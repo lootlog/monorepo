@@ -39,6 +39,13 @@ export const DROP_SOURCE_BOSS_TYPES = [
   "COLOSSUS",
 ] as const;
 
+const dropSourceBossTypes: ReadonlySet<string> = new Set(
+  DROP_SOURCE_BOSS_TYPES,
+);
+
+export const isDropSourceBossType = (type: string | null): boolean =>
+  type !== null && dropSourceBossTypes.has(type);
+
 /**
  * Monster types, strongest first; an event hero ranks right after a hero.
  * NPCs and Hero Trackers are not monsters and rank after every type here.

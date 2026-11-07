@@ -86,6 +86,20 @@ describe("Read cache Dragonfly integration", () => {
     await runtime.dispose();
   });
 
+  it("gives every report after the first the value the first one claimed", async () => {
+    const key = `boss-kill-${randomUUID()}`;
+
+    const claims = await Promise.all(
+      ["a", "b", "c"].map((value) => cache.setNxGet(key, value, 30)),
+    );
+
+    const first = ["a", "b", "c"][claims.indexOf(null)];
+
+    expect(claims.filter((held) => held === null)).toHaveLength(1);
+    expect(claims.filter((held) => held !== null)).toEqual([first, first]);
+    expect(await cache.setNxGet(key, "d", 30)).toBe(first!);
+  });
+
   it("shares a fill slower than the former two-second deadline across service instances", async () => {
     const second = new RedisService(
       await runtime.runPromise(Redis.Redis),

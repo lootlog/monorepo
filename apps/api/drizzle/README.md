@@ -1086,3 +1086,34 @@ Live indexing and the search seed now name a dialog's only NPC as its items'
 source. After applying the migration, rebuild the search indexes with
 `bun run seed` in `apps/search`: live indexing only adds sources, so the
 catalog lists earlier dialog sources only after a rebuild.
+
+## Boss kills across Organizations
+
+`20261107120054_boss_kills` adds `BossKill`: one row per boss kill (the types
+in `DROP_SOURCE_BOSS_TYPES`) with the Organizations that recorded it and the
+party a report named. Drop rates count each kill, and each copy of an item in
+a loot, once across Organizations instead of once per Organization that
+recorded it. Every member of a party reports the same kill; the first report
+claims `kill:dedup:boss:<world>:<npcId>` in Redis for the kill dedup window
+with its time, and each report within the window that counts for its
+Organization upserts the row with that time right after the guild kill
+write. Adding an
+Organization that is already listed changes nothing, so retries and reports
+from several members count the kill once. A party fills in only a kill that
+has none.
+
+The table is a hypertable on `killedAt` with 7-day chunks, compressed two
+days after they close and segmented by `world`, where TimescaleDB is
+installed. Upserts land within the dedup window, so they never touch a
+compressed chunk.
+
+The migration creates an empty table; existing kill buckets cannot tell
+which Organizations' kills were the same fight, so nothing is copied. Drop
+rates count kills and loots from the first boss kill on, and each boss shows
+rates again once it has 100 kills there. Apply the migration before deploying
+the API. Until the table exists the API logs each failed boss kill write and
+still counts the kill for the Organization.
+
+The API no longer writes the party columns `20261107110054_guild_kill_party`
+added to `GuildKillBucket`. Drop them in a later migration, once no API that
+writes them runs.

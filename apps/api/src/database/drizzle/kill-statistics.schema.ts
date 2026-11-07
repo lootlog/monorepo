@@ -171,10 +171,8 @@ const partyCount = (name: string) => integer(name).notNull().default(0);
 
 /**
  * Hourly kills counted once per Organization, however many members reported
- * them. `partyKills` counts the kills whose report named the party; the
- * columns after it sum, over those kills, the loot rolls the party got on
- * average (`getKillLootRolls`) and its members of each profession, alive or
- * dead.
+ * them. The party columns are no longer written: boss kills keep their party
+ * in `BossKill`. They are dropped once no API that writes them runs.
  */
 export const guildKillBucketTable = pgTable(
   "GuildKillBucket",
@@ -215,6 +213,42 @@ export const guildKillBucketTable = pgTable(
     })
       .onDelete("restrict")
       .onUpdate("cascade"),
+  ],
+);
+
+/**
+ * Boss kills counted once across Organizations: the Organizations that
+ * recorded each kill, and its party when a report named it. Every member of a
+ * party reports the same kill, so reports of one boss on one world within the
+ * kill dedup window share the time of the first (see `kill-creation.ts`).
+ * `lootRolls` is the loot rolls the party got on average (`getKillLootRolls`)
+ * and the columns after it its members of each profession, alive or dead;
+ * all are null when no report named the party. A TimescaleDB hypertable on
+ * `killedAt` where the extension is loaded; a plain table elsewhere.
+ */
+export const bossKillTable = pgTable(
+  "BossKill",
+  {
+    world: text("world").notNull(),
+    npcId: integer("npcId").notNull(),
+    killedAt: killTime("killedAt").notNull(),
+    npcName: text("npcName").notNull(),
+    npcType: npcTypeEnum("npcType").notNull(),
+    guildIds: text("guildIds").array().notNull(),
+    lootRolls: doublePrecision("lootRolls"),
+    partyWarriors: integer("partyWarriors"),
+    partyPaladins: integer("partyPaladins"),
+    partyBladeDancers: integer("partyBladeDancers"),
+    partyMages: integer("partyMages"),
+    partyTrackers: integer("partyTrackers"),
+    partyHunters: integer("partyHunters"),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.world, table.npcId, table.killedAt],
+      name: "BossKill_pkey",
+    }),
+    index("BossKill_killedAt_idx").on(table.killedAt.desc()),
   ],
 );
 

@@ -4,7 +4,7 @@ import type { PublishOptions } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, ManagedRuntime } from "effect";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
-import { guildKillBucketTable } from "#src/database/drizzle/kill-statistics.schema";
+import { bossKillTable } from "#src/database/drizzle/kill-statistics.schema";
 import {
   itemSnapshotTable,
   lootItemTable,
@@ -158,11 +158,11 @@ it("publishes a monster's maps from its latest fights, the drops it no longer gi
   });
 });
 
-it("publishes how often a boss's kills drop each item, over the kills of the Organizations that could record it", async () => {
+it("publishes how often a boss's kills drop each item, counting each kill and drop once over the Organizations that could record it", async () => {
   const name = `Heros ${randomUUID()}`;
   const world = `rates-${randomUUID()}`;
-  // Kill buckets begin long before other suites' data, so they set the window.
-  const bucketsBegin = new Date(Date.UTC(2001, 0, 1));
+  // Boss kills begin long before other suites' data, so they set the window.
+  const killsBegin = new Date(Date.UTC(2001, 0, 1));
   const killedAt = new Date(Date.UTC(2001, 0, 2));
   const [everything, legendsOnly] = [randomUUID(), randomUUID()];
 
@@ -199,24 +199,26 @@ it("publishes how often a boss's kills drop each item, over the kills of the Org
           updatedAt: now,
         },
       ]);
-      yield* database.insert(guildKillBucketTable).values(
-        // Every kill named its party: 2 rolls a kill for one, 4 for the other.
+      // Every kill named its party: 2 rolls a kill for one Organization's,
+      // 4 for the other's and 3 for those both recorded.
+      yield* database.insert(bossKillTable).values(
         [
-          { guildId: everything, kills: 200, lootRolls: 400 },
-          { guildId: legendsOnly, kills: 300, lootRolls: 1200 },
-        ].map(({ guildId, kills, lootRolls }) => ({
-          periodStart: bucketsBegin,
-          guildId,
-          world,
-          npcId: 1,
-          npcName: name,
-          npcType: "HERO" as const,
-          npcLvl: 100,
-          kills,
-          partyKills: kills,
-          lootRolls,
-          lastKilledAt: killedAt,
-        })),
+          { guildIds: [everything], kills: 200, lootRolls: 2 },
+          { guildIds: [legendsOnly], kills: 300, lootRolls: 4 },
+          { guildIds: [legendsOnly, everything], kills: 100, lootRolls: 3 },
+        ].flatMap(({ guildIds, kills, lootRolls }, group) =>
+          Array.from({ length: kills }, (_, index) => ({
+            world,
+            npcId: 1,
+            killedAt: new Date(
+              killsBegin.getTime() + (group * 1000 + index) * 60_000,
+            ),
+            npcName: name,
+            npcType: "HERO" as const,
+            guildIds,
+            lootRolls,
+          })),
+        ),
       );
 
       const [npc] = yield* database
@@ -286,11 +288,12 @@ it("publishes how often a boss's kills drop each item, over the kills of the Org
         });
 
       yield* record(20, unique!.id, [everything]);
-      // A kill both Organizations recorded counts in each.
+      // Loots both Organizations recorded count once.
       yield* record(5, legendary!.id, [everything, legendsOnly]);
+      yield* record(4, unique!.id, [legendsOnly, everything]);
       // Kept by an Organization whose settings now skip uniques.
       yield* record(3, unique!.id, [legendsOnly]);
-      // Before the first kill bucket, so no kill pairs with it.
+      // Before the first boss kill, so no kill pairs with it.
       yield* record(
         4,
         unique!.id,
@@ -326,8 +329,8 @@ it("publishes how often a boss's kills drop each item, over the kills of the Org
     .find((monster) => monster.name === name)?.dropRates;
 
   expect(rates?.toSorted((a, b) => a.itemId - b.itemId)).toEqual([
-    // Only the Organization that keeps uniques could have recorded one.
-    { itemId: 900_001, drops: 20, kills: 200, rolls: 400, basis: "PARTY" },
-    { itemId: 900_002, drops: 10, kills: 500, rolls: 1600, basis: "PARTY" },
+    // Only kills the Organization that keeps uniques recorded could drop one.
+    { itemId: 900_001, drops: 24, kills: 300, rolls: 700, basis: "PARTY" },
+    { itemId: 900_002, drops: 5, kills: 600, rolls: 1900, basis: "PARTY" },
   ]);
 });
