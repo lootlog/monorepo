@@ -2848,8 +2848,11 @@ export type ChatMessageResponseDtoOutputNpc = {
   /** @minLength 1 */
   location: string;
   lvl: number;
-  /** @minLength 1 */
-  prof: string;
+  /**
+     * Margonem profession shortname; omitted for a Hero Tracker, which has none.
+     * @minLength 1
+     */
+  prof?: string;
   wt: number;
   hpp?: number;
   /** @minLength 1 */
@@ -2956,8 +2959,11 @@ export type SendMessageDtoNpc = {
   /** @minLength 1 */
   location: string;
   lvl: number;
-  /** @minLength 1 */
-  prof: string;
+  /**
+     * Margonem profession shortname; omitted for a Hero Tracker, which has none.
+     * @minLength 1
+     */
+  prof?: string;
   wt: number;
   hpp?: number;
   /** @minLength 1 */

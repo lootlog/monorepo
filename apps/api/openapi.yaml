@@ -30126,6 +30126,7 @@ components:
             prof:
               type: string
               minLength: 1
+              description: Margonem profession shortname; omitted for a Hero Tracker, which has none.
             wt:
               type: number
             hpp:
@@ -30147,7 +30148,6 @@ components:
             - name
             - location
             - lvl
-            - prof
             - wt
             - icon
             - type
@@ -30275,6 +30275,7 @@ components:
             prof:
               type: string
               minLength: 1
+              description: Margonem profession shortname; omitted for a Hero Tracker, which has none.
             wt:
               type: number
             hpp:
@@ -30296,7 +30297,6 @@ components:
             - name
             - location
             - lvl
-            - prof
             - wt
             - icon
             - type

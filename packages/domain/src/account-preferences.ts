@@ -286,10 +286,14 @@ export const normalizeDetector = flow(
       );
     }
 
-    // Event heroes were detected as heroes; every field a player has not set
-    // apart keeps the hero setting that player chose.
+    // Event heroes were detected as heroes, and Hero Trackers lead to heroes;
+    // every field a player has not set apart keeps the hero setting that
+    // player chose, so a player sending heroes sends trackers too.
     normalized.EVENT_HERO = normalizeDetectorType(normalized.HERO)(
       settings?.EVENT_HERO,
+    );
+    normalized.HERO_TRACKER = normalizeDetectorType(normalized.HERO)(
+      settings?.HERO_TRACKER,
     );
 
     return normalized;

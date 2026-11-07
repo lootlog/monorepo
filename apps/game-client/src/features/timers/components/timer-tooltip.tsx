@@ -6,10 +6,12 @@ import {
   ClockArrowDown,
   ClockArrowUp,
   DoorOpen,
+  MapPin,
   RotateCcw,
   Swords,
 } from "lucide-react";
 import type { FC } from "react";
+import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { useTranslation } from "react-i18next";
 import {
   getLevelSuffix,
@@ -84,6 +86,24 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
 
       <TimerTooltipSection>
         <div className="ll:grid ll:grid-cols-[auto_auto_1fr] ll:items-center ll:gap-x-1.5 ll:gap-y-0.5">
+          {/* A Hero Tracker hides in one of several places, so its timer
+              names the map where its entrance was found. */}
+          {timer.npc.type === NpcTypeEnum.HERO_TRACKER &&
+            timer.npc.location && (
+              <>
+                <MapPin
+                  size={12}
+                  aria-hidden="true"
+                  className="ll:text-emerald-300"
+                />
+                <span className="ll:text-muted-foreground">
+                  {t("tooltip.location")}
+                </span>
+                <span className="ll:min-w-0 ll:wrap-break-word">
+                  {timer.npc.location}
+                </span>
+              </>
+            )}
           {timer.entranceClosesAt && (
             <>
               <DoorOpen

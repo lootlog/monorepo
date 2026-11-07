@@ -36,6 +36,8 @@ export const NpcRoutingDataSchema = Schema.Struct({
   ),
   icon: Schema.optionalKey(Schema.NullOr(Schema.String)),
   isHeroFromEvent: Schema.optionalKey(Schema.Boolean),
+  /** Only the name identifies a Hero Tracker; its template has no weight or profession. */
+  name: Schema.optionalKey(Schema.NullOr(Schema.String)),
 });
 
 export type NpcRoutingData = typeof NpcRoutingDataSchema.Type;

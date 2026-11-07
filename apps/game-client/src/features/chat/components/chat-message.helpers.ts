@@ -81,7 +81,7 @@ export const toChatGameNpc = (npc: ChatNpc): GameNpc => ({
   id: npc.id,
   lvl: npc.lvl,
   nick: npc.name,
-  prof: npc.prof,
+  prof: npc.prof ?? "",
   tpl: npc.id,
   type: npc.type,
   wt: npc.wt,
