@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import main from "@lootlog/sdk/openapi/main.json";
 import activity from "@lootlog/sdk/openapi/activity.json";
 import battlelog from "@lootlog/sdk/openapi/battlelog.json";
+import catalog from "@lootlog/sdk/openapi/catalog.json";
 import search from "@lootlog/sdk/openapi/search.json";
 import {
   getOperationTags,
@@ -9,12 +10,12 @@ import {
 } from "~/lib/reference-document";
 import { referenceMetadata } from "~/lib/reference-metadata";
 
-const specs = { main, activity, battlelog, search };
+const specs = { main, activity, battlelog, catalog, search };
 
 describe("API reference metadata", () => {
   // Scalar hides a tag that no x-tagGroups entry lists, so a new API group
   // without metadata would silently drop its operations from the sidebar.
-  test.each(["main", "activity", "battlelog", "search"] as const)(
+  test.each(["main", "activity", "battlelog", "catalog", "search"] as const)(
     "%s lists every operation tag in exactly one named group",
     (service) => {
       const metadata = referenceMetadata[service];

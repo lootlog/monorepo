@@ -112,6 +112,7 @@ jobs:
                 VITE_AUTH_SERVICE_URL
                 VITE_BATTLELOG_API_URL
                 VITE_BATTLELOG_PUBLIC_URL
+                VITE_CATALOG_API_URL
                 VITE_DISCORD_BOT_PERMISSIONS
                 VITE_DISCORD_CLIENT_ID
                 VITE_GATEWAY_URL

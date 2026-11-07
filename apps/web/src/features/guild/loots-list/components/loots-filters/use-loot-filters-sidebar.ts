@@ -7,8 +7,8 @@ import {
 import {
   useItemsControllerGetItems,
   useNpcsControllerGetNpcs,
-  usePlayersControllerGetPlayers,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
+import { usePlayersControllerGetPlayers } from "@lootlog/client/search";
 import { isEqual, uniqBy } from "es-toolkit";
 import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";

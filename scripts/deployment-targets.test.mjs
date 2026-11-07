@@ -12,6 +12,7 @@ describe("deployment targets", () => {
       "api",
       "auth",
       "battlelog-service",
+      "catalog",
       "developer",
       "discord-bot",
       "gateway",
@@ -34,6 +35,7 @@ describe("deployment targets", () => {
       "api",
       "auth",
       "battlelog-service",
+      "catalog",
       "discord-bot",
       "gateway",
       "search",
@@ -109,7 +111,7 @@ describe("deployment targets", () => {
       changedFiles: [".github/deployment-targets.json"],
     });
 
-    expect(rootPlan.dockerTargets).toHaveLength(8);
+    expect(rootPlan.dockerTargets).toHaveLength(9);
   });
 
   test("CI checks every affected package in exactly one workspace shard", async () => {
@@ -150,6 +152,7 @@ describe("deployment targets", () => {
       "api",
       "auth",
       "battlelog-service",
+      "catalog",
       "discord-bot",
       "gateway",
       "search",
@@ -171,7 +174,7 @@ describe("deployment targets", () => {
       changedFiles: ["patches/drizzle-orm.patch"],
     });
 
-    expect(patchPlan.dockerTargets).toHaveLength(8);
+    expect(patchPlan.dockerTargets).toHaveLength(9);
   });
 
   test("CI rebuilds affected images for workspace manifest changes", async () => {
@@ -196,6 +199,7 @@ describe("deployment targets", () => {
       "api",
       "auth",
       "battlelog-service",
+      "catalog",
       "discord-bot",
       "gateway",
       "search",

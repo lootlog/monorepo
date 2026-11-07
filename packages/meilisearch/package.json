@@ -1,0 +1,31 @@
+{
+  "name": "@lootlog/meilisearch",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./batch-consumer": "./src/batch-consumer.ts",
+    "./index-changed-documents": "./src/index-changed-documents.ts",
+    "./index-settings": "./src/index-settings.ts",
+    "./operation-failure": "./src/operation-failure.ts",
+    "./query-builder": "./src/query-builder.ts",
+    "./search-unavailable": "./src/search-unavailable.ts"
+  },
+  "scripts": {
+    "lint": "oxlint src",
+    "typecheck": "bun check",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@lootlog/messaging": "workspace:*",
+    "effect": "catalog:",
+    "es-toolkit": "catalog:",
+    "meilisearch": "^0.62.0"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}

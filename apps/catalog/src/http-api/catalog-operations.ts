@@ -1,0 +1,143 @@
+import { configureMeilisearchIndexes } from "@lootlog/meilisearch/index-settings";
+import type { SearchOperationFailure } from "@lootlog/meilisearch/operation-failure";
+import { Context, Effect, Layer, Predicate, Redacted } from "effect";
+import { Meilisearch } from "meilisearch";
+import { makeCatalogModule } from "#src/catalog/catalog.service";
+import { CatalogConfig } from "#src/config/catalog-config";
+import {
+  type CatalogWriteFailure,
+  makeCatalogStore,
+} from "#src/database/catalog-store";
+import { CatalogDatabase } from "#src/database/database";
+import type { IndexItemsCommand } from "#src/items/index-items-command";
+import type { ItemRevisionsCommand } from "#src/items/item-revisions-command";
+import { type ItemEntry, makeItemsModule } from "#src/items/items.service";
+import type { MonsterDropsCommand } from "#src/items/monster-drops-command";
+import type { IndexNpcsCommand } from "#src/npcs/index-npcs-command";
+import type { MonsterLocationsCommand } from "#src/npcs/monster-locations-command";
+import { makeNpcsModule, type NpcEntry } from "#src/npcs/npcs.service";
+import { catalogIndexSettings } from "#src/projection/index-settings";
+import { effectLogger } from "#src/shared/logger";
+import type {
+  CatalogControllerGetEventsQuery,
+  CatalogControllerGetIndexQuery,
+  CatalogControllerGetItemsQuery,
+  CatalogControllerGetNpcsQuery,
+  CatalogEventsResponseDto_Output,
+  CatalogIndexResponseDto_Output,
+  CatalogItemsResponseDto_Output,
+  CatalogNpcsResponseDto_Output,
+} from "./contracts/catalog/schemas.js";
+import type {
+  ItemsControllerGetItemsQuery,
+  SearchItemsResponseDto_Output,
+} from "./contracts/items/schemas.js";
+import type {
+  NpcsControllerGetNpcsQuery,
+  NpcHitDto_Output,
+} from "./contracts/npcs/schemas.js";
+
+export interface CatalogOperationsValue {
+  readonly searchNpcs: (
+    query: NpcsControllerGetNpcsQuery,
+  ) => Effect.Effect<ReadonlyArray<NpcHitDto_Output>, SearchOperationFailure>;
+  readonly searchItems: (
+    query: ItemsControllerGetItemsQuery,
+  ) => Effect.Effect<SearchItemsResponseDto_Output, SearchOperationFailure>;
+  readonly catalogItems: (
+    query: CatalogControllerGetItemsQuery,
+  ) => Effect.Effect<CatalogItemsResponseDto_Output, SearchOperationFailure>;
+  readonly catalogNpcs: (
+    query: CatalogControllerGetNpcsQuery,
+  ) => Effect.Effect<CatalogNpcsResponseDto_Output, SearchOperationFailure>;
+  readonly catalogEvents: (
+    query: CatalogControllerGetEventsQuery,
+  ) => Effect.Effect<CatalogEventsResponseDto_Output, SearchOperationFailure>;
+  readonly catalogIndex: (
+    query: CatalogControllerGetIndexQuery,
+  ) => Effect.Effect<CatalogIndexResponseDto_Output, SearchOperationFailure>;
+  readonly indexItems: (
+    data: IndexItemsCommand,
+  ) => Effect.Effect<void, CatalogWriteFailure>;
+  readonly setMonsterDrops: (
+    data: MonsterDropsCommand,
+  ) => Effect.Effect<void, CatalogWriteFailure>;
+  readonly setItemRevisions: (
+    data: ItemRevisionsCommand,
+  ) => Effect.Effect<void, CatalogWriteFailure>;
+  readonly indexNpcs: (
+    data: IndexNpcsCommand,
+  ) => Effect.Effect<void, CatalogWriteFailure>;
+  readonly setNpcLocations: (
+    data: MonsterLocationsCommand,
+  ) => Effect.Effect<void, CatalogWriteFailure>;
+}
+
+export class CatalogOperations extends Context.Service<
+  CatalogOperations,
+  CatalogOperationsValue
+>()("@lootlog/catalog/CatalogOperations") {
+  static readonly layer = Layer.effect(
+    CatalogOperations,
+    Effect.gen(function* () {
+      const config = yield* CatalogConfig;
+      const database = yield* CatalogDatabase;
+
+      const meilisearch = new Meilisearch({
+        host: config.meilisearchHost,
+        apiKey: Redacted.value(config.meilisearchApiKey),
+      });
+
+      const { write } = makeCatalogStore<ItemEntry, NpcEntry>(
+        database,
+        meilisearch,
+      );
+
+      const items = makeItemsModule(meilisearch, write, effectLogger);
+      const npcs = makeNpcsModule(meilisearch, write, effectLogger);
+      const catalog = makeCatalogModule(meilisearch, effectLogger);
+
+      yield* configureMeilisearchIndexes(
+        meilisearch,
+        catalogIndexSettings,
+        effectLogger,
+      );
+
+      return CatalogOperations.of({
+        catalogItems: catalog.getItems,
+        catalogNpcs: catalog.getNpcs,
+        catalogEvents: catalog.getEvents,
+        catalogIndex: catalog.getIndex,
+        searchNpcs: (query) =>
+          npcs.getNpcs({
+            ...query,
+            ids: query.ids ? [...query.ids] : undefined,
+            limit: query.limit ?? 10,
+            search:
+              query.search &&
+              (Predicate.isString(query.search)
+                ? query.search
+                : [...query.search]),
+          }),
+        searchItems: (query) =>
+          items.searchItems({
+            ...query,
+            facets: query.facets ? [...query.facets] : undefined,
+            filter: query.filter ? [...asArray(query.filter)] : undefined,
+            limit: query.limit ?? 20,
+            offset: query.offset ?? 0,
+            sort: query.sort ? [...query.sort] : undefined,
+          }),
+        indexItems: items.indexItems,
+        setMonsterDrops: items.setMonsterDrops,
+        setItemRevisions: items.setItemRevisions,
+        indexNpcs: npcs.indexNpcs,
+        setNpcLocations: npcs.setLocations,
+      });
+    }),
+  );
+}
+
+const asArray = (
+  value: string | ReadonlyArray<string>,
+): ReadonlyArray<string> => (Predicate.isString(value) ? [value] : value);

@@ -1,4 +1,4 @@
-import type { CatalogItemRevisionDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemRevisionDtoOutput } from "@lootlog/client/catalog";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { ArrowRight } from "lucide-react";

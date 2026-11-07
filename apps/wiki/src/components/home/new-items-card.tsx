@@ -2,7 +2,7 @@ import { Link, type LinkOptions } from "@tanstack/react-router";
 import { sortBy } from "es-toolkit";
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import {
   ITEM_RARITIES_BY_VALUE,
   resolveItemRarity,

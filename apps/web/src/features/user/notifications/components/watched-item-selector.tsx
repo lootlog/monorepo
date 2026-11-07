@@ -15,7 +15,7 @@ import {
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
-import type { SearchItemsResponseDtoOutputHitsItem } from "@lootlog/client/search";
+import type { SearchItemsResponseDtoOutputHitsItem } from "@lootlog/client/catalog";
 import { cn } from "cn";
 
 type GameItem = SearchItemsResponseDtoOutputHitsItem;

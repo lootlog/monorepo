@@ -1,0 +1,12 @@
+{
+  "extends": "@lootlog/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declaration": false,
+    "declarationMap": false,
+    "rootDir": ".",
+    "types": ["bun", "node"]
+  },
+  "include": ["src", "test", "drizzle.config.ts"],
+  "exclude": ["dist", "node_modules"]
+}

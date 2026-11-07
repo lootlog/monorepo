@@ -3,6 +3,32 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-07 — Catalog API (breaking)
+
+Items and NPCs move from the Search API to the new Catalog API at
+`https://catalog.lootlog.pl` (`https://dev-catalog.lootlog.pl` in
+development). Operation IDs, parameters and responses are unchanged:
+
+- `GET /items` on Search → `GET /items` on Catalog.
+- `GET /npcs` on Search → `GET /npcs` on Catalog.
+- `GET /public/catalog/items` on Search → `GET /catalog/items` on Catalog.
+- `GET /public/catalog/npcs` on Search → `GET /catalog/npcs` on Catalog.
+- `GET /public/catalog/events` on Search → `GET /catalog/events` on Catalog.
+- `GET /public/catalog/index` on Search → `GET /catalog/index` on Catalog.
+
+Search now serves only `GET /players`. The old paths return `404`.
+
+`GET /all` is removed. To search players, NPCs and items at once, call
+`GET /items` and `GET /npcs` on Catalog and `GET /players` on Search.
+
+The catalog no longer works anonymously: every Catalog request needs an API key
+in `X-Api-Key`, as every other operation does.
+
+The SDK adds the `@lootlog/sdk/catalog` entry point with the Catalog
+functions, which `@lootlog/sdk/search` no longer exports. `configureLootlogApi`
+accepts `baseUrls.catalog` and points it at `https://catalog.lootlog.pl`, or
+`https://dev-catalog.lootlog.pl` with `environment: "development"`.
+
 ## 2026-11-06 — Public catalog index
 
 The Search API adds `GET /public/catalog/index`, which works without an API

@@ -1,4 +1,4 @@
-import type { CatalogDropSourceDtoOutput } from "@lootlog/client/search";
+import type { CatalogDropSourceDtoOutput } from "@lootlog/client/catalog";
 
 type DropRate = NonNullable<CatalogDropSourceDtoOutput["dropRate"]>;
 

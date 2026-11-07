@@ -15,7 +15,7 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
-import { getAllControllerSearchAllQueryKey } from "@lootlog/client/search";
+import { getItemsControllerGetItemsQueryKey } from "@lootlog/client/catalog";
 import { MotionGlobalConfig } from "framer-motion";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LootSearchCommand } from "./loot-search-command";
@@ -144,6 +144,7 @@ describe("LootSearchCommand search failures", () => {
       });
 
       const restore = configureApiClients({
+        catalog: { baseUrl: "https://catalog.test" },
         search: { baseUrl: "https://search.test" },
       });
 
@@ -158,14 +159,9 @@ describe("LootSearchCommand search failures", () => {
 
       if (withCachedResults) {
         client.setQueryData(
-          getAllControllerSearchAllQueryKey({
-            search: "smok",
-            world: "test-world",
-          }),
+          getItemsControllerGetItemsQueryKey({ search: "smok", limit: 10 }),
           {
-            npcs: [],
-            players: [],
-            items: [
+            hits: [
               {
                 id: 1,
                 name: "Nieaktualny wynik",
@@ -198,10 +194,7 @@ describe("LootSearchCommand search failures", () => {
         await waitFor(() =>
           expect(
             client.getQueryState(
-              getAllControllerSearchAllQueryKey({
-                search: "smok",
-                world: "test-world",
-              }),
+              getItemsControllerGetItemsQueryKey({ search: "smok", limit: 10 }),
             )?.status,
           ).toBe("error"),
         );

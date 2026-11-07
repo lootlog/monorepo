@@ -1,6 +1,7 @@
 import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Context, Effect, Layer, Schema } from "effect";
+import { CATALOG_SERVICE_TOKEN_HEADER } from "@lootlog/protocol/http/catalog-access";
+import { Context, Effect, Layer, Redacted, Schema } from "effect";
 import { HttpClient, HttpClientRequest } from "effect/http";
 import { BotConfig } from "#src/config/bot-config";
 
@@ -45,7 +46,7 @@ export interface LootlogClientValue {
     guildId: string,
     discordId: string,
   ) => Effect.Effect<MemberSession, CommandFailure>;
-  readonly search: Read;
+  readonly catalog: Read;
   readonly publicFile: (
     path: string,
   ) => Effect.Effect<Uint8Array, CommandFailure>;
@@ -174,7 +175,16 @@ export class LootlogClient extends Context.Service<
 
       return LootlogClient.of({
         member,
-        search: read(httpClient, config.searchServiceUrl),
+        catalog: read(
+          HttpClient.mapRequest(
+            httpClient,
+            HttpClientRequest.setHeader(
+              CATALOG_SERVICE_TOKEN_HEADER,
+              Redacted.value(config.catalogServiceToken),
+            ),
+          ),
+          config.catalogServiceUrl,
+        ),
         publicFile,
       });
     }),

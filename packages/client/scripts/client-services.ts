@@ -11,6 +11,10 @@ export const clientServices = {
     mutatorName: "battlelogFetch",
     specPath: "../../apps/battlelog/openapi.yaml",
   },
+  catalog: {
+    mutatorName: "catalogFetch",
+    specPath: "../../apps/catalog/openapi.yaml",
+  },
   main: {
     mutatorName: "mainFetch",
     specPath: "../../apps/api/openapi.yaml",

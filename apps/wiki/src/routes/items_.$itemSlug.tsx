@@ -7,7 +7,7 @@ import {
 import {
   getCatalogControllerGetItemsQueryOptions,
   useCatalogControllerGetItems,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { ITEM_RARITY_STYLES } from "@lootlog/ui/components/item-tile-details";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";

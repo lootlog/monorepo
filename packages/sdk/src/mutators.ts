@@ -27,3 +27,8 @@ export const searchFetch = <T>(
   path: string,
   options?: ApiRequestOptions,
 ): Promise<T> => executeApiRequest<T>("search", path, options);
+
+export const catalogFetch = <T>(
+  path: string,
+  options?: ApiRequestOptions,
+): Promise<T> => executeApiRequest<T>("catalog", path, options);

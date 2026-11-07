@@ -1,4 +1,4 @@
-import type { CatalogControllerGetItemsSort } from "@lootlog/client/search";
+import type { CatalogControllerGetItemsSort } from "@lootlog/client/catalog";
 import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
 
 const messages = {

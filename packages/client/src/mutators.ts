@@ -36,6 +36,13 @@ export function searchFetch<TData>(
   return executeApiRequest<TData>("search", path, options);
 }
 
+export function catalogFetch<TData>(
+  path: string,
+  options?: ApiRequestOptions,
+): Promise<TData> {
+  return executeApiRequest<TData>("catalog", path, options);
+}
+
 export function activityFetch<TData>(
   path: string,
   options?: ApiRequestOptions,

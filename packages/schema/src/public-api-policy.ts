@@ -10,9 +10,15 @@ import { MAIN_DOC_OPERATIONS } from "./public-api-operations/main-docs.js";
 import { ACTIVITY_OPERATIONS } from "./public-api-operations/activity.js";
 import { BATTLELOG_OPERATIONS } from "./public-api-operations/battlelog.js";
 import { SEARCH_OPERATIONS } from "./public-api-operations/search.js";
+import { CATALOG_OPERATIONS } from "./public-api-operations/catalog.js";
 
 /** Explicit supported HTTP inventory. Unknown operations are session-only. */
-export type PublicApiService = "main" | "activity" | "battlelog" | "search";
+export type PublicApiService =
+  | "main"
+  | "activity"
+  | "battlelog"
+  | "search"
+  | "catalog";
 
 export type PublicApiOperation = {
   readonly service: PublicApiService;
@@ -38,6 +44,7 @@ export const PUBLIC_API_OPERATIONS = [
   ...ACTIVITY_OPERATIONS,
   ...BATTLELOG_OPERATIONS,
   ...SEARCH_OPERATIONS,
+  ...CATALOG_OPERATIONS,
 ] as const satisfies readonly PublicApiOperation[];
 
 export function getPublicApiOperation(

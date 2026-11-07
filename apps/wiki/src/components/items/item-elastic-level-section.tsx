@@ -1,5 +1,5 @@
 import { useId } from "react";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import {
   Field,
   FieldDescription,

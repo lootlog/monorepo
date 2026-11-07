@@ -8,6 +8,7 @@ import {
   API_URL,
   AUTH_API_URL,
   BATTLELOG_API_URL,
+  CATALOG_API_URL,
   SEARCH_API_URL,
 } from "@/config/api";
 import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
@@ -54,6 +55,10 @@ export const configureWebApiClients = (): (() => void) => {
     battlelog: {
       ...sharedConfiguration,
       baseUrl: BATTLELOG_API_URL ?? mainBaseUrl,
+    },
+    catalog: {
+      ...sharedConfiguration,
+      baseUrl: CATALOG_API_URL ?? mainBaseUrl,
     },
     main: {
       ...sharedConfiguration,

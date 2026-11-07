@@ -2,7 +2,7 @@ import { groupBy } from "es-toolkit";
 import type {
   CatalogDropSourceDtoOutput,
   CatalogItemDtoOutput,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import {
   ITEM_RARITIES_BY_VALUE,
   resolveItemRarity,
