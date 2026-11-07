@@ -1114,6 +1114,9 @@ rates again once it has 100 kills there. Apply the migration before deploying
 the API. Until the table exists the API logs each failed boss kill write and
 still counts the kill for the Organization.
 
-The API no longer writes the party columns `20261107110054_guild_kill_party`
-added to `GuildKillBucket`. Drop them in a later migration, once no API that
-writes them runs.
+`20261107120709_drop_guild_kill_party` drops the party columns
+`20261107110054_guild_kill_party` added to `GuildKillBucket`; `BossKill` holds
+each boss kill's party instead. Apply it only once no API that writes those
+columns runs, on every environment after the API from
+`20261107120054_boss_kills` is deployed there. Dropping a column of the
+compressed hypertable does not rewrite its chunks.
