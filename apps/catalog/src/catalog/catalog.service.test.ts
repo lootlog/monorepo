@@ -301,6 +301,7 @@ test("an old link by catalog key to a rebalanced monster's former identity shows
     monsterKey: "pl_Reuzen_COLOSSUS",
     name: "Reuzen",
     icon: "reuzen.gif",
+    prof: "",
     type: "COLOSSUS" as const,
     locations: [],
     formerLevels: [],

@@ -34,7 +34,6 @@ export const KillsMobileList = ({ npcs, startRank }: KillsMobileListProps) => {
               <NpcTile
                 className="shrink-0"
                 npc={{
-                  id: npc.npcId,
                   name: npc.npcName,
                   lvl: npc.npcLvl,
                   icon: npc.npcIcon,

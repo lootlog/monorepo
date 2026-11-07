@@ -13,22 +13,6 @@ export const CATALOG_OPERATIONS = [
   {
     service: "catalog",
     method: "GET",
-    path: "/npcs",
-    operationId: "NpcsController_getNpcs",
-    access: "read",
-    data: "public",
-  },
-  {
-    service: "catalog",
-    method: "GET",
-    path: "/items",
-    operationId: "ItemsController_getItems",
-    access: "read",
-    data: "public",
-  },
-  {
-    service: "catalog",
-    method: "GET",
     path: "/catalog/items",
     operationId: "CatalogController_getItems",
     access: "read",

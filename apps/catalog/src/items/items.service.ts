@@ -2,11 +2,6 @@ import { uniqueWorlds } from "#src/shared/unique-worlds";
 import { upgradedAttackSpeed } from "@lootlog/domain/item-upgrade";
 import { Effect } from "effect";
 import { groupBy, sortBy } from "es-toolkit";
-import type { Meilisearch, SearchParams } from "meilisearch";
-import {
-  attemptMeilisearch,
-  type SearchOperationFailure,
-} from "@lootlog/meilisearch/operation-failure";
 import type {
   CatalogChange,
   CatalogWriteFailure,
@@ -14,14 +9,11 @@ import type {
 import { changedEntries } from "#src/shared/changed-entries";
 import { npcMonsterKey, type NpcEntry } from "#src/npcs/npcs.service";
 import type { AppLogger } from "#src/shared/logger";
-import type { ItemSearchQuery } from "./item-search-query.js";
-import { ITEMS_INDEX } from "./search-index.js";
 import type {
   CatalogItemObservation,
   CatalogItemRevisions,
   CatalogMonsterDrops,
 } from "@lootlog/protocol/rabbit/catalog";
-import type { ItemHit } from "./item-hit.js";
 import { createItemSearchFields } from "./item-search-fields.js";
 import {
   mergeItemDropFields,
@@ -33,13 +25,6 @@ import {
   toItemLevelFields,
   type ItemLevelFields,
 } from "./item-levels.js";
-
-type SearchItemsResponse = {
-  estimatedTotalHits: number;
-  facetDistribution: Record<string, Record<string, number>>;
-  facetStats: Record<string, { max: number; min: number }>;
-  hits: ItemHit[];
-};
 
 export type IndexItemsCommand = {
   readonly items: ReadonlyArray<CatalogItemObservation>;
@@ -107,31 +92,6 @@ const remainingRetiredDrops = (
         ),
       };
 
-const itemAttributesToRetrieve = [
-  "id",
-  "name",
-  "icon",
-  "stat",
-  "lvl",
-  "rarity",
-  "type",
-  "worlds",
-];
-
-const mapSearchResponse = (data: {
-  estimatedTotalHits?: number;
-  facetDistribution?: Record<string, Record<string, number>>;
-  facetStats?: Record<string, { max: number; min: number }>;
-  hits: ItemHit[];
-  totalHits?: number;
-}): SearchItemsResponse => ({
-  hits: data.hits,
-  estimatedTotalHits:
-    data.estimatedTotalHits ?? data.totalHits ?? data.hits.length,
-  facetDistribution: data.facetDistribution ?? {},
-  facetStats: data.facetStats ?? {},
-});
-
 /**
  * One catalog entry per edition, item id and name. A template observed in
  * Polish and English, or renamed, keeps each name searchable instead of the
@@ -194,67 +154,7 @@ export type ItemEntry = ReturnType<typeof toItemDocuments>[number] &
     "retiredDropMonsterKeys" | "dropRates" | "revisions" | "changedOn"
   >;
 
-export const makeItemsModule = (
-  meilisearch: Meilisearch,
-  write: CatalogWrite,
-  logger: AppLogger,
-) => {
-  const searchItems = Effect.fn("SearchItems.search")(function* ({
-    facets,
-    filter,
-    limit,
-    offset,
-    search,
-    sort,
-  }: ItemSearchQuery) {
-    const index = meilisearch.index<ItemHit>(ITEMS_INDEX);
-    const searchTerm = search ?? "";
-    let incomingFilters: string[] = [];
-
-    if (Array.isArray(filter)) {
-      incomingFilters = filter;
-    } else if (filter) {
-      incomingFilters = [filter];
-    }
-
-    const filters = incomingFilters;
-
-    const query: SearchParams = {
-      limit,
-      offset,
-      attributesToSearchOn: ["name", "stat"],
-      attributesToRetrieve: itemAttributesToRetrieve,
-    };
-
-    if (facets && facets.length > 0) query.facets = facets;
-
-    if (filters.length > 0) query.filter = filters.join(" AND ");
-
-    if (sort && sort.length > 0) query.sort = sort;
-
-    return yield* attemptMeilisearch("search.items", () =>
-      index.search(searchTerm, query),
-    ).pipe(
-      Effect.map(mapSearchResponse),
-      Effect.tapError((error) =>
-        Effect.sync(() => logger.error("Items search error", { error })),
-      ),
-    );
-  });
-
-  const getItems = Effect.fn("SearchItems.get")(function* ({
-    limit,
-    search,
-  }: Pick<ItemSearchQuery, "limit" | "search">) {
-    const response = yield* searchItems({
-      limit,
-      offset: 0,
-      search,
-    });
-
-    return response.hits;
-  });
-
+export const makeItemsModule = (write: CatalogWrite, logger: AppLogger) => {
   const indexItems = Effect.fn("CatalogItems.index")(function* (
     data: IndexItemsCommand,
   ) {
@@ -412,15 +312,10 @@ export const makeItemsModule = (
   );
 
   return {
-    getItems,
     indexItems,
     setItemRevisions,
     setMonsterDrops,
-    searchItems,
   } satisfies {
-    readonly getItems: (
-      input: Pick<ItemSearchQuery, "limit" | "search">,
-    ) => Effect.Effect<ReadonlyArray<ItemHit>, SearchOperationFailure>;
     readonly indexItems: (
       data: IndexItemsCommand,
     ) => Effect.Effect<void, CatalogWriteFailure>;
@@ -430,8 +325,5 @@ export const makeItemsModule = (
     readonly setItemRevisions: (
       data: ItemRevisionsCommand,
     ) => Effect.Effect<void, CatalogWriteFailure>;
-    readonly searchItems: (
-      input: ItemSearchQuery,
-    ) => Effect.Effect<SearchItemsResponse, SearchOperationFailure>;
   };
 };

@@ -28,20 +28,7 @@ const config = CatalogConfig.of({
 const service = { [CATALOG_SERVICE_TOKEN_HEADER]: SERVICE_TOKEN };
 
 const makeBoundary = (overrides: Partial<CatalogOperationsValue> = {}) => {
-  let itemQuery: unknown;
-
   const operations: CatalogOperationsValue = {
-    searchItems: (query) => {
-      itemQuery = query;
-
-      return Effect.succeed({
-        hits: [],
-        estimatedTotalHits: 0,
-        facetDistribution: {},
-        facetStats: {},
-      });
-    },
-    searchNpcs: () => Effect.succeed([]),
     catalogItems: () => Effect.succeed({ hits: [], estimatedTotalHits: 0 }),
     catalogNpcs: () => Effect.succeed({ hits: [], estimatedTotalHits: 0 }),
     catalogEvents: () => Effect.succeed({ events: [] }),
@@ -72,28 +59,10 @@ const makeBoundary = (overrides: Partial<CatalogOperationsValue> = {}) => {
   return {
     handler,
     dispose: boundary.dispose,
-    readItemQuery: () => itemQuery,
   };
 };
 
 describe("Catalog HttpApi contract", () => {
-  test("decodes the item query through the HTTP contract", async () => {
-    const { dispose, handler, readItemQuery } = makeBoundary();
-
-    const response = await handler(
-      "/items?limit=5&offset=2&facets=rarity&facets=type&filter=worlds%20%3D%20berufs",
-    );
-
-    expect(response.status).toBe(200);
-    expect(readItemQuery()).toEqual({
-      limit: 5,
-      offset: 2,
-      filter: "worlds = berufs",
-      facets: ["rarity", "type"],
-    });
-    await dispose();
-  });
-
   test("decodes the catalog filters from one value or several", async () => {
     const queries: unknown[] = [];
 
@@ -172,7 +141,7 @@ test("reads need the service token or an identity from the edge, and keys stay s
     ).toBe(401);
     expect(await status("/catalog/items", service)).toBe(200);
     expect(
-      await status("/items", {
+      await status("/catalog/npcs", {
         "x-auth-user-id": "user",
         "x-auth-discord-id": "discord",
       }),
@@ -180,8 +149,6 @@ test("reads need the service token or an identity from the edge, and keys stay s
 
     // A key reads every catalog read the developer portal lists.
     for (const path of [
-      "/items",
-      "/npcs",
       "/catalog/items",
       "/catalog/npcs",
       "/catalog/events",

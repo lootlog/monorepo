@@ -112,8 +112,8 @@ const catalog = <A>(
       );
 
       return yield* run({
-        items: makeItemsModule(meilisearch, write, logger),
-        npcs: makeNpcsModule(meilisearch, write, logger),
+        items: makeItemsModule(write, logger),
+        npcs: makeNpcsModule(write, logger),
         reads: makeCatalogModule(meilisearch, read, logger),
       });
     }),

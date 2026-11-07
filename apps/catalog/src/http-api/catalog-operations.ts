@@ -1,6 +1,6 @@
 import { configureMeilisearchIndexes } from "@lootlog/meilisearch/index-settings";
 import type { SearchOperationFailure } from "@lootlog/meilisearch/operation-failure";
-import { Context, Effect, Layer, Predicate, Redacted } from "effect";
+import { Context, Effect, Layer, Redacted } from "effect";
 import { Meilisearch } from "meilisearch";
 import { makeCatalogModule } from "#src/catalog/catalog.service";
 import { CatalogConfig } from "#src/config/catalog-config";
@@ -35,25 +35,11 @@ import type {
   CatalogItemsResponseDto_Output,
   CatalogNpcsResponseDto_Output,
 } from "./contracts/catalog/schemas.js";
-import type {
-  ItemsControllerGetItemsQuery,
-  SearchItemsResponseDto_Output,
-} from "./contracts/items/schemas.js";
-import type {
-  NpcsControllerGetNpcsQuery,
-  NpcHitDto_Output,
-} from "./contracts/npcs/schemas.js";
 
 /** Searches read Meilisearch; lookups and listings read the database. */
 type CatalogReadFailure = SearchOperationFailure | EffectDrizzleQueryError;
 
 export interface CatalogOperationsValue {
-  readonly searchNpcs: (
-    query: NpcsControllerGetNpcsQuery,
-  ) => Effect.Effect<ReadonlyArray<NpcHitDto_Output>, SearchOperationFailure>;
-  readonly searchItems: (
-    query: ItemsControllerGetItemsQuery,
-  ) => Effect.Effect<SearchItemsResponseDto_Output, SearchOperationFailure>;
   readonly catalogItems: (
     query: CatalogControllerGetItemsQuery,
   ) => Effect.Effect<CatalogItemsResponseDto_Output, CatalogReadFailure>;
@@ -103,8 +89,8 @@ export class CatalogOperations extends Context.Service<
         meilisearch,
       );
 
-      const items = makeItemsModule(meilisearch, write, effectLogger);
-      const npcs = makeNpcsModule(meilisearch, write, effectLogger);
+      const items = makeItemsModule(write, effectLogger);
+      const npcs = makeNpcsModule(write, effectLogger);
       const catalog = makeCatalogModule(meilisearch, read, effectLogger);
 
       yield* configureMeilisearchIndexes(
@@ -118,26 +104,6 @@ export class CatalogOperations extends Context.Service<
         catalogNpcs: catalog.getNpcs,
         catalogEvents: catalog.getEvents,
         catalogIndex: catalog.getIndex,
-        searchNpcs: (query) =>
-          npcs.getNpcs({
-            ...query,
-            ids: query.ids ? [...query.ids] : undefined,
-            limit: query.limit ?? 10,
-            search:
-              query.search &&
-              (Predicate.isString(query.search)
-                ? query.search
-                : [...query.search]),
-          }),
-        searchItems: (query) =>
-          items.searchItems({
-            ...query,
-            facets: query.facets ? [...query.facets] : undefined,
-            filter: query.filter ? [...asArray(query.filter)] : undefined,
-            limit: query.limit ?? 20,
-            offset: query.offset ?? 0,
-            sort: query.sort ? [...query.sort] : undefined,
-          }),
         indexItems: items.indexItems,
         setMonsterDrops: items.setMonsterDrops,
         setItemRevisions: items.setItemRevisions,
@@ -147,7 +113,3 @@ export class CatalogOperations extends Context.Service<
     }),
   );
 }
-
-const asArray = (
-  value: string | ReadonlyArray<string>,
-): ReadonlyArray<string> => (Predicate.isString(value) ? [value] : value);

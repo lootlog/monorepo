@@ -47,7 +47,6 @@ export const KillMonsterCell = ({
         {kill.heroNpc.npcIcon ? (
           <NpcTile
             npc={{
-              id: kill.heroNpc.npcId ?? undefined,
               name: kill.heroNpc.npcName,
               icon: kill.heroNpc.npcIcon,
             }}
