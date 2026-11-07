@@ -280,6 +280,29 @@ it("records only the highest-weight defeated NPC", async () => {
   });
 });
 
+it("reports the party with who survived, which decides the loot rolls", async () => {
+  const fixture = createBattleTest();
+  const processor = new BattleEventProcessor();
+  await processor.handle({
+    f: {
+      init: "1",
+      w: {
+        "111": createBattleWarrior(111),
+        "112": createBattleWarrior(112, { prof: "m", lvl: 280, hpp: 0 }),
+        "-100": createBattleWarrior(-100),
+      },
+    },
+  });
+  await processor.handle(end);
+
+  expect(await fixture.kills()[0]?.json()).toMatchObject({
+    party: [
+      { prof: "w", lvl: 300, alive: true },
+      { prof: "m", lvl: 280, alive: false },
+    ],
+  });
+});
+
 it("records an event hero with the template flag the map observed", async () => {
   const fixture = createBattleTest();
   // Margonem flags the template only; the battle reports the weight alone.

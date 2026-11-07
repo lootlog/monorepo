@@ -3,6 +3,19 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-07 — Drop rates per loot roll
+
+- `CatalogDropSourceDto_Output.dropRate` adds `rolls`, `basis` and
+  `lootMode`. `drops` now counts copies of the item, and `drops / rolls` is
+  the chance of one loot roll: Margonem rolls a shared loot once per two
+  survivors (5.5 times for a party of 10 on average) and a personal colossus
+  loot once per party member whose profession wears the item. `basis` is
+  `PARTY` when the rolls come from the parties kills reported, `LOOTS` while
+  they are estimated from recorded loots. `dropRate` is `null` until the
+  catalog has recomputed it.
+- `POST /kills` accepts an optional `party`: each member's profession
+  shortname, level and whether they survived the battle.
+
 ## 2026-11-07 — Catalog search (breaking)
 
 `GET /items` and `GET /npcs` are removed from the Catalog API and return

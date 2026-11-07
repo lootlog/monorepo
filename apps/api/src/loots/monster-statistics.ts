@@ -17,7 +17,11 @@ import {
   buildMonsterLocationsQuery,
   toMonsterLocations,
 } from "./monster-locations.js";
-import { buildDropRatesQuery, toMonsterDropRates } from "./drop-rates.js";
+import {
+  buildDropRatesQuery,
+  buildLootPartiesQuery,
+  toMonsterDropRates,
+} from "./drop-rates.js";
 import { buildDropStatisticsQuery, toRetiredDrops } from "./retired-drops.js";
 
 const MONSTERS_PER_MESSAGE = 200;
@@ -51,6 +55,7 @@ export const makeMonsterStatisticsPublisher = (
         return {
           drops: yield* buildDropStatisticsQuery(transaction),
           dropRates: yield* buildDropRatesQuery(transaction),
+          lootParties: yield* buildLootPartiesQuery(transaction),
           locations: yield* buildMonsterLocationsQuery(transaction),
           levels: yield* buildMonsterLevelsQuery(transaction),
         };
@@ -60,21 +65,27 @@ export const makeMonsterStatisticsPublisher = (
     if (statistics === null) return;
 
     const dropRates = new Map(
-      toMonsterDropRates(statistics.dropRates).map((monster) => [
-        JSON.stringify([monster.gameVersion, monster.name, monster.type]),
-        monster.dropRates,
-      ]),
+      toMonsterDropRates(statistics.dropRates, statistics.lootParties).map(
+        (monster) => [
+          JSON.stringify([monster.gameVersion, monster.name, monster.type]),
+          monster,
+        ],
+      ),
     );
 
     // The retired drops message carries each monster's drop rates too.
     const monsterDrops = toRetiredDrops(statistics.drops).map(
-      (monster): CatalogMonsterDrops => ({
-        ...monster,
-        dropRates:
-          dropRates.get(
-            JSON.stringify([monster.gameVersion, monster.name, monster.type]),
-          ) ?? [],
-      }),
+      (monster): CatalogMonsterDrops => {
+        const rated = dropRates.get(
+          JSON.stringify([monster.gameVersion, monster.name, monster.type]),
+        );
+
+        return {
+          ...monster,
+          lootMode: rated?.lootMode ?? "SHARED",
+          dropRates: rated?.dropRates ?? [],
+        };
+      },
     );
 
     const formerLevels = new Map(
