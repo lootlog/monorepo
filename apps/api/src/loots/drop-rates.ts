@@ -18,11 +18,12 @@ import {
   type LootRollProfession,
 } from "@lootlog/domain/loot-rolls";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { guildKillBucketTable } from "#src/database/drizzle/kill-statistics.schema";
+import { bossKillTable } from "#src/database/drizzle/kill-statistics.schema";
 import {
   itemSnapshotTable,
   lootItemTable,
   lootlogConfigNpcTable,
+  lootNpcTable,
   lootPlayerTable,
   lootTable,
   npcSnapshotTable,
@@ -49,26 +50,25 @@ const sumOf = (column: AnyColumn | SQL.Aliased, alias: string) =>
   sql<number>`sum(${column})::float8`.as(alias);
 
 /**
- * How often each boss dropped each item, counted per Organization. The game
- * client records a loot only when it drops something above common, so the
- * loots alone cannot tell how many kills dropped nothing; an Organization's
- * hourly kill buckets can. Each Organization pairs its kills of a boss with
- * the copies of the item it recorded from them, counted from the first kill
- * bucket on and only where its loot settings keep the item's rarity for the
- * boss's type: elsewhere a kill could not have recorded the drop. A kill
- * several Organizations recorded counts in each of them, its drops too, so
- * shared kills weigh the share without skewing it. Settings are read as they
- * are now; an Organization that changed them counts its earlier kills by
- * today's. Alongside the kills come the loot rolls and party members of the
- * kills that named their party, which `toMonsterDropRates` turns into rolls.
+ * How often each boss dropped each item, each kill and each drop counted
+ * once however many Organizations recorded it. The game client records a
+ * loot only when it drops something above common, so the loots alone cannot
+ * tell how many kills dropped nothing; boss kills can. A kill counts for an
+ * item when an Organization that recorded it keeps the item's rarity for the
+ * boss's type: elsewhere it could not have recorded the drop. A drop counts
+ * when an Organization that recorded its loot keeps the rarity. Both are
+ * counted from the first boss kill on. Settings are read as they are now; an
+ * Organization that changed them counts its earlier kills by today's. Alongside the kills come the loot rolls and party
+ * members of the kills that named their party, which `toMonsterDropRates`
+ * turns into rolls.
  */
 export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
   Effect.gen(function* () {
-    const since = yield* selectKillBucketsStart(database);
+    const since = yield* selectBossKillsStart(database);
 
     if (!since) return [];
 
-    // Kill buckets name a world, loots an edition.
+    // Boss kills name a world, loots an edition.
     const editions = database.$with("world_editions").as(
       database
         .selectDistinct({
@@ -79,65 +79,174 @@ export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
         .where(gte(lootTable.createdAt, since)),
     );
 
-    const guildKills = database.$with("guild_kills").as(
+    // Kills recorded by the same Organizations share their eligibility.
+    const killGroups = database.$with("kill_groups").as(
       database
         .select({
-          guildId: guildKillBucketTable.guildId,
-          gameVersion: editions.gameVersion,
-          name: guildKillBucketTable.npcName,
-          type: guildKillBucketTable.npcType,
-          kills: sumOf(guildKillBucketTable.kills, "guild_kills"),
-          partyKills: sumOf(
-            guildKillBucketTable.partyKills,
-            "guild_party_kills",
+          world: bossKillTable.world,
+          name: bossKillTable.npcName,
+          type: bossKillTable.npcType,
+          guildIds: bossKillTable.guildIds,
+          kills: sql<number>`count(*)::float8`.as("group_kills"),
+          partyKills: sql<number>`count(${bossKillTable.lootRolls})::float8`.as(
+            "group_party_kills",
           ),
-          lootRolls: sumOf(guildKillBucketTable.lootRolls, "guild_loot_rolls"),
-          w: sumOf(guildKillBucketTable.partyWarriors, "guild_w"),
-          p: sumOf(guildKillBucketTable.partyPaladins, "guild_p"),
-          b: sumOf(guildKillBucketTable.partyBladeDancers, "guild_b"),
-          m: sumOf(guildKillBucketTable.partyMages, "guild_m"),
-          t: sumOf(guildKillBucketTable.partyTrackers, "guild_t"),
-          h: sumOf(guildKillBucketTable.partyHunters, "guild_h"),
+          lootRolls: sumOf(bossKillTable.lootRolls, "group_loot_rolls"),
+          w: sumOf(bossKillTable.partyWarriors, "group_w"),
+          p: sumOf(bossKillTable.partyPaladins, "group_p"),
+          b: sumOf(bossKillTable.partyBladeDancers, "group_b"),
+          m: sumOf(bossKillTable.partyMages, "group_m"),
+          t: sumOf(bossKillTable.partyTrackers, "group_t"),
+          h: sumOf(bossKillTable.partyHunters, "group_h"),
         })
-        .from(guildKillBucketTable)
-        .innerJoin(editions, eq(editions.world, guildKillBucketTable.world))
+        .from(bossKillTable)
         .groupBy(
-          guildKillBucketTable.guildId,
+          bossKillTable.world,
+          bossKillTable.npcName,
+          bossKillTable.npcType,
+          bossKillTable.guildIds,
+        ),
+    );
+
+    const keptRarity = sql<string>`unnest(${lootlogConfigNpcTable.allowedRarities})`;
+
+    const groupGuilds = database.$with("group_guilds").as(
+      database
+        .select({
+          world: killGroups.world,
+          name: killGroups.name,
+          type: killGroups.type,
+          guildIds: killGroups.guildIds,
+          guildId: sql<string>`unnest(${killGroups.guildIds})`.as(
+            "group_guild_id",
+          ),
+        })
+        .from(killGroups),
+    );
+
+    // The rarities at least one of each group's Organizations keeps.
+    const groupRarities = database.$with("group_rarities").as(
+      database
+        .selectDistinct({
+          world: groupGuilds.world,
+          name: groupGuilds.name,
+          type: groupGuilds.type,
+          guildIds: groupGuilds.guildIds,
+          rarity: keptRarity.as("group_rarity"),
+        })
+        .from(groupGuilds)
+        .innerJoin(
+          lootlogConfigNpcTable,
+          and(
+            eq(lootlogConfigNpcTable.lootlogConfigId, groupGuilds.guildId),
+            eq(lootlogConfigNpcTable.npcType, groupGuilds.type),
+          ),
+        ),
+    );
+
+    // Each boss's kills that could record a drop of each rarity.
+    const rarityKills = database.$with("rarity_kills").as(
+      database
+        .select({
+          gameVersion: editions.gameVersion,
+          name: killGroups.name,
+          type: killGroups.type,
+          rarity: groupRarities.rarity,
+          kills: sumOf(killGroups.kills, "rarity_kills"),
+          partyKills: sumOf(killGroups.partyKills, "rarity_party_kills"),
+          lootRolls: sumOf(killGroups.lootRolls, "rarity_loot_rolls"),
+          w: sumOf(killGroups.w, "rarity_w"),
+          p: sumOf(killGroups.p, "rarity_p"),
+          b: sumOf(killGroups.b, "rarity_b"),
+          m: sumOf(killGroups.m, "rarity_m"),
+          t: sumOf(killGroups.t, "rarity_t"),
+          h: sumOf(killGroups.h, "rarity_h"),
+        })
+        .from(killGroups)
+        .innerJoin(
+          groupRarities,
+          and(
+            eq(groupRarities.world, killGroups.world),
+            eq(groupRarities.name, killGroups.name),
+            eq(groupRarities.type, killGroups.type),
+            eq(groupRarities.guildIds, killGroups.guildIds),
+          ),
+        )
+        .innerJoin(editions, eq(editions.world, killGroups.world))
+        .groupBy(
           editions.gameVersion,
-          guildKillBucketTable.npcName,
-          guildKillBucketTable.npcType,
+          killGroups.name,
+          killGroups.type,
+          groupRarities.rarity,
         ),
     );
 
     const fightSources = buildFightSources(database, since);
 
-    const guildDrops = database.$with("guild_drops").as(
+    // The rarities each boss loot could be recorded with, by any
+    // Organization that recorded it. Loots and kills go to the same
+    // Organizations, so each of them also recorded the kill.
+    const lootRarities = database.$with("loot_rarities").as(
+      database
+        .selectDistinct({
+          lootId: organizationLootRecordTable.lootId,
+          rarity: keptRarity.as("loot_rarity"),
+        })
+        .from(organizationLootRecordTable)
+        .innerJoin(
+          lootTable,
+          eq(lootTable.id, organizationLootRecordTable.lootId),
+        )
+        .innerJoin(lootNpcTable, eq(lootNpcTable.lootId, lootTable.id))
+        .innerJoin(
+          npcSnapshotTable,
+          eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
+        )
+        .innerJoin(
+          lootlogConfigNpcTable,
+          and(
+            eq(
+              lootlogConfigNpcTable.lootlogConfigId,
+              organizationLootRecordTable.guildId,
+            ),
+            eq(lootlogConfigNpcTable.npcType, npcSnapshotTable.type),
+          ),
+        )
+        .where(
+          and(
+            eq(lootTable.source, "FIGHT"),
+            gte(lootTable.createdAt, since),
+            inArray(npcSnapshotTable.type, [...DROP_SOURCE_BOSS_TYPES]),
+          ),
+        ),
+    );
+
+    // Every copy of a loot counts once: a kill rolls several times, or once
+    // a member, but one loot is one kill whoever recorded it.
+    const bossDrops = database.$with("boss_drops").as(
       database
         .select({
-          guildId: organizationLootRecordTable.guildId,
           gameVersion: npcSnapshotTable.gameVersion,
           name: npcSnapshotTable.name,
           type: npcSnapshotTable.type,
           itemId: itemSnapshotTable.itemId,
           rarity: sql<string>`max(${itemSnapshotTable.rarity})`.as(
-            "drop_rarity",
+            "item_rarity",
           ),
           professions: sql<
             string | null
           >`max(${itemSnapshotTable.statsSnapshot}->>'reqp')`.as(
-            "drop_professions",
+            "item_professions",
           ),
-          // Every copy counts: a kill rolls several times, or once a member.
-          drops: sql<number>`count(*)::int`.as("guild_drops"),
+          drops:
+            sql<number>`count(*) filter (where ${lootRarities.lootId} is not null)::int`.as(
+              "item_drops",
+            ),
         })
         .from(fightSources)
         .innerJoin(
           npcSnapshotTable,
           eq(npcSnapshotTable.id, fightSources.npcSnapshotId),
-        )
-        .innerJoin(
-          organizationLootRecordTable,
-          eq(organizationLootRecordTable.lootId, fightSources.lootId),
         )
         .innerJoin(lootItemTable, eq(lootItemTable.lootId, fightSources.lootId))
         .innerJoin(
@@ -145,6 +254,13 @@ export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
           and(
             eq(itemSnapshotTable.id, lootItemTable.itemSnapshotId),
             eq(itemSnapshotTable.gameVersion, npcSnapshotTable.gameVersion),
+          ),
+        )
+        .leftJoin(
+          lootRarities,
+          and(
+            eq(lootRarities.lootId, fightSources.lootId),
+            eq(lootRarities.rarity, itemSnapshotTable.rarity),
           ),
         )
         .where(
@@ -155,7 +271,6 @@ export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
           ),
         )
         .groupBy(
-          organizationLootRecordTable.guildId,
           npcSnapshotTable.gameVersion,
           npcSnapshotTable.name,
           npcSnapshotTable.type,
@@ -163,161 +278,59 @@ export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
         ),
     );
 
-    const drops = database.$with("boss_drops").as(
-      database
-        .select({
-          gameVersion: guildDrops.gameVersion,
-          name: guildDrops.name,
-          type: guildDrops.type,
-          itemId: guildDrops.itemId,
-          rarity: sql<string>`max(${guildDrops.rarity})`.as("item_rarity"),
-          professions: sql<string | null>`max(${guildDrops.professions})`.as(
-            "item_professions",
-          ),
-        })
-        .from(guildDrops)
-        .groupBy(
-          guildDrops.gameVersion,
-          guildDrops.name,
-          guildDrops.type,
-          guildDrops.itemId,
-        ),
-    );
-
-    const allowsRarity = (rarity: SQL, guildId: SQL.Aliased | AnyColumn) =>
-      and(
-        eq(lootlogConfigNpcTable.lootlogConfigId, guildId),
-        eq(lootlogConfigNpcTable.npcType, guildKills.type),
-        sql`${rarity}::"ItemRarity" = any(${lootlogConfigNpcTable.allowedRarities})`,
-      );
-
-    // The kills of every Organization that could have recorded each drop.
-    const eligibleKills = database.$with("eligible_kills").as(
-      database
-        .select({
-          gameVersion: drops.gameVersion,
-          name: drops.name,
-          type: drops.type,
-          itemId: drops.itemId,
-          professions: drops.professions,
-          kills: sumOf(guildKills.kills, "eligible_kills"),
-          partyKills: sumOf(guildKills.partyKills, "eligible_party_kills"),
-          lootRolls: sumOf(guildKills.lootRolls, "eligible_loot_rolls"),
-          w: sumOf(guildKills.w, "eligible_w"),
-          p: sumOf(guildKills.p, "eligible_p"),
-          b: sumOf(guildKills.b, "eligible_b"),
-          m: sumOf(guildKills.m, "eligible_m"),
-          t: sumOf(guildKills.t, "eligible_t"),
-          h: sumOf(guildKills.h, "eligible_h"),
-        })
-        .from(drops)
-        .innerJoin(
-          guildKills,
-          and(
-            eq(guildKills.gameVersion, drops.gameVersion),
-            eq(guildKills.name, drops.name),
-            eq(guildKills.type, drops.type),
-          ),
-        )
-        .innerJoin(
-          lootlogConfigNpcTable,
-          allowsRarity(sql`${drops.rarity}`, guildKills.guildId),
-        )
-        .groupBy(
-          drops.gameVersion,
-          drops.name,
-          drops.type,
-          drops.itemId,
-          drops.professions,
-        ),
-    );
-
-    // Their drops, counting only Organizations whose kills count above.
-    const eligibleDrops = database.$with("eligible_drops").as(
-      database
-        .select({
-          gameVersion: guildDrops.gameVersion,
-          name: guildDrops.name,
-          type: guildDrops.type,
-          itemId: guildDrops.itemId,
-          drops: sql<number>`sum(${guildDrops.drops})::int`.as(
-            "eligible_drops",
-          ),
-        })
-        .from(guildDrops)
-        .innerJoin(
-          guildKills,
-          and(
-            eq(guildKills.guildId, guildDrops.guildId),
-            eq(guildKills.gameVersion, guildDrops.gameVersion),
-            eq(guildKills.name, guildDrops.name),
-            eq(guildKills.type, guildDrops.type),
-          ),
-        )
-        .innerJoin(
-          lootlogConfigNpcTable,
-          allowsRarity(sql`${guildDrops.rarity}`, guildDrops.guildId),
-        )
-        .groupBy(
-          guildDrops.gameVersion,
-          guildDrops.name,
-          guildDrops.type,
-          guildDrops.itemId,
-        ),
-    );
-
     return yield* database
       .with(
         editions,
-        guildKills,
+        killGroups,
+        groupGuilds,
+        groupRarities,
+        rarityKills,
         fightSources,
-        guildDrops,
-        drops,
-        eligibleKills,
-        eligibleDrops,
+        lootRarities,
+        bossDrops,
       )
       .select({
-        gameVersion: eligibleKills.gameVersion,
-        name: eligibleKills.name,
-        type: eligibleKills.type,
-        itemId: eligibleKills.itemId,
-        professions: eligibleKills.professions,
-        drops: sql<number>`coalesce(${eligibleDrops.drops}, 0)`,
-        kills: eligibleKills.kills,
-        partyKills: eligibleKills.partyKills,
-        lootRolls: eligibleKills.lootRolls,
-        w: eligibleKills.w,
-        p: eligibleKills.p,
-        b: eligibleKills.b,
-        m: eligibleKills.m,
-        t: eligibleKills.t,
-        h: eligibleKills.h,
+        gameVersion: bossDrops.gameVersion,
+        name: bossDrops.name,
+        type: bossDrops.type,
+        itemId: bossDrops.itemId,
+        professions: bossDrops.professions,
+        drops: bossDrops.drops,
+        kills: rarityKills.kills,
+        partyKills: rarityKills.partyKills,
+        lootRolls: rarityKills.lootRolls,
+        w: rarityKills.w,
+        p: rarityKills.p,
+        b: rarityKills.b,
+        m: rarityKills.m,
+        t: rarityKills.t,
+        h: rarityKills.h,
       })
-      .from(eligibleKills)
-      .leftJoin(
-        eligibleDrops,
+      .from(bossDrops)
+      .innerJoin(
+        rarityKills,
         and(
-          eq(eligibleDrops.gameVersion, eligibleKills.gameVersion),
-          eq(eligibleDrops.name, eligibleKills.name),
-          eq(eligibleDrops.type, eligibleKills.type),
-          eq(eligibleDrops.itemId, eligibleKills.itemId),
+          eq(rarityKills.gameVersion, bossDrops.gameVersion),
+          eq(rarityKills.name, bossDrops.name),
+          eq(rarityKills.type, bossDrops.type),
+          eq(rarityKills.rarity, bossDrops.rarity),
         ),
       );
   });
 
-const selectKillBucketsStart = (database: ApiDatabaseValue) =>
+const selectBossKillsStart = (database: ApiDatabaseValue) =>
   database
     .select({
-      start: sql<Date | null>`min(${guildKillBucketTable.periodStart})`.mapWith(
+      start: sql<Date | null>`min(${bossKillTable.killedAt})`.mapWith(
         (value: string | Date | null) =>
           value === null ? null : new Date(value),
       ),
     })
-    .from(guildKillBucketTable)
+    .from(bossKillTable)
     .pipe(Effect.map(([window]) => window?.start ?? null));
 
 /**
- * The parties of each boss's recorded fights since the first kill bucket, by
+ * The parties of each boss's recorded fights since the first boss kill, by
  * party size: how many fights had that many players, the items they recorded
  * and their players of each profession. The game client records a fight only
  * when it drops something above common, so they stand in for the parties of
@@ -325,7 +338,7 @@ const selectKillBucketsStart = (database: ApiDatabaseValue) =>
  */
 export const buildLootPartiesQuery = (database: ApiDatabaseValue) =>
   Effect.gen(function* () {
-    const since = yield* selectKillBucketsStart(database);
+    const since = yield* selectBossKillsStart(database);
 
     if (!since) return [];
 

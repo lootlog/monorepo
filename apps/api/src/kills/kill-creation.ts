@@ -7,10 +7,11 @@ import {
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
+import { mapValues } from "es-toolkit";
 import { Clock, Effect, Schema } from "effect";
 import { activityFeedNpcCategory } from "@lootlog/domain/activity-feed";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
-import { getNpcType } from "@lootlog/domain/npc-type";
+import { getNpcType, isDropSourceBossType } from "@lootlog/domain/npc-type";
 import {
   getKillLootRolls,
   type KillLootRolls,
@@ -19,6 +20,7 @@ import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
+  bossKillTable,
   guildKillActivityTable,
   guildKillBucketTable,
   guildKillTotalTable,
@@ -33,6 +35,7 @@ import type { ApplicationLogger } from "#src/shared/application-logger";
 import { getKillNpcId } from "#src/shared/margonem/npc-identity";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
 import {
+  buildBossKillDedupKey,
   buildGuildKillDedupKey,
   buildMemberKillDedupKey,
   buildUserKillDedupKey,
@@ -59,6 +62,12 @@ export interface KillCreationCache {
     value: string,
     ttlSeconds: number,
   ) => Effect.Effect<boolean, unknown>;
+  /** Sets a missing key; returns the value it already held, or null. */
+  readonly setNxGet: (
+    key: string,
+    value: string,
+    ttlSeconds: number,
+  ) => Effect.Effect<string | null, unknown>;
 }
 
 type KillInput = {
@@ -321,31 +330,55 @@ export const makeKillCreation = (
     );
   };
 
-  const partyCounts = ({ lootRolls }: KillInput) => ({
-    partyKills: lootRolls ? 1 : 0,
-    lootRolls: lootRolls?.rolls ?? 0,
-    partyWarriors: lootRolls?.members.w ?? 0,
-    partyPaladins: lootRolls?.members.p ?? 0,
-    partyBladeDancers: lootRolls?.members.b ?? 0,
-    partyMages: lootRolls?.members.m ?? 0,
-    partyTrackers: lootRolls?.members.t ?? 0,
-    partyHunters: lootRolls?.members.h ?? 0,
+  const partyOf = ({ lootRolls }: KillInput) => ({
+    lootRolls: lootRolls?.rolls ?? null,
+    partyWarriors: lootRolls?.members.w ?? null,
+    partyPaladins: lootRolls?.members.p ?? null,
+    partyBladeDancers: lootRolls?.members.b ?? null,
+    partyMages: lootRolls?.members.m ?? null,
+    partyTrackers: lootRolls?.members.t ?? null,
+    partyHunters: lootRolls?.members.h ?? null,
   });
 
-  const addPartyCounts = (input: KillInput) => {
-    const counts = partyCounts(input);
-    const table = guildKillBucketTable;
+  /**
+   * Adds the Organization to the boss kill that every report of it shares.
+   * Adding an Organization again changes nothing, so a retry or another
+   * member's report cannot count the kill twice.
+   */
+  const recordBossKill = (
+    input: KillInput & { readonly guildId: string },
+    killedAt: Date,
+  ) => {
+    const table = bossKillTable;
+    const party = partyOf(input);
 
-    return {
-      partyKills: sql`${table.partyKills} + ${counts.partyKills}`,
-      lootRolls: sql`${table.lootRolls} + ${counts.lootRolls}`,
-      partyWarriors: sql`${table.partyWarriors} + ${counts.partyWarriors}`,
-      partyPaladins: sql`${table.partyPaladins} + ${counts.partyPaladins}`,
-      partyBladeDancers: sql`${table.partyBladeDancers} + ${counts.partyBladeDancers}`,
-      partyMages: sql`${table.partyMages} + ${counts.partyMages}`,
-      partyTrackers: sql`${table.partyTrackers} + ${counts.partyTrackers}`,
-      partyHunters: sql`${table.partyHunters} + ${counts.partyHunters}`,
-    };
+    // The first report that named the party fills it in.
+    const fillParty = mapValues(
+      party,
+      (value, key) => sql`coalesce(${table[key]}, ${value})`,
+    );
+
+    return database
+      .insert(table)
+      .values({
+        world: input.world,
+        npcId: input.npcId,
+        killedAt,
+        npcName: input.npcName,
+        npcType: input.npcType,
+        guildIds: [input.guildId],
+        ...party,
+      })
+      .onConflictDoUpdate({
+        target: [table.world, table.npcId, table.killedAt],
+        set: {
+          guildIds: sql`case
+            when ${input.guildId}::text = any(${table.guildIds}) then ${table.guildIds}
+            else array_append(${table.guildIds}, ${input.guildId}::text)
+          end`,
+          ...fillParty,
+        },
+      });
   };
 
   const incrementGuild = (
@@ -387,7 +420,6 @@ export const makeKillCreation = (
                   npcId: input.npcId,
                   ...descriptive(input),
                   kills: 1,
-                  ...partyCounts(input),
                 })
                 .onConflictDoUpdate({
                   target: [
@@ -398,7 +430,6 @@ export const makeKillCreation = (
                   ],
                   set: {
                     kills: sql`${guildKillBucketTable.kills} + 1`,
-                    ...addPartyCounts(input),
                     ...descriptive(input),
                   },
                 }),
@@ -548,6 +579,29 @@ export const makeKillCreation = (
         ? { updated: 0 }
         : { deduplicated: true, updated: 0 };
 
+    // Every report of one boss kill, from any Organization, carries the time
+    // of the first, so the kill is recorded once for all of them.
+    const bossKilledAt = isDropSourceBossType(npcType)
+      ? yield* cache
+          .setNxGet(
+            buildBossKillDedupKey({ world: data.world, npcId }),
+            killedAt.toISOString(),
+            DEDUP_TTL_SECONDS,
+          )
+          .pipe(
+            Effect.map((first) =>
+              first === null ? killedAt : new Date(first),
+            ),
+            Effect.catch((error) =>
+              Effect.sync(() => {
+                logger.warn("Failed to claim boss kill", { error });
+
+                return null;
+              }),
+            ),
+          )
+      : null;
+
     const memberByGuild = new Map(
       members.map((member) => [member.guildId, member]),
     );
@@ -574,7 +628,7 @@ export const makeKillCreation = (
 
           // A failed guild write releases its claim, so a report from another
           // member can still count the kill.
-          yield* writeOnce(
+          const newGuildKill = yield* writeOnce(
             buildGuildKillDedupKey(guildId, {
               world: data.world,
               npcId,
@@ -582,6 +636,20 @@ export const makeKillCreation = (
             "kills.dedup.guild",
             incrementGuild({ ...input, guildId }, periodStart),
           );
+
+          // Drop rates lose one Organization's report of the kill when this
+          // fails; the Organization's own count stays.
+          if (newGuildKill && bossKilledAt)
+            yield* protect(
+              "kills.create.boss",
+              recordBossKill({ ...input, guildId }, bossKilledAt),
+            ).pipe(
+              Effect.catch((error) =>
+                Effect.sync(() =>
+                  logger.warn("Failed to record boss kill", { error, guildId }),
+                ),
+              ),
+            );
 
           return { guildId, updated: true };
         }).pipe(

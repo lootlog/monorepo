@@ -333,6 +333,28 @@ export class RedisService {
     return result === 1;
   }
 
+  /**
+   * Sets the key when it is missing and returns the value it already held, or
+   * null when this call set it.
+   */
+  async setNxGet(
+    key: string,
+    value: string,
+    ttlSeconds: number,
+  ): Promise<string | null> {
+    return await this.run(
+      this.redis.send<string | null>(
+        "SET",
+        this.prefixKey(key),
+        value,
+        "NX",
+        "GET",
+        "EX",
+        String(ttlSeconds),
+      ),
+    );
+  }
+
   async incr(key: string): Promise<number> {
     return await this.run(this.redis.send("INCR", this.prefixKey(key)));
   }
