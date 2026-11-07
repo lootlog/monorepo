@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { SearchOperationFailure } from "../src/meilisearch/search-operation-failure.js";
+import { SearchOperationFailure } from "@lootlog/meilisearch/operation-failure";
 import { Context, Effect, Layer, Predicate } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import {
@@ -9,31 +9,8 @@ import {
 import { SearchRoutes } from "../src/http-api/search-http.js";
 
 const makeBoundary = (overrides: Partial<SearchOperationsValue> = {}) => {
-  let itemQuery: unknown;
-
   const operations: SearchOperationsValue = {
-    searchItems: (query) => {
-      itemQuery = query;
-
-      return Effect.succeed({
-        hits: [],
-        estimatedTotalHits: 0,
-        facetDistribution: {},
-        facetStats: {},
-      });
-    },
-    searchNpcs: () => Effect.succeed([]),
     searchPlayers: () => Effect.succeed([]),
-    searchAll: () => Effect.succeed({ items: [], npcs: [], players: [] }),
-    catalogItems: () => Effect.succeed({ hits: [], estimatedTotalHits: 0 }),
-    catalogNpcs: () => Effect.succeed({ hits: [], estimatedTotalHits: 0 }),
-    catalogEvents: () => Effect.succeed({ events: [] }),
-    catalogIndex: () => Effect.succeed({ items: [], npcs: [] }),
-    indexItems: () => Effect.void,
-    setMonsterDrops: () => Effect.void,
-    setItemRevisions: () => Effect.void,
-    indexNpcs: () => Effect.void,
-    setNpcLocations: () => Effect.void,
     indexPlayers: () => Effect.void,
     ...overrides,
   };
@@ -49,11 +26,7 @@ const makeBoundary = (overrides: Partial<SearchOperationsValue> = {}) => {
   const handler = (request: Request) =>
     boundary.handler(request, Context.make(SearchOperations, operations));
 
-  return {
-    handler,
-    dispose: boundary.dispose,
-    readItemQuery: () => itemQuery,
-  };
+  return { handler, dispose: boundary.dispose };
 };
 
 describe("Search HttpApi contract", () => {
@@ -61,54 +34,6 @@ describe("Search HttpApi contract", () => {
     const { dispose, handler } = makeBoundary();
     const response = await handler(new Request("http://localhost/healthz"));
     expect(response.status).toBe(200);
-    await dispose();
-  });
-
-  test("decodes the item query through the HTTP contract", async () => {
-    const { dispose, handler, readItemQuery } = makeBoundary();
-
-    const response = await handler(
-      new Request(
-        "http://localhost/items?limit=5&offset=2&facets=rarity&facets=type&filter=worlds%20%3D%20berufs",
-      ),
-    );
-
-    expect(response.status).toBe(200);
-    expect(readItemQuery()).toEqual({
-      limit: 5,
-      offset: 2,
-      filter: "worlds = berufs",
-      facets: ["rarity", "type"],
-    });
-    await dispose();
-  });
-
-  test("decodes the public catalog filters from one value or several", async () => {
-    const queries: unknown[] = [];
-
-    const { dispose, handler } = makeBoundary({
-      catalogItems: (query) => {
-        queries.push(query);
-
-        return Effect.succeed({ hits: [], estimatedTotalHits: 0 });
-      },
-    });
-
-    for (const search of [
-      "rarities=LEGENDARY&sort=lvl:desc",
-      "rarities=LEGENDARY&rarities=HEROIC&droppedBy=pl_template_7001_2",
-    ]) {
-      const response = await handler(
-        new Request(`http://localhost/public/catalog/items?${search}`),
-      );
-
-      expect(response.status).toBe(200);
-    }
-
-    expect(queries).toEqual([
-      { rarities: ["LEGENDARY"], sort: "lvl:desc" },
-      { rarities: ["LEGENDARY", "HEROIC"], droppedBy: "pl_template_7001_2" },
-    ]);
     await dispose();
   });
 
@@ -145,7 +70,7 @@ test("a search outage is an explicit unavailable response, not an empty success"
   }
 });
 
-test("allows scoped keys to search global catalogs and denies malformed or unsupported key access", async () => {
+test("allows scoped keys to search players and denies malformed or unsupported key access", async () => {
   const boundary = makeBoundary();
 
   const headers = {

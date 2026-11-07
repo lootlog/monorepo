@@ -1,6 +1,9 @@
 # Search indexing
 
-The three RabbitMQ consumers collect up to 50 messages per index over a
+Search holds player search. Items and NPCs belong to `apps/catalog`, which
+keeps them in its own database and projects them into Meilisearch.
+
+The player consumers, live and replay, each collect up to 50 messages per index over a
 two-second window. Each consumer processes one batch at a time and keeps all
 deliveries unacknowledged until indexing succeeds. Indexing failures retry the
 same ordered batch every five seconds, holding later batches for that index.
@@ -8,8 +11,7 @@ Other indexes continue independently. Shutdown requeues outstanding deliveries
 through `@lootlog/messaging`.
 
 Indexing collapses repeated document IDs, reads stored documents in chunks of
-100, and submits only changed documents in batches of up to 500. Item updates preserve the union of
-known worlds. Comparisons use the complete serialized document, including
+100, and submits only changed documents in batches of up to 500. Comparisons use the complete serialized document, including
 derived search fields, rather than a process-local cache. Replayed successful
 updates therefore do not require another indexing task.
 
@@ -25,17 +27,16 @@ time. CPU improvement must be measured on the deployed workload.
 
 The counters `search.index.documents.received`, `search.index.documents.skipped`,
 and `search.index.documents.indexed` carry an `index` attribute. Indexed counts
-increase only after task success. Item counts start after merging duplicate IDs
-and their worlds; player and NPC skipped counts also include duplicates within
+increase only after task success. Skipped counts also include duplicates within
 the batch. Received counts include retry attempts.
 
-This changes no HTTP schemas, RabbitMQ payloads, queue declarations, or document
-primary keys. Deployment and rollback require no data migration.
+To rebuild the players index, run `bun run catalog:replay` in `apps/api`: it
+replays every looting character to the `search.players.replay` queue.
 
 ## Search queries and legacy player records
 
-A single `search` value uses text search on `/players` and `/npcs`, as on `/all`.
-Repeated `search` parameters retain exact-name filtering.
+A single `search` value uses text search on `/players`. Repeated `search`
+parameters retain exact-name filtering.
 
 Player results collapse repeated character IDs within the same world and prefer
 records with a known account. An unknown-account record is also omitted when a

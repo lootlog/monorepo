@@ -1,7 +1,7 @@
 import {
   type CatalogControllerGetItemsParams,
   useCatalogControllerGetItems,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { groupItemsByMonster } from "@/lib/group-items-by-monster";
 

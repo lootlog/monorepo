@@ -1,7 +1,7 @@
 import type {
   CatalogDropSourceDtoOutput,
   CatalogItemDtoOutput,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";

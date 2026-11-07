@@ -1,4 +1,4 @@
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { CatalogItemTile } from "@/components/catalog/catalog-item-tile";
 import { ItemNameLink } from "@/components/catalog/item-name-link";
 import { t } from "@/i18n/messages";

@@ -1,7 +1,7 @@
 import type {
   CatalogItemDtoOutput,
   CatalogNpcDtoOutput,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { itemForCharacter } from "@lootlog/domain/elastic-level";
 import {
   isUpgradable,

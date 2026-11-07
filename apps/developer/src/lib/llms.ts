@@ -14,6 +14,7 @@ const services = [
   ["main", portalText.mainDescription],
   ["activity", portalText.activityDescription],
   ["battlelog", portalText.battlelogDescription],
+  ["catalog", portalText.catalogDescription],
   ["search", portalText.searchDescription],
 ] as const;
 

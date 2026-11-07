@@ -44,14 +44,15 @@ that User can access in Lootlog right now. See
 
 ## Services
 
-Lootlog is split into four HTTP services. One API key works for all of them.
+Lootlog is split into five HTTP services. One API key works for all of them.
 
 | Service   | Base URL                       | What it serves                                         |
 | --------- | ------------------------------ | ------------------------------------------------------ |
 | Main API  | `https://api.lootlog.pl`       | Organizations, Members, timers, loot, kills and events |
 | Activity  | `https://activity.lootlog.pl`  | The activity log, Member activity and your online time |
 | Battlelog | `https://battlelog.lootlog.pl` | Recorded battles and their analytics                   |
-| Search    | `https://search.lootlog.pl`    | Players, NPCs and items, including the public catalog  |
+| Catalog   | `https://catalog.lootlog.pl`   | Margonem items and NPCs, and the item and NPC catalog  |
+| Search    | `https://search.lootlog.pl`    | Player search by name                                  |
 
 Changes are also delivered over WebSocket by the
 [realtime gateway](/docs/realtime), so you do not need to poll.

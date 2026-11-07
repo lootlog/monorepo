@@ -75,6 +75,11 @@ const services = [
     description: t.battlelogDescription,
   },
   {
+    slug: "catalog",
+    host: "catalog.lootlog.pl",
+    description: t.catalogDescription,
+  },
+  {
     slug: "search",
     host: "search.lootlog.pl",
     description: t.searchDescription,

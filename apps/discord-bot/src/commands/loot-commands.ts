@@ -209,7 +209,7 @@ export const itemCommand: SlashCommand = {
     Effect.gen(function* () {
       const client = yield* LootlogClient;
 
-      const { hits } = yield* client.search(
+      const { hits } = yield* client.catalog(
         "/items",
         { search: invocation.focused.value, limit: MAX_AUTOCOMPLETE_CHOICES },
         SearchItems,

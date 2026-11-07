@@ -1,4 +1,4 @@
-import { useCatalogControllerGetItems } from "@lootlog/client/search";
+import { useCatalogControllerGetItems } from "@lootlog/client/catalog";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { t } from "@/i18n/messages";

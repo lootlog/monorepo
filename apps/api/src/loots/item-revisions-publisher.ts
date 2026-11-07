@@ -17,7 +17,7 @@ const ITEM_REVISIONS_LOCK = 7_316_205;
 
 /**
  * Publishes the changes the game made to every item with more than one
- * revision. Each item's list is complete, so search replaces what it held
+ * revision. Each item's list is complete, so the catalog replaces what it held
  * and a redelivery changes nothing.
  */
 export const makeItemRevisionsPublisher = (
@@ -50,7 +50,7 @@ export const makeItemRevisionsPublisher = (
       (batch) =>
         rabbit.publish({
           exchange: "default",
-          routingKey: RabbitRoutingKey.SEARCH_ITEMS_REVISIONS,
+          routingKey: RabbitRoutingKey.CATALOG_ITEMS_REVISIONS,
           content: new TextEncoder().encode(JSON.stringify(batch)),
         }),
       { discard: true },

@@ -56,6 +56,32 @@ http:
       entryPoints:
         - "web"
 
+    catalog:
+      rule: "PathPrefix(`/api/catalog`)"
+      service: "catalog"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "stripAuthIdentity"
+        - "apiForwardAuth"
+        - "apiCompress"
+      priority: 10
+      entryPoints:
+        - "web"
+
+    # Trusted services, such as the wiki's Worker, present the catalog token
+    # instead of a session; the catalog checks it.
+    catalog-service:
+      rule: "PathPrefix(`/api/catalog`) && HeaderRegexp(`X-Lootlog-Service-Token`, `.+`)"
+      service: "catalog"
+      middlewares:
+        - "apiStripPrefix"
+        - "stripAuthIdentity"
+        - "apiCompress"
+      priority: 15
+      entryPoints:
+        - "web"
+
     search-public:
       rule: "PathPrefix(`/api/search/public`)"
       service: "search"
@@ -181,6 +207,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:4002"
+    catalog:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:4006"
     api:
       loadBalancer:
         servers:
@@ -211,6 +241,7 @@ http:
         prefixes:
           - "/api/auth"
           - "/api/search"
+          - "/api/catalog"
           - "/api/lootlog"
           - "/api/battlelog"
           - "/api/activity"

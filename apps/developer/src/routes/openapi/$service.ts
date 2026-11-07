@@ -7,12 +7,14 @@ import {
 import main from "@lootlog/sdk/openapi/main.json";
 import activity from "@lootlog/sdk/openapi/activity.json";
 import battlelog from "@lootlog/sdk/openapi/battlelog.json";
+import catalog from "@lootlog/sdk/openapi/catalog.json";
 import search from "@lootlog/sdk/openapi/search.json";
 
 const specs = {
   main: decodeReferenceDocument(main),
   activity: decodeReferenceDocument(activity),
   battlelog: decodeReferenceDocument(battlelog),
+  catalog: decodeReferenceDocument(catalog),
   search: decodeReferenceDocument(search),
 };
 
@@ -26,6 +28,7 @@ export const Route = createFileRoute("/openapi/$service")({
           service !== "main" &&
           service !== "activity" &&
           service !== "battlelog" &&
+          service !== "catalog" &&
           service !== "search"
         )
           return new Response(null, { status: 404 });

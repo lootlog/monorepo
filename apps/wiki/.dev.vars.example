@@ -1,0 +1,4 @@
+# The Worker's local secrets; copy to `.dev.vars`. Deployed Workers get the
+# token from `wrangler secret put CATALOG_SERVICE_TOKEN`.
+CATALOG_API_URL=http://localhost/api/catalog
+CATALOG_SERVICE_TOKEN=local-development-catalog-service-token

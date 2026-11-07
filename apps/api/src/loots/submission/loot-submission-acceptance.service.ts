@@ -545,7 +545,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     const dropSource = this.findDropSource(options.npcs, options.submission);
 
     rabbit(
-      RabbitRoutingKey.SEARCH_NPCS_INDEX,
+      RabbitRoutingKey.CATALOG_NPCS_INDEX,
       options.npcs.map((npc) => ({
         ...searchNpc(npc),
         // Search keeps the latest observation of a catalog entry; loot ids
@@ -561,7 +561,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
     if (items.length > 0)
       rabbit(
-        RabbitRoutingKey.SEARCH_ITEMS_INDEX,
+        RabbitRoutingKey.CATALOG_ITEMS_INDEX,
         items.map((item) => ({
           id: item.id,
           name: item.name,

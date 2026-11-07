@@ -9,14 +9,15 @@
     "#test/*": "./test/*.ts"
   },
   "exports": {
-    "./realtime": "./src/realtime/index.ts",
-    "./transport": "./src/transport.ts",
     "./activity": "./src/generated/activity.ts",
     "./auth": "./src/generated/auth.ts",
     "./battlelog": "./src/generated/battlelog.ts",
+    "./catalog": "./src/generated/catalog.ts",
     "./main": "./src/generated/main.ts",
+    "./realtime": "./src/realtime/index.ts",
+    "./realtime/event-listeners": "./src/realtime/event-listeners.ts",
     "./search": "./src/generated/search.ts",
-    "./realtime/event-listeners": "./src/realtime/event-listeners.ts"
+    "./transport": "./src/transport.ts"
   },
   "scripts": {
     "typecheck": "bun check",

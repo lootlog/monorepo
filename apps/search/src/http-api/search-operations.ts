@@ -1,109 +1,32 @@
+import { configureMeilisearchIndexes } from "@lootlog/meilisearch/index-settings";
+import type { SearchOperationFailure } from "@lootlog/meilisearch/operation-failure";
 import { Context, Effect, Layer, Predicate, Redacted } from "effect";
 import { Meilisearch } from "meilisearch";
 import { SearchConfig } from "#src/config/search-config";
-import { makeCatalogModule } from "#src/catalog/catalog.service";
-import { makeItemsModule } from "#src/items/items.service";
-import { configureMeilisearchIndexes } from "#src/meilisearch/meilisearch-indexes.service";
-import {
-  SearchOperationFailure,
-  type SearchOperationFailure as SearchOperationFailureType,
-} from "#src/meilisearch/search-operation-failure";
-import { makeNpcsModule } from "#src/npcs/npcs.service";
 import { makePlayersModule } from "#src/players/players.service";
+import { PLAYERS_INDEX } from "#src/players/search-index";
 import { effectLogger } from "#src/shared/logger";
-import type { IndexItemsCommand } from "#src/items/index-items-command";
-import type { ItemRevisionsCommand } from "#src/items/item-revisions-command";
-import type { MonsterDropsCommand } from "#src/items/monster-drops-command";
-import type { IndexNpcsCommand } from "#src/npcs/index-npcs-command";
-import type { MonsterLocationsCommand } from "#src/npcs/monster-locations-command";
 import type { IndexPlayersCommand } from "#src/players/index-players-command";
-import type {
-  AllControllerSearchAllQuery,
-  SearchAllResponseDto_Output,
-} from "./contracts/all/schemas.js";
-import type {
-  CatalogControllerGetEventsQuery,
-  CatalogControllerGetIndexQuery,
-  CatalogControllerGetItemsQuery,
-  CatalogControllerGetNpcsQuery,
-  CatalogEventsResponseDto_Output,
-  CatalogIndexResponseDto_Output,
-  CatalogItemsResponseDto_Output,
-  CatalogNpcsResponseDto_Output,
-} from "./contracts/catalog/schemas.js";
-import type {
-  ItemsControllerGetItemsQuery,
-  SearchItemsResponseDto_Output,
-} from "./contracts/items/schemas.js";
-import type {
-  NpcsControllerGetNpcsQuery,
-  NpcHitDto_Output,
-} from "./contracts/npcs/schemas.js";
 import type {
   PlayersControllerGetPlayersQuery,
   PlayerHitDto_Output,
 } from "./contracts/players/schemas.js";
 
-export { SearchOperationFailure };
+/** The settings the search indexes run with. */
+export const searchIndexSettings = {
+  [PLAYERS_INDEX]: { filterableAttributes: ["name", "world"] },
+};
 
 export interface SearchOperationsValue {
   readonly searchPlayers: (
     query: PlayersControllerGetPlayersQuery,
   ) => Effect.Effect<
     ReadonlyArray<PlayerHitDto_Output>,
-    SearchOperationFailureType
+    SearchOperationFailure
   >;
-  readonly searchNpcs: (
-    query: NpcsControllerGetNpcsQuery,
-  ) => Effect.Effect<
-    ReadonlyArray<NpcHitDto_Output>,
-    SearchOperationFailureType
-  >;
-  readonly searchItems: (
-    query: ItemsControllerGetItemsQuery,
-  ) => Effect.Effect<SearchItemsResponseDto_Output, SearchOperationFailureType>;
-  readonly searchAll: (
-    query: AllControllerSearchAllQuery,
-  ) => Effect.Effect<SearchAllResponseDto_Output, SearchOperationFailureType>;
-  readonly catalogItems: (
-    query: CatalogControllerGetItemsQuery,
-  ) => Effect.Effect<
-    CatalogItemsResponseDto_Output,
-    SearchOperationFailureType
-  >;
-  readonly catalogNpcs: (
-    query: CatalogControllerGetNpcsQuery,
-  ) => Effect.Effect<CatalogNpcsResponseDto_Output, SearchOperationFailureType>;
-  readonly catalogEvents: (
-    query: CatalogControllerGetEventsQuery,
-  ) => Effect.Effect<
-    CatalogEventsResponseDto_Output,
-    SearchOperationFailureType
-  >;
-  readonly catalogIndex: (
-    query: CatalogControllerGetIndexQuery,
-  ) => Effect.Effect<
-    CatalogIndexResponseDto_Output,
-    SearchOperationFailureType
-  >;
-  readonly indexItems: (
-    data: IndexItemsCommand,
-  ) => Effect.Effect<void, SearchOperationFailureType>;
-  readonly setMonsterDrops: (
-    data: MonsterDropsCommand,
-  ) => Effect.Effect<void, SearchOperationFailureType>;
-  readonly setItemRevisions: (
-    data: ItemRevisionsCommand,
-  ) => Effect.Effect<void, SearchOperationFailureType>;
-  readonly indexNpcs: (
-    data: IndexNpcsCommand,
-  ) => Effect.Effect<void, SearchOperationFailureType>;
-  readonly setNpcLocations: (
-    data: MonsterLocationsCommand,
-  ) => Effect.Effect<void, SearchOperationFailureType>;
   readonly indexPlayers: (
     data: IndexPlayersCommand,
-  ) => Effect.Effect<void, SearchOperationFailureType>;
+  ) => Effect.Effect<void, SearchOperationFailure>;
 }
 
 export class SearchOperations extends Context.Service<
@@ -120,18 +43,15 @@ export class SearchOperations extends Context.Service<
         apiKey: Redacted.value(config.meilisearchApiKey),
       });
 
-      const items = makeItemsModule(meilisearch, effectLogger);
-      const npcs = makeNpcsModule(meilisearch, effectLogger);
       const players = makePlayersModule(meilisearch, effectLogger);
-      const catalog = makeCatalogModule(meilisearch, effectLogger);
 
-      yield* configureMeilisearchIndexes(meilisearch, effectLogger);
+      yield* configureMeilisearchIndexes(
+        meilisearch,
+        searchIndexSettings,
+        effectLogger,
+      );
 
       return SearchOperations.of({
-        catalogItems: catalog.getItems,
-        catalogNpcs: catalog.getNpcs,
-        catalogEvents: catalog.getEvents,
-        catalogIndex: catalog.getIndex,
         searchPlayers: (query) =>
           players.getPlayers({
             ...query,
@@ -142,55 +62,8 @@ export class SearchOperations extends Context.Service<
                 ? query.search
                 : [...query.search]),
           }),
-        searchNpcs: (query) =>
-          npcs.getNpcs({
-            ...query,
-            ids: query.ids ? [...query.ids] : undefined,
-            limit: query.limit ?? 10,
-            search:
-              query.search &&
-              (Predicate.isString(query.search)
-                ? query.search
-                : [...query.search]),
-          }),
-        searchItems: (query) =>
-          items.searchItems({
-            ...query,
-            facets: query.facets ? [...query.facets] : undefined,
-            filter: query.filter ? [...asArray(query.filter)] : undefined,
-            limit: query.limit ?? 20,
-            offset: query.offset ?? 0,
-            sort: query.sort ? [...query.sort] : undefined,
-          }),
-        searchAll: (query) =>
-          Effect.all(
-            {
-              items: items.getItems({
-                search: query.search,
-                limit: query.limit ?? 10,
-              }),
-              npcs: npcs.getNpcs({
-                search: query.search,
-                limit: query.limit ?? 10,
-              }),
-              players: players.getPlayers({
-                ...query,
-                limit: query.limit ?? 10,
-              }),
-            },
-            { concurrency: "unbounded" },
-          ),
-        indexItems: items.indexItems,
-        setMonsterDrops: items.setMonsterDrops,
-        setItemRevisions: items.setItemRevisions,
-        indexNpcs: npcs.indexNpcs,
-        setNpcLocations: npcs.setLocations,
         indexPlayers: players.indexPlayers,
       });
     }),
   ).pipe(Layer.provide(SearchConfig.layer));
 }
-
-const asArray = (
-  value: string | ReadonlyArray<string>,
-): ReadonlyArray<string> => (Predicate.isString(value) ? [value] : value);

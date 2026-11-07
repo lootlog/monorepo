@@ -1,7 +1,7 @@
 import type {
   CatalogDropSourceDtoOutput,
   CatalogItemDtoOutput,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
 import { useItemForCharacter } from "@/hooks/use-item-for-character";

@@ -48,6 +48,13 @@ const LOCAL_DATABASES = {
     port: "5435",
     fallbackName: "activity_log",
   },
+  catalog: {
+    userKey: "CATALOG_DB_USER",
+    passwordKey: "CATALOG_DB_PASSWORD",
+    nameKey: "CATALOG_DB_NAME",
+    port: "5436",
+    fallbackName: "catalog",
+  },
 } as const;
 
 type LocalDatabaseName = keyof typeof LOCAL_DATABASES;
@@ -59,7 +66,7 @@ const APP_DATABASES = new Map<string, LocalDatabaseName>(
     "apps/auth": "users",
     "apps/activity": "activityLog",
     "apps/battlelog": "battleLog",
-    "apps/search": "lootlog",
+    "apps/catalog": "catalog",
   } satisfies Record<string, LocalDatabaseName>),
 );
 
@@ -67,6 +74,7 @@ export const SHARED_SERVICE_SECRET_KEYS = [
   "ACTIVITY_EVENT_SIGNATURE_SECRET",
   "AUTH_IDP_TOKEN_SECRET",
   "BATTLELOG_CLEANUP_SECRET",
+  "CATALOG_SERVICE_TOKEN",
 ] as const;
 
 const SHARED_KEYS = [

@@ -1,4 +1,9 @@
-export type ReferenceService = "main" | "activity" | "battlelog" | "search";
+export type ReferenceService =
+  | "main"
+  | "activity"
+  | "battlelog"
+  | "catalog"
+  | "search";
 
 type TagMetadata = { name: string; description: string };
 
@@ -185,27 +190,29 @@ export const referenceMetadata: Record<ReferenceService, ServiceMetadata> = {
     },
     groups: [{ name: "Battles", tags: ["battles", "public-battles"] }],
   },
-  search: {
-    description: `Search players, NPCs and items, and list the public item and NPC catalog.\n\n${authentication}\n\n${guides}`,
+  catalog: {
+    description: `Margonem items and NPCs as Lootlog observed them: search items with filters and facets, look up NPCs, and list the item and NPC catalog of each game edition.\n\n${authentication}\n\n${guides}`,
     tags: {
-      Players: { name: "Players", description: "Search players by name." },
-      NPCs: { name: "NPCs", description: "Search NPCs by name." },
       Items: {
         name: "Items",
         description: "Search items with filters, sorting and facets.",
       },
-      All: {
-        name: "All results",
-        description: "Search players, NPCs and items at once.",
-      },
+      NPCs: { name: "NPCs", description: "Search NPCs by name or ID." },
       Catalog: {
-        name: "Public catalog",
-        description: "Items and NPCs of each game edition, without a key.",
+        name: "Catalog",
+        description: "Items and NPCs of each game edition.",
       },
     },
     groups: [
-      { name: "Search", tags: ["Players", "NPCs", "Items", "All"] },
-      { name: "Public", tags: ["Catalog"] },
+      { name: "Items and NPCs", tags: ["Items", "NPCs"] },
+      { name: "Catalog", tags: ["Catalog"] },
     ],
+  },
+  search: {
+    description: `Search players by name.\n\n${authentication}\n\n${guides}`,
+    tags: {
+      Players: { name: "Players", description: "Search players by name." },
+    },
+    groups: [{ name: "Search", tags: ["Players"] }],
   },
 };

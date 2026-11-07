@@ -24,7 +24,7 @@ const MONSTER_STATISTICS_LOCK = 7_316_204;
 /**
  * Publishes, for every monster with recorded fights, the items it no longer
  * drops and how often its kills drop each item, the maps it is fought on and
- * the levels it had before. Each monster's lists are complete, so search
+ * the levels it had before. Each monster's lists are complete, so the catalog
  * replaces what it held and a redelivery changes nothing.
  */
 export const makeMonsterStatisticsPublisher = (
@@ -91,8 +91,8 @@ export const makeMonsterStatisticsPublisher = (
 
     const publish = (
       routingKey:
-        | typeof RabbitRoutingKey.SEARCH_ITEMS_RETIRED_DROPS
-        | typeof RabbitRoutingKey.SEARCH_NPCS_LOCATIONS,
+        | typeof RabbitRoutingKey.CATALOG_ITEMS_RETIRED_DROPS
+        | typeof RabbitRoutingKey.CATALOG_NPCS_LOCATIONS,
       monsters: ReadonlyArray<unknown>,
     ) =>
       Effect.forEach(
@@ -106,8 +106,8 @@ export const makeMonsterStatisticsPublisher = (
         { discard: true },
       );
 
-    yield* publish(RabbitRoutingKey.SEARCH_ITEMS_RETIRED_DROPS, monsterDrops);
-    yield* publish(RabbitRoutingKey.SEARCH_NPCS_LOCATIONS, locations);
+    yield* publish(RabbitRoutingKey.CATALOG_ITEMS_RETIRED_DROPS, monsterDrops);
+    yield* publish(RabbitRoutingKey.CATALOG_NPCS_LOCATIONS, locations);
 
     yield* Effect.logInfo("Monster statistics published").pipe(
       Effect.annotateLogs({

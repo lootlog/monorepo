@@ -1,4 +1,4 @@
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { cn } from "cn";
 import {
   itemUpgradeCost,

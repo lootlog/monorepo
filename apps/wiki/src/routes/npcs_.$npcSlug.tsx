@@ -8,7 +8,7 @@ import {
   getCatalogControllerGetItemsQueryOptions,
   getCatalogControllerGetNpcsQueryOptions,
   useCatalogControllerGetNpcs,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcDrops } from "@/components/npcs/npc-drops";

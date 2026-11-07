@@ -68,7 +68,8 @@
         "@lootlog/battlelog#openapi:generate",
         "@lootlog/discord-bot#openapi:generate",
         "@lootlog/gateway#openapi:generate",
-        "@lootlog/search#openapi:generate"
+        "@lootlog/search#openapi:generate",
+        "@lootlog/catalog#openapi:generate"
       ],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -78,7 +79,8 @@
         "$TURBO_ROOT$/apps/battlelog/openapi.yaml",
         "$TURBO_ROOT$/apps/discord-bot/openapi.yaml",
         "$TURBO_ROOT$/apps/gateway/openapi.yaml",
-        "$TURBO_ROOT$/apps/search/openapi.yaml"
+        "$TURBO_ROOT$/apps/search/openapi.yaml",
+        "$TURBO_ROOT$/apps/catalog/openapi.yaml"
       ],
       "outputs": ["src/generated/**", "openapi/**"]
     },

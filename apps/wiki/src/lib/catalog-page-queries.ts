@@ -6,7 +6,7 @@ import {
   type CatalogItemDtoOutput,
   type CatalogNpcDtoOutput,
   getCatalogControllerGetItemsQueryKey,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { catalogSlug } from "@lootlog/domain/catalog-slug";
 import {
   isNpcCatalogKey,

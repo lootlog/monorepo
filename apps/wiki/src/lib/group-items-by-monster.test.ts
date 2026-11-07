@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { groupItemsByMonster } from "./group-items-by-monster";
 
 const source = (name: string, type: string) => ({

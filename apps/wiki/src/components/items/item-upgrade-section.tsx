@@ -1,4 +1,4 @@
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { ArticleSection } from "@/components/article/article-section";
 import { StatTiles } from "@/components/common/stat-tiles";
 import { t } from "@/i18n/messages";

@@ -9,6 +9,7 @@
     "./loot-events": "./src/loot-events.ts",
     "./loot-summary": "./src/loot-summary.ts",
     "./http/service-auth": "./src/http/service-auth.ts",
+    "./http/catalog-access": "./src/http/catalog-access.ts",
     "./openapi": "./src/openapi/sanitize.ts",
     "./rabbit/events": "./src/rabbit/events.ts",
     "./rabbit/topology": "./src/rabbit/topology.ts",

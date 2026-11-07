@@ -1,4 +1,4 @@
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { ArticleSection } from "@/components/article/article-section";
 import { t } from "@/i18n/messages";
 import { ItemRevisionEntry } from "./item-revision-entry";

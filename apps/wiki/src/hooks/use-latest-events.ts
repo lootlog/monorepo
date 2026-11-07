@@ -5,7 +5,7 @@ import {
   type CatalogItemDtoOutput,
   catalogControllerGetItems,
   getCatalogControllerGetItemsQueryKey,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { eventsByPriority } from "@/lib/hero-trackers";
 import { latestEventOf } from "@/lib/item-events";
