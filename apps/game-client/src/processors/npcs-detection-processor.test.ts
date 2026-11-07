@@ -619,11 +619,21 @@ describe("NpcsDetectionProcessor", () => {
       ...tracker,
       npcs: [{ ...position, icon: { id: 9791 } }],
     });
-    await waitFor(() => expect(requests).toHaveLength(1));
+    await waitFor(() => expect(requests).toHaveLength(2));
     expect(await requests[0]?.json()).toMatchObject({
       npc: { name: "Doświadczony Tropiciel Herosów", lvl: 282 },
       heroTracker: { state: "unclaimed" },
     });
+    // The Lootlog chat announces it too, without the profession it lacks.
+    const chatMessage = await requests[1]?.json();
+    expect(new URL(requests[1]!.url).pathname).toBe(
+      "/guilds/guild-1/chat-messages",
+    );
+    expect(chatMessage).toMatchObject({
+      type: "NPC",
+      npc: { name: "Doświadczony Tropiciel Herosów", lvl: 282 },
+    });
+    expect(chatMessage.npc).not.toHaveProperty("prof");
 
     // Moving without a countdown is no news.
     processor.handle({ npcs: [{ ...position, icon: { id: 9791 } }] });
@@ -631,10 +641,10 @@ describe("NpcsDetectionProcessor", () => {
       npcs: [{ ...position, icon: { id: 9791 }, killSeconds: 1200 }],
     });
 
-    await waitFor(() => expect(requests).toHaveLength(2));
+    await waitFor(() => expect(requests).toHaveLength(4));
     // The game's countdown, which the API turns into a close time on its own
     // clock, not the reporter's.
-    expect(await requests[1]?.json()).toMatchObject({
+    expect(await requests[2]?.json()).toMatchObject({
       heroTracker: { state: "open", entranceSecondsLeft: 1200 },
     });
     expect(useNpcDetectorStore.getState().npcs).toEqual([

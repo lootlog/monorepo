@@ -22,7 +22,12 @@ const ChatNpc = Schema.Struct({
   name: NonEmptyString,
   location: NonEmptyString,
   lvl: FiniteNumber,
-  prof: NonEmptyString,
+  prof: Schema.optionalKey(
+    NonEmptyString.annotate({
+      description:
+        "Margonem profession shortname; omitted for a Hero Tracker, which has none.",
+    }),
+  ),
   wt: FiniteNumber,
   hpp: Schema.optionalKey(FiniteNumber),
   icon: NonEmptyString,
