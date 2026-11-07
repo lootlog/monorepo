@@ -40,6 +40,7 @@ const npc: CatalogNpcDtoOutput = {
   name: "Tanroth",
   icon: "",
   lvl: 300,
+  prof: "",
   type: "HERO",
   gameVersion: "pl",
   locations: [],

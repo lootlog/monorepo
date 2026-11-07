@@ -15,7 +15,7 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
-import { getItemsControllerGetItemsQueryKey } from "@lootlog/client/catalog";
+import { getCatalogControllerGetItemsQueryKey } from "@lootlog/client/catalog";
 import { MotionGlobalConfig } from "framer-motion";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LootSearchCommand } from "./loot-search-command";
@@ -159,7 +159,7 @@ describe("LootSearchCommand search failures", () => {
 
       if (withCachedResults) {
         client.setQueryData(
-          getItemsControllerGetItemsQueryKey({ search: "smok", limit: 10 }),
+          getCatalogControllerGetItemsQueryKey({ search: "smok", limit: 10 }),
           {
             hits: [
               {
@@ -194,7 +194,10 @@ describe("LootSearchCommand search failures", () => {
         await waitFor(() =>
           expect(
             client.getQueryState(
-              getItemsControllerGetItemsQueryKey({ search: "smok", limit: 10 }),
+              getCatalogControllerGetItemsQueryKey({
+                search: "smok",
+                limit: 10,
+              }),
             )?.status,
           ).toBe("error"),
         );

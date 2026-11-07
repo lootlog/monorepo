@@ -1,3 +1,4 @@
+import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import { getItemTypeByCl } from "@lootlog/domain/item-type";
 import type { GameVersion } from "@lootlog/schema/game-version";
 import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
@@ -454,7 +455,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
 
       for (const npc of loot.npcs) {
         const observation = {
-          identityNamespace: "legacy",
+          identityNamespace: NpcIdentityNamespace.LEGACY,
           gameVersion,
           npcId: npc.id,
           name: npc.name,

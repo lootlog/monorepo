@@ -1,3 +1,4 @@
+import type { GameVersion } from "@lootlog/schema/game-version";
 import { MAX_FIXED_LEVELS } from "@lootlog/domain/elastic-level";
 import { and, eq, sql } from "drizzle-orm";
 import { groupBy, maxBy, minBy, sortBy } from "es-toolkit";
@@ -60,7 +61,7 @@ export const buildItemRevisionsQuery = (database: ApiDatabaseValue) => {
 
 /** One revision of an item and when Lootlog saw it looted. */
 export type LootedItemRevision = {
-  readonly gameVersion: string;
+  readonly gameVersion: GameVersion;
   readonly itemId: number;
   readonly snapshotId: number;
   readonly name: string;

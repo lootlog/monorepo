@@ -1,3 +1,4 @@
+import type { CatalogItemRevisions } from "@lootlog/protocol/rabbit/catalog";
 import type { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { sql } from "drizzle-orm";
@@ -43,7 +44,7 @@ export const makeItemRevisionsPublisher = (
 
     if (rows === null) return;
 
-    const items = toItemRevisionHistories(rows);
+    const items: CatalogItemRevisions[] = toItemRevisionHistories(rows);
 
     yield* Effect.forEach(
       chunk(items, ITEMS_PER_MESSAGE),

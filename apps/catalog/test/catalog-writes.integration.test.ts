@@ -7,6 +7,7 @@ import {
 import { Effect, Layer, ManagedRuntime, Redacted } from "effect";
 import { Meilisearch } from "meilisearch";
 import pg from "pg";
+import { makeCatalogModule } from "#src/catalog/catalog.service";
 import { makeCatalogStore } from "#src/database/catalog-store";
 import { CatalogDatabase } from "#src/database/database";
 import { migrateCatalogDatabase } from "#src/database/migrate";
@@ -100,18 +101,20 @@ const catalog = <A>(
   run: (modules: {
     items: ReturnType<typeof makeItemsModule>;
     npcs: ReturnType<typeof makeNpcsModule>;
+    reads: ReturnType<typeof makeCatalogModule>;
   }) => Effect.Effect<A, unknown>,
 ) =>
   runtime.runPromise(
     Effect.gen(function* () {
-      const { write } = makeCatalogStore<ItemEntry, NpcEntry>(
+      const { read, write } = makeCatalogStore<ItemEntry, NpcEntry>(
         yield* CatalogDatabase,
         meilisearch,
       );
 
       return yield* run({
-        items: makeItemsModule(meilisearch, write, logger),
-        npcs: makeNpcsModule(meilisearch, write, logger),
+        items: makeItemsModule(write, logger),
+        npcs: makeNpcsModule(write, logger),
+        reads: makeCatalogModule(meilisearch, read, logger),
       });
     }),
   );
@@ -134,13 +137,14 @@ const storedNpcs = async () =>
 const item = (id: number, world = "new") => ({
   id,
   name: `Item ${id}`,
-  world,
+  worlds: [world],
   icon: "item.gif",
   stat: "",
   lvl: 1,
   rarity: null,
   type: null,
   gameVersion: "pl" as const,
+  observedAt: "2026-10-01T00:00:00.000Z",
 });
 
 function npcDrop(id: number, name: string) {
@@ -391,6 +395,8 @@ const reuzen = {
   prof: null,
   world: "berufs",
   gameVersion: "pl" as const,
+  lootId: 1,
+  observedAt: "2026-10-01T00:00:00.000Z",
 };
 
 // An older client's entry from before the monster lost eight levels.
@@ -436,7 +442,54 @@ test("a rebalanced monster is current only at its newest level, and an older loo
   );
 });
 
-test("a monster's maps and former levels reach each identity and survive new loots and an older publisher", async () => {
+test("the catalog index names an id the game gave to a later item by that item, lists each current monster once, and an old key finds the monster as it is now", async () => {
+  const sethSet = (name: string, observedAt: string) => ({
+    ...item(8450),
+    name,
+    observedAt,
+  });
+
+  await catalog(({ items }) =>
+    items.indexItems({
+      items: [
+        sethSet("Magia mrocznego Seta", "2025-06-17T10:00:00.000Z"),
+        sethSet("Cholewy mrocznej kolaboracji", "2026-09-24T10:00:00.000Z"),
+        item(2),
+        { ...item(3), gameVersion: "en" },
+      ],
+    }),
+  );
+  await catalog(({ npcs }) =>
+    npcs.indexNpcs({ npcs: [{ ...formerReuzen, lootId: 10 }] }),
+  );
+  await catalog(({ npcs }) =>
+    npcs.indexNpcs({ npcs: [{ ...reuzen, lootId: 20 }] }),
+  );
+
+  const index = await catalog(({ reads }) =>
+    reads.getIndex({ gameVersion: "pl" }),
+  );
+
+  expect(index).toEqual({
+    items: [
+      { id: 2, name: "Item 2" },
+      { id: 8450, name: "Cholewy mrocznej kolaboracji" },
+    ],
+    npcs: [{ id: reuzen.id, name: reuzen.name }],
+  });
+
+  const found = await catalog(({ reads }) =>
+    reads.getNpcs({ gameVersion: "pl", keys: [npcCatalogKey(formerReuzen)] }),
+  );
+
+  expect(found.hits).toEqual([
+    expect.objectContaining({ key: npcCatalogKey(reuzen), lvl: reuzen.lvl }),
+  ]);
+  // Only the catalog's fields leave the service.
+  expect(found.hits[0]).not.toHaveProperty("worlds");
+});
+
+test("a monster's maps and former levels reach each identity and survive new loots", async () => {
   const locations = [{ map: "Grota Martwodrzewów - sala", share: 1 }];
   const formerLevels = [{ lvl: 252, until: "2026-01-15" }];
 
@@ -456,10 +509,6 @@ test("a monster's maps and former levels reach each identity and survive new loo
   );
   await catalog(({ npcs }) =>
     npcs.setLocations({ monsters: [{ ...monster, locations, formerLevels }] }),
-  );
-  // An older publisher sends no former levels.
-  await catalog(({ npcs }) =>
-    npcs.setLocations({ monsters: [{ ...monster, locations }] }),
   );
   await catalog(({ npcs }) =>
     npcs.indexNpcs({ npcs: [{ ...reuzen, lootId: 30, world: "tempest" }] }),

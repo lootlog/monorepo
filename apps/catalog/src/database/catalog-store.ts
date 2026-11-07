@@ -1,9 +1,11 @@
+import type { GameVersion } from "@lootlog/schema/game-version";
+import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import { SEARCH_INDEX_PRIMARY_KEY } from "@lootlog/meilisearch/index-settings";
 import {
   completeMeilisearchTask,
   type SearchOperationFailure,
 } from "@lootlog/meilisearch/operation-failure";
-import { and, arrayContains, eq, inArray, sql } from "drizzle-orm";
+import { and, arrayContains, asc, eq, inArray, sql } from "drizzle-orm";
 import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import type { SqlError } from "effect/sql/SqlError";
 import { Effect } from "effect";
@@ -35,11 +37,46 @@ const PROJECTION_BATCH = 500;
 
 const READ_BATCH = 1000;
 
+/** An item id and the name its page goes by. */
+export type CatalogItemName = { readonly id: number; readonly name: string };
+
+/** What the catalog index needs of a current NPC identity. */
+export type CatalogNpcName = {
+  readonly id: number;
+  readonly name: string;
+  readonly type: string | null;
+  readonly gameVersion: GameVersion;
+  readonly identityNamespace: NpcIdentityNamespace;
+};
+
+/**
+ * Lookups by key and whole-catalog listings, answered from PostgreSQL: the
+ * search index stays for searching and filtering.
+ */
+export type CatalogReads<Npc> = {
+  readonly monsterKeyOf: (
+    npcKey: string,
+  ) => Effect.Effect<string | undefined, EffectDrizzleQueryError>;
+  readonly npcsByUids: (
+    uids: ReadonlyArray<string>,
+  ) => Effect.Effect<Npc[], EffectDrizzleQueryError>;
+  readonly npcsByMonsterKeys: (
+    monsterKeys: ReadonlyArray<string>,
+  ) => Effect.Effect<Npc[], EffectDrizzleQueryError>;
+  readonly itemNames: (
+    gameVersion: string | undefined,
+  ) => Effect.Effect<CatalogItemName[], EffectDrizzleQueryError>;
+  readonly currentNpcNames: (
+    gameVersion: string | undefined,
+  ) => Effect.Effect<CatalogNpcName[], EffectDrizzleQueryError>;
+};
+
 /**
  * The reads and writes one catalog change makes. Saving writes the entries
  * to PostgreSQL and replaces them in the search index before the change
- * commits, so the index never holds an entry the database lost; a failed
- * projection rolls the change back and its deliveries are retried.
+ * commits, so a failed projection rolls the change back and its deliveries
+ * are retried. A commit that fails after the projection leaves the index
+ * ahead of the database until the entry's next change or a rebuild.
  */
 export type CatalogChange<Item, Npc> = {
   readonly itemsByUids: (
@@ -96,7 +133,78 @@ export const makeCatalogStore = <
       { discard: true },
     );
 
+  const npcLookups = (executor: CatalogDatabaseValue | Transaction) => ({
+    npcsByUids: (uids: ReadonlyArray<string>) =>
+      Effect.forEach(chunk([...uids], READ_BATCH), (batch) =>
+        executor
+          .select({ document: catalogNpcTable.document })
+          .from(catalogNpcTable)
+          .where(inArray(catalogNpcTable.uid, batch)),
+      ).pipe(Effect.map((pages) => documents<Npc>(pages.flat()))),
+    npcsByMonsterKeys: (monsterKeys: ReadonlyArray<string>) =>
+      Effect.forEach(chunk([...monsterKeys], READ_BATCH), (batch) =>
+        executor
+          .select({ document: catalogNpcTable.document })
+          .from(catalogNpcTable)
+          .where(inArray(catalogNpcTable.monsterKey, batch)),
+      ).pipe(Effect.map((pages) => documents<Npc>(pages.flat()))),
+  });
+
+  const npcDocument = (field: string) =>
+    sql`${catalogNpcTable.document}->>${field}`;
+
+  const read: CatalogReads<Npc> = {
+    ...npcLookups(database),
+    monsterKeyOf: (npcKey) =>
+      database
+        .select({ monsterKey: catalogNpcTable.monsterKey })
+        .from(catalogNpcTable)
+        .where(eq(catalogNpcTable.uid, npcKey))
+        .limit(1)
+        .pipe(Effect.map((rows) => rows[0]?.monsterKey)),
+    // An id the game gave to a later item names that item now, so of the
+    // entries of one id the latest seen gives its name, as its page shows it.
+    itemNames: (gameVersion) =>
+      database
+        .selectDistinctOn([catalogItemTable.itemId], {
+          id: catalogItemTable.itemId,
+          name: sql<string>`${catalogItemTable.document}->>'name'`,
+        })
+        .from(catalogItemTable)
+        .where(
+          gameVersion === undefined
+            ? undefined
+            : eq(catalogItemTable.gameVersion, gameVersion),
+        )
+        .orderBy(
+          asc(catalogItemTable.itemId),
+          sql`(${catalogItemTable.document}->>'firstSeenAt')::bigint desc nulls last`,
+          asc(catalogItemTable.uid),
+        ),
+    currentNpcNames: (gameVersion) =>
+      database
+        .select({
+          id: sql<number>`(${npcDocument("id")})::integer`,
+          name: sql<string>`${npcDocument("name")}`,
+          type: sql<string | null>`${npcDocument("type")}`,
+          gameVersion: sql<GameVersion>`${npcDocument("gameVersion")}`,
+          identityNamespace: sql<NpcIdentityNamespace>`${npcDocument("identityNamespace")}`,
+        })
+        .from(catalogNpcTable)
+        .where(
+          and(
+            gameVersion === undefined
+              ? undefined
+              : eq(npcDocument("gameVersion"), gameVersion),
+            // A monster's former identities are history, not current NPCs.
+            sql`${catalogNpcTable.document}->'current' is distinct from 'false'::jsonb`,
+          ),
+        )
+        .orderBy(asc(catalogNpcTable.uid)),
+  };
+
   const change = (transaction: Transaction): CatalogChange<Item, Npc> => ({
+    ...npcLookups(transaction),
     itemsByUids: (uids) =>
       Effect.forEach(chunk([...uids], READ_BATCH), (batch) =>
         transaction
@@ -150,20 +258,6 @@ export const makeCatalogStore = <
 
         yield* project(ITEMS_INDEX, items);
       }),
-    npcsByUids: (uids) =>
-      Effect.forEach(chunk([...uids], READ_BATCH), (batch) =>
-        transaction
-          .select({ document: catalogNpcTable.document })
-          .from(catalogNpcTable)
-          .where(inArray(catalogNpcTable.uid, batch)),
-      ).pipe(Effect.map((pages) => documents<Npc>(pages.flat()))),
-    npcsByMonsterKeys: (monsterKeys) =>
-      Effect.forEach(chunk([...monsterKeys], READ_BATCH), (batch) =>
-        transaction
-          .select({ document: catalogNpcTable.document })
-          .from(catalogNpcTable)
-          .where(inArray(catalogNpcTable.monsterKey, batch)),
-      ).pipe(Effect.map((pages) => documents<Npc>(pages.flat()))),
     saveNpcs: (npcs) =>
       Effect.gen(function* () {
         for (const batch of chunk([...npcs], PROJECTION_BATCH)) {
@@ -208,5 +302,5 @@ export const makeCatalogStore = <
       }),
     );
 
-  return { write };
+  return { read, write };
 };

@@ -7,9 +7,8 @@ import { useState } from "react";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 
 import {
-  useItemsControllerGetItems,
-  useNpcsControllerGetNpcs,
-  type NpcHitDtoOutput,
+  useCatalogControllerGetItems,
+  useCatalogControllerGetNpcs,
 } from "@lootlog/client/catalog";
 import { usePlayersControllerGetPlayers } from "@lootlog/client/search";
 
@@ -84,12 +83,12 @@ export const useLootSearchCommand = ({
     query: { enabled: debouncedLootSearch.length >= 2 && !isHidInput },
   };
 
-  const itemsQuery = useItemsControllerGetItems(
+  const itemsQuery = useCatalogControllerGetItems(
     { search: debouncedLootSearch, limit: SEARCH_HITS },
     searchOptions,
   );
 
-  const npcsQuery = useNpcsControllerGetNpcs(
+  const npcsQuery = useCatalogControllerGetNpcs(
     { search: debouncedLootSearch, limit: SEARCH_HITS },
     searchOptions,
   );
@@ -135,7 +134,7 @@ export const useLootSearchCommand = ({
     close();
   };
 
-  const handleSelectNpc = (npc: NpcHitDtoOutput) => {
+  const handleSelectNpc = (npc: { name: string }) => {
     applyLootFilters({ npcs: [npc.name] });
   };
 
@@ -186,7 +185,7 @@ export const useLootSearchCommand = ({
 
   // Selecting a hit filters by name, so each name is one option even when
   // several editions or ids share it.
-  const npcResults = uniqBy(npcsQuery.data ?? [], (npc) => npc.name);
+  const npcResults = uniqBy(npcsQuery.data?.hits ?? [], (npc) => npc.name);
 
   const itemResults = uniqBy(itemsQuery.data?.hits ?? [], (item) => item.name);
 

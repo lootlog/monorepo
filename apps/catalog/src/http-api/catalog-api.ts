@@ -4,8 +4,6 @@ import { HttpApi, OpenApi } from "effect/http-api";
 import { CatalogAccess } from "./catalog-access.js";
 import { CatalogGroup } from "./contracts/catalog/api.js";
 import { HealthGroup } from "./contracts/health/api.js";
-import { ItemsGroup } from "./contracts/items/api.js";
-import { NPCsGroup } from "./contracts/npcs/api.js";
 
 export class CatalogApi extends HttpApi.make("CatalogApi")
   .annotate(OpenApi.Title, "Catalog API")
@@ -15,6 +13,6 @@ export class CatalogApi extends HttpApi.make("CatalogApi")
     "Margonem items and NPCs as Lootlog observed them",
   )
   .annotate(OpenApi.Servers, [])
-  .add(HealthGroup, NPCsGroup, ItemsGroup, CatalogGroup)
+  .add(HealthGroup, CatalogGroup)
   .middleware(CatalogAccess)
   .middleware(ApiKeyEndpointPolicy) {}

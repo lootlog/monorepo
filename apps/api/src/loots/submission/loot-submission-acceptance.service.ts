@@ -1,3 +1,7 @@
+import type {
+  CatalogItemObservation,
+  CatalogNpcObservation,
+} from "@lootlog/protocol/rabbit/catalog";
 import { capturesMapPlayers } from "@lootlog/domain/loot-draw";
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
 import {
@@ -546,13 +550,12 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
     rabbit(
       RabbitRoutingKey.CATALOG_NPCS_INDEX,
-      options.npcs.map((npc) => ({
+      options.npcs.map((npc): CatalogNpcObservation => ({
         ...searchNpc(npc),
-        // Search keeps the latest observation of a catalog entry; loot ids
+        // The catalog keeps the latest observation of an entry; loot ids
         // order observations even when deliveries arrive out of order.
         lootId: options.lootId,
-        snapshotHash: npc.snapshotHash ?? undefined,
-        location: options.submission.location,
+        ...(npc.snapshotHash && { snapshotHash: npc.snapshotHash }),
         world: options.submission.world,
         observedAt,
       })),
@@ -562,19 +565,19 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     if (items.length > 0)
       rabbit(
         RabbitRoutingKey.CATALOG_ITEMS_INDEX,
-        items.map((item) => ({
+        items.map((item): CatalogItemObservation => ({
           id: item.id,
           name: item.name,
           icon: item.icon,
-          // The search catalog describes revisions, not looted instances.
+          // The catalog describes revisions, not looted instances.
           stat: splitItemStat(item.stat).revision,
           lvl: item.lvl,
           rarity: item.rarity,
           type: item.type,
-          world: options.submission.world,
+          worlds: [options.submission.world],
           gameVersion: options.submission.gameVersion,
           observedAt,
-          droppedBy: dropSource && searchNpc(dropSource),
+          ...(dropSource && { droppedBy: searchNpc(dropSource) }),
         })),
       );
     rabbit(RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED, {

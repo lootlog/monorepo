@@ -42,7 +42,6 @@ export function StatisticsMonsterLegends({
                   className="h-9"
                   imageClassName="max-h-9"
                   npc={{
-                    id: monster.npc.id,
                     name: monster.npc.name,
                     lvl: monster.npc.lvl ?? undefined,
                     icon: monster.npc.icon,

@@ -35,7 +35,7 @@ test("does not retire a drop on a monster fought too rarely to tell", () => {
 // over three event days, drops the same items under its own ids.
 test("retires a Hero Tracker's drops that its hero no longer drops", () => {
   const monster = (type: string, fights: number) => ({
-    gameVersion: "pl",
+    gameVersion: "pl" as const,
     name: "Negthotep Czarny Kapłan",
     type,
     fights,

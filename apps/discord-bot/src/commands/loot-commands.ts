@@ -210,7 +210,7 @@ export const itemCommand: SlashCommand = {
       const client = yield* LootlogClient;
 
       const { hits } = yield* client.catalog(
-        "/items",
+        "/catalog/items",
         { search: invocation.focused.value, limit: MAX_AUTOCOMPLETE_CHOICES },
         SearchItems,
       );

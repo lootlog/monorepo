@@ -1,6 +1,6 @@
 import { ContextLogger } from "@lootlog/instrumentation";
 
-import type { IndexNpcsCommand } from "#src/npcs/index-npcs-command";
+import type { IndexNpcsCommand } from "#src/npcs/npcs.service";
 
 type CatalogLogContext =
   | { readonly error: unknown }

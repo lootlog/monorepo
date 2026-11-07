@@ -16,7 +16,7 @@ import {
   type WatchedItemResponseDto,
 } from "@lootlog/client/main";
 
-import { useItemsControllerGetItems } from "@lootlog/client/catalog";
+import { useCatalogControllerGetItems } from "@lootlog/client/catalog";
 
 const WatchFormFields = Schema.Struct({
   guildIds: Schema.mutable(Schema.Array(Schema.String)),
@@ -128,7 +128,7 @@ export function useWatchItemForm({
 
   const itemSearchParams = { limit: 10, search: itemSearchValue };
 
-  const itemSearchQuery = useItemsControllerGetItems(itemSearchParams, {
+  const itemSearchQuery = useCatalogControllerGetItems(itemSearchParams, {
     query: {
       enabled: itemSearchValue.length >= 2,
     },

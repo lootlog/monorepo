@@ -1,3 +1,4 @@
+import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import type { ProfessionEnum } from "@lootlog/schema/loot";
 import { sql } from "drizzle-orm";
 import {
@@ -280,7 +281,10 @@ export const npcSnapshotTable = pgTable(
     npcId: integer("npcId").notNull(),
     // NpcIdentityNamespace from @lootlog/schema/npc-identity. `legacy` rows come
     // from clients that sent an overloaded id; do not infer their meaning.
-    identityNamespace: text("identityNamespace").default("legacy").notNull(),
+    identityNamespace: text("identityNamespace")
+      .$type<NpcIdentityNamespace>()
+      .default(NpcIdentityNamespace.LEGACY)
+      .notNull(),
     gameVersion: gameVersionEnum("gameVersion").notNull(),
     snapshotHash: text("snapshotHash"),
     name: text("name").notNull(),
