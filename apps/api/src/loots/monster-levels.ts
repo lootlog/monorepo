@@ -1,3 +1,4 @@
+import type { GameVersion } from "@lootlog/schema/game-version";
 import { sql } from "drizzle-orm";
 import { groupBy, maxBy } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -26,7 +27,7 @@ const DAY = 24 * 60 * 60 * 1000;
 
 /** The fights of a monster recorded at one level. */
 export type MonsterLevelFights = {
-  readonly gameVersion: string;
+  readonly gameVersion: GameVersion;
   readonly name: string;
   readonly type: string | null;
   readonly lvl: number | null;

@@ -44,7 +44,7 @@ export const buildFightSources = (database: ApiDatabaseValue, since?: Date) => {
 /**
  * Every recorded fight of every monster, numbered from the monster's first,
  * with the total its monster has. A monster is its edition, name and type, as
- * the search catalog names it, so a rework that gives it a new id keeps
+ * the catalog names it, so a rework that gives it a new id keeps
  * counting its fights. Fights name their only NPC or the only boss among a
  * group, as drop sources do. The game client records a fight only when it
  * drops something above common, so fights are a sample of kills, not every

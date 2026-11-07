@@ -17,9 +17,11 @@ import { npcMonsterKey, type NpcEntry } from "#src/npcs/npcs.service";
 import type { AppLogger } from "#src/shared/logger";
 import type { ItemSearchQuery } from "./item-search-query.js";
 import { ITEMS_INDEX } from "./search-index.js";
-import type { IndexItemsCommand } from "./index-items-command.js";
-import type { MonsterDropsCommand } from "./monster-drops-command.js";
-import type { ItemRevisionsCommand } from "./item-revisions-command.js";
+import type {
+  CatalogItemObservation,
+  CatalogItemRevisions,
+  CatalogMonsterDrops,
+} from "@lootlog/protocol/rabbit/catalog";
 import type { ItemHit } from "./item-hit.js";
 import { createItemSearchFields } from "./item-search-fields.js";
 import {
@@ -40,7 +42,19 @@ type SearchItemsResponse = {
   hits: ItemHit[];
 };
 
-type IndexItem = IndexItemsCommand["items"][number];
+export type IndexItemsCommand = {
+  readonly items: ReadonlyArray<CatalogItemObservation>;
+};
+
+export type MonsterDropsCommand = {
+  readonly monsters: ReadonlyArray<CatalogMonsterDrops>;
+};
+
+export type ItemRevisionsCommand = {
+  readonly items: ReadonlyArray<CatalogItemRevisions>;
+};
+
+type IndexItem = CatalogItemObservation;
 
 type IndexedItem = Omit<IndexItem, "droppedBy" | "observedAt"> &
   ItemDropFields &
@@ -119,9 +133,6 @@ const mapSearchResponse = (data: {
   facetStats: data.facetStats ?? {},
 });
 
-const itemWorlds = (item: IndexItem) =>
-  uniqueWorlds([...(item.worlds ?? []), ...(item.world ? [item.world] : [])]);
-
 /**
  * One catalog entry per edition, item id and name. A template observed in
  * Polish and English, or renamed, keeps each name searchable instead of the
@@ -144,7 +155,6 @@ const mergeItemsByCatalogKey = (
       ...item
     } = incoming;
 
-    const worlds = itemWorlds(item);
     const uid = itemCatalogKey(item);
     const existingItem = itemsByKey.get(uid);
 
@@ -154,7 +164,7 @@ const mergeItemsByCatalogKey = (
       ...mergeItemDropFields(toItemDropFields(incoming), existingItem),
       ...mergeItemLevels(toItemLevelFields(incoming), existingItem),
       uid,
-      worlds: uniqueWorlds([...(existingItem?.worlds ?? []), ...worlds]),
+      worlds: uniqueWorlds([...(existingItem?.worlds ?? []), ...item.worlds]),
     });
   }
 
@@ -167,7 +177,7 @@ const mergeItemsByCatalogKey = (
  * adds at +5. The seed script and the consumer share it.
  */
 export const toItemDocuments = (items: ReadonlyArray<IndexItem>) =>
-  mergeItemsByCatalogKey(items).map(({ world: _world, ...item }) => ({
+  mergeItemsByCatalogKey(items).map((item) => ({
     ...item,
     ...createItemSearchFields(item.stat),
     upgradedAttackSpeed: upgradedAttackSpeed(item),
@@ -269,11 +279,9 @@ export const makeItemsModule = (
   const indexItems = Effect.fn("CatalogItems.index")(function* (
     data: IndexItemsCommand,
   ) {
-    const validItems = data.items.filter((item) => {
-      const worlds = itemWorlds(item);
-
-      return item.id && item.name && worlds.length > 0;
-    });
+    const validItems = data.items.filter(
+      (item) => item.id && item.name && uniqueWorlds(item.worlds).length > 0,
+    );
 
     if (validItems.length === 0) {
       logger.warn("No valid items to index (missing required fields)");

@@ -10,13 +10,19 @@ import {
 } from "#src/database/catalog-store";
 import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import { CatalogDatabase } from "#src/database/database";
-import type { IndexItemsCommand } from "#src/items/index-items-command";
-import type { ItemRevisionsCommand } from "#src/items/item-revisions-command";
-import { type ItemEntry, makeItemsModule } from "#src/items/items.service";
-import type { MonsterDropsCommand } from "#src/items/monster-drops-command";
-import type { IndexNpcsCommand } from "#src/npcs/index-npcs-command";
-import type { MonsterLocationsCommand } from "#src/npcs/monster-locations-command";
-import { makeNpcsModule, type NpcEntry } from "#src/npcs/npcs.service";
+import {
+  type IndexItemsCommand,
+  type ItemEntry,
+  type ItemRevisionsCommand,
+  makeItemsModule,
+  type MonsterDropsCommand,
+} from "#src/items/items.service";
+import {
+  type IndexNpcsCommand,
+  makeNpcsModule,
+  type MonsterLocationsCommand,
+  type NpcEntry,
+} from "#src/npcs/npcs.service";
 import { catalogIndexSettings } from "#src/projection/index-settings";
 import { effectLogger } from "#src/shared/logger";
 import type {

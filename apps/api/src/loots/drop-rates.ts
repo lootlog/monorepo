@@ -1,3 +1,4 @@
+import type { GameVersion } from "@lootlog/schema/game-version";
 import { DROP_SOURCE_BOSS_TYPES } from "@lootlog/domain/npc-type";
 import {
   type AnyColumn,
@@ -258,7 +259,7 @@ export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
 
 /** One boss's drops of one item over the kills that could record it. */
 export type ItemDropRate = {
-  readonly gameVersion: string;
+  readonly gameVersion: GameVersion;
   readonly name: string;
   readonly type: string | null;
   readonly itemId: number;

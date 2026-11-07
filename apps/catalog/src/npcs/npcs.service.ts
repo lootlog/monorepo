@@ -18,15 +18,23 @@ import type { AppLogger } from "#src/shared/logger";
 import { getNpcType } from "@lootlog/domain/npc-type";
 import type { NpcSearchQuery } from "./npc-search-query.js";
 import { NPCS_INDEX } from "./search-index.js";
-import type { IndexNpcsCommand } from "./index-npcs-command.js";
 import type {
-  MonsterFormerLevel,
-  MonsterLocation,
-  MonsterLocationsCommand,
-} from "./monster-locations-command.js";
+  CatalogMonsterFormerLevel,
+  CatalogMonsterLocation,
+  CatalogMonsterLocations,
+  CatalogNpcObservation,
+} from "@lootlog/protocol/rabbit/catalog";
 import type { NpcHit } from "./npc-hit.js";
 
-type IndexNpc = IndexNpcsCommand["npcs"][number];
+export type IndexNpcsCommand = {
+  readonly npcs: ReadonlyArray<CatalogNpcObservation>;
+};
+
+export type MonsterLocationsCommand = {
+  readonly monsters: ReadonlyArray<CatalogMonsterLocations>;
+};
+
+type IndexNpc = CatalogNpcObservation;
 
 // One catalog entry per edition, identity namespace, id and Margonem type:
 // every world of an edition uses the same NPC ids. Legacy keys omit the
@@ -109,9 +117,6 @@ export const collapseByNameAndType = <
 export const toNpcDocument = (npc: IndexNpc) => {
   const prof = npc.prof ?? "";
 
-  const identityNamespace =
-    npc.identityNamespace ?? NpcIdentityNamespace.LEGACY;
-
   const type = Schema.is(NpcTypeSchema)(npc.type)
     ? npc.type
     : getNpcType(NpcTypeEnum, {
@@ -123,7 +128,7 @@ export const toNpcDocument = (npc: IndexNpc) => {
 
   return {
     id: npc.id,
-    identityNamespace,
+    identityNamespace: npc.identityNamespace,
     name: npc.name,
     icon: npc.icon,
     lvl: npc.lvl,
@@ -133,9 +138,9 @@ export const toNpcDocument = (npc: IndexNpc) => {
     margonemType: npc.margonemType,
     worlds: [npc.world],
     gameVersion: npc.gameVersion,
-    uid: npcCatalogKey({ ...npc, identityNamespace }),
+    uid: npcCatalogKey(npc),
     monsterKey: npcMonsterKey({ ...npc, type }),
-    observedLootId: npc.lootId ?? null,
+    observedLootId: npc.lootId,
     firstSeenAt: toSeenAt(npc.observedAt),
   };
 };
@@ -145,8 +150,8 @@ export const toNpcDocument = (npc: IndexNpc) => {
  * statistics, not from loots; entries it has not reached yet have none.
  */
 export type NpcEntry = ReturnType<typeof toNpcDocument> & {
-  locations?: ReadonlyArray<typeof MonsterLocation.Type>;
-  formerLevels?: ReadonlyArray<typeof MonsterFormerLevel.Type>;
+  locations?: ReadonlyArray<typeof CatalogMonsterLocation.Type>;
+  formerLevels?: ReadonlyArray<typeof CatalogMonsterFormerLevel.Type>;
   current?: boolean;
 };
 
@@ -164,10 +169,7 @@ export const currentRevisions = (
 ) =>
   Object.values(groupBy(documents, ({ monsterKey }) => monsterKey)).flatMap(
     (identities) => {
-      const latest = maxBy(
-        identities,
-        ({ observedLootId }) => observedLootId ?? 0,
-      );
+      const latest = maxBy(identities, ({ observedLootId }) => observedLootId);
 
       return identities.map(({ uid, lvl }) => ({
         uid,
@@ -195,16 +197,13 @@ const toNpcHit = (document: NpcEntry): NpcHit =>
 const isNewerObservation = (
   stored: Pick<NpcEntry, "observedLootId">,
   incoming: Pick<NpcEntry, "observedLootId">,
-) =>
-  incoming.observedLootId !== null &&
-  stored.observedLootId !== null &&
-  stored.observedLootId > incoming.observedLootId;
+) => stored.observedLootId > incoming.observedLootId;
 
 /**
  * One catalog entry from two observations: the later loot's attributes,
- * every world of both, the earlier first sighting and the stored locations. Delivery order is not chronology: a retried or
- * redelivered publication can arrive after a newer one. An observation
- * without a loot id, from an older publisher, counts as the latest.
+ * every world of both, the earlier first sighting and the stored locations.
+ * Delivery order is not chronology: a retried or redelivered publication can
+ * arrive after a newer one.
  */
 export const mergeNpcDocument = (
   incoming: NpcEntry,
@@ -351,8 +350,8 @@ export const makeNpcsModule = (
   });
 
   /**
-   * Replaces each monster's locations, and its former levels when the
-   * publisher sends them, on every catalog identity of it. Only those fields
+   * Replaces each monster's locations and former levels on every catalog
+   * identity of it. Only those fields
    * are written, so observations indexed meanwhile are kept.
    */
   const setLocations = Effect.fn("CatalogNpcs.setLocations")(function* (
@@ -371,16 +370,14 @@ export const makeNpcsModule = (
 
           if (!monster) return [];
 
-          const formerLevels = monster.formerLevels ?? document.formerLevels;
-
           return Bun.deepEquals(monster.locations, document.locations) &&
-            Bun.deepEquals(formerLevels, document.formerLevels)
+            Bun.deepEquals(monster.formerLevels, document.formerLevels)
             ? []
             : [
                 {
                   ...document,
                   locations: monster.locations,
-                  ...(formerLevels && { formerLevels }),
+                  formerLevels: monster.formerLevels,
                 },
               ];
         });
