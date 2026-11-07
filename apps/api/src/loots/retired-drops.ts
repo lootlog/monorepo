@@ -1,3 +1,4 @@
+import type { GameVersion } from "@lootlog/schema/game-version";
 import { and, eq, sql } from "drizzle-orm";
 import { groupBy } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -83,7 +84,7 @@ export const buildDropStatisticsQuery = (database: ApiDatabaseValue) => {
 
 /** A monster's drop statistics for one item, as the query returns them. */
 type ItemDropStatistics = DropStatistics & {
-  readonly gameVersion: string;
+  readonly gameVersion: GameVersion;
   readonly name: string;
   readonly type: string | null;
   readonly itemId: number;

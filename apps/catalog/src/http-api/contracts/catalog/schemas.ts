@@ -241,6 +241,10 @@ export const CatalogNpcDto_Output = Schema.Struct({
   name: Schema.String,
   icon: Schema.String,
   lvl: FiniteNumber,
+  prof: Schema.String.annotate({
+    description:
+      "The NPC's profession as Margonem writes it, such as `w`; empty for most monsters.",
+  }),
   type: NpcTypeSchema,
   gameVersion: GameVersionSchema,
   locations: Schema.Array(
@@ -294,7 +298,12 @@ export const CatalogControllerGetNpcsQuery = Schema.Struct({
       description: "NPC ids, as `CatalogNpcDto_Output.id`.",
     }),
   ),
-  keys: Schema.optionalKey(Schema.Array(Schema.String)),
+  keys: Schema.optionalKey(
+    Schema.Array(Schema.String).annotate({
+      description:
+        "Catalog keys, as `CatalogNpcDto_Output.key`. A lookup by key ignores `search`.",
+    }),
+  ),
   types: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
   limit: Schema.optionalKey(FiniteNumber.annotate({ default: 24 })),
   offset: Schema.optionalKey(FiniteNumber.annotate({ default: 0 })),

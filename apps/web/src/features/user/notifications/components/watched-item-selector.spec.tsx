@@ -86,7 +86,9 @@ it("keeps externally filtered results and selects the complete item after asynch
     stat: "",
     lvl: 20,
     type: null,
-    worlds: ["test"],
+    droppedBy: [],
+    revisions: [],
+    elasticLevel: false,
   };
 
   const props = {

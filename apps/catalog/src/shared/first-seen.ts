@@ -1,7 +1,5 @@
-/** Epoch milliseconds of an ISO observation time; null when it is unknown. */
-export const toSeenAt = (observedAt: string | undefined) => {
-  if (observedAt === undefined) return null;
-
+/** Epoch milliseconds of an ISO observation time; null when it is malformed. */
+export const toSeenAt = (observedAt: string) => {
   const time = Date.parse(observedAt);
 
   return Number.isNaN(time) ? null : time;

@@ -5,8 +5,8 @@ import {
   type LootsControllerResolveLootItemByHidParams,
 } from "@lootlog/client/main";
 import {
-  useItemsControllerGetItems,
-  useNpcsControllerGetNpcs,
+  useCatalogControllerGetItems,
+  useCatalogControllerGetNpcs,
 } from "@lootlog/client/catalog";
 import { usePlayersControllerGetPlayers } from "@lootlog/client/search";
 import { isEqual, uniqBy } from "es-toolkit";
@@ -192,7 +192,7 @@ export const useLootFiltersSidebar = () => {
   // takes no world.
   const npcsSearchParams =
     debouncedNpcsSearchValue.length > 0
-      ? { search: debouncedNpcsSearchValue }
+      ? { search: debouncedNpcsSearchValue, limit: 10 }
       : undefined;
 
   const itemsSearchParams = {
@@ -206,13 +206,13 @@ export const useLootFiltersSidebar = () => {
     },
   });
 
-  const npcsQuery = useNpcsControllerGetNpcs(npcsSearchParams, {
+  const npcsQuery = useCatalogControllerGetNpcs(npcsSearchParams, {
     query: {
       enabled: debouncedNpcsSearchValue.length > 0,
     },
   });
 
-  const itemsQuery = useItemsControllerGetItems(itemsSearchParams, {
+  const itemsQuery = useCatalogControllerGetItems(itemsSearchParams, {
     query: {
       enabled: debouncedItemsSearchValue.length >= 2,
     },
@@ -234,7 +234,7 @@ export const useLootFiltersSidebar = () => {
   );
 
   const playerHits = uniqueByName(playersQuery.data);
-  const npcHits = uniqueByName(npcsQuery.data);
+  const npcHits = uniqueByName(npcsQuery.data?.hits);
   const itemHits = uniqueByName(itemsQuery.data?.hits);
 
   // A pending debounce reads as "searching" so the list never shows stale hits.

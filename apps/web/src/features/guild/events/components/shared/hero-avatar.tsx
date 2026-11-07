@@ -30,7 +30,6 @@ export const HeroAvatar = ({ hero, size = "default" }: HeroAvatarProps) => (
             "max-h-14 max-w-14 rounded-none drop-shadow-[0_4px_6px_rgb(0_0_0/0.45)]",
         )}
         npc={{
-          id: hero.npcId ?? undefined,
           name: hero.npcName,
           icon: hero.npcIcon,
         }}

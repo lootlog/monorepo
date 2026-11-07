@@ -11,17 +11,19 @@ import {
   RabbitRoutingKey,
   type RabbitQueueDefinition,
 } from "@lootlog/protocol/rabbit/topology";
-import { Effect, Layer, Redacted } from "effect";
+import { Effect, Layer, Redacted, Schema } from "effect";
 import type { CatalogWriteFailure } from "#src/database/catalog-store";
 import { CatalogConfig } from "#src/config/catalog-config";
 import { CatalogDatabase, PgClientLive } from "#src/database/database";
 import { CatalogHttpServer } from "#src/http-api/catalog-http";
 import { CatalogOperations } from "#src/http-api/catalog-operations";
-import { IndexItemsPayload } from "#src/items/index-items-command";
-import { ItemRevisionsPayload } from "#src/items/item-revisions-command";
-import { MonsterDropsPayload } from "#src/items/monster-drops-command";
-import { IndexNpcsPayload } from "#src/npcs/index-npcs-command";
-import { MonsterLocationsPayload } from "#src/npcs/monster-locations-command";
+import {
+  CatalogItemObservation,
+  CatalogItemRevisions,
+  CatalogMonsterDrops,
+  CatalogMonsterLocations,
+  CatalogNpcObservation,
+} from "@lootlog/protocol/rabbit/catalog";
 
 /** A delivery the catalog cannot apply is kept in `catalog.dlq`. */
 const catalogQueue = (
@@ -33,7 +35,8 @@ const catalogQueue = (
     deadLetterRoutingKey: RabbitRoutingKey.CATALOG_DLQ,
   });
 
-// Replays get their own queues, so a backfill never delays live loots.
+// Replays get their own queues, so live loots never queue behind a backfill;
+// every change still takes its turn on the catalog's writer lock.
 export const catalogQueues = {
   items: catalogQueue(
     "catalog.items.index",
@@ -77,7 +80,7 @@ export const CatalogConsumers = Layer.effectDiscard(
     for (const queue of [catalogQueues.items, catalogQueues.itemsReplay]) {
       yield* consumeInBatches({
         queue: queue.name,
-        schema: IndexItemsPayload,
+        schema: Schema.Array(CatalogItemObservation),
         apply: (items) => catalog.indexItems({ items: [...items] }),
         isPermanent,
       });
@@ -86,7 +89,7 @@ export const CatalogConsumers = Layer.effectDiscard(
     for (const queue of [catalogQueues.npcs, catalogQueues.npcsReplay]) {
       yield* consumeInBatches({
         queue: queue.name,
-        schema: IndexNpcsPayload,
+        schema: Schema.Array(CatalogNpcObservation),
         apply: (npcs) => catalog.indexNpcs({ npcs: [...npcs] }),
         isPermanent,
       });
@@ -94,19 +97,19 @@ export const CatalogConsumers = Layer.effectDiscard(
 
     yield* consumeInBatches({
       queue: catalogQueues.retiredDrops.name,
-      schema: MonsterDropsPayload,
+      schema: Schema.Array(CatalogMonsterDrops),
       apply: (monsters) => catalog.setMonsterDrops({ monsters: [...monsters] }),
       isPermanent,
     });
     yield* consumeInBatches({
       queue: catalogQueues.itemRevisions.name,
-      schema: ItemRevisionsPayload,
+      schema: Schema.Array(CatalogItemRevisions),
       apply: (items) => catalog.setItemRevisions({ items: [...items] }),
       isPermanent,
     });
     yield* consumeInBatches({
       queue: catalogQueues.npcLocations.name,
-      schema: MonsterLocationsPayload,
+      schema: Schema.Array(CatalogMonsterLocations),
       apply: (monsters) => catalog.setNpcLocations({ monsters: [...monsters] }),
       isPermanent,
     });

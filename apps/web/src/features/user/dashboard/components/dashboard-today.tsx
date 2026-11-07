@@ -211,7 +211,6 @@ export function DashboardToday() {
               <span className="w-10 shrink-0">
                 <NpcTile
                   npc={{
-                    id: favourite.npcId,
                     name: favourite.npcName,
                     lvl: favourite.npcLvl,
                     icon: favourite.npcIcon,

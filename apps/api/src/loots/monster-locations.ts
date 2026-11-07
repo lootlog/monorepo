@@ -1,3 +1,4 @@
+import type { GameVersion } from "@lootlog/schema/game-version";
 import { sql } from "drizzle-orm";
 import { groupBy } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -17,7 +18,7 @@ const MIN_LOCATION_SHARE = 0.01;
 
 /** The fights of a monster recorded on one map. */
 export type MonsterLocationFights = {
-  readonly gameVersion: string;
+  readonly gameVersion: GameVersion;
   readonly name: string;
   readonly type: string | null;
   readonly map: string;

@@ -12,319 +12,6 @@
     }
   ],
   "paths": {
-    "/npcs": {
-      "get": {
-        "tags": ["NPCs"],
-        "operationId": "NpcsController_getNpcs",
-        "parameters": [
-          {
-            "name": "ids",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              }
-            },
-            "required": false
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "number",
-              "default": 10
-            },
-            "required": false
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              ]
-            },
-            "required": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of matching NPCs",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/NpcHitDto_Output"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Search NPCs by name",
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "x-lootlog-access": "read",
-        "x-lootlog-data": "public"
-      }
-    },
-    "/items": {
-      "get": {
-        "tags": ["Items"],
-        "operationId": "ItemsController_getItems",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "number",
-              "default": 20
-            },
-            "required": false
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "schema": {
-              "type": "number",
-              "default": 0
-            },
-            "required": false
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "required": false
-          },
-          {
-            "name": "filter",
-            "in": "query",
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              ]
-            },
-            "required": false,
-            "style": "form",
-            "explode": true
-          },
-          {
-            "name": "facets",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "required": false,
-            "style": "form",
-            "explode": true
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "required": false,
-            "style": "form",
-            "explode": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Item search results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchItemsResponseDto_Output"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Search items with filters, sorting, and facets",
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "x-lootlog-access": "read",
-        "x-lootlog-data": "public"
-      }
-    },
     "/catalog/items": {
       "get": {
         "tags": ["Catalog"],
@@ -805,6 +492,224 @@
         "x-lootlog-access": "read",
         "x-lootlog-data": "public"
       }
+    },
+    "/catalog/events": {
+      "get": {
+        "tags": ["Catalog"],
+        "operationId": "CatalogController_getEvents",
+        "parameters": [
+          {
+            "name": "gameVersion",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["en", "pl"],
+              "description": "Only entries of this game edition."
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogEventsResponseDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List events in the public catalog",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-lootlog-access": "read",
+        "x-lootlog-data": "public"
+      }
+    },
+    "/catalog/index": {
+      "get": {
+        "tags": ["Catalog"],
+        "operationId": "CatalogController_getIndex",
+        "parameters": [
+          {
+            "name": "gameVersion",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["en", "pl"],
+              "description": "Only entries of this game edition."
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogIndexResponseDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List every item and NPC in the public catalog",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-lootlog-access": "read",
+        "x-lootlog-data": "public"
+      }
     }
   },
   "components": {
@@ -816,183 +721,6 @@
       }
     },
     "schemas": {
-      "NpcHitDto_Output": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number"
-          },
-          "identityNamespace": {
-            "type": "string",
-            "enum": ["legacy", "runtime", "template"],
-            "description": "Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id."
-          },
-          "prof": {
-            "type": "string"
-          },
-          "icon": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "lvl": {
-            "type": "number"
-          },
-          "wt": {
-            "type": "number"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "COMMON",
-              "ELITE",
-              "ELITE2",
-              "ELITE3",
-              "HERO",
-              "EVENT_HERO",
-              "COLOSSUS",
-              "TITAN",
-              "HERO_TRACKER",
-              "NPC"
-            ]
-          },
-          "margonemType": {
-            "type": "number"
-          },
-          "worlds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Worlds of the edition where this NPC was observed.",
-            "default": []
-          },
-          "gameVersion": {
-            "type": "string",
-            "enum": ["en", "pl"],
-            "description": "Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated."
-          }
-        },
-        "required": [
-          "id",
-          "identityNamespace",
-          "prof",
-          "icon",
-          "name",
-          "lvl",
-          "wt",
-          "type",
-          "margonemType",
-          "worlds",
-          "gameVersion"
-        ],
-        "description": "NPC search hit"
-      },
-      "SearchUnavailableEncoded": {
-        "type": "object",
-        "properties": {
-          "_tag": {
-            "type": "string",
-            "enum": ["SearchUnavailable"]
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": ["_tag", "message"]
-      },
-      "SearchItemsResponseDto_Output": {
-        "type": "object",
-        "properties": {
-          "hits": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "number"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "icon": {
-                  "type": "string"
-                },
-                "stat": {
-                  "type": "string",
-                  "default": ""
-                },
-                "lvl": {
-                  "type": "number"
-                },
-                "rarity": {
-                  "nullable": true,
-                  "type": "string"
-                },
-                "type": {
-                  "nullable": true,
-                  "type": "string"
-                },
-                "worlds": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "default": []
-                }
-              },
-              "required": [
-                "id",
-                "name",
-                "icon",
-                "stat",
-                "lvl",
-                "rarity",
-                "type",
-                "worlds"
-              ],
-              "description": "Item search hit"
-            }
-          },
-          "estimatedTotalHits": {
-            "type": "number"
-          },
-          "facetDistribution": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "number"
-              }
-            },
-            "default": {}
-          },
-          "facetStats": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "min": {
-                  "type": "number"
-                },
-                "max": {
-                  "type": "number"
-                }
-              },
-              "required": ["min", "max"]
-            },
-            "default": {}
-          }
-        },
-        "required": [
-          "hits",
-          "estimatedTotalHits",
-          "facetDistribution",
-          "facetStats"
-        ],
-        "description": "Item search results"
-      },
       "CatalogItemsResponseDto_Output": {
         "type": "object",
         "properties": {
@@ -1173,6 +901,19 @@
         ],
         "description": "A change the game made to an item"
       },
+      "SearchUnavailableEncoded": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": ["SearchUnavailable"]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["_tag", "message"]
+      },
       "CatalogNpcsResponseDto_Output": {
         "type": "object",
         "properties": {
@@ -1207,6 +948,10 @@
           },
           "lvl": {
             "type": "number"
+          },
+          "prof": {
+            "type": "string",
+            "description": "The NPC's profession as Margonem writes it, such as `w`; empty for most monsters."
           },
           "type": {
             "type": "string",
@@ -1270,12 +1015,103 @@
           "name",
           "icon",
           "lvl",
+          "prof",
           "type",
           "gameVersion",
           "locations",
           "formerLevels"
         ],
         "description": "A Margonem NPC in the public catalog"
+      },
+      "CatalogEventsResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogEventDto_Output"
+            },
+            "description": "The latest year first, then by name."
+          }
+        },
+        "required": ["events"],
+        "description": "Public catalog events"
+      },
+      "CatalogEventDto_Output": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "The event's slug, its name and year, such as `halloween-2026`; `CatalogControllerGetItemsQuery.event` lists its items."
+          },
+          "name": {
+            "type": "string",
+            "description": "The event as the game writes it, such as `Halloween 2026 r.`."
+          },
+          "year": {
+            "description": "The year its name gives; none for an event without one.",
+            "nullable": true,
+            "type": "number"
+          },
+          "itemCount": {
+            "type": "number",
+            "description": "How many catalog items belong to the event."
+          },
+          "boss": {
+            "description": "The strongest monster its highest-level item drops from, which pictures the event; none when Lootlog has not seen that item drop.",
+            "nullable": true,
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "icon": {
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "required": ["name", "icon"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["slug", "name", "year", "itemCount", "boss"],
+        "description": "A Margonem event whose items are in the public catalog"
+      },
+      "CatalogIndexResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogIndexEntryDto_Output"
+            },
+            "description": "Every item, by id."
+          },
+          "npcs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogIndexEntryDto_Output"
+            },
+            "description": "Every NPC as it is now, once per monster, as `CatalogControllerGetNpcs` lists it; by id."
+          }
+        },
+        "required": ["items", "npcs"],
+        "description": "Every item and NPC of the public catalog, unlike its searches, which stop at 1000 hits"
+      },
+      "CatalogIndexEntryDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name"],
+        "description": "A catalog entry by the id and name its links carry, such as `/items/41392-odzienie-dominujacego-czaru` on the wiki."
       }
     }
   }

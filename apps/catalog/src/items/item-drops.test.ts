@@ -4,13 +4,14 @@ import { mergeItemDropFields, toItemDropFields } from "./item-drops.js";
 const item = {
   id: 1,
   name: "Item 1",
-  world: "new",
+  worlds: ["new"],
   icon: "item.gif",
   stat: "",
   lvl: 1,
   rarity: null,
   type: null,
   gameVersion: "pl" as const,
+  observedAt: "2026-10-01T00:00:00.000Z",
 };
 
 const npcDrop = (id: number, name: string) => ({
