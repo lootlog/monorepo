@@ -167,12 +167,9 @@ export const memberKillBucketTable = pgTable(
   ],
 );
 
-const partyCount = (name: string) => integer(name).notNull().default(0);
-
 /**
  * Hourly kills counted once per Organization, however many members reported
- * them. The party columns are no longer written: boss kills keep their party
- * in `BossKill`. They are dropped once no API that writes them runs.
+ * them.
  */
 export const guildKillBucketTable = pgTable(
   "GuildKillBucket",
@@ -188,14 +185,6 @@ export const guildKillBucketTable = pgTable(
     npcIcon: text("npcIcon"),
     kills: integer("kills").notNull(),
     lastKilledAt: killTime("lastKilledAt").notNull(),
-    partyKills: partyCount("partyKills"),
-    lootRolls: doublePrecision("lootRolls").notNull().default(0),
-    partyWarriors: partyCount("partyWarriors"),
-    partyPaladins: partyCount("partyPaladins"),
-    partyBladeDancers: partyCount("partyBladeDancers"),
-    partyMages: partyCount("partyMages"),
-    partyTrackers: partyCount("partyTrackers"),
-    partyHunters: partyCount("partyHunters"),
   },
   (table) => [
     primaryKey({

@@ -62,19 +62,8 @@ export const memberKillSource = (periodStart?: Date) => {
 };
 
 export const guildKillSource = (periodStart?: Date) => {
-  // Party columns feed drop rates only; lifetime totals have none.
-  const {
-    periodStart: start,
-    partyKills: _partyKills,
-    lootRolls: _lootRolls,
-    partyWarriors: _partyWarriors,
-    partyPaladins: _partyPaladins,
-    partyBladeDancers: _partyBladeDancers,
-    partyMages: _partyMages,
-    partyTrackers: _partyTrackers,
-    partyHunters: _partyHunters,
-    ...fields
-  } = getTableColumns(guildKillBucketTable);
+  const { periodStart: start, ...fields } =
+    getTableColumns(guildKillBucketTable);
 
   return periodStart
     ? query

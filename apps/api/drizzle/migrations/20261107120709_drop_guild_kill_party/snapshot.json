@@ -1,0 +1,148 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "a236c113-5f3e-45ea-a268-5c568be12f1d",
+  "prevIds": ["ede89cd4-7999-47f6-bfa5-441d84f04e89"],
+  "footprints": [
+    {
+      "statementType": "drop_column",
+      "statementTarget": ["column", "public", "GuildKillBucket", "partyKills"],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyKills",
+        "n|col|public.GuildKillBucket.partyKills",
+        "e|col|public.GuildKillBucket.partyKills"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": ["column", "public", "GuildKillBucket", "lootRolls"],
+      "writes": [
+        "s|col|public.GuildKillBucket.lootRolls",
+        "n|col|public.GuildKillBucket.lootRolls",
+        "e|col|public.GuildKillBucket.lootRolls"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GuildKillBucket",
+        "partyWarriors"
+      ],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyWarriors",
+        "n|col|public.GuildKillBucket.partyWarriors",
+        "e|col|public.GuildKillBucket.partyWarriors"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GuildKillBucket",
+        "partyPaladins"
+      ],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyPaladins",
+        "n|col|public.GuildKillBucket.partyPaladins",
+        "e|col|public.GuildKillBucket.partyPaladins"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GuildKillBucket",
+        "partyBladeDancers"
+      ],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyBladeDancers",
+        "n|col|public.GuildKillBucket.partyBladeDancers",
+        "e|col|public.GuildKillBucket.partyBladeDancers"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": ["column", "public", "GuildKillBucket", "partyMages"],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyMages",
+        "n|col|public.GuildKillBucket.partyMages",
+        "e|col|public.GuildKillBucket.partyMages"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GuildKillBucket",
+        "partyTrackers"
+      ],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyTrackers",
+        "n|col|public.GuildKillBucket.partyTrackers",
+        "e|col|public.GuildKillBucket.partyTrackers"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GuildKillBucket",
+        "partyHunters"
+      ],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyHunters",
+        "n|col|public.GuildKillBucket.partyHunters",
+        "e|col|public.GuildKillBucket.partyHunters"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"GuildKillBucket\",\"partyKills\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"GuildKillBucket\",\"lootRolls\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"GuildKillBucket\",\"partyWarriors\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"GuildKillBucket\",\"partyPaladins\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"GuildKillBucket\",\"partyBladeDancers\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"GuildKillBucket\",\"partyMages\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"GuildKillBucket\",\"partyTrackers\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"GuildKillBucket\",\"partyHunters\"]"
+    }
+  ]
+}
