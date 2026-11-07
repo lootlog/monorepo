@@ -92,8 +92,35 @@ test("keeps an elastic item's levels apart and narrows one change to when every 
   expect(item?.revisions).toHaveLength(1);
   expect(item?.revisions[0]).toMatchObject({
     lvl: 240,
-    previousStat: "lvl=240;sa=240;etiquette=Wielkanoc",
+    previousStat: "lvl=240;sa=240",
     changedAfter: "2026-04-06",
     changedBy: "2026-04-09",
   });
+});
+
+test("does not count the events the game writes onto an event item as a change", () => {
+  const [item] = toItemRevisionHistories([
+    revision("lvl=218;ac=40", "2025-10-20T10:00:00Z", "2025-11-06T10:00:00Z"),
+    // The event ended: the game named it on the item and left its stats.
+    revision(
+      "lvl=218;ac=40;etiquette=Dzień Piekielnego Kościeja",
+      "2025-11-01T10:00:00Z",
+      "2026-01-25T10:00:00Z",
+    ),
+    // The event came back with a stronger item.
+    revision(
+      "lvl=218;ac=45;etiquette=Dzień Piekielnego Kościeja 2026 r.",
+      "2026-11-06T10:00:00Z",
+      "2026-11-07T10:00:00Z",
+    ),
+  ]);
+
+  expect(item?.revisions).toEqual([
+    expect.objectContaining({
+      previousStat: "lvl=218;ac=40",
+      stat: "lvl=218;ac=45",
+      changedAfter: "2026-01-25",
+      changedBy: "2026-11-06",
+    }),
+  ]);
 });
