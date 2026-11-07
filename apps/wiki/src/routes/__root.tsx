@@ -68,7 +68,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
       return {
         config,
-        storedThemeSelection: storedTheme.selection,
+        storedTheme,
         documentTheme: getDocumentTheme(
           storedTheme.selection,
           storedTheme.customTheme,
@@ -96,7 +96,7 @@ const uiLabels = {
 };
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const { config, storedThemeSelection, documentTheme } = Route.useLoaderData();
+  const { config, storedTheme, documentTheme } = Route.useLoaderData();
 
   const [wikiContext] = useState(() => {
     configureWikiApiClients(config);
@@ -116,7 +116,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <WikiContext value={wikiContext}>
           <UiLabelsProvider labels={uiLabels}>
             <SharedTooltipProvider>
-              <UserTheme storedSelection={storedThemeSelection} />
+              <UserTheme
+                storedSelection={storedTheme.selection}
+                storedCustomTheme={storedTheme.customTheme}
+              />
               <EquipmentSetProvider>
                 <ItemComparisonProvider>
                   <WikiLayout>{children}</WikiLayout>
