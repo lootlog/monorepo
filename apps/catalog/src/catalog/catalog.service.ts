@@ -72,6 +72,7 @@ type CatalogNpcDocument = {
   name: string;
   icon: string;
   lvl: number;
+  prof: string;
   type: CatalogNpcsResponseDto_Output["hits"][number]["type"];
   gameVersion: CatalogNpcsResponseDto_Output["hits"][number]["gameVersion"];
   locations?: CatalogNpcsResponseDto_Output["hits"][number]["locations"];
@@ -186,6 +187,7 @@ const NPC_FIELDS = [
   "name",
   "icon",
   "lvl",
+  "prof",
   "type",
   "gameVersion",
   "locations",

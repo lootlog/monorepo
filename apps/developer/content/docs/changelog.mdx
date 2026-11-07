@@ -3,6 +3,20 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-07 — Catalog search (breaking)
+
+`GET /items` and `GET /npcs` are removed from the Catalog API and return
+`404`. Search items with `GET /catalog/items?search=` and NPCs with
+`GET /catalog/npcs?search=`; both return `{ hits, estimatedTotalHits }`.
+
+- Item search matches names only, and takes the typed filters of
+  `GET /catalog/items` instead of Meilisearch filter expressions.
+- NPC search matches names only and lists each monster once, at its current
+  level.
+- `CatalogNpcDto_Output` adds `prof`, the NPC's profession as Margonem writes
+  it.
+- API keys can call `GET /catalog/events` and `GET /catalog/index`.
+
 ## 2026-11-07 — Catalog lookups
 
 - `GET /catalog/npcs` with `keys` ignores `search`: a key names its NPC

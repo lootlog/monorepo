@@ -34,7 +34,6 @@ export const createKillsColumns = (
       row.original.npcIcon ? (
         <NpcTile
           npc={{
-            id: row.original.npcId,
             name: row.original.npcName,
             lvl: row.original.npcLvl,
             icon: row.original.npcIcon,

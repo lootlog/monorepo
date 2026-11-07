@@ -12,9 +12,7 @@ export const StatsNpcCell = ({ npc, name, subtitle }: StatsNpcCellProps) => (
   <span className="flex min-w-0 items-center gap-3">
     {npc.icon && (
       <span className="w-8 shrink-0">
-        <NpcTile
-          npc={{ id: npc.id, name: npc.name, lvl: npc.lvl, icon: npc.icon }}
-        />
+        <NpcTile npc={{ name: npc.name, lvl: npc.lvl, icon: npc.icon }} />
       </span>
     )}
     <span className="flex min-w-0 flex-col">

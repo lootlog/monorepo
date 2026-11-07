@@ -7,110 +7,6 @@
  */
 import { catalogFetch } from '../mutators';
 /**
- * Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id.
- */
-export type NpcHitDtoOutputIdentityNamespace = typeof NpcHitDtoOutputIdentityNamespace[keyof typeof NpcHitDtoOutputIdentityNamespace];
-
-
-export const NpcHitDtoOutputIdentityNamespace = {
-  legacy: 'legacy',
-  runtime: 'runtime',
-  template: 'template',
-} as const;
-
-export type NpcHitDtoOutputType = typeof NpcHitDtoOutputType[keyof typeof NpcHitDtoOutputType];
-
-
-export const NpcHitDtoOutputType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-  HERO_TRACKER: 'HERO_TRACKER',
-  NPC: 'NPC',
-} as const;
-
-/**
- * Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated.
- */
-export type NpcHitDtoOutputGameVersion = typeof NpcHitDtoOutputGameVersion[keyof typeof NpcHitDtoOutputGameVersion];
-
-
-export const NpcHitDtoOutputGameVersion = {
-  en: 'en',
-  pl: 'pl',
-} as const;
-
-/**
- * NPC search hit
- */
-export interface NpcHitDtoOutput {
-  id: number;
-  /** Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id. */
-  identityNamespace: NpcHitDtoOutputIdentityNamespace;
-  prof: string;
-  icon: string;
-  name: string;
-  lvl: number;
-  wt: number;
-  type: NpcHitDtoOutputType;
-  margonemType: number;
-  /** Worlds of the edition where this NPC was observed. */
-  worlds: string[];
-  /** Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated. */
-  gameVersion: NpcHitDtoOutputGameVersion;
-}
-
-export type _SearchUnavailableEncodedTag = typeof _SearchUnavailableEncodedTag[keyof typeof _SearchUnavailableEncodedTag];
-
-
-export const _SearchUnavailableEncodedTag = {
-  SearchUnavailable: 'SearchUnavailable',
-} as const;
-
-export interface SearchUnavailableEncoded {
-  _tag: _SearchUnavailableEncodedTag;
-  message: string;
-}
-
-/**
- * Item search hit
- */
-export type SearchItemsResponseDtoOutputHitsItem = {
-  id: number;
-  name: string;
-  icon: string;
-  stat: string;
-  lvl: number;
-  /** @nullable */
-  rarity: string | null;
-  /** @nullable */
-  type: string | null;
-  worlds: string[];
-};
-
-export type SearchItemsResponseDtoOutputFacetDistribution = {[key: string]: {[key: string]: number}};
-
-export type SearchItemsResponseDtoOutputFacetStats = {[key: string]: {
-  min: number;
-  max: number;
-}};
-
-/**
- * Item search results
- */
-export interface SearchItemsResponseDtoOutput {
-  hits: SearchItemsResponseDtoOutputHitsItem[];
-  estimatedTotalHits: number;
-  facetDistribution: SearchItemsResponseDtoOutputFacetDistribution;
-  facetStats: SearchItemsResponseDtoOutputFacetStats;
-}
-
-/**
  * How often the boss's kills drop the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.
  * @nullable
  */
@@ -190,6 +86,18 @@ export interface CatalogItemsResponseDtoOutput {
   estimatedTotalHits: number;
 }
 
+export type _SearchUnavailableEncodedTag = typeof _SearchUnavailableEncodedTag[keyof typeof _SearchUnavailableEncodedTag];
+
+
+export const _SearchUnavailableEncodedTag = {
+  SearchUnavailable: 'SearchUnavailable',
+} as const;
+
+export interface SearchUnavailableEncoded {
+  _tag: _SearchUnavailableEncodedTag;
+  message: string;
+}
+
 export type CatalogNpcDtoOutputType = typeof CatalogNpcDtoOutputType[keyof typeof CatalogNpcDtoOutputType];
 
 
@@ -238,6 +146,8 @@ export interface CatalogNpcDtoOutput {
   name: string;
   icon: string;
   lvl: number;
+  /** The NPC's profession as Margonem writes it, such as `w`; empty for most monsters. */
+  prof: string;
   type: CatalogNpcDtoOutputType;
   gameVersion: CatalogNpcDtoOutputGameVersion;
   /** Maps the NPC is fought on, most fought first, from its latest 1000 recorded fights; maps under 1% of them are left out. Lootlog recomputes them daily, so an NPC first seen today may have none yet. */
@@ -315,49 +225,6 @@ export interface CatalogIndexResponseDtoOutput {
   /** Every NPC as it is now, once per monster, as `CatalogControllerGetNpcs` lists it; by id. */
   npcs: CatalogIndexEntryDtoOutput[];
 }
-
-export type NpcsControllerGetNpcsParams = {
-/**
- * @items.minimum -9007199254740991
- * @items.maximum 9007199254740991
- */
-ids?: number[];
-limit?: number;
-search?: string | string[];
-};
-
-export type NpcsControllerGetNpcs401 = {
-  message: string;
-};
-
-export type NpcsControllerGetNpcs403 = {
-  message: string;
-};
-
-export type NpcsControllerGetNpcs429 = {
-  message: string;
-};
-
-export type ItemsControllerGetItemsParams = {
-limit?: number;
-offset?: number;
-search?: string;
-filter?: string | string[];
-facets?: string[];
-sort?: string[];
-};
-
-export type ItemsControllerGetItems401 = {
-  message: string;
-};
-
-export type ItemsControllerGetItems403 = {
-  message: string;
-};
-
-export type ItemsControllerGetItems429 = {
-  message: string;
-};
 
 export type CatalogControllerGetItemsParams = {
 search?: string;
@@ -525,84 +392,6 @@ export type CatalogControllerGetIndex403 = {
 export type CatalogControllerGetIndex429 = {
   message: string;
 };
-
-export const getNpcsControllerGetNpcsUrl = (params?: NpcsControllerGetNpcsParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["ids","search"];
-
-    if (Array.isArray(value) && explodeParameters.includes(key)) {
-      value.forEach((v) => {
-        normalizedParams.append(key, v === null ? 'null' : String(v));
-      });
-      return;
-    }
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/npcs?${stringifiedParams}` : `/npcs`
-}
-
-/**
- * @summary Search NPCs by name
- */
-export const npcsControllerGetNpcs = async (params?: NpcsControllerGetNpcsParams, options?: Parameters<typeof catalogFetch>[1]): Promise<NpcHitDtoOutput[]> => {
-
-  return catalogFetch<NpcHitDtoOutput[]>(getNpcsControllerGetNpcsUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-export const getItemsControllerGetItemsUrl = (params?: ItemsControllerGetItemsParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["filter","facets","sort"];
-
-    if (Array.isArray(value) && explodeParameters.includes(key)) {
-      value.forEach((v) => {
-        normalizedParams.append(key, v === null ? 'null' : String(v));
-      });
-      return;
-    }
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/items?${stringifiedParams}` : `/items`
-}
-
-/**
- * @summary Search items with filters, sorting, and facets
- */
-export const itemsControllerGetItems = async (params?: ItemsControllerGetItemsParams, options?: Parameters<typeof catalogFetch>[1]): Promise<SearchItemsResponseDtoOutput> => {
-
-  return catalogFetch<SearchItemsResponseDtoOutput>(getItemsControllerGetItemsUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
 
 export const getCatalogControllerGetItemsUrl = (params?: CatalogControllerGetItemsParams,) => {
   const normalizedParams = new URLSearchParams();

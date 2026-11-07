@@ -95,7 +95,6 @@ export const TopNpcsCard = ({
                   className="h-9"
                   imageClassName="max-h-9"
                   npc={{
-                    id: npc.npcId,
                     name: npc.npcName,
                     lvl: npc.npcLvl,
                     icon: npc.npcIcon,

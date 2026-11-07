@@ -5,26 +5,17 @@ import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import type { GameVersion } from "@lootlog/schema/game-version";
 import type { CatalogWriteFailure } from "#src/database/catalog-store";
 import { Effect, Schema } from "effect";
-import { groupBy, maxBy, partition, pick } from "es-toolkit";
-import type { Meilisearch } from "meilisearch";
-import { buildMeilisearchNameQuery } from "@lootlog/meilisearch/query-builder";
-import {
-  attemptMeilisearch,
-  type SearchOperationFailure,
-} from "@lootlog/meilisearch/operation-failure";
+import { groupBy, maxBy, partition } from "es-toolkit";
 import { changedEntries } from "#src/shared/changed-entries";
 import type { CatalogWrite } from "#src/items/items.service";
 import type { AppLogger } from "#src/shared/logger";
 import { getNpcType } from "@lootlog/domain/npc-type";
-import type { NpcSearchQuery } from "./npc-search-query.js";
-import { NPCS_INDEX } from "./search-index.js";
 import type {
   CatalogMonsterFormerLevel,
   CatalogMonsterLocation,
   CatalogMonsterLocations,
   CatalogNpcObservation,
 } from "@lootlog/protocol/rabbit/catalog";
-import type { NpcHit } from "./npc-hit.js";
 
 export type IndexNpcsCommand = {
   readonly npcs: ReadonlyArray<CatalogNpcObservation>;
@@ -178,21 +169,6 @@ export const currentRevisions = (
     },
   );
 
-const toNpcHit = (document: NpcEntry): NpcHit =>
-  pick(document, [
-    "id",
-    "identityNamespace",
-    "name",
-    "icon",
-    "lvl",
-    "wt",
-    "prof",
-    "type",
-    "margonemType",
-    "worlds",
-    "gameVersion",
-  ]);
-
 /** Whether `stored` comes from a later loot than `incoming`. */
 const isNewerObservation = (
   stored: Pick<NpcEntry, "observedLootId">,
@@ -240,39 +216,7 @@ export const mergeNpcDocuments = (
   return [...byUid.values()];
 };
 
-export const makeNpcsModule = (
-  meilisearch: Meilisearch,
-  write: CatalogWrite,
-  logger: AppLogger,
-) => {
-  const getNpcs = Effect.fn("CatalogNpcs.get")(function* ({
-    ids,
-    limit,
-    search,
-  }: NpcSearchQuery) {
-    const index = meilisearch.index<NpcEntry>(NPCS_INDEX);
-
-    const { searchTerm, query } = buildMeilisearchNameQuery({
-      ids,
-      limit,
-      search,
-    });
-
-    return yield* attemptMeilisearch("catalog.npcs", () =>
-      index.search(searchTerm, query),
-    ).pipe(
-      Effect.map((response) =>
-        (ids && ids.length > 0
-          ? response.hits
-          : collapseByNameAndType(response.hits)
-        ).map(toNpcHit),
-      ),
-      Effect.tapError((error) =>
-        Effect.sync(() => logger.error("NPC search error", { error })),
-      ),
-    );
-  });
-
+export const makeNpcsModule = (write: CatalogWrite, logger: AppLogger) => {
   const indexNpcs = Effect.fn("CatalogNpcs.index")(function* (
     data: IndexNpcsCommand,
   ) {
@@ -387,10 +331,7 @@ export const makeNpcsModule = (
     );
   });
 
-  return { getNpcs, indexNpcs, setLocations } satisfies {
-    readonly getNpcs: (
-      input: NpcSearchQuery,
-    ) => Effect.Effect<ReadonlyArray<NpcHit>, SearchOperationFailure>;
+  return { indexNpcs, setLocations } satisfies {
     readonly indexNpcs: (
       data: IndexNpcsCommand,
     ) => Effect.Effect<void, CatalogWriteFailure>;

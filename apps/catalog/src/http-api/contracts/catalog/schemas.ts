@@ -241,6 +241,10 @@ export const CatalogNpcDto_Output = Schema.Struct({
   name: Schema.String,
   icon: Schema.String,
   lvl: FiniteNumber,
+  prof: Schema.String.annotate({
+    description:
+      "The NPC's profession as Margonem writes it, such as `w`; empty for most monsters.",
+  }),
   type: NpcTypeSchema,
   gameVersion: GameVersionSchema,
   locations: Schema.Array(

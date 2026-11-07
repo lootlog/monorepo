@@ -85,7 +85,6 @@ export const EventParticipationConfirmationDialogContent = ({
                               {item.heroNpc.npcIcon ? (
                                 <NpcTile
                                   npc={{
-                                    id: undefined,
                                     name: item.heroNpc.npcName,
                                     icon: item.heroNpc.npcIcon,
                                   }}
@@ -170,7 +169,6 @@ export const EventParticipationConfirmationDialogContent = ({
                             {item.heroNpc.npcIcon ? (
                               <NpcTile
                                 npc={{
-                                  id: undefined,
                                   name: item.heroNpc.npcName,
                                   icon: item.heroNpc.npcIcon,
                                 }}
