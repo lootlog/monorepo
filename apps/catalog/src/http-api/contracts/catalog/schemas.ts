@@ -294,7 +294,12 @@ export const CatalogControllerGetNpcsQuery = Schema.Struct({
       description: "NPC ids, as `CatalogNpcDto_Output.id`.",
     }),
   ),
-  keys: Schema.optionalKey(Schema.Array(Schema.String)),
+  keys: Schema.optionalKey(
+    Schema.Array(Schema.String).annotate({
+      description:
+        "Catalog keys, as `CatalogNpcDto_Output.key`. A lookup by key ignores `search`.",
+    }),
+  ),
   types: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
   limit: Schema.optionalKey(FiniteNumber.annotate({ default: 24 })),
   offset: Schema.optionalKey(FiniteNumber.annotate({ default: 0 })),

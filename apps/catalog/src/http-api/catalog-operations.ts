@@ -8,6 +8,7 @@ import {
   type CatalogWriteFailure,
   makeCatalogStore,
 } from "#src/database/catalog-store";
+import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import { CatalogDatabase } from "#src/database/database";
 import type { IndexItemsCommand } from "#src/items/index-items-command";
 import type { ItemRevisionsCommand } from "#src/items/item-revisions-command";
@@ -37,6 +38,9 @@ import type {
   NpcHitDto_Output,
 } from "./contracts/npcs/schemas.js";
 
+/** Searches read Meilisearch; lookups and listings read the database. */
+type CatalogReadFailure = SearchOperationFailure | EffectDrizzleQueryError;
+
 export interface CatalogOperationsValue {
   readonly searchNpcs: (
     query: NpcsControllerGetNpcsQuery,
@@ -46,16 +50,16 @@ export interface CatalogOperationsValue {
   ) => Effect.Effect<SearchItemsResponseDto_Output, SearchOperationFailure>;
   readonly catalogItems: (
     query: CatalogControllerGetItemsQuery,
-  ) => Effect.Effect<CatalogItemsResponseDto_Output, SearchOperationFailure>;
+  ) => Effect.Effect<CatalogItemsResponseDto_Output, CatalogReadFailure>;
   readonly catalogNpcs: (
     query: CatalogControllerGetNpcsQuery,
-  ) => Effect.Effect<CatalogNpcsResponseDto_Output, SearchOperationFailure>;
+  ) => Effect.Effect<CatalogNpcsResponseDto_Output, CatalogReadFailure>;
   readonly catalogEvents: (
     query: CatalogControllerGetEventsQuery,
-  ) => Effect.Effect<CatalogEventsResponseDto_Output, SearchOperationFailure>;
+  ) => Effect.Effect<CatalogEventsResponseDto_Output, CatalogReadFailure>;
   readonly catalogIndex: (
     query: CatalogControllerGetIndexQuery,
-  ) => Effect.Effect<CatalogIndexResponseDto_Output, SearchOperationFailure>;
+  ) => Effect.Effect<CatalogIndexResponseDto_Output, CatalogReadFailure>;
   readonly indexItems: (
     data: IndexItemsCommand,
   ) => Effect.Effect<void, CatalogWriteFailure>;
@@ -88,14 +92,14 @@ export class CatalogOperations extends Context.Service<
         apiKey: Redacted.value(config.meilisearchApiKey),
       });
 
-      const { write } = makeCatalogStore<ItemEntry, NpcEntry>(
+      const { read, write } = makeCatalogStore<ItemEntry, NpcEntry>(
         database,
         meilisearch,
       );
 
       const items = makeItemsModule(meilisearch, write, effectLogger);
       const npcs = makeNpcsModule(meilisearch, write, effectLogger);
-      const catalog = makeCatalogModule(meilisearch, effectLogger);
+      const catalog = makeCatalogModule(meilisearch, read, effectLogger);
 
       yield* configureMeilisearchIndexes(
         meilisearch,

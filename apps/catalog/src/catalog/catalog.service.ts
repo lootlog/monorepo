@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { maxBy, orderBy, uniqBy } from "es-toolkit";
+import { maxBy, orderBy, pick, uniqBy } from "es-toolkit";
 import type { Meilisearch, MultiSearchParams, SearchParams } from "meilisearch";
 import { attemptMeilisearch } from "@lootlog/meilisearch/operation-failure";
 import { buildMeilisearchInFilter } from "@lootlog/meilisearch/query-builder";
@@ -25,6 +25,7 @@ import {
   upgradedAttackSpeed,
 } from "@lootlog/domain/item-upgrade";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
+import type { CatalogReads } from "#src/database/catalog-store";
 import type { AppLogger } from "#src/shared/logger";
 import type {
   CatalogControllerGetEventsQuery,
@@ -42,8 +43,8 @@ const MAX_LIMIT = 96;
 // Margonem item types are upper-case words, such as `ONE_HAND_WEAPON`.
 const ITEM_TYPE = /^[A-Z_]+$/;
 
-// Catalog keys are the search service's own: an edition, an optional
-// namespace and numeric ids, such as `pl_template_257636_2`.
+// Catalog keys are `npcCatalogKey`'s: an edition, an optional namespace and
+// numeric ids, such as `pl_template_257636_2`.
 const CATALOG_KEY = /^[a-z]{2}(?:_[a-z]+)?_\d+_\d+$/;
 
 // Event slugs are `itemEventSlug`'s: lower-case words joined by hyphens.
@@ -87,8 +88,16 @@ const page = (query: { limit?: number; offset?: number }) => ({
 const toDropRate = (rate: ItemDropRate | undefined) =>
   rate ? { drops: rate.drops, kills: rate.kills } : null;
 
-const sortBy = (sort: CatalogControllerGetItemsQuery["sort"]) =>
-  sort === undefined || sort === "relevance" ? undefined : [sort];
+/**
+ * An id the game gave to a later item names that item now: of the entries of
+ * one id, a lookup by id shows the latest seen, as the catalog index names it.
+ */
+const sortBy = ({ sort, ids }: CatalogControllerGetItemsQuery) =>
+  sort === undefined || sort === "relevance"
+    ? ids?.length
+      ? ["firstSeenAt:desc"]
+      : undefined
+    : [sort];
 
 /** The sorts that rank by the attack speed an item adds, and how they count it. */
 const ATTACK_SPEED_SORTS = new Map<
@@ -98,9 +107,6 @@ const ATTACK_SPEED_SORTS = new Map<
   ["attackSpeed:desc", (item) => itemStatAttackSpeed(item.stat)],
   ["upgradedAttackSpeed:desc", (item) => upgradedAttackSpeed(item)],
 ]);
-
-// How many documents the catalog index reads at a time.
-const INDEX_BATCH_SIZE = 5000;
 
 // The most hits one Meilisearch search returns, its `maxTotalHits`.
 const MAX_HITS = 1000;
@@ -173,19 +179,50 @@ const itemFilters = (
   ].filter((filter) => filter !== undefined);
 };
 
+const NPC_FIELDS = [
+  "uid",
+  "id",
+  "identityNamespace",
+  "name",
+  "icon",
+  "lvl",
+  "type",
+  "gameVersion",
+  "locations",
+  "formerLevels",
+  "current",
+  "monsterKey",
+] as const satisfies ReadonlyArray<keyof CatalogNpcDocument>;
+
+/** An NPC entry as the catalog lists it, under its catalog key. */
+const toCatalogNpc = ({
+  uid,
+  identityNamespace: _namespace,
+  current: _current,
+  monsterKey: _monsterKey,
+  locations,
+  formerLevels,
+  ...npc
+}: CatalogNpcDocument) => ({
+  ...npc,
+  key: uid,
+  locations: locations ?? [],
+  formerLevels: formerLevels ?? [],
+});
+
 export const makeCatalogModule = (
   meilisearch: Meilisearch,
+  reads: CatalogReads<CatalogNpcDocument>,
   logger: AppLogger,
 ) => {
-  /** The monster an NPC key belongs to; none for an entry indexed before. */
-  const findMonsterKey = (npcKey: string) =>
-    attemptMeilisearch("catalog.npcs.monster", () =>
-      meilisearch.index<{ monsterKey?: string }>(NPCS_INDEX).search("", {
-        filter: `uid = ${JSON.stringify(npcKey)}`,
-        limit: 1,
-        attributesToRetrieve: ["monsterKey"],
-      }),
-    ).pipe(Effect.map(({ hits }) => hits[0]?.monsterKey));
+  const logReadError =
+    (message: string) =>
+    <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+      effect.pipe(
+        Effect.tapError((error) =>
+          Effect.sync(() => logger.error(message, { error })),
+        ),
+      );
 
   /**
    * Items a world opened on `since` has: those of no event, and those of an
@@ -232,7 +269,9 @@ export const makeCatalogModule = (
     const monsterKey =
       query.droppedBy === undefined
         ? undefined
-        : yield* findMonsterKey(query.droppedBy);
+        : yield* reads
+            .monsterKeyOf(query.droppedBy)
+            .pipe(logReadError("Catalog monster error"));
 
     const availability =
       query.availableSince === undefined
@@ -295,10 +334,9 @@ export const makeCatalogModule = (
     const response = attackSpeed
       ? yield* Effect.all(
           [
-            search(
-              { offset: 0, limit: offset + limit, sort: sortBy(query.sort) },
-              ["elasticLevel != true"],
-            ),
+            search({ offset: 0, limit: offset + limit, sort: sortBy(query) }, [
+              "elasticLevel != true",
+            ]),
             search({ offset: 0, limit: MAX_HITS }, ["elasticLevel = true"]),
           ],
           { concurrency: "unbounded" },
@@ -339,7 +377,7 @@ export const makeCatalogModule = (
             };
           }),
         )
-      : yield* search({ offset, limit, sort: sortBy(query.sort) });
+      : yield* search({ offset, limit, sort: sortBy(query) });
 
     return {
       estimatedTotalHits: response.total,
@@ -376,21 +414,79 @@ export const makeCatalogModule = (
     } satisfies CatalogItemsResponseDto_Output;
   });
 
+  /** Strongest first keeps level-less objects at the end. */
+  const NPC_ORDER = ["lvl:desc", "name:asc"];
+
+  /**
+   * Monsters by catalog key, read from the database. An old link may name a
+   * monster's former identity; its current identity, under another id, shows
+   * the monster as it is now. A key names its entry exactly, so a lookup by
+   * key takes no search text.
+   */
+  const npcsByKeys = Effect.fn("Catalog.npcsByKeys")(function* (
+    keys: ReadonlyArray<string>,
+    query: CatalogControllerGetNpcsQuery,
+  ) {
+    const found = orderBy(
+      (yield* reads.npcsByUids(keys)).filter(
+        (npc) =>
+          (query.gameVersion === undefined ||
+            npc.gameVersion === query.gameVersion) &&
+          (!query.ids?.length || query.ids.includes(npc.id)) &&
+          (!query.types?.length || query.types.includes(npc.type)),
+      ),
+      [({ lvl }) => lvl, ({ name }) => name],
+      ["desc", "asc"],
+    );
+
+    const { limit, offset } = page(query);
+    const listed = found.slice(offset, offset + limit);
+
+    const superseded = [
+      ...new Set(
+        listed.flatMap(({ current, monsterKey }) =>
+          current === false ? [monsterKey] : [],
+        ),
+      ),
+    ];
+
+    const currentIdentities =
+      superseded.length === 0
+        ? []
+        : orderBy(
+            (yield* reads.npcsByMonsterKeys(superseded)).filter(
+              ({ current }) => current !== false,
+            ),
+            [({ lvl }) => lvl, ({ name }) => name],
+            ["desc", "asc"],
+          );
+
+    return {
+      estimatedTotalHits: found.length,
+      hits: collapseByNameAndType([...listed, ...currentIdentities]).map(
+        (npc) => toCatalogNpc(pick(npc, NPC_FIELDS)),
+      ),
+    } satisfies CatalogNpcsResponseDto_Output;
+  });
+
   const getNpcs = Effect.fn("Catalog.npcs")(function* (
     query: CatalogControllerGetNpcsQuery,
   ) {
-    const keys = query.keys?.filter((key) => CATALOG_KEY.test(key));
+    if (query.keys !== undefined) {
+      const keys = query.keys.filter((key) => CATALOG_KEY.test(key));
 
-    if (query.keys !== undefined && keys?.length === 0) {
-      return { hits: [], estimatedTotalHits: 0 };
+      return keys.length === 0
+        ? { hits: [], estimatedTotalHits: 0 }
+        : yield* npcsByKeys(keys, query).pipe(
+            logReadError("Catalog NPC keys error"),
+          );
     }
 
-    const lookup = Boolean(query.ids?.length || keys?.length);
+    const lookup = Boolean(query.ids?.length);
 
     const filters = [
       gameVersionFilter(query.gameVersion),
       query.ids?.length ? buildMeilisearchInFilter("id", query.ids) : undefined,
-      keys?.length ? buildMeilisearchInFilter("uid", keys) : undefined,
       // A listing shows each monster as it is now; a lookup also finds the
       // identities of its earlier versions. Entries indexed before the flag
       // existed have none and count as current.
@@ -402,29 +498,15 @@ export const makeCatalogModule = (
 
     const params: SearchParams = {
       ...page(query),
-      attributesToRetrieve: [
-        "uid",
-        "id",
-        "identityNamespace",
-        "name",
-        "icon",
-        "lvl",
-        "type",
-        "gameVersion",
-        "locations",
-        "formerLevels",
-        "current",
-        "monsterKey",
-      ],
+      attributesToRetrieve: [...NPC_FIELDS],
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
       // Pages and counts are over monsters, not over their catalog identities.
       // A lookup reads every identity it names, so the current one is chosen
       // below rather than the highest level.
       distinct: lookup ? undefined : "monsterKey",
       // Without a query Meilisearch returns documents in storage order; a
-      // query still ranks by relevance before this. Strongest first keeps
-      // level-less objects at the end.
-      sort: ["lvl:desc", "name:asc"],
+      // query still ranks by relevance before this.
+      sort: NPC_ORDER,
     };
 
     const search = (searchParams: SearchParams) =>
@@ -432,11 +514,7 @@ export const makeCatalogModule = (
         meilisearch
           .index<CatalogNpcDocument>(NPCS_INDEX)
           .search(query.search ?? "", searchParams),
-      ).pipe(
-        Effect.tapError((error) =>
-          Effect.sync(() => logger.error("Catalog NPCs error", { error })),
-        ),
-      );
+      ).pipe(logReadError("Catalog NPCs error"));
 
     const response = yield* search(params);
 
@@ -466,20 +544,7 @@ export const makeCatalogModule = (
     return {
       estimatedTotalHits: response.estimatedTotalHits ?? response.hits.length,
       hits: collapseByNameAndType([...response.hits, ...currentIdentities]).map(
-        ({
-          uid,
-          identityNamespace: _namespace,
-          current: _current,
-          monsterKey: _monsterKey,
-          locations,
-          formerLevels,
-          ...npc
-        }) => ({
-          ...npc,
-          key: uid,
-          locations: locations ?? [],
-          formerLevels: formerLevels ?? [],
-        }),
+        toCatalogNpc,
       ),
     } satisfies CatalogNpcsResponseDto_Output;
   });
@@ -566,78 +631,23 @@ export const makeCatalogModule = (
   });
 
   /**
-   * Every item and current NPC by id and name. Searches stop at Meilisearch's
-   * `maxTotalHits`, so the documents are read in batches instead.
+   * Every item and current NPC by id and name, read from the database: a
+   * search stops at Meilisearch's `maxTotalHits`.
    */
   const getIndex = Effect.fn("Catalog.index")(function* (
     query: CatalogControllerGetIndexQuery,
   ) {
-    const readAll = <Document extends Record<string, unknown>>(
-      index: string,
-      filter: string | undefined,
-      fields: Array<Extract<keyof Document, string>>,
-    ) =>
-      Effect.gen(function* () {
-        const documents: Document[] = [];
-
-        for (;;) {
-          const batch = yield* attemptMeilisearch("catalog.index", () =>
-            meilisearch.index<Document>(index).getDocuments({
-              filter,
-              fields,
-              limit: INDEX_BATCH_SIZE,
-              offset: documents.length,
-            }),
-          );
-
-          documents.push(...batch.results);
-
-          if (batch.results.length < INDEX_BATCH_SIZE) return documents;
-        }
-      });
-
-    const gameVersion = gameVersionFilter(query.gameVersion);
-
     const [items, npcs] = yield* Effect.all(
       [
-        readAll<Pick<CatalogItemDocument, "id" | "name">>(
-          ITEMS_INDEX,
-          gameVersion,
-          ["id", "name"],
-        ),
-        readAll<
-          Pick<
-            CatalogNpcDocument,
-            | "id"
-            | "name"
-            | "type"
-            | "gameVersion"
-            | "identityNamespace"
-            | "current"
-          >
-        >(
-          NPCS_INDEX,
-          [gameVersion, "current != false"]
-            .filter((filter) => filter !== undefined)
-            .join(" AND "),
-          ["id", "name", "type", "gameVersion", "identityNamespace", "current"],
-        ),
+        reads.itemNames(query.gameVersion),
+        reads.currentNpcNames(query.gameVersion),
       ],
       { concurrency: 2 },
-    ).pipe(
-      Effect.tapError((error) =>
-        Effect.sync(() => logger.error("Catalog index error", { error })),
-      ),
-    );
+    ).pipe(logReadError("Catalog index error"));
 
-    // An item id may have several versions; its page shows the first stored,
-    // as this reads them. One NPC id may name several monsters.
+    // One NPC id may name several monsters.
     return {
-      items: orderBy(
-        uniqBy(items, ({ id }) => id).map(({ id, name }) => ({ id, name })),
-        ["id"],
-        ["asc"],
-      ),
+      items,
       npcs: orderBy(
         uniqBy(
           collapseByNameAndType(npcs),
