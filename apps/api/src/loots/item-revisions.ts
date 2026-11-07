@@ -95,6 +95,39 @@ const statEntries = (stat: string) =>
       }),
   );
 
+/**
+ * The stats without `etiquette`, the events an item was last available
+ * during. The game writes it onto an event item when the event ends and adds
+ * a year each time it returns, which leaves the item itself as it was.
+ */
+const withoutEvents = (stat: string) =>
+  stat
+    .split(";")
+    .filter((entry) => !entry.startsWith("etiquette="))
+    .join(";");
+
+/**
+ * Revisions that differ only in their events as one revision, looted from
+ * the first loot of any of them to the last.
+ */
+const mergeEventRevisions = (
+  revisions: ReadonlyArray<LootedItemRevision>,
+): LootedItemRevision[] =>
+  Object.values(
+    groupBy(
+      revisions.map((revision) => ({
+        ...revision,
+        stat: withoutEvents(revision.stat),
+      })),
+      ({ name, icon, lvl, stat }) => JSON.stringify([name, icon, lvl, stat]),
+    ),
+  ).flatMap((same) => {
+    const first = minBy(same, ({ firstLootedAt }) => firstLootedAt.getTime());
+    const last = maxBy(same, ({ lastLootedAt }) => lastLootedAt.getTime());
+
+    return first && last ? [{ ...first, lastLootedAt: last.lastLootedAt }] : [];
+  });
+
 /** The stat keys, and `name` or `icon`, that differ between two revisions. */
 const changedFields = (
   before: LootedItemRevision,
@@ -199,7 +232,8 @@ const toRevision = ({ before, after, changedAfter, changedBy }: Change) => ({
 
 /**
  * Every item with more than one revision, with the changes the game made to
- * it, oldest first; an empty list clears what an earlier run published. An
+ * it, oldest first; an empty list clears what an earlier run published.
+ * Events an item was available during are not a change and are left out. An
  * elastic item's revisions differ by level as well, so only revisions of
  * one level are compared.
  */
@@ -210,7 +244,8 @@ export const toItemRevisionHistories = (
     groupBy(rows, ({ gameVersion, itemId }) =>
       JSON.stringify([gameVersion, itemId]),
     ),
-  ).flatMap((revisions) => {
+  ).flatMap((looted) => {
+    const revisions = mergeEventRevisions(looted);
     const [first] = revisions;
 
     if (!first) return [];

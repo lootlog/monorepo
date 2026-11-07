@@ -132,16 +132,16 @@ export const buildNpcChatMessagePayload = ({
 }: BuildNpcChatMessagePayloadOptions): SendChatMessageOptions | null => {
   const characterData = buildChatCharacterData();
 
-  // Chat NPC messages require a profession, which Hero Trackers lack.
-  if (!characterData || !npc.prof) return null;
+  if (!characterData) return null;
 
-  const payload: SendChatMessageOptions = {
+  // A Hero Tracker has no profession; chat omits it instead of an empty one.
+  const { prof, ...chatNpc } = buildNotificationNpcPayload(npc);
+
+  return {
     message,
     guildIds,
     type: messageType,
     characterData,
-    npc: { ...buildNotificationNpcPayload(npc), world },
+    npc: { ...chatNpc, ...(prof && { prof }), world },
   };
-
-  return payload;
 };

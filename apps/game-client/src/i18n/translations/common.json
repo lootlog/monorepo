@@ -72,6 +72,7 @@
   },
   "heroTracker": {
     "unclaimed": "Nikt go jeszcze nie odkrył",
+    "unclaimedShort": "Nieodkryty",
     "open": "Wejście otwarte: {{time}}",
     "closed": "Wejście zamknięte"
   },

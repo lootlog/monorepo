@@ -4,9 +4,12 @@ import type { ReactNode } from "react";
 export function InfoboxSection({
   title,
   children,
+  footer,
 }: {
   title: string;
   children: ReactNode;
+  /** What follows the rows, such as a link to more of them. */
+  footer?: ReactNode;
 }) {
   return (
     <section className="flex flex-col border-t border-border/50 pt-2 pb-1 first:border-t-0">
@@ -14,6 +17,7 @@ export function InfoboxSection({
         {title}
       </h3>
       <dl className="flex flex-col">{children}</dl>
+      {footer}
     </section>
   );
 }
