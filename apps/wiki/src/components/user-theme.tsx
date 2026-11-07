@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import {
   getUserThemesControllerGetThemesQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
@@ -42,9 +42,17 @@ export function UserTheme({ storedSelection }: UserThemeProps) {
     },
   });
 
-  // Signed out, the page keeps the theme it was last shown in.
+  // Signed out, the page keeps the theme it was last shown in, which may be
+  // one the preferences brought in after the server rendered the page.
+  const [shownSelection, setShownSelection] = useState(storedSelection);
+  const preferredSelection = preferences?.theme;
+
+  if (preferredSelection && preferredSelection !== shownSelection) {
+    setShownSelection(preferredSelection);
+  }
+
   const selection = resolveStoredSelection(
-    preferences?.theme ?? storedSelection,
+    preferredSelection ?? shownSelection,
   );
 
   const customThemeId = readCustomThemeId(selection);
