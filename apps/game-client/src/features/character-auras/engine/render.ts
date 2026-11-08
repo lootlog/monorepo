@@ -50,12 +50,7 @@ import { context2d, createCanvas, type AuraSilhouette } from "./silhouette";
 import { groundRadius, spawnFrame, type AuraPlacement } from "./placement";
 import { drawBurstScene } from "./bursts";
 import { drawGround } from "./ground";
-import {
-  ARRIVAL_BURST,
-  drawArrival,
-  eventDarkness,
-  pulseStarted,
-} from "./arrival";
+import { ARRIVAL_BURST, eventStrength, pulseStarted } from "./arrival";
 import { avatarTop, drawAvatar } from "./avatar";
 import { drawStorm, STORM_GLOOM } from "./storm";
 import {
@@ -317,20 +312,14 @@ export class Aura {
     if (this.preset.herald) this.nextBurst = ARRIVAL_BURST;
   }
 
-  /**
-   * How dark the aura makes the whole map now, 0..1: an admin's arrival and pulses, the
-   * storm's overcast; 0 for every other aura.
-   */
+  /** How dark the aura makes the whole map, 0..1: the storm's overcast; 0 for every other aura. */
   mapDarkness(): number {
-    const p = this.preset;
-    const event = p.herald ? eventDarkness(this.age) : 0;
-
-    return Math.max(event, p.storm ? STORM_GLOOM : 0);
+    return this.preset.storm ? STORM_GLOOM : 0;
   }
 
   /**
    * Draws the aura's effects over the whole map, `width` × `height` in the context's units:
-   * the storm, the arrival's night with the admin lit.
+   * the storm.
    */
   drawMapEffects(
     ctx: CanvasRenderingContext2D,
@@ -340,7 +329,7 @@ export class Aura {
   ): void {
     const p = this.preset;
 
-    if (!place.ground || !(p.herald || p.storm)) return;
+    if (!place.ground || !p.storm) return;
     const [light, mid] = this.rgb.tones;
     ctx.save();
 
@@ -355,10 +344,6 @@ export class Aura {
           light,
           mid,
         );
-
-      if (p.herald) {
-        drawArrival(ctx, place, this.age, width, height);
-      }
     } finally {
       ctx.restore();
     }
@@ -369,7 +354,7 @@ export class Aura {
     const burst =
       this.burst >= 0 ? Math.sin(Math.PI * clamp(this.burst, 0, 1)) : 0;
 
-    return Math.max(eventDarkness(this.age), burst);
+    return Math.max(eventStrength(this.age), burst);
   }
 
   /** How far above its box the aura paints at `place`: the admin's giant at full height. */

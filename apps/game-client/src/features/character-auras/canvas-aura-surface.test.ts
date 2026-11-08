@@ -6,7 +6,7 @@ import { canvasAuraRenderer } from "./canvas-aura-surface";
 
 const DRAW_EVENT = "call-draw-add-to-renderer";
 
-/** The game's highest draw order when it reports none; the arrival draws above it. */
+/** The game's highest draw order when it reports none; the storm draws above it. */
 const ABOVE_EVERYTHING = 11;
 
 /**
@@ -143,17 +143,12 @@ it("draws only the auras nearest the hero while others are limited, and all agai
   expect(game.characterOrders()).toEqual([1, 2, 3, 4]);
 });
 
-it("darkens the whole map above everything when an admin arrives, and lets the light back", () => {
+it("keeps the map lit when an admin arrives and darkens it only under the storm", () => {
   let now = 0;
   vi.spyOn(performance, "now").mockImplementation(() => now);
   const game = setGame({ "7": 400 });
   const { context } = game.canvas.create(800, 600);
-  canvasAuraRenderer.setTargets(
-    new Map([
-      ["7", "eclipse"],
-      ["8", "frost"],
-    ]),
-  );
+  canvasAuraRenderer.setTargets(new Map([["7", "eclipse"]]));
 
   const playFor = (seconds: number) => {
     for (let t = 0; t < seconds; t += 0.1) {
@@ -164,12 +159,13 @@ it("darkens the whole map above everything when an admin arrives, and lets the l
 
   playFor(1);
 
-  expect(game.drawnOrders()).toContain(ABOVE_EVERYTHING);
-
-  playFor(3);
-
   expect(game.drawnOrders()).not.toContain(ABOVE_EVERYTHING);
-  expect(game.characterOrders()).toEqual([7, 8]);
+  expect(game.characterOrders()).toEqual([7]);
+
+  canvasAuraRenderer.setTargets(new Map([["7", "thunderlord"]]));
+  playFor(1);
+
+  expect(game.drawnOrders()).toContain(ABOVE_EVERYTHING);
 });
 
 it("spreads new silhouettes over frames and keeps a walker's aura shown while its next one waits", () => {
