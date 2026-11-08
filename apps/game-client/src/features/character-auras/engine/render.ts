@@ -51,6 +51,7 @@ import { groundRadius, spawnFrame, type AuraPlacement } from "./placement";
 import { drawBurstScene } from "./bursts";
 import { drawGround } from "./ground";
 import {
+  drawEclipse,
   drawMoon,
   drawOrbits,
   drawRays,
@@ -538,6 +539,8 @@ export class Aura {
 
       if (p.fx.includes("moon")) drawMoon(b, place, p.pulse(this.time));
 
+      if (p.fx.includes("eclipse")) drawEclipse(b, place, p.pulse(this.time));
+
       if (p.fx.includes("flicker-tongues"))
         drawTongues(b, place, this.burstSwell("eruption"));
 
@@ -698,6 +701,9 @@ export class Aura {
     if (fx.includes("crown") && front) drawCrown(b, place, raised, step);
 
     if (fx.includes("wings") && !front) drawWings(b, place, step);
+
+    if (fx.includes("feather-wings") && !front)
+      drawWings(b, place, step, b.tones[2]);
   }
 
   /** Copies a side's buffers to the screen: body ones follow the character, world ones the camera. */

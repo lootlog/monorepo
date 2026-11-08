@@ -168,7 +168,12 @@
       "crown": "Królewski majestat",
       "wings": "Skrzydła cienia",
       "hearts": "Zakochane serce",
-      "heavenly": "Smok Niebios"
+      "heavenly": "Smok Niebios",
+      "sovereign": "Władca",
+      "seraph": "Serafin",
+      "eclipse": "Zaćmienie",
+      "thunderlord": "Gromowładca",
+      "phoenix": "Feniks"
     },
     "grants": {
       "grant": "Nadaj aurę",
