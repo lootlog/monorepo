@@ -19170,6 +19170,11 @@ components:
             - aurora
             - conqueror
             - heavenly
+            - halo
+            - dragon
+            - crown
+            - wings
+            - hearts
         canChange:
           type: boolean
         canGrant:
@@ -19209,6 +19214,11 @@ components:
             - aurora
             - conqueror
             - heavenly
+            - halo
+            - dragon
+            - crown
+            - wings
+            - hearts
       required:
         - auraId
       additionalProperties: false
@@ -19248,6 +19258,11 @@ components:
             - aurora
             - conqueror
             - heavenly
+            - halo
+            - dragon
+            - crown
+            - wings
+            - hearts
       required:
         - gameAccountId
         - auraId
@@ -35751,6 +35766,11 @@ components:
                 - aurora
                 - conqueror
                 - heavenly
+                - halo
+                - dragon
+                - crown
+                - wings
+                - hearts
             canChange:
               type: boolean
             canGrant:

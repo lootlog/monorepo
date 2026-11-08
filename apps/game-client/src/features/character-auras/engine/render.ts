@@ -52,7 +52,11 @@ import {
   drawMoon,
   drawOrbits,
   drawRays,
+  drawCrown,
+  drawFireDragon,
+  drawHalo,
   drawShards,
+  drawWings,
   drawTongues,
   orbitHeads,
 } from "./signatures";
@@ -75,6 +79,12 @@ const MARGIN = 28;
 const ALPHA_LEVELS = 4;
 
 const COLOR_LEVELS = 7;
+
+/**
+ * How often a lite aura's body pieces, outline and inner light step, s, instead of every
+ * tick; particles still move every tick.
+ */
+const LITE_STEP = 0.2;
 
 /** The black core of a conqueror's bolt. */
 const HAKI_CORE: Rgb = [14, 0, 4];
@@ -166,9 +176,17 @@ function createLayer(): Layer {
 interface Snapshot {
   key: string;
   box: Box;
-  /** The character's and the camera's screen position when it was rendered. */
+  /**
+   * What the body buffers were last rendered for: the tick for most auras, a coarser step
+   * for lite ones (`AuraPreset.lite`), whose body buffers outlive ticks.
+   */
+  bodyKey: string;
+  bodySilhouette: AuraSilhouette | null;
+  bodyBox: Box;
+  /** The character's screen position when the body buffers were rendered. */
   x: number;
   y: number;
+  /** The camera's screen position when the world buffers were rendered. */
   viewX: number;
   viewY: number;
   bodyLit: Layer;
@@ -181,6 +199,9 @@ function createSnapshot(): Snapshot {
   return {
     key: "",
     box: { ox: 0, oy: 0, w: 0, h: 0 },
+    bodyKey: "",
+    bodySilhouette: null,
+    bodyBox: { ox: 0, oy: 0, w: 0, h: 0 },
     x: 0,
     y: 0,
     viewX: 0,
@@ -266,6 +287,8 @@ export class Aura {
     this.burst = -1;
     this.back.key = "";
     this.front.key = "";
+    this.back.bodyKey = "";
+    this.front.bodyKey = "";
     this.outline.key = "";
     this.inner.key = "";
   }
@@ -490,6 +513,8 @@ export class Aura {
       if (place.ground && p.ground)
         drawGround(b, place, p.ground, p.pulse(this.time), this.flash);
 
+      if (place.ground) this.drawLitePieces(b, place, false);
+
       if (p.fx.includes("rays")) drawRays(b, place);
 
       if (p.fx.includes("moon")) drawMoon(b, place, p.pulse(this.time));
@@ -510,7 +535,9 @@ export class Aura {
 
     try {
       this.blit(ctx, this.back, place, "dim");
-      this.drawOutline(ctx, place, glow);
+
+      if (!(p.bare && place.ground))
+        this.drawOutline(ctx, place, glow, this.compositeKey(intensity));
       this.blit(ctx, this.back, place, "lit");
     } finally {
       ctx.restore();
@@ -528,6 +555,8 @@ export class Aura {
     this.snapshot(this.front, place, true, intensity, () => {
       const b = this.brush(intensity);
 
+      if (place.ground) this.drawLitePieces(b, place, true);
+
       if (p.fx.includes("frost-shards") && place.ground)
         drawShards(b, place, true, this.burstSwell("freeze"));
 
@@ -541,7 +570,8 @@ export class Aura {
     ctx.save();
 
     try {
-      if (place.ground) this.drawInner(ctx, place, glow);
+      if (place.ground)
+        this.drawInner(ctx, place, glow, this.compositeKey(intensity));
       this.blit(ctx, this.front, place, "dim");
       this.blit(ctx, this.front, place, "lit");
     } finally {
@@ -552,6 +582,7 @@ export class Aura {
   /**
    * Renders a side's buffers once per tick: the body pieces through `body`, then the
    * particles. The animation only changes on ticks, so other frames just move the buffers.
+   * A lite aura's body buffers are kept across ticks while nothing in them changes.
    */
   private snapshot(
     snap: Snapshot,
@@ -566,13 +597,28 @@ export class Aura {
     if (snap.key === key) return;
     snap.key = key;
     snap.box = box;
-    snap.x = Math.round(place.x);
-    snap.y = Math.round(place.y);
+    const bodyKey = this.bodyKey(place, box, key, intensity);
+
+    if (snap.bodyKey !== bodyKey || snap.bodySilhouette !== place.silhouette) {
+      snap.bodyKey = bodyKey;
+      snap.bodySilhouette = place.silhouette;
+      snap.bodyBox = box;
+      snap.x = Math.round(place.x);
+      snap.y = Math.round(place.y);
+      this.prepare(snap.bodyLit, snap.bodyDim, box);
+
+      // Lite body pieces are pixels only, so they skip the pixel finish.
+      if (this.preset.lite) {
+        snap.bodyLit.soft = false;
+        snap.bodyDim.soft = false;
+      }
+
+      body();
+      this.finish(snap.bodyLit, snap.bodyDim, box);
+    }
+
     snap.viewX = Math.round(place.viewX);
     snap.viewY = Math.round(place.viewY);
-    this.prepare(snap.bodyLit, snap.bodyDim, box);
-    body();
-    this.finish(snap.bodyLit, snap.bodyDim, box);
     this.prepare(snap.worldLit, snap.worldDim, box);
     // Particles are plotted pixel by pixel; only smoke, wisps and firefly glows are soft.
     snap.worldLit.soft = false;
@@ -580,6 +626,59 @@ export class Aura {
     this.drawParticles(place, front);
     this.drawDragonWorld(place, front, intensity);
     this.finish(snap.worldLit, snap.worldDim, box);
+  }
+
+  /**
+   * What a side's body buffers depend on: the tick `key` for most auras; for a lite one round
+   * a character, its size, intensity and coarse step, unless a burst or flash is changing it.
+   */
+  private bodyKey(
+    place: AuraPlacement,
+    box: Box,
+    key: string,
+    intensity: number,
+  ): string {
+    const steady = this.steadyKey(intensity);
+
+    if (!steady || !place.ground) return key;
+
+    return `lite|${box.w}x${box.h}|${steady}`;
+  }
+
+  /** What the outline and inner light composites are rebuilt for: the tick, or a lite step. */
+  private compositeKey(intensity: number): string {
+    return this.steadyKey(intensity) ?? String(this.tick);
+  }
+
+  /**
+   * A lite aura's coarse animation step while no burst or flash is changing it, with the
+   * intensity it was drawn at; null when it has to be drawn every tick.
+   */
+  private steadyKey(intensity: number): string | null {
+    if (!this.preset.lite || this.burst >= 0 || this.flash > 0) return null;
+
+    return `${intensity}|${this.liteStep()}`;
+  }
+
+  /** The coarse step a lite aura's body pieces animate by. */
+  private liteStep(): number {
+    return Math.floor(this.time / LITE_STEP);
+  }
+
+  /** The lite auras' pieces round a character, stepped by `liteStep`; `front` picks the pass. */
+  private drawLitePieces(b: Brush, place: AuraPlacement, front: boolean): void {
+    const fx = this.preset.fx;
+    const step = this.liteStep();
+    // Floating pieces bob a pixel up and down, four steps each way.
+    const raised = Math.floor(step / 4) % 2 === 1;
+
+    if (fx.includes("halo")) drawHalo(b, place, front, raised);
+
+    if (fx.includes("fire-dragon")) drawFireDragon(b, place, front, step);
+
+    if (fx.includes("crown") && front) drawCrown(b, place, raised, step);
+
+    if (fx.includes("wings") && !front) drawWings(b, place, step);
   }
 
   /** Copies a side's buffers to the screen: body ones follow the character, world ones the camera. */
@@ -598,7 +697,7 @@ export class Aura {
     blitLayer(
       ctx,
       which === "lit" ? snap.bodyLit : snap.bodyDim,
-      snap.box,
+      snap.bodyBox,
       mode,
       bodyX,
       bodyY,
@@ -679,6 +778,7 @@ export class Aura {
     ctx: CanvasRenderingContext2D,
     place: AuraPlacement,
     glow: number,
+    key: string,
   ): void {
     const { silhouette } = place;
     const p = this.preset;
@@ -705,7 +805,7 @@ export class Aura {
       // The flash adds white over the inner band (the prism's own rainbow on the prism).
       const flashColors = prism ? (bandColors[0] ?? []) : [WHITE];
 
-      const composite = this.composite(this.outline, silhouette, (octx) =>
+      const composite = this.composite(this.outline, silhouette, key, (octx) =>
         this.paintPixels(octx, this.outline, (data, width, height) => {
           for (let n = 0; n < outline.length; n++) {
             const b = band[n] ?? 0;
@@ -773,6 +873,7 @@ export class Aura {
     ctx: CanvasRenderingContext2D,
     place: AuraPlacement,
     glow: number,
+    key: string,
   ): void {
     const alpha = Math.min(0.5, this.preset.inner * glow);
 
@@ -784,35 +885,39 @@ export class Aura {
       ? this.rainbowStops(0)
       : [this.rgb.tones[0]];
 
-    const composite = this.composite(this.inner, place.silhouette, (octx) => {
-      if (!pixels) {
-        this.paintMask(octx, place.silhouette.sil, this.rgb.tones[0], alpha);
+    const composite = this.composite(
+      this.inner,
+      place.silhouette,
+      key,
+      (octx) => {
+        if (!pixels) {
+          this.paintMask(octx, place.silhouette.sil, this.rgb.tones[0], alpha);
 
-        return;
-      }
-
-      const { body, bodyAlpha } = pixels;
-      this.paintPixels(octx, this.inner, (data, width, height) => {
-        for (let n = 0; n < body.length; n++) {
-          const i = body[n] ?? 0;
-          const a = (alpha * (bodyAlpha[n] ?? 0)) / 255;
-          writePixel(data, i, colorAt(colors, i, width, height), a);
+          return;
         }
-      });
-    });
+
+        const { body, bodyAlpha } = pixels;
+        this.paintPixels(octx, this.inner, (data, width, height) => {
+          for (let n = 0; n < body.length; n++) {
+            const i = body[n] ?? 0;
+            const a = (alpha * (bodyAlpha[n] ?? 0)) / 255;
+            writePixel(data, i, colorAt(colors, i, width, height), a);
+          }
+        });
+      },
+    );
 
     ctx.globalCompositeOperation = "lighter";
     this.blitComposite(ctx, place, composite);
   }
 
-  /** Rebuilds `composite` for this tick and silhouette when stale, via `paint` on a cleared canvas. */
+  /** Rebuilds `composite` for `key` and the silhouette when stale, via `paint` on a cleared canvas. */
   private composite(
     composite: Composite,
     silhouette: AuraSilhouette,
+    key: string,
     paint: (ctx: CanvasRenderingContext2D) => void,
   ): HTMLCanvasElement {
-    const key = String(this.tick);
-
     if (composite.silhouette === silhouette && composite.key === key)
       return composite.canvas;
     composite.silhouette = silhouette;
