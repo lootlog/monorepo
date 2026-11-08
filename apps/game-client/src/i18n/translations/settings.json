@@ -173,7 +173,11 @@
       "seraph": "Serafin",
       "eclipse": "Zaćmienie",
       "thunderlord": "Gromowładca",
-      "phoenix": "Feniks"
+      "phoenix": "Feniks",
+      "emperor": "Cesarz",
+      "quake": "Wstrząs",
+      "starlight": "Gwiazdozbiór",
+      "seal": "Złota pieczęć"
     },
     "grants": {
       "grant": "Nadaj aurę",

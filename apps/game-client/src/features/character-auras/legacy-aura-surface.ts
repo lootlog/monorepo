@@ -7,6 +7,7 @@ import {
   CharacterAuraRenderer,
   type AuraPaint,
   type CharacterAuraSurface,
+  type ShownArrival,
 } from "./character-aura-renderer";
 import { auraScreenBox } from "./engine/render";
 
@@ -14,6 +15,8 @@ import { auraScreenBox } from "./engine/render";
 const MAP_CAMERA = [0, 0] as const;
 
 const shownLayers = new Map<string, LegacyAuraLayers>();
+
+const veil = legacyAuraRuntimeAdapter.createVeil();
 
 function paintLayer(
   layer: HTMLCanvasElement,
@@ -28,6 +31,16 @@ function paintLayer(
   context.clearRect(0, 0, layer.width, layer.height);
   context.setTransform(1, 0, 0, 1, -x, -y);
   paint(context);
+}
+
+/** The night of an admin's arrival with a tall circle of light on them, in map pixels. */
+function arrivalBackground({ place, darkness }: ShownArrival): string {
+  const { bounds } = place.silhouette;
+  const x = Math.round(place.x + bounds.x + bounds.w / 2);
+  const y = Math.round(place.y + bounds.y + bounds.h * 0.45);
+  const alpha = (0.8 * darkness).toFixed(2);
+
+  return `radial-gradient(ellipse 110px 210px at ${x}px ${y}px, rgba(4,2,10,0) 19%, rgba(4,2,10,${alpha}) 100%)`;
 }
 
 /**
@@ -81,6 +94,17 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
     if (!layers) return;
     shownLayers.delete(key);
     legacyAuraRuntimeAdapter.removeLayers(layers);
+  },
+
+  // SI darkens the map round the admin with a CSS gradient; the shockwave is NI's.
+  presentArrival(arrival) {
+    if (!arrival) {
+      veil.remove();
+
+      return;
+    }
+
+    legacyAuraRuntimeAdapter.placeVeil(veil, arrivalBackground(arrival));
   },
 };
 

@@ -19180,6 +19180,10 @@ components:
             - eclipse
             - thunderlord
             - phoenix
+            - emperor
+            - quake
+            - starlight
+            - seal
         canChange:
           type: boolean
         canGrant:
@@ -19229,6 +19233,10 @@ components:
             - eclipse
             - thunderlord
             - phoenix
+            - emperor
+            - quake
+            - starlight
+            - seal
       required:
         - auraId
       additionalProperties: false
@@ -19278,6 +19286,10 @@ components:
             - eclipse
             - thunderlord
             - phoenix
+            - emperor
+            - quake
+            - starlight
+            - seal
       required:
         - gameAccountId
         - auraId
@@ -35791,6 +35803,10 @@ components:
                 - eclipse
                 - thunderlord
                 - phoenix
+                - emperor
+                - quake
+                - starlight
+                - seal
             canChange:
               type: boolean
             canGrant:

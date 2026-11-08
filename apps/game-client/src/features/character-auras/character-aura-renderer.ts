@@ -38,6 +38,18 @@ export type ShownAura<C extends RuntimeAuraCharacter> = {
   front: AuraPaint;
 };
 
+/**
+ * An aura's effects over the whole map (an admin's arrival, a storm): where its character
+ * is, how dark the map gets and how to paint it.
+ */
+export type ShownArrival = {
+  place: AuraPlacement;
+  /** 0..1. */
+  darkness: number;
+  /** Paints the arrival over the whole map into a context whose origin is the screen's. */
+  paint: AuraPaint;
+};
+
 /** Where auras are drawn: the NI canvas or the SI map elements. */
 export interface CharacterAuraSurface<C extends RuntimeAuraCharacter> {
   /** The current map, or null while it is not drawn. */
@@ -56,6 +68,8 @@ export interface CharacterAuraSurface<C extends RuntimeAuraCharacter> {
   present(key: string, shown: ShownAura<C> | null): void;
   /** Forgets everything shown for `key`. */
   release(key: string): void;
+  /** Shows an aura's effects over the whole map this frame, or hides them when null. */
+  presentArrival(arrival: ShownArrival | null): void;
 }
 
 type DrawnAura = {
@@ -63,6 +77,7 @@ type DrawnAura = {
   place: AuraPlacement | null;
   back: AuraPaint;
   front: AuraPaint;
+  arrival: AuraPaint;
 };
 
 /**
@@ -187,6 +202,22 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     for (const [key, auraId] of shown) {
       this.guard(key, () => this.drawTarget(key, auraId, view, dt));
     }
+
+    this.surface.presentArrival(this.darkestArrival());
+  }
+
+  /** The aura darkening the whole map most this frame, if one does. */
+  private darkestArrival(): ShownArrival | null {
+    let darkest: ShownArrival | null = null;
+
+    for (const drawn of this.drawn.values()) {
+      const darkness = drawn.aura.mapDarkness();
+
+      if (!drawn.place || darkness <= (darkest?.darkness ?? 0)) continue;
+      darkest = { place: drawn.place, darkness, paint: drawn.arrival };
+    }
+
+    return darkest;
   }
 
   /**
@@ -329,6 +360,23 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
               drawn.aura.drawFront(context, drawn.place, 1);
           },
           `${key}:front`,
+        ),
+      // The context's transform scales by the game's zoom.
+      arrival: (context) =>
+        this.guard(
+          key,
+          () => {
+            const { a: scaleX, d: scaleY } = context.getTransform();
+
+            if (drawn.place)
+              drawn.aura.drawMapEffects(
+                context,
+                drawn.place,
+                context.canvas.width / scaleX,
+                context.canvas.height / scaleY,
+              );
+          },
+          `${key}:arrival`,
         ),
     };
 
