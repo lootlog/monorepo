@@ -7,6 +7,7 @@ import {
 } from "@lootlog/client/main";
 import {
   CHARACTER_AURA_IDS,
+  isAdminCharacterAuraId,
   type CharacterAuraId,
 } from "@lootlog/schema/character-aura";
 import type { SettingsChoiceOption } from "@/components/settings/settings-choice-card";
@@ -46,11 +47,15 @@ export const CharacterAuraSettings = () => {
 
   const options: SettingsChoiceOption<AuraChoice>[] = [
     { value: NO_AURA, title: t("settings.characterAura.none") },
-    ...CHARACTER_AURA_IDS.map((id) => ({
+    // Admin auras are offered to admins, and to anyone still wearing one.
+    ...CHARACTER_AURA_IDS.filter(
+      (id) =>
+        !isAdminCharacterAuraId(id) || own?.canGrant || own?.auraId === id,
+    ).map((id) => ({
       value: id,
       title: t(`settings.characterAura.auras.${id}`),
       // Removing an aura stays possible after access to choosing one ends.
-      disabled: !own?.canChange,
+      disabled: isAdminCharacterAuraId(id) ? !own?.canGrant : !own?.canChange,
     })),
   ];
 

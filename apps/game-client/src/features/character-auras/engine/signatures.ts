@@ -114,6 +114,67 @@ export function drawMoon(b: Brush, place: AuraPlacement, beat: number): void {
   );
 }
 
+/**
+ * Eclipse: a black sun behind the head, its corona of short flickering rays and a bright
+ * "diamond ring" glint running round its rim.
+ */
+export function drawEclipse(
+  b: Brush,
+  place: AuraPlacement,
+  beat: number,
+): void {
+  const intensity = b.intensity;
+  const { head, bounds } = place.silhouette;
+  const [light, mid] = b.tones;
+  const r = Math.round(clamp(bounds.w * 0.5, 9, 14) * (place.ground ? 1 : 0.9));
+  // Characters: risen above and behind the head, so the head hides only its lower edge.
+  const lag = place.ground ? b.lag : { x: 0, y: 0 };
+  const x = Math.round(place.x + head.x + lag.x * 1.3);
+
+  const y = Math.round(
+    place.y + head.y - (place.ground ? r * 0.55 : 0) + lag.y,
+  );
+
+  softEllipse(b.lit(), x, y, r * 2.4, r * 2.4, mid, 0.3 * intensity * beat);
+
+  // The corona: rays of uneven length, turning slowly.
+  const lit = b.lit();
+  const count = 20;
+  const turn = b.time * 0.12;
+
+  for (let i = 0; i < count; i++) {
+    const angle = turn + (i / count) * TAU;
+    const flicker = 0.6 + 0.4 * noise1(b.time * 1.4 + i * 2.7, 31);
+    const to = r + 2 + (i % 2 === 0 ? 7 : 4) * flicker;
+    pixelLine(
+      lit,
+      x + Math.cos(angle) * (r + 1),
+      y + Math.sin(angle) * (r + 1),
+      x + Math.cos(angle) * to,
+      y + Math.sin(angle) * to,
+      i % 2 === 0 ? light : mid,
+      0.75 * intensity * flicker * beat,
+      0.05,
+    );
+  }
+
+  const dim = b.dim();
+  dim.fillStyle = rgba([6, 4, 8], 0.98 * intensity);
+  pixelDisc(dim, x, y, r);
+  pixelEllipse(lit, x, y, r, r, light, 0.95 * intensity, 0, 1);
+
+  const ring = b.time * 0.7;
+  pixelGlint(
+    lit,
+    Math.round(x + Math.cos(ring) * r),
+    Math.round(y + Math.sin(ring) * r),
+    2,
+    [255, 255, 255],
+    light,
+    intensity,
+  );
+}
+
 /** Hellfire: flame tongues licking up from the outline, each on its own flicker. */
 export function drawTongues(
   b: Brush,
@@ -411,22 +472,33 @@ export function drawCrown(
     pixelGlint(lit, x + glint * 4, y, 1, [255, 255, 255], light, a * 0.9);
 }
 
+/** Wings of shadow: the feathers hanging off the leading edge. */
+const SHADOW_FEATHERS: Rgb = [16, 22, 26];
+
 /**
- * Wings of shadow: two dark wings spread from the shoulders behind the character, their
- * leading edges lit, raised and lowered every few lite `step`s. Pixels only.
+ * Wings: two wings spread from the shoulders behind the character, their leading edges lit,
+ * raised and lowered every few lite `step`s. Without `feathers` they are dark wings of
+ * shadow; with them, full wings of that colour, feathered densely. Pixels only.
  */
-export function drawWings(b: Brush, place: AuraPlacement, step: number): void {
+export function drawWings(
+  b: Brush,
+  place: AuraPlacement,
+  step: number,
+  feathers?: Rgb,
+): void {
   const { bounds } = place.silhouette;
   const [light, mid] = b.tones;
   const a = b.intensity;
   const dim = b.dim();
   const lit = b.lit();
+  const full = feathers !== undefined;
+  const color = feathers ?? SHADOW_FEATHERS;
+  const count = full ? 8 : 4;
   const cx = place.x + bounds.x + bounds.w / 2;
   const sy = place.y + bounds.y + Math.round(bounds.h * 0.28);
   const span = Math.round(clamp(bounds.w * 0.8 + 8, 16, 28));
   // Four poses: up, mid, down, mid.
   const lift = [-4, 0, 4, 0][Math.floor(step / 3) % 4] ?? 0;
-  const shadow: Rgb = [16, 22, 26];
 
   for (const side of [-1, 1]) {
     const rootX = cx + side * 3;
@@ -434,17 +506,32 @@ export function drawWings(b: Brush, place: AuraPlacement, step: number): void {
     const tipY = sy - 10 + lift;
 
     // Feathers hanging from the leading edge, the outer ones longest.
-    for (let f = 1; f <= 4; f++) {
-      const k = f / 4;
+    for (let f = 1; f <= count; f++) {
+      const k = f / count;
       const px = rootX + (tipX - rootX) * k;
       const py = sy + (tipY - sy) * k;
-      const endX = px + side * f * 0.7;
-      const endY = py + 4 + f * 2.5;
-      pixelLine(dim, px, py, endX, endY, shadow, a * 0.9, a * 0.9);
-      plot(lit, endX, endY, f > 2 ? mid : light, a * 0.7);
+      const endX = px + side * k * 2.8;
+      const endY = py + 4 + k * 10;
+      pixelLine(dim, px, py, endX, endY, color, a * 0.9, a * 0.9);
+
+      if (full)
+        pixelLine(
+          dim,
+          px - side,
+          py + 1,
+          endX - side,
+          endY,
+          color,
+          a * 0.8,
+          a * 0.8,
+        );
+      plot(lit, endX, endY, k > 0.5 ? mid : light, a * 0.7);
     }
 
     pixelLine(lit, rootX, sy, tipX, tipY, mid, a, a * 0.8);
+
+    if (full)
+      pixelLine(lit, rootX, sy - 1, tipX, tipY - 1, light, a * 0.8, a * 0.6);
     plot(lit, tipX, tipY, light, a);
   }
 }

@@ -28,11 +28,34 @@ export const CHARACTER_AURA_IDS = [
   "crown",
   "wings",
   "hearts",
+  "sovereign",
+  "seraph",
+  "eclipse",
+  "thunderlord",
+  "phoenix",
 ] as const;
 
 export const CharacterAuraIdSchema = Schema.Literals(CHARACTER_AURA_IDS);
 
 export type CharacterAuraId = typeof CharacterAuraIdSchema.Type;
+
+/**
+ * Auras only Lootlog admins may wear; a granted User chooses among the rest.
+ */
+export const ADMIN_CHARACTER_AURA_IDS = [
+  "sovereign",
+  "seraph",
+  "eclipse",
+  "thunderlord",
+  "phoenix",
+] as const satisfies ReadonlyArray<CharacterAuraId>;
+
+const adminCharacterAuraIds: ReadonlySet<string> = new Set(
+  ADMIN_CHARACTER_AURA_IDS,
+);
+
+export const isAdminCharacterAuraId = (id: CharacterAuraId): boolean =>
+  adminCharacterAuraIds.has(id);
 
 /**
  * Which auras a device draws on the map: all of them, the hero's and the few

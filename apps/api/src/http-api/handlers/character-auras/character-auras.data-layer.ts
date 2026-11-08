@@ -2,6 +2,7 @@ import { asc, eq, inArray, isNotNull, or } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
 import {
   CharacterAuraIdSchema,
+  isAdminCharacterAuraId,
   type CharacterAuraId,
   type CharacterAurasChanged,
 } from "@lootlog/schema/character-aura";
@@ -42,7 +43,8 @@ export interface CharacterAurasEvents {
  * Auras are a perk of the Users in `adminUserIds` and of the Users an admin
  * granted them to. A User who loses it keeps no shown aura: revoking a grant
  * deletes the aura, and an admin dropped from `adminUserIds` keeps the stored
- * choice but no longer shows it, and may only remove it.
+ * choice but no longer shows it, and may only remove it. Admin auras are
+ * the admins' own: only they choose them, and only theirs show.
  */
 export const makeCharacterAurasData = (
   adminUserIds: ReadonlyArray<string>,
@@ -143,6 +145,7 @@ export const makeCharacterAurasData = (
         database
           .select({
             gameAccountId: players.accountId,
+            userId: userCharacterAuraTable.userId,
             auraId: userCharacterAuraTable.auraId,
           })
           .from(players)
@@ -169,8 +172,11 @@ export const makeCharacterAurasData = (
           .pipe(
             Effect.mapBoth({
               onSuccess: (rows) => ({
-                auras: rows.flatMap(({ gameAccountId, auraId }) =>
-                  isCharacterAuraId(auraId) ? [{ gameAccountId, auraId }] : [],
+                auras: rows.flatMap(({ gameAccountId, userId, auraId }) =>
+                  isCharacterAuraId(auraId) &&
+                  (admins.has(userId) || !isAdminCharacterAuraId(auraId))
+                    ? [{ gameAccountId, auraId }]
+                    : [],
                 ),
               }),
               onFailure: operationError,
@@ -189,9 +195,9 @@ export const makeCharacterAurasData = (
             return yield* getOwnAura(userId);
           }
 
-          const allowed = yield* canChange(userId).pipe(
-            Effect.mapError(operationError),
-          );
+          const allowed = isAdminCharacterAuraId(auraId)
+            ? admins.has(userId)
+            : yield* canChange(userId).pipe(Effect.mapError(operationError));
 
           if (!allowed) return yield* accessDenied();
           const updatedAt = yield* now;
