@@ -100,6 +100,11 @@ export const OwnCharacterAuraResponseDtoAuraId = {
   arcane: 'arcane',
   aurora: 'aurora',
   conqueror: 'conqueror',
+  halo: 'halo',
+  dragon: 'dragon',
+  crown: 'crown',
+  wings: 'wings',
+  hearts: 'hearts',
 } as const;
 
 export interface OwnCharacterAuraResponseDto {
@@ -133,6 +138,11 @@ export const UpdateOwnCharacterAuraDtoAuraId = {
   arcane: 'arcane',
   aurora: 'aurora',
   conqueror: 'conqueror',
+  halo: 'halo',
+  dragon: 'dragon',
+  crown: 'crown',
+  wings: 'wings',
+  hearts: 'hearts',
 } as const;
 
 export interface UpdateOwnCharacterAuraDto {
@@ -161,6 +171,11 @@ export const CharacterAuraResponseDtoAuraId = {
   arcane: 'arcane',
   aurora: 'aurora',
   conqueror: 'conqueror',
+  halo: 'halo',
+  dragon: 'dragon',
+  crown: 'crown',
+  wings: 'wings',
+  hearts: 'hearts',
 } as const;
 
 export interface CharacterAuraResponseDto {
@@ -7450,6 +7465,87 @@ export type ReservationSpotsResponseDtoItem = {
 
 export type ReservationSpotsResponseDto = ReservationSpotsResponseDtoItem[];
 
+/**
+ * @nullable
+ */
+export type CharacterAuraGrantResponseAuraId = typeof CharacterAuraGrantResponseAuraId[keyof typeof CharacterAuraGrantResponseAuraId] | null;
+
+
+export const CharacterAuraGrantResponseAuraId = {
+  divine: 'divine',
+  hellfire: 'hellfire',
+  frost: 'frost',
+  void: 'void',
+  storm: 'storm',
+  venom: 'venom',
+  bloodmoon: 'bloodmoon',
+  astral: 'astral',
+  prism: 'prism',
+  spirit: 'spirit',
+  sakura: 'sakura',
+  sandstorm: 'sandstorm',
+  necro: 'necro',
+  tide: 'tide',
+  arcane: 'arcane',
+  aurora: 'aurora',
+  conqueror: 'conqueror',
+  halo: 'halo',
+  dragon: 'dragon',
+  crown: 'crown',
+  wings: 'wings',
+  hearts: 'hearts',
+} as const;
+
+export interface CharacterAuraGrantResponse {
+  id: string;
+  displayName: string;
+  /** @nullable */
+  auraId: CharacterAuraGrantResponseAuraId;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+}
+
+export type GrantGlobalChatSenderAuraRequestAuraId = typeof GrantGlobalChatSenderAuraRequestAuraId[keyof typeof GrantGlobalChatSenderAuraRequestAuraId];
+
+
+export const GrantGlobalChatSenderAuraRequestAuraId = {
+  divine: 'divine',
+  hellfire: 'hellfire',
+  frost: 'frost',
+  void: 'void',
+  storm: 'storm',
+  venom: 'venom',
+  bloodmoon: 'bloodmoon',
+  astral: 'astral',
+  prism: 'prism',
+  spirit: 'spirit',
+  sakura: 'sakura',
+  sandstorm: 'sandstorm',
+  necro: 'necro',
+  tide: 'tide',
+  arcane: 'arcane',
+  aurora: 'aurora',
+  conqueror: 'conqueror',
+  halo: 'halo',
+  dragon: 'dragon',
+  crown: 'crown',
+  wings: 'wings',
+  hearts: 'hearts',
+} as const;
+
+export interface GrantGlobalChatSenderAuraRequest {
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  world?: string;
+  auraId: GrantGlobalChatSenderAuraRequestAuraId;
+}
+
+export interface CharacterAuraGrantsResponse {
+  grants: CharacterAuraGrantResponse[];
+}
+
 export interface GlobalChatMuteResponse {
   id: string;
   displayName: string;
@@ -11365,6 +11461,11 @@ export const GameClientBootstrapResponseDtoOutputCharacterAuraAuraId = {
   arcane: 'arcane',
   aurora: 'aurora',
   conqueror: 'conqueror',
+  halo: 'halo',
+  dragon: 'dragon',
+  crown: 'crown',
+  wings: 'wings',
+  hearts: 'hearts',
 } as const;
 
 /**
@@ -13868,6 +13969,48 @@ export type GlobalChatControllerUnmuteMessageSender403 = HttpErrorResponse | {
 };
 
 export type GlobalChatControllerUnmuteMessageSender429 = {
+  message: string;
+};
+
+export type GlobalChatControllerGetAuraGrants401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type GlobalChatControllerGetAuraGrants403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type GlobalChatControllerGetAuraGrants429 = {
+  message: string;
+};
+
+export type GlobalChatControllerGrantSenderAuraPathParameters = {
+ messageId: string,
+ }
+export type GlobalChatControllerGrantSenderAura401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type GlobalChatControllerGrantSenderAura403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type GlobalChatControllerGrantSenderAura429 = {
+  message: string;
+};
+
+export type GlobalChatControllerRevokeAuraGrantPathParameters = {
+ grantId: string,
+ }
+export type GlobalChatControllerRevokeAuraGrant401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type GlobalChatControllerRevokeAuraGrant403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type GlobalChatControllerRevokeAuraGrant429 = {
   message: string;
 };
 
@@ -28012,6 +28155,315 @@ export const useGlobalChatControllerUnmuteMessageSender = <TError = ErrorType<Re
         TContext
       > => {
       return useMutation(getGlobalChatControllerUnmuteMessageSenderMutationOptions(options), queryClient);
+    }
+
+export const getGlobalChatControllerGetAuraGrantsUrl = () => {
+
+
+
+
+  return `/global-chat/aura-grants`
+}
+
+/**
+ * List the users a global chat admin let wear a character aura; global chat admins only
+ * @summary Get character aura grants
+ */
+export const globalChatControllerGetAuraGrants = async ( options?: Parameters<typeof mainFetch>[1]): Promise<CharacterAuraGrantsResponse> => {
+
+  return mainFetch<CharacterAuraGrantsResponse>(getGlobalChatControllerGetAuraGrantsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGlobalChatControllerGetAuraGrantsQueryKey = () => {
+    return [
+    `/global-chat/aura-grants`
+    ] as const;
+    }
+
+
+export const getGlobalChatControllerGetAuraGrantsQueryOptions = <TData = Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetAuraGrants401 | GlobalChatControllerGetAuraGrants403 | GlobalChatControllerGetAuraGrants429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGlobalChatControllerGetAuraGrantsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>> = ({ signal }) => globalChatControllerGetAuraGrants({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GlobalChatControllerGetAuraGrantsQueryResult = NonNullable<Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>>
+export type GlobalChatControllerGetAuraGrantsQueryError = ErrorType<RequestValidationError | GlobalChatControllerGetAuraGrants401 | GlobalChatControllerGetAuraGrants403 | GlobalChatControllerGetAuraGrants429>
+
+
+export function useGlobalChatControllerGetAuraGrants<TData = Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetAuraGrants401 | GlobalChatControllerGetAuraGrants403 | GlobalChatControllerGetAuraGrants429>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>,
+          TError,
+          Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGlobalChatControllerGetAuraGrants<TData = Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetAuraGrants401 | GlobalChatControllerGetAuraGrants403 | GlobalChatControllerGetAuraGrants429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>,
+          TError,
+          Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGlobalChatControllerGetAuraGrants<TData = Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetAuraGrants401 | GlobalChatControllerGetAuraGrants403 | GlobalChatControllerGetAuraGrants429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get character aura grants
+ */
+
+export function useGlobalChatControllerGetAuraGrants<TData = Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetAuraGrants401 | GlobalChatControllerGetAuraGrants403 | GlobalChatControllerGetAuraGrants429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGlobalChatControllerGetAuraGrantsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get character aura grants
+ */
+export const prefetchGlobalChatControllerGetAuraGrantsQuery = async <TData = Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetAuraGrants401 | GlobalChatControllerGetAuraGrants403 | GlobalChatControllerGetAuraGrants429>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getGlobalChatControllerGetAuraGrantsQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useGlobalChatControllerGetAuraGrants} query
+ */
+export const invalidateGlobalChatControllerGetAuraGrants = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getGlobalChatControllerGetAuraGrantsQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get character aura grants
+ */
+export const useSetGlobalChatControllerGetAuraGrantsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>> | undefined | ((old: Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>> | undefined) => Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>>({ exact: $exactMatch, queryKey: getGlobalChatControllerGetAuraGrantsQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get character aura grants
+ */
+export const useGetGlobalChatControllerGetAuraGrantsQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof globalChatControllerGetAuraGrants>>>(getGlobalChatControllerGetAuraGrantsQueryKey());
+}
+
+
+
+export const getGlobalChatControllerGrantSenderAuraUrl = ({ messageId }: GlobalChatControllerGrantSenderAuraPathParameters,) => {
+
+
+
+
+  return `/global-chat/messages/${messageId}/sender-aura`
+}
+
+/**
+ * Let the sender of a kept message wear character auras and put the given one on; global chat admins only
+ * @summary Grant character aura to message sender
+ */
+export const globalChatControllerGrantSenderAura = async ({ messageId }: GlobalChatControllerGrantSenderAuraPathParameters,
+    grantGlobalChatSenderAuraRequest: GrantGlobalChatSenderAuraRequest, options?: Parameters<typeof mainFetch>[1]): Promise<CharacterAuraGrantResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<CharacterAuraGrantResponse>(getGlobalChatControllerGrantSenderAuraUrl({ messageId }),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(grantGlobalChatSenderAuraRequest)
+  }
+);}
+
+
+
+
+
+export const getGlobalChatControllerGrantSenderAuraMutationKey = () => ['globalChatControllerGrantSenderAura'] as const;
+
+export const getGlobalChatControllerGrantSenderAuraMutationOptions = <TError = ErrorType<RequestValidationError | GlobalChatControllerGrantSenderAura401 | GlobalChatControllerGrantSenderAura403 | HttpErrorResponse | GlobalChatControllerGrantSenderAura429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerGrantSenderAura>>, TError,GlobalChatControllerGrantSenderAuraMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerGrantSenderAura>>, TError,GlobalChatControllerGrantSenderAuraMutationVariables, TContext> => {
+
+const mutationKey = getGlobalChatControllerGrantSenderAuraMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof globalChatControllerGrantSenderAura>>, GlobalChatControllerGrantSenderAuraMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  globalChatControllerGrantSenderAura(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GlobalChatControllerGrantSenderAuraMutationResult = NonNullable<Awaited<ReturnType<typeof globalChatControllerGrantSenderAura>>>
+    export type GlobalChatControllerGrantSenderAuraMutationBody = BodyType<GrantGlobalChatSenderAuraRequest>
+    export type GlobalChatControllerGrantSenderAuraMutationError = ErrorType<RequestValidationError | GlobalChatControllerGrantSenderAura401 | GlobalChatControllerGrantSenderAura403 | HttpErrorResponse | GlobalChatControllerGrantSenderAura429>
+    export type GlobalChatControllerGrantSenderAuraMutationVariables = {pathParams: GlobalChatControllerGrantSenderAuraPathParameters;data: BodyType<GrantGlobalChatSenderAuraRequest>}
+
+    /**
+ * @summary Grant character aura to message sender
+ */
+export const useGlobalChatControllerGrantSenderAura = <TError = ErrorType<RequestValidationError | GlobalChatControllerGrantSenderAura401 | GlobalChatControllerGrantSenderAura403 | HttpErrorResponse | GlobalChatControllerGrantSenderAura429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerGrantSenderAura>>, TError,GlobalChatControllerGrantSenderAuraMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof globalChatControllerGrantSenderAura>>,
+        TError,
+        GlobalChatControllerGrantSenderAuraMutationVariables,
+        TContext
+      > => {
+      return useMutation(getGlobalChatControllerGrantSenderAuraMutationOptions(options), queryClient);
+    }
+
+export const getGlobalChatControllerRevokeAuraGrantUrl = ({ grantId }: GlobalChatControllerRevokeAuraGrantPathParameters,) => {
+
+
+
+
+  return `/global-chat/aura-grants/${grantId}`
+}
+
+/**
+ * Stop showing the aura of a user an admin let wear one; global chat admins only
+ * @summary Revoke character aura grant
+ */
+export const globalChatControllerRevokeAuraGrant = async ({ grantId }: GlobalChatControllerRevokeAuraGrantPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+
+  return mainFetch<void>(getGlobalChatControllerRevokeAuraGrantUrl({ grantId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getGlobalChatControllerRevokeAuraGrantMutationKey = () => ['globalChatControllerRevokeAuraGrant'] as const;
+
+export const getGlobalChatControllerRevokeAuraGrantMutationOptions = <TError = ErrorType<RequestValidationError | GlobalChatControllerRevokeAuraGrant401 | GlobalChatControllerRevokeAuraGrant403 | HttpErrorResponse | GlobalChatControllerRevokeAuraGrant429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerRevokeAuraGrant>>, TError,GlobalChatControllerRevokeAuraGrantMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerRevokeAuraGrant>>, TError,GlobalChatControllerRevokeAuraGrantMutationVariables, TContext> => {
+
+const mutationKey = getGlobalChatControllerRevokeAuraGrantMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof globalChatControllerRevokeAuraGrant>>, GlobalChatControllerRevokeAuraGrantMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  globalChatControllerRevokeAuraGrant(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GlobalChatControllerRevokeAuraGrantMutationResult = NonNullable<Awaited<ReturnType<typeof globalChatControllerRevokeAuraGrant>>>
+
+    export type GlobalChatControllerRevokeAuraGrantMutationError = ErrorType<RequestValidationError | GlobalChatControllerRevokeAuraGrant401 | GlobalChatControllerRevokeAuraGrant403 | HttpErrorResponse | GlobalChatControllerRevokeAuraGrant429>
+    export type GlobalChatControllerRevokeAuraGrantMutationVariables = {pathParams: GlobalChatControllerRevokeAuraGrantPathParameters}
+
+    /**
+ * @summary Revoke character aura grant
+ */
+export const useGlobalChatControllerRevokeAuraGrant = <TError = ErrorType<RequestValidationError | GlobalChatControllerRevokeAuraGrant401 | GlobalChatControllerRevokeAuraGrant403 | HttpErrorResponse | GlobalChatControllerRevokeAuraGrant429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerRevokeAuraGrant>>, TError,GlobalChatControllerRevokeAuraGrantMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof globalChatControllerRevokeAuraGrant>>,
+        TError,
+        GlobalChatControllerRevokeAuraGrantMutationVariables,
+        TContext
+      > => {
+      return useMutation(getGlobalChatControllerRevokeAuraGrantMutationOptions(options), queryClient);
     }
 
 export const getListReservationSpotsUrl = ({ guildId }: ListReservationSpotsPathParameters,) => {

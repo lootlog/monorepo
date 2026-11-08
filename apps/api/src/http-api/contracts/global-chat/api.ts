@@ -7,6 +7,10 @@ import {
 } from "effect/http-api";
 import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
+  CharacterAuraGrantParams,
+  CharacterAuraGrantResponse,
+  CharacterAuraGrantsResponse,
+  GrantGlobalChatSenderAuraRequest,
   GlobalChatChannelQuery,
   GlobalChatMessageParams,
   GlobalChatMessageResponse,
@@ -185,5 +189,50 @@ export class GlobalChatGroup extends HttpApiGroup.make("globalChat")
       .annotate(
         OpenApi.Description,
         "Lift the mute of the sender of a kept message; 404 when the sender is not muted; global chat admins only",
+      ),
+    HttpApiEndpoint.get(
+      "GlobalChatControllerGetAuraGrants",
+      "/global-chat/aura-grants",
+      { success: CharacterAuraGrantsResponse, error: forbidden },
+    )
+      .middleware(BearerSecurityMiddleware)
+      .annotate(OpenApi.Identifier, "GlobalChatController_getAuraGrants")
+      .annotate(OpenApi.Summary, "Get character aura grants")
+      .annotate(
+        OpenApi.Description,
+        "List the users a global chat admin let wear a character aura; global chat admins only",
+      ),
+    HttpApiEndpoint.put(
+      "GlobalChatControllerGrantSenderAura",
+      "/global-chat/messages/:messageId/sender-aura",
+      {
+        params: GlobalChatMessageParams,
+        payload: GrantGlobalChatSenderAuraRequest,
+        success: CharacterAuraGrantResponse,
+        error: [forbidden, notFound],
+      },
+    )
+      .middleware(BearerSecurityMiddleware)
+      .annotate(OpenApi.Identifier, "GlobalChatController_grantSenderAura")
+      .annotate(OpenApi.Summary, "Grant character aura to message sender")
+      .annotate(
+        OpenApi.Description,
+        "Let the sender of a kept message wear character auras and put the given one on; global chat admins only",
+      ),
+    HttpApiEndpoint.delete(
+      "GlobalChatControllerRevokeAuraGrant",
+      "/global-chat/aura-grants/:grantId",
+      {
+        params: CharacterAuraGrantParams,
+        success: HttpApiSchema.Empty(204),
+        error: [forbidden, notFound],
+      },
+    )
+      .middleware(BearerSecurityMiddleware)
+      .annotate(OpenApi.Identifier, "GlobalChatController_revokeAuraGrant")
+      .annotate(OpenApi.Summary, "Revoke character aura grant")
+      .annotate(
+        OpenApi.Description,
+        "Stop showing the aura of a user an admin let wear one; global chat admins only",
       ),
   ) {}

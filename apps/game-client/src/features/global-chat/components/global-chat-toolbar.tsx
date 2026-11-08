@@ -17,6 +17,7 @@ import {
   useGlobalChatStore,
   type GlobalChatChannel,
 } from "@/store/global-chat.store";
+import { GlobalChatAuraGrants } from "./global-chat-aura-grants";
 import { GlobalChatMutes } from "./global-chat-mutes";
 
 type GlobalChatToolbarProps = {
@@ -100,6 +101,7 @@ export const GlobalChatToolbar = ({
               "ll:flex ll:shrink-0 ll:items-center ll:px-0.5",
             )}
           >
+            <GlobalChatAuraGrants />
             <GlobalChatMutes />
           </div>
         ) : null}

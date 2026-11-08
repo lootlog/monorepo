@@ -21,7 +21,11 @@ type AuraFx =
   | "curtain"
   | "footprints"
   | "raincloud"
-  | "haki";
+  | "haki"
+  | "halo"
+  | "dragon"
+  | "crown"
+  | "wings";
 
 /**
  * The aura's own short animation every few seconds, like the burst of the game's animated
@@ -57,7 +61,8 @@ type GroundStyle =
   | "ripples"
   | "circle"
   | "dust"
-  | "cracks";
+  | "cracks"
+  | "halo";
 
 /** What decorates the tooltip box beyond the outline, so each aura's tip has its own look. */
 export type TipDeco =
@@ -77,7 +82,11 @@ export type TipDeco =
   | "waves"
   | "sigils"
   | "curtain"
-  | "cracks";
+  | "cracks"
+  | "halo"
+  | "crown"
+  | "wings"
+  | "hearts";
 
 export interface AuraPreset {
   id: CharacterAuraId;
@@ -109,6 +118,15 @@ export interface AuraPreset {
   nick: readonly [string, string, string];
   /** Pixel outline tones, light to dark: the inner ring, the second ring, the dithered falloff. */
   tones: readonly [string, string, string];
+  /**
+   * Built for weak PCs: its body pieces, drawn in pixels only, skip the pixel finish
+   * (`getImageData`), and they, the outline and the inner light are rebuilt on a coarse
+   * animation step (or a new sprite frame, burst or flash) instead of every tick. Body
+   * pieces must be pixels only; anything timed animates in those steps.
+   */
+  lite?: boolean;
+  /** No outline or inner light round a character, only its pieces and particles. */
+  bare?: boolean;
 }
 
 const breathe = (period: number, depth: number) => (t: number) =>
@@ -745,6 +763,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     tip: "prism-corners",
     nick: ["#ff6b6b", "#ffe45a", "#5ac8ff"],
     tones: ["#ffffff", "#ffffff", "#ffffff"],
+    lite: true,
   },
   spirit: {
     id: "spirit",
@@ -1233,5 +1252,245 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     tip: "cracks",
     nick: ["#ff8a8a", "#e01828", "#2a0006"],
     tones: ["#ff5a5a", "#c0101e", "#1a0004"],
+  },
+  halo: {
+    id: "halo",
+    tier: "unique",
+    description:
+      "Lekka aura dla słabszych komputerów: nad głową unosi się srebrna aureola, pod stopami lśni cienki krąg, a w górę ulatują pojedyncze iskry.",
+    particles: ["#ffffff", "#e4ecff", "#b8c8ff", "#8a9cff"],
+    rim: "#e4ecff",
+    haze: "#8a9cff",
+    near: 0.8,
+    far: 0.5,
+    inner: 0,
+    pulse: () => 1,
+    ground: { style: "halo", color: "#b8c8ff", alpha: 0.6 },
+    emitters: [
+      {
+        kind: "mote",
+        rate: 3,
+        from: "feet-rim",
+        life: [1.2, 2],
+        speed: [8, 14],
+        spread: 0.3,
+        size: [0.7, 1.3],
+        colors: 3,
+        front: 0.5,
+      },
+      {
+        kind: "glint",
+        rate: 0.6,
+        from: "edge-high",
+        life: [0.4, 0.7],
+        speed: [0, 1],
+        size: [3, 5],
+        front: 1,
+      },
+    ],
+    fx: ["halo"],
+    burst: "descend",
+    tip: "halo",
+    nick: ["#ffffff", "#c8d4ff", "#7a8cc8"],
+    tones: ["#ffffff", "#c8d4ff", "#7a8cc8"],
+    lite: true,
+    bare: true,
+  },
+  dragon: {
+    id: "dragon",
+    tier: "heroic",
+    description:
+      "Mały ognisty smok krąży wokół postaci nad żarzącym się kręgiem, a spod jego skrzydeł sypią się iskry.",
+    particles: ["#fff3b0", "#ffb22e", "#ff5a14", "#c4160e"],
+    rim: "#ff8a3a",
+    haze: "#c4160e",
+    near: 0.8,
+    far: 0.5,
+    inner: 0,
+    pulse: breathe(2.4, 0.08),
+    ground: { style: "halo", color: "#ff5a14", alpha: 0.55 },
+    emitters: [
+      {
+        kind: "ember",
+        rate: 3,
+        from: "edge",
+        life: [0.4, 0.8],
+        speed: [16, 30],
+        spread: 0.6,
+        drag: 0.5,
+        size: [1.4, 2.2],
+        colors: 4,
+        front: 0.5,
+      },
+      {
+        kind: "spark",
+        rate: 1.5,
+        from: "feet-rim",
+        life: [0.4, 0.8],
+        speed: [20, 40],
+        spread: 0.8,
+        size: [0.8, 1.2],
+        colors: 2,
+        front: 0.6,
+      },
+    ],
+    fx: ["dragon"],
+    burst: "eruption",
+    tip: "embers",
+    tipEmitters: [
+      {
+        kind: "ember",
+        rate: 5,
+        from: "edge-under",
+        life: [0.4, 0.8],
+        speed: [10, 25],
+        dir: Math.PI / 2,
+        spread: 0.8,
+        gravity: -40,
+        size: [1.6, 2.4],
+        colors: 4,
+        front: 1,
+      },
+    ],
+    nick: ["#ffd27a", "#ff6a1e", "#a8160c"],
+    tones: ["#ffd27a", "#e8541a", "#7a1a0a"],
+    lite: true,
+  },
+  crown: {
+    id: "crown",
+    tier: "heroic",
+    description:
+      "Nad głową unosi się złota korona z klejnotami, a wokół postaci migoczą królewskie fioletowe iskry.",
+    particles: ["#fff6c8", "#ffd34a", "#c8a0ff", "#8a4aff"],
+    rim: "#e8c86a",
+    haze: "#8a4aff",
+    near: 0.8,
+    far: 0.5,
+    inner: 0,
+    pulse: breathe(3.6, 0.08),
+    ground: { style: "halo", color: "#a070ff", alpha: 0.5 },
+    emitters: [
+      {
+        kind: "mote",
+        rate: 3,
+        from: "edge",
+        life: [1.2, 2],
+        speed: [4, 10],
+        spread: 0.6,
+        size: [0.7, 1.3],
+        colors: 2,
+        colorFrom: 2,
+        front: 0.5,
+      },
+      {
+        kind: "glint",
+        rate: 0.8,
+        from: "edge-high",
+        life: [0.4, 0.7],
+        speed: [0, 1],
+        size: [3, 5],
+        colors: 2,
+        front: 1,
+      },
+    ],
+    fx: ["crown"],
+    burst: "comet",
+    tip: "crown",
+    nick: ["#fff2b0", "#e8b830", "#8a4aff"],
+    tones: ["#fff2b0", "#e8b830", "#6a3aa8"],
+    lite: true,
+  },
+  wings: {
+    id: "wings",
+    tier: "heroic",
+    description:
+      "Za plecami rozkładają się skrzydła cienia o turkusowych krawędziach i powoli nimi uderzają, gubiąc czarne pióra.",
+    particles: ["#e0fff8", "#5affd8", "#2a8a7a", "#1a2226"],
+    rim: "#5affd8",
+    haze: "#0e3a34",
+    near: 0.75,
+    far: 0.5,
+    inner: 0,
+    pulse: breathe(3, 0.08),
+    ground: { style: "halo", color: "#3ad8b8", alpha: 0.45 },
+    emitters: [
+      {
+        kind: "feather",
+        rate: 0.5,
+        from: "edge-high",
+        life: [3, 4.5],
+        speed: [2, 6],
+        dir: Math.PI / 2,
+        spread: 0.8,
+        size: [1, 1],
+        colors: 1,
+        colorFrom: 3,
+        front: 0.4,
+        land: "settle",
+        wind: 0.5,
+      },
+      {
+        kind: "mote",
+        rate: 2.5,
+        from: "edge",
+        life: [1, 1.6],
+        speed: [4, 10],
+        spread: 0.6,
+        size: [0.7, 1.2],
+        colors: 2,
+        colorFrom: 1,
+        front: 0.5,
+      },
+    ],
+    fx: ["wings"],
+    burst: "whirl",
+    tip: "wings",
+    nick: ["#c8fff0", "#3ad8b8", "#0e3a34"],
+    tones: ["#c8fff0", "#3ad8b8", "#0e3a34"],
+    lite: true,
+  },
+  hearts: {
+    id: "hearts",
+    tier: "heroic",
+    description:
+      "Z postaci ulatują w górę pikselowe serduszka, a pod stopami jaśnieje różowy krąg.",
+    particles: ["#ff7aa8", "#ff3a6a", "#ffc0d8", "#ffffff"],
+    rim: "#ff9cc0",
+    haze: "#ff3a6a",
+    near: 0.75,
+    far: 0.45,
+    inner: 0,
+    pulse: (t) => 0.9 + heartbeat(t, 1.3) * 0.2,
+    ground: { style: "halo", color: "#ff6a9a", alpha: 0.5 },
+    emitters: [
+      {
+        kind: "heart",
+        rate: 2.5,
+        from: "edge-high",
+        life: [1.6, 2.4],
+        speed: [6, 12],
+        spread: 0.5,
+        sway: 6,
+        size: [1.4, 3],
+        colors: 3,
+        front: 0.5,
+      },
+      {
+        kind: "glint",
+        rate: 0.8,
+        from: "edge",
+        life: [0.4, 0.7],
+        speed: [0, 1],
+        size: [3, 4],
+        colorFrom: 3,
+        front: 1,
+      },
+    ],
+    fx: [],
+    burst: "spores",
+    tip: "hearts",
+    nick: ["#ffe0ec", "#ff6a9a", "#c01a4a"],
+    tones: ["#ffe0ec", "#ff6a9a", "#a01a4a"],
+    lite: true,
   },
 };

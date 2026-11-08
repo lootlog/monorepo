@@ -75,6 +75,18 @@ export const userCharacterAuraTable = pgTable("UserCharacterAura", {
 });
 
 /**
+ * Users a global chat admin let wear an aura, besides the admins themselves.
+ * Revoking the grant keeps the stored aura but stops showing it.
+ */
+export const characterAuraGrantTable = pgTable("CharacterAuraGrant", {
+  userId: text("userId").notNull().primaryKey(),
+  /** The User's chat name when granted, so admins recognise the entry. */
+  displayName: text("displayName").notNull(),
+  grantedByUserId: text("grantedByUserId").notNull(),
+  createdAt: timestamp("createdAt", { mode: "date", precision: 3 }).notNull(),
+});
+
+/**
  * Margonem accounts a User proved to play: the gateway verified Margonem's
  * signed proof and announced it. An account shared by several Users belongs
  * to each of them; the latest `verifiedAt` names who plays it now.

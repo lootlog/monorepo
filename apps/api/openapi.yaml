@@ -7560,6 +7560,221 @@ paths:
                 additionalProperties: false
       description: Lift the mute of the sender of a kept message; 404 when the sender is not muted; global chat admins only
       summary: Unmute global chat message sender
+  /global-chat/aura-grants:
+    get:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_getAuraGrants
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: CharacterAuraGrantsResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterAuraGrantsResponse"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: List the users a global chat admin let wear a character aura; global chat admins only
+      summary: Get character aura grants
+  /global-chat/messages/{messageId}/sender-aura:
+    put:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_grantSenderAura
+      parameters:
+        - name: messageId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: CharacterAuraGrantResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterAuraGrantResponse"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Let the sender of a kept message wear character auras and put the given one on; global chat admins only
+      summary: Grant character aura to message sender
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GrantGlobalChatSenderAuraRequest"
+        required: true
+  /global-chat/aura-grants/{grantId}:
+    delete:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_revokeAuraGrant
+      parameters:
+        - name: grantId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "204":
+          description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Stop showing the aura of a user an admin let wear one; global chat admins only
+      summary: Revoke character aura grant
   /guilds/{guildId}/reservation-spots:
     get:
       tags:
@@ -19030,6 +19245,11 @@ components:
             - arcane
             - aurora
             - conqueror
+            - halo
+            - dragon
+            - crown
+            - wings
+            - hearts
         canChange:
           type: boolean
         gameAccountIds:
@@ -19065,6 +19285,11 @@ components:
             - arcane
             - aurora
             - conqueror
+            - halo
+            - dragon
+            - crown
+            - wings
+            - hearts
       required:
         - auraId
       additionalProperties: false
@@ -19103,6 +19328,11 @@ components:
             - arcane
             - aurora
             - conqueror
+            - halo
+            - dragon
+            - crown
+            - wings
+            - hearts
       required:
         - gameAccountId
         - auraId
@@ -29848,6 +30078,94 @@ components:
           - currentReservation
           - nextReservation
         additionalProperties: false
+    CharacterAuraGrantResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        auraId:
+          nullable: true
+          type: string
+          enum:
+            - divine
+            - hellfire
+            - frost
+            - void
+            - storm
+            - venom
+            - bloodmoon
+            - astral
+            - prism
+            - spirit
+            - sakura
+            - sandstorm
+            - necro
+            - tide
+            - arcane
+            - aurora
+            - conqueror
+            - halo
+            - dragon
+            - crown
+            - wings
+            - hearts
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - id
+        - displayName
+        - auraId
+        - createdAt
+      additionalProperties: false
+    GrantGlobalChatSenderAuraRequest:
+      type: object
+      properties:
+        world:
+          type: string
+          minLength: 1
+          maxLength: 64
+        auraId:
+          type: string
+          enum:
+            - divine
+            - hellfire
+            - frost
+            - void
+            - storm
+            - venom
+            - bloodmoon
+            - astral
+            - prism
+            - spirit
+            - sakura
+            - sandstorm
+            - necro
+            - tide
+            - arcane
+            - aurora
+            - conqueror
+            - halo
+            - dragon
+            - crown
+            - wings
+            - hearts
+      required:
+        - auraId
+      additionalProperties: false
+    CharacterAuraGrantsResponse:
+      type: object
+      properties:
+        grants:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterAuraGrantResponse"
+      required:
+        - grants
+      additionalProperties: false
     GlobalChatMuteResponse:
       type: object
       properties:
@@ -35605,6 +35923,11 @@ components:
                 - arcane
                 - aurora
                 - conqueror
+                - halo
+                - dragon
+                - crown
+                - wings
+                - hearts
             canChange:
               type: boolean
             gameAccountIds:

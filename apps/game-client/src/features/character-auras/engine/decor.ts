@@ -601,6 +601,80 @@ function drawCracks({ b, corners, light, a }: TipFrame): void {
   }
 }
 
+/** A thin silver ring floating over the middle of the top edge, glinting now and then. */
+function drawTipHalo({ b, L, T, W, light, mid, a }: TipFrame): void {
+  const x = Math.round(L + W / 2);
+  const y = T - 6 - (b.tick % 16 < 8 ? 0 : 1);
+  pixelEllipse(b.lit(), x, y, 9, 3, light, a * 0.9, 0, 1);
+  pixelEllipse(b.lit(), x, y - 1, 9, 3, mid, a * 0.45, 0, 1);
+
+  if (b.tick % 24 < 3)
+    pixelGlint(b.lit(), x + 9, y, 2, [255, 255, 255], light, a);
+}
+
+/** A small gold crown on the middle of the top edge, a glint running along its points. */
+function drawTipCrown({ b, L, T, W, light, mid, dark, a }: TipFrame): void {
+  const x = Math.round(L + W / 2) - 4;
+  const y = T - 6;
+
+  for (let i = 0; i < 9; i++) {
+    plot(b.lit(), x + i, y + 2, i % 4 === 0 ? light : mid, a);
+    plot(b.lit(), x + i, y + 3, dark, a * 0.8);
+  }
+
+  for (const px of [0, 4, 8]) {
+    plot(b.lit(), x + px, y, mid, a);
+    plot(b.lit(), x + px, y + 1, light, a);
+  }
+
+  const glint = b.tick % 24;
+
+  if (glint < 3)
+    pixelGlint(b.lit(), x + glint * 4, y, 1, [255, 255, 255], light, a);
+}
+
+/** Small dark wings off both sides of the box, beating slowly. */
+function drawTipWings({ b, L, T, R, light, mid, a }: TipFrame): void {
+  const lift = b.tick % 12 < 6 ? 0 : 2;
+
+  for (const [x, side] of [
+    [L - 1, -1],
+    [R + 1, 1],
+  ] as const) {
+    for (let f = 0; f < 3; f++) {
+      const tipX = x + side * (9 - f * 2);
+      const tipY = T + 2 - lift + f * 3;
+      pixelLine(b.dim(), x, T + 6, tipX, tipY, [16, 22, 26], a, a * 0.8);
+      plot(b.lit(), tipX, tipY, f === 0 ? light : mid, a);
+    }
+  }
+}
+
+/** Pixel hearts on the corners, beating in turn. */
+function drawTipHearts({ b, corners, light, mid, a }: TipFrame): void {
+  for (const [i, [x, y, sx, sy]] of corners.entries()) {
+    const big = (b.tick + i * 3) % 12 < 2;
+    const cx = x + sx * 3;
+    const cy = y + sy * 3 - 1;
+
+    for (const [dx, dy] of [
+      [-1, 0],
+      [1, 0],
+      [-1, 1],
+      [0, 1],
+      [1, 1],
+      [0, 2],
+    ] as const)
+      plot(b.lit(), cx + dx, cy + dy, mid, a);
+    plot(b.lit(), cx - 1, cy, light, a);
+
+    if (big) {
+      plot(b.lit(), cx - 2, cy + 1, mid, a * 0.6);
+      plot(b.lit(), cx + 2, cy + 1, mid, a * 0.6);
+    }
+  }
+}
+
 function drawTipCurtain({ b, L, T, W, boost }: TipFrame): void {
   drawCurtain(b, L + W / 2, T - 24, W / 2 + 6, 26, boost);
 }
@@ -630,6 +704,10 @@ const TIP_DECO_PAINTERS: Record<
   sigils: { front: true, draw: drawSigils },
   curtain: { front: false, draw: drawTipCurtain },
   cracks: { front: true, draw: drawCracks },
+  halo: { front: true, draw: drawTipHalo },
+  crown: { front: true, draw: drawTipCrown },
+  wings: { front: true, draw: drawTipWings },
+  hearts: { front: true, draw: drawTipHearts },
 };
 
 /** The aura's own dressing round a tooltip box; `front` draws what may overlap the box. */
