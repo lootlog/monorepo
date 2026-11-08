@@ -50,14 +50,13 @@ import { context2d, createCanvas, type AuraSilhouette } from "./silhouette";
 import { groundRadius, spawnFrame, type AuraPlacement } from "./placement";
 import { drawBurstScene } from "./bursts";
 import { drawGround } from "./ground";
-import { BEACON_HEIGHT, drawBeacon } from "./beacon";
 import {
   ARRIVAL_BURST,
   drawArrival,
   eventDarkness,
   pulseStarted,
 } from "./arrival";
-import { drawAvatar } from "./avatar";
+import { avatarTop, drawAvatar } from "./avatar";
 import { drawStorm, STORM_GLOOM } from "./storm";
 import {
   drawAirCracks,
@@ -315,7 +314,7 @@ export class Aura {
     this.rgb = colorsOf(this.preset);
 
     // An admin arrives with a burst.
-    if (this.preset.beacon) this.nextBurst = ARRIVAL_BURST;
+    if (this.preset.herald) this.nextBurst = ARRIVAL_BURST;
   }
 
   /**
@@ -324,14 +323,14 @@ export class Aura {
    */
   mapDarkness(): number {
     const p = this.preset;
-    const event = p.beacon ? eventDarkness(this.age) : 0;
+    const event = p.herald ? eventDarkness(this.age) : 0;
 
     return Math.max(event, p.storm ? STORM_GLOOM : 0);
   }
 
   /**
    * Draws the aura's effects over the whole map, `width` × `height` in the context's units:
-   * the storm, the arrival's night with the admin lit and its shockwave, the beacon over it.
+   * the storm, the arrival's night with the admin lit and its shockwave.
    */
   drawMapEffects(
     ctx: CanvasRenderingContext2D,
@@ -341,7 +340,7 @@ export class Aura {
   ): void {
     const p = this.preset;
 
-    if (!place.ground || !(p.beacon || p.storm)) return;
+    if (!place.ground || !(p.herald || p.storm)) return;
     const [light, mid] = this.rgb.tones;
     ctx.save();
 
@@ -357,9 +356,8 @@ export class Aura {
           mid,
         );
 
-      if (p.beacon) {
+      if (p.herald) {
         drawArrival(ctx, place, this.age, width, height, light, mid, p.arrival);
-        drawBeacon(ctx, p.id, place, this.rgb.tones, this.time, 1);
       }
     } finally {
       ctx.restore();
@@ -374,9 +372,11 @@ export class Aura {
     return Math.max(eventDarkness(this.age), burst);
   }
 
-  /** How far above its box the aura paints at `place`: the admin beacon's reach. */
+  /** How far above its box the aura paints at `place`: the admin's giant at full height. */
   reachAbove(place: AuraPlacement): number {
-    return this.preset.beacon && place.ground ? BEACON_HEIGHT : 0;
+    if (!this.preset.herald || !place.ground) return 0;
+
+    return Math.max(0, boxOf(place).oy - avatarTop(place));
   }
 
   setPreset(id: CharacterAuraId): void {
@@ -400,7 +400,7 @@ export class Aura {
     this.age += Math.max(0, dt);
 
     // Each later pulse over the map brings the burst too.
-    if (this.preset.beacon && pulseStarted(before, this.age))
+    if (this.preset.herald && pulseStarted(before, this.age))
       this.nextBurst = Math.min(this.nextBurst, ARRIVAL_BURST);
     this.carry += Math.max(0, dt);
     let steps = 0;
@@ -644,8 +644,7 @@ export class Aura {
     ctx.save();
 
     try {
-      if (p.beacon && place.ground) {
-        drawBeacon(ctx, p.id, place, this.rgb.tones, this.time, intensity);
+      if (p.herald && place.ground) {
         const giant = this.avatarStrength();
 
         if (giant > 0.02)
