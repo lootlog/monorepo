@@ -1,6 +1,11 @@
 import { asc, eq, inArray, isNotNull, or } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
-import { CharacterAuraIdSchema } from "@lootlog/schema/character-aura";
+import {
+  CharacterAuraIdSchema,
+  type CharacterAuraId,
+  type CharacterAurasChanged,
+} from "@lootlog/schema/character-aura";
+import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   userCharacterAuraGrantTable,
@@ -26,13 +31,23 @@ const accessDenied = () =>
 const notFound = () =>
   Effect.fail(new CharacterAuraGrantTargetNotFound({ status: 404 }));
 
+/** Tells every Game client which aura the accounts show now. */
+export interface CharacterAurasEvents {
+  readonly publishChanged: (
+    change: CharacterAurasChanged,
+  ) => Effect.Effect<void, unknown>;
+}
+
 /**
  * Auras are a perk of the Users in `adminUserIds` and of the Users an admin
  * granted them to. A User who loses it keeps no shown aura: revoking a grant
  * deletes the aura, and an admin dropped from `adminUserIds` keeps the stored
  * choice but no longer shows it, and may only remove it.
  */
-export const makeCharacterAurasData = (adminUserIds: ReadonlyArray<string>) =>
+export const makeCharacterAurasData = (
+  adminUserIds: ReadonlyArray<string>,
+  events: CharacterAurasEvents,
+) =>
   Effect.gen(function* () {
     const database = yield* ApiDatabase;
     const admins = new Set(adminUserIds);
@@ -74,6 +89,26 @@ export const makeCharacterAurasData = (adminUserIds: ReadonlyArray<string>) =>
 
         return player ? player.userId : yield* notFound();
       });
+
+    /**
+     * Shows the User's new aura on their accounts without waiting for the
+     * next list refresh. The change is committed; a lost event reaches
+     * readers with that refresh.
+     */
+    const announce = (userId: string, auraId: CharacterAuraId | null) =>
+      Effect.gen(function* () {
+        const accounts = yield* database
+          .select({ id: players.accountId })
+          .from(players)
+          .where(eq(players.userId, userId))
+          .orderBy(asc(players.accountId));
+
+        if (accounts.length === 0) return;
+
+        yield* events.publishChanged({
+          auras: accounts.map(({ id }) => ({ gameAccountId: id, auraId })),
+        });
+      }).pipe(ignorePublicationFailure);
 
     const getOwnAura = (userId: string) =>
       Effect.gen(function* () {
@@ -149,6 +184,7 @@ export const makeCharacterAurasData = (adminUserIds: ReadonlyArray<string>) =>
               .delete(userCharacterAuraTable)
               .where(eq(userCharacterAuraTable.userId, userId))
               .pipe(Effect.mapError(operationError));
+            yield* announce(userId, null);
 
             return yield* getOwnAura(userId);
           }
@@ -168,6 +204,7 @@ export const makeCharacterAurasData = (adminUserIds: ReadonlyArray<string>) =>
               set: { auraId, updatedAt },
             })
             .pipe(Effect.mapError(operationError));
+          yield* announce(userId, auraId);
 
           return yield* getOwnAura(userId);
         }),
@@ -203,6 +240,8 @@ export const makeCharacterAurasData = (adminUserIds: ReadonlyArray<string>) =>
               }),
             )
             .pipe(Effect.mapError(operationError));
+
+          if (!admins.has(userId)) yield* announce(userId, null);
         }),
       // Deprecated: accounts follow verified Margonem proofs. Older Game
       // clients still call it, so it only reports whether the aura shows.
@@ -218,5 +257,11 @@ export const makeCharacterAurasData = (adminUserIds: ReadonlyArray<string>) =>
     });
   });
 
-export const characterAurasDataLayer = (adminUserIds: ReadonlyArray<string>) =>
-  Layer.effect(CharacterAurasData, makeCharacterAurasData(adminUserIds));
+export const characterAurasDataLayer = (
+  adminUserIds: ReadonlyArray<string>,
+  events: CharacterAurasEvents,
+) =>
+  Layer.effect(
+    CharacterAurasData,
+    makeCharacterAurasData(adminUserIds, events),
+  );
