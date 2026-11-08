@@ -1,6 +1,13 @@
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { AddonStatusSection } from "@/features/settings/components/general/addon-status-section";
@@ -13,6 +20,7 @@ import {
   ItemRarityEnum,
   type ItemRarityEnum as ItemRarity,
 } from "@lootlog/schema/item-rarity";
+import { MAP_AURA_MODES } from "@lootlog/schema/character-aura";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -43,6 +51,8 @@ export const GeneralSettingsTab: FC = () => {
     (state) => state.toggleAnimationEffects,
   );
 
+  const mapAuras = useSettingsStore((state) => state.mapAuras);
+  const setMapAuras = useSettingsStore((state) => state.setMapAuras);
   const lootSplit = useAccountEnabledFlag("lootSplit");
   const { t } = useTranslation();
 
@@ -84,6 +94,35 @@ export const GeneralSettingsTab: FC = () => {
             }}
             id="animation-effects"
           />
+        </SettingsRow>
+        <SettingsRow
+          controlId="map-auras"
+          label={t("settings.general.mapAurasLabel")}
+          description={t("settings.general.mapAurasDescription")}
+        >
+          <Select
+            value={mapAuras}
+            onValueChange={(value) =>
+              setMapAuras(
+                MAP_AURA_MODES.find((mode) => mode === value) ?? "auto",
+              )
+            }
+          >
+            <SelectTrigger
+              aria-label={t("settings.general.mapAurasLabel")}
+              size="sm"
+              className="ll:w-44"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MAP_AURA_MODES.map((mode) => (
+                <SelectItem key={mode} value={mode}>
+                  {t(`settings.general.mapAurasModes.${mode}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </SettingsRow>
         <SettingsRow
           controlId="loot-split-window"

@@ -35,6 +35,15 @@ export const CharacterAuraIdSchema = Schema.Literals(CHARACTER_AURA_IDS);
 export type CharacterAuraId = typeof CharacterAuraIdSchema.Type;
 
 /**
+ * Which auras a device draws on the map: all of them, the hero's and the few
+ * nearest it, or none. `auto` draws all with graphics acceleration and the
+ * nearest ones without it.
+ */
+export const MAP_AURA_MODES = ["auto", "all", "nearby", "off"] as const;
+
+export type MapAuraMode = (typeof MAP_AURA_MODES)[number];
+
+/**
  * The auras now shown on Margonem accounts after a User changed theirs; a
  * `null` aura means the account shows none. Ids stay plain strings so a Game
  * client that does not know a newer aura skips it instead of rejecting the
