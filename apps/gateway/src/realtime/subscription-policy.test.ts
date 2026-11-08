@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
-import { canReadPreciseLocation, canSubscribe } from "./subscription-policy.js";
+import {
+  canReadPreciseLocation,
+  canSubscribe,
+  defaultScopes,
+} from "./subscription-policy.js";
 import type { SessionData } from "./session.js";
 
 const makeSession = (permissions: Permission[]): SessionData => ({
@@ -64,5 +68,19 @@ describe("logical subscription policy", () => {
     // Without a world, the scope would match every world's channel.
     expect(canSubscribe(member, { topic: "global.chat.world" })).toBe(false);
     expect(canSubscribe({ ...member, guilds: [] }, world)).toBe(false);
+  });
+
+  test("sends aura changes only to Game clients that joined understanding them", () => {
+    const aurasScope = { topic: "global.character-auras" } as const;
+    const game = { ...makeSession([]), platform: "game" } as const;
+    const reader = { ...game, characterAuras: true };
+
+    expect(defaultScopes(reader)).toContainEqual(aurasScope);
+    expect(canSubscribe({ ...reader, platform: "web-app" }, aurasScope)).toBe(
+      false,
+    );
+    // A Game client that predates the event rejects it and disconnects.
+    expect(defaultScopes(game)).not.toContainEqual(aurasScope);
+    expect(canSubscribe(game, aurasScope)).toBe(false);
   });
 });

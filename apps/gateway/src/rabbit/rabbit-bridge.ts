@@ -136,6 +136,12 @@ const consumerSpecs = [
     RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2_DLQ,
   ),
   retryable(
+    "gateway-character-auras-changed",
+    RabbitRoutingKey.CHARACTER_AURAS_CHANGED,
+    RabbitRoutingKey.CHARACTER_AURAS_CHANGED_RETRY,
+    RabbitRoutingKey.CHARACTER_AURAS_CHANGED_DLQ,
+  ),
+  retryable(
     "gateway-global-chat-channel-update",
     RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE,
     RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE_RETRY,
@@ -773,6 +779,14 @@ export class RabbitBridge {
         globalChatScope(data.world),
         { v: 1, type: "global-chat.created", data },
         data.id,
+      ),
+    // Each change carries the accounts' current auras, so a redelivery
+    // sets the same state again.
+    [RabbitRoutingKey.CHARACTER_AURAS_CHANGED]: (data, messageId) =>
+      this.publish(
+        { topic: "global.character-auras" },
+        { v: 1, type: "character-auras.changed", data },
+        messageId,
       ),
     [RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE]: (data, messageId) =>
       this.publish(
