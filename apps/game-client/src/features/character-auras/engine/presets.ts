@@ -140,6 +140,11 @@ export interface AuraPreset {
   lite?: boolean;
   /** No outline or inner light round a character, only its pieces and particles. */
   bare?: boolean;
+  /**
+   * Admin auras: a tall beam of light over the character, seen from across the map, and
+   * the aura's burst as soon as it shows (when the admin enters the map).
+   */
+  beacon?: boolean;
 }
 
 const breathe = (period: number, depth: number) => (t: number) =>
@@ -1571,6 +1576,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   sovereign: {
     id: "sovereign",
     tier: "mythic",
+    beacon: true,
     description:
       "Nad głową lśni złota korona, wokół krążą trzy gwiazdy, za postacią obracają się promienie, a co chwilę z nieba spada słup światła i deszcz złota.",
     particles: ["#fff6c8", "#ffd34a", "#e8a020", "#c8a0ff", "#8a4aff"],
@@ -1627,6 +1633,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   seraph: {
     id: "seraph",
     tier: "mythic",
+    beacon: true,
     description:
       "Za plecami biją białe skrzydła o złotych krawędziach, nad głową świeci aureola na tle boskich promieni, a co chwilę z nieba spada słup światła.",
     particles: ["#ffffff", "#fff6dc", "#ffe39a", "#d8e4ff"],
@@ -1682,6 +1689,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   eclipse: {
     id: "eclipse",
     tier: "mythic",
+    beacon: true,
     description:
       "Za głową wschodzi czarne słońce w złotej koronie, wokół trzaskają czarne pioruny, a co chwilę fala mroku podrywa kamienie z ziemi.",
     particles: ["#fff3c0", "#ffc94a", "#ff8a2a", "#140a06", "#c77dff"],
@@ -1737,6 +1745,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   thunderlord: {
     id: "thunderlord",
     tier: "mythic",
+    beacon: true,
     description:
       "Nad koroną kłębi się burzowa chmura, po sylwetce przeskakują iskry, a co chwilę trzy pioruny naraz biją wokół postaci.",
     particles: ["#ffffff", "#fff3b0", "#ffd34a", "#7cc8ff", "#3a6bff"],
@@ -1799,6 +1808,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   phoenix: {
     id: "phoenix",
     tier: "mythic",
+    beacon: true,
     description:
       "Za plecami biją ogniste skrzydła feniksa, płomienie liżą sylwetkę, a co chwilę feniks odradza się w słupie ognia.",
     particles: ["#fff3b0", "#ffb22e", "#ff5a14", "#c4160e", "#3a2622"],

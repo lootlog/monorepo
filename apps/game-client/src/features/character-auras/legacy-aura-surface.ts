@@ -69,7 +69,7 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
       shownLayers.set(key, layers);
     }
 
-    const box = auraScreenBox(shown.place);
+    const box = auraScreenBox(shown.place, shown.above);
     legacyAuraRuntimeAdapter.placeLayers(layers, shown.character.element, box);
     paintLayer(layers.back, box.x, box.y, shown.back);
     paintLayer(layers.front, box.x, box.y, shown.front);
