@@ -1,13 +1,6 @@
 import type { CharacterAuraId } from "@lootlog/schema/character-aura";
-import {
-  auraRuntimeAdapter,
-  type RuntimeAuraCharacter,
-} from "@/lib/margonem-runtime/adapters/aura-runtime-adapter";
-import {
-  rendererRuntimeAdapter,
-  type RuntimeDrawable,
-} from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
-import { Aura, isAuraInView } from "./engine/render";
+import type { RuntimeAuraCharacter } from "@/lib/margonem-runtime/adapters/aura-runtime-adapter";
+import { Aura } from "./engine/render";
 import type { AuraPlacement } from "./engine/placement";
 import { SilhouetteCache } from "./engine/silhouette";
 
@@ -20,26 +13,49 @@ const MAX_FAILURES = 120;
 /** The failure key of the per-frame work shared by every aura. */
 const FRAME_KEY = "*";
 
-/** Just under and just over the character in the draw order, between it and the next row. */
-const ORDER_EPSILON = 0.001;
+/** The map an aura is drawn on and its camera: particle space minus screen space. */
+export type AuraView = { mapId?: number; camera: readonly [number, number] };
 
-type AuraView = NonNullable<ReturnType<typeof auraRuntimeAdapter.getView>>;
+/** Paints one side of an aura into a context whose origin is the screen's. */
+export type AuraPaint = (context: CanvasRenderingContext2D) => void;
+
+/** An aura shown this frame: its character, where it goes and its two sides. */
+export type ShownAura<C extends RuntimeAuraCharacter> = {
+  character: C;
+  place: AuraPlacement;
+  back: AuraPaint;
+  front: AuraPaint;
+};
+
+/** Where auras are drawn: the NI canvas or the SI map elements. */
+export interface CharacterAuraSurface<C extends RuntimeAuraCharacter> {
+  /** The current map, or null while it is not drawn. */
+  getView(): AuraView | null;
+  getHero(): C | null;
+  getOther(characterId: string): C | null;
+  /** Calls `onFrame` once per drawn frame until unsubscribed. */
+  subscribeFrame(onFrame: () => void): (() => void) | null;
+  /** Whether an aura at `place` lands on what `context` draws. */
+  isInView(place: AuraPlacement, context: CanvasRenderingContext2D): boolean;
+  /** Shows the aura of `key` this frame, or hides it when null. */
+  present(key: string, shown: ShownAura<C> | null): void;
+  /** Forgets everything shown for `key`. */
+  release(key: string): void;
+}
 
 type DrawnAura = {
   aura: Aura;
   place: AuraPlacement | null;
-  /** The character's draw order this frame. */
-  order: number;
-  back: RuntimeDrawable;
-  front: RuntimeDrawable;
+  back: AuraPaint;
+  front: AuraPaint;
 };
 
 /**
- * Draws auras into the game canvas just under and over their characters,
- * once per game frame. Only characters with an aura cost any work: the hero
- * when it wears one and the others whose account shows one.
+ * Draws auras on a surface just under and over their characters, once per
+ * frame. Only characters with an aura cost any work: the hero when it wears
+ * one and the others whose account shows one.
  */
-class CharacterAuraRenderer {
+export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
   private targets: ReadonlyMap<string, CharacterAuraId> = new Map();
   private readonly drawn = new Map<string, DrawnAura>();
   private readonly silhouettes = new SilhouetteCache();
@@ -52,12 +68,14 @@ class CharacterAuraRenderer {
   private readonly disabled = new Set<string>();
   private broken = false;
 
+  constructor(private readonly surface: CharacterAuraSurface<C>) {}
+
   /** Characters to draw an aura on, by `HERO_AURA_KEY` or character id. */
   setTargets(targets: ReadonlyMap<string, CharacterAuraId>): void {
     this.targets = targets;
 
     for (const key of this.drawn.keys()) {
-      if (!targets.has(key)) this.drawn.delete(key);
+      if (!targets.has(key)) this.drop(key);
     }
 
     if (targets.size === 0) {
@@ -68,14 +86,23 @@ class CharacterAuraRenderer {
 
     if (this.unsubscribe || this.broken) return;
     this.last = performance.now();
-    this.unsubscribe = rendererRuntimeAdapter.subscribeDraw(this.onFrame);
+    this.unsubscribe = this.surface.subscribeFrame(this.onFrame);
   }
 
   private stop(): void {
     this.unsubscribe?.();
     this.unsubscribe = null;
-    this.drawn.clear();
+    this.dropAll();
     this.silhouettes.clear();
+  }
+
+  private drop(key: string): void {
+    this.drawn.delete(key);
+    this.surface.release(key);
+  }
+
+  private dropAll(): void {
+    for (const key of this.drawn.keys()) this.drop(key);
   }
 
   private readonly onFrame = (): void => this.drawFrame();
@@ -111,7 +138,7 @@ class CharacterAuraRenderer {
         this.stop();
       } else {
         this.disabled.add(key);
-        this.drawn.delete(key);
+        this.drop(key);
       }
 
       return undefined;
@@ -132,12 +159,12 @@ class CharacterAuraRenderer {
   }
 
   private currentView(): AuraView | null {
-    const view = auraRuntimeAdapter.getView();
+    const view = this.surface.getView();
 
     // Particles live in map pixels; a new map starts every aura over.
     if (view && view.mapId !== this.mapId) {
       this.mapId = view.mapId;
-      this.drawn.clear();
+      this.dropAll();
     }
 
     return view;
@@ -151,67 +178,59 @@ class CharacterAuraRenderer {
   ): void {
     const character = view
       ? key === HERO_AURA_KEY
-        ? auraRuntimeAdapter.getHero()
-        : auraRuntimeAdapter.getOther(key)
+        ? this.surface.getHero()
+        : this.surface.getOther(key)
       : null;
 
-    const drawn = this.drawnAura(key, auraId, character);
+    const drawn = this.drawnAura(key, auraId);
 
     drawn.place =
       view && character ? this.placement(character, view.camera) : null;
     drawn.aura.update(dt, drawn.place, 1);
 
-    if (!drawn.place) return;
-    rendererRuntimeAdapter.addDrawable(drawn.back);
-    rendererRuntimeAdapter.addDrawable(drawn.front);
+    this.surface.present(
+      key,
+      character && drawn.place
+        ? {
+            character,
+            place: drawn.place,
+            back: drawn.back,
+            front: drawn.front,
+          }
+        : null,
+    );
   }
 
-  private drawnAura(
-    key: string,
-    auraId: CharacterAuraId,
-    character: RuntimeAuraCharacter | null,
-  ): DrawnAura {
+  private drawnAura(key: string, auraId: CharacterAuraId): DrawnAura {
     const existing = this.drawn.get(key);
 
     if (existing) {
       existing.aura.setPreset(auraId);
-      existing.order = character?.order ?? existing.order;
 
       return existing;
     }
 
-    // The game draws these whatever their position (`getAlwaysDraw`), so an
-    // aura off the visible canvas skips its tick render and blits here.
     const drawn: DrawnAura = {
       aura: new Aura(auraId),
       place: null,
-      order: character?.order ?? 0,
-      back: {
-        getAlwaysDraw: () => true,
-        getOrder: () => drawn.order - ORDER_EPSILON,
-        draw: (context) =>
-          this.guard(
-            key,
-            () => {
-              if (drawn.place && isInCanvas(drawn.place, context))
-                drawn.aura.drawBack(context, drawn.place, 1);
-            },
-            `${key}:back`,
-          ),
-      },
-      front: {
-        getAlwaysDraw: () => true,
-        getOrder: () => drawn.order + ORDER_EPSILON,
-        draw: (context) =>
-          this.guard(
-            key,
-            () => {
-              if (drawn.place && isInCanvas(drawn.place, context))
-                drawn.aura.drawFront(context, drawn.place, 1);
-            },
-            `${key}:front`,
-          ),
-      },
+      back: (context) =>
+        this.guard(
+          key,
+          () => {
+            if (drawn.place && this.surface.isInView(drawn.place, context))
+              drawn.aura.drawBack(context, drawn.place, 1);
+          },
+          `${key}:back`,
+        ),
+      front: (context) =>
+        this.guard(
+          key,
+          () => {
+            if (drawn.place && this.surface.isInView(drawn.place, context))
+              drawn.aura.drawFront(context, drawn.place, 1);
+          },
+          `${key}:front`,
+        ),
     };
 
     this.drawn.set(key, drawn);
@@ -241,19 +260,3 @@ class CharacterAuraRenderer {
     };
   }
 }
-
-/** Whether an aura shows on the game canvas; the game scales the context by its zoom. */
-function isInCanvas(
-  place: AuraPlacement,
-  context: CanvasRenderingContext2D,
-): boolean {
-  const { a: scaleX, d: scaleY } = context.getTransform();
-
-  return isAuraInView(
-    place,
-    context.canvas.width / scaleX,
-    context.canvas.height / scaleY,
-  );
-}
-
-export const characterAuraRenderer = new CharacterAuraRenderer();

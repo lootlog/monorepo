@@ -2,7 +2,7 @@ import { ImageData as SkiaImageData } from "@napi-rs/canvas";
 import { installTestCanvas } from "@/test/canvas";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
 import type { RuntimeDrawable } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
-import { characterAuraRenderer } from "./character-aura-renderer";
+import { canvasAuraRenderer } from "./canvas-aura-surface";
 
 const DRAW_EVENT = "call-draw-add-to-renderer";
 
@@ -55,7 +55,7 @@ function setGame() {
 }
 
 afterEach(() => {
-  characterAuraRenderer.setTargets(new Map());
+  canvasAuraRenderer.setTargets(new Map());
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   delete testRuntimeWindow.API;
@@ -70,7 +70,7 @@ it("stops drawing an aura whose drawing keeps failing although its update succee
   vi.spyOn(context, "getTransform").mockImplementation(() => {
     throw new Error("context lost");
   });
-  characterAuraRenderer.setTargets(new Map([["42", "storm"]]));
+  canvasAuraRenderer.setTargets(new Map([["42", "storm"]]));
 
   expect(game.playFrame(context)).toBe(2);
 
