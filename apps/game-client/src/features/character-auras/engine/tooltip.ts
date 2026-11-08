@@ -39,7 +39,14 @@ export class CharacterAuraTooltip {
   private frame = 0;
   private last = 0;
 
-  constructor(private readonly layer: HTMLElement) {
+  /**
+   * @param layer Where the game puts the tip it shows.
+   * @param tipSelector The shown tip in `layer`: NI's tip wrapper, or SI's `#tip`.
+   */
+  constructor(
+    private readonly layer: HTMLElement,
+    private readonly tipSelector = ":scope > .tip-wrapper",
+  ) {
     this.canvas = document.createElement("canvas");
     this.canvas.className = "ll-aura-tip-canvas";
     this.canvas.hidden = true;
@@ -56,7 +63,7 @@ export class CharacterAuraTooltip {
   }
 
   private check(): void {
-    const tip = this.layer.querySelector<HTMLElement>(":scope > .tip-wrapper");
+    const tip = this.layer.querySelector<HTMLElement>(this.tipSelector);
     const id = tip?.querySelector<HTMLElement>(`.${MARK_CLASS}`)?.dataset.aura;
 
     if (!tip || !isCharacterAuraId(id)) return this.stop();
@@ -120,7 +127,9 @@ export class CharacterAuraTooltip {
     const tipW = Math.round(rect.width);
     const tipH = Math.round(rect.height);
 
+    // A tip hidden in place (SI fades `#tip` out) leaves no frozen aura behind.
     if (tipW < 4 || tipH < 4) {
+      this.canvas.hidden = true;
       this.frame = requestAnimationFrame(this.render);
 
       return;

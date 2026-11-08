@@ -16,6 +16,7 @@ import {
   createGuildFixture,
   createMemberFixture,
 } from "../../../../test/organization-fixtures.js";
+import { makeCharacterAurasData } from "../character-auras/character-auras.data-layer.js";
 import {
   makeGlobalChatOperations,
   type GlobalChatStore,
@@ -473,6 +474,9 @@ describe("global chat", () => {
         }),
       ),
       fail(operations.unmuteMessageSender(reader, undefined, sent.id)),
+      fail(operations.getAuraGrants(reader)),
+      fail(operations.grantSenderAura(reader, sent.id, { auraId: "frost" })),
+      fail(operations.revokeAuraGrant(reader, author.userId)),
     ]);
 
     const page = await run(
@@ -480,7 +484,7 @@ describe("global chat", () => {
     );
 
     expect(attempts.map(({ _tag }) => _tag)).toEqual(
-      Array.from({ length: 6 }, () => "GlobalChatAccessDenied"),
+      Array.from({ length: 9 }, () => "GlobalChatAccessDenied"),
     );
     expect(page.messages).toHaveLength(1);
     expect(page.pinned).toBeNull();
@@ -605,5 +609,55 @@ describe("global chat", () => {
     expect(lasting.mutedUntil).toBeNull();
     expect(afterExpiry.mutes).toEqual([]);
     expect(viewer.muted).toBe(false);
+  });
+
+  it("lets the sender of a message wear the granted aura until the grant is revoked", async () => {
+    const { operations, database } = await setup();
+
+    const sent = await run(
+      operations.sendMessage(author, { message: "Aura?", world: "gordion" }),
+    );
+
+    const auras = (
+      operation: (
+        data: Effect.Success<ReturnType<typeof makeCharacterAurasData>>,
+      ) => Effect.Effect<unknown, unknown>,
+    ) =>
+      run(
+        Effect.flatMap(makeCharacterAurasData([admin.userId]), operation).pipe(
+          Effect.provideService(ApiDatabase, database),
+        ),
+      );
+
+    const granted = await run(
+      operations.grantSenderAura(admin, sent.id, {
+        world: "gordion",
+        auraId: "frost",
+      }),
+    );
+
+    const own = await auras((data) => data.getOwnAura(author.userId));
+    // The granted User may switch to another aura on their own.
+    await auras((data) => data.updateOwnAura(author.userId, "void"));
+    const listed = await run(operations.getAuraGrants(admin));
+
+    await run(operations.revokeAuraGrant(admin, granted.id));
+
+    const revoked = await auras((data) => data.getOwnAura(author.userId));
+
+    const refused = await run(
+      Effect.flatMap(makeCharacterAurasData([admin.userId]), (data) =>
+        Effect.flip(data.updateOwnAura(author.userId, "frost")),
+      ).pipe(Effect.provideService(ApiDatabase, database)),
+    );
+
+    expect(granted).toMatchObject({ displayName: "Author", auraId: "frost" });
+    expect(own).toMatchObject({ auraId: "frost", canChange: true });
+    expect(listed.grants).toEqual([{ ...granted, auraId: "void" }]);
+    expect(revoked).toMatchObject({ canChange: false });
+    expect(refused._tag).toBe("CharacterAuraAccessDenied");
+    expect(
+      (await fail(operations.revokeAuraGrant(admin, granted.id)))._tag,
+    ).toBe("GlobalChatNotFound");
   });
 });

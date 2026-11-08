@@ -496,6 +496,32 @@ export const SOFT_PARTICLES: ReadonlySet<ParticleKind> = new Set<ParticleKind>([
   "firefly",
 ]);
 
+/** Pixel hearts, rows top down: small (3×3) and large (5×4). */
+const HEARTS: readonly (readonly string[])[] = [
+  ["X.X", "XXX", ".X."],
+  [".X.X.", "XXXXX", ".XXX.", "..X.."],
+];
+
+/** A pixel heart drifting up, with a white glint on its left lobe. */
+function drawHeartParticle(
+  lit: CanvasRenderingContext2D,
+  _dim: CanvasRenderingContext2D,
+  p: Particle,
+  x: number,
+  y: number,
+  age: number,
+  color: Rgb,
+): void {
+  const a = envelope(age, 0.15, 0.35);
+  const rows = HEARTS[p.size >= 2 ? 1 : 0] ?? [];
+  const left = x - Math.floor((rows[0]?.length ?? 0) / 2);
+
+  for (const [dy, row] of rows.entries())
+    for (let dx = 0; dx < row.length; dx++)
+      if (row[dx] === "X") plot(lit, left + dx, y + dy, color, a);
+  plot(lit, left + (p.size >= 2 ? 1 : 0), y + 1, [255, 255, 255], a * 0.8);
+}
+
 /** The shaded underside of a 2×2 stone grain. */
 const STONE_SHADE: Rgb = [18, 14, 16];
 
@@ -521,4 +547,5 @@ export const PARTICLE_PAINTERS: Record<ParticleKind, ParticlePainter> = {
   puddle: drawPuddleParticle,
   print: drawPrintParticle,
   ring: drawRingParticle,
+  heart: drawHeartParticle,
 };

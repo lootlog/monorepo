@@ -2,8 +2,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getApiErrorStatus } from "@lootlog/client/transport";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
+import type { CharacterAuraId } from "@lootlog/schema/character-aura";
 import {
+  getCharacterAurasControllerGetAurasQueryKey,
+  getGlobalChatControllerGetAuraGrantsQueryKey,
   getGlobalChatControllerGetMutesQueryKey,
+  useGlobalChatControllerGrantSenderAura,
+  useGlobalChatControllerRevokeAuraGrant,
   useGlobalChatControllerDeleteMessage,
   useGlobalChatControllerMuteSender,
   useGlobalChatControllerPinMessage,
@@ -84,6 +89,16 @@ export const useGlobalChatModeration = (channel: GlobalChatChannel) => {
     },
   });
 
+  const auraMutation = useGlobalChatControllerGrantSenderAura({
+    mutation: {
+      onSuccess: (grant) => {
+        showRuntimeMessage(t("auraGrant.granted", { name: grant.displayName }));
+        invalidateAuraGrants(queryClient);
+      },
+      onError,
+    },
+  });
+
   const unmuteMutation = useGlobalChatControllerUnmuteMessageSender({
     mutation: {
       onSuccess: () => {
@@ -118,13 +133,46 @@ export const useGlobalChatModeration = (channel: GlobalChatChannel) => {
         pathParams: { messageId },
         params: channelParams,
       }),
+    grantSenderAura: (messageId: string, auraId: CharacterAuraId) =>
+      auraMutation.mutate({
+        pathParams: { messageId },
+        data: { ...channelParams, auraId },
+      }),
     isPending:
+      auraMutation.isPending ||
       unmuteMutation.isPending ||
       deleteMutation.isPending ||
       pinMutation.isPending ||
       unpinMutation.isPending ||
       muteMutation.isPending,
   };
+};
+
+/** The admin's grant list and the auras shown on the map follow a grant change. */
+const invalidateAuraGrants = (
+  queryClient: ReturnType<typeof useQueryClient>,
+) => {
+  void queryClient.invalidateQueries({
+    queryKey: getGlobalChatControllerGetAuraGrantsQueryKey(),
+  });
+  void queryClient.invalidateQueries({
+    queryKey: getCharacterAurasControllerGetAurasQueryKey(),
+  });
+};
+
+/** Revoking an aura grant refreshes the admin's list. */
+export const useCharacterAuraRevoke = () => {
+  const { t } = useTranslation("globalChat");
+  const queryClient = useQueryClient();
+
+  return useGlobalChatControllerRevokeAuraGrant({
+    mutation: {
+      onSuccess: () => invalidateAuraGrants(queryClient),
+      onError: () => {
+        showRuntimeMessage(t("errors.moderationFailed"));
+      },
+    },
+  });
 };
 
 /** Lifting a mute refreshes the admin's list. */

@@ -95,8 +95,19 @@ export function drawGround(
       pixelEllipse(lit, x, y, rx, ry, light, a * 0.6, 0, 2);
       break;
     case "rainbow":
-      softEllipse(lit, x, y, rx * 0.95, ry * 0.95, [255, 255, 255], a * 0.2);
+      // Pixels only: the prism is a lite aura, so its body skips the pixel finish.
       pixelEllipse(lit, x, y, rx, ry, null, a, t * 1.2, 1);
+      pixelEllipse(
+        lit,
+        x,
+        y,
+        Math.round(rx * 0.6),
+        Math.round(ry * 0.6),
+        [255, 255, 255],
+        a * 0.3,
+        0,
+        2,
+      );
       break;
     case "ripples":
       // Three rings spreading from the feet in turn, fading as they widen.
@@ -124,21 +135,22 @@ export function drawGround(
       break;
     case "dust":
       softEllipse(lit, x, y, rx * 1.1, ry * 1.1, dark, a * 0.45);
-
-      // Dashes of sand racing round the feet.
-      for (let dash = 0; dash < 4; dash++) {
-        for (let s = 0; s < 8; s++) {
-          const angle = t * 4 + (dash * TAU) / 4 + s * 0.08;
-          plot(
-            lit,
-            x + Math.cos(angle) * rx * (0.85 + (dash % 2) * 0.2),
-            y + Math.sin(angle) * ry,
-            s < 3 ? light : color,
-            (s / 8) * a,
-          );
-        }
-      }
-
+      drawDustDashes(lit, x, y, rx, ry, t, light, color, a);
+      break;
+    case "halo":
+      // Pixels only and still between ticks, so a lite aura's cached body stays valid.
+      pixelEllipse(lit, x, y, rx, ry, light, a, 0, 1);
+      pixelEllipse(
+        lit,
+        x,
+        y,
+        Math.round(rx * 0.7),
+        Math.round(ry * 0.7),
+        color,
+        a * 0.45,
+        0,
+        2,
+      );
       break;
     case "cracks":
       drawCrackedGround(b, x, y, rx, ry, color, a, intensity, flash);
@@ -206,6 +218,32 @@ function drawCrackedGround(
   }
 
   softEllipse(b.dim(), x, y, rx * 0.6, ry * 0.6, [10, 0, 4], 0.6 * intensity);
+}
+
+/** Dust ground: dashes of sand racing round the feet. */
+function drawDustDashes(
+  lit: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  rx: number,
+  ry: number,
+  t: number,
+  light: Rgb,
+  color: Rgb,
+  a: number,
+): void {
+  for (let dash = 0; dash < 4; dash++) {
+    for (let s = 0; s < 8; s++) {
+      const angle = t * 4 + (dash * TAU) / 4 + s * 0.08;
+      plot(
+        lit,
+        x + Math.cos(angle) * rx * (0.85 + (dash % 2) * 0.2),
+        y + Math.sin(angle) * ry,
+        s < 3 ? light : color,
+        (s / 8) * a,
+      );
+    }
+  }
 }
 
 /** Vortex ground: three arms of pixels winding in, rotating a notch per tick. */

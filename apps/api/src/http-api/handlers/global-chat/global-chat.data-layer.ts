@@ -8,7 +8,9 @@ import {
   type GlobalChatChannelUpdate,
   type GlobalChatMessage,
 } from "@lootlog/schema/chat";
+import { CharacterAuraIdSchema } from "@lootlog/schema/character-aura";
 import type {
+  CharacterAuraGrantResponse,
   GlobalChatMessageResponse,
   GlobalChatMuteResponse,
 } from "#src/contracts/global-chat/schemas";
@@ -19,6 +21,10 @@ import {
   memberTable,
 } from "#src/database/drizzle/organization.schema";
 import { timerTable } from "#src/database/drizzle/timer.schema";
+import {
+  characterAuraGrantTable,
+  userCharacterAuraTable,
+} from "#src/database/drizzle/user.schema";
 import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import {
   GlobalChatAccessDenied,
@@ -117,6 +123,22 @@ const muteResponse = (
   id: row.id,
   displayName: row.displayName,
   mutedUntil: row.mutedUntil?.toISOString() ?? null,
+  createdAt: row.createdAt.toISOString(),
+});
+
+// A stored id the Game client no longer draws reads as no aura.
+const isCharacterAuraId = Schema.is(CharacterAuraIdSchema);
+
+const auraGrantResponse = (row: {
+  userId: string;
+  displayName: string;
+  auraId: string | null;
+  createdAt: Date;
+}): CharacterAuraGrantResponse => ({
+  id: row.userId,
+  displayName: row.displayName,
+  auraId:
+    row.auraId !== null && isCharacterAuraId(row.auraId) ? row.auraId : null,
   createdAt: row.createdAt.toISOString(),
 });
 
@@ -520,6 +542,89 @@ export const makeGlobalChatOperations = (
           const { senderUserId } = yield* findMessage(world, messageId);
 
           yield* liftMute(eq(globalChatMuteTable.userId, senderUserId));
+        }),
+      getAuraGrants: (caller) =>
+        Effect.gen(function* () {
+          yield* requireAdmin(caller);
+
+          const rows = yield* database
+            .select({
+              userId: characterAuraGrantTable.userId,
+              displayName: characterAuraGrantTable.displayName,
+              auraId: userCharacterAuraTable.auraId,
+              createdAt: characterAuraGrantTable.createdAt,
+            })
+            .from(characterAuraGrantTable)
+            .leftJoin(
+              userCharacterAuraTable,
+              eq(userCharacterAuraTable.userId, characterAuraGrantTable.userId),
+            )
+            .orderBy(asc(characterAuraGrantTable.displayName))
+            .pipe(Effect.mapError(operationError));
+
+          return { grants: rows.map(auraGrantResponse) };
+        }),
+      grantSenderAura: (caller, messageId, { world, auraId }) =>
+        Effect.gen(function* () {
+          yield* requireAdmin(caller);
+          yield* requireChannel(world);
+
+          const { senderUserId, displayName } = yield* findMessage(
+            world,
+            messageId,
+          );
+
+          const now = new Date();
+
+          // Granting again renames the entry and swaps the aura.
+          const grant = yield* database
+            .transaction((transaction) =>
+              Effect.gen(function* () {
+                const [row] = yield* transaction
+                  .insert(characterAuraGrantTable)
+                  .values({
+                    userId: senderUserId,
+                    displayName,
+                    grantedByUserId: caller.userId,
+                    createdAt: now,
+                  })
+                  .onConflictDoUpdate({
+                    target: characterAuraGrantTable.userId,
+                    set: { displayName },
+                  })
+                  .returning();
+
+                yield* transaction
+                  .insert(userCharacterAuraTable)
+                  .values({ userId: senderUserId, auraId, updatedAt: now })
+                  .onConflictDoUpdate({
+                    target: userCharacterAuraTable.userId,
+                    set: { auraId, updatedAt: now },
+                  });
+
+                return row;
+              }),
+            )
+            .pipe(Effect.mapError(operationError));
+
+          if (!grant)
+            return yield* Effect.fail(
+              operationError(new Error("Aura grant upsert returned no row")),
+            );
+
+          return auraGrantResponse({ ...grant, auraId });
+        }),
+      revokeAuraGrant: (caller, grantId) =>
+        Effect.gen(function* () {
+          yield* requireAdmin(caller);
+
+          const deleted = yield* database
+            .delete(characterAuraGrantTable)
+            .where(eq(characterAuraGrantTable.userId, grantId))
+            .returning({ userId: characterAuraGrantTable.userId })
+            .pipe(Effect.mapError(operationError));
+
+          if (deleted.length === 0) return yield* notFound();
         }),
     });
   });

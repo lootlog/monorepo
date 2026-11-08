@@ -46,7 +46,8 @@
     "deleteConfirm": {
       "title": "Usunąć wiadomość?",
       "description": "Zniknie z czatu u wszystkich."
-    }
+    },
+    "grantAura": "Nadaj aurę"
   },
   "mute": {
     "durations": {
@@ -98,5 +99,16 @@
     "muted": "Nie możesz teraz pisać na czacie globalnym",
     "channelGone": "Ten kanał już nie istnieje",
     "moderationFailed": "Nie udało się wykonać akcji moderacji"
+  },
+  "auraGrant": {
+    "granted": "Nadano aurę: {{name}}"
+  },
+  "auraGrants": {
+    "open": "Nadane aury",
+    "title": "Nadane aury",
+    "empty": "Nikt nie ma nadanej aury.",
+    "noAura": "bez aury",
+    "revoke": "Odbierz aurę: {{name}}",
+    "loadError": "Nie udało się wczytać nadanych aur"
   }
 }

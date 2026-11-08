@@ -22,6 +22,11 @@ export const CHARACTER_AURA_IDS = [
   "arcane",
   "aurora",
   "conqueror",
+  "halo",
+  "dragon",
+  "crown",
+  "wings",
+  "hearts",
 ] as const;
 
 export const CharacterAuraIdSchema = Schema.Literals(CHARACTER_AURA_IDS);

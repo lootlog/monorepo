@@ -8,7 +8,10 @@ import {
 import type { CharacterAuraId } from "@lootlog/schema/character-aura";
 import { readGameClientBootstrap } from "@/lib/game-client-bootstrap";
 import { auraRuntimeAdapter } from "@/lib/margonem-runtime/adapters/aura-runtime-adapter";
-import { subscribeCharacterTipUpdates } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
+import {
+  isLegacyTooltipRuntimeAvailable,
+  subscribeCharacterTipUpdates,
+} from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
 import { useGameStore } from "@/store/game.store";
 import { useOthersStore } from "@/store/others.store";
 import {
@@ -17,6 +20,7 @@ import {
 } from "../character-aura-renderer";
 import { resolveCharacterAuraTargets } from "../character-aura-targets";
 import { auraMark, CharacterAuraTooltip } from "../engine/tooltip";
+import { installLegacyAuraTips } from "../legacy-aura-tips";
 import { useOwnCharacterAura } from "./use-own-character-aura";
 
 /** Auras change rarely; a newly chosen one reaches other players within this time. */
@@ -24,11 +28,11 @@ const AURAS_REFRESH_INTERVAL_MS = 5 * 60_000;
 
 /**
  * Shows every aura on the map: the hero's own as soon as it is chosen, and
- * the auras of other players by the Margonem account they play. Auras exist
- * only on the NI canvas.
+ * the auras of other players by the Margonem account they play, on the NI
+ * canvas and the SI map, and marks their tips so the tip shows the aura.
  */
 export const useCharacterAuras = () => {
-  const available = auraRuntimeAdapter.isAvailable();
+  const available = characterAuraRenderer.isAvailable();
   const heroAccountId = useGameStore((state) => state.game?.hero.accountId);
   const othersById = useOthersStore((state) => state.othersById);
   const { data: own } = useOwnCharacterAura();
@@ -66,9 +70,28 @@ export const useCharacterAuras = () => {
 
   const hasAuras = targets.byCharacter.size > 0;
 
+  const legacyTips = useRef<ReturnType<typeof installLegacyAuraTips> | null>(
+    null,
+  );
+
   // Installed before the targets apply, so tips rebuilt for them get the mark.
   useEffect(() => {
     if (!available || !hasAuras) return;
+
+    if (isLegacyTooltipRuntimeAvailable()) {
+      const tips = installLegacyAuraTips({
+        auraOf: (accountId) => accountAuras.current.get(accountId),
+        heroAura: () => drawn.current.get(HERO_AURA_KEY),
+      });
+
+      legacyTips.current = tips;
+
+      return () => {
+        legacyTips.current = null;
+        tips.dispose();
+      };
+    }
+
     const layer = auraRuntimeAdapter.getTipLayer();
     const tooltip = layer ? new CharacterAuraTooltip(layer) : null;
 
@@ -115,6 +138,7 @@ export const useCharacterAuras = () => {
     drawn.current = targets.byCharacter;
 
     auraRuntimeAdapter.refreshTips(changed, heroChanged);
+    legacyTips.current?.refresh(changed);
   }, [available, targets, heroAccountId, heroAura]);
 
   useEffect(() => () => characterAuraRenderer.setTargets(new Map()), []);

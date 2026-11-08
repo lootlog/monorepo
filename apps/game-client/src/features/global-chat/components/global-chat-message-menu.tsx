@@ -1,7 +1,8 @@
-import { Copy, Pin, Trash2, Volume2, VolumeX } from "lucide-react";
+import { Copy, Pin, Sparkles, Trash2, Volume2, VolumeX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GlobalChatMessageResponse } from "@lootlog/client/main";
+import { CHARACTER_AURA_IDS } from "@lootlog/schema/character-aura";
 import { GLOBAL_CHAT_MUTE_DURATIONS_MINUTES } from "@lootlog/schema/chat";
 import { ConfirmPopover } from "@/components/confirm-popover";
 import {
@@ -31,7 +32,7 @@ type GlobalChatMessageMenuProps = {
 };
 
 /**
- * Copy for everyone; pin, delete and mute for global chat admins. The items of
+ * Copy for everyone; pin, delete, mute and aura grants for global chat admins. The items of
  * the transcript's shared context menu.
  */
 export const GlobalChatMessageMenu = ({
@@ -42,8 +43,14 @@ export const GlobalChatMessageMenu = ({
   const { t } = useTranslation("globalChat");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
-  const { deleteMessage, pinMessage, muteSender, unmuteSender, isPending } =
-    useGlobalChatModeration(channel);
+  const {
+    deleteMessage,
+    pinMessage,
+    muteSender,
+    unmuteSender,
+    grantSenderAura,
+    isPending,
+  } = useGlobalChatModeration(channel);
 
   return (
     <>
@@ -91,6 +98,26 @@ export const GlobalChatMessageMenu = ({
             />
             {t("messageActions.unmute")}
           </ContextMenuItem>
+          <ContextMenuSub>
+            <ContextMenuSubTrigger disabled={isPending}>
+              <Sparkles
+                aria-hidden
+                strokeWidth={1.5}
+                className={ICON_CLASS_NAME}
+              />
+              {t("messageActions.grantAura")}
+            </ContextMenuSubTrigger>
+            <ContextMenuContent className="ll:max-h-72 ll:w-40 ll:overflow-y-auto">
+              {CHARACTER_AURA_IDS.map((auraId) => (
+                <ContextMenuItem
+                  key={auraId}
+                  onClick={() => grantSenderAura(message.id, auraId)}
+                >
+                  {t(`characterAura.auras.${auraId}`, { ns: "settings" })}
+                </ContextMenuItem>
+              ))}
+            </ContextMenuContent>
+          </ContextMenuSub>
           <ConfirmPopover
             open={deleteConfirmOpen}
             onOpenChange={setDeleteConfirmOpen}
