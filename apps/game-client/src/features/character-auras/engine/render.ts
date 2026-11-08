@@ -2020,6 +2020,21 @@ export function isAuraInView(
   );
 }
 
+/**
+ * The screen rect an aura at `place` can paint into this frame: its buffers
+ * plus the drift a character or the camera makes between ticks.
+ */
+export function auraScreenBox(place: AuraPlacement) {
+  const box = boxOf(place);
+
+  return {
+    x: box.ox - VIEW_SLACK,
+    y: box.oy - VIEW_SLACK,
+    width: box.w + VIEW_SLACK * 2,
+    height: box.h + VIEW_SLACK * 2,
+  };
+}
+
 function boxOf(place: AuraPlacement): Box {
   const pad = place.silhouette.pad + MARGIN;
 

@@ -104,6 +104,11 @@ export function getLegacyOtherIdAt(target: EventTarget | null): string | null {
   return id.slice(LEGACY_OTHER_ELEMENT_PREFIX.length) || null;
 }
 
+/** The SI map element (`#other{id}.other`) of an other. */
+export function getLegacyOtherElement(id: string): HTMLElement | null {
+  return document.getElementById(`${LEGACY_OTHER_ELEMENT_PREFIX}${id}`);
+}
+
 export function isLegacyTooltipRuntimeAvailable(): boolean {
   const runtimeWindow = getRuntimeWindow();
 
@@ -127,9 +132,7 @@ export function buildLegacyOtherTip(other: LegacyGameOther): string | null {
  * updates a tip that is already on screen.
  */
 export function setLegacyOtherTip(id: string, html: string): void {
-  document
-    .getElementById(`${LEGACY_OTHER_ELEMENT_PREFIX}${id}`)
-    ?.setAttribute("tip", html);
+  getLegacyOtherElement(id)?.setAttribute("tip", html);
 }
 
 export function refreshWhoIsHereRuntimeTooltip(
