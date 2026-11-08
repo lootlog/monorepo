@@ -2,19 +2,19 @@
   "type": "diff",
   "version": "9",
   "dialect": "postgres",
-  "id": "b4ec65be-b865-471f-8880-f426dd682a12",
+  "id": "7d48532d-0379-418b-bd54-c06f3432811b",
   "prevIds": ["a236c113-5f3e-45ea-a268-5c568be12f1d"],
   "footprints": [
     {
       "statementType": "create_table",
-      "statementTarget": ["table", "public", "CharacterAuraGrant"],
+      "statementTarget": ["table", "public", "UserCharacterAuraGrant"],
       "writes": [
-        "s|tbl|public.CharacterAuraGrant",
-        "n|tbl|public.CharacterAuraGrant",
-        "e|tbl|public.CharacterAuraGrant",
-        "n|rel|public.CharacterAuraGrant",
-        "n|type|public.CharacterAuraGrant",
-        "n|rel|public.CharacterAuraGrant_pkey"
+        "s|tbl|public.UserCharacterAuraGrant",
+        "n|tbl|public.UserCharacterAuraGrant",
+        "e|tbl|public.UserCharacterAuraGrant",
+        "n|rel|public.UserCharacterAuraGrant",
+        "n|type|public.UserCharacterAuraGrant",
+        "n|rel|public.UserCharacterAuraGrant_pkey"
       ],
       "reads": ["n|sch|public"]
     }
@@ -24,7 +24,7 @@
       "op": "create",
       "row": {
         "schema": "public",
-        "name": "CharacterAuraGrant",
+        "name": "UserCharacterAuraGrant",
         "isRlsEnabled": false,
         "entityType": "tables"
       }
@@ -33,7 +33,7 @@
       "op": "create",
       "row": {
         "schema": "public",
-        "table": "CharacterAuraGrant",
+        "table": "UserCharacterAuraGrant",
         "name": "userId",
         "type": "text",
         "typeSchema": null,
@@ -49,23 +49,7 @@
       "op": "create",
       "row": {
         "schema": "public",
-        "table": "CharacterAuraGrant",
-        "name": "displayName",
-        "type": "text",
-        "typeSchema": null,
-        "notNull": true,
-        "dimensions": 0,
-        "default": null,
-        "generated": null,
-        "identity": null,
-        "entityType": "columns"
-      }
-    },
-    {
-      "op": "create",
-      "row": {
-        "schema": "public",
-        "table": "CharacterAuraGrant",
+        "table": "UserCharacterAuraGrant",
         "name": "grantedByUserId",
         "type": "text",
         "typeSchema": null,
@@ -81,8 +65,8 @@
       "op": "create",
       "row": {
         "schema": "public",
-        "table": "CharacterAuraGrant",
-        "name": "createdAt",
+        "table": "UserCharacterAuraGrant",
+        "name": "grantedAt",
         "type": "timestamp(3)",
         "typeSchema": null,
         "notNull": true,
@@ -97,8 +81,8 @@
       "op": "create",
       "row": {
         "schema": "public",
-        "table": "CharacterAuraGrant",
-        "name": "CharacterAuraGrant_pkey",
+        "table": "UserCharacterAuraGrant",
+        "name": "UserCharacterAuraGrant_pkey",
         "columns": ["userId"],
         "nameExplicit": false,
         "entityType": "pks"

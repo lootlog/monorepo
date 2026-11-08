@@ -1,119 +1,56 @@
-import type { RuntimeAuraCharacter } from "./aura-runtime-adapter";
+import type {
+  RuntimeAuraCharacter,
+  RuntimeCharacterFrame,
+} from "./aura-runtime-adapter";
+import {
+  getLegacyOtherElement,
+  getLegacyRuntimeOther,
+} from "./tooltip-runtime-adapter";
 
-/** What SI keeps on the hero (player.js) and every other (elements.js `newOther`) it moves. */
-type LegacyMapCharacter = {
-  /** Drawn tile position; steps by 0.25 while walking. */
-  rx?: number;
-  ry?: number;
-  /** One frame of the 4×4 sprite sheet. */
-  fw?: number;
-  fh?: number;
+/** An SI character as the aura sees it: its frame and the map element it is drawn as. */
+export type LegacyAuraCharacter = RuntimeAuraCharacter & {
+  /** `#hero` or `#other{id}`, the element the aura's layers sit beside. */
+  element: HTMLElement;
+};
+
+/** The two canvases of one aura: under and over its character. */
+export type LegacyAuraLayers = {
+  back: HTMLCanvasElement;
+  front: HTMLCanvasElement;
+};
+
+/** A layer's rect in `#base` pixels, which are map pixels. */
+export type LegacyAuraLayerBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };
 
 type LegacyAuraRuntimeWindow = Window & {
   Engine?: unknown;
-  hero?: LegacyMapCharacter;
-  map?: {
-    id?: number;
-    /** Map size in tiles (map.js `_u`). */
-    x?: number;
-    y?: number;
-    /** The scroll `center` asked `#base` for (map.js:406). */
-    scrollpos?: readonly [number, number];
-  };
-  g?: {
-    other?: Record<string, LegacyMapCharacter | undefined>;
-    /** The open battle, false once it closes (battle.js:19, :339). */
-    battle?: unknown;
-  };
+  map?: { id?: number };
 };
 
 const getRuntimeWindow = (): LegacyAuraRuntimeWindow => window;
 
-const TILE = 32;
+/** Sprites are swapped rarely; the cache only guards against unbounded growth. */
+const MAX_SPRITES = 256;
 
-/** `#base`, the map viewport: 512 px wide and at most as tall (map.js:417). */
-const VIEW_SIZE = 512;
-
-/** The sprite sheet frame an element shows and the size of the whole sheet. */
-export type LegacySpriteFrameInput = {
-  backgroundPosition: string;
-  frameWidth: number;
-  frameHeight: number;
-  imageWidth: number;
-  imageHeight: number;
-};
-
-const mod = (value: number, size: number) => ((value % size) + size) % size;
-
-function parsePixels(value: string | undefined): number | null {
-  if (value === undefined) return null;
-
-  const match = /^(-?\d+(?:\.\d+)?)(?:px)?$/.exec(value);
-
-  return match?.[1] === undefined ? null : Number(match[1]);
-}
-
-/**
- * The source rect a `#hero` or `#other{id}` element shows. SI moves the
- * sheet by `step * fw` and `-dir * fh` (player.js:727, elements.js:2327), so
- * a positive offset or the hero's starting `dir` of -1 wraps round the
- * repeating background, as the browser draws it.
- */
-export function legacySpriteFrame({
-  backgroundPosition,
-  frameWidth,
-  frameHeight,
-  imageWidth,
-  imageHeight,
-}: LegacySpriteFrameInput): {
-  sx: number;
-  sy: number;
-  sw: number;
-  sh: number;
-} | null {
-  const [x, y] = backgroundPosition.trim().split(/\s+/);
-  const offsetX = parsePixels(x);
-  // A single value sets only x; y is then centred, which SI never uses.
-  const offsetY = parsePixels(y);
-
-  if (
-    offsetX === null ||
-    offsetY === null ||
-    !(frameWidth > 0 && frameHeight > 0) ||
-    !(imageWidth > 0 && imageHeight > 0)
-  ) {
-    return null;
-  }
-
-  const sx = Math.round(mod(-offsetX, imageWidth));
-  const sy = Math.round(mod(-offsetY, imageHeight));
-
-  if (sx + frameWidth > imageWidth || sy + frameHeight > imageHeight) {
-    return null;
-  }
-
-  return { sx, sy, sw: frameWidth, sh: frameHeight };
-}
-
-/** The image of a `background-image: url(...)` value, as the style returns it. */
-export function parseBackgroundImageUrl(value: string): string | null {
-  const match = /^url\(\s*(["']?)(.+?)\1\s*\)$/.exec(value.trim());
-
-  return match?.[2] ?? null;
-}
-
-/**
- * Sprites by url. SI loads every sprite through ImgLoader into a blob url
- * (functions.js:31-41) and sets it as the element's background, so a second
- * image of that url decodes from memory and its pixels stay readable.
- */
+/** The sprite of each `background-image` url SI gave a character element. */
 const sprites = new Map<string, HTMLImageElement>();
 
-/** Outfit changes and passing players add sprites; old ones go once there are this many. */
-const MAX_SPRITES = 64;
+const BACKGROUND_URL = /^url\((["']?)(.+)\1\)$/;
 
-function spriteImage(url: string): HTMLImageElement | null {
+/**
+ * SI loads a sprite through XHR into a `blob:` url of the page's own origin
+ * (functions.js `ImgLoader.onload`) and sets it as the element's background,
+ * so the same url decodes again from memory and its pixels can be read.
+ */
+function spriteOf(backgroundImage: string): HTMLImageElement | null {
+  const url = BACKGROUND_URL.exec(backgroundImage)?.[2];
+
+  if (!url) return null;
   let image = sprites.get(url);
 
   if (!image) {
@@ -126,140 +63,143 @@ function spriteImage(url: string): HTMLImageElement | null {
   return image.complete && image.naturalWidth > 0 ? image : null;
 }
 
-function getCamera(): readonly [number, number] {
-  const scroll = getRuntimeWindow().map?.scrollpos;
-  const x = scroll?.[0];
-  const y = scroll?.[1];
-
-  // `#base` cannot scroll before the map's corner; a small map asks for it.
-  return [
-    Number.isFinite(x) ? Math.max(0, Number(x)) : 0,
-    Number.isFinite(y) ? Math.max(0, Number(y)) : 0,
-  ];
+function modulo(value: number, size: number): number {
+  return ((value % size) + size) % size;
 }
 
 /**
- * A character as its map element shows it now. Position and frame size come
- * from the game's state, image, frame and stacking from the element's inline
- * style, which the game writes on every step; nothing here forces a layout.
+ * The frame SI shows on a character element. `moveOther` (elements.js) and
+ * `hero.run` (player.js) set its inline left, top, size, z-index and the
+ * background position of the sprite's 4×4 frame grid; in water the element
+ * is pushed down and cut shorter, so the visible part is what it shows.
  */
-function toAuraCharacter(
-  character: LegacyMapCharacter | undefined,
-  element: HTMLElement | null,
-  left: (rx: number, fw: number) => number,
-  top: (ry: number, fh: number) => number,
-): RuntimeAuraCharacter | null {
-  if (!character || !element || element.style.display === "none") return null;
+function readFrame(element: HTMLElement): RuntimeCharacterFrame | null {
+  const { style } = element;
 
-  const { rx, ry, fw, fh } = character;
-
-  if (
-    !Number.isFinite(rx) ||
-    !Number.isFinite(ry) ||
-    fw === undefined ||
-    fh === undefined
-  ) {
-    return null;
-  }
-
-  const url = parseBackgroundImageUrl(element.style.backgroundImage);
-  const image = url ? spriteImage(url) : null;
+  if (!element.isConnected || style.display === "none") return null;
+  const image = spriteOf(style.backgroundImage);
 
   if (!image) return null;
 
-  const frame = legacySpriteFrame({
-    backgroundPosition: element.style.backgroundPosition,
-    frameWidth: fw,
-    frameHeight: fh,
-    imageWidth: image.naturalWidth,
-    imageHeight: image.naturalHeight,
-  });
+  const [bx = Number.NaN, by = Number.NaN] = style.backgroundPosition
+    .split(" ")
+    .map((value) => Number.parseFloat(value));
 
-  if (!frame) return null;
+  const frame = {
+    image,
+    sx: modulo(-bx, image.naturalWidth),
+    sy: modulo(-by, image.naturalHeight),
+    sw: Number.parseFloat(style.width),
+    sh: Number.parseFloat(style.height),
+    dx: Number.parseFloat(style.left),
+    dy: Number.parseFloat(style.top),
+  };
 
-  const [cameraX, cameraY] = getCamera();
-  const tileX = Number(rx);
-  const tileY = Number(ry);
-  // The game writes `zIndex: getLayerOrder(y, 10)`; a fractional row is
-  // rejected by the style, so the element keeps the last whole one.
-  const zIndex = Number.parseInt(element.style.zIndex, 10);
+  const valid =
+    frame.sw > 0 &&
+    frame.sh > 0 &&
+    Number.isFinite(frame.sx) &&
+    Number.isFinite(frame.sy) &&
+    Number.isFinite(frame.dx) &&
+    Number.isFinite(frame.dy);
+
+  return valid ? frame : null;
+}
+
+function toAuraCharacter(
+  element: HTMLElement | null,
+): LegacyAuraCharacter | null {
+  const frame = element && readFrame(element);
+
+  if (!element || !frame) return null;
+  // `getLayerOrder` (elements.js) sets `y * 2 + 10`; a fraction mid-step is
+  // not a valid z-index, so the element keeps its last whole one.
+  const order = Number.parseInt(element.style.zIndex, 10);
 
   return {
-    frame: {
-      image,
-      ...frame,
-      // The full frame, also in water where the game crops the element's
-      // bottom (elements.js:2321-2325), as the NI aura uses the whole frame.
-      dx: left(tileX, fw) - cameraX,
-      dy: top(tileY, fh) - cameraY,
-    },
-    order: Number.isFinite(zIndex) ? zIndex : Math.round(tileY) * 2 + 10,
-    feetHeight: fh,
+    element,
+    frame,
+    order: Number.isFinite(order) ? order : 0,
+    feetHeight: frame.sh,
   };
 }
 
-/** SI's map: `#base` and the `#hero` and `#other{id}` elements in it. */
+function createLayer(): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = 0;
+  canvas.height = 0;
+  // Inline only: no stylesheet rule matches these, and the map's clicks and
+  // tips go through them to the characters and ground underneath.
+  canvas.style.cssText = "position:absolute;left:0;top:0;pointer-events:none";
+
+  return canvas;
+}
+
+function placeLayer(
+  layer: HTMLCanvasElement,
+  box: LegacyAuraLayerBox,
+  zIndex: string,
+): void {
+  if (layer.width !== box.width) layer.width = box.width;
+
+  if (layer.height !== box.height) layer.height = box.height;
+
+  const transform = `translate(${box.x}px,${box.y}px)`;
+
+  if (layer.style.transform !== transform) layer.style.transform = transform;
+
+  if (layer.style.zIndex !== zIndex) layer.style.zIndex = zIndex;
+}
+
+/** SI's map: `#base` holds the hero and others as positioned elements in map pixels. */
 export const legacyAuraRuntimeAdapter = {
   isAvailable(): boolean {
-    const runtimeWindow = getRuntimeWindow();
-
     return (
-      !runtimeWindow.Engine &&
-      Boolean(runtimeWindow.g && runtimeWindow.hero && runtimeWindow.map)
+      getRuntimeWindow().Engine === undefined &&
+      document.getElementById("base") !== null
     );
   },
 
-  /** The current map, its scroll and size, or null while a battle covers it. */
-  getView(): {
-    mapId?: number;
-    camera: readonly [number, number];
-    mapSize: readonly [number, number];
-    viewSize: readonly [number, number];
-  } | null {
-    const runtimeWindow = getRuntimeWindow();
-    const map = runtimeWindow.map;
-    const width = Number(map?.x) * TILE;
-    const height = Number(map?.y) * TILE;
-
-    if (
-      runtimeWindow.g?.battle ||
-      !(width > 0 && height > 0) ||
-      !Number.isFinite(width) ||
-      !Number.isFinite(height)
-    ) {
-      return null;
-    }
-
-    return {
-      mapId: map?.id,
-      camera: getCamera(),
-      mapSize: [width, height],
-      viewSize: [VIEW_SIZE, VIEW_SIZE],
-    };
+  getMapId(): number | undefined {
+    return getRuntimeWindow().map?.id;
   },
 
-  /** `#base`, which scrolls the map and holds every character element. */
-  getMapHost(): HTMLElement | null {
-    return document.getElementById("base");
+  getHero(): LegacyAuraCharacter | null {
+    return toAuraCharacter(document.getElementById("hero"));
   },
 
-  getHero(): RuntimeAuraCharacter | null {
-    // player.js:663-664 rounds the hero's corner.
-    return toAuraCharacter(
-      getRuntimeWindow().hero,
-      document.getElementById("hero"),
-      (rx, fw) => Math.round(rx * TILE + 16 - fw / 2),
-      (ry, fh) => Math.round(ry * TILE + TILE - fh),
-    );
+  getOther(characterId: string): LegacyAuraCharacter | null {
+    if (!getLegacyRuntimeOther(characterId)) return null;
+
+    return toAuraCharacter(getLegacyOtherElement(characterId));
   },
 
-  getOther(characterId: string): RuntimeAuraCharacter | null {
-    // elements.js:2321-2322 places others without rounding.
-    return toAuraCharacter(
-      getRuntimeWindow().g?.other?.[characterId],
-      document.getElementById(`other${characterId}`),
-      (rx, fw) => rx * TILE + 16 - (fw >> 1),
-      (ry, fh) => ry * TILE + TILE - fh,
-    );
+  createLayers(): LegacyAuraLayers {
+    return { back: createLayer(), front: createLayer() };
+  },
+
+  /**
+   * Puts the layers right before and after the character's element with its
+   * z-index, so the back one paints under it and the front one over it,
+   * both under the characters of the rows in front.
+   */
+  placeLayers(
+    layers: LegacyAuraLayers,
+    element: HTMLElement,
+    box: LegacyAuraLayerBox,
+  ): void {
+    const { back, front } = layers;
+
+    if (element.previousSibling !== back) element.before(back);
+
+    if (element.nextSibling !== front) element.after(front);
+
+    placeLayer(back, box, element.style.zIndex);
+    placeLayer(front, box, element.style.zIndex);
+  },
+
+  removeLayers(layers: LegacyAuraLayers): void {
+    layers.back.remove();
+    layers.front.remove();
   },
 };

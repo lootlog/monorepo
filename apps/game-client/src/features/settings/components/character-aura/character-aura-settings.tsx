@@ -23,7 +23,7 @@ type AuraChoice = CharacterAuraId | typeof NO_AURA;
 export const CharacterAuraSettings = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { data: own } = useOwnCharacterAura();
+  const { data: own } = useOwnCharacterAura({ refetchOnMount: "always" });
 
   const mutation = useMutation({
     mutationFn: (auraId: CharacterAuraId | null) =>

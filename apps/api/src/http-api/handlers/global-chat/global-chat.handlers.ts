@@ -3,9 +3,6 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import type {
-  CharacterAuraGrantResponse,
-  CharacterAuraGrantsResponse,
-  GrantGlobalChatSenderAuraRequest,
   GlobalChatMessageResponse,
   GlobalChatMessagesResponse,
   GlobalChatMuteResponse,
@@ -112,21 +109,6 @@ export class GlobalChatData extends Context.Service<
       world: string | undefined,
       messageId: string,
     ) => Effect.Effect<void, GlobalChatFailure>;
-    readonly getAuraGrants: (
-      caller: GlobalChatCaller,
-    ) => Effect.Effect<
-      CharacterAuraGrantsResponse,
-      GlobalChatAccessDenied | GlobalChatOperationError
-    >;
-    readonly grantSenderAura: (
-      caller: GlobalChatCaller,
-      messageId: string,
-      payload: GrantGlobalChatSenderAuraRequest,
-    ) => Effect.Effect<CharacterAuraGrantResponse, GlobalChatFailure>;
-    readonly revokeAuraGrant: (
-      caller: GlobalChatCaller,
-      grantId: string,
-    ) => Effect.Effect<void, GlobalChatFailure>;
   }
 >()("@lootlog/api/http-api/global-chat/data") {}
 
@@ -218,25 +200,6 @@ export const GlobalChatHandlers = HttpApiBuilder.group(
         declaredHttpFailure(
           withCaller((data, caller) =>
             data.unmuteMessageSender(caller, query.world, params.messageId),
-          ),
-        ),
-      )
-      .handle("GlobalChatControllerGetAuraGrants", () =>
-        declaredHttpFailure(
-          withCaller((data, caller) => data.getAuraGrants(caller)),
-        ),
-      )
-      .handle("GlobalChatControllerGrantSenderAura", ({ params, payload }) =>
-        declaredHttpFailure(
-          withCaller((data, caller) =>
-            data.grantSenderAura(caller, params.messageId, payload),
-          ),
-        ),
-      )
-      .handle("GlobalChatControllerRevokeAuraGrant", ({ params }) =>
-        declaredHttpFailure(
-          withCaller((data, caller) =>
-            data.revokeAuraGrant(caller, params.grantId),
           ),
         ),
       ),

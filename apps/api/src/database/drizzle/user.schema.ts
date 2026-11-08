@@ -75,15 +75,13 @@ export const userCharacterAuraTable = pgTable("UserCharacterAura", {
 });
 
 /**
- * Users a global chat admin let wear an aura, besides the admins themselves.
- * Revoking the grant keeps the stored aura but stops showing it.
+ * Users a global chat admin let choose any aura, beside the admins themselves.
+ * Revoking deletes the row together with the aura the User wears.
  */
-export const characterAuraGrantTable = pgTable("CharacterAuraGrant", {
+export const userCharacterAuraGrantTable = pgTable("UserCharacterAuraGrant", {
   userId: text("userId").notNull().primaryKey(),
-  /** The User's chat name when granted, so admins recognise the entry. */
-  displayName: text("displayName").notNull(),
   grantedByUserId: text("grantedByUserId").notNull(),
-  createdAt: timestamp("createdAt", { mode: "date", precision: 3 }).notNull(),
+  grantedAt: timestamp("grantedAt", { mode: "date", precision: 3 }).notNull(),
 });
 
 /**
