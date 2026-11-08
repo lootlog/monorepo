@@ -73,9 +73,11 @@ describe("SocketProvider", () => {
       !command.requestId
     )
       throw new Error("Missing session join command");
+    // Without the feature the gateway never sends aura changes.
     expect(command.data).toEqual({
       world: "alpha",
       character: expectedJoinData,
+      features: ["character-auras"],
     });
     expect(command.data).not.toHaveProperty("location");
     const requestId = command.requestId;

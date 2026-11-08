@@ -4,7 +4,11 @@ import type {
   NpcPresenceReportAck,
   NpcPresenceSnapshot,
 } from "@lootlog/schema/npc-presence";
-import type { CommandSuccess, SessionJoined } from "@lootlog/protocol/realtime";
+import {
+  CHARACTER_AURAS_FEATURE,
+  type CommandSuccess,
+  type SessionJoined,
+} from "@lootlog/protocol/realtime";
 import {
   toOfflinePlayerPresence,
   toPlayerPresence,
@@ -84,6 +88,7 @@ const UNWRAPPED_EVENT_TYPES: ReadonlySet<ServerEvent["type"]> = new Set([
   "loot-split.auto-accepted",
   "air-tag.map-threat-updated",
   "npc-presence.updated",
+  "character-auras.changed",
 ]);
 
 /** Server events delivered to listeners under their protocol type. */
@@ -114,6 +119,7 @@ const FORWARDED_EVENT_TYPES = [
   "global-chat.deleted",
   "global-chat.pinned",
   "global-chat.stats",
+  "character-auras.changed",
   "event.map-status-updated",
   "event.hero-killed",
   "event.ranking-updated",
@@ -441,6 +447,7 @@ export class AppSocket {
         clan: data.clan,
       },
       margonemAccountProof,
+      features: [CHARACTER_AURAS_FEATURE],
     });
 
     ensureCurrent();
