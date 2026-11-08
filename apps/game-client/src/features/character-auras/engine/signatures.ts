@@ -1,5 +1,5 @@
 import { clamp } from "es-toolkit";
-import { TAU, noise1, rgba, type Rgb } from "./math";
+import { TAU, mulberry32, noise1, rgba, type Rgb } from "./math";
 import {
   pixelArc,
   pixelDisc,
@@ -111,6 +111,67 @@ export function drawMoon(b: Brush, place: AuraPlacement, beat: number): void {
     0.9 * intensity * clamp(beat, 0.6, 1.2),
     0,
     1,
+  );
+}
+
+/**
+ * Eclipse: a black sun behind the head, its corona of short flickering rays and a bright
+ * "diamond ring" glint running round its rim.
+ */
+export function drawEclipse(
+  b: Brush,
+  place: AuraPlacement,
+  beat: number,
+): void {
+  const intensity = b.intensity;
+  const { head, bounds } = place.silhouette;
+  const [light, mid] = b.tones;
+  const r = Math.round(clamp(bounds.w * 0.5, 9, 14) * (place.ground ? 1 : 0.9));
+  // Characters: risen above and behind the head, so the head hides only its lower edge.
+  const lag = place.ground ? b.lag : { x: 0, y: 0 };
+  const x = Math.round(place.x + head.x + lag.x * 1.3);
+
+  const y = Math.round(
+    place.y + head.y - (place.ground ? r * 0.55 : 0) + lag.y,
+  );
+
+  softEllipse(b.lit(), x, y, r * 2.4, r * 2.4, mid, 0.3 * intensity * beat);
+
+  // The corona: rays of uneven length, turning slowly.
+  const lit = b.lit();
+  const count = 20;
+  const turn = b.time * 0.12;
+
+  for (let i = 0; i < count; i++) {
+    const angle = turn + (i / count) * TAU;
+    const flicker = 0.6 + 0.4 * noise1(b.time * 1.4 + i * 2.7, 31);
+    const to = r + 2 + (i % 2 === 0 ? 7 : 4) * flicker;
+    pixelLine(
+      lit,
+      x + Math.cos(angle) * (r + 1),
+      y + Math.sin(angle) * (r + 1),
+      x + Math.cos(angle) * to,
+      y + Math.sin(angle) * to,
+      i % 2 === 0 ? light : mid,
+      0.75 * intensity * flicker * beat,
+      0.05,
+    );
+  }
+
+  const dim = b.dim();
+  dim.fillStyle = rgba([6, 4, 8], 0.98 * intensity);
+  pixelDisc(dim, x, y, r);
+  pixelEllipse(lit, x, y, r, r, light, 0.95 * intensity, 0, 1);
+
+  const ring = b.time * 0.7;
+  pixelGlint(
+    lit,
+    Math.round(x + Math.cos(ring) * r),
+    Math.round(y + Math.sin(ring) * r),
+    2,
+    [255, 255, 255],
+    light,
+    intensity,
   );
 }
 
@@ -500,4 +561,55 @@ export function drawShards(
         intensity,
       );
   }
+}
+
+/**
+ * Quake: cracks in the air beside the character, as if it struck the air itself and the
+ * world splintered: lines out from a point at chest height and rings joining them. `seed`
+ * shapes them (a new one each quake), `strength` (0..1) is how bright they flash.
+ */
+export function drawAirCracks(
+  b: Brush,
+  place: AuraPlacement,
+  seed: number,
+  strength: number,
+): void {
+  if (strength <= 0.02) return;
+  const rng = mulberry32(seed);
+  const { bounds } = place.silhouette;
+  const side = rng() < 0.5 ? -1 : 1;
+  const cx = place.x + bounds.x + bounds.w / 2 + side * (bounds.w / 2 + 6);
+  const cy = place.y + bounds.y + bounds.h * 0.4;
+  const [light, mid] = b.tones;
+  const lit = b.lit();
+  const a = b.intensity * strength;
+  const spokes = 7;
+  const ends: [number, number][] = [];
+
+  for (let i = 0; i < spokes; i++) {
+    const angle = (i / spokes) * TAU + rng() * 0.6;
+    const length = 9 + rng() * 9;
+    let x = cx;
+    let y = cy;
+
+    // Each spoke in three kinked steps, so it reads as a crack, not a ray.
+    for (let step = 1; step <= 3; step++) {
+      const bend = angle + (rng() - 0.5) * 0.7;
+      const nx = cx + Math.cos(bend) * length * (step / 3);
+      const ny = cy + Math.sin(bend) * length * (step / 3);
+      pixelLine(lit, x, y, nx, ny, step === 1 ? light : mid, a, a * 0.8);
+
+      if (step === 2) ends.push([nx, ny]);
+      x = nx;
+      y = ny;
+    }
+  }
+
+  // The ring of cross-cracks halfway out.
+  for (const [i, [x0, y0]] of ends.entries()) {
+    const [x1, y1] = ends[(i + 1) % ends.length] ?? [x0, y0];
+    pixelLine(lit, x0, y0, x1, y1, mid, a * 0.7, a * 0.7);
+  }
+
+  pixelGlint(lit, cx, cy, 2, [255, 255, 255], light, a);
 }

@@ -106,6 +106,15 @@ export const OwnCharacterAuraResponseDtoAuraId = {
   crown: 'crown',
   wings: 'wings',
   hearts: 'hearts',
+  sovereign: 'sovereign',
+  seraph: 'seraph',
+  eclipse: 'eclipse',
+  thunderlord: 'thunderlord',
+  phoenix: 'phoenix',
+  emperor: 'emperor',
+  quake: 'quake',
+  starlight: 'starlight',
+  seal: 'seal',
 } as const;
 
 export interface OwnCharacterAuraResponseDto {
@@ -146,6 +155,15 @@ export const UpdateOwnCharacterAuraDtoAuraId = {
   crown: 'crown',
   wings: 'wings',
   hearts: 'hearts',
+  sovereign: 'sovereign',
+  seraph: 'seraph',
+  eclipse: 'eclipse',
+  thunderlord: 'thunderlord',
+  phoenix: 'phoenix',
+  emperor: 'emperor',
+  quake: 'quake',
+  starlight: 'starlight',
+  seal: 'seal',
 } as const;
 
 export interface UpdateOwnCharacterAuraDto {
@@ -180,6 +198,15 @@ export const CharacterAuraResponseDtoAuraId = {
   crown: 'crown',
   wings: 'wings',
   hearts: 'hearts',
+  sovereign: 'sovereign',
+  seraph: 'seraph',
+  eclipse: 'eclipse',
+  thunderlord: 'thunderlord',
+  phoenix: 'phoenix',
+  emperor: 'emperor',
+  quake: 'quake',
+  starlight: 'starlight',
+  seal: 'seal',
 } as const;
 
 export interface CharacterAuraResponseDto {
@@ -11390,6 +11417,15 @@ export const GameClientBootstrapResponseDtoOutputCharacterAuraAuraId = {
   crown: 'crown',
   wings: 'wings',
   hearts: 'hearts',
+  sovereign: 'sovereign',
+  seraph: 'seraph',
+  eclipse: 'eclipse',
+  thunderlord: 'thunderlord',
+  phoenix: 'phoenix',
+  emperor: 'emperor',
+  quake: 'quake',
+  starlight: 'starlight',
+  seal: 'seal',
 } as const;
 
 /**

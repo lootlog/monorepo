@@ -19175,6 +19175,15 @@ components:
             - crown
             - wings
             - hearts
+            - sovereign
+            - seraph
+            - eclipse
+            - thunderlord
+            - phoenix
+            - emperor
+            - quake
+            - starlight
+            - seal
         canChange:
           type: boolean
         canGrant:
@@ -19219,6 +19228,15 @@ components:
             - crown
             - wings
             - hearts
+            - sovereign
+            - seraph
+            - eclipse
+            - thunderlord
+            - phoenix
+            - emperor
+            - quake
+            - starlight
+            - seal
       required:
         - auraId
       additionalProperties: false
@@ -19263,6 +19281,15 @@ components:
             - crown
             - wings
             - hearts
+            - sovereign
+            - seraph
+            - eclipse
+            - thunderlord
+            - phoenix
+            - emperor
+            - quake
+            - starlight
+            - seal
       required:
         - gameAccountId
         - auraId
@@ -35771,6 +35798,15 @@ components:
                 - crown
                 - wings
                 - hearts
+                - sovereign
+                - seraph
+                - eclipse
+                - thunderlord
+                - phoenix
+                - emperor
+                - quake
+                - starlight
+                - seal
             canChange:
               type: boolean
             canGrant:

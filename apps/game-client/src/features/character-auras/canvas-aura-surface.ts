@@ -9,6 +9,7 @@ import {
 import {
   CharacterAuraRenderer,
   type CharacterAuraSurface,
+  type ShownArrival,
   type ShownAura,
 } from "./character-aura-renderer";
 import { isAuraInView } from "./engine/render";
@@ -23,6 +24,15 @@ type CanvasAura = {
 };
 
 const shownAuras = new Map<string, CanvasAura>();
+
+let shownArrival: ShownArrival | null = null;
+
+/** An admin's arrival, drawn over everything on the map. */
+const arrivalDrawable: RuntimeDrawable = {
+  getAlwaysDraw: () => true,
+  getOrder: () => rendererRuntimeAdapter.getHighestOrder() + 1,
+  draw: (context) => shownArrival?.paint(context),
+};
 
 function createCanvasAura(shown: ShownAura<RuntimeAuraCharacter>): CanvasAura {
   // The game draws these whatever their position (`getAlwaysDraw`), so an
@@ -52,13 +62,14 @@ const canvasAuraSurface: CharacterAuraSurface<RuntimeAuraCharacter> = {
   subscribeFrame: (onFrame) => rendererRuntimeAdapter.subscribeDraw(onFrame),
 
   // The game scales the context by its zoom.
-  isInView(place, context) {
+  isInView(place, context, above) {
     const { a: scaleX, d: scaleY } = context.getTransform();
 
     return isAuraInView(
       place,
       context.canvas.width / scaleX,
       context.canvas.height / scaleY,
+      above,
     );
   },
 
@@ -78,6 +89,12 @@ const canvasAuraSurface: CharacterAuraSurface<RuntimeAuraCharacter> = {
 
   release(key) {
     shownAuras.delete(key);
+  },
+
+  presentArrival(arrival) {
+    shownArrival = arrival;
+
+    if (arrival) rendererRuntimeAdapter.addDrawable(arrivalDrawable);
   },
 };
 

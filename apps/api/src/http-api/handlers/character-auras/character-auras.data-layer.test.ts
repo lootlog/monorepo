@@ -110,6 +110,40 @@ describe("character auras", () => {
     expect(revoked[1]._tag).toBe("CharacterAuraAccessDenied");
   });
 
+  it("keeps admin auras to admins, even for granted Users", async () => {
+    const admin = await setup(["admin"]);
+
+    await admin.verify("player", "101");
+    await admin.verify("admin", "202");
+    await admin.run((data) =>
+      Effect.all([
+        data.grantAuras("admin", "101"),
+        data.grantAuras("admin", "202"),
+      ]),
+    );
+
+    const refused = await admin.run((data) =>
+      Effect.flip(data.updateOwnAura("player", "sovereign")),
+    );
+
+    expect(refused._tag).toBe("CharacterAuraAccessDenied");
+
+    await admin.run((data) => data.updateOwnAura("admin", "sovereign"));
+
+    expect(await admin.run((data) => data.getAuras())).toEqual({
+      auras: [{ gameAccountId: "202", auraId: "sovereign" }],
+    });
+
+    // Dropped from the admins, the grant alone does not keep it showing.
+    const dropped = await admin.boundary.run(
+      Effect.flatMap(makeCharacterAurasData([], admin.events), (data) =>
+        data.getAuras(),
+      ),
+    );
+
+    expect(dropped).toEqual({ auras: [] });
+  });
+
   it("shows an account with the aura of the User who proved it last, whatever order the proofs arrive in", async () => {
     const { run, verify } = await setup(["first", "second"]);
 
