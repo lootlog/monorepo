@@ -1,41 +1,59 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import {
   characterAurasControllerGetAuras,
   type CharacterAurasResponseDto,
   getCharacterAurasControllerGetAurasQueryKey,
+  getCharacterAurasControllerGetOwnAuraQueryKey,
+  type OwnCharacterAuraResponseDto,
   useCharacterAurasControllerGetAuras,
 } from "@lootlog/client/main";
-import type { CharacterAuraId } from "@lootlog/schema/character-aura";
+import type {
+  CharacterAuraId,
+  CharacterAurasChanged,
+} from "@lootlog/schema/character-aura";
+import { useSocket } from "@/contexts/socket-context";
 import { readGameClientBootstrap } from "@/lib/game-client-bootstrap";
 import { auraRuntimeAdapter } from "@/lib/margonem-runtime/adapters/aura-runtime-adapter";
-import {
-  isLegacyTooltipRuntimeAvailable,
-  subscribeCharacterTipUpdates,
-} from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
+import { legacyAuraRuntimeAdapter } from "@/lib/margonem-runtime/adapters/legacy-aura-runtime-adapter";
+import { subscribeCharacterTipUpdates } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
 import { useGameStore } from "@/store/game.store";
 import { useOthersStore } from "@/store/others.store";
-import {
-  characterAuraRenderer,
-  HERO_AURA_KEY,
-} from "../character-aura-renderer";
+import { canvasAuraRenderer } from "../canvas-aura-surface";
+import { applyCharacterAuraChanges } from "../character-aura-changes";
+import { HERO_AURA_KEY } from "../character-aura-renderer";
 import { resolveCharacterAuraTargets } from "../character-aura-targets";
 import { auraMark, CharacterAuraTooltip } from "../engine/tooltip";
-import { installLegacyAuraTips } from "../legacy-aura-tips";
+import { legacyAuraRenderer } from "../legacy-aura-surface";
 import { useOwnCharacterAura } from "./use-own-character-aura";
 
-/** Auras change rarely; a newly chosen one reaches other players within this time. */
+/**
+ * Auras change rarely and arrive live; the refresh catches up on a change
+ * lost while disconnected or announced to an older gateway.
+ */
 const AURAS_REFRESH_INTERVAL_MS = 5 * 60_000;
 
 /**
  * Shows every aura on the map: the hero's own as soon as it is chosen, and
- * the auras of other players by the Margonem account they play, on the NI
- * canvas and the SI map, and marks their tips so the tip shows the aura.
+ * the auras of other players by the Margonem account they play. NI draws
+ * them on its map canvas and marks character tips; SI draws them beside its
+ * character elements.
  */
 export const useCharacterAuras = () => {
-  const available = characterAuraRenderer.isAvailable();
+  const canvas = auraRuntimeAdapter.isAvailable();
+
+  const renderer = canvas
+    ? canvasAuraRenderer
+    : legacyAuraRuntimeAdapter.isAvailable()
+      ? legacyAuraRenderer
+      : null;
+
+  const available = renderer !== null;
   const heroAccountId = useGameStore((state) => state.game?.hero.accountId);
   const othersById = useOthersStore((state) => state.othersById);
   const { data: own } = useOwnCharacterAura();
+  const { socket } = useSocket();
+  const queryClient = useQueryClient();
 
   const listKey = getCharacterAurasControllerGetAurasQueryKey();
 
@@ -52,6 +70,38 @@ export const useCharacterAuras = () => {
       staleTime: AURAS_REFRESH_INTERVAL_MS,
     },
   });
+
+  // A change patches the list in place, so no player refetches it.
+  useEffect(() => {
+    if (!available || !socket) return;
+
+    const onChanged = (change: CharacterAurasChanged) => {
+      queryClient.setQueryData<CharacterAurasResponseDto>(
+        getCharacterAurasControllerGetAurasQueryKey(),
+        (current) => applyCharacterAuraChanges(current, change),
+      );
+
+      // The hero follows the User's own aura, which an admin may have revoked.
+      const heroAccount = useGameStore.getState().game?.hero.accountId;
+      const ownKey = getCharacterAurasControllerGetOwnAuraQueryKey();
+
+      const ownAura =
+        queryClient.getQueryData<OwnCharacterAuraResponseDto>(ownKey)?.auraId;
+
+      const heroChange = change.auras.find(
+        ({ gameAccountId }) => gameAccountId === heroAccount,
+      );
+
+      if (heroChange && heroChange.auraId !== ownAura)
+        void queryClient.invalidateQueries({ queryKey: ownKey });
+    };
+
+    socket.on("character-auras.changed", onChanged);
+
+    return () => {
+      socket.off("character-auras.changed", onChanged);
+    };
+  }, [available, socket, queryClient]);
 
   const heroAura = own?.canChange ? own.auraId : null;
 
@@ -70,28 +120,9 @@ export const useCharacterAuras = () => {
 
   const hasAuras = targets.byCharacter.size > 0;
 
-  const legacyTips = useRef<ReturnType<typeof installLegacyAuraTips> | null>(
-    null,
-  );
-
   // Installed before the targets apply, so tips rebuilt for them get the mark.
   useEffect(() => {
-    if (!available || !hasAuras) return;
-
-    if (isLegacyTooltipRuntimeAvailable()) {
-      const tips = installLegacyAuraTips({
-        auraOf: (accountId) => accountAuras.current.get(accountId),
-        heroAura: () => drawn.current.get(HERO_AURA_KEY),
-      });
-
-      legacyTips.current = tips;
-
-      return () => {
-        legacyTips.current = null;
-        tips.dispose();
-      };
-    }
-
+    if (!canvas || !hasAuras) return;
     const layer = auraRuntimeAdapter.getTipLayer();
     const tooltip = layer ? new CharacterAuraTooltip(layer) : null;
 
@@ -106,12 +137,14 @@ export const useCharacterAuras = () => {
       unsubscribe?.();
       tooltip?.dispose();
     };
-  }, [available, hasAuras]);
+  }, [canvas, hasAuras]);
 
   useEffect(() => {
-    if (!available) return;
+    if (!renderer) return;
     accountAuras.current = targets.byAccount;
-    characterAuraRenderer.setTargets(targets.byCharacter);
+    renderer.setTargets(targets.byCharacter);
+
+    if (!canvas) return;
 
     // Cached tips keep the old mark until they are rebuilt, so every
     // character whose aura appeared, changed or went away gets its tip rebuilt.
@@ -138,8 +171,11 @@ export const useCharacterAuras = () => {
     drawn.current = targets.byCharacter;
 
     auraRuntimeAdapter.refreshTips(changed, heroChanged);
-    legacyTips.current?.refresh(changed);
-  }, [available, targets, heroAccountId, heroAura]);
+  }, [renderer, canvas, targets, heroAccountId, heroAura]);
 
-  useEffect(() => () => characterAuraRenderer.setTargets(new Map()), []);
+  useEffect(() => {
+    if (!renderer) return;
+
+    return () => renderer.setTargets(new Map());
+  }, [renderer]);
 };

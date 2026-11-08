@@ -1,12 +1,8 @@
 import type { CharacterAuraId } from "@lootlog/schema/character-aura";
 import type { RuntimeAuraCharacter } from "@/lib/margonem-runtime/adapters/aura-runtime-adapter";
-import { legacyAuraRuntimeAdapter } from "@/lib/margonem-runtime/adapters/legacy-aura-runtime-adapter";
-import type { AuraSurface, AuraView, SurfaceAura } from "./aura-surface";
 import { Aura } from "./engine/render";
 import type { AuraPlacement } from "./engine/placement";
 import { SilhouetteCache } from "./engine/silhouette";
-import { legacyAuraSurface } from "./legacy-aura-surface";
-import { niAuraSurface } from "./ni-aura-surface";
 
 /** The key of the hero among the drawn characters; others use their character id. */
 export const HERO_AURA_KEY = "hero";
@@ -17,30 +13,52 @@ const MAX_FAILURES = 120;
 /** The failure key of the per-frame work shared by every aura. */
 const FRAME_KEY = "*";
 
-type DrawnAura = SurfaceAura & {
-  aura: Aura;
-  place: AuraPlacement | null;
-  /** The character's stacking order this frame. */
-  order: number;
+/** The map an aura is drawn on and its camera: particle space minus screen space. */
+export type AuraView = { mapId?: number; camera: readonly [number, number] };
+
+/** Paints one side of an aura into a context whose origin is the screen's. */
+export type AuraPaint = (context: CanvasRenderingContext2D) => void;
+
+/** An aura shown this frame: its character, where it goes and its two sides. */
+export type ShownAura<C extends RuntimeAuraCharacter> = {
+  character: C;
+  place: AuraPlacement;
+  back: AuraPaint;
+  front: AuraPaint;
 };
 
-/** SI draws characters as map elements; NI, and the game while it starts, on its canvas. */
-function resolveSurface(): AuraSurface {
-  return legacyAuraRuntimeAdapter.isAvailable()
-    ? legacyAuraSurface
-    : niAuraSurface;
+/** Where auras are drawn: the NI canvas or the SI map elements. */
+export interface CharacterAuraSurface<C extends RuntimeAuraCharacter> {
+  /** The current map, or null while it is not drawn. */
+  getView(): AuraView | null;
+  getHero(): C | null;
+  getOther(characterId: string): C | null;
+  /** Calls `onFrame` once per drawn frame until unsubscribed. */
+  subscribeFrame(onFrame: () => void): (() => void) | null;
+  /** Whether an aura at `place` lands on what `context` draws. */
+  isInView(place: AuraPlacement, context: CanvasRenderingContext2D): boolean;
+  /** Shows the aura of `key` this frame, or hides it when null. */
+  present(key: string, shown: ShownAura<C> | null): void;
+  /** Forgets everything shown for `key`. */
+  release(key: string): void;
 }
 
+type DrawnAura = {
+  aura: Aura;
+  place: AuraPlacement | null;
+  back: AuraPaint;
+  front: AuraPaint;
+};
+
 /**
- * Draws auras just under and over their characters, once per game frame, on
- * the NI canvas or the SI map. Only characters with an aura cost any work:
- * the hero when it wears one and the others whose account shows one.
+ * Draws auras on a surface just under and over their characters, once per
+ * frame. Only characters with an aura cost any work: the hero when it wears
+ * one and the others whose account shows one.
  */
-class CharacterAuraRenderer {
+export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
   private targets: ReadonlyMap<string, CharacterAuraId> = new Map();
   private readonly drawn = new Map<string, DrawnAura>();
   private readonly silhouettes = new SilhouetteCache();
-  private surface: AuraSurface | null = null;
   private unsubscribe: (() => void) | null = null;
   private mapId: number | undefined;
   private last = 0;
@@ -50,17 +68,14 @@ class CharacterAuraRenderer {
   private readonly disabled = new Set<string>();
   private broken = false;
 
-  /** Whether this game draws characters where auras can follow them. */
-  isAvailable(): boolean {
-    return resolveSurface().isAvailable();
-  }
+  constructor(private readonly surface: CharacterAuraSurface<C>) {}
 
   /** Characters to draw an aura on, by `HERO_AURA_KEY` or character id. */
   setTargets(targets: ReadonlyMap<string, CharacterAuraId>): void {
     this.targets = targets;
 
     for (const key of this.drawn.keys()) {
-      if (!targets.has(key)) this.forget(key);
+      if (!targets.has(key)) this.drop(key);
     }
 
     if (targets.size === 0) {
@@ -70,22 +85,24 @@ class CharacterAuraRenderer {
     }
 
     if (this.unsubscribe || this.broken) return;
-    this.surface = resolveSurface();
     this.last = performance.now();
     this.unsubscribe = this.surface.subscribeFrame(this.onFrame);
-  }
-
-  private forget(key: string): void {
-    this.drawn.delete(key);
-    this.surface?.forget(key);
   }
 
   private stop(): void {
     this.unsubscribe?.();
     this.unsubscribe = null;
-    this.drawn.clear();
+    this.dropAll();
     this.silhouettes.clear();
-    this.surface?.clear();
+  }
+
+  private drop(key: string): void {
+    this.drawn.delete(key);
+    this.surface.release(key);
+  }
+
+  private dropAll(): void {
+    for (const key of this.drawn.keys()) this.drop(key);
   }
 
   private readonly onFrame = (): void => this.drawFrame();
@@ -121,7 +138,7 @@ class CharacterAuraRenderer {
         this.stop();
       } else {
         this.disabled.add(key);
-        this.forget(key);
+        this.drop(key);
       }
 
       return undefined;
@@ -129,37 +146,31 @@ class CharacterAuraRenderer {
   }
 
   private drawFrame(): void {
-    const surface = this.surface;
-
-    if (!surface) return;
     const now = performance.now();
     const dt = (now - this.last) / 1000;
     this.last = now;
-    const view = this.guard(FRAME_KEY, () => this.currentView(surface));
+    const view = this.guard(FRAME_KEY, () => this.currentView());
 
     if (view === undefined) return;
 
     for (const [key, auraId] of this.targets) {
-      this.guard(key, () => this.drawTarget(surface, key, auraId, view, dt));
+      this.guard(key, () => this.drawTarget(key, auraId, view, dt));
     }
-
-    this.guard(FRAME_KEY, () => surface.endFrame(), `${FRAME_KEY}:end`);
   }
 
-  private currentView(surface: AuraSurface): AuraView | null {
-    const view = surface.getView();
+  private currentView(): AuraView | null {
+    const view = this.surface.getView();
 
     // Particles live in map pixels; a new map starts every aura over.
     if (view && view.mapId !== this.mapId) {
       this.mapId = view.mapId;
-      this.drawn.clear();
+      this.dropAll();
     }
 
     return view;
   }
 
   private drawTarget(
-    surface: AuraSurface,
     key: string,
     auraId: CharacterAuraId,
     view: AuraView | null,
@@ -167,30 +178,34 @@ class CharacterAuraRenderer {
   ): void {
     const character = view
       ? key === HERO_AURA_KEY
-        ? surface.getHero()
-        : surface.getOther(key)
+        ? this.surface.getHero()
+        : this.surface.getOther(key)
       : null;
 
-    const drawn = this.drawnAura(surface, key, auraId, character);
+    const drawn = this.drawnAura(key, auraId);
 
     drawn.place =
       view && character ? this.placement(character, view.camera) : null;
     drawn.aura.update(dt, drawn.place, 1);
 
-    if (drawn.place) surface.show(key, drawn);
+    this.surface.present(
+      key,
+      character && drawn.place
+        ? {
+            character,
+            place: drawn.place,
+            back: drawn.back,
+            front: drawn.front,
+          }
+        : null,
+    );
   }
 
-  private drawnAura(
-    surface: AuraSurface,
-    key: string,
-    auraId: CharacterAuraId,
-    character: RuntimeAuraCharacter | null,
-  ): DrawnAura {
+  private drawnAura(key: string, auraId: CharacterAuraId): DrawnAura {
     const existing = this.drawn.get(key);
 
     if (existing) {
       existing.aura.setPreset(auraId);
-      existing.order = character?.order ?? existing.order;
 
       return existing;
     }
@@ -198,21 +213,20 @@ class CharacterAuraRenderer {
     const drawn: DrawnAura = {
       aura: new Aura(auraId),
       place: null,
-      order: character?.order ?? 0,
-      drawBack: (context) =>
+      back: (context) =>
         this.guard(
           key,
           () => {
-            if (drawn.place && surface.isInView(drawn.place, context))
+            if (drawn.place && this.surface.isInView(drawn.place, context))
               drawn.aura.drawBack(context, drawn.place, 1);
           },
           `${key}:back`,
         ),
-      drawFront: (context) =>
+      front: (context) =>
         this.guard(
           key,
           () => {
-            if (drawn.place && surface.isInView(drawn.place, context))
+            if (drawn.place && this.surface.isInView(drawn.place, context))
               drawn.aura.drawFront(context, drawn.place, 1);
           },
           `${key}:front`,
@@ -246,5 +260,3 @@ class CharacterAuraRenderer {
     };
   }
 }
-
-export const characterAuraRenderer = new CharacterAuraRenderer();

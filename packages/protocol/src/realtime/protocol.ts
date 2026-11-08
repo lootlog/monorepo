@@ -1,5 +1,6 @@
 import { AccessPolicySnapshot, AccessPolicyChange } from "./access-policy.js";
 import { UserFeedItem } from "../feed.js";
+import { CharacterAurasChangedSchema } from "@lootlog/schema/character-aura";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
 import { PartyGatheringClientUpdateSchema } from "@lootlog/schema/party-ready-room";
 import {
@@ -103,6 +104,8 @@ export const RealtimeLogicalTopic = Schema.Literals([
   // A world's own global chat channel. A scope without a world matches every
   // world, so world channels cannot share the shared channel's topic.
   "global.chat.world",
+  // Aura changes, for Game clients that joined with `CHARACTER_AURAS_FEATURE`.
+  "global.character-auras",
 ]);
 
 export type RealtimeLogicalTopic = typeof RealtimeLogicalTopic.Type;
@@ -224,8 +227,18 @@ const SessionJoinCommand = command(
     world: Schema.optional(Schema.NonEmptyString),
     character: Schema.optional(PresenceCharacter),
     margonemAccountProof: Schema.optional(Schema.Unknown),
+    /**
+     * Server events this client understands beyond the original set. A client
+     * rejects an event type it does not know and disconnects, so the gateway
+     * sends such events only to clients that list them. Gateways that predate
+     * the field drop it, and unknown names are ignored.
+     */
+    features: Schema.optional(Schema.Array(Schema.NonEmptyString)),
   }),
 );
+
+/** Joins with this feature receive `character-auras.changed`. */
+export const CHARACTER_AURAS_FEATURE = "character-auras";
 
 const HeartbeatCommand = command(
   "presence.heartbeat",
@@ -484,6 +497,7 @@ export const ServerEvent = Schema.Union([
     }),
   ),
   serverEvent("global-chat.stats", GlobalChatStatsSchema),
+  serverEvent("character-auras.changed", CharacterAurasChangedSchema),
   serverEvent("feed.entry", UserFeedItem),
   serverEvent(
     "kills.changed",

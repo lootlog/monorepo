@@ -104,6 +104,11 @@ export function getLegacyOtherIdAt(target: EventTarget | null): string | null {
   return id.slice(LEGACY_OTHER_ELEMENT_PREFIX.length) || null;
 }
 
+/** The SI map element (`#other{id}.other`) of an other. */
+export function getLegacyOtherElement(id: string): HTMLElement | null {
+  return document.getElementById(`${LEGACY_OTHER_ELEMENT_PREFIX}${id}`);
+}
+
 export function isLegacyTooltipRuntimeAvailable(): boolean {
   const runtimeWindow = getRuntimeWindow();
 
@@ -127,68 +132,7 @@ export function buildLegacyOtherTip(other: LegacyGameOther): string | null {
  * updates a tip that is already on screen.
  */
 export function setLegacyOtherTip(id: string, html: string): void {
-  document
-    .getElementById(`${LEGACY_OTHER_ELEMENT_PREFIX}${id}`)
-    ?.setAttribute("tip", html);
-}
-
-/**
- * Passes every other tip SI builds through `extend`. newOther defines
- * `g.tips.other` with its first other and calls it on each full update
- * (elements.js:2179-2208), so a wrapper there reaches every later tip, and
- * `buildLegacyOtherTip` too. Null until SI has defined it.
- */
-export function wrapLegacyOtherTipBuilder(
-  extend: (other: LegacyGameOther, html: string) => string,
-): (() => void) | null {
-  const tips = getRuntimeWindow().g?.tips;
-  const original = tips?.other;
-
-  if (!tips || !original) return null;
-
-  const wrapped = (other: LegacyGameOther): string => {
-    const html = original(other);
-
-    try {
-      return extend(other, String(html));
-    } catch (error) {
-      console.warn("[MargonemTooltips] Failed to extend tooltip:", error);
-
-      return html;
-    }
-  };
-
-  tips.other = wrapped;
-
-  return () => {
-    if (tips.other === wrapped) tips.other = original;
-  };
-}
-
-const LEGACY_HERO_ELEMENT_ID = "hero";
-
-/** The `#hero` element that contains `target`. */
-export function isLegacyHeroAt(target: EventTarget | null): boolean {
-  return (
-    target instanceof Element &&
-    target.closest(`#${LEGACY_HERO_ELEMENT_ID}`) !== null
-  );
-}
-
-/** The hero's tip html, which hero._u rewrites on every hero update (player.js:189-194). */
-export function getLegacyHeroTip(): string | null {
-  return (
-    document.getElementById(LEGACY_HERO_ELEMENT_ID)?.getAttribute("tip") ?? null
-  );
-}
-
-export function setLegacyHeroTip(html: string): void {
-  document.getElementById(LEGACY_HERO_ELEMENT_ID)?.setAttribute("tip", html);
-}
-
-/** SI's Tip shows every tip in one `#tip`, appended to `body` on first use (tips.js:236-241). */
-export function getLegacyTipLayer() {
-  return { layer: document.body, tip: ":scope > #tip" };
+  getLegacyOtherElement(id)?.setAttribute("tip", html);
 }
 
 export function refreshWhoIsHereRuntimeTooltip(

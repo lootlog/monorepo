@@ -167,7 +167,16 @@
       "dragon": "Smocza furia",
       "crown": "Królewski majestat",
       "wings": "Skrzydła cienia",
-      "hearts": "Zakochane serce"
+      "hearts": "Zakochane serce",
+      "heavenly": "Smok Niebios"
+    },
+    "grants": {
+      "grant": "Nadaj aurę",
+      "revoke": "Odbierz aurę",
+      "granted": "Gracz może teraz wybrać aurę w ustawieniach Lootloga.",
+      "revoked": "Aura odebrana.",
+      "noUser": "Ten gracz nie ma Lootloga na tym koncie.",
+      "failed": "Nie udało się zmienić dostępu do aury."
     }
   },
   "general": {

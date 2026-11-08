@@ -71,4 +71,42 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
       "Deprecated: an aura shows on the Margonem accounts its user proved to play when the Game client connected, so this changes nothing. Returns the own aura, or 403 while the user wears no aura they may use",
     )
     .annotate(OpenApi.Deprecated, true),
+  HttpApiEndpoint.put(
+    "CharacterAurasControllerGrantAuras",
+    "/character-auras/grants/game-accounts/:gameAccountId",
+    {
+      params: CharacterAuraGameAccountParams,
+      success: HttpApiSchema.Empty(204),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "CharacterAurasController_grantAuras")
+    .annotate(OpenApi.Summary, "Grant character auras")
+    .annotate(
+      OpenApi.Description,
+      "Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Global chat admins only; 404 when no user proved to play the account",
+    ),
+  HttpApiEndpoint.delete(
+    "CharacterAurasControllerRevokeAuras",
+    "/character-auras/grants/game-accounts/:gameAccountId",
+    {
+      params: CharacterAuraGameAccountParams,
+      success: HttpApiSchema.Empty(204),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "CharacterAurasController_revokeAuras")
+    .annotate(OpenApi.Summary, "Revoke character auras")
+    .annotate(
+      OpenApi.Description,
+      "Withdraw the aura grant of the user who last proved to play the Margonem account and remove the aura they wear; global chat admins keep theirs. Global chat admins only; 404 when no user proved to play the account",
+    ),
 ) {}

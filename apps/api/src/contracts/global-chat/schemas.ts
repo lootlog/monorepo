@@ -6,7 +6,6 @@ import {
   GlobalChatMessageText,
   GlobalChatWorld,
 } from "@lootlog/schema/chat";
-import { CharacterAuraIdSchema } from "@lootlog/schema/character-aura";
 import { DateTimeString } from "@lootlog/schema/http-scalars";
 
 export const GlobalChatMessageResponse = Schema.Struct({
@@ -117,35 +116,4 @@ export type MuteGlobalChatSenderRequest =
 
 export const GlobalChatMuteParams = Schema.Struct({
   muteId: Schema.NonEmptyString,
-});
-
-/** Lets the sender of a kept message wear an aura, starting with this one. */
-export const GrantGlobalChatSenderAuraRequest = Schema.Struct({
-  world: Schema.optionalKey(GlobalChatWorld),
-  auraId: CharacterAuraIdSchema,
-}).annotate({ identifier: "GrantGlobalChatSenderAuraRequest" });
-
-export type GrantGlobalChatSenderAuraRequest =
-  typeof GrantGlobalChatSenderAuraRequest.Type;
-
-export const CharacterAuraGrantResponse = Schema.Struct({
-  id: Schema.String,
-  displayName: Schema.String,
-  /** The aura the User wears now; null after they removed it. */
-  auraId: Schema.NullOr(CharacterAuraIdSchema),
-  createdAt: DateTimeString,
-}).annotate({ identifier: "CharacterAuraGrantResponse" });
-
-export type CharacterAuraGrantResponse = typeof CharacterAuraGrantResponse.Type;
-
-export const CharacterAuraGrantsResponse = Schema.Struct({
-  /** Users who may wear an aura besides the admins, by name. */
-  grants: Schema.Array(CharacterAuraGrantResponse),
-}).annotate({ identifier: "CharacterAuraGrantsResponse" });
-
-export type CharacterAuraGrantsResponse =
-  typeof CharacterAuraGrantsResponse.Type;
-
-export const CharacterAuraGrantParams = Schema.Struct({
-  grantId: Schema.NonEmptyString,
 });

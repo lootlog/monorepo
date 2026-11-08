@@ -268,10 +268,10 @@ const DRAGON_GAP = 0.15;
 const DRAGON_TURN = 30;
 
 /**
- * Dragon: a small fire dragon circling the character at waist height, the far side of the
+ * Fire dragon: a small dragon circling the character at waist height, the far side of the
  * circle (`front` false) behind it. `step` is the aura's lite step; pixels only.
  */
-export function drawDragon(
+export function drawFireDragon(
   b: Brush,
   place: AuraPlacement,
   front: boolean,
