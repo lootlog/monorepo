@@ -10,9 +10,28 @@ import {
   type Rgb,
   type Rng,
 } from "./math";
-import { footprint, ParticleField, type SpawnFrame } from "./particles";
+import {
+  footprint,
+  ParticleField,
+  type EmitterSpec,
+  type SpawnFrame,
+} from "./particles";
 import { Spring } from "./physics";
-import { jagged, pixelGlint, pixelLine } from "./paint";
+import {
+  jagged,
+  pixelEllipse,
+  pixelGlint,
+  pixelLine,
+  softEllipse,
+} from "./paint";
+import {
+  Dragon,
+  drawClouds,
+  drawDragon,
+  drawPearl,
+  project,
+  type Point3,
+} from "./dragon";
 import { posterizeAlpha } from "./pixel";
 import {
   drawCloud,
@@ -102,6 +121,7 @@ const BURST_DURATION: Record<BurstKind, number> = {
   ascend: 1.2,
   "aurora-flare": 1.2,
   conqueror: 0.9,
+  roar: 1.6,
 };
 
 /** An offscreen buffer of one side's light (`lit`) or covering (`dim`) pixels. */
@@ -213,6 +233,9 @@ export class Aura {
   private lastCenter: { x: number; y: number } | null = null;
   private motion = { vx: 0, vy: 0 };
   private lastPrint: { x: number; y: number; side: number } | null = null;
+  /** Heavenly Dragon: the dragon and the pearl it chases, in particle space. */
+  private dragon: Dragon | null = null;
+  private pearl: Point3 = { x: 0, y: 0, z: 0 };
   /** The head in particle space at the last tick: where the spring is pulled to. */
   private headTarget = { x: 0, y: 0 };
   private rgb: AuraColors;
@@ -239,6 +262,7 @@ export class Aura {
     this.rgb = colorsOf(this.preset);
     this.field.clear();
     this.bolts = [];
+    this.dragon = null;
     this.burst = -1;
     this.back.key = "";
     this.front.key = "";
@@ -328,6 +352,8 @@ export class Aura {
       };
     }
 
+    if (fx.includes("dragon")) this.stepDragon(place, frame, teleported);
+
     if (fx.includes("orbits"))
       frame.attractors = orbitHeads(place, this.time).map(([x, y]) => ({
         x: x + place.viewX,
@@ -358,6 +384,78 @@ export class Aura {
     };
   }
 
+  private get roaring(): boolean {
+    return this.burst >= 0 && this.burstKind === "roar";
+  }
+
+  /**
+   * Heavenly Dragon: the pearl circles the body on a tilted, bobbing ring (or runs round the
+   * tooltip's frame); during the roar it hangs over the head. The dragon chases it, the
+   * pearl sheds sparks and, mid-roar, golden fire streams from the jaws.
+   */
+  private stepDragon(
+    place: AuraPlacement,
+    frame: SpawnFrame,
+    teleported: boolean,
+  ): void {
+    const roaring = this.roaring;
+
+    if (place.ground) {
+      const { body, center } = frame;
+      const r = body.w * 0.7 + 12;
+      const a = this.time * 1.25;
+
+      this.pearl = roaring
+        ? { x: center.x + Math.sin(this.time * 3) * 6, y: body.y - 24, z: 0 }
+        : {
+            x: center.x + Math.cos(a) * r,
+            y: body.y + body.h * (0.45 + 0.3 * Math.sin(a * 0.55)),
+            z: Math.sin(a) * r,
+          };
+    } else {
+      this.pearl = {
+        ...tipPathAt(frame.body, this.time * (roaring ? 90 : 45)),
+        z: 0,
+      };
+    }
+
+    if (!this.dragon || teleported) this.dragon = new Dragon(this.pearl);
+    // Round a box the dragon stays flat (z 0): it must keep off the tip's text.
+    this.dragon.step(this.pearl, TICK, place.ground ? 5 : 7);
+
+    if (!place.ground) pushOutOfBox(this.dragon, frame.body, 4);
+    const [px, py] = project(this.pearl, 0, 0);
+
+    // A spark falls off the pearl every other tick, so its path glitters behind it.
+    if (this.tick % 2 === 0)
+      this.field.emit(
+        PEARL_SPARK,
+        {
+          ...frame,
+          feet: { x: px, y: py, rx: 1, ry: 1 },
+        },
+        1,
+      );
+
+    if (!roaring || !place.ground || this.burst < 0.25 || this.burst > 0.85)
+      return;
+    const head = this.dragon.head;
+    const dir = this.dragon.heading;
+    const [hx, hy] = project(head, 0, 0);
+    this.field.emit(
+      {
+        ...DRAGON_FIRE,
+        dir: Math.atan2(dir.y + dir.z * 0.22, dir.x),
+        front: head.z > 0 ? 1 : 0,
+      },
+      {
+        ...frame,
+        feet: { x: hx + dir.x * 3, y: hy + dir.y * 3, rx: 0.5, ry: 0.5 },
+      },
+      6,
+    );
+  }
+
   /** Frost and sand: footprints left and right of the stride while walking. */
   private stepPrints(frame: SpawnFrame): void {
     if (Math.hypot(this.motion.vx, this.motion.vy) < 8) return;
@@ -386,7 +484,7 @@ export class Aura {
     const p = this.preset;
     const glow = this.glow(intensity);
 
-    this.snapshot(this.back, place, false, () => {
+    this.snapshot(this.back, place, false, intensity, () => {
       const b = this.brush(intensity);
 
       if (place.ground && p.ground)
@@ -427,7 +525,7 @@ export class Aura {
     const p = this.preset;
     const glow = this.glow(intensity);
 
-    this.snapshot(this.front, place, true, () => {
+    this.snapshot(this.front, place, true, intensity, () => {
       const b = this.brush(intensity);
 
       if (p.fx.includes("frost-shards") && place.ground)
@@ -459,6 +557,7 @@ export class Aura {
     snap: Snapshot,
     place: AuraPlacement,
     front: boolean,
+    intensity: number,
     body: () => void,
   ): void {
     const box = boxOf(place);
@@ -479,6 +578,7 @@ export class Aura {
     snap.worldLit.soft = false;
     snap.worldDim.soft = false;
     this.drawParticles(place, front);
+    this.drawDragonWorld(place, front, intensity);
     this.finish(snap.worldLit, snap.worldDim, box);
   }
 
@@ -905,6 +1005,23 @@ export class Aura {
     if (fx.includes("glyph-orbit")) drawGlyphOrbit(b, box, front);
 
     if (fx.includes("dust-swirl")) drawDustSwirl(b, box, front);
+
+    if (fx.includes("dragon") && !front) {
+      // Auspicious clouds drifting under the feet, on a faint golden glow.
+      const rx = groundRadius(place);
+      const x = Math.round(place.feetX);
+      const y = Math.round(place.feetY) - 2;
+      softEllipse(
+        b.lit(),
+        x,
+        y,
+        rx,
+        rx * 0.36,
+        this.rgb.particles[1] ?? this.rgb.rim,
+        0.18 * b.intensity,
+      );
+      drawClouds(b, x, y + 1, rx);
+    }
   }
 
   // --- bursts ------------------------------------------------------------------------------
@@ -1027,6 +1144,12 @@ export class Aura {
       );
     }
 
+    if (kind === "roar" && crossed(0.85)) {
+      // The fire dies out in a thunderclap: a flash and gold raining round the character.
+      this.flash = 1;
+      this.field.emit(GOLD_RAIN, frame, Math.round(14 * k));
+    }
+
     if (this.burst > 1) this.burst = -1;
   }
 
@@ -1133,6 +1256,28 @@ export class Aura {
         break;
       case "conqueror":
         this.startConqueror(place, frame, k);
+        break;
+      case "roar":
+        // The dragon rises after the pearl over the head; the fire streams in `stepDragon`.
+        this.flash = 0.8;
+        this.field.emit(
+          {
+            kind: "mote",
+            rate: 0,
+            from: "feet-rim",
+            life: [0.8, 1.4],
+            speed: [30, 60],
+            spread: 0.6,
+            drag: 1,
+            size: [1.2, 2],
+            colors: 2,
+            front: 0.5,
+          },
+          frame,
+          Math.round(14 * k),
+        );
+        this.burstRing(place, frame, frame.feet.rx * 2, 1);
+        this.burstRing(place, frame, frame.feet.rx * 1.3, 0);
         break;
       case "sandspout":
         this.field.emit(
@@ -1368,6 +1513,12 @@ export class Aura {
     )
       return;
 
+    if (this.burstKind === "roar") {
+      this.drawRoar(place, front, t, light, intensity);
+
+      return;
+    }
+
     drawBurstScene(this.burstKind, b, {
       place,
       intensity,
@@ -1380,6 +1531,74 @@ export class Aura {
       cx,
       fade,
     });
+  }
+
+  /** The roar: golden rings spreading from the dragon's jaws (not round a tooltip's text). */
+  private drawRoar(
+    place: AuraPlacement,
+    front: boolean,
+    t: number,
+    light: Rgb,
+    intensity: number,
+  ): void {
+    if (!front || !this.dragon || !place.ground || t > 0.7) return;
+    const [hx, hy] = project(this.dragon.head, place.viewX, place.viewY);
+
+    for (const delay of [0, 0.15, 0.3]) {
+      const u = (t - delay) / 0.4;
+
+      if (u < 0 || u > 1) continue;
+      const r = 4 + u * 26;
+      pixelEllipse(
+        this.lit,
+        hx,
+        hy,
+        r,
+        r * 0.8,
+        light,
+        (1 - u) * intensity,
+        0,
+        2,
+      );
+    }
+  }
+
+  /** The dragon and its pearl, which live on the map, into the side's world buffers. */
+  private drawDragonWorld(
+    place: AuraPlacement,
+    front: boolean,
+    intensity: number,
+  ): void {
+    if (!this.dragon || !this.preset.fx.includes("dragon")) return;
+    const b = this.brush(intensity);
+
+    // Round a tooltip the dragon is flat and all drawn over the frame.
+    if (place.ground)
+      drawDragon(
+        b,
+        this.dragon,
+        place.viewX,
+        place.viewY,
+        front,
+        false,
+        this.roaring,
+      );
+    else if (front)
+      drawDragon(
+        b,
+        this.dragon,
+        place.viewX,
+        place.viewY,
+        front,
+        true,
+        this.roaring,
+      );
+
+    if (place.ground ? this.pearl.z > 0 !== front : !front) return;
+    const [px, py] = project(this.pearl, place.viewX, place.viewY);
+    // The pearl's glow is soft and needs the pixel finish.
+    this.litLayer.soft = true;
+    drawPearl(b, px, py);
   }
 
   // --- lightning -----------------------------------------------------------------------------
@@ -1691,6 +1910,95 @@ function colorsOf(preset: AuraPreset): AuraColors {
     tones: [hexToRgb(light), hexToRgb(mid), hexToRgb(dark)],
     particles: preset.particles.map(hexToRgb),
   };
+}
+
+/** Heavenly Dragon: the spark the pearl sheds, drifting down as it fades. */
+const PEARL_SPARK: EmitterSpec = {
+  kind: "mote",
+  rate: 0,
+  from: "feet",
+  life: [0.5, 0.9],
+  speed: [2, 6],
+  dir: Math.PI / 2,
+  spread: 1,
+  size: [0.8, 1.2],
+  colors: 2,
+  front: 0.5,
+};
+
+/** Heavenly Dragon: golden fire from the jaws; `dir` and `front` follow the head. */
+const DRAGON_FIRE: EmitterSpec = {
+  kind: "ember",
+  rate: 0,
+  from: "feet",
+  life: [0.45, 0.8],
+  speed: [70, 110],
+  spread: 0.45,
+  drag: 0.6,
+  size: [2.6, 3.6],
+  colors: 4,
+  front: 0.5,
+};
+
+/** Heavenly Dragon: the gold raining round the character as the roar ends. */
+const GOLD_RAIN: EmitterSpec = {
+  kind: "spark",
+  rate: 0,
+  from: "above",
+  life: [0.6, 1],
+  speed: [20, 40],
+  dir: Math.PI / 2,
+  spread: 0.5,
+  gravity: 160,
+  size: [0.8, 1.2],
+  colors: 2,
+  front: 0.5,
+  groundOnly: true,
+};
+
+/** A point `distance` px along a path running round a tooltip's box, 8 px outside its sides. */
+function tipPathAt(
+  { x, y, w, h }: { x: number; y: number; w: number; h: number },
+  distance: number,
+): Point {
+  const out = 8;
+  const top = w + 2 * out;
+  const side = h + 2 * out;
+  let d = distance % (2 * (top + side));
+
+  if (d < top) return { x: x - out + d, y: y - out };
+
+  if ((d -= top) < side) return { x: x + w + out, y: y - out + d };
+
+  if ((d -= side) < top) return { x: x + w + out - d, y: y + h + out };
+
+  return { x: x - out, y: y + h + out - (d - top) };
+}
+
+/**
+ * Keeps the dragon flat and out of a tooltip: a segment that cut a corner into the box,
+ * grown by `margin`, is pushed back out through its nearest side, so it never crosses the text.
+ */
+function pushOutOfBox(
+  dragon: Dragon,
+  { x, y, w, h }: { x: number; y: number; w: number; h: number },
+  margin: number,
+): void {
+  for (const seg of dragon.segments) {
+    seg.z = 0;
+    const left = seg.x - (x - margin);
+    const right = x + w + margin - seg.x;
+    const top = seg.y - (y - margin);
+    const bottom = y + h + margin - seg.y;
+
+    if (left <= 0 || right <= 0 || top <= 0 || bottom <= 0) continue;
+    const nearest = Math.min(left, right, top, bottom);
+
+    if (nearest === left) seg.x = x - margin;
+    else if (nearest === right) seg.x = x + w + margin;
+    else if (nearest === top) seg.y = y - margin;
+    else seg.y = y + h + margin;
+  }
 }
 
 /** Camera drift a world buffer can move by between ticks. */

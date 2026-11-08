@@ -69,6 +69,8 @@ export function drawBurstScene(
     case "spores":
     case "bloodrain":
     case "aurora-flare":
+    // The roar's rings spread from the dragon's jaws, which only the renderer knows.
+    case "roar":
       break;
   }
 }
