@@ -135,6 +135,9 @@ const BURST_DURATION: Record<BurstKind, number> = {
   "aurora-flare": 1.2,
   conqueror: 0.9,
   roar: 1.6,
+  coronation: 1.4,
+  judgement: 0.6,
+  rebirth: 1.2,
 };
 
 /** An offscreen buffer of one side's light (`lit`) or covering (`dim`) pixels. */
@@ -1202,7 +1205,7 @@ export class Aura {
     const k = clamp(intensity, 0.5, 1.5);
 
     if (this.burst >= 0) {
-      this.advanceBurst(kind, frame, k);
+      this.advanceBurst(kind, place, frame, k);
 
       return;
     }
@@ -1216,7 +1219,12 @@ export class Aura {
   }
 
   /** The running burst's per-tick spawns and the beats it crosses this tick. */
-  private advanceBurst(kind: BurstKind, frame: SpawnFrame, k: number): void {
+  private advanceBurst(
+    kind: BurstKind,
+    place: AuraPlacement,
+    frame: SpawnFrame,
+    k: number,
+  ): void {
     const before = this.burst;
     this.burst += TICK / BURST_DURATION[kind];
     const crossed = (at: number) => before < at && this.burst >= at;
@@ -1299,6 +1307,14 @@ export class Aura {
       );
     }
 
+    // The halo lands: a flash, two rings and gold raining round the character.
+    if ((kind === "coronation" || kind === "rebirth") && crossed(0.85)) {
+      this.flash = 1;
+      this.field.emit(GOLD_RAIN, frame, Math.round(16 * k));
+      this.burstRing(place, frame, frame.feet.rx * 2.4, 1);
+      this.burstRing(place, frame, frame.feet.rx * 1.5, 0);
+    }
+
     if (kind === "roar" && crossed(0.85)) {
       // The fire dies out in a thunderclap: a flash and gold raining round the character.
       this.flash = 1;
@@ -1340,6 +1356,8 @@ export class Aura {
     frame: SpawnFrame,
     k: number,
   ): void {
+    if (this.startMythicBurst(kind, place, frame, k)) return;
+
     switch (kind) {
       case "eruption":
         this.flash = 0.6;
@@ -1515,6 +1533,104 @@ export class Aura {
         this.flash = Math.max(this.flash, 0.3);
         break;
     }
+  }
+
+  /** The admin auras' own bursts; false for every other kind. */
+  private startMythicBurst(
+    kind: BurstKind,
+    place: AuraPlacement,
+    frame: SpawnFrame,
+    k: number,
+  ): boolean {
+    switch (kind) {
+      case "coronation":
+        this.flash = 0.6;
+        this.field.emit(
+          {
+            kind: "glint",
+            rate: 0,
+            from: "edge-high",
+            life: [0.5, 0.9],
+            speed: [0, 3],
+            size: [4, 7],
+            colors: 2,
+            front: 0.7,
+          },
+          frame,
+          Math.round(6 * k),
+        );
+
+        return true;
+      case "rebirth":
+        // The phoenix flares up: a fountain of embers, then the pillar of fire falls.
+        this.flash = 1;
+        this.field.emit(
+          {
+            kind: "ember",
+            rate: 0,
+            from: "edge",
+            life: [0.6, 1.1],
+            speed: [55, 100],
+            spread: 1,
+            drag: 0.8,
+            size: [2, 3.4],
+            colors: 4,
+            front: 0.5,
+          },
+          frame,
+          Math.round(26 * k),
+        );
+        this.burstRing(place, frame, frame.feet.rx * 1.8, 1);
+
+        return true;
+      case "judgement":
+        this.startJudgement(place, frame, k);
+
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Judgement: three heavy bolts from the sky striking round the character at once, a
+   * shockwave of two rings and gold sparks raining down. Tooltips get the middle one.
+   */
+  private startJudgement(
+    place: AuraPlacement,
+    frame: SpawnFrame,
+    k: number,
+  ): void {
+    this.flash = 1;
+    const { silhouette } = place;
+    const offsets = place.ground ? [-16, 0, 16] : [0];
+
+    for (const dx of offsets) {
+      const ax = silhouette.head.x + dx * 1.6 + (this.rng() - 0.5) * 6;
+      const ay = silhouette.head.y - 48;
+
+      const bx =
+        (place.ground ? place.feetX - place.x : silhouette.head.x) + dx;
+
+      const by = place.ground
+        ? place.feetY - place.y - 2 + Math.abs(dx) * 0.2
+        : silhouette.head.y;
+
+      this.bolts.push({
+        points: jagged(ax, ay, bx, by, this.rng),
+        ax,
+        ay,
+        bx,
+        by,
+        age: 0,
+        life: TICK * 5,
+        heavy: true,
+      });
+    }
+
+    this.field.emit(GOLD_RAIN, frame, Math.round(18 * k));
+    this.burstRing(place, frame, frame.feet.rx * 2.6, 1);
+    this.burstRing(place, frame, frame.feet.rx * 1.6, 0);
   }
 
   /** Strike: one heavy bolt from the cloud (or above the head) down to the feet. */
