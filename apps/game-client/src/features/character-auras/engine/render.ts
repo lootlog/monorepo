@@ -330,7 +330,7 @@ export class Aura {
 
   /**
    * Draws the aura's effects over the whole map, `width` × `height` in the context's units:
-   * the storm, the arrival's night with the admin lit and its shockwave.
+   * the storm, the arrival's night with the admin lit.
    */
   drawMapEffects(
     ctx: CanvasRenderingContext2D,
@@ -357,7 +357,7 @@ export class Aura {
         );
 
       if (p.herald) {
-        drawArrival(ctx, place, this.age, width, height, light, mid, p.arrival);
+        drawArrival(ctx, place, this.age, width, height);
       }
     } finally {
       ctx.restore();
