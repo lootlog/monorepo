@@ -21,7 +21,8 @@ type AuraFx =
   | "curtain"
   | "footprints"
   | "raincloud"
-  | "haki";
+  | "haki"
+  | "dragon";
 
 /**
  * The aura's own short animation every few seconds, like the burst of the game's animated
@@ -44,7 +45,8 @@ export type BurstKind =
   | "splash"
   | "ascend"
   | "aurora-flare"
-  | "conqueror";
+  | "conqueror"
+  | "roar";
 
 type GroundStyle =
   | "disc"
@@ -77,7 +79,8 @@ export type TipDeco =
   | "waves"
   | "sigils"
   | "curtain"
-  | "cracks";
+  | "cracks"
+  | "clouds";
 
 export interface AuraPreset {
   id: CharacterAuraId;
@@ -1233,5 +1236,66 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     tip: "cracks",
     nick: ["#ff8a8a", "#e01828", "#2a0006"],
     tones: ["#ff5a5a", "#c0101e", "#1a0004"],
+  },
+  heavenly: {
+    id: "heavenly",
+    tier: "legendary",
+    description:
+      "Wokół postaci owija się nefrytowo-złoty smok, goniąc świecącą perłę: przelatuje za nią i przed nią, a pod stopami płyną złociste obłoki. Co jakiś czas smok wzbija się nad głowę i zieje złotym ogniem.",
+    particles: [
+      "#fff3b0",
+      "#ffc94a",
+      "#ff8a2a",
+      "#c03a10",
+      "#2fbf7a",
+      "#e8fff2",
+    ],
+    rim: "#ffe08a",
+    haze: "#2fbf7a",
+    near: 0.85,
+    far: 0.5,
+    inner: 0.07,
+    pulse: breathe(3, 0.08),
+    emitters: [
+      {
+        kind: "mote",
+        rate: 5,
+        from: "feet",
+        life: [1.2, 2],
+        speed: [8, 16],
+        spread: 0.5,
+        sway: 6,
+        size: [0.8, 1.4],
+        colors: 2,
+        front: 0.5,
+      },
+      {
+        kind: "glint",
+        rate: 1.5,
+        from: "edge",
+        life: [0.5, 0.8],
+        speed: [0, 1],
+        size: [3, 5],
+        colorFrom: 4,
+        front: 1,
+      },
+      {
+        kind: "mote",
+        rate: 3,
+        from: "edge",
+        life: [1, 1.6],
+        speed: [4, 10],
+        spread: 6.28,
+        outward: 0.6,
+        size: [0.6, 1],
+        colorFrom: 4,
+        front: 0.5,
+      },
+    ],
+    fx: ["dragon"],
+    burst: "roar",
+    tip: "clouds",
+    nick: ["#fff3b0", "#ffc94a", "#2fbf7a"],
+    tones: ["#fff0a0", "#2fbf7a", "#0a3a24"],
   },
 };
