@@ -1,12 +1,9 @@
 /**
- * An admin's arrival on the map, like a dragon landing: the whole map darkens round a
- * circle of light on the admin, the aura's burst falls in the dark, a shockwave rolls
- * out across the map, and the light comes back. Every `PULSE_EVERY` seconds after, a
- * shorter, fainter pulse of the same. Only while one runs is anything drawn.
+ * An admin's arrival on the map: the whole map darkens round a circle of light on the
+ * admin, the aura's burst falls in the dark, and the light comes back. Every
+ * `PULSE_EVERY` seconds after, a shorter, fainter pulse of the same. Only while one runs is anything drawn.
  */
-import { clamp } from "es-toolkit";
-import { mulberry32, rgba, TAU, type Rgb } from "./math";
-import { jagged } from "./paint";
+import { rgba, type Rgb } from "./math";
 import type { AuraPlacement } from "./placement";
 import { context2d, createCanvas } from "./silhouette";
 
@@ -14,10 +11,6 @@ import { context2d, createCanvas } from "./silhouette";
 const DARK = 0.5;
 
 export const ARRIVAL_BURST = 0.55;
-
-const SHOCK_START = 0.65;
-
-const SHOCK_LENGTH = 1.3;
 
 const LIGHT_BACK = 2.6;
 
@@ -30,9 +23,6 @@ const DARKEST = 0.8;
 const LIGHT_RADIUS = 46;
 
 const LIGHT_STRETCH = 1.9;
-
-/** How far the shockwave rolls out over the ground, px. */
-const SHOCK_REACH = 420;
 
 const NIGHT: Rgb = [4, 2, 10];
 
@@ -139,19 +129,13 @@ export function drawNight(
   ctx.fillRect(right, top, Math.max(0, width - right), bottom - top);
 }
 
-/**
- * Darkens the screen (`width` × `height`) round the admin at `place` and rolls the
- * shockwave out from their feet, in the aura's `light` and `mid` tones.
- */
+/** Darkens the screen (`width` × `height`) round the admin at `place`. */
 export function drawArrival(
   ctx: CanvasRenderingContext2D,
   place: AuraPlacement,
   age: number,
   width: number,
   height: number,
-  light: Rgb,
-  mid: Rgb,
-  tearing?: "will" | "quake",
 ): void {
   const event = mapEvent(age);
 
@@ -163,135 +147,4 @@ export function drawArrival(
   const cx = place.x + bounds.x + bounds.w / 2;
   const cy = place.y + bounds.y + bounds.h * 0.45;
   drawNight(ctx, cx, cy, width, height, DARKEST * darkness);
-
-  const shock = (event.t - SHOCK_START) / SHOCK_LENGTH;
-
-  if (shock <= 0 || shock >= 1) return;
-
-  if (tearing === "will")
-    drawWillStorm(ctx, place, event.t, shock, darkness, mid);
-  else if (tearing === "quake")
-    drawQuakeCracks(ctx, place, shock, darkness, light);
-
-  // Two rings rolling out over the ground, the leading one bright.
-  ctx.globalCompositeOperation = "lighter";
-  ctx.lineWidth = 2;
-
-  for (const [lag, color, strength] of [
-    [0, light, 1],
-    [0.12, mid, 0.6],
-  ] as const) {
-    const k = clamp(shock - lag, 0, 1);
-
-    if (k <= 0) continue;
-    const radius = 12 + (1 - (1 - k) ** 2) * SHOCK_REACH;
-    ctx.globalAlpha = (1 - k) * strength;
-    ctx.strokeStyle = rgba(color, 1);
-    ctx.beginPath();
-    ctx.ellipse(
-      Math.round(place.feetX),
-      Math.round(place.feetY) - 2,
-      radius,
-      radius * 0.36,
-      0,
-      0,
-      TAU,
-    );
-    ctx.stroke();
-  }
-}
-
-/** Strokes the polyline `points` (x, y pairs) up to `share` of its points. */
-function strokePath(
-  ctx: CanvasRenderingContext2D,
-  points: readonly number[],
-  share = 1,
-): void {
-  const count = Math.max(2, Math.ceil((points.length / 2) * share));
-  ctx.beginPath();
-  ctx.moveTo(points[0] ?? 0, points[1] ?? 0);
-
-  for (let i = 1; i < count; i++)
-    ctx.lineTo(points[i * 2] ?? 0, points[i * 2 + 1] ?? 0);
-  ctx.stroke();
-}
-
-/**
- * The will: black lightning in a coloured rim lashing out from the admin across the map,
- * a new set every few frames while the shockwave rolls.
- */
-function drawWillStorm(
-  ctx: CanvasRenderingContext2D,
-  place: AuraPlacement,
-  age: number,
-  shock: number,
-  darkness: number,
-  rim: Rgb,
-): void {
-  const rng = mulberry32(Math.floor(age * 12));
-  const { bounds } = place.silhouette;
-  const x = place.x + bounds.x + bounds.w / 2;
-  const y = place.y + bounds.y + bounds.h * 0.5;
-  const reach = Math.min(1, shock * 2.5);
-  const alpha = darkness * (1 - shock * 0.6);
-  ctx.globalCompositeOperation = "source-over";
-  ctx.globalAlpha = 1;
-
-  for (let i = 0; i < 7; i++) {
-    const angle = rng() * TAU;
-    const length = (140 + rng() * 260) * reach;
-
-    const points = jagged(
-      x,
-      y,
-      x + Math.cos(angle) * length,
-      y + Math.sin(angle) * length * 0.6,
-      rng,
-    );
-
-    ctx.strokeStyle = rgba(rim, 0.85 * alpha);
-    ctx.lineWidth = 3;
-    strokePath(ctx, points);
-    ctx.strokeStyle = rgba([0, 0, 0], alpha);
-    ctx.lineWidth = 1.2;
-    strokePath(ctx, points);
-  }
-}
-
-/** A quake: cracks running out from the admin's feet across the ground, lit inside. */
-function drawQuakeCracks(
-  ctx: CanvasRenderingContext2D,
-  place: AuraPlacement,
-  shock: number,
-  darkness: number,
-  light: Rgb,
-): void {
-  const rng = mulberry32(17);
-  const x = place.feetX;
-  const y = place.feetY - 2;
-  const reveal = Math.min(1, shock * 3);
-
-  for (let i = 0; i < 9; i++) {
-    const angle = (i / 9) * TAU + rng() * 0.5;
-    const length = 160 + rng() * 260;
-
-    const points = jagged(
-      x,
-      y,
-      x + Math.cos(angle) * length,
-      y + Math.sin(angle) * length * 0.45,
-      rng,
-    );
-
-    ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = 0.9 * darkness;
-    ctx.strokeStyle = rgba(NIGHT, 1);
-    ctx.lineWidth = 3;
-    strokePath(ctx, points, reveal);
-    ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = darkness * (1 - shock * 0.5);
-    ctx.strokeStyle = rgba(light, 1);
-    ctx.lineWidth = 1;
-    strokePath(ctx, points, reveal);
-  }
 }

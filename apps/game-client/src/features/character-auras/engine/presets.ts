@@ -149,11 +149,6 @@ export interface AuraPreset {
    * (when the admin enters the map).
    */
   herald?: boolean;
-  /**
-   * What tears across the map with an admin's arrival shockwave: black lightning of the
-   * will, or cracks as from a quake.
-   */
-  arrival?: "will" | "quake";
   /** An overcast sky and lightning over the whole map while the aura is on it. */
   storm?: boolean;
   /** The dragon's colours, for an aura with the `dragon` effect; jade and gold otherwise. */
@@ -1749,7 +1744,6 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
         front: 0.8,
       },
     ],
-    arrival: "will",
     fx: ["eclipse", "lightning", "haki"],
     burst: "conqueror",
     tip: "eclipse",
@@ -1902,9 +1896,8 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     id: "emperor",
     tier: "mythic",
     herald: true,
-    arrival: "will",
     description:
-      "Wokół postaci owija się lazurowy smok, czarne pioruny woli trzaskają w fioletowej poświacie, a przy wejściu na mapę ich burza przetacza się po całym ekranie.",
+      "Wokół postaci owija się lazurowy smok, a czarne pioruny woli trzaskają w fioletowej poświacie.",
     particles: ["#e0a8ff", "#a04cff", "#4a1080", "#221a2a", "#4e4458"],
     rim: "#b45cff",
     haze: "#06000c",
@@ -1946,9 +1939,8 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     id: "quake",
     tier: "mythic",
     herald: true,
-    arrival: "quake",
     description:
-      "Powietrze obok postaci pęka jak szkło, ziemia rozstępuje się pod stopami, a każdy wstrząs ciska kamieniami; przy wejściu na mapę pęknięcia przebiegają przez cały ekran.",
+      "Powietrze obok postaci pęka jak szkło, ziemia rozstępuje się pod stopami, a każdy wstrząs ciska kamieniami.",
     particles: ["#ffffff", "#d8f0ff", "#8fc8ff", "#5a6a80", "#2a3440"],
     rim: "#e8f6ff",
     haze: "#4a8acc",
