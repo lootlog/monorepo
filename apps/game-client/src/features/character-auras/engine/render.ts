@@ -889,27 +889,12 @@ export class Aura {
       return;
     }
 
-    if (silhouette.far) {
-      ctx.globalCompositeOperation = p.darkHaze ? "source-over" : "lighter";
-      this.blitMask(
-        ctx,
-        place,
-        silhouette.far,
-        this.rgb.haze,
-        Math.min(1, p.far * glow),
-      );
-    }
-
-    if (silhouette.near) {
-      ctx.globalCompositeOperation = "lighter";
-      this.blitMask(
-        ctx,
-        place,
-        silhouette.near,
-        this.rgb.rim,
-        Math.min(1, p.near * glow),
-      );
-    }
+    if (!silhouette.glow) return;
+    const { near, far } = silhouette.glow;
+    ctx.globalCompositeOperation = p.darkHaze ? "source-over" : "lighter";
+    this.blitMask(ctx, place, far, this.rgb.haze, Math.min(1, p.far * glow));
+    ctx.globalCompositeOperation = "lighter";
+    this.blitMask(ctx, place, near, this.rgb.rim, Math.min(1, p.near * glow));
   }
 
   /** The character lit by its own aura: its silhouette tinted and added over it. */
@@ -935,7 +920,9 @@ export class Aura {
       key,
       (octx) => {
         if (!pixels) {
-          this.paintMask(octx, place.silhouette.sil, this.rgb.tones[0], alpha);
+          const glow = place.silhouette.glow;
+
+          if (glow) this.paintMask(octx, glow.sil, this.rgb.tones[0], alpha);
 
           return;
         }
@@ -967,13 +954,12 @@ export class Aura {
     composite.silhouette = silhouette;
     composite.key = key;
     const { canvas } = composite;
+    const width = silhouette.width + silhouette.pad * 2;
+    const height = silhouette.height + silhouette.pad * 2;
 
-    if (
-      canvas.width !== silhouette.sil.width ||
-      canvas.height !== silhouette.sil.height
-    ) {
-      canvas.width = silhouette.sil.width;
-      canvas.height = silhouette.sil.height;
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
     }
 
     const octx = context2d(canvas);
