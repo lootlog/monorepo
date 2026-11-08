@@ -32,7 +32,7 @@ export type AuraPaint = (context: CanvasRenderingContext2D) => void;
 export type ShownAura<C extends RuntimeAuraCharacter> = {
   character: C;
   place: AuraPlacement;
-  /** How far above its box the aura paints (the admin beacon), px. */
+  /** How far above its box the aura paints (the admin's giant), px. */
   above: number;
   back: AuraPaint;
   front: AuraPaint;

@@ -145,10 +145,10 @@ export interface AuraPreset {
   /** No outline or inner light round a character, only its pieces and particles. */
   bare?: boolean;
   /**
-   * Admin auras: a tall beam of light over the character, seen from across the map, and
-   * the aura's burst as soon as it shows (when the admin enters the map).
+   * Admin auras: the arrival over the whole map, and the aura's burst as soon as it shows
+   * (when the admin enters the map).
    */
-  beacon?: boolean;
+  herald?: boolean;
   /**
    * What tears across the map with an admin's arrival shockwave: black lightning of the
    * will, or cracks as from a quake.
@@ -1589,7 +1589,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   sovereign: {
     id: "sovereign",
     tier: "mythic",
-    beacon: true,
+    herald: true,
     description:
       "Nad głową lśni złota korona, wokół krążą trzy gwiazdy, za postacią obracają się promienie, a co chwilę z nieba spada słup światła i deszcz złota.",
     particles: ["#fff6c8", "#ffd34a", "#e8a020", "#c8a0ff", "#8a4aff"],
@@ -1646,7 +1646,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   seraph: {
     id: "seraph",
     tier: "mythic",
-    beacon: true,
+    herald: true,
     description:
       "Nad głową świeci aureola na tle boskich promieni, wokół krążą trzy jasne gwiazdy, z góry opadają pióra, a co chwilę z nieba spada słup światła.",
     particles: ["#ffffff", "#fff6dc", "#ffe39a", "#d8e4ff"],
@@ -1702,7 +1702,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   eclipse: {
     id: "eclipse",
     tier: "mythic",
-    beacon: true,
+    herald: true,
     description:
       "Za głową wschodzi czarne słońce w złotej koronie, wokół trzaskają czarne pioruny, a co chwilę fala mroku podrywa kamienie z ziemi.",
     particles: ["#fff3c0", "#ffc94a", "#ff8a2a", "#140a06", "#c77dff"],
@@ -1760,7 +1760,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     id: "thunderlord",
     tier: "mythic",
     storm: true,
-    beacon: true,
+    herald: true,
     description:
       "Gdy jest na mapie, niebo nad całą mapą się chmurzy i co chwilę gdzieś bije piorun; nad koroną kłębi się burzowa chmura, a co chwilę trzy pioruny naraz biją wokół postaci.",
     particles: ["#ffffff", "#fff3b0", "#ffd34a", "#7cc8ff", "#3a6bff"],
@@ -1823,7 +1823,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   phoenix: {
     id: "phoenix",
     tier: "mythic",
-    beacon: true,
+    herald: true,
     description:
       "Płomienie liżą sylwetkę, za nią płoną ogniste promienie, wokół krąży ognisty smok, a co chwilę feniks odradza się w słupie ognia.",
     particles: ["#fff3b0", "#ffb22e", "#ff5a14", "#c4160e", "#3a2622"],
@@ -1901,7 +1901,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   emperor: {
     id: "emperor",
     tier: "mythic",
-    beacon: true,
+    herald: true,
     arrival: "will",
     description:
       "Wokół postaci owija się lazurowy smok, czarne pioruny woli trzaskają w fioletowej poświacie, a przy wejściu na mapę ich burza przetacza się po całym ekranie.",
@@ -1945,7 +1945,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   quake: {
     id: "quake",
     tier: "mythic",
-    beacon: true,
+    herald: true,
     arrival: "quake",
     description:
       "Powietrze obok postaci pęka jak szkło, ziemia rozstępuje się pod stopami, a każdy wstrząs ciska kamieniami; przy wejściu na mapę pęknięcia przebiegają przez cały ekran.",
@@ -2004,7 +2004,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     nick: ["#ffffff", "#a8d8ff", "#2a4a7a"],
     tones: ["#ffffff", "#a8d8ff", "#2a4a7a"],
   },
-  // Calmer admin auras: no beacon, no arrival.
+  // Calmer admin auras: no arrival.
   starlight: {
     id: "starlight",
     tier: "mythic",
