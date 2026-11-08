@@ -1,6 +1,7 @@
 import { clamp } from "es-toolkit";
 import { TAU, noise1, rgba, type Rgb } from "./math";
 import {
+  pixelArc,
   pixelDisc,
   pixelEllipse,
   pixelGlint,
@@ -234,6 +235,217 @@ export function drawOrbits(
         pixelGlint(b.lit(), x, y, 2, [255, 255, 255], color, intensity);
       else plot(b.lit(), x, y, color, (1 - k / tail) * 0.9 * intensity);
     }
+  }
+}
+
+/**
+ * Halo: a thin silver ring over the head, the half behind the head (`front` false) or before
+ * it, one pixel higher while `raised`. Pixels only, so a lite aura can cache it.
+ */
+export function drawHalo(
+  b: Brush,
+  place: AuraPlacement,
+  front: boolean,
+  raised: boolean,
+): void {
+  const { head, bounds } = place.silhouette;
+  const [light, mid] = b.tones;
+  const rx = Math.round(clamp(bounds.w * 0.3, 5, 9));
+  const ry = Math.max(2, Math.round(rx * 0.32));
+  const x = Math.round(place.x + head.x);
+  const y = Math.round(place.y + head.y) - 4 - (raised ? 1 : 0);
+  const a = b.intensity;
+  pixelArc(b.lit(), x, y, rx, ry, light, 0.9 * a, front);
+  pixelArc(b.lit(), x, y - 1, rx, ry, mid, 0.45 * a, front);
+}
+
+/** Dragon: segments of its serpentine body, head first, and their spacing in radians. */
+const DRAGON_SEGMENTS = 11;
+
+const DRAGON_GAP = 0.15;
+
+/** Lite steps the dragon takes per turn round the character. */
+const DRAGON_TURN = 30;
+
+/**
+ * Fire dragon: a small dragon circling the character at waist height, the far side of the
+ * circle (`front` false) behind it. `step` is the aura's lite step; pixels only.
+ */
+export function drawFireDragon(
+  b: Brush,
+  place: AuraPlacement,
+  front: boolean,
+  step: number,
+): void {
+  const { bounds } = place.silhouette;
+  const [light, mid, dark] = b.tones;
+  const cx = place.x + bounds.x + bounds.w / 2;
+  const cy = place.y + bounds.y + bounds.h * 0.55;
+  const rx = Math.round(bounds.w * 0.5 + 12);
+  const ry = Math.max(4, Math.round(rx * 0.35));
+  const head = (step / DRAGON_TURN) * TAU;
+  const lit = b.lit();
+  const a = b.intensity;
+
+  // Tail first, so the head lands on top.
+  for (let k = DRAGON_SEGMENTS - 1; k >= 0; k--) {
+    const angle = head - k * DRAGON_GAP;
+
+    if (Math.sin(angle) >= 0 !== front) continue;
+    const x = Math.round(cx + Math.cos(angle) * rx);
+
+    // The body undulates as it flies.
+    const y = Math.round(
+      cy + Math.sin(angle) * ry + Math.sin(step * 0.8 - k * 0.9) * 1.5,
+    );
+
+    if (k === 0) drawDragonHead(lit, x, y, -Math.sin(angle), b.tones, a);
+    else if (k < 7) {
+      // A 2 px thick body: dark back, lit belly.
+      plot(lit, x, y, mid, a);
+      plot(lit, x + 1, y, mid, a);
+      plot(lit, x, y + 1, k < 4 ? light : mid, a * 0.9);
+      plot(lit, x + 1, y + 1, k < 4 ? light : mid, a * 0.9);
+      plot(lit, x, y - 1, dark, a * 0.8);
+    } else plot(lit, x, y, k < 9 ? mid : dark, a);
+
+    if (k === 3) drawDragonWings(lit, x, y, step, mid, dark, a);
+  }
+}
+
+/** The dragon's head facing `dir` (−1 left, 1 right): snout, a horn and a hot eye. */
+function drawDragonHead(
+  lit: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  dir: number,
+  tones: readonly [Rgb, Rgb, Rgb],
+  a: number,
+): void {
+  const [light, mid, dark] = tones;
+  const f = dir < 0 ? -1 : 1;
+
+  for (let dx = 0; dx < 3; dx++) {
+    plot(lit, x + f * dx, y, mid, a);
+    plot(lit, x + f * dx, y + 1, dx === 2 ? mid : light, a);
+  }
+
+  plot(lit, x + f * 3, y + 1, mid, a);
+  plot(lit, x - f, y - 2, dark, a);
+  plot(lit, x, y - 1, dark, a);
+  plot(lit, x + f, y, [255, 255, 200], a);
+  // A puff of fire ahead of the snout.
+  plot(lit, x + f * 5, y + 1, light, a * 0.6);
+}
+
+/** Two bat wings off a body segment, raised and lowered every other step. */
+function drawDragonWings(
+  lit: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  step: number,
+  mid: Rgb,
+  dark: Rgb,
+  a: number,
+): void {
+  const up = step % 2 === 0;
+  const tip = up ? -5 : -2;
+
+  for (const side of [-1, 1]) {
+    pixelLine(lit, x, y - 1, x + side * 4, y + tip, dark, a, a);
+    pixelLine(
+      lit,
+      x + side * 4,
+      y + tip,
+      x + side * 2,
+      y - 1,
+      mid,
+      a * 0.8,
+      a * 0.8,
+    );
+  }
+}
+
+/** Crown: gem colours on its three points, left to right. */
+const CROWN_GEMS: readonly Rgb[] = [
+  [255, 70, 90],
+  [90, 170, 255],
+  [255, 70, 90],
+];
+
+/**
+ * Crown: a small gold crown floating over the head, one pixel higher while `raised`, with a
+ * glint running along its points every few steps. Pixels only.
+ */
+export function drawCrown(
+  b: Brush,
+  place: AuraPlacement,
+  raised: boolean,
+  step: number,
+): void {
+  const { head } = place.silhouette;
+  const [light, mid, dark] = b.tones;
+  const a = b.intensity;
+  const lit = b.lit();
+  const x = Math.round(place.x + head.x) - 4;
+  const y = Math.round(place.y + head.y) - 6 - (raised ? 1 : 0);
+
+  // The band, lit on top, shaded at the bottom.
+  for (let i = 0; i < 9; i++) {
+    plot(lit, x + i, y + 2, i % 4 === 0 ? light : mid, a);
+    plot(lit, x + i, y + 3, dark, a * 0.8);
+  }
+
+  // Three points with their gems.
+  for (const [n, px] of [0, 4, 8].entries()) {
+    plot(lit, x + px, y, mid, a);
+    plot(lit, x + px, y + 1, light, a);
+    plot(lit, x + px, y + 2, CROWN_GEMS[n] ?? light, a);
+  }
+
+  plot(lit, x + 2, y + 1, mid, a * 0.8);
+  plot(lit, x + 6, y + 1, mid, a * 0.8);
+  const glint = step % 12;
+
+  if (glint < 3)
+    pixelGlint(lit, x + glint * 4, y, 1, [255, 255, 255], light, a * 0.9);
+}
+
+/**
+ * Wings of shadow: two dark wings spread from the shoulders behind the character, their
+ * leading edges lit, raised and lowered every few lite `step`s. Pixels only.
+ */
+export function drawWings(b: Brush, place: AuraPlacement, step: number): void {
+  const { bounds } = place.silhouette;
+  const [light, mid] = b.tones;
+  const a = b.intensity;
+  const dim = b.dim();
+  const lit = b.lit();
+  const cx = place.x + bounds.x + bounds.w / 2;
+  const sy = place.y + bounds.y + Math.round(bounds.h * 0.28);
+  const span = Math.round(clamp(bounds.w * 0.8 + 8, 16, 28));
+  // Four poses: up, mid, down, mid.
+  const lift = [-4, 0, 4, 0][Math.floor(step / 3) % 4] ?? 0;
+  const shadow: Rgb = [16, 22, 26];
+
+  for (const side of [-1, 1]) {
+    const rootX = cx + side * 3;
+    const tipX = cx + side * span;
+    const tipY = sy - 10 + lift;
+
+    // Feathers hanging from the leading edge, the outer ones longest.
+    for (let f = 1; f <= 4; f++) {
+      const k = f / 4;
+      const px = rootX + (tipX - rootX) * k;
+      const py = sy + (tipY - sy) * k;
+      const endX = px + side * f * 0.7;
+      const endY = py + 4 + f * 2.5;
+      pixelLine(dim, px, py, endX, endY, shadow, a * 0.9, a * 0.9);
+      plot(lit, endX, endY, f > 2 ? mid : light, a * 0.7);
+    }
+
+    pixelLine(lit, rootX, sy, tipX, tipY, mid, a, a * 0.8);
+    plot(lit, tipX, tipY, light, a);
   }
 }
 

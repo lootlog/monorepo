@@ -23,7 +23,8 @@ export type ParticleKind =
   | "dust"
   | "scorch"
   | "puddle"
-  | "print";
+  | "print"
+  | "heart";
 
 /**
  * What a falling particle does when it reaches the ground:

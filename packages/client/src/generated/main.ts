@@ -101,6 +101,11 @@ export const OwnCharacterAuraResponseDtoAuraId = {
   aurora: 'aurora',
   conqueror: 'conqueror',
   heavenly: 'heavenly',
+  halo: 'halo',
+  dragon: 'dragon',
+  crown: 'crown',
+  wings: 'wings',
+  hearts: 'hearts',
 } as const;
 
 export interface OwnCharacterAuraResponseDto {
@@ -136,6 +141,11 @@ export const UpdateOwnCharacterAuraDtoAuraId = {
   aurora: 'aurora',
   conqueror: 'conqueror',
   heavenly: 'heavenly',
+  halo: 'halo',
+  dragon: 'dragon',
+  crown: 'crown',
+  wings: 'wings',
+  hearts: 'hearts',
 } as const;
 
 export interface UpdateOwnCharacterAuraDto {
@@ -165,6 +175,11 @@ export const CharacterAuraResponseDtoAuraId = {
   aurora: 'aurora',
   conqueror: 'conqueror',
   heavenly: 'heavenly',
+  halo: 'halo',
+  dragon: 'dragon',
+  crown: 'crown',
+  wings: 'wings',
+  hearts: 'hearts',
 } as const;
 
 export interface CharacterAuraResponseDto {
@@ -11370,6 +11385,11 @@ export const GameClientBootstrapResponseDtoOutputCharacterAuraAuraId = {
   aurora: 'aurora',
   conqueror: 'conqueror',
   heavenly: 'heavenly',
+  halo: 'halo',
+  dragon: 'dragon',
+  crown: 'crown',
+  wings: 'wings',
+  hearts: 'hearts',
 } as const;
 
 /**
