@@ -18933,6 +18933,145 @@ paths:
       description: "Deprecated: an aura shows on the Margonem accounts its user proved to play when the Game client connected, so this changes nothing. Returns the own aura, or 403 while the user wears no aura they may use"
       summary: Show own aura on a Margonem account
       deprecated: true
+  /character-auras/grants/game-accounts/{gameAccountId}:
+    put:
+      tags:
+        - character-auras
+      operationId: CharacterAurasController_grantAuras
+      parameters:
+        - name: gameAccountId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "204":
+          description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Global chat admins only; 404 when no user proved to play the account
+      summary: Grant character auras
+    delete:
+      tags:
+        - character-auras
+      operationId: CharacterAurasController_revokeAuras
+      parameters:
+        - name: gameAccountId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "204":
+          description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Withdraw the aura grant of the user who last proved to play the Margonem account and remove the aura they wear; global chat admins keep theirs. Global chat admins only; 404 when no user proved to play the account
+      summary: Revoke character auras
 components:
   schemas:
     RequestValidationError:
@@ -19032,6 +19171,8 @@ components:
             - conqueror
         canChange:
           type: boolean
+        canGrant:
+          type: boolean
         gameAccountIds:
           type: array
           items:
@@ -19039,6 +19180,7 @@ components:
       required:
         - auraId
         - canChange
+        - canGrant
         - gameAccountIds
       additionalProperties: false
     UpdateOwnCharacterAuraDto:
@@ -35607,6 +35749,8 @@ components:
                 - conqueror
             canChange:
               type: boolean
+            canGrant:
+              type: boolean
             gameAccountIds:
               type: array
               items:
@@ -35614,6 +35758,7 @@ components:
           required:
             - auraId
             - canChange
+            - canGrant
             - gameAccountIds
           additionalProperties: false
         characterAuras:
