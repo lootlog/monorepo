@@ -11,6 +11,7 @@ import {
 } from "#src/realtime/session-access";
 import { parseRealtimeJson } from "@lootlog/protocol/realtime/codec";
 import {
+  CHARACTER_AURAS_FEATURE,
   decodeClientCommand,
   type ClientCommand,
   type CommandSuccess,
@@ -921,6 +922,8 @@ export class CommandHandler {
       }
 
       socket.data.guilds = authorizedGuilds;
+      socket.data.characterAuras =
+        data.features?.includes(CHARACTER_AURAS_FEATURE) === true;
       socket.data.joined = true;
       const scopes = defaultScopes(socket.data);
       yield* Effect.try({

@@ -1,11 +1,18 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import {
   characterAurasControllerGetAuras,
   type CharacterAurasResponseDto,
   getCharacterAurasControllerGetAurasQueryKey,
+  getCharacterAurasControllerGetOwnAuraQueryKey,
+  type OwnCharacterAuraResponseDto,
   useCharacterAurasControllerGetAuras,
 } from "@lootlog/client/main";
-import type { CharacterAuraId } from "@lootlog/schema/character-aura";
+import type {
+  CharacterAuraId,
+  CharacterAurasChanged,
+} from "@lootlog/schema/character-aura";
+import { useSocket } from "@/contexts/socket-context";
 import { readGameClientBootstrap } from "@/lib/game-client-bootstrap";
 import { auraRuntimeAdapter } from "@/lib/margonem-runtime/adapters/aura-runtime-adapter";
 import { subscribeCharacterTipUpdates } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
@@ -15,11 +22,15 @@ import {
   characterAuraRenderer,
   HERO_AURA_KEY,
 } from "../character-aura-renderer";
+import { applyCharacterAuraChanges } from "../character-aura-changes";
 import { resolveCharacterAuraTargets } from "../character-aura-targets";
 import { auraMark, CharacterAuraTooltip } from "../engine/tooltip";
 import { useOwnCharacterAura } from "./use-own-character-aura";
 
-/** Auras change rarely; a newly chosen one reaches other players within this time. */
+/**
+ * Auras change rarely and arrive live; the refresh catches up on a change
+ * lost while disconnected or announced to an older gateway.
+ */
 const AURAS_REFRESH_INTERVAL_MS = 5 * 60_000;
 
 /**
@@ -32,6 +43,8 @@ export const useCharacterAuras = () => {
   const heroAccountId = useGameStore((state) => state.game?.hero.accountId);
   const othersById = useOthersStore((state) => state.othersById);
   const { data: own } = useOwnCharacterAura();
+  const { socket } = useSocket();
+  const queryClient = useQueryClient();
 
   const listKey = getCharacterAurasControllerGetAurasQueryKey();
 
@@ -48,6 +61,38 @@ export const useCharacterAuras = () => {
       staleTime: AURAS_REFRESH_INTERVAL_MS,
     },
   });
+
+  // A change patches the list in place, so no player refetches it.
+  useEffect(() => {
+    if (!available || !socket) return;
+
+    const onChanged = (change: CharacterAurasChanged) => {
+      queryClient.setQueryData<CharacterAurasResponseDto>(
+        getCharacterAurasControllerGetAurasQueryKey(),
+        (current) => applyCharacterAuraChanges(current, change),
+      );
+
+      // The hero follows the User's own aura, which an admin may have revoked.
+      const heroAccount = useGameStore.getState().game?.hero.accountId;
+      const ownKey = getCharacterAurasControllerGetOwnAuraQueryKey();
+
+      const ownAura =
+        queryClient.getQueryData<OwnCharacterAuraResponseDto>(ownKey)?.auraId;
+
+      const heroChange = change.auras.find(
+        ({ gameAccountId }) => gameAccountId === heroAccount,
+      );
+
+      if (heroChange && heroChange.auraId !== ownAura)
+        void queryClient.invalidateQueries({ queryKey: ownKey });
+    };
+
+    socket.on("character-auras.changed", onChanged);
+
+    return () => {
+      socket.off("character-auras.changed", onChanged);
+    };
+  }, [available, socket, queryClient]);
 
   const heroAura = own?.canChange ? own.auraId : null;
 

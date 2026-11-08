@@ -45,6 +45,8 @@ export interface SessionData extends AuthenticatedIdentity {
   /** Lootlogs whose activity log recorded this session's connection. */
   activityOrganizationIds?: string[];
   character?: typeof PresenceCharacter.Type;
+  /** The client joined with `CHARACTER_AURAS_FEATURE`, so it reads aura changes. */
+  characterAuras?: boolean;
   confidence: typeof PresenceConfidence.Type;
   presence?: typeof BasicPresence.Type & {
     readonly location?: {
