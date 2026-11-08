@@ -10,20 +10,24 @@ export interface AuraSilhouette {
   pad: number;
   width: number;
   height: number;
-  /** White silhouette, crisp. */
-  sil: HTMLCanvasElement;
   /**
    * The silhouette's pixels as flat lists into the padded canvas, so a tick writes the tinted
    * outline straight into a buffer; null when the sprite's pixels can't be read (cross-origin),
-   * and then the blurred `near`/`far` glows stand in.
+   * and then `glow` stands in.
    */
   pixels: SilhouettePixels | null;
-  near: HTMLCanvasElement | null;
-  far: HTMLCanvasElement | null;
+  glow: SilhouetteGlow | null;
   edge: EdgeSite[];
   bounds: { x: number; y: number; w: number; h: number };
   /** Where a halo sits: above the head for characters, the top right corner for boxes. */
   head: { x: number; y: number };
+}
+
+/** A cross-origin frame's crisp white silhouette and its blurred `near` and `far` glows. */
+interface SilhouetteGlow {
+  sil: HTMLCanvasElement;
+  near: HTMLCanvasElement;
+  far: HTMLCanvasElement;
 }
 
 /** Pixel indices (`y * width + x` in the padded canvas), each list with its parallel data. */
@@ -104,56 +108,30 @@ function drawBlurred(
   ctx.restore();
 }
 
-function finishSilhouette(
-  sil: HTMLCanvasElement,
-  alpha: Uint8ClampedArray | null,
+/** The tinted-pixel silhouette of a padded single-channel alpha buffer. */
+function pixelSilhouette(
+  alpha: Uint8Array,
   width: number,
   height: number,
   edge: EdgeSite[],
   bounds: AuraSilhouette["bounds"],
   head: AuraSilhouette["head"],
 ): AuraSilhouette {
-  const pixels = alpha ? silhouettePixels(alpha, sil.width, sil.height) : null;
-
-  if (pixels)
-    return {
-      pad: PAD,
-      width,
-      height,
-      sil,
-      pixels,
-      near: null,
-      far: null,
-      edge,
-      bounds,
-      head,
-    };
-  const near = createCanvas(sil.width, sil.height);
-  const nearCtx = context2d(near);
-  drawBlurred(nearCtx, sil, 1.6, 3);
-  drawBlurred(nearCtx, sil, 4, 1);
-  const far = createCanvas(sil.width, sil.height);
-  const farCtx = context2d(far);
-  drawBlurred(farCtx, sil, 6, 2);
-  drawBlurred(farCtx, sil, 11, 2);
-
   return {
     pad: PAD,
     width,
     height,
-    sil,
-    pixels: null,
-    near,
-    far,
+    pixels: silhouettePixels(alpha, width + PAD * 2, height + PAD * 2),
+    glow: null,
     edge,
     bounds,
     head,
   };
 }
 
-/** The outline bands and the shape's own pixels, from the silhouette's alpha. */
+/** The outline bands and the shape's own pixels, from the padded silhouette's alpha. */
 function silhouettePixels(
-  alpha: Uint8ClampedArray,
+  alpha: Uint8Array,
   width: number,
   height: number,
 ): SilhouettePixels {
@@ -162,7 +140,7 @@ function silhouettePixels(
   let bodyCount = 0;
 
   for (let i = 0; i < size; i++) {
-    const a = alpha[i * 4 + 3] ?? 0;
+    const a = alpha[i] ?? 0;
 
     if (a > 96) solid[i] = 1;
 
@@ -198,7 +176,7 @@ function silhouettePixels(
       pixels.band[o++] = band;
     }
 
-    const a = alpha[i * 4 + 3] ?? 0;
+    const a = alpha[i] ?? 0;
 
     if (a > 0) {
       pixels.body[b] = i;
@@ -209,8 +187,98 @@ function silhouettePixels(
   return pixels;
 }
 
-/** Silhouette of one sprite frame. Reads pixels for the outline when the image allows it. */
-function buildSpriteSilhouette(
+/** The alpha channel of an RGBA buffer. */
+function alphaOf(rgba: Uint8ClampedArray): Uint8Array {
+  const alpha = new Uint8Array(rgba.length / 4);
+
+  for (let i = 0; i < alpha.length; i++) alpha[i] = rgba[i * 4 + 3] ?? 0;
+
+  return alpha;
+}
+
+/** A sprite sheet's alpha, read once for all its frames. */
+interface SheetAlpha {
+  alpha: Uint8Array;
+  width: number;
+  height: number;
+}
+
+/** A sprite's size in pixels; 0 for sources the game never draws characters from. */
+function sourceSize(image: CanvasImageSource) {
+  if (image instanceof HTMLImageElement)
+    return { width: image.naturalWidth, height: image.naturalHeight };
+
+  if (image instanceof HTMLCanvasElement)
+    return { width: image.width, height: image.height };
+
+  return { width: 0, height: 0 };
+}
+
+/** Reads the whole sheet in one readback; null when it is cross-origin. */
+function readSheet(
+  image: CanvasImageSource,
+  width: number,
+  height: number,
+): SheetAlpha | null {
+  const canvas = createCanvas(width, height);
+  const ctx = context2d(canvas, { willReadFrequently: true });
+  ctx.drawImage(image, 0, 0);
+
+  try {
+    return {
+      alpha: alphaOf(ctx.getImageData(0, 0, width, height).data),
+      width,
+      height,
+    };
+  } catch {
+    // Cross-origin sprite: the canvas is tainted.
+    return null;
+  }
+}
+
+/** Silhouette of one sprite frame, cut from its sheet's alpha. */
+function sheetSilhouette(
+  sheet: SheetAlpha,
+  sx: number,
+  sy: number,
+  sw: number,
+  sh: number,
+): AuraSilhouette {
+  const width = sw + PAD * 2;
+  const alpha = new Uint8Array(width * (sh + PAD * 2));
+  const left = Math.round(sx);
+  const top = Math.round(sy);
+
+  for (let y = 0; y < sh; y++) {
+    const row = top + y;
+
+    if (row < 0 || row >= sheet.height) continue;
+
+    for (let x = 0; x < sw; x++) {
+      const column = left + x;
+
+      if (column < 0 || column >= sheet.width) continue;
+      alpha[(y + PAD) * width + x + PAD] =
+        sheet.alpha[row * sheet.width + column] ?? 0;
+    }
+  }
+
+  const outline = traceOutline(alpha, width, sw, sh);
+  const bounds = outline?.bounds ?? fallbackBounds(sw, sh);
+  const edge = outline?.edge.length ? outline.edge : ellipseSites(bounds);
+
+  return pixelSilhouette(alpha, sw, sh, edge, bounds, {
+    x: bounds.x + bounds.w / 2,
+    y: bounds.y,
+  });
+}
+
+function fallbackBounds(sw: number, sh: number): AuraSilhouette["bounds"] {
+  return { x: sw * 0.25, y: sh * 0.22, w: sw * 0.5, h: sh * 0.78 };
+}
+
+/** A cross-origin sprite frame: blurred glows of its shape round an ellipse of sites. */
+function glowSilhouette(
   image: CanvasImageSource,
   sx: number,
   sy: number,
@@ -218,30 +286,32 @@ function buildSpriteSilhouette(
   sh: number,
 ): AuraSilhouette {
   const sil = createCanvas(sw + PAD * 2, sh + PAD * 2);
-  const ctx = context2d(sil, { willReadFrequently: true });
+  const ctx = context2d(sil);
   ctx.drawImage(image, sx, sy, sw, sh, PAD, PAD, sw, sh);
   ctx.globalCompositeOperation = "source-in";
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, sil.width, sil.height);
 
-  let outline: ReturnType<typeof traceOutline> = null;
-  let alpha: Uint8ClampedArray | null = null;
+  const near = createCanvas(sil.width, sil.height);
+  const nearCtx = context2d(near);
+  drawBlurred(nearCtx, sil, 1.6, 3);
+  drawBlurred(nearCtx, sil, 4, 1);
+  const far = createCanvas(sil.width, sil.height);
+  const farCtx = context2d(far);
+  drawBlurred(farCtx, sil, 6, 2);
+  drawBlurred(farCtx, sil, 11, 2);
+  const bounds = fallbackBounds(sw, sh);
 
-  try {
-    alpha = ctx.getImageData(0, 0, sil.width, sil.height).data;
-    outline = traceOutline(ctx.getImageData(PAD, PAD, sw, sh).data, sw, sh);
-  } catch {
-    // Cross-origin sprite: the canvas is tainted; blurred glows and an ellipse stand in.
-  }
-
-  const fallback = { x: sw * 0.25, y: sh * 0.22, w: sw * 0.5, h: sh * 0.78 };
-  const bounds = outline?.bounds ?? fallback;
-  const edge = outline?.edge.length ? outline.edge : ellipseSites(bounds);
-
-  return finishSilhouette(sil, alpha, sw, sh, edge, bounds, {
-    x: bounds.x + bounds.w / 2,
-    y: bounds.y,
-  });
+  return {
+    pad: PAD,
+    width: sw,
+    height: sh,
+    pixels: null,
+    glow: { sil, near, far },
+    edge: ellipseSites(bounds),
+    bounds,
+    head: { x: bounds.x + bounds.w / 2, y: bounds.y },
+  };
 }
 
 /** A rounded box, for tooltips. */
@@ -256,7 +326,7 @@ export function buildBoxSilhouette(
   ctx.beginPath();
   ctx.roundRect(PAD, PAD, width, height, radius);
   ctx.fill();
-  const alpha = ctx.getImageData(0, 0, sil.width, sil.height).data;
+  const alpha = alphaOf(ctx.getImageData(0, 0, sil.width, sil.height).data);
   const edge: EdgeSite[] = [];
   const perimeter = 2 * (width + height);
   const step = Math.max(6, perimeter / MAX_EDGE_SITES);
@@ -270,8 +340,7 @@ export function buildBoxSilhouette(
     else edge.push({ x: 0, y: perimeter - d, nx: -1, ny: 0 });
   }
 
-  return finishSilhouette(
-    sil,
+  return pixelSilhouette(
     alpha,
     width,
     height,
@@ -281,16 +350,20 @@ export function buildBoxSilhouette(
   );
 }
 
-/** Outline pixels of an RGBA buffer (alpha > 96 next to transparency) with gradient normals. */
+/**
+ * Outline pixels of a frame (alpha > 96 next to transparency) with gradient normals, from the
+ * padded alpha buffer `stride` wide; coordinates are relative to the frame.
+ */
 function traceOutline(
-  data: Uint8ClampedArray,
+  data: Uint8Array,
+  stride: number,
   width: number,
   height: number,
 ): { edge: EdgeSite[]; bounds: AuraSilhouette["bounds"] } | null {
   const alpha = (x: number, y: number) =>
     x < 0 || y < 0 || x >= width || y >= height
       ? 0
-      : (data[(y * width + x) * 4 + 3] ?? 0);
+      : (data[(y + PAD) * stride + x + PAD] ?? 0);
 
   const solid = (x: number, y: number) => alpha(x, y) > 96;
   const sites: EdgeSite[] = [];
@@ -334,10 +407,10 @@ function traceOutline(
   }
 
   if (maxX < 0) return null;
-  const stride = Math.max(1, sites.length / MAX_EDGE_SITES);
+  const every = Math.max(1, sites.length / MAX_EDGE_SITES);
   const edge: EdgeSite[] = [];
 
-  for (let i = 0; i < sites.length; i += stride) {
+  for (let i = 0; i < sites.length; i += every) {
     const site = sites[Math.floor(i)];
 
     if (site) edge.push(site);
@@ -370,21 +443,40 @@ function ellipseSites(bounds: AuraSilhouette["bounds"]): EdgeSite[] {
 }
 
 /**
+ * Time a frame may spend building silhouettes, ms. A crowd entering the map or every walker
+ * stepping onto a new frame at once would otherwise stall that frame; the rest wait for the
+ * next ones, keeping their last silhouette meanwhile.
+ */
+const BUILD_BUDGET_MS = 1;
+
+/**
  * Silhouettes per sprite frame. Walking cycles through 16 frames of one image; animated outfits
  * multiply that, so each image keeps at most `perImage` silhouettes and starts over past it.
+ * Each sheet's pixels are read once and every frame is cut from them.
  */
 export class SilhouetteCache {
   private byImage = new WeakMap<object, Map<string, AuraSilhouette>>();
+  private sheets = new WeakMap<object, SheetAlpha | null>();
+  private spent = 0;
 
-  constructor(private readonly perImage = 128) {}
+  constructor(
+    private readonly perImage = 128,
+    private readonly budget = BUILD_BUDGET_MS,
+  ) {}
 
+  /** Starts a frame's build budget; the first build of a frame always runs. */
+  beginFrame(): void {
+    this.spent = 0;
+  }
+
+  /** The frame's silhouette, or null when it is not built yet and this frame's budget is spent. */
   sprite(
     image: CanvasImageSource,
     sx: number,
     sy: number,
     sw: number,
     sh: number,
-  ): AuraSilhouette {
+  ): AuraSilhouette | null {
     let frames = this.byImage.get(image);
 
     if (!frames) {
@@ -393,19 +485,40 @@ export class SilhouetteCache {
     }
 
     const key = `${sx},${sy},${sw},${sh}`;
-    let silhouette = frames.get(key);
+    const cached = frames.get(key);
 
-    if (!silhouette) {
+    if (cached) return cached;
+
+    const { width, height } = sourceSize(image);
+
+    // A sprite still loading has nothing to outline yet.
+    if (!(width > 0 && height > 0) || this.spent >= this.budget) return null;
+    const start = performance.now();
+
+    try {
+      let sheet = this.sheets.get(image);
+
+      if (sheet === undefined) {
+        sheet = readSheet(image, width, height);
+        this.sheets.set(image, sheet);
+      }
+
+      const silhouette = sheet
+        ? sheetSilhouette(sheet, sx, sy, sw, sh)
+        : glowSilhouette(image, sx, sy, sw, sh);
+
       if (frames.size >= this.perImage) frames.clear();
-      silhouette = buildSpriteSilhouette(image, sx, sy, sw, sh);
       frames.set(key, silhouette);
-    }
 
-    return silhouette;
+      return silhouette;
+    } finally {
+      this.spent += performance.now() - start;
+    }
   }
 
   /** Drops every silhouette, for when no aura is drawn. */
   clear(): void {
     this.byImage = new WeakMap();
+    this.sheets = new WeakMap();
   }
 }
