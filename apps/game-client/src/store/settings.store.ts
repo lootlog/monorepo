@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import type { MapAuraMode } from "@lootlog/schema/character-aura";
 import { storageKey } from "@/lib/storage-key";
 import { createChangedOnlyStorage } from "./changed-only-storage";
 import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
@@ -8,6 +9,7 @@ const STORAGE_KEY = storageKey("ll:settings:state");
 
 interface SettingsState {
   animationEffectsEnabled: boolean;
+  mapAuras: MapAuraMode;
   lootDebugLoggingEnabled: boolean;
   masterVolume: number;
   soundsMuted: boolean;
@@ -17,6 +19,7 @@ interface SettingsState {
   ensureGuildId: (charId: string, orderedGuildIds: string[]) => void;
   setGuildId: (charId: string, guildId: string) => void;
   setLootDebugLoggingEnabled: (enabled: boolean) => void;
+  setMapAuras: (mode: MapAuraMode) => void;
   setMasterVolume: (volume: number) => void;
   setWorld: (guildId: string, world: string) => void;
   toggleAnimationEffects: () => void;
@@ -29,6 +32,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       animationEffectsEnabled: true,
+      mapAuras: "auto",
       lootDebugLoggingEnabled: false,
       masterVolume: 0.5,
       soundsMuted: false,
@@ -66,6 +70,9 @@ export const useSettingsStore = create<SettingsState>()(
       setLootDebugLoggingEnabled: (lootDebugLoggingEnabled) => {
         set({ lootDebugLoggingEnabled });
       },
+      setMapAuras: (mapAuras) => {
+        set({ mapAuras });
+      },
       setMasterVolume: (masterVolume) => {
         set({ masterVolume: Math.min(1, Math.max(0, masterVolume)) });
       },
@@ -102,6 +109,7 @@ export const useSettingsStore = create<SettingsState>()(
       name: STORAGE_KEY,
       partialize: (state) => ({
         animationEffectsEnabled: state.animationEffectsEnabled,
+        mapAuras: state.mapAuras,
         lootDebugLoggingEnabled: state.lootDebugLoggingEnabled,
         masterVolume: state.masterVolume,
         soundsMuted: state.soundsMuted,

@@ -94,6 +94,13 @@ const MANIFEST = [
             },
           },
           {
+            id: "map-auras",
+            labelKey: "settings.general.mapAurasLabel",
+            descriptionKey: "settings.general.mapAurasDescription",
+            aliases: ["aury", "aura", "wydajność", "akceleracja", "lagi"],
+            settingKeys: ["device.mapAuras"],
+          },
+          {
             id: "loot-split-window",
             labelKey: "lootSplit.settings.windowLabel",
             descriptionKey: "lootSplit.settings.windowDescription",

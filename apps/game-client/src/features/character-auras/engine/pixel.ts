@@ -5,11 +5,47 @@
 
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5] as const;
 
+/** Quantized values by `(bayer << 8) | value`, per level count. */
+const quantizeTables = new Map<number, Uint8Array>();
+
+/** Each byte snapped to `levels` steps at every Bayer threshold, so a pixel is a lookup. */
+function quantizeTable(levels: number): Uint8Array {
+  let table = quantizeTables.get(levels);
+
+  if (table) return table;
+  const steps = levels - 1;
+  table = new Uint8Array(16 << 8);
+
+  for (let b = 0; b < 16; b++) {
+    const threshold = (b + 0.5) / 16;
+
+    for (let v = 0; v < 256; v++)
+      table[(b << 8) | v] = Math.round(
+        (Math.min(steps, Math.floor((v / 255) * steps + threshold)) / steps) *
+          255,
+      );
+  }
+
+  quantizeTables.set(levels, table);
+
+  return table;
+}
+
+function quantizeColor(
+  data: Uint8ClampedArray,
+  i: number,
+  table: Uint8Array,
+  bayer: number,
+): void {
+  for (let c = i; c < i + 3; c++) data[c] = table[bayer | (data[c] ?? 0)] ?? 0;
+}
+
 /**
  * Quantizes the alpha of an RGBA buffer in place to `levels` steps (0 included). Pixels
  * under `floor` are cleared, so faint smears don't turn into stray dither dots. `originX`/
  * `originY` anchor the dither pattern to screen pixels, so it doesn't crawl as a buffer moves.
- * With `colorLevels`, each colour channel is quantized the same way.
+ * With `colorLevels`, each colour channel is quantized the same way. Returns what is left
+ * visible, as `alphaBounds` does.
  */
 export function posterizeAlpha(
   data: Uint8ClampedArray,
@@ -20,16 +56,21 @@ export function posterizeAlpha(
   originX = 0,
   originY = 0,
   colorLevels = 0,
-): void {
-  const steps = Math.max(1, levels - 1);
+): PixelBounds | null {
+  const alphaTable = quantizeTable(Math.max(2, levels));
+  const colorTable = colorLevels > 1 ? quantizeTable(colorLevels) : null;
   const cut = floor * 255;
-  const colorSteps = colorLevels > 1 ? colorLevels - 1 : 0;
+  // Most of a layer is empty; whole pixels are skipped a word at a time.
+  const words = new Uint32Array(data.buffer, data.byteOffset, width * height);
+  const bounds = new BoundsBuilder();
 
   for (let y = 0; y < height; y++) {
     const row = ((y + originY) & 3) * 4;
+    let p = y * width;
 
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4 + 3;
+    for (let x = 0; x < width; x++, p++) {
+      if (words[p] === 0) continue;
+      const i = p * 4 + 3;
       const a = data[i] ?? 0;
 
       if (a === 0) continue;
@@ -39,27 +80,74 @@ export function posterizeAlpha(
         continue;
       }
 
-      const threshold = ((BAYER4[row + ((x + originX) & 3)] ?? 0) + 0.5) / 16;
-      data[i] = Math.round(
-        (Math.min(steps, Math.floor((a / 255) * steps + threshold)) / steps) *
-          255,
-      );
+      const bayer = (BAYER4[row + ((x + originX) & 3)] ?? 0) << 8;
+      const quantized = alphaTable[bayer | a] ?? 0;
+      data[i] = quantized;
+
+      if (quantized === 0) continue;
+      bounds.include(x, y);
 
       // Colour ramps band into a few flat tones, dithered at the seams like the alpha.
-      if (colorSteps) {
-        for (let c = i - 3; c < i; c++) {
-          data[c] = Math.round(
-            (Math.min(
-              colorSteps,
-              Math.floor(((data[c] ?? 0) / 255) * colorSteps + threshold),
-            ) /
-              colorSteps) *
-              255,
-          );
-        }
-      }
+      if (colorTable) quantizeColor(data, i - 3, colorTable, bayer);
     }
   }
+
+  return bounds.result();
+}
+
+/** The smallest rect holding every visible pixel of a buffer, inclusive. */
+export interface PixelBounds {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/** Grows `PixelBounds` over pixels visited row by row, top to bottom. */
+class BoundsBuilder {
+  private left = Infinity;
+  private top = Infinity;
+  private right = -1;
+  private bottom = -1;
+
+  include(x: number, y: number): void {
+    if (x < this.left) this.left = x;
+
+    if (x > this.right) this.right = x;
+
+    if (y < this.top) this.top = y;
+
+    this.bottom = y;
+  }
+
+  result(): PixelBounds | null {
+    return this.right < 0
+      ? null
+      : {
+          left: this.left,
+          top: this.top,
+          right: this.right,
+          bottom: this.bottom,
+        };
+  }
+}
+
+/** Where an RGBA buffer has any alpha, or null when it is all clear. */
+export function alphaBounds(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+): PixelBounds | null {
+  const words = new Uint32Array(data.buffer, data.byteOffset, width * height);
+  const bounds = new BoundsBuilder();
+
+  for (let y = 0, p = 0; y < height; y++) {
+    for (let x = 0; x < width; x++, p++) {
+      if (words[p] !== 0 && data[p * 4 + 3]) bounds.include(x, y);
+    }
+  }
+
+  return bounds.result();
 }
 
 const SQRT2 = Math.SQRT2;
