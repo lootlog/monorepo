@@ -1,0 +1,92 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "7d48532d-0379-418b-bd54-c06f3432811b",
+  "prevIds": ["a236c113-5f3e-45ea-a268-5c568be12f1d"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "UserCharacterAuraGrant"],
+      "writes": [
+        "s|tbl|public.UserCharacterAuraGrant",
+        "n|tbl|public.UserCharacterAuraGrant",
+        "e|tbl|public.UserCharacterAuraGrant",
+        "n|rel|public.UserCharacterAuraGrant",
+        "n|type|public.UserCharacterAuraGrant",
+        "n|rel|public.UserCharacterAuraGrant_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "UserCharacterAuraGrant",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserCharacterAuraGrant",
+        "name": "userId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserCharacterAuraGrant",
+        "name": "grantedByUserId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserCharacterAuraGrant",
+        "name": "grantedAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserCharacterAuraGrant",
+        "name": "UserCharacterAuraGrant_pkey",
+        "columns": ["userId"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

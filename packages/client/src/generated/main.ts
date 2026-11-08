@@ -106,6 +106,7 @@ export interface OwnCharacterAuraResponseDto {
   /** @nullable */
   auraId: OwnCharacterAuraResponseDtoAuraId;
   canChange: boolean;
+  canGrant: boolean;
   gameAccountIds: string[];
 }
 
@@ -11374,6 +11375,7 @@ export type GameClientBootstrapResponseDtoOutputCharacterAura = {
   /** @nullable */
   auraId: GameClientBootstrapResponseDtoOutputCharacterAuraAuraId;
   canChange: boolean;
+  canGrant: boolean;
   gameAccountIds: string[];
 } | null;
 
@@ -16503,6 +16505,36 @@ export type CharacterAurasControllerLinkGameAccount403 = HttpErrorResponse | {
 };
 
 export type CharacterAurasControllerLinkGameAccount429 = {
+  message: string;
+};
+
+export type CharacterAurasControllerGrantAurasPathParameters = {
+ gameAccountId: string,
+ }
+export type CharacterAurasControllerGrantAuras401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type CharacterAurasControllerGrantAuras403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type CharacterAurasControllerGrantAuras429 = {
+  message: string;
+};
+
+export type CharacterAurasControllerRevokeAurasPathParameters = {
+ gameAccountId: string,
+ }
+export type CharacterAurasControllerRevokeAuras401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type CharacterAurasControllerRevokeAuras403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type CharacterAurasControllerRevokeAuras429 = {
   message: string;
 };
 
@@ -43806,4 +43838,154 @@ export const useCharacterAurasControllerLinkGameAccount = <TError = ErrorType<Re
         TContext
       > => {
       return useMutation(getCharacterAurasControllerLinkGameAccountMutationOptions(options), queryClient);
+    }
+
+export const getCharacterAurasControllerGrantAurasUrl = ({ gameAccountId }: CharacterAurasControllerGrantAurasPathParameters,) => {
+
+
+
+
+  return `/character-auras/grants/game-accounts/${gameAccountId}`
+}
+
+/**
+ * Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Global chat admins only; 404 when no user proved to play the account
+ * @summary Grant character auras
+ */
+export const characterAurasControllerGrantAuras = async ({ gameAccountId }: CharacterAurasControllerGrantAurasPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+
+  return mainFetch<void>(getCharacterAurasControllerGrantAurasUrl({ gameAccountId }),
+  {
+    ...options,
+    method: 'PUT'
+
+
+  }
+);}
+
+
+
+
+
+export const getCharacterAurasControllerGrantAurasMutationKey = () => ['characterAurasControllerGrantAuras'] as const;
+
+export const getCharacterAurasControllerGrantAurasMutationOptions = <TError = ErrorType<RequestValidationError | CharacterAurasControllerGrantAuras401 | CharacterAurasControllerGrantAuras403 | HttpErrorResponse | CharacterAurasControllerGrantAuras429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerGrantAuras>>, TError,CharacterAurasControllerGrantAurasMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerGrantAuras>>, TError,CharacterAurasControllerGrantAurasMutationVariables, TContext> => {
+
+const mutationKey = getCharacterAurasControllerGrantAurasMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof characterAurasControllerGrantAuras>>, CharacterAurasControllerGrantAurasMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  characterAurasControllerGrantAuras(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CharacterAurasControllerGrantAurasMutationResult = NonNullable<Awaited<ReturnType<typeof characterAurasControllerGrantAuras>>>
+
+    export type CharacterAurasControllerGrantAurasMutationError = ErrorType<RequestValidationError | CharacterAurasControllerGrantAuras401 | CharacterAurasControllerGrantAuras403 | HttpErrorResponse | CharacterAurasControllerGrantAuras429>
+    export type CharacterAurasControllerGrantAurasMutationVariables = {pathParams: CharacterAurasControllerGrantAurasPathParameters}
+
+    /**
+ * @summary Grant character auras
+ */
+export const useCharacterAurasControllerGrantAuras = <TError = ErrorType<RequestValidationError | CharacterAurasControllerGrantAuras401 | CharacterAurasControllerGrantAuras403 | HttpErrorResponse | CharacterAurasControllerGrantAuras429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerGrantAuras>>, TError,CharacterAurasControllerGrantAurasMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof characterAurasControllerGrantAuras>>,
+        TError,
+        CharacterAurasControllerGrantAurasMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCharacterAurasControllerGrantAurasMutationOptions(options), queryClient);
+    }
+
+export const getCharacterAurasControllerRevokeAurasUrl = ({ gameAccountId }: CharacterAurasControllerRevokeAurasPathParameters,) => {
+
+
+
+
+  return `/character-auras/grants/game-accounts/${gameAccountId}`
+}
+
+/**
+ * Withdraw the aura grant of the user who last proved to play the Margonem account and remove the aura they wear; global chat admins keep theirs. Global chat admins only; 404 when no user proved to play the account
+ * @summary Revoke character auras
+ */
+export const characterAurasControllerRevokeAuras = async ({ gameAccountId }: CharacterAurasControllerRevokeAurasPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+
+  return mainFetch<void>(getCharacterAurasControllerRevokeAurasUrl({ gameAccountId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getCharacterAurasControllerRevokeAurasMutationKey = () => ['characterAurasControllerRevokeAuras'] as const;
+
+export const getCharacterAurasControllerRevokeAurasMutationOptions = <TError = ErrorType<RequestValidationError | CharacterAurasControllerRevokeAuras401 | CharacterAurasControllerRevokeAuras403 | HttpErrorResponse | CharacterAurasControllerRevokeAuras429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerRevokeAuras>>, TError,CharacterAurasControllerRevokeAurasMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerRevokeAuras>>, TError,CharacterAurasControllerRevokeAurasMutationVariables, TContext> => {
+
+const mutationKey = getCharacterAurasControllerRevokeAurasMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof characterAurasControllerRevokeAuras>>, CharacterAurasControllerRevokeAurasMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  characterAurasControllerRevokeAuras(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CharacterAurasControllerRevokeAurasMutationResult = NonNullable<Awaited<ReturnType<typeof characterAurasControllerRevokeAuras>>>
+
+    export type CharacterAurasControllerRevokeAurasMutationError = ErrorType<RequestValidationError | CharacterAurasControllerRevokeAuras401 | CharacterAurasControllerRevokeAuras403 | HttpErrorResponse | CharacterAurasControllerRevokeAuras429>
+    export type CharacterAurasControllerRevokeAurasMutationVariables = {pathParams: CharacterAurasControllerRevokeAurasPathParameters}
+
+    /**
+ * @summary Revoke character auras
+ */
+export const useCharacterAurasControllerRevokeAuras = <TError = ErrorType<RequestValidationError | CharacterAurasControllerRevokeAuras401 | CharacterAurasControllerRevokeAuras403 | HttpErrorResponse | CharacterAurasControllerRevokeAuras429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerRevokeAuras>>, TError,CharacterAurasControllerRevokeAurasMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof characterAurasControllerRevokeAuras>>,
+        TError,
+        CharacterAurasControllerRevokeAurasMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCharacterAurasControllerRevokeAurasMutationOptions(options), queryClient);
     }
