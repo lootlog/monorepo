@@ -526,20 +526,29 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   image-rendering: pixelated;
 }
 
+/*
+ * Players paste their own themes into the game (CssLoader.js appends them to
+ * <head>), and those often restyle the tip nick with `!important`. Losing the
+ * background or its text clip while the text stays transparent hides the nick,
+ * so the whole effect is `!important` and the selector outranks theme rules.
+ */
 .tip-wrapper[data-ll-aura] .info-wrapper .nick {
-  background: linear-gradient(
+  background-image: linear-gradient(
     100deg,
     var(--ll-aura-a) 0%,
     var(--ll-aura-b) 30%,
     var(--ll-aura-c) 50%,
     var(--ll-aura-b) 70%,
     var(--ll-aura-a) 100%
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: ll-aura-nick 2.4s steps(12) infinite;
+  ) !important;
+  background-color: transparent !important;
+  background-repeat: repeat !important;
+  background-size: 200% 100% !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  animation: ll-aura-nick 2.4s steps(12) infinite !important;
 }
 
 @keyframes ll-aura-nick {
@@ -553,7 +562,7 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
 
 @media (prefers-reduced-motion: reduce) {
   .tip-wrapper[data-ll-aura] .info-wrapper .nick {
-    animation: none;
+    animation: none !important;
   }
 }
 
