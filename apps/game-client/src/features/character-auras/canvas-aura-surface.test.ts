@@ -9,22 +9,41 @@ const DRAW_EVENT = "call-draw-add-to-renderer";
 /** The game's highest draw order when it reports none; the arrival draws above it. */
 const ABOVE_EVERYTHING = 11;
 
-/** A Margonem game whose renderer collects what the draw hook adds each frame. */
-function setGame(othersX: Record<string, number> = {}) {
+/**
+ * A Margonem game whose renderer collects what the draw hook adds each frame. Characters
+ * share one two-frame sprite, or each has its own with `ownSprites`; `walk` steps them all
+ * onto the second frame.
+ */
+function setGame(othersX: Record<string, number> = {}, ownSprites = false) {
   const canvas = installTestCanvas();
   // Silhouettes put pixels they build into a Skia canvas.
   vi.stubGlobal("ImageData", SkiaImageData);
-  const sprite = canvas.create(32, 48);
-  sprite.context.fillStyle = "#fff";
-  sprite.context.fillRect(8, 4, 16, 40);
   const drawables: RuntimeDrawable[] = [];
+  const sprites = new Map<number, HTMLCanvasElement>();
+  let frameX = 0;
+
+  const spriteOf = (order: number) => {
+    const key = ownSprites ? order : 0;
+    let sprite = sprites.get(key);
+
+    if (!sprite) {
+      const created = canvas.create(64, 48);
+      created.context.fillStyle = "#fff";
+      created.context.fillRect(8, 4, 16, 40);
+      created.context.fillRect(40, 6, 16, 38);
+      sprite = created.canvas;
+      sprites.set(key, sprite);
+    }
+
+    return sprite;
+  };
 
   const character = (x: number, order: number) => ({
     imgLoaded: true,
     fh: 48,
     getOrder: () => order,
     drawIcon: (context: CanvasRenderingContext2D) =>
-      context.drawImage(sprite.canvas, 0, 0, 32, 48, x, 100, 32, 48),
+      context.drawImage(spriteOf(order), frameX, 0, 32, 48, x, 100, 32, 48),
   });
 
   let onDraw: (() => void) | null = null;
@@ -49,6 +68,9 @@ function setGame(othersX: Record<string, number> = {}) {
 
   return {
     canvas,
+    walk() {
+      frameX = 32;
+    },
     /** One game frame: the draw hook adds drawables, then the game draws them. */
     playFrame(context: CanvasRenderingContext2D) {
       drawables.length = 0;
@@ -148,4 +170,31 @@ it("darkens the whole map above everything when an admin arrives, and lets the l
 
   expect(game.drawnOrders()).not.toContain(ABOVE_EVERYTHING);
   expect(game.characterOrders()).toEqual([7, 8]);
+});
+
+it("spreads new silhouettes over frames and keeps a walker's aura shown while its next one waits", () => {
+  const game = setGame({ "1": 100, "2": 300, "3": 500 }, true);
+  const { context } = game.canvas.create(800, 600);
+  // Every silhouette build takes longer than a frame's budget.
+  let now = 0;
+  vi.spyOn(performance, "now").mockImplementation(() => (now += 5));
+  canvasAuraRenderer.setTargets(
+    new Map([
+      ["1", "storm"],
+      ["2", "frost"],
+      ["3", "divine"],
+    ]),
+  );
+
+  game.playFrame(context);
+  expect(game.drawnOrders()).toHaveLength(1);
+  game.playFrame(context);
+  expect(game.drawnOrders()).toHaveLength(2);
+  game.playFrame(context);
+  expect(game.drawnOrders().toSorted()).toEqual([1, 2, 3]);
+
+  game.walk();
+  game.playFrame(context);
+
+  expect(game.drawnOrders().toSorted()).toEqual([1, 2, 3]);
 });

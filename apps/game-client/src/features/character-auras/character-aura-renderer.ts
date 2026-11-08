@@ -191,6 +191,7 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     const view = this.guard(FRAME_KEY, () => this.currentView());
 
     if (view === undefined) return;
+    this.silhouettes.beginFrame();
     const shown = this.guard(FRAME_KEY, () => this.shownTargets(view));
 
     if (shown === undefined) return;
@@ -300,7 +301,9 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     const drawn = this.drawnAura(key, auraId);
 
     drawn.place =
-      view && character ? this.placement(character, view.camera) : null;
+      view && character
+        ? this.placement(character, view.camera, drawn.place)
+        : null;
     drawn.aura.update(dt, drawn.place, 1);
 
     this.surface.present(
@@ -385,18 +388,29 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     return drawn;
   }
 
+  /**
+   * Where the aura goes this frame. A frame whose silhouette waits for a later frame's build
+   * budget keeps the last one, which matches but for a step of the walk; an aura with none yet
+   * waits unseen.
+   */
   private placement(
     { frame, feetHeight }: RuntimeAuraCharacter,
     [viewX, viewY]: readonly [number, number],
-  ): AuraPlacement {
-    return {
-      silhouette: this.silhouettes.sprite(
+    last: AuraPlacement | null,
+  ): AuraPlacement | null {
+    const silhouette =
+      this.silhouettes.sprite(
         frame.image,
         frame.sx,
         frame.sy,
         frame.sw,
         frame.sh,
-      ),
+      ) ?? last?.silhouette;
+
+    if (!silhouette) return null;
+
+    return {
+      silhouette,
       x: frame.dx,
       y: frame.dy,
       viewX,
