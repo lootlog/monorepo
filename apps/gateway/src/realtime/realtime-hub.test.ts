@@ -1805,6 +1805,55 @@ describe("RealtimeHub federation", () => {
     for (const target of excluded) expect(target.sent).toHaveLength(0);
   });
 
+  test("routes aura changes to every replica's aura readers only", async () => {
+    const [local, remote] = await startPair();
+
+    const reader = (id: string) =>
+      makeTestSocket(
+        makeAdminSession(id, { platform: "game", characterAuras: true }),
+      );
+
+    const localReader = reader("local-reader");
+    const remoteReader = reader("remote-reader");
+    const unsubscribed = reader("remote-unsubscribed");
+
+    for (const [hub, target] of [
+      [local, localReader],
+      [remote, remoteReader],
+    ] as const) {
+      hub.register(target.socket);
+      hub.subscribe(target.socket, { topic: "global.character-auras" });
+    }
+
+    remote.register(unsubscribed.socket);
+
+    const { bridge, deliver } = makeRabbitBridgeHarness(local);
+
+    const change = {
+      auras: [
+        { gameAccountId: "101", auraId: "frost" },
+        { gameAccountId: "202", auraId: null },
+      ],
+    };
+
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          yield* bridge.start();
+          yield* deliver(RabbitRoutingKey.CHARACTER_AURAS_CHANGED, change, {
+            messageId: "aura-change",
+          });
+        }),
+      ),
+    );
+
+    for (const target of [localReader, remoteReader])
+      expect(target.sent.map((text) => decodeRealtimeFrame(text))).toEqual([
+        { v: 1, type: "character-auras.changed", data: change },
+      ]);
+    expect(unsubscribed.sent).toHaveLength(0);
+  });
+
   test("closes on the first dropped event and never resumes a session with a delivery gap", async () => {
     const {
       hubs: [hub],
