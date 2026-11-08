@@ -50,8 +50,8 @@ import { context2d, createCanvas, type AuraSilhouette } from "./silhouette";
 import { groundRadius, spawnFrame, type AuraPlacement } from "./placement";
 import { drawBurstScene } from "./bursts";
 import { drawGround } from "./ground";
-import { ARRIVAL_BURST, eventStrength, pulseStarted } from "./arrival";
-import { avatarTop, drawAvatar } from "./avatar";
+import { ARRIVAL_BURST, arrivalEvent, pulseStarted } from "./arrival";
+import { drawSummonBack, drawSummonFront, type Summon } from "./summon";
 import { drawStorm, STORM_GLOOM } from "./storm";
 import {
   drawAirCracks,
@@ -349,19 +349,15 @@ export class Aura {
     }
   }
 
-  /** How far the transformation's giant has risen, 0..1: through events and bursts. */
-  private avatarStrength(): number {
-    const burst =
-      this.burst >= 0 ? Math.sin(Math.PI * clamp(this.burst, 0, 1)) : 0;
+  /** The admin's summoning at their feet while an arrival or pulse runs at `place`. */
+  private summon(place: AuraPlacement, intensity: number): Summon | null {
+    if (!this.preset.herald || !place.ground) return null;
+    const event = arrivalEvent(this.age);
 
-    return Math.max(eventStrength(this.age), burst);
-  }
+    if (!event) return null;
+    const [light, mid] = this.rgb.tones;
 
-  /** How far above its box the aura paints at `place`: the admin's giant at full height. */
-  reachAbove(place: AuraPlacement): number {
-    if (!this.preset.herald || !place.ground) return 0;
-
-    return Math.max(0, boxOf(place).oy - avatarTop(place));
+    return { t: event.t, strength: event.strength * intensity, light, mid };
   }
 
   setPreset(id: CharacterAuraId): void {
@@ -629,18 +625,9 @@ export class Aura {
     ctx.save();
 
     try {
-      if (p.herald && place.ground) {
-        const giant = this.avatarStrength();
+      const summon = this.summon(place, intensity);
 
-        if (giant > 0.02)
-          drawAvatar(
-            ctx,
-            place,
-            this.rgb.tones[1],
-            Boolean(p.darkHaze),
-            giant * intensity,
-          );
-      }
+      if (summon) drawSummonBack(ctx, place, summon);
 
       this.blit(ctx, this.back, place, "dim");
 
@@ -691,6 +678,9 @@ export class Aura {
         this.drawInner(ctx, place, glow, this.compositeKey(intensity));
       this.blit(ctx, this.front, place, "dim");
       this.blit(ctx, this.front, place, "lit");
+      const summon = this.summon(place, intensity);
+
+      if (summon) drawSummonFront(ctx, place, summon);
     } finally {
       ctx.restore();
     }
@@ -2366,13 +2356,12 @@ export function isAuraInView(
   place: AuraPlacement,
   width: number,
   height: number,
-  above = 0,
 ): boolean {
   const box = boxOf(place);
 
   return (
     box.ox < width + VIEW_SLACK &&
-    box.oy - above < height + VIEW_SLACK &&
+    box.oy < height + VIEW_SLACK &&
     box.ox + box.w > -VIEW_SLACK &&
     box.oy + box.h > -VIEW_SLACK
   );
@@ -2382,14 +2371,14 @@ export function isAuraInView(
  * The screen rect an aura at `place` can paint into this frame: its buffers
  * plus the drift a character or the camera makes between ticks.
  */
-export function auraScreenBox(place: AuraPlacement, above = 0) {
+export function auraScreenBox(place: AuraPlacement) {
   const box = boxOf(place);
 
   return {
     x: box.ox - VIEW_SLACK,
-    y: box.oy - above - VIEW_SLACK,
+    y: box.oy - VIEW_SLACK,
     width: box.w + VIEW_SLACK * 2,
-    height: box.h + above + VIEW_SLACK * 2,
+    height: box.h + VIEW_SLACK * 2,
   };
 }
 
