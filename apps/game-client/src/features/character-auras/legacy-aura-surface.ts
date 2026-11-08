@@ -96,7 +96,7 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
     legacyAuraRuntimeAdapter.removeLayers(layers);
   },
 
-  // SI darkens the map round the admin with a CSS gradient; the shockwave is NI's.
+  // SI darkens the map round the admin with a CSS gradient.
   presentArrival(arrival) {
     if (!arrival) {
       veil.remove();
