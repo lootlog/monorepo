@@ -18,7 +18,9 @@ import {
 } from "./particles";
 import { Spring } from "./physics";
 import {
+  bindLightPixels,
   jagged,
+  LightPixels,
   pixelEllipse,
   pixelGlint,
   pixelLine,
@@ -32,7 +34,7 @@ import {
   project,
   type Point3,
 } from "./dragon";
-import { posterizeAlpha } from "./pixel";
+import { alphaBounds, posterizeAlpha, type PixelBounds } from "./pixel";
 import {
   drawCloud,
   drawCurtain,
@@ -141,6 +143,11 @@ interface Layer {
   used: boolean;
   /** Something soft (gradient blobs) was drawn, so it needs the pixel finish; pixel-only layers skip it. */
   soft: boolean;
+  /**
+   * What the finish found drawn, so every frame copies only that: a layer's content
+   * covers about a tenth of its box, and copying the rest costs the most without a GPU.
+   */
+  bounds: PixelBounds | null;
 }
 
 /** A point in screen or particle space, px. */
@@ -164,6 +171,7 @@ function createLayer(): Layer {
     ctx: context2d(canvas, { willReadFrequently: true }),
     used: false,
     soft: true,
+    bounds: null,
   };
 }
 
@@ -264,13 +272,24 @@ export class Aura {
   private readonly front = createSnapshot();
   private readonly outline = createComposite();
   private readonly inner = createComposite();
+  /** The lit layer's single pixels while it renders (`prepare` to `finish`). */
+  private readonly lightPixels = new LightPixels();
   /** The layer pair drawn into right now; draw helpers pick `lit` (additive) or `dim` (covering). */
   private litCtx!: CanvasRenderingContext2D;
   private dim!: CanvasRenderingContext2D;
   private dimLayer!: Layer;
   private litLayer!: Layer;
 
-  constructor(id: CharacterAuraId, seed = Math.floor(Math.random() * 1e9)) {
+  /**
+   * `phase` (0..1) shifts when this aura's ticks land, so auras on one screen render their
+   * ticks on different frames instead of all on the same one.
+   */
+  constructor(
+    id: CharacterAuraId,
+    seed = Math.floor(Math.random() * 1e9),
+    phase = 0,
+  ) {
+    this.carry = clamp(phase, 0, 1) * TICK;
     this.rng = mulberry32(seed);
     this.field = new ParticleField(this.rng);
     this.preset = AURAS[id];
@@ -733,18 +752,43 @@ export class Aura {
       layer.soft = true;
     }
 
+    this.lightPixels.reset(box.ox, box.oy, box.w, box.h);
+    bindLightPixels(lit.ctx, this.lightPixels);
+
     this.litCtx = lit.ctx;
     this.dim = dim.ctx;
     this.litLayer = lit;
     this.dimLayer = dim;
   }
 
-  /** Snaps what was drawn to the pixel grid: stepped alpha and flat, dithered tones. */
+  /**
+   * Adds the plotted light, snaps soft layers to the pixel grid (stepped alpha and flat,
+   * dithered tones) and finds what each layer holds.
+   */
   private finish(lit: Layer, dim: Layer, box: Box): void {
+    bindLightPixels(lit.ctx, null);
+    const light = this.lightPixels;
+    const plotted = !light.empty;
+
+    if (plotted) lit.used = true;
+
     for (const layer of [lit, dim]) {
-      if (!layer.used || !layer.soft) continue;
+      layer.bounds = null;
+
+      if (!layer.used) continue;
       const image = layer.ctx.getImageData(0, 0, box.w, box.h);
-      posterizeAlpha(
+      const addsLight = layer === lit && plotted;
+
+      if (addsLight) light.addInto(image.data);
+
+      if (!layer.soft) {
+        layer.bounds = alphaBounds(image.data, box.w, box.h);
+
+        if (addsLight) layer.ctx.putImageData(image, 0, 0);
+        continue;
+      }
+
+      layer.bounds = posterizeAlpha(
         image.data,
         box.w,
         box.h,
@@ -2159,19 +2203,23 @@ function blitLayer(
   dx: number,
   dy: number,
 ): void {
-  if (!layer.used) return;
+  const { bounds } = layer;
+
+  if (!layer.used || !bounds) return;
+  const w = bounds.right - bounds.left + 1;
+  const h = bounds.bottom - bounds.top + 1;
   ctx.globalCompositeOperation = mode;
   ctx.globalAlpha = 1;
   ctx.drawImage(
     layer.canvas,
-    0,
-    0,
-    box.w,
-    box.h,
-    box.ox + dx,
-    box.oy + dy,
-    box.w,
-    box.h,
+    bounds.left,
+    bounds.top,
+    w,
+    h,
+    box.ox + dx + bounds.left,
+    box.oy + dy + bounds.top,
+    w,
+    h,
   );
 }
 

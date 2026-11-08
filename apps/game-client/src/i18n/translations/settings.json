@@ -186,6 +186,14 @@
     "allowWorldSelectionDescription": "Pozwala wybrać świat przy dodawaniu timera; nie działa na zgrupowanych timerach.",
     "animationEffectsLabel": "Efekty animacji",
     "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi.",
+    "mapAurasLabel": "Aury na mapie",
+    "mapAurasDescription": "Które aury postaci rysować na mapie. Na komputerze bez akceleracji grafiki tryb automatyczny pokazuje tylko twoją aurę i dwie najbliższe.",
+    "mapAurasModes": {
+      "auto": "Automatycznie",
+      "all": "Wszystkie",
+      "nearby": "Moja i najbliższe",
+      "off": "Wyłączone"
+    },
     "statusTitle": "Stan dodatku",
     "accountLabel": "Konto",
     "accountChecking": "Sprawdzanie sesji…",

@@ -43,6 +43,121 @@ export const LEAF_POSES: readonly (readonly (readonly [
   ],
 ];
 
+/**
+ * The single pixels plotted into an additive (`lighter`) layer, kept as premultiplied RGBA
+ * instead of one `fillRect` and parsed colour string each: a tick plots hundreds of them,
+ * and `lighter` adds and clamps in any order, so they can join the layer at its finish.
+ */
+export class LightPixels {
+  private data = new Uint8ClampedArray(0);
+  private ox = 0;
+  private oy = 0;
+  private width = 0;
+  private height = 0;
+  /** The plotted area in buffer pixels; empty while `left > right`. */
+  private left = 0;
+  private top = 0;
+  private right = -1;
+  private bottom = -1;
+
+  /** Starts over for a `width`×`height` layer whose top-left is (`ox`, `oy`) when drawing. */
+  reset(ox: number, oy: number, width: number, height: number): void {
+    this.clear();
+    this.ox = ox;
+    this.oy = oy;
+    this.width = width;
+    this.height = height;
+
+    if (this.data.length < width * height * 4)
+      this.data = new Uint8ClampedArray(width * height * 4);
+  }
+
+  add(x: number, y: number, color: Rgb, alpha: number): void {
+    const px = Math.round(x) - this.ox;
+    const py = Math.round(y) - this.oy;
+
+    if (px < 0 || py < 0 || px >= this.width || py >= this.height) return;
+    // The precision `rgba` hands the canvas.
+    const a = Math.round(Math.min(alpha, 1) * 1000) / 1000;
+    const { data } = this;
+    const i = (py * this.width + px) * 4;
+    // Clamped bytes saturate like `lighter` does.
+    data[i] = (data[i] ?? 0) + color[0] * a;
+    data[i + 1] = (data[i + 1] ?? 0) + color[1] * a;
+    data[i + 2] = (data[i + 2] ?? 0) + color[2] * a;
+    data[i + 3] = (data[i + 3] ?? 0) + 255 * a;
+
+    if (this.empty) {
+      this.left = this.right = px;
+      this.top = this.bottom = py;
+
+      return;
+    }
+
+    this.left = Math.min(this.left, px);
+    this.right = Math.max(this.right, px);
+    this.top = Math.min(this.top, py);
+    this.bottom = Math.max(this.bottom, py);
+  }
+
+  get empty(): boolean {
+    return this.left > this.right;
+  }
+
+  /** Adds the plots into `target`, the layer's straight-alpha pixels, and starts over. */
+  addInto(target: Uint8ClampedArray): void {
+    const { data, width } = this;
+
+    for (let y = this.top; y <= this.bottom; y++) {
+      for (let x = this.left; x <= this.right; x++) {
+        const i = (y * width + x) * 4;
+        const sa = data[i + 3] ?? 0;
+
+        if (sa === 0) continue;
+        const da = target[i + 3] ?? 0;
+        const alpha = Math.min(255, sa + da);
+
+        for (let c = 0; c < 3; c++) {
+          const premultiplied = Math.min(
+            255,
+            (data[i + c] ?? 0) + ((target[i + c] ?? 0) * da) / 255,
+          );
+
+          target[i + c] = (premultiplied * 255) / alpha;
+        }
+
+        target[i + 3] = alpha;
+      }
+    }
+
+    this.clear();
+  }
+
+  private clear(): void {
+    if (this.empty) return;
+
+    for (let y = this.top; y <= this.bottom; y++)
+      this.data.fill(
+        0,
+        (y * this.width + this.left) * 4,
+        (y * this.width + this.right + 1) * 4,
+      );
+    this.left = this.top = 0;
+    this.right = this.bottom = -1;
+  }
+}
+
+const lightPixels = new WeakMap<CanvasRenderingContext2D, LightPixels>();
+
+/** Sends `ctx`'s plots to `pixels` until unbound with null; `ctx` must be drawing with `lighter`. */
+export function bindLightPixels(
+  ctx: CanvasRenderingContext2D,
+  pixels: LightPixels | null,
+): void {
+  if (pixels) lightPixels.set(ctx, pixels);
+  else lightPixels.delete(ctx);
+}
+
 export function plot(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -51,6 +166,14 @@ export function plot(
   alpha: number,
 ): void {
   if (alpha <= 0.02) return;
+  const light = lightPixels.get(ctx);
+
+  if (light) {
+    light.add(x, y, color, alpha);
+
+    return;
+  }
+
   ctx.fillStyle = rgba(color, alpha);
   ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
 }
@@ -214,7 +337,9 @@ export function drawDot(
 
   if (!texture) {
     texture = createCanvas(DOT_SIZE, DOT_SIZE);
-    const tctx = context2d(texture);
+    // Kept in memory like the aura layers it is drawn into: a GPU texture would be read
+    // back on every draw, over ten times slower.
+    const tctx = context2d(texture, { willReadFrequently: true });
     const half = DOT_SIZE / 2;
     const gradient = tctx.createRadialGradient(half, half, 0, half, half, half);
     gradient.addColorStop(0, rgba(hot(color), 1));

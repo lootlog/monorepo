@@ -10,6 +10,12 @@ export const HERO_AURA_KEY = "hero";
 /** Consecutive failing frames (about two seconds) before a step gives up for the session. */
 const MAX_FAILURES = 120;
 
+/**
+ * Each new aura's tick phase moves on by this fraction, so any number of auras keep
+ * their tick renders on different frames.
+ */
+const GOLDEN_RATIO = (Math.sqrt(5) - 1) / 2;
+
 /** The failure key of the per-frame work shared by every aura. */
 const FRAME_KEY = "*";
 
@@ -57,11 +63,15 @@ type DrawnAura = {
  */
 export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
   private targets: ReadonlyMap<string, CharacterAuraId> = new Map();
+  /** How many other characters' auras are drawn, nearest the hero first; null for all. */
+  private othersLimit: number | null = null;
   private readonly drawn = new Map<string, DrawnAura>();
   private readonly silhouettes = new SilhouetteCache();
   private unsubscribe: (() => void) | null = null;
   private mapId: number | undefined;
   private last = 0;
+  /** Auras created so far, which spreads their tick phases. */
+  private created = 0;
   /** Consecutive failures by `FRAME_KEY`, aura key or one of its two draws. */
   private readonly failures = new Map<string, number>();
   /** Auras that kept failing and are no longer drawn. */
@@ -87,6 +97,11 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     if (this.unsubscribe || this.broken) return;
     this.last = performance.now();
     this.unsubscribe = this.surface.subscribeFrame(this.onFrame);
+  }
+
+  /** Draws only the `limit` other auras nearest the hero, or every aura when null. */
+  setOthersLimit(limit: number | null): void {
+    this.othersLimit = limit;
   }
 
   private stop(): void {
@@ -152,10 +167,62 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     const view = this.guard(FRAME_KEY, () => this.currentView());
 
     if (view === undefined) return;
+    const shown = this.guard(FRAME_KEY, () => this.shownTargets(view));
 
-    for (const [key, auraId] of this.targets) {
+    if (shown === undefined) return;
+
+    for (const key of this.drawn.keys()) {
+      if (!shown.has(key)) this.drop(key);
+    }
+
+    for (const [key, auraId] of shown) {
       this.guard(key, () => this.drawTarget(key, auraId, view, dt));
     }
+  }
+
+  /** The targets drawn this frame: all, or the hero and the others nearest it. */
+  private shownTargets(
+    view: AuraView | null,
+  ): ReadonlyMap<string, CharacterAuraId> {
+    const limit = this.othersLimit;
+
+    if (limit === null) return this.targets;
+    const heroAura = this.targets.get(HERO_AURA_KEY);
+
+    if (this.targets.size - (heroAura ? 1 : 0) <= limit) return this.targets;
+
+    const hero = view ? this.surface.getHero() : null;
+    const nearest: { key: string; distance: number }[] = [];
+
+    for (const key of this.targets.keys()) {
+      if (key === HERO_AURA_KEY) continue;
+      const other = view ? this.surface.getOther(key) : null;
+
+      if (!other) continue;
+
+      const distance = hero
+        ? Math.hypot(
+            other.frame.dx - hero.frame.dx,
+            other.frame.dy - hero.frame.dy,
+          )
+        : 0;
+
+      nearest.push({ key, distance });
+    }
+
+    const shown = new Map<string, CharacterAuraId>();
+
+    if (heroAura) shown.set(HERO_AURA_KEY, heroAura);
+
+    for (const { key } of nearest
+      .toSorted((a, b) => a.distance - b.distance)
+      .slice(0, limit)) {
+      const auraId = this.targets.get(key);
+
+      if (auraId) shown.set(key, auraId);
+    }
+
+    return shown;
   }
 
   private currentView(): AuraView | null {
@@ -211,7 +278,7 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     }
 
     const drawn: DrawnAura = {
-      aura: new Aura(auraId),
+      aura: new Aura(auraId, undefined, (this.created++ * GOLDEN_RATIO) % 1),
       place: null,
       back: (context) =>
         this.guard(

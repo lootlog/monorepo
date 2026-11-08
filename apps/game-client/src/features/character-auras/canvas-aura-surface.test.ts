@@ -7,7 +7,7 @@ import { canvasAuraRenderer } from "./canvas-aura-surface";
 const DRAW_EVENT = "call-draw-add-to-renderer";
 
 /** A Margonem game whose renderer collects what the draw hook adds each frame. */
-function setGame() {
+function setGame(othersX: Record<string, number> = {}) {
   const canvas = installTestCanvas();
   // Silhouettes put pixels they build into a Skia canvas.
   vi.stubGlobal("ImageData", SkiaImageData);
@@ -15,6 +15,15 @@ function setGame() {
   sprite.context.fillStyle = "#fff";
   sprite.context.fillRect(8, 4, 16, 40);
   const drawables: RuntimeDrawable[] = [];
+
+  const character = (x: number, order: number) => ({
+    imgLoaded: true,
+    fh: 48,
+    getOrder: () => order,
+    drawIcon: (context: CanvasRenderingContext2D) =>
+      context.drawImage(sprite.canvas, 0, 0, 32, 48, x, 100, 32, 48),
+  });
+
   let onDraw: (() => void) | null = null;
 
   testRuntimeWindow.API = {
@@ -29,14 +38,9 @@ function setGame() {
     apiData: { CALL_DRAW_ADD_TO_RENDERER: DRAW_EVENT },
     renderer: { add: (drawable: RuntimeDrawable) => drawables.push(drawable) },
     map: { d: { id: 1 }, getOffset: () => [0, 0] },
+    hero: { ...character(100, 0), d: { id: 0 } },
     others: {
-      getById: () => ({
-        imgLoaded: true,
-        fh: 48,
-        getOrder: () => 10,
-        drawIcon: (context: CanvasRenderingContext2D) =>
-          context.drawImage(sprite.canvas, 0, 0, 32, 48, 100, 100, 32, 48),
-      }),
+      getById: (id: string) => character(othersX[id] ?? 100, Number(id)),
     },
   };
 
@@ -51,11 +55,16 @@ function setGame() {
 
       return drawables.length;
     },
+    /** The characters whose auras the last frame drew, by their draw order. */
+    drawnOrders() {
+      return [...new Set(drawables.map((d) => Math.round(d.getOrder())))];
+    },
   };
 }
 
 afterEach(() => {
   canvasAuraRenderer.setTargets(new Map());
+  canvasAuraRenderer.setOthersLimit(null);
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   delete testRuntimeWindow.API;
@@ -77,4 +86,26 @@ it("stops drawing an aura whose drawing keeps failing although its update succee
   for (let frame = 0; frame < 200; frame++) game.playFrame(context);
 
   expect(game.playFrame(context)).toBe(0);
+});
+
+it("draws only the auras nearest the hero while others are limited, and all again without the limit", () => {
+  const game = setGame({ "1": 600, "2": 140, "3": 300 });
+  const { context } = game.canvas.create(800, 600);
+  canvasAuraRenderer.setOthersLimit(2);
+  canvasAuraRenderer.setTargets(
+    new Map([
+      ["1", "storm"],
+      ["2", "frost"],
+      ["3", "divine"],
+    ]),
+  );
+
+  game.playFrame(context);
+
+  expect(game.drawnOrders().toSorted()).toEqual([2, 3]);
+
+  canvasAuraRenderer.setOthersLimit(null);
+  game.playFrame(context);
+
+  expect(game.drawnOrders().toSorted()).toEqual([1, 2, 3]);
 });
