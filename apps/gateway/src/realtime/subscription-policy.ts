@@ -115,6 +115,10 @@ export const canSubscribe = (session: SessionData, scope: Scope): boolean => {
     if (scope.topic === "global.chat")
       return session.platform === "game" && session.guilds.length > 0;
 
+    // Only a client that understands aura changes may receive them.
+    if (scope.topic === "global.character-auras")
+      return session.platform === "game" && session.characterAuras === true;
+
     if (scope.topic === "global.chat.world")
       return (
         session.platform === "game" &&
@@ -164,6 +168,10 @@ export const defaultScopes = (session: SessionData): Scope[] => {
   }
 
   if (!session.apiKeyAccess) scopes.push({ topic: "party.ready-room" });
+
+  const auras = { topic: "global.character-auras" } satisfies Scope;
+
+  if (canSubscribe(session, auras)) scopes.push(auras);
 
   return scopes;
 };
