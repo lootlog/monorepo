@@ -15,6 +15,12 @@ export class CharacterAuraAccessDenied extends TaggedErrorClass<CharacterAuraAcc
   { status: Schema.Literal(403) },
 ) {}
 
+/** No Lootlog User proved to play the Margonem account. */
+export class CharacterAuraGrantTargetNotFound extends TaggedErrorClass<CharacterAuraGrantTargetNotFound>()(
+  "CharacterAuraGrantTargetNotFound",
+  { status: Schema.Literal(404) },
+) {}
+
 export class CharacterAurasOperationError extends TaggedErrorClass<CharacterAurasOperationError>()(
   "CharacterAurasOperationError",
   { cause: Schema.Defect() },
@@ -25,10 +31,12 @@ export class CharacterAurasIdentity extends Context.Service<
   { readonly userId: Effect.Effect<string> }
 >()("@lootlog/api/http-api/character-auras/identity") {}
 
-type Operation<A> = Effect.Effect<
-  A,
-  CharacterAuraAccessDenied | CharacterAurasOperationError
->;
+type CharacterAurasFailure =
+  | CharacterAuraAccessDenied
+  | CharacterAuraGrantTargetNotFound
+  | CharacterAurasOperationError;
+
+type Operation<A> = Effect.Effect<A, CharacterAurasFailure>;
 
 export class CharacterAurasData extends Context.Service<
   CharacterAurasData,
@@ -48,6 +56,16 @@ export class CharacterAurasData extends Context.Service<
       userId: string,
       gameAccountId: string,
     ) => Operation<OwnCharacterAuraResponse>;
+    /** Lets the User who plays the account choose any aura; admins only. */
+    readonly grantAuras: (
+      callerUserId: string,
+      gameAccountId: string,
+    ) => Operation<void>;
+    /** Withdraws a grant and removes the aura it allowed; admins only. */
+    readonly revokeAuras: (
+      callerUserId: string,
+      gameAccountId: string,
+    ) => Operation<void>;
   }
 >()("@lootlog/api/http-api/character-auras/data") {}
 
@@ -72,14 +90,11 @@ export const getOwnCharacterAura = () =>
   withUser((data, userId) => data.getOwnAura(userId));
 
 const toHttpResponse = <A, R>(
-  effect: Effect.Effect<
-    A,
-    CharacterAuraAccessDenied | CharacterAurasOperationError,
-    R
-  >,
+  effect: Effect.Effect<A, CharacterAurasFailure, R>,
 ) =>
   Effect.catchTags(effect, {
     CharacterAuraAccessDenied: statusCodeResponse,
+    CharacterAuraGrantTargetNotFound: statusCodeResponse,
     CharacterAurasOperationError: (error) => Effect.die(error.cause),
   });
 
@@ -105,6 +120,20 @@ export const CharacterAurasHandlers = HttpApiBuilder.group(
         toHttpResponse(
           withUser((data, userId) =>
             data.linkGameAccount(userId, params.gameAccountId),
+          ),
+        ),
+      )
+      .handle("CharacterAurasControllerGrantAuras", ({ params }) =>
+        toHttpResponse(
+          withUser((data, userId) =>
+            data.grantAuras(userId, params.gameAccountId),
+          ),
+        ),
+      )
+      .handle("CharacterAurasControllerRevokeAuras", ({ params }) =>
+        toHttpResponse(
+          withUser((data, userId) =>
+            data.revokeAuras(userId, params.gameAccountId),
           ),
         ),
       ),
