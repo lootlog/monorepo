@@ -15,16 +15,16 @@ import type {
 import { useSocket } from "@/contexts/socket-context";
 import { readGameClientBootstrap } from "@/lib/game-client-bootstrap";
 import { auraRuntimeAdapter } from "@/lib/margonem-runtime/adapters/aura-runtime-adapter";
+import { legacyAuraRuntimeAdapter } from "@/lib/margonem-runtime/adapters/legacy-aura-runtime-adapter";
 import { subscribeCharacterTipUpdates } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
 import { useGameStore } from "@/store/game.store";
 import { useOthersStore } from "@/store/others.store";
-import {
-  characterAuraRenderer,
-  HERO_AURA_KEY,
-} from "../character-aura-renderer";
+import { canvasAuraRenderer } from "../canvas-aura-surface";
 import { applyCharacterAuraChanges } from "../character-aura-changes";
+import { HERO_AURA_KEY } from "../character-aura-renderer";
 import { resolveCharacterAuraTargets } from "../character-aura-targets";
 import { auraMark, CharacterAuraTooltip } from "../engine/tooltip";
+import { legacyAuraRenderer } from "../legacy-aura-surface";
 import { useOwnCharacterAura } from "./use-own-character-aura";
 
 /**
@@ -35,11 +35,20 @@ const AURAS_REFRESH_INTERVAL_MS = 5 * 60_000;
 
 /**
  * Shows every aura on the map: the hero's own as soon as it is chosen, and
- * the auras of other players by the Margonem account they play. Auras exist
- * only on the NI canvas.
+ * the auras of other players by the Margonem account they play. NI draws
+ * them on its map canvas and marks character tips; SI draws them beside its
+ * character elements.
  */
 export const useCharacterAuras = () => {
-  const available = auraRuntimeAdapter.isAvailable();
+  const canvas = auraRuntimeAdapter.isAvailable();
+
+  const renderer = canvas
+    ? canvasAuraRenderer
+    : legacyAuraRuntimeAdapter.isAvailable()
+      ? legacyAuraRenderer
+      : null;
+
+  const available = renderer !== null;
   const heroAccountId = useGameStore((state) => state.game?.hero.accountId);
   const othersById = useOthersStore((state) => state.othersById);
   const { data: own } = useOwnCharacterAura();
@@ -113,7 +122,7 @@ export const useCharacterAuras = () => {
 
   // Installed before the targets apply, so tips rebuilt for them get the mark.
   useEffect(() => {
-    if (!available || !hasAuras) return;
+    if (!canvas || !hasAuras) return;
     const layer = auraRuntimeAdapter.getTipLayer();
     const tooltip = layer ? new CharacterAuraTooltip(layer) : null;
 
@@ -128,12 +137,14 @@ export const useCharacterAuras = () => {
       unsubscribe?.();
       tooltip?.dispose();
     };
-  }, [available, hasAuras]);
+  }, [canvas, hasAuras]);
 
   useEffect(() => {
-    if (!available) return;
+    if (!renderer) return;
     accountAuras.current = targets.byAccount;
-    characterAuraRenderer.setTargets(targets.byCharacter);
+    renderer.setTargets(targets.byCharacter);
+
+    if (!canvas) return;
 
     // Cached tips keep the old mark until they are rebuilt, so every
     // character whose aura appeared, changed or went away gets its tip rebuilt.
@@ -160,7 +171,11 @@ export const useCharacterAuras = () => {
     drawn.current = targets.byCharacter;
 
     auraRuntimeAdapter.refreshTips(changed, heroChanged);
-  }, [available, targets, heroAccountId, heroAura]);
+  }, [renderer, canvas, targets, heroAccountId, heroAura]);
 
-  useEffect(() => () => characterAuraRenderer.setTargets(new Map()), []);
+  useEffect(() => {
+    if (!renderer) return;
+
+    return () => renderer.setTargets(new Map());
+  }, [renderer]);
 };
