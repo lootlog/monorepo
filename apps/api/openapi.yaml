@@ -19169,6 +19169,7 @@ components:
             - arcane
             - aurora
             - conqueror
+            - heavenly
         canChange:
           type: boolean
         canGrant:
@@ -19207,6 +19208,7 @@ components:
             - arcane
             - aurora
             - conqueror
+            - heavenly
       required:
         - auraId
       additionalProperties: false
@@ -19245,6 +19247,7 @@ components:
             - arcane
             - aurora
             - conqueror
+            - heavenly
       required:
         - gameAccountId
         - auraId
@@ -35747,6 +35750,7 @@ components:
                 - arcane
                 - aurora
                 - conqueror
+                - heavenly
             canChange:
               type: boolean
             canGrant:
