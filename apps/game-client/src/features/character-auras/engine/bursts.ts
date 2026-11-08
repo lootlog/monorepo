@@ -1,5 +1,13 @@
 import { TAU, envelope, hslToRgb, type Rgb } from "./math";
-import { DIAG, ORTHO, pixelArc, pixelEllipse, pixelGlint, plot } from "./paint";
+import {
+  DIAG,
+  ORTHO,
+  pixelArc,
+  pixelEllipse,
+  pixelGlint,
+  pixelLine,
+  plot,
+} from "./paint";
 import { drawMagicCircle, drawSouls, type Brush } from "./decor";
 import { groundRadius, type AuraPlacement } from "./placement";
 import type { BurstKind } from "./presets";
@@ -23,12 +31,24 @@ export interface BurstScene {
   fade: number;
 }
 
+/** The admin auras' bursts that bring a pillar of light (or fire) down on the character. */
+const PILLAR_BURSTS: ReadonlySet<BurstKind> = new Set([
+  "coronation",
+  "rebirth",
+]);
+
 /** Draws the running burst `kind` into the brush's layers. */
 export function drawBurstScene(
   kind: BurstKind,
   b: Brush,
   scene: BurstScene,
 ): void {
+  if (PILLAR_BURSTS.has(kind)) {
+    drawPillarBurst(b, scene);
+
+    return;
+  }
+
   switch (kind) {
     case "descend":
       drawDescendBurst(b, scene);
@@ -369,4 +389,34 @@ function drawConquerorBurst(
     0,
     2,
   );
+}
+
+function drawPillarBurst(b: Brush, scene: BurstScene): void {
+  const { place, front, t, bounds, light, mid, cx, fade } = scene;
+
+  // A column of light falling on the character from far above, brightest at its core,
+  // with the descending halo inside it; it fades out as the halo lands.
+  if (!front && place.ground) {
+    const half = Math.round(bounds.w * 0.45 + 3);
+    const top = place.y + bounds.y - 60;
+    const bottom = place.feetY - 2;
+    const swell = Math.sin(Math.PI * Math.min(1, t * 1.15));
+
+    for (let dx = -half; dx <= half; dx++) {
+      const core = 1 - Math.abs(dx) / (half + 1);
+      const a = fade * swell * core * 0.7;
+      pixelLine(
+        b.lit(),
+        cx + dx,
+        top,
+        cx + dx,
+        bottom,
+        core > 0.6 ? light : mid,
+        a * 0.35,
+        a,
+      );
+    }
+  }
+
+  drawDescendBurst(b, scene);
 }

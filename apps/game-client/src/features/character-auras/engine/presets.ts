@@ -2,8 +2,8 @@ import type { CharacterAuraId } from "@lootlog/schema/character-aura";
 import { heartbeat, noise1 } from "./math";
 import type { EmitterSpec } from "./particles";
 
-/** Item rarities of the game, for when auras become rewards. */
-type AuraTier = "unique" | "heroic" | "legendary";
+/** Item rarities of the game, for when auras become rewards; admin auras stand above them. */
+type AuraTier = "unique" | "heroic" | "legendary" | "mythic";
 
 /** Signature effects drawn by the renderer on top of the shared glow and particles. */
 type AuraFx =
@@ -52,7 +52,10 @@ export type BurstKind =
   | "ascend"
   | "aurora-flare"
   | "conqueror"
-  | "roar";
+  | "roar"
+  | "coronation"
+  | "judgement"
+  | "rebirth";
 
 type GroundStyle =
   | "disc"
@@ -91,7 +94,12 @@ export type TipDeco =
   | "halo"
   | "crown"
   | "wings"
-  | "hearts";
+  | "hearts"
+  | "regal"
+  | "seraph"
+  | "eclipse"
+  | "thunder-crown"
+  | "phoenix";
 
 export interface AuraPreset {
   id: CharacterAuraId;
@@ -1562,9 +1570,9 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   // Admin auras: only Lootlog admins wear them (`ADMIN_CHARACTER_AURA_IDS`).
   sovereign: {
     id: "sovereign",
-    tier: "legendary",
+    tier: "mythic",
     description:
-      "Nad głową lśni złota korona, za postacią obracają się promienie, a pod stopami płonie krąg run.",
+      "Nad głową lśni złota korona, wokół krążą trzy gwiazdy, za postacią obracają się promienie, a co chwilę z nieba spada słup światła i deszcz złota.",
     particles: ["#fff6c8", "#ffd34a", "#e8a020", "#c8a0ff", "#8a4aff"],
     rim: "#ffe08a",
     haze: "#8a4aff",
@@ -1610,17 +1618,17 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
         front: 0.5,
       },
     ],
-    fx: ["rays", "crown"],
-    burst: "descend",
-    tip: "crown",
+    fx: ["rays", "crown", "orbits"],
+    burst: "coronation",
+    tip: "regal",
     nick: ["#fff6c8", "#ffc94a", "#8a4aff"],
     tones: ["#fff6c8", "#ffc94a", "#6a3aa8"],
   },
   seraph: {
     id: "seraph",
-    tier: "legendary",
+    tier: "mythic",
     description:
-      "Za plecami rozkładają się białe skrzydła o złotych krawędziach, nad głową świeci aureola, a z góry opadają pióra.",
+      "Za plecami biją białe skrzydła o złotych krawędziach, nad głową świeci aureola na tle boskich promieni, a co chwilę z nieba spada słup światła.",
     particles: ["#ffffff", "#fff6dc", "#ffe39a", "#d8e4ff"],
     rim: "#fff6dc",
     haze: "#ffe39a",
@@ -1665,18 +1673,17 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
         front: 1,
       },
     ],
-    fx: ["halo", "feather-wings"],
-    burst: "descend",
-    tip: "wings",
+    fx: ["halo", "feather-wings", "rays"],
+    burst: "coronation",
+    tip: "seraph",
     nick: ["#ffffff", "#ffe39a", "#c8962a"],
     tones: ["#ffffff", "#ffd86b", "#f4ead2"],
-    lite: true,
   },
   eclipse: {
     id: "eclipse",
-    tier: "legendary",
+    tier: "mythic",
     description:
-      "Za głową wschodzi czarne słońce w złotej koronie promieni, a smugi mroku krążą spiralą nad wirem pustki.",
+      "Za głową wschodzi czarne słońce w złotej koronie, wokół trzaskają czarne pioruny, a co chwilę fala mroku podrywa kamienie z ziemi.",
     particles: ["#fff3c0", "#ffc94a", "#ff8a2a", "#140a06", "#c77dff"],
     rim: "#ffc94a",
     haze: "#0a0604",
@@ -1721,17 +1728,17 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
         front: 0.8,
       },
     ],
-    fx: ["eclipse"],
-    burst: "implode",
-    tip: "tendrils",
+    fx: ["eclipse", "lightning", "haki"],
+    burst: "conqueror",
+    tip: "eclipse",
     nick: ["#fff3c0", "#ffb84a", "#5a2a08"],
     tones: ["#fff3c0", "#ffb84a", "#3a1a04"],
   },
   thunderlord: {
     id: "thunderlord",
-    tier: "legendary",
+    tier: "mythic",
     description:
-      "Nad koroną kłębi się burzowa chmura, złote pioruny biją w ziemię, a po sylwetce przeskakują iskry.",
+      "Nad koroną kłębi się burzowa chmura, po sylwetce przeskakują iskry, a co chwilę trzy pioruny naraz biją wokół postaci.",
     particles: ["#ffffff", "#fff3b0", "#ffd34a", "#7cc8ff", "#3a6bff"],
     rim: "#ffe08a",
     haze: "#3a6bff",
@@ -1784,16 +1791,16 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
       },
     ],
     fx: ["lightning", "raincloud", "crown"],
-    burst: "strike",
-    tip: "bolt-corners",
+    burst: "judgement",
+    tip: "thunder-crown",
     nick: ["#ffffff", "#ffd34a", "#3a6bff"],
     tones: ["#ffffff", "#ffd34a", "#3a4fd8"],
   },
   phoenix: {
     id: "phoenix",
-    tier: "legendary",
+    tier: "mythic",
     description:
-      "Za plecami biją ogniste skrzydła feniksa, płomienie liżą sylwetkę, a w górę sypią się żarzące iskry.",
+      "Za plecami biją ogniste skrzydła feniksa, płomienie liżą sylwetkę, a co chwilę feniks odradza się w słupie ognia.",
     particles: ["#fff3b0", "#ffb22e", "#ff5a14", "#c4160e", "#3a2622"],
     rim: "#ff9a3a",
     haze: "#ff3d10",
@@ -1845,9 +1852,9 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
         front: 0.7,
       },
     ],
-    fx: ["feather-wings", "flicker-tongues"],
-    burst: "eruption",
-    tip: "embers",
+    fx: ["feather-wings", "flicker-tongues", "rays"],
+    burst: "rebirth",
+    tip: "phoenix",
     tipEmitters: [
       {
         kind: "ember",
