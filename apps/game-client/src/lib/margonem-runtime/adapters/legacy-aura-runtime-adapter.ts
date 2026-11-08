@@ -202,4 +202,28 @@ export const legacyAuraRuntimeAdapter = {
     layers.back.remove();
     layers.front.remove();
   },
+
+  /** A cover over the whole of `#base`, above every character, for an admin's arrival. */
+  createVeil(): HTMLDivElement {
+    const veil = document.createElement("div");
+    // Inline only, like the layers; clicks go through to the map.
+    veil.style.cssText =
+      "position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:2147483000";
+
+    return veil;
+  },
+
+  /** Puts the veil into `#base` with `background`; false while the map is not shown. */
+  placeVeil(veil: HTMLDivElement, background: string): boolean {
+    const base = document.getElementById("base");
+
+    if (!base) return false;
+
+    if (veil.parentElement !== base) base.append(veil);
+
+    if (veil.style.background !== background)
+      veil.style.background = background;
+
+    return true;
+  },
 };

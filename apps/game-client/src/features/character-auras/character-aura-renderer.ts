@@ -1,4 +1,7 @@
-import type { CharacterAuraId } from "@lootlog/schema/character-aura";
+import {
+  isAdminCharacterAuraId,
+  type CharacterAuraId,
+} from "@lootlog/schema/character-aura";
 import type { RuntimeAuraCharacter } from "@/lib/margonem-runtime/adapters/aura-runtime-adapter";
 import { Aura } from "./engine/render";
 import type { AuraPlacement } from "./engine/placement";
@@ -29,8 +32,22 @@ export type AuraPaint = (context: CanvasRenderingContext2D) => void;
 export type ShownAura<C extends RuntimeAuraCharacter> = {
   character: C;
   place: AuraPlacement;
+  /** How far above its box the aura paints (the admin beacon), px. */
+  above: number;
   back: AuraPaint;
   front: AuraPaint;
+};
+
+/**
+ * An aura's effects over the whole map (an admin's arrival, a storm): where its character
+ * is, how dark the map gets and how to paint it.
+ */
+export type ShownArrival = {
+  place: AuraPlacement;
+  /** 0..1. */
+  darkness: number;
+  /** Paints the arrival over the whole map into a context whose origin is the screen's. */
+  paint: AuraPaint;
 };
 
 /** Where auras are drawn: the NI canvas or the SI map elements. */
@@ -41,12 +58,18 @@ export interface CharacterAuraSurface<C extends RuntimeAuraCharacter> {
   getOther(characterId: string): C | null;
   /** Calls `onFrame` once per drawn frame until unsubscribed. */
   subscribeFrame(onFrame: () => void): (() => void) | null;
-  /** Whether an aura at `place` lands on what `context` draws. */
-  isInView(place: AuraPlacement, context: CanvasRenderingContext2D): boolean;
+  /** Whether an aura at `place`, reaching `above` its box, lands on what `context` draws. */
+  isInView(
+    place: AuraPlacement,
+    context: CanvasRenderingContext2D,
+    above: number,
+  ): boolean;
   /** Shows the aura of `key` this frame, or hides it when null. */
   present(key: string, shown: ShownAura<C> | null): void;
   /** Forgets everything shown for `key`. */
   release(key: string): void;
+  /** Shows an aura's effects over the whole map this frame, or hides them when null. */
+  presentArrival(arrival: ShownArrival | null): void;
 }
 
 type DrawnAura = {
@@ -54,6 +77,7 @@ type DrawnAura = {
   place: AuraPlacement | null;
   back: AuraPaint;
   front: AuraPaint;
+  arrival: AuraPaint;
 };
 
 /**
@@ -179,9 +203,28 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     for (const [key, auraId] of shown) {
       this.guard(key, () => this.drawTarget(key, auraId, view, dt));
     }
+
+    this.surface.presentArrival(this.darkestArrival());
   }
 
-  /** The targets drawn this frame: all, or the hero and the others nearest it. */
+  /** The aura darkening the whole map most this frame, if one does. */
+  private darkestArrival(): ShownArrival | null {
+    let darkest: ShownArrival | null = null;
+
+    for (const drawn of this.drawn.values()) {
+      const darkness = drawn.aura.mapDarkness();
+
+      if (!drawn.place || darkness <= (darkest?.darkness ?? 0)) continue;
+      darkest = { place: drawn.place, darkness, paint: drawn.arrival };
+    }
+
+    return darkest;
+  }
+
+  /**
+   * The targets drawn this frame: all, or the hero, every admin aura (meant to be seen
+   * across the map) and the others nearest the hero.
+   */
   private shownTargets(
     view: AuraView | null,
   ): ReadonlyMap<string, CharacterAuraId> {
@@ -194,9 +237,18 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
 
     const hero = view ? this.surface.getHero() : null;
     const nearest: { key: string; distance: number }[] = [];
+    const shown = new Map<string, CharacterAuraId>();
 
-    for (const key of this.targets.keys()) {
+    if (heroAura) shown.set(HERO_AURA_KEY, heroAura);
+
+    for (const [key, auraId] of this.targets) {
       if (key === HERO_AURA_KEY) continue;
+
+      if (isAdminCharacterAuraId(auraId)) {
+        shown.set(key, auraId);
+        continue;
+      }
+
       const other = view ? this.surface.getOther(key) : null;
 
       if (!other) continue;
@@ -210,10 +262,6 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
 
       nearest.push({ key, distance });
     }
-
-    const shown = new Map<string, CharacterAuraId>();
-
-    if (heroAura) shown.set(HERO_AURA_KEY, heroAura);
 
     for (const { key } of nearest
       .toSorted((a, b) => a.distance - b.distance)
@@ -264,6 +312,7 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
         ? {
             character,
             place: drawn.place,
+            above: drawn.aura.reachAbove(drawn.place),
             back: drawn.back,
             front: drawn.front,
           }
@@ -287,7 +336,14 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
         this.guard(
           key,
           () => {
-            if (drawn.place && this.surface.isInView(drawn.place, context))
+            if (
+              drawn.place &&
+              this.surface.isInView(
+                drawn.place,
+                context,
+                drawn.aura.reachAbove(drawn.place),
+              )
+            )
               drawn.aura.drawBack(context, drawn.place, 1);
           },
           `${key}:back`,
@@ -296,10 +352,34 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
         this.guard(
           key,
           () => {
-            if (drawn.place && this.surface.isInView(drawn.place, context))
+            if (
+              drawn.place &&
+              this.surface.isInView(
+                drawn.place,
+                context,
+                drawn.aura.reachAbove(drawn.place),
+              )
+            )
               drawn.aura.drawFront(context, drawn.place, 1);
           },
           `${key}:front`,
+        ),
+      // The context's transform scales by the game's zoom.
+      arrival: (context) =>
+        this.guard(
+          key,
+          () => {
+            const { a: scaleX, d: scaleY } = context.getTransform();
+
+            if (drawn.place)
+              drawn.aura.drawMapEffects(
+                context,
+                drawn.place,
+                context.canvas.width / scaleX,
+                context.canvas.height / scaleY,
+              );
+          },
+          `${key}:arrival`,
         ),
     };
 

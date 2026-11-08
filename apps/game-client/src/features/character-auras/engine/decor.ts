@@ -283,17 +283,8 @@ interface TipFrame {
   boost: number;
 }
 
-/** Gold diamonds on the corners and a small cross over the top edge. */
-function drawHolyCorners({
-  b,
-  L,
-  T,
-  W,
-  corners,
-  light,
-  mid,
-  a,
-}: TipFrame): void {
+/** Gold diamonds on the corners, glinting in turn. */
+function drawGemCorners({ b, corners, light, mid, a }: TipFrame): void {
   for (const [i, [x, y, sx, sy]] of corners.entries()) {
     const cx = x + sx * 2;
     const cy = y + sy * 2;
@@ -313,6 +304,12 @@ function drawHolyCorners({
     if ((b.tick + i * 5) % 20 < 3)
       pixelGlint(b.lit(), cx, cy, 2, [255, 255, 255], light, a);
   }
+}
+
+/** Gold diamonds on the corners and a small cross over the top edge. */
+function drawHolyCorners(frame: TipFrame): void {
+  const { b, L, T, W, light, mid, a } = frame;
+  drawGemCorners(frame);
 
   for (let i = 0; i < 7; i++)
     plot(b.lit(), L + W / 2, T - 3 - i, i < 2 ? mid : light, a);
@@ -692,30 +689,57 @@ function drawTipCurtain({ b, L, T, W, boost }: TipFrame): void {
  */
 const TIP_DECO_PAINTERS: Record<
   TipDeco,
-  { front: boolean; draw: (frame: TipFrame) => void } | null
+  readonly { front: boolean; draw: (frame: TipFrame) => void }[]
 > = {
-  "holy-corners": { front: true, draw: drawHolyCorners },
-  embers: null,
-  icicles: { front: true, draw: drawIcicles },
-  tendrils: { front: false, draw: drawTendrils },
-  "bolt-corners": { front: true, draw: drawBoltCorners },
-  drips: { front: true, draw: drawDrips },
-  "blood-drips": { front: true, draw: drawDrips },
-  constellation: { front: false, draw: drawConstellation },
-  "prism-corners": { front: true, draw: drawPrismCorners },
-  vines: { front: false, draw: drawVines },
-  blossoms: { front: true, draw: drawBlossoms },
-  sand: { front: true, draw: drawSand },
-  "skull-corners": { front: true, draw: drawSkullCorners },
-  waves: { front: true, draw: drawWaves },
-  sigils: { front: true, draw: drawSigils },
-  curtain: { front: false, draw: drawTipCurtain },
-  cracks: { front: true, draw: drawCracks },
-  clouds: { front: true, draw: drawTipClouds },
-  halo: { front: true, draw: drawTipHalo },
-  crown: { front: true, draw: drawTipCrown },
-  wings: { front: true, draw: drawTipWings },
-  hearts: { front: true, draw: drawTipHearts },
+  "holy-corners": [{ front: true, draw: drawHolyCorners }],
+  embers: [],
+  icicles: [{ front: true, draw: drawIcicles }],
+  tendrils: [{ front: false, draw: drawTendrils }],
+  "bolt-corners": [{ front: true, draw: drawBoltCorners }],
+  drips: [{ front: true, draw: drawDrips }],
+  "blood-drips": [{ front: true, draw: drawDrips }],
+  constellation: [{ front: false, draw: drawConstellation }],
+  "prism-corners": [{ front: true, draw: drawPrismCorners }],
+  vines: [{ front: false, draw: drawVines }],
+  blossoms: [{ front: true, draw: drawBlossoms }],
+  sand: [{ front: true, draw: drawSand }],
+  "skull-corners": [{ front: true, draw: drawSkullCorners }],
+  waves: [{ front: true, draw: drawWaves }],
+  sigils: [{ front: true, draw: drawSigils }],
+  curtain: [{ front: false, draw: drawTipCurtain }],
+  cracks: [{ front: true, draw: drawCracks }],
+  clouds: [{ front: true, draw: drawTipClouds }],
+  halo: [{ front: true, draw: drawTipHalo }],
+  crown: [{ front: true, draw: drawTipCrown }],
+  wings: [{ front: true, draw: drawTipWings }],
+  hearts: [{ front: true, draw: drawTipHearts }],
+  // Admin auras layer two decorations each.
+  regal: [
+    { front: true, draw: drawTipCrown },
+    { front: true, draw: drawGemCorners },
+  ],
+  seraph: [
+    { front: true, draw: drawTipHalo },
+    { front: true, draw: drawGemCorners },
+  ],
+  eclipse: [
+    { front: false, draw: drawTendrils },
+    { front: true, draw: drawCracks },
+  ],
+  "thunder-crown": [
+    { front: true, draw: drawTipCrown },
+    { front: true, draw: drawBoltCorners },
+  ],
+  phoenix: [{ front: true, draw: drawGemCorners }],
+  emperor: [
+    { front: false, draw: drawTendrils },
+    { front: true, draw: drawTipCrown },
+    { front: true, draw: drawCracks },
+  ],
+  quake: [
+    { front: true, draw: drawCracks },
+    { front: true, draw: drawGemCorners },
+  ],
 };
 
 /** The aura's own dressing round a tooltip box; `front` draws what may overlap the box. */
@@ -726,15 +750,17 @@ export function drawTipDeco(
   front: boolean,
   boost: number,
 ): void {
-  const painter = TIP_DECO_PAINTERS[deco];
+  const painters = TIP_DECO_PAINTERS[deco].filter(
+    (painter) => painter.front === front,
+  );
 
-  if (!painter || painter.front !== front) return;
+  if (painters.length === 0) return;
   const { x: L, y: T, w: W, h: H } = box;
   const R = L + W - 1;
   const B = T + H - 1;
   const [light, mid, dark] = b.tones;
 
-  painter.draw({
+  const frame: TipFrame = {
     b,
     deco,
     L,
@@ -754,7 +780,9 @@ export function drawTipDeco(
     dark,
     a: b.intensity,
     boost,
-  });
+  };
+
+  for (const painter of painters) painter.draw(frame);
 }
 
 /** The arcane circle: two rings, a turning pentagram and runes between the rings. */

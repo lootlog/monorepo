@@ -50,7 +50,18 @@ import { context2d, createCanvas, type AuraSilhouette } from "./silhouette";
 import { groundRadius, spawnFrame, type AuraPlacement } from "./placement";
 import { drawBurstScene } from "./bursts";
 import { drawGround } from "./ground";
+import { BEACON_HEIGHT, drawBeacon } from "./beacon";
 import {
+  ARRIVAL_BURST,
+  drawArrival,
+  eventDarkness,
+  pulseStarted,
+} from "./arrival";
+import { drawAvatar } from "./avatar";
+import { drawStorm, STORM_GLOOM } from "./storm";
+import {
+  drawAirCracks,
+  drawEclipse,
   drawMoon,
   drawOrbits,
   drawRays,
@@ -134,6 +145,10 @@ const BURST_DURATION: Record<BurstKind, number> = {
   "aurora-flare": 1.2,
   conqueror: 0.9,
   roar: 1.6,
+  coronation: 1.4,
+  judgement: 0.6,
+  rebirth: 1.2,
+  quake: 0.9,
 };
 
 /** An offscreen buffer of one side's light (`lit`) or covering (`dim`) pixels. */
@@ -257,6 +272,10 @@ export class Aura {
   /** The preset's burst animation: progress 0..1, or -1 while resting. */
   private burst = -1;
   private nextBurst = 2.5;
+  /** Seconds since the aura showed, for an admin's arrival. */
+  private age = 0;
+  /** Shapes the quake's crack in the air; a new one each quake. */
+  private quakeSeed = 1;
   /** Props follow the head through this spring, so they trail a walk. */
   private spring: Spring | null = null;
   private lastCenter: { x: number; y: number } | null = null;
@@ -294,6 +313,70 @@ export class Aura {
     this.field = new ParticleField(this.rng);
     this.preset = AURAS[id];
     this.rgb = colorsOf(this.preset);
+
+    // An admin arrives with a burst.
+    if (this.preset.beacon) this.nextBurst = ARRIVAL_BURST;
+  }
+
+  /**
+   * How dark the aura makes the whole map now, 0..1: an admin's arrival and pulses, the
+   * storm's overcast; 0 for every other aura.
+   */
+  mapDarkness(): number {
+    const p = this.preset;
+    const event = p.beacon ? eventDarkness(this.age) : 0;
+
+    return Math.max(event, p.storm ? STORM_GLOOM : 0);
+  }
+
+  /**
+   * Draws the aura's effects over the whole map, `width` × `height` in the context's units:
+   * the storm, the arrival's night with the admin lit and its shockwave, the beacon over it.
+   */
+  drawMapEffects(
+    ctx: CanvasRenderingContext2D,
+    place: AuraPlacement,
+    width: number,
+    height: number,
+  ): void {
+    const p = this.preset;
+
+    if (!place.ground || !(p.beacon || p.storm)) return;
+    const [light, mid] = this.rgb.tones;
+    ctx.save();
+
+    try {
+      if (p.storm)
+        drawStorm(
+          ctx,
+          width,
+          height,
+          this.time,
+          [place.viewX, place.viewY],
+          light,
+          mid,
+        );
+
+      if (p.beacon) {
+        drawArrival(ctx, place, this.age, width, height, light, mid, p.arrival);
+        drawBeacon(ctx, p.id, place, this.rgb.tones, this.time, 1);
+      }
+    } finally {
+      ctx.restore();
+    }
+  }
+
+  /** How far the transformation's giant has risen, 0..1: through events and bursts. */
+  private avatarStrength(): number {
+    const burst =
+      this.burst >= 0 ? Math.sin(Math.PI * clamp(this.burst, 0, 1)) : 0;
+
+    return Math.max(eventDarkness(this.age), burst);
+  }
+
+  /** How far above its box the aura paints at `place`: the admin beacon's reach. */
+  reachAbove(place: AuraPlacement): number {
+    return this.preset.beacon && place.ground ? BEACON_HEIGHT : 0;
   }
 
   setPreset(id: CharacterAuraId): void {
@@ -313,6 +396,12 @@ export class Aura {
   }
 
   update(dt: number, place: AuraPlacement | null, intensity: number): void {
+    const before = this.age;
+    this.age += Math.max(0, dt);
+
+    // Each later pulse over the map brings the burst too.
+    if (this.preset.beacon && pulseStarted(before, this.age))
+      this.nextBurst = Math.min(this.nextBurst, ARRIVAL_BURST);
     this.carry += Math.max(0, dt);
     let steps = 0;
 
@@ -538,6 +627,8 @@ export class Aura {
 
       if (p.fx.includes("moon")) drawMoon(b, place, p.pulse(this.time));
 
+      if (p.fx.includes("eclipse")) drawEclipse(b, place, p.pulse(this.time));
+
       if (p.fx.includes("flicker-tongues"))
         drawTongues(b, place, this.burstSwell("eruption"));
 
@@ -553,6 +644,20 @@ export class Aura {
     ctx.save();
 
     try {
+      if (p.beacon && place.ground) {
+        drawBeacon(ctx, p.id, place, this.rgb.tones, this.time, intensity);
+        const giant = this.avatarStrength();
+
+        if (giant > 0.02)
+          drawAvatar(
+            ctx,
+            place,
+            this.rgb.tones[1],
+            Boolean(p.darkHaze),
+            giant * intensity,
+          );
+      }
+
       this.blit(ctx, this.back, place, "dim");
 
       if (!(p.bare && place.ground))
@@ -582,6 +687,15 @@ export class Aura {
       if (p.fx.includes("orbits")) drawOrbits(b, place, true, this.rgb.rim);
 
       if (p.fx.includes("lightning")) this.drawBolts(place, intensity);
+
+      // A faint crack hangs in the air between quakes and flashes with each one.
+      if (p.fx.includes("quake") && place.ground)
+        drawAirCracks(
+          b,
+          place,
+          this.quakeSeed,
+          0.3 + 0.7 * this.burstSwell("quake"),
+        );
       this.drawDecor(b, place, true);
       this.drawBurst(b, place, true);
     });
@@ -1182,7 +1296,7 @@ export class Aura {
     const k = clamp(intensity, 0.5, 1.5);
 
     if (this.burst >= 0) {
-      this.advanceBurst(kind, frame, k);
+      this.advanceBurst(kind, place, frame, k);
 
       return;
     }
@@ -1196,7 +1310,12 @@ export class Aura {
   }
 
   /** The running burst's per-tick spawns and the beats it crosses this tick. */
-  private advanceBurst(kind: BurstKind, frame: SpawnFrame, k: number): void {
+  private advanceBurst(
+    kind: BurstKind,
+    place: AuraPlacement,
+    frame: SpawnFrame,
+    k: number,
+  ): void {
     const before = this.burst;
     this.burst += TICK / BURST_DURATION[kind];
     const crossed = (at: number) => before < at && this.burst >= at;
@@ -1279,6 +1398,14 @@ export class Aura {
       );
     }
 
+    // The halo lands: a flash, two rings and gold raining round the character.
+    if ((kind === "coronation" || kind === "rebirth") && crossed(0.85)) {
+      this.flash = 1;
+      this.field.emit(GOLD_RAIN, frame, Math.round(16 * k));
+      this.burstRing(place, frame, frame.feet.rx * 2.4, 1);
+      this.burstRing(place, frame, frame.feet.rx * 1.5, 0);
+    }
+
     if (kind === "roar" && crossed(0.85)) {
       // The fire dies out in a thunderclap: a flash and gold raining round the character.
       this.flash = 1;
@@ -1320,6 +1447,8 @@ export class Aura {
     frame: SpawnFrame,
     k: number,
   ): void {
+    if (this.startMythicBurst(kind, place, frame, k)) return;
+
     switch (kind) {
       case "eruption":
         this.flash = 0.6;
@@ -1497,6 +1626,112 @@ export class Aura {
     }
   }
 
+  /** The admin auras' own bursts; false for every other kind. */
+  private startMythicBurst(
+    kind: BurstKind,
+    place: AuraPlacement,
+    frame: SpawnFrame,
+    k: number,
+  ): boolean {
+    switch (kind) {
+      case "coronation":
+        this.flash = 0.6;
+        this.field.emit(
+          {
+            kind: "glint",
+            rate: 0,
+            from: "edge-high",
+            life: [0.5, 0.9],
+            speed: [0, 3],
+            size: [4, 7],
+            colors: 2,
+            front: 0.7,
+          },
+          frame,
+          Math.round(6 * k),
+        );
+
+        return true;
+      case "rebirth":
+        // The phoenix flares up: a fountain of embers, then the pillar of fire falls.
+        this.flash = 1;
+        this.field.emit(
+          {
+            kind: "ember",
+            rate: 0,
+            from: "edge",
+            life: [0.6, 1.1],
+            speed: [55, 100],
+            spread: 1,
+            drag: 0.8,
+            size: [2, 3.4],
+            colors: 4,
+            front: 0.5,
+          },
+          frame,
+          Math.round(26 * k),
+        );
+        this.burstRing(place, frame, frame.feet.rx * 1.8, 1);
+
+        return true;
+      case "quake":
+        // A new crack in the air, and the ground heaves.
+        this.quakeSeed = Math.floor(this.rng() * 1e9);
+        this.flash = 1;
+        this.startConqueror(place, frame, k, false);
+        this.burstRing(place, frame, frame.feet.rx * 3, 0);
+
+        return true;
+      case "judgement":
+        this.startJudgement(place, frame, k);
+
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Judgement: three heavy bolts from the sky striking round the character at once, a
+   * shockwave of two rings and gold sparks raining down. Tooltips get the middle one.
+   */
+  private startJudgement(
+    place: AuraPlacement,
+    frame: SpawnFrame,
+    k: number,
+  ): void {
+    this.flash = 1;
+    const { silhouette } = place;
+    const offsets = place.ground ? [-16, 0, 16] : [0];
+
+    for (const dx of offsets) {
+      const ax = silhouette.head.x + dx * 1.6 + (this.rng() - 0.5) * 6;
+      const ay = silhouette.head.y - 48;
+
+      const bx =
+        (place.ground ? place.feetX - place.x : silhouette.head.x) + dx;
+
+      const by = place.ground
+        ? place.feetY - place.y - 2 + Math.abs(dx) * 0.2
+        : silhouette.head.y;
+
+      this.bolts.push({
+        points: jagged(ax, ay, bx, by, this.rng),
+        ax,
+        ay,
+        bx,
+        by,
+        age: 0,
+        life: TICK * 5,
+        heavy: true,
+      });
+    }
+
+    this.field.emit(GOLD_RAIN, frame, Math.round(18 * k));
+    this.burstRing(place, frame, frame.feet.rx * 2.6, 1);
+    this.burstRing(place, frame, frame.feet.rx * 1.6, 0);
+  }
+
   /** Strike: one heavy bolt from the cloud (or above the head) down to the feet. */
   private startStrike(
     place: AuraPlacement,
@@ -1552,8 +1787,9 @@ export class Aura {
     place: AuraPlacement,
     frame: SpawnFrame,
     k: number,
+    bolts = true,
   ): void {
-    this.hakiBolts(place, 7, true);
+    if (bolts) this.hakiBolts(place, 7, true);
     this.field.emit(
       {
         kind: "grain",
@@ -1717,6 +1953,7 @@ export class Aura {
         front,
         false,
         this.roaring,
+        this.preset.dragonScales,
       );
     else if (front)
       drawDragon(
@@ -1727,6 +1964,7 @@ export class Aura {
         front,
         true,
         this.roaring,
+        this.preset.dragonScales,
       );
 
     if (place.ground ? this.pearl.z > 0 !== front : !front) return;
@@ -2144,12 +2382,13 @@ export function isAuraInView(
   place: AuraPlacement,
   width: number,
   height: number,
+  above = 0,
 ): boolean {
   const box = boxOf(place);
 
   return (
     box.ox < width + VIEW_SLACK &&
-    box.oy < height + VIEW_SLACK &&
+    box.oy - above < height + VIEW_SLACK &&
     box.ox + box.w > -VIEW_SLACK &&
     box.oy + box.h > -VIEW_SLACK
   );
@@ -2159,14 +2398,14 @@ export function isAuraInView(
  * The screen rect an aura at `place` can paint into this frame: its buffers
  * plus the drift a character or the camera makes between ticks.
  */
-export function auraScreenBox(place: AuraPlacement) {
+export function auraScreenBox(place: AuraPlacement, above = 0) {
   const box = boxOf(place);
 
   return {
     x: box.ox - VIEW_SLACK,
-    y: box.oy - VIEW_SLACK,
+    y: box.oy - above - VIEW_SLACK,
     width: box.w + VIEW_SLACK * 2,
-    height: box.h + VIEW_SLACK * 2,
+    height: box.h + above + VIEW_SLACK * 2,
   };
 }
 
