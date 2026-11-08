@@ -13,6 +13,7 @@ import {
   plot,
   RUNES,
 } from "./paint";
+import { drawClouds } from "./dragon";
 import type { TipDeco } from "./presets";
 
 /** What a decoration draws with: the layer buffers, the stepped clock and the aura's colours. */
@@ -601,6 +602,12 @@ function drawCracks({ b, corners, light, a }: TipFrame): void {
   }
 }
 
+/** Heavenly Dragon: a cloud drifting under each bottom corner of the box. */
+function drawTipClouds({ b, L, R, B }: TipFrame): void {
+  drawClouds(b, L + 8, B + 3, 9);
+  drawClouds(b, R - 8, B + 3, 9);
+}
+
 function drawTipCurtain({ b, L, T, W, boost }: TipFrame): void {
   drawCurtain(b, L + W / 2, T - 24, W / 2 + 6, 26, boost);
 }
@@ -630,6 +637,7 @@ const TIP_DECO_PAINTERS: Record<
   sigils: { front: true, draw: drawSigils },
   curtain: { front: false, draw: drawTipCurtain },
   cracks: { front: true, draw: drawCracks },
+  clouds: { front: true, draw: drawTipClouds },
 };
 
 /** The aura's own dressing round a tooltip box; `front` draws what may overlap the box. */
