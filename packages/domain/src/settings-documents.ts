@@ -18,6 +18,7 @@ import {
   CHAT_MESSAGE_GAP_MIN_PX,
   CHAT_NPC_LAYOUTS,
 } from "@lootlog/schema/chat-appearance";
+import { MAP_AURA_MODES } from "@lootlog/schema/character-aura";
 import {
   DEFAULT_NPC_TYPE_COLORS,
   isHexAppearanceColor,
@@ -486,6 +487,11 @@ export const DEVICE_SETTINGS_CATALOG = {
     defaultValue: true,
     persistence: "DEVICE",
     isValid: isBoolean,
+  },
+  mapAuras: {
+    defaultValue: "auto",
+    persistence: "DEVICE",
+    isValid: isOneOf(MAP_AURA_MODES),
   },
   masterVolume: {
     defaultValue: 0.5,

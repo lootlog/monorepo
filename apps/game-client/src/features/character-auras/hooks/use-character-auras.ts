@@ -19,12 +19,14 @@ import { legacyAuraRuntimeAdapter } from "@/lib/margonem-runtime/adapters/legacy
 import { subscribeCharacterTipUpdates } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
 import { useGameStore } from "@/store/game.store";
 import { useOthersStore } from "@/store/others.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { canvasAuraRenderer } from "../canvas-aura-surface";
 import { applyCharacterAuraChanges } from "../character-aura-changes";
 import { HERO_AURA_KEY } from "../character-aura-renderer";
 import { resolveCharacterAuraTargets } from "../character-aura-targets";
 import { auraMark, CharacterAuraTooltip } from "../engine/tooltip";
 import { legacyAuraRenderer } from "../legacy-aura-surface";
+import { NEARBY_AURA_LIMIT, resolveMapAuraMode } from "../map-aura-mode";
 import { useOwnCharacterAura } from "./use-own-character-aura";
 
 /**
@@ -105,6 +107,10 @@ export const useCharacterAuras = () => {
 
   const heroAura = own?.canChange ? own.auraId : null;
 
+  const mapAuras = resolveMapAuraMode(
+    useSettingsStore((state) => state.mapAuras),
+  );
+
   const targets = resolveCharacterAuraTargets({
     listed: list?.auras ?? [],
     heroAccountId,
@@ -119,6 +125,10 @@ export const useCharacterAuras = () => {
   const heroMark = useRef<string | null>(null);
 
   const hasAuras = targets.byCharacter.size > 0;
+
+  useEffect(() => {
+    renderer?.setOthersLimit(mapAuras === "nearby" ? NEARBY_AURA_LIMIT : null);
+  }, [renderer, mapAuras]);
 
   // Installed before the targets apply, so tips rebuilt for them get the mark.
   useEffect(() => {
@@ -142,7 +152,8 @@ export const useCharacterAuras = () => {
   useEffect(() => {
     if (!renderer) return;
     accountAuras.current = targets.byAccount;
-    renderer.setTargets(targets.byCharacter);
+    // Tips still mark the auras the map does not draw.
+    renderer.setTargets(mapAuras === "off" ? new Map() : targets.byCharacter);
 
     if (!canvas) return;
 
@@ -171,7 +182,7 @@ export const useCharacterAuras = () => {
     drawn.current = targets.byCharacter;
 
     auraRuntimeAdapter.refreshTips(changed, heroChanged);
-  }, [renderer, canvas, targets, heroAccountId, heroAura]);
+  }, [renderer, canvas, targets, mapAuras, heroAccountId, heroAura]);
 
   useEffect(() => {
     if (!renderer) return;
