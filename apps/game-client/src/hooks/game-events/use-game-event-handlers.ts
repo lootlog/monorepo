@@ -1,3 +1,4 @@
+import { useCharacterAuraGrantMenu } from "@/features/character-auras/hooks/use-character-aura-grant-menu";
 import { useCharacterAuras } from "@/features/character-auras/hooks/use-character-auras";
 import { useEffect, useRef } from "react";
 import { useGlobalStore } from "@/store/global.store";
@@ -12,6 +13,7 @@ export const useGameEventHandlers = () => {
   useCharacterTooltipCatchingGuilds();
   useCharacterTooltipGameEvents();
   useCharacterAuras();
+  useCharacterAuraGrantMenu();
   useOnlineCharacterOwners();
   useOtherCatchingGuildGlow();
   useWhoIsHereLootlogHighlight();

@@ -7,6 +7,8 @@ export const OwnCharacterAuraResponse = Schema.Struct({
   auraId: Schema.NullOr(CharacterAuraIdSchema),
   /** Whether the User may choose an aura; removing one is always allowed. */
   canChange: Schema.Boolean,
+  /** Whether the User may grant and revoke auras of other Users. */
+  canGrant: Schema.Boolean,
   /** Margonem accounts other players see the aura on. */
   gameAccountIds: Schema.Array(Schema.String),
 }).annotate({ identifier: "OwnCharacterAuraResponseDto" });

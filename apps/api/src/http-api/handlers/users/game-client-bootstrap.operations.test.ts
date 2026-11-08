@@ -158,10 +158,13 @@ const run = ({
               Effect.succeed({
                 auraId: null,
                 canChange: false,
+                canGrant: false,
                 gameAccountIds: [],
               }),
             updateOwnAura: notReadAtStartup,
             linkGameAccount: notReadAtStartup,
+            grantAuras: notReadAtStartup,
+            revokeAuras: notReadAtStartup,
           }),
         ),
       ]),

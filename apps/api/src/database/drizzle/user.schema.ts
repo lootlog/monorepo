@@ -75,6 +75,16 @@ export const userCharacterAuraTable = pgTable("UserCharacterAura", {
 });
 
 /**
+ * Users a global chat admin let choose any aura, beside the admins themselves.
+ * Revoking deletes the row together with the aura the User wears.
+ */
+export const userCharacterAuraGrantTable = pgTable("UserCharacterAuraGrant", {
+  userId: text("userId").notNull().primaryKey(),
+  grantedByUserId: text("grantedByUserId").notNull(),
+  grantedAt: timestamp("grantedAt", { mode: "date", precision: 3 }).notNull(),
+});
+
+/**
  * Margonem accounts a User proved to play: the gateway verified Margonem's
  * signed proof and announced it. An account shared by several Users belongs
  * to each of them; the latest `verifiedAt` names who plays it now.

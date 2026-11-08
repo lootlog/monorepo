@@ -164,6 +164,14 @@
       "aurora": "Zorza polarna",
       "conqueror": "Wola zdobywcy",
       "heavenly": "Smok Niebios"
+    },
+    "grants": {
+      "grant": "Nadaj aurę",
+      "revoke": "Odbierz aurę",
+      "granted": "Gracz może teraz wybrać aurę w ustawieniach Lootloga.",
+      "revoked": "Aura odebrana.",
+      "noUser": "Ten gracz nie ma Lootloga na tym koncie.",
+      "failed": "Nie udało się zmienić dostępu do aury."
     }
   },
   "general": {
