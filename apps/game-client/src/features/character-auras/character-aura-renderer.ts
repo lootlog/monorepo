@@ -1,4 +1,7 @@
-import type { CharacterAuraId } from "@lootlog/schema/character-aura";
+import {
+  isAdminCharacterAuraId,
+  type CharacterAuraId,
+} from "@lootlog/schema/character-aura";
 import type { RuntimeAuraCharacter } from "@/lib/margonem-runtime/adapters/aura-runtime-adapter";
 import { Aura } from "./engine/render";
 import type { AuraPlacement } from "./engine/placement";
@@ -29,6 +32,8 @@ export type AuraPaint = (context: CanvasRenderingContext2D) => void;
 export type ShownAura<C extends RuntimeAuraCharacter> = {
   character: C;
   place: AuraPlacement;
+  /** How far above its box the aura paints (the admin beacon), px. */
+  above: number;
   back: AuraPaint;
   front: AuraPaint;
 };
@@ -41,8 +46,12 @@ export interface CharacterAuraSurface<C extends RuntimeAuraCharacter> {
   getOther(characterId: string): C | null;
   /** Calls `onFrame` once per drawn frame until unsubscribed. */
   subscribeFrame(onFrame: () => void): (() => void) | null;
-  /** Whether an aura at `place` lands on what `context` draws. */
-  isInView(place: AuraPlacement, context: CanvasRenderingContext2D): boolean;
+  /** Whether an aura at `place`, reaching `above` its box, lands on what `context` draws. */
+  isInView(
+    place: AuraPlacement,
+    context: CanvasRenderingContext2D,
+    above: number,
+  ): boolean;
   /** Shows the aura of `key` this frame, or hides it when null. */
   present(key: string, shown: ShownAura<C> | null): void;
   /** Forgets everything shown for `key`. */
@@ -180,7 +189,10 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     }
   }
 
-  /** The targets drawn this frame: all, or the hero and the others nearest it. */
+  /**
+   * The targets drawn this frame: all, or the hero, every admin aura (meant to be seen
+   * across the map) and the others nearest the hero.
+   */
   private shownTargets(
     view: AuraView | null,
   ): ReadonlyMap<string, CharacterAuraId> {
@@ -193,9 +205,18 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
 
     const hero = view ? this.surface.getHero() : null;
     const nearest: { key: string; distance: number }[] = [];
+    const shown = new Map<string, CharacterAuraId>();
 
-    for (const key of this.targets.keys()) {
+    if (heroAura) shown.set(HERO_AURA_KEY, heroAura);
+
+    for (const [key, auraId] of this.targets) {
       if (key === HERO_AURA_KEY) continue;
+
+      if (isAdminCharacterAuraId(auraId)) {
+        shown.set(key, auraId);
+        continue;
+      }
+
       const other = view ? this.surface.getOther(key) : null;
 
       if (!other) continue;
@@ -209,10 +230,6 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
 
       nearest.push({ key, distance });
     }
-
-    const shown = new Map<string, CharacterAuraId>();
-
-    if (heroAura) shown.set(HERO_AURA_KEY, heroAura);
 
     for (const { key } of nearest
       .toSorted((a, b) => a.distance - b.distance)
@@ -261,6 +278,7 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
         ? {
             character,
             place: drawn.place,
+            above: drawn.aura.reachAbove(drawn.place),
             back: drawn.back,
             front: drawn.front,
           }
@@ -284,7 +302,14 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
         this.guard(
           key,
           () => {
-            if (drawn.place && this.surface.isInView(drawn.place, context))
+            if (
+              drawn.place &&
+              this.surface.isInView(
+                drawn.place,
+                context,
+                drawn.aura.reachAbove(drawn.place),
+              )
+            )
               drawn.aura.drawBack(context, drawn.place, 1);
           },
           `${key}:back`,
@@ -293,7 +318,14 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
         this.guard(
           key,
           () => {
-            if (drawn.place && this.surface.isInView(drawn.place, context))
+            if (
+              drawn.place &&
+              this.surface.isInView(
+                drawn.place,
+                context,
+                drawn.aura.reachAbove(drawn.place),
+              )
+            )
               drawn.aura.drawFront(context, drawn.place, 1);
           },
           `${key}:front`,

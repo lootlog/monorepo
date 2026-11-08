@@ -50,6 +50,7 @@ import { context2d, createCanvas, type AuraSilhouette } from "./silhouette";
 import { groundRadius, spawnFrame, type AuraPlacement } from "./placement";
 import { drawBurstScene } from "./bursts";
 import { drawGround } from "./ground";
+import { BEACON_HEIGHT, drawBeacon } from "./beacon";
 import {
   drawEclipse,
   drawMoon,
@@ -77,6 +78,9 @@ const TICK = 0.1;
 
 /** Room around the padded silhouette for particles drifting away from it. */
 const MARGIN = 28;
+
+/** Seconds after an admin aura shows before its arrival burst. */
+const ARRIVAL_BURST = 0.4;
 
 /** Alpha and colour steps of the pixel finish. */
 const ALPHA_LEVELS = 4;
@@ -298,6 +302,14 @@ export class Aura {
     this.field = new ParticleField(this.rng);
     this.preset = AURAS[id];
     this.rgb = colorsOf(this.preset);
+
+    // An admin arrives with a burst.
+    if (this.preset.beacon) this.nextBurst = ARRIVAL_BURST;
+  }
+
+  /** How far above its box the aura paints at `place`: the admin beacon's reach. */
+  reachAbove(place: AuraPlacement): number {
+    return this.preset.beacon && place.ground ? BEACON_HEIGHT : 0;
   }
 
   setPreset(id: CharacterAuraId): void {
@@ -559,6 +571,8 @@ export class Aura {
     ctx.save();
 
     try {
+      if (p.beacon && place.ground)
+        drawBeacon(ctx, p.id, place, this.rgb.tones, this.time, intensity);
       this.blit(ctx, this.back, place, "dim");
 
       if (!(p.bare && place.ground))
@@ -2280,12 +2294,13 @@ export function isAuraInView(
   place: AuraPlacement,
   width: number,
   height: number,
+  above = 0,
 ): boolean {
   const box = boxOf(place);
 
   return (
     box.ox < width + VIEW_SLACK &&
-    box.oy < height + VIEW_SLACK &&
+    box.oy - above < height + VIEW_SLACK &&
     box.ox + box.w > -VIEW_SLACK &&
     box.oy + box.h > -VIEW_SLACK
   );
@@ -2295,14 +2310,14 @@ export function isAuraInView(
  * The screen rect an aura at `place` can paint into this frame: its buffers
  * plus the drift a character or the camera makes between ticks.
  */
-export function auraScreenBox(place: AuraPlacement) {
+export function auraScreenBox(place: AuraPlacement, above = 0) {
   const box = boxOf(place);
 
   return {
     x: box.ox - VIEW_SLACK,
-    y: box.oy - VIEW_SLACK,
+    y: box.oy - above - VIEW_SLACK,
     width: box.w + VIEW_SLACK * 2,
-    height: box.h + VIEW_SLACK * 2,
+    height: box.h + above + VIEW_SLACK * 2,
   };
 }
 

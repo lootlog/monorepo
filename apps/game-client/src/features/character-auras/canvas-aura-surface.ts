@@ -52,13 +52,14 @@ const canvasAuraSurface: CharacterAuraSurface<RuntimeAuraCharacter> = {
   subscribeFrame: (onFrame) => rendererRuntimeAdapter.subscribeDraw(onFrame),
 
   // The game scales the context by its zoom.
-  isInView(place, context) {
+  isInView(place, context, above) {
     const { a: scaleX, d: scaleY } = context.getTransform();
 
     return isAuraInView(
       place,
       context.canvas.width / scaleX,
       context.canvas.height / scaleY,
+      above,
     );
   },
 

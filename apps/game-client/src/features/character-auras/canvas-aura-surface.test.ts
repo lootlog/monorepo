@@ -89,7 +89,7 @@ it("stops drawing an aura whose drawing keeps failing although its update succee
 });
 
 it("draws only the auras nearest the hero while others are limited, and all again without the limit", () => {
-  const game = setGame({ "1": 600, "2": 140, "3": 300 });
+  const game = setGame({ "1": 600, "2": 140, "3": 300, "4": 700 });
   const { context } = game.canvas.create(800, 600);
   canvasAuraRenderer.setOthersLimit(2);
   canvasAuraRenderer.setTargets(
@@ -97,15 +97,17 @@ it("draws only the auras nearest the hero while others are limited, and all agai
       ["1", "storm"],
       ["2", "frost"],
       ["3", "divine"],
+      // An admin aura is drawn however far it is, without taking a near aura's place.
+      ["4", "sovereign"],
     ]),
   );
 
   game.playFrame(context);
 
-  expect(game.drawnOrders().toSorted()).toEqual([2, 3]);
+  expect(game.drawnOrders().toSorted()).toEqual([2, 3, 4]);
 
   canvasAuraRenderer.setOthersLimit(null);
   game.playFrame(context);
 
-  expect(game.drawnOrders().toSorted()).toEqual([1, 2, 3]);
+  expect(game.drawnOrders().toSorted()).toEqual([1, 2, 3, 4]);
 });
