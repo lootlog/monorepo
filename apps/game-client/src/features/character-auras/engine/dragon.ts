@@ -120,17 +120,27 @@ export class Dragon {
   }
 }
 
-const JADE: Rgb = [44, 176, 116];
+/** A dragon's colours: its hide, the scales and fins, the belly and the eye. */
+export interface DragonScales {
+  hide: Rgb;
+  hideDark: Rgb;
+  scale: Rgb;
+  scaleDark: Rgb;
+  belly: Rgb;
+  eye: Rgb;
+}
 
-const JADE_DARK: Rgb = [16, 86, 58];
+/** The Heavenly Dragon's jade hide and gold scales. */
+export const JADE_DRAGON: DragonScales = {
+  hide: [44, 176, 116],
+  hideDark: [16, 86, 58],
+  scale: [255, 206, 84],
+  scaleDark: [176, 110, 30],
+  belly: [240, 226, 160],
+  eye: [255, 60, 40],
+};
 
-const GOLD: Rgb = [255, 206, 84];
-
-const GOLD_DARK: Rgb = [176, 110, 30];
-
-const BELLY: Rgb = [240, 226, 160];
-
-const EYE: Rgb = [255, 60, 40];
+const GOLD = JADE_DRAGON.scale;
 
 const WHITE: Rgb = [255, 255, 255];
 
@@ -158,6 +168,7 @@ export function drawDragon(
   front: boolean,
   all = false,
   roaring = false,
+  scales: DragonScales = JADE_DRAGON,
 ): void {
   const segments = dragon.segments;
   const n = segments.length;
@@ -169,14 +180,14 @@ export function drawDragon(
 
     if (seg && (all || seg.z > 0 === front)) {
       const [x, y] = project(seg, viewX, viewY);
-      drawSegment(b, Math.round(x), Math.round(y), i, n, shimmer);
+      drawSegment(b, Math.round(x), Math.round(y), i, n, shimmer, scales);
     }
   }
 
   const head = dragon.head;
 
   if (all || head.z > 0 === front)
-    drawHead(b, dragon, segments[5] ?? head, viewX, viewY);
+    drawHead(b, dragon, segments[5] ?? head, viewX, viewY, scales);
 }
 
 /**
@@ -191,24 +202,25 @@ function drawSegment(
   i: number,
   n: number,
   shimmer: number,
+  scales: DragonScales,
 ): void {
   const a = b.intensity;
   const dim = b.dim();
   const r = Math.max(0, Math.round(3.2 * (1 - (i / n) * 0.85)));
   const scale = i % 3 === 0;
-  dim.fillStyle = rgba(scale ? GOLD_DARK : JADE_DARK, a);
+  dim.fillStyle = rgba(scale ? scales.scaleDark : scales.hideDark, a);
   pixelDisc(dim, x, y, r);
-  dim.fillStyle = rgba(scale ? GOLD : JADE, a);
+  dim.fillStyle = rgba(scale ? scales.scale : scales.hide, a);
 
   if (r > 0) pixelDisc(dim, x, y - 1, r - 1);
 
-  if (i % 2 === 0 && r > 1) plot(dim, x, y + r - 1, BELLY, a);
+  if (i % 2 === 0 && r > 1) plot(dim, x, y + r - 1, scales.belly, a);
 
-  if (i % 4 === 1 && i < n - 3) plot(dim, x, y - r - 1, GOLD, a);
+  if (i % 4 === 1 && i < n - 3) plot(dim, x, y - r - 1, scales.scale, a);
 
-  if (i === n - 1) plot(b.lit(), x, y, GOLD, a);
+  if (i === n - 1) plot(b.lit(), x, y, scales.scale, a);
 
-  if (shimmer < 0) plot(b.lit(), x, y - r, GOLD, 0.8 * a);
+  if (shimmer < 0) plot(b.lit(), x, y - r, scales.scale, 0.8 * a);
   else if (Math.abs(shimmer - i) < 2) plot(b.lit(), x, y - 1, WHITE, 0.9 * a);
 }
 
@@ -219,6 +231,7 @@ function drawHead(
   back: Point3,
   viewX: number,
   viewY: number,
+  scales: DragonScales,
 ): void {
   const a = b.intensity;
   const dim = b.dim();
@@ -228,20 +241,47 @@ function drawHead(
   const y = Math.round(hy);
   const left = facing > 0 ? x - 2 : x - 3;
   // Head: a 6×4 snout-forward block, horns swept back, a glowing red eye.
-  dim.fillStyle = rgba(JADE_DARK, a);
+  dim.fillStyle = rgba(scales.hideDark, a);
   dim.fillRect(left, y - 2, 6, 4);
-  dim.fillStyle = rgba(JADE, a);
+  dim.fillStyle = rgba(scales.hide, a);
   dim.fillRect(left, y - 2, 6, 2);
-  plot(dim, x + facing * 3, y, BELLY, a);
-  plot(dim, x + facing * 3, y + 1, BELLY, a);
-  pixelLine(dim, x - facing * 2, y - 2, x - facing * 5, y - 5, GOLD, a, a);
-  pixelLine(dim, x - facing, y - 2, x - facing * 3, y - 5, GOLD_DARK, a, a);
+  plot(dim, x + facing * 3, y, scales.belly, a);
+  plot(dim, x + facing * 3, y + 1, scales.belly, a);
+  pixelLine(
+    dim,
+    x - facing * 2,
+    y - 2,
+    x - facing * 5,
+    y - 5,
+    scales.scale,
+    a,
+    a,
+  );
+  pixelLine(
+    dim,
+    x - facing,
+    y - 2,
+    x - facing * 3,
+    y - 5,
+    scales.scaleDark,
+    a,
+    a,
+  );
   const lit = b.lit();
-  plot(lit, x + facing, y - 1, EYE, a);
+  plot(lit, x + facing, y - 1, scales.eye, a);
   // Whiskers trail back along the body's path, drooping a pixel.
   const [bx, by] = project(back, viewX, viewY);
-  pixelLine(lit, x + facing * 3, y + 1, bx, by + 3, GOLD, 0.8 * a, 0.1 * a);
-  pixelLine(lit, x + facing * 3, y, bx, by - 3, GOLD, 0.6 * a, 0.1 * a);
+  pixelLine(
+    lit,
+    x + facing * 3,
+    y + 1,
+    bx,
+    by + 3,
+    scales.scale,
+    0.8 * a,
+    0.1 * a,
+  );
+  pixelLine(lit, x + facing * 3, y, bx, by - 3, scales.scale, 0.6 * a, 0.1 * a);
 }
 
 /** The pearl the dragon chases: a small glowing orb with a turning glint. */

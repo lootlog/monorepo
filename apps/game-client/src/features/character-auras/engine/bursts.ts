@@ -37,6 +37,9 @@ const PILLAR_BURSTS: ReadonlySet<BurstKind> = new Set([
   "rebirth",
 ]);
 
+/** The bursts that roll a pressure wave out from the body. */
+const WAVE_BURSTS: ReadonlySet<BurstKind> = new Set(["conqueror", "quake"]);
+
 /** Draws the running burst `kind` into the brush's layers. */
 export function drawBurstScene(
   kind: BurstKind,
@@ -45,6 +48,12 @@ export function drawBurstScene(
 ): void {
   if (PILLAR_BURSTS.has(kind)) {
     drawPillarBurst(b, scene);
+
+    return;
+  }
+
+  if (WAVE_BURSTS.has(kind)) {
+    drawConquerorBurst(b, scene);
 
     return;
   }
@@ -79,9 +88,6 @@ export function drawBurstScene(
       break;
     case "ascend":
       drawAscendBurst(b, scene);
-      break;
-    case "conqueror":
-      drawConquerorBurst(b, scene);
       break;
     case "eruption":
     case "freeze":

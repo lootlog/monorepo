@@ -111,6 +111,10 @@ export const OwnCharacterAuraResponseDtoAuraId = {
   eclipse: 'eclipse',
   thunderlord: 'thunderlord',
   phoenix: 'phoenix',
+  emperor: 'emperor',
+  quake: 'quake',
+  starlight: 'starlight',
+  seal: 'seal',
 } as const;
 
 export interface OwnCharacterAuraResponseDto {
@@ -156,6 +160,10 @@ export const UpdateOwnCharacterAuraDtoAuraId = {
   eclipse: 'eclipse',
   thunderlord: 'thunderlord',
   phoenix: 'phoenix',
+  emperor: 'emperor',
+  quake: 'quake',
+  starlight: 'starlight',
+  seal: 'seal',
 } as const;
 
 export interface UpdateOwnCharacterAuraDto {
@@ -195,6 +203,10 @@ export const CharacterAuraResponseDtoAuraId = {
   eclipse: 'eclipse',
   thunderlord: 'thunderlord',
   phoenix: 'phoenix',
+  emperor: 'emperor',
+  quake: 'quake',
+  starlight: 'starlight',
+  seal: 'seal',
 } as const;
 
 export interface CharacterAuraResponseDto {
@@ -11410,6 +11422,10 @@ export const GameClientBootstrapResponseDtoOutputCharacterAuraAuraId = {
   eclipse: 'eclipse',
   thunderlord: 'thunderlord',
   phoenix: 'phoenix',
+  emperor: 'emperor',
+  quake: 'quake',
+  starlight: 'starlight',
+  seal: 'seal',
 } as const;
 
 /**

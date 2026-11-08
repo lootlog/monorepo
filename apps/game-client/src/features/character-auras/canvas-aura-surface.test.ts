@@ -6,6 +6,9 @@ import { canvasAuraRenderer } from "./canvas-aura-surface";
 
 const DRAW_EVENT = "call-draw-add-to-renderer";
 
+/** The game's highest draw order when it reports none; the arrival draws above it. */
+const ABOVE_EVERYTHING = 11;
+
 /** A Margonem game whose renderer collects what the draw hook adds each frame. */
 function setGame(othersX: Record<string, number> = {}) {
   const canvas = installTestCanvas();
@@ -55,9 +58,15 @@ function setGame(othersX: Record<string, number> = {}) {
 
       return drawables.length;
     },
-    /** The characters whose auras the last frame drew, by their draw order. */
+    /** The draw orders of what the last frame added. */
     drawnOrders() {
       return [...new Set(drawables.map((d) => Math.round(d.getOrder())))];
+    },
+    /** The characters whose auras the last frame drew, by their draw order. */
+    characterOrders() {
+      return this.drawnOrders()
+        .filter((order) => order < ABOVE_EVERYTHING)
+        .toSorted();
     },
   };
 }
@@ -104,10 +113,39 @@ it("draws only the auras nearest the hero while others are limited, and all agai
 
   game.playFrame(context);
 
-  expect(game.drawnOrders().toSorted()).toEqual([2, 3, 4]);
+  expect(game.characterOrders()).toEqual([2, 3, 4]);
 
   canvasAuraRenderer.setOthersLimit(null);
   game.playFrame(context);
 
-  expect(game.drawnOrders().toSorted()).toEqual([1, 2, 3, 4]);
+  expect(game.characterOrders()).toEqual([1, 2, 3, 4]);
+});
+
+it("darkens the whole map above everything when an admin arrives, and lets the light back", () => {
+  let now = 0;
+  vi.spyOn(performance, "now").mockImplementation(() => now);
+  const game = setGame({ "7": 400 });
+  const { context } = game.canvas.create(800, 600);
+  canvasAuraRenderer.setTargets(
+    new Map([
+      ["7", "eclipse"],
+      ["8", "frost"],
+    ]),
+  );
+
+  const playFor = (seconds: number) => {
+    for (let t = 0; t < seconds; t += 0.1) {
+      now += 100;
+      game.playFrame(context);
+    }
+  };
+
+  playFor(1);
+
+  expect(game.drawnOrders()).toContain(ABOVE_EVERYTHING);
+
+  playFor(3);
+
+  expect(game.drawnOrders()).not.toContain(ABOVE_EVERYTHING);
+  expect(game.characterOrders()).toEqual([7, 8]);
 });

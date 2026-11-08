@@ -1,5 +1,5 @@
 import { clamp } from "es-toolkit";
-import { TAU, noise1, rgba, type Rgb } from "./math";
+import { TAU, mulberry32, noise1, rgba, type Rgb } from "./math";
 import {
   pixelArc,
   pixelDisc,
@@ -472,33 +472,22 @@ export function drawCrown(
     pixelGlint(lit, x + glint * 4, y, 1, [255, 255, 255], light, a * 0.9);
 }
 
-/** Wings of shadow: the feathers hanging off the leading edge. */
-const SHADOW_FEATHERS: Rgb = [16, 22, 26];
-
 /**
- * Wings: two wings spread from the shoulders behind the character, their leading edges lit,
- * raised and lowered every few lite `step`s. Without `feathers` they are dark wings of
- * shadow; with them, full wings of that colour, feathered densely. Pixels only.
+ * Wings of shadow: two dark wings spread from the shoulders behind the character, their
+ * leading edges lit, raised and lowered every few lite `step`s. Pixels only.
  */
-export function drawWings(
-  b: Brush,
-  place: AuraPlacement,
-  step: number,
-  feathers?: Rgb,
-): void {
+export function drawWings(b: Brush, place: AuraPlacement, step: number): void {
   const { bounds } = place.silhouette;
   const [light, mid] = b.tones;
   const a = b.intensity;
   const dim = b.dim();
   const lit = b.lit();
-  const full = feathers !== undefined;
-  const color = feathers ?? SHADOW_FEATHERS;
-  const count = full ? 8 : 4;
   const cx = place.x + bounds.x + bounds.w / 2;
   const sy = place.y + bounds.y + Math.round(bounds.h * 0.28);
   const span = Math.round(clamp(bounds.w * 0.8 + 8, 16, 28));
   // Four poses: up, mid, down, mid.
   const lift = [-4, 0, 4, 0][Math.floor(step / 3) % 4] ?? 0;
+  const shadow: Rgb = [16, 22, 26];
 
   for (const side of [-1, 1]) {
     const rootX = cx + side * 3;
@@ -506,32 +495,17 @@ export function drawWings(
     const tipY = sy - 10 + lift;
 
     // Feathers hanging from the leading edge, the outer ones longest.
-    for (let f = 1; f <= count; f++) {
-      const k = f / count;
+    for (let f = 1; f <= 4; f++) {
+      const k = f / 4;
       const px = rootX + (tipX - rootX) * k;
       const py = sy + (tipY - sy) * k;
-      const endX = px + side * k * 2.8;
-      const endY = py + 4 + k * 10;
-      pixelLine(dim, px, py, endX, endY, color, a * 0.9, a * 0.9);
-
-      if (full)
-        pixelLine(
-          dim,
-          px - side,
-          py + 1,
-          endX - side,
-          endY,
-          color,
-          a * 0.8,
-          a * 0.8,
-        );
-      plot(lit, endX, endY, k > 0.5 ? mid : light, a * 0.7);
+      const endX = px + side * f * 0.7;
+      const endY = py + 4 + f * 2.5;
+      pixelLine(dim, px, py, endX, endY, shadow, a * 0.9, a * 0.9);
+      plot(lit, endX, endY, f > 2 ? mid : light, a * 0.7);
     }
 
     pixelLine(lit, rootX, sy, tipX, tipY, mid, a, a * 0.8);
-
-    if (full)
-      pixelLine(lit, rootX, sy - 1, tipX, tipY - 1, light, a * 0.8, a * 0.6);
     plot(lit, tipX, tipY, light, a);
   }
 }
@@ -587,4 +561,55 @@ export function drawShards(
         intensity,
       );
   }
+}
+
+/**
+ * Quake: cracks in the air beside the character, as if it struck the air itself and the
+ * world splintered: lines out from a point at chest height and rings joining them. `seed`
+ * shapes them (a new one each quake), `strength` (0..1) is how bright they flash.
+ */
+export function drawAirCracks(
+  b: Brush,
+  place: AuraPlacement,
+  seed: number,
+  strength: number,
+): void {
+  if (strength <= 0.02) return;
+  const rng = mulberry32(seed);
+  const { bounds } = place.silhouette;
+  const side = rng() < 0.5 ? -1 : 1;
+  const cx = place.x + bounds.x + bounds.w / 2 + side * (bounds.w / 2 + 6);
+  const cy = place.y + bounds.y + bounds.h * 0.4;
+  const [light, mid] = b.tones;
+  const lit = b.lit();
+  const a = b.intensity * strength;
+  const spokes = 7;
+  const ends: [number, number][] = [];
+
+  for (let i = 0; i < spokes; i++) {
+    const angle = (i / spokes) * TAU + rng() * 0.6;
+    const length = 9 + rng() * 9;
+    let x = cx;
+    let y = cy;
+
+    // Each spoke in three kinked steps, so it reads as a crack, not a ray.
+    for (let step = 1; step <= 3; step++) {
+      const bend = angle + (rng() - 0.5) * 0.7;
+      const nx = cx + Math.cos(bend) * length * (step / 3);
+      const ny = cy + Math.sin(bend) * length * (step / 3);
+      pixelLine(lit, x, y, nx, ny, step === 1 ? light : mid, a, a * 0.8);
+
+      if (step === 2) ends.push([nx, ny]);
+      x = nx;
+      y = ny;
+    }
+  }
+
+  // The ring of cross-cracks halfway out.
+  for (const [i, [x0, y0]] of ends.entries()) {
+    const [x1, y1] = ends[(i + 1) % ends.length] ?? [x0, y0];
+    pixelLine(lit, x0, y0, x1, y1, mid, a * 0.7, a * 0.7);
+  }
+
+  pixelGlint(lit, cx, cy, 2, [255, 255, 255], light, a);
 }

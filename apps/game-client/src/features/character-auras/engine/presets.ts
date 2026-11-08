@@ -1,6 +1,7 @@
 import type { CharacterAuraId } from "@lootlog/schema/character-aura";
 import { heartbeat, noise1 } from "./math";
 import type { EmitterSpec } from "./particles";
+import type { DragonScales } from "./dragon";
 
 /** Item rarities of the game, for when auras become rewards; admin auras stand above them. */
 type AuraTier = "unique" | "heroic" | "legendary" | "mythic";
@@ -27,8 +28,8 @@ type AuraFx =
   | "fire-dragon"
   | "crown"
   | "wings"
-  | "feather-wings"
-  | "eclipse";
+  | "eclipse"
+  | "quake";
 
 /**
  * The aura's own short animation every few seconds, like the burst of the game's animated
@@ -55,7 +56,8 @@ export type BurstKind =
   | "roar"
   | "coronation"
   | "judgement"
-  | "rebirth";
+  | "rebirth"
+  | "quake";
 
 type GroundStyle =
   | "disc"
@@ -99,7 +101,9 @@ export type TipDeco =
   | "seraph"
   | "eclipse"
   | "thunder-crown"
-  | "phoenix";
+  | "phoenix"
+  | "emperor"
+  | "quake";
 
 export interface AuraPreset {
   id: CharacterAuraId;
@@ -145,6 +149,15 @@ export interface AuraPreset {
    * the aura's burst as soon as it shows (when the admin enters the map).
    */
   beacon?: boolean;
+  /**
+   * What tears across the map with an admin's arrival shockwave: black lightning of the
+   * will, or cracks as from a quake.
+   */
+  arrival?: "will" | "quake";
+  /** An overcast sky and lightning over the whole map while the aura is on it. */
+  storm?: boolean;
+  /** The dragon's colours, for an aura with the `dragon` effect; jade and gold otherwise. */
+  dragonScales?: DragonScales;
 }
 
 const breathe = (period: number, depth: number) => (t: number) =>
@@ -1635,7 +1648,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     tier: "mythic",
     beacon: true,
     description:
-      "Za plecami biją białe skrzydła o złotych krawędziach, nad głową świeci aureola na tle boskich promieni, a co chwilę z nieba spada słup światła.",
+      "Nad głową świeci aureola na tle boskich promieni, wokół krążą trzy jasne gwiazdy, z góry opadają pióra, a co chwilę z nieba spada słup światła.",
     particles: ["#ffffff", "#fff6dc", "#ffe39a", "#d8e4ff"],
     rim: "#fff6dc",
     haze: "#ffe39a",
@@ -1680,7 +1693,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
         front: 1,
       },
     ],
-    fx: ["halo", "feather-wings", "rays"],
+    fx: ["halo", "rays", "orbits"],
     burst: "coronation",
     tip: "seraph",
     nick: ["#ffffff", "#ffe39a", "#c8962a"],
@@ -1736,6 +1749,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
         front: 0.8,
       },
     ],
+    arrival: "will",
     fx: ["eclipse", "lightning", "haki"],
     burst: "conqueror",
     tip: "eclipse",
@@ -1745,9 +1759,10 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   thunderlord: {
     id: "thunderlord",
     tier: "mythic",
+    storm: true,
     beacon: true,
     description:
-      "Nad koroną kłębi się burzowa chmura, po sylwetce przeskakują iskry, a co chwilę trzy pioruny naraz biją wokół postaci.",
+      "Gdy jest na mapie, niebo nad całą mapą się chmurzy i co chwilę gdzieś bije piorun; nad koroną kłębi się burzowa chmura, a co chwilę trzy pioruny naraz biją wokół postaci.",
     particles: ["#ffffff", "#fff3b0", "#ffd34a", "#7cc8ff", "#3a6bff"],
     rim: "#ffe08a",
     haze: "#3a6bff",
@@ -1810,7 +1825,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     tier: "mythic",
     beacon: true,
     description:
-      "Za plecami biją ogniste skrzydła feniksa, płomienie liżą sylwetkę, a co chwilę feniks odradza się w słupie ognia.",
+      "Płomienie liżą sylwetkę, za nią płoną ogniste promienie, wokół krąży ognisty smok, a co chwilę feniks odradza się w słupie ognia.",
     particles: ["#fff3b0", "#ffb22e", "#ff5a14", "#c4160e", "#3a2622"],
     rim: "#ff9a3a",
     haze: "#ff3d10",
@@ -1862,7 +1877,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
         front: 0.7,
       },
     ],
-    fx: ["feather-wings", "flicker-tongues", "rays"],
+    fx: ["flicker-tongues", "rays", "fire-dragon"],
     burst: "rebirth",
     tip: "phoenix",
     tipEmitters: [
@@ -1882,5 +1897,198 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     ],
     nick: ["#fff3b0", "#ff8a1e", "#d4180c"],
     tones: ["#fff3b0", "#ff8a1e", "#c4160e"],
+  },
+  emperor: {
+    id: "emperor",
+    tier: "mythic",
+    beacon: true,
+    arrival: "will",
+    description:
+      "Wokół postaci owija się lazurowy smok, czarne pioruny woli trzaskają w fioletowej poświacie, a przy wejściu na mapę ich burza przetacza się po całym ekranie.",
+    particles: ["#e0a8ff", "#a04cff", "#4a1080", "#221a2a", "#4e4458"],
+    rim: "#b45cff",
+    haze: "#06000c",
+    near: 0.9,
+    far: 0.75,
+    darkHaze: true,
+    inner: 0.05,
+    pulse: (t) => 0.85 + Math.max(0, noise1(t * 6, 29)) * 0.3,
+    ground: { style: "cracks", color: "#a04cff", alpha: 0.75 },
+    emitters: [
+      {
+        kind: "spark",
+        rate: 3,
+        from: "edge",
+        life: [0.2, 0.4],
+        speed: [40, 70],
+        spread: 6.28,
+        outward: 0.8,
+        size: [0.8, 1.2],
+        colors: 2,
+        front: 0.6,
+      },
+    ],
+    fx: ["dragon", "lightning", "haki"],
+    burst: "conqueror",
+    tip: "emperor",
+    nick: ["#f0c8ff", "#a04cff", "#1a0428"],
+    tones: ["#e0a0ff", "#9a3aff", "#14031f"],
+    dragonScales: {
+      hide: [70, 140, 230],
+      hideDark: [28, 58, 140],
+      scale: [190, 222, 255],
+      scaleDark: [90, 120, 200],
+      belly: [222, 236, 255],
+      eye: [255, 50, 40],
+    },
+  },
+  quake: {
+    id: "quake",
+    tier: "mythic",
+    beacon: true,
+    arrival: "quake",
+    description:
+      "Powietrze obok postaci pęka jak szkło, ziemia rozstępuje się pod stopami, a każdy wstrząs ciska kamieniami; przy wejściu na mapę pęknięcia przebiegają przez cały ekran.",
+    particles: ["#ffffff", "#d8f0ff", "#8fc8ff", "#5a6a80", "#2a3440"],
+    rim: "#e8f6ff",
+    haze: "#4a8acc",
+    near: 0.85,
+    far: 0.55,
+    inner: 0.07,
+    pulse: (t) => 0.88 + Math.max(0, noise1(t * 4, 37)) * 0.25,
+    ground: { style: "cracks", color: "#cfeaff", alpha: 0.75 },
+    emitters: [
+      {
+        kind: "grain",
+        rate: 4,
+        from: "feet-rim",
+        life: [1.4, 2.2],
+        speed: [20, 40],
+        spread: 0.6,
+        gravity: 60,
+        size: [1, 2],
+        colors: 2,
+        colorFrom: 3,
+        front: 0.5,
+        land: "bounce",
+        groundOnly: true,
+      },
+      {
+        kind: "smoke",
+        rate: 3,
+        from: "feet-rim",
+        life: [1, 1.6],
+        speed: [8, 16],
+        spread: 1.2,
+        drag: 0.4,
+        size: [4, 7],
+        colorFrom: 3,
+        front: 0.3,
+      },
+      {
+        kind: "mote",
+        rate: 4,
+        from: "edge",
+        life: [0.8, 1.4],
+        speed: [6, 12],
+        spread: 6.28,
+        outward: 0.6,
+        size: [0.7, 1.2],
+        colors: 3,
+        front: 0.5,
+      },
+    ],
+    fx: ["quake"],
+    burst: "quake",
+    tip: "quake",
+    nick: ["#ffffff", "#a8d8ff", "#2a4a7a"],
+    tones: ["#ffffff", "#a8d8ff", "#2a4a7a"],
+  },
+  // Calmer admin auras: no beacon, no arrival.
+  starlight: {
+    id: "starlight",
+    tier: "mythic",
+    description:
+      "Wokół postaci spokojnie krążą trzy gwiazdy, srebrny pył mieni się na jej obrysie, a pod stopami lśni cienki krąg.",
+    particles: ["#ffffff", "#d8e4ff", "#9ab4ff", "#c8a8ff"],
+    rim: "#d8e4ff",
+    haze: "#5a6cff",
+    near: 0.75,
+    far: 0.45,
+    inner: 0.05,
+    pulse: breathe(4.5, 0.06),
+    ground: { style: "ring", color: "#9ab4ff", alpha: 0.4 },
+    emitters: [
+      {
+        kind: "glint",
+        rate: 1.6,
+        from: "body",
+        life: [0.6, 1.1],
+        speed: [0, 2],
+        size: [3, 5],
+        colors: 4,
+        front: 0.6,
+      },
+      {
+        kind: "mote",
+        rate: 4,
+        from: "edge",
+        life: [1.2, 2],
+        speed: [3, 8],
+        spread: 6.28,
+        outward: 0.5,
+        drag: 0.3,
+        size: [0.6, 1.1],
+        colors: 4,
+        front: 0.5,
+      },
+    ],
+    fx: ["orbits"],
+    burst: "comet",
+    tip: "constellation",
+    nick: ["#ffffff", "#c8d4ff", "#8a7aff"],
+    tones: ["#ffffff", "#c8d4ff", "#4a4aa8"],
+  },
+  seal: {
+    id: "seal",
+    tier: "mythic",
+    description:
+      "Pod stopami powoli obraca się złoty krąg z pieczęcią, wokół postaci krążą złote znaki, a w górę unoszą się drobne iskry.",
+    particles: ["#fff6c8", "#ffd34a", "#e8a020", "#ffffff"],
+    rim: "#ffe08a",
+    haze: "#e8a020",
+    near: 0.75,
+    far: 0.45,
+    inner: 0.05,
+    pulse: breathe(3.6, 0.06),
+    ground: { style: "circle", color: "#ffcf5a", alpha: 0.6 },
+    emitters: [
+      {
+        kind: "mote",
+        rate: 4,
+        from: "feet-rim",
+        life: [1.2, 2],
+        speed: [8, 16],
+        spread: 0.3,
+        size: [0.7, 1.2],
+        colors: 3,
+        front: 0.5,
+      },
+      {
+        kind: "glint",
+        rate: 0.8,
+        from: "edge-high",
+        life: [0.4, 0.7],
+        speed: [0, 1],
+        size: [3, 5],
+        colorFrom: 3,
+        front: 1,
+      },
+    ],
+    fx: ["glyph-orbit"],
+    burst: "ascend",
+    tip: "sigils",
+    nick: ["#fff6c8", "#ffc94a", "#a8661a"],
+    tones: ["#fff6c8", "#ffc94a", "#8a5414"],
   },
 };

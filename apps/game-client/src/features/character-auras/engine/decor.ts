@@ -631,19 +631,8 @@ function drawTipCrown({ b, L, T, W, light, mid, dark, a }: TipFrame): void {
     pixelGlint(b.lit(), x + glint * 4, y, 1, [255, 255, 255], light, a);
 }
 
-/** Small wings off both sides of the box, beating slowly: dark, or the aura's own feathers. */
-function drawTipWings({
-  b,
-  deco,
-  L,
-  T,
-  R,
-  light,
-  mid,
-  dark,
-  a,
-}: TipFrame): void {
-  const feathers: Rgb = deco === "wings" ? [16, 22, 26] : dark;
+/** Small dark wings off both sides of the box, beating slowly. */
+function drawTipWings({ b, L, T, R, light, mid, a }: TipFrame): void {
   const lift = b.tick % 12 < 6 ? 0 : 2;
 
   for (const [x, side] of [
@@ -653,7 +642,7 @@ function drawTipWings({
     for (let f = 0; f < 3; f++) {
       const tipX = x + side * (9 - f * 2);
       const tipY = T + 2 - lift + f * 3;
-      pixelLine(b.dim(), x, T + 6, tipX, tipY, feathers, a, a * 0.8);
+      pixelLine(b.dim(), x, T + 6, tipX, tipY, [16, 22, 26], a, a * 0.8);
       plot(b.lit(), tipX, tipY, f === 0 ? light : mid, a);
     }
   }
@@ -731,7 +720,7 @@ const TIP_DECO_PAINTERS: Record<
   ],
   seraph: [
     { front: true, draw: drawTipHalo },
-    { front: true, draw: drawTipWings },
+    { front: true, draw: drawGemCorners },
   ],
   eclipse: [
     { front: false, draw: drawTendrils },
@@ -741,7 +730,16 @@ const TIP_DECO_PAINTERS: Record<
     { front: true, draw: drawTipCrown },
     { front: true, draw: drawBoltCorners },
   ],
-  phoenix: [{ front: true, draw: drawTipWings }],
+  phoenix: [{ front: true, draw: drawGemCorners }],
+  emperor: [
+    { front: false, draw: drawTendrils },
+    { front: true, draw: drawTipCrown },
+    { front: true, draw: drawCracks },
+  ],
+  quake: [
+    { front: true, draw: drawCracks },
+    { front: true, draw: drawGemCorners },
+  ],
 };
 
 /** The aura's own dressing round a tooltip box; `front` draws what may overlap the box. */

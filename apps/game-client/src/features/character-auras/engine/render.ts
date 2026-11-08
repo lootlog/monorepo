@@ -52,6 +52,15 @@ import { drawBurstScene } from "./bursts";
 import { drawGround } from "./ground";
 import { BEACON_HEIGHT, drawBeacon } from "./beacon";
 import {
+  ARRIVAL_BURST,
+  drawArrival,
+  eventDarkness,
+  pulseStarted,
+} from "./arrival";
+import { drawAvatar } from "./avatar";
+import { drawStorm, STORM_GLOOM } from "./storm";
+import {
+  drawAirCracks,
   drawEclipse,
   drawMoon,
   drawOrbits,
@@ -78,9 +87,6 @@ const TICK = 0.1;
 
 /** Room around the padded silhouette for particles drifting away from it. */
 const MARGIN = 28;
-
-/** Seconds after an admin aura shows before its arrival burst. */
-const ARRIVAL_BURST = 0.4;
 
 /** Alpha and colour steps of the pixel finish. */
 const ALPHA_LEVELS = 4;
@@ -142,6 +148,7 @@ const BURST_DURATION: Record<BurstKind, number> = {
   coronation: 1.4,
   judgement: 0.6,
   rebirth: 1.2,
+  quake: 0.9,
 };
 
 /** An offscreen buffer of one side's light (`lit`) or covering (`dim`) pixels. */
@@ -265,6 +272,10 @@ export class Aura {
   /** The preset's burst animation: progress 0..1, or -1 while resting. */
   private burst = -1;
   private nextBurst = 2.5;
+  /** Seconds since the aura showed, for an admin's arrival. */
+  private age = 0;
+  /** Shapes the quake's crack in the air; a new one each quake. */
+  private quakeSeed = 1;
   /** Props follow the head through this spring, so they trail a walk. */
   private spring: Spring | null = null;
   private lastCenter: { x: number; y: number } | null = null;
@@ -307,6 +318,62 @@ export class Aura {
     if (this.preset.beacon) this.nextBurst = ARRIVAL_BURST;
   }
 
+  /**
+   * How dark the aura makes the whole map now, 0..1: an admin's arrival and pulses, the
+   * storm's overcast; 0 for every other aura.
+   */
+  mapDarkness(): number {
+    const p = this.preset;
+    const event = p.beacon ? eventDarkness(this.age) : 0;
+
+    return Math.max(event, p.storm ? STORM_GLOOM : 0);
+  }
+
+  /**
+   * Draws the aura's effects over the whole map, `width` × `height` in the context's units:
+   * the storm, the arrival's night with the admin lit and its shockwave, the beacon over it.
+   */
+  drawMapEffects(
+    ctx: CanvasRenderingContext2D,
+    place: AuraPlacement,
+    width: number,
+    height: number,
+  ): void {
+    const p = this.preset;
+
+    if (!place.ground || !(p.beacon || p.storm)) return;
+    const [light, mid] = this.rgb.tones;
+    ctx.save();
+
+    try {
+      if (p.storm)
+        drawStorm(
+          ctx,
+          width,
+          height,
+          this.time,
+          [place.viewX, place.viewY],
+          light,
+          mid,
+        );
+
+      if (p.beacon) {
+        drawArrival(ctx, place, this.age, width, height, light, mid, p.arrival);
+        drawBeacon(ctx, p.id, place, this.rgb.tones, this.time, 1);
+      }
+    } finally {
+      ctx.restore();
+    }
+  }
+
+  /** How far the transformation's giant has risen, 0..1: through events and bursts. */
+  private avatarStrength(): number {
+    const burst =
+      this.burst >= 0 ? Math.sin(Math.PI * clamp(this.burst, 0, 1)) : 0;
+
+    return Math.max(eventDarkness(this.age), burst);
+  }
+
   /** How far above its box the aura paints at `place`: the admin beacon's reach. */
   reachAbove(place: AuraPlacement): number {
     return this.preset.beacon && place.ground ? BEACON_HEIGHT : 0;
@@ -329,6 +396,12 @@ export class Aura {
   }
 
   update(dt: number, place: AuraPlacement | null, intensity: number): void {
+    const before = this.age;
+    this.age += Math.max(0, dt);
+
+    // Each later pulse over the map brings the burst too.
+    if (this.preset.beacon && pulseStarted(before, this.age))
+      this.nextBurst = Math.min(this.nextBurst, ARRIVAL_BURST);
     this.carry += Math.max(0, dt);
     let steps = 0;
 
@@ -571,8 +644,20 @@ export class Aura {
     ctx.save();
 
     try {
-      if (p.beacon && place.ground)
+      if (p.beacon && place.ground) {
         drawBeacon(ctx, p.id, place, this.rgb.tones, this.time, intensity);
+        const giant = this.avatarStrength();
+
+        if (giant > 0.02)
+          drawAvatar(
+            ctx,
+            place,
+            this.rgb.tones[1],
+            Boolean(p.darkHaze),
+            giant * intensity,
+          );
+      }
+
       this.blit(ctx, this.back, place, "dim");
 
       if (!(p.bare && place.ground))
@@ -602,6 +687,15 @@ export class Aura {
       if (p.fx.includes("orbits")) drawOrbits(b, place, true, this.rgb.rim);
 
       if (p.fx.includes("lightning")) this.drawBolts(place, intensity);
+
+      // A faint crack hangs in the air between quakes and flashes with each one.
+      if (p.fx.includes("quake") && place.ground)
+        drawAirCracks(
+          b,
+          place,
+          this.quakeSeed,
+          0.3 + 0.7 * this.burstSwell("quake"),
+        );
       this.drawDecor(b, place, true);
       this.drawBurst(b, place, true);
     });
@@ -718,9 +812,6 @@ export class Aura {
     if (fx.includes("crown") && front) drawCrown(b, place, raised, step);
 
     if (fx.includes("wings") && !front) drawWings(b, place, step);
-
-    if (fx.includes("feather-wings") && !front)
-      drawWings(b, place, step, b.tones[2]);
   }
 
   /** Copies a side's buffers to the screen: body ones follow the character, world ones the camera. */
@@ -1597,6 +1688,14 @@ export class Aura {
         this.burstRing(place, frame, frame.feet.rx * 1.8, 1);
 
         return true;
+      case "quake":
+        // A new crack in the air, and the ground heaves.
+        this.quakeSeed = Math.floor(this.rng() * 1e9);
+        this.flash = 1;
+        this.startConqueror(place, frame, k, false);
+        this.burstRing(place, frame, frame.feet.rx * 3, 0);
+
+        return true;
       case "judgement":
         this.startJudgement(place, frame, k);
 
@@ -1702,8 +1801,9 @@ export class Aura {
     place: AuraPlacement,
     frame: SpawnFrame,
     k: number,
+    bolts = true,
   ): void {
-    this.hakiBolts(place, 7, true);
+    if (bolts) this.hakiBolts(place, 7, true);
     this.field.emit(
       {
         kind: "grain",
@@ -1867,6 +1967,7 @@ export class Aura {
         front,
         false,
         this.roaring,
+        this.preset.dragonScales,
       );
     else if (front)
       drawDragon(
@@ -1877,6 +1978,7 @@ export class Aura {
         front,
         true,
         this.roaring,
+        this.preset.dragonScales,
       );
 
     if (place.ground ? this.pearl.z > 0 !== front : !front) return;
