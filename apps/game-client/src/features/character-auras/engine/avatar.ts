@@ -64,6 +64,13 @@ function tint(
   return canvas;
 }
 
+/** The top of the giant over the character at `place` at its full height, px. */
+export function avatarTop(place: AuraPlacement): number {
+  return Math.floor(
+    place.feetY - (place.feetY - (place.y - place.silhouette.pad)) * SCALE,
+  );
+}
+
 /**
  * Draws the giant behind the character at `place`, `strength` (0..1) grown and opaque:
  * dark when `dark`, else additive light in `color`.
