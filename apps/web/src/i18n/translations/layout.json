@@ -60,6 +60,12 @@
     "open": "Otwórz wiki",
     "dismiss": "Ukryj ogłoszenie"
   },
+  "supportAnnouncement": {
+    "title": "Wesprzyj Lootloga",
+    "description": "Lootlog jest darmowy i\u00a0open source. Każda kawa pomaga utrzymać serwery i\u00a0rozwijać nowe funkcje.",
+    "open": "Postaw kawę",
+    "dismiss": "Ukryj ogłoszenie"
+  },
   "breadcrumbs": {
     "statistics": "Analityka",
     "opponents": "Przeciwnicy",

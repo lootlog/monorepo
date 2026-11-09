@@ -14,6 +14,7 @@ import { Outlet, useMatches } from "@tanstack/react-router";
 import { usePresentedPathname } from "@/lib/router/use-presented-location";
 import { useTranslation } from "react-i18next";
 import { GlobalModals } from "@/components/common/global-modals";
+import { SupportAnnouncement } from "@/components/common/support-announcement";
 import { getRouteErrorStatus } from "@/lib/router/route-errors";
 
 export const AppLayout = () => {
@@ -79,6 +80,8 @@ export const AppLayout = () => {
       >
         {t("layout.navigation.skipToContent")}
       </a>
+      {/* Loaded with the shell: arriving later, it would push the page down. */}
+      <SupportAnnouncement />
       {/* Desktop navigation stays expanded; only the mobile sheet opens and
           closes, from its menu button, so Ctrl/Cmd+B stays with the page. */}
       <SidebarProvider
