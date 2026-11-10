@@ -38,6 +38,7 @@ import { makeEventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import { makeEventGapReads } from "#src/events/monitoring/event-gap-reads";
 import { makeEventReadCache } from "#src/events/catalog/event-read-cache.service";
 import { applicationLogger } from "#src/shared/application-logger";
+import { createOrganizationLootRecordFixture } from "./loot-fixtures.js";
 
 describe("Read cache Dragonfly integration", () => {
   let runtime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
@@ -839,11 +840,13 @@ describe("Read cache Dragonfly integration", () => {
             .returning();
 
           if (!loot) throw new Error("Missing loot fixture");
-          yield* db.insert(organizationLootRecordTable).values({
-            guildId: guild.id,
-            lootId: loot.id,
-            updatedAt: new Date(),
-          });
+          yield* db.insert(organizationLootRecordTable).values(
+            createOrganizationLootRecordFixture({
+              guildId: guild.id,
+              lootId: loot.id,
+              updatedAt: new Date(),
+            }),
+          );
 
           const operations = makeLootsOperations({
             persistence: makeLootPersistence(db),

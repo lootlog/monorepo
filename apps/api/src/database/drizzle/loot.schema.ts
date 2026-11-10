@@ -350,10 +350,13 @@ export const organizationLootRecordTable = pgTable(
     // immutable once the loot is accepted, and both are filters of the
     // organization's loot list, so holding them here lets the list scan this
     // table alone: the join to Loot that only tested them was 80% of the
-    // buffers one page read. Nullable until the backfill of existing records
-    // completes; the list keeps joining Loot while they can be null.
-    lootWorld: text("lootWorld"),
-    lootCreatedAt: timestamp("lootCreatedAt", { mode: "date", precision: 3 }),
+    // buffers one page read. NOT NULL is what lets the page filter on them
+    // instead of on Loot, so the constraint is the contract, not a hint.
+    lootWorld: text("lootWorld").notNull(),
+    lootCreatedAt: timestamp("lootCreatedAt", {
+      mode: "date",
+      precision: 3,
+    }).notNull(),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
       .defaultNow()
       .notNull(),

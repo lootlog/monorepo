@@ -38,6 +38,7 @@ import {
   type NotificationDispatchStore,
 } from "#src/notifications/jobs/notification-job-dispatch";
 import { NotificationJobStatus } from "#src/notifications/notification-enums";
+import { createOrganizationLootRecordFixture } from "../../../test/loot-fixtures.js";
 
 const job = (active: boolean): NotificationDispatchJob => ({
   ...createNotificationJobFixture({
@@ -144,9 +145,13 @@ describe("notification job dispatch", () => {
             .values({ lootId: id, npcSnapshotId: id }),
         );
         await run(
-          database
-            .insert(organizationLootRecordTable)
-            .values({ lootId: id, guildId: "organization", updatedAt: now }),
+          database.insert(organizationLootRecordTable).values(
+            createOrganizationLootRecordFixture({
+              lootId: id,
+              guildId: "organization",
+              updatedAt: now,
+            }),
+          ),
         );
         await run(
           database.insert(notificationJobTable).values(
