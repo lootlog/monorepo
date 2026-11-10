@@ -346,6 +346,14 @@ export const organizationLootRecordTable = pgTable(
     guildId: text("guildId").notNull(),
     archivedAt: timestamp("archivedAt", { mode: "date", precision: 3 }),
     archivedByMemberId: integer("archivedByMemberId"),
+    // The world and creation time of the loot this record stands for. Both are
+    // immutable once the loot is accepted, and both are filters of the
+    // organization's loot list, so holding them here lets the list scan this
+    // table alone: the join to Loot that only tested them was 80% of the
+    // buffers one page read. Nullable until the backfill of existing records
+    // completes; the list keeps joining Loot while they can be null.
+    lootWorld: text("lootWorld"),
+    lootCreatedAt: timestamp("lootCreatedAt", { mode: "date", precision: 3 }),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
       .defaultNow()
       .notNull(),
@@ -357,10 +365,14 @@ export const organizationLootRecordTable = pgTable(
       table["lootId"],
     ),
     index("OrganizationLootRecord_lootId_idx").on(table["lootId"]),
-    index("OrganizationLootRecord_guildId_archivedAt_lootId_idx").on(
+    // Replaces OrganizationLootRecord_guildId_archivedAt_lootId_idx, which the
+    // planner never chose: it carries the world so a world-filtered page is an
+    // index range of exactly `limit` rows instead of the guild's whole history.
+    index("OrganizationLootRecord_guildId_archivedAt_world_lootId_idx").on(
       table["guildId"],
       table["archivedAt"],
-      table["lootId"],
+      table["lootWorld"],
+      table["lootId"].desc(),
     ),
     index("OrganizationLootRecord_archivedByMemberId_notnull_idx")
       .on(table["archivedByMemberId"])
