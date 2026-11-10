@@ -11,6 +11,10 @@ import { AuthRoutes } from "./server.js";
 import { OpenApi } from "effect/http-api";
 import { AuthApi } from "#src/http-api/auth-api";
 
+const SESSION_TOKEN_COOKIE = "local.session_token";
+
+const SESSION_DATA_COOKIE = "local.session_data";
+
 const makeRuntime = (
   authenticated = true,
   idpTokenSecret: string | null = "idp-test-secret",
@@ -35,9 +39,23 @@ const makeRuntime = (
     ),
   );
 
+  const getSessionWithCookies = mock(
+    async ({ headers }: { headers: Headers }) => ({
+      session: await getSession({ headers }),
+      setCookie: authenticated
+        ? [`${SESSION_DATA_COOKIE}=cached; Path=/; Secure; HttpOnly`]
+        : [],
+    }),
+  );
+
   const auth = {
+    sessionCookieNames: {
+      token: SESSION_TOKEN_COOKIE,
+      data: SESSION_DATA_COOKIE,
+    },
     api: {
       getSession,
+      getSessionWithCookies,
       getJwks: mock(() => Promise.resolve({ keys: [] })),
       getAccessToken: mock(() =>
         Promise.resolve({
@@ -88,6 +106,7 @@ const makeRuntime = (
     betterAuthHandler,
     dispose: boundary.dispose,
     getSession,
+    getSessionWithCookies,
     getAccessToken: auth.api.getAccessToken,
     run,
   };
@@ -220,11 +239,41 @@ describe("Auth HttpApi contract", () => {
     expect(await response.json()).toEqual({ status: "OK" });
 
     const getSessionHeaders =
-      runtime.getSession.mock.calls.at(-1)?.[0]?.headers;
+      runtime.getSessionWithCookies.mock.calls.at(-1)?.[0]?.headers;
 
     expect(getSessionHeaders?.get("cookie")).toBe(
       "local.session_token=test-session",
     );
+  });
+
+  it("returns the refreshed cookie cache so the next request skips the session store", async () => {
+    const response = await runtime.run(
+      new Request("http://localhost/auth/verify", {
+        headers: { cookie: `${SESSION_TOKEN_COOKIE}=test-session` },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.getSetCookie()).toEqual([
+      expect.stringContaining(`${SESSION_DATA_COOKIE}=cached`),
+    ]);
+  });
+
+  it("does not read the session store without a session token cookie", async () => {
+    const fresh = makeRuntime();
+
+    try {
+      const response = await fresh.run(
+        new Request("http://localhost/auth/verify", {
+          headers: { "x-api-key": "unknown" },
+        }),
+      );
+
+      expect(response.status).toBe(401);
+      expect(fresh.getSessionWithCookies).not.toHaveBeenCalled();
+    } finally {
+      await fresh.dispose();
+    }
   });
 
   it("no longer exposes the realtime ticket endpoint", async () => {
