@@ -64,10 +64,7 @@ export class ReadyRoomData extends Context.Service<
       accessibleGuildIds: ReadonlyArray<string>,
       world: string,
     ) => DataEffect;
-    readonly list: (
-      identity: ReadyRoomIdentity,
-      accessibleGuildIds: ReadonlyArray<string>,
-    ) => DataEffect;
+    readonly list: (identity: ReadyRoomIdentity) => DataEffect;
     readonly get: (
       identity: ReadyRoomIdentity,
       notificationId: string,
@@ -199,8 +196,7 @@ export const activeReadyRooms = Effect.fn("activeReadyRooms")(function* (
 
 const listReadyRooms = Effect.fn("listReadyRooms")(function* () {
   const current = yield* identity;
-  const guildIds = yield* accessibleGuildIds(current.discordId);
-  const value = yield* data((service) => service.list(current, guildIds));
+  const value = yield* data((service) => service.list(current));
 
   return yield* decode(PartyReadyRoomsDomainResponse, value);
 });

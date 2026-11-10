@@ -384,8 +384,7 @@ export const makeReadyRoomDataLayer = (
           operation(createRoom(context, identity, guildId, payload)),
         active: (identity, guildIds, world) =>
           operation(activeRooms(context, identity, guildIds, world)),
-        list: (identity, guildIds) =>
-          operation(listRooms(context, identity, guildIds)),
+        list: (identity) => operation(listRooms(context, identity)),
         get: (identity, notificationId, guildIds) =>
           operation(getRoom(context, identity, notificationId, guildIds)),
         apply: (identity, notificationId, guildIds, payload) =>
