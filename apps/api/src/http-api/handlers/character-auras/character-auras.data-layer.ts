@@ -12,6 +12,7 @@ import {
   userCharacterAuraGrantTable,
   userCharacterAuraTable,
 } from "#src/database/drizzle/user.schema";
+import type { CharacterAurasResponse } from "#src/contracts/character-auras/schemas";
 import { currentMargonemAccountPlayers } from "#src/margonem-accounts/margonem-accounts";
 import {
   CharacterAuraAccessDenied,
@@ -40,6 +41,22 @@ export interface CharacterAurasEvents {
 }
 
 /**
+ * Holds the list every Game client reads at startup. The list is the same for
+ * every reader, so one stored copy serves them all.
+ */
+export interface CharacterAurasListCache {
+  readonly read: <E>(
+    load: Effect.Effect<CharacterAurasResponse, E>,
+  ) => Effect.Effect<CharacterAurasResponse, E>;
+  readonly invalidate: Effect.Effect<void>;
+}
+
+const uncachedList: CharacterAurasListCache = {
+  read: (load) => load,
+  invalidate: Effect.void,
+};
+
+/**
  * Auras are a perk of the Users in `adminUserIds` and of the Users an admin
  * granted them to. A User who loses it keeps no shown aura: revoking a grant
  * deletes the aura, and an admin dropped from `adminUserIds` keeps the stored
@@ -49,6 +66,7 @@ export interface CharacterAurasEvents {
 export const makeCharacterAurasData = (
   adminUserIds: ReadonlyArray<string>,
   events: CharacterAurasEvents,
+  listCache: CharacterAurasListCache = uncachedList,
 ) =>
   Effect.gen(function* () {
     const database = yield* ApiDatabase;
@@ -142,46 +160,48 @@ export const makeCharacterAurasData = (
 
     return CharacterAurasData.of({
       getAuras: () =>
-        database
-          .select({
-            gameAccountId: players.accountId,
-            userId: userCharacterAuraTable.userId,
-            auraId: userCharacterAuraTable.auraId,
-          })
-          .from(players)
-          .innerJoin(
-            userCharacterAuraTable,
-            eq(userCharacterAuraTable.userId, players.userId),
-          )
-          .leftJoin(
-            userCharacterAuraGrantTable,
-            eq(
-              userCharacterAuraGrantTable.userId,
-              userCharacterAuraTable.userId,
-            ),
-          )
-          .where(
-            or(
-              isNotNull(userCharacterAuraGrantTable.userId),
-              admins.size === 0
-                ? undefined
-                : inArray(userCharacterAuraTable.userId, [...admins]),
-            ),
-          )
-          .orderBy(asc(players.accountId))
-          .pipe(
-            Effect.mapBoth({
-              onSuccess: (rows) => ({
-                auras: rows.flatMap(({ gameAccountId, userId, auraId }) =>
-                  isCharacterAuraId(auraId) &&
-                  (admins.has(userId) || !isAdminCharacterAuraId(auraId))
-                    ? [{ gameAccountId, auraId }]
-                    : [],
-                ),
+        listCache.read(
+          database
+            .select({
+              gameAccountId: players.accountId,
+              userId: userCharacterAuraTable.userId,
+              auraId: userCharacterAuraTable.auraId,
+            })
+            .from(players)
+            .innerJoin(
+              userCharacterAuraTable,
+              eq(userCharacterAuraTable.userId, players.userId),
+            )
+            .leftJoin(
+              userCharacterAuraGrantTable,
+              eq(
+                userCharacterAuraGrantTable.userId,
+                userCharacterAuraTable.userId,
+              ),
+            )
+            .where(
+              or(
+                isNotNull(userCharacterAuraGrantTable.userId),
+                admins.size === 0
+                  ? undefined
+                  : inArray(userCharacterAuraTable.userId, [...admins]),
+              ),
+            )
+            .orderBy(asc(players.accountId))
+            .pipe(
+              Effect.mapBoth({
+                onSuccess: (rows) => ({
+                  auras: rows.flatMap(({ gameAccountId, userId, auraId }) =>
+                    isCharacterAuraId(auraId) &&
+                    (admins.has(userId) || !isAdminCharacterAuraId(auraId))
+                      ? [{ gameAccountId, auraId }]
+                      : [],
+                  ),
+                }),
+                onFailure: operationError,
               }),
-              onFailure: operationError,
-            }),
-          ),
+            ),
+        ),
       getOwnAura,
       updateOwnAura: (userId, auraId) =>
         Effect.gen(function* () {
@@ -190,6 +210,7 @@ export const makeCharacterAurasData = (
               .delete(userCharacterAuraTable)
               .where(eq(userCharacterAuraTable.userId, userId))
               .pipe(Effect.mapError(operationError));
+            yield* listCache.invalidate;
             yield* announce(userId, null);
 
             return yield* getOwnAura(userId);
@@ -210,6 +231,7 @@ export const makeCharacterAurasData = (
               set: { auraId, updatedAt },
             })
             .pipe(Effect.mapError(operationError));
+          yield* listCache.invalidate;
           yield* announce(userId, auraId);
 
           return yield* getOwnAura(userId);
@@ -225,6 +247,8 @@ export const makeCharacterAurasData = (
             .values({ userId, grantedByUserId: callerUserId, grantedAt })
             .onConflictDoNothing({ target: userCharacterAuraGrantTable.userId })
             .pipe(Effect.mapError(operationError));
+          // A stored aura starts to show once its User is granted.
+          yield* listCache.invalidate;
         }),
       // An admin keeps access, and the aura with it, while listed.
       revokeAuras: (callerUserId, gameAccountId) =>
@@ -246,6 +270,7 @@ export const makeCharacterAurasData = (
               }),
             )
             .pipe(Effect.mapError(operationError));
+          yield* listCache.invalidate;
 
           if (!admins.has(userId)) yield* announce(userId, null);
         }),
@@ -266,8 +291,9 @@ export const makeCharacterAurasData = (
 export const characterAurasDataLayer = (
   adminUserIds: ReadonlyArray<string>,
   events: CharacterAurasEvents,
+  listCache: CharacterAurasListCache,
 ) =>
   Layer.effect(
     CharacterAurasData,
-    makeCharacterAurasData(adminUserIds, events),
+    makeCharacterAurasData(adminUserIds, events, listCache),
   );
