@@ -379,13 +379,13 @@ end
 -- one, so counting the live scores beats sweeping the stale ones on every merge.
 local function othersInterested(key)
   local live=redis.call("ZCOUNT",key,"("..now,"+inf")
-  if live == 0 then return 0 end
+  if live == 0 then return false end
+  if live > 1 then return true end
   local mine=redis.call("ZSCORE",key,instance)
-  if mine ~= false and tonumber(mine) > now then return live-1 end
-  return live
+  return mine == false or tonumber(mine) <= now
 end
-local interested=othersInterested(KEYS[6])+othersInterested(KEYS[7])
-return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=interested > 0}),{"targets","removed","enemies"})
+local remoteRecipients=(#updates > 0 or #removed > 0) and (othersInterested(KEYS[6]) or othersInterested(KEYS[7]))
+return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=remoteRecipients}),{"targets","removed","enemies"})
 `;
 
 const SNAPSHOT_SCRIPT = `${LUA_COMMON}

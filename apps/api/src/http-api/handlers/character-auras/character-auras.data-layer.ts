@@ -11,6 +11,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   userCharacterAuraGrantTable,
   userCharacterAuraTable,
+  userMargonemAccountTable,
 } from "#src/database/drizzle/user.schema";
 import type { CharacterAurasResponse } from "#src/contracts/character-auras/schemas";
 import { currentMargonemAccountPlayers } from "#src/margonem-accounts/margonem-accounts";
@@ -78,8 +79,41 @@ export const makeCharacterAurasData = (
     );
 
     // An aura shows on the Margonem accounts its User proved to play, each
-    // with the aura of the User who proved it last.
-    const players = currentMargonemAccountPlayers(database);
+    // with the aura of the User who proved it last. Scoping `DISTINCT ON
+    // ("accountId")` by candidate `accountId`s keeps every user's proofs for
+    // those accounts while avoiding a full-table scan of `UserMargonemAccount`.
+    const auraPlayers = currentMargonemAccountPlayers(
+      database,
+      inArray(
+        userMargonemAccountTable.accountId,
+        database
+          .select({ accountId: userMargonemAccountTable.accountId })
+          .from(userMargonemAccountTable)
+          .innerJoin(
+            userCharacterAuraTable,
+            eq(userCharacterAuraTable.userId, userMargonemAccountTable.userId),
+          ),
+      ),
+    );
+
+    const userAccounts = (userId: string) => {
+      const players = currentMargonemAccountPlayers(
+        database,
+        inArray(
+          userMargonemAccountTable.accountId,
+          database
+            .select({ accountId: userMargonemAccountTable.accountId })
+            .from(userMargonemAccountTable)
+            .where(eq(userMargonemAccountTable.userId, userId)),
+        ),
+      );
+
+      return database
+        .select({ id: players.accountId })
+        .from(players)
+        .where(eq(players.userId, userId))
+        .orderBy(asc(players.accountId));
+    };
 
     const isGranted = (userId: string) =>
       database
@@ -100,6 +134,11 @@ export const makeCharacterAurasData = (
       Effect.gen(function* () {
         if (!admins.has(callerUserId)) return yield* accessDenied();
 
+        const players = currentMargonemAccountPlayers(
+          database,
+          eq(userMargonemAccountTable.accountId, gameAccountId),
+        );
+
         const [player] = yield* database
           .select({ userId: players.userId })
           .from(players)
@@ -117,11 +156,7 @@ export const makeCharacterAurasData = (
      */
     const announce = (userId: string, auraId: CharacterAuraId | null) =>
       Effect.gen(function* () {
-        const accounts = yield* database
-          .select({ id: players.accountId })
-          .from(players)
-          .where(eq(players.userId, userId))
-          .orderBy(asc(players.accountId));
+        const accounts = yield* userAccounts(userId);
 
         if (accounts.length === 0) return;
 
@@ -141,14 +176,7 @@ export const makeCharacterAurasData = (
         const auraId =
           aura && isCharacterAuraId(aura.auraId) ? aura.auraId : null;
 
-        const accounts =
-          auraId === null
-            ? []
-            : yield* database
-                .select({ id: players.accountId })
-                .from(players)
-                .where(eq(players.userId, userId))
-                .orderBy(asc(players.accountId));
+        const accounts = auraId === null ? [] : yield* userAccounts(userId);
 
         return {
           auraId,
@@ -163,14 +191,14 @@ export const makeCharacterAurasData = (
         listCache.read(
           database
             .select({
-              gameAccountId: players.accountId,
+              gameAccountId: auraPlayers.accountId,
               userId: userCharacterAuraTable.userId,
               auraId: userCharacterAuraTable.auraId,
             })
-            .from(players)
+            .from(auraPlayers)
             .innerJoin(
               userCharacterAuraTable,
-              eq(userCharacterAuraTable.userId, players.userId),
+              eq(userCharacterAuraTable.userId, auraPlayers.userId),
             )
             .leftJoin(
               userCharacterAuraGrantTable,
@@ -187,7 +215,7 @@ export const makeCharacterAurasData = (
                   : inArray(userCharacterAuraTable.userId, [...admins]),
               ),
             )
-            .orderBy(asc(players.accountId))
+            .orderBy(asc(auraPlayers.accountId))
             .pipe(
               Effect.mapBoth({
                 onSuccess: (rows) => ({
