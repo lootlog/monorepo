@@ -28,9 +28,14 @@ const makeCharacterAurasListCache = (
       ttlSeconds: 30,
       codec: listCodec,
     }),
+  // The write is committed; readers catch up when the stored list expires.
   invalidate: Effect.tryPromise(() =>
     redis.invalidateScopes(LIST_CACHE_SCOPE),
-  ).pipe(Effect.ignore),
+  ).pipe(
+    Effect.catch((error) =>
+      Effect.logWarning("Failed to invalidate the character aura list", error),
+    ),
+  ),
 });
 
 const makeCharacterAurasEvents = (
