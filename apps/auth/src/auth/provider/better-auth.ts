@@ -5,6 +5,7 @@ import { runLogEffect } from "@lootlog/instrumentation";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { getCookies } from "better-auth/cookies";
 import { admin } from "better-auth/plugins/admin";
 import { bearer } from "better-auth/plugins/bearer";
 import { jwt } from "better-auth/plugins/jwt";
@@ -195,6 +196,36 @@ export const createLootlogAuth = ({
 
 export type LootlogAuth = ReturnType<typeof createLootlogAuth>;
 
+/**
+ * Shapes a Better Auth instance into the runtime service: the resolved session
+ * cookie names, and a session read that keeps the Set-Cookie headers so the
+ * caller can return the refreshed cookie cache to the browser.
+ */
+export const toAuthProvider = (auth: LootlogAuth) => {
+  const cookies = getCookies(auth.options);
+
+  return {
+    ...auth,
+    apiKeys: auth.api,
+    sessionCookieNames: {
+      token: cookies.sessionToken.name,
+      data: cookies.sessionData.name,
+    },
+    api: {
+      ...auth.api,
+      getSessionWithCookies: async ({ headers }: { headers: Headers }) => {
+        const { headers: responseHeaders, response } =
+          await auth.api.getSession({ headers, returnHeaders: true });
+
+        return {
+          session: response,
+          setCookie: responseHeaders.getSetCookie(),
+        };
+      },
+    },
+  };
+};
+
 export class BetterAuthRuntime extends Context.Service<
   BetterAuthRuntime,
   AuthProvider &
@@ -220,7 +251,7 @@ export class BetterAuthRuntime extends Context.Service<
         secondaryStorage: redis.secondaryStorage,
       });
 
-      return BetterAuthRuntime.of({ ...auth, apiKeys: auth.api });
+      return BetterAuthRuntime.of(toAuthProvider(auth));
     }),
   );
 }

@@ -5,7 +5,12 @@ import {
   httpServerRouteMetrics,
 } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
-import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
+import {
+  HttpMiddleware,
+  HttpRouter,
+  HttpServerRequest,
+  HttpServerResponse,
+} from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/provider/better-auth-url";
@@ -72,10 +77,17 @@ export const AuthRoutes = Layer.merge(
   BetterAuthRawRoutes,
 );
 
+// Traefik's forwardAuth calls /auth/verify once per proxied request. Its spans
+// carry no information and outnumber every other trace in the platform.
+const TracingLive = HttpMiddleware.layerTracerDisabledForUrls(["/auth/verify"]);
+
 export const AuthHttpServer = Layer.unwrap(
   Effect.map(AppConfig, ({ port }) =>
     HttpRouter.serve(AuthRoutes.pipe(Layer.provide(httpServerRouteMetrics)), {
       middleware: httpServerMetrics,
-    }).pipe(Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port }))),
+    }).pipe(
+      Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port })),
+      Layer.provide(TracingLive),
+    ),
   ),
 ).pipe(Layer.provide(AppConfig.layer));
