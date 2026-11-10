@@ -42,7 +42,6 @@ export const activeRooms = (
 export const listRooms = (
   context: ReadyRoomContext,
   identity: ReadyRoomIdentity,
-  guildIds: ReadonlyArray<string>,
 ) =>
   Effect.gen(function* () {
     const apiKey = yield* requestApiKeyAccess;
@@ -51,7 +50,10 @@ export const listRooms = (
       identity.discordId,
     );
 
+    // Most players are in no room, so the guild lookup waits for one.
     if (aggregates.length === 0) return [];
+
+    const guildIds = yield* context.accessibleGuildIds(identity.discordId);
 
     const visibleSources = yield* readyRoomSourceVisibility(
       context.database,

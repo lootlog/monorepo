@@ -4,6 +4,7 @@ import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
 import { makeUserAccountDeletion } from "../account-organization/user-account-deletion.data-layer.js";
 import { recordMargonemAccountVerification } from "#src/margonem-accounts/margonem-accounts";
 import type { CharacterAurasChanged } from "@lootlog/schema/character-aura";
+import type { CharacterAurasResponse } from "#src/contracts/character-auras/schemas";
 import { makeCharacterAurasData } from "./character-auras.data-layer.js";
 
 const boundaries: Array<Awaited<ReturnType<typeof createDatabaseBoundary>>> =
@@ -246,6 +247,58 @@ describe("character auras", () => {
       canGrant: false,
       gameAccountIds: [],
     });
+  });
+
+  it("serves a stored list until a write changes who shows which aura", async () => {
+    const { boundary, events, verify } = await setup(["admin"]);
+
+    await verify("admin", "202");
+    await verify("player", "101");
+
+    // Keeps the list until told to forget it, as the shared cache does.
+    let stored: CharacterAurasResponse | undefined;
+
+    const lists = () =>
+      boundary.run(
+        Effect.flatMap(
+          makeCharacterAurasData(["admin"], events, {
+            read: (load) =>
+              stored
+                ? Effect.succeed(stored)
+                : Effect.tap(load, (list) =>
+                    Effect.sync(() => void (stored = list)),
+                  ),
+            invalidate: Effect.sync(() => void (stored = undefined)),
+          }),
+          (data) =>
+            Effect.gen(function* () {
+              const seen = [yield* data.getAuras()];
+
+              yield* data.updateOwnAura("admin", "void");
+              seen.push(yield* data.getAuras());
+              yield* data.grantAuras("admin", "101");
+              yield* data.updateOwnAura("player", "frost");
+              seen.push(yield* data.getAuras());
+              yield* data.revokeAuras("admin", "101");
+              seen.push(yield* data.getAuras());
+              yield* data.updateOwnAura("admin", null);
+              seen.push(yield* data.getAuras());
+
+              return seen.map(({ auras }) => auras);
+            }),
+        ),
+      );
+
+    expect(await lists()).toEqual([
+      [],
+      [{ gameAccountId: "202", auraId: "void" }],
+      [
+        { gameAccountId: "101", auraId: "frost" },
+        { gameAccountId: "202", auraId: "void" },
+      ],
+      [{ gameAccountId: "202", auraId: "void" }],
+      [],
+    ]);
   });
 
   it("tells Game clients each change of an aura on the accounts it shows on", async () => {
