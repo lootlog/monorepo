@@ -1,4 +1,4 @@
-import { desc, sql } from "drizzle-orm";
+import { desc, sql, type SQL } from "drizzle-orm";
 import { Effect } from "effect";
 import type { MargonemAccountVerifiedV1 } from "@lootlog/protocol/rabbit/events";
 import type { ApiDatabaseValue as Database } from "#src/database/drizzle/database";
@@ -28,13 +28,17 @@ export const recordMargonemAccountVerification = (
     .pipe(Effect.asVoid);
 
 /** Each verified Margonem account with the User who proved it last. */
-export const currentMargonemAccountPlayers = (database: Database) =>
+export const currentMargonemAccountPlayers = (
+  database: Database,
+  where?: SQL,
+) =>
   database
     .selectDistinctOn([userMargonemAccountTable.accountId], {
       accountId: userMargonemAccountTable.accountId,
       userId: userMargonemAccountTable.userId,
     })
     .from(userMargonemAccountTable)
+    .where(where)
     .orderBy(
       userMargonemAccountTable.accountId,
       desc(userMargonemAccountTable.verifiedAt),
