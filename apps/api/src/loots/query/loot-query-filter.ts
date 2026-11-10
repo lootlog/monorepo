@@ -15,7 +15,7 @@ import {
   type SQL,
   type SQLWrapper,
 } from "drizzle-orm";
-import { alias, QueryBuilder } from "drizzle-orm/pg-core";
+import { alias, QueryBuilder, type PgColumn } from "drizzle-orm/pg-core";
 import {
   itemSnapshotTable,
   lootItemTable,
@@ -23,6 +23,7 @@ import {
   lootPlayerTable,
   lootTable,
   npcSnapshotTable,
+  organizationLootRecordTable,
   playerSnapshotTable,
 } from "#src/database/drizzle/loot.schema";
 import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
@@ -48,6 +49,19 @@ export type LootQueryFilters = {
   readonly createdAtMin?: string;
   readonly createdAtMax?: string;
   readonly lootId?: number;
+};
+
+/**
+ * Where the scalar columns a page filters on live. Both the loot and the
+ * organization's record of it carry the loot id, the world and the creation
+ * time, so a query can be driven from whichever table it already scans: the id
+ * selection drives from the record and never joins Loot, while queries that
+ * read other loot columns keep driving from Loot.
+ */
+export type LootQuerySource = {
+  readonly lootId: PgColumn;
+  readonly world: PgColumn;
+  readonly createdAt: PgColumn;
 };
 
 export type LootQueryVisibilityRole = {
@@ -105,7 +119,7 @@ const queryItem = alias(lootItemTable, "query_li");
 
 const queryItemSnapshot = alias(itemSnapshotTable, "query_is");
 
-const existsPlayer = (condition: SQL) =>
+const existsPlayer = (lootId: PgColumn, condition: SQL) =>
   exists(
     query
       .select({ id: queryPlayer.id })
@@ -114,10 +128,10 @@ const existsPlayer = (condition: SQL) =>
         queryPlayerSnapshot,
         eq(queryPlayerSnapshot.id, queryPlayer.playerSnapshotId),
       )
-      .where(and(eq(queryPlayer.lootId, lootTable.id), condition)),
+      .where(and(eq(queryPlayer.lootId, lootId), condition)),
   );
 
-const existsNpc = (condition: SQL) =>
+const existsNpc = (lootId: PgColumn, condition: SQL) =>
   exists(
     query
       .select({ id: queryNpc.id })
@@ -126,10 +140,10 @@ const existsNpc = (condition: SQL) =>
         queryNpcSnapshot,
         eq(queryNpcSnapshot.id, queryNpc.npcSnapshotId),
       )
-      .where(and(eq(queryNpc.lootId, lootTable.id), condition)),
+      .where(and(eq(queryNpc.lootId, lootId), condition)),
   );
 
-const existsItem = (condition: SQL) =>
+const existsItem = (lootId: PgColumn, condition: SQL) =>
   exists(
     query
       .select({ id: queryItem.id })
@@ -138,7 +152,7 @@ const existsItem = (condition: SQL) =>
         queryItemSnapshot,
         eq(queryItemSnapshot.id, queryItem.itemSnapshotId),
       )
-      .where(and(eq(queryItem.lootId, lootTable.id), condition)),
+      .where(and(eq(queryItem.lootId, lootId), condition)),
   );
 
 const levelRange = (
@@ -154,6 +168,7 @@ const levelRange = (
       );
 
 const rangeConditions = (
+  source: LootQuerySource,
   filters: ResolvedLootQueryFilters,
 ): Array<SQL | undefined> => {
   const npc = levelRange(
@@ -175,81 +190,104 @@ const rangeConditions = (
   );
 
   return [
-    npc ? existsNpc(npc) : undefined,
-    item ? existsItem(item) : undefined,
-    player ? existsPlayer(player) : undefined,
+    npc ? existsNpc(source.lootId, npc) : undefined,
+    item ? existsItem(source.lootId, item) : undefined,
+    player ? existsPlayer(source.lootId, player) : undefined,
   ];
 };
 
-const existsItemSnapshotIds = (snapshotIds: ReadonlyArray<number>) =>
+const existsItemSnapshotIds = (
+  lootId: PgColumn,
+  snapshotIds: ReadonlyArray<number>,
+) =>
   exists(
     query
       .select({ id: queryItem.id })
       .from(queryItem)
       .where(
         and(
-          eq(queryItem.lootId, lootTable.id),
+          eq(queryItem.lootId, lootId),
           inArray(queryItem.itemSnapshotId, [...snapshotIds]),
         ),
       ),
   );
 
-const existsNpcSnapshotIds = (snapshotIds: ReadonlyArray<number>) =>
+const existsNpcSnapshotIds = (
+  lootId: PgColumn,
+  snapshotIds: ReadonlyArray<number>,
+) =>
   exists(
     query
       .select({ id: queryNpc.id })
       .from(queryNpc)
       .where(
         and(
-          eq(queryNpc.lootId, lootTable.id),
+          eq(queryNpc.lootId, lootId),
           inArray(queryNpc.npcSnapshotId, [...snapshotIds]),
         ),
       ),
   );
 
-const existsPlayerSnapshotIds = (snapshotIds: ReadonlyArray<number>) =>
+const existsPlayerSnapshotIds = (
+  lootId: PgColumn,
+  snapshotIds: ReadonlyArray<number>,
+) =>
   exists(
     query
       .select({ id: queryPlayer.id })
       .from(queryPlayer)
       .where(
         and(
-          eq(queryPlayer.lootId, lootTable.id),
+          eq(queryPlayer.lootId, lootId),
           inArray(queryPlayer.playerSnapshotId, [...snapshotIds]),
         ),
       ),
   );
 
-const npcNameCondition = (snapshotIds: ReadonlyArray<number> | undefined) => {
+const npcNameCondition = (
+  lootId: PgColumn,
+  snapshotIds: ReadonlyArray<number> | undefined,
+) => {
   if (snapshotIds === undefined) return undefined;
 
   if (snapshotIds.length === 0) return sql`false`;
 
-  return existsNpcSnapshotIds(snapshotIds);
+  return existsNpcSnapshotIds(lootId, snapshotIds);
 };
 
 const relationConditions = (
+  source: LootQuerySource,
   filters: ResolvedLootQueryFilters,
 ): Array<SQL | undefined> => [
   filters.players?.length
-    ? existsPlayer(inArray(queryPlayerSnapshot.name, [...filters.players]))
+    ? existsPlayer(
+        source.lootId,
+        inArray(queryPlayerSnapshot.name, [...filters.players]),
+      )
     : undefined,
-  npcNameCondition(filters.npcNameSnapshotIds),
+  npcNameCondition(source.lootId, filters.npcNameSnapshotIds),
   filters.npcTypes?.length
-    ? existsNpc(inArray(sql`${queryNpcSnapshot.type}`, [...filters.npcTypes]))
+    ? existsNpc(
+        source.lootId,
+        inArray(sql`${queryNpcSnapshot.type}`, [...filters.npcTypes]),
+      )
     : undefined,
   filters.rarities?.length
     ? existsItem(
+        source.lootId,
         inArray(sql`${queryItemSnapshot.rarity}`, [...filters.rarities]),
       )
     : undefined,
-  filters.hid ? existsItem(eq(queryItem.hid, filters.hid)) : undefined,
+  filters.hid
+    ? existsItem(source.lootId, eq(queryItem.hid, filters.hid))
+    : undefined,
   filters.itemSnapshotIds
-    ? existsItemSnapshotIds(filters.itemSnapshotIds)
+    ? existsItemSnapshotIds(source.lootId, filters.itemSnapshotIds)
     : undefined,
 ];
 
 const professionCondition = (
+  lootId: PgColumn,
   professions: ReadonlyArray<string> | undefined,
 ) => {
   if (!professions?.length) return undefined;
@@ -269,7 +307,7 @@ const professionCondition = (
     ),
   );
 
-  return condition ? existsItem(condition) : undefined;
+  return condition ? existsItem(lootId, condition) : undefined;
 };
 
 // Each relation contributes an arm only when the term can still match it.
@@ -285,7 +323,10 @@ const searchRelationArm = (
   return snapshotIds.length === 0 ? undefined : membership(snapshotIds);
 };
 
-const searchCondition = (search: ResolvedLootSearch | undefined) => {
+const searchCondition = (
+  lootId: PgColumn,
+  search: ResolvedLootSearch | undefined,
+) => {
   if (!search) return undefined;
   const pattern = containsPattern(search.pattern);
 
@@ -293,40 +334,60 @@ const searchCondition = (search: ResolvedLootSearch | undefined) => {
     or(
       searchRelationArm(
         search.itemSnapshotIds,
-        existsItemSnapshotIds,
-        existsItem(ilike(queryItemSnapshot.name, pattern)),
+        (ids) => existsItemSnapshotIds(lootId, ids),
+        existsItem(lootId, ilike(queryItemSnapshot.name, pattern)),
       ),
       searchRelationArm(
         search.npcSnapshotIds,
-        existsNpcSnapshotIds,
-        existsNpc(ilike(queryNpcSnapshot.name, pattern)),
+        (ids) => existsNpcSnapshotIds(lootId, ids),
+        existsNpc(lootId, ilike(queryNpcSnapshot.name, pattern)),
       ),
       searchRelationArm(
         search.playerSnapshotIds,
-        existsPlayerSnapshotIds,
-        existsPlayer(ilike(queryPlayerSnapshot.name, pattern)),
+        (ids) => existsPlayerSnapshotIds(lootId, ids),
+        existsPlayer(lootId, ilike(queryPlayerSnapshot.name, pattern)),
       ),
     ) ?? sql`false`
   );
 };
 
+/** The loot's own columns: for queries that already read other loot columns. */
+export const lootQuerySource: LootQuerySource = {
+  lootId: lootTable.id,
+  world: lootTable.world,
+  createdAt: lootTable.createdAt,
+};
+
+/**
+ * The organization's record of the loot. Driving the page from here keeps the
+ * scan, the filters and the ordering on one table: testing the world through
+ * Loot was 80% of the buffers a page read, because it ran once per record the
+ * Organization owns.
+ */
+export const organizationLootRecordQuerySource: LootQuerySource = {
+  lootId: organizationLootRecordTable.lootId,
+  world: organizationLootRecordTable.lootWorld,
+  createdAt: organizationLootRecordTable.lootCreatedAt,
+};
+
 export const buildLootQueryConditions = (
+  source: LootQuerySource,
   filters: ResolvedLootQueryFilters,
   permissions: ReadonlyArray<string>,
   roles: ReadonlyArray<LootQueryVisibilityRole>,
 ) => [
-  filters.world ? eq(lootTable.world, filters.world) : undefined,
-  filters.cursor ? lt(lootTable.id, filters.cursor) : undefined,
-  filters.lootId !== undefined ? eq(lootTable.id, filters.lootId) : undefined,
+  filters.world ? eq(source.world, filters.world) : undefined,
+  filters.cursor ? lt(source.lootId, filters.cursor) : undefined,
+  filters.lootId !== undefined ? eq(source.lootId, filters.lootId) : undefined,
   filters.createdAtMin
-    ? gte(lootTable.createdAt, new Date(filters.createdAtMin))
+    ? gte(source.createdAt, new Date(filters.createdAtMin))
     : undefined,
   filters.createdAtMax
-    ? lte(lootTable.createdAt, new Date(filters.createdAtMax))
+    ? lte(source.createdAt, new Date(filters.createdAtMax))
     : undefined,
-  ...rangeConditions(filters),
-  ...relationConditions(filters),
-  professionCondition(filters.professions),
-  searchCondition(filters.search),
-  buildLootNpcVisibilityCondition(lootTable.id, permissions, roles),
+  ...rangeConditions(source, filters),
+  ...relationConditions(source, filters),
+  professionCondition(source.lootId, filters.professions),
+  searchCondition(source.lootId, filters.search),
+  buildLootNpcVisibilityCondition(source.lootId, permissions, roles),
 ];

@@ -39,6 +39,7 @@ import { makeNotificationRuleOperations } from "./rules/notification-rule-operat
 import { makeNotificationUserTargets } from "./targets/notification-user-targets.js";
 import { makeNotificationWatchedItems } from "./rules/notification-watched-items.js";
 import { makeNotificationJobOperations } from "./jobs/notification-job-operations.js";
+import { createOrganizationLootRecordFixture } from "../../test/loot-fixtures.js";
 
 const identity = {
   userId: "user-1",
@@ -342,9 +343,13 @@ test.each([true, false])(
         }),
       );
       await boundary.run(
-        database
-          .insert(organizationLootRecordTable)
-          .values({ lootId: 1, guildId: "1", updatedAt: new Date(0) }),
+        database.insert(organizationLootRecordTable).values(
+          createOrganizationLootRecordFixture({
+            lootId: 1,
+            guildId: "1",
+            updatedAt: new Date(0),
+          }),
+        ),
       );
       await boundary.run(
         database.insert(npcSnapshotTable).values([
@@ -383,11 +388,13 @@ test.each([true, false])(
         }),
       );
       await boundary.run(
-        database.insert(organizationLootRecordTable).values({
-          lootId: 2,
-          guildId: "1",
-          updatedAt: new Date(0),
-        }),
+        database.insert(organizationLootRecordTable).values(
+          createOrganizationLootRecordFixture({
+            lootId: 2,
+            guildId: "1",
+            updatedAt: new Date(0),
+          }),
+        ),
       );
       await boundary.run(
         database.insert(lootNpcTable).values({ lootId: 2, npcSnapshotId: 2 }),

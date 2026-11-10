@@ -17,6 +17,7 @@ import {
   createGuildFixture,
   createMemberFixture,
 } from "../../test/organization-fixtures.js";
+import { createOrganizationLootRecordFixture } from "../../test/loot-fixtures.js";
 
 const boundaries: Array<Awaited<ReturnType<typeof createDatabaseBoundary>>> =
   [];
@@ -60,15 +61,25 @@ const setup = async () => {
   // Loot 1 is shared by both Organizations; loot 2 is archived in the first.
   await run(
     database.insert(organizationLootRecordTable).values([
-      { id: 101, lootId: 1, guildId: first.id, updatedAt: now },
-      {
+      createOrganizationLootRecordFixture({
+        id: 101,
+        lootId: 1,
+        guildId: first.id,
+        updatedAt: now,
+      }),
+      createOrganizationLootRecordFixture({
         id: 102,
         lootId: 2,
         guildId: first.id,
         archivedAt: now,
         updatedAt: now,
-      },
-      { id: 201, lootId: 1, guildId: second.id, updatedAt: now },
+      }),
+      createOrganizationLootRecordFixture({
+        id: 201,
+        lootId: 1,
+        guildId: second.id,
+        updatedAt: now,
+      }),
     ]),
   );
   await run(

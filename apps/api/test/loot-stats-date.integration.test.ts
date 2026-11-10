@@ -17,6 +17,7 @@ import {
 } from "../src/database/drizzle/loot.schema.js";
 import { buildLootStatsQueries } from "../src/loots/query/loot-stats-query.js";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
+import { createOrganizationLootRecordFixture } from "./loot-fixtures.js";
 
 describe("loot statistics date parameter compatibility", () => {
   for (const timezone of ["UTC", "Europe/Warsaw"]) {
@@ -85,9 +86,14 @@ describe("loot statistics date parameter compatibility", () => {
               yield* transaction
                 .insert(lootNpcTable)
                 .values({ lootId: loot.id, npcSnapshotId: npc.id });
-              yield* transaction
-                .insert(organizationLootRecordTable)
-                .values({ guildId, lootId: loot.id, updatedAt: new Date() });
+              yield* transaction.insert(organizationLootRecordTable).values(
+                createOrganizationLootRecordFixture({
+                  guildId,
+                  lootId: loot.id,
+                  lootWorld: "date-boundary",
+                  updatedAt: new Date(),
+                }),
+              );
               yield* transaction.insert(lootItemTable).values({
                 lootId: loot.id,
                 itemSnapshotId: item.id,

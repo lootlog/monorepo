@@ -29,6 +29,7 @@ import { makeLootsOperations } from "#src/loots/loots.operations";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
 import { applicationLogger } from "#src/shared/application-logger";
+import { createOrganizationLootRecordFixture } from "../../../test/loot-fixtures.js";
 
 const eventStart = new Date("2026-06-01T00:00:00.000Z");
 
@@ -292,12 +293,14 @@ describe("event wrapped summary", () => {
       );
       await run(
         database.insert(organizationLootRecordTable).values(
-          loots.map((loot, index) => ({
-            lootId: index + 1,
-            guildId: loot.guildId ?? guild.id,
-            archivedAt: loot.archived ? now : null,
-            updatedAt: now,
-          })),
+          loots.map((loot, index) =>
+            createOrganizationLootRecordFixture({
+              lootId: index + 1,
+              guildId: loot.guildId ?? guild.id,
+              archivedAt: loot.archived ? now : null,
+              updatedAt: now,
+            }),
+          ),
         ),
       );
       await run(

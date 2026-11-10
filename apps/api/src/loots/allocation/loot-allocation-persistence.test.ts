@@ -29,6 +29,7 @@ import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { makeLootAllocationPersistence } from "./loot-allocation-persistence.js";
 import { makeLootAllocationOperations } from "./loot-allocation.operations.js";
 import { applicationLogger } from "#src/shared/application-logger";
+import { createOrganizationLootRecordFixture } from "../../../test/loot-fixtures.js";
 
 test("the submitting Organization's NPC visibility decides the allocation, not other Organizations recording the loot", async () => {
   const boundary = await createDatabaseBoundary();
@@ -94,9 +95,14 @@ test("the submitting Organization's NPC visibility decides the allocation, not o
         database.insert(memberToRoleTable).values({ A: id, B: guildId }),
       );
       await run(
-        database
-          .insert(organizationLootRecordTable)
-          .values({ id, lootId: 1, guildId, updatedAt: now }),
+        database.insert(organizationLootRecordTable).values(
+          createOrganizationLootRecordFixture({
+            id,
+            lootId: 1,
+            guildId,
+            updatedAt: now,
+          }),
+        ),
       );
     }
 
@@ -221,9 +227,14 @@ test("allocation requires a recent actor submission at the atomic update", async
       }),
     );
     await run(
-      database
-        .insert(organizationLootRecordTable)
-        .values({ id: 1, lootId: 1, guildId: "1", updatedAt: now }),
+      database.insert(organizationLootRecordTable).values(
+        createOrganizationLootRecordFixture({
+          id: 1,
+          lootId: 1,
+          guildId: "1",
+          updatedAt: now,
+        }),
+      ),
     );
     await run(
       database
@@ -273,9 +284,14 @@ test("allocation requires a recent actor submission at the atomic update", async
       ),
     ).toBe(false);
     await run(
-      database
-        .insert(organizationLootRecordTable)
-        .values({ id: 2, lootId: 1, guildId: "2", updatedAt: now }),
+      database.insert(organizationLootRecordTable).values(
+        createOrganizationLootRecordFixture({
+          id: 2,
+          lootId: 1,
+          guildId: "2",
+          updatedAt: now,
+        }),
+      ),
     );
     // A mixed party also records the loot in an Organization outside the
     // actor's reach; their own submission still confirms the allocation.

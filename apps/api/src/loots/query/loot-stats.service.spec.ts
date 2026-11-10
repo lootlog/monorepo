@@ -118,7 +118,7 @@ describe("LootStatsService aggregates", () => {
             sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt", "gameVersion") values (1, 'several-npcs', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl'), (2, 'one-npc', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl'), (3, 'common-only', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl'), (4, 'archived', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl'), (5, 'other-organization', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl')`,
           );
           yield* db.execute(
-            sql`insert into "OrganizationLootRecord" ("lootId", "guildId", "archivedAt", "updatedAt") values (1, 'guild-1', null, now()), (2, 'guild-1', null, now()), (3, 'guild-1', null, now()), (4, 'guild-1', now(), now()), (5, 'guild-2', null, now())`,
+            sql`insert into "OrganizationLootRecord" ("lootId", "guildId", "archivedAt", "updatedAt", "lootWorld", "lootCreatedAt") select v."lootId", v."guildId", v."archivedAt", now(), "Loot".world, "Loot"."createdAt" from (values (1, 'guild-1', null::timestamp), (2, 'guild-1', null), (3, 'guild-1', null), (4, 'guild-1', now()::timestamp), (5, 'guild-2', null)) as v("lootId", "guildId", "archivedAt") join "Loot" on "Loot".id = v."lootId"`,
           );
           yield* db.execute(
             sql`insert into "NpcSnapshot" (id, "npcId", name, type, lvl, "gameVersion") values (1, 100, 'Hero', 'HERO', 100, 'pl'), (2, 200, 'Elite', 'ELITE2', 100, 'pl'), (3, 300, 'Elite III', 'ELITE3', 100, 'pl'), (4, 400, 'Common', 'COMMON', 100, 'pl')`,
