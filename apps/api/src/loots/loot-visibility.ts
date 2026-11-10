@@ -62,26 +62,22 @@ export function buildLootNpcVisibilityCondition(
 
   if (readableRoles.length === 0) return sql`false`;
 
-  const roleConditions = readableRoles.map((role) => {
+  const roleConditions = collapseReadableRoles(readableRoles).map((grant) => {
     const excludedTypes: NonNullable<
       typeof npcSnapshotTable.$inferSelect.type
     >[] = [];
 
-    if (!role.permissions.includes(LOOT_PERMISSION.readTitans))
-      excludedTypes.push("TITAN");
+    if (!grant.readTitans) excludedTypes.push("TITAN");
 
-    if (!role.permissions.includes(LOOT_PERMISSION.readHeroes))
-      excludedTypes.push("HERO", "EVENT_HERO");
+    if (!grant.readHeroes) excludedTypes.push("HERO", "EVENT_HERO");
 
     return and(
       isNotNull(visibilityNpc.lvl),
-      between(
-        visibilityNpc.lvl,
-        normalizeSqlLevel(role.lvlRangeFrom ?? 0, 0),
-        normalizeSqlLevel(role.lvlRangeTo ?? 500, 500),
-      ),
+      between(visibilityNpc.lvl, grant.from, grant.to),
       isNotNull(visibilityNpc.type),
-      notInArray(visibilityNpc.type, excludedTypes),
+      excludedTypes.length > 0
+        ? notInArray(visibilityNpc.type, excludedTypes)
+        : undefined,
     );
   });
 
@@ -107,6 +103,73 @@ export function buildLootNpcVisibilityCondition(
           ),
         ),
     ),
+  );
+}
+
+interface NormalizedRoleGrant {
+  from: number;
+  to: number;
+  readonly readTitans: boolean;
+  readonly readHeroes: boolean;
+}
+
+function collapseReadableRoles(
+  roles: readonly {
+    readonly lvlRangeFrom: number | null;
+    readonly lvlRangeTo: number | null;
+    readonly permissions: readonly string[];
+  }[],
+): NormalizedRoleGrant[] {
+  const sorted = roles
+    .map((role): NormalizedRoleGrant => ({
+      from: normalizeSqlLevel(role.lvlRangeFrom ?? 0, 0),
+      to: normalizeSqlLevel(role.lvlRangeTo ?? 500, 500),
+      readTitans: role.permissions.includes(LOOT_PERMISSION.readTitans),
+      readHeroes: role.permissions.includes(LOOT_PERMISSION.readHeroes),
+    }))
+    .toSorted((left, right) => left.from - right.from || right.to - left.to);
+
+  const merged: NormalizedRoleGrant[] = [];
+
+  for (const grant of sorted) {
+    const sameTypePrevious = merged.findLast(
+      (candidate) =>
+        candidate.readTitans === grant.readTitans &&
+        candidate.readHeroes === grant.readHeroes,
+    );
+
+    if (
+      sameTypePrevious &&
+      sameTypePrevious.from <= sameTypePrevious.to &&
+      grant.from <= grant.to &&
+      grant.from <= sameTypePrevious.to + 1
+    ) {
+      sameTypePrevious.to = Math.max(sameTypePrevious.to, grant.to);
+      continue;
+    }
+
+    if (
+      sameTypePrevious &&
+      sameTypePrevious.from === grant.from &&
+      sameTypePrevious.to === grant.to
+    ) {
+      continue;
+    }
+
+    merged.push(grant);
+  }
+
+  return merged.filter(
+    (grant) =>
+      !merged.some(
+        (other) =>
+          other !== grant &&
+          other.from <= other.to &&
+          other.from <= grant.from &&
+          other.to >= grant.to &&
+          (other.readTitans || !grant.readTitans) &&
+          (other.readHeroes || !grant.readHeroes),
+      ),
   );
 }
 

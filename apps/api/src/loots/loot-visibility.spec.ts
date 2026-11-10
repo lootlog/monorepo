@@ -152,6 +152,41 @@ describe("loot visibility", () => {
           ],
         ),
       ).toEqual([1]);
+      expect(
+        await visible(
+          [],
+          [
+            role("narrow-no-heroes", [Permission.LOOTLOG_LOOTS_READ], 1, 300),
+            role(
+              "lower-half-heroes",
+              [
+                Permission.LOOTLOG_LOOTS_READ,
+                Permission.LOOTLOG_LOOTS_HEROES_READ,
+              ],
+              1,
+              49,
+            ),
+            role(
+              "upper-half-heroes",
+              [
+                Permission.LOOTLOG_LOOTS_READ,
+                Permission.LOOTLOG_LOOTS_HEROES_READ,
+              ],
+              50,
+              100,
+            ),
+            role(
+              "dominated-heroes",
+              [
+                Permission.LOOTLOG_LOOTS_READ,
+                Permission.LOOTLOG_LOOTS_HEROES_READ,
+              ],
+              20,
+              60,
+            ),
+          ],
+        ),
+      ).toEqual([1]);
     } finally {
       await boundary.dispose();
     }
