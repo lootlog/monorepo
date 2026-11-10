@@ -61,10 +61,23 @@ type AccessTokenPayload = {
 } | null;
 
 export interface AuthProvider {
+  /** Resolved names of the session token cookie and the cookie cache cookie. */
+  readonly sessionCookieNames: {
+    readonly token: string;
+    readonly data: string;
+  };
   readonly api: {
     readonly getSession: (input: {
       headers: Headers;
     }) => Promise<SessionIdentity | null>;
+    /**
+     * The session plus the cookies Better Auth wants to write back, so a caller
+     * can return the refreshed cookie cache to the browser.
+     */
+    readonly getSessionWithCookies: (input: { headers: Headers }) => Promise<{
+      readonly session: SessionIdentity | null;
+      readonly setCookie: ReadonlyArray<string>;
+    }>;
     readonly getJwks: () => Promise<JSONWebKeySet>;
     readonly getAccessToken: (input: {
       body: { userId: string; accountId: string };
@@ -148,6 +161,22 @@ export const createAuthService = ({
     }),
   );
 
+  const getSessionWithCookies = Effect.fn("AuthService.getSessionWithCookies")(
+    (headers: Headers) =>
+      Effect.tryPromise({
+        try: () => auth.api.getSessionWithCookies({ headers }),
+        catch: () => internalServerError({ message: "Internal server error" }),
+      }),
+  );
+
+  /**
+   * Without a session token cookie Better Auth has nothing to resolve, so the
+   * lookup would always miss. Skipping it keeps API-key and bearer requests off
+   * the session store entirely.
+   */
+  const hasSessionCookie = (headers: Headers) =>
+    headers.get("cookie")?.includes(auth.sessionCookieNames.token) === true;
+
   const validateBearerToken = Effect.fn("AuthService.validateBearerToken")(
     function* (token: string) {
       const jwks = yield* Effect.tryPromise({
@@ -227,10 +256,20 @@ export const createAuthService = ({
 
         if (!key || !verifyApiKey) return yield* unauthorized();
 
-        return yield* verifyApiKey(key);
+        return { identity: yield* verifyApiKey(key), setCookie: [] };
       }
 
-      const session = yield* getSession(headers);
+      // The cookie cache keeps the session store out of the common path. Its
+      // refresh only reaches the browser when this response carries it back.
+      const {
+        session,
+        setCookie,
+      }: {
+        readonly session: SessionIdentity | null;
+        readonly setCookie: ReadonlyArray<string>;
+      } = hasSessionCookie(headers)
+        ? yield* getSessionWithCookies(headers)
+        : { session: null, setCookie: [] };
 
       const verifiedIdentity = yield* buildVerifiedIdentityFromRequest(
         session,
@@ -243,7 +282,7 @@ export const createAuthService = ({
 
       const identity: VerifiedIdentity = verifiedIdentity;
 
-      return identity;
+      return { identity, setCookie };
     },
   );
 

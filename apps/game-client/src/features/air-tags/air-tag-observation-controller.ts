@@ -16,11 +16,20 @@ import type {
   OtherUpdate,
 } from "@lootlog/margonem/game-events";
 
-export const AIR_TAG_BATCH_INTERVAL_MS = 250;
+/**
+ * How long queued sightings coalesce before they leave as one batch.
+ *
+ * A moving target is only queued once it has travelled
+ * `AIR_TAG_MOVEMENT_THRESHOLD_TILES`, which the game walks in about 400 ms, so
+ * this window governs how many targets share a batch rather than how fresh any
+ * one of them is. A batch costs the gateway and Dragonfly the same whatever it
+ * carries, so coalescing wider is close to a proportional saving on a busy map.
+ */
+export const AIR_TAG_BATCH_INTERVAL_MS = 500;
 
 export const AIR_TAG_HEARTBEAT_INTERVAL_MS = 5_000;
 
-// Keeps a still target's sightings under 6.25 s apart, inside the 10 s AirTag and map-threat freshness windows.
+// Keeps a still target's sightings under 6.5 s apart, inside the 10 s AirTag and map-threat freshness windows.
 const AIR_TAG_HEARTBEAT_SCAN_INTERVAL_MS = 1_000;
 
 const AIR_TAG_HEARTBEAT_ALIGNMENT_MS = 2_000;

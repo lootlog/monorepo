@@ -19,7 +19,7 @@ import type {
   RedisGatewayStore,
   RedisScriptReply,
 } from "#src/platform/redis-store";
-import type { AirTagScope } from "#src/realtime/session";
+import type { AirTagScope, SessionData } from "#src/realtime/session";
 
 const TARGET_TTL_MS = 10_000;
 
@@ -40,14 +40,14 @@ for _,key in ipairs(KEYS) do redis.call("ZADD",key,expiresAt,ARGV[1]); redis.cal
 return #KEYS
 `;
 
-// A still enemy is sighted at most 6.25 s apart; re-reporting a sighting this old keeps its
+// A still enemy is sighted at most 6.5 s apart; re-reporting a sighting this old keeps its
 // age under `AIR_TAG_MAP_THREAT_FRESH_MS` on recipients.
 const THREAT_REFRESH_MS = 4_000;
 
 // Caps full-list fan-out per map; a change inside the window is sent with the next sighting.
 export const THREAT_BROADCAST_THROTTLE_MS = 1_000;
 
-// One game tab sends at most four batches a second.
+// One game tab sends at most two batches a second.
 const CONNECTION_BATCH_RATE_LIMIT = 15;
 
 // Several characters of one user may each observe a busy map.
@@ -55,23 +55,60 @@ const USER_BATCH_RATE_LIMIT = 45;
 
 const BATCH_RATE_WINDOW_MS = 3_000;
 
-// One round trip admits a batch: the connection limit, then the user limit, then
-// each scope's disabled flag. The shared limiter reads KEYS and ARGV, so it runs
-// as a function whose parameters shadow them.
+// One round trip admits a batch: the user limit, then each scope's disabled
+// flag. The shared limiter reads KEYS and ARGV, so it runs as a function whose
+// parameters shadow them. The connection limit is enforced in process by
+// {@link admitConnectionBatch}.
 const ADMISSION_SCRIPT = `
 local function consume(KEYS, ARGV)
 ${slidingWindowRateLimitScript({ refreshExpiryOnReject: true, includeTimestamp: false })}
 end
-local connection=consume({KEYS[1]},{ARGV[1],ARGV[2],ARGV[4]})
-if connection[1] ~= 1 then return connection end
-local user=consume({KEYS[2]},{ARGV[1],ARGV[3],ARGV[4]})
+local user=consume({KEYS[1]},{ARGV[1],ARGV[2],ARGV[3]})
 if user[1] ~= 1 then return user end
 local result={1,0}
-for i=3,#KEYS do
-  if redis.call("GET",KEYS[i]) == "1" then result[i]=1 else result[i]=0 end
+for i=2,#KEYS do
+  if redis.call("GET",KEYS[i]) == "1" then result[i+1]=1 else result[i+1]=0 end
 end
 return result
 `;
+
+export type ConnectionBatchAdmission =
+  | { readonly admitted: true }
+  | { readonly admitted: false; readonly retryAfterMs: number };
+
+/**
+ * The connection limit over the same window the shared limiter used. A
+ * connection only ever reports through the replica that holds its socket, so
+ * this needs no shared state, and a flooding connection no longer reaches
+ * Dragonfly at all.
+ */
+export const admitConnectionBatch = (
+  session: Pick<SessionData, "airTagBatchesSentAt">,
+  now: number,
+): ConnectionBatchAdmission => {
+  const sentAt = (session.airTagBatchesSentAt ??= []);
+
+  let kept = 0;
+
+  for (const at of sentAt) {
+    if (now - at < BATCH_RATE_WINDOW_MS) sentAt[kept++] = at;
+  }
+
+  sentAt.length = kept;
+
+  const oldest = sentAt[0];
+
+  if (oldest !== undefined && sentAt.length >= CONNECTION_BATCH_RATE_LIMIT) {
+    return {
+      admitted: false,
+      retryAfterMs: Math.max(1, oldest + BATCH_RATE_WINDOW_MS - now),
+    };
+  }
+
+  sentAt.push(now);
+
+  return { admitted: true };
+};
 
 const AdmissionReply = Schema.Array(Schema.Number);
 
@@ -107,11 +144,13 @@ end
 local function liveThreats(key, now, threatTtl)
   local records={}
   local count=0
+  local stale={}
   local raw=redis.call("HGETALL",key)
   for i=1,#raw,2 do
     local record=cjson.decode(raw[i+1])
-    if now-tonumber(record.observedAt) >= threatTtl then redis.call("HDEL",key,raw[i]) else records[raw[i]]=record; count=count+1 end
+    if now-tonumber(record.observedAt) >= threatTtl then stale[#stale+1]=raw[i] else records[raw[i]]=record; count=count+1 end
   end
+  if #stale > 0 then redis.call("HDEL",key,unpack(stale)) end
   return records, count
 end
 `;
@@ -127,7 +166,7 @@ local function isThreat(relation, enemy, clanEnemy) return relation == enemy or 
 local function carry(target, observation, existing, field)
   if observation[field] ~= nil then target[field]=observation[field] elseif existing ~= nil then target[field]=existing[field] end
 end
--- Connections that reported the target within the TTL; a live observer reports it at least every 6.25 s.
+-- Connections that reported the target within the TTL; a live observer reports it at least every 6.5 s.
 local function liveObservers(target, now, ttl)
   local observers={}
   if target.seenBy ~= nil then
@@ -136,6 +175,25 @@ local function liveObservers(target, now, ttl)
     end
   end
   return observers
+end
+-- Dragonfly charges a Lua redis.call about what it charges a client command, so
+-- this script costs what its call count costs. Reads and writes are staged and
+-- issued once per key instead of once per target.
+local writes={}
+local writeAt={}
+local scores={}
+local drops={}
+local function stage(id, encoded, score)
+  local at=writeAt[id]
+  if at ~= nil then writes[at]=encoded else
+    writes[#writes+1]=id; writes[#writes+1]=encoded; writeAt[id]=#writes
+  end
+  if score ~= nil then scores[#scores+1]=score; scores[#scores+1]=id end
+end
+local function flush()
+  if #drops > 0 then redis.call("HDEL",KEYS[1],unpack(drops)); redis.call("ZREM",KEYS[2],unpack(drops)); drops={} end
+  if #writes > 0 then redis.call("HSET",KEYS[1],unpack(writes)); writes={}; writeAt={} end
+  if #scores > 0 then redis.call("ZADD",KEYS[2],unpack(scores)); scores={} end
 end
 local now=nowMs()
 local observations=cjson.decode(ARGV[2])
@@ -166,37 +224,52 @@ local accepted=0
 local updates={}
 local removed={}
 local threatRemoved=false
+-- Caller-deduplicated ids, and a departure never shares a target with a
+-- sighting, so one read covers both loops.
+local touched={}
+for _,departure in ipairs(departures) do touched[#touched+1]=departure.targetId end
+for _,observation in ipairs(observations) do touched[#touched+1]=observation.targetId end
+local stored={}
+if #touched > 0 then
+  local rows=redis.call("HMGET",KEYS[1],unpack(touched))
+  for index,id in ipairs(touched) do
+    if rows[index] ~= false then stored[id]=cjson.decode(rows[index]) end
+  end
+end
+local threatDrops={}
 -- A target leaves once no observer still sees it and one of them saw it leave the map;
 -- a target only out of sight stays until its TTL.
 for _,departure in ipairs(departures) do
-  local existingRaw=redis.call("HGET",KEYS[1],departure.targetId)
-  if existingRaw ~= false then
-    local target=cjson.decode(existingRaw)
+  local target=stored[departure.targetId]
+  if target ~= nil then
     local observers=liveObservers(target,now,ttl)
     if observers[observer] ~= nil then
       observers[observer]=nil
       if departure.reason == "left-map" then target.departed=true end
       if target.departed == true and next(observers) == nil then
-        redis.call("HDEL",KEYS[1],departure.targetId); redis.call("ZREM",KEYS[2],departure.targetId)
+        drops[#drops+1]=departure.targetId
+        stored[departure.targetId]=nil
         count=count-1
         metadata.revision=tonumber(metadata.revision)+1
         table.insert(removed,departure.targetId)
-        if threatsAllowed and redis.call("HDEL",KEYS[4],departure.targetId) == 1 then threatRemoved=true end
+        if threatsAllowed then threatDrops[#threatDrops+1]=departure.targetId end
       else
         target.seenBy=observers
-        redis.call("HSET",KEYS[1],departure.targetId,cjson.encode(target))
+        stage(departure.targetId,cjson.encode(target))
       end
     end
   end
 end
+if #threatDrops > 0 and redis.call("HDEL",KEYS[4],unpack(threatDrops)) > 0 then threatRemoved=true end
 for _,observation in ipairs(observations) do
-  local existingRaw=redis.call("HGET",KEYS[1],observation.targetId)
-  local existing=nil
-  if existingRaw ~= false then existing=cjson.decode(existingRaw) end
+  local existing=stored[observation.targetId]
   local shouldAccept=true
   if existing == nil and count >= maxTargets then
     shouldAccept=false
     if isThreat(tonumber(observation.relation),enemy,clanEnemy) then
+      -- A full map evicting a non-threat is rare, and it scans committed state,
+      -- so the staged writes go out first.
+      flush()
       local candidates=redis.call("ZRANGE",KEYS[2],0,-1)
       for _,candidateId in ipairs(candidates) do
         local candidateRaw=redis.call("HGET",KEYS[1],candidateId)
@@ -204,6 +277,7 @@ for _,observation in ipairs(observations) do
           local candidate=cjson.decode(candidateRaw)
           if not isThreat(effective(candidate,now,ttl,enemy,clanEnemy),enemy,clanEnemy) then
             redis.call("HDEL",KEYS[1],candidateId); redis.call("ZREM",KEYS[2],candidateId)
+            stored[candidateId]=nil
             count=count-1; shouldAccept=true; break
           end
         end
@@ -232,14 +306,16 @@ for _,observation in ipairs(observations) do
       metadata.revision=tonumber(metadata.revision)+1; target.lastBroadcastAt=now
       table.insert(updates,public(target))
     end
-    redis.call("HSET",KEYS[1],target.targetId,cjson.encode(target)); redis.call("ZADD",KEYS[2],now+ttl,target.targetId)
+    stage(target.targetId,cjson.encode(target),now+ttl)
     if existing == nil then count=count+1 end
     accepted=accepted+1
   end
 end
+flush()
 redis.call("SET",KEYS[3],cjson.encode(metadata),"EX",idle)
-if redis.call("EXISTS",KEYS[1]) == 1 then redis.call("EXPIRE",KEYS[1],idle) end
-if redis.call("EXISTS",KEYS[2]) == 1 then redis.call("EXPIRE",KEYS[2],idle) end
+-- EXPIRE on a missing key does nothing, so it needs no EXISTS guard.
+redis.call("EXPIRE",KEYS[1],idle)
+redis.call("EXPIRE",KEYS[2],idle)
 -- Map threats: clan enemies with a clan, from verified observers only.
 local sightings={}
 if threatsAllowed then
@@ -252,6 +328,7 @@ local state={broadcastAt=0,pending=false}
 if stateRaw ~= false then state=cjson.decode(stateRaw) end
 local threatResult=nil
 local threatPendingMs=nil
+local threatWrites={}
 if #sightings > 0 or state.pending == true or threatRemoved then
   local records, threatCount = liveThreats(KEYS[4], now, threatTtl)
   local due=state.pending == true or threatRemoved
@@ -270,16 +347,20 @@ if #sightings > 0 or state.pending == true or threatRemoved then
         if previous.nickname ~= record.nickname or clanId(previous) ~= clanId(record) or previous.lvl ~= record.lvl or previous.prof ~= record.prof or previous.stasis ~= record.stasis or now-tonumber(previous.reportedAt or 0) >= threatRefresh then due=true end
       end
       records[observation.targetId]=record
-      redis.call("HSET",KEYS[4],observation.targetId,cjson.encode(record))
+      threatWrites[#threatWrites+1]=observation.targetId
+      threatWrites[#threatWrites+1]=cjson.encode(record)
     end
   end
   state.pending=false
   -- An empty list tells recipients the last enemy left.
   if due then
     if now-tonumber(state.broadcastAt) >= threatThrottle then
+      -- A broadcast stamps every record, so it supersedes the staged sightings.
+      threatWrites={}
       for id,record in pairs(records) do
         record.reportedAt=record.observedAt
-        redis.call("HSET",KEYS[4],id,cjson.encode(record))
+        threatWrites[#threatWrites+1]=id
+        threatWrites[#threatWrites+1]=cjson.encode(record)
       end
       state.broadcastAt=now
       threatResult={revision=now,enemies=threatEnemies(records,now)}
@@ -288,16 +369,20 @@ if #sightings > 0 or state.pending == true or threatRemoved then
       threatPendingMs=threatThrottle-(now-tonumber(state.broadcastAt))
     end
   end
+  if #threatWrites > 0 then redis.call("HSET",KEYS[4],unpack(threatWrites)) end
   state.mapName=mapName
   redis.call("SET",KEYS[5],cjson.encode(state),"PX",threatTtl)
   if next(records) ~= nil then redis.call("PEXPIRE",KEYS[4],threatTtl) end
 end
 -- Another replica follows this map, or every map of the Organization, so its sockets need the update through federation.
+-- A registration expires with its key and only a handful of replicas ever hold
+-- one, so counting the live scores beats sweeping the stale ones on every merge.
 local function othersInterested(key)
-  redis.call("ZREMRANGEBYSCORE",key,"-inf",now)
-  local count=redis.call("ZCARD",key)
-  if redis.call("ZSCORE",key,instance) ~= false then count=count-1 end
-  return count
+  local live=redis.call("ZCOUNT",key,"("..now,"+inf")
+  if live == 0 then return 0 end
+  local mine=redis.call("ZSCORE",key,instance)
+  if mine ~= false and tonumber(mine) > now then return live-1 end
+  return live
 end
 local interested=othersInterested(KEYS[6])+othersInterested(KEYS[7])
 return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=interested > 0}),{"targets","removed","enemies"})
@@ -482,19 +567,16 @@ export type BatchAdmission =
 /** The batch's rate-limit verdict and enabled scopes, or null for an unexpected reply. */
 export const admitBatch = (
   redis: ScriptStore,
-  connectionId: string,
   userId: string,
   scopes: ReadonlyArray<AirTagScope>,
 ): Effect.Effect<BatchAdmission | null, RealtimeStoreError> =>
   storeCall("air-tag.admission", async () => {
     const reply = await redis.command.eval(
       ADMISSION_SCRIPT,
-      2 + scopes.length,
-      `air-tag:rate:connection:${connectionId}`,
+      1 + scopes.length,
       `air-tag:rate:${userId}`,
       ...scopes.map((scope) => disabledKey(scope)),
       BATCH_RATE_WINDOW_MS,
-      CONNECTION_BATCH_RATE_LIMIT,
       USER_BATCH_RATE_LIMIT,
       crypto.randomUUID(),
     );

@@ -31,6 +31,7 @@ import {
 } from "effect";
 import {
   createLootlogAuth,
+  toAuthProvider,
   BetterAuthRuntime,
 } from "#src/auth/provider/better-auth";
 import { AuthDatabase } from "./drizzle.js";
@@ -403,7 +404,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
             ),
             Layer.provide(Layer.succeed(AuthDatabase, db)),
             Layer.provide(
-              Layer.succeed(BetterAuthRuntime, { ...auth, apiKeys: auth.api }),
+              Layer.succeed(BetterAuthRuntime, toAuthProvider(auth)),
             ),
             Layer.provide(
               Layer.succeed(AppConfig, {

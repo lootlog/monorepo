@@ -1,4 +1,7 @@
-import type { AirTagObservationBatch } from "@lootlog/schema/air-tag";
+import {
+  AIR_TAG_MAP_THREAT_FRESH_MS,
+  type AirTagObservationBatch,
+} from "@lootlog/schema/air-tag";
 import type { Other, OtherCreate } from "@lootlog/margonem/game-events";
 import {
   AIR_TAG_BATCH_INTERVAL_MS,
@@ -162,6 +165,34 @@ describe("AirTagObservationController", () => {
       expectedMapId: 42,
       observations: [expect.objectContaining({ targetId: "123" })],
     });
+  });
+
+  it("keeps a stationary target's reports closer together than the freshness window", () => {
+    const publishedAt: number[] = [];
+    const controller = new AirTagObservationController();
+    controller.configure({
+      enabled: true,
+      canPublish: true,
+      mapId: 42,
+      publisher: () => publishedAt.push(Date.now()),
+    });
+    controller.handle({ "123": createOther() });
+
+    for (let elapsed = 0; elapsed < 30_000; elapsed += 100) {
+      vi.advanceTimersByTime(100);
+    }
+
+    // The heartbeat, its scan granularity and the batch window bound the gap
+    // between two reports of a target that never moves; it settles at the
+    // heartbeat itself. Once that bound reaches the window the gateway keeps a
+    // target in, the target expires and silently leaves every observer's map,
+    // so the three constants spend one budget rather than standing on their own.
+    const gaps = publishedAt
+      .slice(1)
+      .map((at, index) => at - publishedAt[index]!);
+
+    expect(publishedAt.length).toBeGreaterThan(4);
+    expect(Math.max(...gaps)).toBeLessThan(AIR_TAG_MAP_THREAT_FRESH_MS);
   });
 
   it("reports stasis from a partial update at once, keeps the profession, and ends stasis on the next small step", () => {

@@ -41,6 +41,8 @@ export interface SessionData extends AuthenticatedIdentity {
   guilds: UserGuildData[];
   subscriptions: Map<string, typeof SubscriptionScope.Type>;
   airTagScopes: AirTagScope[];
+  /** When this connection sent its recent sighting batches, for its rate limit. */
+  airTagBatchesSentAt?: number[];
   npcPresence?: NpcPresenceState;
   /** Lootlogs whose activity log recorded this session's connection. */
   activityOrganizationIds?: string[];

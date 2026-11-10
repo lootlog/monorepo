@@ -11,6 +11,11 @@ import {
 
 const findDiscordAccountId = () => Effect.succeed("account-row-1");
 
+const SESSION_COOKIE = "test.session_token";
+
+const withSessionCookie = () =>
+  new Headers({ cookie: `${SESSION_COOKIE}=signed-value` });
+
 const createFakeAuth = () => {
   const getSession = mock<AuthProvider["api"]["getSession"]>(() =>
     Promise.resolve(null),
@@ -26,7 +31,16 @@ const createFakeAuth = () => {
 
   return {
     auth: {
-      api: { getSession, getJwks, getAccessToken },
+      sessionCookieNames: { token: SESSION_COOKIE, data: "session_data" },
+      api: {
+        getSession,
+        getSessionWithCookies: async ({ headers }) => ({
+          session: await getSession({ headers }),
+          setCookie: [],
+        }),
+        getJwks,
+        getAccessToken,
+      },
     } satisfies AuthProvider,
     getAccessToken,
     getJwks,
@@ -120,7 +134,7 @@ describe("AuthService", () => {
           headers: new Headers({ "x-api-key": "valid" }),
         }),
       ),
-    ).toEqual(identity);
+    ).toMatchObject({ identity });
     expect(getSession).not.toHaveBeenCalled();
   });
 
@@ -138,9 +152,11 @@ describe("AuthService", () => {
 
     await expect(
       Effect.runPromise(
-        service.verifyRequestIdentity({ headers: new Headers() }),
+        service.verifyRequestIdentity({ headers: withSessionCookie() }),
       ),
-    ).resolves.toEqual({ userId: "user-1", discordId: "discord-1" });
+    ).resolves.toMatchObject({
+      identity: { userId: "user-1", discordId: "discord-1" },
+    });
   });
 
   it("verifies bearer JWTs against Better Auth JWKS", async () => {
@@ -174,7 +190,9 @@ describe("AuthService", () => {
           authorizationHeader: `Bearer ${token}`,
         }),
       ),
-    ).resolves.toEqual({ userId: "user-2", discordId: "discord-2" });
+    ).resolves.toMatchObject({
+      identity: { userId: "user-2", discordId: "discord-2" },
+    });
   });
 
   it("returns provider token scopes and remaining lifetime", async () => {
