@@ -512,6 +512,8 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
         .values({
           lootId: createdLoot.id,
           guildId: randomGuild.id,
+          lootWorld: createdLoot.world,
+          lootCreatedAt: createdLoot.createdAt,
           updatedAt: new Date(),
         })
         .returning({ id: organizationLootRecordTable.id });
