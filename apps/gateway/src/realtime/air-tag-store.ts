@@ -107,11 +107,13 @@ end
 local function liveThreats(key, now, threatTtl)
   local records={}
   local count=0
+  local stale={}
   local raw=redis.call("HGETALL",key)
   for i=1,#raw,2 do
     local record=cjson.decode(raw[i+1])
-    if now-tonumber(record.observedAt) >= threatTtl then redis.call("HDEL",key,raw[i]) else records[raw[i]]=record; count=count+1 end
+    if now-tonumber(record.observedAt) >= threatTtl then stale[#stale+1]=raw[i] else records[raw[i]]=record; count=count+1 end
   end
+  if #stale > 0 then redis.call("HDEL",key,unpack(stale)) end
   return records, count
 end
 `;
@@ -136,6 +138,25 @@ local function liveObservers(target, now, ttl)
     end
   end
   return observers
+end
+-- Dragonfly charges a Lua redis.call about what it charges a client command, so
+-- this script costs what its call count costs. Reads and writes are staged and
+-- issued once per key instead of once per target.
+local writes={}
+local writeAt={}
+local scores={}
+local drops={}
+local function stage(id, encoded, score)
+  local at=writeAt[id]
+  if at ~= nil then writes[at]=encoded else
+    writes[#writes+1]=id; writes[#writes+1]=encoded; writeAt[id]=#writes
+  end
+  if score ~= nil then scores[#scores+1]=score; scores[#scores+1]=id end
+end
+local function flush()
+  if #drops > 0 then redis.call("HDEL",KEYS[1],unpack(drops)); redis.call("ZREM",KEYS[2],unpack(drops)); drops={} end
+  if #writes > 0 then redis.call("HSET",KEYS[1],unpack(writes)); writes={}; writeAt={} end
+  if #scores > 0 then redis.call("ZADD",KEYS[2],unpack(scores)); scores={} end
 end
 local now=nowMs()
 local observations=cjson.decode(ARGV[2])
@@ -166,37 +187,52 @@ local accepted=0
 local updates={}
 local removed={}
 local threatRemoved=false
+-- Caller-deduplicated ids, and a departure never shares a target with a
+-- sighting, so one read covers both loops.
+local touched={}
+for _,departure in ipairs(departures) do touched[#touched+1]=departure.targetId end
+for _,observation in ipairs(observations) do touched[#touched+1]=observation.targetId end
+local stored={}
+if #touched > 0 then
+  local rows=redis.call("HMGET",KEYS[1],unpack(touched))
+  for index,id in ipairs(touched) do
+    if rows[index] ~= false then stored[id]=cjson.decode(rows[index]) end
+  end
+end
+local threatDrops={}
 -- A target leaves once no observer still sees it and one of them saw it leave the map;
 -- a target only out of sight stays until its TTL.
 for _,departure in ipairs(departures) do
-  local existingRaw=redis.call("HGET",KEYS[1],departure.targetId)
-  if existingRaw ~= false then
-    local target=cjson.decode(existingRaw)
+  local target=stored[departure.targetId]
+  if target ~= nil then
     local observers=liveObservers(target,now,ttl)
     if observers[observer] ~= nil then
       observers[observer]=nil
       if departure.reason == "left-map" then target.departed=true end
       if target.departed == true and next(observers) == nil then
-        redis.call("HDEL",KEYS[1],departure.targetId); redis.call("ZREM",KEYS[2],departure.targetId)
+        drops[#drops+1]=departure.targetId
+        stored[departure.targetId]=nil
         count=count-1
         metadata.revision=tonumber(metadata.revision)+1
         table.insert(removed,departure.targetId)
-        if threatsAllowed and redis.call("HDEL",KEYS[4],departure.targetId) == 1 then threatRemoved=true end
+        if threatsAllowed then threatDrops[#threatDrops+1]=departure.targetId end
       else
         target.seenBy=observers
-        redis.call("HSET",KEYS[1],departure.targetId,cjson.encode(target))
+        stage(departure.targetId,cjson.encode(target))
       end
     end
   end
 end
+if #threatDrops > 0 and redis.call("HDEL",KEYS[4],unpack(threatDrops)) > 0 then threatRemoved=true end
 for _,observation in ipairs(observations) do
-  local existingRaw=redis.call("HGET",KEYS[1],observation.targetId)
-  local existing=nil
-  if existingRaw ~= false then existing=cjson.decode(existingRaw) end
+  local existing=stored[observation.targetId]
   local shouldAccept=true
   if existing == nil and count >= maxTargets then
     shouldAccept=false
     if isThreat(tonumber(observation.relation),enemy,clanEnemy) then
+      -- A full map evicting a non-threat is rare, and it scans committed state,
+      -- so the staged writes go out first.
+      flush()
       local candidates=redis.call("ZRANGE",KEYS[2],0,-1)
       for _,candidateId in ipairs(candidates) do
         local candidateRaw=redis.call("HGET",KEYS[1],candidateId)
@@ -204,6 +240,7 @@ for _,observation in ipairs(observations) do
           local candidate=cjson.decode(candidateRaw)
           if not isThreat(effective(candidate,now,ttl,enemy,clanEnemy),enemy,clanEnemy) then
             redis.call("HDEL",KEYS[1],candidateId); redis.call("ZREM",KEYS[2],candidateId)
+            stored[candidateId]=nil
             count=count-1; shouldAccept=true; break
           end
         end
@@ -232,14 +269,16 @@ for _,observation in ipairs(observations) do
       metadata.revision=tonumber(metadata.revision)+1; target.lastBroadcastAt=now
       table.insert(updates,public(target))
     end
-    redis.call("HSET",KEYS[1],target.targetId,cjson.encode(target)); redis.call("ZADD",KEYS[2],now+ttl,target.targetId)
+    stage(target.targetId,cjson.encode(target),now+ttl)
     if existing == nil then count=count+1 end
     accepted=accepted+1
   end
 end
+flush()
 redis.call("SET",KEYS[3],cjson.encode(metadata),"EX",idle)
-if redis.call("EXISTS",KEYS[1]) == 1 then redis.call("EXPIRE",KEYS[1],idle) end
-if redis.call("EXISTS",KEYS[2]) == 1 then redis.call("EXPIRE",KEYS[2],idle) end
+-- EXPIRE on a missing key does nothing, so it needs no EXISTS guard.
+redis.call("EXPIRE",KEYS[1],idle)
+redis.call("EXPIRE",KEYS[2],idle)
 -- Map threats: clan enemies with a clan, from verified observers only.
 local sightings={}
 if threatsAllowed then
@@ -252,6 +291,7 @@ local state={broadcastAt=0,pending=false}
 if stateRaw ~= false then state=cjson.decode(stateRaw) end
 local threatResult=nil
 local threatPendingMs=nil
+local threatWrites={}
 if #sightings > 0 or state.pending == true or threatRemoved then
   local records, threatCount = liveThreats(KEYS[4], now, threatTtl)
   local due=state.pending == true or threatRemoved
@@ -270,16 +310,20 @@ if #sightings > 0 or state.pending == true or threatRemoved then
         if previous.nickname ~= record.nickname or clanId(previous) ~= clanId(record) or previous.lvl ~= record.lvl or previous.prof ~= record.prof or previous.stasis ~= record.stasis or now-tonumber(previous.reportedAt or 0) >= threatRefresh then due=true end
       end
       records[observation.targetId]=record
-      redis.call("HSET",KEYS[4],observation.targetId,cjson.encode(record))
+      threatWrites[#threatWrites+1]=observation.targetId
+      threatWrites[#threatWrites+1]=cjson.encode(record)
     end
   end
   state.pending=false
   -- An empty list tells recipients the last enemy left.
   if due then
     if now-tonumber(state.broadcastAt) >= threatThrottle then
+      -- A broadcast stamps every record, so it supersedes the staged sightings.
+      threatWrites={}
       for id,record in pairs(records) do
         record.reportedAt=record.observedAt
-        redis.call("HSET",KEYS[4],id,cjson.encode(record))
+        threatWrites[#threatWrites+1]=id
+        threatWrites[#threatWrites+1]=cjson.encode(record)
       end
       state.broadcastAt=now
       threatResult={revision=now,enemies=threatEnemies(records,now)}
@@ -288,16 +332,20 @@ if #sightings > 0 or state.pending == true or threatRemoved then
       threatPendingMs=threatThrottle-(now-tonumber(state.broadcastAt))
     end
   end
+  if #threatWrites > 0 then redis.call("HSET",KEYS[4],unpack(threatWrites)) end
   state.mapName=mapName
   redis.call("SET",KEYS[5],cjson.encode(state),"PX",threatTtl)
   if next(records) ~= nil then redis.call("PEXPIRE",KEYS[4],threatTtl) end
 end
 -- Another replica follows this map, or every map of the Organization, so its sockets need the update through federation.
+-- A registration expires with its key and only a handful of replicas ever hold
+-- one, so counting the live scores beats sweeping the stale ones on every merge.
 local function othersInterested(key)
-  redis.call("ZREMRANGEBYSCORE",key,"-inf",now)
-  local count=redis.call("ZCARD",key)
-  if redis.call("ZSCORE",key,instance) ~= false then count=count-1 end
-  return count
+  local live=redis.call("ZCOUNT",key,"("..now,"+inf")
+  if live == 0 then return 0 end
+  local mine=redis.call("ZSCORE",key,instance)
+  if mine ~= false and tonumber(mine) > now then return live-1 end
+  return live
 end
 local interested=othersInterested(KEYS[6])+othersInterested(KEYS[7])
 return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=interested > 0}),{"targets","removed","enemies"})
