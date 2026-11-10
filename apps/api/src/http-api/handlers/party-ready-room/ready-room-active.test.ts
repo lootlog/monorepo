@@ -304,10 +304,13 @@ it("keeps authorized gathering rosters current across discovery, observations, a
 
     emptyIndex = true;
 
-    for (const path of [
-      "/messaging/party-gathering/active?world=experimental",
-      "/messaging/party-gathering",
-    ]) {
+    // Discovery reads the caller's guilds to find its indexes, but an empty
+    // result needs no source-role query. The caller's own rooms are indexed by
+    // User, so an empty list needs no query at all.
+    for (const [path, queries] of [
+      ["/messaging/party-gathering/active?world=experimental", 1],
+      ["/messaging/party-gathering", 0],
+    ] as const) {
       querySpy.mockClear();
 
       const empty = await boundary.handler(
@@ -318,8 +321,7 @@ it("keeps authorized gathering rosters current across discovery, observations, a
 
       expect(empty.status).toBe(200);
       expect(await empty.json()).toEqual([]);
-      // Empty indexes still authorize the caller, but need no source-role query.
-      expect(querySpy).toHaveBeenCalledTimes(1);
+      expect(querySpy).toHaveBeenCalledTimes(queries);
     }
 
     emptyIndex = false;
