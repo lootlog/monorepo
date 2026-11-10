@@ -40,14 +40,14 @@ for _,key in ipairs(KEYS) do redis.call("ZADD",key,expiresAt,ARGV[1]); redis.cal
 return #KEYS
 `;
 
-// A still enemy is sighted at most 6.25 s apart; re-reporting a sighting this old keeps its
+// A still enemy is sighted at most 6.5 s apart; re-reporting a sighting this old keeps its
 // age under `AIR_TAG_MAP_THREAT_FRESH_MS` on recipients.
 const THREAT_REFRESH_MS = 4_000;
 
 // Caps full-list fan-out per map; a change inside the window is sent with the next sighting.
 export const THREAT_BROADCAST_THROTTLE_MS = 1_000;
 
-// One game tab sends at most four batches a second.
+// One game tab sends at most two batches a second.
 const CONNECTION_BATCH_RATE_LIMIT = 15;
 
 // Several characters of one user may each observe a busy map.
@@ -166,7 +166,7 @@ local function isThreat(relation, enemy, clanEnemy) return relation == enemy or 
 local function carry(target, observation, existing, field)
   if observation[field] ~= nil then target[field]=observation[field] elseif existing ~= nil then target[field]=existing[field] end
 end
--- Connections that reported the target within the TTL; a live observer reports it at least every 6.25 s.
+-- Connections that reported the target within the TTL; a live observer reports it at least every 6.5 s.
 local function liveObservers(target, now, ttl)
   local observers={}
   if target.seenBy ~= nil then
