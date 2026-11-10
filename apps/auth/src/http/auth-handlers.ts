@@ -1,5 +1,10 @@
 import { Effect, Layer, Schema } from "effect";
-import { HttpServerRequest, HttpServerResponse } from "effect/http";
+import {
+  Cookies,
+  HttpMiddleware,
+  HttpServerRequest,
+  HttpServerResponse,
+} from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
 import { AuthService, HttpResponseError } from "#src/auth/auth-service";
 import { AuthApi } from "#src/http-api/auth-api";
@@ -45,14 +50,14 @@ const verify = Effect.fn("AuthController_verify")(function* () {
   const auth = yield* AuthService;
   const headers = yield* requestHeaders;
 
-  const identity = yield* auth.verifyRequestIdentity({
+  const { identity, setCookie } = yield* auth.verifyRequestIdentity({
     headers,
     authorizationHeader: headers.get("authorization") ?? undefined,
     authDiscordId: headers.get("x-auth-discord-id") ?? undefined,
     authUserId: headers.get("x-auth-user-id") ?? undefined,
   });
 
-  return { identity, body: { status: "OK" as const } };
+  return { identity, setCookie, body: { status: "OK" as const } };
 });
 
 const getScopes = Effect.fn("AuthController_getScopes")(function* () {
@@ -93,15 +98,26 @@ export const AuthHandlers = Layer.merge(
   HttpApiBuilder.group(AuthApi, "auth", (handlers) =>
     handlers
       .handleRaw("AuthControllerVerify", () =>
-        toHttpResponse(verify(), ({ body, identity }) =>
-          HttpServerResponse.jsonUnsafe(body, {
-            headers: {
-              "X-Auth-Discord-Id": identity.discordId,
-              "X-Auth-User-Id": identity.userId,
-              "X-Auth-Api-Key-Access": identity.apiKeyAccess
-                ? JSON.stringify(identity.apiKeyAccess)
-                : "",
-            },
+        // Traefik calls this once per proxied request; a log line per call
+        // tells nothing and dominated the service's log volume.
+        HttpMiddleware.withLoggerDisabled(
+          toHttpResponse(verify(), ({ body, identity, setCookie }) => {
+            const response = HttpServerResponse.jsonUnsafe(body, {
+              headers: {
+                "X-Auth-Discord-Id": identity.discordId,
+                "X-Auth-User-Id": identity.userId,
+                "X-Auth-Api-Key-Access": identity.apiKeyAccess
+                  ? JSON.stringify(identity.apiKeyAccess)
+                  : "",
+              },
+            });
+
+            return setCookie.length === 0
+              ? response
+              : HttpServerResponse.replaceCookies(
+                  response,
+                  Cookies.fromSetCookie(setCookie),
+                );
           }),
         ),
       )

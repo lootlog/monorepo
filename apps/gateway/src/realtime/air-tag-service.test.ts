@@ -2,6 +2,8 @@ import { Effect } from "effect";
 import { describe, expect, test } from "bun:test";
 import { makeGamePingSocket } from "../../test/realtime-fixtures.js";
 import { AirTagService } from "./air-tag-service.js";
+import { admitConnectionBatch } from "./air-tag-store.js";
+import type { SessionData } from "./session.js";
 
 describe("AirTagService", () => {
   test("rejects an empty observation batch before touching Redis", async () => {
@@ -146,5 +148,31 @@ describe("AirTagService map threats", () => {
     expect(threatPublications).toEqual([
       expect.objectContaining({ mapId: 7, mapName: "Map", revision: 1_300 }),
     ]);
+  });
+});
+
+describe("air-tag connection batch admission", () => {
+  const session = (): Pick<SessionData, "airTagBatchesSentAt"> => ({});
+
+  test("admits the window's batches, then rejects until the oldest one ages out", () => {
+    const connection = session();
+    const startedAt = 1_000_000;
+
+    for (let index = 0; index < 15; index += 1) {
+      expect(admitConnectionBatch(connection, startedAt + index)).toEqual({
+        admitted: true,
+      });
+    }
+
+    // The 16th batch inside the window waits for the first one to leave it.
+    expect(admitConnectionBatch(connection, startedAt + 15)).toEqual({
+      admitted: false,
+      retryAfterMs: 2_985,
+    });
+
+    // Once it has, the connection publishes again rather than staying stuck.
+    expect(admitConnectionBatch(connection, startedAt + 3_000)).toEqual({
+      admitted: true,
+    });
   });
 });

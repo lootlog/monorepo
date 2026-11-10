@@ -39,6 +39,7 @@ import type { CommandAdmission } from "#src/realtime/command-admission";
 import {
   THREAT_BROADCAST_THROTTLE_MS,
   admitBatch,
+  admitConnectionBatch,
   takeThreatFlush,
   hashTag,
   interestKeyFor,
@@ -664,12 +665,15 @@ export class AirTagService {
     socket: GatewaySocket,
     scopes: ReadonlyArray<AirTagScope>,
   ): Effect.Effect<BatchAdmission | null> {
-    return admitBatch(
-      this.redis,
-      socket.data.connectionId,
-      socket.data.userId,
-      scopes,
-    ).pipe(
+    const connection = admitConnectionBatch(socket.data, Date.now());
+
+    if (!connection.admitted)
+      return Effect.succeed<BatchAdmission>({
+        status: "rate-limited",
+        retryAfterMs: connection.retryAfterMs,
+      });
+
+    return admitBatch(this.redis, socket.data.userId, scopes).pipe(
       Effect.catch((error) =>
         warn("Failed to admit air tag observations", error).pipe(
           Effect.as(null),
