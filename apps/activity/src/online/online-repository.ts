@@ -156,22 +156,50 @@ export class OnlineRepository extends Context.Service<
           WHERE ${query.world ?? null}::text IS NULL OR world = ${query.world ?? null}::text
         ), intervals AS (
           SELECT unnest(range_agg(tstzrange(start, finish, '[)'))) AS span FROM counted_intervals
+        -- Each interval and merged span is expanded into the Warsaw days it
+        -- covers and then joined on the date. Testing every day against every
+        -- interval instead costs days multiplied by intervals, which is why a
+        -- year-long range took hundreds of times a single day's work.
+        ), interval_days AS (
+          SELECT g::date AS date, source_intervals.world
+          FROM source_intervals
+          CROSS JOIN LATERAL generate_series(
+            date_trunc('day', source_intervals.start AT TIME ZONE 'Europe/Warsaw'),
+            date_trunc('day', (source_intervals.finish - interval '1 microsecond') AT TIME ZONE 'Europe/Warsaw'),
+            interval '1 day') g
+          WHERE source_intervals.finish > source_intervals.start
+        ), day_worlds AS (
+          SELECT date, COALESCE(array_agg(DISTINCT world ORDER BY world) FILTER (WHERE world IS NOT NULL), '{}') AS worlds,
+            bool_or(world IS NULL) AS unknown
+          FROM interval_days GROUP BY date
+        ), span_days AS (
+          SELECT g::date AS date,
+            GREATEST(0, EXTRACT(epoch FROM (
+              LEAST(upper(intervals.span), (g::date + 1)::timestamp AT TIME ZONE 'Europe/Warsaw')
+              - GREATEST(lower(intervals.span), g::timestamp AT TIME ZONE 'Europe/Warsaw')))) AS seconds
+          FROM intervals
+          CROSS JOIN LATERAL generate_series(
+            date_trunc('day', lower(intervals.span) AT TIME ZONE 'Europe/Warsaw'),
+            date_trunc('day', (upper(intervals.span) - interval '1 microsecond') AT TIME ZONE 'Europe/Warsaw'),
+            interval '1 day') g
+        ), day_seconds AS (
+          SELECT date, sum(seconds) AS seconds FROM span_days GROUP BY date
         )
         SELECT days.date::text AS date,
-          ARRAY(SELECT DISTINCT world FROM source_intervals WHERE world IS NOT NULL
-            AND start < days.finish AND finish > days.start AND finish > start ORDER BY world) AS worlds,
-          NOT EXISTS(SELECT 1 FROM source_intervals WHERE world IS NULL
-            AND start < days.finish AND finish > days.start AND finish > start) AS "worldsComplete",
+          COALESCE(day_worlds.worlds, '{}') AS worlds,
+          NOT COALESCE(day_worlds.unknown, false) AS "worldsComplete",
           CASE WHEN ${trackingStartedAt}::timestamptz IS NULL OR days.finish <= ${trackingStartedAt}::timestamptz
             OR days.finish <= ${cutoff}::timestamptz OR days.start > ${nowIso}::timestamptz THEN NULL
           WHEN (days.start < ${trackingStartedAt}::timestamptz OR days.start < ${cutoff}::timestamptz)
-            AND COALESCE(sum(EXTRACT(epoch FROM (LEAST(upper(span), days.finish) - GREATEST(lower(span), days.start)))) FILTER (WHERE span IS NOT NULL), 0) = 0 THEN NULL
-          ELSE COALESCE(sum(EXTRACT(epoch FROM (LEAST(upper(span), days.finish) - GREATEST(lower(span), days.start)))) FILTER (WHERE span IS NOT NULL), 0)::double precision END AS "onlineSeconds",
+            AND COALESCE(day_seconds.seconds, 0) = 0 THEN NULL
+          ELSE COALESCE(day_seconds.seconds, 0)::double precision END AS "onlineSeconds",
           COALESCE(days.start < ${trackingStartedAt}::timestamptz AND days.finish > ${trackingStartedAt}::timestamptz, false)
             OR (days.start <= ${nowIso}::timestamptz AND days.finish > ${nowIso}::timestamptz)
             OR (days.start < ${cutoff}::timestamptz AND days.finish > ${cutoff}::timestamptz) AS partial
-        FROM days LEFT JOIN intervals ON span && tstzrange(days.start, days.finish, '[)')
-        GROUP BY days.date, days.start, days.finish ORDER BY days.date`;
+        FROM days
+        LEFT JOIN day_worlds ON day_worlds.date = days.date
+        LEFT JOIN day_seconds ON day_seconds.date = days.date
+        ORDER BY days.date`;
 
         return {
           timezone: "Europe/Warsaw" as const,
