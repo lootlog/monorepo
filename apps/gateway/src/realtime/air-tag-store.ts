@@ -19,7 +19,7 @@ import type {
   RedisGatewayStore,
   RedisScriptReply,
 } from "#src/platform/redis-store";
-import type { AirTagScope } from "#src/realtime/session";
+import type { AirTagScope, SessionData } from "#src/realtime/session";
 
 const TARGET_TTL_MS = 10_000;
 
@@ -55,23 +55,60 @@ const USER_BATCH_RATE_LIMIT = 45;
 
 const BATCH_RATE_WINDOW_MS = 3_000;
 
-// One round trip admits a batch: the connection limit, then the user limit, then
-// each scope's disabled flag. The shared limiter reads KEYS and ARGV, so it runs
-// as a function whose parameters shadow them.
+// One round trip admits a batch: the user limit, then each scope's disabled
+// flag. The shared limiter reads KEYS and ARGV, so it runs as a function whose
+// parameters shadow them. The connection limit is enforced in process by
+// {@link admitConnectionBatch}.
 const ADMISSION_SCRIPT = `
 local function consume(KEYS, ARGV)
 ${slidingWindowRateLimitScript({ refreshExpiryOnReject: true, includeTimestamp: false })}
 end
-local connection=consume({KEYS[1]},{ARGV[1],ARGV[2],ARGV[4]})
-if connection[1] ~= 1 then return connection end
-local user=consume({KEYS[2]},{ARGV[1],ARGV[3],ARGV[4]})
+local user=consume({KEYS[1]},{ARGV[1],ARGV[2],ARGV[3]})
 if user[1] ~= 1 then return user end
 local result={1,0}
-for i=3,#KEYS do
-  if redis.call("GET",KEYS[i]) == "1" then result[i]=1 else result[i]=0 end
+for i=2,#KEYS do
+  if redis.call("GET",KEYS[i]) == "1" then result[i+1]=1 else result[i+1]=0 end
 end
 return result
 `;
+
+export type ConnectionBatchAdmission =
+  | { readonly admitted: true }
+  | { readonly admitted: false; readonly retryAfterMs: number };
+
+/**
+ * The connection limit over the same window the shared limiter used. A
+ * connection only ever reports through the replica that holds its socket, so
+ * this needs no shared state, and a flooding connection no longer reaches
+ * Dragonfly at all.
+ */
+export const admitConnectionBatch = (
+  session: Pick<SessionData, "airTagBatchesSentAt">,
+  now: number,
+): ConnectionBatchAdmission => {
+  const sentAt = (session.airTagBatchesSentAt ??= []);
+
+  let kept = 0;
+
+  for (const at of sentAt) {
+    if (now - at < BATCH_RATE_WINDOW_MS) sentAt[kept++] = at;
+  }
+
+  sentAt.length = kept;
+
+  const oldest = sentAt[0];
+
+  if (oldest !== undefined && sentAt.length >= CONNECTION_BATCH_RATE_LIMIT) {
+    return {
+      admitted: false,
+      retryAfterMs: Math.max(1, oldest + BATCH_RATE_WINDOW_MS - now),
+    };
+  }
+
+  sentAt.push(now);
+
+  return { admitted: true };
+};
 
 const AdmissionReply = Schema.Array(Schema.Number);
 
@@ -530,19 +567,16 @@ export type BatchAdmission =
 /** The batch's rate-limit verdict and enabled scopes, or null for an unexpected reply. */
 export const admitBatch = (
   redis: ScriptStore,
-  connectionId: string,
   userId: string,
   scopes: ReadonlyArray<AirTagScope>,
 ): Effect.Effect<BatchAdmission | null, RealtimeStoreError> =>
   storeCall("air-tag.admission", async () => {
     const reply = await redis.command.eval(
       ADMISSION_SCRIPT,
-      2 + scopes.length,
-      `air-tag:rate:connection:${connectionId}`,
+      1 + scopes.length,
       `air-tag:rate:${userId}`,
       ...scopes.map((scope) => disabledKey(scope)),
       BATCH_RATE_WINDOW_MS,
-      CONNECTION_BATCH_RATE_LIMIT,
       USER_BATCH_RATE_LIMIT,
       crypto.randomUUID(),
     );
