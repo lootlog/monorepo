@@ -27,7 +27,7 @@ export const JOIN_ADMISSION_LIMITS = {
 
 /**
  * Every game client on the new interface publishes AirTag batches every
- * 250 ms. Unbounded, they fill the command slots and the event loop, so
+ * 500 ms. Unbounded, they fill the command slots and the event loop, so
  * heartbeats and joins time out. A rejected batch loses nothing: the client
  * merges it into its next batch. The 8 slots leave 8 free while joins hold
  * theirs; 300 batches per second is about half of what one replica served
