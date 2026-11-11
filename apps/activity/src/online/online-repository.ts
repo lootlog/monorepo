@@ -134,6 +134,10 @@ export class OnlineRepository extends Context.Service<
           ? new Date(meta.lastObservedAt).toISOString()
           : null;
 
+        // Each interval is expanded once into the Warsaw days it covers, clipped
+        // to each day's bounds, and merged per day with range_agg. Keep the
+        // startedAt bound off UserOnlineInterval_startedAt_idx so retention's
+        // global index never replaces the per-user primary key scan.
         const days = yield* sql<{
           date: string;
           onlineSeconds: number | null;
@@ -148,57 +152,49 @@ export class OnlineRepository extends Context.Service<
         ), source_intervals AS (
           SELECT "world", GREATEST("startedAt", ${cutoff}::timestamptz) AS start, "endedAt" AS finish
           FROM "UserOnlineInterval" WHERE "userId" = ${userId}
-            AND "endedAt" > ${cutoff}::timestamptz
-            AND "endedAt" > (SELECT min(start) FROM days)
-            AND "startedAt" < (SELECT max(finish) FROM days)
-        ), counted_intervals AS (
-          SELECT start, finish FROM source_intervals
-          WHERE ${query.world ?? null}::text IS NULL OR world = ${query.world ?? null}::text
-        ), intervals AS (
-          SELECT unnest(range_agg(tstzrange(start, finish, '[)'))) AS span FROM counted_intervals
-        -- Each interval and merged span is expanded into the Warsaw days it
-        -- covers and then joined on the date. Testing every day against every
-        -- interval instead costs days multiplied by intervals, which is why a
-        -- year-long range took hundreds of times a single day's work.
+            AND "endedAt" > GREATEST(${cutoff}::timestamptz, ${query.from}::date::timestamp AT TIME ZONE 'Europe/Warsaw')
+            AND "startedAt" + interval '0 seconds' < (${query.to}::date + 1)::timestamp AT TIME ZONE 'Europe/Warsaw'
         ), interval_days AS (
-          SELECT g::date AS date, source_intervals.world
+          SELECT g::date AS date, source_intervals.world,
+            tstzrange(
+              GREATEST(source_intervals.start, g::timestamp AT TIME ZONE 'Europe/Warsaw'),
+              LEAST(source_intervals.finish, (g::date + 1)::timestamp AT TIME ZONE 'Europe/Warsaw'),
+              '[)'
+            ) AS span
           FROM source_intervals
           CROSS JOIN LATERAL generate_series(
-            date_trunc('day', source_intervals.start AT TIME ZONE 'Europe/Warsaw'),
-            date_trunc('day', (source_intervals.finish - interval '1 microsecond') AT TIME ZONE 'Europe/Warsaw'),
+            GREATEST(${query.from}::date::timestamp, date_trunc('day', source_intervals.start AT TIME ZONE 'Europe/Warsaw')),
+            LEAST(${query.to}::date::timestamp, date_trunc('day', (source_intervals.finish - interval '1 microsecond') AT TIME ZONE 'Europe/Warsaw')),
             interval '1 day') g
           WHERE source_intervals.finish > source_intervals.start
-        ), day_worlds AS (
-          SELECT date, COALESCE(array_agg(DISTINCT world ORDER BY world) FILTER (WHERE world IS NOT NULL), '{}') AS worlds,
-            bool_or(world IS NULL) AS unknown
-          FROM interval_days GROUP BY date
-        ), span_days AS (
-          SELECT g::date AS date,
-            GREATEST(0, EXTRACT(epoch FROM (
-              LEAST(upper(intervals.span), (g::date + 1)::timestamp AT TIME ZONE 'Europe/Warsaw')
-              - GREATEST(lower(intervals.span), g::timestamp AT TIME ZONE 'Europe/Warsaw')))) AS seconds
-          FROM intervals
-          CROSS JOIN LATERAL generate_series(
-            date_trunc('day', lower(intervals.span) AT TIME ZONE 'Europe/Warsaw'),
-            date_trunc('day', (upper(intervals.span) - interval '1 microsecond') AT TIME ZONE 'Europe/Warsaw'),
-            interval '1 day') g
-        ), day_seconds AS (
-          SELECT date, sum(seconds) AS seconds FROM span_days GROUP BY date
+        ), day_agg AS (
+          SELECT date,
+            COALESCE(array_agg(DISTINCT world ORDER BY world) FILTER (WHERE world IS NOT NULL), '{}') AS worlds,
+            bool_or(world IS NULL) AS unknown,
+            range_agg(span) FILTER (WHERE ${query.world ?? null}::text IS NULL OR world = ${query.world ?? null}::text) AS spans
+          FROM interval_days
+          GROUP BY date
+        ), day_stats AS (
+          SELECT day_agg.date, day_agg.worlds, day_agg.unknown,
+            COALESCE((
+              SELECT sum(EXTRACT(epoch FROM (upper(s) - lower(s))))
+              FROM unnest(day_agg.spans) AS s
+            ), 0) AS seconds
+          FROM day_agg
         )
         SELECT days.date::text AS date,
-          COALESCE(day_worlds.worlds, '{}') AS worlds,
-          NOT COALESCE(day_worlds.unknown, false) AS "worldsComplete",
+          COALESCE(day_stats.worlds, '{}') AS worlds,
+          NOT COALESCE(day_stats.unknown, false) AS "worldsComplete",
           CASE WHEN ${trackingStartedAt}::timestamptz IS NULL OR days.finish <= ${trackingStartedAt}::timestamptz
             OR days.finish <= ${cutoff}::timestamptz OR days.start > ${nowIso}::timestamptz THEN NULL
           WHEN (days.start < ${trackingStartedAt}::timestamptz OR days.start < ${cutoff}::timestamptz)
-            AND COALESCE(day_seconds.seconds, 0) = 0 THEN NULL
-          ELSE COALESCE(day_seconds.seconds, 0)::double precision END AS "onlineSeconds",
+            AND COALESCE(day_stats.seconds, 0) = 0 THEN NULL
+          ELSE COALESCE(day_stats.seconds, 0)::double precision END AS "onlineSeconds",
           COALESCE(days.start < ${trackingStartedAt}::timestamptz AND days.finish > ${trackingStartedAt}::timestamptz, false)
             OR (days.start <= ${nowIso}::timestamptz AND days.finish > ${nowIso}::timestamptz)
             OR (days.start < ${cutoff}::timestamptz AND days.finish > ${cutoff}::timestamptz) AS partial
         FROM days
-        LEFT JOIN day_worlds ON day_worlds.date = days.date
-        LEFT JOIN day_seconds ON day_seconds.date = days.date
+        LEFT JOIN day_stats ON day_stats.date = days.date
         ORDER BY days.date`;
 
         return {

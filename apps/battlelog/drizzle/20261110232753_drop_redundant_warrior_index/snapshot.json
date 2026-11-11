@@ -1,0 +1,37 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "98d5ce25-fdc0-49af-9cf9-834bf666d92e",
+  "prevIds": ["fc42f71a-8db0-47ea-ba0d-266e80449ebc"],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "battle_warriors",
+        "battle_warriors_originalId_battleId_idx"
+      ],
+      "writes": [
+        "s|idx|public.battle_warriors_originalId_battleId_idx",
+        "n|idx|public.battle_warriors_originalId_battleId_idx",
+        "e|idx|public.battle_warriors_originalId_battleId_idx",
+        "n|rel|public.battle_warriors_originalId_battleId_idx"
+      ],
+      "reads": [
+        "e|tbl|public.battle_warriors",
+        "n|sch|public",
+        "e|col|public.battle_warriors.originalId",
+        "e|col|public.battle_warriors.battleId"
+      ],
+      "sharedWrites": []
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"battle_warriors_originalId_battleId_idx\"]"
+    }
+  ]
+}
