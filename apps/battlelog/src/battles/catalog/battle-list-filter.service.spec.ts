@@ -217,6 +217,15 @@ describe("battle list filters against PostgreSQL", () => {
     ).toEqual([]);
   });
 
+  it("treats the full 1-500 range as no level filter and keeps a one-sided bound", async () => {
+    const everyone = await list({});
+
+    expect(await list({ minLevel: 1, maxLevel: 500 })).toEqual(everyone);
+    expect(await list({ minLevel: 201, maxLevel: 500 })).toEqual([]);
+    expect(await list({ minLevel: 1, maxLevel: 99 })).toEqual([]);
+    expect(await list({ minLevel: 200, maxLevel: 500 })).toEqual(everyone);
+  });
+
   it("includes battles saved exactly at either end of a date range", async () => {
     const savedAt = (index: number) =>
       new Date(FIRST_BATTLE_AT + index).toISOString();

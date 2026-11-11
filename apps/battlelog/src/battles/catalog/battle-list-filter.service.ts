@@ -29,6 +29,11 @@ type BattleListFilterDatabase = {
   };
 };
 
+// Margonem levels run from 1 to 500; the web panel's default range is the same.
+const MIN_WARRIOR_LEVEL = 1;
+
+const MAX_WARRIOR_LEVEL = 500;
+
 export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
   const appendTeamResultConditions = (
     resultConditions: (SQL | undefined)[],
@@ -125,15 +130,36 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
       return;
     }
 
+    // The panel sends the full range (1 to 500) while no level filter is set.
+    // Such a bound excludes no warrior, but the EXISTS below would still probe
+    // battle_warriors once per battle the user owns.
+    const minLevel =
+      query.minLevel !== undefined && query.minLevel > MIN_WARRIOR_LEVEL
+        ? query.minLevel
+        : undefined;
+
+    const maxLevel =
+      query.maxLevel !== undefined && query.maxLevel < MAX_WARRIOR_LEVEL
+        ? query.maxLevel
+        : undefined;
+
+    // Selected characters still need an opponent besides themselves.
+    if (
+      minLevel === undefined &&
+      maxLevel === undefined &&
+      !characterIds.length
+    ) {
+      return;
+    }
+
     const levelConditions: (SQL | undefined)[] = [];
 
-    if (query.minLevel !== undefined && query.maxLevel !== undefined) {
-      levelConditions.push(gte(battleWarriors.lvl, query.minLevel));
-      levelConditions.push(lte(battleWarriors.lvl, query.maxLevel));
-    } else if (query.minLevel !== undefined) {
-      levelConditions.push(gte(battleWarriors.lvl, query.minLevel));
-    } else if (query.maxLevel !== undefined) {
-      levelConditions.push(lte(battleWarriors.lvl, query.maxLevel));
+    if (minLevel !== undefined) {
+      levelConditions.push(gte(battleWarriors.lvl, minLevel));
+    }
+
+    if (maxLevel !== undefined) {
+      levelConditions.push(lte(battleWarriors.lvl, maxLevel));
     }
 
     if (characterIds.length) {

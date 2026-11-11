@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "bun --watch src/main.ts",
     "build": "bun build src/main.ts --target=bun --packages=external --outdir=dist/src --sourcemap=linked",
-    "start": "bun --enable-source-maps dist/src/main.js",
+    "start": "bun dist/src/main.js",
     "lint": "oxlint src test",
     "typecheck": "bun check",
     "format": "oxfmt src test",
