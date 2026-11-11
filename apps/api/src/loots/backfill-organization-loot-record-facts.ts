@@ -1,5 +1,5 @@
 import { BunRuntime } from "@effect/platform-bun";
-import { and, between, eq, isNull, max, min, sql } from "drizzle-orm";
+import { and, between, eq, isNull, max, min, or, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import {
@@ -13,13 +13,19 @@ import {
  * filled row never needs revisiting and the `lootWorld IS NULL` guard makes a
  * re-run resume where the last one stopped.
  *
- * The work is windowed by `lootId` rather than by row count: that is the order
- * the unique (guildId, lootId) index stores records in, so each window touches
- * a bounded, contiguous slice instead of scattering writes across the table.
+ * The work is windowed by `lootId` rather than by row count: the
+ * `OrganizationLootRecord_lootId_idx` range scan gives each window a bounded,
+ * contiguous slice instead of scattering writes across the table.
  * Each window is its own transaction, so this can be interrupted at any point
  * and nothing is left half-written.
  */
 const WINDOW = 50_000;
+
+// The same condition the NOT NULL migration validates.
+const missingFacts = or(
+  isNull(organizationLootRecordTable.lootWorld),
+  isNull(organizationLootRecordTable.lootCreatedAt),
+);
 
 export const backfillOrganizationLootRecordFacts = Effect.gen(function* () {
   const database = yield* ApiDatabase;
@@ -30,7 +36,7 @@ export const backfillOrganizationLootRecordFacts = Effect.gen(function* () {
       highest: max(organizationLootRecordTable.lootId),
     })
     .from(organizationLootRecordTable)
-    .where(isNull(organizationLootRecordTable.lootWorld));
+    .where(missingFacts);
 
   if (!bounds?.lowest || !bounds.highest) {
     yield* Effect.logInfo("Organization loot record facts already complete");
@@ -58,7 +64,7 @@ export const backfillOrganizationLootRecordFacts = Effect.gen(function* () {
         and(
           eq(lootTable.id, organizationLootRecordTable.lootId),
           between(organizationLootRecordTable.lootId, lower, upper),
-          isNull(organizationLootRecordTable.lootWorld),
+          missingFacts,
         ),
       );
 

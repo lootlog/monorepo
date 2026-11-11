@@ -207,13 +207,14 @@ const readLootFacts = (
     .where(eq(lootTable.id, lootId))
     .limit(1)
     .pipe(
-      Effect.map((rows) => {
+      Effect.flatMap((rows) => {
         const facts = rows[0];
 
-        if (!facts)
-          throw new DependencyUnavailableError("Failed to resolve loot facts");
-
-        return facts;
+        return facts
+          ? Effect.succeed(facts)
+          : Effect.fail(
+              new DependencyUnavailableError("Failed to resolve loot facts"),
+            );
       }),
     );
 

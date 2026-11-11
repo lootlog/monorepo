@@ -1120,3 +1120,36 @@ each boss kill's party instead. Apply it only once no API that writes those
 columns runs, on every environment after the API from
 `20261107120054_boss_kills` is deployed there. Dropping a column of the
 compressed hypertable does not rewrite its chunks.
+
+## Loot facts on Organization records
+
+`OrganizationLootRecord` carries `lootWorld` and `lootCreatedAt`, the two
+immutable loot facts the loot list filters on, so the page selection reads one
+table instead of joining `Loot` (the join was 80% of the buffers of a page).
+Roll it out in this order; each step is a separate deploy:
+
+1. Apply `20261111090400_loot_record_world_denormalization`. It only adds two
+   nullable columns, which is metadata-only. Then deploy the API: it writes
+   both columns for every new record, and the migration must come first or
+   every loot submission fails.
+2. Run `bun src/loots/backfill-organization-loot-record-facts.ts` from
+   `apps/api` until it reports nothing left to fill. It works newest first in
+   windows of 50,000 loot ids and resumes where it stopped (about ten minutes
+   on the 15.7M-row production copy). Do not create the new index before this:
+   updating an indexed column rewrites every index of the table.
+3. Build the new index outside a transaction, then analyze:
+
+   ```sql
+   CREATE INDEX CONCURRENTLY IF NOT EXISTS "OrganizationLootRecord_guildId_archivedAt_world_lootId_idx" ON "OrganizationLootRecord" ("guildId","archivedAt","lootWorld","lootId" DESC NULLS LAST);
+   ANALYZE "OrganizationLootRecord";
+   ```
+
+4. Apply `20261111090416_loot_record_facts_required` and deploy the API that
+   selects the page from the record. The migration refuses to run on a
+   populated database without the valid index, validates the facts without
+   blocking writes, sets both columns `NOT NULL`, and drops the unused
+   `OrganizationLootRecord_guildId_archivedAt_lootId_idx` (839 MB).
+
+The runner applies all pending migrations in one transaction, so steps 1 and 4
+cannot be pending together on a database that has not been backfilled: the
+second one fails and rolls the first back.
