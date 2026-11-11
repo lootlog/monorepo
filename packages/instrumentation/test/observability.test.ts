@@ -361,6 +361,37 @@ describe("observability contract", () => {
     );
   });
 
+  test("fast successful HTTP responses are not logged while client errors are", async () => {
+    const boundary = HttpRouter.toWebHandler(
+      Layer.mergeAll(
+        HttpRouter.add("GET", "/ok", HttpServerResponse.empty()),
+        HttpRouter.add(
+          "GET",
+          "/missing",
+          HttpServerResponse.empty({ status: 404 }),
+        ),
+      ).pipe(
+        Layer.provide(HttpServer.layerServices),
+        Layer.merge(observability({})),
+      ),
+      { middleware: httpServerMetrics },
+    );
+
+    try {
+      await boundary.handler(new Request("http://localhost/ok"));
+      await boundary.handler(new Request("http://localhost/missing"));
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    } finally {
+      await boundary.dispose();
+    }
+
+    const output = JSON.stringify(logOutput.mock.calls);
+
+    expect(logOutput.mock.calls).toHaveLength(1);
+    expect(output).toContain("/missing");
+    expect(output).not.toContain("/ok");
+  });
+
   test("HTTP propagates incoming trace context and logs correlate with exported spans", async () => {
     logOutput.mockImplementation(() => {});
     const payloads: unknown[] = [];
