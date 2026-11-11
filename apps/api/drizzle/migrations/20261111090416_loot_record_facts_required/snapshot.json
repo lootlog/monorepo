@@ -2,8 +2,8 @@
   "type": "diff",
   "version": "9",
   "dialect": "postgres",
-  "id": "637a3d15-3c19-4280-a2a5-93cfb5a77934",
-  "prevIds": ["7d48532d-0379-418b-bd54-c06f3432811b"],
+  "id": "912a2317-051f-4457-b77a-389196cf7009",
+  "prevIds": ["fec985eb-ecc7-4670-a74c-9a79bd56c312"],
   "footprints": [
     {
       "statementType": "drop_index",
@@ -29,22 +29,23 @@
       "sharedWrites": []
     },
     {
-      "statementType": "add_column",
+      "statementType": "alter_column",
       "statementTarget": [
         "column",
         "public",
         "OrganizationLootRecord",
         "lootWorld"
       ],
-      "writes": [
-        "s|col|public.OrganizationLootRecord.lootWorld",
-        "n|col|public.OrganizationLootRecord.lootWorld",
-        "e|col|public.OrganizationLootRecord.lootWorld"
+      "writes": ["s|colprop|public.OrganizationLootRecord.lootWorld.notNull"],
+      "reads": [
+        "n|tbl|public.OrganizationLootRecord",
+        "n|sch|public",
+        "n|col|public.OrganizationLootRecord.lootWorld"
       ],
-      "reads": ["n|tbl|public.OrganizationLootRecord", "n|sch|public"]
+      "sqlHash": "726927b005b04987"
     },
     {
-      "statementType": "add_column",
+      "statementType": "alter_column",
       "statementTarget": [
         "column",
         "public",
@@ -52,11 +53,14 @@
         "lootCreatedAt"
       ],
       "writes": [
-        "s|col|public.OrganizationLootRecord.lootCreatedAt",
-        "n|col|public.OrganizationLootRecord.lootCreatedAt",
-        "e|col|public.OrganizationLootRecord.lootCreatedAt"
+        "s|colprop|public.OrganizationLootRecord.lootCreatedAt.notNull"
       ],
-      "reads": ["n|tbl|public.OrganizationLootRecord", "n|sch|public"]
+      "reads": [
+        "n|tbl|public.OrganizationLootRecord",
+        "n|sch|public",
+        "n|col|public.OrganizationLootRecord.lootCreatedAt"
+      ],
+      "sqlHash": "cf792d0841bd913a"
     },
     {
       "statementType": "create_index",
@@ -83,38 +87,6 @@
     }
   ],
   "deltas": [
-    {
-      "op": "create",
-      "row": {
-        "schema": "public",
-        "table": "OrganizationLootRecord",
-        "name": "lootWorld",
-        "type": "text",
-        "typeSchema": null,
-        "notNull": false,
-        "dimensions": 0,
-        "default": null,
-        "generated": null,
-        "identity": null,
-        "entityType": "columns"
-      }
-    },
-    {
-      "op": "create",
-      "row": {
-        "schema": "public",
-        "table": "OrganizationLootRecord",
-        "name": "lootCreatedAt",
-        "type": "timestamp(3)",
-        "typeSchema": null,
-        "notNull": false,
-        "dimensions": 0,
-        "default": null,
-        "generated": null,
-        "identity": null,
-        "entityType": "columns"
-      }
-    },
     {
       "op": "create",
       "row": {
@@ -163,6 +135,20 @@
     {
       "op": "drop",
       "key": "indexes\u0000[\"public\",\"OrganizationLootRecord_guildId_archivedAt_lootId_idx\"]"
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"OrganizationLootRecord\",\"lootWorld\"]",
+      "set": {
+        "notNull": true
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"OrganizationLootRecord\",\"lootCreatedAt\"]",
+      "set": {
+        "notNull": true
+      }
     }
   ]
 }

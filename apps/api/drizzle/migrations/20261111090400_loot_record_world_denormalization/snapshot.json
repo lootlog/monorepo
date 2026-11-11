@@ -1,0 +1,73 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "fec985eb-ecc7-4670-a74c-9a79bd56c312",
+  "prevIds": ["7d48532d-0379-418b-bd54-c06f3432811b"],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OrganizationLootRecord",
+        "lootWorld"
+      ],
+      "writes": [
+        "s|col|public.OrganizationLootRecord.lootWorld",
+        "n|col|public.OrganizationLootRecord.lootWorld",
+        "e|col|public.OrganizationLootRecord.lootWorld"
+      ],
+      "reads": ["n|tbl|public.OrganizationLootRecord", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OrganizationLootRecord",
+        "lootCreatedAt"
+      ],
+      "writes": [
+        "s|col|public.OrganizationLootRecord.lootCreatedAt",
+        "n|col|public.OrganizationLootRecord.lootCreatedAt",
+        "e|col|public.OrganizationLootRecord.lootCreatedAt"
+      ],
+      "reads": ["n|tbl|public.OrganizationLootRecord", "n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationLootRecord",
+        "name": "lootWorld",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationLootRecord",
+        "name": "lootCreatedAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}
