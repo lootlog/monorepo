@@ -1,0 +1,168 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "637a3d15-3c19-4280-a2a5-93cfb5a77934",
+  "prevIds": ["7d48532d-0379-418b-bd54-c06f3432811b"],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OrganizationLootRecord",
+        "OrganizationLootRecord_guildId_archivedAt_lootId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OrganizationLootRecord_guildId_archivedAt_lootId_idx",
+        "n|idx|public.OrganizationLootRecord_guildId_archivedAt_lootId_idx",
+        "e|idx|public.OrganizationLootRecord_guildId_archivedAt_lootId_idx",
+        "n|rel|public.OrganizationLootRecord_guildId_archivedAt_lootId_idx"
+      ],
+      "reads": [
+        "e|tbl|public.OrganizationLootRecord",
+        "n|sch|public",
+        "e|col|public.OrganizationLootRecord.guildId",
+        "e|col|public.OrganizationLootRecord.archivedAt",
+        "e|col|public.OrganizationLootRecord.lootId"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OrganizationLootRecord",
+        "lootWorld"
+      ],
+      "writes": [
+        "s|col|public.OrganizationLootRecord.lootWorld",
+        "n|col|public.OrganizationLootRecord.lootWorld",
+        "e|col|public.OrganizationLootRecord.lootWorld"
+      ],
+      "reads": ["n|tbl|public.OrganizationLootRecord", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OrganizationLootRecord",
+        "lootCreatedAt"
+      ],
+      "writes": [
+        "s|col|public.OrganizationLootRecord.lootCreatedAt",
+        "n|col|public.OrganizationLootRecord.lootCreatedAt",
+        "e|col|public.OrganizationLootRecord.lootCreatedAt"
+      ],
+      "reads": ["n|tbl|public.OrganizationLootRecord", "n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OrganizationLootRecord",
+        "OrganizationLootRecord_guildId_archivedAt_world_lootId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OrganizationLootRecord_guildId_archivedAt_world_lootId_idx",
+        "n|idx|public.OrganizationLootRecord_guildId_archivedAt_world_lootId_idx",
+        "e|idx|public.OrganizationLootRecord_guildId_archivedAt_world_lootId_idx",
+        "n|rel|public.OrganizationLootRecord_guildId_archivedAt_world_lootId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OrganizationLootRecord",
+        "n|sch|public",
+        "n|col|public.OrganizationLootRecord.guildId",
+        "n|col|public.OrganizationLootRecord.archivedAt",
+        "n|col|public.OrganizationLootRecord.lootWorld",
+        "n|col|public.OrganizationLootRecord.lootId"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationLootRecord",
+        "name": "lootWorld",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationLootRecord",
+        "name": "lootCreatedAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationLootRecord",
+        "name": "OrganizationLootRecord_guildId_archivedAt_world_lootId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "guildId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "archivedAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "lootWorld",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "lootId",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"OrganizationLootRecord_guildId_archivedAt_lootId_idx\"]"
+    }
+  ]
+}

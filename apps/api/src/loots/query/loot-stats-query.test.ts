@@ -86,7 +86,7 @@ describe("loot statistics at the PostgreSQL boundary", () => {
             sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt", "gameVersion") values (1, 'stats-1', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl'), (2, 'stats-2', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl'), (3, 'stats-3', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl')`,
           );
           yield* db.execute(
-            sql`insert into "OrganizationLootRecord" (id, "lootId", "guildId", "archivedAt", "updatedAt") values (1, 1, 'stats-a', null, now()), (2, 1, 'stats-b', null, now()), (3, 2, 'stats-a', null, now()), (4, 3, 'stats-a', now(), now())`,
+            sql`insert into "OrganizationLootRecord" (id, "lootId", "guildId", "archivedAt", "updatedAt", "lootWorld", "lootCreatedAt") select v.id, v."lootId", v."guildId", v."archivedAt", now(), "Loot".world, "Loot"."createdAt" from (values (1, 1, 'stats-a', null::timestamp), (2, 1, 'stats-b', null), (3, 2, 'stats-a', null), (4, 3, 'stats-a', now()::timestamp)) as v(id, "lootId", "guildId", "archivedAt") join "Loot" on "Loot".id = v."lootId"`,
           );
           yield* db.execute(
             sql`insert into "NpcSnapshot" (id, "npcId", name, type, lvl, "gameVersion") values (1, 100, 'Hero', 'HERO', 100, 'pl'), (2, 200, 'Elite', 'ELITE2', 100, 'pl'), (3, 300, 'Titan', 'TITAN', 100, 'pl')`,
@@ -206,7 +206,7 @@ describe("loot statistics at the PostgreSQL boundary", () => {
             sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt", "gameVersion") values (1, 'day-1', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 23:30:00', now(), 'pl')`,
           );
           yield* db.execute(
-            sql`insert into "OrganizationLootRecord" (id, "lootId", "guildId", "updatedAt") values (1, 1, 'stats-day', now())`,
+            sql`insert into "OrganizationLootRecord" (id, "lootId", "guildId", "updatedAt", "lootWorld", "lootCreatedAt") select 1, 1, 'stats-day', now(), world, "createdAt" from "Loot" where id = 1`,
           );
           yield* db.execute(
             sql`insert into "NpcSnapshot" (id, "npcId", name, type, lvl, wt, "gameVersion") values (1, 400, 'Escort', 'ELITE', 70, 15, 'pl'), (2, 300, 'Boss', 'ELITE2', 50, 25, 'pl')`,

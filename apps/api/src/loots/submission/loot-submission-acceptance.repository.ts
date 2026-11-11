@@ -192,6 +192,31 @@ const toLootSubmissionRows = (
   });
 };
 
+/**
+ * The loot facts every organization record denormalizes. Read from Loot inside
+ * the writing transaction rather than taken from the caller, so a record can
+ * never disagree with the loot it stands for.
+ */
+const readLootFacts = (
+  transaction: Pick<typeof ApiDatabase.Service, "select">,
+  lootId: number,
+) =>
+  transaction
+    .select({ world: lootTable.world, createdAt: lootTable.createdAt })
+    .from(lootTable)
+    .where(eq(lootTable.id, lootId))
+    .limit(1)
+    .pipe(
+      Effect.map((rows) => {
+        const facts = rows[0];
+
+        if (!facts)
+          throw new DependencyUnavailableError("Failed to resolve loot facts");
+
+        return facts;
+      }),
+    );
+
 export const makeLootSubmissionAcceptancePersistence = (
   database: typeof ApiDatabase.Service,
 ): LootSubmissionAcceptancePersistence => ({
@@ -346,12 +371,16 @@ export const makeLootSubmissionAcceptancePersistence = (
         const now = new Date(yield* Clock.currentTimeMillis);
 
         if (guildIds.length > 0) {
+          const facts = yield* readLootFacts(transaction, lootId);
+
           yield* transaction
             .insert(organizationLootRecordTable)
             .values(
               guildIds.map((guildId) => ({
                 guildId,
                 lootId,
+                lootWorld: facts.world,
+                lootCreatedAt: facts.createdAt,
                 updatedAt: now,
               })),
             )
@@ -454,7 +483,13 @@ export const makeLootSubmissionAcceptancePersistence = (
             lootShareSource: data.lootShareSource,
             updatedAt: now,
           })
-          .returning({ id: lootTable.id });
+          // world and createdAt come back so the organization records can
+          // denormalize them without a second read.
+          .returning({
+            id: lootTable.id,
+            world: lootTable.world,
+            createdAt: lootTable.createdAt,
+          });
 
         const loot = createdLoots[0];
 
@@ -528,6 +563,8 @@ export const makeLootSubmissionAcceptancePersistence = (
             data.submissions.map(({ guildId }) => ({
               guildId,
               lootId: loot.id,
+              lootWorld: loot.world,
+              lootCreatedAt: loot.createdAt,
               updatedAt: now,
             })),
           )

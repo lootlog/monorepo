@@ -17,6 +17,7 @@ import {
 } from "#src/database/drizzle/loot.schema";
 import { guildTable } from "#src/database/drizzle/organization.schema";
 import { makeMonsterStatisticsPublisher } from "#src/loots/monster-statistics";
+import { createOrganizationLootRecordFixture } from "./loot-fixtures.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 
@@ -278,11 +279,13 @@ it("publishes how often a boss's kills drop each item, counting each kill and dr
           );
           yield* database.insert(organizationLootRecordTable).values(
             loots.flatMap(({ id }) =>
-              guildIds.map((guildId) => ({
-                lootId: id,
-                guildId,
-                updatedAt: now,
-              })),
+              guildIds.map((guildId) =>
+                createOrganizationLootRecordFixture({
+                  lootId: id,
+                  guildId,
+                  updatedAt: now,
+                }),
+              ),
             ),
           );
         });

@@ -19,6 +19,7 @@ import {
   createGuildFixture,
   createMemberFixture,
 } from "./organization-fixtures.js";
+import { createOrganizationLootRecordFixture } from "./loot-fixtures.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 
@@ -76,9 +77,14 @@ const seedLoot = Effect.gen(function* () {
 
   if (!loot) throw new Error("Missing loot fixture");
 
-  yield* db
-    .insert(organizationLootRecordTable)
-    .values({ guildId, lootId: loot.id, updatedAt: new Date() });
+  yield* db.insert(organizationLootRecordTable).values(
+    createOrganizationLootRecordFixture({
+      guildId,
+      lootId: loot.id,
+      lootWorld: "luvia",
+      updatedAt: new Date(),
+    }),
+  );
 
   return loot.id;
 });

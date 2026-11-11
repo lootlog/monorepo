@@ -27,6 +27,7 @@ import { makeLootAllocationPersistence } from "#src/loots/allocation/loot-alloca
 import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { buildLootStatsQueries } from "#src/loots/query/loot-stats-query";
 import { makeUserFeed } from "#src/feed/user-feed";
+import { createOrganizationLootRecordFixture } from "../../../test/loot-fixtures.js";
 
 describe("filtered loot reads", () => {
   it("uses each kill's retained NPC level across reads, search, feed, statistics and allocation", async () => {
@@ -133,12 +134,14 @@ describe("filtered loot reads", () => {
           }),
         );
         await run(
-          database.insert(organizationLootRecordTable).values({
-            id,
-            lootId: id,
-            guildId: guild.id,
-            updatedAt: now,
-          }),
+          database.insert(organizationLootRecordTable).values(
+            createOrganizationLootRecordFixture({
+              id,
+              lootId: id,
+              guildId: guild.id,
+              updatedAt: now,
+            }),
+          ),
         );
         await run(
           database.insert(lootSubmissionTable).values({
@@ -449,22 +452,26 @@ describe("filtered loot reads", () => {
       );
       await run(
         database.insert(organizationLootRecordTable).values(
-          Array.from({ length: 8 }, (_, index) => ({
-            id: 101 + index,
-            lootId: index + 1,
-            guildId: index === 6 ? "foreign" : guild.id,
-            archivedAt: index === 7 ? now : null,
-            updatedAt: now,
-          })),
+          Array.from({ length: 8 }, (_, index) =>
+            createOrganizationLootRecordFixture({
+              id: 101 + index,
+              lootId: index + 1,
+              guildId: index === 6 ? "foreign" : guild.id,
+              archivedAt: index === 7 ? now : null,
+              updatedAt: now,
+            }),
+          ),
         ),
       );
       await run(
-        database.insert(organizationLootRecordTable).values({
-          id: 200,
-          lootId: 1,
-          guildId: foreignGuild.id,
-          updatedAt: now,
-        }),
+        database.insert(organizationLootRecordTable).values(
+          createOrganizationLootRecordFixture({
+            id: 200,
+            lootId: 1,
+            guildId: foreignGuild.id,
+            updatedAt: now,
+          }),
+        ),
       );
       await run(
         database.insert(memberTable).values([
@@ -765,11 +772,13 @@ describe("free-text loot search", () => {
       );
       await run(
         database.insert(organizationLootRecordTable).values(
-          locations.map((_location, index) => ({
-            lootId: index + 1,
-            guildId: index === 5 ? "outside" : guild.id,
-            updatedAt: now,
-          })),
+          locations.map((_location, index) =>
+            createOrganizationLootRecordFixture({
+              lootId: index + 1,
+              guildId: index === 5 ? "outside" : guild.id,
+              updatedAt: now,
+            }),
+          ),
         ),
       );
       await run(
