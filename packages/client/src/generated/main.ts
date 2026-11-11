@@ -7881,8 +7881,9 @@ export const LootlogConfigNpcResponseDtoOutputNpcType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -7926,8 +7927,9 @@ export const NullableLootlogConfigResponseDtoOutputNpcsItemNpcType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 

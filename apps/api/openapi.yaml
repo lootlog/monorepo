@@ -30578,8 +30578,9 @@ components:
             - ELITE3
             - HERO
             - EVENT_HERO
-            - TITAN
             - COLOSSUS
+            - TITAN
+            - HERO_TRACKER
             - NPC
         allowedRarities:
           type: array
@@ -30632,8 +30633,9 @@ components:
                   - ELITE3
                   - HERO
                   - EVENT_HERO
-                  - TITAN
                   - COLOSSUS
+                  - TITAN
+                  - HERO_TRACKER
                   - NPC
               allowedRarities:
                 type: array
