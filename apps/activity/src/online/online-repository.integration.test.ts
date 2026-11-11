@@ -17,6 +17,7 @@ import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ActivityDatabase } from "#src/database/database";
 import { userOnlineIntervals } from "#src/database/schema";
+import { backfillOnlineDays } from "#src/database/backfill-online-days";
 import { OnlineConsumer } from "./online-consumer.js";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import {
@@ -130,6 +131,21 @@ describe("durable private online history", () => {
 
         yield* Effect.tryPromise(() =>
           client.query(checkpointIndexesMigration),
+        );
+
+        const dayRollupMigration = yield* Effect.promise(() =>
+          Bun.file(
+            new URL(
+              "../../drizzle/migrations/20261111104604_online_day_rollup/migration.sql",
+              import.meta.url,
+            ),
+          ).text(),
+        );
+
+        yield* Effect.tryPromise(() =>
+          client.query(
+            dayRollupMigration.replaceAll("--> statement-breakpoint", ""),
+          ),
         );
       }).pipe(Effect.scoped, Effect.provide(database)),
     );
@@ -648,6 +664,9 @@ describe("durable private online history", () => {
             observedAt: new Date(Date.parse(cutoff) + 7200_000),
           },
         ]);
+        // Rows written outside ingest reach the rollup the way production
+        // history does: through the backfill.
+        yield* backfillOnlineDays();
         yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt")
           SELECT 'batch-tracking-' || n, ${cutoff}::timestamptz FROM generate_series(1, 2001) n`;
         yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt") VALUES ('batch-fresh', ${now}::timestamptz)`;
@@ -1132,5 +1151,47 @@ describe("durable private online history", () => {
         expect(rollback.days[1]?.onlineSeconds).toBe(7200);
       }),
     );
+  });
+
+  it("rebuilds the same days from stored intervals, including the 25-hour Warsaw day", async () => {
+    const range = { from: "2026-10-24", to: "2026-10-26" } as const;
+
+    const days = await run(
+      Effect.gen(function* () {
+        const repo = yield* OnlineRepository;
+        const sql = yield* PgClient.PgClient;
+
+        yield* repo.ingest({
+          ...checkpoint(
+            "rebuild",
+            "long",
+            "2026-10-24T20:00:00Z",
+            "2026-10-26T01:00:00Z",
+          ),
+          world: "luvia",
+        });
+        yield* repo.ingest({
+          ...checkpoint(
+            "rebuild",
+            "overlap",
+            "2026-10-25T10:00:00Z",
+            "2026-10-25T11:00:00Z",
+          ),
+          world: "classic",
+        });
+
+        const live = yield* repo.find("rebuild", range);
+
+        yield* sql`DELETE FROM "UserOnlineDay" WHERE "userId" = 'rebuild'`;
+        yield* backfillOnlineDays();
+
+        return { live, rebuilt: yield* repo.find("rebuild", range) };
+      }).pipe(Effect.provide(database)),
+    );
+
+    expect(days.rebuilt).toEqual(days.live);
+    expect(days.live.days.map((day) => day.onlineSeconds)).toEqual([
+      7200, 90_000, 7200,
+    ]);
   });
 });

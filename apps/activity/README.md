@@ -48,6 +48,21 @@ The migration uses transactional index drops with a two-second lock timeout. A b
 
 Application rollback preserves data and query results with either layout, but the old retention query loses its `endedAt` access path. Before rolling back Activity, restore `UserOnlineInterval_endedAt_idx` on `("endedAt")` and `UserOnlineInterval_userId_endedAt_idx` on `("userId", "endedAt")` using `CREATE INDEX CONCURRENTLY` outside a transaction. Index restoration can use additional disk and CPU; inspect and remove an invalid index before retrying a failed concurrent build. If the optimized Activity version is deployed again, remove the restored indexes after deployment; the journaled migration will not run twice.
 
+### Online day rollup
+
+`20261111104604_online_day_rollup` adds `UserOnlineDay`, one row per User, Warsaw day and world holding the merged online spans (`tstzmultirange`). It exists because the history read scanned every interval of the User, which for the heaviest Users cost seconds of heap I/O and grows with the retention window. The read now touches one row per requested day and returns the same seconds, worlds and partial flags. The intervals stay the source of truth; the rollup can be rebuilt from them at any time.
+
+Ingestion folds each accepted interval into the rollup in the same transaction. The fold is a set union, so overlapping sessions, redelivered and out-of-order checkpoints, and a backfill running next to ingestion all converge. Stored spans are not clipped to the retention cutoff; the read clips them, and retention deletes whole days that ended before the cutoff. A world-less replay that turns a known segment unknown rebuilds the touched days from the intervals, because a union cannot take time back.
+
+Roll out in this order. The migration only creates an empty table.
+
+1. Run `db:migrate:deploy`.
+2. Deploy the Activity image of the first rollup commit, which writes the rollup but still reads the intervals.
+3. Run `bun apps/activity/src/database/backfill-online-days.ts` against the database with the service environment (port-forward on production). It folds the intervals in six-hour `startedAt` windows, is safe to repeat and to run during ingestion, and accepts an ISO timestamp to rebuild only recent history. Compare a few Users' responses before and after step 4.
+4. Deploy the image that reads the rollup.
+
+Before step 4 a rollback needs no cleanup. After it, rolling back the read only returns to the slower scan; the rollup can stay.
+
 ### Activity retention without writer stalls
 
 `20260929142405_activity_retention_lock_timeout` keeps the seven-day Organization activity window and changes how expired chunks are dropped. Dropping a chunk needs ACCESS EXCLUSIVE on that chunk, and the removed `Activity_actorSnapshotId_fkey` also required it on `ActivityActorSnapshot`, which every activity write reads. While a long reader held either table, the built-in retention policy waited for its full five-minute runtime; its queued lock blocked every later activity read and write until it was killed, and retention never completed.
