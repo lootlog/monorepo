@@ -18,11 +18,11 @@
     "./timers/timer-key": "./src/timers/timer-key.ts"
   },
   "scripts": {
-    "dev": "bun --conditions=development --watch --enable-source-maps src/main.ts",
+    "dev": "bun --conditions=development --watch src/main.ts",
     "prebuild": "bun ./tools/clean-build.mjs",
     "build": "tsc -p tsconfig.build.json",
-    "start": "bun --enable-source-maps dist/src/main.js",
-    "start:debug": "bun --conditions=development --inspect-wait --watch --enable-source-maps src/main.ts",
+    "start": "bun dist/src/main.js",
+    "start:debug": "bun --conditions=development --inspect-wait --watch src/main.ts",
     "lint": "oxlint src test && effect-tsgo diagnostics --project tsconfig.json --severity error",
     "typecheck": "bun check -p tsconfig.json",
     "format": "oxfmt src test",

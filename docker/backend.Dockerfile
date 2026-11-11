@@ -68,4 +68,4 @@ WORKDIR "/usr/src/app/${APP_DIR}"
 USER bun
 EXPOSE 4000
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["bun", "--enable-source-maps", "dist/src/main.js"]
+CMD ["bun", "dist/src/main.js"]
