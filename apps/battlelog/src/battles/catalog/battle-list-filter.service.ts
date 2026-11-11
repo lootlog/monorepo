@@ -12,7 +12,9 @@ import {
   notInArray,
   or,
   type SQL,
+  sql,
 } from "drizzle-orm";
+import { EmptyFilter } from "drizzle-orm/relations";
 import { Effect } from "effect";
 import type { BattleListQuery } from "#src/battles/catalog/query-battles";
 import type { DrizzleDatabase } from "#src/database/database";
@@ -34,6 +36,13 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
     characterIds: string[],
     resultColumn: "winningTeam" | "losingTeam",
   ): void => {
+    if (!characterIds.length) {
+      // The user has no characters in this world, so they cannot have won or lost here.
+      resultConditions.push(sql`false`);
+
+      return;
+    }
+
     resultConditions.push(
       and(
         warriorExists(
@@ -52,8 +61,9 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
     battlesRef: typeof battles,
     query: BattleListQuery,
     characterIds: string[],
+    characterScoped: boolean,
   ): void => {
-    if (!query.result?.length || !characterIds.length) {
+    if (!query.result?.length || (!characterIds.length && !characterScoped)) {
       return;
     }
 
@@ -137,9 +147,13 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
     Effect.gen(function* () {
       let characterIds = query.characterId ?? [];
 
+      const characterScoped = Boolean(
+        query.result?.length && (characterIds.length || userId),
+      );
+
       if (query.result?.length && !characterIds.length && userId) {
         const userChars = yield* drizzle.query.userCharacters.findMany({
-          where: { userId },
+          where: { userId, world: query.world || EmptyFilter },
           columns: { characterId: true },
         });
 
@@ -175,7 +189,13 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
           }
         }
 
-        appendResultConditions(conditions, battlesRef, query, characterIds);
+        appendResultConditions(
+          conditions,
+          battlesRef,
+          query,
+          characterIds,
+          characterScoped,
+        );
         appendPhCondition(conditions, battlesRef, query, characterIds);
 
         if (query.matchmaking !== undefined) {
