@@ -319,8 +319,14 @@ export const lootNpcTable = pgTable(
     runtimeNpcId: integer("runtimeNpcId"),
   },
   (table) => [
-    index("LootNpc_lootId_idx").on(table["lootId"]),
-    index("LootNpc_npcSnapshotId_idx").on(table["npcSnapshotId"]),
+    index("LootNpc_lootId_npcSnapshotId_idx").on(
+      table["lootId"],
+      table["npcSnapshotId"],
+    ),
+    index("LootNpc_npcSnapshotId_lootId_idx").on(
+      table["npcSnapshotId"],
+      table["lootId"],
+    ),
     foreignKey({
       columns: [table["lootId"]],
       foreignColumns: [lootTable["id"]],
@@ -357,11 +363,9 @@ export const organizationLootRecordTable = pgTable(
       table["lootId"],
     ),
     index("OrganizationLootRecord_lootId_idx").on(table["lootId"]),
-    index("OrganizationLootRecord_guildId_archivedAt_lootId_idx").on(
-      table["guildId"],
-      table["archivedAt"],
-      table["lootId"],
-    ),
+    index("OrganizationLootRecord_guildId_lootId_id_active_idx")
+      .on(table["guildId"], table["lootId"], table["id"])
+      .where(sql`${table["archivedAt"]} IS NULL`),
     index("OrganizationLootRecord_archivedByMemberId_notnull_idx")
       .on(table["archivedByMemberId"])
       .where(sql`${table["archivedByMemberId"]} IS NOT NULL`),

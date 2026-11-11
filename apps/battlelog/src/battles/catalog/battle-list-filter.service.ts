@@ -13,6 +13,7 @@ import {
   or,
   type SQL,
 } from "drizzle-orm";
+import { EmptyFilter } from "drizzle-orm/relations";
 import { Effect } from "effect";
 import type { BattleListQuery } from "#src/battles/catalog/query-battles";
 import type { DrizzleDatabase } from "#src/database/database";
@@ -139,7 +140,7 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
 
       if (query.result?.length && !characterIds.length && userId) {
         const userChars = yield* drizzle.query.userCharacters.findMany({
-          where: { userId },
+          where: { userId, world: query.world || EmptyFilter },
           columns: { characterId: true },
         });
 

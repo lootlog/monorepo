@@ -314,19 +314,29 @@ export const buildLootQueryConditions = (
   filters: ResolvedLootQueryFilters,
   permissions: ReadonlyArray<string>,
   roles: ReadonlyArray<LootQueryVisibilityRole>,
-) => [
-  filters.world ? eq(lootTable.world, filters.world) : undefined,
-  filters.cursor ? lt(lootTable.id, filters.cursor) : undefined,
-  filters.lootId !== undefined ? eq(lootTable.id, filters.lootId) : undefined,
-  filters.createdAtMin
-    ? gte(lootTable.createdAt, new Date(filters.createdAtMin))
-    : undefined,
-  filters.createdAtMax
-    ? lte(lootTable.createdAt, new Date(filters.createdAtMax))
-    : undefined,
-  ...rangeConditions(filters),
-  ...relationConditions(filters),
-  professionCondition(filters.professions),
-  searchCondition(filters.search),
-  buildLootNpcVisibilityCondition(lootTable.id, permissions, roles),
-];
+) => {
+  const hasPositiveNpcFilter =
+    filters.npcLevelMin !== undefined ||
+    filters.npcLevelMax !== undefined ||
+    filters.npcNameSnapshotIds !== undefined ||
+    Boolean(filters.npcTypes?.length);
+
+  return [
+    filters.world ? eq(lootTable.world, filters.world) : undefined,
+    filters.cursor ? lt(lootTable.id, filters.cursor) : undefined,
+    filters.lootId !== undefined ? eq(lootTable.id, filters.lootId) : undefined,
+    filters.createdAtMin
+      ? gte(lootTable.createdAt, new Date(filters.createdAtMin))
+      : undefined,
+    filters.createdAtMax
+      ? lte(lootTable.createdAt, new Date(filters.createdAtMax))
+      : undefined,
+    ...rangeConditions(filters),
+    ...relationConditions(filters),
+    professionCondition(filters.professions),
+    searchCondition(filters.search),
+    buildLootNpcVisibilityCondition(lootTable.id, permissions, roles, {
+      hasPositiveNpcFilter,
+    }),
+  ];
+};

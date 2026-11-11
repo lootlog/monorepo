@@ -100,6 +100,13 @@ export class LootStatsService {
       roles,
     );
 
+    const positiveNpcVisibility = buildLootNpcVisibilityCondition(
+      lootTable.id,
+      permissions,
+      roles,
+      { hasPositiveNpcFilter: true },
+    );
+
     const load = Effect.gen(
       function* (this: LootStatsService) {
         const queries = buildLootStatsQueries(this.database, {
@@ -109,6 +116,7 @@ export class LootStatsService {
           npcTypes: npcTypes?.length ? [...npcTypes] : undefined,
           excludeColossus,
           visibility,
+          positiveNpcVisibility,
           truncUnit: this.getTimelineTruncUnit(period),
         });
 

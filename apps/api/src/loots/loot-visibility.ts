@@ -53,6 +53,9 @@ export function buildLootNpcVisibilityCondition(
     readonly lvlRangeTo: number | null;
     readonly permissions: readonly string[];
   }[],
+  options?: {
+    readonly hasPositiveNpcFilter?: boolean;
+  },
 ) {
   if (permissions.includes(Permission.OWNER)) return undefined;
 
@@ -81,6 +84,24 @@ export function buildLootNpcVisibilityCondition(
     );
   });
 
+  const noHiddenNpc = notExists(
+    query
+      .select({ id: visibilityLootNpc.id })
+      .from(visibilityLootNpc)
+      .innerJoin(
+        visibilityNpc,
+        eq(visibilityNpc.id, visibilityLootNpc.npcSnapshotId),
+      )
+      .where(
+        and(
+          eq(visibilityLootNpc.lootId, lootId),
+          not(or(...roleConditions) ?? sql`false`),
+        ),
+      ),
+  );
+
+  if (options?.hasPositiveNpcFilter) return noHiddenNpc;
+
   return and(
     exists(
       query
@@ -88,21 +109,7 @@ export function buildLootNpcVisibilityCondition(
         .from(visibilityLootNpc)
         .where(eq(visibilityLootNpc.lootId, lootId)),
     ),
-    notExists(
-      query
-        .select({ id: visibilityLootNpc.id })
-        .from(visibilityLootNpc)
-        .innerJoin(
-          visibilityNpc,
-          eq(visibilityNpc.id, visibilityLootNpc.npcSnapshotId),
-        )
-        .where(
-          and(
-            eq(visibilityLootNpc.lootId, lootId),
-            not(or(...roleConditions) ?? sql`false`),
-          ),
-        ),
-    ),
+    noHiddenNpc,
   );
 }
 
