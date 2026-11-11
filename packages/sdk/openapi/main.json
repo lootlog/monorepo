@@ -28491,8 +28491,9 @@
                     "ELITE3",
                     "HERO",
                     "EVENT_HERO",
-                    "TITAN",
                     "COLOSSUS",
+                    "TITAN",
+                    "HERO_TRACKER",
                     "NPC"
                   ]
                 },
@@ -28532,8 +28533,9 @@
               "ELITE3",
               "HERO",
               "EVENT_HERO",
-              "TITAN",
               "COLOSSUS",
+              "TITAN",
+              "HERO_TRACKER",
               "NPC"
             ]
           },
