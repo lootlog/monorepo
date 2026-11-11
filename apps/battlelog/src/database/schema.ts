@@ -303,10 +303,6 @@ export const battleWarriors = pgTable(
       name: "battle_warriors_pkey",
       columns: [table.battleId, table.originalId],
     }),
-    index("battle_warriors_originalId_battleId_idx").on(
-      table.originalId,
-      table.battleId,
-    ),
   ],
 );
 

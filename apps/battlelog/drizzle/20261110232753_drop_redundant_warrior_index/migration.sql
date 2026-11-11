@@ -1,0 +1,1 @@
+DROP INDEX "battle_warriors_originalId_battleId_idx";

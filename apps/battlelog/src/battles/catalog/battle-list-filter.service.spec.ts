@@ -55,6 +55,14 @@ const fixtures = [
     userId: "other-owner",
   },
   {
+    id: "unrecorded-loss",
+    characterId: "ghost",
+    team: 1,
+    winningTeam: 2,
+    losingTeam: 1,
+    userId: "ghost-owner",
+  },
+  {
     id: "other-recorder",
     characterId: "outsider",
     team: 1,
@@ -173,6 +181,11 @@ describe("battle list filters against PostgreSQL", () => {
     expect(await list({ characterId: ["hero"], result: ["lost"] })).toEqual([
       "mixed",
     ]);
+  });
+
+  it("returns no won or lost battles for a user without recorded characters", async () => {
+    expect(await list({ result: ["lost"] }, "ghost-owner")).toEqual([]);
+    expect(await list({ result: ["won"] }, "ghost-owner")).toEqual([]);
   });
 
   it("keeps flee separate from team results and excludes draws and invalid winning teams", async () => {
