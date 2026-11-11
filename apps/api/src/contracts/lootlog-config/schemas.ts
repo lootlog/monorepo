@@ -5,20 +5,11 @@ import {
   FiniteNumber,
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 
 const npcLootlogConfigFields = {
   id: FiniteNumber,
-  npcType: Schema.Literals([
-    "COMMON",
-    "ELITE",
-    "ELITE2",
-    "ELITE3",
-    "HERO",
-    "EVENT_HERO",
-    "TITAN",
-    "COLOSSUS",
-    "NPC",
-  ]),
+  npcType: NpcTypeSchema,
   allowedRarities: Schema.Array(
     Schema.Literals(["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"]),
   ),
