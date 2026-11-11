@@ -3,6 +3,8 @@ import { desc, sql } from "drizzle-orm";
 import {
   check,
   boolean,
+  customType,
+  date,
   index,
   integer,
   jsonb,
@@ -188,6 +190,32 @@ export const userOnlineIntervals = pgTable(
       "UserOnlineInterval_check",
       sql`${table.endedAt} >= ${table.startedAt} AND ${table.observedAt} >= ${table.endedAt}`,
     ),
+  ],
+);
+
+const timestamptzMultirange = customType<{ data: string }>({
+  dataType: () => "tstzmultirange",
+});
+
+// Read model of UserOnlineInterval: the merged online spans of one user on one
+// Warsaw calendar day and world, so a dashboard read touches one row per day
+// instead of every checkpoint. Rows are only ever grown by set union, which keeps
+// overlapping sessions, redeliveries and out-of-order checkpoints idempotent, and
+// the table can always be rebuilt from the intervals. An empty world means the
+// interval carried no world provenance. Spans are not clipped to the retention
+// cutoff; readers clip them.
+export const userOnlineDays = pgTable(
+  "UserOnlineDay",
+  {
+    userId: text().notNull(),
+    date: date({ mode: "string" }).notNull(),
+    world: text().notNull(),
+    spans: timestamptzMultirange().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.date, table.world] }),
+    // Retention drops whole days across users.
+    index("UserOnlineDay_date_idx").on(table.date),
   ],
 );
 

@@ -1,0 +1,152 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "bd6930ee-0877-4115-b928-897d1dd66619",
+  "prevIds": ["7ca660ef-d1f5-4774-b1fe-e7bc29329d7e"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "UserOnlineDay"],
+      "writes": [
+        "s|tbl|public.UserOnlineDay",
+        "n|tbl|public.UserOnlineDay",
+        "e|tbl|public.UserOnlineDay",
+        "n|rel|public.UserOnlineDay",
+        "n|type|public.UserOnlineDay",
+        "n|rel|public.UserOnlineDay_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "UserOnlineDay",
+        "UserOnlineDay_date_idx"
+      ],
+      "writes": [
+        "s|idx|public.UserOnlineDay_date_idx",
+        "n|idx|public.UserOnlineDay_date_idx",
+        "e|idx|public.UserOnlineDay_date_idx",
+        "n|rel|public.UserOnlineDay_date_idx"
+      ],
+      "reads": [
+        "n|tbl|public.UserOnlineDay",
+        "n|sch|public",
+        "n|col|public.UserOnlineDay.date"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "UserOnlineDay",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserOnlineDay",
+        "name": "userId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserOnlineDay",
+        "name": "date",
+        "type": "date",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserOnlineDay",
+        "name": "world",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserOnlineDay",
+        "name": "spans",
+        "type": "tstzmultirange",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserOnlineDay",
+        "name": "UserOnlineDay_date_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "date",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserOnlineDay",
+        "name": "UserOnlineDay_pkey",
+        "columns": ["userId", "date", "world"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

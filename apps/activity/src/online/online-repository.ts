@@ -1,10 +1,15 @@
 import { onlineHistoryCutoff } from "./online-retention.js";
+import {
+  ONLINE_TIME_ZONE,
+  rebuildOnlineDays,
+  upsertOnlineDays,
+} from "./online-days.js";
 import { PgClient } from "@effect/sql-pg";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, count, inArray, lte, sql as drizzleSql } from "drizzle-orm";
+import { and, count, inArray, lt, lte, sql as drizzleSql } from "drizzle-orm";
 import { ActivityDatabase } from "#src/database/database";
-import { userOnlineIntervals } from "#src/database/schema";
+import { userOnlineDays, userOnlineIntervals } from "#src/database/schema";
 import type { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
 import type {
   UserOnlineQuery,
@@ -79,8 +84,13 @@ export class OnlineRepository extends Context.Service<
         // Normalize both starts to the same retention boundary: trimming must not break valid replays.
         yield* sql.withTransaction(
           Effect.gen(function* () {
-            const inserted =
-              yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "world", "startedAt", "endedAt", "observedAt")
+            const inserted = yield* sql<{
+              world: string | null;
+              wasKnown: boolean;
+            }>`WITH prior AS (
+              SELECT 1 FROM "UserOnlineInterval"
+              WHERE "userId" = ${event.userId} AND "sessionId" = ${event.sessionId} AND "segmentId" = ${event.segmentId} AND "world" IS NOT NULL
+            ) INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "world", "startedAt", "endedAt", "observedAt")
           VALUES (${event.userId}, ${event.sessionId}, ${event.segmentId}, ${event.world ?? null}, GREATEST(${event.startedAt}::timestamptz, ${cutoff}::timestamptz), ${event.endedAt}::timestamptz, ${event.observedAt}::timestamptz)
           ON CONFLICT ("userId", "sessionId", "segmentId") DO UPDATE
           SET "world" = CASE WHEN "UserOnlineInterval"."world" IS NULL OR EXCLUDED."world" IS NULL THEN NULL ELSE "UserOnlineInterval"."world" END,
@@ -89,7 +99,7 @@ export class OnlineRepository extends Context.Service<
               "observedAt" = GREATEST("UserOnlineInterval"."observedAt", EXCLUDED."observedAt")
           WHERE GREATEST("UserOnlineInterval"."startedAt", ${cutoff}::timestamptz) = EXCLUDED."startedAt"
             AND ("UserOnlineInterval"."world" IS NULL OR EXCLUDED."world" IS NULL OR "UserOnlineInterval"."world" = EXCLUDED."world")
-          RETURNING "userId"`;
+          RETURNING "world", EXISTS (SELECT 1 FROM prior) AS "wasKnown"`;
 
             if (!inserted.length)
               return yield* Effect.fail(
@@ -97,6 +107,24 @@ export class OnlineRepository extends Context.Service<
                   message: "Online segment start or world cannot change",
                 }),
               );
+            // The day rollup follows the accepted interval inside the same
+            // transaction, using the same retention-clamped start and the
+            // segment's stored world, which a world-less replay turns unknown for
+            // the whole segment. A union cannot take back time already folded
+            // under the known world, so that case recomputes the touched days.
+            yield* inserted[0]?.world === null && inserted[0].wasKnown
+              ? rebuildOnlineDays(
+                  sql,
+                  event.userId,
+                  cutoff > event.startedAt ? cutoff : event.startedAt,
+                  event.endedAt,
+                )
+              : upsertOnlineDays(
+                  sql,
+                  sql`SELECT ${event.userId}::text AS "userId", ${inserted[0]?.world ?? null}::text AS world,
+                    GREATEST(${event.startedAt}::timestamptz, ${cutoff}::timestamptz) AS start, ${event.endedAt}::timestamptz AS finish`,
+                );
+
             yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt")
           VALUES (${event.userId}, ${event.observedAt}::timestamptz)
           ON CONFLICT ("userId") DO UPDATE
@@ -296,6 +324,33 @@ export class OnlineRepository extends Context.Service<
                 ) SELECT count(*)::int AS count FROM updated`;
 
               if (trimmed[0]?.count === 1000) return true;
+
+              // A day that ended before the cutoff holds no retained time.
+              const expiredDays = db
+                .select({ ctid: drizzleSql<string>`ctid`.as("ctid") })
+                .from(userOnlineDays)
+                .where(
+                  lt(
+                    userOnlineDays.date,
+                    drizzleSql<string>`(${current.cutoff}::timestamptz AT TIME ZONE ${ONLINE_TIME_ZONE})::date`,
+                  ),
+                )
+                .limit(1000)
+                .for("update");
+
+              const removedDays = db.$with("removed_days").as(
+                db
+                  .delete(userOnlineDays)
+                  .where(inArray(drizzleSql`ctid`, expiredDays))
+                  .returning({ value: drizzleSql`1`.as("value") }),
+              );
+
+              const expiredDayCount = yield* db
+                .with(removedDays)
+                .select({ count: count() })
+                .from(removedDays);
+
+              if (expiredDayCount[0]?.count === 1000) return true;
 
               const tracking = yield* sql<{ count: number }>`
                 WITH removed AS (
