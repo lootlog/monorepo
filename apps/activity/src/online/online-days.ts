@@ -11,7 +11,7 @@ type Sql = PgClient.PgClient;
  * world, start and finish; each interval is split at Warsaw midnights and
  * merged into the stored spans of every day it touches. Set union makes the
  * statement idempotent, so redeliveries, overlapping sessions, out-of-order
- * checkpoints and a backfill racing live ingestion all converge. Days whose
+ * checkpoints and a rebuild racing live ingestion all converge. Days whose
  * stored spans already contain the new ones are not rewritten.
  *
  * Tagged SQL because the Drizzle builder has no multirange operators or

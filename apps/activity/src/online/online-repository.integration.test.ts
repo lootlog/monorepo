@@ -17,7 +17,7 @@ import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ActivityDatabase } from "#src/database/database";
 import { userOnlineIntervals } from "#src/database/schema";
-import { backfillOnlineDays } from "#src/database/backfill-online-days";
+import { upsertOnlineDays } from "./online-days.js";
 import { OnlineConsumer } from "./online-consumer.js";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import {
@@ -54,6 +54,12 @@ describe("durable private online history", () => {
     endedAt,
     observedAt: endedAt,
   });
+
+  const foldAllIntervals = (sql: PgClient.PgClient) =>
+    upsertOnlineDays(
+      sql,
+      sql`SELECT "userId", world, "startedAt" AS start, "endedAt" AS finish FROM "UserOnlineInterval"`,
+    );
 
   const run = <A, E>(effect: Effect.Effect<A, E, OnlineRepository>) =>
     Effect.runPromise(
@@ -665,8 +671,8 @@ describe("durable private online history", () => {
           },
         ]);
         // Rows written outside ingest reach the rollup the way production
-        // history does: through the backfill.
-        yield* backfillOnlineDays();
+        // history does: folded from the intervals.
+        yield* foldAllIntervals(sql);
         yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt")
           SELECT 'batch-tracking-' || n, ${cutoff}::timestamptz FROM generate_series(1, 2001) n`;
         yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt") VALUES ('batch-fresh', ${now}::timestamptz)`;
@@ -1183,7 +1189,7 @@ describe("durable private online history", () => {
         const live = yield* repo.find("rebuild", range);
 
         yield* sql`DELETE FROM "UserOnlineDay" WHERE "userId" = 'rebuild'`;
-        yield* backfillOnlineDays();
+        yield* foldAllIntervals(sql);
 
         return { live, rebuilt: yield* repo.find("rebuild", range) };
       }).pipe(Effect.provide(database)),
