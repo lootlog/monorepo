@@ -132,6 +132,25 @@ describe("lootlog configuration response conversion", () => {
     );
   });
 
+  it("returns a configuration containing a HERO_TRACKER NPC", async () => {
+    const layer = provideServices(
+      makeData({
+        get: () =>
+          Effect.succeed({
+            id: "guild-a",
+            npcs: [{ ...npc, npcType: "HERO_TRACKER" as const }],
+          }),
+      }),
+      authorization,
+    );
+
+    const response = await Effect.runPromise(
+      getLootlogConfig("guild-a").pipe(Effect.provide(layer)),
+    );
+
+    expect(response?.npcs[0]?.npcType).toBe("HERO_TRACKER");
+  });
+
   it("retains conversion of dates and nulls in open configuration fields", async () => {
     for (const source of [
       null,
