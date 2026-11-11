@@ -52,16 +52,9 @@ Application rollback preserves data and query results with either layout, but th
 
 `20261111104604_online_day_rollup` adds `UserOnlineDay`, one row per User, Warsaw day and world holding the merged online spans (`tstzmultirange`). It exists because the history read scanned every interval of the User, which for the heaviest Users cost seconds of heap I/O and grows with the retention window. The read now touches one row per requested day and returns the same seconds, worlds and partial flags. The intervals stay the source of truth; the rollup can be rebuilt from them at any time.
 
-Ingestion folds each accepted interval into the rollup in the same transaction. The fold is a set union, so overlapping sessions, redelivered and out-of-order checkpoints, and a backfill running next to ingestion all converge. Stored spans are not clipped to the retention cutoff; the read clips them, and retention deletes whole days that ended before the cutoff. A world-less replay that turns a known segment unknown rebuilds the touched days from the intervals, because a union cannot take time back.
+Ingestion folds each accepted interval into the rollup in the same transaction. The fold is a set union, so overlapping sessions, redelivered and out-of-order checkpoints, and a rebuild running next to ingestion all converge. Stored spans are not clipped to the retention cutoff; the read clips them, and retention deletes whole days that ended before the cutoff. A world-less replay that turns a known segment unknown rebuilds the touched days from the intervals, because a union cannot take time back.
 
-Roll out in this order. The migration only creates an empty table.
-
-1. Run `db:migrate:deploy`.
-2. Deploy the Activity image of the first rollup commit, which writes the rollup but still reads the intervals.
-3. Run `bun apps/activity/src/database/backfill-online-days.ts` against the database with the service environment (port-forward on production). It folds the intervals in six-hour `startedAt` windows, is safe to repeat and to run during ingestion, and accepts an ISO timestamp to rebuild only recent history. Compare a few Users' responses before and after step 4.
-4. Deploy the image that reads the rollup.
-
-Before step 4 a rollback needs no cleanup. After it, rolling back the read only returns to the slower scan; the rollup can stay.
+The rollup went live on 2026-11-11: migration, ingestion, a one-off backfill from the intervals, then the read. Rebuilding it later means folding the intervals through `upsertOnlineDays` in `online-days.ts`, which is safe to repeat and to run during ingestion; a database restored from an older backup needs that rebuild before the read can be trusted.
 
 ### Activity retention without writer stalls
 
