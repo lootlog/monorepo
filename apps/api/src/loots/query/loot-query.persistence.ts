@@ -38,6 +38,8 @@ import {
 import { memberTable } from "#src/database/drizzle/organization.schema";
 import {
   buildLootQueryConditions,
+  lootQuerySource,
+  organizationLootRecordQuerySource,
   LOOT_SEARCH_SNAPSHOT_LIMIT,
   lootSearchMatchesNothing,
   type LootQueryFilters,
@@ -182,6 +184,17 @@ export const makeLootQueryPersistence = (
       isNull(organizationLootRecordTable.archivedAt),
     );
 
+  /**
+   * The Organization's own records, with no join to Loot. This is the only
+   * scope the page selection has, so a record of another Organization cannot
+   * enter the result.
+   */
+  const activeRecordsOfOrganization = (guildId: string) =>
+    and(
+      eq(organizationLootRecordTable.guildId, guildId),
+      isNull(organizationLootRecordTable.archivedAt),
+    );
+
   const findIds = (options: {
     readonly guildId: string;
     readonly permissions: ReadonlyArray<string>;
@@ -195,23 +208,27 @@ export const makeLootQueryPersistence = (
           ? Effect.succeed<Array<number>>([])
           : protect(
               "loots.query.ids",
+              // Driven from the Organization's records: the world, the
+              // creation time, the cursor and the ordering all read columns of
+              // the row the scan is already on, so one index range of `limit`
+              // rows replaces a walk through every record the Organization
+              // owns. The relation filters and the visibility rules correlate
+              // on the record's lootId and are unchanged.
               database
-                .select({ id: lootTable.id })
-                .from(lootTable)
-                .innerJoin(
-                  organizationLootRecordTable,
-                  activeOrganizationRecord(options.guildId),
-                )
+                .select({ id: organizationLootRecordTable.lootId })
+                .from(organizationLootRecordTable)
                 .where(
                   and(
+                    activeRecordsOfOrganization(options.guildId),
                     ...buildLootQueryConditions(
+                      organizationLootRecordQuerySource,
                       filters,
                       options.permissions,
                       options.roles,
                     ),
                   ),
                 )
-                .orderBy(desc(lootTable.id))
+                .orderBy(desc(organizationLootRecordTable.lootId))
                 .limit(options.limit)
                 .pipe(Effect.map((rows) => rows.map(({ id }) => id))),
             ),
@@ -266,6 +283,7 @@ export const makeLootQueryPersistence = (
           .where(
             and(
               ...buildLootQueryConditions(
+                lootQuerySource,
                 filters,
                 options.permissions,
                 options.roles,

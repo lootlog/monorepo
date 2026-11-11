@@ -88,7 +88,8 @@ const loot = async (options: {
 
   for (const guildId of options.guildIds)
     await client.query(
-      `INSERT INTO "OrganizationLootRecord" ("lootId","guildId","archivedAt","updatedAt") VALUES ($1,$2,$3,now())`,
+      `INSERT INTO "OrganizationLootRecord" ("lootId","guildId","archivedAt","updatedAt","lootWorld","lootCreatedAt")
+       SELECT $1,$2,$3,now(),world,"createdAt" FROM "Loot" WHERE id = $1`,
       [lootId, guildId, options.archived ? new Date() : null],
     );
 

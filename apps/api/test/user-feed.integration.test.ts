@@ -116,10 +116,10 @@ const insertLoot = async (
   )(
     (
       await client.query(
-        `WITH loot AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") VALUES ($1,'tempest','pl','FIGHT','map',now()) RETURNING id),
+        `WITH loot AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") VALUES ($1,'tempest','pl','FIGHT','map',now()) RETURNING id,world,"createdAt"),
         npc AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,prof,"gameVersion") VALUES ($2,$1,$3::"NpcType",100,'WARRIOR','pl') RETURNING id),
         linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId","runtimeNpcId") SELECT loot.id, npc.id, $6::integer FROM loot, npc)
-        INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt") SELECT id,$4,$5,now() FROM loot RETURNING "lootId" AS id`,
+        INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt") SELECT id,$4,$5,now(),world,"createdAt" FROM loot RETURNING "lootId" AS id`,
         [
           randomUUID(),
           npc.npcId,
@@ -250,7 +250,9 @@ describe("personal Organization activity feed", () => {
 
     if (!loot) throw new Error("Missing loot");
     await client.query(
-      `INSERT INTO "OrganizationLootRecord" ("lootId","guildId","updatedAt") VALUES ($1,$2,now()),($1,$3,now())`,
+      `INSERT INTO "OrganizationLootRecord" ("lootId","guildId","updatedAt","lootWorld","lootCreatedAt")
+       SELECT "Loot".id,g,now(),"Loot".world,"Loot"."createdAt"
+       FROM "Loot", unnest(ARRAY[$2,$3]) AS g WHERE "Loot".id = $1`,
       [loot.id, guild.id, other.guild.id],
     );
 
@@ -423,10 +425,10 @@ describe("personal Organization activity feed", () => {
     )(
       (
         await client.query(
-          `WITH loot AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") VALUES ($1,'tempest','pl','FIGHT','map',now()) RETURNING id),
+          `WITH loot AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") VALUES ($1,'tempest','pl','FIGHT','map',now()) RETURNING id,world,"createdAt"),
           npc AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,wt,prof,"gameVersion") VALUES (21,$1 || 'boss','ELITE2',50,25,'WARRIOR','pl'), (22,$1 || 'escort','ELITE',70,15,'WARRIOR','pl') RETURNING id),
           linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId") SELECT loot.id, npc.id FROM loot, npc)
-          INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt") SELECT id,$2,$3,now() FROM loot RETURNING "lootId" AS id`,
+          INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt") SELECT id,$2,$3,now(),world,"createdAt" FROM loot RETURNING "lootId" AS id`,
           [randomUUID(), guild.id, new Date(recent.getTime() + 5000)],
         )
       ).rows,
@@ -714,9 +716,9 @@ describe("personal Organization activity feed", () => {
     );
     await client.query(
       `WITH npcs AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,"gameVersion") SELECT n,'NPC '||n||$2,CASE WHEN n%2=0 THEN 'ELITE2'::"NpcType" ELSE 'HERO'::"NpcType" END,100,'pl' FROM generate_series(0,199)n RETURNING id,"npcId"),
-      loots AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") SELECT $2||n,'tempest','pl','FIGHT','map',now() FROM generate_series(1,30000)n RETURNING id),
+      loots AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") SELECT $2||n,'tempest','pl','FIGHT','map',now() FROM generate_series(1,30000)n RETURNING id,world,"createdAt"),
       linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId") SELECT loots.id, npcs.id FROM loots JOIN npcs ON npcs."npcId"=loots.id%200)
-      INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt") SELECT id,$1,now()-(id%86400)*interval '1 second',now() FROM loots`,
+      INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt") SELECT id,$1,now()-(id%86400)*interval '1 second',now(),world,"createdAt" FROM loots`,
       [guild.id, randomUUID()],
     );
     await client.query(
