@@ -1126,30 +1126,64 @@ compressed hypertable does not rewrite its chunks.
 `OrganizationLootRecord` carries `lootWorld` and `lootCreatedAt`, the two
 immutable loot facts the loot list filters on, so the page selection reads one
 table instead of joining `Loot` (the join was 80% of the buffers of a page).
-Roll it out in this order; each step is a separate deploy:
+Both columns are `NOT NULL`, the API writes them in the transaction that
+accepts a loot, and `OrganizationLootRecord_guildId_archivedAt_world_lootId_idx`
+replaces `OrganizationLootRecord_guildId_archivedAt_lootId_idx`.
 
-1. Apply `20261111090400_loot_record_world_denormalization`. It only adds two
-   nullable columns, which is metadata-only. Then deploy the API: it writes
-   both columns for every new record, and the migration must come first or
-   every loot submission fails.
-2. Run `bun src/loots/backfill-organization-loot-record-facts.ts` from
-   `apps/api` until it reports nothing left to fill. It works newest first in
-   windows of 50,000 loot ids and resumes where it stopped (about ten minutes
-   on the 15.7M-row production copy). Do not create the new index before this:
-   updating an indexed column rewrites every index of the table.
-3. Build the new index outside a transaction, then analyze:
+Production went through this on 2026-11-11 in four steps: the nullable columns
+(`20261111090400_loot_record_world_denormalization`), a windowed backfill of
+15.8M records (about 15 minutes), the index built concurrently, and
+`20261111090416_loot_record_facts_required`. A database that is restored from
+an older backup and holds loots needs the same order, because the runner
+applies all pending migrations in one transaction and the second one fails,
+rolling the first back, while any record misses its facts or the index does
+not exist:
+
+1. Apply only the first migration, then deploy the API.
+2. Fill the facts in windows, newest first, each its own transaction. Repeat
+   the statement for lower `lootId` ranges until it updates no row. Do not
+   build the index first: updating an indexed column rewrites every index of
+   the table.
+
+   ```sql
+   UPDATE "OrganizationLootRecord" r
+   SET "lootWorld" = l."world", "lootCreatedAt" = l."createdAt"
+   FROM "Loot" l
+   WHERE l."id" = r."lootId"
+     AND r."lootId" BETWEEN <lower> AND <upper>
+     AND (r."lootWorld" IS NULL OR r."lootCreatedAt" IS NULL);
+   ```
+
+3. Build the index outside a transaction, then analyze:
 
    ```sql
    CREATE INDEX CONCURRENTLY IF NOT EXISTS "OrganizationLootRecord_guildId_archivedAt_world_lootId_idx" ON "OrganizationLootRecord" ("guildId","archivedAt","lootWorld","lootId" DESC NULLS LAST);
    ANALYZE "OrganizationLootRecord";
    ```
 
-4. Apply `20261111090416_loot_record_facts_required` and deploy the API that
-   selects the page from the record. The migration refuses to run on a
-   populated database without the valid index, validates the facts without
-   blocking writes, sets both columns `NOT NULL`, and drops the unused
-   `OrganizationLootRecord_guildId_archivedAt_lootId_idx` (839 MB).
+4. Apply the second migration. It validates the facts without blocking writes,
+   sets both columns `NOT NULL` and drops the unused old index (839 MB).
 
-The runner applies all pending migrations in one transaction, so steps 1 and 4
-cannot be pending together on a database that has not been backfilled: the
-second one fails and rolls the first back.
+### After a bulk rewrite
+
+Rewriting every row of a table leaves dead tuples. Autovacuum cleaned them
+within minutes in production (104 left), and the planner statistics came from
+the `ANALYZE` after the index build, so `VACUUM (ANALYZE)` was not needed. Run
+`VACUUM (ANALYZE) "OrganizationLootRecord"` after a bulk rewrite only where
+autovacuum is off or lagging: `ANALYZE` refreshes the statistics the planner
+uses to choose the new index, and `VACUUM` refreshes the visibility map that
+index-only scans rely on.
+
+Neither returns space to the operating system. After the backfill the table
+and its indexes took 4.5 GB, about 1 GB more than freshly built copies would.
+That is free space inside the heap and in the three indexes the rewrite
+touched, which later inserts reuse. To shrink them, rebuild the indexes
+without blocking writes:
+
+```sql
+REINDEX INDEX CONCURRENTLY "OrganizationLootRecord_guildId_lootId_key";
+REINDEX INDEX CONCURRENTLY "OrganizationLootRecord_lootId_idx";
+REINDEX INDEX CONCURRENTLY "OrganizationLootRecord_pkey";
+```
+
+Each needs room for a second copy of the index while it runs.
