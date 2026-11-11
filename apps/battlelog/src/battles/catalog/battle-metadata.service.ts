@@ -47,16 +47,26 @@ export const makeBattleMetadata = (
 
   // Keep the join inside LIMIT: an incomplete newest battle must not hide
   // the character's last recorded level/profession.
-  const latestCharacterWarrior = drizzle
+  // OFFSET 0 keeps this join battle-first instead of scanning global warrior ids.
+  const latestBattleWarrior = drizzle
     .select({ lvl: battleWarriors.lvl, prof: battleWarriors.prof })
-    .from(battles)
-    .innerJoin(
-      battleWarriors,
+    .from(battleWarriors)
+    .where(
       and(
         eq(battleWarriors.battleId, battles.id),
         eq(battleWarriors.originalId, battles.characterId),
       ),
     )
+    .offset(0)
+    .as("latest_battle_warrior");
+
+  const latestCharacterWarrior = drizzle
+    .select({
+      lvl: latestBattleWarrior.lvl,
+      prof: latestBattleWarrior.prof,
+    })
+    .from(battles)
+    .innerJoinLateral(latestBattleWarrior, sql`true`)
     .where(
       and(
         eq(battles.userId, userCharacters.userId),
