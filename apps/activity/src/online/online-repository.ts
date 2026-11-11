@@ -162,10 +162,10 @@ export class OnlineRepository extends Context.Service<
           ? new Date(meta.lastObservedAt).toISOString()
           : null;
 
-        // Each interval is expanded once into the Warsaw days it covers, clipped
-        // to each day's bounds, and merged per day with range_agg. Keep the
-        // startedAt bound off UserOnlineInterval_startedAt_idx so retention's
-        // global index never replaces the per-user primary key scan.
+        // One UserOnlineDay row per day and world holds the merged spans, so the
+        // read is bounded by the number of days, not by checkpoints. Spans are
+        // clipped to the retention cutoff here because the stored ones are not.
+        // Tagged SQL because the Drizzle builder has no multirange operators.
         const days = yield* sql<{
           date: string;
           onlineSeconds: number | null;
@@ -174,33 +174,20 @@ export class OnlineRepository extends Context.Service<
           worldsComplete: boolean;
         }>`
         WITH days AS (
-          SELECT d::date AS date, d::timestamp AT TIME ZONE 'Europe/Warsaw' AS start,
-            (d::date + 1)::timestamp AT TIME ZONE 'Europe/Warsaw' AS finish
+          SELECT d::date AS date, d::timestamp AT TIME ZONE ${ONLINE_TIME_ZONE} AS start,
+            (d::date + 1)::timestamp AT TIME ZONE ${ONLINE_TIME_ZONE} AS finish
           FROM generate_series(${query.from}::date::timestamp, ${query.to}::date::timestamp, interval '1 day') d
-        ), source_intervals AS (
-          SELECT "world", GREATEST("startedAt", ${cutoff}::timestamptz) AS start, "endedAt" AS finish
-          FROM "UserOnlineInterval" WHERE "userId" = ${userId}
-            AND "endedAt" > GREATEST(${cutoff}::timestamptz, ${query.from}::date::timestamp AT TIME ZONE 'Europe/Warsaw')
-            AND "startedAt" + interval '0 seconds' < (${query.to}::date + 1)::timestamp AT TIME ZONE 'Europe/Warsaw'
-        ), interval_days AS (
-          SELECT g::date AS date, source_intervals.world,
-            tstzrange(
-              GREATEST(source_intervals.start, g::timestamp AT TIME ZONE 'Europe/Warsaw'),
-              LEAST(source_intervals.finish, (g::date + 1)::timestamp AT TIME ZONE 'Europe/Warsaw'),
-              '[)'
-            ) AS span
-          FROM source_intervals
-          CROSS JOIN LATERAL generate_series(
-            GREATEST(${query.from}::date::timestamp, date_trunc('day', source_intervals.start AT TIME ZONE 'Europe/Warsaw')),
-            LEAST(${query.to}::date::timestamp, date_trunc('day', (source_intervals.finish - interval '1 microsecond') AT TIME ZONE 'Europe/Warsaw')),
-            interval '1 day') g
-          WHERE source_intervals.finish > source_intervals.start
+        ), retained AS (
+          SELECT date, world, spans * tstzmultirange(tstzrange(${cutoff}::timestamptz, NULL)) AS spans
+          FROM "UserOnlineDay"
+          WHERE "userId" = ${userId} AND date BETWEEN ${query.from}::date AND ${query.to}::date
         ), day_agg AS (
           SELECT date,
-            COALESCE(array_agg(DISTINCT world ORDER BY world) FILTER (WHERE world IS NOT NULL), '{}') AS worlds,
-            bool_or(world IS NULL) AS unknown,
-            range_agg(span) FILTER (WHERE ${query.world ?? null}::text IS NULL OR world = ${query.world ?? null}::text) AS spans
-          FROM interval_days
+            COALESCE(array_agg(world ORDER BY world) FILTER (WHERE world <> ''), '{}') AS worlds,
+            bool_or(world = '') AS unknown,
+            COALESCE(range_agg(spans) FILTER (WHERE ${query.world ?? null}::text IS NULL OR world = ${query.world ?? null}::text), '{}'::tstzmultirange) AS spans
+          FROM retained
+          WHERE NOT isempty(spans)
           GROUP BY date
         ), day_stats AS (
           SELECT day_agg.date, day_agg.worlds, day_agg.unknown,
