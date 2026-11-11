@@ -29,7 +29,7 @@ test("the scoped log runner preserves the configured logger", async () => {
 });
 
 describe("HTTP server metrics", () => {
-  test("silences healthcheck access logs while preserving responses and other request logs", async () => {
+  test("serves healthcheck-lookalike paths as ordinary requests without access logs for fast successes", async () => {
     const messages: unknown[] = [];
     const logger = Logger.make(({ message }) => messages.push(message));
 
@@ -111,7 +111,7 @@ describe("HTTP server metrics", () => {
       expect(otherResponses.map((response) => response.status)).toEqual([
         204, 204, 204, 204, 204,
       ]);
-      expect(messages).toHaveLength(5);
+      expect(messages).toHaveLength(0);
     } finally {
       await boundary.dispose();
     }

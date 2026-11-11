@@ -1,4 +1,4 @@
-import { Clock, Context, Effect, FiberSet, Metric } from "effect";
+import { Clock, Context, Effect, Exit, FiberSet, Metric } from "effect";
 import {
   HttpMiddleware,
   HttpRouter,
@@ -142,6 +142,10 @@ export const httpServerRouteMetrics = HttpRouter.middleware(
 export const isHealthcheck = (url: string) =>
   /^\/+(?:healthz|readyz)\/*(?:[?#]|$)/i.test(url);
 
+// Successful, fast responses are in the metrics and traces already; logging
+// each one costs more than it tells. Failures and slow requests stay logged.
+const slowRequestLogThresholdMilliseconds = 1_000;
+
 export const httpServerMetrics = HttpMiddleware.make(
   <E, R>(
     httpApp: Effect.Effect<
@@ -164,12 +168,25 @@ export const httpServerMetrics = HttpMiddleware.make(
         Effect.onExit((exit) =>
           Effect.gen(function* () {
             const completedAt = yield* Clock.currentTimeNanos;
+            const status = HttpServerError.exitResponse(exit).status;
+
+            const durationMilliseconds =
+              Number(completedAt - startedAt) / 1_000_000;
+
             yield* recordHttpServerMetrics({
               route: metrics.route,
               method: request.method,
-              status: HttpServerError.exitResponse(exit).status,
-              durationMilliseconds: Number(completedAt - startedAt) / 1_000_000,
+              status,
+              durationMilliseconds,
             });
+
+            if (
+              Exit.isSuccess(exit) &&
+              status < 400 &&
+              durationMilliseconds < slowRequestLogThresholdMilliseconds
+            ) {
+              yield* HttpMiddleware.withLoggerDisabled(Effect.void);
+            }
           }),
         ),
         Effect.provideService(RequestMetrics, metrics),
