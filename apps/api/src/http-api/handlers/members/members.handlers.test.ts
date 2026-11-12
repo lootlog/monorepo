@@ -51,6 +51,7 @@ const member = {
 const makeData = (overrides: Partial<MembersData["Service"]> = {}) =>
   MembersData.of({
     getMe: () => Effect.succeed(member),
+    findStoredMember: () => Effect.succeed(member),
     refreshMember: () => Effect.succeed(member),
     deactivateMember: () => Effect.succeed({ ...member, active: false }),
     refreshAllMembers: () => Effect.succeed({}),
