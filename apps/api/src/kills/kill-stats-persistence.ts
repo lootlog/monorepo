@@ -492,7 +492,13 @@ export const makeKillStatsPersistence = (
             sql`unnest(${guildKillDayTable.hours}) with ordinality as hours(kills, slot)`,
             sql`true`,
           )
-          .where(buildKillStatsCondition(guildDayColumns, filter))
+          // Hours without kills are not cells of the heatmap.
+          .where(
+            and(
+              buildKillStatsCondition(guildDayColumns, filter),
+              sql`hours.kills > 0`,
+            ),
+          )
           .groupBy(weekday, hour)
           .orderBy(weekday, hour),
       );

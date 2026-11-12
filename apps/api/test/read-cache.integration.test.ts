@@ -1001,31 +1001,19 @@ describe("Read cache Dragonfly integration", () => {
 
       const responses = await Promise.all(Array.from({ length: 8 }, request));
       expect(queries).toBe(5);
-      expect(await cache.scan(`loot-stats:${organization}:*`)).toEqual([]);
-
-      const firstGenerationKeys = await cache.scan(
-        `read-cache:v1:*:loot-stats:${organization}:*`,
-      );
-
-      expect(firstGenerationKeys).toHaveLength(1);
+      expect(await cache.scan(`loot-stats:${organization}:*`)).toHaveLength(1);
       expect(
         responses.every(
           (response) =>
             JSON.stringify(response) === JSON.stringify(responses[0]),
         ),
       ).toBe(true);
+
+      // A warm entry is served without SQL, and invalidating the Organization's
+      // scopes does not drop it: statistics refresh by age, not by writes.
       await cache.invalidateScopes(`loot-stats:${organization}`);
-      await request();
-      expect(queries).toBe(10);
-
-      const nextGenerationKeys = await cache.scan(
-        `read-cache:v1:*:loot-stats:${organization}:*`,
-      );
-
-      expect(nextGenerationKeys).toHaveLength(2);
-      expect(nextGenerationKeys).toEqual(
-        expect.arrayContaining(firstGenerationKeys),
-      );
+      expect(await request()).toEqual(responses[0]);
+      expect(queries).toBe(5);
     } finally {
       querySpy.mockRestore();
       await boundary.dispose();
