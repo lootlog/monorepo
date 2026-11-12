@@ -1,4 +1,4 @@
-import { BunRedis } from "@effect/platform-bun";
+import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import { RedisClient } from "bun";
 import { createBunRedisClient, RedisConnection } from "bullmq";
 import { RedisService } from "#src/redis/redis.service";
@@ -32,7 +32,7 @@ export class ApiRedis extends Context.Service<ApiRedis, RedisService>()(
     Effect.map(ApiRuntimeConfig, ({ redis }) =>
       ApiRedis.layerWithoutRedis.pipe(
         Layer.provide(
-          BunRedis.layer({
+          reconnectingBunRedisLayer({
             url: redisUrl(redis),
           }),
         ),

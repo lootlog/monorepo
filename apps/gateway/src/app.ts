@@ -4,7 +4,7 @@ import {
 } from "#src/realtime/gateway-metrics";
 import { GatewayConnectionMetrics } from "#src/realtime/connection-metrics";
 import { OnlineHistories } from "#src/realtime/online-history";
-import { BunRedis } from "@effect/platform-bun";
+import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
@@ -155,7 +155,7 @@ const GatewayApplicationLive = GatewayApplication.layerWithoutDependencies.pipe(
   Layer.provide(
     Layer.unwrap(
       Effect.map(GatewayConfig, (config) =>
-        BunRedis.layer({
+        reconnectingBunRedisLayer({
           url: `redis://${encodeURIComponent(config.redis.username)}:${encodeURIComponent(Redacted.value(config.redis.password))}@${config.redis.host}:${config.redis.port}`,
         }),
       ),
