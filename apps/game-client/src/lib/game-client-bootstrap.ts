@@ -6,6 +6,7 @@ import {
 import {
   getCharacterAurasControllerGetAurasQueryKey,
   getCharacterAurasControllerGetOwnAuraQueryKey,
+  getGuildsControllerGetGuildPermissionsQueryKey,
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
@@ -113,6 +114,15 @@ const load = async (queryClient: QueryClient, signal: AbortSignal) => {
         decodeGuildSettingsDocuments(response.guildTimerDocuments),
       );
   }
+
+  if (response.guildPermissions)
+    for (const [guildId, capabilities] of Object.entries(
+      response.guildPermissions,
+    ))
+      seed(
+        getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
+        capabilities,
+      );
 
   if (response.userPreferences)
     seed(

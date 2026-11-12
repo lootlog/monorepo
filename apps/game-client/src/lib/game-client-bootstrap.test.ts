@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, expect, it } from "vitest";
 import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
 } from "@lootlog/client/main";
@@ -71,6 +72,51 @@ it("leaves an unavailable part, and every later refetch, to the query's own endp
     expect(client.getQueryData(preferencesKey)).toBeUndefined();
     // An invalidation after startup must read current data, not the bootstrap.
     expect(await readGameClientBootstrap(guildsKey)).toBeUndefined();
+  } finally {
+    stop();
+    restore();
+    client.clear();
+  }
+});
+
+it("answers a guild's permissions query only for guilds the bootstrap read", async () => {
+  const restore = configureApiClients({
+    main: {
+      baseUrl: "https://api.example.test",
+      fetch: async () =>
+        Response.json({
+          accessibleGuilds: [guild, { ...guild, id: "guild-2" }],
+          userPreferences: null,
+          lootlogConfig: null,
+          settingsDocuments: null,
+          guildTimerDocuments: null,
+          guildPermissions: { "guild-1": ["LOOTLOG_ACCESS"] },
+        }),
+    },
+  });
+
+  const client = new QueryClient();
+  const stop = startGameClientBootstrap(client);
+
+  const readKey = getGuildsControllerGetGuildPermissionsQueryKey({
+    guildId: "guild-1",
+  });
+
+  const failedKey = getGuildsControllerGetGuildPermissionsQueryKey({
+    guildId: "guild-2",
+  });
+
+  try {
+    const startup = Promise.all([
+      readGameClientBootstrap(readKey),
+      readGameClientBootstrap(failedKey),
+    ]);
+
+    setTestRuntimeGame({ hero: { accountId: "202", characterId: "7" } });
+    useGlobalStore.setState({ gameState: { gameInitialized: true } });
+
+    expect(await startup).toEqual([["LOOTLOG_ACCESS"], undefined]);
+    expect(client.getQueryData(failedKey)).toBeUndefined();
   } finally {
     stop();
     restore();
