@@ -1,7 +1,5 @@
-import {
-  getLootListCacheScope,
-  getLootStatsCacheScope,
-} from "#src/shared/cache";
+import { getOrSetStaleJson } from "#src/redis/stale-json-cache";
+import { getLootListCacheScope } from "#src/shared/cache";
 import { makeUserFeed } from "#src/feed/user-feed";
 import { makeUserLootStats } from "#src/loots/query/user-loot-stats";
 import { makeGuildKillActivityPublisher } from "#src/kills/guild-kill-activity";
@@ -70,11 +68,7 @@ export const recordsServicesLive = Layer.effect(
           organizationIds,
           (guildId) =>
             Effect.tryPromise({
-              try: () =>
-                redis.invalidateScopes(
-                  getLootListCacheScope(guildId),
-                  getLootStatsCacheScope(guildId),
-                ),
+              try: () => redis.invalidateScopes(getLootListCacheScope(guildId)),
               catch: (error) => error,
             }),
           { concurrency: "unbounded", discard: true },
@@ -121,7 +115,6 @@ export const recordsServicesLive = Layer.effect(
     const loots = makeLootsOperations({
       persistence: makeLootPersistence(database),
       query: lootQuery,
-      stats: lootStats,
       redis,
       logger: applicationLogger,
     });
@@ -174,11 +167,21 @@ export const recordsServicesLive = Layer.effect(
           applicationLogger,
           makeGuildKillActivityPublisher(database, rabbit),
         ),
-        guildKillQueries: makeGuildKillQueries(
-          killStatsPersistence,
-          killQueryCache,
-          applicationLogger,
-        ),
+        guildKillQueries: makeGuildKillQueries(killStatsPersistence, {
+          getOrSetStale: (key, schema, load, freshSeconds) =>
+            getOrSetStaleJson(redis, {
+              key,
+              schema,
+              freshSeconds,
+              retainSeconds: 24 * 3_600,
+              factory: load,
+              onError: (error) =>
+                applicationLogger.warn(
+                  "Kill statistics cache unavailable",
+                  error,
+                ),
+            }),
+        }),
         memberKillQuery: makeMemberKillQuery(
           killStatsPersistence,
           killQueryCache,

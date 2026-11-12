@@ -1,4 +1,4 @@
-import type { KillQueryCache } from "#src/kills/kill-query-support";
+import type { StaleKillQueryCache } from "#src/kills/kill-query-support";
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
@@ -54,10 +54,16 @@ const memberIds = { first: 0, second: 0 };
 
 const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
 
-const cache: KillQueryCache = { getOrSet: (_key, _schema, load) => load };
+const cache: StaleKillQueryCache = {
+  getOrSetStale: (_key, _schema, load) =>
+    Effect.map(load, (value) => ({
+      value,
+      computedAt: new Date().toISOString(),
+    })),
+};
 
 const queries = Effect.map(ApiDatabase, (db) =>
-  makeGuildKillQueries(makeKillStatsPersistence(db), cache, applicationLogger),
+  makeGuildKillQueries(makeKillStatsPersistence(db), cache),
 );
 
 beforeAll(async () => {

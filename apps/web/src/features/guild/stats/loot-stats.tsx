@@ -3,6 +3,7 @@ import { useLootsControllerGetLootStats } from "@lootlog/client/main";
 import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 
+import { StatsComputedAt } from "@/components/common/stats-computed-at";
 import { LootOverviewCards } from "@/components/common/loot-stats/loot-overview-cards";
 import { LootStatsFilterBar } from "./components/loot-stats-filter-bar";
 import { LootTopContributors } from "./components/loot-top-contributors";
@@ -59,6 +60,7 @@ export const LootStats = () => {
         onClearFilters={resetFilters}
       />
 
+      <StatsComputedAt computedAt={data?.computedAt} />
       <LootOverviewCards data={data?.overview} isLoading={isLoading} />
       <StatsSectionColumns className="xl:grid-cols-3 xl:*:first:col-span-2">
         <Suspense fallback={<LootTimelineChartSkeleton />}>

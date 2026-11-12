@@ -851,7 +851,6 @@ describe("Read cache Dragonfly integration", () => {
           const operations = makeLootsOperations({
             persistence: makeLootPersistence(db),
             query: makeLootQueryOperations(makeLootQueryPersistence(db)),
-            stats: new LootStatsService(db, cache),
             redis: cache,
             logger: applicationLogger,
           });
