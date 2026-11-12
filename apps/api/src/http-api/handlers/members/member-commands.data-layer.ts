@@ -15,6 +15,7 @@ import {
   getAdminBulkRefreshRateLimit,
   getMemberCacheSoftTtl,
   getRefreshPermissionsTtl,
+  MEMBER_STALE_ACCESS_GRACE_MS,
 } from "#src/members/member-cache";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
@@ -71,8 +72,6 @@ export interface MemberCommandsPorts {
     readonly completedAt: Date;
   }) => Effect.Effect<unknown, unknown>;
 }
-
-const STALE_ACCESS_GRACE_MS = 6 * 60 * 60 * 1000;
 
 const failure = (cause: unknown) => new MembersOperationError({ cause });
 
@@ -135,7 +134,7 @@ const useStaleMember = (
     member?.active &&
     member.lastDiscordSyncAt &&
     (now.getTime() - member.lastDiscordSyncAt.getTime() <=
-      STALE_ACCESS_GRACE_MS ||
+      MEMBER_STALE_ACCESS_GRACE_MS ||
       isTransientMemberSyncStatus(refreshAttempt.status)),
   );
 
@@ -443,6 +442,8 @@ export const makeMembersDataLayer = (
             }),
             callerFailure,
           ),
+        findStoredMember: (discordId, guildId) =>
+          operation(memberWithRoles(database, discordId, guildId), failure),
         refreshMember: (guildId, discordId) =>
           operation(
             Effect.gen(function* () {

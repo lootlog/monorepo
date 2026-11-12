@@ -1,6 +1,9 @@
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import type { ApiKeyAccess } from "@lootlog/schema/api-key-access";
-import type { MemberWithRoles } from "#src/members/member.types";
+import type {
+  MemberWithRoles,
+  StoredMemberWithRoles,
+} from "#src/members/member.types";
 import {
   pathString,
   statusCodeResponse,
@@ -85,6 +88,11 @@ export class MembersData extends Context.Service<
       MemberWithRoles | null,
       MembersOperationError | ReauthenticationRequired
     >;
+    /** The stored member and its roles, without contacting Discord. */
+    readonly findStoredMember: (
+      discordId: string,
+      guildId: string,
+    ) => Effect.Effect<StoredMemberWithRoles | null, MembersOperationError>;
     readonly refreshMember: (guildId: string, discordId: string) => DataEffect;
     readonly deactivateMember: (
       guildId: string,

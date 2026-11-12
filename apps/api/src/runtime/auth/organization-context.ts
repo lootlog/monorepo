@@ -20,7 +20,11 @@ import {
   writeGuildConfigurationCache,
 } from "#src/guilds/guild-configuration-cache";
 import { isActiveMember } from "#src/members/member-access-query";
-import { getMemberCacheSoftTtl } from "#src/members/member-cache";
+import {
+  getMemberCacheSoftTtl,
+  MEMBER_STALE_ACCESS_GRACE_MS,
+} from "#src/members/member-cache";
+import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
 import type { MemberWithRoles, Role } from "#src/members/member.types";
 import {
@@ -72,11 +76,17 @@ export type OrganizationContextRefresh = (options: {
   readonly reason: string;
 }) => Effect.Effect<unknown, unknown>;
 
-// A context stays cached until its member reaches the soft TTL, and the next
-// request then waits for Discord. Past two thirds of the soft TTL a request
-// queues a background refresh so active members rarely reach that point. It
-// never extends how long the cached permissions are trusted.
+// A context stays cached until its member reaches the soft TTL. Past two
+// thirds of the soft TTL a request queues a background refresh so active
+// members rarely reach that point. Past the soft TTL the stored member keeps
+// serving requests for the stale-access grace while the refresh runs in the
+// background; only a member Discord has not confirmed, or one past the grace,
+// makes the request wait for Discord.
 const REFRESH_AHEAD_FRACTION = 2 / 3;
+
+// Once the soft TTL has passed, a failed background refresh is queued again
+// after this long.
+const STALE_REFRESH_RETRY_SECONDS = 60;
 
 const refreshAheadKey = (userId: string, guildId: string) =>
   `organization-context:refresh-ahead:${userId}:${guildId}`;
@@ -205,32 +215,32 @@ export class OrganizationContextLookup extends Context.Service<
             return guild;
           });
 
-        const refreshAhead = (
+        const softTtl = getMemberCacheSoftTtl(config.environment);
+
+        const refreshInBackground = (
           options: { readonly userId: string; readonly discordId: string },
           guildId: string,
           lastSync: Date | null,
           now: number,
         ) =>
           Effect.gen(function* () {
-            const softTtl = getMemberCacheSoftTtl(config.environment);
+            if (!lastSync) return;
 
-            if (
-              !lastSync ||
-              now - lastSync.getTime() < softTtl * REFRESH_AHEAD_FRACTION
-            ) {
-              return;
-            }
+            const age = now - lastSync.getTime();
+
+            if (age < softTtl * REFRESH_AHEAD_FRACTION) return;
 
             const key = refreshAheadKey(options.userId, guildId);
 
-            // The marker lives until the context stops being fresh, so each
-            // user and guild queues at most one refresh per aging window.
+            // The marker lives until the context stops being fresh, and at
+            // least a retry interval after that, so each user and guild queues
+            // at most one refresh at a time.
             const claimed = yield* cache.setIfAbsent(
               key,
               "1",
               Math.max(
-                Math.ceil((lastSync.getTime() + softTtl - now) / 1000),
-                1,
+                Math.ceil((softTtl - age) / 1000),
+                STALE_REFRESH_RETRY_SECONDS,
               ),
             );
 
@@ -241,7 +251,10 @@ export class OrganizationContextLookup extends Context.Service<
               guildId,
               userId: options.userId,
               priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-              reason: "organization-context-refresh-ahead",
+              reason:
+                age <= softTtl
+                  ? "organization-context-refresh-ahead"
+                  : "organization-context-stale",
             }).pipe(
               // A failed enqueue must not block the retry until the soft TTL.
               Effect.tapError(() => cache.del(key).pipe(Effect.ignore)),
@@ -276,7 +289,7 @@ export class OrganizationContextLookup extends Context.Service<
                 );
 
                 if (member) {
-                  yield* refreshAhead(
+                  yield* refreshInBackground(
                     options,
                     guild.id,
                     member.lastDiscordSyncAt,
@@ -293,6 +306,45 @@ export class OrganizationContextLookup extends Context.Service<
                 yield* cache.del(permissionsKey).pipe(Effect.ignore);
               }
 
+              const stored = yield* members
+                .findStoredMember(options.discordId, guild.id)
+                .pipe(Effect.orDie);
+
+              if (
+                stored?.lastDiscordSyncAt &&
+                isActiveMember(stored) &&
+                // The caller must sign in again; only a Discord sync tells them.
+                stored.lastDiscordStatus !==
+                  MEMBER_LAST_DISCORD_STATUS.UNAUTHORIZED
+              ) {
+                const age = now - stored.lastDiscordSyncAt.getTime();
+
+                if (age <= MEMBER_STALE_ACCESS_GRACE_MS) {
+                  yield* refreshInBackground(
+                    options,
+                    guild.id,
+                    stored.lastDiscordSyncAt,
+                    now,
+                  );
+
+                  if (age <= softTtl) {
+                    yield* cache
+                      .set(
+                        permissionsKey,
+                        JSON.stringify({ member: stored }),
+                        PERMISSIONS_CACHE_TTL_SECONDS,
+                      )
+                      .pipe(Effect.ignore);
+                  }
+
+                  return toOrganizationContext(
+                    guild,
+                    stored,
+                    options.discordId,
+                  );
+                }
+              }
+
               const member = yield* members
                 .getMe(
                   { userId: options.userId, discordId: options.discordId },
@@ -304,7 +356,7 @@ export class OrganizationContextLookup extends Context.Service<
               if (!member || !isActiveMember(member)) return null;
 
               if (!member.isStale && !member.refreshQueued) {
-                yield* refreshAhead(
+                yield* refreshInBackground(
                   options,
                   guild.id,
                   member.lastDiscordSyncAt,
