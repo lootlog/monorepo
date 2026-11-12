@@ -11,9 +11,11 @@ import {
 
 const BATCH_MESSAGE_LIMIT = 50;
 
+const BATCH_WINDOW = "3 seconds";
+
 /**
- * Consumes one queue in ordered batches of up to 50 deliveries or two
- * seconds. Every delivery stays unacknowledged until its batch is applied, a
+ * Consumes one queue in ordered batches of up to 50 deliveries or three
+ * seconds, so Meilisearch indexes a few large tasks instead of many small ones. Every delivery stays unacknowledged until its batch is applied, a
  * failed batch is retried in order every five seconds, and a batch that fails
  * permanently is applied one delivery at a time so only the one that cannot
  * succeed is rejected. A delivery that does not decode is rejected too; a
@@ -57,7 +59,7 @@ export const consumeInBatches = Effect.fn("consumeInBatches")(function* <
     );
 
   yield* Stream.fromQueue(pending).pipe(
-    Stream.groupedWithin(BATCH_MESSAGE_LIMIT, "2 seconds"),
+    Stream.groupedWithin(BATCH_MESSAGE_LIMIT, BATCH_WINDOW),
     Stream.runForEach((batch) =>
       Effect.gen(function* () {
         const outcome = yield* Effect.exit(
