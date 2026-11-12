@@ -6,6 +6,7 @@ import { APIError } from "better-auth/api";
 import { and, eq } from "drizzle-orm";
 import { createLocalJWKSet, jwtVerify, type JSONWebKeySet } from "jose";
 import {
+  Clock,
   Context,
   DateTime,
   Function,
@@ -137,6 +138,26 @@ export const normalizeScopes = Function.compose(
   },
 );
 
+/**
+ * How long a verified session cookie keeps its decision. One page load sends
+ * the same cookie through Traefik a dozen times; a revoked session therefore
+ * stays valid for at most this long on top of the cookie cache's own window.
+ */
+export const SESSION_DECISION_TTL_MS = 5_000;
+
+const SESSION_DECISION_CAPACITY = 10_000;
+
+const readCookie = (cookieHeader: string, name: string) => {
+  for (const part of cookieHeader.split(";")) {
+    const separator = part.indexOf("=");
+
+    if (separator !== -1 && part.slice(0, separator).trim() === name)
+      return part.slice(separator + 1).trim();
+  }
+
+  return undefined;
+};
+
 export const createAuthService = ({
   auth,
   appUrl,
@@ -176,6 +197,25 @@ export const createAuthService = ({
    */
   const hasSessionCookie = (headers: Headers) =>
     headers.get("cookie")?.includes(auth.sessionCookieNames.token) === true;
+
+  const sessionDecisions = new Map<
+    string,
+    { readonly identity: VerifiedIdentity; readonly expiresAt: number }
+  >();
+
+  /** Hash of the session cookies, so the cache never holds a credential. */
+  const sessionDecisionKey = (headers: Headers) => {
+    const cookie = headers.get("cookie") ?? "";
+    const token = readCookie(cookie, auth.sessionCookieNames.token);
+
+    if (!token) return undefined;
+
+    return new Bun.CryptoHasher("sha256")
+      .update(token)
+      .update("\0")
+      .update(readCookie(cookie, auth.sessionCookieNames.data) ?? "")
+      .digest("base64");
+  };
 
   const validateBearerToken = Effect.fn("AuthService.validateBearerToken")(
     function* (token: string) {
@@ -259,6 +299,22 @@ export const createAuthService = ({
         return { identity: yield* verifyApiKey(key), setCookie: [] };
       }
 
+      // Only a successful session decision is remembered, and only when it
+      // carries no cookie refresh: a refusal must flip as soon as the user
+      // signs in, and the refresh has to reach the browser.
+      const decisionKey = authorizationHeader
+        ? undefined
+        : sessionDecisionKey(headers);
+
+      const now = yield* Clock.currentTimeMillis;
+
+      const remembered = decisionKey
+        ? sessionDecisions.get(decisionKey)
+        : undefined;
+
+      if (remembered && remembered.expiresAt > now)
+        return { identity: remembered.identity, setCookie: [] };
+
       // The cookie cache keeps the session store out of the common path. Its
       // refresh only reaches the browser when this response carries it back.
       const {
@@ -281,6 +337,21 @@ export const createAuthService = ({
       }
 
       const identity: VerifiedIdentity = verifiedIdentity;
+
+      if (decisionKey && session && setCookie.length === 0) {
+        if (sessionDecisions.size >= SESSION_DECISION_CAPACITY) {
+          for (const [key, decision] of sessionDecisions)
+            if (decision.expiresAt <= now) sessionDecisions.delete(key);
+
+          if (sessionDecisions.size >= SESSION_DECISION_CAPACITY)
+            sessionDecisions.clear();
+        }
+
+        sessionDecisions.set(decisionKey, {
+          identity,
+          expiresAt: now + SESSION_DECISION_TTL_MS,
+        });
+      }
 
       return { identity, setCookie };
     },

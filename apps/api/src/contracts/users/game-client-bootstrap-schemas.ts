@@ -8,6 +8,7 @@ import {
   CharacterAurasResponse,
   OwnCharacterAuraResponse,
 } from "#src/contracts/character-auras/schemas";
+import { OrganizationCapabilitiesResponse } from "#src/contracts/guilds/schemas";
 import {
   CurrentOrganizationsResponse,
   UserPreferencesResponse,
@@ -46,6 +47,13 @@ export const GameClientBootstrapResponse = Schema.Struct({
   /** GET /preferences/guilds for the timers domain of every accessible guild */
   guildTimerDocuments: Schema.NullOr(
     Schema.Struct(GuildSettingsDocumentsResponseSchema.fields),
+  ),
+  /**
+   * GET /guilds/{guildId}/permissions for every accessible guild, by guild id.
+   * A guild whose read failed is absent, not empty.
+   */
+  guildPermissions: Schema.NullOr(
+    Schema.Record(Schema.String, OrganizationCapabilitiesResponse),
   ),
   /** GET /users/@me/character-aura */
   characterAura: Schema.NullOr(Schema.Struct(OwnCharacterAuraResponse.fields)),
