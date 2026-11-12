@@ -5,6 +5,7 @@ import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
 import { FilterBar } from "@/components/common/filter-bar";
+import { StatsComputedAt } from "@/components/common/stats-computed-at";
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 import {
   KillStatsFilters,
@@ -82,6 +83,7 @@ export const KillStats = () => {
       >
         <KillStatsFilters {...filterProps} />
       </FilterBar>
+      <StatsComputedAt computedAt={data?.computedAt} />
       <KillStatsOverview
         total={data?.overview.guildUniqueKills}
         totalDetail={t("kills.overview.participations", {

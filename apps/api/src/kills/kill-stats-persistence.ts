@@ -20,6 +20,7 @@ import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildKillBucketTable,
+  guildKillDayTable,
   memberKillBucketTable,
 } from "#src/database/drizzle/kill-statistics.schema";
 import { memberTable } from "#src/database/drizzle/organization.schema";
@@ -166,6 +167,15 @@ const guildBucketColumns: FilterColumns = {
   npcType: guildKillBucketTable.npcType,
   npcLvl: guildKillBucketTable.npcLvl,
   npcName: guildKillBucketTable.npcName,
+};
+
+const guildDayColumns: FilterColumns = {
+  guildId: guildKillDayTable.guildId,
+  npcId: guildKillDayTable.npcId,
+  world: guildKillDayTable.world,
+  npcType: guildKillDayTable.npcType,
+  npcLvl: guildKillDayTable.npcLvl,
+  npcName: guildKillDayTable.npcName,
 };
 
 /** Organization buckets, which keep the hour of every kill even for all-time statistics. */
@@ -425,6 +435,25 @@ export const makeKillStatsPersistence = (
     filter: KillStatsFilter,
     unit: KillTimelineUnit,
   ) => {
+    // Without a period start the daily rollup holds the same kills in far
+    // fewer rows; hours are only asked for by periods, which have a start.
+    if (!filter.periodStart?.gte && unit === "day") {
+      const day = sql<string>`to_char(${guildKillDayTable.day}, 'YYYY-MM-DD')`;
+
+      return protect(
+        "kills.stats.guild-timeline",
+        database
+          .select({
+            date: day,
+            kills: sum(guildKillDayTable.kills).mapWith(Number),
+          })
+          .from(guildKillDayTable)
+          .where(buildKillStatsCondition(guildDayColumns, filter))
+          .groupBy(day)
+          .orderBy(day),
+      );
+    }
+
     const date =
       unit === "hour"
         ? sql<string>`to_char(${guildKillBucketTable.periodStart} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`
@@ -445,6 +474,36 @@ export const makeKillStatsPersistence = (
   };
 
   const guildKillHourlyWeekday = (filter: KillStatsFilter) => {
+    if (!filter.periodStart?.gte) {
+      // Slot n of the day's counters is local hour n - 1.
+      const weekday = sql<number>`extract(isodow from ${guildKillDayTable.day})::int`;
+      const hour = sql<number>`(hours.slot - 1)::int`;
+
+      return protect(
+        "kills.stats.guild-hourly-weekday",
+        database
+          .select({
+            weekday,
+            hour,
+            kills: sql<number>`sum(hours.kills)`.mapWith(Number),
+          })
+          .from(guildKillDayTable)
+          .innerJoinLateral(
+            sql`unnest(${guildKillDayTable.hours}) with ordinality as hours(kills, slot)`,
+            sql`true`,
+          )
+          // Hours without kills are not cells of the heatmap.
+          .where(
+            and(
+              buildKillStatsCondition(guildDayColumns, filter),
+              sql`hours.kills > 0`,
+            ),
+          )
+          .groupBy(weekday, hour)
+          .orderBy(weekday, hour),
+      );
+    }
+
     const weekday = sql<number>`extract(isodow from ${warsawTime})::int`;
     const hour = sql<number>`extract(hour from ${warsawTime})::int`;
 

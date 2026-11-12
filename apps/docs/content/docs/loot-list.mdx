@@ -106,6 +106,13 @@ wyższym poziomem. Tak samo liczą statystyki, lista łupów i dashboard.
 
 Godziny i dni są w czasie polskim.
 
+Statystyki czytają całą historię grupy, więc Lootlog nie liczy ich przy każdym
+wejściu. Statystyki łupów odświeżają się co 3 godziny, a statystyki bić co
+godzinę. Po upływie tego czasu strona od razu pokazuje poprzednie liczby, a
+nowe liczy w tle. Pod filtrami widać, kiedy liczby zostały policzone, więc
+świeży łup albo bicie pojawią się w statystykach z opóźnieniem. Lista łupów
+odświeża się od razu.
+
 ## Kto widzi łupy
 
 Odczyt łupów wymaga `LOOTLOG_LOOTS_READ`, a łupy z tytanów i herosów osobnych

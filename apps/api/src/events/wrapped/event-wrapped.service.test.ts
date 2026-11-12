@@ -331,7 +331,6 @@ describe("event wrapped summary", () => {
         makeLootsOperations({
           persistence: makeLootPersistence(database),
           query: makeLootQueryOperations(makeLootQueryPersistence(database)),
-          stats: { invalidateCache: () => Effect.void },
           redis: {
             invalidateScopes: async () => undefined,
             getOrSetJsonEffect: (options) => options.factory,

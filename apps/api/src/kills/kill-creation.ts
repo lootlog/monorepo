@@ -23,6 +23,7 @@ import {
   bossKillTable,
   guildKillActivityTable,
   guildKillBucketTable,
+  guildKillDayTable,
   guildKillTotalTable,
   memberKillBucketTable,
   memberKillTotalTable,
@@ -40,7 +41,11 @@ import {
   buildMemberKillDedupKey,
   buildUserKillDedupKey,
 } from "./kill-dedup-key.js";
-import { getKillStatsBucketStart } from "./kill-stats-period.js";
+import {
+  getKillStatsBucketStart,
+  toStatsDate,
+  toStatsHour,
+} from "./kill-stats-period.js";
 
 const DEDUP_TTL_SECONDS = 30;
 
@@ -372,6 +377,43 @@ export const makeKillCreation = (
       ];
     };
 
+  /** The Warsaw day and hour of the kill, in the day rollup's hourly counters. */
+  const incrementGuildDay = (
+    transaction: Transaction,
+    input: KillInput & { readonly guildId: string },
+    periodStart: Date,
+  ) => {
+    const hour = toStatsHour(periodStart);
+    const table = guildKillDayTable;
+    const slot = sql.raw(String(hour));
+
+    return transaction
+      .insert(table)
+      .values({
+        guildId: input.guildId,
+        world: input.world,
+        npcId: input.npcId,
+        day: toStatsDate(periodStart),
+        npcName: input.npcName,
+        npcType: input.npcType,
+        npcLvl: input.npcLvl,
+        kills: 1,
+        hours: Array.from({ length: 24 }, (_, index) =>
+          index === hour ? 1 : 0,
+        ),
+      })
+      .onConflictDoUpdate({
+        target: [table.guildId, table.world, table.npcId, table.day],
+        set: {
+          kills: sql`${table.kills} + 1`,
+          hours: sql`${table.hours}[1:${slot}] || (${table.hours}[${slot} + 1] + 1) || ${table.hours}[${slot} + 2:24]`,
+          npcName: input.npcName,
+          npcType: input.npcType,
+          npcLvl: input.npcLvl,
+        },
+      });
+  };
+
   const incrementGuild =
     (
       input: KillInput & { readonly guildId: string },
@@ -420,6 +462,7 @@ export const makeKillCreation = (
             ...descriptive(input),
           },
         }),
+      incrementGuildDay(transaction, input, periodStart),
       ...(activityFeedNpcCategory(input.npcType) !== "OTHER"
         ? [
             transaction.insert(guildKillActivityTable).values({

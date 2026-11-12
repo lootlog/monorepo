@@ -39,8 +39,8 @@ describe("LootStatsService access-scoped caching", () => {
   it("separates cache entries for different effective loot visibility", () => {
     const service = new LootStatsService(database, {
       getOrSetJsonEffect: () => Effect.die("Unexpected cache read"),
-      invalidateScopes: () =>
-        Promise.reject(new Error("Unexpected cache invalidation")),
+      setNX: () => Promise.resolve(true),
+      setJson: () => Promise.resolve(),
     });
 
     const base = role("role", [Permission.LOOTLOG_LOOTS_READ]);
@@ -86,9 +86,16 @@ describe("LootStatsService access-scoped caching", () => {
 
     const service = new LootStatsService(database, {
       getOrSetJsonEffect: (options) =>
-        Effect.succeed(options.codec.parse(JSON.stringify(expected))),
-      invalidateScopes: () =>
-        Promise.reject(new Error("Unexpected cache invalidation")),
+        Effect.succeed(
+          options.codec.parse(
+            JSON.stringify({
+              value: expected,
+              computedAt: "2026-01-01T10:00:00.000Z",
+            }),
+          ),
+        ),
+      setNX: () => Promise.resolve(true),
+      setJson: () => Promise.resolve(),
     });
 
     await expect(
@@ -99,7 +106,7 @@ describe("LootStatsService access-scoped caching", () => {
           [role("role", [Permission.LOOTLOG_LOOTS_READ])],
         ),
       ),
-    ).resolves.toEqual(expected);
+    ).resolves.toEqual({ ...expected, computedAt: "2026-01-01T10:00:00.000Z" });
   });
 });
 
@@ -142,8 +149,8 @@ describe("LootStatsService aggregates", () => {
 
       const service = new LootStatsService(boundary.database, {
         getOrSetJsonEffect: (options) => options.factory,
-        invalidateScopes: () =>
-          Promise.reject(new Error("Unexpected cache invalidation")),
+        setNX: () => Promise.resolve(true),
+        setJson: () => Promise.resolve(),
       });
 
       const stats = await boundary.run(

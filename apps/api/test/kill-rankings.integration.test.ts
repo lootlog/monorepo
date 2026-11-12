@@ -1,4 +1,4 @@
-import type { KillQueryCache } from "#src/kills/kill-query-support";
+import type { StaleKillQueryCache } from "#src/kills/kill-query-support";
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
@@ -24,13 +24,18 @@ import {
   memberKillBucketTable,
   memberKillTotalTable,
   guildKillBucketTable,
+  guildKillDayTable,
   guildKillTotalTable,
 } from "../src/database/drizzle/kill-statistics.schema.js";
 import { makeEventCatalogMutations } from "../src/events/catalog/event-catalog-mutations.js";
 import { makeEventPointsStore } from "../src/events/kills/event-points.repository.js";
 import { makeKillStatsPersistence } from "../src/kills/kill-stats-persistence.js";
 import { makeGuildKillQueries } from "../src/kills/guild-kill-queries.js";
-import { getKillStatsBucketStart } from "../src/kills/kill-stats-period.js";
+import {
+  getKillStatsBucketStart,
+  toStatsDate,
+  toStatsHour,
+} from "../src/kills/kill-stats-period.js";
 import { applicationLogger } from "../src/shared/application-logger.js";
 import {
   ResourceConflictError,
@@ -49,10 +54,16 @@ const memberIds = { first: 0, second: 0 };
 
 const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
 
-const cache: KillQueryCache = { getOrSet: (_key, _schema, load) => load };
+const cache: StaleKillQueryCache = {
+  getOrSetStale: (_key, _schema, load) =>
+    Effect.map(load, (value) => ({
+      value,
+      computedAt: new Date().toISOString(),
+    })),
+};
 
 const queries = Effect.map(ApiDatabase, (db) =>
-  makeGuildKillQueries(makeKillStatsPersistence(db), cache, applicationLogger),
+  makeGuildKillQueries(makeKillStatsPersistence(db), cache),
 );
 
 beforeAll(async () => {
@@ -194,6 +205,7 @@ afterAll(async () => {
         memberKillBucketTable,
         memberKillTotalTable,
         guildKillBucketTable,
+        guildKillDayTable,
         guildKillTotalTable,
         memberTable,
       ]) {
@@ -475,14 +487,33 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, co
         lastKilledAt: periodStart,
       });
 
-      yield* db.insert(guildKillBucketTable).values([
+      const buckets = [
         // 23:00 on Tuesday and midnight on Wednesday in Warsaw (CEST).
         bucket(new Date("2026-07-14T21:00:00Z"), 2),
         bucket(new Date("2026-07-14T22:00:00Z"), 3),
         bucket(new Date("2026-07-15T22:00:00Z"), 50, NpcType.HERO),
         bucket(new Date("2026-07-14T22:00:00Z"), 999, NpcType.ELITE2, guildId),
         bucket(currentHour, 4),
-      ]);
+      ];
+
+      yield* db.insert(guildKillBucketTable).values(buckets);
+
+      // The kill writer keeps the day rollup beside the buckets.
+      yield* db.insert(guildKillDayTable).values(
+        buckets.map(({ periodStart, kills, ...row }) => ({
+          guildId: row.guildId,
+          world: row.world,
+          npcId: row.npcId,
+          npcName: row.npcName,
+          npcType: row.npcType,
+          npcLvl: row.npcLvl,
+          day: toStatsDate(periodStart),
+          kills,
+          hours: Array.from({ length: 24 }, (_, hour) =>
+            hour === toStatsHour(periodStart) ? kills : 0,
+          ),
+        })),
+      );
 
       // 100 Elita II kills predate hourly history and live only in the totals.
       yield* db

@@ -18,6 +18,7 @@ import {
   memberKillTotalTable,
   guildKillActivityTable,
   guildKillBucketTable,
+  guildKillDayTable,
   guildKillTotalTable,
 } from "#src/database/drizzle/kill-statistics.schema";
 import { Permission } from "@lootlog/schema/permissions";
@@ -173,6 +174,7 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
       [memberKillBucketTable, [1, 1]],
       [guildKillTotalTable, [1, 1]],
       [guildKillBucketTable, [1, 1]],
+      [guildKillDayTable, [1, 1]],
     ] as const) {
       expect(
         (await boundary.run(database.select().from(table))).map(
@@ -707,6 +709,20 @@ it("records a boss kill once for every Organization that reports it", async () =
     ).toEqual([
       { guildId: "123", kills: 2 },
       { guildId: "456", kills: 1 },
+    ]);
+    // The day rollup counts the repeated kill in one hour slot of its day.
+    expect(
+      (await boundary.run(database.select().from(guildKillDayTable)))
+        .map(({ guildId, kills, hours }) => ({
+          guildId,
+          kills,
+          hours: hours.filter((count) => count > 0),
+          slots: hours.length,
+        }))
+        .toSorted((a, b) => a.guildId.localeCompare(b.guildId)),
+    ).toEqual([
+      { guildId: "123", kills: 2, hours: [2], slots: 24 },
+      { guildId: "456", kills: 1, hours: [1], slots: 24 },
     ]);
     expect(
       (await boundary.run(database.select().from(bossKillTable))).map(
