@@ -22,7 +22,7 @@ updates index settings when the settings owned by this service differ.
 After deploying, compare equivalent traffic windows: Meilisearch CPU, indexing
 tasks per minute, documents per task, task-status requests, and RabbitMQ message
 age and depth. Measure search freshness alongside resource use; the batching
-window adds up to two seconds before processing, plus any queue and indexing
+window adds up to three seconds before processing, plus any queue and indexing
 time. CPU improvement must be measured on the deployed workload.
 
 The counters `search.index.documents.received`, `search.index.documents.skipped`,
