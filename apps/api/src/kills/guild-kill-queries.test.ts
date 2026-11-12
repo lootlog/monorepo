@@ -3,7 +3,9 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
+import { createGuildFixture } from "../../test/organization-fixtures.js";
 import {
+  guildKillDayTable,
   guildKillTotalTable,
   memberKillTotalTable,
 } from "#src/database/drizzle/kill-statistics.schema";
@@ -110,6 +112,44 @@ describe("guild kill rankings", () => {
         "member-3",
         "member-2",
       ]);
+    } finally {
+      await boundary.dispose();
+    }
+  });
+});
+
+describe("all-time weekday heatmap", () => {
+  it("lists only the hours that have kills", async () => {
+    const boundary = await createDatabaseBoundary();
+
+    try {
+      await boundary.run(
+        boundary.database
+          .insert(guildTable)
+          .values(createGuildFixture({ id: "organization" })),
+      );
+      await boundary.run(
+        boundary.database.insert(guildKillDayTable).values({
+          guildId: "organization",
+          world: "tempest",
+          npcId: 1,
+          day: "2026-07-16",
+          npcName: "NPC",
+          npcType: NpcType.HERO,
+          npcLvl: 100,
+          kills: 3,
+          hours: Array.from({ length: 24 }, (_, hour) => (hour === 5 ? 3 : 0)),
+        }),
+      );
+
+      const cells = await boundary.run(
+        makeKillStatsPersistence(boundary.database).guildKillHourlyWeekday({
+          guildId: "organization",
+        }),
+      );
+
+      // 2026-07-16 is a Thursday.
+      expect(cells).toEqual([{ weekday: 4, hour: 5, kills: 3 }]);
     } finally {
       await boundary.dispose();
     }
