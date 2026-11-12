@@ -34,9 +34,9 @@ import {
   type CommandSuggestion,
 } from "@/features/command/command-suggestions.helpers";
 import { usePartyCommand } from "@/features/command/hooks/use-party-command";
+import { getGuildPermissionsQueryOptions } from "@/hooks/api/guild-permissions-query";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import {
-  useGuildsControllerGetGuildPermissions,
   useChatControllerClearChatMessages,
   useChatControllerSendChatMessage,
   useMembersControllerGetMe,
@@ -46,7 +46,7 @@ import {
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
 import { useGameStore } from "@/store/game.store";
 import { useChatStore } from "@/store/chat.store";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import {
   getChatMessageTypeForSubmitAction,
@@ -325,14 +325,10 @@ export function useChatInputController({
     isCommandInput,
   );
 
-  const guildPermissionsQuery = useGuildsControllerGetGuildPermissions(
-    { guildId: resolvedGuildId },
-    {
-      query: {
-        enabled: Boolean(selectedGuildId),
-        staleTime: 5 * 60 * 1000,
-      },
-    },
+  const guildPermissionsQuery = useQuery(
+    getGuildPermissionsQueryOptions(resolvedGuildId, {
+      enabled: Boolean(selectedGuildId),
+    }),
   );
 
   const guildMembersQuery = useGuildMembersSummary(

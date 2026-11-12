@@ -1,10 +1,12 @@
 import { describe, expect, it, mock } from "bun:test";
 import { APIError } from "better-auth/api";
 import { Effect, Redacted } from "effect";
+import { TestClock } from "effect/testing";
 import { exportJWK, generateKeyPair, SignJWT, type JSONWebKeySet } from "jose";
 import {
   createAuthService,
   HttpResponseError,
+  SESSION_DECISION_TTL_MS,
   normalizeScopes,
   type AuthProvider,
 } from "./auth-service.js";
@@ -156,6 +158,86 @@ describe("AuthService", () => {
       ),
     ).resolves.toMatchObject({
       identity: { userId: "user-1", discordId: "discord-1" },
+    });
+  });
+
+  describe("session decision cache", () => {
+    const setup = () => {
+      const { auth, getSession } = createFakeAuth();
+
+      getSession.mockResolvedValue({
+        user: { id: "user-1", discordId: "discord-1" },
+      });
+
+      const service = createAuthService({
+        auth,
+        appUrl: "http://localhost:3000",
+        findDiscordAccountId,
+      });
+
+      return { getSession, service };
+    };
+
+    it("reuses a session decision only until it expires", async () => {
+      const { getSession, service } = setup();
+
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          yield* service.verifyRequestIdentity({
+            headers: withSessionCookie(),
+          });
+          yield* service.verifyRequestIdentity({
+            headers: withSessionCookie(),
+          });
+          expect(getSession).toHaveBeenCalledTimes(1);
+
+          yield* TestClock.adjust(SESSION_DECISION_TTL_MS + 1);
+          yield* service.verifyRequestIdentity({
+            headers: withSessionCookie(),
+          });
+          expect(getSession).toHaveBeenCalledTimes(2);
+        }).pipe(Effect.provide(TestClock.layer())),
+      );
+    });
+
+    it("never lets one session cookie answer for another", async () => {
+      const { getSession, service } = setup();
+      getSession.mockResolvedValueOnce(null);
+
+      await expect(
+        Effect.runPromise(
+          service.verifyRequestIdentity({
+            headers: new Headers({ cookie: `${SESSION_COOKIE}=revoked` }),
+          }),
+        ),
+      ).rejects.toBeInstanceOf(HttpResponseError);
+
+      await expect(
+        Effect.runPromise(
+          service.verifyRequestIdentity({
+            headers: new Headers({ cookie: `${SESSION_COOKIE}=other` }),
+          }),
+        ),
+      ).resolves.toMatchObject({ identity: { userId: "user-1" } });
+
+      expect(getSession).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not remember a refusal", async () => {
+      const { getSession, service } = setup();
+      getSession.mockResolvedValueOnce(null);
+
+      await expect(
+        Effect.runPromise(
+          service.verifyRequestIdentity({ headers: withSessionCookie() }),
+        ),
+      ).rejects.toBeInstanceOf(HttpResponseError);
+
+      await expect(
+        Effect.runPromise(
+          service.verifyRequestIdentity({ headers: withSessionCookie() }),
+        ),
+      ).resolves.toMatchObject({ identity: { userId: "user-1" } });
     });
   });
 
