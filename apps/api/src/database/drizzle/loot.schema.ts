@@ -368,15 +368,22 @@ export const organizationLootRecordTable = pgTable(
       table["lootId"],
     ),
     index("OrganizationLootRecord_lootId_idx").on(table["lootId"]),
-    // Replaces OrganizationLootRecord_guildId_archivedAt_lootId_idx, which the
-    // planner never chose: it carries the world so a world-filtered page is an
-    // index range of exactly `limit` rows instead of the guild's whole history.
-    index("OrganizationLootRecord_guildId_archivedAt_world_lootId_idx").on(
-      table["guildId"],
-      table["archivedAt"],
-      table["lootWorld"],
-      table["lootId"].desc(),
-    ),
+    // Serves the loot page: an Organization's active records on one world in
+    // the page's `ORDER BY "lootId" DESC`, so a page reads about `limit` rows.
+    // Both details are what makes the index ordered. The archive filter is the
+    // predicate, not a key column, because PostgreSQL does not treat
+    // `IS NULL` as an equality for ordering; and the key must be NULLS FIRST,
+    // the default of DESC, because `.desc()` alone emits NULLS LAST, which
+    // does not match. Without either, the planner, which also estimates
+    // guildId and lootWorld as independent, sorted the Organization's whole
+    // world history for every page (1.36M buffers for 6 legendary loots).
+    index("OrganizationLootRecord_guildId_world_lootId_active_idx")
+      .on(
+        table["guildId"],
+        table["lootWorld"],
+        table["lootId"].desc().nullsFirst(),
+      )
+      .where(sql`${table["archivedAt"]} IS NULL`),
     index("OrganizationLootRecord_archivedByMemberId_notnull_idx")
       .on(table["archivedByMemberId"])
       .where(sql`${table["archivedByMemberId"]} IS NOT NULL`),

@@ -1187,3 +1187,33 @@ REINDEX INDEX CONCURRENTLY "OrganizationLootRecord_pkey";
 ```
 
 Each needs room for a second copy of the index while it runs.
+
+## Ordered loot page index
+
+`20261112085427_loot_record_active_world_index` replaces
+`OrganizationLootRecord_guildId_archivedAt_world_lootId_idx` with
+`OrganizationLootRecord_guildId_world_lootId_active_idx`, a partial index on
+`("guildId", "lootWorld", "lootId" DESC) WHERE "archivedAt" IS NULL`. The old
+index could not return records in the page's `ORDER BY "lootId" DESC`:
+`"archivedAt" IS NULL` on a key column is not an equality for ordering, and
+its `NULLS LAST` did not match `DESC`. Because the planner also estimates
+`guildId` and `lootWorld` as independent (433 rows instead of 94,157 for one
+Organization), it read and sorted the Organization's whole world history for
+every page. On production a legendary page of the largest inferno Organization
+took 1.87 s and 1.36M buffers this way, and 13 ms and 2,587 buffers once the
+scan followed `lootId`. The loot page queries were 36% of the database's
+execution time on 2026-11-11.
+
+In Drizzle, `.desc()` on an index column emits `DESC NULLS LAST`. An index meant
+to serve a query's `orderBy(desc(column))` needs `.desc().nullsFirst()`.
+
+Like the previous loot index, build it before the migration on a populated
+database, outside a transaction:
+
+```sql
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "OrganizationLootRecord_guildId_world_lootId_active_idx" ON "OrganizationLootRecord" ("guildId","lootWorld","lootId" DESC) WHERE "archivedAt" IS NULL;
+```
+
+The migration stops the deploy while the index is missing, then drops the old
+index. A database restored from a backup taken before 2026-11-11 applies the
+loot facts steps above first, then this build.
