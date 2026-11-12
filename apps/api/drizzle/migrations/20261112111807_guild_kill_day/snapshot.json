@@ -2,7 +2,7 @@
   "type": "diff",
   "version": "9",
   "dialect": "postgres",
-  "id": "fb080853-54d7-41aa-ab5a-0dc70d74caae",
+  "id": "2c2fb0cf-6cc0-4399-aa1c-d005219fc4d6",
   "prevIds": ["050b3c9f-bed7-43cb-9b75-0088c38224f2"],
   "footprints": [
     {
@@ -17,25 +17,6 @@
         "n|rel|public.GuildKillDay_pkey"
       ],
       "reads": ["n|sch|public", "n|enum|public.NpcType"]
-    },
-    {
-      "statementType": "create_fk",
-      "statementTarget": ["table", "public", "GuildKillDay"],
-      "writes": [
-        "s|fk|public.GuildKillDay.GuildKillDay_guildId_fkey",
-        "n|fk|public.GuildKillDay.GuildKillDay_guildId_fkey",
-        "e|fk|public.GuildKillDay.GuildKillDay_guildId_fkey",
-        "n|con|public.GuildKillDay.GuildKillDay_guildId_fkey"
-      ],
-      "reads": [
-        "n|tbl|public.GuildKillDay",
-        "n|sch|public",
-        "n|tbl|public.Guild",
-        "n|sch|public",
-        "n|col|public.GuildKillDay.guildId",
-        "n|col|public.Guild.id",
-        "e|uniqueness|public.Guild.id"
-      ]
     }
   ],
   "deltas": [
@@ -190,22 +171,6 @@
         "generated": null,
         "identity": null,
         "entityType": "columns"
-      }
-    },
-    {
-      "op": "create",
-      "row": {
-        "schema": "public",
-        "table": "GuildKillDay",
-        "name": "GuildKillDay_guildId_fkey",
-        "nameExplicit": true,
-        "columns": ["guildId"],
-        "schemaTo": "public",
-        "tableTo": "Guild",
-        "columnsTo": ["id"],
-        "onUpdate": "CASCADE",
-        "onDelete": "RESTRICT",
-        "entityType": "fks"
       }
     },
     {
