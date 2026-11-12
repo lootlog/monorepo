@@ -38,6 +38,58 @@ const guild = {
   active: true,
 };
 
+const provideLookup = (
+  cache: OrganizationContextCache,
+  queueRefresh: OrganizationContextRefresh,
+  members: Pick<MembersData["Service"], "getMe" | "findStoredMember">,
+) =>
+  Effect.provide(
+    OrganizationContextLookup.layerDatabase(cache, queueRefresh).pipe(
+      Layer.provide(
+        Layer.mergeAll(
+          Layer.succeed(
+            ApiRuntimeConfig,
+            // SAFETY: the lookup reads only `environment` from config.
+            ApiRuntimeConfig.of({
+              environment: RuntimeEnvironment.PROD,
+            } as ApiRuntimeConfig["Service"]),
+          ),
+          // SAFETY: the guild comes from the cache and the member from
+          // `MembersData`, so the lookup never queries the database.
+          Layer.succeed(ApiDatabase, {} as ApiDatabase["Service"]),
+          Layer.succeed(
+            MembersData,
+            MembersData.of({
+              ...members,
+              refreshMember: () => Effect.die("unused"),
+              deactivateMember: () => Effect.die("unused"),
+              refreshAllMembers: () => Effect.die("unused"),
+            }),
+          ),
+        ),
+      ),
+    ),
+  );
+
+const guildOnlyCache = (
+  written: Map<string, string> = new Map(),
+): OrganizationContextCache => ({
+  get: (key) =>
+    Effect.succeed(
+      key === getGuildCacheKey(guildId) ? JSON.stringify(guild) : null,
+    ),
+  set: (key, value) => Effect.sync(() => written.set(key, value)),
+  del: () => Effect.void,
+  setIfAbsent: (key, value) =>
+    Effect.sync(() => {
+      if (written.has(key)) return false;
+
+      written.set(key, value);
+
+      return true;
+    }),
+});
+
 describe("organization context lookup", () => {
   it("queues one background refresh for an aging cached member, retries a failed enqueue, and reads the current guild configuration", async () => {
     const roles = [
@@ -142,33 +194,11 @@ describe("organization context lookup", () => {
             ),
         );
       }).pipe(
-        Effect.provide(
-          OrganizationContextLookup.layerDatabase(cache, queueRefresh).pipe(
-            Layer.provide(
-              Layer.mergeAll(
-                Layer.succeed(
-                  ApiRuntimeConfig,
-                  // SAFETY: the lookup reads only `environment` from config.
-                  ApiRuntimeConfig.of({
-                    environment: RuntimeEnvironment.PROD,
-                  } as ApiRuntimeConfig["Service"]),
-                ),
-                // SAFETY: the guild and context come from the cache, so the
-                // lookup never queries the database.
-                Layer.succeed(ApiDatabase, {} as ApiDatabase["Service"]),
-                Layer.succeed(
-                  MembersData,
-                  MembersData.of({
-                    getMe,
-                    refreshMember: () => Effect.die("unused"),
-                    deactivateMember: () => Effect.die("unused"),
-                    refreshAllMembers: () => Effect.die("unused"),
-                  }),
-                ),
-              ),
-            ),
-          ),
-        ),
+        provideLookup(cache, queueRefresh, {
+          getMe,
+          findStoredMember: () =>
+            Effect.die("cached context must not read the member row"),
+        }),
       );
 
       return { contexts, queueRefresh };
@@ -228,46 +258,11 @@ describe("organization context lookup", () => {
 
         return yield* lookup.lookup(owner);
       }).pipe(
-        Effect.provide(
-          OrganizationContextLookup.layerDatabase(
-            {
-              get: (key) =>
-                Effect.succeed(
-                  key === getGuildCacheKey(guildId)
-                    ? JSON.stringify(guild)
-                    : null,
-                ),
-              set: () => Effect.void,
-              del: () => Effect.void,
-              setIfAbsent: () => Effect.succeed(false),
-            },
-            () => Effect.void,
-          ).pipe(
-            Layer.provide(
-              Layer.mergeAll(
-                Layer.succeed(
-                  ApiRuntimeConfig,
-                  // SAFETY: the lookup reads only `environment` from config.
-                  ApiRuntimeConfig.of({
-                    environment: RuntimeEnvironment.PROD,
-                  } as ApiRuntimeConfig["Service"]),
-                ),
-                // SAFETY: the guild comes from the cache and the member from
-                // `getMe`, so the lookup never queries the database.
-                Layer.succeed(ApiDatabase, {} as ApiDatabase["Service"]),
-                Layer.succeed(
-                  MembersData,
-                  MembersData.of({
-                    getMe: () => Effect.succeed(stored),
-                    refreshMember: () => Effect.die("unused"),
-                    deactivateMember: () => Effect.die("unused"),
-                    refreshAllMembers: () => Effect.die("unused"),
-                  }),
-                ),
-              ),
-            ),
-          ),
-        ),
+        provideLookup(guildOnlyCache(), () => Effect.void, {
+          // A member Discord has not confirmed yet waits for `getMe`.
+          findStoredMember: () => Effect.succeed(null),
+          getMe: () => Effect.succeed(stored),
+        }),
         Effect.runPromise,
       );
 
@@ -275,5 +270,93 @@ describe("organization context lookup", () => {
     expect(await lookupWith({ ...member, active: false })).toBeNull();
     expect(await lookupWith({ ...member, globalUserId: null })).toBeNull();
     expect((await lookupWith(member))?.permissions).toContain(Permission.OWNER);
+  });
+
+  it("serves a stored member past the soft TTL while Discord refreshes it in the background, and waits for Discord only when it must", async () => {
+    const minutesAgo = (minutes: number) =>
+      new Date(Date.now() - minutes * 60_000);
+
+    const stored = {
+      id: 3,
+      userId: identity.discordId,
+      guildId,
+      type: "USER" as const,
+      name: "Member",
+      discordDisplayName: null,
+      avatar: null,
+      banner: null,
+      active: true,
+      globalUserId: identity.userId,
+      createdAt: new Date(guild.createdAt),
+      updatedAt: new Date(guild.updatedAt),
+      lastDiscordSyncAt: minutesAgo(40),
+      lastDiscordAttemptAt: null,
+      lastDiscordStatus: "SUCCESS",
+      roles: [
+        {
+          id: "role-1",
+          guildId,
+          name: "Member",
+          color: null,
+          position: 1,
+          permissions: [Permission.LOOTLOG_ACCESS],
+          lvlRangeFrom: 0,
+          lvlRangeTo: 500,
+          createdAt: new Date(guild.createdAt),
+          updatedAt: new Date(guild.updatedAt),
+        },
+      ],
+    };
+
+    const lookupWith = (member: typeof stored) =>
+      Effect.gen(function* () {
+        const written = new Map<string, string>();
+        const queued: Array<string> = [];
+        const getMe = mock(() => Effect.succeed(null));
+
+        const context = yield* Effect.gen(function* () {
+          const lookup = yield* OrganizationContextLookup;
+
+          return yield* Effect.forEach([1, 2], () => lookup.lookup(identity));
+        }).pipe(
+          provideLookup(
+            guildOnlyCache(written),
+            ({ reason }) => Effect.sync(() => queued.push(reason)),
+            { findStoredMember: () => Effect.succeed(member), getMe },
+          ),
+        );
+
+        // The refresh is forked; give it a moment to reach the queue.
+        yield* Effect.sleep("20 millis");
+
+        return {
+          permissions: context.map((entry) => entry?.permissions ?? null),
+          queued,
+          cached: written.has(getPermissionsCacheKey(identity.userId, guildId)),
+          waitedForDiscord: getMe.mock.calls.length,
+        };
+      }).pipe(Effect.runPromise);
+
+    // Forty minutes old: served at once, one refresh queued for both
+    // requests, and never cached as fresh.
+    expect(await lookupWith(stored)).toEqual({
+      permissions: [[Permission.LOOTLOG_ACCESS], [Permission.LOOTLOG_ACCESS]],
+      queued: ["organization-context-stale"],
+      cached: false,
+      waitedForDiscord: 0,
+    });
+
+    // Past the stale-access grace, or when Discord asked the caller to sign
+    // in again, the request waits for Discord.
+    for (const member of [
+      { ...stored, lastDiscordSyncAt: minutesAgo(7 * 60) },
+      { ...stored, lastDiscordStatus: "UNAUTHORIZED" },
+    ]) {
+      expect(await lookupWith(member)).toMatchObject({
+        permissions: [null, null],
+        queued: [],
+        waitedForDiscord: 2,
+      });
+    }
   });
 });
