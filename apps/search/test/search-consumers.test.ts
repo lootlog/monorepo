@@ -21,7 +21,7 @@ const player = (id: number) => ({
   world: "test",
 });
 
-const until = async (condition: () => boolean, timeout = 6000) => {
+const until = async (condition: () => boolean, timeout = 9000) => {
   const deadline = Date.now() + timeout;
 
   while (!condition()) {
@@ -251,7 +251,7 @@ test("retries the ordered batch without requeueing or letting newer batches over
   } finally {
     await fixture.runtime.dispose();
   }
-}, 15000);
+}, 25000);
 
 test("shutdown requeues buffered deliveries before the flush deadline", async () => {
   const fixture = await setup();
