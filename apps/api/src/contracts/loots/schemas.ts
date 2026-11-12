@@ -113,7 +113,7 @@ const LootStatsTopItems = Schema.Array(
 
 export type LootStatsResponse = typeof LootStatsResponse.Type;
 
-export const LootStatsResponse = Schema.Struct({
+const LootStatsBody = Schema.Struct({
   overview: LootStatsOverview,
   byRarity: Schema.Record(
     Schema.String,
@@ -135,6 +135,16 @@ export const LootStatsResponse = Schema.Struct({
     }),
   ),
   topItems: LootStatsTopItems,
+});
+
+export type LootStatsBody = typeof LootStatsBody.Type;
+
+export { LootStatsBody };
+
+export const LootStatsResponse = Schema.Struct({
+  ...LootStatsBody.fields,
+  /** When the statistics were computed; they refresh in the background. */
+  computedAt: DateTimeString,
 }).annotate({ identifier: "LootStatsResponseDto_Output" });
 
 export type UserLootStatsQuery = typeof UserLootStatsQuery.Type;

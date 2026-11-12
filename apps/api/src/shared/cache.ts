@@ -107,8 +107,3 @@ export function getEventWrappedCachePattern(
 export function getLootListCacheScope(guildId: string): string {
   return `loots:list:${guildId}`;
 }
-
-/** Read-cache generation scope of an Organization's loot statistics. */
-export function getLootStatsCacheScope(guildId: string): string {
-  return `loot-stats:${guildId}`;
-}

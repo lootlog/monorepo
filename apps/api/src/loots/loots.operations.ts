@@ -50,7 +50,6 @@ import type {
   LootQueryOperations,
 } from "#src/loots/query/loot-query.operations";
 import type { LootQueryFilters } from "#src/loots/query/loot-query-filter";
-import type { LootStatsService } from "#src/loots/query/loot-stats.service";
 
 type Guild = typeof guildTable.$inferSelect;
 
@@ -175,7 +174,6 @@ export interface LootsOperations {
 interface LootsDependencies {
   readonly persistence: LootPersistence;
   readonly query: LootQueryOperations;
-  readonly stats: Pick<LootStatsService, "invalidateCache">;
   readonly redis: Pick<RedisService, "invalidateScopes" | "getOrSetJsonEffect">;
   readonly logger: ApplicationLogger;
 }
@@ -248,7 +246,6 @@ const normalizeCachedPage = (page: typeof LootListResponse.Type): LootPage => ({
 export const makeLootsOperations = ({
   persistence,
   query,
-  stats,
   redis,
   logger,
 }: LootsDependencies): LootsOperations => {
@@ -345,13 +342,7 @@ export const makeLootsOperations = ({
           );
         }
 
-        yield* Effect.all(
-          [
-            invalidateList([options.guild.id]),
-            stats.invalidateCache([options.guild.id]),
-          ],
-          { concurrency: "unbounded", discard: true },
-        );
+        yield* invalidateList([options.guild.id]);
       }),
 
     createComment: (options) =>

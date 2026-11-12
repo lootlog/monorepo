@@ -4,6 +4,7 @@ import {
   PageSize,
   NonEmptyString,
   JsonValue,
+  DateTimeString,
   FiniteNumber,
   NpcLevelRange,
   NpcTypes,
@@ -103,7 +104,7 @@ export const CreateKillResponse = Schema.Struct({
 
 export type GuildKillStatsResponse = typeof GuildKillStatsResponse.Type;
 
-export const GuildKillStatsResponse = Schema.Struct({
+const GuildKillStatsBody = Schema.Struct({
   overview: Schema.Struct({
     guildUniqueKills: FiniteNumber,
     totalMemberParticipations: FiniteNumber,
@@ -140,6 +141,14 @@ export const GuildKillStatsResponse = Schema.Struct({
       kills: FiniteNumber,
     }),
   ),
+});
+
+export { GuildKillStatsBody };
+
+export const GuildKillStatsResponse = Schema.Struct({
+  ...GuildKillStatsBody.fields,
+  /** When the statistics were computed; they refresh in the background. */
+  computedAt: DateTimeString,
 }).annotate({ identifier: "GuildKillStatsResponseDto_Output" });
 
 export type UserKillStatsResponse = typeof UserKillStatsResponse.Type;

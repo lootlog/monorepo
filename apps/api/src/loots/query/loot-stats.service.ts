@@ -1,11 +1,14 @@
-import { getLootStatsCacheScope } from "#src/shared/cache";
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { Logger } from "#src/shared/application-logger";
-import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
-import { LootStatsResponse as LootStatsResponseSchema } from "#src/contracts/loots/schemas";
+import type { RedisService } from "#src/redis/redis.service";
+import { getOrSetStaleJson } from "#src/redis/stale-json-cache";
+import {
+  LootStatsBody,
+  LootStatsResponse as LootStatsResponseSchema,
+} from "#src/contracts/loots/schemas";
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { DEFAULT_PERIOD, type Period } from "@lootlog/schema/http-scalars";
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
@@ -36,7 +39,14 @@ import { currentStatsPeriodStart } from "#src/kills/kill-stats-period";
 
 type Role = typeof roleTable.$inferSelect;
 
-const CACHE_TTL_SECONDS = 60;
+/**
+ * Statistics read the whole history of an Organization, so they are served
+ * for hours and recomputed in the background; the response says when they
+ * were computed.
+ */
+const FRESH_SECONDS = 3 * 3_600;
+
+const RETAIN_SECONDS = 24 * 3_600;
 
 export class LootStatsService {
   private readonly logger = new Logger(LootStatsService.name);
@@ -45,33 +55,9 @@ export class LootStatsService {
     private readonly database: Parameters<typeof buildLootStatsQueries>[0],
     private readonly redis: Pick<
       RedisService,
-      "getOrSetJsonEffect" | "invalidateScopes"
+      "getOrSetJsonEffect" | "setNX" | "setJson"
     >,
   ) {}
-
-  invalidateCache(guildIds: string[]) {
-    const uniqueGuildIds = [...new Set(guildIds)];
-
-    return Effect.forEach(
-      uniqueGuildIds,
-      (guildId) =>
-        Effect.tryPromise({
-          try: () =>
-            this.redis.invalidateScopes(getLootStatsCacheScope(guildId)),
-          catch: (cause) => cause,
-        }).pipe(
-          Effect.catch((error) =>
-            Effect.sync(() =>
-              this.logger.warn("Failed to invalidate loot stats cache", {
-                error,
-                guildId,
-              }),
-            ),
-          ),
-        ),
-      { concurrency: "unbounded" },
-    ).pipe(Effect.asVoid);
-  }
 
   getLootStatsEffect(
     guildId: string,
@@ -140,21 +126,20 @@ export class LootStatsService {
       }.bind(this),
     );
 
-    return this.redis
-      .getOrSetJsonEffect({
-        key: cacheKey,
-        scopes: [getLootStatsCacheScope(guildId)],
-        ttlSeconds: CACHE_TTL_SECONDS,
-        codec: makeJsonCodec(LootStatsResponseSchema),
-        factory: load,
-        onError: (error) =>
-          this.logger.warn("Loot statistics cache unavailable", error),
-      })
-      .pipe(
-        Effect.withSpan("LootsController_getLootStats", {
-          attributes: { adapter: "loot-stats", retryCount: 0 },
-        }),
-      );
+    return getOrSetStaleJson(this.redis, {
+      key: cacheKey,
+      schema: LootStatsBody,
+      freshSeconds: FRESH_SECONDS,
+      retainSeconds: RETAIN_SECONDS,
+      factory: load,
+      onError: (error) =>
+        this.logger.warn("Loot statistics cache unavailable", error),
+    }).pipe(
+      Effect.map(({ value, computedAt }) => ({ ...value, computedAt })),
+      Effect.withSpan("LootsController_getLootStats", {
+        attributes: { adapter: "loot-stats", retryCount: 0 },
+      }),
+    );
   }
 
   private buildCacheKey(

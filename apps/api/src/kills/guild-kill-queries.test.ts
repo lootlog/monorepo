@@ -11,13 +11,17 @@ import {
   guildTable,
   memberTable,
 } from "#src/database/drizzle/organization.schema";
-import { applicationLogger as logger } from "#src/shared/application-logger";
-import type { KillQueryCache } from "./kill-query-support.js";
+import { Effect } from "effect";
+import type { StaleKillQueryCache } from "./kill-query-support.js";
 import { makeGuildKillQueries } from "./guild-kill-queries.js";
 import { makeKillStatsPersistence } from "./kill-stats-persistence.js";
 
-const passthrough: KillQueryCache = {
-  getOrSet: (_key, _schema, load) => load,
+const passthrough: StaleKillQueryCache = {
+  getOrSetStale: (_key, _schema, load) =>
+    Effect.map(load, (value) => ({
+      value,
+      computedAt: "2026-10-01T12:00:00.000Z",
+    })),
 };
 
 const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
@@ -83,7 +87,6 @@ describe("guild kill rankings", () => {
       const queries = makeGuildKillQueries(
         makeKillStatsPersistence(boundary.database),
         passthrough,
-        logger,
       );
 
       const top = await boundary.run(

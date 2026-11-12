@@ -93,7 +93,6 @@ const makeOperations = (
       createDraw: () => Effect.die("Unexpected draw write"),
       voidDraw: () => Effect.die("Unexpected draw void"),
     },
-    stats: { invalidateCache: () => Effect.void },
     redis: {
       invalidateScopes: async () => undefined,
       getOrSetJsonEffect: () => Effect.die("Unexpected Redis cache read"),
@@ -514,7 +513,6 @@ describe("loot list pages", () => {
       createDraw: () => Effect.die("Unexpected draw write"),
       voidDraw: () => Effect.die("Unexpected draw void"),
     },
-    stats: { invalidateCache: () => Effect.void },
     redis: {
       invalidateScopes: async () => undefined,
       getOrSetJsonEffect: (options) => options.factory,

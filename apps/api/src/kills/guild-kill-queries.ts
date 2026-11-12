@@ -3,12 +3,11 @@ import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { DateTime, Effect, Schema } from "effect";
 import { sum } from "es-toolkit";
-import type { ApplicationLogger } from "#src/shared/application-logger";
 import type { Period } from "@lootlog/schema/http-scalars";
 import {
   GUILD_TOP_KILLERS_DEFAULT_LIMIT,
   GUILD_TOP_NPCS_DEFAULT_LIMIT,
-  GuildKillStatsResponse,
+  GuildKillStatsBody,
   GuildTopKillersByTypeResponse,
   GuildTopNpcsResponse,
   NPC_KILLERS_DEFAULT_LIMIT,
@@ -23,8 +22,8 @@ import type { KillStatsPersistence } from "./kill-stats-persistence.js";
 import {
   buildKillQueryCacheKey,
   buildNpcLevelFilter,
-  cachedKillQuery,
-  type KillQueryCache,
+  cachedStaleKillQuery,
+  type StaleKillQueryCache,
   type KillQueryRole,
   readableRoles,
   visibilityCacheScope,
@@ -44,8 +43,7 @@ class GuildKillQueriesError extends TaggedErrorClass<GuildKillQueriesError>()(
 
 export const makeGuildKillQueries = (
   persistence: KillStatsPersistence,
-  cache: KillQueryCache,
-  logger: ApplicationLogger,
+  cache: StaleKillQueryCache,
 ) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -91,16 +89,13 @@ export const makeGuildKillQueries = (
 
       return yield* protect(
         "kills.guild-overview",
-        cachedKillQuery({
-          scopes: [`kill-stats:guild:${guildId}`],
+        cachedStaleKillQuery({
           cache,
-          logger,
           key: buildKillQueryCacheKey("guild-overview", guildId, {
             query: { ...query, period },
             visibility: visibility.cacheScope,
           }),
-          label: "guild kill stats",
-          schema: GuildKillStatsResponse,
+          schema: GuildKillStatsBody,
           load: Effect.gen(function* () {
             const timelineUnit = getKillTimelineUnit(period);
 
@@ -203,7 +198,9 @@ export const makeGuildKillQueries = (
               hourlyWeekday,
             };
           }),
-        }),
+        }).pipe(
+          Effect.map(({ value, computedAt }) => ({ ...value, computedAt })),
+        ),
       );
     });
 
@@ -221,15 +218,12 @@ export const makeGuildKillQueries = (
 
       return yield* protect(
         "kills.guild-top-npcs",
-        cachedKillQuery({
-          scopes: [`kill-stats:guild:${guildId}`],
+        cachedStaleKillQuery({
           cache,
-          logger,
           key: buildKillQueryCacheKey("guild-top-npcs", guildId, {
             query: { ...query, limit, period },
             visibility: visibility.cacheScope,
           }),
-          label: "guild top npcs",
           schema: GuildTopNpcsResponse,
           load: persistence
             .topGuildNpcs(
@@ -250,7 +244,7 @@ export const makeGuildKillQueries = (
               limit,
             )
             .pipe(Effect.map((topNpcs) => ({ topNpcs }))),
-        }),
+        }).pipe(Effect.map(({ value }) => value)),
       );
     });
 
@@ -269,17 +263,14 @@ export const makeGuildKillQueries = (
 
       return yield* protect(
         "kills.guild-top-killers",
-        cachedKillQuery({
-          scopes: [`kill-stats:guild:${guildId}`],
+        cachedStaleKillQuery({
           cache,
-          logger,
           key: buildKillQueryCacheKey("guild-top-killers", guildId, {
             limit,
             npcTypes,
             period,
             visibility: visibility.cacheScope,
           }),
-          label: "guild top killers",
           schema: GuildTopKillersByTypeResponse,
           load: persistence
             .topMembersByType(
@@ -311,7 +302,7 @@ export const makeGuildKillQueries = (
                 ),
               ),
             ),
-        }),
+        }).pipe(Effect.map(({ value }) => value)),
       );
     });
 
@@ -339,10 +330,8 @@ export const makeGuildKillQueries = (
 
       return yield* protect(
         "kills.guild-npc-killers",
-        cachedKillQuery({
-          scopes: [`kill-stats:guild:${guildId}`],
+        cachedStaleKillQuery({
           cache,
-          logger,
           key: buildKillQueryCacheKey("guild-npc-killers", guildId, {
             limit,
             npcId,
@@ -350,7 +339,6 @@ export const makeGuildKillQueries = (
             visibility: visibility.cacheScope,
             world,
           }),
-          label: "npc killers",
           schema: NpcKillersResponse,
           load: Effect.gen(function* () {
             const [killers, summaries, memberNpc] = yield* Effect.all(
@@ -399,7 +387,7 @@ export const makeGuildKillQueries = (
               ),
             };
           }),
-        }),
+        }).pipe(Effect.map(({ value }) => value)),
       );
     });
 
