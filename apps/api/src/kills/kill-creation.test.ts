@@ -488,7 +488,7 @@ it("does not release a replacement claim when a failed write outlives its claim"
   }
 });
 
-it("lets another member count a guild kill whose first guild write failed", async () => {
+it("rolls back the first member's kill with its failed guild write and lets another member count it", async () => {
   const boundary = await createDatabaseBoundary();
   const claims = new Map<string, string>();
 
@@ -589,7 +589,7 @@ it("lets another member count a guild kill whose first guild write failed", asyn
       (await boundary.run(database.select().from(memberKillTotalTable))).map(
         ({ kills }) => kills,
       ),
-    ).toEqual([1, 1]);
+    ).toEqual([1]);
   } finally {
     await boundary.dispose();
   }
