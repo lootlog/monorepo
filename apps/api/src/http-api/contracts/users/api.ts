@@ -44,7 +44,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     .annotate(OpenApi.Summary, "Delete user account")
     .annotate(
       OpenApi.Description,
-      "Deletes the account and its personal data. Member kill statistics in compressed history are removed by a background job within a day.",
+      "Deletes the account and its personal data. Member kill statistics in compressed history are removed by a background job off peak.",
     ),
   HttpApiEndpoint.get(
     "UsersControllerGetUserPreferences",
