@@ -33,6 +33,7 @@ import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { apiRabbitFailurePolicies } from "#src/runtime/infrastructure/api-rabbit";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { forkCronTask } from "#src/runtime/background/cron";
+import { makeMemberKillPurge } from "#src/kills/member-kill-purge";
 import {
   makeRabbitConsumer,
   orderedHandlerRetry,
@@ -360,6 +361,16 @@ export const ScheduledJobs = Layer.effectDiscard(
         ),
       ),
       "15 * * * *",
+    );
+    // Off peak (03:30-06:30 CET); a run interrupted by a restart resumes in
+    // the next hour.
+    yield* forkCronTask(
+      makeMemberKillPurge(database)().pipe(
+        Effect.catch((error) =>
+          Effect.logError("Deleted account member kill purge failed", error),
+        ),
+      ),
+      "30 2-5 * * *",
     );
     yield* forkCronTask(cleanupTimers, "0 3 * * *");
     yield* forkCronTask(cleanupReservations, "0 4 * * *");

@@ -10,8 +10,8 @@ import {
   OpenApi,
 } from "effect/http-api";
 import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
-import { StatusOk } from "#src/contracts/shared";
 import {
+  AccountDeletionAccepted,
   CurrentOrganizationsResponse,
   UserGameAccountPreferencesResponse,
   GameAccountPreferencesPath,
@@ -36,7 +36,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
       "Get recent activity across accessible Organizations",
     ),
   HttpApiEndpoint.delete("UsersControllerDeleteAccount", "/users/@me", {
-    success: StatusOk,
+    success: AccountDeletionAccepted.pipe(HttpApiSchema.status(202)),
     error: HttpErrorResponse.pipe(HttpApiSchema.status(503)),
   })
     .middleware(BearerSecurityMiddleware)
@@ -44,7 +44,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     .annotate(OpenApi.Summary, "Delete user account")
     .annotate(
       OpenApi.Description,
-      "Permanently delete user account and associated data",
+      "Deletes the account and its personal data. Member kill statistics in compressed history are removed by a background job off peak.",
     ),
   HttpApiEndpoint.get(
     "UsersControllerGetUserPreferences",

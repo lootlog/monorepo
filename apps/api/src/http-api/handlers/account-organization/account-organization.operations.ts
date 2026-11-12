@@ -47,8 +47,9 @@ import {
   type UpdateOrganizationConfigRequest,
 } from "#src/contracts/guilds/schemas";
 
-import { OrganizationSummary, StatusOk } from "#src/contracts/shared";
+import { OrganizationSummary } from "#src/contracts/shared";
 import {
+  AccountDeletionAccepted,
   UserGameAccountPreferencesResponse,
   UserPreferencesResponse,
   CurrentOrganizationsResponse,
@@ -443,7 +444,7 @@ const deleteCurrentAccount = Effect.fn("deleteCurrentAccount")(function* () {
   const current = yield* identity;
   yield* data((service) => service.deleteAccount(current));
 
-  return yield* decode(StatusOk, { status: "OK" });
+  return yield* decode(AccountDeletionAccepted, { status: "ACCEPTED" });
 });
 
 export const getCurrentUserPreferences = Effect.fn("getCurrentUserPreferences")(

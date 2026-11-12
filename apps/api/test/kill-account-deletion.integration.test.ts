@@ -12,6 +12,7 @@ import {
   guildKillBucketTable,
   memberKillTotalTable,
   memberKillBucketTable,
+  memberKillPurgeTable,
   userKillTotalTable,
   userKillBucketTable,
   userCharacterKillBucketTable,
@@ -22,6 +23,7 @@ import {
   memberTable,
 } from "../src/database/drizzle/organization.schema.js";
 import { makeUserAccountDeletion } from "../src/http-api/handlers/account-organization/user-account-deletion.data-layer.js";
+import { makeMemberKillPurge } from "../src/kills/member-kill-purge.js";
 import { createGuildFixture } from "./organization-fixtures.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
@@ -73,7 +75,7 @@ afterAll(async () => {
   await runtime.dispose();
 });
 
-test("account deletion removes personal and member kills from compressed TimescaleDB chunks", async () => {
+test("account deletion removes personal kills at once and member kills from compressed TimescaleDB chunks in the purge job", async () => {
   requireIsolatedTestDatabase();
 
   await run(
@@ -136,6 +138,17 @@ test("account deletion removes personal and member kills from compressed Timesca
           kills: 3,
         })),
       );
+      const currentHour = new Date();
+      currentHour.setUTCMinutes(0, 0, 0);
+
+      yield* db.insert(memberKillBucketTable).values({
+        ...npc,
+        periodStart: currentHour,
+        guildId,
+        memberId: deleted.id,
+        discordUserId: deleted.userId,
+        kills: 1,
+      });
       yield* db.insert(memberKillTotalTable).values(
         [deleted, kept].map((member) => ({
           ...npc,
@@ -216,6 +229,31 @@ test("account deletion removes personal and member kills from compressed Timesca
           .select({ discordUserId: table.discordUserId })
           .from(table)
           .where(inArray(table.discordUserId, [deletedUser, keptUser]));
+
+      // Deleting the compressed rows would decompress the Organization's
+      // segment, so the request leaves them to the purge job.
+      expect(
+        yield* db
+          .select({
+            discordUserId: memberKillBucketTable.discordUserId,
+            periodStart: memberKillBucketTable.periodStart,
+          })
+          .from(memberKillBucketTable)
+          .where(eq(memberKillBucketTable.guildId, guildId))
+          .orderBy(memberKillBucketTable.discordUserId),
+      ).toEqual([
+        { discordUserId: deletedUser, periodStart },
+        { discordUserId: keptUser, periodStart },
+      ]);
+
+      yield* makeMemberKillPurge(db)();
+
+      expect(
+        yield* db
+          .select({ memberId: memberKillPurgeTable.memberId })
+          .from(memberKillPurgeTable)
+          .where(eq(memberKillPurgeTable.guildId, guildId)),
+      ).toEqual([]);
 
       for (const table of [
         memberKillBucketTable,
