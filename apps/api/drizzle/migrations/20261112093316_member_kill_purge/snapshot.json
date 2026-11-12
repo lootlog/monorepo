@@ -1,0 +1,159 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "050b3c9f-bed7-43cb-9b75-0088c38224f2",
+  "prevIds": ["abf23387-6cbf-47eb-a79a-479b1016215a"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "MemberKillPurge"],
+      "writes": [
+        "s|tbl|public.MemberKillPurge",
+        "n|tbl|public.MemberKillPurge",
+        "e|tbl|public.MemberKillPurge",
+        "n|rel|public.MemberKillPurge",
+        "n|type|public.MemberKillPurge",
+        "n|rel|public.MemberKillPurge_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": ["table", "public", "MemberKillPurge"],
+      "writes": [
+        "s|fk|public.MemberKillPurge.MemberKillPurge_memberId_Member_id_fkey",
+        "n|fk|public.MemberKillPurge.MemberKillPurge_memberId_Member_id_fkey",
+        "e|fk|public.MemberKillPurge.MemberKillPurge_memberId_Member_id_fkey",
+        "n|con|public.MemberKillPurge.MemberKillPurge_memberId_Member_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.MemberKillPurge",
+        "n|sch|public",
+        "n|tbl|public.Member",
+        "n|sch|public",
+        "n|col|public.MemberKillPurge.memberId",
+        "n|col|public.Member.id",
+        "e|uniqueness|public.Member.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "MemberKillPurge",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MemberKillPurge",
+        "name": "memberId",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MemberKillPurge",
+        "name": "guildId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MemberKillPurge",
+        "name": "before",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MemberKillPurge",
+        "name": "claimedUntil",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MemberKillPurge",
+        "name": "createdAt",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MemberKillPurge",
+        "name": "MemberKillPurge_memberId_Member_id_fkey",
+        "nameExplicit": false,
+        "columns": ["memberId"],
+        "schemaTo": "public",
+        "tableTo": "Member",
+        "columnsTo": ["id"],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MemberKillPurge",
+        "name": "MemberKillPurge_pkey",
+        "columns": ["memberId"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

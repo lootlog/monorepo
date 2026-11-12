@@ -98,12 +98,12 @@ paths:
       security:
         - bearer: []
       responses:
-        "200":
-          description: StatusOkResponseDto_Output
+        "202":
+          description: AccountDeletionAcceptedResponseDto_Output
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StatusOkResponseDto_Output"
+                $ref: "#/components/schemas/AccountDeletionAcceptedResponseDto_Output"
         "400":
           description: RequestValidationError
           content:
@@ -154,7 +154,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Permanently delete user account and associated data
+      description: Deletes the account and its personal data. Member kill statistics in compressed history are removed by a background job off peak.
       summary: Delete user account
   /users/@me/preferences:
     get:
@@ -36120,6 +36120,16 @@ components:
                   - icon
                 additionalProperties: false
           additionalProperties: false
+      additionalProperties: false
+    AccountDeletionAcceptedResponseDto_Output:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ACCEPTED
+      required:
+        - status
       additionalProperties: false
     UserFeedResponseDto_Output:
       type: object

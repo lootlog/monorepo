@@ -1,9 +1,10 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberKillTotalTable,
   memberKillBucketTable,
+  memberKillPurgeTable,
   userCharacterKillBucketTable,
   userKillCharacterTable,
   userKillTotalTable,
@@ -90,20 +91,40 @@ const deletePersistedAccount = (
         .where(eq(memberTable.userId, identity.discordId));
 
       const memberIds = members.map(({ id }) => id);
+      const deactivatedAt = new Date(yield* Clock.currentTimeMillis);
 
-      // Compressed kill buckets are segmented by Organization, so removing one
-      // member decompresses that Organization's segments in each chunk.
+      // Buckets from this hour on sit in an uncompressed chunk and are deleted
+      // now, so kills after a returning member's reactivation are never
+      // purged. Older ones would decompress each chunk's Organization segment
+      // (hundreds of MB of WAL), so the member kill purge job deletes them off
+      // peak.
+      const purgeBefore = new Date(
+        Math.floor(deactivatedAt.getTime() / 3_600_000) * 3_600_000,
+      );
+
+      // Personal kill buckets are segmented by the Discord id, so TimescaleDB
+      // deletes their compressed batches without decompressing them.
       yield* transaction.execute(
         sql`select set_config('timescaledb.max_tuples_decompressed_per_dml_transaction', '0', true)`,
       );
 
       if (memberIds.length > 0) {
         yield* transaction
-          .delete(memberKillBucketTable)
-          .where(inArray(memberKillBucketTable.memberId, memberIds));
-        yield* transaction
           .delete(memberKillTotalTable)
           .where(inArray(memberKillTotalTable.memberId, memberIds));
+        yield* transaction
+          .insert(memberKillPurgeTable)
+          .values(
+            members.map((member) => ({
+              memberId: member.id,
+              guildId: member.guildId,
+              before: purgeBefore,
+            })),
+          )
+          .onConflictDoUpdate({
+            target: memberKillPurgeTable.memberId,
+            set: { before: purgeBefore },
+          });
       }
 
       yield* transaction
@@ -175,9 +196,16 @@ const deletePersistedAccount = (
           ),
         );
 
-      const deactivatedAt = new Date(yield* Clock.currentTimeMillis);
-
       for (const member of members) {
+        yield* transaction
+          .delete(memberKillBucketTable)
+          .where(
+            and(
+              eq(memberKillBucketTable.guildId, member.guildId),
+              eq(memberKillBucketTable.memberId, member.id),
+              gte(memberKillBucketTable.periodStart, purgeBefore),
+            ),
+          );
         yield* transaction
           .delete(memberToRoleTable)
           .where(eq(memberToRoleTable.A, member.id));

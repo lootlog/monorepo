@@ -11635,6 +11635,17 @@ export interface UpdateUserPreferencesDto {
   mutes?: UpdateUserPreferencesDtoMutes;
 }
 
+export type AccountDeletionAcceptedResponseDtoOutputStatus = typeof AccountDeletionAcceptedResponseDtoOutputStatus[keyof typeof AccountDeletionAcceptedResponseDtoOutputStatus];
+
+
+export const AccountDeletionAcceptedResponseDtoOutputStatus = {
+  ACCEPTED: 'ACCEPTED',
+} as const;
+
+export interface AccountDeletionAcceptedResponseDtoOutput {
+  status: AccountDeletionAcceptedResponseDtoOutputStatus;
+}
+
 export type UserFeedResponseDtoOutputItemsItem = {
   id: string;
   /**
@@ -16786,12 +16797,12 @@ export const getUsersControllerDeleteAccountUrl = () => {
 }
 
 /**
- * Permanently delete user account and associated data
+ * Deletes the account and its personal data. Member kill statistics in compressed history are removed by a background job off peak.
  * @summary Delete user account
  */
-export const usersControllerDeleteAccount = async ( options?: Parameters<typeof mainFetch>[1]): Promise<StatusOkResponseDtoOutput> => {
+export const usersControllerDeleteAccount = async ( options?: Parameters<typeof mainFetch>[1]): Promise<AccountDeletionAcceptedResponseDtoOutput> => {
 
-  return mainFetch<StatusOkResponseDtoOutput>(getUsersControllerDeleteAccountUrl(),
+  return mainFetch<AccountDeletionAcceptedResponseDtoOutput>(getUsersControllerDeleteAccountUrl(),
   {
     ...options,
     method: 'DELETE'
