@@ -232,7 +232,9 @@ export const guildKillBucketTable = pgTable(
  * `hours[n + 1]` is the kills of local hour `n`, so the array always has 24
  * entries and sums to `kills`; the repeated hour of a 25-hour day shares its
  * slot, as `extract(hour ...)` of the local time does. The descriptive columns
- * are those of the latest kill, as in the totals.
+ * are those of the latest kill, as in the totals. It has no foreign key to the
+ * Organization: adding one locks `Guild` for the transaction, and the rollup is
+ * derived from `GuildKillBucket`, which has one.
  */
 export const guildKillDayTable = pgTable(
   "GuildKillDay",
@@ -252,13 +254,6 @@ export const guildKillDayTable = pgTable(
       columns: [table.guildId, table.world, table.npcId, table.day],
       name: "GuildKillDay_pkey",
     }),
-    foreignKey({
-      columns: [table.guildId],
-      foreignColumns: [guildTable.id],
-      name: "GuildKillDay_guildId_fkey",
-    })
-      .onDelete("restrict")
-      .onUpdate("cascade"),
   ],
 );
 

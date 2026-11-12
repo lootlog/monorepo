@@ -3,15 +3,16 @@ import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
 import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
 import { readMigrationFiles } from "drizzle-orm/migrator";
+import { GUILD_KILL_DAY_BACKFILL_SQL } from "#src/kills/guild-kill-day-backfill";
 
-describe("guild kill day migration", () => {
+describe("guild kill day backfill", () => {
   it("rolls hourly buckets up into Warsaw days, merging the repeated hour of a 25-hour day and keeping the latest NPC description", async () => {
     const database = new PGlite({ extensions: { pg_trgm } });
 
     try {
       const migrations = readMigrationFiles({
         migrationsFolder: fileURLToPath(
-          new URL("../../../drizzle/migrations", import.meta.url),
+          new URL("../../drizzle/migrations", import.meta.url),
         ),
       });
 
@@ -39,6 +40,9 @@ describe("guild kill day migration", () => {
       `);
 
       await database.exec(migrations[dayIndex]!.sql.join("\n"));
+      await database.query(GUILD_KILL_DAY_BACKFILL_SQL, ["guild"]);
+      // Running it again replaces the rows instead of adding to them.
+      await database.query(GUILD_KILL_DAY_BACKFILL_SQL, ["guild"]);
 
       const { rows } = await database.query(
         `SELECT "npcId", day::text AS day, "npcName", "npcLvl", kills, hours FROM "GuildKillDay" ORDER BY "npcId"`,
