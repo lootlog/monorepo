@@ -1217,3 +1217,27 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS "OrganizationLootRecord_guildId_world_lo
 The migration stops the deploy while the index is missing, then drops the old
 index. A database restored from a backup taken before 2026-11-11 applies the
 loot facts steps above first, then this build.
+
+## Deferred member kill purge
+
+`20261112093316_member_kill_purge` adds `MemberKillPurge`, one row per member of
+a deleted account. `MemberKillBucket` compresses by `guildId`, so deleting one
+member's rows decompresses the Organization's segment in every chunk they
+touch. For the largest Organization on the local production clone that was
+212 MB of WAL in one transaction; on production on 2026-11-11 the request ran
+for about 200 s, failed, and its retries wrote about 6.6 GB of WAL during the
+peak.
+
+`DELETE /users/@me` now returns 202. It deletes personal kills (compressed by
+`discordUserId`, so TimescaleDB drops whole batches without decompressing),
+`MemberKillTotal`, and member buckets from the current hour, and records the
+start of that hour as the purge's `before`. Every API replica runs the purge
+hourly from 02:30 to 05:30 UTC. It leases one member, reads which 7-day chunks
+hold that member's buckets older than `before`, and deletes each chunk in its
+own transaction (about 13 MB of WAL and 80 ms per chunk for the same member).
+Buckets from the current hour onward are never purged, so kills recorded after
+a returning member is reactivated survive.
+
+Apply the migration before deploying the API. Rolling the API back leaves
+pending purges unprocessed and their compressed rows in place; process them by
+rolling forward again.

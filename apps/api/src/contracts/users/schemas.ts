@@ -248,3 +248,7 @@ export type GameAccountPreferencesPath = typeof GameAccountPreferencesPath.Type;
 export const GameAccountPreferencesPath = Schema.Struct({
   accountId: Schema.String.annotate({ examples: ["1234567"] }),
 });
+
+export const AccountDeletionAccepted = Schema.Struct({
+  status: Schema.Literal("ACCEPTED"),
+}).annotate({ identifier: "AccountDeletionAcceptedResponseDto_Output" });

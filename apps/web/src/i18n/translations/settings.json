@@ -1021,7 +1021,7 @@
       "description": "Trwale usuwa Twoje dane – ustawienia, statystyki bić i zapisane walki. Łupy, timery i inne dane Lootlogów pozostaną nienaruszone, bo są częścią ich wspólnej historii.",
       "deleteAccount": "Usuń konto",
       "deleteConfirmTitle": "Na pewno chcesz usunąć konto?",
-      "deleteConfirmDescription": "To nieodwracalne. Twoje ustawienia, statystyki bić i walki zostaną trwale usunięte. Dane Lootlogów (łupy, timery) nie zostaną ruszone – należą do Lootlogów, nie do Twojego konta.",
+      "deleteConfirmDescription": "To nieodwracalne. Twoje ustawienia, statystyki bić i walki zostaną trwale usunięte – starsze statystyki bić w Lootlogach znikną w ciągu doby. Dane Lootlogów (łupy, timery) nie zostaną ruszone – należą do Lootlogów, nie do Twojego konta.",
       "deleteConfirmLabel": "Wpisz „{{name}}”, aby potwierdzić",
       "deleteConfirmButton": "Tak, usuń moje konto"
     }

@@ -168,6 +168,25 @@ export const memberKillBucketTable = pgTable(
 );
 
 /**
+ * Member kill buckets left by a deleted account. Compressed chunks segment by
+ * Organization, so deleting one member's rows decompresses the Organization's
+ * history; a nightly job removes the buckets older than `before` one chunk per
+ * transaction instead of inside the deletion request.
+ */
+export const memberKillPurgeTable = pgTable("MemberKillPurge", {
+  memberId: integer("memberId")
+    .primaryKey()
+    .references(() => memberTable.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  guildId: text("guildId").notNull(),
+  before: killTime("before").notNull(),
+  claimedUntil: killTime("claimedUntil"),
+  createdAt: killTime("createdAt").defaultNow().notNull(),
+});
+
+/**
  * Hourly kills counted once per Organization, however many members reported
  * them.
  */
