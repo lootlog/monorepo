@@ -2048,7 +2048,6 @@ describe("durable loot publications", () => {
               return realQuery.fetchLootById(...args);
             }),
         },
-        stats: { invalidateCache: () => Effect.void },
         redis: {
           invalidateScopes: async () => {
             throw new Error("Unexpected cache invalidation");
@@ -2188,7 +2187,6 @@ describe("durable loot publications", () => {
           ),
       },
       persistence: makeLootPersistence(database),
-      stats: { invalidateCache: () => Effect.void },
       redis: {
         invalidateScopes: async () => undefined,
         getOrSetJsonEffect: () => Effect.die("Unexpected list read"),

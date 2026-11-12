@@ -70,6 +70,13 @@ export const toStatsDate = (instant: Date | string) =>
     DateTime.setZoneNamedUnsafe(DateTime.makeUnsafe(instant), STATS_TIME_ZONE),
   );
 
+/** The wall-clock hour (0-23) of an instant in `STATS_TIME_ZONE`. */
+export const toStatsHour = (instant: Date) =>
+  DateTime.getPart(
+    DateTime.setZoneNamedUnsafe(DateTime.makeUnsafe(instant), STATS_TIME_ZONE),
+    "hour",
+  );
+
 // A literal, not a parameter: grouping repeats the expression of the
 // selection, and PostgreSQL matches them by text.
 const statsTimeZone = sql.raw(`'${STATS_TIME_ZONE}'`);

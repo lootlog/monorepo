@@ -1,0 +1,223 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "fb080853-54d7-41aa-ab5a-0dc70d74caae",
+  "prevIds": ["050b3c9f-bed7-43cb-9b75-0088c38224f2"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "GuildKillDay"],
+      "writes": [
+        "s|tbl|public.GuildKillDay",
+        "n|tbl|public.GuildKillDay",
+        "e|tbl|public.GuildKillDay",
+        "n|rel|public.GuildKillDay",
+        "n|type|public.GuildKillDay",
+        "n|rel|public.GuildKillDay_pkey"
+      ],
+      "reads": ["n|sch|public", "n|enum|public.NpcType"]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": ["table", "public", "GuildKillDay"],
+      "writes": [
+        "s|fk|public.GuildKillDay.GuildKillDay_guildId_fkey",
+        "n|fk|public.GuildKillDay.GuildKillDay_guildId_fkey",
+        "e|fk|public.GuildKillDay.GuildKillDay_guildId_fkey",
+        "n|con|public.GuildKillDay.GuildKillDay_guildId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.GuildKillDay",
+        "n|sch|public",
+        "n|tbl|public.Guild",
+        "n|sch|public",
+        "n|col|public.GuildKillDay.guildId",
+        "n|col|public.Guild.id",
+        "e|uniqueness|public.Guild.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "GuildKillDay",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillDay",
+        "name": "guildId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillDay",
+        "name": "world",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillDay",
+        "name": "npcId",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillDay",
+        "name": "day",
+        "type": "date",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillDay",
+        "name": "npcName",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillDay",
+        "name": "npcType",
+        "type": "NpcType",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillDay",
+        "name": "npcLvl",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillDay",
+        "name": "kills",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillDay",
+        "name": "hours",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillDay",
+        "name": "GuildKillDay_guildId_fkey",
+        "nameExplicit": true,
+        "columns": ["guildId"],
+        "schemaTo": "public",
+        "tableTo": "Guild",
+        "columnsTo": ["id"],
+        "onUpdate": "CASCADE",
+        "onDelete": "RESTRICT",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillDay",
+        "name": "GuildKillDay_pkey",
+        "columns": ["guildId", "world", "npcId", "day"],
+        "nameExplicit": true,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

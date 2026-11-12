@@ -6,6 +6,7 @@ import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 import { Effect, Schema } from "effect";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
+import type { StaleJson } from "#src/redis/stale-json-cache";
 import type { KillStatsFilter } from "./kill-stats-persistence.js";
 
 export type KillQueryRole = typeof roleTable.$inferSelect;
@@ -18,6 +19,16 @@ export interface KillQueryCache {
     ttlSeconds: number,
     scopes: readonly string[],
   ) => Effect.Effect<S["Type"], unknown>;
+}
+
+export interface StaleKillQueryCache {
+  /** Serves the value for hours past `freshSeconds` while it refreshes. */
+  readonly getOrSetStale: <S extends Schema.ConstraintDecoder<unknown>>(
+    key: string,
+    schema: S,
+    load: Effect.Effect<S["Type"], unknown>,
+    freshSeconds: number,
+  ) => Effect.Effect<StaleJson<S["Type"]>, unknown>;
 }
 
 export const buildKillQueryCacheKey = <Params extends object>(
@@ -110,4 +121,26 @@ export const cachedKillQuery = <
     options.load,
     30,
     options.scopes,
+  );
+
+/**
+ * Organization kill statistics scan the Organization's whole history, so they
+ * are served for `FRESH_SECONDS` and refreshed in the background; kills do not
+ * invalidate them.
+ */
+export const GUILD_KILL_STATS_FRESH_SECONDS = 3_600;
+
+export const cachedStaleKillQuery = <
+  S extends Schema.ConstraintDecoder<unknown>,
+>(options: {
+  readonly cache: StaleKillQueryCache;
+  readonly key: string;
+  readonly schema: S;
+  readonly load: Effect.Effect<S["Type"], unknown>;
+}) =>
+  options.cache.getOrSetStale(
+    options.key,
+    options.schema,
+    options.load,
+    GUILD_KILL_STATS_FRESH_SECONDS,
   );

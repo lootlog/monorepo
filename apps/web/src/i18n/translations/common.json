@@ -52,6 +52,7 @@
   "stats": {
     "kills": "Statystyki bić",
     "loots": "Statystyki łupów",
+    "computedAt": "Statystyki policzone",
     "navigation": {
       "kills": "Bicia",
       "loots": "Łupy",

@@ -1,4 +1,5 @@
 import {
+  date,
   doublePrecision,
   foreignKey,
   index,
@@ -218,6 +219,43 @@ export const guildKillBucketTable = pgTable(
       columns: [table.guildId],
       foreignColumns: [guildTable.id],
       name: "GuildKillBucket_guildId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+  ],
+);
+
+/**
+ * Organization kills per Europe/Warsaw calendar day, written in the same
+ * transaction as `GuildKillBucket`. All-time timelines and the weekday-by-hour
+ * heatmap read these rows instead of every hourly bucket of an Organization.
+ * `hours[n + 1]` is the kills of local hour `n`, so the array always has 24
+ * entries and sums to `kills`; the repeated hour of a 25-hour day shares its
+ * slot, as `extract(hour ...)` of the local time does. The descriptive columns
+ * are those of the latest kill, as in the totals.
+ */
+export const guildKillDayTable = pgTable(
+  "GuildKillDay",
+  {
+    guildId: text("guildId").notNull(),
+    world: text("world").notNull(),
+    npcId: integer("npcId").notNull(),
+    day: date("day", { mode: "string" }).notNull(),
+    npcName: text("npcName").notNull(),
+    npcType: npcTypeEnum("npcType").notNull(),
+    npcLvl: integer("npcLvl").notNull(),
+    kills: integer("kills").notNull(),
+    hours: integer("hours").array().notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.guildId, table.world, table.npcId, table.day],
+      name: "GuildKillDay_pkey",
+    }),
+    foreignKey({
+      columns: [table.guildId],
+      foreignColumns: [guildTable.id],
+      name: "GuildKillDay_guildId_fkey",
     })
       .onDelete("restrict")
       .onUpdate("cascade"),
