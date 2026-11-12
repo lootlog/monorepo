@@ -7,6 +7,7 @@ import type { GameClientBootstrapQuery } from "#src/contracts/users/game-client-
 import {
   getCurrentUserAccessibleGuilds,
   getCurrentUserPreferences,
+  guildPermissions as getGuildPermissions,
 } from "../account-organization/account-organization.operations.js";
 import {
   getGuildPreferences,
@@ -55,21 +56,49 @@ export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
       );
 
       if (accessibleGuilds === null)
-        return { accessibleGuilds, guildTimerDocuments: null };
+        return {
+          accessibleGuilds,
+          guildTimerDocuments: null,
+          guildPermissions: null,
+        };
+
+      // Each guild runs the permissions endpoint's own authorization; one
+      // that fails is left out so the client reads just that guild itself.
+      const guildIds: ReadonlyArray<string> = accessibleGuilds.map(
+        ({ id }: { readonly id: string }) => id,
+      );
+
+      const guildPermissions = yield* Effect.forEach(
+        guildIds,
+        (id) =>
+          getGuildPermissions(id).pipe(
+            Effect.map((capabilities) => [id, capabilities] as const),
+            Effect.catchCause((cause) =>
+              Cause.hasInterruptsOnly(cause)
+                ? Effect.interrupt
+                : Effect.succeed(undefined),
+            ),
+          ),
+        { concurrency: "unbounded" },
+      ).pipe(
+        Effect.map((entries) =>
+          Object.fromEntries(entries.filter((entry) => entry !== undefined)),
+        ),
+      );
 
       const guildTimerDocuments =
         accessibleGuilds.length === 0
           ? { guilds: {} }
           : yield* getGuildPreferences({
               domains: "timers",
-              guildIds: accessibleGuilds.map(({ id }) => id).join(","),
+              guildIds: guildIds.join(","),
             }).pipe(orUnavailable("guildTimerDocuments"));
 
-      return { accessibleGuilds, guildTimerDocuments };
+      return { accessibleGuilds, guildTimerDocuments, guildPermissions };
     });
 
     const [
-      { accessibleGuilds, guildTimerDocuments },
+      { accessibleGuilds, guildTimerDocuments, guildPermissions },
       userPreferences,
       lootlogConfig,
       settingsDocuments,
@@ -95,6 +124,7 @@ export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
       lootlogConfig,
       settingsDocuments,
       guildTimerDocuments,
+      guildPermissions,
       characterAura,
       characterAuras,
     };

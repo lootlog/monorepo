@@ -184,6 +184,14 @@ describe("getGameClientBootstrap", () => {
     expect(response.guildTimerDocuments).toEqual({ guilds: {} });
   });
 
+  it("reads the permissions of every accessible guild by its own endpoint's policy", async () => {
+    const response = await run();
+
+    expect(response.guildPermissions).toEqual({
+      "guild-a": [Permission.LOOTLOG_ACCESS],
+    });
+  });
+
   it("reports a failed part as unavailable instead of empty or failing the rest", async () => {
     const response = await run({ lootlogConfig: failure("database down") });
 
@@ -203,6 +211,7 @@ describe("getGameClientBootstrap", () => {
 
     expect(response.accessibleGuilds).toBeNull();
     expect(response.guildTimerDocuments).toBeNull();
+    expect(response.guildPermissions).toBeNull();
     expect(guildPreferenceQueries).toEqual([]);
   });
 });

@@ -11392,6 +11392,11 @@ export type GameClientBootstrapResponseDtoOutputGuildTimerDocuments = {
 /**
  * @nullable
  */
+export type GameClientBootstrapResponseDtoOutputGuildPermissions = {[key: string]: ('OWNER' | 'ADMIN' | 'LOOTLOG_MANAGE' | 'LOOTLOG_ACCESS' | 'LOOTLOG_LOOTS_READ' | 'LOOTLOG_LOOTS_WRITE' | 'LOOTLOG_LOOTS_ARCHIVE' | 'LOOTLOG_LOOTS_TITANS_READ' | 'LOOTLOG_LOOTS_HEROES_READ' | 'LOOTLOG_TIMERS_READ' | 'LOOTLOG_TIMERS_WRITE' | 'LOOTLOG_TIMERS_RESET' | 'LOOTLOG_TIMERS_DELETE' | 'LOOTLOG_TIMERS_TITANS_READ' | 'LOOTLOG_TIMERS_HEROES_READ' | 'LOOTLOG_RESERVATIONS_READ' | 'LOOTLOG_RESERVATIONS_WRITE' | 'LOOTLOG_MEMBERS_READ' | 'LOOTLOG_ONLINE_PLAYERS_READ' | 'LOOTLOG_PRESENCE_LOCATION_READ' | 'LOOTLOG_CHAT_READ' | 'LOOTLOG_CHAT_WRITE' | 'LOOTLOG_CHAT_TITANS_READ' | 'LOOTLOG_CHAT_HEROES_READ' | 'LOOTLOG_NOTIFICATIONS_READ' | 'LOOTLOG_NOTIFICATIONS_SEND' | 'LOOTLOG_NOTIFICATIONS_TITANS_READ' | 'LOOTLOG_NOTIFICATIONS_HEROES_READ' | 'LOOTLOG_EVENTS_MANAGE' | 'LOOTLOG_EVENTS_READ' | 'LOOTLOG_EVENTS_WRITE' | 'LOOTLOG_DOCS_READ' | 'LOOTLOG_DOCS_WRITE')[]} | null;
+
+/**
+ * @nullable
+ */
 export type GameClientBootstrapResponseDtoOutputCharacterAuraAuraId = typeof GameClientBootstrapResponseDtoOutputCharacterAuraAuraId[keyof typeof GameClientBootstrapResponseDtoOutputCharacterAuraAuraId] | null;
 
 
@@ -11472,6 +11477,8 @@ export interface GameClientBootstrapResponseDtoOutput {
   settingsDocuments: GameClientBootstrapResponseDtoOutputSettingsDocuments;
   /** @nullable */
   guildTimerDocuments: GameClientBootstrapResponseDtoOutputGuildTimerDocuments;
+  /** @nullable */
+  guildPermissions: GameClientBootstrapResponseDtoOutputGuildPermissions;
   /** @nullable */
   characterAura: GameClientBootstrapResponseDtoOutputCharacterAura;
   /** @nullable */
