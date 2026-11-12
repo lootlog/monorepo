@@ -120,11 +120,19 @@ export const makeKillCreation = (
       ),
     );
 
-  const writeOnce = Effect.fnUntraced(function* (
-    key: string,
-    operation: string,
-    write: Effect.Effect<void, KillCreationError>,
-  ) {
+  type Transaction = Parameters<Parameters<typeof database.transaction>[0]>[0];
+
+  type Write = (
+    transaction: Transaction,
+  ) => ReadonlyArray<Effect.Effect<unknown, unknown>>;
+
+  interface Claim {
+    readonly key: string;
+    readonly token: string;
+  }
+
+  /** Takes the dedup claim for one destination; null when another report holds it. */
+  const claim = Effect.fnUntraced(function* (key: string, operation: string) {
     const token = randomUUID();
 
     const acquired = yield* protect(
@@ -132,24 +140,19 @@ export const makeKillCreation = (
       cache.setNx(key, token, DEDUP_TTL_SECONDS),
     );
 
-    if (!acquired) return false;
-    yield* write.pipe(
-      Effect.tapError(() =>
-        cache.deleteIfValue(key, token).pipe(
-          Effect.catch((error) =>
-            Effect.sync(() =>
-              logger.warn("Failed to release kill dedup claim", {
-                error,
-                key,
-              }),
-            ),
+    return acquired ? ({ key, token } satisfies Claim) : null;
+  });
+
+  const release = ({ key, token }: Claim) =>
+    cache
+      .deleteIfValue(key, token)
+      .pipe(
+        Effect.catch((error) =>
+          Effect.sync(() =>
+            logger.warn("Failed to release kill dedup claim", { error, key }),
           ),
         ),
-      ),
-    );
-
-    return true;
-  });
+      );
 
   const descriptive = (input: KillInput) => ({
     npcName: input.npcName,
@@ -164,171 +167,158 @@ export const makeKillCreation = (
    * The account-wide and per-character rows change together, so a kill counts
    * for its character exactly when it counts for the account.
    */
-  const incrementUser = (
-    input: KillInput,
-    character: CharacterInput,
-    periodStart: Date,
-  ) => {
-    const key = {
-      discordUserId: input.userId,
-      world: input.world,
-      npcId: input.npcId,
+  const incrementUser =
+    (input: KillInput, character: CharacterInput, periodStart: Date): Write =>
+    (transaction) => {
+      const key = {
+        discordUserId: input.userId,
+        world: input.world,
+        npcId: input.npcId,
+      };
+
+      const characterKey = { ...key, characterId: character.characterId };
+
+      const characterDetails = {
+        name: character.name,
+        level: character.level,
+        profession: character.profession,
+        icon: character.icon,
+      };
+
+      const characterCount = {
+        kills: sql`${userKillCharacterTable.kills} + 1`,
+        lastKilledAt: input.lastKilledAt,
+      };
+
+      return [
+        transaction
+          .insert(userKillTotalTable)
+          .values({ ...key, ...descriptive(input), kills: 1 })
+          .onConflictDoUpdate({
+            target: [
+              userKillTotalTable.discordUserId,
+              userKillTotalTable.world,
+              userKillTotalTable.npcId,
+            ],
+            set: {
+              kills: sql`${userKillTotalTable.kills} + 1`,
+              ...descriptive(input),
+            },
+          }),
+        transaction
+          .insert(userKillBucketTable)
+          .values({ ...key, periodStart, ...descriptive(input), kills: 1 })
+          .onConflictDoUpdate({
+            target: [
+              userKillBucketTable.discordUserId,
+              userKillBucketTable.world,
+              userKillBucketTable.npcId,
+              userKillBucketTable.periodStart,
+            ],
+            set: {
+              kills: sql`${userKillBucketTable.kills} + 1`,
+              ...descriptive(input),
+            },
+          }),
+        transaction
+          .insert(userCharacterKillBucketTable)
+          .values({
+            ...characterKey,
+            periodStart,
+            ...descriptive(input),
+            kills: 1,
+          })
+          .onConflictDoUpdate({
+            target: [
+              userCharacterKillBucketTable.discordUserId,
+              userCharacterKillBucketTable.world,
+              userCharacterKillBucketTable.characterId,
+              userCharacterKillBucketTable.npcId,
+              userCharacterKillBucketTable.periodStart,
+            ],
+            set: {
+              kills: sql`${userCharacterKillBucketTable.kills} + 1`,
+              ...descriptive(input),
+            },
+          }),
+        transaction
+          .insert(userKillCharacterTable)
+          .values({
+            discordUserId: input.userId,
+            world: input.world,
+            characterId: character.characterId,
+            ...characterDetails,
+            kills: 1,
+            firstKilledAt: input.lastKilledAt,
+            lastKilledAt: input.lastKilledAt,
+          })
+          .onConflictDoUpdate({
+            target: [
+              userKillCharacterTable.discordUserId,
+              userKillCharacterTable.world,
+              userKillCharacterTable.characterId,
+            ],
+            // An older Game client reports only the id; keep the last
+            // known details.
+            set:
+              character.name === null
+                ? characterCount
+                : { ...characterCount, ...characterDetails },
+          }),
+      ];
     };
 
-    const characterKey = { ...key, characterId: character.characterId };
+  const incrementMember =
+    (
+      input: KillInput & {
+        readonly guildId: string;
+        readonly memberId: number;
+      },
+      periodStart: Date,
+    ): Write =>
+    (transaction) => {
+      const key = {
+        guildId: input.guildId,
+        memberId: input.memberId,
+        discordUserId: input.userId,
+        world: input.world,
+        npcId: input.npcId,
+      };
 
-    const characterDetails = {
-      name: character.name,
-      level: character.level,
-      profession: character.profession,
-      icon: character.icon,
+      return [
+        transaction
+          .insert(memberKillTotalTable)
+          .values({ ...key, ...descriptive(input), kills: 1 })
+          .onConflictDoUpdate({
+            target: [
+              memberKillTotalTable.guildId,
+              memberKillTotalTable.memberId,
+              memberKillTotalTable.world,
+              memberKillTotalTable.npcId,
+            ],
+            set: {
+              kills: sql`${memberKillTotalTable.kills} + 1`,
+              ...descriptive(input),
+            },
+          }),
+        transaction
+          .insert(memberKillBucketTable)
+          .values({ ...key, periodStart, ...descriptive(input), kills: 1 })
+          .onConflictDoUpdate({
+            target: [
+              memberKillBucketTable.guildId,
+              memberKillBucketTable.memberId,
+              memberKillBucketTable.world,
+              memberKillBucketTable.npcId,
+              memberKillBucketTable.periodStart,
+            ],
+            set: {
+              kills: sql`${memberKillBucketTable.kills} + 1`,
+              ...descriptive(input),
+            },
+          }),
+      ];
     };
-
-    const characterCount = {
-      kills: sql`${userKillCharacterTable.kills} + 1`,
-      lastKilledAt: input.lastKilledAt,
-    };
-
-    return protect(
-      "kills.create.user",
-      database.transaction((transaction) =>
-        Effect.all(
-          [
-            transaction
-              .insert(userKillTotalTable)
-              .values({ ...key, ...descriptive(input), kills: 1 })
-              .onConflictDoUpdate({
-                target: [
-                  userKillTotalTable.discordUserId,
-                  userKillTotalTable.world,
-                  userKillTotalTable.npcId,
-                ],
-                set: {
-                  kills: sql`${userKillTotalTable.kills} + 1`,
-                  ...descriptive(input),
-                },
-              }),
-            transaction
-              .insert(userKillBucketTable)
-              .values({ ...key, periodStart, ...descriptive(input), kills: 1 })
-              .onConflictDoUpdate({
-                target: [
-                  userKillBucketTable.discordUserId,
-                  userKillBucketTable.world,
-                  userKillBucketTable.npcId,
-                  userKillBucketTable.periodStart,
-                ],
-                set: {
-                  kills: sql`${userKillBucketTable.kills} + 1`,
-                  ...descriptive(input),
-                },
-              }),
-            transaction
-              .insert(userCharacterKillBucketTable)
-              .values({
-                ...characterKey,
-                periodStart,
-                ...descriptive(input),
-                kills: 1,
-              })
-              .onConflictDoUpdate({
-                target: [
-                  userCharacterKillBucketTable.discordUserId,
-                  userCharacterKillBucketTable.world,
-                  userCharacterKillBucketTable.characterId,
-                  userCharacterKillBucketTable.npcId,
-                  userCharacterKillBucketTable.periodStart,
-                ],
-                set: {
-                  kills: sql`${userCharacterKillBucketTable.kills} + 1`,
-                  ...descriptive(input),
-                },
-              }),
-            transaction
-              .insert(userKillCharacterTable)
-              .values({
-                discordUserId: input.userId,
-                world: input.world,
-                characterId: character.characterId,
-                ...characterDetails,
-                kills: 1,
-                firstKilledAt: input.lastKilledAt,
-                lastKilledAt: input.lastKilledAt,
-              })
-              .onConflictDoUpdate({
-                target: [
-                  userKillCharacterTable.discordUserId,
-                  userKillCharacterTable.world,
-                  userKillCharacterTable.characterId,
-                ],
-                // An older Game client reports only the id; keep the last
-                // known details.
-                set:
-                  character.name === null
-                    ? characterCount
-                    : { ...characterCount, ...characterDetails },
-              }),
-          ],
-          { discard: true },
-        ),
-      ),
-    );
-  };
-
-  const incrementMember = (
-    input: KillInput & { readonly guildId: string; readonly memberId: number },
-    periodStart: Date,
-  ) => {
-    const key = {
-      guildId: input.guildId,
-      memberId: input.memberId,
-      discordUserId: input.userId,
-      world: input.world,
-      npcId: input.npcId,
-    };
-
-    return protect(
-      "kills.create.member",
-      database.transaction((transaction) =>
-        Effect.all(
-          [
-            transaction
-              .insert(memberKillTotalTable)
-              .values({ ...key, ...descriptive(input), kills: 1 })
-              .onConflictDoUpdate({
-                target: [
-                  memberKillTotalTable.guildId,
-                  memberKillTotalTable.memberId,
-                  memberKillTotalTable.world,
-                  memberKillTotalTable.npcId,
-                ],
-                set: {
-                  kills: sql`${memberKillTotalTable.kills} + 1`,
-                  ...descriptive(input),
-                },
-              }),
-            transaction
-              .insert(memberKillBucketTable)
-              .values({ ...key, periodStart, ...descriptive(input), kills: 1 })
-              .onConflictDoUpdate({
-                target: [
-                  memberKillBucketTable.guildId,
-                  memberKillBucketTable.memberId,
-                  memberKillBucketTable.world,
-                  memberKillBucketTable.npcId,
-                  memberKillBucketTable.periodStart,
-                ],
-                set: {
-                  kills: sql`${memberKillBucketTable.kills} + 1`,
-                  ...descriptive(input),
-                },
-              }),
-          ],
-          { discard: true },
-        ),
-      ),
-    );
-  };
 
   const partyOf = ({ lootRolls }: KillInput) => ({
     lootRolls: lootRolls?.rolls ?? null,
@@ -345,116 +335,108 @@ export const makeKillCreation = (
    * Adding an Organization again changes nothing, so a retry or another
    * member's report cannot count the kill twice.
    */
-  const recordBossKill = (
-    input: KillInput & { readonly guildId: string },
-    killedAt: Date,
-  ) => {
-    const table = bossKillTable;
-    const party = partyOf(input);
+  const recordBossKill =
+    (input: KillInput & { readonly guildId: string }, killedAt: Date): Write =>
+    (transaction) => {
+      const table = bossKillTable;
+      const party = partyOf(input);
 
-    // The first report that named the party fills it in.
-    const fillParty = mapValues(
-      party,
-      (value, key) => sql`coalesce(${table[key]}, ${value})`,
-    );
+      // The first report that named the party fills it in.
+      const fillParty = mapValues(
+        party,
+        (value, key) => sql`coalesce(${table[key]}, ${value})`,
+      );
 
-    return database
-      .insert(table)
-      .values({
-        world: input.world,
-        npcId: input.npcId,
-        killedAt,
-        npcName: input.npcName,
-        npcType: input.npcType,
-        guildIds: [input.guildId],
-        ...party,
-      })
-      .onConflictDoUpdate({
-        target: [table.world, table.npcId, table.killedAt],
-        set: {
-          guildIds: sql`case
-            when ${input.guildId}::text = any(${table.guildIds}) then ${table.guildIds}
-            else array_append(${table.guildIds}, ${input.guildId}::text)
-          end`,
-          ...fillParty,
-        },
-      });
-  };
+      return [
+        transaction
+          .insert(table)
+          .values({
+            world: input.world,
+            npcId: input.npcId,
+            killedAt,
+            npcName: input.npcName,
+            npcType: input.npcType,
+            guildIds: [input.guildId],
+            ...party,
+          })
+          .onConflictDoUpdate({
+            target: [table.world, table.npcId, table.killedAt],
+            set: {
+              guildIds: sql`case
+                when ${input.guildId}::text = any(${table.guildIds}) then ${table.guildIds}
+                else array_append(${table.guildIds}, ${input.guildId}::text)
+              end`,
+              ...fillParty,
+            },
+          }),
+      ];
+    };
 
-  const incrementGuild = (
-    input: KillInput & { readonly guildId: string },
-    periodStart: Date,
-  ) =>
-    protect(
-      "kills.create.guild",
-      database
-        .transaction((transaction) =>
-          Effect.all(
-            [
-              transaction
-                .insert(guildKillTotalTable)
-                .values({
-                  guildId: input.guildId,
-                  world: input.world,
-                  npcId: input.npcId,
-                  ...descriptive(input),
-                  kills: 1,
-                })
-                .onConflictDoUpdate({
-                  target: [
-                    guildKillTotalTable.guildId,
-                    guildKillTotalTable.world,
-                    guildKillTotalTable.npcId,
-                  ],
-                  set: {
-                    kills: sql`${guildKillTotalTable.kills} + 1`,
-                    ...descriptive(input),
-                  },
-                }),
-              transaction
-                .insert(guildKillBucketTable)
-                .values({
-                  periodStart,
-                  guildId: input.guildId,
-                  world: input.world,
-                  npcId: input.npcId,
-                  ...descriptive(input),
-                  kills: 1,
-                })
-                .onConflictDoUpdate({
-                  target: [
-                    guildKillBucketTable.guildId,
-                    guildKillBucketTable.world,
-                    guildKillBucketTable.npcId,
-                    guildKillBucketTable.periodStart,
-                  ],
-                  set: {
-                    kills: sql`${guildKillBucketTable.kills} + 1`,
-                    ...descriptive(input),
-                  },
-                }),
-              ...(activityFeedNpcCategory(input.npcType) !== "OTHER"
-                ? [
-                    transaction.insert(guildKillActivityTable).values({
-                      id: Bun.randomUUIDv7(),
-                      guildId: input.guildId,
-                      world: input.world,
-                      npcId: input.npcId,
-                      npcName: input.npcName,
-                      npcType: input.npcType,
-                      npcLvl: input.npcLvl,
-                      npcProf: input.npcProf,
-                      npcIcon: input.npcIcon,
-                      occurredAt: input.lastKilledAt,
-                    }),
-                  ]
-                : []),
-            ],
-            { discard: true },
-          ),
-        )
-        .pipe(Effect.tap(() => publishActivity(input).pipe(Effect.forkDetach))),
-    );
+  const incrementGuild =
+    (
+      input: KillInput & { readonly guildId: string },
+      periodStart: Date,
+    ): Write =>
+    (transaction) => [
+      transaction
+        .insert(guildKillTotalTable)
+        .values({
+          guildId: input.guildId,
+          world: input.world,
+          npcId: input.npcId,
+          ...descriptive(input),
+          kills: 1,
+        })
+        .onConflictDoUpdate({
+          target: [
+            guildKillTotalTable.guildId,
+            guildKillTotalTable.world,
+            guildKillTotalTable.npcId,
+          ],
+          set: {
+            kills: sql`${guildKillTotalTable.kills} + 1`,
+            ...descriptive(input),
+          },
+        }),
+      transaction
+        .insert(guildKillBucketTable)
+        .values({
+          periodStart,
+          guildId: input.guildId,
+          world: input.world,
+          npcId: input.npcId,
+          ...descriptive(input),
+          kills: 1,
+        })
+        .onConflictDoUpdate({
+          target: [
+            guildKillBucketTable.guildId,
+            guildKillBucketTable.world,
+            guildKillBucketTable.npcId,
+            guildKillBucketTable.periodStart,
+          ],
+          set: {
+            kills: sql`${guildKillBucketTable.kills} + 1`,
+            ...descriptive(input),
+          },
+        }),
+      ...(activityFeedNpcCategory(input.npcType) !== "OTHER"
+        ? [
+            transaction.insert(guildKillActivityTable).values({
+              id: Bun.randomUUIDv7(),
+              guildId: input.guildId,
+              world: input.world,
+              npcId: input.npcId,
+              npcName: input.npcName,
+              npcType: input.npcType,
+              npcLvl: input.npcLvl,
+              npcProf: input.npcProf,
+              npcIcon: input.npcIcon,
+              occurredAt: input.lastKilledAt,
+            }),
+          ]
+        : []),
+    ];
 
   return Effect.fn("KillsController_createKill")(function* (
     discordId: string,
@@ -487,196 +469,240 @@ export const makeKillCreation = (
         : null,
     };
 
-    const userDedupKey = buildUserKillDedupKey(discordId, {
-      world: data.world,
-      npcId,
-    });
-
     const apiKey = yield* requestApiKeyAccess;
 
-    // The personal record and the Organization targets are independent; both
-    // finish before the result is read, so neither interrupts the other's
-    // write, and a personal dedup failure still prevents every guild write.
-    const recordPersonal =
-      !apiKey || apiKey.personalData
-        ? writeOnce(
-            userDedupKey,
-            "kills.dedup.user",
-            incrementUser(
-              input,
-              {
-                characterId: data.characterId,
-                name: data.character?.name ?? null,
-                level: data.character?.lvl ?? null,
-                profession: data.character?.prof ?? null,
-                icon: data.character?.icon ?? null,
-              },
-              periodStart,
-            ),
-          ).pipe(
-            Effect.catchIf(
-              (error) => error.operation !== "kills.dedup.user",
-              (error) =>
+    // Every claim this request holds. All of them are released unless the one
+    // transaction below commits, so a retry can write what a failure rolled back.
+    const claims: Claim[] = [];
+
+    const track = (acquired: Claim | null) => {
+      if (acquired) claims.push(acquired);
+
+      return acquired;
+    };
+
+    const releaseAll = Effect.forEach(claims, release, {
+      concurrency: "unbounded",
+      discard: true,
+    });
+
+    const writeKill = Effect.gen(function* () {
+      // The personal claim and the Organization targets are independent; both
+      // finish before the result is read, so neither interrupts the other, and
+      // a personal dedup failure still prevents every guild write.
+      const claimPersonal =
+        !apiKey || apiKey.personalData
+          ? claim(
+              buildUserKillDedupKey(discordId, { world: data.world, npcId }),
+              "kills.dedup.user",
+            ).pipe(Effect.map(track))
+          : Effect.succeed(null);
+
+      const readTargets = Effect.gen(function* () {
+        const [catchingGuildIds, writableGuildRows] = yield* protect(
+          "kills.create.scope",
+          Effect.all(
+            [
+              selectCharacterCatchingGuildIds(database, discordId, data),
+              selectAccessibleGuilds(database, discordId, [
+                Permission.LOOTLOG_LOOTS_WRITE,
+              ]).pipe(
+                Effect.map((rows) =>
+                  rows.map(({ guild }) => ({ id: guild.id })),
+                ),
+              ),
+            ],
+            { concurrency: "unbounded" },
+          ),
+        );
+
+        const writableGuildIds = new Set(writableGuildRows.map(({ id }) => id));
+
+        const guildIds = catchingGuildIds.filter((guildId) =>
+          writableGuildIds.has(guildId),
+        );
+
+        if (guildIds.length === 0) return { guildIds, members: [] };
+
+        const members = yield* protect(
+          "kills.create.members",
+          selectActiveGuildMembers(database, discordId, guildIds),
+        );
+
+        return { guildIds, members };
+      });
+
+      const [personalResult, targetsResult] = yield* Effect.all(
+        [claimPersonal, readTargets],
+        { concurrency: "unbounded", mode: "result" },
+      );
+
+      const personalClaim = yield* Effect.fromResult(personalResult);
+      const { guildIds, members } = yield* Effect.fromResult(targetsResult);
+
+      const memberByGuild = new Map(
+        members.map((member) => [member.guildId, member]),
+      );
+
+      // A failed guild claim must not stop the other Organizations.
+      const claimGuilds = Effect.forEach(
+        guildIds,
+        (guildId) => {
+          const member = memberByGuild.get(guildId);
+
+          if (!member) return Effect.succeed(null);
+          const killKey = { world: data.world, npcId };
+
+          return Effect.gen(function* () {
+            const memberClaim = track(
+              yield* claim(
+                buildMemberKillDedupKey(guildId, member.id, killKey),
+                "kills.dedup.member",
+              ),
+            );
+
+            if (!memberClaim) return null;
+
+            const guildClaim = yield* claim(
+              buildGuildKillDedupKey(guildId, killKey),
+              "kills.dedup.guild",
+            ).pipe(
+              Effect.map(track),
+              Effect.catch((error) =>
                 Effect.sync(() => {
                   logger.error({
-                    message: "Failed to upsert user kill stats",
+                    message: `Failed to claim guild kill for guildId ${guildId}`,
                     error,
                   });
 
-                  return false;
+                  return null;
                 }),
-            ),
-            Effect.tap((updated) =>
-              updated
-                ? invalidate(`kill-stats:user:${discordId}`)
-                : Effect.void,
-            ),
-          )
-        : Effect.succeed(false);
+              ),
+            );
 
-    const readTargets = Effect.gen(function* () {
-      const [catchingGuildIds, writableGuildRows] = yield* protect(
-        "kills.create.scope",
-        Effect.all(
-          [
-            selectCharacterCatchingGuildIds(database, discordId, data),
-            selectAccessibleGuilds(database, discordId, [
-              Permission.LOOTLOG_LOOTS_WRITE,
-            ]).pipe(
-              Effect.map((rows) => rows.map(({ guild }) => ({ id: guild.id }))),
-            ),
-          ],
-          { concurrency: "unbounded" },
-        ),
-      );
-
-      const writableGuildIds = new Set(writableGuildRows.map(({ id }) => id));
-
-      const guildIds = catchingGuildIds.filter((guildId) =>
-        writableGuildIds.has(guildId),
-      );
-
-      if (guildIds.length === 0) return { guildIds, members: [] };
-
-      const members = yield* protect(
-        "kills.create.members",
-        selectActiveGuildMembers(database, discordId, guildIds),
-      );
-
-      return { guildIds, members };
-    });
-
-    const [personalResult, targetsResult] = yield* Effect.all(
-      [recordPersonal, readTargets],
-      { concurrency: "unbounded", mode: "result" },
-    );
-
-    const personalUpdated = yield* Effect.fromResult(personalResult);
-    const { guildIds, members } = yield* Effect.fromResult(targetsResult);
-
-    if (guildIds.length === 0)
-      return personalUpdated
-        ? { updated: 0 }
-        : { deduplicated: true, updated: 0 };
-
-    // Every report of one boss kill, from any Organization, carries the time
-    // of the first, so the kill is recorded once for all of them.
-    const bossKilledAt = isDropSourceBossType(npcType)
-      ? yield* cache
-          .setNxGet(
-            buildBossKillDedupKey({ world: data.world, npcId }),
-            killedAt.toISOString(),
-            DEDUP_TTL_SECONDS,
-          )
-          .pipe(
-            Effect.map((first) =>
-              first === null ? killedAt : new Date(first),
-            ),
+            return {
+              guildId,
+              memberId: member.id,
+              countsGuild: guildClaim !== null,
+            };
+          }).pipe(
             Effect.catch((error) =>
               Effect.sync(() => {
-                logger.warn("Failed to claim boss kill", { error });
+                logger.error({
+                  message: `Failed to claim kill stats for guildId ${guildId}`,
+                  error,
+                });
 
                 return null;
               }),
             ),
-          )
-      : null;
-
-    const memberByGuild = new Map(
-      members.map((member) => [member.guildId, member]),
-    );
-
-    const results = yield* Effect.forEach(
-      guildIds,
-      (guildId) => {
-        const member = memberByGuild.get(guildId);
-
-        if (!member) return Effect.succeed({ guildId, updated: false });
-        const memberInput = { ...input, guildId, memberId: member.id };
-
-        return Effect.gen(function* () {
-          const newMemberKill = yield* writeOnce(
-            buildMemberKillDedupKey(guildId, member.id, {
-              world: data.world,
-              npcId,
-            }),
-            "kills.dedup.member",
-            incrementMember(memberInput, periodStart),
           );
+        },
+        { concurrency: "unbounded" },
+      );
 
-          if (!newMemberKill) return { guildId, updated: false };
+      const targets = (yield* claimGuilds)
+        .filter((target) => target !== null)
+        .toSorted((a, b) => a.guildId.localeCompare(b.guildId));
 
-          // A failed guild write releases its claim, so a report from another
-          // member can still count the kill.
-          const newGuildKill = yield* writeOnce(
-            buildGuildKillDedupKey(guildId, {
-              world: data.world,
-              npcId,
-            }),
-            "kills.dedup.guild",
-            incrementGuild({ ...input, guildId }, periodStart),
-          );
+      if (!personalClaim && targets.length === 0)
+        return { deduplicated: true, updated: 0 };
 
-          // Drop rates lose one Organization's report of the kill when this
-          // fails; the Organization's own count stays.
-          if (newGuildKill && bossKilledAt)
-            yield* protect(
-              "kills.create.boss",
-              recordBossKill({ ...input, guildId }, bossKilledAt),
-            ).pipe(
-              Effect.catch((error) =>
-                Effect.sync(() =>
-                  logger.warn("Failed to record boss kill", { error, guildId }),
+      // Every report of one boss kill, from any Organization, carries the time
+      // of the first, so the kill is recorded once for all of them.
+      const bossKilledAt =
+        isDropSourceBossType(npcType) && targets.some((t) => t.countsGuild)
+          ? yield* cache
+              .setNxGet(
+                buildBossKillDedupKey({ world: data.world, npcId }),
+                killedAt.toISOString(),
+                DEDUP_TTL_SECONDS,
+              )
+              .pipe(
+                Effect.map((first) =>
+                  first === null ? killedAt : new Date(first),
                 ),
+                Effect.catch((error) =>
+                  Effect.sync(() => {
+                    logger.warn("Failed to claim boss kill", { error });
+
+                    return null;
+                  }),
+                ),
+              )
+          : null;
+
+      // The personal rows come first, then each Organization in id order. The
+      // boss rows are shared between Organizations, so they come last: no
+      // transaction holds one while waiting for rows another one holds.
+      const writes: Write[] = [
+        ...(personalClaim
+          ? [
+              incrementUser(
+                input,
+                {
+                  characterId: data.characterId,
+                  name: data.character?.name ?? null,
+                  level: data.character?.lvl ?? null,
+                  profession: data.character?.prof ?? null,
+                  icon: data.character?.icon ?? null,
+                },
+                periodStart,
               ),
-            );
+            ]
+          : []),
+        ...targets.flatMap(({ guildId, memberId, countsGuild }) => [
+          incrementMember({ ...input, guildId, memberId }, periodStart),
+          ...(countsGuild
+            ? [incrementGuild({ ...input, guildId }, periodStart)]
+            : []),
+        ]),
+        ...(bossKilledAt
+          ? targets
+              .filter(({ countsGuild }) => countsGuild)
+              .map(({ guildId }) =>
+                recordBossKill({ ...input, guildId }, bossKilledAt),
+              )
+          : []),
+      ];
 
-          return { guildId, updated: true };
-        }).pipe(
-          Effect.catch((error) =>
-            Effect.sync(() => {
-              logger.error({
-                message: `Failed to upsert kill stats for guildId ${guildId}`,
-                error,
-              });
-
-              return { guildId, updated: false };
-            }),
+      const committed = yield* protect(
+        "kills.create.write",
+        database.transaction((transaction) =>
+          Effect.all(
+            writes.flatMap((write) => write(transaction)),
+            { discard: true },
           ),
-        );
-      },
-      { concurrency: "unbounded" },
-    );
+        ),
+      ).pipe(
+        Effect.as(true),
+        Effect.catch((error) =>
+          Effect.sync(() => {
+            logger.error({ message: "Failed to upsert kill stats", error });
+          }).pipe(Effect.andThen(releaseAll), Effect.as(false)),
+        ),
+      );
 
-    yield* Effect.forEach(
-      results,
-      ({ guildId }) => invalidate(`kill-stats:guild:${guildId}`),
-      { concurrency: "unbounded", discard: true },
-    );
-    const updated = results.filter(({ updated }) => updated).length;
+      if (!committed) return { updated: 0 };
 
-    return !personalUpdated && updated === 0
-      ? { deduplicated: true, updated: 0 }
-      : { updated };
+      if (personalClaim) yield* invalidate(`kill-stats:user:${discordId}`);
+      yield* Effect.forEach(
+        targets,
+        ({ guildId }) => invalidate(`kill-stats:guild:${guildId}`),
+        { concurrency: "unbounded", discard: true },
+      );
+      yield* Effect.forEach(
+        targets.filter(({ countsGuild }) => countsGuild),
+        ({ guildId }) =>
+          publishActivity({ ...input, guildId }).pipe(Effect.forkDetach),
+        { discard: true },
+      );
+
+      return { updated: targets.length };
+    });
+
+    // A failure after the first claim rolls the whole kill back, so every
+    // claim goes back and the next report writes it again.
+    return yield* writeKill.pipe(Effect.onError(() => releaseAll));
   });
 };
