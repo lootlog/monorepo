@@ -1,4 +1,4 @@
-import { BunRedis } from "@effect/platform-bun";
+import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import {
   Permission,
   UserGuildPermissionsDtoSchema,
@@ -199,7 +199,7 @@ export class Permissions extends Context.Service<
     Effect.map(ActivityConfig, (config) =>
       Permissions.layer.pipe(
         Layer.provide(
-          BunRedis.layer({
+          reconnectingBunRedisLayer({
             url: config.redisUrl
               ? Redacted.value(config.redisUrl)
               : "redis://localhost:6379",
