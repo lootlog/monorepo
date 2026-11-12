@@ -1,5 +1,5 @@
 import { and, eq, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberKillBucketTable,
@@ -11,6 +11,9 @@ const CHUNK_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Longer than one purge, so an expired lease means the claimant died.
 const CLAIM_LEASE = "1 hour";
+
+// Hourly runs claim no new member after this, so the last one ends off peak.
+const RUN_BUDGET_MS = 45 * 60 * 1000;
 
 type Claim = Omit<typeof memberKillPurgeTable.$inferSelect, "claimedUntil"> & {
   readonly claimedUntil: Date;
@@ -121,7 +124,9 @@ export const makeMemberKillPurge = (database: typeof ApiDatabase.Service) => {
   });
 
   return Effect.fn("MemberKillPurge.run")(function* () {
-    for (;;) {
+    const deadline = (yield* Clock.currentTimeMillis) + RUN_BUDGET_MS;
+
+    while ((yield* Clock.currentTimeMillis) < deadline) {
       const claim = yield* claimNext;
 
       if (!claim) return;

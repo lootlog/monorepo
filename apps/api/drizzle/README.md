@@ -1232,7 +1232,8 @@ peak.
 `discordUserId`, so TimescaleDB drops whole batches without decompressing),
 `MemberKillTotal`, and member buckets from the current hour, and records the
 start of that hour as the purge's `before`. Every API replica runs the purge
-hourly from 02:30 to 05:30 UTC. It leases one member, reads which 7-day chunks
+hourly from 02:30 to 05:30 UTC and claims no new member after 45 minutes,
+so the last run ends off peak. It leases one member, reads which 7-day chunks
 hold that member's buckets older than `before`, and deletes each chunk in its
 own transaction (about 13 MB of WAL and 80 ms per chunk for the same member).
 Buckets from the current hour onward are never purged, so kills recorded after

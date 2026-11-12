@@ -16797,7 +16797,7 @@ export const getUsersControllerDeleteAccountUrl = () => {
 }
 
 /**
- * Deletes the account and its personal data. Member kill statistics in compressed history are removed by a background job within a day.
+ * Deletes the account and its personal data. Member kill statistics in compressed history are removed by a background job off peak.
  * @summary Delete user account
  */
 export const usersControllerDeleteAccount = async ( options?: Parameters<typeof mainFetch>[1]): Promise<AccountDeletionAcceptedResponseDtoOutput> => {
