@@ -1,0 +1,37 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "abad5dae-50b4-497f-bc2d-851270a2e1d5",
+  "prevIds": ["2c2fb0cf-6cc0-4399-aa1c-d005219fc4d6"],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Timer",
+        "Timer_guildId_maxSpawnTime_idx"
+      ],
+      "writes": [
+        "s|idx|public.Timer_guildId_maxSpawnTime_idx",
+        "n|idx|public.Timer_guildId_maxSpawnTime_idx",
+        "e|idx|public.Timer_guildId_maxSpawnTime_idx",
+        "n|rel|public.Timer_guildId_maxSpawnTime_idx"
+      ],
+      "reads": [
+        "e|tbl|public.Timer",
+        "n|sch|public",
+        "e|col|public.Timer.guildId",
+        "e|col|public.Timer.maxSpawnTime"
+      ],
+      "sharedWrites": []
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"Timer_guildId_maxSpawnTime_idx\"]"
+    }
+  ]
+}
