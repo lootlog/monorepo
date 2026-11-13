@@ -3,34 +3,46 @@ import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
 import { CharacterAurasResponse } from "#src/contracts/character-auras/schemas";
 import {
+  CharacterAuraHolders,
   characterAurasDataLayer,
+  type CharacterAurasCache,
   type CharacterAurasEvents,
-  type CharacterAurasListCache,
 } from "#src/http-api/handlers/character-auras/character-auras.data-layer";
 import { makeJsonCodec } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
-
-const LIST_CACHE_SCOPE = "character-auras:list";
+import { CHARACTER_AURAS_CACHE_SCOPE } from "#src/shared/cache";
 
 const listCodec = makeJsonCodec(CharacterAurasResponse);
 
-// Aura writes invalidate the list. The TTL bounds what they cannot see: a
-// newly proved account of a User who shows an aura, and a deleted account.
-const makeCharacterAurasListCache = (
+const holdersCodec = makeJsonCodec(CharacterAuraHolders);
+
+const makeCharacterAurasCache = (
   redis: ApiRedis["Service"],
-): CharacterAurasListCache => ({
-  read: (load) =>
+): CharacterAurasCache => ({
+  // Aura writes invalidate the list. The TTL bounds what they cannot see: a
+  // newly proved account of a User who shows an aura.
+  list: (load) =>
     redis.getOrSetJsonEffect({
-      key: LIST_CACHE_SCOPE,
-      scopes: [LIST_CACHE_SCOPE],
+      key: CHARACTER_AURAS_CACHE_SCOPE,
+      scopes: [CHARACTER_AURAS_CACHE_SCOPE],
       factory: load,
       ttlSeconds: 30,
       codec: listCodec,
     }),
-  // The write is committed; readers catch up when the stored list expires.
+  // Every aura and grant write invalidates it; the TTL bounds only a failed
+  // invalidation.
+  holders: (load) =>
+    redis.getOrSetJsonEffect({
+      key: `${CHARACTER_AURAS_CACHE_SCOPE}:holders`,
+      scopes: [CHARACTER_AURAS_CACHE_SCOPE],
+      factory: load,
+      ttlSeconds: 300,
+      codec: holdersCodec,
+    }),
+  // The write is committed; readers catch up when the stored copies expire.
   invalidate: Effect.tryPromise(() =>
-    redis.invalidateScopes(LIST_CACHE_SCOPE),
+    redis.invalidateScopes(CHARACTER_AURAS_CACHE_SCOPE),
   ).pipe(
     Effect.catch((error) =>
       Effect.logWarning("Failed to invalidate the character aura list", error),
@@ -61,7 +73,7 @@ export const characterAurasData = Layer.unwrap(
     return characterAurasDataLayer(
       globalChatAdminUserIds,
       makeCharacterAurasEvents(rabbit),
-      makeCharacterAurasListCache(redis),
+      makeCharacterAurasCache(redis),
     );
   }),
 );
