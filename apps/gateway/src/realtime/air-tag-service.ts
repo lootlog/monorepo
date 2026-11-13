@@ -41,7 +41,7 @@ import {
   admitBatch,
   admitConnectionBatch,
   takeThreatFlush,
-  hashTag,
+  mapKeyPrefix,
   interestKeyFor,
   loadMapThreat,
   loadScopeSnapshot,
@@ -526,7 +526,7 @@ export class AirTagService {
     delayMs: number,
     failedAttempts = 0,
   ): void {
-    const flushKey = hashTag(scope);
+    const flushKey = mapKeyPrefix(scope);
 
     if (this.threatFlushes.has(flushKey)) return;
 
@@ -646,14 +646,21 @@ export class AirTagService {
   }
 
   private refreshInterest(): Effect.Effect<void, RealtimeStoreError> {
-    const keys = new Set(
-      this.hub
-        .getLocalScopes("map.air-tags")
-        .map((scope) => interestKeyFor(scope)),
+    // A registration script receives the keys of one Organization only.
+    const byOrganization = Map.groupBy(
+      this.hub.getLocalScopes("map.air-tags"),
+      (scope) => scope.organizationId ?? "",
+    );
+
+    const batches = [...byOrganization.values()].flatMap((scopes) =>
+      chunk(
+        [...new Set(scopes.map((scope) => interestKeyFor(scope)))],
+        INTEREST_BATCH_SIZE,
+      ),
     );
 
     return Effect.forEach(
-      chunk([...keys], INTEREST_BATCH_SIZE),
+      batches,
       (batch) =>
         registerReplicaInterest(this.redis, this.hub.instanceId, batch),
       { concurrency: "unbounded", discard: true },
