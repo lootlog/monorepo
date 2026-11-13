@@ -145,35 +145,43 @@ describe("RealtimeHub federation", () => {
     },
   );
 
-  test("delivers a Web-only Discord event to the user's Web app on every replica, never to the game", async () => {
+  test("delivers kill-stats.changed only to the user's clients that joined with the feature, on every replica", async () => {
     const [local, remote] = await startPair();
 
+    const variants = [
+      { name: "web-app", platform: "web-app", killStats: true },
+      { name: "older web-app", platform: "web-app", killStats: false },
+      { name: "game", platform: "game", killStats: false },
+    ] as const;
+
     const targets = [local, remote].flatMap((hub, index) =>
-      (["web-app", "game"] as const).map((platform) => {
+      variants.map(({ name, platform, killStats }) => {
         const target = makeTestSocket({
-          ...makeAdminSession(`${platform}-${index}`, { platform }),
-          discordId: "shared-discord",
+          ...makeAdminSession(`${name}-${index}`, { platform, killStats }),
+          userId: "shared-user",
         });
 
         hub.register(target.socket);
 
-        return { platform, target };
+        return { name, target };
       }),
     );
 
-    await local.publishToDiscord(
-      "shared-discord",
-      { v: 1, type: "kill-stats.changed", data: {} },
-      { recipientPlatform: "web-app" },
-    );
+    await local.publishToUser("shared-user", {
+      v: 1,
+      type: "kill-stats.changed",
+      data: {},
+    });
 
-    // Older game clients reject event types they do not know.
+    // A client that does not know the event type rejects it and disconnects.
     expect(
-      targets.map(({ platform, target }) => [platform, target.sent.length]),
+      targets.map(({ name, target }) => [name, target.sent.length]),
     ).toEqual([
       ["web-app", 1],
+      ["older web-app", 0],
       ["game", 0],
       ["web-app", 1],
+      ["older web-app", 0],
       ["game", 0],
     ]);
   });

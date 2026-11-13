@@ -1295,5 +1295,11 @@ Build it before the migration on a populated database, outside a transaction:
 CREATE INDEX CONCURRENTLY IF NOT EXISTS "OrganizationLootRecord_createdAt_brin_idx" ON "OrganizationLootRecord" USING brin ("createdAt") WITH (pages_per_range=16, autosummarize=on);
 ```
 
-The migration stops the deploy while the index is missing. An older API
-revision keeps working with or without it.
+The migration stops the deploy while the index is missing or invalid. A failed
+concurrent build leaves an invalid index; drop it before building it again:
+
+```sql
+DROP INDEX CONCURRENTLY IF EXISTS "OrganizationLootRecord_createdAt_brin_idx";
+```
+
+An older API revision keeps working with or without the index.

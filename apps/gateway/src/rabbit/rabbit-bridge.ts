@@ -580,10 +580,9 @@ export class RabbitBridge {
   private publishTo(
     discordId: string,
     event: Event,
-    options?: Parameters<RealtimeHub["publishToDiscord"]>[2],
   ): Effect.Effect<void, unknown> {
     return Effect.tryPromise({
-      try: () => this.hub.publishToDiscord(discordId, event, options),
+      try: () => this.hub.publishToDiscord(discordId, event),
       catch: (cause) => cause,
     });
   }
@@ -771,13 +770,17 @@ export class RabbitBridge {
           ),
         { concurrency: "unbounded", discard: true },
       ),
-    // Only the Web app shows personal kill statistics.
+    // Delivery skips clients that did not join with KILL_STATS_FEATURE.
     [RabbitRoutingKey.USERS_KILL_STATS_CHANGED]: (data) =>
-      this.publishTo(
-        data.recipientDiscordId,
-        { v: 1, type: "kill-stats.changed", data: {} },
-        { recipientPlatform: "web-app" },
-      ),
+      Effect.tryPromise({
+        try: () =>
+          this.hub.publishToUser(data.recipientUserId, {
+            v: 1,
+            type: "kill-stats.changed",
+            data: {},
+          }),
+        catch: (cause) => cause,
+      }),
     [RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED]: (data) =>
       Effect.forEach(
         data.eligibleGuildIds,
