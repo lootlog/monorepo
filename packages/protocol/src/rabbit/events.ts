@@ -196,6 +196,12 @@ const PartyReadyRoomUpdated = Schema.Struct({
   update: Schema.Unknown,
 });
 
+// A refresh hint for the one user whose personal kill statistics a kill
+// changed. Kills of other Organization members never change them.
+const UserKillStatsChanged = Schema.Struct({
+  recipientUserId: Schema.NonEmptyString,
+});
+
 const NotificationVolunteer = Schema.Struct({
   notificationId: Schema.NonEmptyString,
   targetDiscordId: Schema.NonEmptyString,
@@ -407,6 +413,7 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.PRESENCE_CHECK_REQUEST]: PresenceCheckRequested,
   [RabbitRoutingKey.PRESENCE_COVERAGE_CHECK]: PresenceCoverageChecked,
   [RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED]: PartyReadyRoomUpdated,
+  [RabbitRoutingKey.USERS_KILL_STATS_CHANGED]: UserKillStatsChanged,
 } as const;
 
 export type CanonicalRabbitEventRoutingKey =

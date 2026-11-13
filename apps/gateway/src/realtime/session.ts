@@ -49,6 +49,8 @@ export interface SessionData extends AuthenticatedIdentity {
   character?: typeof PresenceCharacter.Type;
   /** The client joined with `CHARACTER_AURAS_FEATURE`, so it reads aura changes. */
   characterAuras?: boolean;
+  /** The client joined with `KILL_STATS_FEATURE`, so it reads `kill-stats.changed`. */
+  killStats?: boolean;
   confidence: typeof PresenceConfidence.Type;
   presence?: typeof BasicPresence.Type & {
     readonly location?: {

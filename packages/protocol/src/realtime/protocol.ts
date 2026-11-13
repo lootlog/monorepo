@@ -240,6 +240,9 @@ const SessionJoinCommand = command(
 /** Joins with this feature receive `character-auras.changed`. */
 export const CHARACTER_AURAS_FEATURE = "character-auras";
 
+/** Joins with this feature receive `kill-stats.changed`. */
+export const KILL_STATS_FEATURE = "kill-stats";
+
 const HeartbeatCommand = command(
   "presence.heartbeat",
   Schema.Struct({ sessionId: Schema.NonEmptyString }),
@@ -503,6 +506,9 @@ export const ServerEvent = Schema.Union([
     "kills.changed",
     Schema.Struct({ guildId: Schema.NonEmptyString }),
   ),
+  // Sent only to the clients of the user whose own kill statistics changed
+  // that joined with KILL_STATS_FEATURE.
+  serverEvent("kill-stats.changed", Schema.Struct({})),
   serverEvent("loot.created", GuildLootCreatedEventV2),
   serverEvent("loot.share-updated", GuildLootShareUpdatedEventV2),
   serverEvent("loot.snapshot", LootSnapshotEvent),

@@ -220,6 +220,12 @@ const consumerSpecs = [
     queue: "gateway-guilds-notifications-going",
     routingKey: RabbitRoutingKey.GUILDS_NOTIFICATIONS_GOING,
   },
+  // No retry or DLQ: a refresh hint; a lost one heals on the next kill or
+  // the statistics' own staleness.
+  {
+    queue: "gateway-users-kill-stats-changed",
+    routingKey: RabbitRoutingKey.USERS_KILL_STATS_CHANGED,
+  },
   retryable(
     "gateway-users-party-ready-room-updated",
     RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED,
@@ -764,6 +770,17 @@ export class RabbitBridge {
           ),
         { concurrency: "unbounded", discard: true },
       ),
+    // Delivery skips clients that did not join with KILL_STATS_FEATURE.
+    [RabbitRoutingKey.USERS_KILL_STATS_CHANGED]: (data) =>
+      Effect.tryPromise({
+        try: () =>
+          this.hub.publishToUser(data.recipientUserId, {
+            v: 1,
+            type: "kill-stats.changed",
+            data: {},
+          }),
+        catch: (cause) => cause,
+      }),
     [RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED]: (data) =>
       Effect.forEach(
         data.eligibleGuildIds,
