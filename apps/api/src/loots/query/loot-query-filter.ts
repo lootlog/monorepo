@@ -252,7 +252,19 @@ const npcNameCondition = (
 
   if (snapshotIds.length === 0) return sql`false`;
 
-  return existsNpcSnapshotIds(lootId, snapshotIds);
+  // Start from the chosen NPCs instead of testing each scanned loot: the
+  // correlated EXISTS made a rare NPC on a busy world walk the Organization's
+  // whole world history (2.7 s, 1M buffers on a local production copy), while
+  // the array reads the NPCs' rows from "LootNpc_npcSnapshotId_lootId_idx"
+  // and probes the records by key (12 ms). The query builder has no
+  // `= ANY(ARRAY(subquery))`; the `IN` semi-join `inArray` renders read 4x
+  // the buffers.
+  const npcLootIds = query
+    .select({ lootId: queryNpc.lootId })
+    .from(queryNpc)
+    .where(inArray(queryNpc.npcSnapshotId, [...snapshotIds]));
+
+  return sql`${lootId} = any(array(${npcLootIds}))`;
 };
 
 const relationConditions = (
