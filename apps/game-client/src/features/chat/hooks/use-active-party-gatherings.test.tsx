@@ -67,8 +67,22 @@ it("discovers gatherings on join and preserves visible state during refresh fail
 
   vi.useFakeTimers({ shouldAdvanceTime: true });
 
-  const { result, unmount } = renderHook(useActivePartyGatherings, {
-    wrapper: harness.wrapper,
+  let reopened = false;
+  const observeReopened = vi.fn<(count: number) => void>();
+
+  const ReopenedChat = () => {
+    observeReopened(useActivePartyGatherings().data.length);
+
+    return null;
+  };
+
+  const { result, unmount, rerender } = renderHook(useActivePartyGatherings, {
+    wrapper: ({ children }) => (
+      <harness.wrapper>
+        {children}
+        {reopened && <ReopenedChat />}
+      </harness.wrapper>
+    ),
   });
 
   try {
@@ -86,6 +100,14 @@ it("discovers gatherings on join and preserves visible state during refresh fail
     await act(async () => {
       await vi.advanceTimersByTimeAsync(10 * 60_000);
     });
+    expect(request).toHaveBeenCalledTimes(requestsAfterJoin);
+
+    // Opening the chat mounts another observer; the live cache needs no fetch.
+    reopened = true;
+    rerender();
+    await waitFor(() => expect(observeReopened).toHaveBeenLastCalledWith(1));
+    reopened = false;
+    rerender();
     expect(request).toHaveBeenCalledTimes(requestsAfterJoin);
     request.mockImplementation(async () =>
       Response.json({ message: "Unavailable" }, { status: 500 }),
