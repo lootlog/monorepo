@@ -154,13 +154,9 @@ it("adapts kill invalidation signals without adding an actor or NPC identity", (
   const client = new GatewayClient();
   const deliver = subscribe.mock.calls[0]?.[0];
   const handler = vi.fn();
-  client.on("kills.changed", handler);
-  deliver?.({
-    v: 1,
-    type: "kills.changed",
-    data: { guildId: "organization-1" },
-  });
-  expect(handler).toHaveBeenCalledWith({ guildId: "organization-1" });
+  client.on("kill-stats.changed", handler);
+  deliver?.({ v: 1, type: "kill-stats.changed", data: {} });
+  expect(handler).toHaveBeenCalledWith({});
 });
 
 it("delivers complete feed entries without turning them into loot invalidation signals", () => {

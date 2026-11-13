@@ -24,7 +24,7 @@ export function useKillStatsUpdates(socket: Pick<GatewayClient, "on" | "off">) {
 
     const scheduleRefresh = () => {
       if (timer !== undefined) return;
-      // Organization events are only refresh hints, never personal increments.
+      // A refresh hint for this user's own kills, never an increment.
       timer = setTimeout(() => {
         timer = undefined;
 
@@ -39,12 +39,12 @@ export function useKillStatsUpdates(socket: Pick<GatewayClient, "on" | "off">) {
       if (payload.recover) scheduleRefresh();
     };
 
-    socket.on("kills.changed", scheduleRefresh);
+    socket.on("kill-stats.changed", scheduleRefresh);
     socket.on("join", onJoin);
 
     return () => {
       clearTimeout(timer);
-      socket.off("kills.changed", scheduleRefresh);
+      socket.off("kill-stats.changed", scheduleRefresh);
       socket.off("join", onJoin);
     };
   }, [queryClient, socket]);

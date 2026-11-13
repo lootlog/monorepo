@@ -145,6 +145,39 @@ describe("RealtimeHub federation", () => {
     },
   );
 
+  test("delivers a Web-only Discord event to the user's Web app on every replica, never to the game", async () => {
+    const [local, remote] = await startPair();
+
+    const targets = [local, remote].flatMap((hub, index) =>
+      (["web-app", "game"] as const).map((platform) => {
+        const target = makeTestSocket({
+          ...makeAdminSession(`${platform}-${index}`, { platform }),
+          discordId: "shared-discord",
+        });
+
+        hub.register(target.socket);
+
+        return { platform, target };
+      }),
+    );
+
+    await local.publishToDiscord(
+      "shared-discord",
+      { v: 1, type: "kill-stats.changed", data: {} },
+      { recipientPlatform: "web-app" },
+    );
+
+    // Older game clients reject event types they do not know.
+    expect(
+      targets.map(({ platform, target }) => [platform, target.sent.length]),
+    ).toEqual([
+      ["web-app", 1],
+      ["game", 0],
+      ["web-app", 1],
+      ["game", 0],
+    ]);
+  });
+
   test("blocks revoked Organization payloads on direct user, Discord and snapshot delivery", async () => {
     const [local, remote] = await startPair();
 

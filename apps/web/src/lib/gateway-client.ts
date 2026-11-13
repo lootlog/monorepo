@@ -90,7 +90,7 @@ const groupPresence = <TValue>(
 /** Server events delivered to listeners under their protocol type. */
 const FORWARDED_EVENT_TYPES = [
   "feed.entry",
-  "kills.changed",
+  "kill-stats.changed",
   "loot.created",
   "loot.share-updated",
   "loot.snapshot",
