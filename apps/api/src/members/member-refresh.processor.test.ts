@@ -119,6 +119,30 @@ describe("member refresh processor", () => {
     ).toHaveBeenCalled();
   });
 
+  it("completes a refused refresh instead of retrying it", async () => {
+    const dependencies = makeDependencies();
+    dependencies.sync.syncMemberFromDiscord.mockReturnValue(
+      Effect.succeed({
+        member: null,
+        status: "DISCORD_HTTP_403",
+        nextRefreshAt: null,
+      }),
+    );
+
+    const result = await Effect.runPromise(
+      Effect.result(makeMemberRefreshProcessor(dependencies)(job)),
+    );
+
+    // A failed job is retried by BullMQ; Discord refuses every retry.
+    expect(Result.isSuccess(result)).toBe(true);
+    expect(
+      dependencies.diagnostics.recordMemberRefreshMetric,
+    ).toHaveBeenCalledWith({
+      outcome: "processed",
+      reason: "DISCORD_HTTP_403",
+    });
+  });
+
   it("respects the next refresh time while extending and finally releasing the user lock", async () => {
     const dependencies = makeDependencies();
     const now = Date.UTC(2026, 8, 4, 12);
