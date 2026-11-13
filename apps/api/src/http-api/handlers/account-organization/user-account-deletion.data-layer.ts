@@ -38,6 +38,7 @@ import {
 } from "#src/discord/discord-cache.util";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import {
+  CHARACTER_AURAS_CACHE_SCOPE,
   getAuthTokenCachePattern,
   getLegacyAuthTokenCacheKey,
   getMemberReadCacheScope,
@@ -306,6 +307,7 @@ export const makeUserAccountDeletion = (
         ports.invalidateCacheScopes(
           getUserLootlogConfigCacheScope(identity.discordId),
           getUserGuildPermissionsCacheScope(identity.discordId),
+          CHARACTER_AURAS_CACHE_SCOPE,
         ),
         ...removedMembers.map((member) =>
           invalidateRemovedMember(ports, member),
