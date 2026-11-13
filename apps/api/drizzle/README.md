@@ -1270,3 +1270,30 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS "LootNpc_npcSnapshotId_lootId_idx" ON "L
 
 The migration stops the deploy while the index is missing, then drops the old
 index. An older API revision keeps working with either index.
+
+## User feed record index
+
+`GET /users/@me/feed` selects the user's Organization loot records from the
+last 24 hours. `OrganizationLootRecord` had no index on `"createdAt"`, so the
+query bitmap-scanned every record of the user's Organizations and filtered the
+day out of them: on a local production copy, a member of ten Organizations
+(1.08M records, 1,909 of them recent) read 152k buffers and spent 400 ms of a
+470 ms query there. Production measured p50 430 ms and p99 2.3 s.
+
+`20261113183419_loot_record_created_at_brin` adds
+`OrganizationLootRecord_createdAt_brin_idx`, a BRIN index on `"createdAt"`
+(`pages_per_range = 16`, `autosummarize = on`). Records are appended in
+creation order, so the recent ones sit in a few hundred heap pages: the same
+query takes 110 ms and the index is 320 kB. A btree on
+`("guildId", "createdAt") WHERE "archivedAt" IS NULL` reached 67 ms but is
+748 MB. Ranges not yet summarized are always read, so a lagging summary costs
+time, never rows.
+
+Build it before the migration on a populated database, outside a transaction:
+
+```sql
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "OrganizationLootRecord_createdAt_brin_idx" ON "OrganizationLootRecord" USING brin ("createdAt") WITH (pages_per_range=16, autosummarize=on);
+```
+
+The migration stops the deploy while the index is missing. An older API
+revision keeps working with or without it.
