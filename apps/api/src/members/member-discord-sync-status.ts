@@ -36,15 +36,25 @@ function toDiscordHttpSyncStatus(statusCode: number): DiscordHttpSyncStatus {
   return `${DISCORD_HTTP_SYNC_STATUS_PREFIX}${statusCode}`;
 }
 
+/**
+ * A refresh that has not settled the member: stored access keeps serving
+ * while it lasts. A Discord refusal keeps the stored member too, although
+ * retrying it cannot succeed.
+ */
 export function isTransientMemberSyncStatus(
   status: MemberRefreshStatus,
 ): boolean {
   return (
     status === MEMBER_DISCORD_SYNC_STATUS.QUEUED ||
-    isRetryableMemberRefreshStatus(status)
+    isRetryableMemberRefreshStatus(status) ||
+    isDiscordRefusalSyncStatus(status)
   );
 }
 
+/**
+ * A failure another attempt can fix. Discord answers a refusal the same way
+ * until the member or the server changes, so it is not retried.
+ */
 export function isRetryableMemberRefreshStatus(
   status: MemberRefreshStatus,
 ): boolean {
@@ -53,7 +63,8 @@ export function isRetryableMemberRefreshStatus(
     status === MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE ||
     status === MEMBER_DISCORD_SYNC_STATUS.DISCORD_SERVICE_UNAVAILABLE ||
     status === MEMBER_DISCORD_SYNC_STATUS.ERROR ||
-    status.startsWith(DISCORD_HTTP_SYNC_STATUS_PREFIX)
+    (status.startsWith(DISCORD_HTTP_SYNC_STATUS_PREFIX) &&
+      !isDiscordRefusalSyncStatus(status))
   );
 }
 
@@ -83,10 +94,13 @@ export function getTransientMemberSyncStatus(error: unknown): MemberSyncStatus {
 
 /**
  * Discord is reachable and refused this member's request (for example 403),
- * so the failure belongs to the member, not to Discord or Lootlog.
+ * so the failure belongs to the member, not to Discord or Lootlog. A 408 is
+ * Lootlog's own request timeout, not a refusal.
  */
-export function isDiscordRefusalSyncStatus(status: MemberSyncStatus): boolean {
-  return /^DISCORD_HTTP_4\d\d$/.test(status);
+export function isDiscordRefusalSyncStatus(
+  status: MemberRefreshStatus,
+): boolean {
+  return /^DISCORD_HTTP_4\d\d$/.test(status) && status !== "DISCORD_HTTP_408";
 }
 
 // toDiscordRequestError keeps a Discord status it has no dedicated error for

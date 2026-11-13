@@ -8,6 +8,7 @@ import type {
 export type DiscordMemberRefreshMetricOutcome =
   | "queued"
   | "delayed"
+  | "refused"
   | "rate_limited"
   | "processed"
   | "failed"

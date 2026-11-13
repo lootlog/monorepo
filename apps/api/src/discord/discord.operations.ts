@@ -48,6 +48,14 @@ export const makeDiscordOperations = (
       readonly discordId: string;
     }) =>
       adapter("discord.guildMember", () => guildMember.getGuildMember(options)),
+    isGuildMemberRefused: (options: {
+      readonly guildId: string;
+      readonly userId: string;
+      readonly discordId: string;
+    }) =>
+      adapter("discord.guildMember.refused", () =>
+        guildMember.isGuildMemberRefused(options),
+      ),
     clearGuildMemberCache: (options: {
       readonly guildId: string;
       readonly userId: string;
