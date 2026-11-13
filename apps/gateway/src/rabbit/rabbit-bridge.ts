@@ -220,6 +220,12 @@ const consumerSpecs = [
     queue: "gateway-guilds-notifications-going",
     routingKey: RabbitRoutingKey.GUILDS_NOTIFICATIONS_GOING,
   },
+  // No retry or DLQ: a refresh hint; a lost one heals on the next kill or
+  // the statistics' own staleness.
+  {
+    queue: "gateway-users-kill-stats-changed",
+    routingKey: RabbitRoutingKey.USERS_KILL_STATS_CHANGED,
+  },
   retryable(
     "gateway-users-party-ready-room-updated",
     RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED,
@@ -574,9 +580,10 @@ export class RabbitBridge {
   private publishTo(
     discordId: string,
     event: Event,
+    options?: Parameters<RealtimeHub["publishToDiscord"]>[2],
   ): Effect.Effect<void, unknown> {
     return Effect.tryPromise({
-      try: () => this.hub.publishToDiscord(discordId, event),
+      try: () => this.hub.publishToDiscord(discordId, event, options),
       catch: (cause) => cause,
     });
   }
@@ -763,6 +770,13 @@ export class RabbitBridge {
             { v: 1, type: "reservation.changed", data },
           ),
         { concurrency: "unbounded", discard: true },
+      ),
+    // Only the Web app shows personal kill statistics.
+    [RabbitRoutingKey.USERS_KILL_STATS_CHANGED]: (data) =>
+      this.publishTo(
+        data.recipientDiscordId,
+        { v: 1, type: "kill-stats.changed", data: {} },
+        { recipientPlatform: "web-app" },
       ),
     [RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED]: (data) =>
       Effect.forEach(

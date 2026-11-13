@@ -503,6 +503,8 @@ export const ServerEvent = Schema.Union([
     "kills.changed",
     Schema.Struct({ guildId: Schema.NonEmptyString }),
   ),
+  // Sent only to the Web app of the user whose own kill statistics changed.
+  serverEvent("kill-stats.changed", Schema.Struct({})),
   serverEvent("loot.created", GuildLootCreatedEventV2),
   serverEvent("loot.share-updated", GuildLootShareUpdatedEventV2),
   serverEvent("loot.snapshot", LootSnapshotEvent),

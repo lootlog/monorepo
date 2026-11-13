@@ -104,6 +104,9 @@ export const makeKillCreation = (
   publishActivity: (
     input: KillInput & { readonly guildId: string },
   ) => Effect.Effect<void> = () => Effect.void,
+  publishPersonalStatsChanged: (
+    discordId: string,
+  ) => Effect.Effect<void> = () => Effect.void,
 ) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -728,7 +731,11 @@ export const makeKillCreation = (
 
       if (!committed) return { updated: 0 };
 
-      if (personalClaim) yield* invalidate(`kill-stats:user:${discordId}`);
+      if (personalClaim) {
+        yield* invalidate(`kill-stats:user:${discordId}`);
+        yield* publishPersonalStatsChanged(discordId).pipe(Effect.forkDetach);
+      }
+
       yield* Effect.forEach(
         targets,
         ({ guildId }) => invalidate(`kill-stats:guild:${guildId}`),

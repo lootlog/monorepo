@@ -32,6 +32,7 @@ import { LootStatsService } from "#src/loots/query/loot-stats.service";
 import { applicationLogger } from "#src/shared/application-logger";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer } from "effect";
 import { recordsDataLayer } from "#src/http-api/handlers/records/records.data-layer";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
@@ -166,6 +167,23 @@ export const recordsServicesLive = Layer.effect(
           },
           applicationLogger,
           makeGuildKillActivityPublisher(database, rabbit),
+          (recipientDiscordId) =>
+            rabbit
+              .publish({
+                exchange: "default",
+                routingKey: RabbitRoutingKey.USERS_KILL_STATS_CHANGED,
+                content: new TextEncoder().encode(
+                  JSON.stringify({ recipientDiscordId }),
+                ),
+              })
+              .pipe(
+                Effect.asVoid,
+                Effect.catch(() =>
+                  Effect.logWarning(
+                    "Personal kill statistics refresh hint failed",
+                  ),
+                ),
+              ),
         ),
         guildKillQueries: makeGuildKillQueries(killStatsPersistence, {
           getOrSetStale: (key, schema, load, freshSeconds) =>

@@ -22,7 +22,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("coalesces kill hints, refreshes active statistics without attributing kills, and leaves feed untouched", async () => {
+it("refreshes personal statistics on the user's own kill hints only, coalesced, and leaves feed untouched", async () => {
   vi.useFakeTimers();
 
   const client = new QueryClient({
@@ -57,13 +57,20 @@ it("coalesces kill hints, refreshes active statistics without attributing kills,
     ),
   });
 
+  // Another member's kill changes only Organization statistics.
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "kills.changed",
+      data: { guildId: "guild-1" },
+    }),
+  );
+  await act(() => vi.advanceTimersByTimeAsync(1_000));
+  expect(queryFn).not.toHaveBeenCalled();
+
   act(() => {
     for (let i = 0; i < 20; i++)
-      gateway.deliver({
-        v: 1,
-        type: "kills.changed",
-        data: { guildId: "guild-1" },
-      });
+      gateway.deliver({ v: 1, type: "kill-stats.changed", data: {} });
   });
   expect(queryFn).not.toHaveBeenCalled();
   await act(() => vi.advanceTimersByTimeAsync(1_000));
@@ -89,13 +96,7 @@ it("coalesces kill hints, refreshes active statistics without attributing kills,
   );
   await act(() => vi.advanceTimersByTimeAsync(1_000));
   expect(queryFn).toHaveBeenCalledTimes(2);
-  act(() =>
-    gateway.deliver({
-      v: 1,
-      type: "kills.changed",
-      data: { guildId: "guild-1" },
-    }),
-  );
+  act(() => gateway.deliver({ v: 1, type: "kill-stats.changed", data: {} }));
   unmount();
   await vi.advanceTimersByTimeAsync(1_000);
   expect(queryFn).toHaveBeenCalledTimes(2);

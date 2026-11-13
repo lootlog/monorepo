@@ -135,7 +135,15 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
         updatedAt: new Date(),
       }),
     );
-    const createKill = makeKillCreation(database, cache, logger);
+    const personalHints: string[] = [];
+
+    const createKill = makeKillCreation(
+      database,
+      cache,
+      logger,
+      undefined,
+      (discordId) => Effect.sync(() => personalHints.push(discordId)),
+    );
 
     const keyRequest = createKill("discord-1", payload).pipe(
       Effect.provideService(ForwardAuthIdentity, {
@@ -166,6 +174,9 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
       deduplicated: true,
       updated: 0,
     });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Only the one write that changed the user's own statistics refreshes them.
+    expect(personalHints).toEqual(["discord-1"]);
 
     for (const [table, kills] of [
       [userKillTotalTable, [1]],
