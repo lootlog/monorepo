@@ -269,6 +269,21 @@ it.each(["refetching", "invalidated"] as const)(
   },
 );
 
+it("skips timers of a character that has caught for no Lootlog for longer than the stale time", () => {
+  const fixture = createFixture();
+
+  queryClient.setQueryData(
+    configKey,
+    { "101": { catchingGuildIds: [] } },
+    { updatedAt: Date.now() - 10 * 60_000 },
+  );
+  fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
+  expect(fixture.requests).toHaveLength(0);
+  expect(skippedTimerReasons()).toEqual([
+    { reason: "no-catching-organization" },
+  ]);
+});
+
 it("submits while configuration is pending and does not replay", async () => {
   const fixture = createFixture();
   queryClient.clear();
