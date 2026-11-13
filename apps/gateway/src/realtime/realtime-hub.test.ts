@@ -151,7 +151,7 @@ describe("RealtimeHub federation", () => {
     const variants = [
       { name: "web-app", platform: "web-app", killStats: true },
       { name: "older web-app", platform: "web-app", killStats: false },
-      { name: "game", platform: "game", killStats: false },
+      { name: "game", platform: "game", killStats: true },
     ] as const;
 
     const targets = [local, remote].flatMap((hub, index) =>
