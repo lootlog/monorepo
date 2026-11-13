@@ -1,0 +1,91 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "48d5a4ff-8c3a-4c6a-be9d-abc8e47114a5",
+  "prevIds": [
+    "abad5dae-50b4-497f-bc2d-851270a2e1d5",
+    "d896e333-71b2-41bc-a85a-33d1fa5f2dee"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "LootNpc",
+        "LootNpc_npcSnapshotId_idx"
+      ],
+      "writes": [
+        "s|idx|public.LootNpc_npcSnapshotId_idx",
+        "n|idx|public.LootNpc_npcSnapshotId_idx",
+        "e|idx|public.LootNpc_npcSnapshotId_idx",
+        "n|rel|public.LootNpc_npcSnapshotId_idx"
+      ],
+      "reads": [
+        "e|tbl|public.LootNpc",
+        "n|sch|public",
+        "e|col|public.LootNpc.npcSnapshotId"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "LootNpc",
+        "LootNpc_npcSnapshotId_lootId_idx"
+      ],
+      "writes": [
+        "s|idx|public.LootNpc_npcSnapshotId_lootId_idx",
+        "n|idx|public.LootNpc_npcSnapshotId_lootId_idx",
+        "e|idx|public.LootNpc_npcSnapshotId_lootId_idx",
+        "n|rel|public.LootNpc_npcSnapshotId_lootId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.LootNpc",
+        "n|sch|public",
+        "n|col|public.LootNpc.npcSnapshotId",
+        "n|col|public.LootNpc.lootId"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "LootNpc",
+        "name": "LootNpc_npcSnapshotId_lootId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "npcSnapshotId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "lootId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"LootNpc_npcSnapshotId_idx\"]"
+    }
+  ]
+}

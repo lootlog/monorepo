@@ -320,7 +320,12 @@ export const lootNpcTable = pgTable(
   },
   (table) => [
     index("LootNpc_lootId_idx").on(table["lootId"]),
-    index("LootNpc_npcSnapshotId_idx").on(table["npcSnapshotId"]),
+    // Covers the loot list's NPC filter, which reads every loot of the chosen
+    // NPCs as an index-only scan; its prefix serves the snapshot lookups.
+    index("LootNpc_npcSnapshotId_lootId_idx").on(
+      table["npcSnapshotId"],
+      table["lootId"],
+    ),
     foreignKey({
       columns: [table["lootId"]],
       foreignColumns: [lootTable["id"]],
