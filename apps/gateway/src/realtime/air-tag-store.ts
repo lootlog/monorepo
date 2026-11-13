@@ -516,12 +516,16 @@ export type ScriptStore = {
 
 export type ThreatScope = Pick<AirTagScope, "guildId" | "world" | "mapId">;
 
-/** Keeps every key of one map on one cluster slot. */
-export const hashTag = (scope: ThreatScope): string =>
-  `{air-tag:${scope.guildId}:${scope.world}:${scope.mapId}}`;
+/** Keeps every key of one Organization, any-map interest included, on one slot. */
+const organizationTag = (organizationId: string): string =>
+  `{air-tag:${organizationId}}`;
+
+/** The key prefix of one map, which also identifies the map within a process. */
+export const mapKeyPrefix = (scope: ThreatScope): string =>
+  `${organizationTag(scope.guildId)}:${scope.world}:${scope.mapId}`;
 
 const scopeKeys = (scope: AirTagScope): [string, string, string] => {
-  const tag = hashTag(scope);
+  const tag = mapKeyPrefix(scope);
 
   return [`${tag}:targets`, `${tag}:expirations`, `${tag}:metadata`];
 };
@@ -530,10 +534,10 @@ const disabledKey = (scope: Pick<AirTagScope, "guildId" | "world">): string =>
   `air-tag:disabled:${scope.guildId}:${scope.world}`;
 
 const anyMapInterestKey = (organizationId: string): string =>
-  `{air-tag:${organizationId}}:any-map:replicas`;
+  `${organizationTag(organizationId)}:any-map:replicas`;
 
 const interestKey = (scope: ThreatScope): string =>
-  `${hashTag(scope)}:replicas`;
+  `${mapKeyPrefix(scope)}:replicas`;
 
 export const threatMapsKey = (guildId: string, world: string): string =>
   `air-tag:threat-maps:${guildId}:${world}`;
@@ -614,7 +618,7 @@ export const mergeObservations = (
     mapName: string;
   },
 ): Effect.Effect<MergeResult, RealtimeStoreError> => {
-  const tag = hashTag(scope);
+  const tag = mapKeyPrefix(scope);
 
   return storeCall("air-tag.merge", async () => {
     const result = await redis.command.eval(
@@ -701,7 +705,7 @@ export const readThreatMapIds = (
 
 /** One map's live threat list, empty when it has none. */
 export const loadMapThreat = (redis: ScriptStore, scope: ThreatScope) => {
-  const tag = hashTag(scope);
+  const tag = mapKeyPrefix(scope);
 
   return storeCall(
     "air-tag.threat-snapshot",
@@ -734,7 +738,7 @@ export const takeThreatFlush = (
   scope: ThreatScope,
   retry: boolean,
 ) => {
-  const tag = hashTag(scope);
+  const tag = mapKeyPrefix(scope);
 
   return storeCall("air-tag.threat-flush", async () => {
     const result = String(

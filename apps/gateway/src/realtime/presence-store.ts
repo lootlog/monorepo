@@ -65,8 +65,9 @@ const DELTA_FLUSH_INTERVAL_MS = 250;
 
 const REDIS_TTL_SECONDS = Math.ceil(PRESENCE_EXPIRY_MS / 1_000);
 
-// One call refreshes every Organization of a session: KEYS 1 is the expiry
-// index, then presence, metadata and Organization index per Organization.
+// One call refreshes a session in one Organization, so no call spans the keys of
+// two Organizations: KEYS 1 is the expiry index, then presence, metadata and
+// the Organization index.
 const REFRESH_PRESENCE = `
 -- presence:refresh
 for key = 2, #KEYS, 3 do
@@ -81,7 +82,7 @@ end
 return 1
 `;
 
-// One call removes a session from every Organization, with the same key layout.
+// One call removes a session from one Organization, with the same key layout.
 const REMOVE_PRESENCE = `
 -- presence:remove
 for key = 2, #KEYS, 3 do
@@ -470,42 +471,40 @@ export class PresenceStore {
   ) {
     if (organizationIds.length === 0) return Effect.void;
 
-    const keys = organizationIds.flatMap((organizationId) => [
-      presenceKey(organizationId, presence.sessionId),
-      metadataKey(organizationId, presence.sessionId),
-      indexKey(organizationId),
-    ]);
-
-    const members = organizationIds.flatMap((organizationId) => [
-      presenceKey(organizationId, presence.sessionId),
-      JSON.stringify([organizationId, presence.sessionId]),
-    ]);
-
     // Metadata lastSeen survives the payload TTL, so expiry still knows the
     // departure. A refresh restores the Organization and due indexes.
-    return storeCall("presence.refresh", () =>
-      this.redis.command
-        .eval(
-          REFRESH_PRESENCE,
-          1 + keys.length,
-          EXPIRY_DUE_INDEX,
-          ...keys,
-          JSON.stringify(presence),
-          REDIS_TTL_SECONDS,
-          JSON.stringify({
-            userId: presence.userId,
-            discordId,
-            presence: withoutLocation(presence),
-          }),
-          presence.lastSeen + PRESENCE_EXPIRY_MS,
-          ...members,
-        )
-        .then(() => {
-          if (!announce) return;
-
-          for (const organizationId of organizationIds)
-            this.deltas.queue(organizationId, { action: "upsert", presence });
-        }),
+    return Effect.forEach(
+      organizationIds,
+      (organizationId) =>
+        storeCall("presence.refresh", () =>
+          this.redis.command
+            .eval(
+              REFRESH_PRESENCE,
+              4,
+              EXPIRY_DUE_INDEX,
+              presenceKey(organizationId, presence.sessionId),
+              metadataKey(organizationId, presence.sessionId),
+              indexKey(organizationId),
+              JSON.stringify(presence),
+              REDIS_TTL_SECONDS,
+              JSON.stringify({
+                userId: presence.userId,
+                discordId,
+                presence: withoutLocation(presence),
+              }),
+              presence.lastSeen + PRESENCE_EXPIRY_MS,
+              presenceKey(organizationId, presence.sessionId),
+              JSON.stringify([organizationId, presence.sessionId]),
+            )
+            .then(() => {
+              if (announce)
+                this.deltas.queue(organizationId, {
+                  action: "upsert",
+                  presence,
+                });
+            }),
+        ),
+      { concurrency: "unbounded", discard: true },
     );
   }
 
@@ -517,35 +516,31 @@ export class PresenceStore {
   ): Effect.Effect<void, unknown> {
     if (organizationIds.length === 0) return Effect.void;
 
-    const keys = organizationIds.flatMap((organizationId) => [
-      presenceKey(organizationId, sessionId),
-      metadataKey(organizationId, sessionId),
-      indexKey(organizationId),
-    ]);
-
-    const members = organizationIds.flatMap((organizationId) => [
-      presenceKey(organizationId, sessionId),
-      JSON.stringify([organizationId, sessionId]),
-    ]);
-
-    return storeCall("presence.remove", () =>
-      this.redis.command
-        .eval(
-          REMOVE_PRESENCE,
-          1 + keys.length,
-          EXPIRY_DUE_INDEX,
-          ...keys,
-          ...members,
-        )
-        .then(() => {
-          for (const organizationId of organizationIds)
-            this.deltas.queue(organizationId, {
-              action: "remove",
-              userId,
-              discordId,
-              sessionId,
-            });
-        }),
+    return Effect.forEach(
+      organizationIds,
+      (organizationId) =>
+        storeCall("presence.remove", () =>
+          this.redis.command
+            .eval(
+              REMOVE_PRESENCE,
+              4,
+              EXPIRY_DUE_INDEX,
+              presenceKey(organizationId, sessionId),
+              metadataKey(organizationId, sessionId),
+              indexKey(organizationId),
+              presenceKey(organizationId, sessionId),
+              JSON.stringify([organizationId, sessionId]),
+            )
+            .then(() => {
+              this.deltas.queue(organizationId, {
+                action: "remove",
+                userId,
+                discordId,
+                sessionId,
+              });
+            }),
+        ),
+      { concurrency: "unbounded", discard: true },
     );
   }
 

@@ -25,7 +25,7 @@ import type {
  * one of them is. A batch costs the gateway and Dragonfly the same whatever it
  * carries, so coalescing wider is close to a proportional saving on a busy map.
  */
-export const AIR_TAG_BATCH_INTERVAL_MS = 500;
+export const AIR_TAG_BATCH_INTERVAL_MS = 1_000;
 
 export const AIR_TAG_HEARTBEAT_INTERVAL_MS = 5_000;
 
