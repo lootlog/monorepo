@@ -1,5 +1,8 @@
 import { selectCharacterCatchingGuildIds } from "#src/members/character-catching-guilds";
-import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
+import {
+  ForwardAuthIdentity,
+  requestApiKeyAccess,
+} from "#src/runtime/auth/forward-auth-identity";
 import {
   selectAccessibleGuilds,
   selectActiveGuildMembers,
@@ -8,7 +11,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { mapValues } from "es-toolkit";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect, Option, Schema } from "effect";
 import { activityFeedNpcCategory } from "@lootlog/domain/activity-feed";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcType, isDropSourceBossType } from "@lootlog/domain/npc-type";
@@ -104,6 +107,8 @@ export const makeKillCreation = (
   publishActivity: (
     input: KillInput & { readonly guildId: string },
   ) => Effect.Effect<void> = () => Effect.void,
+  publishPersonalStatsChanged: (userId: string) => Effect.Effect<void> = () =>
+    Effect.void,
 ) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -728,7 +733,16 @@ export const makeKillCreation = (
 
       if (!committed) return { updated: 0 };
 
-      if (personalClaim) yield* invalidate(`kill-stats:user:${discordId}`);
+      if (personalClaim) {
+        yield* invalidate(`kill-stats:user:${discordId}`);
+        const identity = yield* Effect.serviceOption(ForwardAuthIdentity);
+
+        if (Option.isSome(identity))
+          yield* publishPersonalStatsChanged(identity.value.userId).pipe(
+            Effect.forkDetach,
+          );
+      }
+
       yield* Effect.forEach(
         targets,
         ({ guildId }) => invalidate(`kill-stats:guild:${guildId}`),

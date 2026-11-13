@@ -1,0 +1,55 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "29df924b-6d0e-4670-a230-f23a0f4c8aba",
+  "prevIds": ["48d5a4ff-8c3a-4c6a-be9d-abc8e47114a5"],
+  "footprints": [
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OrganizationLootRecord",
+        "OrganizationLootRecord_createdAt_brin_idx"
+      ],
+      "writes": [
+        "s|idx|public.OrganizationLootRecord_createdAt_brin_idx",
+        "n|idx|public.OrganizationLootRecord_createdAt_brin_idx",
+        "e|idx|public.OrganizationLootRecord_createdAt_brin_idx",
+        "n|rel|public.OrganizationLootRecord_createdAt_brin_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OrganizationLootRecord",
+        "n|sch|public",
+        "n|col|public.OrganizationLootRecord.createdAt"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationLootRecord",
+        "name": "OrganizationLootRecord_createdAt_brin_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "pages_per_range=16, autosummarize=on",
+        "method": "brin",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

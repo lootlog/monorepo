@@ -389,6 +389,16 @@ export const organizationLootRecordTable = pgTable(
         table["lootId"].desc().nullsFirst(),
       )
       .where(sql`${table["archivedAt"]} IS NULL`),
+    // Serves the user feed's last-24-hours window. Records are appended in
+    // creation order, so the newest ones share a few hundred heap pages and a
+    // block-range index finds them for a few hundred kB, where a btree on
+    // (guildId, createdAt) costs 748 MB. Without either, the feed read every
+    // record of the user's Organizations: 152k buffers, 400 ms of a 470 ms
+    // query. autosummarize keeps the newest ranges summarized between
+    // vacuums; an unsummarized range is still read, never skipped.
+    index("OrganizationLootRecord_createdAt_brin_idx")
+      .using("brin", table["createdAt"])
+      .with({ pages_per_range: 16, autosummarize: "on" }),
     index("OrganizationLootRecord_archivedByMemberId_notnull_idx")
       .on(table["archivedByMemberId"])
       .where(sql`${table["archivedByMemberId"]} IS NOT NULL`),

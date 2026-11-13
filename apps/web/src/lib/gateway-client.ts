@@ -7,6 +7,7 @@ import {
   RealtimeEventListeners,
   unwrapOrganizationEvent,
 } from "@lootlog/client/realtime/event-listeners";
+import { KILL_STATS_FEATURE } from "@lootlog/protocol/realtime";
 import { GATEWAY_SOCKET_PATH, GATEWAY_URL } from "@/config/gateway";
 import {
   RealtimeClient,
@@ -90,7 +91,7 @@ const groupPresence = <TValue>(
 /** Server events delivered to listeners under their protocol type. */
 const FORWARDED_EVENT_TYPES = [
   "feed.entry",
-  "kills.changed",
+  "kill-stats.changed",
   "loot.created",
   "loot.share-updated",
   "loot.snapshot",
@@ -207,7 +208,9 @@ export class GatewayClient {
 
   /** Joins the signed-in user's Lootlogs; `join` follows once it succeeds. */
   join(): void {
-    void this.realtime.join({}).catch(() => undefined);
+    void this.realtime
+      .join({ features: [KILL_STATS_FEATURE] })
+      .catch(() => undefined);
   }
 
   async fetchPresence(guildId: string): Promise<OrganizationPresenceResponse> {
