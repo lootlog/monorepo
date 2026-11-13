@@ -130,6 +130,17 @@ export class DiscordGuildMemberClient {
     }
   }
 
+  /** Discord refused this member recently, so asking again would be refused. */
+  async isGuildMemberRefused(options: {
+    guildId: string;
+    userId: string;
+    discordId: string;
+  }): Promise<boolean> {
+    return Boolean(
+      await this.redisService.get(getGuildMemberForbiddenCacheKey(options)),
+    );
+  }
+
   async clearGuildMemberCache(options: {
     guildId: string;
     userId: string;
