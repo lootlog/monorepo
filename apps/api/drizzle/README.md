@@ -1242,3 +1242,31 @@ a returning member is reactivated survive.
 Apply the migration before deploying the API. Rolling the API back leaves
 pending purges unprocessed and their compressed rows in place; process them by
 rolling forward again.
+
+## Loot NPC filter index
+
+The loot list's NPC filter used a correlated `EXISTS` per scanned record. A
+rarely looted NPC on a busy world therefore walked the Organization's whole
+world history: on a local production copy, a legendary page of four titan
+snapshots (17,056 `LootNpc` rows) on the largest thantos Organization (123,894
+records) read 1.02M buffers in 2.7 s. The filter now reads the chosen NPCs'
+loot ids first (`"lootId" = ANY(ARRAY(SELECT ...))`) and probes the records by
+key: 12 ms warm. The NPC summary of the same filters went from 1.4–2.2 s to
+4–33 ms.
+
+`20261113131207_loot_npc_snapshot_loot_index` replaces
+`LootNpc_npcSnapshotId_idx` with `LootNpc_npcSnapshotId_lootId_idx` on
+`("npcSnapshotId", "lootId")`, so that read is index-only. Without it the most
+looted NPC (231k rows) fetched 77k heap blocks and an unfiltered page took
+170–330 ms instead of 15–25 ms; the previous form needed 1 ms there, because
+its descending scan stops early when the NPC is dense. The index is 424 MB
+instead of 132 MB locally: the single-column index deduplicates its keys.
+
+Build it before the migration on a populated database, outside a transaction:
+
+```sql
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "LootNpc_npcSnapshotId_lootId_idx" ON "LootNpc" ("npcSnapshotId","lootId");
+```
+
+The migration stops the deploy while the index is missing, then drops the old
+index. An older API revision keeps working with either index.
