@@ -246,7 +246,7 @@ export const memberServicesLive = Layer.effect(
           );
 
         const recordMetric = (options: {
-          readonly outcome: "delayed" | "queued" | "rate_limited";
+          readonly outcome: "delayed" | "queued" | "refused" | "rate_limited";
           readonly reason: string;
         }) => adapter(() => diagnostics.recordMemberRefreshMetric(options));
 
@@ -255,6 +255,7 @@ export const memberServicesLive = Layer.effect(
           memberRefreshQueue,
           {
             nextRefreshAt,
+            isRefused: discord.isGuildMemberRefused,
             recordMetric,
             getLock: (key) => adapter(() => redis.get(key)),
             setLock: (key, owner, ttl) =>

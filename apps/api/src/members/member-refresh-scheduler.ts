@@ -36,8 +36,13 @@ export interface MemberRefreshSchedulerPorts {
   readonly nextRefreshAt: (
     userId: string,
   ) => Effect.Effect<Date | null, unknown>;
+  readonly isRefused: (options: {
+    readonly discordId: string;
+    readonly guildId: string;
+    readonly userId: string;
+  }) => Effect.Effect<boolean, unknown>;
   readonly recordMetric: (options: {
-    readonly outcome: "delayed" | "queued";
+    readonly outcome: "delayed" | "queued" | "refused";
     readonly reason: string;
   }) => Effect.Effect<unknown, unknown>;
   readonly getLock: (key: string) => Effect.Effect<string | null, unknown>;
@@ -83,7 +88,12 @@ const errorCode = (error: unknown) =>
 
 export const makeMemberRefreshScheduler = (
   logger: Logger,
-  queue: BullQueue<MemberRefreshJobData>,
+  queue: {
+    readonly getJob: BullQueue<MemberRefreshJobData>["getJob"];
+    readonly add: (
+      ...args: Parameters<BullQueue<MemberRefreshJobData>["add"]>
+    ) => Promise<void | Job<MemberRefreshJobData>>;
+  },
   ports: MemberRefreshSchedulerPorts,
 ) => {
   const bull = <A>(operation: string, run: () => Promise<A>) =>
@@ -156,6 +166,14 @@ export const makeMemberRefreshScheduler = (
   const enqueueRefresh = Effect.fn("members.refresh.enqueue")(function* (
     data: MemberRefreshJobData,
   ) {
+    // Discord answers a refused member the same way until the refusal
+    // expires, so a job queued now would only repeat the refusal.
+    if (yield* ports.isRefused(data)) {
+      yield* ports.recordMetric({ outcome: "refused", reason: data.reason });
+
+      return { queued: false, nextRefreshAt: null };
+    }
+
     const nextRefreshAt = yield* ports.nextRefreshAt(data.userId);
 
     const delay = nextRefreshAt
