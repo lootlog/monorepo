@@ -143,6 +143,9 @@ export const prepareSourceEventVisibility = (
     // API keys never read it; `canReadApiKey` already refused them.
     if (event.type === "notification.volunteer") return true;
 
+    // A bundle loaded before the event existed would reject it and disconnect.
+    if (event.type === "kill-stats.changed") return session.killStats === true;
+
     if (!canReadNpc(session, guild)) return false;
 
     switch (event.type) {

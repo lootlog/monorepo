@@ -354,13 +354,8 @@ export class RealtimeHub {
     await this.redis.publish(message, frames);
   }
 
-  async publishToDiscord(
-    discordId: string,
-    event: Event,
-    options: { readonly recipientPlatform?: "game" | "web-app" } = {},
-  ): Promise<void> {
+  async publishToDiscord(discordId: string, event: Event): Promise<void> {
     const { message, prepared, frames } = this.createFederatedMessage({
-      ...options,
       discordId,
       frame: event,
     });

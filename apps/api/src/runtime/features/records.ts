@@ -167,13 +167,13 @@ export const recordsServicesLive = Layer.effect(
           },
           applicationLogger,
           makeGuildKillActivityPublisher(database, rabbit),
-          (recipientDiscordId) =>
+          (recipientUserId) =>
             rabbit
               .publish({
                 exchange: "default",
                 routingKey: RabbitRoutingKey.USERS_KILL_STATS_CHANGED,
                 content: new TextEncoder().encode(
-                  JSON.stringify({ recipientDiscordId }),
+                  JSON.stringify({ recipientUserId }),
                 ),
               })
               .pipe(

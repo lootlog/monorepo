@@ -199,7 +199,7 @@ const PartyReadyRoomUpdated = Schema.Struct({
 // A refresh hint for the one user whose personal kill statistics a kill
 // changed. Kills of other Organization members never change them.
 const UserKillStatsChanged = Schema.Struct({
-  recipientDiscordId: Schema.NonEmptyString,
+  recipientUserId: Schema.NonEmptyString,
 });
 
 const NotificationVolunteer = Schema.Struct({

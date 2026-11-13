@@ -142,7 +142,14 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
       cache,
       logger,
       undefined,
-      (discordId) => Effect.sync(() => personalHints.push(discordId)),
+      (userId) => Effect.sync(() => personalHints.push(userId)),
+    );
+
+    const personalRequest = createKill("discord-1", payload).pipe(
+      Effect.provideService(ForwardAuthIdentity, {
+        userId: "user",
+        discordId: "discord-1",
+      }),
     );
 
     const keyRequest = createKill("discord-1", payload).pipe(
@@ -163,10 +170,10 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
     expect(
       await boundary.run(database.select().from(userKillBucketTable)),
     ).toEqual([]);
-    expect(await boundary.run(createKill("discord-1", payload))).toEqual({
+    expect(await boundary.run(personalRequest)).toEqual({
       updated: 1,
     });
-    expect(await boundary.run(createKill("discord-1", payload))).toEqual({
+    expect(await boundary.run(personalRequest)).toEqual({
       deduplicated: true,
       updated: 0,
     });
@@ -176,7 +183,7 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
     });
     await new Promise((resolve) => setTimeout(resolve, 0));
     // Only the one write that changed the user's own statistics refreshes them.
-    expect(personalHints).toEqual(["discord-1"]);
+    expect(personalHints).toEqual(["user"]);
 
     for (const [table, kills] of [
       [userKillTotalTable, [1]],
