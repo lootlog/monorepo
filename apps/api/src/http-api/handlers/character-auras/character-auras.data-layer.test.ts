@@ -5,7 +5,10 @@ import { makeUserAccountDeletion } from "../account-organization/user-account-de
 import { recordMargonemAccountVerification } from "#src/margonem-accounts/margonem-accounts";
 import type { CharacterAurasChanged } from "@lootlog/schema/character-aura";
 import type { CharacterAurasResponse } from "#src/contracts/character-auras/schemas";
-import { makeCharacterAurasData } from "./character-auras.data-layer.js";
+import {
+  makeCharacterAurasData,
+  type CharacterAuraHolders,
+} from "./character-auras.data-layer.js";
 
 const boundaries: Array<Awaited<ReturnType<typeof createDatabaseBoundary>>> =
   [];
@@ -249,55 +252,81 @@ describe("character auras", () => {
     });
   });
 
-  it("serves a stored list until a write changes who shows which aura", async () => {
+  it("serves stored reads until a write changes who shows which aura", async () => {
     const { boundary, events, verify } = await setup(["admin"]);
 
     await verify("admin", "202");
     await verify("player", "101");
 
-    // Keeps the list until told to forget it, as the shared cache does.
-    let stored: CharacterAurasResponse | undefined;
+    // Keeps each read until told to forget it, as the shared cache does.
+    let list: CharacterAurasResponse | undefined;
+    let holders: CharacterAuraHolders | undefined;
 
     const lists = () =>
       boundary.run(
         Effect.flatMap(
           makeCharacterAurasData(["admin"], events, {
-            read: (load) =>
-              stored
-                ? Effect.succeed(stored)
-                : Effect.tap(load, (list) =>
-                    Effect.sync(() => void (stored = list)),
+            list: (load) =>
+              list
+                ? Effect.succeed(list)
+                : Effect.tap(load, (loaded) =>
+                    Effect.sync(() => void (list = loaded)),
                   ),
-            invalidate: Effect.sync(() => void (stored = undefined)),
+            holders: (load) =>
+              holders
+                ? Effect.succeed(holders)
+                : Effect.tap(load, (loaded) =>
+                    Effect.sync(() => void (holders = loaded)),
+                  ),
+            invalidate: Effect.sync(() => {
+              list = undefined;
+              holders = undefined;
+            }),
           }),
           (data) =>
             Effect.gen(function* () {
-              const seen = [yield* data.getAuras()];
+              const see = Effect.all([
+                Effect.map(data.getAuras(), ({ auras }) => auras),
+                Effect.map(
+                  data.getOwnAura("player"),
+                  ({ auraId, canChange }) => ({ auraId, canChange }),
+                ),
+              ]);
+
+              const seen = [yield* see];
 
               yield* data.updateOwnAura("admin", "void");
-              seen.push(yield* data.getAuras());
+              seen.push(yield* see);
               yield* data.grantAuras("admin", "101");
+              seen.push(yield* see);
               yield* data.updateOwnAura("player", "frost");
-              seen.push(yield* data.getAuras());
+              seen.push(yield* see);
               yield* data.revokeAuras("admin", "101");
-              seen.push(yield* data.getAuras());
+              seen.push(yield* see);
               yield* data.updateOwnAura("admin", null);
-              seen.push(yield* data.getAuras());
+              seen.push(yield* see);
 
-              return seen.map(({ auras }) => auras);
+              return seen;
             }),
         ),
       );
 
+    const none = { auraId: null, canChange: false };
+    const granted = { auraId: null, canChange: true };
+
     expect(await lists()).toEqual([
-      [],
-      [{ gameAccountId: "202", auraId: "void" }],
+      [[], none],
+      [[{ gameAccountId: "202", auraId: "void" }], none],
+      [[{ gameAccountId: "202", auraId: "void" }], granted],
       [
-        { gameAccountId: "101", auraId: "frost" },
-        { gameAccountId: "202", auraId: "void" },
+        [
+          { gameAccountId: "101", auraId: "frost" },
+          { gameAccountId: "202", auraId: "void" },
+        ],
+        { auraId: "frost", canChange: true },
       ],
-      [{ gameAccountId: "202", auraId: "void" }],
-      [],
+      [[{ gameAccountId: "202", auraId: "void" }], none],
+      [[], none],
     ]);
   });
 

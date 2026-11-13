@@ -42,18 +42,35 @@ export interface CharacterAurasEvents {
 }
 
 /**
- * Holds the list every Game client reads at startup. The list is the same for
- * every reader, so one stored copy serves them all.
+ * Every stored aura and every grant. Both belong to a handful of Users, so
+ * one copy answers each startup, including the usual one with neither.
  */
-export interface CharacterAurasListCache {
-  readonly read: <E>(
+export const CharacterAuraHolders = Schema.Struct({
+  auras: Schema.Array(
+    Schema.Struct({ userId: Schema.String, auraId: Schema.String }),
+  ),
+  grantedUserIds: Schema.Array(Schema.String),
+});
+
+export type CharacterAuraHolders = typeof CharacterAuraHolders.Type;
+
+/**
+ * Holds what every Game client reads at startup. Both reads are the same for
+ * every reader, so one stored copy of each serves them all.
+ */
+export interface CharacterAurasCache {
+  readonly list: <E>(
     load: Effect.Effect<CharacterAurasResponse, E>,
   ) => Effect.Effect<CharacterAurasResponse, E>;
+  readonly holders: <E>(
+    load: Effect.Effect<CharacterAuraHolders, E>,
+  ) => Effect.Effect<CharacterAuraHolders, E>;
   readonly invalidate: Effect.Effect<void>;
 }
 
-const uncachedList: CharacterAurasListCache = {
-  read: (load) => load,
+const uncached: CharacterAurasCache = {
+  list: (load) => load,
+  holders: (load) => load,
   invalidate: Effect.void,
 };
 
@@ -67,7 +84,7 @@ const uncachedList: CharacterAurasListCache = {
 export const makeCharacterAurasData = (
   adminUserIds: ReadonlyArray<string>,
   events: CharacterAurasEvents,
-  listCache: CharacterAurasListCache = uncachedList,
+  cache: CharacterAurasCache = uncached,
 ) =>
   Effect.gen(function* () {
     const database = yield* ApiDatabase;
@@ -126,6 +143,21 @@ export const makeCharacterAurasData = (
     const canChange = (userId: string) =>
       admins.has(userId) ? Effect.succeed(true) : isGranted(userId);
 
+    const holders = cache.holders(
+      Effect.all({
+        auras: database
+          .select({
+            userId: userCharacterAuraTable.userId,
+            auraId: userCharacterAuraTable.auraId,
+          })
+          .from(userCharacterAuraTable),
+        grantedUserIds: database
+          .select({ userId: userCharacterAuraGrantTable.userId })
+          .from(userCharacterAuraGrantTable)
+          .pipe(Effect.map((rows) => rows.map((row) => row.userId))),
+      }),
+    );
+
     /**
      * Only admins grant. The account names the User who proved to play it
      * last, the same User whose aura shows on it.
@@ -165,13 +197,11 @@ export const makeCharacterAurasData = (
         });
       }).pipe(ignorePublicationFailure);
 
+    // Writes check access against the database; this read shows it.
     const getOwnAura = (userId: string) =>
       Effect.gen(function* () {
-        const [aura] = yield* database
-          .select({ auraId: userCharacterAuraTable.auraId })
-          .from(userCharacterAuraTable)
-          .where(eq(userCharacterAuraTable.userId, userId))
-          .limit(1);
+        const { auras, grantedUserIds } = yield* holders;
+        const aura = auras.find((holder) => holder.userId === userId);
 
         const auraId =
           aura && isCharacterAuraId(aura.auraId) ? aura.auraId : null;
@@ -180,7 +210,7 @@ export const makeCharacterAurasData = (
 
         return {
           auraId,
-          canChange: yield* canChange(userId),
+          canChange: admins.has(userId) || grantedUserIds.includes(userId),
           canGrant: admins.has(userId),
           gameAccountIds: accounts.map((account) => account.id),
         };
@@ -188,7 +218,7 @@ export const makeCharacterAurasData = (
 
     return CharacterAurasData.of({
       getAuras: () =>
-        listCache.read(
+        cache.list(
           database
             .select({
               gameAccountId: auraPlayers.accountId,
@@ -238,7 +268,7 @@ export const makeCharacterAurasData = (
               .delete(userCharacterAuraTable)
               .where(eq(userCharacterAuraTable.userId, userId))
               .pipe(Effect.mapError(operationError));
-            yield* listCache.invalidate;
+            yield* cache.invalidate;
             yield* announce(userId, null);
 
             return yield* getOwnAura(userId);
@@ -259,7 +289,7 @@ export const makeCharacterAurasData = (
               set: { auraId, updatedAt },
             })
             .pipe(Effect.mapError(operationError));
-          yield* listCache.invalidate;
+          yield* cache.invalidate;
           yield* announce(userId, auraId);
 
           return yield* getOwnAura(userId);
@@ -276,7 +306,7 @@ export const makeCharacterAurasData = (
             .onConflictDoNothing({ target: userCharacterAuraGrantTable.userId })
             .pipe(Effect.mapError(operationError));
           // A stored aura starts to show once its User is granted.
-          yield* listCache.invalidate;
+          yield* cache.invalidate;
         }),
       // An admin keeps access, and the aura with it, while listed.
       revokeAuras: (callerUserId, gameAccountId) =>
@@ -298,7 +328,7 @@ export const makeCharacterAurasData = (
               }),
             )
             .pipe(Effect.mapError(operationError));
-          yield* listCache.invalidate;
+          yield* cache.invalidate;
 
           if (!admins.has(userId)) yield* announce(userId, null);
         }),
@@ -319,9 +349,9 @@ export const makeCharacterAurasData = (
 export const characterAurasDataLayer = (
   adminUserIds: ReadonlyArray<string>,
   events: CharacterAurasEvents,
-  listCache: CharacterAurasListCache,
+  cache: CharacterAurasCache,
 ) =>
   Layer.effect(
     CharacterAurasData,
-    makeCharacterAurasData(adminUserIds, events, listCache),
+    makeCharacterAurasData(adminUserIds, events, cache),
   );

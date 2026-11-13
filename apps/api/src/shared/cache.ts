@@ -107,3 +107,6 @@ export function getEventWrappedCachePattern(
 export function getLootListCacheScope(guildId: string): string {
   return `loots:list:${guildId}`;
 }
+
+// Every aura and aura grant write, account deletion included, invalidates it.
+export const CHARACTER_AURAS_CACHE_SCOPE = "character-auras:list";
