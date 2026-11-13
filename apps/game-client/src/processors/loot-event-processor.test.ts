@@ -345,12 +345,18 @@ it("submits different loot effects that share an event id", async () => {
 
 // The API rejects loot from a character that catches for no Organization;
 // submitting it only produces a 400 response.
-it.each(["no Organization", "another character only"] as const)(
+it.each([
+  "no Organization",
+  "no Organization for longer than the stale time",
+  "another character only",
+] as const)(
   "skips battle and dialog loot while the character catches for %s",
   (whitelist) => {
     const fixture = createFixture();
 
     if (whitelist === "no Organization") seedCatchingGuildIds([]);
+    else if (whitelist.startsWith("no Organization for longer"))
+      seedCatchingGuildIds([], { updatedAt: Date.now() - 10 * 60_000 });
     else
       queryClient.setQueryData(configKey, {
         "999": { catchingGuildIds: ["guild-1"] },
@@ -393,12 +399,6 @@ it.each<[string, () => Promise<void>]>([
         })
         .execute(undefined);
       await waitFor(() => expect(queryClient.isMutating()).toBe(1));
-    },
-  ],
-  [
-    "is older than its stale time",
-    async () => {
-      seedCatchingGuildIds([], { updatedAt: Date.now() - 60_000 });
     },
   ],
   [

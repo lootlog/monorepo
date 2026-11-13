@@ -46,6 +46,9 @@ export const useLootlogCharactersConfig = ({ enabled = true } = {}) => {
   );
 };
 
+/** A failed save's rollback stores the earlier data stamped as never loaded. */
+const UNCONFIRMED_UPDATED_AT = 0;
+
 const NO_ORGANIZATIONS: readonly string[] = [];
 
 /**
@@ -69,31 +72,40 @@ export const useCurrentCharacterCatchingGuildIds = ():
 
 /**
  * The catching scope of a character outside React. A loaded configuration
- * without this character catches for none. A pending, failed or older load,
- * a save still in flight, or a failed save's rollback (stored as outdated),
- * none of which the API has confirmed, leaves the scope unknown
- * (`undefined`), so callers defer to the API: it may already know a scope
- * this cache has not seen.
+ * without this character catches for none. A pending or failed load, a save
+ * still in flight, or a failed save's rollback (stored as outdated), none of
+ * which the API has confirmed (stamped as never loaded), leaves the scope unknown (`undefined`), so
+ * callers defer to the API: it may already know a scope this cache has not
+ * seen. An older load stays authoritative, because the API rejects every
+ * report of a character that catches for none; a read past the stale time
+ * refreshes it in the background instead.
  */
 export const getFreshCharacterCatchingGuildIds = (
   accountId: string,
   characterId: string,
 ): readonly string[] | undefined => {
+  const queryKey =
+    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+      accountId,
+    });
+
   const state =
     queryClient.getQueryState<UserLootlogConfigAccountResponseDtoOutput>(
-      getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
-        accountId,
-      }),
+      queryKey,
     );
 
   if (
     state?.status !== "success" ||
-    Date.now() - state.dataUpdatedAt >= CHARACTERS_CONFIG_STALE_TIME ||
+    state.dataUpdatedAt === UNCONFIRMED_UPDATED_AT ||
     queryClient.isMutating({
       mutationKey: LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY,
     }) > 0
   ) {
     return undefined;
+  }
+
+  if (Date.now() - state.dataUpdatedAt >= CHARACTERS_CONFIG_STALE_TIME) {
+    void queryClient.invalidateQueries({ queryKey, refetchType: "active" });
   }
 
   return state.data?.[characterId]?.catchingGuildIds ?? NO_ORGANIZATIONS;
