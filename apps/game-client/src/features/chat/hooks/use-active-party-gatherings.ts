@@ -65,6 +65,11 @@ export function useActivePartyGatherings() {
       !!world &&
       areVisibleGuildsResolved,
     staleTime: 0,
+    // The chat window unmounts its gathering bar while closed. The always
+    // mounted character switch keeps the cache live through socket pushes, so
+    // a remounting observer must not refetch; a rejoin still does because
+    // `enabled` turns on again while the data is stale.
+    refetchOnMount: false,
   });
 
   // oxlint-disable-next-line react-doctor/effect-needs-cleanup -- Cleanup removes every listener with the same event and handler, including the events loop.
