@@ -3021,7 +3021,7 @@ describe("realtime Dragonfly integration", () => {
 
       // A lapsed registration returns with the next refresh while a socket still follows the map.
       await first.store.command.del(
-        "{air-tag:organization-1:classic:11}:replicas",
+        "{air-tag:organization-1}:classic:11:replicas",
       );
       await reportSolo(3);
       await Bun.sleep(100);
