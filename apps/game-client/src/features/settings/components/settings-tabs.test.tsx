@@ -279,13 +279,10 @@ describe("SettingsTabs manifest coverage", () => {
     );
 
     // The aura subsection shows only to Users who may choose an aura; the
-    // navigation reads the app's client, the panel the harness's.
-    const ownAura = {
-      auras: [],
-      canChange: true,
-      personalAuraIds: [],
-      canGrant: false,
-    };
+    // navigation reads the app's client, the panel the harness's. The answer
+    // is an older API's, without `personalAuraIds`: a new Game client meets
+    // it while the API is still being deployed.
+    const ownAura = { auras: [], canChange: true, canGrant: false };
 
     for (const client of [harness.queryClient, queryClient]) {
       client.setQueryData(

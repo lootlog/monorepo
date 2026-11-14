@@ -71,8 +71,9 @@ export const CharacterAuraSettings = () => {
   const mayChoose = (id: CharacterAuraId) => {
     if (isAdminCharacterAuraId(id)) return own?.canGrant ?? false;
 
+    // An API from before personal auras, or a response it stored, has no list.
     if (isPersonalCharacterAuraId(id))
-      return own?.personalAuraIds.includes(id) ?? false;
+      return own?.personalAuraIds?.includes(id) ?? false;
 
     return own?.canChange ?? false;
   };
