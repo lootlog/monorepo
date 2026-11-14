@@ -962,8 +962,10 @@ export class Aura {
     const fx = this.preset.fx;
     const [light, mid] = this.rgb.tones;
 
-    if (fx.includes("power-flame") && !front)
-      drawPowerFire(ctx, place, this.tick, this.burst, intensity);
+    const { fire } = this.preset;
+
+    if (fire && !front)
+      drawPowerFire(ctx, place, this.tick, this.burst, intensity, fire);
 
     if (fx.includes("clockwork") && !front)
       drawTimeEchoes(
@@ -2510,7 +2512,7 @@ export class Aura {
 
   private drawBolts(place: AuraPlacement, intensity: number): void {
     const ctx = this.lit;
-    const mid = this.rgb.tones[1];
+    const mid = this.preset.fire?.bolt ?? this.rgb.tones[1];
 
     for (const bolt of this.bolts) {
       const fade = bolt.age < TICK ? 1 : 0.6;

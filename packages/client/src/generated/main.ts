@@ -118,6 +118,9 @@ export const CharacterAuraResponseDtoAuraId = {
   architect: 'architect',
   absolute: 'absolute',
   ascendant: 'ascendant',
+  ascendant2: 'ascendant2',
+  ascendant3: 'ascendant3',
+  ascendant4: 'ascendant4',
 } as const;
 
 export interface CharacterAuraResponseDto {
@@ -177,6 +180,9 @@ export const UpdateOwnCharacterAuraDtoAuraId = {
   architect: 'architect',
   absolute: 'absolute',
   ascendant: 'ascendant',
+  ascendant2: 'ascendant2',
+  ascendant3: 'ascendant3',
+  ascendant4: 'ascendant4',
 } as const;
 
 export interface UpdateOwnCharacterAuraDto {

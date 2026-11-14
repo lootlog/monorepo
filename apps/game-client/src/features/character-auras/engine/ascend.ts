@@ -27,24 +27,28 @@ function surge(burst: number): number {
   return (1 - (burst - POWER_RELEASE) / (1 - POWER_RELEASE)) ** 1.5 * 0.9;
 }
 
-/** Spikes round the fire, from the ground on one side over the top to the other. */
-const SPIKES = 23;
+/** How one of the warrior auras' fires looks. */
+export interface PowerFire {
+  /** Its size against the first one's. */
+  scale: number;
+  /** Spikes round it, from the ground on one side over the top to the other. */
+  spikes: number;
+  /** Its colours, outside in: the faint bloom, the edge, the body and the white-hot core. */
+  colors: readonly [Rgb, Rgb, Rgb, Rgb];
+  /** The glow of the lightning crawling over it, when it has any. */
+  bolt?: Rgb;
+}
 
 /**
  * The fire's shells, outside in: how far each reaches, how long its spikes are and how
  * solid it is. The outermost is a faint bloom; the rest are opaque.
  */
 const SHELLS = [
-  { reach: 1.1, spike: 1.15, alpha: 0.3, color: [255, 150, 20] },
-  { reach: 1, spike: 1, alpha: 1, color: [255, 180, 30] },
-  { reach: 0.86, spike: 0.74, alpha: 1, color: [255, 234, 90] },
-  { reach: 0.68, spike: 0.42, alpha: 1, color: [255, 253, 222] },
-] as const satisfies readonly {
-  reach: number;
-  spike: number;
-  alpha: number;
-  color: Rgb;
-}[];
+  { reach: 1.1, spike: 1.15, alpha: 0.3 },
+  { reach: 1, spike: 1, alpha: 1 },
+  { reach: 0.86, spike: 0.74, alpha: 1 },
+  { reach: 0.68, spike: 0.42, alpha: 1 },
+] as const;
 
 /**
  * The fire behind the character, as anime draws it: one solid shape more than twice the
@@ -58,35 +62,40 @@ export function drawPowerFire(
   tick: number,
   burst: number,
   intensity: number,
+  fire: PowerFire,
 ): void {
   const { bounds } = place.silhouette;
+  const { spikes } = fire;
   const grow = 1 + surge(burst);
   const cx = place.x + bounds.x + bounds.w / 2;
   const base = Math.round(place.feetY) + 3;
-  const rx = (bounds.w * 0.95 + 10) * (1 + surge(burst) * 0.5);
-  const ry = bounds.h * 1.05 * grow;
+  const rx = (bounds.w * 0.95 + 10) * fire.scale * (1 + surge(burst) * 0.5);
+  const ry = bounds.h * 1.05 * fire.scale * grow;
   const cy = base - ry * 0.82;
   // From just under the left flank, over the top, to just under the right one.
   const from = Math.PI - 0.6;
   const sweep = Math.PI + 1.2;
   const rng = mulberry32(tick * 7919 + 13);
   // One set of spikes for every shell, so the shells stay nested.
-  const lengths = Array.from({ length: SPIKES }, () => 0.5 + rng() * 0.8);
-  const leans = Array.from({ length: SPIKES }, () => (rng() - 0.5) * 0.6);
+  const lengths = Array.from({ length: spikes }, () => 0.5 + rng() * 0.8);
+  const leans = Array.from({ length: spikes }, () => (rng() - 0.5) * 0.6);
   ctx.globalCompositeOperation = "source-over";
 
-  for (const shell of SHELLS) {
+  for (const [index, shell] of SHELLS.entries()) {
     ctx.globalAlpha = Math.min(1, shell.alpha * intensity);
-    ctx.fillStyle = rgba(shell.color, 1);
+    ctx.fillStyle = rgba(fire.colors[index] ?? fire.colors[3], 1);
     ctx.beginPath();
     ctx.moveTo(cx - rx * shell.reach * 0.75, base);
 
-    for (let i = 0; i < SPIKES; i++) {
-      const angle = from + ((i + 0.5) / SPIKES) * sweep;
-      const half = (sweep / SPIKES) * 0.5;
+    for (let i = 0; i < spikes; i++) {
+      const angle = from + ((i + 0.5) / spikes) * sweep;
+      const half = (sweep / spikes) * 0.5;
       // How near the top the spike is: those there are the longest.
       const top = Math.max(0, -Math.sin(angle));
-      const length = (12 + 34 * top) * (lengths[i] ?? 1) * shell.spike * grow;
+
+      const length =
+        (12 + 34 * top) * (lengths[i] ?? 1) * shell.spike * fire.scale * grow;
+
       // Every spike is swept upwards, as fire is, not straight out.
       const outX = Math.cos(angle) + (leans[i] ?? 0);
       const outY = Math.sin(angle) - 1.2;
