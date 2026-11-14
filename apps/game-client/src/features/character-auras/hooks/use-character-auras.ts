@@ -23,7 +23,11 @@ import { useSettingsStore } from "@/store/settings.store";
 import { canvasAuraRenderer } from "../canvas-aura-surface";
 import { applyCharacterAuraChanges } from "../character-aura-changes";
 import { HERO_AURA_KEY } from "../character-aura-renderer";
-import { resolveCharacterAuraTargets } from "../character-aura-targets";
+import {
+  characterAuraKey,
+  ownAuraOf,
+  resolveCharacterAuraTargets,
+} from "../character-aura-targets";
 import { auraMark, CharacterAuraTooltip } from "../engine/tooltip";
 import { legacyAuraRenderer } from "../legacy-aura-surface";
 import { NEARBY_AURA_LIMIT, resolveMapAuraMode } from "../map-aura-mode";
@@ -37,7 +41,7 @@ const AURAS_REFRESH_INTERVAL_MS = 5 * 60_000;
 
 /**
  * Shows every aura on the map: the hero's own as soon as it is chosen, and
- * the auras of other players by the Margonem account they play. NI draws
+ * the auras of other players' characters. NI draws
  * them on its map canvas and marks character tips; SI draws them beside its
  * character elements.
  */
@@ -52,6 +56,15 @@ export const useCharacterAuras = () => {
 
   const available = renderer !== null;
   const heroAccountId = useGameStore((state) => state.game?.hero.accountId);
+
+  const heroCharacterId = useGameStore((state) => state.game?.hero.characterId);
+
+  const hero =
+    heroAccountId && heroCharacterId
+      ? { accountId: heroAccountId, characterId: heroCharacterId }
+      : undefined;
+
+  const heroKey = hero && characterAuraKey(hero);
   const othersById = useOthersStore((state) => state.othersById);
   const { data: own } = useOwnCharacterAura();
   const { socket } = useSocket();
@@ -84,17 +97,18 @@ export const useCharacterAuras = () => {
       );
 
       // The hero follows the User's own aura, which an admin may have revoked.
-      const heroAccount = useGameStore.getState().game?.hero.accountId;
+      const current = useGameStore.getState().game?.hero;
       const ownKey = getCharacterAurasControllerGetOwnAuraQueryKey();
 
-      const ownAura =
-        queryClient.getQueryData<OwnCharacterAuraResponseDto>(ownKey)?.auraId;
+      const own = queryClient.getQueryData<OwnCharacterAuraResponseDto>(ownKey);
 
       const heroChange = change.auras.find(
-        ({ gameAccountId }) => gameAccountId === heroAccount,
+        ({ gameAccountId, characterId }) =>
+          gameAccountId === current?.accountId &&
+          characterId === current.characterId,
       );
 
-      if (heroChange && heroChange.auraId !== ownAura)
+      if (heroChange && heroChange.auraId !== ownAuraOf(own, current))
         void queryClient.invalidateQueries({ queryKey: ownKey });
     };
 
@@ -105,7 +119,7 @@ export const useCharacterAuras = () => {
     };
   }, [available, socket, queryClient]);
 
-  const heroAura = own?.canChange ? own.auraId : null;
+  const heroAura = own?.canChange ? ownAuraOf(own, hero) : null;
 
   const mapAuras = resolveMapAuraMode(
     useSettingsStore((state) => state.mapAuras),
@@ -113,14 +127,14 @@ export const useCharacterAuras = () => {
 
   const targets = resolveCharacterAuraTargets({
     listed: list?.auras ?? [],
-    heroAccountId,
+    hero,
     heroAura,
     othersById,
   });
 
-  const accountAuras = useRef(targets.byAccount);
+  const tipAuras = useRef(targets.byKey);
   const drawn = useRef<ReadonlyMap<string, CharacterAuraId>>(new Map());
-  // The hero's tip mark follows its own aura once its account is known;
+  // The hero's tip mark follows its own aura once its character is known;
   // before that the listed auras may mark it, so it is rebuilt every time.
   const heroMark = useRef<string | null>(null);
 
@@ -137,8 +151,8 @@ export const useCharacterAuras = () => {
     const tooltip = layer ? new CharacterAuraTooltip(layer) : null;
 
     const unsubscribe = subscribeCharacterTipUpdates((update) => {
-      const accountId = auraRuntimeAdapter.getTipOwnerAccountId(update.object);
-      const auraId = accountId && accountAuras.current.get(accountId);
+      const owner = auraRuntimeAdapter.getTipOwner(update.object);
+      const auraId = owner && tipAuras.current.get(characterAuraKey(owner));
 
       if (auraId) update.text += auraMark(auraId);
     });
@@ -151,7 +165,7 @@ export const useCharacterAuras = () => {
 
   useEffect(() => {
     if (!renderer) return;
-    accountAuras.current = targets.byAccount;
+    tipAuras.current = targets.byKey;
     // Tips still mark the auras the map does not draw.
     renderer.setTargets(mapAuras === "off" ? new Map() : targets.byCharacter);
 
@@ -173,16 +187,16 @@ export const useCharacterAuras = () => {
       }
     }
 
-    const nextHeroMark = `${heroAccountId}:${heroAura}`;
+    const nextHeroMark = heroKey ? `${heroKey}:${heroAura}` : null;
 
     const heroChanged =
-      heroAccountId === undefined || heroMark.current !== nextHeroMark;
+      nextHeroMark === null || heroMark.current !== nextHeroMark;
 
     heroMark.current = nextHeroMark;
     drawn.current = targets.byCharacter;
 
     auraRuntimeAdapter.refreshTips(changed, heroChanged);
-  }, [renderer, canvas, targets, mapAuras, heroAccountId, heroAura]);
+  }, [renderer, canvas, targets, mapAuras, heroKey, heroAura]);
 
   useEffect(() => {
     if (!renderer) return;

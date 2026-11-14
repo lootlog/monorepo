@@ -213,13 +213,14 @@ const MANIFEST = [
       {
         id: "character-aura",
         labelKey: "settings.subsections.characterAura",
-        // Shown to Users who may choose an aura or still wear one.
+        // Shown to Users who may choose an aura or still wear one on any
+        // of their characters.
         visible: () => {
           const own = queryClient.getQueryData<OwnCharacterAuraResponseDto>(
             getCharacterAurasControllerGetOwnAuraQueryKey(),
           );
 
-          return Boolean(own?.canChange || own?.auraId);
+          return Boolean(own?.canChange || own?.auras.length);
         },
         controls: [
           {

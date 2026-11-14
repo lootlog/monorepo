@@ -4,25 +4,25 @@ import { applyCharacterAuraChanges } from "./character-aura-changes";
 
 const list: CharacterAurasResponseDto = {
   auras: [
-    { gameAccountId: "101", auraId: "frost" },
-    { gameAccountId: "202", auraId: "void" },
+    { gameAccountId: "101", characterId: "1", auraId: "frost" },
+    { gameAccountId: "202", characterId: "2", auraId: "void" },
   ],
 };
 
 describe("applyCharacterAuraChanges", () => {
-  it("shows a new aura, swaps one and removes another without touching other accounts", () => {
+  it("shows a new aura, swaps one and removes another without touching other characters", () => {
     expect(
       applyCharacterAuraChanges(list, {
         auras: [
-          { gameAccountId: "101", auraId: null },
-          { gameAccountId: "202", auraId: "tide" },
-          { gameAccountId: "303", auraId: "sakura" },
+          { gameAccountId: "101", characterId: "1", auraId: null },
+          { gameAccountId: "202", characterId: "2", auraId: "tide" },
+          { gameAccountId: "202", characterId: "3", auraId: "sakura" },
         ],
       }),
     ).toEqual({
       auras: [
-        { gameAccountId: "202", auraId: "tide" },
-        { gameAccountId: "303", auraId: "sakura" },
+        { gameAccountId: "202", characterId: "2", auraId: "tide" },
+        { gameAccountId: "202", characterId: "3", auraId: "sakura" },
       ],
     });
   });
@@ -30,15 +30,23 @@ describe("applyCharacterAuraChanges", () => {
   it("drops an aura this client cannot draw instead of showing a stale one", () => {
     expect(
       applyCharacterAuraChanges(list, {
-        auras: [{ gameAccountId: "101", auraId: "from-a-newer-client" }],
+        auras: [
+          {
+            gameAccountId: "101",
+            characterId: "1",
+            auraId: "from-a-newer-client",
+          },
+        ],
       }),
-    ).toEqual({ auras: [{ gameAccountId: "202", auraId: "void" }] });
+    ).toEqual({
+      auras: [{ gameAccountId: "202", characterId: "2", auraId: "void" }],
+    });
   });
 
   it("leaves an unloaded list for its first fetch", () => {
     expect(
       applyCharacterAuraChanges(undefined, {
-        auras: [{ gameAccountId: "101", auraId: "frost" }],
+        auras: [{ gameAccountId: "101", characterId: "1", auraId: "frost" }],
       }),
     ).toBeUndefined();
   });
