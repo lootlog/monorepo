@@ -9,7 +9,7 @@ import type {
 } from "#src/contracts/character-auras/schemas";
 import { LootlogApi } from "../../lootlog-api.js";
 
-/** The User may not choose an aura, or wears none to show on an account. */
+/** The User may not choose an aura, or does not play the character. */
 export class CharacterAuraAccessDenied extends TaggedErrorClass<CharacterAuraAccessDenied>()(
   "CharacterAuraAccessDenied",
   { status: Schema.Literal(403) },
@@ -25,6 +25,12 @@ export class CharacterAurasOperationError extends TaggedErrorClass<CharacterAura
   "CharacterAurasOperationError",
   { cause: Schema.Defect() },
 ) {}
+
+/** A Margonem character, by its account and id. */
+export interface CharacterAuraCharacter {
+  readonly gameAccountId: string;
+  readonly characterId: string;
+}
 
 export class CharacterAurasIdentity extends Context.Service<
   CharacterAurasIdentity,
@@ -50,11 +56,8 @@ export class CharacterAurasData extends Context.Service<
     ) => Effect.Effect<OwnCharacterAuraResponse, CharacterAurasOperationError>;
     readonly updateOwnAura: (
       userId: string,
+      character: CharacterAuraCharacter,
       auraId: CharacterAuraId | null,
-    ) => Operation<OwnCharacterAuraResponse>;
-    readonly linkGameAccount: (
-      userId: string,
-      gameAccountId: string,
     ) => Operation<OwnCharacterAuraResponse>;
     /** Lets the User who plays the account choose any aura; admins only. */
     readonly grantAuras: (
@@ -112,14 +115,14 @@ export const CharacterAurasHandlers = HttpApiBuilder.group(
       .handle("CharacterAurasControllerUpdateOwnAura", ({ payload }) =>
         toHttpResponse(
           withUser((data, userId) =>
-            data.updateOwnAura(userId, payload.auraId),
-          ),
-        ),
-      )
-      .handle("CharacterAurasControllerLinkGameAccount", ({ params }) =>
-        toHttpResponse(
-          withUser((data, userId) =>
-            data.linkGameAccount(userId, params.gameAccountId),
+            data.updateOwnAura(
+              userId,
+              {
+                gameAccountId: payload.gameAccountId,
+                characterId: payload.characterId,
+              },
+              payload.auraId,
+            ),
           ),
         ),
       )

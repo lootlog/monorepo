@@ -37,7 +37,7 @@ type RuntimeCanvasCharacter = {
   imgLoaded?: boolean;
   fh?: number;
   ry?: number;
-  d?: { account?: number | string; y?: number };
+  d?: { account?: number | string; id?: number | string; y?: number };
   drawIcon?: (
     context: CharacterIconContext,
     ignoreWraithShadow?: boolean,
@@ -224,12 +224,17 @@ export const auraRuntimeAdapter = {
     );
   },
 
-  /** The Margonem account of the hero or other a character tip belongs to. */
-  getTipOwnerAccountId(object: CharacterTipUpdate["object"]): string | null {
+  /** The hero or other a character tip belongs to. */
+  getTipOwner(
+    object: CharacterTipUpdate["object"],
+  ): { accountId: string; characterId: string } | null {
     if (!isCanvasCharacter(object)) return null;
     const account = object.d?.account;
+    const id = object.d?.id;
 
-    return account === undefined ? null : String(account);
+    return account === undefined || id === undefined
+      ? null
+      : { accountId: String(account), characterId: String(id) };
   },
 
   /** `.tip-layer`, where Tips.js appends the one `.tip-wrapper` it shows. */
