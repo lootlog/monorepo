@@ -8,6 +8,7 @@ import {
 import {
   CHARACTER_AURA_IDS,
   isAdminCharacterAuraId,
+  isPersonalCharacterAuraId,
   type CharacterAuraId,
 } from "@lootlog/schema/character-aura";
 import type { SettingsChoiceOption } from "@/components/settings/settings-choice-card";
@@ -65,16 +66,31 @@ export const CharacterAuraSettings = () => {
       reportSettingsSave.failed(() => mutation.mutate(variables)),
   });
 
+  // Admin auras are the admins' own, a personal aura its holders'; the rest
+  // come with access to auras in general.
+  const mayChoose = (id: CharacterAuraId) => {
+    if (isAdminCharacterAuraId(id)) return own?.canGrant ?? false;
+
+    if (isPersonalCharacterAuraId(id))
+      return own?.personalAuraIds.includes(id) ?? false;
+
+    return own?.canChange ?? false;
+  };
+
   const options: SettingsChoiceOption<AuraChoice>[] = [
     { value: NO_AURA, title: t("settings.characterAura.none") },
-    // Admin auras are offered to admins, and to anyone still wearing one.
+    // Admin and personal auras are offered to those who may choose them, and
+    // to anyone still wearing one.
     ...CHARACTER_AURA_IDS.filter(
-      (id) => !isAdminCharacterAuraId(id) || own?.canGrant || heroAura === id,
+      (id) =>
+        !(isAdminCharacterAuraId(id) || isPersonalCharacterAuraId(id)) ||
+        mayChoose(id) ||
+        heroAura === id,
     ).map((id) => ({
       value: id,
       title: t(`settings.characterAura.auras.${id}`),
       // Removing an aura stays possible after access to choosing one ends.
-      disabled: isAdminCharacterAuraId(id) ? !own?.canGrant : !own?.canChange,
+      disabled: !mayChoose(id),
     })),
   ];
 

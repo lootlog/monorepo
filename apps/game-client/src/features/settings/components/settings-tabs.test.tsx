@@ -280,7 +280,12 @@ describe("SettingsTabs manifest coverage", () => {
 
     // The aura subsection shows only to Users who may choose an aura; the
     // navigation reads the app's client, the panel the harness's.
-    const ownAura = { auras: [], canChange: true, canGrant: false };
+    const ownAura = {
+      auras: [],
+      canChange: true,
+      personalAuraIds: [],
+      canGrant: false,
+    };
 
     for (const client of [harness.queryClient, queryClient]) {
       client.setQueryData(

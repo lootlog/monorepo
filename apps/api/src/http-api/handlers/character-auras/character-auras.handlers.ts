@@ -2,7 +2,10 @@ import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
-import type { CharacterAuraId } from "@lootlog/schema/character-aura";
+import type {
+  CharacterAuraId,
+  PersonalCharacterAuraId,
+} from "@lootlog/schema/character-aura";
 import type {
   CharacterAurasResponse,
   OwnCharacterAuraResponse,
@@ -64,7 +67,13 @@ export class CharacterAurasData extends Context.Service<
       callerUserId: string,
       gameAccountId: string,
     ) => Operation<void>;
-    /** Withdraws a grant and removes the aura it allowed; admins only. */
+    /** Lets the User who plays the account choose one personal aura; admins only. */
+    readonly grantPersonalAura: (
+      callerUserId: string,
+      gameAccountId: string,
+      auraId: PersonalCharacterAuraId,
+    ) => Operation<void>;
+    /** Withdraws every grant and removes the auras they allowed; admins only. */
     readonly revokeAuras: (
       callerUserId: string,
       gameAccountId: string,
@@ -130,6 +139,13 @@ export const CharacterAurasHandlers = HttpApiBuilder.group(
         toHttpResponse(
           withUser((data, userId) =>
             data.grantAuras(userId, params.gameAccountId),
+          ),
+        ),
+      )
+      .handle("CharacterAurasControllerGrantPersonalAura", ({ params }) =>
+        toHttpResponse(
+          withUser((data, userId) =>
+            data.grantPersonalAura(userId, params.gameAccountId, params.auraId),
           ),
         ),
       )

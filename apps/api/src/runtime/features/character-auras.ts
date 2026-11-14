@@ -34,7 +34,8 @@ const makeCharacterAurasCache = (
   // invalidation.
   holders: (load) =>
     redis.getOrSetJsonEffect({
-      key: `${CHARACTER_AURAS_CACHE_SCOPE}:holders`,
+      // A copy stored before personal grants joined it would not decode.
+      key: `${CHARACTER_AURAS_CACHE_SCOPE}:holders:personal`,
       scopes: [CHARACTER_AURAS_CACHE_SCOPE],
       factory: load,
       ttlSeconds: 300,
