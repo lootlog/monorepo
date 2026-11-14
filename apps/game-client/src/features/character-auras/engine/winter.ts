@@ -18,7 +18,7 @@ import {
 import type { Brush, TipFrame } from "./decor";
 import { groundRadius, type AuraPlacement } from "./placement";
 import { context2d, createCanvas } from "./silhouette";
-import { groundWave, scatter, wash, type MapScene } from "./sky";
+import { scatter, wash, type MapScene } from "./sky";
 
 const WHITE: Rgb = [255, 255, 255];
 
@@ -413,13 +413,6 @@ export function drawBlizzard(scene: MapScene): void {
   }
 
   wash(scene, WHITE, 0.22 * (1 - burst) ** 4, "lighter");
-  groundWave(
-    scene,
-    burst * Math.max(width, height) * 0.7,
-    WHITE,
-    ICE,
-    (1 - burst) ** 1.5,
-  );
 }
 
 // --- the tooltip --------------------------------------------------------------------------------

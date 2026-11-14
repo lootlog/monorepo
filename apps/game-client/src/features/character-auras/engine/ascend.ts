@@ -5,12 +5,11 @@
  * ground everywhere and a pulse rolls out every second or so. Its burst is a power-up:
  * everything is drawn in towards the character, then released at once, and the map shakes.
  */
-import { clamp } from "es-toolkit";
 import { mulberry32, rgba, type Rgb } from "./math";
-import { pixelLine } from "./paint";
+import { jagged, pixelLine } from "./paint";
 import type { Brush } from "./decor";
 import type { AuraPlacement } from "./placement";
-import { groundWave, scatter, wash, washAround, type MapScene } from "./sky";
+import { scatter, wash, washAround, type MapScene } from "./sky";
 
 const WHITE: Rgb = [255, 255, 255];
 
@@ -154,13 +153,57 @@ export const POWER_VEIL: Rgb = [10, 7, 0];
 
 const STREAMS = 46;
 
-/** Seconds between the pulses rolling out from the character, and how far they reach, px. */
-const PULSE_EVERY = 1.4;
-
-const PULSE_REACH = 260;
-
 /** How hard the map shakes at the release, px. */
 const SHAKE = 9;
+
+/** Cracks the release tears through the ground, and how far they run, px. */
+const CRACKS = 9;
+
+const CRACK_REACH = 340;
+
+/**
+ * The ground splitting under the release: jagged cracks run out from the feet across
+ * the map, glowing, and cool where they lie. Each burst they take the same paths.
+ */
+function drawCracks(scene: MapScene, release: number): void {
+  const { ctx, x, feetY, light } = scene;
+  const rng = mulberry32(4711);
+  const grown = Math.min(1, release * 3.5);
+  const cool = 1 - release;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  for (let i = 0; i < CRACKS; i++) {
+    const angle = (i / CRACKS) * Math.PI * 2 + rng() * 0.5;
+    const reach = CRACK_REACH * (0.55 + rng() * 0.45);
+
+    const path = jagged(
+      x,
+      feetY,
+      x + Math.cos(angle) * reach,
+      feetY + Math.sin(angle) * reach * 0.55,
+      rng,
+    );
+
+    const count = Math.max(2, Math.round((path.length / 2) * grown));
+
+    for (const [color, lineWidth, alpha, mode] of [
+      ["#120a04", 5, 0.8, "source-over"],
+      [rgba(light, 1), 2, cool, "lighter"],
+    ] as const) {
+      ctx.globalCompositeOperation = mode;
+      ctx.globalAlpha = alpha * Math.min(1, cool * 2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      ctx.moveTo(path[0] ?? x, path[1] ?? feetY);
+
+      for (let k = 1; k < count; k++)
+        ctx.lineTo(path[k * 2] ?? x, path[k * 2 + 1] ?? feetY);
+      ctx.stroke();
+    }
+  }
+}
 
 /** Lines of air streaming away from the character, or into it while the power gathers. */
 const streams = (() => {
@@ -196,7 +239,7 @@ function shake({ ctx, time }: MapScene, strength: number): void {
  * again. In a burst the air is drawn in, then a flash, three shockwaves and the shake.
  */
 export function drawPowerField(scene: MapScene): void {
-  const { ctx, width, height, x, y, now, view, burst, light, mid } = scene;
+  const { ctx, width, height, x, y, now, view, burst, light } = scene;
   const gathering = burst >= 0 && burst < POWER_RELEASE;
 
   const release =
@@ -259,29 +302,8 @@ export function drawPowerField(scene: MapScene): void {
     ctx.stroke();
   }
 
-  // The pulse: a ring rolling out from the feet, again and again.
-  const pulse = (now % PULSE_EVERY) / PULSE_EVERY;
-  groundWave(
-    scene,
-    pulse * PULSE_REACH,
-    light,
-    mid,
-    clamp(1 - pulse, 0, 1) ** 2 * 0.6,
-  );
-
   if (release < 0) return;
   wash(scene, light, 0.5 * (1 - release) ** 3, "lighter");
 
-  for (const delay of [0, 0.14, 0.28]) {
-    const wave = (release - delay) / (1 - delay);
-
-    if (wave > 0)
-      groundWave(
-        scene,
-        wave * Math.max(width, height) * 0.8,
-        WHITE,
-        light,
-        (1 - wave) ** 1.4,
-      );
-  }
+  drawCracks(scene, release);
 }

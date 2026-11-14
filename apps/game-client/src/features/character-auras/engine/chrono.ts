@@ -16,7 +16,7 @@ import {
 import type { Brush, TipFrame } from "./decor";
 import { groundRadius, type AuraPlacement } from "./placement";
 import type { AuraSilhouette } from "./silhouette";
-import { groundWave, wash, washAround, type MapScene } from "./sky";
+import { wash, washAround, type MapScene } from "./sky";
 import { tintedSilhouette } from "./summon";
 import { hasGraphicsAcceleration } from "../map-aura-mode";
 
@@ -363,13 +363,6 @@ export function drawTimeStop(scene: MapScene): void {
   if (burst < STOP_TO) return;
   const release = (burst - STOP_TO) / (1 - STOP_TO);
   wash(scene, light, 0.22 * (1 - release) ** 3, "lighter");
-  groundWave(
-    scene,
-    release * Math.max(width, height) * 0.6,
-    light,
-    mid,
-    (1 - release) ** 1.5,
-  );
 }
 
 // --- the tooltip --------------------------------------------------------------------------------

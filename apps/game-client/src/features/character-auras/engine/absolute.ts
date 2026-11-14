@@ -7,7 +7,7 @@
  */
 import { hasGraphicsAcceleration } from "../map-aura-mode";
 import { rgba, TAU } from "./math";
-import { groundWave, scatter, wash, type MapScene } from "./sky";
+import { scatter, wash, type MapScene } from "./sky";
 
 /** The seal's radius, px, and how flat it lies on the ground. */
 const SEAL_RADIUS = 250;
@@ -165,11 +165,4 @@ export function drawDominion(scene: MapScene, shifted: number): void {
   if (shift <= 0) return;
   // The change itself: a flash and a wave rolling out over the map.
   wash(scene, light, 0.4 * shift ** 2, "lighter");
-  groundWave(
-    scene,
-    (1 - shift) * Math.max(width, height) * 0.75,
-    light,
-    mid,
-    shift,
-  );
 }
