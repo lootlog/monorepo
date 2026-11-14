@@ -79,7 +79,7 @@ import {
   RELOAD_GLITCH,
 } from "./glitch";
 import { drawDominion } from "./absolute";
-import { drawPowerFlame, POWER_RELEASE } from "./ascend";
+import { drawPowerFire, drawPowerStreaks, POWER_RELEASE } from "./ascend";
 import { MAP_EFFECTS } from "./map-effects";
 import type { MapScene } from "./sky";
 import {
@@ -923,7 +923,7 @@ export class Aura {
       drawSupernova(b, place, front, burst);
     }
 
-    if (fx.includes("power-flame")) drawPowerFlame(b, place, front, burst);
+    if (fx.includes("power-flame") && front) drawPowerStreaks(b, place, burst);
 
     if (fx.includes("clockwork") && !front) {
       const clock = this.frozenAt ?? this.time;
@@ -950,7 +950,8 @@ export class Aura {
 
   /**
    * The character's doubles drawn straight onto the map, behind it or (`front`) over
-   * it: the echoes of where it stood, its ghosts split into colours.
+   * it: the echoes of where it stood, its ghosts split into colours. The golden fire
+   * goes the same way, being taller than the aura's buffers.
    */
   private drawDoubles(
     ctx: CanvasRenderingContext2D,
@@ -960,6 +961,9 @@ export class Aura {
   ): void {
     const fx = this.preset.fx;
     const [light, mid] = this.rgb.tones;
+
+    if (fx.includes("power-flame") && !front)
+      drawPowerFire(ctx, place, this.tick, this.burst, intensity);
 
     if (fx.includes("clockwork") && !front)
       drawTimeEchoes(
@@ -1653,12 +1657,11 @@ export class Aura {
       if (this.burst > 1) this.frozenAt = null;
     }
 
-    // The power is released: stones thrown up, rings and a crack of lightning.
+    // The power is released: stones thrown up and rings.
     if (kind === "powerup" && crossed(POWER_RELEASE)) {
       this.flash = 1;
       this.startConqueror(place, frame, k, false);
       this.burstRing(place, frame, frame.feet.rx * 3.4, 1);
-      this.startStrike(place, frame, k);
     }
 
     // The spikes shatter into shards thrown up and out.

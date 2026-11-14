@@ -1,13 +1,13 @@
 /**
- * Złoty wojownik: a tall flame of golden energy standing round the character, lightning
- * crawling over it, the ground cracked under its feet. While the admin is on the map the
+ * Złoty wojownik: a solid, spiked fire of golden energy burning behind the character,
+ * more than twice its height, the ground cracked under its feet. While the admin is on the map the
  * air streams away from them in lines across the whole screen, pebbles lift off the
  * ground everywhere and a pulse rolls out every second or so. Its burst is a power-up:
  * everything is drawn in towards the character, then released at once, and the map shakes.
  */
 import { clamp } from "es-toolkit";
-import { mulberry32, noise1, rgba, type Rgb } from "./math";
-import { pixelLine, plot } from "./paint";
+import { mulberry32, rgba, type Rgb } from "./math";
+import { pixelLine } from "./paint";
 import type { Brush } from "./decor";
 import type { AuraPlacement } from "./placement";
 import { groundWave, scatter, wash, washAround, type MapScene } from "./sky";
@@ -27,73 +27,112 @@ function surge(burst: number): number {
   return (1 - (burst - POWER_RELEASE) / (1 - POWER_RELEASE)) ** 1.5 * 0.9;
 }
 
+/** Spikes round the fire, from the ground on one side over the top to the other. */
+const SPIKES = 23;
+
 /**
- * The flame of energy round the character: a bright wavering edge, a thin dithered veil
- * inside it and streaks racing up through it. The shell goes behind the character
- * (`front` false); only the veil and the streaks pass before it.
+ * The fire's shells, outside in: how far each reaches, how long its spikes are and how
+ * solid it is. The outermost is a faint bloom; the rest are opaque.
  */
-export function drawPowerFlame(
+const SHELLS = [
+  { reach: 1.1, spike: 1.15, alpha: 0.3, color: [255, 150, 20] },
+  { reach: 1, spike: 1, alpha: 1, color: [255, 180, 30] },
+  { reach: 0.86, spike: 0.74, alpha: 1, color: [255, 234, 90] },
+  { reach: 0.68, spike: 0.42, alpha: 1, color: [255, 253, 222] },
+] as const satisfies readonly {
+  reach: number;
+  spike: number;
+  alpha: number;
+  color: Rgb;
+}[];
+
+/**
+ * The fire behind the character, as anime draws it: one solid shape more than twice the
+ * character's height, white-hot at the body and gold at its edge, whose whole outline is
+ * sharp spikes swept upwards, a new set every tick. Drawn straight onto the map, so it
+ * is not held to the aura's own buffers round the character.
+ */
+export function drawPowerFire(
+  ctx: CanvasRenderingContext2D,
+  place: AuraPlacement,
+  tick: number,
+  burst: number,
+  intensity: number,
+): void {
+  const { bounds } = place.silhouette;
+  const grow = 1 + surge(burst);
+  const cx = place.x + bounds.x + bounds.w / 2;
+  const base = Math.round(place.feetY) + 3;
+  const rx = (bounds.w * 0.95 + 10) * (1 + surge(burst) * 0.5);
+  const ry = bounds.h * 1.05 * grow;
+  const cy = base - ry * 0.82;
+  // From just under the left flank, over the top, to just under the right one.
+  const from = Math.PI - 0.6;
+  const sweep = Math.PI + 1.2;
+  const rng = mulberry32(tick * 7919 + 13);
+  // One set of spikes for every shell, so the shells stay nested.
+  const lengths = Array.from({ length: SPIKES }, () => 0.5 + rng() * 0.8);
+  const leans = Array.from({ length: SPIKES }, () => (rng() - 0.5) * 0.6);
+  ctx.globalCompositeOperation = "source-over";
+
+  for (const shell of SHELLS) {
+    ctx.globalAlpha = Math.min(1, shell.alpha * intensity);
+    ctx.fillStyle = rgba(shell.color, 1);
+    ctx.beginPath();
+    ctx.moveTo(cx - rx * shell.reach * 0.75, base);
+
+    for (let i = 0; i < SPIKES; i++) {
+      const angle = from + ((i + 0.5) / SPIKES) * sweep;
+      const half = (sweep / SPIKES) * 0.5;
+      // How near the top the spike is: those there are the longest.
+      const top = Math.max(0, -Math.sin(angle));
+      const length = (12 + 34 * top) * (lengths[i] ?? 1) * shell.spike * grow;
+      // Every spike is swept upwards, as fire is, not straight out.
+      const outX = Math.cos(angle) + (leans[i] ?? 0);
+      const outY = Math.sin(angle) - 1.2;
+      const norm = Math.hypot(outX, outY) || 1;
+
+      ctx.lineTo(
+        cx + Math.cos(angle - half) * rx * shell.reach,
+        Math.min(base, cy + Math.sin(angle - half) * ry * shell.reach),
+      );
+      ctx.lineTo(
+        cx + Math.cos(angle) * rx * shell.reach + (outX / norm) * length,
+        cy + Math.sin(angle) * ry * shell.reach + (outY / norm) * length,
+      );
+    }
+
+    ctx.lineTo(cx + rx * shell.reach * 0.75, base);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+/** Thin streaks racing up through the fire, before the character. */
+export function drawPowerStreaks(
   b: Brush,
   place: AuraPlacement,
-  front: boolean,
   burst: number,
 ): void {
   const { bounds } = place.silhouette;
-  const [light, mid, dark] = b.tones;
-  const lit = b.lit();
   const a = b.intensity;
-  const grow = 1 + surge(burst);
   const cx = place.x + bounds.x + bounds.w / 2;
   const base = Math.round(place.feetY) + 2;
-  const tall = Math.round((bounds.h + 24) * grow);
-  const half = (bounds.w / 2 + 13) * (1 + surge(burst) * 0.4);
-  // The flame flickers faster while the power gathers.
-  const t = b.time * (burst >= 0 && burst < POWER_RELEASE ? 14 : 8);
+  const tall = (bounds.h + 40) * (1 + surge(burst));
 
-  for (let row = 0; row <= tall; row++) {
-    const up = row / tall;
-    const y = base - row;
-
-    // Widest at the knees, drawn to a point that leans as it flickers.
-    const width =
-      half * (1 - up ** 1.8) * (0.55 + 0.45 * Math.min(1, row / 8)) +
-      noise1(t + row * 0.22, 3) * (1 + up * 3) +
-      // Tongues of flame: the edge steps out and in as they climb.
-      ((row + Math.floor(t)) % 7 < 3 ? 2 : -1) * (0.4 + up);
-
-    if (width < 0.5) continue;
-    const lean = noise1(t * 0.6 + row * 0.08, 9) * up * up * 6;
-    const left = Math.round(cx + lean - width);
-    const right = Math.round(cx + lean + width);
-
-    if (!front) {
-      for (const [edge, inward] of [
-        [left, 1],
-        [right, -1],
-      ] as const) {
-        plot(lit, edge, y, up > 0.8 ? WHITE : light, a);
-        plot(lit, edge + inward, y, mid, 0.85 * a);
-        plot(lit, edge + inward * 2, y, dark, 0.5 * a);
-
-        // A loose spark of the edge now and then.
-        if ((row * 7 + b.tick * 3) % 23 === 0)
-          plot(lit, edge - inward * 2, y - 1, light, 0.8 * a);
-      }
-    }
-
-    // The veil: every other pixel, so the map and the character show through.
-    const veil = (front ? 0.1 : 0.22) * (1 - up * 0.6) * a;
-
-    for (let x = left + 3; x <= right - 3; x++)
-      if ((x + y + b.tick) % 2 === 0) plot(lit, x, y, mid, veil);
-  }
-
-  // Streaks racing up through the flame.
-  for (let i = 0; i < 7; i++) {
-    if ((i % 2 === 0) !== front) continue;
-    const rise = ((b.time * (1.6 + (i % 3) * 0.5) + i * 0.37) % 1) * tall;
-    const x = cx + ((i / 6) * 2 - 1) * half * 0.7 * (1 - (rise / tall) ** 2);
-    pixelLine(lit, x, base - rise, x, base - rise - 5, light, 0.9 * a, 0.1 * a);
+  for (let i = 0; i < 5; i++) {
+    const rise = ((b.time * (1.8 + i * 0.4) + i * 0.37) % 1) * tall;
+    const x = cx + ((i / 4) * 2 - 1) * (bounds.w / 2 + 8);
+    pixelLine(
+      b.lit(),
+      x,
+      base - rise,
+      x,
+      base - rise - 7,
+      WHITE,
+      0.9 * a,
+      0.1 * a,
+    );
   }
 }
 
