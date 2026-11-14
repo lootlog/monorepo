@@ -46,6 +46,14 @@ export const CHARACTER_AURA_IDS = [
   "ascendant2",
   "ascendant3",
   "ascendant4",
+  "skyborne",
+  "joker",
+  "nightowl",
+  "sunder",
+  "fortyfour",
+  "thirteenth",
+  "ninepins",
+  "threefaces",
 ] as const;
 
 export const CharacterAuraIdSchema = Schema.Literals(CHARACTER_AURA_IDS);

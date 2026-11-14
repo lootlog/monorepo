@@ -121,6 +121,14 @@ export const CharacterAuraResponseDtoAuraId = {
   ascendant2: 'ascendant2',
   ascendant3: 'ascendant3',
   ascendant4: 'ascendant4',
+  skyborne: 'skyborne',
+  joker: 'joker',
+  nightowl: 'nightowl',
+  sunder: 'sunder',
+  fortyfour: 'fortyfour',
+  thirteenth: 'thirteenth',
+  ninepins: 'ninepins',
+  threefaces: 'threefaces',
 } as const;
 
 export interface CharacterAuraResponseDto {
@@ -183,6 +191,14 @@ export const UpdateOwnCharacterAuraDtoAuraId = {
   ascendant2: 'ascendant2',
   ascendant3: 'ascendant3',
   ascendant4: 'ascendant4',
+  skyborne: 'skyborne',
+  joker: 'joker',
+  nightowl: 'nightowl',
+  sunder: 'sunder',
+  fortyfour: 'fortyfour',
+  thirteenth: 'thirteenth',
+  ninepins: 'ninepins',
+  threefaces: 'threefaces',
 } as const;
 
 export interface UpdateOwnCharacterAuraDto {

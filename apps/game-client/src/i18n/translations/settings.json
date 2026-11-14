@@ -186,7 +186,15 @@
       "ascendant": "Złoty wojownik",
       "ascendant2": "Złoty wojownik II",
       "ascendant3": "Złoty wojownik III",
-      "ascendant4": "Szkarłatny wojownik"
+      "ascendant4": "Szkarłatny wojownik",
+      "skyborne": "Podniebie",
+      "joker": "Joker",
+      "nightowl": "Nocna sowa",
+      "sunder": "Rozdzielenie",
+      "fortyfour": "Czterdzieści i cztery",
+      "thirteenth": "Trzynasta godzina",
+      "ninepins": "Dziewięć szpilek",
+      "threefaces": "Trzy twarze"
     },
     "grants": {
       "grant": "Nadaj aurę",
