@@ -18,6 +18,7 @@ import { groundRadius, type AuraPlacement } from "./placement";
 import type { AuraSilhouette } from "./silhouette";
 import { groundWave, wash, washAround, type MapScene } from "./sky";
 import { tintedSilhouette } from "./summon";
+import { hasGraphicsAcceleration } from "../map-aura-mode";
 
 const WHITE: Rgb = [255, 255, 255];
 
@@ -305,9 +306,12 @@ export function drawTimeStop(scene: MapScene): void {
   const still = stillness(burst);
 
   if (still > 0) {
-    // A grey source keeps the map's light and hue but takes its saturation.
-    // The one who stopped time keeps their colour.
-    washAround(scene, GREY, 0.92 * still, 36, 90, "saturation");
+    // The one who stopped time keeps their colour. A grey source keeps the map's light
+    // and hue but takes its saturation; drawn by the CPU that blend costs ten times a
+    // plain fill over the whole screen, so there the map fades into grey instead.
+    if (hasGraphicsAcceleration())
+      washAround(scene, GREY, 0.92 * still, 36, 90, "saturation");
+    else washAround(scene, GREY, 0.6 * still, 36, 90);
     wash(scene, mid, 0.07 * still, "lighter");
 
     const open = smoothstep(STOP_FROM, STOP_FROM + 0.12, burst);
