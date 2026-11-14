@@ -4,6 +4,7 @@
  * blits and small rects: nothing here reads pixels back or allocates per frame.
  */
 import { rgba, type Rgb } from "./math";
+import { context2d, createCanvas } from "./silhouette";
 
 /** One frame of an effect over the whole map, in the context's units (screen px). */
 export interface MapScene {
@@ -88,9 +89,40 @@ export function wash(
   ctx.fillRect(0, 0, width, height);
 }
 
+const clearings = new Map<string, HTMLCanvasElement>();
+
+/** A square of `color` thinning out towards its centre: clear within `inner` px, full at `outer`. */
+function clearing(color: Rgb, inner: number, outer: number): HTMLCanvasElement {
+  const key = `${color.join(",")}|${inner}|${outer}`;
+  const cached = clearings.get(key);
+
+  if (cached) return cached;
+  const canvas = createCanvas(outer * 2, outer * 2);
+  const ctx = context2d(canvas);
+
+  const gradient = ctx.createRadialGradient(
+    outer,
+    outer,
+    inner,
+    outer,
+    outer,
+    outer,
+  );
+
+  gradient.addColorStop(0, rgba(color, 0.12));
+  gradient.addColorStop(1, rgba(color, 1));
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, outer * 2, outer * 2);
+  clearings.set(key, canvas);
+
+  return canvas;
+}
+
 /**
  * A wash over the whole screen that thins out towards the character, so a dark sky
  * leaves the aura that brought it its light: clear within `inner` px, full beyond `outer`.
+ * The thinning is one sprite built once and the rest four flat fills: a gradient over
+ * the whole screen costs ten times a flat fill when the CPU draws it.
  */
 export function washAround(
   { ctx, width, height, x, y }: MapScene,
@@ -101,13 +133,17 @@ export function washAround(
   mode: GlobalCompositeOperation = "source-over",
 ): void {
   if (alpha <= 0.01) return;
-  const gradient = ctx.createRadialGradient(x, y, inner, x, y, outer);
-  gradient.addColorStop(0, rgba(color, alpha * 0.12));
-  gradient.addColorStop(1, rgba(color, alpha));
+  const left = Math.round(x) - outer;
+  const top = Math.round(y) - outer;
+  const size = outer * 2;
   ctx.globalCompositeOperation = mode;
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
+  ctx.globalAlpha = Math.min(1, alpha);
+  ctx.fillStyle = rgba(color, 1);
+  ctx.fillRect(0, 0, width, top);
+  ctx.fillRect(0, top + size, width, height - top - size);
+  ctx.fillRect(0, top, left, size);
+  ctx.fillRect(left + size, top, width - left - size, size);
+  ctx.drawImage(clearing(color, inner, outer), left, top);
 }
 
 /**
