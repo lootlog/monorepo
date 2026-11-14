@@ -10,7 +10,7 @@ let accelerated: boolean | null = null;
  * the map each frame is blended by the CPU, the cost that grows with each
  * aura shown. A WebGL context that would fall back to software is refused.
  */
-function hasGraphicsAcceleration(): boolean {
+export function hasGraphicsAcceleration(): boolean {
   if (accelerated !== null) return accelerated;
 
   const context = document

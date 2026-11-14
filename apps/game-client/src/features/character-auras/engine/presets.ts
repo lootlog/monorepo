@@ -1,6 +1,7 @@
 import type { CharacterAuraId } from "@lootlog/schema/character-aura";
 import { heartbeat, noise1 } from "./math";
 import type { EmitterSpec } from "./particles";
+import type { PowerFire } from "./ascend";
 import type { DragonScales } from "./dragon";
 
 /** Item rarities of the game, for when auras become rewards; admin auras stand above them. */
@@ -29,7 +30,32 @@ type AuraFx =
   | "crown"
   | "wings"
   | "eclipse"
-  | "quake";
+  | "quake"
+  | "galaxy"
+  | "clockwork"
+  | "winter"
+  | "glitch"
+  | "power-flame";
+
+/** What an aura lays over the whole map while its admin is on it (`MAP_EFFECTS`). */
+export type MapEffectKind =
+  | "storm"
+  | "cosmos"
+  | "blizzard"
+  | "timestop"
+  | "wireframe"
+  | "power";
+
+/** The auras made as one kit each (`KITS`). */
+export type AuraKitId =
+  | "skyborne"
+  | "joker"
+  | "nightowl"
+  | "sunder"
+  | "fortyfour"
+  | "thirteenth"
+  | "ninepins"
+  | "threefaces";
 
 /**
  * The aura's own short animation every few seconds, like the burst of the game's animated
@@ -57,7 +83,13 @@ export type BurstKind =
   | "coronation"
   | "judgement"
   | "rebirth"
-  | "quake";
+  | "quake"
+  | "supernova"
+  | "timestop"
+  | "glaciate"
+  | "reload"
+  | "powerup"
+  | "kit";
 
 type GroundStyle =
   | "disc"
@@ -103,7 +135,12 @@ export type TipDeco =
   | "thunder-crown"
   | "phoenix"
   | "emperor"
-  | "quake";
+  | "quake"
+  | "cosmos"
+  | "chrono"
+  | "winter"
+  | "terminal"
+  | "power";
 
 export interface AuraPreset {
   id: CharacterAuraId;
@@ -149,14 +186,163 @@ export interface AuraPreset {
    * (when the admin enters the map).
    */
   herald?: boolean;
-  /** An overcast sky and lightning over the whole map while the aura is on it. */
-  storm?: boolean;
+  /** What the aura lays over the whole map while it is on it: a storm, a night sky. */
+  sky?: MapEffectKind;
+  /**
+   * An aura that wears others in turn, moving on as each one's burst ends. Its own
+   * looks are then never drawn: only its id, description and nick are its own.
+   */
+  realms?: readonly CharacterAuraId[];
+  /** The kit that draws the aura's pieces, its effect over the map and its burst. */
+  kit?: AuraKitId;
+  /** The fire of an aura with the `power-flame` effect. */
+  fire?: PowerFire;
   /** The dragon's colours, for an aura with the `dragon` effect; jade and gold otherwise. */
   dragonScales?: DragonScales;
 }
 
 const breathe = (period: number, depth: number) => (t: number) =>
   1 + Math.sin((t / period) * Math.PI * 2) * depth;
+
+/** What the kit auras shed whatever their kit: dust off the outline and a glint or two. */
+const KIT_EMITTERS: readonly EmitterSpec[] = [
+  {
+    kind: "mote",
+    rate: 6,
+    from: "edge",
+    life: [1, 1.8],
+    speed: [4, 10],
+    spread: 6.28,
+    outward: 0.6,
+    drag: 0.3,
+    size: [0.6, 1.2],
+    colors: 3,
+    front: 0.5,
+  },
+  {
+    kind: "glint",
+    rate: 1.2,
+    from: "body",
+    life: [0.5, 0.9],
+    speed: [0, 2],
+    size: [3, 5],
+    colors: 2,
+    front: 0.7,
+  },
+];
+
+/**
+ * An aura made as a kit: the kit draws everything that is its own, so the preset only
+ * names it and gives its colours and words.
+ */
+function kitAura(
+  id: CharacterAuraId & AuraKitId,
+  look: Pick<AuraPreset, "description" | "particles" | "tones" | "tip"> &
+    Partial<AuraPreset>,
+): AuraPreset {
+  const [light, mid, dark] = look.tones;
+
+  return {
+    id,
+    kit: id,
+    tier: "legendary",
+    rim: light,
+    haze: mid,
+    near: 0.85,
+    far: 0.5,
+    inner: 0.06,
+    pulse: breathe(3.6, 0.1),
+    emitters: KIT_EMITTERS,
+    fx: [],
+    burst: "kit",
+    nick: [light, mid, dark],
+    ...look,
+  };
+}
+
+/** Gold fire: an orange bloom, a gold edge, a yellow body and a white-hot core. */
+const GOLD_FIRE: PowerFire["colors"] = [
+  [255, 150, 20],
+  [255, 180, 30],
+  [255, 234, 90],
+  [255, 253, 222],
+];
+
+/** What the warrior auras shed: energy racing up, pebbles lifting, sparks off the body. */
+const WARRIOR_EMITTERS: readonly EmitterSpec[] = [
+  {
+    kind: "mote",
+    rate: 14,
+    from: "feet-rim",
+    life: [0.5, 0.9],
+    speed: [60, 110],
+    dir: -Math.PI / 2,
+    spread: 0.12,
+    size: [0.8, 1.6],
+    colors: 3,
+    front: 0.5,
+  },
+  {
+    kind: "grain",
+    rate: 4,
+    from: "feet-rim",
+    life: [1.2, 2],
+    speed: [12, 26],
+    dir: -Math.PI / 2,
+    spread: 0.3,
+    gravity: -12,
+    size: [1.4, 2],
+    colors: 2,
+    colorFrom: 3,
+    front: 0.5,
+    groundOnly: true,
+  },
+  {
+    kind: "spark",
+    rate: 6,
+    from: "edge",
+    life: [0.2, 0.45],
+    speed: [40, 90],
+    spread: 6.28,
+    outward: 0.7,
+    size: [0.7, 1.2],
+    colors: 3,
+    front: 0.7,
+  },
+];
+
+/**
+ * One of the warrior auras: a solid fire behind the character and the field of power
+ * over the map. They differ in their fire, and in what `stage` overrides.
+ */
+function warrior(
+  id: CharacterAuraId,
+  stage: Partial<AuraPreset> & Pick<AuraPreset, "description" | "fire">,
+): AuraPreset {
+  return {
+    id,
+    tier: "mythic",
+    sky: "power",
+    herald: true,
+    // The fire is the whole look: no outline round the character.
+    bare: true,
+    particles: ["#ffffff", "#fff3a0", "#ffd83a", "#7a6a58", "#3a302a"],
+    rim: "#fff3a0",
+    haze: "#ffb400",
+    near: 0.95,
+    far: 0.6,
+    inner: 0.12,
+    pulse: (t) => 0.9 + noise1(t * 9, 47) * 0.14 + noise1(t * 3, 53) * 0.08,
+    ground: { style: "cracks", color: "#ffd83a", alpha: 0.8 },
+    emitters: WARRIOR_EMITTERS,
+    fx: ["power-flame"],
+    burst: "powerup",
+    tip: "power",
+    nick: ["#ffffff", "#ffd83a", "#ff9a00"],
+    tones: ["#fffbe0", "#ffd83a", "#b87400"],
+    ...stage,
+  };
+}
 
 export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   divine: {
@@ -1753,7 +1939,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   thunderlord: {
     id: "thunderlord",
     tier: "mythic",
-    storm: true,
+    sky: "storm",
     herald: true,
     description:
       "Gdy jest na mapie, niebo nad całą mapą się chmurzy i co chwilę gdzieś bije piorun; nad koroną kłębi się burzowa chmura, a co chwilę trzy pioruny naraz biją wokół postaci.",
@@ -1996,6 +2182,395 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     nick: ["#ffffff", "#a8d8ff", "#2a4a7a"],
     tones: ["#ffffff", "#a8d8ff", "#2a4a7a"],
   },
+  // The showcase: each takes over the whole map in its own way.
+  cosmos: {
+    id: "cosmos",
+    tier: "mythic",
+    sky: "cosmos",
+    herald: true,
+    description:
+      "Gdy jest na mapie, nad całą mapą zapada noc pełna gwiazd, mgławic i meteorów; pod stopami obraca się galaktyka, wokół krążą planety, a co chwilę wszystko zapada się w postać i wybucha supernową.",
+    particles: ["#ffffff", "#ffe9b8", "#9fb4ff", "#c77dff", "#ff7ad9"],
+    rim: "#b8c4ff",
+    haze: "#4a2ab8",
+    near: 0.85,
+    far: 0.55,
+    inner: 0.06,
+    pulse: breathe(5, 0.08),
+    emitters: [
+      {
+        kind: "glint",
+        rate: 1.4,
+        from: "body",
+        life: [0.5, 0.9],
+        speed: [0, 2],
+        size: [3, 5],
+        colors: 3,
+        front: 0.7,
+      },
+      {
+        kind: "mote",
+        rate: 5,
+        from: "edge",
+        life: [1.4, 2.4],
+        speed: [3, 9],
+        spread: 6.28,
+        outward: 0.6,
+        drag: 0.3,
+        size: [0.6, 1.2],
+        colors: 5,
+        front: 0.5,
+      },
+      {
+        kind: "mote",
+        rate: 4,
+        from: "feet-rim",
+        life: [1.4, 2.2],
+        speed: [6, 14],
+        spread: 0.4,
+        size: [0.7, 1.2],
+        colors: 3,
+        colorFrom: 2,
+        front: 0.5,
+      },
+    ],
+    fx: ["galaxy"],
+    burst: "supernova",
+    tip: "cosmos",
+    nick: ["#ffffff", "#9fb4ff", "#c77dff"],
+    tones: ["#ffffff", "#9fb4ff", "#3a2a8a"],
+  },
+  timelord: {
+    id: "timelord",
+    tier: "mythic",
+    sky: "timestop",
+    herald: true,
+    description:
+      "Pod stopami tyka tarcza zegara, za plecami obracają się mosiężne zębatki, a za idącą postacią zostają jej echa; co chwilę czas staje: cała mapa traci kolory, wszystko zastyga, a wskazówka biegnie wstecz.",
+    particles: ["#ffffff", "#ffe296", "#d6a046", "#5fe0d0", "#9af5ea"],
+    rim: "#9af5ea",
+    haze: "#1a8a8a",
+    near: 0.8,
+    far: 0.5,
+    inner: 0.06,
+    pulse: (t) => 0.94 + (t % 1 < 0.15 ? 0.14 : 0),
+    emitters: [
+      {
+        kind: "mote",
+        rate: 5,
+        from: "above",
+        life: [1.6, 2.4],
+        speed: [10, 18],
+        dir: Math.PI / 2,
+        spread: 0.15,
+        gravity: 20,
+        size: [0.6, 1],
+        colors: 2,
+        colorFrom: 1,
+        front: 0.5,
+      },
+      {
+        kind: "glint",
+        rate: 1,
+        from: "feet-rim",
+        life: [0.4, 0.7],
+        speed: [0, 1],
+        size: [3, 5],
+        colors: 2,
+        colorFrom: 3,
+        front: 0.5,
+      },
+      {
+        kind: "mote",
+        rate: 4,
+        from: "edge",
+        life: [1, 1.8],
+        speed: [4, 10],
+        spread: 6.28,
+        outward: 0.6,
+        drag: 0.3,
+        size: [0.6, 1.1],
+        colors: 2,
+        colorFrom: 3,
+        front: 0.5,
+      },
+    ],
+    fx: ["clockwork"],
+    burst: "timestop",
+    tip: "chrono",
+    nick: ["#eafffb", "#5fe0d0", "#d6a046"],
+    tones: ["#eafffb", "#5fe0d0", "#14585e"],
+  },
+  winterlord: {
+    id: "winterlord",
+    tier: "mythic",
+    sky: "blizzard",
+    herald: true,
+    description:
+      "Gdy jest na mapie, nad całą mapą szaleje zamieć, a z rogów ekranu narasta szron; nad głową lśni lodowa korona, wokół krążą płatki śniegu, a co chwilę spod ziemi wystrzeliwują lodowe kolce i roztrzaskują się.",
+    particles: ["#ffffff", "#dff4ff", "#a8dcff", "#6cb6ff"],
+    rim: "#dff4ff",
+    haze: "#5aa8ff",
+    near: 0.85,
+    far: 0.5,
+    inner: 0.08,
+    pulse: breathe(4.2, 0.1),
+    emitters: [
+      {
+        kind: "flake",
+        rate: 3,
+        from: "above",
+        life: [2.4, 3.4],
+        speed: [10, 18],
+        dir: Math.PI / 2,
+        spread: 0.5,
+        sway: 14,
+        size: [1.8, 3],
+        colors: 3,
+        front: 0.5,
+        land: "settle",
+        wind: 0.8,
+      },
+      {
+        kind: "mote",
+        rate: 6,
+        from: "edge",
+        life: [1, 1.8],
+        speed: [4, 10],
+        spread: 6.28,
+        outward: 0.6,
+        drag: 0.3,
+        size: [0.6, 1.1],
+        colors: 3,
+        front: 0.5,
+      },
+      {
+        kind: "smoke",
+        rate: 3,
+        from: "feet-rim",
+        life: [1.2, 1.8],
+        speed: [6, 12],
+        spread: 1.4,
+        drag: 0.5,
+        size: [4, 7],
+        colors: 2,
+        colorFrom: 1,
+        front: 0.3,
+      },
+    ],
+    fx: ["winter"],
+    burst: "glaciate",
+    tip: "winter",
+    wind: -14,
+    nick: ["#ffffff", "#bfe6ff", "#5aa8ff"],
+    tones: ["#ffffff", "#bfe6ff", "#3f7fc8"],
+  },
+  architect: {
+    id: "architect",
+    tier: "mythic",
+    sky: "wireframe",
+    herald: true,
+    description:
+      "Postać stoi zaznaczona jak w edytorze świata, za nią spada kod, a jej sylwetka rozszczepia się na barwy; przez całą mapę prześwituje siatka pól, a co chwilę świat się przeładowuje: pasy mapy uciekają na boki.",
+    particles: ["#ffffff", "#b6ffd8", "#3df0a0", "#00e8ff", "#ff28c8"],
+    rim: "#7dffc0",
+    haze: "#00a070",
+    near: 0.8,
+    far: 0.5,
+    inner: 0.05,
+    pulse: (t) => 0.9 + Math.max(0, noise1(t * 8, 43)) * 0.25,
+    emitters: [
+      {
+        kind: "mote",
+        rate: 6,
+        from: "feet-rim",
+        life: [0.8, 1.4],
+        speed: [14, 26],
+        dir: -Math.PI / 2,
+        spread: 0.1,
+        size: [1, 1.8],
+        colors: 3,
+        colorFrom: 1,
+        front: 0.5,
+      },
+      {
+        kind: "spark",
+        rate: 3,
+        from: "edge",
+        life: [0.15, 0.3],
+        speed: [40, 80],
+        spread: 6.28,
+        outward: 0.8,
+        size: [0.7, 1.1],
+        colors: 2,
+        colorFrom: 3,
+        front: 0.7,
+      },
+    ],
+    fx: ["glitch"],
+    burst: "reload",
+    tip: "terminal",
+    nick: ["#eafff2", "#3df0a0", "#00e8ff"],
+    tones: ["#eafff2", "#3df0a0", "#0e6a48"],
+  },
+  ascendant: warrior("ascendant", {
+    description:
+      "Za postacią płonie lity, kolczasty ogień złotej energii, biały przy ciele i złoty na krawędziach, a ziemia pod stopami pęka; przez cały ekran pędzą od niej strugi powietrza, z całej mapy unoszą się kamyki, a co chwilę moc zbiera się i uwalnia z błyskiem, trzema falami i wstrząsem mapy.",
+    fire: { scale: 1, spikes: 23, colors: GOLD_FIRE },
+  }),
+  ascendant2: warrior("ascendant2", {
+    description:
+      "Drugi stopień: złoty ogień jest wyższy i gęściej najeżony kolcami, a po postaci bez przerwy pełzają błękitne wyładowania.",
+    fire: { scale: 1.15, spikes: 31, colors: GOLD_FIRE, bolt: [120, 190, 255] },
+    fx: ["power-flame", "lightning"],
+  }),
+  ascendant3: warrior("ascendant3", {
+    description:
+      "Trzeci stopień: ogień sięga trzech wysokości postaci i szeroko się rozlewa, wyładowania biją gęsto, a z ziemi unosi się dwa razy więcej iskier i kamieni.",
+    fire: { scale: 1.5, spikes: 37, colors: GOLD_FIRE, bolt: [120, 190, 255] },
+    fx: ["power-flame", "lightning"],
+    emitters: [...WARRIOR_EMITTERS, ...WARRIOR_EMITTERS],
+  }),
+  ascendant4: warrior("ascendant4", {
+    description:
+      "Czwarty stopień: ogień płonie szkarłatem, ciemnoczerwony na krawędziach i rozżarzony przy ciele, a strugi powietrza i fale na mapie są czerwone.",
+    fire: {
+      scale: 1.3,
+      spikes: 27,
+      colors: [
+        [170, 10, 20],
+        [214, 24, 28],
+        [255, 104, 44],
+        [255, 232, 196],
+      ],
+    },
+    particles: ["#ffffff", "#ffc0a0", "#ff4a2a", "#7a5a52", "#3a2826"],
+    rim: "#ff8a6a",
+    haze: "#c81414",
+    ground: { style: "cracks", color: "#ff4a2a", alpha: 0.8 },
+    nick: ["#ffe8d8", "#ff4a2a", "#a80c14"],
+    tones: ["#ffe8d8", "#ff4a2a", "#8a0c10"],
+  }),
+  absolute: {
+    id: "absolute",
+    tier: "mythic",
+    herald: true,
+    realms: [
+      "cosmos",
+      "phoenix",
+      "timelord",
+      "eclipse",
+      "winterlord",
+      "emperor",
+      "architect",
+      "thunderlord",
+    ],
+    description:
+      "Nosi po kolei aury pozostałych administratorów i z każdym wybuchem zmienia się w następną: noc, ogień, czas, mrok, zimę, smoka, kod i burzę. Wokół postaci, na całym ekranie, obraca się pieczęć, w niebo biją słupy światła, krążą komety, a nad całą mapą unoszą się iskry.",
+    particles: ["#ffffff", "#fff6c8", "#ffd34a"],
+    rim: "#ffffff",
+    haze: "#ffd34a",
+    near: 0.85,
+    far: 0.55,
+    inner: 0.08,
+    pulse: breathe(3, 0.1),
+    emitters: [],
+    fx: [],
+    burst: "coronation",
+    tip: "regal",
+    nick: ["#ffffff", "#ffd34a", "#c77dff"],
+    tones: ["#ffffff", "#ffd34a", "#8a4aff"],
+  },
+  // Auras made for single players, one kit each; anyone granted auras may wear them.
+  skyborne: kitAura("skyborne", {
+    description:
+      "Mapa unosi się w chmurach: obłoki leżą pod stopami i płyną nad całą mapą, nad ekranem wędrują słońce i księżyc, a światło całej mapy przechodzi przez dobę trwającą 67 sekund. Co chwilę niebo się otwiera i na postać spada słup słońca.",
+    particles: ["#ffffff", "#dfeeff", "#ffe08a"],
+    tones: ["#ffffff", "#bfe0ff", "#4a7ac8"],
+    tip: "clouds",
+  }),
+  joker: kitAura("joker", {
+    description:
+      "Mapa staje się stołem do gry: wokół postaci krążą karty, na mapie leżą i odwracają się ogromne, a nad ekranem obraca się wachlarz talii. Co chwilę pasy mapy tasują się jak karty i przez ekran przelatuje pięćdziesiąta trzecia: Joker.",
+    particles: ["#f6f0e2", "#d62836", "#1c1a22"],
+    tones: ["#f6f0e2", "#d62836", "#5a0c14"],
+    tip: "prism-corners",
+  }),
+  nightowl: kitAura("nightowl", {
+    description:
+      "Na mapie zapada noc z jednym kręgiem księżycowego światła wokół postaci, a w ciemności otwierają się 22 pary oczu, które ją śledzą. Co chwilę nad mapą przelatuje sowa wielka jak ekran i sypią się pióra.",
+    particles: ["#ffffff", "#d8e2ff", "#ffc83c"],
+    tones: ["#eef2ff", "#aab8ff", "#2a2a6a"],
+    tip: "constellation",
+    emitters: [
+      ...KIT_EMITTERS,
+      {
+        kind: "feather",
+        rate: 0.8,
+        from: "above",
+        life: [3, 4.5],
+        speed: [2, 6],
+        dir: Math.PI / 2,
+        spread: 0.8,
+        size: [1, 1],
+        colors: 2,
+        front: 0.4,
+        land: "settle",
+        wind: 0.5,
+      },
+    ],
+  }),
+  sunder: kitAura("sunder", {
+    description:
+      "Przez cały ekran, przez postać, biegnie linia światła: mapa nad nią jest rozjaśniona złotem, pod nią leży w cieniu, a pod stopami obraca się yin-yang. Co chwilę trzy cięcia topora rozsuwają połowy mapy, w szczelinie widać gwiazdy, a trzecie zatrzaskuje świat.",
+    particles: ["#ffffff", "#ffde8c", "#c88246"],
+    tones: ["#fffbe6", "#ffde8c", "#6a4418"],
+    tip: "sigils",
+  }),
+  fortyfour: kitAura("fortyfour", {
+    description:
+      "Przy stopach postaci siedzi kot, po całej mapie chodzą świecące ślady łap, czterdzieści cztery naraz, a w dolnych rogach ekranu siedzą koty i machają ogonami. Co chwilę ogromna łapa przeciąga pazurami przez mapę i przez ekran przebiegają czterdzieści cztery koty.",
+    particles: ["#ffffff", "#ffe0a8", "#ffbe5a"],
+    tones: ["#fff4dc", "#ffbe5a", "#7a4a12"],
+    tip: "phoenix",
+    fx: ["footprints"],
+  }),
+  thirteenth: kitAura("thirteenth", {
+    description:
+      "Mapa stoi w złotej godzinie, a postać jest wskazówką zegara słonecznego szerokiego na cały ekran: jej długi cień obraca się po mapie obok trzynastu kresek. Co chwilę dzwon bije trzynaście razy i przy ostatnim uderzeniu słońce gaśnie.",
+    particles: ["#ffffff", "#ffe2a0", "#ffb046"],
+    tones: ["#fff2d0", "#ffb046", "#8a4a10"],
+    tip: "holy-corners",
+  }),
+  ninepins: kitAura("ninepins", {
+    description:
+      "Z góry ekranu nad całą mapą zwisają nici, wokół postaci płonie krąg dziewięciu świec ze znakiem na ziemi, a obok niej unosi się laleczka. Co chwilę nad mapą pojawia się laleczka wielka jak ekran, wbija się w nią szpilka i cała mapa podskakuje.",
+    particles: ["#ffffff", "#c8a0ff", "#6ee678"],
+    tones: ["#f0e6ff", "#9a5ae6", "#2a0a4a"],
+    tip: "skull-corners",
+    emitters: [
+      ...KIT_EMITTERS,
+      {
+        kind: "wisp",
+        rate: 5,
+        from: "around",
+        radius: [26, 38],
+        life: [1.2, 1.8],
+        speed: [14, 22],
+        size: [2.5, 4],
+        colors: 2,
+        colorFrom: 1,
+        front: 0.4,
+      },
+    ],
+  }),
+  threefaces: kitAura("threefaces", {
+    description:
+      "Nad mapą wisi wielki sierp księżyca, ekran stoi w trzech pasach o różnym świetle, a po bokach postaci stoją dwie jej sylwetki i co 23 tyknięcia zamieniają się miejscami. Co chwilę pasy rozjeżdżają się jak rozbite lustro, sierp spada przez ekran jak ostrze i trzy znów stają się jednym.",
+    particles: ["#ffffff", "#e2e8ff", "#aa5aff"],
+    tones: ["#ffffff", "#c8d2ff", "#3a3a9a"],
+    tip: "constellation",
+  }),
   // Calmer admin auras: no arrival.
   starlight: {
     id: "starlight",

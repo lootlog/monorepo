@@ -117,7 +117,12 @@ it("starts an initialized character with one bootstrap request, without repeatin
         guildTimerDocuments: {
           guilds: { "guild-1": createSettingsDocuments() },
         },
-        characterAura: { auras: [], canChange: false, canGrant: false },
+        characterAura: {
+          auras: [],
+          canChange: false,
+          personalAuraIds: [],
+          canGrant: false,
+        },
         characterAuras: { auras: [] },
       });
 

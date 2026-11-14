@@ -52,7 +52,44 @@ import { drawBurstScene } from "./bursts";
 import { drawGround } from "./ground";
 import { ARRIVAL_BURST, arrivalEvent, pulseStarted } from "./arrival";
 import { drawSummonBack, drawSummonFront, type Summon } from "./summon";
-import { drawStorm, STORM_GLOOM } from "./storm";
+import {
+  drawClockFace,
+  drawGears,
+  drawTimeEchoes,
+  stillness,
+  STOP_FROM,
+  STOP_TO,
+  TIMESTOP_LENGTH,
+  TRAIL_STEPS,
+  type TrailStep,
+} from "./chrono";
+import {
+  drawGalaxy,
+  drawPlanets,
+  drawSupernova,
+  SUPERNOVA_BLAST,
+} from "./cosmos";
+import {
+  drawCodeRain,
+  drawGhosts,
+  drawSelection,
+  drawTornRows,
+  drawWireGround,
+  glitchLevel,
+  RELOAD_GLITCH,
+} from "./glitch";
+import { drawDominion } from "./absolute";
+import { drawPowerFire, drawPowerStreaks, POWER_RELEASE } from "./ascend";
+import { KITS } from "./kits/registry";
+import { MAP_EFFECTS } from "./map-effects";
+import type { MapScene } from "./sky";
+import {
+  drawIceCrown,
+  drawIceRing,
+  drawRime,
+  drawSnowOrbit,
+  SPIKES_SHATTER,
+} from "./winter";
 import {
   drawAirCracks,
   drawEclipse,
@@ -119,6 +156,12 @@ interface Bolt {
   haki?: boolean;
 }
 
+/** An aura of realms wearing one that leaves the map alone: only its dominion is drawn. */
+const DOMINION_ONLY = { gloom: 0, veil: [4, 2, 10] } as const;
+
+/** Seconds an aura of realms wears its first one at least. */
+const FIRST_REALM = 4;
+
 /** How long each burst runs, in seconds. */
 const BURST_DURATION: Record<BurstKind, number> = {
   descend: 1.2,
@@ -143,6 +186,13 @@ const BURST_DURATION: Record<BurstKind, number> = {
   judgement: 0.6,
   rebirth: 1.2,
   quake: 0.9,
+  supernova: 1.6,
+  timestop: TIMESTOP_LENGTH,
+  glaciate: 1.5,
+  powerup: 2,
+  // A kit names its own length (`burstLength`).
+  kit: 2,
+  reload: 1.2,
 };
 
 /** An offscreen buffer of one side's light (`lit`) or covering (`dim`) pixels. */
@@ -270,6 +320,15 @@ export class Aura {
   private age = 0;
   /** Shapes the quake's crack in the air; a new one each quake. */
   private quakeSeed = 1;
+  /** Where the character stood at the last ticks, newest first, for the auras that echo it. */
+  private trail: TrailStep[] = [];
+  /** The aura's time when time stopped; null while it runs. */
+  private frozenAt: number | null = null;
+  /** The aura's own preset; `preset` is the one drawn, which differs for an aura of realms. */
+  private host: AuraPreset;
+  /** Which of the host's realms is worn, and the seconds since that changed. */
+  private realm = 0;
+  private shifted = Infinity;
   /** Props follow the head through this spring, so they trail a walk. */
   private spring: Spring | null = null;
   private lastCenter: { x: number; y: number } | null = null;
@@ -305,21 +364,30 @@ export class Aura {
     this.carry = clamp(phase, 0, 1) * TICK;
     this.rng = mulberry32(seed);
     this.field = new ParticleField(this.rng);
-    this.preset = AURAS[id];
+    this.host = AURAS[id];
+    this.preset = this.worn();
     this.rgb = colorsOf(this.preset);
 
     // An admin arrives with a burst.
     if (this.preset.herald) this.nextBurst = ARRIVAL_BURST;
   }
 
-  /** How dark the aura makes the whole map, 0..1: the storm's overcast; 0 for every other aura. */
-  mapDarkness(): number {
-    return this.preset.storm ? STORM_GLOOM : 0;
+  /**
+   * What the aura lays over the whole map: how much it dims it, 0..1, and with what
+   * colour; null for an aura that leaves the map alone.
+   */
+  mapEffect(): { gloom: number; veil: Rgb } | null {
+    if (this.preset.sky) return MAP_EFFECTS[this.preset.sky];
+
+    if (this.preset.kit) return KITS[this.preset.kit];
+
+    // The dominion lies over the map whatever is worn.
+    return this.host.realms ? DOMINION_ONLY : null;
   }
 
   /**
    * Draws the aura's effects over the whole map, `width` × `height` in the context's units:
-   * the storm.
+   * a storm, a night sky.
    */
   drawMapEffects(
     ctx: CanvasRenderingContext2D,
@@ -329,21 +397,37 @@ export class Aura {
   ): void {
     const p = this.preset;
 
-    if (!place.ground || !p.storm) return;
-    const [light, mid] = this.rgb.tones;
+    if (!place.ground || !(p.sky || p.kit || this.host.realms)) return;
+    const [light, mid, dark] = this.rgb.tones;
+    const { bounds } = place.silhouette;
     ctx.save();
 
     try {
-      if (p.storm)
-        drawStorm(
-          ctx,
-          width,
-          height,
-          this.time,
-          [place.viewX, place.viewY],
-          light,
-          mid,
-        );
+      const scene: MapScene = {
+        ctx,
+        width,
+        height,
+        time: this.time,
+        now: this.age,
+        view: [place.viewX, place.viewY],
+        x: place.x + bounds.x + bounds.w / 2,
+        y: place.y + bounds.y + bounds.h * 0.45,
+        feetY: place.feetY - 2,
+        // The burst steps with the ticks; over the map it runs on between them.
+        burst:
+          this.burst < 0
+            ? -1
+            : Math.min(1, this.burst + this.carry / this.burstLength()),
+        light,
+        mid,
+        dark,
+      };
+
+      if (p.sky) MAP_EFFECTS[p.sky].draw(scene);
+
+      if (p.kit) KITS[p.kit].sky(scene);
+
+      if (this.host.realms) drawDominion(scene, this.shifted);
     } finally {
       ctx.restore();
     }
@@ -361,13 +445,30 @@ export class Aura {
   }
 
   setPreset(id: CharacterAuraId): void {
-    if (id === this.preset.id) return;
-    this.preset = AURAS[id];
-    this.rgb = colorsOf(this.preset);
+    if (id === this.host.id) return;
+    this.host = AURAS[id];
+    this.realm = 0;
     this.field.clear();
+    this.wear();
+  }
+
+  /** The preset drawn now: the aura's own, or the one an aura of `realms` wears in turn. */
+  private worn(): AuraPreset {
+    const { realms } = this.host;
+    const id = realms?.[this.realm % realms.length];
+
+    return id ? AURAS[id] : this.host;
+  }
+
+  /** Puts on the preset now worn, dropping what belonged to the last one but its particles. */
+  private wear(): void {
+    this.preset = this.worn();
+    this.rgb = colorsOf(this.preset);
     this.bolts = [];
     this.dragon = null;
     this.burst = -1;
+    this.trail = [];
+    this.frozenAt = null;
     this.back.key = "";
     this.front.key = "";
     this.back.bodyKey = "";
@@ -379,6 +480,7 @@ export class Aura {
   update(dt: number, place: AuraPlacement | null, intensity: number): void {
     const before = this.age;
     this.age += Math.max(0, dt);
+    this.shifted += Math.max(0, dt);
 
     // Each later pulse over the map brings the burst too.
     if (this.preset.herald && pulseStarted(before, this.age))
@@ -410,11 +512,30 @@ export class Aura {
         ? [...this.preset.emitters, ...this.preset.tipEmitters]
         : this.preset.emitters;
 
-    this.field.update(TICK, emitters, frame, intensity, this.time);
-    this.field.bubbleUp(TICK);
+    // While time stands still nothing is born and nothing moves.
+    if (this.frozenAt === null) {
+      this.field.update(
+        TICK,
+        emitters,
+        frame,
+        // An aura of realms sheds half as much again.
+        this.host.realms ? intensity * 1.5 : intensity,
+        this.time,
+      );
+      this.field.bubbleUp(TICK);
+    }
 
     if (!place || !frame) return;
     const fx = this.preset.fx;
+
+    if (fx.includes("clockwork") && place.ground) {
+      this.trail.unshift({
+        x: place.x + place.viewX,
+        y: place.y + place.viewY,
+        silhouette: place.silhouette,
+      });
+      this.trail.length = Math.min(this.trail.length, TRAIL_STEPS);
+    }
 
     if (fx.includes("footprints") && place.ground) this.stepPrints(frame);
 
@@ -604,6 +725,8 @@ export class Aura {
 
       if (place.ground) this.drawLitePieces(b, place, false);
 
+      if (place.ground) this.drawShowcase(b, place, false);
+
       if (p.fx.includes("rays")) drawRays(b, place);
 
       if (p.fx.includes("moon")) drawMoon(b, place, p.pulse(this.time));
@@ -629,6 +752,7 @@ export class Aura {
 
       if (summon) drawSummonBack(ctx, place, summon);
 
+      if (place.ground) this.drawDoubles(ctx, place, false, intensity);
       this.blit(ctx, this.back, place, "dim");
 
       if (!(p.bare && place.ground))
@@ -651,6 +775,8 @@ export class Aura {
       const b = this.brush(intensity);
 
       if (place.ground) this.drawLitePieces(b, place, true);
+
+      if (place.ground) this.drawShowcase(b, place, true);
 
       if (p.fx.includes("frost-shards") && place.ground)
         drawShards(b, place, true, this.burstSwell("freeze"));
@@ -678,6 +804,8 @@ export class Aura {
         this.drawInner(ctx, place, glow, this.compositeKey(intensity));
       this.blit(ctx, this.front, place, "dim");
       this.blit(ctx, this.front, place, "lit");
+
+      if (place.ground) this.drawDoubles(ctx, place, true, intensity);
       const summon = this.summon(place, intensity);
 
       if (summon) drawSummonFront(ctx, place, summon);
@@ -786,6 +914,83 @@ export class Aura {
     if (fx.includes("crown") && front) drawCrown(b, place, raised, step);
 
     if (fx.includes("wings") && !front) drawWings(b, place, step);
+  }
+
+  /** The showcase admin auras' pieces round a character; `front` picks the pass. */
+  private drawShowcase(b: Brush, place: AuraPlacement, front: boolean): void {
+    const fx = this.preset.fx;
+    const burst = this.burst;
+
+    if (fx.includes("galaxy")) {
+      if (!front) drawGalaxy(b, place, burst);
+      drawPlanets(b, place, front, burst);
+      drawSupernova(b, place, front, burst);
+    }
+
+    if (fx.includes("power-flame") && front) drawPowerStreaks(b, place, burst);
+
+    if (this.preset.kit) KITS[this.preset.kit].pieces(b, place, front, burst);
+
+    if (fx.includes("clockwork") && !front) {
+      const clock = this.frozenAt ?? this.time;
+      drawClockFace(b, place, clock, burst);
+      drawGears(b, place, clock);
+    }
+
+    if (fx.includes("winter")) {
+      if (!front) drawRime(b, place, burst);
+      drawIceRing(b, place, front, burst);
+      drawSnowOrbit(b, place, front);
+
+      if (front) drawIceCrown(b, place, Math.floor(this.tick / 8) % 2 === 1);
+    }
+
+    if (fx.includes("glitch")) {
+      if (front) drawSelection(b, place, burst);
+      else {
+        drawWireGround(b, place);
+        drawCodeRain(b, place);
+      }
+    }
+  }
+
+  /**
+   * The character's doubles drawn straight onto the map, behind it or (`front`) over
+   * it: the echoes of where it stood, its ghosts split into colours. The golden fire
+   * goes the same way, being taller than the aura's buffers.
+   */
+  private drawDoubles(
+    ctx: CanvasRenderingContext2D,
+    place: AuraPlacement,
+    front: boolean,
+    intensity: number,
+  ): void {
+    const fx = this.preset.fx;
+    const [light, mid] = this.rgb.tones;
+
+    const { fire, kit } = this.preset;
+
+    if (kit)
+      KITS[kit].doubles?.(ctx, place, front, this.tick, this.burst, intensity);
+
+    if (fire && !front)
+      drawPowerFire(ctx, place, this.tick, this.burst, intensity, fire);
+
+    if (fx.includes("clockwork") && !front)
+      drawTimeEchoes(
+        ctx,
+        place,
+        this.trail,
+        mid,
+        intensity,
+        stillness(this.burst),
+      );
+
+    if (!fx.includes("glitch")) return;
+    const level = glitchLevel(this.tick, this.burst);
+
+    if (front) drawTornRows(ctx, place, level, this.tick, light, intensity);
+    else drawGhosts(ctx, place, level, this.tick, intensity);
   }
 
   /** Copies a side's buffers to the screen: body ones follow the character, world ones the camera. */
@@ -1249,6 +1454,13 @@ export class Aura {
 
   // --- bursts ------------------------------------------------------------------------------
 
+  /** How long the running burst lasts, s: the kit's own length, or its kind's. */
+  private burstLength(): number {
+    const { kit } = this.preset;
+
+    return kit ? KITS[kit].burst.length : BURST_DURATION[this.burstKind];
+  }
+
   private get burstKind(): BurstKind {
     return this.preset.burst;
   }
@@ -1291,7 +1503,7 @@ export class Aura {
     k: number,
   ): void {
     const before = this.burst;
-    this.burst += TICK / BURST_DURATION[kind];
+    this.burst += TICK / this.burstLength();
     const crossed = (at: number) => before < at && this.burst >= at;
 
     if (kind === "bloodrain" && this.burst < 0.8) {
@@ -1386,7 +1598,165 @@ export class Aura {
       this.field.emit(GOLD_RAIN, frame, Math.round(14 * k));
     }
 
-    if (this.burst > 1) this.burst = -1;
+    this.advanceShowcaseBurst(kind, place, frame, k, crossed);
+
+    if (this.burst <= 1) return;
+    this.burst = -1;
+
+    // An aura of realms moves on to the next one as each burst ends, but for the burst
+    // it arrives with: the first realm stays to be seen.
+    if (!this.host.realms || this.age < FIRST_REALM) return;
+    this.realm++;
+    this.wear();
+    this.shifted = 0;
+    this.flash = 1;
+    this.nextBurst = 3 + this.rng() * 2;
+  }
+
+  /** The beats the showcase admin auras' bursts cross this tick. */
+  private advanceShowcaseBurst(
+    kind: BurstKind,
+    place: AuraPlacement,
+    frame: SpawnFrame,
+    k: number,
+    crossed: (at: number) => boolean,
+  ): void {
+    // The star blows: everything it pulled in is thrown back out.
+    if (kind === "supernova" && crossed(SUPERNOVA_BLAST)) {
+      this.flash = 1;
+      this.field.emit(
+        {
+          kind: "spark",
+          rate: 0,
+          from: "body",
+          life: [0.5, 1],
+          speed: [60, 130],
+          spread: TAU,
+          drag: 1.6,
+          size: [0.8, 1.4],
+          colors: 5,
+          front: 0.6,
+        },
+        frame,
+        Math.round(34 * k),
+      );
+      this.field.emit(
+        {
+          kind: "glint",
+          rate: 0,
+          from: "body",
+          life: [0.5, 0.9],
+          speed: [0, 3],
+          size: [4, 7],
+          colors: 3,
+          front: 0.7,
+        },
+        frame,
+        Math.round(6 * k),
+      );
+      this.burstRing(place, frame, frame.feet.rx * 3.2, 2);
+      this.burstRing(place, frame, frame.feet.rx * 2, 0);
+    }
+
+    if (kind === "timestop") {
+      if (crossed(STOP_FROM)) {
+        this.frozenAt = this.time;
+        this.flash = 0.8;
+      }
+
+      // Time snaps back.
+      if (crossed(STOP_TO)) {
+        this.frozenAt = null;
+        this.flash = 1;
+        this.burstRing(place, frame, frame.feet.rx * 2.8, 3);
+        this.burstRing(place, frame, frame.feet.rx * 1.7, 0);
+      }
+
+      if (this.burst > 1) this.frozenAt = null;
+    }
+
+    // A kit's burst is released: a flash, sparks off the body and two rings.
+    if (
+      kind === "kit" &&
+      this.preset.kit &&
+      crossed(KITS[this.preset.kit].burst.release)
+    ) {
+      this.flash = 1;
+      this.field.emit(
+        {
+          kind: "spark",
+          rate: 0,
+          from: "body",
+          life: [0.4, 0.9],
+          speed: [50, 110],
+          spread: TAU,
+          drag: 1.5,
+          size: [0.8, 1.4],
+          colors: 3,
+          front: 0.6,
+        },
+        frame,
+        Math.round(24 * k),
+      );
+      this.burstRing(place, frame, frame.feet.rx * 2.8, 1);
+      this.burstRing(place, frame, frame.feet.rx * 1.7, 0);
+    }
+
+    // The power is released: stones thrown up and rings.
+    if (kind === "powerup" && crossed(POWER_RELEASE)) {
+      this.flash = 1;
+      this.startConqueror(place, frame, k, false);
+      this.burstRing(place, frame, frame.feet.rx * 3.4, 1);
+    }
+
+    // The spikes shatter into shards thrown up and out.
+    if (kind === "glaciate" && crossed(SPIKES_SHATTER)) {
+      this.flash = 0.7;
+      this.field.emit(
+        {
+          kind: "shard",
+          rate: 0,
+          from: "feet-rim",
+          life: [1.2, 1.8],
+          speed: [50, 100],
+          dir: -Math.PI / 2,
+          spread: 1.8,
+          gravity: 220,
+          size: [1.6, 3],
+          colors: 4,
+          front: 0.5,
+          spin: [-6, 6],
+          land: "shatter",
+          groundOnly: true,
+        },
+        frame,
+        Math.round(22 * k),
+      );
+      this.burstRing(place, frame, frame.feet.rx * 2.4, 1);
+    }
+
+    // The world is back: bits rise off the ground as the sweep redraws it.
+    if (kind === "reload" && crossed(RELOAD_GLITCH)) {
+      this.flash = 1;
+      this.field.emit(
+        {
+          kind: "mote",
+          rate: 0,
+          from: "feet-rim",
+          life: [0.7, 1.3],
+          speed: [30, 60],
+          dir: -Math.PI / 2,
+          spread: 0.2,
+          size: [1, 2],
+          colors: 3,
+          colorFrom: 1,
+          front: 0.5,
+        },
+        frame,
+        Math.round(20 * k),
+      );
+      this.burstRing(place, frame, frame.feet.rx * 2.4, 2);
+    }
   }
 
   /** A ring spreading on the ground under the feet, while the ground piece shows. */
@@ -1658,6 +2028,58 @@ export class Aura {
         return true;
       case "judgement":
         this.startJudgement(place, frame, k);
+
+        return true;
+      case "supernova":
+      case "timestop":
+      case "powerup":
+      case "kit":
+        // The galaxy starts to fall in; the hand winds up.
+        this.flash = 0.5;
+
+        return true;
+      case "glaciate":
+        // The ground freezes over: spikes shoot up (`drawIceRing`) in a puff of snow.
+        this.flash = 0.9;
+        this.field.emit(
+          {
+            kind: "flake",
+            rate: 0,
+            from: "feet-rim",
+            life: [0.9, 1.5],
+            speed: [20, 45],
+            spread: TAU,
+            drag: 1.2,
+            size: [2.4, 3.4],
+            colors: 3,
+            front: 0.6,
+          },
+          frame,
+          Math.round(14 * k),
+        );
+        this.burstRing(place, frame, frame.feet.rx * 2, 0);
+
+        return true;
+      case "reload":
+        // Static jumps off the character as the map starts to tear.
+        this.flash = 0.6;
+        this.field.emit(
+          {
+            kind: "spark",
+            rate: 0,
+            from: "edge",
+            life: [0.2, 0.4],
+            speed: [60, 120],
+            spread: TAU,
+            outward: 0.8,
+            size: [0.8, 1.2],
+            colors: 2,
+            colorFrom: 3,
+            front: 0.7,
+          },
+          frame,
+          Math.round(18 * k),
+        );
 
         return true;
       default:
@@ -2134,7 +2556,7 @@ export class Aura {
 
   private drawBolts(place: AuraPlacement, intensity: number): void {
     const ctx = this.lit;
-    const mid = this.rgb.tones[1];
+    const mid = this.preset.fire?.bolt ?? this.rgb.tones[1];
 
     for (const bolt of this.bolts) {
       const fade = bolt.age < TICK ? 1 : 0.6;

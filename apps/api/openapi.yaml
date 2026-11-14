@@ -18856,7 +18856,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Choose the aura one Margonem character of the authenticated user wears, or remove it with null; fails with 403 when choosing one without access to auras or for a character on an account the user did not prove to play
+      description: Choose the aura one Margonem character of the authenticated user wears, or remove it with null; fails with 403 when choosing one without access to auras, a personal aura not granted to the user, or for a character on an account the user did not prove to play
       summary: Update own character aura
       requestBody:
         content:
@@ -19001,8 +19001,92 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Withdraw the aura grant of the user who last proved to play the Margonem account and remove the aura they wear; global chat admins keep theirs. Global chat admins only; 404 when no user proved to play the account
+      description: Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; global chat admins keep theirs. Global chat admins only; 404 when no user proved to play the account
       summary: Revoke character auras
+  /character-auras/grants/game-accounts/{gameAccountId}/personal-auras/{auraId}:
+    put:
+      tags:
+        - character-auras
+      operationId: CharacterAurasController_grantPersonalAura
+      parameters:
+        - name: gameAccountId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: auraId
+          in: path
+          schema:
+            type: string
+            enum:
+              - skyborne
+              - joker
+              - nightowl
+              - sunder
+              - fortyfour
+              - thirteenth
+              - ninepins
+              - threefaces
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "204":
+          description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Global chat admins only; 404 when no user proved to play the account
+      summary: Grant a personal character aura
 components:
   schemas:
     RequestValidationError:
@@ -19085,11 +19169,25 @@ components:
             $ref: "#/components/schemas/CharacterAuraResponseDto"
         canChange:
           type: boolean
+        personalAuraIds:
+          type: array
+          items:
+            type: string
+            enum:
+              - skyborne
+              - joker
+              - nightowl
+              - sunder
+              - fortyfour
+              - thirteenth
+              - ninepins
+              - threefaces
         canGrant:
           type: boolean
       required:
         - auras
         - canChange
+        - personalAuraIds
         - canGrant
       additionalProperties: false
     CharacterAuraResponseDto:
@@ -19134,6 +19232,23 @@ components:
             - quake
             - starlight
             - seal
+            - cosmos
+            - timelord
+            - winterlord
+            - architect
+            - absolute
+            - ascendant
+            - ascendant2
+            - ascendant3
+            - ascendant4
+            - skyborne
+            - joker
+            - nightowl
+            - sunder
+            - fortyfour
+            - thirteenth
+            - ninepins
+            - threefaces
       required:
         - gameAccountId
         - characterId
@@ -19182,6 +19297,23 @@ components:
             - quake
             - starlight
             - seal
+            - cosmos
+            - timelord
+            - winterlord
+            - architect
+            - absolute
+            - ascendant
+            - ascendant2
+            - ascendant3
+            - ascendant4
+            - skyborne
+            - joker
+            - nightowl
+            - sunder
+            - fortyfour
+            - thirteenth
+            - ninepins
+            - threefaces
       required:
         - gameAccountId
         - characterId
@@ -35733,11 +35865,25 @@ components:
                 $ref: "#/components/schemas/CharacterAuraResponseDto"
             canChange:
               type: boolean
+            personalAuraIds:
+              type: array
+              items:
+                type: string
+                enum:
+                  - skyborne
+                  - joker
+                  - nightowl
+                  - sunder
+                  - fortyfour
+                  - thirteenth
+                  - ninepins
+                  - threefaces
             canGrant:
               type: boolean
           required:
             - auras
             - canChange
+            - personalAuraIds
             - canGrant
           additionalProperties: false
         characterAuras:

@@ -1,0 +1,108 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "d6d6e93f-6d32-454b-99d7-57854f4950d5",
+  "prevIds": ["e201ba0a-462a-49a4-9dd3-97bf67c975c1"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "UserPersonalCharacterAuraGrant"],
+      "writes": [
+        "s|tbl|public.UserPersonalCharacterAuraGrant",
+        "n|tbl|public.UserPersonalCharacterAuraGrant",
+        "e|tbl|public.UserPersonalCharacterAuraGrant",
+        "n|rel|public.UserPersonalCharacterAuraGrant",
+        "n|type|public.UserPersonalCharacterAuraGrant",
+        "n|rel|public.UserPersonalCharacterAuraGrant_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "UserPersonalCharacterAuraGrant",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserPersonalCharacterAuraGrant",
+        "name": "userId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserPersonalCharacterAuraGrant",
+        "name": "auraId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserPersonalCharacterAuraGrant",
+        "name": "grantedByUserId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserPersonalCharacterAuraGrant",
+        "name": "grantedAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserPersonalCharacterAuraGrant",
+        "name": "UserPersonalCharacterAuraGrant_pkey",
+        "columns": ["userId", "auraId"],
+        "nameExplicit": true,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

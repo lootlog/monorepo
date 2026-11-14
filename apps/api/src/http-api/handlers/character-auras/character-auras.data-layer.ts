@@ -3,6 +3,8 @@ import { Clock, Effect, Layer, Schema } from "effect";
 import {
   CharacterAuraIdSchema,
   isAdminCharacterAuraId,
+  isPersonalCharacterAuraId,
+  PERSONAL_CHARACTER_AURA_IDS,
   type CharacterAurasChanged,
 } from "@lootlog/schema/character-aura";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
@@ -11,6 +13,7 @@ import {
   characterAuraTable,
   userCharacterAuraGrantTable,
   userMargonemAccountTable,
+  userPersonalCharacterAuraGrantTable,
 } from "#src/database/drizzle/user.schema";
 import type { CharacterAurasResponse } from "#src/contracts/character-auras/schemas";
 import { currentMargonemAccountPlayers } from "#src/margonem-accounts/margonem-accounts";
@@ -62,6 +65,9 @@ export const CharacterAuraHolders = Schema.Struct({
     }),
   ),
   grantedUserIds: Schema.Array(Schema.String),
+  personalGrants: Schema.Array(
+    Schema.Struct({ userId: Schema.String, auraId: Schema.String }),
+  ),
 });
 
 export type CharacterAuraHolders = typeof CharacterAuraHolders.Type;
@@ -94,6 +100,9 @@ const uncached: CharacterAurasCache = {
  * deletes their auras, and an admin dropped from `adminUserIds` keeps the
  * stored choices but no longer shows them, and may only remove them. Admin
  * auras are the admins' own: only they choose them, and only theirs show.
+ * A personal aura is its holders' own in the same way: beside the admins, only
+ * a User granted that very aura chooses it, with or without the grant of
+ * auras in general, and only theirs shows.
  */
 export const makeCharacterAurasData = (
   adminUserIds: ReadonlyArray<string>,
@@ -134,6 +143,7 @@ export const makeCharacterAurasData = (
           characterId: characterAuraTable.characterId,
           userId: characterAuraTable.userId,
           auraId: characterAuraTable.auraId,
+          personalHolder: userPersonalCharacterAuraGrantTable.userId,
         })
         .from(characterAuraTable)
         .innerJoin(
@@ -147,11 +157,25 @@ export const makeCharacterAurasData = (
           userCharacterAuraGrantTable,
           eq(userCharacterAuraGrantTable.userId, characterAuraTable.userId),
         )
+        .leftJoin(
+          userPersonalCharacterAuraGrantTable,
+          and(
+            eq(
+              userPersonalCharacterAuraGrantTable.userId,
+              characterAuraTable.userId,
+            ),
+            eq(
+              userPersonalCharacterAuraGrantTable.auraId,
+              characterAuraTable.auraId,
+            ),
+          ),
+        )
         .where(
           and(
             where,
             or(
               isNotNull(userCharacterAuraGrantTable.userId),
+              isNotNull(userPersonalCharacterAuraGrantTable.userId),
               admins.size === 0
                 ? undefined
                 : inArray(characterAuraTable.userId, [...admins]),
@@ -164,11 +188,21 @@ export const makeCharacterAurasData = (
         )
         .pipe(
           Effect.map((rows) =>
-            rows.flatMap(({ gameAccountId, characterId, userId, auraId }) =>
-              isCharacterAuraId(auraId) &&
-              (admins.has(userId) || !isAdminCharacterAuraId(auraId))
-                ? [{ gameAccountId, characterId, auraId }]
-                : [],
+            rows.flatMap(
+              ({
+                gameAccountId,
+                characterId,
+                userId,
+                auraId,
+                personalHolder,
+              }) =>
+                isCharacterAuraId(auraId) &&
+                (admins.has(userId) ||
+                  (isPersonalCharacterAuraId(auraId)
+                    ? personalHolder !== null
+                    : !isAdminCharacterAuraId(auraId)))
+                  ? [{ gameAccountId, characterId, auraId }]
+                  : [],
             ),
           ),
         );
@@ -193,6 +227,21 @@ export const makeCharacterAurasData = (
 
     const canChange = (userId: string) =>
       admins.has(userId) ? Effect.succeed(true) : isGranted(userId);
+
+    const holdsPersonalAura = (userId: string, auraId: string) =>
+      admins.has(userId)
+        ? Effect.succeed(true)
+        : database
+            .select({ userId: userPersonalCharacterAuraGrantTable.userId })
+            .from(userPersonalCharacterAuraGrantTable)
+            .where(
+              and(
+                eq(userPersonalCharacterAuraGrantTable.userId, userId),
+                eq(userPersonalCharacterAuraGrantTable.auraId, auraId),
+              ),
+            )
+            .limit(1)
+            .pipe(Effect.map((rows) => rows.length > 0));
 
     // Any proof will do: the aura shows only while the User plays it last.
     const playsAccount = (userId: string, gameAccountId: string) =>
@@ -222,6 +271,12 @@ export const makeCharacterAurasData = (
           .select({ userId: userCharacterAuraGrantTable.userId })
           .from(userCharacterAuraGrantTable)
           .pipe(Effect.map((rows) => rows.map((row) => row.userId))),
+        personalGrants: database
+          .select({
+            userId: userPersonalCharacterAuraGrantTable.userId,
+            auraId: userPersonalCharacterAuraGrantTable.auraId,
+          })
+          .from(userPersonalCharacterAuraGrantTable),
       }),
     );
 
@@ -276,7 +331,13 @@ export const makeCharacterAurasData = (
     // Writes check access against the database; this read shows it.
     const getOwnAura = (userId: string) =>
       Effect.gen(function* () {
-        const { auras, grantedUserIds } = yield* holders;
+        const { auras, grantedUserIds, personalGrants } = yield* holders;
+
+        const granted = new Set(
+          personalGrants.flatMap((grant) =>
+            grant.userId === userId ? [grant.auraId] : [],
+          ),
+        );
 
         return {
           auras: auras
@@ -288,6 +349,9 @@ export const makeCharacterAurasData = (
             )
             .toSorted(byCharacter),
           canChange: admins.has(userId) || grantedUserIds.includes(userId),
+          personalAuraIds: PERSONAL_CHARACTER_AURA_IDS.filter(
+            (auraId) => admins.has(userId) || granted.has(auraId),
+          ),
           canGrant: admins.has(userId),
         };
       }).pipe(Effect.mapError(operationError));
@@ -329,7 +393,9 @@ export const makeCharacterAurasData = (
           const allowed = yield* Effect.all([
             isAdminCharacterAuraId(auraId)
               ? Effect.succeed(admins.has(userId))
-              : canChange(userId),
+              : isPersonalCharacterAuraId(auraId)
+                ? holdsPersonalAura(userId, auraId)
+                : canChange(userId),
             playsAccount(userId, character.gameAccountId),
           ]).pipe(
             Effect.mapBoth({
@@ -377,6 +443,29 @@ export const makeCharacterAurasData = (
           // A stored aura starts to show once its User is granted.
           yield* cache.invalidate;
         }),
+      grantPersonalAura: (callerUserId, gameAccountId, auraId) =>
+        Effect.gen(function* () {
+          const userId = yield* grantTarget(callerUserId, gameAccountId);
+          const grantedAt = yield* now;
+
+          // Granting again keeps the first grant.
+          yield* database
+            .insert(userPersonalCharacterAuraGrantTable)
+            .values({
+              userId,
+              auraId,
+              grantedByUserId: callerUserId,
+              grantedAt,
+            })
+            .onConflictDoNothing({
+              target: [
+                userPersonalCharacterAuraGrantTable.userId,
+                userPersonalCharacterAuraGrantTable.auraId,
+              ],
+            })
+            .pipe(Effect.mapError(operationError));
+          yield* cache.invalidate;
+        }),
       // An admin keeps access, and the auras with it, while listed.
       revokeAuras: (callerUserId, gameAccountId) =>
         Effect.gen(function* () {
@@ -388,6 +477,11 @@ export const makeCharacterAurasData = (
                 yield* transaction
                   .delete(userCharacterAuraGrantTable)
                   .where(eq(userCharacterAuraGrantTable.userId, userId));
+                yield* transaction
+                  .delete(userPersonalCharacterAuraGrantTable)
+                  .where(
+                    eq(userPersonalCharacterAuraGrantTable.userId, userId),
+                  );
 
                 if (admins.has(userId)) return [];
 
