@@ -101,7 +101,12 @@ describe("character auras", () => {
       data.updateOwnAura("player", character("101"), null),
     );
 
-    expect(removed).toEqual({ auras: [], canChange: false, canGrant: false });
+    expect(removed).toEqual({
+      auras: [],
+      canChange: false,
+      personalAuraIds: [],
+      canGrant: false,
+    });
   });
 
   it("shows an aura only on the character it was chosen for, and only while its User has access", async () => {
@@ -272,6 +277,7 @@ describe("character auras", () => {
     expect(await run((data) => data.getOwnAura("player"))).toEqual({
       auras: [],
       canChange: false,
+      personalAuraIds: [],
       canGrant: false,
     });
 
@@ -282,7 +288,68 @@ describe("character auras", () => {
     );
 
     // A new grant does not bring the removed auras back.
-    expect(regranted).toEqual({ auras: [], canChange: true, canGrant: false });
+    expect(regranted).toEqual({
+      auras: [],
+      canChange: true,
+      personalAuraIds: [],
+      canGrant: false,
+    });
+  });
+
+  it("keeps a personal aura to the User it was granted to, whatever else they may choose", async () => {
+    const { run, verify } = await setup(["admin"]);
+
+    await verify("granted", "101");
+    await verify("holder", "202");
+    await run((data) =>
+      Effect.all([
+        data.grantAuras("admin", "101"),
+        data.grantPersonalAura("admin", "202", "skyborne"),
+      ]),
+    );
+
+    // The grant of auras in general does not cover a personal one, a personal
+    // grant covers neither the other personal auras nor the rest, and only
+    // admins grant it.
+    const refused = await run((data) =>
+      Effect.all([
+        Effect.flip(
+          data.updateOwnAura("granted", character("101"), "skyborne"),
+        ),
+        Effect.flip(data.updateOwnAura("holder", character("202"), "joker")),
+        Effect.flip(data.updateOwnAura("holder", character("202"), "frost")),
+        Effect.flip(data.grantPersonalAura("holder", "101", "skyborne")),
+      ]),
+    );
+
+    expect(refused.map((error) => error._tag)).toEqual([
+      "CharacterAuraAccessDenied",
+      "CharacterAuraAccessDenied",
+      "CharacterAuraAccessDenied",
+      "CharacterAuraAccessDenied",
+    ]);
+
+    const chosen = await run((data) =>
+      data.updateOwnAura("holder", character("202"), "skyborne"),
+    );
+
+    expect(chosen).toEqual({
+      auras: [shown("202", "skyborne")],
+      canChange: false,
+      personalAuraIds: ["skyborne"],
+      canGrant: false,
+    });
+    expect(await run((data) => data.getAuras())).toEqual({
+      auras: [shown("202", "skyborne")],
+    });
+
+    // Revoking takes the personal grant and the aura with it.
+    await run((data) => data.revokeAuras("admin", "202"));
+
+    expect(await run((data) => data.getAuras())).toEqual({ auras: [] });
+    expect(
+      (await run((data) => data.getOwnAura("holder"))).personalAuraIds,
+    ).toEqual([]);
   });
 
   it("serves stored reads until a write changes who shows which aura", async () => {

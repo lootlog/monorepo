@@ -76,6 +76,20 @@ export interface HttpErrorResponse {
   details?: HttpErrorResponseDetails;
 }
 
+export type OwnCharacterAuraResponseDtoPersonalAuraIdsItem = typeof OwnCharacterAuraResponseDtoPersonalAuraIdsItem[keyof typeof OwnCharacterAuraResponseDtoPersonalAuraIdsItem];
+
+
+export const OwnCharacterAuraResponseDtoPersonalAuraIdsItem = {
+  skyborne: 'skyborne',
+  joker: 'joker',
+  nightowl: 'nightowl',
+  sunder: 'sunder',
+  fortyfour: 'fortyfour',
+  thirteenth: 'thirteenth',
+  ninepins: 'ninepins',
+  threefaces: 'threefaces',
+} as const;
+
 export type CharacterAuraResponseDtoAuraId = typeof CharacterAuraResponseDtoAuraId[keyof typeof CharacterAuraResponseDtoAuraId];
 
 
@@ -140,6 +154,7 @@ export interface CharacterAuraResponseDto {
 export interface OwnCharacterAuraResponseDto {
   auras: CharacterAuraResponseDto[];
   canChange: boolean;
+  personalAuraIds: OwnCharacterAuraResponseDtoPersonalAuraIdsItem[];
   canGrant: boolean;
 }
 
@@ -11392,12 +11407,27 @@ export type GameClientBootstrapResponseDtoOutputGuildTimerDocuments = {
  */
 export type GameClientBootstrapResponseDtoOutputGuildPermissions = {[key: string]: ('OWNER' | 'ADMIN' | 'LOOTLOG_MANAGE' | 'LOOTLOG_ACCESS' | 'LOOTLOG_LOOTS_READ' | 'LOOTLOG_LOOTS_WRITE' | 'LOOTLOG_LOOTS_ARCHIVE' | 'LOOTLOG_LOOTS_TITANS_READ' | 'LOOTLOG_LOOTS_HEROES_READ' | 'LOOTLOG_TIMERS_READ' | 'LOOTLOG_TIMERS_WRITE' | 'LOOTLOG_TIMERS_RESET' | 'LOOTLOG_TIMERS_DELETE' | 'LOOTLOG_TIMERS_TITANS_READ' | 'LOOTLOG_TIMERS_HEROES_READ' | 'LOOTLOG_RESERVATIONS_READ' | 'LOOTLOG_RESERVATIONS_WRITE' | 'LOOTLOG_MEMBERS_READ' | 'LOOTLOG_ONLINE_PLAYERS_READ' | 'LOOTLOG_PRESENCE_LOCATION_READ' | 'LOOTLOG_CHAT_READ' | 'LOOTLOG_CHAT_WRITE' | 'LOOTLOG_CHAT_TITANS_READ' | 'LOOTLOG_CHAT_HEROES_READ' | 'LOOTLOG_NOTIFICATIONS_READ' | 'LOOTLOG_NOTIFICATIONS_SEND' | 'LOOTLOG_NOTIFICATIONS_TITANS_READ' | 'LOOTLOG_NOTIFICATIONS_HEROES_READ' | 'LOOTLOG_EVENTS_MANAGE' | 'LOOTLOG_EVENTS_READ' | 'LOOTLOG_EVENTS_WRITE' | 'LOOTLOG_DOCS_READ' | 'LOOTLOG_DOCS_WRITE')[]} | null;
 
+export type GameClientBootstrapResponseDtoOutputCharacterAuraPersonalAuraIdsItem = typeof GameClientBootstrapResponseDtoOutputCharacterAuraPersonalAuraIdsItem[keyof typeof GameClientBootstrapResponseDtoOutputCharacterAuraPersonalAuraIdsItem];
+
+
+export const GameClientBootstrapResponseDtoOutputCharacterAuraPersonalAuraIdsItem = {
+  skyborne: 'skyborne',
+  joker: 'joker',
+  nightowl: 'nightowl',
+  sunder: 'sunder',
+  fortyfour: 'fortyfour',
+  thirteenth: 'thirteenth',
+  ninepins: 'ninepins',
+  threefaces: 'threefaces',
+} as const;
+
 /**
  * @nullable
  */
 export type GameClientBootstrapResponseDtoOutputCharacterAura = {
   auras: CharacterAuraResponseDto[];
   canChange: boolean;
+  personalAuraIds: GameClientBootstrapResponseDtoOutputCharacterAuraPersonalAuraIdsItem[];
   canGrant: boolean;
 } | null;
 
@@ -16555,6 +16585,22 @@ export type CharacterAurasControllerRevokeAuras403 = HttpErrorResponse | {
 };
 
 export type CharacterAurasControllerRevokeAuras429 = {
+  message: string;
+};
+
+export type CharacterAurasControllerGrantPersonalAuraPathParameters = {
+ gameAccountId: string,
+    auraId: 'skyborne' | 'joker' | 'nightowl' | 'sunder' | 'fortyfour' | 'thirteenth' | 'ninepins' | 'threefaces',
+ }
+export type CharacterAurasControllerGrantPersonalAura401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type CharacterAurasControllerGrantPersonalAura403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type CharacterAurasControllerGrantPersonalAura429 = {
   message: string;
 };
 
@@ -43703,7 +43749,7 @@ export const getCharacterAurasControllerUpdateOwnAuraUrl = () => {
 }
 
 /**
- * Choose the aura one Margonem character of the authenticated user wears, or remove it with null; fails with 403 when choosing one without access to auras or for a character on an account the user did not prove to play
+ * Choose the aura one Margonem character of the authenticated user wears, or remove it with null; fails with 403 when choosing one without access to auras, a personal aura not granted to the user, or for a character on an account the user did not prove to play
  * @summary Update own character aura
  */
 export const characterAurasControllerUpdateOwnAura = async (updateOwnCharacterAuraDto: UpdateOwnCharacterAuraDto, options?: Parameters<typeof mainFetch>[1]): Promise<OwnCharacterAuraResponseDto> => {
@@ -43867,7 +43913,7 @@ export const getCharacterAurasControllerRevokeAurasUrl = ({ gameAccountId }: Cha
 }
 
 /**
- * Withdraw the aura grant of the user who last proved to play the Margonem account and remove the aura they wear; global chat admins keep theirs. Global chat admins only; 404 when no user proved to play the account
+ * Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; global chat admins keep theirs. Global chat admins only; 404 when no user proved to play the account
  * @summary Revoke character auras
  */
 export const characterAurasControllerRevokeAuras = async ({ gameAccountId }: CharacterAurasControllerRevokeAurasPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
@@ -43931,4 +43977,79 @@ export const useCharacterAurasControllerRevokeAuras = <TError = ErrorType<Reques
         TContext
       > => {
       return useMutation(getCharacterAurasControllerRevokeAurasMutationOptions(options), queryClient);
+    }
+
+export const getCharacterAurasControllerGrantPersonalAuraUrl = ({ gameAccountId, auraId }: CharacterAurasControllerGrantPersonalAuraPathParameters,) => {
+
+
+
+
+  return `/character-auras/grants/game-accounts/${gameAccountId}/personal-auras/${auraId}`
+}
+
+/**
+ * Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Global chat admins only; 404 when no user proved to play the account
+ * @summary Grant a personal character aura
+ */
+export const characterAurasControllerGrantPersonalAura = async ({ gameAccountId, auraId }: CharacterAurasControllerGrantPersonalAuraPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+
+  return mainFetch<void>(getCharacterAurasControllerGrantPersonalAuraUrl({ gameAccountId, auraId }),
+  {
+    ...options,
+    method: 'PUT'
+
+
+  }
+);}
+
+
+
+
+
+export const getCharacterAurasControllerGrantPersonalAuraMutationKey = () => ['characterAurasControllerGrantPersonalAura'] as const;
+
+export const getCharacterAurasControllerGrantPersonalAuraMutationOptions = <TError = ErrorType<RequestValidationError | CharacterAurasControllerGrantPersonalAura401 | CharacterAurasControllerGrantPersonalAura403 | HttpErrorResponse | CharacterAurasControllerGrantPersonalAura429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerGrantPersonalAura>>, TError,CharacterAurasControllerGrantPersonalAuraMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerGrantPersonalAura>>, TError,CharacterAurasControllerGrantPersonalAuraMutationVariables, TContext> => {
+
+const mutationKey = getCharacterAurasControllerGrantPersonalAuraMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof characterAurasControllerGrantPersonalAura>>, CharacterAurasControllerGrantPersonalAuraMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  characterAurasControllerGrantPersonalAura(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CharacterAurasControllerGrantPersonalAuraMutationResult = NonNullable<Awaited<ReturnType<typeof characterAurasControllerGrantPersonalAura>>>
+
+    export type CharacterAurasControllerGrantPersonalAuraMutationError = ErrorType<RequestValidationError | CharacterAurasControllerGrantPersonalAura401 | CharacterAurasControllerGrantPersonalAura403 | HttpErrorResponse | CharacterAurasControllerGrantPersonalAura429>
+    export type CharacterAurasControllerGrantPersonalAuraMutationVariables = {pathParams: CharacterAurasControllerGrantPersonalAuraPathParameters}
+
+    /**
+ * @summary Grant a personal character aura
+ */
+export const useCharacterAurasControllerGrantPersonalAura = <TError = ErrorType<RequestValidationError | CharacterAurasControllerGrantPersonalAura401 | CharacterAurasControllerGrantPersonalAura403 | HttpErrorResponse | CharacterAurasControllerGrantPersonalAura429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerGrantPersonalAura>>, TError,CharacterAurasControllerGrantPersonalAuraMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof characterAurasControllerGrantPersonalAura>>,
+        TError,
+        CharacterAurasControllerGrantPersonalAuraMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCharacterAurasControllerGrantPersonalAuraMutationOptions(options), queryClient);
     }

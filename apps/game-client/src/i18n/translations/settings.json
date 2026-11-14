@@ -198,6 +198,8 @@
     },
     "grants": {
       "grant": "Nadaj aurę",
+      "grantPersonal": "Nadaj aurę: {{aura}}",
+      "grantedPersonal": "Gracz może teraz wybrać aurę {{aura}} w ustawieniach Lootloga.",
       "revoke": "Odbierz aurę",
       "granted": "Gracz może teraz wybrać aurę w ustawieniach Lootloga.",
       "revoked": "Aury odebrane.",

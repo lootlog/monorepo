@@ -155,9 +155,15 @@ const run = ({
           CharacterAurasData.of({
             getAuras: () => Effect.succeed({ auras: [] }),
             getOwnAura: () =>
-              Effect.succeed({ auras: [], canChange: false, canGrant: false }),
+              Effect.succeed({
+                auras: [],
+                canChange: false,
+                personalAuraIds: [],
+                canGrant: false,
+              }),
             updateOwnAura: notReadAtStartup,
             grantAuras: notReadAtStartup,
+            grantPersonalAura: notReadAtStartup,
             revokeAuras: notReadAtStartup,
           }),
         ),
