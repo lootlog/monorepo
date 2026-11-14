@@ -44,7 +44,7 @@ export interface Box {
 }
 
 /** Pixel sprites: one character per pixel, mapped through a palette; spaces are empty. */
-function sprite(
+export function sprite(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,

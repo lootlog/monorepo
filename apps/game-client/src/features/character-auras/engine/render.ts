@@ -80,6 +80,7 @@ import {
 } from "./glitch";
 import { drawDominion } from "./absolute";
 import { drawPowerFire, drawPowerStreaks, POWER_RELEASE } from "./ascend";
+import { KITS } from "./kits/registry";
 import { MAP_EFFECTS } from "./map-effects";
 import type { MapScene } from "./sky";
 import {
@@ -189,6 +190,8 @@ const BURST_DURATION: Record<BurstKind, number> = {
   timestop: TIMESTOP_LENGTH,
   glaciate: 1.5,
   powerup: 2,
+  // A kit names its own length (`burstLength`).
+  kit: 2,
   reload: 1.2,
 };
 
@@ -376,6 +379,8 @@ export class Aura {
   mapEffect(): { gloom: number; veil: Rgb } | null {
     if (this.preset.sky) return MAP_EFFECTS[this.preset.sky];
 
+    if (this.preset.kit) return KITS[this.preset.kit];
+
     // The dominion lies over the map whatever is worn.
     return this.host.realms ? DOMINION_ONLY : null;
   }
@@ -392,7 +397,7 @@ export class Aura {
   ): void {
     const p = this.preset;
 
-    if (!place.ground || !(p.sky || this.host.realms)) return;
+    if (!place.ground || !(p.sky || p.kit || this.host.realms)) return;
     const [light, mid, dark] = this.rgb.tones;
     const { bounds } = place.silhouette;
     ctx.save();
@@ -412,16 +417,15 @@ export class Aura {
         burst:
           this.burst < 0
             ? -1
-            : Math.min(
-                1,
-                this.burst + this.carry / BURST_DURATION[this.burstKind],
-              ),
+            : Math.min(1, this.burst + this.carry / this.burstLength()),
         light,
         mid,
         dark,
       };
 
       if (p.sky) MAP_EFFECTS[p.sky].draw(scene);
+
+      if (p.kit) KITS[p.kit].sky(scene);
 
       if (this.host.realms) drawDominion(scene, this.shifted);
     } finally {
@@ -925,6 +929,8 @@ export class Aura {
 
     if (fx.includes("power-flame") && front) drawPowerStreaks(b, place, burst);
 
+    if (this.preset.kit) KITS[this.preset.kit].pieces(b, place, front, burst);
+
     if (fx.includes("clockwork") && !front) {
       const clock = this.frozenAt ?? this.time;
       drawClockFace(b, place, clock, burst);
@@ -962,7 +968,10 @@ export class Aura {
     const fx = this.preset.fx;
     const [light, mid] = this.rgb.tones;
 
-    const { fire } = this.preset;
+    const { fire, kit } = this.preset;
+
+    if (kit)
+      KITS[kit].doubles?.(ctx, place, front, this.tick, this.burst, intensity);
 
     if (fire && !front)
       drawPowerFire(ctx, place, this.tick, this.burst, intensity, fire);
@@ -1445,6 +1454,13 @@ export class Aura {
 
   // --- bursts ------------------------------------------------------------------------------
 
+  /** How long the running burst lasts, s: the kit's own length, or its kind's. */
+  private burstLength(): number {
+    const { kit } = this.preset;
+
+    return kit ? KITS[kit].burst.length : BURST_DURATION[this.burstKind];
+  }
+
   private get burstKind(): BurstKind {
     return this.preset.burst;
   }
@@ -1487,7 +1503,7 @@ export class Aura {
     k: number,
   ): void {
     const before = this.burst;
-    this.burst += TICK / BURST_DURATION[kind];
+    this.burst += TICK / this.burstLength();
     const crossed = (at: number) => before < at && this.burst >= at;
 
     if (kind === "bloodrain" && this.burst < 0.8) {
@@ -1657,6 +1673,33 @@ export class Aura {
       }
 
       if (this.burst > 1) this.frozenAt = null;
+    }
+
+    // A kit's burst is released: a flash, sparks off the body and two rings.
+    if (
+      kind === "kit" &&
+      this.preset.kit &&
+      crossed(KITS[this.preset.kit].burst.release)
+    ) {
+      this.flash = 1;
+      this.field.emit(
+        {
+          kind: "spark",
+          rate: 0,
+          from: "body",
+          life: [0.4, 0.9],
+          speed: [50, 110],
+          spread: TAU,
+          drag: 1.5,
+          size: [0.8, 1.4],
+          colors: 3,
+          front: 0.6,
+        },
+        frame,
+        Math.round(24 * k),
+      );
+      this.burstRing(place, frame, frame.feet.rx * 2.8, 1);
+      this.burstRing(place, frame, frame.feet.rx * 1.7, 0);
     }
 
     // The power is released: stones thrown up and rings.
@@ -1990,6 +2033,7 @@ export class Aura {
       case "supernova":
       case "timestop":
       case "powerup":
+      case "kit":
         // The galaxy starts to fall in; the hand winds up.
         this.flash = 0.5;
 

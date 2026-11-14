@@ -19143,6 +19143,14 @@ components:
             - ascendant2
             - ascendant3
             - ascendant4
+            - skyborne
+            - joker
+            - nightowl
+            - sunder
+            - fortyfour
+            - thirteenth
+            - ninepins
+            - threefaces
       required:
         - gameAccountId
         - characterId
@@ -19200,6 +19208,14 @@ components:
             - ascendant2
             - ascendant3
             - ascendant4
+            - skyborne
+            - joker
+            - nightowl
+            - sunder
+            - fortyfour
+            - thirteenth
+            - ninepins
+            - threefaces
       required:
         - gameAccountId
         - characterId
