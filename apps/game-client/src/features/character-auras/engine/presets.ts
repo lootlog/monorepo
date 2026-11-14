@@ -2261,8 +2261,10 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     tier: "mythic",
     sky: "power",
     herald: true,
+    // The fire is the whole look: no outline round the character.
+    bare: true,
     description:
-      "Wokół postaci stoi wysoki płomień złotej energii, po którym pełzają wyładowania, a ziemia pod stopami pęka; przez cały ekran pędzą od niej strugi powietrza, z całej mapy unoszą się kamyki, a co chwilę moc zbiera się i uwalnia z błyskiem, trzema falami i wstrząsem mapy.",
+      "Za postacią płonie lity, kolczasty ogień złotej energii, biały przy ciele i złoty na krawędziach, a ziemia pod stopami pęka; przez cały ekran pędzą od niej strugi powietrza, z całej mapy unoszą się kamyki, a co chwilę moc zbiera się i uwalnia z błyskiem, trzema falami i wstrząsem mapy.",
     particles: ["#ffffff", "#fff3a0", "#ffd83a", "#7a6a58", "#3a302a"],
     rim: "#fff3a0",
     haze: "#ffb400",
@@ -2312,7 +2314,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
         front: 0.7,
       },
     ],
-    fx: ["power-flame", "lightning"],
+    fx: ["power-flame"],
     burst: "powerup",
     tip: "power",
     nick: ["#ffffff", "#ffd83a", "#ff9a00"],
