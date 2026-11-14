@@ -1,6 +1,7 @@
 import type { CharacterAuraId } from "@lootlog/schema/character-aura";
 import { heartbeat, noise1 } from "./math";
 import type { EmitterSpec } from "./particles";
+import type { PowerFire } from "./ascend";
 import type { DragonScales } from "./dragon";
 
 /** Item rarities of the game, for when auras become rewards; admin auras stand above them. */
@@ -180,12 +181,98 @@ export interface AuraPreset {
    * looks are then never drawn: only its id, description and nick are its own.
    */
   realms?: readonly CharacterAuraId[];
+  /** The fire of an aura with the `power-flame` effect. */
+  fire?: PowerFire;
   /** The dragon's colours, for an aura with the `dragon` effect; jade and gold otherwise. */
   dragonScales?: DragonScales;
 }
 
 const breathe = (period: number, depth: number) => (t: number) =>
   1 + Math.sin((t / period) * Math.PI * 2) * depth;
+
+/** Gold fire: an orange bloom, a gold edge, a yellow body and a white-hot core. */
+const GOLD_FIRE: PowerFire["colors"] = [
+  [255, 150, 20],
+  [255, 180, 30],
+  [255, 234, 90],
+  [255, 253, 222],
+];
+
+/** What the warrior auras shed: energy racing up, pebbles lifting, sparks off the body. */
+const WARRIOR_EMITTERS: readonly EmitterSpec[] = [
+  {
+    kind: "mote",
+    rate: 14,
+    from: "feet-rim",
+    life: [0.5, 0.9],
+    speed: [60, 110],
+    dir: -Math.PI / 2,
+    spread: 0.12,
+    size: [0.8, 1.6],
+    colors: 3,
+    front: 0.5,
+  },
+  {
+    kind: "grain",
+    rate: 4,
+    from: "feet-rim",
+    life: [1.2, 2],
+    speed: [12, 26],
+    dir: -Math.PI / 2,
+    spread: 0.3,
+    gravity: -12,
+    size: [1.4, 2],
+    colors: 2,
+    colorFrom: 3,
+    front: 0.5,
+    groundOnly: true,
+  },
+  {
+    kind: "spark",
+    rate: 6,
+    from: "edge",
+    life: [0.2, 0.45],
+    speed: [40, 90],
+    spread: 6.28,
+    outward: 0.7,
+    size: [0.7, 1.2],
+    colors: 3,
+    front: 0.7,
+  },
+];
+
+/**
+ * One of the warrior auras: a solid fire behind the character and the field of power
+ * over the map. They differ in their fire, and in what `stage` overrides.
+ */
+function warrior(
+  id: CharacterAuraId,
+  stage: Partial<AuraPreset> & Pick<AuraPreset, "description" | "fire">,
+): AuraPreset {
+  return {
+    id,
+    tier: "mythic",
+    sky: "power",
+    herald: true,
+    // The fire is the whole look: no outline round the character.
+    bare: true,
+    particles: ["#ffffff", "#fff3a0", "#ffd83a", "#7a6a58", "#3a302a"],
+    rim: "#fff3a0",
+    haze: "#ffb400",
+    near: 0.95,
+    far: 0.6,
+    inner: 0.12,
+    pulse: (t) => 0.9 + noise1(t * 9, 47) * 0.14 + noise1(t * 3, 53) * 0.08,
+    ground: { style: "cracks", color: "#ffd83a", alpha: 0.8 },
+    emitters: WARRIOR_EMITTERS,
+    fx: ["power-flame"],
+    burst: "powerup",
+    tip: "power",
+    nick: ["#ffffff", "#ffd83a", "#ff9a00"],
+    tones: ["#fffbe0", "#ffd83a", "#b87400"],
+    ...stage,
+  };
+}
 
 export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   divine: {
@@ -2256,70 +2343,44 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     nick: ["#eafff2", "#3df0a0", "#00e8ff"],
     tones: ["#eafff2", "#3df0a0", "#0e6a48"],
   },
-  ascendant: {
-    id: "ascendant",
-    tier: "mythic",
-    sky: "power",
-    herald: true,
-    // The fire is the whole look: no outline round the character.
-    bare: true,
+  ascendant: warrior("ascendant", {
     description:
       "Za postacią płonie lity, kolczasty ogień złotej energii, biały przy ciele i złoty na krawędziach, a ziemia pod stopami pęka; przez cały ekran pędzą od niej strugi powietrza, z całej mapy unoszą się kamyki, a co chwilę moc zbiera się i uwalnia z błyskiem, trzema falami i wstrząsem mapy.",
-    particles: ["#ffffff", "#fff3a0", "#ffd83a", "#7a6a58", "#3a302a"],
-    rim: "#fff3a0",
-    haze: "#ffb400",
-    near: 0.95,
-    far: 0.6,
-    inner: 0.12,
-    pulse: (t) => 0.9 + noise1(t * 9, 47) * 0.14 + noise1(t * 3, 53) * 0.08,
-    ground: { style: "cracks", color: "#ffd83a", alpha: 0.8 },
-    emitters: [
-      {
-        kind: "mote",
-        rate: 14,
-        from: "feet-rim",
-        life: [0.5, 0.9],
-        speed: [60, 110],
-        dir: -Math.PI / 2,
-        spread: 0.12,
-        size: [0.8, 1.6],
-        colors: 3,
-        front: 0.5,
-      },
-      {
-        kind: "grain",
-        rate: 4,
-        from: "feet-rim",
-        life: [1.2, 2],
-        speed: [12, 26],
-        dir: -Math.PI / 2,
-        spread: 0.3,
-        gravity: -12,
-        size: [1.4, 2],
-        colors: 2,
-        colorFrom: 3,
-        front: 0.5,
-        groundOnly: true,
-      },
-      {
-        kind: "spark",
-        rate: 6,
-        from: "edge",
-        life: [0.2, 0.45],
-        speed: [40, 90],
-        spread: 6.28,
-        outward: 0.7,
-        size: [0.7, 1.2],
-        colors: 3,
-        front: 0.7,
-      },
-    ],
-    fx: ["power-flame"],
-    burst: "powerup",
-    tip: "power",
-    nick: ["#ffffff", "#ffd83a", "#ff9a00"],
-    tones: ["#fffbe0", "#ffd83a", "#b87400"],
-  },
+    fire: { scale: 1, spikes: 23, colors: GOLD_FIRE },
+  }),
+  ascendant2: warrior("ascendant2", {
+    description:
+      "Drugi stopień: złoty ogień jest wyższy i gęściej najeżony kolcami, a po postaci bez przerwy pełzają błękitne wyładowania.",
+    fire: { scale: 1.15, spikes: 31, colors: GOLD_FIRE, bolt: [120, 190, 255] },
+    fx: ["power-flame", "lightning"],
+  }),
+  ascendant3: warrior("ascendant3", {
+    description:
+      "Trzeci stopień: ogień sięga trzech wysokości postaci i szeroko się rozlewa, wyładowania biją gęsto, a z ziemi unosi się dwa razy więcej iskier i kamieni.",
+    fire: { scale: 1.5, spikes: 37, colors: GOLD_FIRE, bolt: [120, 190, 255] },
+    fx: ["power-flame", "lightning"],
+    emitters: [...WARRIOR_EMITTERS, ...WARRIOR_EMITTERS],
+  }),
+  ascendant4: warrior("ascendant4", {
+    description:
+      "Czwarty stopień: ogień płonie szkarłatem, ciemnoczerwony na krawędziach i rozżarzony przy ciele, a strugi powietrza i fale na mapie są czerwone.",
+    fire: {
+      scale: 1.3,
+      spikes: 27,
+      colors: [
+        [170, 10, 20],
+        [214, 24, 28],
+        [255, 104, 44],
+        [255, 232, 196],
+      ],
+    },
+    particles: ["#ffffff", "#ffc0a0", "#ff4a2a", "#7a5a52", "#3a2826"],
+    rim: "#ff8a6a",
+    haze: "#c81414",
+    ground: { style: "cracks", color: "#ff4a2a", alpha: 0.8 },
+    nick: ["#ffe8d8", "#ff4a2a", "#a80c14"],
+    tones: ["#ffe8d8", "#ff4a2a", "#8a0c10"],
+  }),
   absolute: {
     id: "absolute",
     tier: "mythic",

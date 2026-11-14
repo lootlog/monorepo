@@ -19140,6 +19140,9 @@ components:
             - architect
             - absolute
             - ascendant
+            - ascendant2
+            - ascendant3
+            - ascendant4
       required:
         - gameAccountId
         - characterId
@@ -19194,6 +19197,9 @@ components:
             - architect
             - absolute
             - ascendant
+            - ascendant2
+            - ascendant3
+            - ascendant4
       required:
         - gameAccountId
         - characterId

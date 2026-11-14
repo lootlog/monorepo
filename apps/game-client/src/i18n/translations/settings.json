@@ -183,7 +183,10 @@
       "winterlord": "Władca Zimy",
       "architect": "Architekt",
       "absolute": "Absolut",
-      "ascendant": "Złoty wojownik"
+      "ascendant": "Złoty wojownik",
+      "ascendant2": "Złoty wojownik II",
+      "ascendant3": "Złoty wojownik III",
+      "ascendant4": "Szkarłatny wojownik"
     },
     "grants": {
       "grant": "Nadaj aurę",
