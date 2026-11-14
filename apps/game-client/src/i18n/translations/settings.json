@@ -181,7 +181,8 @@
       "cosmos": "Kosmos",
       "timelord": "Władca Czasu",
       "winterlord": "Władca Zimy",
-      "architect": "Architekt"
+      "architect": "Architekt",
+      "absolute": "Absolut"
     },
     "grants": {
       "grant": "Nadaj aurę",
