@@ -19028,6 +19028,7 @@ paths:
               - ninepins
               - threefaces
               - twineyes
+              - tulipwind
           required: true
       security:
         - bearer: []
@@ -19184,6 +19185,7 @@ components:
               - ninepins
               - threefaces
               - twineyes
+              - tulipwind
         canGrant:
           type: boolean
       required:
@@ -19252,6 +19254,7 @@ components:
             - ninepins
             - threefaces
             - twineyes
+            - tulipwind
       required:
         - gameAccountId
         - characterId
@@ -19318,6 +19321,7 @@ components:
             - ninepins
             - threefaces
             - twineyes
+            - tulipwind
       required:
         - gameAccountId
         - characterId
@@ -35883,6 +35887,7 @@ components:
                   - ninepins
                   - threefaces
                   - twineyes
+                  - tulipwind
             canGrant:
               type: boolean
           required:
