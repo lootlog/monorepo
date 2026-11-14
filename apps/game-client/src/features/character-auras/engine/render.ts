@@ -413,6 +413,8 @@ export class Aura {
         x: place.x + bounds.x + bounds.w / 2,
         y: place.y + bounds.y + bounds.h * 0.45,
         feetY: place.feetY - 2,
+        top: place.y + bounds.y,
+        half: bounds.w / 2,
         // The burst steps with the ticks; over the map it runs on between them.
         burst:
           this.burst < 0
@@ -1654,8 +1656,6 @@ export class Aura {
         frame,
         Math.round(6 * k),
       );
-      this.burstRing(place, frame, frame.feet.rx * 3.2, 2);
-      this.burstRing(place, frame, frame.feet.rx * 2, 0);
     }
 
     if (kind === "timestop") {
@@ -1668,14 +1668,12 @@ export class Aura {
       if (crossed(STOP_TO)) {
         this.frozenAt = null;
         this.flash = 1;
-        this.burstRing(place, frame, frame.feet.rx * 2.8, 3);
-        this.burstRing(place, frame, frame.feet.rx * 1.7, 0);
       }
 
       if (this.burst > 1) this.frozenAt = null;
     }
 
-    // A kit's burst is released: a flash, sparks off the body and two rings.
+    // A kit's burst is released: a flash and sparks off the body.
     if (
       kind === "kit" &&
       this.preset.kit &&
@@ -1698,15 +1696,12 @@ export class Aura {
         frame,
         Math.round(24 * k),
       );
-      this.burstRing(place, frame, frame.feet.rx * 2.8, 1);
-      this.burstRing(place, frame, frame.feet.rx * 1.7, 0);
     }
 
     // The power is released: stones thrown up and rings.
     if (kind === "powerup" && crossed(POWER_RELEASE)) {
       this.flash = 1;
       this.startConqueror(place, frame, k, false);
-      this.burstRing(place, frame, frame.feet.rx * 3.4, 1);
     }
 
     // The spikes shatter into shards thrown up and out.
@@ -1732,7 +1727,6 @@ export class Aura {
         frame,
         Math.round(22 * k),
       );
-      this.burstRing(place, frame, frame.feet.rx * 2.4, 1);
     }
 
     // The world is back: bits rise off the ground as the sweep redraws it.
@@ -1755,7 +1749,6 @@ export class Aura {
         frame,
         Math.round(20 * k),
       );
-      this.burstRing(place, frame, frame.feet.rx * 2.4, 2);
     }
   }
 
@@ -1766,7 +1759,9 @@ export class Aura {
     size: number,
     color: number,
   ): void {
-    if (!place.ground) return;
+    // Admin and kit auras spread nothing over the ground: each has its own finish.
+    if (!place.ground || this.preset.tier === "mythic" || this.preset.kit)
+      return;
     this.field.emit(
       {
         kind: "ring",
@@ -2057,7 +2052,6 @@ export class Aura {
           frame,
           Math.round(14 * k),
         );
-        this.burstRing(place, frame, frame.feet.rx * 2, 0);
 
         return true;
       case "reload":
@@ -2285,6 +2279,13 @@ export class Aura {
 
       return;
     }
+
+    // Nor does a pressure wave roll out from them.
+    if (
+      this.preset.tier === "mythic" &&
+      (this.burstKind === "conqueror" || this.burstKind === "quake")
+    )
+      return;
 
     drawBurstScene(this.burstKind, b, {
       place,

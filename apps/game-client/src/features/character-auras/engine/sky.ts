@@ -21,6 +21,9 @@ export interface MapScene {
   x: number;
   y: number;
   feetY: number;
+  /** The top of the character on screen, and half its width. */
+  top: number;
+  half: number;
   /** The aura's burst, 0..1 between ticks too; -1 while it rests. */
   burst: number;
   light: Rgb;
@@ -144,31 +147,4 @@ export function washAround(
   ctx.fillRect(0, top, left, size);
   ctx.fillRect(left + size, top, width - left - size, size);
   ctx.drawImage(clearing(color, inner, outer), left, top);
-}
-
-/**
- * A ring lying on the ground round the character's feet, `radius` px wide: the shockwave
- * of a burst rolling over the map. A wide dim stroke under a thin bright one.
- */
-export function groundWave(
-  { ctx, x, feetY }: MapScene,
-  radius: number,
-  light: Rgb,
-  mid: Rgb,
-  alpha: number,
-): void {
-  if (alpha <= 0.01 || radius <= 1) return;
-  ctx.globalCompositeOperation = "lighter";
-
-  for (const [color, lineWidth, a] of [
-    [mid, 5, 0.4],
-    [light, 1.5, 1],
-  ] as const) {
-    ctx.globalAlpha = Math.min(1, alpha * a);
-    ctx.strokeStyle = rgba(color, 1);
-    ctx.lineWidth = lineWidth;
-    ctx.beginPath();
-    ctx.ellipse(x, feetY, radius, radius * 0.55, 0, 0, Math.PI * 2);
-    ctx.stroke();
-  }
 }

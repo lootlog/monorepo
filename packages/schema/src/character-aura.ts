@@ -54,6 +54,7 @@ export const CHARACTER_AURA_IDS = [
   "thirteenth",
   "ninepins",
   "threefaces",
+  "twineyes",
 ] as const;
 
 export const CharacterAuraIdSchema = Schema.Literals(CHARACTER_AURA_IDS);
@@ -104,6 +105,7 @@ export const PERSONAL_CHARACTER_AURA_IDS = [
   "thirteenth",
   "ninepins",
   "threefaces",
+  "twineyes",
 ] as const satisfies ReadonlyArray<CharacterAuraId>;
 
 export const PersonalCharacterAuraIdSchema = Schema.Literals(
