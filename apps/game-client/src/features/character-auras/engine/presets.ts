@@ -56,7 +56,8 @@ export type AuraKitId =
   | "thirteenth"
   | "ninepins"
   | "threefaces"
-  | "twineyes";
+  | "twineyes"
+  | "tulipwind";
 
 /**
  * The aura's own short animation every few seconds, like the burst of the game's animated
@@ -2592,6 +2593,33 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
         front: 0.7,
       },
     ],
+  }),
+  tulipwind: kitAura("tulipwind", {
+    description:
+      "Wokół postaci nie ma żadnej poświaty, są tylko zdarzenia: u jej stóp rosną tulipany, na skraju ekranu na tle niskiego słońca obraca się wiatrak, a nad całą mapą wiatr niesie płatki. Co chwilę skrzydła wiatraka rozpędzają się, urywają i lecą przez ekran jak jedno wielkie ostrze, obraz na mgnienie zmienia się w negatyw, a na całej mapie wschodzą tulipany.",
+    particles: ["#e8323c", "#ff8a1e", "#f6f0e2", "#ff7ab0", "#ffd646"],
+    tones: ["#fff6e2", "#ff8a1e", "#8a2a10"],
+    tip: "blossoms",
+    // Nothing glows round the character: the aura is what happens about it.
+    bare: true,
+    inner: 0,
+    emitters: [
+      {
+        kind: "leaf",
+        rate: 2.4,
+        from: "above",
+        life: [2.4, 3.4],
+        speed: [6, 12],
+        dir: Math.PI / 2,
+        spread: 1.4,
+        size: [2.4, 3.4],
+        colors: 5,
+        front: 0.6,
+        land: "settle",
+        wind: 0.9,
+      },
+    ],
+    wind: -22,
   }),
   // Calmer admin auras: no arrival.
   starlight: {
