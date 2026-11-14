@@ -7,7 +7,7 @@
  */
 import { rgba, type Rgb } from "../math";
 import { plot } from "../paint";
-import { groundWave, wash } from "../sky";
+import { wash } from "../sky";
 import { tintedSilhouette } from "../summon";
 import { moveRect, span, type AuraKit } from "./kit";
 
@@ -167,12 +167,5 @@ export const threefaces: AuraKit = {
     // The three close into one.
     const closed = span(burst, 0.62, 1);
     wash(scene, MOON, 0.45 * (1 - closed) ** 3, "lighter");
-    groundWave(
-      scene,
-      closed * Math.max(width, height) * 0.8,
-      [255, 255, 255],
-      PANES[0] ?? MOON,
-      1 - closed,
-    );
   },
 };

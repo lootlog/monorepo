@@ -9,7 +9,7 @@ import { sprite } from "../decor";
 import { rgba, TAU, type Rgb } from "../math";
 import { pixelEllipse, pixelLine, plot } from "../paint";
 import { groundRadius } from "../placement";
-import { groundWave, wash } from "../sky";
+import { wash } from "../sky";
 import { span, type AuraKit } from "./kit";
 
 const GOLD: Rgb = [255, 176, 70];
@@ -94,7 +94,7 @@ export const thirteenth: AuraKit = {
   },
 
   sky(scene) {
-    const { ctx, width, height, x, feetY, now, burst } = scene;
+    const { ctx, x, feetY, now, burst } = scene;
     // The strokes so far, and how far into the latest one.
     const tolls = burst < 0 ? 0 : Math.min(HOURS, burst / (0.8 / HOURS));
     const struck = Math.floor(tolls);
@@ -147,15 +147,6 @@ export const thirteenth: AuraKit = {
     // Each stroke darkens the sky a little more and sends a wave out.
     wash(scene, DARK, 0.6 * (struck / HOURS) * (1 - out));
 
-    if (burst < 0.8)
-      groundWave(
-        scene,
-        (tolls - struck) * 320,
-        GOLD,
-        AMBER,
-        1 - (tolls - struck),
-      );
-
     if (burst < 0.8) return;
     // The thirteenth: the sun out and the world left in amber, then back in a flash.
     const back = span(burst, 0.92, 1);
@@ -166,13 +157,6 @@ export const thirteenth: AuraKit = {
       [255, 244, 214],
       0.5 * (back > 0 ? (1 - back) ** 2 : 0),
       "lighter",
-    );
-    groundWave(
-      scene,
-      back * Math.max(width, height) * 0.8,
-      [255, 244, 214],
-      GOLD,
-      back > 0 ? 1 - back : 0,
     );
   },
 };

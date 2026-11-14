@@ -7,7 +7,7 @@
 import { rgba, type Rgb } from "../math";
 import { pixelGlint, plot } from "../paint";
 import { groundRadius } from "../placement";
-import { groundWave, scatter, wash } from "../sky";
+import { scatter, wash } from "../sky";
 import { moveRect, type AuraKit } from "./kit";
 
 const WHITE: Rgb = [255, 255, 255];
@@ -173,13 +173,6 @@ export const sunder: AuraKit = {
       ctx.lineTo(width + 20, horizon + height * 0.12);
       ctx.stroke();
       wash(scene, WHITE, 0.35 * fade, "lighter");
-      groundWave(
-        scene,
-        since * Math.max(width, height) * 0.7,
-        WHITE,
-        GOLD,
-        fade,
-      );
     }
   },
 };
