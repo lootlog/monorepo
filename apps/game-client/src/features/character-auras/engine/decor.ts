@@ -757,6 +757,10 @@ const TIP_DECO_PAINTERS: Record<
     { front: true, draw: drawIcicles },
     { front: true, draw: drawTipSnow },
   ],
+  power: [
+    { front: true, draw: drawBoltCorners },
+    { front: true, draw: drawGemCorners },
+  ],
   terminal: [
     { front: false, draw: drawTipRain },
     { front: true, draw: drawTipBrackets },

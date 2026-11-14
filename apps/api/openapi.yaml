@@ -19139,6 +19139,7 @@ components:
             - winterlord
             - architect
             - absolute
+            - ascendant
       required:
         - gameAccountId
         - characterId
@@ -19192,6 +19193,7 @@ components:
             - winterlord
             - architect
             - absolute
+            - ascendant
       required:
         - gameAccountId
         - characterId
