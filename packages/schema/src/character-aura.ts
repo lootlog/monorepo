@@ -37,6 +37,10 @@ export const CHARACTER_AURA_IDS = [
   "quake",
   "starlight",
   "seal",
+  "cosmos",
+  "timelord",
+  "winterlord",
+  "architect",
 ] as const;
 
 export const CharacterAuraIdSchema = Schema.Literals(CHARACTER_AURA_IDS);
@@ -56,6 +60,10 @@ export const ADMIN_CHARACTER_AURA_IDS = [
   "quake",
   "starlight",
   "seal",
+  "cosmos",
+  "timelord",
+  "winterlord",
+  "architect",
 ] as const satisfies ReadonlyArray<CharacterAuraId>;
 
 const adminCharacterAuraIds: ReadonlySet<string> = new Set(

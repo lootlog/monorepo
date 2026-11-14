@@ -29,7 +29,19 @@ type AuraFx =
   | "crown"
   | "wings"
   | "eclipse"
-  | "quake";
+  | "quake"
+  | "galaxy"
+  | "clockwork"
+  | "winter"
+  | "glitch";
+
+/** What an aura lays over the whole map while its admin is on it (`MAP_EFFECTS`). */
+export type MapEffectKind =
+  | "storm"
+  | "cosmos"
+  | "blizzard"
+  | "timestop"
+  | "wireframe";
 
 /**
  * The aura's own short animation every few seconds, like the burst of the game's animated
@@ -57,7 +69,11 @@ export type BurstKind =
   | "coronation"
   | "judgement"
   | "rebirth"
-  | "quake";
+  | "quake"
+  | "supernova"
+  | "timestop"
+  | "glaciate"
+  | "reload";
 
 type GroundStyle =
   | "disc"
@@ -103,7 +119,11 @@ export type TipDeco =
   | "thunder-crown"
   | "phoenix"
   | "emperor"
-  | "quake";
+  | "quake"
+  | "cosmos"
+  | "chrono"
+  | "winter"
+  | "terminal";
 
 export interface AuraPreset {
   id: CharacterAuraId;
@@ -149,8 +169,8 @@ export interface AuraPreset {
    * (when the admin enters the map).
    */
   herald?: boolean;
-  /** An overcast sky and lightning over the whole map while the aura is on it. */
-  storm?: boolean;
+  /** What the aura lays over the whole map while it is on it: a storm, a night sky. */
+  sky?: MapEffectKind;
   /** The dragon's colours, for an aura with the `dragon` effect; jade and gold otherwise. */
   dragonScales?: DragonScales;
 }
@@ -1753,7 +1773,7 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
   thunderlord: {
     id: "thunderlord",
     tier: "mythic",
-    storm: true,
+    sky: "storm",
     herald: true,
     description:
       "Gdy jest na mapie, niebo nad całą mapą się chmurzy i co chwilę gdzieś bije piorun; nad koroną kłębi się burzowa chmura, a co chwilę trzy pioruny naraz biją wokół postaci.",
@@ -1995,6 +2015,237 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     tip: "quake",
     nick: ["#ffffff", "#a8d8ff", "#2a4a7a"],
     tones: ["#ffffff", "#a8d8ff", "#2a4a7a"],
+  },
+  // The showcase: each takes over the whole map in its own way.
+  cosmos: {
+    id: "cosmos",
+    tier: "mythic",
+    sky: "cosmos",
+    herald: true,
+    description:
+      "Gdy jest na mapie, nad całą mapą zapada noc pełna gwiazd, mgławic i meteorów; pod stopami obraca się galaktyka, wokół krążą planety, a co chwilę wszystko zapada się w postać i wybucha supernową.",
+    particles: ["#ffffff", "#ffe9b8", "#9fb4ff", "#c77dff", "#ff7ad9"],
+    rim: "#b8c4ff",
+    haze: "#4a2ab8",
+    near: 0.85,
+    far: 0.55,
+    inner: 0.06,
+    pulse: breathe(5, 0.08),
+    emitters: [
+      {
+        kind: "glint",
+        rate: 1.4,
+        from: "body",
+        life: [0.5, 0.9],
+        speed: [0, 2],
+        size: [3, 5],
+        colors: 3,
+        front: 0.7,
+      },
+      {
+        kind: "mote",
+        rate: 5,
+        from: "edge",
+        life: [1.4, 2.4],
+        speed: [3, 9],
+        spread: 6.28,
+        outward: 0.6,
+        drag: 0.3,
+        size: [0.6, 1.2],
+        colors: 5,
+        front: 0.5,
+      },
+      {
+        kind: "mote",
+        rate: 4,
+        from: "feet-rim",
+        life: [1.4, 2.2],
+        speed: [6, 14],
+        spread: 0.4,
+        size: [0.7, 1.2],
+        colors: 3,
+        colorFrom: 2,
+        front: 0.5,
+      },
+    ],
+    fx: ["galaxy"],
+    burst: "supernova",
+    tip: "cosmos",
+    nick: ["#ffffff", "#9fb4ff", "#c77dff"],
+    tones: ["#ffffff", "#9fb4ff", "#3a2a8a"],
+  },
+  timelord: {
+    id: "timelord",
+    tier: "mythic",
+    sky: "timestop",
+    herald: true,
+    description:
+      "Pod stopami tyka tarcza zegara, za plecami obracają się mosiężne zębatki, a za idącą postacią zostają jej echa; co chwilę czas staje: cała mapa traci kolory, wszystko zastyga, a wskazówka biegnie wstecz.",
+    particles: ["#ffffff", "#ffe296", "#d6a046", "#5fe0d0", "#9af5ea"],
+    rim: "#9af5ea",
+    haze: "#1a8a8a",
+    near: 0.8,
+    far: 0.5,
+    inner: 0.06,
+    pulse: (t) => 0.94 + (t % 1 < 0.15 ? 0.14 : 0),
+    emitters: [
+      {
+        kind: "mote",
+        rate: 5,
+        from: "above",
+        life: [1.6, 2.4],
+        speed: [10, 18],
+        dir: Math.PI / 2,
+        spread: 0.15,
+        gravity: 20,
+        size: [0.6, 1],
+        colors: 2,
+        colorFrom: 1,
+        front: 0.5,
+      },
+      {
+        kind: "glint",
+        rate: 1,
+        from: "feet-rim",
+        life: [0.4, 0.7],
+        speed: [0, 1],
+        size: [3, 5],
+        colors: 2,
+        colorFrom: 3,
+        front: 0.5,
+      },
+      {
+        kind: "mote",
+        rate: 4,
+        from: "edge",
+        life: [1, 1.8],
+        speed: [4, 10],
+        spread: 6.28,
+        outward: 0.6,
+        drag: 0.3,
+        size: [0.6, 1.1],
+        colors: 2,
+        colorFrom: 3,
+        front: 0.5,
+      },
+    ],
+    fx: ["clockwork"],
+    burst: "timestop",
+    tip: "chrono",
+    nick: ["#eafffb", "#5fe0d0", "#d6a046"],
+    tones: ["#eafffb", "#5fe0d0", "#14585e"],
+  },
+  winterlord: {
+    id: "winterlord",
+    tier: "mythic",
+    sky: "blizzard",
+    herald: true,
+    description:
+      "Gdy jest na mapie, nad całą mapą szaleje zamieć, a z rogów ekranu narasta szron; nad głową lśni lodowa korona, wokół krążą płatki śniegu, a co chwilę spod ziemi wystrzeliwują lodowe kolce i roztrzaskują się.",
+    particles: ["#ffffff", "#dff4ff", "#a8dcff", "#6cb6ff"],
+    rim: "#dff4ff",
+    haze: "#5aa8ff",
+    near: 0.85,
+    far: 0.5,
+    inner: 0.08,
+    pulse: breathe(4.2, 0.1),
+    emitters: [
+      {
+        kind: "flake",
+        rate: 3,
+        from: "above",
+        life: [2.4, 3.4],
+        speed: [10, 18],
+        dir: Math.PI / 2,
+        spread: 0.5,
+        sway: 14,
+        size: [1.8, 3],
+        colors: 3,
+        front: 0.5,
+        land: "settle",
+        wind: 0.8,
+      },
+      {
+        kind: "mote",
+        rate: 6,
+        from: "edge",
+        life: [1, 1.8],
+        speed: [4, 10],
+        spread: 6.28,
+        outward: 0.6,
+        drag: 0.3,
+        size: [0.6, 1.1],
+        colors: 3,
+        front: 0.5,
+      },
+      {
+        kind: "smoke",
+        rate: 3,
+        from: "feet-rim",
+        life: [1.2, 1.8],
+        speed: [6, 12],
+        spread: 1.4,
+        drag: 0.5,
+        size: [4, 7],
+        colors: 2,
+        colorFrom: 1,
+        front: 0.3,
+      },
+    ],
+    fx: ["winter"],
+    burst: "glaciate",
+    tip: "winter",
+    wind: -14,
+    nick: ["#ffffff", "#bfe6ff", "#5aa8ff"],
+    tones: ["#ffffff", "#bfe6ff", "#3f7fc8"],
+  },
+  architect: {
+    id: "architect",
+    tier: "mythic",
+    sky: "wireframe",
+    herald: true,
+    description:
+      "Postać stoi zaznaczona jak w edytorze świata, za nią spada kod, a jej sylwetka rozszczepia się na barwy; przez całą mapę prześwituje siatka pól, a co chwilę świat się przeładowuje: pasy mapy uciekają na boki.",
+    particles: ["#ffffff", "#b6ffd8", "#3df0a0", "#00e8ff", "#ff28c8"],
+    rim: "#7dffc0",
+    haze: "#00a070",
+    near: 0.8,
+    far: 0.5,
+    inner: 0.05,
+    pulse: (t) => 0.9 + Math.max(0, noise1(t * 8, 43)) * 0.25,
+    emitters: [
+      {
+        kind: "mote",
+        rate: 6,
+        from: "feet-rim",
+        life: [0.8, 1.4],
+        speed: [14, 26],
+        dir: -Math.PI / 2,
+        spread: 0.1,
+        size: [1, 1.8],
+        colors: 3,
+        colorFrom: 1,
+        front: 0.5,
+      },
+      {
+        kind: "spark",
+        rate: 3,
+        from: "edge",
+        life: [0.15, 0.3],
+        speed: [40, 80],
+        spread: 6.28,
+        outward: 0.8,
+        size: [0.7, 1.1],
+        colors: 2,
+        colorFrom: 3,
+        front: 0.7,
+      },
+    ],
+    fx: ["glitch"],
+    burst: "reload",
+    tip: "terminal",
+    nick: ["#eafff2", "#3df0a0", "#00e8ff"],
+    tones: ["#eafff2", "#3df0a0", "#0e6a48"],
   },
   // Calmer admin auras: no arrival.
   starlight: {

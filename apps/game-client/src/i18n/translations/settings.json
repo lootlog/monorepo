@@ -177,7 +177,11 @@
       "emperor": "Cesarz",
       "quake": "Wstrząs",
       "starlight": "Gwiazdozbiór",
-      "seal": "Złota pieczęć"
+      "seal": "Złota pieczęć",
+      "cosmos": "Kosmos",
+      "timelord": "Władca Czasu",
+      "winterlord": "Władca Zimy",
+      "architect": "Architekt"
     },
     "grants": {
       "grant": "Nadaj aurę",

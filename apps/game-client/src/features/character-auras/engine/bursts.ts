@@ -40,7 +40,10 @@ const PILLAR_BURSTS: ReadonlySet<BurstKind> = new Set([
 /** The bursts that roll a pressure wave out from the body. */
 const WAVE_BURSTS: ReadonlySet<BurstKind> = new Set(["conqueror", "quake"]);
 
-/** Draws the running burst `kind` into the brush's layers. */
+/**
+ * Draws the running burst `kind` into the brush's layers. The showcase admin auras'
+ * bursts (supernova, timestop, glaciate, reload) are played by their own pieces.
+ */
 export function drawBurstScene(
   kind: BurstKind,
   b: Brush,
