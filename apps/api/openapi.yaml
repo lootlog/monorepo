@@ -19134,6 +19134,10 @@ components:
             - quake
             - starlight
             - seal
+            - cosmos
+            - timelord
+            - winterlord
+            - architect
       required:
         - gameAccountId
         - characterId
@@ -19182,6 +19186,10 @@ components:
             - quake
             - starlight
             - seal
+            - cosmos
+            - timelord
+            - winterlord
+            - architect
       required:
         - gameAccountId
         - characterId

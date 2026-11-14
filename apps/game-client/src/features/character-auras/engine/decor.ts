@@ -13,7 +13,11 @@ import {
   plot,
   RUNES,
 } from "./paint";
+import { drawTipClock, drawTipGear } from "./chrono";
+import { drawTipPlanet, drawTipStars } from "./cosmos";
 import { drawClouds } from "./dragon";
+import { drawTipBrackets, drawTipRain } from "./glitch";
+import { drawTipSnow } from "./winter";
 import type { TipDeco } from "./presets";
 
 /** What a decoration draws with: the layer buffers, the stepped clock and the aura's colours. */
@@ -265,7 +269,7 @@ export function drawSouls(
 type BoxCorner = [x: number, y: number, sx: number, sy: number];
 
 /** One tooltip decoration frame: the brush, the box edges and the aura's tones. */
-interface TipFrame {
+export interface TipFrame {
   b: Brush;
   deco: TipDeco;
   L: number;
@@ -739,6 +743,23 @@ const TIP_DECO_PAINTERS: Record<
   quake: [
     { front: true, draw: drawCracks },
     { front: true, draw: drawGemCorners },
+  ],
+  cosmos: [
+    { front: false, draw: drawTipStars },
+    { front: true, draw: drawTipPlanet },
+  ],
+  chrono: [
+    { front: false, draw: drawTipGear },
+    { front: true, draw: drawTipClock },
+    { front: true, draw: drawGemCorners },
+  ],
+  winter: [
+    { front: true, draw: drawIcicles },
+    { front: true, draw: drawTipSnow },
+  ],
+  terminal: [
+    { front: false, draw: drawTipRain },
+    { front: true, draw: drawTipBrackets },
   ],
 };
 

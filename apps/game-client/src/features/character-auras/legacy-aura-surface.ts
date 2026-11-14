@@ -34,13 +34,14 @@ function paintLayer(
 }
 
 /** The night of an admin's arrival with a tall circle of light on them, in map pixels. */
-function arrivalBackground({ place, darkness }: ShownArrival): string {
+function arrivalBackground({ place, darkness, veil }: ShownArrival): string {
   const { bounds } = place.silhouette;
   const x = Math.round(place.x + bounds.x + bounds.w / 2);
   const y = Math.round(place.y + bounds.y + bounds.h * 0.45);
+  const color = veil.join(",");
   const alpha = (0.8 * darkness).toFixed(2);
 
-  return `radial-gradient(ellipse 110px 210px at ${x}px ${y}px, rgba(4,2,10,0) 19%, rgba(4,2,10,${alpha}) 100%)`;
+  return `radial-gradient(ellipse 110px 210px at ${x}px ${y}px, rgba(${color},0) 19%, rgba(${color},${alpha}) 100%)`;
 }
 
 /**
@@ -96,9 +97,10 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
     legacyAuraRuntimeAdapter.removeLayers(layers);
   },
 
-  // SI darkens the map round the admin with a CSS gradient.
+  // SI dims the map round the admin with a CSS gradient.
   presentArrival(arrival) {
-    if (!arrival) {
+    // An effect only seen in bursts leaves the SI map as it is.
+    if (!arrival || arrival.darkness <= 0) {
       veil.remove();
 
       return;

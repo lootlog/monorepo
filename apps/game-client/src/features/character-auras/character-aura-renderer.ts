@@ -44,6 +44,8 @@ export type ShownArrival = {
   place: AuraPlacement;
   /** 0..1. */
   darkness: number;
+  /** What the map is dimmed with, where a surface can only lay a flat veil over it. */
+  veil: readonly [number, number, number];
   /** Paints the arrival over the whole map into a context whose origin is the screen's. */
   paint: AuraPaint;
 };
@@ -201,15 +203,26 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     this.surface.presentArrival(this.darkestArrival());
   }
 
-  /** The aura darkening the whole map most this frame, if one does. */
+  /**
+   * The one aura whose effects go over the whole map this frame: of those that have
+   * any, the one dimming the map most.
+   */
   private darkestArrival(): ShownArrival | null {
     let darkest: ShownArrival | null = null;
 
     for (const drawn of this.drawn.values()) {
-      const darkness = drawn.aura.mapDarkness();
+      const effect = drawn.aura.mapEffect();
 
-      if (!drawn.place || darkness <= (darkest?.darkness ?? 0)) continue;
-      darkest = { place: drawn.place, darkness, paint: drawn.arrival };
+      if (!drawn.place || !effect) continue;
+
+      if (darkest && effect.gloom <= darkest.darkness) continue;
+
+      darkest = {
+        place: drawn.place,
+        darkness: effect.gloom,
+        veil: effect.veil,
+        paint: drawn.arrival,
+      };
     }
 
     return darkest;

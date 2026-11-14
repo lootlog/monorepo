@@ -112,6 +112,10 @@ export const CharacterAuraResponseDtoAuraId = {
   quake: 'quake',
   starlight: 'starlight',
   seal: 'seal',
+  cosmos: 'cosmos',
+  timelord: 'timelord',
+  winterlord: 'winterlord',
+  architect: 'architect',
 } as const;
 
 export interface CharacterAuraResponseDto {
@@ -165,6 +169,10 @@ export const UpdateOwnCharacterAuraDtoAuraId = {
   quake: 'quake',
   starlight: 'starlight',
   seal: 'seal',
+  cosmos: 'cosmos',
+  timelord: 'timelord',
+  winterlord: 'winterlord',
+  architect: 'architect',
 } as const;
 
 export interface UpdateOwnCharacterAuraDto {

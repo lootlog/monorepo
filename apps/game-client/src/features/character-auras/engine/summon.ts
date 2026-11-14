@@ -39,7 +39,7 @@ const tinted = new WeakMap<AuraSilhouette, Map<string, HTMLCanvasElement>>();
  * The silhouette's shape in `color` on a padded-silhouette-sized canvas: from its body
  * pixels, or its crisp mask for a cross-origin frame; null when it has neither.
  */
-function tint(
+export function tintedSilhouette(
   silhouette: AuraSilhouette,
   color: Rgb,
 ): HTMLCanvasElement | null {
@@ -176,7 +176,9 @@ export function drawSummonFront(
   // A tenth of a second up to the burst, then fading out.
   const since = summon.t - ARRIVAL_BURST;
   const flare = since < 0 ? 1 + since / 0.1 : 1 - since / FLARE_LENGTH;
-  const image = flare > 0 ? tint(place.silhouette, summon.light) : null;
+
+  const image =
+    flare > 0 ? tintedSilhouette(place.silhouette, summon.light) : null;
 
   if (image) {
     ctx.imageSmoothingEnabled = false;
