@@ -20,6 +20,7 @@ import {
   watchedItemTable,
 } from "#src/database/drizzle/notification.schema";
 import {
+  characterAuraTable,
   userCharacterAuraGameAccountTable,
   userCharacterAuraGrantTable,
   userCharacterAuraTable,
@@ -157,6 +158,9 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userSettingDocumentTable)
         .where(eq(userSettingDocumentTable.userId, identity.userId));
+      yield* transaction
+        .delete(characterAuraTable)
+        .where(eq(characterAuraTable.userId, identity.userId));
       yield* transaction
         .delete(userCharacterAuraTable)
         .where(eq(userCharacterAuraTable.userId, identity.userId));

@@ -143,7 +143,7 @@
   },
   "characterAura": {
     "title": "Aura postaci",
-    "description": "Pikselowa aura wokół każdej Twojej postaci i jej dymka. Widzą ją wszyscy gracze z Lootlogiem, na każdym koncie Margonem, na którym grasz.",
+    "description": "Pikselowa aura wokół tej postaci i jej dymka. Każda postać ma własną aurę, więc Twoje pozostałe postacie i konta jej nie pokazują. Widzą ją wszyscy gracze z Lootlogiem.",
     "none": "Brak",
     "auras": {
       "divine": "Boski blask",
@@ -183,7 +183,7 @@
       "grant": "Nadaj aurę",
       "revoke": "Odbierz aurę",
       "granted": "Gracz może teraz wybrać aurę w ustawieniach Lootloga.",
-      "revoked": "Aura odebrana.",
+      "revoked": "Aury odebrane.",
       "noUser": "Ten gracz nie ma Lootloga na tym koncie.",
       "failed": "Nie udało się zmienić dostępu do aury."
     }

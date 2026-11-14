@@ -90,12 +90,4 @@ export const MAIN_THEME_OPERATIONS = [
     access: "session-only",
     data: "personal",
   },
-  {
-    service: "main",
-    method: "PUT",
-    path: "/users/@me/character-aura/game-accounts/{gameAccountId}",
-    operationId: "CharacterAurasController_linkGameAccount",
-    access: "session-only",
-    data: "personal",
-  },
 ] as const satisfies readonly PublicApiOperation[];

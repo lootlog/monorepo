@@ -1,7 +1,11 @@
+import type { CharacterAuraResponseDto } from "@lootlog/client/main";
 import { describe, expect, it } from "vitest";
 import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
 import { HERO_AURA_KEY } from "./character-aura-renderer";
-import { resolveCharacterAuraTargets } from "./character-aura-targets";
+import {
+  characterAuraKey,
+  resolveCharacterAuraTargets,
+} from "./character-aura-targets";
 
 const other = (characterId: string, accountId: string): RuntimeOther => ({
   accountId,
@@ -12,46 +16,48 @@ const other = (characterId: string, accountId: string): RuntimeOther => ({
   profession: "w",
 });
 
+const hero = { accountId: "1", characterId: "10" };
+
 describe("resolveCharacterAuraTargets", () => {
-  it("draws an aura on every visible character of a listed account", () => {
+  it("draws an aura only on the listed character, not on others of its account", () => {
     const { byCharacter } = resolveCharacterAuraTargets({
-      listed: [{ gameAccountId: "7", auraId: "frost" }],
-      heroAccountId: "1",
+      listed: [{ gameAccountId: "7", characterId: "a", auraId: "frost" }],
+      hero,
       heroAura: null,
       othersById: {
         a: other("a", "7"),
         b: other("b", "7"),
-        c: other("c", "8"),
+        // The same character id on another account is another character.
+        c: other("a", "8"),
       },
     });
 
-    expect(byCharacter).toEqual(
-      new Map([
-        ["a", "frost"],
-        ["b", "frost"],
-      ]),
-    );
+    expect(byCharacter).toEqual(new Map([["a", "frost"]]));
   });
 
   it("follows the hero's own choice before the list catches up", () => {
+    const listed: CharacterAuraResponseDto[] = [
+      { gameAccountId: "1", characterId: "10", auraId: "frost" },
+    ];
+
     const removed = resolveCharacterAuraTargets({
-      listed: [{ gameAccountId: "1", auraId: "frost" }],
-      heroAccountId: "1",
+      listed,
+      hero,
       heroAura: null,
       othersById: {},
     });
 
     expect(removed.byCharacter.size).toBe(0);
-    expect(removed.byAccount.has("1")).toBe(false);
+    expect(removed.byKey.has(characterAuraKey(hero))).toBe(false);
 
     const changed = resolveCharacterAuraTargets({
-      listed: [{ gameAccountId: "1", auraId: "frost" }],
-      heroAccountId: "1",
+      listed,
+      hero,
       heroAura: "sakura",
       othersById: {},
     });
 
     expect(changed.byCharacter.get(HERO_AURA_KEY)).toBe("sakura");
-    expect(changed.byAccount.get("1")).toBe("sakura");
+    expect(changed.byKey.get(characterAuraKey(hero))).toBe("sakura");
   });
 });
