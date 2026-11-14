@@ -65,8 +65,34 @@ export const userSettingsTable = pgTable(
 );
 
 /**
- * The aura a User wears on every character they play with Lootlog. Users live
- * in the auth service, so `userId` has no foreign key.
+ * The aura a Margonem character wears, chosen by the User who plays it. It
+ * shows only while that User plays the account, so a shared account does not
+ * carry an earlier player's choice. Users live in the auth service, so
+ * `userId` has no foreign key.
+ */
+export const characterAuraTable = pgTable(
+  "CharacterAura",
+  {
+    accountId: text("accountId").notNull(),
+    characterId: text("characterId").notNull(),
+    userId: text("userId").notNull(),
+    auraId: text("auraId").notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.accountId, table.characterId],
+      name: "CharacterAura_pkey",
+    }),
+    index("CharacterAura_userId_idx").on(table.userId),
+  ],
+);
+
+/**
+ * Deprecated: one aura per User, shown on every character they played, which
+ * made players of several accounts look like one person. Nothing reads it
+ * since auras belong to characters; a later migration drops it once no
+ * deployed API reads it.
  */
 export const userCharacterAuraTable = pgTable("UserCharacterAura", {
   userId: text("userId").notNull().primaryKey(),

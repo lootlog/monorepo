@@ -1,22 +1,22 @@
-import { asc, eq, inArray, isNotNull, or } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, or, type SQL } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
 import {
   CharacterAuraIdSchema,
   isAdminCharacterAuraId,
-  type CharacterAuraId,
   type CharacterAurasChanged,
 } from "@lootlog/schema/character-aura";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
+  characterAuraTable,
   userCharacterAuraGrantTable,
-  userCharacterAuraTable,
   userMargonemAccountTable,
 } from "#src/database/drizzle/user.schema";
 import type { CharacterAurasResponse } from "#src/contracts/character-auras/schemas";
 import { currentMargonemAccountPlayers } from "#src/margonem-accounts/margonem-accounts";
 import {
   CharacterAuraAccessDenied,
+  type CharacterAuraCharacter,
   CharacterAuraGrantTargetNotFound,
   CharacterAurasData,
   CharacterAurasOperationError,
@@ -34,6 +34,13 @@ const accessDenied = () =>
 const notFound = () =>
   Effect.fail(new CharacterAuraGrantTargetNotFound({ status: 404 }));
 
+const byCharacter = (
+  left: CharacterAuraCharacter,
+  right: CharacterAuraCharacter,
+) =>
+  left.gameAccountId.localeCompare(right.gameAccountId) ||
+  left.characterId.localeCompare(right.characterId);
+
 /** Tells every Game client which aura the accounts show now. */
 export interface CharacterAurasEvents {
   readonly publishChanged: (
@@ -47,7 +54,12 @@ export interface CharacterAurasEvents {
  */
 export const CharacterAuraHolders = Schema.Struct({
   auras: Schema.Array(
-    Schema.Struct({ userId: Schema.String, auraId: Schema.String }),
+    Schema.Struct({
+      userId: Schema.String,
+      gameAccountId: Schema.String,
+      characterId: Schema.String,
+      auraId: Schema.String,
+    }),
   ),
   grantedUserIds: Schema.Array(Schema.String),
 });
@@ -76,10 +88,12 @@ const uncached: CharacterAurasCache = {
 
 /**
  * Auras are a perk of the Users in `adminUserIds` and of the Users an admin
- * granted them to. A User who loses it keeps no shown aura: revoking a grant
- * deletes the aura, and an admin dropped from `adminUserIds` keeps the stored
- * choice but no longer shows it, and may only remove it. Admin auras are
- * the admins' own: only they choose them, and only theirs show.
+ * granted them to. Each character wears its own aura, chosen by a User who
+ * proved to play its account, and it shows while that User plays the account
+ * last. A User who loses the perk keeps no shown aura: revoking a grant
+ * deletes their auras, and an admin dropped from `adminUserIds` keeps the
+ * stored choices but no longer shows them, and may only remove them. Admin
+ * auras are the admins' own: only they choose them, and only theirs show.
  */
 export const makeCharacterAurasData = (
   adminUserIds: ReadonlyArray<string>,
@@ -95,42 +109,79 @@ export const makeCharacterAurasData = (
       (millis) => new Date(millis),
     );
 
-    // An aura shows on the Margonem accounts its User proved to play, each
-    // with the aura of the User who proved it last. Scoping `DISTINCT ON
-    // ("accountId")` by candidate `accountId`s keeps every user's proofs for
-    // those accounts while avoiding a full-table scan of `UserMargonemAccount`.
-    const auraPlayers = currentMargonemAccountPlayers(
-      database,
-      inArray(
-        userMargonemAccountTable.accountId,
-        database
-          .select({ accountId: userMargonemAccountTable.accountId })
-          .from(userMargonemAccountTable)
-          .innerJoin(
-            userCharacterAuraTable,
-            eq(userCharacterAuraTable.userId, userMargonemAccountTable.userId),
-          ),
-      ),
-    );
-
-    const userAccounts = (userId: string) => {
+    /**
+     * The auras that show on characters matching `where`: each was chosen by
+     * the User who proved to play its account last, while they have access.
+     * Scoping `DISTINCT ON ("accountId")` by the accounts with an aura keeps
+     * every proof for those accounts while avoiding a full-table scan of
+     * `UserMargonemAccount`.
+     */
+    const shownAuras = (where?: SQL) => {
       const players = currentMargonemAccountPlayers(
         database,
         inArray(
           userMargonemAccountTable.accountId,
           database
-            .select({ accountId: userMargonemAccountTable.accountId })
-            .from(userMargonemAccountTable)
-            .where(eq(userMargonemAccountTable.userId, userId)),
+            .select({ accountId: characterAuraTable.accountId })
+            .from(characterAuraTable)
+            .where(where),
         ),
       );
 
       return database
-        .select({ id: players.accountId })
-        .from(players)
-        .where(eq(players.userId, userId))
-        .orderBy(asc(players.accountId));
+        .select({
+          gameAccountId: characterAuraTable.accountId,
+          characterId: characterAuraTable.characterId,
+          userId: characterAuraTable.userId,
+          auraId: characterAuraTable.auraId,
+        })
+        .from(characterAuraTable)
+        .innerJoin(
+          players,
+          and(
+            eq(players.accountId, characterAuraTable.accountId),
+            eq(players.userId, characterAuraTable.userId),
+          ),
+        )
+        .leftJoin(
+          userCharacterAuraGrantTable,
+          eq(userCharacterAuraGrantTable.userId, characterAuraTable.userId),
+        )
+        .where(
+          and(
+            where,
+            or(
+              isNotNull(userCharacterAuraGrantTable.userId),
+              admins.size === 0
+                ? undefined
+                : inArray(characterAuraTable.userId, [...admins]),
+            ),
+          ),
+        )
+        .orderBy(
+          asc(characterAuraTable.accountId),
+          asc(characterAuraTable.characterId),
+        )
+        .pipe(
+          Effect.map((rows) =>
+            rows.flatMap(({ gameAccountId, characterId, userId, auraId }) =>
+              isCharacterAuraId(auraId) &&
+              (admins.has(userId) || !isAdminCharacterAuraId(auraId))
+                ? [{ gameAccountId, characterId, auraId }]
+                : [],
+            ),
+          ),
+        );
     };
+
+    const isCharacter = ({
+      gameAccountId,
+      characterId,
+    }: CharacterAuraCharacter) =>
+      and(
+        eq(characterAuraTable.accountId, gameAccountId),
+        eq(characterAuraTable.characterId, characterId),
+      );
 
     const isGranted = (userId: string) =>
       database
@@ -143,14 +194,30 @@ export const makeCharacterAurasData = (
     const canChange = (userId: string) =>
       admins.has(userId) ? Effect.succeed(true) : isGranted(userId);
 
+    // Any proof will do: the aura shows only while the User plays it last.
+    const playsAccount = (userId: string, gameAccountId: string) =>
+      database
+        .select({ userId: userMargonemAccountTable.userId })
+        .from(userMargonemAccountTable)
+        .where(
+          and(
+            eq(userMargonemAccountTable.userId, userId),
+            eq(userMargonemAccountTable.accountId, gameAccountId),
+          ),
+        )
+        .limit(1)
+        .pipe(Effect.map((rows) => rows.length > 0));
+
     const holders = cache.holders(
       Effect.all({
         auras: database
           .select({
-            userId: userCharacterAuraTable.userId,
-            auraId: userCharacterAuraTable.auraId,
+            userId: characterAuraTable.userId,
+            gameAccountId: characterAuraTable.accountId,
+            characterId: characterAuraTable.characterId,
+            auraId: characterAuraTable.auraId,
           })
-          .from(userCharacterAuraTable),
+          .from(characterAuraTable),
         grantedUserIds: database
           .select({ userId: userCharacterAuraGrantTable.userId })
           .from(userCharacterAuraGrantTable)
@@ -160,7 +227,7 @@ export const makeCharacterAurasData = (
 
     /**
      * Only admins grant. The account names the User who proved to play it
-     * last, the same User whose aura shows on it.
+     * last, the same User whose auras show on its characters.
      */
     const grantTarget = (callerUserId: string, gameAccountId: string) =>
       Effect.gen(function* () {
@@ -182,18 +249,27 @@ export const makeCharacterAurasData = (
       });
 
     /**
-     * Shows the User's new aura on their accounts without waiting for the
-     * next list refresh. The change is committed; a lost event reaches
-     * readers with that refresh.
+     * Shows what the characters wear now without waiting for the next list
+     * refresh. The change is committed; a lost event reaches readers with
+     * that refresh.
      */
-    const announce = (userId: string, auraId: CharacterAuraId | null) =>
+    const announce = (characters: ReadonlyArray<CharacterAuraCharacter>) =>
       Effect.gen(function* () {
-        const accounts = yield* userAccounts(userId);
+        if (characters.length === 0) return;
 
-        if (accounts.length === 0) return;
+        const shown = yield* shownAuras(or(...characters.map(isCharacter)));
 
         yield* events.publishChanged({
-          auras: accounts.map(({ id }) => ({ gameAccountId: id, auraId })),
+          auras: characters.map(({ gameAccountId, characterId }) => ({
+            gameAccountId,
+            characterId,
+            auraId:
+              shown.find(
+                (aura) =>
+                  aura.gameAccountId === gameAccountId &&
+                  aura.characterId === characterId,
+              )?.auraId ?? null,
+          })),
         });
       }).pipe(ignorePublicationFailure);
 
@@ -201,96 +277,89 @@ export const makeCharacterAurasData = (
     const getOwnAura = (userId: string) =>
       Effect.gen(function* () {
         const { auras, grantedUserIds } = yield* holders;
-        const aura = auras.find((holder) => holder.userId === userId);
-
-        const auraId =
-          aura && isCharacterAuraId(aura.auraId) ? aura.auraId : null;
-
-        const accounts = auraId === null ? [] : yield* userAccounts(userId);
 
         return {
-          auraId,
+          auras: auras
+            .flatMap(
+              ({ userId: holder, gameAccountId, characterId, auraId }) =>
+                holder === userId && isCharacterAuraId(auraId)
+                  ? [{ gameAccountId, characterId, auraId }]
+                  : [],
+            )
+            .toSorted(byCharacter),
           canChange: admins.has(userId) || grantedUserIds.includes(userId),
           canGrant: admins.has(userId),
-          gameAccountIds: accounts.map((account) => account.id),
         };
       }).pipe(Effect.mapError(operationError));
 
     return CharacterAurasData.of({
       getAuras: () =>
         cache.list(
-          database
-            .select({
-              gameAccountId: auraPlayers.accountId,
-              userId: userCharacterAuraTable.userId,
-              auraId: userCharacterAuraTable.auraId,
-            })
-            .from(auraPlayers)
-            .innerJoin(
-              userCharacterAuraTable,
-              eq(userCharacterAuraTable.userId, auraPlayers.userId),
-            )
-            .leftJoin(
-              userCharacterAuraGrantTable,
-              eq(
-                userCharacterAuraGrantTable.userId,
-                userCharacterAuraTable.userId,
-              ),
-            )
-            .where(
-              or(
-                isNotNull(userCharacterAuraGrantTable.userId),
-                admins.size === 0
-                  ? undefined
-                  : inArray(userCharacterAuraTable.userId, [...admins]),
-              ),
-            )
-            .orderBy(asc(auraPlayers.accountId))
-            .pipe(
-              Effect.mapBoth({
-                onSuccess: (rows) => ({
-                  auras: rows.flatMap(({ gameAccountId, userId, auraId }) =>
-                    isCharacterAuraId(auraId) &&
-                    (admins.has(userId) || !isAdminCharacterAuraId(auraId))
-                      ? [{ gameAccountId, auraId }]
-                      : [],
-                  ),
-                }),
-                onFailure: operationError,
-              }),
-            ),
+          shownAuras().pipe(
+            Effect.mapBoth({
+              onSuccess: (auras) => ({ auras }),
+              onFailure: operationError,
+            }),
+          ),
         ),
       getOwnAura,
-      updateOwnAura: (userId, auraId) =>
+      updateOwnAura: (userId, character, auraId) =>
         Effect.gen(function* () {
           if (auraId === null) {
-            yield* database
-              .delete(userCharacterAuraTable)
-              .where(eq(userCharacterAuraTable.userId, userId))
+            // Another User's choice for the character stays theirs.
+            const removed = yield* database
+              .delete(characterAuraTable)
+              .where(
+                and(
+                  isCharacter(character),
+                  eq(characterAuraTable.userId, userId),
+                ),
+              )
+              .returning({ userId: characterAuraTable.userId })
               .pipe(Effect.mapError(operationError));
-            yield* cache.invalidate;
-            yield* announce(userId, null);
+
+            if (removed.length > 0) {
+              yield* cache.invalidate;
+              yield* announce([character]);
+            }
 
             return yield* getOwnAura(userId);
           }
 
-          const allowed = isAdminCharacterAuraId(auraId)
-            ? admins.has(userId)
-            : yield* canChange(userId).pipe(Effect.mapError(operationError));
+          const allowed = yield* Effect.all([
+            isAdminCharacterAuraId(auraId)
+              ? Effect.succeed(admins.has(userId))
+              : canChange(userId),
+            playsAccount(userId, character.gameAccountId),
+          ]).pipe(
+            Effect.mapBoth({
+              onSuccess: ([access, plays]) => access && plays,
+              onFailure: operationError,
+            }),
+          );
 
           if (!allowed) return yield* accessDenied();
           const updatedAt = yield* now;
 
           yield* database
-            .insert(userCharacterAuraTable)
-            .values({ userId, auraId, updatedAt })
+            .insert(characterAuraTable)
+            .values({
+              accountId: character.gameAccountId,
+              characterId: character.characterId,
+              userId,
+              auraId,
+              updatedAt,
+            })
             .onConflictDoUpdate({
-              target: userCharacterAuraTable.userId,
-              set: { auraId, updatedAt },
+              target: [
+                characterAuraTable.accountId,
+                characterAuraTable.characterId,
+              ],
+              set: { userId, auraId, updatedAt },
             })
             .pipe(Effect.mapError(operationError));
           yield* cache.invalidate;
-          yield* announce(userId, auraId);
+          yield* announce([character]);
 
           return yield* getOwnAura(userId);
         }),
@@ -308,40 +377,33 @@ export const makeCharacterAurasData = (
           // A stored aura starts to show once its User is granted.
           yield* cache.invalidate;
         }),
-      // An admin keeps access, and the aura with it, while listed.
+      // An admin keeps access, and the auras with it, while listed.
       revokeAuras: (callerUserId, gameAccountId) =>
         Effect.gen(function* () {
           const userId = yield* grantTarget(callerUserId, gameAccountId);
 
-          yield* database
+          const removed = yield* database
             .transaction((transaction) =>
               Effect.gen(function* () {
                 yield* transaction
                   .delete(userCharacterAuraGrantTable)
                   .where(eq(userCharacterAuraGrantTable.userId, userId));
 
-                if (admins.has(userId)) return;
+                if (admins.has(userId)) return [];
 
-                yield* transaction
-                  .delete(userCharacterAuraTable)
-                  .where(eq(userCharacterAuraTable.userId, userId));
+                return yield* transaction
+                  .delete(characterAuraTable)
+                  .where(eq(characterAuraTable.userId, userId))
+                  .returning({
+                    gameAccountId: characterAuraTable.accountId,
+                    characterId: characterAuraTable.characterId,
+                  });
               }),
             )
             .pipe(Effect.mapError(operationError));
+
           yield* cache.invalidate;
-
-          if (!admins.has(userId)) yield* announce(userId, null);
-        }),
-      // Deprecated: accounts follow verified Margonem proofs. Older Game
-      // clients still call it, so it only reports whether the aura shows.
-      linkGameAccount: (userId) =>
-        Effect.gen(function* () {
-          const own = yield* getOwnAura(userId);
-
-          if (!own.canChange || own.auraId === null)
-            return yield* accessDenied();
-
-          return own;
+          yield* announce(removed.toSorted(byCharacter));
         }),
     });
   });

@@ -1872,8 +1872,8 @@ describe("RealtimeHub federation", () => {
 
     const change = {
       auras: [
-        { gameAccountId: "101", auraId: "frost" },
-        { gameAccountId: "202", auraId: null },
+        { gameAccountId: "101", characterId: "1", auraId: "frost" },
+        { gameAccountId: "202", characterId: "2", auraId: null },
       ],
     };
 

@@ -1,0 +1,168 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "e201ba0a-462a-49a4-9dd3-97bf67c975c1",
+  "prevIds": ["29df924b-6d0e-4670-a230-f23a0f4c8aba"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "CharacterAura"],
+      "writes": [
+        "s|tbl|public.CharacterAura",
+        "n|tbl|public.CharacterAura",
+        "e|tbl|public.CharacterAura",
+        "n|rel|public.CharacterAura",
+        "n|type|public.CharacterAura",
+        "n|rel|public.CharacterAura_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "CharacterAura",
+        "CharacterAura_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.CharacterAura_userId_idx",
+        "n|idx|public.CharacterAura_userId_idx",
+        "e|idx|public.CharacterAura_userId_idx",
+        "n|rel|public.CharacterAura_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.CharacterAura",
+        "n|sch|public",
+        "n|col|public.CharacterAura.userId"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "CharacterAura",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CharacterAura",
+        "name": "accountId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CharacterAura",
+        "name": "characterId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CharacterAura",
+        "name": "userId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CharacterAura",
+        "name": "auraId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CharacterAura",
+        "name": "updatedAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CharacterAura",
+        "name": "CharacterAura_userId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CharacterAura",
+        "name": "CharacterAura_pkey",
+        "columns": ["accountId", "characterId"],
+        "nameExplicit": true,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

@@ -18733,7 +18733,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: List every Margonem account whose characters wear an aura, for any signed-in user; the list names no Lootlog user
+      description: List every Margonem character that wears an aura, with its account, for any signed-in user; the list names no Lootlog user
       summary: Get character auras
   /users/@me/character-aura:
     get:
@@ -18794,7 +18794,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Retrieve the aura the authenticated user wears, whether they may choose one, and the Margonem accounts it shows on
+      description: Retrieve the auras the characters of the authenticated user wear and whether they may choose one
       summary: Get own character aura
     put:
       tags:
@@ -18856,7 +18856,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Choose the aura the authenticated user wears, or remove it with null; choosing one fails with 403 for users without access to auras
+      description: Choose the aura one Margonem character of the authenticated user wears, or remove it with null; fails with 403 when choosing one without access to auras or for a character on an account the user did not prove to play
       summary: Update own character aura
       requestBody:
         content:
@@ -18864,75 +18864,6 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdateOwnCharacterAuraDto"
         required: true
-  /users/@me/character-aura/game-accounts/{gameAccountId}:
-    put:
-      tags:
-        - character-auras
-      operationId: CharacterAurasController_linkGameAccount
-      parameters:
-        - name: gameAccountId
-          in: path
-          schema:
-            type: string
-          required: true
-      security:
-        - bearer: []
-      responses:
-        "200":
-          description: OwnCharacterAuraResponseDto
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OwnCharacterAuraResponseDto"
-        "400":
-          description: RequestValidationError
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RequestValidationError"
-        "401":
-          description: ReauthenticationRequired
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
-                    additionalProperties: false
-        "403":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
-                    additionalProperties: false
-        "429":
-          description: Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
-      description: "Deprecated: an aura shows on the Margonem accounts its user proved to play when the Game client connected, so this changes nothing. Returns the own aura, or 403 while the user wears no aura they may use"
-      summary: Show own aura on a Margonem account
-      deprecated: true
   /character-auras/grants/game-accounts/{gameAccountId}:
     put:
       tags:
@@ -19148,112 +19079,25 @@ components:
     OwnCharacterAuraResponseDto:
       type: object
       properties:
-        auraId:
-          nullable: true
-          type: string
-          enum:
-            - divine
-            - hellfire
-            - frost
-            - void
-            - storm
-            - venom
-            - bloodmoon
-            - astral
-            - prism
-            - spirit
-            - sakura
-            - sandstorm
-            - necro
-            - tide
-            - arcane
-            - aurora
-            - conqueror
-            - heavenly
-            - halo
-            - dragon
-            - crown
-            - wings
-            - hearts
-            - sovereign
-            - seraph
-            - eclipse
-            - thunderlord
-            - phoenix
-            - emperor
-            - quake
-            - starlight
-            - seal
-        canChange:
-          type: boolean
-        canGrant:
-          type: boolean
-        gameAccountIds:
-          type: array
-          items:
-            type: string
-      required:
-        - auraId
-        - canChange
-        - canGrant
-        - gameAccountIds
-      additionalProperties: false
-    UpdateOwnCharacterAuraDto:
-      type: object
-      properties:
-        auraId:
-          nullable: true
-          type: string
-          enum:
-            - divine
-            - hellfire
-            - frost
-            - void
-            - storm
-            - venom
-            - bloodmoon
-            - astral
-            - prism
-            - spirit
-            - sakura
-            - sandstorm
-            - necro
-            - tide
-            - arcane
-            - aurora
-            - conqueror
-            - heavenly
-            - halo
-            - dragon
-            - crown
-            - wings
-            - hearts
-            - sovereign
-            - seraph
-            - eclipse
-            - thunderlord
-            - phoenix
-            - emperor
-            - quake
-            - starlight
-            - seal
-      required:
-        - auraId
-      additionalProperties: false
-    CharacterAurasResponseDto:
-      type: object
-      properties:
         auras:
           type: array
           items:
             $ref: "#/components/schemas/CharacterAuraResponseDto"
+        canChange:
+          type: boolean
+        canGrant:
+          type: boolean
       required:
         - auras
+        - canChange
+        - canGrant
       additionalProperties: false
     CharacterAuraResponseDto:
       type: object
       properties:
         gameAccountId:
+          type: string
+        characterId:
           type: string
         auraId:
           type: string
@@ -19292,7 +19136,66 @@ components:
             - seal
       required:
         - gameAccountId
+        - characterId
         - auraId
+      additionalProperties: false
+    UpdateOwnCharacterAuraDto:
+      type: object
+      properties:
+        gameAccountId:
+          type: string
+        characterId:
+          type: string
+        auraId:
+          nullable: true
+          type: string
+          enum:
+            - divine
+            - hellfire
+            - frost
+            - void
+            - storm
+            - venom
+            - bloodmoon
+            - astral
+            - prism
+            - spirit
+            - sakura
+            - sandstorm
+            - necro
+            - tide
+            - arcane
+            - aurora
+            - conqueror
+            - heavenly
+            - halo
+            - dragon
+            - crown
+            - wings
+            - hearts
+            - sovereign
+            - seraph
+            - eclipse
+            - thunderlord
+            - phoenix
+            - emperor
+            - quake
+            - starlight
+            - seal
+      required:
+        - gameAccountId
+        - characterId
+        - auraId
+      additionalProperties: false
+    CharacterAurasResponseDto:
+      type: object
+      properties:
+        auras:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterAuraResponseDto"
+      required:
+        - auras
       additionalProperties: false
     SharedUserThemeResponseDto:
       type: object
@@ -35824,55 +35727,18 @@ components:
           nullable: true
           type: object
           properties:
-            auraId:
-              nullable: true
-              type: string
-              enum:
-                - divine
-                - hellfire
-                - frost
-                - void
-                - storm
-                - venom
-                - bloodmoon
-                - astral
-                - prism
-                - spirit
-                - sakura
-                - sandstorm
-                - necro
-                - tide
-                - arcane
-                - aurora
-                - conqueror
-                - heavenly
-                - halo
-                - dragon
-                - crown
-                - wings
-                - hearts
-                - sovereign
-                - seraph
-                - eclipse
-                - thunderlord
-                - phoenix
-                - emperor
-                - quake
-                - starlight
-                - seal
+            auras:
+              type: array
+              items:
+                $ref: "#/components/schemas/CharacterAuraResponseDto"
             canChange:
               type: boolean
             canGrant:
               type: boolean
-            gameAccountIds:
-              type: array
-              items:
-                type: string
           required:
-            - auraId
+            - auras
             - canChange
             - canGrant
-            - gameAccountIds
           additionalProperties: false
         characterAuras:
           nullable: true
