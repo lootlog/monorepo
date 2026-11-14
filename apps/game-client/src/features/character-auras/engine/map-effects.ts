@@ -2,6 +2,7 @@
  * The effects an aura can lay over the whole map while its admin is on it, by the kind a
  * preset names in `sky`.
  */
+import { drawPowerField, POWER_GLOOM, POWER_VEIL } from "./ascend";
 import { drawTimeStop } from "./chrono";
 import { COSMOS_GLOOM, drawCosmosSky } from "./cosmos";
 import { drawWireframe, WIREFRAME_GLOOM, WIREFRAME_VEIL } from "./glitch";
@@ -32,6 +33,7 @@ export const MAP_EFFECTS: Record<MapEffectKind, MapEffect> = {
   cosmos: { gloom: COSMOS_GLOOM, veil: DARK, draw: drawCosmosSky },
   blizzard: { gloom: BLIZZARD_GLOOM, veil: BLIZZARD_VEIL, draw: drawBlizzard },
   timestop: { gloom: 0, veil: DARK, draw: drawTimeStop },
+  power: { gloom: POWER_GLOOM, veil: POWER_VEIL, draw: drawPowerField },
   wireframe: {
     gloom: WIREFRAME_GLOOM,
     veil: WIREFRAME_VEIL,

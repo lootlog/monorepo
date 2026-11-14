@@ -117,6 +117,7 @@ export const CharacterAuraResponseDtoAuraId = {
   winterlord: 'winterlord',
   architect: 'architect',
   absolute: 'absolute',
+  ascendant: 'ascendant',
 } as const;
 
 export interface CharacterAuraResponseDto {
@@ -175,6 +176,7 @@ export const UpdateOwnCharacterAuraDtoAuraId = {
   winterlord: 'winterlord',
   architect: 'architect',
   absolute: 'absolute',
+  ascendant: 'ascendant',
 } as const;
 
 export interface UpdateOwnCharacterAuraDto {

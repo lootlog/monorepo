@@ -33,7 +33,8 @@ type AuraFx =
   | "galaxy"
   | "clockwork"
   | "winter"
-  | "glitch";
+  | "glitch"
+  | "power-flame";
 
 /** What an aura lays over the whole map while its admin is on it (`MAP_EFFECTS`). */
 export type MapEffectKind =
@@ -41,7 +42,8 @@ export type MapEffectKind =
   | "cosmos"
   | "blizzard"
   | "timestop"
-  | "wireframe";
+  | "wireframe"
+  | "power";
 
 /**
  * The aura's own short animation every few seconds, like the burst of the game's animated
@@ -73,7 +75,8 @@ export type BurstKind =
   | "supernova"
   | "timestop"
   | "glaciate"
-  | "reload";
+  | "reload"
+  | "powerup";
 
 type GroundStyle =
   | "disc"
@@ -123,7 +126,8 @@ export type TipDeco =
   | "cosmos"
   | "chrono"
   | "winter"
-  | "terminal";
+  | "terminal"
+  | "power";
 
 export interface AuraPreset {
   id: CharacterAuraId;
@@ -2251,6 +2255,68 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     tip: "terminal",
     nick: ["#eafff2", "#3df0a0", "#00e8ff"],
     tones: ["#eafff2", "#3df0a0", "#0e6a48"],
+  },
+  ascendant: {
+    id: "ascendant",
+    tier: "mythic",
+    sky: "power",
+    herald: true,
+    description:
+      "Wokół postaci stoi wysoki płomień złotej energii, po którym pełzają wyładowania, a ziemia pod stopami pęka; przez cały ekran pędzą od niej strugi powietrza, z całej mapy unoszą się kamyki, a co chwilę moc zbiera się i uwalnia z błyskiem, trzema falami i wstrząsem mapy.",
+    particles: ["#ffffff", "#fff3a0", "#ffd83a", "#7a6a58", "#3a302a"],
+    rim: "#fff3a0",
+    haze: "#ffb400",
+    near: 0.95,
+    far: 0.6,
+    inner: 0.12,
+    pulse: (t) => 0.9 + noise1(t * 9, 47) * 0.14 + noise1(t * 3, 53) * 0.08,
+    ground: { style: "cracks", color: "#ffd83a", alpha: 0.8 },
+    emitters: [
+      {
+        kind: "mote",
+        rate: 14,
+        from: "feet-rim",
+        life: [0.5, 0.9],
+        speed: [60, 110],
+        dir: -Math.PI / 2,
+        spread: 0.12,
+        size: [0.8, 1.6],
+        colors: 3,
+        front: 0.5,
+      },
+      {
+        kind: "grain",
+        rate: 4,
+        from: "feet-rim",
+        life: [1.2, 2],
+        speed: [12, 26],
+        dir: -Math.PI / 2,
+        spread: 0.3,
+        gravity: -12,
+        size: [1.4, 2],
+        colors: 2,
+        colorFrom: 3,
+        front: 0.5,
+        groundOnly: true,
+      },
+      {
+        kind: "spark",
+        rate: 6,
+        from: "edge",
+        life: [0.2, 0.45],
+        speed: [40, 90],
+        spread: 6.28,
+        outward: 0.7,
+        size: [0.7, 1.2],
+        colors: 3,
+        front: 0.7,
+      },
+    ],
+    fx: ["power-flame", "lightning"],
+    burst: "powerup",
+    tip: "power",
+    nick: ["#ffffff", "#ffd83a", "#ff9a00"],
+    tones: ["#fffbe0", "#ffd83a", "#b87400"],
   },
   absolute: {
     id: "absolute",

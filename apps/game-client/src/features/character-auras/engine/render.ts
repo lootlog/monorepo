@@ -79,6 +79,7 @@ import {
   RELOAD_GLITCH,
 } from "./glitch";
 import { drawDominion } from "./absolute";
+import { drawPowerFlame, POWER_RELEASE } from "./ascend";
 import { MAP_EFFECTS } from "./map-effects";
 import type { MapScene } from "./sky";
 import {
@@ -187,6 +188,7 @@ const BURST_DURATION: Record<BurstKind, number> = {
   supernova: 1.6,
   timestop: TIMESTOP_LENGTH,
   glaciate: 1.5,
+  powerup: 2,
   reload: 1.2,
 };
 
@@ -921,6 +923,8 @@ export class Aura {
       drawSupernova(b, place, front, burst);
     }
 
+    if (fx.includes("power-flame")) drawPowerFlame(b, place, front, burst);
+
     if (fx.includes("clockwork") && !front) {
       const clock = this.frozenAt ?? this.time;
       drawClockFace(b, place, clock, burst);
@@ -1649,6 +1653,14 @@ export class Aura {
       if (this.burst > 1) this.frozenAt = null;
     }
 
+    // The power is released: stones thrown up, rings and a crack of lightning.
+    if (kind === "powerup" && crossed(POWER_RELEASE)) {
+      this.flash = 1;
+      this.startConqueror(place, frame, k, false);
+      this.burstRing(place, frame, frame.feet.rx * 3.4, 1);
+      this.startStrike(place, frame, k);
+    }
+
     // The spikes shatter into shards thrown up and out.
     if (kind === "glaciate" && crossed(SPIKES_SHATTER)) {
       this.flash = 0.7;
@@ -1972,6 +1984,7 @@ export class Aura {
         return true;
       case "supernova":
       case "timestop":
+      case "powerup":
         // The galaxy starts to fall in; the hand winds up.
         this.flash = 0.5;
 
