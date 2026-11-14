@@ -19138,6 +19138,7 @@ components:
             - timelord
             - winterlord
             - architect
+            - absolute
       required:
         - gameAccountId
         - characterId
@@ -19190,6 +19191,7 @@ components:
             - timelord
             - winterlord
             - architect
+            - absolute
       required:
         - gameAccountId
         - characterId

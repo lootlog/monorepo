@@ -78,7 +78,9 @@ import {
   glitchLevel,
   RELOAD_GLITCH,
 } from "./glitch";
+import { drawDominion } from "./absolute";
 import { MAP_EFFECTS } from "./map-effects";
+import type { MapScene } from "./sky";
 import {
   drawIceCrown,
   drawIceRing,
@@ -151,6 +153,12 @@ interface Bolt {
   /** Conqueror's will: a black core in a red glow instead of white in blue. */
   haki?: boolean;
 }
+
+/** An aura of realms wearing one that leaves the map alone: only its dominion is drawn. */
+const DOMINION_ONLY = { gloom: 0, veil: [4, 2, 10] } as const;
+
+/** Seconds an aura of realms wears its first one at least. */
+const FIRST_REALM = 4;
 
 /** How long each burst runs, in seconds. */
 const BURST_DURATION: Record<BurstKind, number> = {
@@ -311,6 +319,11 @@ export class Aura {
   private trail: TrailStep[] = [];
   /** The aura's time when time stopped; null while it runs. */
   private frozenAt: number | null = null;
+  /** The aura's own preset; `preset` is the one drawn, which differs for an aura of realms. */
+  private host: AuraPreset;
+  /** Which of the host's realms is worn, and the seconds since that changed. */
+  private realm = 0;
+  private shifted = Infinity;
   /** Props follow the head through this spring, so they trail a walk. */
   private spring: Spring | null = null;
   private lastCenter: { x: number; y: number } | null = null;
@@ -346,7 +359,8 @@ export class Aura {
     this.carry = clamp(phase, 0, 1) * TICK;
     this.rng = mulberry32(seed);
     this.field = new ParticleField(this.rng);
-    this.preset = AURAS[id];
+    this.host = AURAS[id];
+    this.preset = this.worn();
     this.rgb = colorsOf(this.preset);
 
     // An admin arrives with a burst.
@@ -358,7 +372,10 @@ export class Aura {
    * colour; null for an aura that leaves the map alone.
    */
   mapEffect(): { gloom: number; veil: Rgb } | null {
-    return this.preset.sky ? MAP_EFFECTS[this.preset.sky] : null;
+    if (this.preset.sky) return MAP_EFFECTS[this.preset.sky];
+
+    // The dominion lies over the map whatever is worn.
+    return this.host.realms ? DOMINION_ONLY : null;
   }
 
   /**
@@ -373,13 +390,13 @@ export class Aura {
   ): void {
     const p = this.preset;
 
-    if (!place.ground || !p.sky) return;
+    if (!place.ground || !(p.sky || this.host.realms)) return;
     const [light, mid, dark] = this.rgb.tones;
     const { bounds } = place.silhouette;
     ctx.save();
 
     try {
-      MAP_EFFECTS[p.sky].draw({
+      const scene: MapScene = {
         ctx,
         width,
         height,
@@ -400,7 +417,11 @@ export class Aura {
         light,
         mid,
         dark,
-      });
+      };
+
+      if (p.sky) MAP_EFFECTS[p.sky].draw(scene);
+
+      if (this.host.realms) drawDominion(scene, this.shifted);
     } finally {
       ctx.restore();
     }
@@ -418,10 +439,25 @@ export class Aura {
   }
 
   setPreset(id: CharacterAuraId): void {
-    if (id === this.preset.id) return;
-    this.preset = AURAS[id];
-    this.rgb = colorsOf(this.preset);
+    if (id === this.host.id) return;
+    this.host = AURAS[id];
+    this.realm = 0;
     this.field.clear();
+    this.wear();
+  }
+
+  /** The preset drawn now: the aura's own, or the one an aura of `realms` wears in turn. */
+  private worn(): AuraPreset {
+    const { realms } = this.host;
+    const id = realms?.[this.realm % realms.length];
+
+    return id ? AURAS[id] : this.host;
+  }
+
+  /** Puts on the preset now worn, dropping what belonged to the last one but its particles. */
+  private wear(): void {
+    this.preset = this.worn();
+    this.rgb = colorsOf(this.preset);
     this.bolts = [];
     this.dragon = null;
     this.burst = -1;
@@ -438,6 +474,7 @@ export class Aura {
   update(dt: number, place: AuraPlacement | null, intensity: number): void {
     const before = this.age;
     this.age += Math.max(0, dt);
+    this.shifted += Math.max(0, dt);
 
     // Each later pulse over the map brings the burst too.
     if (this.preset.herald && pulseStarted(before, this.age))
@@ -471,7 +508,14 @@ export class Aura {
 
     // While time stands still nothing is born and nothing moves.
     if (this.frozenAt === null) {
-      this.field.update(TICK, emitters, frame, intensity, this.time);
+      this.field.update(
+        TICK,
+        emitters,
+        frame,
+        // An aura of realms sheds half as much again.
+        this.host.realms ? intensity * 1.5 : intensity,
+        this.time,
+      );
       this.field.bubbleUp(TICK);
     }
 
@@ -1530,7 +1574,17 @@ export class Aura {
 
     this.advanceShowcaseBurst(kind, place, frame, k, crossed);
 
-    if (this.burst > 1) this.burst = -1;
+    if (this.burst <= 1) return;
+    this.burst = -1;
+
+    // An aura of realms moves on to the next one as each burst ends, but for the burst
+    // it arrives with: the first realm stays to be seen.
+    if (!this.host.realms || this.age < FIRST_REALM) return;
+    this.realm++;
+    this.wear();
+    this.shifted = 0;
+    this.flash = 1;
+    this.nextBurst = 3 + this.rng() * 2;
   }
 
   /** The beats the showcase admin auras' bursts cross this tick. */

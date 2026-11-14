@@ -171,6 +171,11 @@ export interface AuraPreset {
   herald?: boolean;
   /** What the aura lays over the whole map while it is on it: a storm, a night sky. */
   sky?: MapEffectKind;
+  /**
+   * An aura that wears others in turn, moving on as each one's burst ends. Its own
+   * looks are then never drawn: only its id, description and nick are its own.
+   */
+  realms?: readonly CharacterAuraId[];
   /** The dragon's colours, for an aura with the `dragon` effect; jade and gold otherwise. */
   dragonScales?: DragonScales;
 }
@@ -2246,6 +2251,36 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     tip: "terminal",
     nick: ["#eafff2", "#3df0a0", "#00e8ff"],
     tones: ["#eafff2", "#3df0a0", "#0e6a48"],
+  },
+  absolute: {
+    id: "absolute",
+    tier: "mythic",
+    herald: true,
+    realms: [
+      "cosmos",
+      "phoenix",
+      "timelord",
+      "eclipse",
+      "winterlord",
+      "emperor",
+      "architect",
+      "thunderlord",
+    ],
+    description:
+      "Nosi po kolei aury pozostałych administratorów i z każdym wybuchem zmienia się w następną: noc, ogień, czas, mrok, zimę, smoka, kod i burzę. Wokół postaci, na całym ekranie, obraca się pieczęć, w niebo biją słupy światła, krążą komety, a nad całą mapą unoszą się iskry.",
+    particles: ["#ffffff", "#fff6c8", "#ffd34a"],
+    rim: "#ffffff",
+    haze: "#ffd34a",
+    near: 0.85,
+    far: 0.55,
+    inner: 0.08,
+    pulse: breathe(3, 0.1),
+    emitters: [],
+    fx: [],
+    burst: "coronation",
+    tip: "regal",
+    nick: ["#ffffff", "#ffd34a", "#c77dff"],
+    tones: ["#ffffff", "#ffd34a", "#8a4aff"],
   },
   // Calmer admin auras: no arrival.
   starlight: {
