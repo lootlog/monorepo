@@ -1,6 +1,9 @@
 /** Input and output schemas for the auras Margonem characters wear. */
 import { Schema } from "effect";
-import { CharacterAuraIdSchema } from "@lootlog/schema/character-aura";
+import {
+  CharacterAuraIdSchema,
+  PersonalCharacterAuraIdSchema,
+} from "@lootlog/schema/character-aura";
 
 const MargonemId = Schema.String.check(Schema.isPattern(/^[1-9]\d{0,19}$/));
 
@@ -15,6 +18,8 @@ export const OwnCharacterAuraResponse = Schema.Struct({
   auras: Schema.Array(CharacterAuraResponse),
   /** Whether the User may choose an aura; removing one is always allowed. */
   canChange: Schema.Boolean,
+  /** The personal auras the User may choose; `canChange` does not cover them. */
+  personalAuraIds: Schema.Array(PersonalCharacterAuraIdSchema),
   /** Whether the User may grant and revoke auras of other Users. */
   canGrant: Schema.Boolean,
 }).annotate({ identifier: "OwnCharacterAuraResponseDto" });
@@ -34,6 +39,11 @@ export type UpdateOwnCharacterAuraRequest =
 
 export const CharacterAuraGameAccountParams = Schema.Struct({
   gameAccountId: MargonemId,
+});
+
+export const PersonalCharacterAuraGrantParams = Schema.Struct({
+  gameAccountId: MargonemId,
+  auraId: PersonalCharacterAuraIdSchema,
 });
 
 export const CharacterAurasResponse = Schema.Struct({

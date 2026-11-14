@@ -166,6 +166,12 @@ it("keeps the map lit when an admin arrives and darkens it only under the storm"
   playFor(1);
 
   expect(game.drawnOrders()).toContain(ABOVE_EVERYTHING);
+
+  // The time stop never dims the map between bursts, yet still has to reach it.
+  canvasAuraRenderer.setTargets(new Map([["7", "timelord"]]));
+  playFor(1);
+
+  expect(game.drawnOrders()).toContain(ABOVE_EVERYTHING);
 });
 
 it("spreads new silhouettes over frames and keeps a walker's aura shown while its next one waits", () => {

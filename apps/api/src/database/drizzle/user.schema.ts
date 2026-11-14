@@ -111,6 +111,28 @@ export const userCharacterAuraGrantTable = pgTable("UserCharacterAuraGrant", {
 });
 
 /**
+ * Personal auras a global chat admin let a User choose, one row an aura. They
+ * stand apart from `UserCharacterAuraGrant`: that grant does not cover them,
+ * and a User may hold one of these without it. Revoking a User's auras deletes
+ * their rows here too.
+ */
+export const userPersonalCharacterAuraGrantTable = pgTable(
+  "UserPersonalCharacterAuraGrant",
+  {
+    userId: text("userId").notNull(),
+    auraId: text("auraId").notNull(),
+    grantedByUserId: text("grantedByUserId").notNull(),
+    grantedAt: timestamp("grantedAt", { mode: "date", precision: 3 }).notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.userId, table.auraId],
+      name: "UserPersonalCharacterAuraGrant_pkey",
+    }),
+  ],
+);
+
+/**
  * Margonem accounts a User proved to play: the gateway verified Margonem's
  * signed proof and announced it. An account shared by several Users belongs
  * to each of them; the latest `verifiedAt` names who plays it now.

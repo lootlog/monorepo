@@ -37,6 +37,23 @@ export const CHARACTER_AURA_IDS = [
   "quake",
   "starlight",
   "seal",
+  "cosmos",
+  "timelord",
+  "winterlord",
+  "architect",
+  "absolute",
+  "ascendant",
+  "ascendant2",
+  "ascendant3",
+  "ascendant4",
+  "skyborne",
+  "joker",
+  "nightowl",
+  "sunder",
+  "fortyfour",
+  "thirteenth",
+  "ninepins",
+  "threefaces",
 ] as const;
 
 export const CharacterAuraIdSchema = Schema.Literals(CHARACTER_AURA_IDS);
@@ -56,6 +73,15 @@ export const ADMIN_CHARACTER_AURA_IDS = [
   "quake",
   "starlight",
   "seal",
+  "cosmos",
+  "timelord",
+  "winterlord",
+  "architect",
+  "absolute",
+  "ascendant",
+  "ascendant2",
+  "ascendant3",
+  "ascendant4",
 ] as const satisfies ReadonlyArray<CharacterAuraId>;
 
 const adminCharacterAuraIds: ReadonlySet<string> = new Set(
@@ -64,6 +90,35 @@ const adminCharacterAuraIds: ReadonlySet<string> = new Set(
 
 export const isAdminCharacterAuraId = (id: CharacterAuraId): boolean =>
   adminCharacterAuraIds.has(id);
+
+/**
+ * Auras made for single players. An admin grants each one by name: holding a
+ * grant of auras in general does not let a User choose them.
+ */
+export const PERSONAL_CHARACTER_AURA_IDS = [
+  "skyborne",
+  "joker",
+  "nightowl",
+  "sunder",
+  "fortyfour",
+  "thirteenth",
+  "ninepins",
+  "threefaces",
+] as const satisfies ReadonlyArray<CharacterAuraId>;
+
+export const PersonalCharacterAuraIdSchema = Schema.Literals(
+  PERSONAL_CHARACTER_AURA_IDS,
+);
+
+export type PersonalCharacterAuraId = typeof PersonalCharacterAuraIdSchema.Type;
+
+const personalCharacterAuraIds: ReadonlySet<string> = new Set(
+  PERSONAL_CHARACTER_AURA_IDS,
+);
+
+export const isPersonalCharacterAuraId = (
+  id: CharacterAuraId,
+): id is PersonalCharacterAuraId => personalCharacterAuraIds.has(id);
 
 /**
  * Which auras a device draws on the map: all of them, the hero's and the few
