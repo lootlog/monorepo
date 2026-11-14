@@ -89,6 +89,7 @@ export const OwnCharacterAuraResponseDtoPersonalAuraIdsItem = {
   ninepins: 'ninepins',
   threefaces: 'threefaces',
   twineyes: 'twineyes',
+  tulipwind: 'tulipwind',
 } as const;
 
 export type CharacterAuraResponseDtoAuraId = typeof CharacterAuraResponseDtoAuraId[keyof typeof CharacterAuraResponseDtoAuraId];
@@ -145,6 +146,7 @@ export const CharacterAuraResponseDtoAuraId = {
   ninepins: 'ninepins',
   threefaces: 'threefaces',
   twineyes: 'twineyes',
+  tulipwind: 'tulipwind',
 } as const;
 
 export interface CharacterAuraResponseDto {
@@ -217,6 +219,7 @@ export const UpdateOwnCharacterAuraDtoAuraId = {
   ninepins: 'ninepins',
   threefaces: 'threefaces',
   twineyes: 'twineyes',
+  tulipwind: 'tulipwind',
 } as const;
 
 export interface UpdateOwnCharacterAuraDto {
@@ -11423,6 +11426,7 @@ export const GameClientBootstrapResponseDtoOutputCharacterAuraPersonalAuraIdsIte
   ninepins: 'ninepins',
   threefaces: 'threefaces',
   twineyes: 'twineyes',
+  tulipwind: 'tulipwind',
 } as const;
 
 /**
@@ -16594,7 +16598,7 @@ export type CharacterAurasControllerRevokeAuras429 = {
 
 export type CharacterAurasControllerGrantPersonalAuraPathParameters = {
  gameAccountId: string,
-    auraId: 'skyborne' | 'joker' | 'nightowl' | 'sunder' | 'fortyfour' | 'thirteenth' | 'ninepins' | 'threefaces' | 'twineyes',
+    auraId: 'skyborne' | 'joker' | 'nightowl' | 'sunder' | 'fortyfour' | 'thirteenth' | 'ninepins' | 'threefaces' | 'twineyes' | 'tulipwind',
  }
 export type CharacterAurasControllerGrantPersonalAura401 = ReauthenticationRequiredEncoded | {
   message: string;

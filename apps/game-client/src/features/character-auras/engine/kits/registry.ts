@@ -9,6 +9,7 @@ import { skyborne } from "./skyborne";
 import { sunder } from "./sunder";
 import { thirteenth } from "./thirteenth";
 import { threefaces } from "./threefaces";
+import { tulipwind } from "./tulipwind";
 import { twineyes } from "./twineyes";
 
 export const KITS: Record<AuraKitId, AuraKit> = {
@@ -20,5 +21,6 @@ export const KITS: Record<AuraKitId, AuraKit> = {
   thirteenth,
   ninepins,
   threefaces,
+  tulipwind,
   twineyes,
 };
