@@ -10,14 +10,7 @@ import { pixelDisc, pixelEllipse, pixelGlint, pixelLine, plot } from "./paint";
 import type { Brush, TipFrame } from "./decor";
 import { groundRadius, type AuraPlacement } from "./placement";
 import { context2d, createCanvas } from "./silhouette";
-import {
-  groundWave,
-  scatter,
-  wash,
-  washAround,
-  wrap,
-  type MapScene,
-} from "./sky";
+import { scatter, wash, washAround, wrap, type MapScene } from "./sky";
 
 const WHITE: Rgb = [255, 255, 255];
 
@@ -452,13 +445,6 @@ export function drawCosmosSky(scene: MapScene): void {
 
   if (blast < 0) return;
   wash(scene, scene.light, 0.3 * (1 - blast) ** 4, "lighter");
-  groundWave(
-    scene,
-    blast * Math.max(width, height) * 0.7,
-    scene.light,
-    scene.mid,
-    (1 - blast) ** 1.5,
-  );
 }
 
 /** A meteor in most slots of time, and a shower of them right after a supernova. */

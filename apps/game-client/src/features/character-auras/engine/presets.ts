@@ -55,7 +55,8 @@ export type AuraKitId =
   | "fortyfour"
   | "thirteenth"
   | "ninepins"
-  | "threefaces";
+  | "threefaces"
+  | "twineyes";
 
 /**
  * The aura's own short animation every few seconds, like the burst of the game's animated
@@ -2570,6 +2571,27 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     particles: ["#ffffff", "#e2e8ff", "#aa5aff"],
     tones: ["#ffffff", "#c8d2ff", "#3a3a9a"],
     tip: "constellation",
+  }),
+  twineyes: kitAura("twineyes", {
+    description:
+      "Nic się od tej aury nie rozchodzi: nad mapą wiszą dwa wielkie oczy, czerwone z trzema wirującymi znakami i fioletowe z kręgami, a po dłoni postaci skaczą iskry. Co chwilę oczy otwierają się szeroko, z góry ekranu spada piorun, a postać łapie go w uniesioną dłoń, trzyma i wchłania.",
+    particles: ["#ffffff", "#96c8ff", "#a488e8"],
+    tones: ["#ffffff", "#96c8ff", "#3a2a8a"],
+    tip: "bolt-corners",
+    emitters: [
+      {
+        kind: "spark",
+        rate: 4,
+        from: "edge",
+        life: [0.15, 0.35],
+        speed: [30, 70],
+        spread: 6.28,
+        outward: 0.7,
+        size: [0.7, 1.1],
+        colors: 2,
+        front: 0.7,
+      },
+    ],
   }),
   // Calmer admin auras: no arrival.
   starlight: {

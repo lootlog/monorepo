@@ -8,7 +8,7 @@ import { sprite } from "../decor";
 import { ramp, rgba, type Rgb } from "../math";
 import { pixelGlint } from "../paint";
 import { context2d, createCanvas } from "../silhouette";
-import { groundWave, wash, wrap } from "../sky";
+import { wash, wrap } from "../sky";
 import { span, type AuraKit } from "./kit";
 
 /** Seconds a whole day takes. */
@@ -181,12 +181,5 @@ export const skyborne: AuraKit = {
     }
 
     wash(scene, [255, 244, 210], 0.35 * (1 - open) ** 4, "lighter");
-    groundWave(
-      scene,
-      open * Math.max(width, height) * 0.8,
-      WHITE,
-      [255, 220, 140],
-      fade,
-    );
   },
 };
