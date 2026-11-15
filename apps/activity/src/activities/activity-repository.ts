@@ -143,14 +143,18 @@ const decodeCursor = (cursor: string) => {
   return { createdAt: drizzleSql`${createdAt}::timestamptz`, id };
 };
 
-const IDEMPOTENCY_CLOCK_SKEW_MS = 3_600_000;
+// How far a Gateway clock may run ahead of the database before a redelivery
+// can be stored twice. A day costs nothing: chunks that recent are never
+// compressed, so the lookup stays on the B-tree index.
+const IDEMPOTENCY_CLOCK_SKEW_MS = 86_400_000;
 
 /**
  * The earliest "createdAt" an earlier delivery of this key can have. The
  * Gateway ends the key with its publication time in milliseconds and the row is
- * stamped when it is inserted, so it cannot be older than the key. The bound
- * keeps the lookup out of older chunks, which are compressed and have no index
- * on the key. A key without that suffix is looked up in every chunk.
+ * stamped when it is inserted, so it cannot be older than the key by more than
+ * the clock skew. The bound keeps the lookup out of older chunks, which are
+ * compressed and have no index on the key. A key without that suffix is looked
+ * up in every chunk.
  */
 const idempotencyLowerBound = (idempotencyKey: string, now: number) => {
   const publishedAt = /_(\d{13})$/.exec(idempotencyKey)?.[1];

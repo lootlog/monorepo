@@ -4,7 +4,7 @@ import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
-import { Effect, Layer, Redacted } from "effect";
+import { Clock, Effect, Layer, Redacted } from "effect";
 import pg from "pg";
 import { ActivityDatabase } from "#src/database/database";
 import { migrateActivityDatabase } from "#src/database/migrate";
@@ -385,12 +385,16 @@ describe("ActivityRepository", () => {
   });
 
   it.each([
-    ["stamped by a Gateway in step with the database", 0],
-    ["stamped by a Gateway two hours ahead of the database", 7_200_000],
-    ["delayed in the queue for three days", -259_200_000],
+    ["stamped by a Gateway in step with the database", 0, 0],
+    [
+      "stamped by a Gateway two hours ahead and redelivered ninety minutes later",
+      7_200_000,
+      5_400_000,
+    ],
+    ["delayed in the queue for three days", -259_200_000, 0],
   ])(
     "persists a redelivered Gateway activity exactly once when %s",
-    async (_, offset) => {
+    async (_, offset, redeliveryDelay) => {
       const key = `connect_event_session-${offset}_guild-gateway_${Date.now() + offset}`;
 
       const activity = {
@@ -403,16 +407,34 @@ describe("ActivityRepository", () => {
         idempotencyKey: key,
       } as const;
 
-      const create = () =>
+      const create = (clockOffset = 0) =>
         Effect.runPromise(
           Effect.gen(function* () {
-            return yield* (yield* ActivityRepository).create(activity);
+            const clock = yield* Clock.Clock;
+            const repository = yield* ActivityRepository;
+
+            return yield* repository.create(activity).pipe(
+              Effect.provideService(Clock.Clock, {
+                currentTimeMillisUnsafe: () =>
+                  clock.currentTimeMillisUnsafe() + clockOffset,
+                currentTimeMillis: Effect.map(
+                  clock.currentTimeMillis,
+                  (now) => now + clockOffset,
+                ),
+                currentTimeNanosUnsafe: () => clock.currentTimeNanosUnsafe(),
+                currentTimeNanos: clock.currentTimeNanos,
+                monotonicTimeNanosUnsafe: () =>
+                  clock.monotonicTimeNanosUnsafe(),
+                monotonicTimeNanos: clock.monotonicTimeNanos,
+                sleep: (duration) => clock.sleep(duration),
+              }),
+            );
           }).pipe(Effect.provide(repositoryLayer())),
         );
 
       const first = await create();
 
-      expect(await create()).toEqual(first);
+      expect(await create(redeliveryDelay)).toEqual(first);
       expect(
         await pool.query(
           `SELECT COUNT(*)::int AS count FROM "Activity" WHERE "idempotencyKey" = $1`,
