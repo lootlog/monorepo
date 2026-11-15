@@ -342,16 +342,17 @@ describe("ActivityRepository", () => {
     ).toMatchObject({ rows: [{ count: 1 }] });
   });
 
-  it("paginates by creation time across mixed identifier formats", async () => {
+  it("paginates by microsecond creation time across mixed identifier formats", async () => {
     // Recent rows: the retention job drops anything older than seven days as
-    // soon as it runs. The minute is fixed within the statement, so the two
-    // middle rows share a creation time.
+    // soon as it runs. The two middle rows share a creation time and the oldest
+    // one falls in the same millisecond, where a cursor rounded to milliseconds
+    // would skip all three.
     await pool.query(
       `INSERT INTO "Activity" ("id", "userId", "guildId", "discordId", "type", "createdAt", "source", "idempotencyKey") VALUES
         ('zzzzzzzzzzzzzzzzzzzzzzzzz', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '1 minute', 'WEB_APP', 'pagination-newest'),
-        ('yyyyyyyyyyyyyyyyyyyyyyyyy', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '2 minutes', 'WEB_APP', 'pagination-same-time'),
-        ('10000000-0000-4000-8000-000000000000', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '2 minutes', 'WEB_APP', 'pagination-middle'),
-        ('xxxxxxxxxxxxxxxxxxxxxxxxx', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '3 minutes', 'WEB_APP', 'pagination-oldest')`,
+        ('yyyyyyyyyyyyyyyyyyyyyyyyy', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '2 minutes' + interval '700 microseconds', 'WEB_APP', 'pagination-same-time'),
+        ('10000000-0000-4000-8000-000000000000', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '2 minutes' + interval '700 microseconds', 'WEB_APP', 'pagination-middle'),
+        ('xxxxxxxxxxxxxxxxxxxxxxxxx', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '2 minutes' + interval '300 microseconds', 'WEB_APP', 'pagination-oldest')`,
     );
 
     const [firstPage, secondPage] = await Effect.runPromise(

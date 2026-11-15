@@ -107,30 +107,42 @@ const mapActivityRow = ({
   actorSnapshot: actorSnapshot ?? undefined,
 });
 
-const encodeCursor = (activity: {
-  readonly createdAt: Date;
-  readonly id: string;
+// A JavaScript Date keeps milliseconds and "createdAt" keeps microseconds, so
+// the cursor carries the timestamp as PostgreSQL text. A cursor rounded to the
+// millisecond would skip the rows that share it with the last row of a page.
+const CURSOR_TIMESTAMP_FORMAT = 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"';
+
+const CURSOR_TIMESTAMP_PATTERN =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{1,6}Z$/;
+
+const cursorCreatedAt = drizzleSql<string>`to_char(${activities.createdAt} AT TIME ZONE 'UTC', ${CURSOR_TIMESTAMP_FORMAT})`;
+
+const encodeCursor = (row: {
+  readonly cursorCreatedAt: string;
+  readonly activity: { readonly id: string };
 }) =>
-  Buffer.from(
-    JSON.stringify([activity.createdAt.toISOString(), activity.id]),
-  ).toString("base64url");
+  Buffer.from(JSON.stringify([row.cursorCreatedAt, row.activity.id])).toString(
+    "base64url",
+  );
 
 const decodeCursor = (cursor: string) => {
   const value = Schema.decodeUnknownOption(
     Schema.fromJsonString(Schema.Tuple([Schema.String, Schema.String])),
   )(Buffer.from(cursor, "base64url").toString("utf8"));
 
-  if (Option.isNone(value) || !Number.isFinite(Date.parse(value.value[0]))) {
+  if (
+    Option.isNone(value) ||
+    !CURSOR_TIMESTAMP_PATTERN.test(value.value[0]) ||
+    !Number.isFinite(Date.parse(value.value[0]))
+  ) {
     throw new Error("Invalid activity cursor");
   }
 
   const [createdAt, id] = value.value;
 
-  return { createdAt: new Date(createdAt), id };
+  return { createdAt: drizzleSql`${createdAt}::timestamptz`, id };
 };
 
-// Covers clock skew between the Gateway that stamps the key and the database
-// that stamps the row.
 const IDEMPOTENCY_CLOCK_SKEW_MS = 3_600_000;
 
 /**
@@ -457,6 +469,7 @@ export class ActivityRepository extends Context.Service<
           .select({
             activity: activities,
             actorSnapshot: activityActorSnapshots,
+            cursorCreatedAt,
           })
           .from(activities)
           .leftJoin(
@@ -470,12 +483,11 @@ export class ActivityRepository extends Context.Service<
         const rows = yield* statement;
         const hasMore = rows.length > query.limit;
         const page = hasMore ? rows.slice(0, query.limit) : rows;
-        const lastActivity = page.at(-1)?.activity;
+        const lastRow = page.at(-1);
 
         return {
           data: page.map(mapActivityRow),
-          nextCursor:
-            hasMore && lastActivity ? encodeCursor(lastActivity) : undefined,
+          nextCursor: hasMore && lastRow ? encodeCursor(lastRow) : undefined,
           hasMore,
         };
       });
