@@ -129,6 +129,25 @@ const decodeCursor = (cursor: string) => {
   return { createdAt: new Date(createdAt), id };
 };
 
+// Covers clock skew between the Gateway that stamps the key and the database
+// that stamps the row.
+const IDEMPOTENCY_CLOCK_SKEW_MS = 3_600_000;
+
+/**
+ * The earliest "createdAt" an earlier delivery of this key can have. The
+ * Gateway ends the key with its publication time in milliseconds and the row is
+ * stamped when it is inserted, so it cannot be older than the key. The bound
+ * keeps the lookup out of older chunks, which are compressed and have no index
+ * on the key. A key without that suffix is looked up in every chunk.
+ */
+const idempotencyLowerBound = (idempotencyKey: string, now: number) => {
+  const publishedAt = /_(\d{13})$/.exec(idempotencyKey)?.[1];
+
+  return publishedAt === undefined
+    ? undefined
+    : new Date(Math.min(Number(publishedAt), now) - IDEMPOTENCY_CLOCK_SKEW_MS);
+};
+
 export class ActivityRepository extends Context.Service<
   ActivityRepository,
   ActivityRepositoryValue
@@ -212,6 +231,11 @@ export class ActivityRepository extends Context.Service<
       ) {
         const actorSnapshotId = yield* snapshotId(dto);
 
+        const createdSince = idempotencyLowerBound(
+          dto.idempotencyKey,
+          yield* Clock.currentTimeMillis,
+        );
+
         return yield* db.transaction((tx) =>
           Effect.gen(function* () {
             yield* tx.execute(
@@ -228,7 +252,14 @@ export class ActivityRepository extends Context.Service<
                 activityActorSnapshots,
                 eq(activities.actorSnapshotId, activityActorSnapshots.id),
               )
-              .where(eq(activities.idempotencyKey, dto.idempotencyKey))
+              .where(
+                and(
+                  eq(activities.idempotencyKey, dto.idempotencyKey),
+                  createdSince
+                    ? gte(activities.createdAt, createdSince)
+                    : undefined,
+                ),
+              )
               .limit(1);
 
             if (existing[0]) {
@@ -475,23 +506,18 @@ export class ActivityRepository extends Context.Service<
         id: string,
         guildId: string,
       ) {
-        const row = yield* db
-          .select({ id: activities.id, createdAt: activities.createdAt })
-          .from(activities)
-          .where(and(eq(activities.id, id), eq(activities.guildId, guildId)))
-          .limit(1);
-
-        if (!row[0]) return yield* new ActivityNotFound({ id });
-        yield* db
+        // One statement, so the stored microsecond "createdAt" never travels
+        // through a millisecond Date. The Organization is the segment key of
+        // compressed chunks: naming it decompresses one batch instead of
+        // probing every Organization's.
+        const deleted = yield* db
           .delete(activities)
-          .where(
-            and(
-              eq(activities.id, id),
-              eq(activities.createdAt, row[0].createdAt),
-            ),
-          );
+          .where(and(eq(activities.guildId, guildId), eq(activities.id, id)))
+          .returning({ id: activities.id });
 
-        return 1;
+        if (!deleted.length) return yield* new ActivityNotFound({ id });
+
+        return deleted.length;
       });
 
       const memberStats = (guildId: string) =>

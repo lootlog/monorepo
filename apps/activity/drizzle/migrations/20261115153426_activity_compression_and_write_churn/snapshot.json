@@ -1,0 +1,89 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "eda9a7c5-da23-46c2-9978-6a739404f318",
+  "prevIds": ["c49e7423-466a-4df8-a3a0-d6e9247f0ae1"],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MemberActivitySession",
+        "MemberActivitySession_guildId_discordId_source_idx"
+      ],
+      "writes": [
+        "s|idx|public.MemberActivitySession_guildId_discordId_source_idx",
+        "n|idx|public.MemberActivitySession_guildId_discordId_source_idx",
+        "e|idx|public.MemberActivitySession_guildId_discordId_source_idx",
+        "n|rel|public.MemberActivitySession_guildId_discordId_source_idx"
+      ],
+      "reads": [
+        "e|tbl|public.MemberActivitySession",
+        "n|sch|public",
+        "e|col|public.MemberActivitySession.guildId",
+        "e|col|public.MemberActivitySession.discordId",
+        "e|col|public.MemberActivitySession.source"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MemberActivitySession",
+        "MemberActivitySession_guildId_source_idx"
+      ],
+      "writes": [
+        "s|idx|public.MemberActivitySession_guildId_source_idx",
+        "n|idx|public.MemberActivitySession_guildId_source_idx",
+        "e|idx|public.MemberActivitySession_guildId_source_idx",
+        "n|rel|public.MemberActivitySession_guildId_source_idx"
+      ],
+      "reads": [
+        "e|tbl|public.MemberActivitySession",
+        "n|sch|public",
+        "e|col|public.MemberActivitySession.guildId",
+        "e|col|public.MemberActivitySession.source"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MemberActivitySession",
+        "MemberActivitySession_lastSeenAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.MemberActivitySession_lastSeenAt_idx",
+        "n|idx|public.MemberActivitySession_lastSeenAt_idx",
+        "e|idx|public.MemberActivitySession_lastSeenAt_idx",
+        "n|rel|public.MemberActivitySession_lastSeenAt_idx"
+      ],
+      "reads": [
+        "e|tbl|public.MemberActivitySession",
+        "n|sch|public",
+        "e|col|public.MemberActivitySession.lastSeenAt"
+      ],
+      "sharedWrites": []
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"MemberActivitySession_guildId_discordId_source_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"MemberActivitySession_guildId_source_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"MemberActivitySession_lastSeenAt_idx\"]"
+    }
+  ]
+}

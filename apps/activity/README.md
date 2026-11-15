@@ -64,6 +64,24 @@ The migration drops the foreign key and replaces the built-in policy with the ho
 
 A failing job is visible in `timescaledb_information.job_stats` and `job_history`; repeated failures mean a long transaction is reading expired activity. Rolling the application back needs no schema change. To restore the previous database behavior, delete the job, run `add_retention_policy('"Activity"', INTERVAL '7 days')`, and add the foreign key `NOT VALID` so existing chunks are not scanned.
 
+### Activity compression and write churn
+
+`20261115153426_activity_compression_and_write_churn` shrinks the Organization activity log and the WAL its bookkeeping tables produce. It changes no contract and no retention window.
+
+- `Activity` chunks are compressed once they are a day past their end, segmented by `guildId` and ordered by `createdAt DESC, id DESC`, which is how every Organization read filters and pages. The current and the previous day stay uncompressed, so inserts and the duplicate lookup of a fresh event keep using B-tree indexes. The hourly `activity_retention` job drops compressed chunks like any other.
+- `MemberActivitySession` keeps only its primary key. The three dropped indexes were a prefix of that key, a subset no query filters by, and `lastSeenAt`, which nothing reads; each one added a page to the WAL of every connection and disconnection.
+- `MemberActivityStats` (fill factor 70) and `UserOnlineTracking` (fill factor 50) are rewritten with `CLUSTER`. Both take an in-place update per event and had grown to many times their live size; the free space keeps those updates heap-only.
+
+Deploy Activity before applying the migration. The release bounds the duplicate lookup by the publication time at the end of the Gateway's idempotency key, so a fresh event reads only the newest chunks. The previous release looks the key up in every chunk; on compressed chunks that is a scan of the key column for each event. The same release deletes an activity by Organization and identifier in one statement, which also works on a compressed chunk.
+
+The migration takes ACCESS EXCLUSIVE on `Activity`, `MemberActivitySession`, `MemberActivityStats` and `UserOnlineTracking` with a two-second lock timeout and holds them until it commits, which is as long as the two rewrites take. Activity and checkpoint consumers wait and continue; a busy table fails the migration without changing anything, and it can be retried. Run it off-peak.
+
+The compression job starts as soon as the migration commits and converts every chunk older than a day, one at a time. Watch `timescaledb_information.job_stats` and `chunk_compression_stats('"Activity"')`. A chunk whose compression could not take its final lock keeps a dead heap until it is dropped by retention within the week.
+
+On a synthetic copy (1.8 million rows, 2000 Organizations) compressed chunks took 3.8 times less space, the first page of an Organization's log, a deep cursor, filters and suggestions all read fewer buffers than before, and a session connection and disconnection wrote 32% less WAL.
+
+Application rollback needs no schema change, but restores the unbounded duplicate lookup; remove the policy and decompress first if the previous release has to run for long: `SELECT remove_compression_policy('"Activity"')`, then `SELECT decompress_chunk(c, true) FROM show_chunks('"Activity"') c`. Recreate a dropped session index with `CREATE INDEX CONCURRENTLY` outside a transaction if a later query needs it.
+
 ## Migration and rollout
 
 1. Deploy migrations `drizzle/migrations/20260906084000_user_online_history/migration.sql` and `drizzle/migrations/20260906084001_online_history_16_week_retention/migration.sql` using `bun run --cwd apps/activity db:migrate:deploy` in the approved deployment environment. The migration command uses the Drizzle journal and executes only pending SQL files. The second migration physically deletes expired online history and trims crossing intervals; this retention reduction is irreversible. Existing seven-day Timescale activity retention remains unchanged.
