@@ -90,6 +90,8 @@ export class ActivityPublisher {
                   prof: player.prof,
                 }
               : undefined,
+            // Activity reads the trailing timestamp to bound its duplicate
+            // lookup; keep it last and in milliseconds.
             idempotencyKey: `${type.toLowerCase()}_${session.connectionId}_${guildId}_${timestamp}`,
           };
 

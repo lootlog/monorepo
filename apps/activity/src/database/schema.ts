@@ -147,16 +147,8 @@ export const memberActivitySessions = pgTable(
       name: "MemberActivitySession_pkey",
       columns: [table.guildId, table.discordId, table.source, table.sessionId],
     }),
-    index("MemberActivitySession_guildId_discordId_source_idx").on(
-      table.guildId,
-      table.discordId,
-      table.source,
-    ),
-    index("MemberActivitySession_guildId_source_idx").on(
-      table.guildId,
-      table.source,
-    ),
-    index("MemberActivitySession_lastSeenAt_idx").on(table.lastSeenAt),
+    // Every session read and delete names the member, which the primary key
+    // leads with; a second index only adds a random page to each connection.
   ],
 );
 

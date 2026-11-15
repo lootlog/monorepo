@@ -107,26 +107,61 @@ const mapActivityRow = ({
   actorSnapshot: actorSnapshot ?? undefined,
 });
 
-const encodeCursor = (activity: {
-  readonly createdAt: Date;
-  readonly id: string;
+// A JavaScript Date keeps milliseconds and "createdAt" keeps microseconds, so
+// the cursor carries the timestamp as PostgreSQL text. A cursor rounded to the
+// millisecond would skip the rows that share it with the last row of a page.
+const CURSOR_TIMESTAMP_FORMAT = 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"';
+
+const CURSOR_TIMESTAMP_PATTERN =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{1,6}Z$/;
+
+const cursorCreatedAt = drizzleSql<string>`to_char(${activities.createdAt} AT TIME ZONE 'UTC', ${CURSOR_TIMESTAMP_FORMAT})`;
+
+const encodeCursor = (row: {
+  readonly cursorCreatedAt: string;
+  readonly activity: { readonly id: string };
 }) =>
-  Buffer.from(
-    JSON.stringify([activity.createdAt.toISOString(), activity.id]),
-  ).toString("base64url");
+  Buffer.from(JSON.stringify([row.cursorCreatedAt, row.activity.id])).toString(
+    "base64url",
+  );
 
 const decodeCursor = (cursor: string) => {
   const value = Schema.decodeUnknownOption(
     Schema.fromJsonString(Schema.Tuple([Schema.String, Schema.String])),
   )(Buffer.from(cursor, "base64url").toString("utf8"));
 
-  if (Option.isNone(value) || !Number.isFinite(Date.parse(value.value[0]))) {
+  if (
+    Option.isNone(value) ||
+    !CURSOR_TIMESTAMP_PATTERN.test(value.value[0]) ||
+    !Number.isFinite(Date.parse(value.value[0]))
+  ) {
     throw new Error("Invalid activity cursor");
   }
 
   const [createdAt, id] = value.value;
 
-  return { createdAt: new Date(createdAt), id };
+  return { createdAt: drizzleSql`${createdAt}::timestamptz`, id };
+};
+
+// How far a Gateway clock may run ahead of the database before a redelivery
+// can be stored twice. A day costs nothing: chunks that recent are never
+// compressed, so the lookup stays on the B-tree index.
+const IDEMPOTENCY_CLOCK_SKEW_MS = 86_400_000;
+
+/**
+ * The earliest "createdAt" an earlier delivery of this key can have. The
+ * Gateway ends the key with its publication time in milliseconds and the row is
+ * stamped when it is inserted, so it cannot be older than the key by more than
+ * the clock skew. The bound keeps the lookup out of older chunks, which are
+ * compressed and have no index on the key. A key without that suffix is looked
+ * up in every chunk.
+ */
+const idempotencyLowerBound = (idempotencyKey: string, now: number) => {
+  const publishedAt = /_(\d{13})$/.exec(idempotencyKey)?.[1];
+
+  return publishedAt === undefined
+    ? undefined
+    : new Date(Math.min(Number(publishedAt), now) - IDEMPOTENCY_CLOCK_SKEW_MS);
 };
 
 export class ActivityRepository extends Context.Service<
@@ -212,6 +247,11 @@ export class ActivityRepository extends Context.Service<
       ) {
         const actorSnapshotId = yield* snapshotId(dto);
 
+        const createdSince = idempotencyLowerBound(
+          dto.idempotencyKey,
+          yield* Clock.currentTimeMillis,
+        );
+
         return yield* db.transaction((tx) =>
           Effect.gen(function* () {
             yield* tx.execute(
@@ -228,7 +268,14 @@ export class ActivityRepository extends Context.Service<
                 activityActorSnapshots,
                 eq(activities.actorSnapshotId, activityActorSnapshots.id),
               )
-              .where(eq(activities.idempotencyKey, dto.idempotencyKey))
+              .where(
+                and(
+                  eq(activities.idempotencyKey, dto.idempotencyKey),
+                  createdSince
+                    ? gte(activities.createdAt, createdSince)
+                    : undefined,
+                ),
+              )
               .limit(1);
 
             if (existing[0]) {
@@ -426,6 +473,7 @@ export class ActivityRepository extends Context.Service<
           .select({
             activity: activities,
             actorSnapshot: activityActorSnapshots,
+            cursorCreatedAt,
           })
           .from(activities)
           .leftJoin(
@@ -439,12 +487,11 @@ export class ActivityRepository extends Context.Service<
         const rows = yield* statement;
         const hasMore = rows.length > query.limit;
         const page = hasMore ? rows.slice(0, query.limit) : rows;
-        const lastActivity = page.at(-1)?.activity;
+        const lastRow = page.at(-1);
 
         return {
           data: page.map(mapActivityRow),
-          nextCursor:
-            hasMore && lastActivity ? encodeCursor(lastActivity) : undefined,
+          nextCursor: hasMore && lastRow ? encodeCursor(lastRow) : undefined,
           hasMore,
         };
       });
@@ -475,23 +522,18 @@ export class ActivityRepository extends Context.Service<
         id: string,
         guildId: string,
       ) {
-        const row = yield* db
-          .select({ id: activities.id, createdAt: activities.createdAt })
-          .from(activities)
-          .where(and(eq(activities.id, id), eq(activities.guildId, guildId)))
-          .limit(1);
-
-        if (!row[0]) return yield* new ActivityNotFound({ id });
-        yield* db
+        // One statement, so the stored microsecond "createdAt" never travels
+        // through a millisecond Date. The Organization is the segment key of
+        // compressed chunks: naming it decompresses one batch instead of
+        // probing every Organization's.
+        const deleted = yield* db
           .delete(activities)
-          .where(
-            and(
-              eq(activities.id, id),
-              eq(activities.createdAt, row[0].createdAt),
-            ),
-          );
+          .where(and(eq(activities.guildId, guildId), eq(activities.id, id)))
+          .returning({ id: activities.id });
 
-        return 1;
+        if (!deleted.length) return yield* new ActivityNotFound({ id });
+
+        return deleted.length;
       });
 
       const memberStats = (guildId: string) =>

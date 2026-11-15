@@ -4,7 +4,7 @@ import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
-import { Effect, Layer, Redacted } from "effect";
+import { Clock, Effect, Layer, Redacted } from "effect";
 import pg from "pg";
 import { ActivityDatabase } from "#src/database/database";
 import { migrateActivityDatabase } from "#src/database/migrate";
@@ -342,13 +342,17 @@ describe("ActivityRepository", () => {
     ).toMatchObject({ rows: [{ count: 1 }] });
   });
 
-  it("paginates by creation time across mixed identifier formats", async () => {
+  it("paginates by microsecond creation time across mixed identifier formats", async () => {
+    // Recent rows: the retention job drops anything older than seven days as
+    // soon as it runs. The two middle rows share a creation time and the oldest
+    // one falls in the same millisecond, where a cursor rounded to milliseconds
+    // would skip all three.
     await pool.query(
       `INSERT INTO "Activity" ("id", "userId", "guildId", "discordId", "type", "createdAt", "source", "idempotencyKey") VALUES
-        ('zzzzzzzzzzzzzzzzzzzzzzzzz', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', '2026-09-04T12:03:00Z', 'WEB_APP', 'pagination-newest'),
-        ('yyyyyyyyyyyyyyyyyyyyyyyyy', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', '2026-09-04T12:02:00Z', 'WEB_APP', 'pagination-same-time'),
-        ('10000000-0000-4000-8000-000000000000', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', '2026-09-04T12:02:00Z', 'WEB_APP', 'pagination-middle'),
-        ('xxxxxxxxxxxxxxxxxxxxxxxxx', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', '2026-09-04T12:01:00Z', 'WEB_APP', 'pagination-oldest')`,
+        ('zzzzzzzzzzzzzzzzzzzzzzzzz', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '1 minute', 'WEB_APP', 'pagination-newest'),
+        ('yyyyyyyyyyyyyyyyyyyyyyyyy', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '2 minutes' + interval '700 microseconds', 'WEB_APP', 'pagination-same-time'),
+        ('10000000-0000-4000-8000-000000000000', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '2 minutes' + interval '700 microseconds', 'WEB_APP', 'pagination-middle'),
+        ('xxxxxxxxxxxxxxxxxxxxxxxxx', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '2 minutes' + interval '300 microseconds', 'WEB_APP', 'pagination-oldest')`,
     );
 
     const [firstPage, secondPage] = await Effect.runPromise(
@@ -380,7 +384,131 @@ describe("ActivityRepository", () => {
     ]);
   });
 
-  // Runs last: retention also drops the fixed-date rows of earlier tests.
+  it.each([
+    ["stamped by a Gateway in step with the database", 0, 0],
+    [
+      "stamped by a Gateway two hours ahead and redelivered ninety minutes later",
+      7_200_000,
+      5_400_000,
+    ],
+    ["delayed in the queue for three days", -259_200_000, 0],
+  ])(
+    "persists a redelivered Gateway activity exactly once when %s",
+    async (_, offset, redeliveryDelay) => {
+      const key = `connect_event_session-${offset}_guild-gateway_${Date.now() + offset}`;
+
+      const activity = {
+        userId: "user-gateway",
+        guildId: "guild-gateway",
+        discordId: "discord-gateway",
+        type: ActivityType.CONNECT_EVENT,
+        source: ActivitySource.WEB_APP,
+        details: { sessionId: `session-${offset}` },
+        idempotencyKey: key,
+      } as const;
+
+      const create = (clockOffset = 0) =>
+        Effect.runPromise(
+          Effect.gen(function* () {
+            const clock = yield* Clock.Clock;
+            const repository = yield* ActivityRepository;
+
+            return yield* repository.create(activity).pipe(
+              Effect.provideService(Clock.Clock, {
+                currentTimeMillisUnsafe: () =>
+                  clock.currentTimeMillisUnsafe() + clockOffset,
+                currentTimeMillis: Effect.map(
+                  clock.currentTimeMillis,
+                  (now) => now + clockOffset,
+                ),
+                currentTimeNanosUnsafe: () => clock.currentTimeNanosUnsafe(),
+                currentTimeNanos: clock.currentTimeNanos,
+                monotonicTimeNanosUnsafe: () =>
+                  clock.monotonicTimeNanosUnsafe(),
+                monotonicTimeNanos: clock.monotonicTimeNanos,
+                sleep: (duration) => clock.sleep(duration),
+              }),
+            );
+          }).pipe(Effect.provide(repositoryLayer())),
+        );
+
+      const first = await create();
+
+      expect(await create(redeliveryDelay)).toEqual(first);
+      expect(
+        await pool.query(
+          `SELECT COUNT(*)::int AS count FROM "Activity" WHERE "idempotencyKey" = $1`,
+          [key],
+        ),
+      ).toMatchObject({ rows: [{ count: 1 }] });
+    },
+  );
+
+  it("reads, pages and deletes compressed activity", async () => {
+    const guildId = "guild-compressed";
+
+    const insert = (id: string, age: string, organization = guildId) =>
+      pool.query(
+        `INSERT INTO "Activity" ("id", "userId", "guildId", "discordId", "type", "createdAt", "source", "idempotencyKey")
+         VALUES ($1, 'user-compressed', $2, 'discord-compressed', 'CONNECT_EVENT', now() - $3::interval, 'WEB_APP', $1)`,
+        [id, organization, age],
+      );
+
+    await insert("compressed-newer", "73 hours");
+    await insert("compressed-older", "74 hours");
+    await insert(
+      "compressed-other-guild",
+      "73 hours",
+      "guild-compressed-other",
+    );
+    await insert("uncompressed-today", "1 minute");
+
+    // What the policy does to chunks past its window, without racing its
+    // background run over the same chunk.
+    await pool.query(
+      `SELECT compress_chunk(chunk, if_not_compressed => true)
+       FROM show_chunks('"Activity"', older_than => INTERVAL '1 day') AS chunk`,
+    );
+
+    const activitiesWithIds = (...ids: string[]) =>
+      ids.map((id) => expect.objectContaining({ id }));
+
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const repository = yield* ActivityRepository;
+        const first = yield* repository.findMany({ guildId, limit: 2 });
+
+        const second = yield* repository.findMany({
+          guildId,
+          cursor: first.nextCursor,
+          limit: 2,
+        });
+
+        expect(first.data).toEqual(
+          activitiesWithIds("uncompressed-today", "compressed-newer"),
+        );
+        expect(second.data).toEqual(activitiesWithIds("compressed-older"));
+        expect(
+          yield* repository.findOne("compressed-older", guildId),
+        ).toMatchObject({ id: "compressed-older" });
+
+        yield* repository.deleteOne("compressed-older", guildId);
+        yield* repository.deleteOne("uncompressed-today", guildId);
+
+        expect(
+          (yield* repository.findMany({ guildId, limit: 5 })).data,
+        ).toEqual(activitiesWithIds("compressed-newer"));
+        // Another Organization's row shared the chunk and must survive the delete.
+        expect(
+          (yield* repository.findMany({
+            guildId: "guild-compressed-other",
+            limit: 5,
+          })).data,
+        ).toEqual(activitiesWithIds("compressed-other-guild"));
+      }).pipe(Effect.provide(repositoryLayer())),
+    );
+  }, 15_000);
+
   it("drops seven-day-old activity without queuing writers behind readers", async () => {
     const insert = (key: string, age: string) =>
       pool.query(
