@@ -57,7 +57,7 @@ const failure = (cause: string) => Effect.fail(new Error(cause));
 const notReadAtStartup = () => Effect.die(new Error("not read at startup"));
 
 type StartupReads = {
-  readonly accessibleGuilds?: Effect.Effect<unknown, Error>;
+  readonly accessibleGuilds?: Effect.Effect<(typeof accessibleGuild)[], Error>;
   readonly lootlogConfig?: Effect.Effect<unknown, Error>;
   readonly guildPreferenceQueries?: unknown[];
 };
@@ -94,10 +94,6 @@ const run = ({
                 accessibleGuilds,
                 (cause) => new AccountOrganizationOperationError({ cause }),
               ),
-            getUserGameAccountPreferences: notReadAtStartup,
-            updateUserGameAccountPreferences: notReadAtStartup,
-            getUserGuilds: notReadAtStartup,
-            getUserGuildsWithPermissions: notReadAtStartup,
             getManageableUserGuilds: notReadAtStartup,
             getGuildDiscordSyncStatus: notReadAtStartup,
             refreshGuildDiscordSync: notReadAtStartup,
@@ -110,11 +106,6 @@ const run = ({
         Layer.succeed(
           SettingsData,
           SettingsData.of({
-            getGlobalTimerSettings: notReadAtStartup,
-            updateGlobalTimerSettings: notReadAtStartup,
-            getGuildTimerSettings: notReadAtStartup,
-            updateGuildTimerSettings: notReadAtStartup,
-            migrateTimerSettings: notReadAtStartup,
             getPreferences: () => Effect.succeed({ domains: {} }),
             getGuildPreferences: (_userId, query) => {
               guildPreferenceQueries.push(query);
@@ -122,8 +113,6 @@ const run = ({
               return Effect.succeed({ guilds: {} });
             },
             patchPreferences: notReadAtStartup,
-            getSoundSettings: notReadAtStartup,
-            updateSoundSettings: notReadAtStartup,
           }),
         ),
         Layer.succeed(

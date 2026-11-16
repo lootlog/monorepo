@@ -4,7 +4,7 @@ import { getQueryKeyPath } from "./query-key-path";
 import {
   getListEventMapsQueryKey,
   getListEventsQueryKey,
-  getShowEventOverviewQueryKey,
+  getShowEventQueryKey,
   getShowEventWrappedQueryKey,
 } from "@lootlog/client/main";
 
@@ -49,7 +49,7 @@ export function invalidateEventDetailQueries(
   eventId: string,
 ) {
   queryClient.invalidateQueries({
-    queryKey: getShowEventOverviewQueryKey({ guildId, eventId }),
+    queryKey: getShowEventQueryKey({ guildId, eventId }),
   });
   queryClient.invalidateQueries({
     queryKey: getListEventMapsQueryKey({ guildId, eventId }),

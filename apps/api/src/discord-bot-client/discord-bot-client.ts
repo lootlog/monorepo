@@ -69,15 +69,9 @@ class DiscordBotClientFailure extends TaggedErrorClass<DiscordBotClientFailure>(
 type DiscordBotFailure = OutboundHttpFailure | DiscordBotClientFailure;
 
 export interface DiscordBotClient {
-  readonly getGuildChannels: (
-    guildId: string,
-  ) => Effect.Effect<GuildChannels, DiscordBotFailure>;
   readonly refreshGuildChannels: (
     guildId: string,
   ) => Effect.Effect<GuildChannels, DiscordBotFailure>;
-  readonly getGuildSyncStatus: (
-    guildId: string,
-  ) => Effect.Effect<DiscordGuildSyncState, DiscordBotFailure>;
 }
 
 export const makeDiscordBotClient = (
@@ -87,16 +81,15 @@ export const makeDiscordBotClient = (
   const request = <A>(
     decodeJson: (value: string) => A,
     url: string,
-    method: "GET" | "POST",
     timeout: number,
   ) =>
     outboundHttpRequest(httpClient, {
       adapter: "discord-bot",
-      body: method === "POST" ? "{}" : undefined,
-      headers: method === "POST" ? { "content-type": "application/json" } : {},
-      method,
+      body: "{}",
+      headers: { "content-type": "application/json" },
+      method: "POST",
       responseLimitBytes: 1024 * 1024,
-      retryTimes: method === "GET" ? 2 : 0,
+      retryTimes: 0,
       timeout: `${timeout} millis`,
       url,
     }).pipe(
@@ -123,32 +116,13 @@ export const makeDiscordBotClient = (
   const serviceUrl = discordBotServiceUrl.toString().replace(/\/$/, "");
 
   return {
-    getGuildChannels: (guildId) =>
-      request(
-        Schema.decodeUnknownSync(
-          Schema.fromJsonString(DiscordGuildChannelsResponse),
-        ),
-        `${serviceUrl}/internal/guilds/${guildId}/channels`,
-        "GET",
-        5000,
-      ),
     refreshGuildChannels: (guildId) =>
       request(
         Schema.decodeUnknownSync(
           Schema.fromJsonString(DiscordGuildChannelsResponse),
         ),
         `${serviceUrl}/internal/guilds/${guildId}/channels/refresh`,
-        "POST",
         10_000,
-      ),
-    getGuildSyncStatus: (guildId) =>
-      request(
-        Schema.decodeUnknownSync(
-          Schema.fromJsonString(DiscordGuildSyncStateSchema),
-        ),
-        `${serviceUrl}/internal/guilds/${guildId}/sync-status`,
-        "GET",
-        5000,
       ),
   };
 };

@@ -13,10 +13,7 @@ import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   AccountDeletionAccepted,
   CurrentOrganizationsResponse,
-  UserGameAccountPreferencesResponse,
-  GameAccountPreferencesPath,
   UserPreferencesResponse,
-  UpdateUserGameAccountPreferencesRequest,
   UpdateUserPreferencesRequest,
 } from "#src/contracts/users/schemas";
 import {
@@ -118,42 +115,5 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     .annotate(
       OpenApi.Description,
       "Return in one request what the game client reads at startup: accessible guilds, user preferences, the Lootlog configuration of the game account, its settings documents and the timer documents of every accessible guild. Each part applies the access policy of its own endpoint; a part that could not be read is null and must be read from that endpoint.",
-    ),
-  HttpApiEndpoint.get(
-    "UsersControllerGetUserGameAccountPreferences",
-    "/users/@me/game-preferences/accounts/:accountId",
-    {
-      params: GameAccountPreferencesPath,
-      success: UserGameAccountPreferencesResponse,
-    },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(
-      OpenApi.Identifier,
-      "UsersController_getUserGameAccountPreferences",
-    )
-    .annotate(OpenApi.Summary, "Get user game account preferences")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).",
-    ),
-  HttpApiEndpoint.patch(
-    "UsersControllerUpdateUserGameAccountPreferences",
-    "/users/@me/game-preferences/accounts/:accountId",
-    {
-      params: GameAccountPreferencesPath,
-      payload: UpdateUserGameAccountPreferencesRequest,
-      success: UserGameAccountPreferencesResponse,
-    },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(
-      OpenApi.Identifier,
-      "UsersController_updateUserGameAccountPreferences",
-    )
-    .annotate(OpenApi.Summary, "Update user game account preferences")
-    .annotate(
-      OpenApi.Description,
-      "Update account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).",
     ),
 ) {}

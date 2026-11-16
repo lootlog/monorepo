@@ -2,12 +2,10 @@ import { Effect } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
-  currentGuildPermissionsList,
   guildDiscordSync,
   guildPermissions,
   guildRead,
   guildWorlds,
-  legacyCurrentGuildList,
   manageableCurrentGuildList,
   toAccountOrganizationHttpResponse,
   updateGuildConfiguration,
@@ -18,12 +16,6 @@ export const GuildsHandlers = HttpApiBuilder.group(
   "guilds",
   (handlers) =>
     handlers
-      .handle("GuildsControllerGetUserGuilds", ({ query }) =>
-        toAccountOrganizationHttpResponse(legacyCurrentGuildList(query.source)),
-      )
-      .handle("GuildsControllerGetUserGuildsWithPermissions", () =>
-        toAccountOrganizationHttpResponse(currentGuildPermissionsList()),
-      )
       .handle("GuildsControllerGetManageableUserGuilds", () =>
         toAccountOrganizationHttpResponse(manageableCurrentGuildList()),
       )
@@ -32,15 +24,6 @@ export const GuildsHandlers = HttpApiBuilder.group(
           guildRead(params.guildId).pipe(
             Effect.withSpan("GuildsControllerGetGuildById", {
               attributes: { operationId: "GuildsControllerGetGuildById" },
-            }),
-          ),
-        ),
-      )
-      .handle("GuildsControllerGetGuildConfig", ({ params }) =>
-        toAccountOrganizationHttpResponse(
-          guildRead(params.guildId).pipe(
-            Effect.withSpan("GuildsControllerGetGuildConfig", {
-              attributes: { operationId: "GuildsControllerGetGuildConfig" },
             }),
           ),
         ),

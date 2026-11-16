@@ -12,7 +12,6 @@ import type { AccessPolicySnapshot } from "@lootlog/protocol/realtime/access-pol
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { configureApiClients } from "@lootlog/client/transport";
 import { authClient } from "@/lib/auth-client";
-import { createSoundSettings } from "@/test/sound-settings-fixtures";
 import { SocketProvider } from "@/contexts/socket-context";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket, getSocket } from "@/lib/socket";
@@ -54,7 +53,6 @@ export const createRealtimeTest = () => {
 
   const requests: string[] = [];
   let sessionDiscordId: string | null = null;
-  const soundSettings = createSoundSettings();
 
   const externalFetch = stubMargonemAccountFetch();
 
@@ -85,8 +83,6 @@ export const createRealtimeTest = () => {
             }
           : null,
       );
-
-    if (url.pathname === "/sound-settings") return Response.json(soundSettings);
 
     if (url.pathname === "/preferences")
       return Response.json(

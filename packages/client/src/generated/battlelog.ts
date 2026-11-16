@@ -888,10 +888,6 @@ export interface BattleDeletedResponseDtoOutput {
   message: string;
 }
 
-export interface BattleUserWorldsResponseDtoOutput {
-  worlds: string[];
-}
-
 export type BattleWarriorsSearchResponseDtoOutputWarriorsItem = {
   name: string;
   icon: string;
@@ -2660,18 +2656,6 @@ export type BattlesControllerSearchWarriors403 = {
 };
 
 export type BattlesControllerSearchWarriors429 = {
-  message: string;
-};
-
-export type BattlesControllerGetUserWorlds401 = {
-  message: string;
-};
-
-export type BattlesControllerGetUserWorlds403 = {
-  message: string;
-};
-
-export type BattlesControllerGetUserWorlds429 = {
   message: string;
 };
 
@@ -5259,149 +5243,6 @@ export const useGetBattlesControllerSearchWarriorsQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerSearchWarriorsParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof battlesControllerSearchWarriors>>>(getBattlesControllerSearchWarriorsQueryKey(params));
-}
-
-
-
-export const getBattlesControllerGetUserWorldsUrl = () => {
-
-
-
-
-  return `/battles/@me/worlds`
-}
-
-/**
- * @summary Get worlds used by authenticated user battles
- */
-export const battlesControllerGetUserWorlds = async ( options?: Parameters<typeof battlelogFetch>[1]): Promise<BattleUserWorldsResponseDtoOutput> => {
-
-  return battlelogFetch<BattleUserWorldsResponseDtoOutput>(getBattlesControllerGetUserWorldsUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getBattlesControllerGetUserWorldsQueryKey = () => {
-    return [
-    `/battles/@me/worlds`
-    ] as const;
-    }
-
-
-export const getBattlesControllerGetUserWorldsQueryOptions = <TData = Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError = ErrorType<BattlesControllerGetUserWorlds401 | BattlesControllerGetUserWorlds403 | BattlesControllerGetUserWorlds429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getBattlesControllerGetUserWorldsQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>> = ({ signal }) => battlesControllerGetUserWorlds({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type BattlesControllerGetUserWorldsQueryResult = NonNullable<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>>
-export type BattlesControllerGetUserWorldsQueryError = ErrorType<BattlesControllerGetUserWorlds401 | BattlesControllerGetUserWorlds403 | BattlesControllerGetUserWorlds429>
-
-
-export function useBattlesControllerGetUserWorlds<TData = Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError = ErrorType<BattlesControllerGetUserWorlds401 | BattlesControllerGetUserWorlds403 | BattlesControllerGetUserWorlds429>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>,
-          TError,
-          Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof battlelogFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useBattlesControllerGetUserWorlds<TData = Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError = ErrorType<BattlesControllerGetUserWorlds401 | BattlesControllerGetUserWorlds403 | BattlesControllerGetUserWorlds429>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>,
-          TError,
-          Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof battlelogFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useBattlesControllerGetUserWorlds<TData = Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError = ErrorType<BattlesControllerGetUserWorlds401 | BattlesControllerGetUserWorlds403 | BattlesControllerGetUserWorlds429>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Get worlds used by authenticated user battles
- */
-
-export function useBattlesControllerGetUserWorlds<TData = Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError = ErrorType<BattlesControllerGetUserWorlds401 | BattlesControllerGetUserWorlds403 | BattlesControllerGetUserWorlds429>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getBattlesControllerGetUserWorldsQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-/**
- * @summary Get worlds used by authenticated user battles
- */
-export const prefetchBattlesControllerGetUserWorldsQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError = ErrorType<BattlesControllerGetUserWorlds401 | BattlesControllerGetUserWorlds403 | BattlesControllerGetUserWorlds429>>(
- queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
-
-  ): Promise<QueryClient> => {
-
-  const queryOptions = getBattlesControllerGetUserWorldsQueryOptions(options)
-
-  await queryClient.query(queryOptions).catch(() => {});
-
-  return queryClient;
-}
-
-/**
- * @summary Invalidates the {@link useBattlesControllerGetUserWorlds} query
- */
-export const invalidateBattlesControllerGetUserWorlds = async (
- queryClient: QueryClient,  options?: InvalidateOptions
-  ): Promise<QueryClient> => {
-
-  await queryClient.invalidateQueries({ queryKey: getBattlesControllerGetUserWorldsQueryKey() }, options);
-
-  return queryClient;
-}
-
-/**
- * @summary Get worlds used by authenticated user battles
- */
-export const useSetBattlesControllerGetUserWorldsQueryData = () => {
-  const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined), $exactMatch: boolean = true) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetUserWorldsQueryKey() }, updater);
-  };
-}
-
-/**
- * @summary Get worlds used by authenticated user battles
- */
-export const useGetBattlesControllerGetUserWorldsQueryData = () => {
-  const queryClient = useQueryClient();
-  return () =>
-    queryClient.getQueryData<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>>(getBattlesControllerGetUserWorldsQueryKey());
 }
 
 

@@ -53,14 +53,6 @@ export const ACTIVITY_OPERATIONS = [
   {
     service: "activity",
     method: "GET",
-    path: "/guilds/{guildId}/users/{userId}/activity-logs",
-    operationId: "ActivitiesController_findByUser",
-    access: "read",
-    data: "organization",
-  },
-  {
-    service: "activity",
-    method: "GET",
     path: "/guilds/{guildId}/member-activity-stats",
     operationId: "ActivitiesController_getMemberActivityStats",
     access: "read",

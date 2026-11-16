@@ -22,7 +22,7 @@ import type { EventHeroSummary } from "#src/events/kills/event-hero-summary";
 
 export const makeEventsRanking = (
   rankingRead: Pick<EventRankingRead, "getEditHistories" | "getRanking">,
-  catalogRead: Pick<EventsCatalogRead, "getEventOverview">,
+  catalogRead: Pick<EventsCatalogRead, "getEvent">,
   eventAccess: EventAccess,
   participation: Pick<
     EventParticipation,
@@ -66,7 +66,7 @@ export const makeEventsRanking = (
     return Effect.gen(function* () {
       const { filteredOverview, rankings } = yield* Effect.all(
         {
-          filteredOverview: catalogRead.getEventOverview(
+          filteredOverview: catalogRead.getEvent(
             guildData,
             eventId,
             roles,

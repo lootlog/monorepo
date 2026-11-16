@@ -15,6 +15,7 @@ const ActivitySource = Schema.Literals(["GAME", "WEB_APP"]);
 const ActivityListQuery = Schema.Struct({
   type: Schema.optionalKey(Schema.Array(ActivityType)),
   source: Schema.optionalKey(Schema.Array(ActivitySource)),
+  userId: Schema.optionalKey(Schema.String),
   playerName: Schema.optionalKey(Schema.String),
   clanName: Schema.optionalKey(Schema.String),
   world: Schema.optionalKey(Schema.String),
@@ -221,24 +222,6 @@ export type ActivitiesControllerSuggestClanNames200 =
 
 export const ActivitiesControllerSuggestClanNames200 =
   ClanNameSuggestionsResponseDto_Output;
-
-export type ActivitiesControllerFindByUserPathParams =
-  typeof ActivitiesControllerFindByUserPathParams.Type;
-
-export const ActivitiesControllerFindByUserPathParams = Schema.Struct({
-  guildId: Schema.String,
-  userId: Schema.String,
-});
-
-export type ActivitiesControllerFindByUserQuery =
-  typeof ActivitiesControllerFindByUserQuery.Type;
-
-export const ActivitiesControllerFindByUserQuery = ActivityListQuery;
-
-export type ActivitiesControllerFindByUser200 =
-  typeof ActivitiesControllerFindByUser200.Type;
-
-export const ActivitiesControllerFindByUser200 = PaginatedActivitiesResponseDto;
 
 export type ActivitiesControllerGetMemberActivityStatsPathParams =
   typeof ActivitiesControllerGetMemberActivityStatsPathParams.Type;

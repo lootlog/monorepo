@@ -941,7 +941,7 @@ describe("Read cache Dragonfly integration", () => {
           });
 
           const overview = () =>
-            catalog.getEventOverview({ id: guildId }, eventId, [], policy);
+            catalog.getEvent({ id: guildId }, eventId, [], policy);
 
           const history = () =>
             gaps.getMapCoverageGaps({ id: guildId }, eventId, mapId);

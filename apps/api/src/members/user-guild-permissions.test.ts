@@ -2,12 +2,12 @@ import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import { eq } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
-import { createPermissionCacheBoundary } from "../../../../test/permission-cache-fixtures.js";
-import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
+import { createPermissionCacheBoundary } from "../../test/permission-cache-fixtures.js";
+import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,
   createMemberFixture,
-} from "../../../../test/organization-fixtures.js";
+} from "../../test/organization-fixtures.js";
 import {
   guildTable,
   memberTable,
@@ -21,8 +21,11 @@ import {
 import {
   getInternalUserPermissions,
   InternalGuildsData,
-} from "../internal/internal.handlers.js";
-import { makeUserGuildPermissions } from "./user-guild-permissions.data-layer.js";
+} from "#src/http-api/handlers/internal/internal.handlers";
+import {
+  makeUserGuildPermissionsPersistence,
+  makeUserGuildPermissionsProjection,
+} from "./user-guild-permissions.js";
 import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
 import { makeGuildLifecycle } from "#src/guilds/guild-lifecycle.operations";
 
@@ -98,14 +101,14 @@ const createFixture = async () => {
     }),
   );
 
-  const publicProjection = makeUserGuildPermissions(
-    database,
+  const projection = makeUserGuildPermissionsProjection(
+    makeUserGuildPermissionsPersistence(database),
     cacheBoundary.cache,
   );
 
   const read = (requestIdentity: ForwardAuthIdentityValue = identity) =>
     boundary.run(
-      publicProjection(requestIdentity).pipe(
+      projection(requestIdentity.discordId, requestIdentity.userId).pipe(
         Effect.provideService(ForwardAuthIdentity, requestIdentity),
       ),
     );

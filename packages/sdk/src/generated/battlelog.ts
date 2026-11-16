@@ -752,10 +752,6 @@ export interface BattleWarriorsSearchResponseDtoOutput {
   warriors: BattleWarriorsSearchResponseDtoOutputWarriorsItem[];
 }
 
-export interface BattleUserWorldsResponseDtoOutput {
-  worlds: string[];
-}
-
 export type BattleTimelineResponseDtoOutputTimelineItemHpByWarrior = {[key: string]: number};
 
 export type BattleTimelineResponseDtoOutputTimelineItemTeamHp = {[key: string]: number};
@@ -2534,18 +2530,6 @@ export type BattlesControllerSearchWarriors429 = {
   message: string;
 };
 
-export type BattlesControllerGetUserWorlds401 = {
-  message: string;
-};
-
-export type BattlesControllerGetUserWorlds403 = {
-  message: string;
-};
-
-export type BattlesControllerGetUserWorlds429 = {
-  message: string;
-};
-
 export type BattlesControllerGetBattleTimelinePathParameters = {
  battleId: string,
  }
@@ -3147,30 +3131,6 @@ export const getBattlesControllerSearchWarriorsUrl = (params: BattlesControllerS
 export const battlesControllerSearchWarriors = async (params: BattlesControllerSearchWarriorsParams, options?: Parameters<typeof battlelogFetch>[1]): Promise<BattleWarriorsSearchResponseDtoOutput> => {
 
   return battlelogFetch<BattleWarriorsSearchResponseDtoOutput>(getBattlesControllerSearchWarriorsUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-export const getBattlesControllerGetUserWorldsUrl = () => {
-
-
-
-
-  return `/battles/@me/worlds`
-}
-
-/**
- * @summary Get worlds used by authenticated user battles
- */
-export const battlesControllerGetUserWorlds = async ( options?: Parameters<typeof battlelogFetch>[1]): Promise<BattleUserWorldsResponseDtoOutput> => {
-
-  return battlelogFetch<BattleUserWorldsResponseDtoOutput>(getBattlesControllerGetUserWorldsUrl(),
   {
     ...options,
     method: 'GET'

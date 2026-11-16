@@ -311,21 +311,6 @@ export const EventsHandlers = HttpApiBuilder.group(
               ),
             ),
         ),
-      showEventOverview: ({ params }) =>
-        event("showEventOverview", read, params, (caller, eventId) =>
-          operations.catalog
-            .getEventOverview(
-              caller.guild,
-              eventId,
-              [...caller.roles],
-              caller.accessPolicy,
-            )
-            .pipe(
-              Effect.map((value) =>
-                encodeUnknownResponse(EventOverviewResponse, value),
-              ),
-            ),
-        ),
       showEventWrapped: ({ params }) =>
         event("showEventWrapped", read, params, (caller, eventId) =>
           operations.catalog.getWrapped(

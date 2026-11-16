@@ -1,11 +1,10 @@
-import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
+import type { UserGameAccountPreferences } from "@lootlog/schema/account-preferences";
+import type { SoundSettingsFixture } from "@/test/sound-settings-fixtures";
 import { onTestFinished, vi } from "vitest";
 import { createRealtimeTest } from "@/test/realtime-test";
 import {
   getUsersControllerGetUserPreferencesQueryKey,
-  type UserGameAccountPreferencesResponseDtoOutput,
   type UserPreferencesResponseDtoOutput,
-  type SoundSettingsResponseDto,
 } from "@lootlog/client/main";
 import {
   accountPreferenceValues,
@@ -13,7 +12,10 @@ import {
   soundSettingValues,
   userPreferenceValues,
 } from "@/test/settings-documents-fixtures";
-import { createDetectorSettings } from "@/lib/game-account-preferences";
+import {
+  createDetectorSettings,
+  createNotificationsSettings,
+} from "@/lib/game-account-preferences";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -21,9 +23,9 @@ import { useWindowsStore } from "@/store/windows.store";
 export const createNotificationTest = () => {
   const test = createRealtimeTest();
 
-  const preferences: UserGameAccountPreferencesResponseDtoOutput = {
+  const preferences: UserGameAccountPreferences = {
     accountId: "1",
-    notifications: createNotificationsResponse(["guild-1"]),
+    notifications: createNotificationsSettings(["guild-1"]),
     detector: createDetectorSettings(),
     pings: { enabled: false },
     airTags: { enabled: false },
@@ -49,7 +51,7 @@ export const createNotificationTest = () => {
     mutes: { players: [], npcs: [] },
   };
 
-  const soundSettings: SoundSettingsResponseDto = {
+  const soundSettings: SoundSettingsFixture = {
     userId: "user",
     masterVolume: 1,
     notificationsVolume: 0.5,

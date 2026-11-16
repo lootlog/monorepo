@@ -4,7 +4,7 @@ import { createEventOverview } from "@/lib/testing/event";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   getListEventMapsQueryKey,
-  getShowEventOverviewQueryKey,
+  getShowEventQueryKey,
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -62,7 +62,7 @@ it("keeps selected hero maps current and closes management if that hero disappea
         fetch: async (input, init) => {
           const path = new URL(new Request(input, init).url).pathname;
 
-          if (path.endsWith("/overview")) return Response.json(event);
+          if (path.endsWith(`/events/${event.id}`)) return Response.json(event);
 
           if (path.endsWith("/maps")) {
             return Response.json({
@@ -172,7 +172,7 @@ it("keeps selected hero maps current and closes management if that hero disappea
   expect(screen.getByRole("dialog")).toBeTruthy();
   act(() => {
     client.setQueryData(
-      getShowEventOverviewQueryKey({ guildId: "guild-1", eventId: "event-1" }),
+      getShowEventQueryKey({ guildId: "guild-1", eventId: "event-1" }),
       {
         ...event,
         heroNpcs: [],

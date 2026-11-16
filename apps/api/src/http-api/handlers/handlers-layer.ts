@@ -21,8 +21,6 @@ import { PublicGuildStatsCardHandlers } from "./public-guild-stats-card/public-g
 import { ReservationSharingHandlers } from "./reservation-sharing/reservation-sharing.handlers.js";
 import { ReservationsHandlers } from "./reservations/reservations.handlers.js";
 import { RolesHandlers } from "./roles/roles.handlers.js";
-import { SoundSettingsHandlers } from "./sound-settings/sound-settings.handlers.js";
-import { TimerSettingsHandlers } from "./timer-settings/timer-settings.handlers.js";
 import { TimersHandlers } from "./timers/timers.handlers.js";
 import { HeroSightingsHandlers } from "./hero-sightings/hero-sightings.handlers.js";
 import { UserLootlogConfigHandlers } from "./user-lootlog-config/user-lootlog-config.handlers.js";
@@ -39,7 +37,6 @@ export const LootlogApiHandlers = Layer.mergeAll(
   TimersHandlers,
   HeroSightingsHandlers,
   UserLootlogConfigHandlers,
-  TimerSettingsHandlers,
   PreferencesHandlers,
   LootsHandlers,
   LootlogConfigHandlers,
@@ -51,7 +48,6 @@ export const LootlogApiHandlers = Layer.mergeAll(
   NotificationsHandlers,
   MessagingHandlers,
   PartyReadyRoomHandlers,
-  SoundSettingsHandlers,
   EventsHandlers,
   MapsHandlers,
   MapTemplatesHandlers,

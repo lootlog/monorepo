@@ -158,6 +158,18 @@ export interface MemberActivityStatsResponseDto {
   updatedAt: string;
 }
 
+export interface ClanNameSuggestionsResponseDtoOutput {
+  suggestions: string[];
+}
+
+export interface WorldSuggestionsResponseDtoOutput {
+  worlds: string[];
+}
+
+export interface ActorNameSuggestionsResponseDtoOutput {
+  suggestions: string[];
+}
+
 export type PaginatedActivitiesResponseDtoDataItemType = typeof PaginatedActivitiesResponseDtoDataItemType[keyof typeof PaginatedActivitiesResponseDtoDataItemType];
 
 
@@ -220,18 +232,6 @@ export interface PaginatedActivitiesResponseDto {
   data: PaginatedActivitiesResponseDtoDataItem[];
   nextCursor?: string;
   hasMore: boolean;
-}
-
-export interface ClanNameSuggestionsResponseDtoOutput {
-  suggestions: string[];
-}
-
-export interface WorldSuggestionsResponseDtoOutput {
-  worlds: string[];
-}
-
-export interface ActorNameSuggestionsResponseDtoOutput {
-  suggestions: string[];
 }
 
 /**
@@ -381,6 +381,7 @@ export type ActivitiesControllerFindByGuildPathParameters = {
 export type ActivitiesControllerFindByGuildParams = {
 type?: ActivitiesControllerFindByGuildTypeItem[];
 source?: ActivitiesControllerFindByGuildSourceItem[];
+userId?: string;
 playerName?: string;
 clanName?: string;
 world?: string;
@@ -555,72 +556,6 @@ export const ActivitiesControllerSuggestClanNames503StatusCode = {
 export type ActivitiesControllerSuggestClanNames503 = {
   message: string;
   statusCode: ActivitiesControllerSuggestClanNames503StatusCode;
-};
-
-export type ActivitiesControllerFindByUserPathParameters = {
- guildId: string,
-    userId: string,
- }
-export type ActivitiesControllerFindByUserParams = {
-type?: ActivitiesControllerFindByUserTypeItem[];
-source?: ActivitiesControllerFindByUserSourceItem[];
-playerName?: string;
-clanName?: string;
-world?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
-startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
-endDate?: string;
-cursor?: string;
-/**
- * @minimum 1
- * @maximum 100
- */
-limit?: number;
-};
-
-export type ActivitiesControllerFindByUserTypeItem = typeof ActivitiesControllerFindByUserTypeItem[keyof typeof ActivitiesControllerFindByUserTypeItem];
-
-
-export const ActivitiesControllerFindByUserTypeItem = {
-  CONNECT_EVENT: 'CONNECT_EVENT',
-  DISCONNECT_EVENT: 'DISCONNECT_EVENT',
-} as const;
-
-export type ActivitiesControllerFindByUserSourceItem = typeof ActivitiesControllerFindByUserSourceItem[keyof typeof ActivitiesControllerFindByUserSourceItem];
-
-
-export const ActivitiesControllerFindByUserSourceItem = {
-  GAME: 'GAME',
-  WEB_APP: 'WEB_APP',
-} as const;
-
-export type ActivitiesControllerFindByUser401 = {
-  message: string;
-};
-
-export type ActivitiesControllerFindByUser403 = {
-  message: string;
-};
-
-export type ActivitiesControllerFindByUser429 = {
-  message: string;
-};
-
-export type ActivitiesControllerFindByUser503StatusCode = typeof ActivitiesControllerFindByUser503StatusCode[keyof typeof ActivitiesControllerFindByUser503StatusCode];
-
-
-export const ActivitiesControllerFindByUser503StatusCode = {
-  NUMBER_503: 503,
-} as const;
-
-export type ActivitiesControllerFindByUser503 = {
-  message: string;
-  statusCode: ActivitiesControllerFindByUser503StatusCode;
 };
 
 export type ActivitiesControllerGetMemberActivityStatsPathParameters = {
@@ -1689,176 +1624,6 @@ export const useGetActivitiesControllerSuggestClanNamesQueryData = () => {
   return ({ guildId }: ActivitiesControllerSuggestClanNamesPathParameters,
     params?: ActivitiesControllerSuggestClanNamesParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>>(getActivitiesControllerSuggestClanNamesQueryKey({ guildId },params));
-}
-
-
-
-export const getActivitiesControllerFindByUserUrl = ({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["type","source"];
-
-    if (Array.isArray(value) && explodeParameters.includes(key)) {
-      value.forEach((v) => {
-        normalizedParams.append(key, v === null ? 'null' : String(v));
-      });
-      return;
-    }
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/guilds/${guildId}/users/${userId}/activity-logs?${stringifiedParams}` : `/guilds/${guildId}/users/${userId}/activity-logs`
-}
-
-/**
- * @summary Get activities for a specific user in a guild
- */
-export const activitiesControllerFindByUser = async ({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams, options?: Parameters<typeof activityFetch>[1]): Promise<PaginatedActivitiesResponseDto> => {
-
-  return activityFetch<PaginatedActivitiesResponseDto>(getActivitiesControllerFindByUserUrl({ guildId, userId },params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getActivitiesControllerFindByUserQueryKey = ({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams,) => {
-    return [
-    `/guilds/${guildId}/users/${userId}/activity-logs`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getActivitiesControllerFindByUserQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getActivitiesControllerFindByUserQueryKey({ guildId, userId },params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof activitiesControllerFindByUser>>> = ({ signal }) => activitiesControllerFindByUser({ guildId, userId },params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined && userId !== null && userId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ActivitiesControllerFindByUserQueryResult = NonNullable<Awaited<ReturnType<typeof activitiesControllerFindByUser>>>
-export type ActivitiesControllerFindByUserQueryError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>
-
-
-export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>(
- pathParams: ActivitiesControllerFindByUserPathParameters,
-    params: undefined |  ActivitiesControllerFindByUserParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof activitiesControllerFindByUser>>,
-          TError,
-          Awaited<ReturnType<typeof activitiesControllerFindByUser>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof activityFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>(
- pathParams: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof activitiesControllerFindByUser>>,
-          TError,
-          Awaited<ReturnType<typeof activitiesControllerFindByUser>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof activityFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>(
- pathParams: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Get activities for a specific user in a guild
- */
-
-export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>(
- { guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getActivitiesControllerFindByUserQueryOptions({ guildId, userId },params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-/**
- * @summary Get activities for a specific user in a guild
- */
-export const prefetchActivitiesControllerFindByUserQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>(
- queryClient: QueryClient, { guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
-
-  ): Promise<QueryClient> => {
-
-  const queryOptions = getActivitiesControllerFindByUserQueryOptions({ guildId, userId },params,options)
-
-  await queryClient.query(queryOptions).catch(() => {});
-
-  return queryClient;
-}
-
-/**
- * @summary Invalidates the {@link useActivitiesControllerFindByUser} query
- */
-export const invalidateActivitiesControllerFindByUser = async (
- queryClient: QueryClient, { guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams, options?: InvalidateOptions
-  ): Promise<QueryClient> => {
-
-  await queryClient.invalidateQueries({ queryKey: getActivitiesControllerFindByUserQueryKey({ guildId, userId },params) }, options);
-
-  return queryClient;
-}
-
-/**
- * @summary Get activities for a specific user in a guild
- */
-export const useSetActivitiesControllerFindByUserQueryData = () => {
-  const queryClient = useQueryClient();
-  return ({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params: ActivitiesControllerFindByUserParams | undefined,updater: Awaited<ReturnType<typeof activitiesControllerFindByUser>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerFindByUser>> | undefined) => Awaited<ReturnType<typeof activitiesControllerFindByUser>> | undefined), $exactMatch: boolean = true) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerFindByUser>>>({ exact: $exactMatch, queryKey: getActivitiesControllerFindByUserQueryKey({ guildId, userId },params) }, updater);
-  };
-}
-
-/**
- * @summary Get activities for a specific user in a guild
- */
-export const useGetActivitiesControllerFindByUserQueryData = () => {
-  const queryClient = useQueryClient();
-  return ({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams,) =>
-    queryClient.getQueryData<Awaited<ReturnType<typeof activitiesControllerFindByUser>>>(getActivitiesControllerFindByUserQueryKey({ guildId, userId },params));
 }
 
 

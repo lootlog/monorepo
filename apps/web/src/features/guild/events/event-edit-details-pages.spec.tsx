@@ -15,7 +15,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, expect, it, onTestFinished } from "vitest";
-import { getShowEventOverviewQueryKey } from "@lootlog/client/main";
+import { getShowEventQueryKey } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
 import { createEventOverview } from "@/lib/testing/event";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
@@ -54,7 +54,7 @@ it.each(["settings", "rulebook"] as const)(
     const event = createEventOverview({ name: "Wakacje 2026" });
 
     client.setQueryData(
-      getShowEventOverviewQueryKey({ guildId: "guild-1", eventId: "event-1" }),
+      getShowEventQueryKey({ guildId: "guild-1", eventId: "event-1" }),
       event,
     );
     onTestFinished(() => client.clear());

@@ -6,7 +6,7 @@ import { MemberAvatar } from "@/components/common/member-avatar";
 import {
   useEventsRankingControllerGetEventHeroStats,
   useListEventRanking,
-  useShowEventOverview,
+  useShowEvent,
 } from "@lootlog/client/main";
 import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
@@ -169,7 +169,7 @@ export const EventMemberKillsPageContent = ({
     isLoading: eventLoading,
     error: eventError,
     refetch: refetchEvent,
-  } = useShowEventOverview(
+  } = useShowEvent(
     {
       guildId: queryGuildId,
       eventId: queryEventId,

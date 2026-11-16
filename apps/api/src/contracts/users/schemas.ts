@@ -1,6 +1,5 @@
 /** Shared input and output schemas for the users feature. */
 import * as Schema from "effect/Schema";
-import * as Struct from "effect/Struct";
 import {
   FiniteNumber,
   NonEmptyString,
@@ -31,59 +30,6 @@ const MutedNpc = Schema.Struct({
   lvl: PositiveSafeInteger,
   prof: Schema.Union([Schema.String, Schema.Null]),
   icon: Schema.Union([Schema.String, Schema.Null]),
-});
-
-const GameNotificationPreferences = Schema.Struct({
-  show: Schema.Boolean,
-  highlight: Schema.Boolean,
-  ignoreOtherWorlds: Schema.Boolean,
-  autoHideTimeout: Schema.optionalKey(
-    FiniteNumber.check(
-      Schema.isGreaterThanOrEqualTo(0).annotate({
-        expected: "a value greater than or equal to 0",
-      }),
-    ),
-  ),
-  // Deployed Game clients read and send a server list per type. The route
-  // mirrors the shared `notifications.guildIds` here and folds per-type lists
-  // from requests back into it.
-  guildIds: Schema.Array(Schema.String),
-  sound: Schema.Boolean,
-});
-
-const GameNotificationPreferencesPatch = GameNotificationPreferences.mapFields(
-  Struct.map(Schema.optionalKey),
-);
-
-const NpcDetectorPreferences = Schema.Struct({
-  detect: Schema.Boolean,
-  autoSend: Schema.Boolean,
-  notifyWindow: Schema.Boolean,
-  highlight: Schema.Boolean,
-  notifySound: Schema.Boolean,
-});
-
-const NpcDetectorPreferencesPatch = NpcDetectorPreferences.mapFields(
-  Struct.map(Schema.optionalKey),
-);
-
-const DetectorRoutingLevel = FiniteNumber.check(
-  Schema.isGreaterThanOrEqualTo(0).annotate({
-    expected: "a value greater than or equal to 0",
-  }),
-).check(
-  Schema.isLessThanOrEqualTo(500).annotate({
-    expected: "a value less than or equal to 500",
-  }),
-);
-
-const DetectorRoutingRule = Schema.Struct({
-  id: NonEmptyString,
-  name: Schema.optionalKey(Schema.String),
-  minLevel: DetectorRoutingLevel,
-  maxLevel: DetectorRoutingLevel,
-  world: Schema.optionalKey(Schema.String),
-  guildIds: Schema.Array(Schema.String),
 });
 
 export type UserPreferencesResponse = typeof UserPreferencesResponse.Type;
@@ -166,88 +112,12 @@ const CurrentOrganizationResponse = Schema.Struct({
   isAccessDataStale: Schema.Boolean,
 }).annotate({ identifier: "UserCurrentGuildResponseDto_Output" });
 
-export type UserGameAccountPreferencesResponse =
-  typeof UserGameAccountPreferencesResponse.Type;
-
-export const UserGameAccountPreferencesResponse = Schema.Struct({
-  accountId: NonEmptyString,
-  notifications: Schema.Struct({
-    guildIds: Schema.Array(Schema.String),
-    ELITE2: GameNotificationPreferences,
-    HERO: GameNotificationPreferences,
-    EVENT_HERO: GameNotificationPreferences,
-    COLOSSUS: GameNotificationPreferences,
-    TITAN: GameNotificationPreferences,
-    HERO_TRACKER: GameNotificationPreferences,
-    message: GameNotificationPreferences,
-    "party-gathering": GameNotificationPreferences,
-  }),
-  detector: Schema.Struct({
-    routingRules: Schema.Array(DetectorRoutingRule),
-    ELITE2: NpcDetectorPreferences,
-    HERO: NpcDetectorPreferences,
-    EVENT_HERO: NpcDetectorPreferences,
-    COLOSSUS: NpcDetectorPreferences,
-    TITAN: NpcDetectorPreferences,
-    HERO_TRACKER: NpcDetectorPreferences,
-  }),
-  pings: Schema.Struct({ enabled: Schema.Boolean }),
-  airTags: Schema.Struct({ enabled: Schema.Boolean }),
-  hasStoredNotifications: Schema.Boolean,
-  hasStoredDetector: Schema.Boolean,
-  hasStoredPings: Schema.Boolean,
-  hasStoredAirTags: Schema.Boolean,
-  hasStoredPreferences: Schema.Boolean,
-}).annotate({ identifier: "UserGameAccountPreferencesResponseDto_Output" });
-
-export type UpdateUserGameAccountPreferencesRequest =
-  typeof UpdateUserGameAccountPreferencesRequest.Type;
-
-export const UpdateUserGameAccountPreferencesRequest = Schema.Struct({
-  notifications: Schema.optionalKey(
-    Schema.Struct({
-      guildIds: Schema.optionalKey(Schema.Array(Schema.String)),
-      ELITE2: Schema.optionalKey(GameNotificationPreferencesPatch),
-      HERO: Schema.optionalKey(GameNotificationPreferencesPatch),
-      EVENT_HERO: Schema.optionalKey(GameNotificationPreferencesPatch),
-      COLOSSUS: Schema.optionalKey(GameNotificationPreferencesPatch),
-      TITAN: Schema.optionalKey(GameNotificationPreferencesPatch),
-      HERO_TRACKER: Schema.optionalKey(GameNotificationPreferencesPatch),
-      message: Schema.optionalKey(GameNotificationPreferencesPatch),
-      "party-gathering": Schema.optionalKey(GameNotificationPreferencesPatch),
-    }),
-  ),
-  detector: Schema.optionalKey(
-    Schema.Struct({
-      routingRules: Schema.optionalKey(Schema.Array(DetectorRoutingRule)),
-      ELITE2: Schema.optionalKey(NpcDetectorPreferencesPatch),
-      HERO: Schema.optionalKey(NpcDetectorPreferencesPatch),
-      EVENT_HERO: Schema.optionalKey(NpcDetectorPreferencesPatch),
-      COLOSSUS: Schema.optionalKey(NpcDetectorPreferencesPatch),
-      TITAN: Schema.optionalKey(NpcDetectorPreferencesPatch),
-      HERO_TRACKER: Schema.optionalKey(NpcDetectorPreferencesPatch),
-    }),
-  ),
-  pings: Schema.optionalKey(
-    Schema.Struct({ enabled: Schema.optionalKey(Schema.Boolean) }),
-  ),
-  airTags: Schema.optionalKey(
-    Schema.Struct({ enabled: Schema.optionalKey(Schema.Boolean) }),
-  ),
-}).annotate({ identifier: "UpdateUserGameAccountPreferencesDto" });
-
 export type CurrentOrganizationsResponse =
   typeof CurrentOrganizationsResponse.Type;
 
 export const CurrentOrganizationsResponse = Schema.Array(
   CurrentOrganizationResponse,
 );
-
-export type GameAccountPreferencesPath = typeof GameAccountPreferencesPath.Type;
-
-export const GameAccountPreferencesPath = Schema.Struct({
-  accountId: Schema.String.annotate({ examples: ["1234567"] }),
-});
 
 export const AccountDeletionAccepted = Schema.Struct({
   status: Schema.Literal("ACCEPTED"),

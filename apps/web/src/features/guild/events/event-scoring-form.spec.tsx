@@ -16,7 +16,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, expect, it, onTestFinished } from "vitest";
 import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "@lootlog/domain/scoring";
-import { getShowEventOverviewQueryKey } from "@lootlog/client/main";
+import { getShowEventQueryKey } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
 import { createEventOverview } from "@/lib/testing/event";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
@@ -40,7 +40,7 @@ async function renderScoringForm(mode: "create" | "edit") {
   });
 
   client.setQueryData(
-    getShowEventOverviewQueryKey({ guildId: "guild-1", eventId: "event-1" }),
+    getShowEventQueryKey({ guildId: "guild-1", eventId: "event-1" }),
     event,
   );
   onTestFinished(() => client.clear());
