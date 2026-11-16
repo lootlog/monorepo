@@ -12,7 +12,10 @@ import {
   memberToRoleTable,
 } from "#src/database/drizzle/organization.schema";
 import { applicationLogger } from "#src/shared/application-logger";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import {
+  AuthenticationRequiredError,
+  ResourceNotFoundError,
+} from "#src/shared/http/http-errors";
 import { MEMBER_LAST_DISCORD_STATUS } from "./member-discord-status.js";
 import { makeMemberDelivery } from "./member-delivery.operations.js";
 import { makeMemberRemoval } from "./member-removal.operations.js";
@@ -144,6 +147,8 @@ type DiscordBoundaryState = {
   duringPublish: Effect.Effect<unknown, unknown> | undefined;
 };
 
+type LogEntry = { readonly level: string; readonly code?: string };
+
 const createSyncBoundary = async () => {
   const boundary = await createDatabaseBoundary();
   await boundary.run(
@@ -233,8 +238,16 @@ const createSyncBoundary = async () => {
     });
 
   const delivery = makeDelivery();
+  const logged: LogEntry[] = [];
 
-  const sync = makeMemberSync(applicationLogger, store, delivery, {
+  const logger = {
+    ...applicationLogger,
+    log: (entry: LogEntry) => {
+      logged.push(entry);
+    },
+  };
+
+  const sync = makeMemberSync(logger, store, delivery, {
     getGuildMember: () =>
       state.error ? Effect.fail(state.error) : Effect.succeed(state.member),
     nextRefreshAt: () => Effect.succeed(null),
@@ -254,6 +267,7 @@ const createSyncBoundary = async () => {
     ...boundary,
     state,
     events,
+    logged,
     store,
     makeDelivery,
     removal: makeMemberRemoval(boundary.database, delivery),
@@ -453,6 +467,37 @@ test("a transient Discord failure retains permissions and successful recovery re
     await boundary.refresh();
     expect(boundary.events).toEqual(["freshness"]);
     expect(await boundary.pending()).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("a member who must sign in again is warned about once per loss of authorization", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    const signInAgain = new AuthenticationRequiredError({
+      code: "ACCOUNT_NOT_FOUND",
+    });
+
+    await boundary.refresh();
+
+    // Every request of such a member repeats the attempt.
+    boundary.state.error = signInAgain;
+    await boundary.refresh();
+    await boundary.refresh();
+
+    boundary.state.error = undefined;
+    await boundary.refresh();
+
+    boundary.state.error = signInAgain;
+    await boundary.refresh();
+
+    expect(boundary.logged).toMatchObject([
+      { level: "warn", code: "ACCOUNT_NOT_FOUND" },
+      { level: "debug", code: "ACCOUNT_NOT_FOUND" },
+      { level: "warn", code: "ACCOUNT_NOT_FOUND" },
+    ]);
   } finally {
     await boundary.dispose();
   }

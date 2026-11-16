@@ -51,7 +51,7 @@ export const makeMemberSync = (
       readonly deactivate?: boolean;
       readonly markSynced?: boolean;
     }) {
-      const member = yield* store.markSyncAttempt({
+      const attempt = yield* store.markSyncAttempt({
         userId: options.discordId,
         guildId: options.guildId,
         status: options.status,
@@ -60,9 +60,13 @@ export const makeMemberSync = (
         attemptedAt: new Date(yield* Clock.currentTimeMillis),
       });
 
-      if (member) yield* delivery.deliver(member.id);
+      if (attempt) yield* delivery.deliver(attempt.member.id);
 
-      return member;
+      return {
+        member: attempt?.member ?? null,
+        // A member that is not stored has no earlier status to repeat.
+        statusChanged: attempt?.statusChanged ?? true,
+      };
     },
   );
 
@@ -139,7 +143,7 @@ export const makeMemberSync = (
           : result.failure;
 
       if (error instanceof ResourceNotFoundError) {
-        const member = yield* markAttempt({
+        const { member } = yield* markAttempt({
           discordId: options.discordId,
           guildId: options.guildId,
           status: MEMBER_DISCORD_SYNC_STATUS.NOT_FOUND,
@@ -159,10 +163,21 @@ export const makeMemberSync = (
         error instanceof ApplicationError &&
         error.kind === ApplicationErrorKind.AUTHENTICATION_REQUIRED
       ) {
-        const member = yield* markAttempt({
+        const { member, statusChanged } = yield* markAttempt({
           discordId: options.discordId,
           guildId: options.guildId,
           status: MEMBER_DISCORD_SYNC_STATUS.UNAUTHORIZED,
+        });
+
+        // Every request of a member who must sign in again repeats this
+        // attempt, because only the auth service knows about a new sign-in.
+        // Only the first one is news.
+        logger.log({
+          level: statusChanged ? "warn" : "debug",
+          message: "Member must sign in again to refresh from Discord",
+          guildId: options.guildId,
+          userId: options.userId,
+          code: error.body.code,
         });
 
         return {

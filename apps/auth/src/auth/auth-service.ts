@@ -481,10 +481,20 @@ export const createAuthService = ({
         }
 
         if (error instanceof APIError) {
-          return yield* new HttpResponseError({
-            status: Schema.is(Schema.Number)(error.status) ? error.status : 400,
-            body: { error: "ACCOUNT_NOT_FOUND" },
-          });
+          const code = error.body?.code;
+
+          if (code === "ACCOUNT_NOT_FOUND") {
+            return yield* new HttpResponseError({
+              status: 400,
+              body: { error: "ACCOUNT_NOT_FOUND" },
+            });
+          }
+
+          // Better Auth reports every failed refresh of an expired token
+          // this way; the account exists and a new sign-in replaces the token.
+          if (code === "FAILED_TO_GET_ACCESS_TOKEN") {
+            return yield* unauthorized({ error: "TOKEN_EXPIRED" });
+          }
         }
 
         return yield* internalServerError({ error: "INTERNAL_ERROR" });

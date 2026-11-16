@@ -333,10 +333,13 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
             yield* queueMemberDeliveries(transaction, [member.id], true);
 
           return {
-            ...member,
-            roles: options.deactivate
-              ? []
-              : currentRoles.map(({ role }) => role),
+            member: {
+              ...member,
+              roles: options.deactivate
+                ? []
+                : currentRoles.map(({ role }) => role),
+            },
+            statusChanged: existing.lastDiscordStatus !== options.status,
           };
         }),
       ),

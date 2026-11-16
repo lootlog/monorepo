@@ -180,7 +180,7 @@ export class AuthService {
           response.error === "TOKEN_EXPIRED"
         ) {
           this.logger.log({
-            level: "warn",
+            level: "debug",
             message: `Token error for user ${userId}: ${response.error}`,
           });
 
@@ -270,7 +270,7 @@ export class AuthService {
 
     if (this.isAccountNotFoundError(error)) {
       this.logger.log({
-        level: "warn",
+        level: "debug",
         message: `Account not found for user ${userId}`,
       });
 
@@ -279,7 +279,7 @@ export class AuthService {
 
     if (this.isTokenError(error)) {
       this.logger.log({
-        level: "warn",
+        level: "debug",
         message: `Token error for user ${userId}`,
       });
 
