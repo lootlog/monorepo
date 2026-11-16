@@ -33,7 +33,7 @@ export class LootlogConfigGroup extends HttpApiGroup.make("lootlog-config").add(
     .annotate(OpenApi.Summary, "Get lootlog configuration")
     .annotate(
       OpenApi.Description,
-      "Retrieve the lootlog configuration of a guild: the item rarities it collects from each NPC type. Every member with Lootlog access can read it.",
+      "Retrieve lootlog configuration for a guild",
     ),
   HttpApiEndpoint.put(
     "LootlogConfigControllerUpdateNpc",

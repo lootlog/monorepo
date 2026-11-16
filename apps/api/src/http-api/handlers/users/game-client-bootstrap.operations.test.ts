@@ -19,10 +19,6 @@ import {
   CharacterAurasData,
   CharacterAurasIdentity,
 } from "../character-auras/character-auras.handlers.js";
-import {
-  LootlogConfigAuthorization,
-  LootlogConfigData,
-} from "../lootlog-config/lootlog-config.handlers.js";
 import { getGameClientBootstrap } from "./game-client-bootstrap.operations.js";
 
 const identity = { userId: "user-a", discordId: "discord-a" };
@@ -105,19 +101,6 @@ const run = ({
             getManageableUserGuilds: notReadAtStartup,
             getGuildDiscordSyncStatus: notReadAtStartup,
             refreshGuildDiscordSync: notReadAtStartup,
-          }),
-        ),
-        Layer.succeed(
-          LootlogConfigAuthorization,
-          LootlogConfigAuthorization.of({
-            requireCapability: ({ guildId }) => Effect.succeed({ guildId }),
-          }),
-        ),
-        Layer.succeed(
-          LootlogConfigData,
-          LootlogConfigData.of({
-            get: (guildId) => Effect.succeed({ id: guildId, npcs: [] }),
-            updateNpc: notReadAtStartup,
           }),
         ),
         Layer.succeed(
@@ -206,9 +189,6 @@ describe("getGameClientBootstrap", () => {
 
     expect(response.guildPermissions).toEqual({
       "guild-a": [Permission.LOOTLOG_ACCESS],
-    });
-    expect(response.guildLootlogConfigs).toEqual({
-      "guild-a": { id: "guild-a", npcs: [] },
     });
   });
 

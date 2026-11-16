@@ -3,16 +3,6 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
-## 2026-11-16 — Lootlog configuration for every member
-
-- `GET /guilds/{guildId}/lootlog-config` no longer requires the
-  administrator capability: every member with Lootlog access reads which item
-  rarities the Organization collects from each NPC type. Updating stays
-  limited to administrators.
-- `GET /users/@me/game-client/bootstrap` adds `guildLootlogConfigs`: that
-  configuration for every accessible guild, by guild id. A guild whose read
-  failed is absent; one without a configuration is `null`.
-
 ## 2026-11-07 — Drop rates per loot roll
 
 - `CatalogDropSourceDto_Output.dropRate` adds `rolls`, `basis` and
