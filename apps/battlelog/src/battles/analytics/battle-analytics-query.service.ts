@@ -25,7 +25,11 @@ import type {
   DateRangeQuery,
 } from "#src/battles/analytics/battle-analytics.types";
 import type { DrizzleDatabase } from "#src/database/database";
-import { battleWarriors, battles } from "#src/database/schema";
+import {
+  battleWarriorFilters,
+  battleWarriors,
+  battles,
+} from "#src/database/schema";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -179,8 +183,8 @@ export const makeBattleAnalyticsQuery = (
     ];
 
     const warriorConditions: (SQL | undefined)[] = [
-      inArray(battleWarriors.originalId, params.characterIds),
-      ...(params.phFilter ? [gt(battleWarriors.ph, 0)] : []),
+      inArray(battleWarriorFilters.originalId, params.characterIds),
+      ...(params.phFilter ? [gt(battleWarriorFilters.ph, 0)] : []),
     ];
 
     conditions.push(warriorExists(battlesRef, ...warriorConditions));
