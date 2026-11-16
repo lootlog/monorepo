@@ -1,4 +1,5 @@
 import { HttpClient, HttpClientResponse } from "effect/http";
+import { defaultKeyHasher } from "@better-auth/api-key";
 import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { and, eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer, Option, Schema } from "effect";
@@ -64,6 +65,29 @@ const isUserBanned = (
   now: number,
 ) =>
   user.banned && (user.banExpires === null || user.banExpires.getTime() > now);
+
+const statusFor = (
+  keyId: string,
+  row: { key: StoredKey; user: typeof authUsers.$inferSelect } | undefined,
+  now: number,
+): ApiKeyStatus => {
+  const grant = row ? grantFor(row.key) : null;
+
+  if (!row || !grant || !active(row.key, now) || isUserBanned(row.user, now))
+    return { keyId, valid: false };
+
+  return {
+    keyId,
+    valid: true,
+    userId: row.user.id,
+    discordId: row.user.discordId,
+    access: {
+      ...grant,
+      keyId,
+      expiresAt: row.key.expiresAt?.toISOString() ?? null,
+    },
+  };
+};
 
 const summary = (key: StoredKey) => {
   const grant = grantFor(key);
@@ -153,30 +177,13 @@ export class ApiKeyService extends Context.Service<
 
         const now = Date.now();
 
-        return ids.map((keyId): ApiKeyStatus => {
-          const row = rows.find(({ key }) => key.id === keyId);
-          const grant = row ? grantFor(row.key) : null;
-
-          if (
-            !row ||
-            !grant ||
-            !active(row.key, now) ||
-            isUserBanned(row.user, now)
-          )
-            return { keyId, valid: false };
-
-          return {
+        return ids.map((keyId) =>
+          statusFor(
             keyId,
-            valid: true,
-            userId: row.user.id,
-            discordId: row.user.discordId,
-            access: {
-              ...grant,
-              keyId,
-              expiresAt: row.key.expiresAt?.toISOString() ?? null,
-            },
-          };
-        });
+            rows.find(({ key }) => key.id === keyId),
+            now,
+          ),
+        );
       });
 
       const owned = Effect.fn("ApiKeyService.owned")(function* (
@@ -387,24 +394,32 @@ export class ApiKeyService extends Context.Service<
         verify: Effect.fn("ApiKeyService.verify")(function* (key) {
           if (config.apiKeysEnabled !== true)
             return yield* failure(401, "API keys are disabled");
-          const api = auth.apiKeys;
 
-          if (!api) return yield* failure(503, "API keys unavailable");
+          // Read-only on purpose: Better Auth's verifyApiKey writes the key
+          // row twice per call (lastRequest, updatedAt) and cannot be told
+          // not to. Keys are stored under Better Auth's default hash.
+          const hashedKey = yield* Effect.promise(() => defaultKeyHasher(key));
 
-          const result = yield* Effect.tryPromise({
-            try: () => api.verifyApiKey({ body: { key } }),
-            catch: () => failure(503, "API key verification unavailable"),
-          });
+          const rows = yield* query(
+            database
+              .select({ key: authApiKeys, user: authUsers })
+              .from(authApiKeys)
+              .innerJoin(authUsers, eq(authUsers.id, authApiKeys.referenceId))
+              .where(eq(authApiKeys.key, hashedKey))
+              .limit(1),
+          );
 
-          if (!result.valid || !result.key)
-            return yield* failure(401, "API key rejected");
+          const row = rows[0];
 
-          const status = (yield* readStatuses([result.key.id]))[0];
+          if (!row) return yield* failure(401, "API key rejected");
 
-          if (!status?.valid) return yield* failure(401, "API key rejected");
+          const keyId = row.key.id;
+          const status = statusFor(keyId, row, Date.now());
+
+          if (!status.valid) return yield* failure(401, "API key rejected");
 
           const allowed = yield* rateLimits
-            .consumeApiKeyRateLimit(result.key.id)
+            .consumeApiKeyRateLimit(keyId)
             .pipe(
               Effect.mapError(() =>
                 failure(503, "API key verification unavailable"),
@@ -415,7 +430,7 @@ export class ApiKeyService extends Context.Service<
             yield* Effect.logWarning("API key rate limit exceeded", {
               context: "ApiKeyService",
               code: "RATE_LIMITED",
-              keyId: result.key.id,
+              keyId,
               userId: status.userId,
               discordId: status.discordId,
             });
