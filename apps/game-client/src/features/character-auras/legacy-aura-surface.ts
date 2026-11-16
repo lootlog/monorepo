@@ -9,7 +9,7 @@ import {
   type CharacterAuraSurface,
   type ShownArrival,
 } from "./character-aura-renderer";
-import { auraScreenBox } from "./engine/render";
+import { auraScreenBox } from "./engine/layers";
 
 /** SI has no camera in the way: `#base` scrolls, so its pixels are map pixels. */
 const MAP_CAMERA = [0, 0] as const;
