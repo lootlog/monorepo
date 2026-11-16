@@ -3,7 +3,11 @@ import { parseRuntimeFacts } from "@/lib/margonem-runtime/runtime-event-parser";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import { configureApiClients } from "@lootlog/client/transport";
-import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/client/main";
+import {
+  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+} from "@lootlog/client/main";
+import { getLootlogSettingsQueryKey } from "@/lib/lootlog-settings";
 import { queryClient } from "@/lib/query-client";
 import { LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useBattleStore } from "@/store/game-store/battle.store";
@@ -81,16 +85,13 @@ const createFixture = () => {
   const processor = new LootEventProcessor();
   const requests: Request[] = [];
   let status = 200;
-  let rejectionCode: string | undefined;
 
   const fetch: typeof globalThis.fetch = (input, init) => {
     requests.push(new Request(input, init));
 
     return Promise.resolve(
       Response.json(
-        rejectionCode === undefined
-          ? { id: 999, submittedGuilds: [], rejectedGuilds: [] }
-          : { code: rejectionCode },
+        { id: 999, submittedGuilds: [], rejectedGuilds: [] },
         { status },
       ),
     );
@@ -112,10 +113,6 @@ const createFixture = () => {
     },
     fail: () => {
       status = 400;
-    },
-    rejectWith: (code: string) => {
-      status = 400;
-      rejectionCode = code;
     },
     succeed: () => {
       status = 200;
@@ -424,45 +421,89 @@ it.each<[string, () => Promise<void>]>([
   expect(await fixture.payload(1)).toMatchObject({ source: "DIALOG" });
 });
 
-// Lootlog settings are invisible to members, so the API's refusal is the only
-// source: it may silence nothing but loot those same settings refuse, and
-// only until a changed setting could plausibly have been missed.
-it("stops resubmitting loot the Lootlog settings refused until the refusal expires", async () => {
-  const fixture = createFixture();
-  const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-  useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+const collecting = (...allowedRarities: string[]) => ({
+  id: "guild-1",
+  npcs: [{ id: 1, npcType: "ELITE2", allowedRarities }],
+});
+
+// The fight's strongest NPC is an elite II, and the character catches for
+// one Lootlog whose settings were loaded `age` ago.
+const createSettingsFixture = (
+  settings: ReturnType<typeof collecting>,
+  age = 0,
+) => {
+  const loots: Request[] = [];
+  let current: ReturnType<typeof collecting> | undefined = settings;
+
+  onTestFinished(
+    configureApiClients({
+      main: {
+        baseUrl: "https://api.example.test",
+        fetch: (input, init) => {
+          const request = new Request(input, init);
+
+          if (request.method === "POST") {
+            loots.push(request);
+
+            return Promise.resolve(Response.json({ id: 999 }));
+          }
+
+          return Promise.resolve(
+            current
+              ? Response.json(current)
+              : Response.json({ code: "UNAVAILABLE" }, { status: 503 }),
+          );
+        },
+      },
+    }),
+  );
   seedCatchingGuildIds(["guild-1"]);
+  queryClient.setQueryData(
+    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    [{ id: "guild-1" }],
+  );
+  queryClient.setQueryData(getLootlogSettingsQueryKey("guild-1"), settings, {
+    updatedAt: Date.now() - age,
+  });
 
-  const loot = (rarity: string) =>
-    fixture.processor.handleLootFromBattle(createLootEvent("fight", rarity));
+  return {
+    loots,
+    loot: (rarity: string) =>
+      new LootEventProcessor().handleLootFromBattle(
+        createLootEvent("fight", rarity),
+      ),
+    serve: (next: ReturnType<typeof collecting> | undefined) => {
+      current = next;
+    },
+  };
+};
 
-  const refused = (count: number) =>
-    waitFor(() =>
-      expect(
-        log.mock.calls.filter(([, details]) => details.stage === "failed"),
-      ).toHaveLength(count),
-    );
+const TEN_MINUTES = 10 * 60_000;
 
-  fixture.rejectWith("INVALID_REQUEST");
-  loot("unique");
-  await refused(1);
-  fixture.rejectWith("NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT");
-  loot("unique");
-  await refused(2);
+it("submits only loot the Lootlog settings collect", async () => {
+  const fixture = createSettingsFixture(collecting("HEROIC", "LEGENDARY"));
+  fixture.loot("unique");
+  fixture.loot("heroic");
+  await waitFor(() => expect(fixture.loots).toHaveLength(1));
+  expect(await fixture.loots[0].json()).toMatchObject({
+    loots: [{ stat: "rarity=heroic" }],
+  });
+});
 
-  loot("unique");
-  loot("heroic");
-  await refused(3);
-  expect(fixture.requests).toHaveLength(3);
-  seedCatchingGuildIds(["guild-1", "guild-2"]);
-  loot("unique");
-  await refused(4);
-  seedCatchingGuildIds(["guild-1"]);
+// An administrator may have enabled the rarity since the settings were
+// loaded; skipping on the old copy would lose the loot silently.
+it("reads old settings again before skipping loot they refuse", async () => {
+  const fixture = createSettingsFixture(collecting("HEROIC"), TEN_MINUTES);
+  fixture.serve(collecting("HEROIC", "UNIQUE"));
+  fixture.loot("unique");
+  await waitFor(() => expect(fixture.loots).toHaveLength(1));
+});
 
-  const now = Date.now();
-  vi.spyOn(Date, "now").mockReturnValue(now + 10 * 60_000);
-  loot("unique");
-  await refused(5);
+it("submits loot when old settings that refuse it cannot be read again", async () => {
+  const fixture = createSettingsFixture(collecting("HEROIC"), TEN_MINUTES);
+  fixture.serve(undefined);
+  fixture.loot("unique");
+  await waitFor(() => expect(fixture.loots).toHaveLength(1));
 });
 
 it("ignores dialog loot without a tracked NPC", () => {

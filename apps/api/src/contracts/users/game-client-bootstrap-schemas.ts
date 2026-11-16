@@ -9,6 +9,7 @@ import {
   OwnCharacterAuraResponse,
 } from "#src/contracts/character-auras/schemas";
 import { OrganizationCapabilitiesResponse } from "#src/contracts/guilds/schemas";
+import { LootlogConfigResponse } from "#src/contracts/lootlog-config/schemas";
 import {
   CurrentOrganizationsResponse,
   UserPreferencesResponse,
@@ -54,6 +55,14 @@ export const GameClientBootstrapResponse = Schema.Struct({
    */
   guildPermissions: Schema.NullOr(
     Schema.Record(Schema.String, OrganizationCapabilitiesResponse),
+  ),
+  /**
+   * GET /guilds/{guildId}/lootlog-config for every accessible guild, by guild
+   * id. A guild whose read failed is absent; one without a configuration is
+   * null.
+   */
+  guildLootlogConfigs: Schema.NullOr(
+    Schema.Record(Schema.String, LootlogConfigResponse),
   ),
   /** GET /users/@me/character-aura */
   characterAura: Schema.NullOr(Schema.Struct(OwnCharacterAuraResponse.fields)),

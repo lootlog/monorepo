@@ -13,6 +13,7 @@ import {
   getGuildPreferences,
   getPreferences,
 } from "../settings/settings.operations.js";
+import { getLootlogConfig } from "../lootlog-config/lootlog-config.handlers.js";
 import { getUserLootlogAccountConfig } from "../user-lootlog-config/user-lootlog-config.handlers.js";
 import {
   getCharacterAuras,
@@ -60,30 +61,37 @@ export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
           accessibleGuilds,
           guildTimerDocuments: null,
           guildPermissions: null,
+          guildLootlogConfigs: null,
         };
 
-      // Each guild runs the permissions endpoint's own authorization; one
-      // that fails is left out so the client reads just that guild itself.
       const guildIds: ReadonlyArray<string> = accessibleGuilds.map(
         ({ id }: { readonly id: string }) => id,
       );
 
-      const guildPermissions = yield* Effect.forEach(
-        guildIds,
-        (id) =>
-          getGuildPermissions(id).pipe(
-            Effect.map((capabilities) => [id, capabilities] as const),
-            Effect.catchCause((cause) =>
-              Cause.hasInterruptsOnly(cause)
-                ? Effect.interrupt
-                : Effect.succeed(undefined),
+      // Each guild runs its endpoint's own authorization; one that fails is
+      // left out so the client reads just that guild itself.
+      const byGuild = <A, E, R>(read: (id: string) => Effect.Effect<A, E, R>) =>
+        Effect.forEach(
+          guildIds,
+          (id) =>
+            read(id).pipe(
+              Effect.map((value) => [id, value] as const),
+              Effect.catchCause((cause) =>
+                Cause.hasInterruptsOnly(cause)
+                  ? Effect.interrupt
+                  : Effect.succeed(undefined),
+              ),
             ),
+          { concurrency: "unbounded" },
+        ).pipe(
+          Effect.map((entries) =>
+            Object.fromEntries(entries.filter((entry) => entry !== undefined)),
           ),
+        );
+
+      const [guildPermissions, guildLootlogConfigs] = yield* Effect.all(
+        [byGuild(getGuildPermissions), byGuild(getLootlogConfig)],
         { concurrency: "unbounded" },
-      ).pipe(
-        Effect.map((entries) =>
-          Object.fromEntries(entries.filter((entry) => entry !== undefined)),
-        ),
       );
 
       const guildTimerDocuments =
@@ -94,11 +102,21 @@ export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
               guildIds: guildIds.join(","),
             }).pipe(orUnavailable("guildTimerDocuments"));
 
-      return { accessibleGuilds, guildTimerDocuments, guildPermissions };
+      return {
+        accessibleGuilds,
+        guildTimerDocuments,
+        guildPermissions,
+        guildLootlogConfigs,
+      };
     });
 
     const [
-      { accessibleGuilds, guildTimerDocuments, guildPermissions },
+      {
+        accessibleGuilds,
+        guildTimerDocuments,
+        guildPermissions,
+        guildLootlogConfigs,
+      },
       userPreferences,
       lootlogConfig,
       settingsDocuments,
@@ -125,6 +143,7 @@ export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
       settingsDocuments,
       guildTimerDocuments,
       guildPermissions,
+      guildLootlogConfigs,
       characterAura,
       characterAuras,
     };

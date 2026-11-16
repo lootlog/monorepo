@@ -1,4 +1,5 @@
 import { AccessRequirement } from "@lootlog/domain/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { decodeDomainJson } from "../../domain-json.schema.js";
@@ -69,6 +70,32 @@ describe("lootlog config HttpApi handlers", () => {
     ]);
     expect(dataCalls).toEqual([["guild-a", 1]]);
     expect(Schema.is(NpcLootlogConfigResponse)(response)).toBe(true);
+  });
+
+  // The game client of every member filters its loot reports by the
+  // configuration; requiring ADMIN again would send them all to the API.
+  it("lets every member with Lootlog access read the configuration", async () => {
+    const authorizationCalls: unknown[] = [];
+
+    const layer = provideServices(
+      makeData(),
+      LootlogConfigAuthorization.of({
+        requireCapability: (options) => {
+          authorizationCalls.push(options);
+
+          return Effect.succeed({ guildId: "guild-a" });
+        },
+      }),
+    );
+
+    const response = await Effect.runPromise(
+      getLootlogConfig("guild-alias").pipe(Effect.provide(layer)),
+    );
+
+    expect(authorizationCalls).toEqual([
+      { guildId: "guild-alias", anyOf: [Permission.LOOTLOG_ACCESS] },
+    ]);
+    expect(response).toEqual({ id: "guild-a", npcs: [npc] });
   });
 
   it("fails closed before config reads for a hidden Organization", async () => {

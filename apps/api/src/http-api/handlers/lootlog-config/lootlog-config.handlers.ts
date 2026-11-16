@@ -1,5 +1,8 @@
 import { AccessRequirement } from "@lootlog/domain/access-policy";
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import {
+  Permission,
+  type Permission as PermissionValue,
+} from "@lootlog/schema/permissions";
 import {
   optionalPathString,
   statusCodeResponse,
@@ -121,7 +124,10 @@ export class LootlogConfigData extends Context.Service<
   );
 }
 
-const authorize = (guildId: string | undefined) => {
+const authorize = (
+  guildId: string | undefined,
+  anyOf: ReadonlyArray<PermissionValue>,
+) => {
   if (typeof guildId !== "string") {
     return Effect.fail(
       new LootlogConfigAccessDenied({
@@ -132,17 +138,21 @@ const authorize = (guildId: string | undefined) => {
   }
 
   return Effect.flatMap(LootlogConfigAuthorization, (authorization) =>
-    authorization.requireCapability({
-      guildId,
-      anyOf: AccessRequirement.ADMINISTER,
-    }),
+    authorization.requireCapability({ guildId, anyOf }),
   );
 };
 
+/**
+ * Every member reads the configuration: the game client decides from it
+ * which loot to report, so it is no more than what a refused report tells.
+ */
 export const getLootlogConfig = Effect.fn("getLootlogConfig")(function* (
   requestedGuildId: string | undefined,
 ) {
-  const { guildId } = yield* authorize(requestedGuildId);
+  const { guildId } = yield* authorize(requestedGuildId, [
+    Permission.LOOTLOG_ACCESS,
+  ]);
+
   const data = yield* LootlogConfigData;
 
   // The open configuration fields can contain domain dates outside the declared fields.
@@ -160,7 +170,11 @@ export const updateLootlogConfigNpc = Effect.fn("updateLootlogConfigNpc")(
     npcId: number,
     payload: UpdateNpcLootlogConfigRequest,
   ) {
-    const { guildId } = yield* authorize(requestedGuildId);
+    const { guildId } = yield* authorize(
+      requestedGuildId,
+      AccessRequirement.ADMINISTER,
+    );
+
     const data = yield* LootlogConfigData;
 
     return yield* Schema.decodeUnknownEffect(NpcLootlogConfigResponse)(
