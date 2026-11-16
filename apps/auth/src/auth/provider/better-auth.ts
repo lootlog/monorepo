@@ -230,10 +230,7 @@ export class BetterAuthRuntime extends Context.Service<
   BetterAuthRuntime,
   AuthProvider &
     Pick<LootlogAuth, "handler"> & {
-      readonly apiKeys?: Pick<
-        LootlogAuth["api"],
-        "createApiKey" | "verifyApiKey"
-      >;
+      readonly apiKeys?: Pick<LootlogAuth["api"], "createApiKey">;
       readonly options: Pick<LootlogAuth["options"], "baseURL">;
     }
 >()("@lootlog/auth/BetterAuthRuntime") {

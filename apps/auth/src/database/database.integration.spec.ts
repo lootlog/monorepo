@@ -566,6 +566,8 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         );
 
         expect(stored[0]?.key).not.toBe(key.key);
+        // Verification is a hot path and must stay read-only on the key row.
+        expect(stored[0]?.lastRequest).toBeNull();
         await expect(
           keysRuntime.runPromise(keys.rename("another-user", key.id, "stolen")),
         ).rejects.toMatchObject({ status: 404 });
@@ -595,6 +597,15 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
             .set({ banned: false })
             .where(eq(authUsers.id, user.id)),
         );
+        await runtime.runPromise(
+          db
+            .update(authApiKeys)
+            .set({ expiresAt: new Date(Date.now() - 1000) })
+            .where(eq(authApiKeys.id, key.id)),
+        );
+        await expect(
+          keysRuntime.runPromise(keys.verify(key.key)),
+        ).rejects.toMatchObject({ status: 401 });
         await keysRuntime.runPromise(keys.remove(user.id, key.id));
         await expect(
           keysRuntime.runPromise(keys.verify(key.key)),
