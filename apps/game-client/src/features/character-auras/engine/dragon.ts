@@ -7,6 +7,7 @@
 import { clamp } from "es-toolkit";
 import type { Brush } from "./decor";
 import { rgba, type Rgb } from "./math";
+import type { EmitterSpec } from "./particles";
 import { pixelDisc, pixelLine, plot, softEllipse } from "./paint";
 
 export interface Point3 {
@@ -327,5 +328,59 @@ export function drawClouds(b: Brush, x: number, y: number, rx: number): void {
       pixelDisc(dim, cx + ox, cy, r);
       plot(lit, cx + ox, cy - r, [255, 240, 190], 0.7 * a);
     }
+  }
+}
+
+/** Heavenly Dragon: the spark the pearl sheds, drifting down as it fades. */
+export const PEARL_SPARK: EmitterSpec = {
+  kind: "mote",
+  rate: 0,
+  from: "feet",
+  life: [0.5, 0.9],
+  speed: [2, 6],
+  dir: Math.PI / 2,
+  spread: 1,
+  size: [0.8, 1.2],
+  colors: 2,
+  front: 0.5,
+};
+
+/** Heavenly Dragon: golden fire from the jaws; `dir` and `front` follow the head. */
+export const DRAGON_FIRE: EmitterSpec = {
+  kind: "ember",
+  rate: 0,
+  from: "feet",
+  life: [0.45, 0.8],
+  speed: [70, 110],
+  spread: 0.45,
+  drag: 0.6,
+  size: [2.6, 3.6],
+  colors: 4,
+  front: 0.5,
+};
+
+/**
+ * Keeps the dragon flat and out of a tooltip: a segment that cut a corner into the box,
+ * grown by `margin`, is pushed back out through its nearest side, so it never crosses the text.
+ */
+export function pushOutOfBox(
+  dragon: Dragon,
+  { x, y, w, h }: { x: number; y: number; w: number; h: number },
+  margin: number,
+): void {
+  for (const seg of dragon.segments) {
+    seg.z = 0;
+    const left = seg.x - (x - margin);
+    const right = x + w + margin - seg.x;
+    const top = seg.y - (y - margin);
+    const bottom = y + h + margin - seg.y;
+
+    if (left <= 0 || right <= 0 || top <= 0 || bottom <= 0) continue;
+    const nearest = Math.min(left, right, top, bottom);
+
+    if (nearest === left) seg.x = x - margin;
+    else if (nearest === right) seg.x = x + w + margin;
+    else if (nearest === top) seg.y = y - margin;
+    else seg.y = y + h + margin;
   }
 }
