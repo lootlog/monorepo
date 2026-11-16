@@ -82,6 +82,7 @@ const setup = async () => {
   const api = makeInternalGuildsData(
     {
       findActiveGuild: () => Effect.succeed(null),
+      findActiveMemberIdentity: () => Effect.succeed(null),
       findGuildsForPermissions: () =>
         Effect.sync(() =>
           members

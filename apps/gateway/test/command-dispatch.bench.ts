@@ -162,8 +162,14 @@ for (const [scenario, frames] of Object.entries(scenarios)) {
   const run = async (count: number) => {
     // Both counts are multiples of every scenario's frame count.
     for (let index = 0; index < count; index += frames.length)
-      for (const input of frames)
+      for (const input of frames) {
+        // One connection may send 15 batches per 3 s; forget them so every
+        // observation is admitted and the benchmark measures the merge.
+        if (socket.data.airTagBatchesSentAt)
+          socket.data.airTagBatchesSentAt.length = 0;
+
         await Effect.runPromise(handler.handle(socket, input));
+      }
   };
 
   await run(warmupCommands);

@@ -674,7 +674,7 @@ export class AirTagService {
   ): Effect.Effect<BatchAdmission | null> {
     const connection = admitConnectionBatch(socket.data, Date.now());
 
-    if (!connection.admitted)
+    if (connection.admitted === false)
       return Effect.succeed<BatchAdmission>({
         status: "rate-limited",
         retryAfterMs: connection.retryAfterMs,
@@ -725,7 +725,7 @@ export const airTagRoutes = (
           const admission = observationAdmission.tryAcquire();
 
           // A rejected batch loses nothing: the client merges it into its next one.
-          if (!admission.admitted)
+          if (admission.admitted === false)
             return Effect.succeed<AirTagObservationAck>({
               status: "rejected",
               code: "rate-limited",
