@@ -101,6 +101,14 @@ export type CatalogChange<Item, Npc> = {
   readonly saveNpcs: (
     npcs: ReadonlyArray<Npc>,
   ) => Effect.Effect<void, CatalogWriteFailure>;
+  /**
+   * Stores entries that a later loot left as they were. The loot id orders
+   * observations in the database and no search reads it, so the index keeps
+   * the entry it has and the change does not wait for a projection.
+   */
+  readonly saveNpcLoots: (
+    npcs: ReadonlyArray<Npc>,
+  ) => Effect.Effect<void, EffectDrizzleQueryError>;
 };
 
 /** Why a catalog change did not commit; only a rejected search request is final. */
@@ -203,6 +211,30 @@ export const makeCatalogStore = <
         .orderBy(asc(catalogNpcTable.uid)),
   };
 
+  const storeNpcs = (transaction: Transaction, npcs: ReadonlyArray<Npc>) =>
+    Effect.forEach(
+      chunk([...npcs], PROJECTION_BATCH),
+      (batch) =>
+        transaction
+          .insert(catalogNpcTable)
+          .values(
+            batch.map((npc) => ({
+              uid: npc.uid,
+              monsterKey: npc.monsterKey,
+              document: npc,
+            })),
+          )
+          .onConflictDoUpdate({
+            target: catalogNpcTable.uid,
+            set: {
+              monsterKey: sql`excluded."monsterKey"`,
+              document: sql`excluded."document"`,
+              updatedAt: sql`now()`,
+            },
+          }),
+      { discard: true },
+    );
+
   const change = (transaction: Transaction): CatalogChange<Item, Npc> => ({
     ...npcLookups(transaction),
     itemsByUids: (uids) =>
@@ -260,28 +292,10 @@ export const makeCatalogStore = <
       }),
     saveNpcs: (npcs) =>
       Effect.gen(function* () {
-        for (const batch of chunk([...npcs], PROJECTION_BATCH)) {
-          yield* transaction
-            .insert(catalogNpcTable)
-            .values(
-              batch.map((npc) => ({
-                uid: npc.uid,
-                monsterKey: npc.monsterKey,
-                document: npc,
-              })),
-            )
-            .onConflictDoUpdate({
-              target: catalogNpcTable.uid,
-              set: {
-                monsterKey: sql`excluded."monsterKey"`,
-                document: sql`excluded."document"`,
-                updatedAt: sql`now()`,
-              },
-            });
-        }
-
+        yield* storeNpcs(transaction, npcs);
         yield* project(NPCS_INDEX, npcs);
       }),
+    saveNpcLoots: (npcs) => storeNpcs(transaction, npcs),
   });
 
   /**
@@ -309,6 +323,7 @@ export const makeCatalogStore = <
             ...change(transaction),
             saveItems: noteSave,
             saveNpcs: noteSave,
+            saveNpcLoots: noteSave,
           }).pipe(Effect.map((result) => ({ result, saves })));
         },
         { isolationLevel: "repeatable read", accessMode: "read only" },
