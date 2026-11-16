@@ -14,10 +14,8 @@ import { ResourceConflictError } from "#src/shared/http/http-errors";
 import { EventTimersError } from "#src/events/respawn/event-timers.port";
 import { BearerSecurityMiddleware } from "./contracts/shared.js";
 import { LootlogApi } from "./lootlog-api.js";
-import {
-  EventsHandlers,
-  EventsAuthorization,
-} from "./handlers/events/events.handlers.js";
+import { EventsHandlers } from "./handlers/events/events.handlers.js";
+import { EventsAuthorization } from "./handlers/events/events-authorization.js";
 import { EventOperations } from "./handlers/events/events.data-layer.js";
 import {
   TimersHandlers,

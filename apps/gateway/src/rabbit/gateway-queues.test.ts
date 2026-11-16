@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { RabbitExchange } from "@lootlog/protocol/rabbit/topology";
-import { gatewayQueueDefinitions } from "./rabbit-bridge.js";
+import { gatewayQueueDefinitions } from "./gateway-queues.js";
 
 describe("Gateway RabbitMQ topology", () => {
   test("keeps every queue name unique", () => {
