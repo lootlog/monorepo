@@ -360,6 +360,38 @@ describe("AuthService", () => {
     });
   });
 
+  it("reports a failed token refresh as an expired token, not as a missing account", async () => {
+    const { auth, getAccessToken } = createFakeAuth();
+    getAccessToken.mockRejectedValue(
+      new APIError("BAD_REQUEST", {
+        code: "FAILED_TO_GET_ACCESS_TOKEN",
+        message: "Failed to get a valid access token",
+      }),
+    );
+
+    const idpToken = (accountId: string | null) =>
+      Effect.runPromise(
+        createAuthService({
+          auth,
+          appUrl: "http://localhost:3000",
+          findDiscordAccountId: () => Effect.succeed(accountId),
+          idpTokenSecret: Redacted.make("idp-test-secret"),
+        }).getIdpTokenResponse(
+          { userId: "user-1", discordId: "discord-1" },
+          "Bearer idp-test-secret",
+        ),
+      );
+
+    await expect(idpToken("account-row-1")).rejects.toMatchObject({
+      status: 401,
+      body: { error: "TOKEN_EXPIRED" },
+    });
+    await expect(idpToken(null)).rejects.toMatchObject({
+      status: 400,
+      body: { error: "ACCOUNT_NOT_FOUND" },
+    });
+  });
+
   it("requires reauthentication when Better Auth cannot refresh the Discord token", async () => {
     const { auth, getAccessToken, getSession } = createFakeAuth();
     getSession.mockResolvedValue({
