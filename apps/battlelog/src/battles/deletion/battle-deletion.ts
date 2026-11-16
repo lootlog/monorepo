@@ -9,6 +9,7 @@ import {
   battleObjectDeletions,
   battleSubmissions,
   battleTimelines,
+  battleWarriorFilters,
   battleWarriors,
   userCharacters,
   weaponKills,
@@ -130,6 +131,9 @@ export const makeBattleDeletion = (
         );
       }
 
+      yield* transaction
+        .delete(battleWarriorFilters)
+        .where(owned(battleWarriorFilters, battleWarriorFilters.battleId));
       yield* transaction
         .delete(battleTimelines)
         .where(owned(battleTimelines, battleTimelines.battleId));

@@ -14,7 +14,11 @@ import {
 } from "drizzle-orm";
 import { Effect } from "effect";
 import type { DrizzleDatabase } from "#src/database/database";
-import { battles, battleWarriors } from "#src/database/schema";
+import {
+  battles,
+  battleWarriorFilters,
+  battleWarriors,
+} from "#src/database/schema";
 import type { BattleAnalyticsQuery } from "./battle-analytics-query.service.js";
 import type {
   BattleStatisticsQuery,
@@ -95,29 +99,44 @@ export const makeBattleAnalyticsRead = (
       requireOpponent?: boolean;
     } = {},
   ) => {
+    // Both participants come from the owner's filter rows, so resolving them
+    // for a whole history reads only that owner's index entries.
+    const ownedBy = (battle: typeof battles) =>
+      and(
+        eq(battleWarriorFilters.userId, battle.userId),
+        eq(battleWarriorFilters.battleId, battle.id),
+      );
+
     const user = db
-      .select(snapshotColumns)
-      .from(battleWarriors)
+      .select({
+        originalId: battleWarriorFilters.originalId,
+        team: battleWarriorFilters.team,
+        ph: battleWarriorFilters.ph,
+      })
+      .from(battleWarriorFilters)
       .where(
         and(
-          eq(battleWarriors.battleId, battles.id),
-          inArray(battleWarriors.originalId, characterIds),
+          ownedBy(battles),
+          inArray(battleWarriorFilters.originalId, characterIds),
         ),
       )
-      .orderBy(...selectedWarriorOrder(battles))
+      .orderBy(...selectedWarriorOrder(battles, battleWarriorFilters))
       .limit(1)
       .as("analytics_user");
 
     const opponent = db
-      .select(snapshotColumns)
-      .from(battleWarriors)
+      .select({
+        originalId: battleWarriorFilters.originalId,
+        lvl: battleWarriorFilters.lvl,
+      })
+      .from(battleWarriorFilters)
       .where(
         and(
-          eq(battleWarriors.battleId, battles.id),
-          notInArray(battleWarriors.originalId, characterIds),
+          ownedBy(battles),
+          notInArray(battleWarriorFilters.originalId, characterIds),
         ),
       )
-      .orderBy(asc(battleWarriors.originalId))
+      .orderBy(asc(battleWarriorFilters.originalId))
       .limit(1)
       .as("analytics_opponent");
 
@@ -147,7 +166,7 @@ export const makeBattleAnalyticsRead = (
         ? undefined
         : queryModule.warriorExists(
             battles,
-            eq(battleWarriors.originalId, options.opponentId),
+            eq(battleWarriorFilters.originalId, options.opponentId),
           ),
       options.excludeBattleId === undefined
         ? undefined
@@ -647,6 +666,17 @@ export const makeBattleAnalyticsRead = (
       )
       .as("selected_opponent");
 
+    const selectedUser = db
+      .select(snapshotColumns)
+      .from(battleWarriors)
+      .where(
+        and(
+          eq(battleWarriors.battleId, battles.id),
+          eq(battleWarriors.originalId, user.originalId),
+        ),
+      )
+      .as("selected_user");
+
     const rows = yield* db
       .select({
         battleId: battles.id,
@@ -659,7 +689,7 @@ export const makeBattleAnalyticsRead = (
         ratingDelta: battles.ratingDelta,
         userRating: battles.rating,
         opponentRating: battles.opponentRating,
-        userWarrior: warriorSnapshotSelection(user),
+        userWarrior: warriorSnapshotSelection(selectedUser),
         opponentWarrior: warriorSnapshotSelection(selectedOpponent),
       })
       .from(battles)
@@ -667,6 +697,7 @@ export const makeBattleAnalyticsRead = (
       .leftJoinLateral(opponent, sql`true`)
       .where(where)
       .innerJoinLateral(selectedOpponent, sql`true`)
+      .innerJoinLateral(selectedUser, sql`true`)
       .orderBy(desc(battles.id))
       .limit(page.size)
       .offset(page.offset);

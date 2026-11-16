@@ -31,6 +31,34 @@ one step:
 - **No duplicated or derived data.** Participant statistics live only in their
   columns; `battles.statistics` is computed when a battle is read. A
   participant is identified by `("battleId", "originalId")`.
+- **Participant filters are keyed by owner.** `battle_warrior_filters` is the
+  one exception to the rule above: it repeats a participant's `name`, `lvl`,
+  `ph` and `team` under the battle's `"userId"`. Filtering a history through
+  `battle_warriors` takes one scattered lookup per battle: on the local
+  production copy the warrior search read 225,000 pages over about 8 seconds
+  for an owner of 38,000 battles, past the 2-second read budget. In
+  `battle_warrior_filters` an owner's participants are adjacent, and the
+  primary key holds every column, so the battle list filters, the analytics
+  filters and the warrior search read only the index. Analytics also pick a
+  battle's own and opposing participant there and read `battle_warriors` only
+  for the rows they return. Rows are written with
+  the battle, removed by `BattleDeletion` and never updated.
+  `20261116135340_battle_warrior_filters` fills the table from the existing
+  participants in one statement (about 6 minutes and 8 GB for 38 million
+  participants on the local production copy). Apply it before the release
+  that reads the table. The previous release saves battles without filter
+  rows until it is replaced, so add them once after the deploy, with a start
+  shortly before the migration ran:
+
+  ```sql
+  INSERT INTO battle_warrior_filters ("userId", "battleId", "originalId", name, lvl, ph, team)
+  SELECT b."userId", w."battleId", w."originalId", w.name, w.lvl, w.ph, w.team
+  FROM battles b
+  INNER JOIN battle_warriors w ON w."battleId" = b.id
+  WHERE b."createdAt" >= '2026-11-16'
+  ON CONFLICT DO NOTHING;
+  ```
+
 - **Plain side tables.** A unique index on a hypertable must contain the
   partition column, so `(userId, submissionId)` lives in `battle_submissions`.
   `BattleDeletion` removes a battle's rows from every table together instead
