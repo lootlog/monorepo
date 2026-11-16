@@ -31,7 +31,7 @@ import {
   getPermissionsCacheKey,
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "#src/shared/cache";
-import { MembersData } from "#src/http-api/handlers/members/members.handlers";
+import { MembersData } from "#src/members/members-data";
 import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 

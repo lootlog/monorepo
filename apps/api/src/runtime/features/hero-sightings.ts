@@ -9,8 +9,8 @@ import {
   makeCreateHeroSighting,
   makeHeroSightingClaims,
   makeHeroSightingReads,
-} from "#src/http-api/handlers/hero-sightings/hero-sightings.data-layer";
-import { HeroSightingsData } from "#src/http-api/handlers/hero-sightings/hero-sightings.handlers";
+} from "#src/hero-sightings/hero-sightings.data-layer";
+import { HeroSightingsData } from "#src/hero-sightings/hero-sightings-data";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
 /**

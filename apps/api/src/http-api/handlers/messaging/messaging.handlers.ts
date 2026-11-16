@@ -1,3 +1,8 @@
+import {
+  type MessagingCaller,
+  MessagingOperationError,
+  MessagingData,
+} from "#src/messaging/messaging-data";
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -13,45 +18,15 @@ import {
   type VolunteerForPartyRequest,
 } from "#src/contracts/messaging/schemas";
 
-export type MessagingCaller = {
-  readonly userId: string;
-  readonly discordId: string;
-};
-
 export class MessagingAccessDenied extends TaggedErrorClass<MessagingAccessDenied>()(
   "MessagingAccessDenied",
   { status: Schema.Literal(401), code: Schema.String },
-) {}
-
-export class MessagingOperationError extends TaggedErrorClass<MessagingOperationError>()(
-  "MessagingOperationError",
-  { cause: Schema.Defect() },
 ) {}
 
 export class MessagingIdentity extends Context.Service<
   MessagingIdentity,
   { readonly caller: Effect.Effect<MessagingCaller, MessagingAccessDenied> }
 >()("@lootlog/api/http-api/messaging/identity") {}
-
-export class MessagingData extends Context.Service<
-  MessagingData,
-  {
-    readonly sendNotification: (
-      caller: MessagingCaller,
-      payload: SendNotificationRequest,
-    ) => Effect.Effect<unknown, MessagingOperationError>;
-    readonly volunteer: (
-      discordId: string,
-      notificationId: string,
-      payload: VolunteerForPartyRequest,
-    ) => Effect.Effect<void, MessagingOperationError>;
-    readonly going: (
-      caller: MessagingCaller,
-      notificationId: string,
-      payload: NotificationGoingRequest,
-    ) => Effect.Effect<unknown, MessagingOperationError>;
-  }
->()("@lootlog/api/http-api/messaging/data") {}
 
 const caller = Effect.flatMap(MessagingIdentity, (identity) => identity.caller);
 

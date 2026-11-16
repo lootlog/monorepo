@@ -1,11 +1,17 @@
 import {
+  type HeroSightingsIdentity,
+  type HeroSightingsGuildAccess,
+  type DataEffect,
+  HeroSightingsData,
+} from "#src/hero-sightings/hero-sightings-data";
+import {
   reauthenticationRequiredResponse,
   statusCodeResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
-import type { AccessPolicy } from "@lootlog/domain/access-policy";
+
 import {
   HERO_SIGHTING_WRITE_PERMISSION,
   NPC_FEATURE_PERMISSIONS,
@@ -15,31 +21,11 @@ import type { Permission as PermissionValue } from "@lootlog/schema/permissions"
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { LootlogApi } from "../../lootlog-api.js";
 import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
-import type {
-  ClaimHeroSightingRequest,
-  CreateHeroSightingRequest,
-  CreateHeroSightingResponse,
-  HeroSightingResponse,
-  HeroSightingsResponse,
-} from "#src/contracts/hero-sightings/schemas";
-import type { Guild, Role } from "#src/timers/timers.types";
-import type { MemberWithRoles } from "#src/members/member.types";
+
 import type {
   HeroSightingsDataFailure,
   HeroSightingsNotFound,
-} from "./hero-sighting-errors.js";
-
-export type HeroSightingsIdentity = {
-  readonly userId: string;
-  readonly discordId: string;
-};
-
-export type HeroSightingsGuildAccess = HeroSightingsIdentity & {
-  readonly guild: Guild;
-  readonly member: MemberWithRoles;
-  readonly accessPolicy: AccessPolicy;
-  readonly roles: ReadonlyArray<Role>;
-};
+} from "#src/hero-sightings/hero-sighting-errors";
 
 export class HeroSightingsAccessDenied extends TaggedErrorClass<HeroSightingsAccessDenied>()(
   "HeroSightingsAccessDenied",
@@ -64,40 +50,6 @@ export class HeroSightingsAuthorization extends Context.Service<
     >;
   }
 >()("@lootlog/api/http-api/hero-sightings/authorization") {}
-
-type DataEffect<A> = Effect.Effect<A, HeroSightingsDataFailure>;
-
-export class HeroSightingsData extends Context.Service<
-  HeroSightingsData,
-  {
-    readonly create: (
-      identity: HeroSightingsIdentity,
-      payload: CreateHeroSightingRequest,
-    ) => DataEffect<CreateHeroSightingResponse>;
-    readonly getAll: (
-      identity: HeroSightingsIdentity,
-      world: string,
-    ) => DataEffect<HeroSightingsResponse>;
-    readonly getGuildSightings: (
-      access: HeroSightingsGuildAccess,
-      world: string,
-    ) => DataEffect<HeroSightingsResponse>;
-    readonly getHistory: (
-      access: HeroSightingsGuildAccess,
-      world: string,
-      hero: string,
-    ) => DataEffect<HeroSightingsResponse>;
-    readonly claim: (
-      access: HeroSightingsGuildAccess,
-      sightingId: number,
-      payload: ClaimHeroSightingRequest,
-    ) => DataEffect<HeroSightingResponse>;
-    readonly unclaim: (
-      access: HeroSightingsGuildAccess,
-      sightingId: number,
-    ) => DataEffect<HeroSightingResponse>;
-  }
->()("@lootlog/api/http-api/hero-sightings/data") {}
 
 /** Reads need the hero tier as well, which each sighting checks by its level. */
 const READ_PERMISSION =

@@ -3,7 +3,7 @@ import {
   type PartyGatheringUpdateEnvelope,
 } from "@lootlog/schema/party-ready-room";
 import { Effect, Schema } from "effect";
-import type { ReadyRoomRedis } from "#src/http-api/handlers/party-ready-room/ready-room.repository";
+import type { ReadyRoomRedis } from "./ready-room.repository.js";
 import { createPartyGatheringUpdateEnvelope } from "./ready-room-projection.js";
 import type { ReadyRoomAggregate } from "./ready-room.types.js";
 

@@ -1,0 +1,100 @@
+import { activeEventCondition } from "#src/events/event-scope-query";
+import { and, eq, or } from "drizzle-orm";
+import { AccessRequirement } from "@lootlog/domain/access-policy";
+import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
+import type { TimersGuildAccess } from "./timers-data.js";
+import { timerNpcField, parseTimerNpc } from "./timer-projection.js";
+import type { ApiDatabase } from "#src/database/drizzle/database";
+import {
+  eventHeroNpcTable,
+  eventTable,
+} from "#src/database/drizzle/event.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
+import { isLegacyNpcIdIdentifier } from "./timer-key.js";
+
+export const canViewTimer = (
+  access: Pick<TimersGuildAccess, "accessPolicy" | "roles">,
+  timer: Pick<typeof timerTable.$inferSelect, "npc">,
+) =>
+  access.accessPolicy.allowsAny(AccessRequirement.ADMINISTER) ||
+  canViewNpcTimer(parseTimerNpc(timer.npc), access.roles);
+
+type TimerDatabase = Pick<typeof ApiDatabase.Service, "select">;
+
+export const timerIdentifierCondition = (
+  guildId: string,
+  world: string,
+  timerIdentifier: string,
+) =>
+  isLegacyNpcIdIdentifier(timerIdentifier)
+    ? and(
+        eq(timerTable.guildId, guildId),
+        eq(timerTable.world, world),
+        eq(timerTable.npcId, Number.parseInt(timerIdentifier, 10)),
+      )
+    : and(
+        eq(timerTable.guildId, guildId),
+        eq(timerTable.world, world),
+        eq(timerTable.timerKey, timerIdentifier),
+      );
+
+export const findTimerMatches = (
+  database: TimerDatabase,
+  guildId: string,
+  world: string,
+  timerIdentifier: string,
+) => {
+  const timerCondition = timerIdentifierCondition(
+    guildId,
+    world,
+    timerIdentifier,
+  );
+
+  return database.select().from(timerTable).where(timerCondition);
+};
+
+export const activeTimerEventCondition = (
+  guildId: string,
+  world: string,
+  npcId: number,
+  npcName: string,
+  now: Date,
+) =>
+  and(
+    eq(eventTable.guildId, guildId),
+    eq(eventTable.world, world),
+    or(
+      eq(eventHeroNpcTable.npcId, npcId),
+      eq(eventHeroNpcTable.npcName, npcName),
+    ),
+    activeEventCondition(now),
+  );
+
+type TimerEventNpc = Pick<typeof timerTable.$inferSelect, "npcId" | "npc">;
+
+export const findActiveTimerEventHeroes = (
+  database: TimerDatabase,
+  guildId: string,
+  world: string,
+  timers: readonly [TimerEventNpc, ...TimerEventNpc[]],
+  now: Date,
+) => {
+  return database
+    .select({ id: eventHeroNpcTable.id })
+    .from(eventHeroNpcTable)
+    .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
+    .where(
+      or(
+        ...timers.map((timer) =>
+          activeTimerEventCondition(
+            guildId,
+            world,
+            timer.npcId,
+            String(timerNpcField(timer.npc, "name") ?? ""),
+            now,
+          ),
+        ),
+      ),
+    )
+    .limit(1);
+};

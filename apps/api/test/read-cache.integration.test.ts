@@ -1,6 +1,6 @@
 import { UserLootlogConfigData } from "#src/http-api/handlers/user-lootlog-config/user-lootlog-config.handlers";
-import { MemberReadData } from "#src/http-api/handlers/members/members.handlers";
-import { makeMemberReadDataLayer } from "#src/http-api/handlers/members/member-read.data-layer";
+import { MemberReadData } from "../src/members/members-data.js";
+import { makeMemberReadDataLayer } from "../src/members/member-read.data-layer.js";
 import { afterAll, beforeAll, describe, expect, it, spyOn } from "bun:test";
 import { createDatabaseBoundary } from "./database-fixtures.js";
 import { randomUUID } from "node:crypto";

@@ -38,7 +38,7 @@ import { makeNotificationJobStore } from "#src/notifications/jobs/notification-j
 import { makeNotificationMatching } from "#src/notifications/rules/notification-matching.service";
 import { makeNotificationGuildTargets } from "#src/notifications/targets/notification-guild-targets";
 import { applicationLogger } from "#src/shared/application-logger";
-import { makeAutoTimer } from "#src/http-api/handlers/timers/timer-auto.data-layer";
+import { makeAutoTimer } from "#src/timers/timer-auto.data-layer";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import { decodeRabbitEventJson } from "@lootlog/protocol/rabbit/events";

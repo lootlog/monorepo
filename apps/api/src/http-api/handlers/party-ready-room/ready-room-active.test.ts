@@ -42,8 +42,8 @@ import {
   PartyReadyRoomHandlers,
   ReadyRoomAuthorization,
 } from "./party-ready-room.handlers.js";
-import { makeReadyRoomDataLayer } from "./ready-room.data-layer.js";
-import type { ReadyRoomRedis } from "./ready-room.repository.js";
+import { makeReadyRoomDataLayer } from "#src/messaging/ready-room/ready-room.data-layer";
+import type { ReadyRoomRedis } from "#src/messaging/ready-room/ready-room.repository";
 
 it("keeps authorized gathering rosters current across discovery, observations, applications and cancellation", async () => {
   const databaseBoundary = await createDatabaseBoundary();

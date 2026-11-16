@@ -12,19 +12,19 @@ import { HttpClient } from "effect/http";
 import {
   GuildSummaryCacheSchema,
   makeAccessibleGuilds,
-} from "#src/http-api/handlers/account-organization/accessible-guilds.data-layer";
-import { makeCurrentUserGuilds } from "#src/http-api/handlers/account-organization/current-user-guilds.data-layer";
-import { makeGuildDiscordSyncData } from "#src/http-api/handlers/account-organization/guild-discord-sync.data-layer";
-import { makeManageableGuilds } from "#src/http-api/handlers/account-organization/manageable-guilds.data-layer";
-import { makeUserAccountDeletion } from "#src/http-api/handlers/account-organization/user-account-deletion.data-layer";
-import { makeUserPreferencesData } from "#src/http-api/handlers/account-organization/user-preferences.data-layer";
+} from "#src/guilds/accessible-guilds.data-layer";
+import { makeCurrentUserGuilds } from "#src/guilds/current-user-guilds.data-layer";
+import { makeGuildDiscordSyncData } from "#src/guilds/guild-discord-sync.data-layer";
+import { makeManageableGuilds } from "#src/guilds/manageable-guilds.data-layer";
+import { makeUserAccountDeletion } from "#src/users/user-account-deletion.data-layer";
+import { makeUserPreferencesData } from "#src/users/user-preferences.data-layer";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
 import {
   AccountOrganizationData,
   AccountOrganizationOperationError,
-  GuildConfigurationData,
-} from "#src/http-api/handlers/account-organization/account-organization.operations";
+} from "#src/guilds/account-organization-data";
+import { GuildConfigurationData } from "#src/guilds/guild-configuration-data";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import {
@@ -36,10 +36,8 @@ import {
   InternalGuildsOperationError,
   type InternalGuildsCache,
 } from "#src/http-api/handlers/internal/internal.handlers";
-import {
-  OrganizationWorkspaceOperationError,
-  RolesData,
-} from "#src/http-api/handlers/organization-workspace/organization-workspace.operations";
+import { OrganizationWorkspaceOperationError } from "#src/guilds/organization-workspace-access";
+import { RolesData } from "#src/guilds/roles-data";
 import { MemberServices, membersData } from "#src/runtime/features/members";
 
 type GuildDiscordSyncValue = ReturnType<typeof makeGuildDiscordSyncData>;

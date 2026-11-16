@@ -18,10 +18,8 @@ import {
   SettingsOperationError,
   toSettingsHttpResponse,
 } from "../settings/settings.operations.js";
-import {
-  AccountOrganizationOperationError,
-  toAccountOrganizationHttpResponse,
-} from "../account-organization/account-organization.operations.js";
+import { AccountOrganizationOperationError } from "#src/guilds/account-organization-data";
+import { toAccountOrganizationHttpResponse } from "../account-organization/account-organization.operations.js";
 
 describe("business failures survive HTTP mapping", () => {
   it.each([

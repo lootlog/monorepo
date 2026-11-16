@@ -11,13 +11,9 @@ import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
-import {
-  ChatOperationError,
-  ChatHandlers,
-  ChatData,
-  ChatAuthorization,
-} from "./chat.handlers.js";
-import { makeChatOperations, type ChatRedis } from "./chat.data-layer.js";
+import { ChatOperationError, ChatData } from "#src/chat/chat-data";
+import { ChatHandlers, ChatAuthorization } from "./chat.handlers.js";
+import { makeChatOperations, type ChatRedis } from "#src/chat/chat.data-layer";
 
 const message = {
   id: "message",

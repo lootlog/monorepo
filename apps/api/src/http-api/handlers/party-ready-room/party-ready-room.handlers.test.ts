@@ -7,10 +7,12 @@ import {
 } from "#src/shared/http/http-errors";
 import { PartyReadyRoomResponse } from "#src/contracts/party-ready-room/schemas";
 import {
-  ReadyRoomAccessDenied,
-  ReadyRoomAuthorization,
   ReadyRoomData,
   ReadyRoomOperationError,
+} from "#src/messaging/ready-room/ready-room-data";
+import {
+  ReadyRoomAccessDenied,
+  ReadyRoomAuthorization,
   activeReadyRooms,
   cancelReadyRoom,
   createReadyRoom,

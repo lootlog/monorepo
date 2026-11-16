@@ -2,10 +2,10 @@ import { describe, expect, it } from "bun:test";
 import { Effect, Layer } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import {
-  AccountOrganizationAuthorization,
   AccountOrganizationData,
   AccountOrganizationOperationError,
-} from "../account-organization/account-organization.operations.js";
+} from "#src/guilds/account-organization-data";
+import { AccountOrganizationAuthorization } from "../account-organization/account-organization.operations.js";
 import {
   SettingsData,
   SettingsIdentity,
@@ -15,10 +15,8 @@ import {
   UserLootlogConfigIdentity,
   UserLootlogConfigOperationError,
 } from "../user-lootlog-config/user-lootlog-config.handlers.js";
-import {
-  CharacterAurasData,
-  CharacterAurasIdentity,
-} from "../character-auras/character-auras.handlers.js";
+import { CharacterAurasData } from "#src/character-auras/character-auras-data";
+import { CharacterAurasIdentity } from "../character-auras/character-auras.handlers.js";
 import { getGameClientBootstrap } from "./game-client-bootstrap.operations.js";
 
 const identity = { userId: "user-a", discordId: "discord-a" };

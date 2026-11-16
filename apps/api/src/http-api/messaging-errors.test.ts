@@ -20,17 +20,19 @@ import {
   MessagingHandlers,
   MessagingIdentity,
 } from "./handlers/messaging/messaging.handlers.js";
-import { makeMessagingDataLayer } from "./handlers/messaging/messaging.data-layer.js";
+import { makeMessagingDataLayer } from "#src/messaging/messaging.data-layer";
 import {
   LootlogConfigHandlers,
   LootlogConfigData,
   LootlogConfigAuthorization,
 } from "./handlers/lootlog-config/lootlog-config.handlers.js";
 import {
-  PartyReadyRoomHandlers,
-  ReadyRoomAuthorization,
   ReadyRoomData,
   ReadyRoomOperationError,
+} from "#src/messaging/ready-room/ready-room-data";
+import {
+  PartyReadyRoomHandlers,
+  ReadyRoomAuthorization,
 } from "./handlers/party-ready-room/party-ready-room.handlers.js";
 
 const caller = { userId: "user", discordId: "discord" };

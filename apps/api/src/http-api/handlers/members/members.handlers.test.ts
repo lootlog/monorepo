@@ -6,7 +6,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import {
   MemberBoundary,
   MemberRefreshJobBoundary,
-} from "./member-response.schema.js";
+} from "#src/members/member-response.schema";
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import {
   NullableMemberRefreshJobResponse,
@@ -14,13 +14,15 @@ import {
   MemberResponse,
 } from "#src/contracts/members/schemas";
 import {
+  MembersData,
+  MemberReadData,
+  MemberRefreshJobData,
+} from "#src/members/members-data";
+import {
   deactivateGuildMember,
   getCurrentMember,
   MembersAccessDenied,
   MembersAuthorization,
-  MembersData,
-  MemberReadData,
-  MemberRefreshJobData,
   MembersNotFound,
   refreshGuildMember,
 } from "./members.handlers.js";

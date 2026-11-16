@@ -52,8 +52,8 @@ import {
   membersData,
   memberServicesLive,
 } from "#src/runtime/features/members";
-import { MemberRefreshJobDataLive } from "#src/http-api/handlers/members/member-read.data-layer";
-import { MyReservationsData } from "#src/http-api/handlers/organization-workspace/organization-workspace.operations";
+import { MemberRefreshJobDataLive } from "#src/members/member-read.data-layer";
+import { MyReservationsData } from "#src/reservations/reservations-data";
 import { timersData } from "#src/runtime/features/timers";
 import { heroSightingsData } from "#src/runtime/features/hero-sightings";
 
