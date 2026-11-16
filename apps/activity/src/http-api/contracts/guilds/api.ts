@@ -11,9 +11,6 @@ import {
   ActivitiesControllerFindByGuild200,
   ActivitiesControllerFindByGuildPathParams,
   ActivitiesControllerFindByGuildQuery,
-  ActivitiesControllerFindByUser200,
-  ActivitiesControllerFindByUserPathParams,
-  ActivitiesControllerFindByUserQuery,
   ActivitiesControllerFindOne200,
   ActivitiesControllerFindOnePathParams,
   ActivitiesControllerGetMemberActivityStats200,
@@ -86,19 +83,6 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "ActivitiesController_suggestClanNames")
     .annotate(OpenApi.Summary, "Get clan name suggestions for a guild"),
-  HttpApiEndpoint.get(
-    "ActivitiesControllerFindByUser",
-    "/guilds/:guildId/users/:userId/activity-logs",
-    {
-      params: ActivitiesControllerFindByUserPathParams,
-      query: ActivitiesControllerFindByUserQuery,
-      success: ActivitiesControllerFindByUser200,
-      error: AuthorizationUnavailable,
-    },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(OpenApi.Identifier, "ActivitiesController_findByUser")
-    .annotate(OpenApi.Summary, "Get activities for a specific user in a guild"),
   HttpApiEndpoint.get(
     "ActivitiesControllerGetMemberActivityStats",
     "/guilds/:guildId/member-activity-stats",

@@ -5,8 +5,8 @@ description: Every change to the HTTP, realtime and game client contracts, by th
 
 ## 2026-11-16 — Duplicate and legacy operations removed (breaking)
 
-Fourteen operations that duplicated another one are removed and return `404`.
-The replacements already exist and return the same data:
+Fifteen operations that duplicated another one are removed and return `404`.
+The replacements return the same data:
 
 - `GET /guilds/{guildId}/config` → `GET /guilds/{guildId}`.
   `PATCH /guilds/{guildId}/config` is unchanged.
@@ -24,6 +24,9 @@ The replacements already exist and return the same data:
   keys no longer read or change game account preferences.
 - `GET /battles/@me/worlds` on Battlelog → `GET /battles/@me/characters`; the
   worlds are the distinct `world` values of the returned characters.
+- `GET /guilds/{guildId}/users/{userId}/activity-logs` on Activity →
+  `GET /guilds/{guildId}/activity-logs?userId=`, a new optional filter that
+  combines with the other filters and the cursor.
 
 The matching functions are removed from `@lootlog/sdk` in its next release.
 

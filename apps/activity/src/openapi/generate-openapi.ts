@@ -23,7 +23,6 @@ preserveOpenApi30Contract(
     "ActivitiesController_suggestActorNames:limit": boundedInteger(1, 50, 10),
     "ActivitiesController_suggestWorlds:limit": boundedInteger(1, 50, 20),
     "ActivitiesController_suggestClanNames:limit": boundedInteger(1, 50, 10),
-    "ActivitiesController_findByUser:limit": boundedInteger(1, 100, 50),
   },
   {
     "HealthzController_check:200": "The Activity process is responding",
