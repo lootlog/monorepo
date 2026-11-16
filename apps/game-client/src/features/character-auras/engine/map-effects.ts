@@ -7,7 +7,7 @@ import { drawTimeStop } from "./chrono";
 import { COSMOS_GLOOM, drawCosmosSky } from "./cosmos";
 import { drawWireframe, WIREFRAME_GLOOM, WIREFRAME_VEIL } from "./glitch";
 import type { Rgb } from "./math";
-import type { MapEffectKind } from "./presets";
+import type { MapEffectKind } from "./presets/preset";
 import type { MapScene } from "./sky";
 import { drawStorm, STORM_GLOOM } from "./storm";
 import { BLIZZARD_GLOOM, BLIZZARD_VEIL, drawBlizzard } from "./winter";

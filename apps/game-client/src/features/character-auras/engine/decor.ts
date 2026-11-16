@@ -18,7 +18,7 @@ import { drawTipPlanet, drawTipStars } from "./cosmos";
 import { drawClouds } from "./dragon";
 import { drawTipBrackets, drawTipRain } from "./glitch";
 import { drawTipSnow } from "./winter";
-import type { TipDeco } from "./presets";
+import type { TipDeco } from "./presets/preset";
 
 /** What a decoration draws with: the layer buffers, the stepped clock and the aura's colours. */
 export interface Brush {
