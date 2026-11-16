@@ -1,0 +1,120 @@
+import { describe, expect, test } from "bun:test";
+import { Effect } from "effect";
+import {
+  COMMIT_READY_ROOM_SCRIPT,
+  CREATE_READY_ROOM_SCRIPT,
+} from "./ready-room-redis-scripts.js";
+import type { ReadyRoomAggregate } from "./ready-room.types.js";
+import {
+  makeReadyRoomRepository,
+  type ReadyRoomRedis,
+} from "./ready-room.repository.js";
+
+const clock = () => Date.parse("2026-09-02T10:00:00.000Z");
+
+const aggregate = (overrides: Partial<ReadyRoomAggregate> = {}) =>
+  ({
+    schemaVersion: 3,
+    notificationId: "notification-1",
+    organizerDiscordId: "discord-1",
+    organizerCharacter: {
+      accountId: "account-1",
+      characterId: "character-1",
+      nick: "Organizer",
+      lvl: 100,
+      prof: "w",
+      icon: "icon",
+    },
+    guildIds: ["guild-1"],
+    world: "Tempest",
+    status: "ACTIVE",
+    revision: 1,
+    createdAt: "2026-09-02T10:00:00.000Z",
+    updatedAt: "2026-09-02T10:00:00.000Z",
+    expiresAt: "2026-09-02T10:30:00.000Z",
+    participants: {},
+    ...overrides,
+  }) satisfies ReadyRoomAggregate;
+
+describe("Effect Ready Room repository", () => {
+  test("preserves v3 Redis keys and the remaining room TTL on create", async () => {
+    const calls: Array<{
+      script: string;
+      keys: ReadonlyArray<string>;
+      arguments_: ReadonlyArray<string | number>;
+    }> = [];
+
+    const redis: ReadyRoomRedis = {
+      getJson: () => Effect.succeed(null),
+      eval: (
+        script: string,
+        keys: ReadonlyArray<string>,
+        arguments_: ReadonlyArray<string | number>,
+      ) => {
+        calls.push({ script, keys, arguments_ });
+
+        return Effect.succeed(["CREATED"]);
+      },
+    };
+
+    const result = await Effect.runPromise(
+      makeReadyRoomRepository(redis, clock).create(aggregate()),
+    );
+
+    expect(result.status).toBe("created");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.script).toBe(CREATE_READY_ROOM_SCRIPT);
+    expect(calls[0]?.keys).toEqual([
+      "party-ready-room:v3:room:notification-1",
+      "party-ready-room:v3:organizer:discord-1",
+      "party-ready-room:v3:character:Tempest:character-1",
+      "party-ready-room:v3:discovery:guild-1:Tempest",
+      "party-ready-room:v3:publications",
+      "party-ready-room:v3:publication-due",
+    ]);
+    expect(calls[0]?.arguments_[3]).toBe(1800);
+    expect(calls[0]?.arguments_[4]).toBe(Date.parse(aggregate().expiresAt));
+  });
+
+  test("maps a Redis CAS mismatch to a typed conflict result", async () => {
+    const redis: ReadyRoomRedis = {
+      getJson: () => Effect.succeed(null),
+      eval: (script: string) => {
+        expect(script).toBe(COMMIT_READY_ROOM_SCRIPT);
+
+        return Effect.succeed(["CONFLICT"]);
+      },
+    };
+
+    const current = aggregate();
+    const next = aggregate({ revision: 2 });
+
+    await expect(
+      Effect.runPromise(
+        makeReadyRoomRepository(redis, clock).commit(current, next),
+      ),
+    ).resolves.toEqual({ status: "conflict" });
+  });
+
+  test("does not execute Redis when the aggregate already expired", async () => {
+    let evalCount = 0;
+
+    const redis: ReadyRoomRedis = {
+      getJson: () => Effect.succeed(null),
+      eval: () => {
+        evalCount += 1;
+
+        return Effect.succeed([]);
+      },
+    };
+
+    await expect(
+      Effect.runPromise(
+        makeReadyRoomRepository(redis, clock).create(
+          aggregate({ expiresAt: "2026-09-02T09:59:59.000Z" }),
+        ),
+      ),
+    ).rejects.toThrow("Ready Room must expire in the future");
+    expect(evalCount).toBe(0);
+  });
+});

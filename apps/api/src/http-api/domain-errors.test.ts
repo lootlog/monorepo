@@ -17,12 +17,12 @@ import { LootlogApi } from "./lootlog-api.js";
 import { EventsHandlers } from "./handlers/events/events.handlers.js";
 import { EventsAuthorization } from "./handlers/events/events-authorization.js";
 import { EventOperations } from "./handlers/events/events.data-layer.js";
+import { TimersData } from "#src/timers/timers-data";
 import {
   TimersHandlers,
   TimersAuthorization,
-  TimersData,
 } from "./handlers/timers/timers.handlers.js";
-import { toTimersDataFailure } from "./handlers/timers/timer-errors.js";
+import { toTimersDataFailure } from "#src/timers/timer-errors";
 import {
   NotificationsHandlers,
   NotificationsAuthorization,

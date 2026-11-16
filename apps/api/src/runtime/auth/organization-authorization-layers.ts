@@ -54,12 +54,12 @@ import {
   TimersAccessDenied,
   TimersAuthorization,
 } from "#src/http-api/handlers/timers/timers.handlers";
-import { TimersNotFound } from "#src/http-api/handlers/timers/timer-errors";
+import { TimersNotFound } from "#src/timers/timer-errors";
 import {
   HeroSightingsAccessDenied,
   HeroSightingsAuthorization,
 } from "#src/http-api/handlers/hero-sightings/hero-sightings.handlers";
-import { HeroSightingsNotFound } from "#src/http-api/handlers/hero-sightings/hero-sighting-errors";
+import { HeroSightingsNotFound } from "#src/hero-sightings/hero-sighting-errors";
 import {
   AccountOrganizationAccessDenied,
   AccountOrganizationAuthorization,

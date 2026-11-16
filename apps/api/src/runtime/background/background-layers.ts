@@ -1,4 +1,4 @@
-import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
+import { ReadyRoomData } from "#src/messaging/ready-room/ready-room-data";
 import { makeNotificationContent } from "#src/notifications/content/notification-content.service";
 import { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";

@@ -12,7 +12,7 @@ import { Redis } from "effect/persistence";
 import { GLOBAL_CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
 import { RedisService } from "#src/redis/redis.service";
 import { makeGlobalChatStore } from "#src/runtime/features/global-chat";
-import type { GlobalChatStore } from "#src/http-api/handlers/global-chat/global-chat.data-layer";
+import type { GlobalChatStore } from "../src/global-chat/global-chat.data-layer.js";
 
 describe("Global chat store Dragonfly integration", () => {
   let redis: RedisService;

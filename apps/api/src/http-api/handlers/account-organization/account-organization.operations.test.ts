@@ -13,18 +13,18 @@ import { LootlogApi } from "../../lootlog-api.js";
 
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { GuildsHandlers } from "../guilds/guilds.handlers.js";
+import { AccountOrganizationData } from "#src/guilds/account-organization-data";
+import { GuildConfigurationData } from "#src/guilds/guild-configuration-data";
 import {
-  GuildConfigurationData,
   getCurrentUserPreferences,
   updateCurrentUserPreferences,
   updateGuildConfiguration,
   AccountOrganizationAccessDenied,
   AccountOrganizationAuthorization,
-  AccountOrganizationData,
   AccountOrganizationNotFound,
 } from "./account-organization.operations.js";
 
-import { makeManageableGuilds } from "./manageable-guilds.data-layer.js";
+import { makeManageableGuilds } from "#src/guilds/manageable-guilds.data-layer";
 
 const identity = { userId: "user-a", discordId: "discord-a" };
 

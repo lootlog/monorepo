@@ -1,5 +1,15 @@
-import { readGuildOrderPreference } from "#src/guilds/guild-order-query";
-import { sortGuildsByPreference } from "#src/guilds/guild-order";
+import { RolesData } from "#src/guilds/roles-data";
+import {
+  OrganizationWorkspaceData,
+  MyReservationsData,
+  ReservationReadData,
+  ReservationSharingData,
+} from "#src/reservations/reservations-data";
+import {
+  type OrganizationWorkspaceIdentity,
+  OrganizationWorkspaceOperationError,
+} from "#src/guilds/organization-workspace-access";
+
 import {
   AcceptedReservationShareBoundary,
   CreatedReservationShareInvitationBoundary,
@@ -10,42 +20,28 @@ import {
   ReservationSpotsBoundary,
   ReservationWindowBoundary,
 } from "./organization-workspace-response.schema.js";
-import type { GuildMemberChanged } from "@lootlog/protocol/rabbit/events";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
-import { selectActiveRoleHolders } from "#src/members/member-role-holders";
+
 import {
   pathString,
   statusCodeResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Clock, Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Schema } from "effect";
 import { applicationErrorResponse } from "#src/http-api/application-error-response";
-import {
-  createAccessPolicy,
-  AccessRequirement,
-} from "@lootlog/domain/access-policy";
+import { AccessRequirement } from "@lootlog/domain/access-policy";
 import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import type { ReservationViewerContext } from "#src/reservations/reservation-viewer";
-import { and, asc, desc, eq, gte, inArray, lt, or } from "drizzle-orm";
-import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  guildTable,
-  roleTable,
-} from "#src/database/drizzle/organization.schema";
-import { reservationTable } from "#src/database/drizzle/reservation.schema";
-import { presentReservation } from "#src/reservations/reservation-presentation";
+
 import {
   ApplicationError,
   applicationErrorStatus,
   applicationErrorStatusOrUndefined,
-  PermissionDeniedError,
-  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { getPermissionsCachePattern } from "#src/shared/cache";
+
 import type { AcceptReservationShareInvitationRequest } from "#src/contracts/reservation-sharing/schemas";
 
 import type {
@@ -62,11 +58,6 @@ import {
 } from "#src/contracts/roles/schemas";
 import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
-export type OrganizationWorkspaceIdentity = {
-  readonly userId: string;
-  readonly discordId: string;
-};
-
 export type OrganizationWorkspaceGuildAccess = OrganizationWorkspaceIdentity & {
   readonly guildId: string;
   readonly ownerId: string;
@@ -81,11 +72,6 @@ export class OrganizationWorkspaceAccessDenied extends TaggedErrorClass<Organiza
 export class OrganizationWorkspaceNotFound extends TaggedErrorClass<OrganizationWorkspaceNotFound>()(
   "OrganizationWorkspaceNotFound",
   { status: Schema.Literal(404), code: Schema.String },
-) {}
-
-export class OrganizationWorkspaceOperationError extends TaggedErrorClass<OrganizationWorkspaceOperationError>()(
-  "OrganizationWorkspaceOperationError",
-  { cause: Schema.Defect() },
 ) {}
 
 type AccessFailure =
@@ -107,320 +93,6 @@ export class OrganizationWorkspaceAuthorization extends Context.Service<
     }) => Effect.Effect<OrganizationWorkspaceGuildAccess, AccessFailure>;
   }
 >()("@lootlog/api/http-api/organization-workspace/authorization") {}
-
-type DataEffect = Effect.Effect<unknown, OrganizationWorkspaceOperationError>;
-
-export class OrganizationWorkspaceData extends Context.Service<
-  OrganizationWorkspaceData,
-  {
-    readonly create: (
-      context: ReservationViewerContext,
-      spotId: string,
-      payload: CreateReservationRequest,
-    ) => DataEffect;
-    readonly deleteVisible: (
-      context: ReservationViewerContext,
-      reservationId: number,
-    ) => DataEffect;
-    readonly deleteOwned: (
-      identity: OrganizationWorkspaceIdentity,
-      reservationId: number,
-    ) => DataEffect;
-    readonly updateOwned: (
-      identity: OrganizationWorkspaceIdentity,
-      reservationId: number,
-      payload: UpdateReservationRequest,
-    ) => DataEffect;
-  }
->()("@lootlog/api/http-api/organization-workspace/data") {}
-
-export class MyReservationsData extends Context.Service<
-  MyReservationsData,
-  {
-    readonly listMine: (
-      identity: OrganizationWorkspaceIdentity,
-      query: MyReservationsQuery,
-    ) => DataEffect;
-  }
->()("@lootlog/api/http-api/my-reservations/data") {
-  static readonly layerDatabase = Layer.effect(
-    MyReservationsData,
-    Effect.map(ApiDatabase, (database) =>
-      MyReservationsData.of({
-        listMine: ({ userId, discordId }, query) =>
-          Effect.gen(function* () {
-            const [guildRows, preferredIds] = yield* Effect.all(
-              [
-                selectAccessibleGuilds(database, discordId).pipe(
-                  Effect.map((rows) =>
-                    rows.map(({ guild }) => ({ id: guild.id })),
-                  ),
-                ),
-                readGuildOrderPreference(database, userId),
-              ],
-              { concurrency: "unbounded" },
-            );
-
-            if (guildRows.length === 0) return { items: [] };
-
-            const guildIds = sortGuildsByPreference(
-              guildRows,
-              preferredIds,
-            ).map(({ id }) => id);
-
-            const now = new Date(yield* Clock.currentTimeMillis);
-
-            const timeCondition =
-              query.status === "past"
-                ? and(
-                    gte(
-                      reservationTable.endsAt,
-                      new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
-                    ),
-                    lt(reservationTable.endsAt, now),
-                  )
-                : gte(reservationTable.endsAt, now);
-
-            const rows = yield* database
-              .select({ reservation: reservationTable, guild: guildTable })
-              .from(reservationTable)
-              .innerJoin(
-                guildTable,
-                eq(guildTable.id, reservationTable.guildId),
-              )
-              .where(
-                and(
-                  inArray(reservationTable.guildId, guildIds),
-                  timeCondition,
-                  or(
-                    eq(reservationTable.createdByUserId, userId),
-                    eq(reservationTable.legacyCreatedByDiscordId, discordId),
-                  ),
-                ),
-              )
-              .orderBy(
-                query.status === "past"
-                  ? desc(reservationTable.endsAt)
-                  : asc(reservationTable.startsAt),
-                query.status === "past"
-                  ? desc(reservationTable.id)
-                  : asc(reservationTable.id),
-              );
-
-            const viewer = {
-              guildId: null,
-              userId,
-              discordId,
-              canModerateCurrentGuild: false,
-            };
-
-            return {
-              items: rows.map(({ reservation, guild }) =>
-                presentReservation({ ...reservation, guild }, viewer),
-              ),
-            };
-          }).pipe(
-            Effect.withSpan("listMyReservations.persistence", {
-              attributes: { adapter: "ApiDatabase", retryCount: 0 },
-            }),
-            Effect.mapError(
-              (cause) => new OrganizationWorkspaceOperationError({ cause }),
-            ),
-          ),
-      }),
-    ),
-  );
-}
-
-export class ReservationReadData extends Context.Service<
-  ReservationReadData,
-  {
-    readonly listSpots: (context: ReservationViewerContext) => DataEffect;
-    readonly listWindow: (
-      context: ReservationViewerContext,
-      spotId: string,
-      from: string,
-      to: string,
-    ) => DataEffect;
-    readonly pinSpot: (
-      userId: string,
-      guildId: string,
-      spotId: string,
-    ) => DataEffect;
-    readonly unpinSpot: (
-      userId: string,
-      guildId: string,
-      spotId: string,
-    ) => DataEffect;
-  }
->()("@lootlog/api/http-api/reservation-read/data") {}
-
-export class ReservationSharingData extends Context.Service<
-  ReservationSharingData,
-  {
-    readonly listShares: (guildId: string) => DataEffect;
-    readonly createInvitation: (guildId: string, userId: string) => DataEffect;
-    readonly revokeInvitation: (
-      guildId: string,
-      invitationId: string,
-    ) => DataEffect;
-    readonly revokeShare: (guildId: string, shareId: string) => DataEffect;
-    readonly previewInvitation: (
-      token: string,
-      discordId: string,
-    ) => DataEffect;
-    readonly acceptInvitation: (
-      token: string,
-      payload: AcceptReservationShareInvitationRequest,
-      identity: OrganizationWorkspaceIdentity,
-    ) => DataEffect;
-  }
->()("@lootlog/api/http-api/reservation-sharing/data") {}
-
-export class RolesData extends Context.Service<
-  RolesData,
-  {
-    readonly getRoles: (guildId: string) => DataEffect;
-    readonly updateRole: (
-      discordId: string,
-      guildId: string,
-      roleId: string,
-      payload: UpdateRolePermissionsRequest,
-    ) => DataEffect;
-  }
->()("@lootlog/api/http-api/roles/data") {
-  static layerDatabase(cache: RolesCache, events: RolePolicyEvents) {
-    return Layer.effect(
-      RolesData,
-      Effect.map(ApiDatabase, (database) => {
-        const operation = <A, E>(effect: Effect.Effect<A, E>) =>
-          effect.pipe(
-            Effect.mapError(
-              (cause) => new OrganizationWorkspaceOperationError({ cause }),
-            ),
-          );
-
-        return RolesData.of({
-          getRoles: (guildId) =>
-            operation(
-              database
-                .select()
-                .from(roleTable)
-                .where(eq(roleTable.guildId, guildId))
-                .orderBy(desc(roleTable.position)),
-            ),
-          updateRole: (discordId, guildId, roleId, payload) =>
-            operation(
-              Effect.gen(function* () {
-                const roles = yield* database
-                  .select()
-                  .from(roleTable)
-                  .where(
-                    and(
-                      eq(roleTable.id, roleId),
-                      eq(roleTable.guildId, guildId),
-                    ),
-                  )
-                  .limit(1);
-
-                const role = roles[0];
-
-                if (!role)
-                  return yield* Effect.fail(new ResourceNotFoundError());
-
-                const owners = yield* database
-                  .select({ ownerId: guildTable.ownerId })
-                  .from(guildTable)
-                  .where(eq(guildTable.id, guildId))
-                  .limit(1);
-
-                const roleIsAdministrative = createAccessPolicy({
-                  capabilities: role.permissions,
-                }).allowsAny(AccessRequirement.ADMINISTER);
-
-                const newPermissionsAreAdministrative = createAccessPolicy({
-                  capabilities: payload.permissions,
-                }).allowsAny(AccessRequirement.ADMINISTER);
-
-                if (
-                  roleIsAdministrative !== newPermissionsAreAdministrative &&
-                  owners[0]?.ownerId !== discordId
-                ) {
-                  return yield* Effect.fail(new PermissionDeniedError());
-                }
-
-                // Republish on repeated saves too: a previous attempt may have
-                // committed the policy before cache invalidation or delivery failed.
-                const updated = yield* database
-                  .update(roleTable)
-                  .set({
-                    permissions: [...payload.permissions],
-                    lvlRangeFrom: payload.lvlRangeFrom,
-                    lvlRangeTo: payload.lvlRangeTo,
-                    updatedAt: new Date(yield* Clock.currentTimeMillis),
-                  })
-                  .where(
-                    and(
-                      eq(roleTable.id, roleId),
-                      eq(roleTable.guildId, guildId),
-                    ),
-                  )
-                  .returning();
-
-                yield* cache.deleteByPattern(
-                  getPermissionsCachePattern(guildId),
-                );
-
-                const members = yield* selectActiveRoleHolders(
-                  database,
-                  guildId,
-                  roleId,
-                );
-
-                yield* Effect.forEach(
-                  members,
-                  (member) =>
-                    member.userId
-                      ? cache
-                          .invalidateUserGuildPermissions(member.discordId)
-                          .pipe(
-                            Effect.andThen(
-                              events.memberPolicyChanged({
-                                guildId,
-                                discordId: member.discordId,
-                                userId: member.userId,
-                              }),
-                            ),
-                          )
-                      : Effect.void,
-                  { concurrency: 4, discard: true },
-                );
-
-                return updated[0] ?? null;
-              }).pipe(
-                Effect.withSpan("roles.update.persistence", {
-                  attributes: { adapter: "ApiDatabase", retryCount: 0 },
-                }),
-              ),
-            ),
-        });
-      }),
-    );
-  }
-}
-
-export interface RolePolicyEvents {
-  readonly memberPolicyChanged: (
-    member: typeof GuildMemberChanged.Type,
-  ) => Effect.Effect<void, unknown>;
-}
-
-export interface RolesCache {
-  readonly invalidateUserGuildPermissions: (
-    discordId: string,
-  ) => Effect.Effect<void, unknown>;
-  readonly deleteByPattern: (pattern: string) => Effect.Effect<void, unknown>;
-}
 
 const identity = Effect.flatMap(
   OrganizationWorkspaceAuthorization,

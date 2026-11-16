@@ -55,8 +55,8 @@ import { HttpClient } from "effect/http";
 import {
   makeMembersDataLayer,
   type MemberCommandsPorts,
-} from "#src/http-api/handlers/members/member-commands.data-layer";
-import { makeMemberReadDataLayer } from "#src/http-api/handlers/members/member-read.data-layer";
+} from "#src/members/member-commands.data-layer";
+import { makeMemberReadDataLayer } from "#src/members/member-read.data-layer";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 

@@ -430,9 +430,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/account-organization/user-preferences.data-layer.ts"
-      ],
+      "files": ["apps/api/src/users/user-preferences.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -774,9 +772,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/timers/timer-list.data-layer.ts"
-      ],
+      "files": ["apps/api/src/timers/timer-list.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -862,9 +858,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/timers/timer-search.data-layer.ts"
-      ],
+      "files": ["apps/api/src/timers/timer-search.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -893,9 +887,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/account-organization/guild-discord-sync.data-layer.ts"
-      ],
+      "files": ["apps/api/src/guilds/guild-discord-sync.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -913,9 +905,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/account-organization/current-user-guilds.data-layer.ts"
-      ],
+      "files": ["apps/api/src/guilds/current-user-guilds.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -1119,9 +1109,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/party-ready-room/ready-room.repository.ts"
-      ],
+      "files": ["apps/api/src/messaging/ready-room/ready-room.repository.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -1179,14 +1167,15 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/party-ready-room/ready-room.data-layer.ts"
-      ],
+      "files": ["apps/api/src/messaging/ready-room/ready-room.data-layer.ts"],
       "rules": {
         "anti-slop-effect/no-service-constructor-imports": [
           "error",
           {
-            "nonServiceImports": ["makeReadyRoomRepository"]
+            "nonServiceImports": [
+              "makeReadyRoomRepository",
+              "makeReadyRoomPublicationOutbox"
+            ]
           }
         ]
       }

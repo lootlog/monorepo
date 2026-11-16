@@ -44,6 +44,14 @@ import {
 } from "#src/contracts/reservation-sharing/schemas";
 import { RoleResponse } from "#src/contracts/roles/schemas";
 
+import { OrganizationWorkspaceOperationError } from "#src/guilds/organization-workspace-access";
+import {
+  OrganizationWorkspaceData,
+  MyReservationsData,
+  ReservationSharingData,
+  ReservationReadData,
+} from "#src/reservations/reservations-data";
+import { RolesData } from "#src/guilds/roles-data";
 import {
   acceptReservationShareInvitation,
   createReservation,
@@ -52,13 +60,7 @@ import {
   previewReservationShareInvitation,
   OrganizationWorkspaceAccessDenied,
   OrganizationWorkspaceAuthorization,
-  OrganizationWorkspaceData,
   OrganizationWorkspaceNotFound,
-  OrganizationWorkspaceOperationError,
-  MyReservationsData,
-  ReservationSharingData,
-  ReservationReadData,
-  RolesData,
   updateGuildRole,
   toOrganizationWorkspaceHttpResponse,
 } from "./organization-workspace.operations.js";

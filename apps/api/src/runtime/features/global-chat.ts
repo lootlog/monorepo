@@ -14,7 +14,7 @@ import {
   makeGlobalChatDataLayer,
   type GlobalChatEvents,
   type GlobalChatStore,
-} from "#src/http-api/handlers/global-chat/global-chat.data-layer";
+} from "#src/global-chat/global-chat.data-layer";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
