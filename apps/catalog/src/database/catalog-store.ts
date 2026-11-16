@@ -285,22 +285,47 @@ export const makeCatalogStore = <
   });
 
   /**
-   * Runs one catalog change. Changes run one at a time across every
-   * consumer and replica, so the index receives entries in the order the
-   * database committed them.
+   * Runs one catalog change. Most deliveries repeat what the catalog already
+   * holds, so the change first runs on a snapshot, where a save only says
+   * that there is something to write: one that saves nothing is done, without
+   * waiting for a writer. One that saves runs again on the entries as they
+   * are by then, one at a time across every consumer and replica, so the
+   * index receives entries in the order the database committed them.
    */
   const write = <A, E>(
     run: (change: CatalogChange<Item, Npc>) => Effect.Effect<A, E>,
   ) =>
-    database.transaction((transaction) =>
-      Effect.gen(function* () {
-        yield* transaction.execute(
-          sql`select pg_advisory_xact_lock(hashtext('lootlog:catalog:writer'))`,
-        );
+    Effect.gen(function* () {
+      const settled = yield* database.transaction(
+        (transaction) => {
+          let saves = false;
 
-        return yield* run(change(transaction));
-      }),
-    );
+          const noteSave = () =>
+            Effect.sync(() => {
+              saves = true;
+            });
+
+          return run({
+            ...change(transaction),
+            saveItems: noteSave,
+            saveNpcs: noteSave,
+          }).pipe(Effect.map((result) => ({ result, saves })));
+        },
+        { isolationLevel: "repeatable read", accessMode: "read only" },
+      );
+
+      if (!settled.saves) return settled.result;
+
+      return yield* database.transaction((transaction) =>
+        Effect.gen(function* () {
+          yield* transaction.execute(
+            sql`select pg_advisory_xact_lock(hashtext('lootlog:catalog:writer'))`,
+          );
+
+          return yield* run(change(transaction));
+        }),
+      );
+    });
 
   return { read, write };
 };
