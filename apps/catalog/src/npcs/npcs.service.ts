@@ -6,7 +6,7 @@ import type { GameVersion } from "@lootlog/schema/game-version";
 import type { CatalogWriteFailure } from "#src/database/catalog-store";
 import { Effect, Schema } from "effect";
 import { groupBy, maxBy, partition } from "es-toolkit";
-import { changedEntries } from "#src/shared/changed-entries";
+import { changedEntries, countEntries } from "#src/shared/changed-entries";
 import type { CatalogWrite } from "#src/items/items.service";
 import type { AppLogger } from "#src/shared/logger";
 import { getNpcType } from "@lootlog/domain/npc-type";
@@ -198,6 +198,17 @@ export const mergeNpcDocument = (
   };
 };
 
+/**
+ * The stored entry when a later loot shows the monster as it is stored:
+ * moving only the loot id would rewrite the entry on every kill. The stored
+ * id then trails the monster's latest loot, so an older loot redelivered
+ * after it can win until the monster is looted again.
+ */
+const keepWhenOnlyLootIsLater = (merged: NpcEntry, stored: NpcEntry) =>
+  Bun.deepEquals({ ...merged, observedLootId: stored.observedLootId }, stored)
+    ? stored
+    : merged;
+
 /** Documents of one catalog entry in one batch merge into one. */
 export const mergeNpcDocuments = (
   documents: ReadonlyArray<NpcEntry>,
@@ -242,7 +253,7 @@ export const makeNpcsModule = (write: CatalogWrite, logger: AppLogger) => {
     const documents = mergeNpcDocuments(validNpcs.map(toNpcDocument));
     const incomingUids = new Set(documents.map(({ uid }) => uid));
 
-    yield* write((change) =>
+    const changedCount = yield* write((change) =>
       Effect.gen(function* () {
         const storedEntries = yield* change.npcsByUids([...incomingUids]);
 
@@ -268,14 +279,19 @@ export const makeNpcsModule = (write: CatalogWrite, logger: AppLogger) => {
           ]).map((revision) => [revision.uid, revision.current]),
         );
 
-        const changed = yield* changedEntries(
-          "npcs",
+        const changed = changedEntries(
           documents,
           storedEntries,
-          (npc, stored) => ({
-            ...(stored ? mergeNpcDocument(npc, stored) : npc),
-            current: current.get(npc.uid) ?? true,
-          }),
+          (npc, stored) => {
+            const isCurrent = current.get(npc.uid) ?? true;
+
+            return stored
+              ? keepWhenOnlyLootIsLater(
+                  { ...mergeNpcDocument(npc, stored), current: isCurrent },
+                  stored,
+                )
+              : { ...npc, current: isCurrent };
+          },
         );
 
         // The monster's other identities, when this batch changed which is current.
@@ -289,8 +305,12 @@ export const makeNpcsModule = (write: CatalogWrite, logger: AppLogger) => {
         if (changed.length + superseded.length > 0) {
           yield* change.saveNpcs([...changed, ...superseded]);
         }
+
+        return changed.length;
       }),
     );
+
+    yield* countEntries("npcs", documents.length, changedCount);
   });
 
   /**

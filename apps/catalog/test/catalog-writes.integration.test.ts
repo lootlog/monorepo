@@ -541,3 +541,62 @@ test("a monster's maps and former levels reach each identity and survive new loo
     expect(npc).toMatchObject({ locations, formerLevels });
   }
 });
+
+test("a later loot that shows a monster as the catalog holds it writes nothing", async () => {
+  await catalog(({ npcs }) =>
+    npcs.indexNpcs({ npcs: [{ ...reuzen, lootId: 20 }] }),
+  );
+
+  const stored = await storedNpcs();
+  const writes = projectionWrites;
+
+  await catalog(({ npcs }) =>
+    npcs.indexNpcs({ npcs: [{ ...reuzen, lootId: 30 }] }),
+  );
+
+  expect(await storedNpcs()).toEqual(stored);
+  expect(projectionWrites).toBe(writes);
+});
+
+test("a delivery that changes nothing does not wait for a writer, and changes that waited for one keep each other's worlds", async () => {
+  await catalog(({ items }) => items.indexItems({ items: [item(1)] }));
+
+  const writer = await pool.connect();
+
+  try {
+    await writer.query(
+      `SELECT pg_advisory_lock(hashtext('lootlog:catalog:writer'))`,
+    );
+
+    // Resolves while the writer still holds the lock.
+    await catalog(({ items }) => items.indexItems({ items: [item(1)] }));
+
+    const waiting = ["first", "second"].map((world) =>
+      catalog(({ items }) => items.indexItems({ items: [item(1, world)] })),
+    );
+
+    // Both saw the entry before either changed it.
+    while (
+      (
+        await pool.query(
+          `SELECT FROM pg_locks WHERE locktype = 'advisory' AND NOT granted`,
+        )
+      ).rowCount !== waiting.length
+    ) {
+      await Bun.sleep(10);
+    }
+
+    await writer.query(
+      `SELECT pg_advisory_unlock(hashtext('lootlog:catalog:writer'))`,
+    );
+    await Promise.all(waiting);
+  } finally {
+    writer.release(true);
+  }
+
+  expect((await storedItem(itemCatalogKey(item(1))))?.worlds).toEqual([
+    "first",
+    "new",
+    "second",
+  ]);
+}, 15_000);
