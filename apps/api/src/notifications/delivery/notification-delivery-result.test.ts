@@ -181,4 +181,33 @@ describe("notification delivery result", () => {
     );
     expect(removed).toEqual([["guild-1", guildJob.targetId]]);
   });
+
+  it("resumes the target removal when a recorded failure is redelivered", async () => {
+    const failedJob = createNotificationJobFixture({
+      ownerType: "GUILD",
+      ownerId: "guild-1",
+      status: "FAILED",
+    });
+
+    const removed: Array<[string, number]> = [];
+
+    const handle = makeNotificationDeliveryResult(
+      {
+        find: () => Effect.succeed(failedJob),
+        record: () => Effect.die("a terminal job must not be recorded again"),
+      },
+      { enqueue: () => Effect.die("terminal jobs must not be retried") },
+      () => Effect.die("a terminal job must not be finalized again"),
+      (guildId, targetId) =>
+        Effect.sync(() => {
+          removed.push([guildId, targetId]);
+        }),
+    );
+
+    await Effect.runPromise(
+      handle({ ...failedEvent, retryable: false, errorCode: "10003" }),
+    );
+
+    expect(removed).toEqual([["guild-1", failedJob.targetId]]);
+  });
 });

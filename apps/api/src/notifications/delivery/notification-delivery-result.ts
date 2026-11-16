@@ -48,9 +48,25 @@ export const makeNotificationDeliveryResult = (
     if (
       !job ||
       job.status === NotificationJobStatus.SENT ||
-      job.status === NotificationJobStatus.CANCELED ||
-      (job.status === NotificationJobStatus.FAILED && !event.success)
+      job.status === NotificationJobStatus.CANCELED
     ) {
+      return;
+    }
+
+    // A channel deletion the bot never reported (it was offline, or the
+    // channel left the snapshot earlier) would otherwise fail every later
+    // notification. Apply the same removal as the channel-deleted fact.
+    const channelDeleted =
+      !event.success &&
+      job.ownerType === NotificationOwnerType.GUILD &&
+      event.errorCode !== undefined &&
+      DELETED_CHANNEL_ERROR_CODES.has(event.errorCode);
+
+    if (job.status === NotificationJobStatus.FAILED && !event.success) {
+      // A redelivered result whose removal failed after the job was recorded:
+      // the job stays terminal, only the removal is resumed.
+      if (channelDeleted) yield* removeGuildTarget(job.ownerId, job.targetId);
+
       return;
     }
 
@@ -102,14 +118,5 @@ export const makeNotificationDeliveryResult = (
 
     yield* finalize(job);
 
-    // A channel deletion the bot never reported (it was offline, or the
-    // channel left the snapshot earlier) would otherwise fail every later
-    // notification. Apply the same removal as the channel-deleted fact.
-    if (
-      job.ownerType === NotificationOwnerType.GUILD &&
-      event.errorCode !== undefined &&
-      DELETED_CHANNEL_ERROR_CODES.has(event.errorCode)
-    ) {
-      yield* removeGuildTarget(job.ownerId, job.targetId);
-    }
+    if (channelDeleted) yield* removeGuildTarget(job.ownerId, job.targetId);
   });
