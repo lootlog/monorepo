@@ -1,9 +1,4 @@
-import {
-  findStrongestNpc,
-  getNpcType,
-  MIN_LOOT_NPC_WT,
-} from "@lootlog/domain/npc-type";
-import { ItemRarityEnum } from "@lootlog/schema/item-rarity";
+import { getNpcType, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { resolveLootAcceptance } from "@lootlog/domain/loot-acceptance";
 import { capturesMapPlayers } from "@lootlog/domain/loot-draw";
@@ -15,9 +10,9 @@ import {
 import { getApiErrorStringField } from "@lootlog/client/transport";
 import { NpcType } from "@/api/npcs.api";
 import {
-  isLootRefusedByLootlogSettings,
-  refreshRefusingLootlogSettings,
-} from "@/lib/lootlog-settings";
+  RejectedLootMemory,
+  type LootAcceptanceKey,
+} from "@/processors/rejected-loot-memory";
 import { getItemStat } from "@/utils/game/get-item-stat";
 import { useOthersStore } from "@/store/others.store";
 import {
@@ -59,9 +54,9 @@ const LOOT_SOURCE_BY_EVENT_SOURCE = {
 /** The API's answer when no Lootlog of the character takes the loot. */
 const NO_LOOTLOG_ACCEPTS_LOOT_CODE = "NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT";
 
-const ITEM_RARITIES: readonly ItemRarityEnum[] = Object.values(ItemRarityEnum);
-
 export class LootEventProcessor {
+  private readonly rejectedLoots = new RejectedLootMemory();
+
   handleLootFromBattle(
     event: GameEvent,
     ingress?: RuntimeIngressSnapshot,
@@ -206,14 +201,9 @@ export class LootEventProcessor {
       game,
     );
 
-    const rejected = this.isRejectedByEveryOrganization(
-      npcs,
-      loots,
-      game,
-      debugContext,
-    );
+    const acceptance = this.resolveAcceptance(npcs, loots, game, debugContext);
 
-    if (rejected === true) return;
+    if (acceptance.rejected) return;
 
     const { hero, map, gameVersion } = game;
 
@@ -248,23 +238,15 @@ export class LootEventProcessor {
       payload,
     });
 
-    this.submit(payload, debugContext, "loot", rejected);
+    this.submit(payload, debugContext, "loot", acceptance.key);
   }
 
   private submit(
     payload: Parameters<typeof createLoot>[0],
     debugContext: LootCreateDebugContext,
     label: "loot" | "dialog loot",
-    rejected: false | Promise<boolean>,
+    acceptanceKey: LootAcceptanceKey | undefined,
   ): void {
-    if (rejected !== false) {
-      void rejected.then((confirmed) => {
-        if (!confirmed) this.submit(payload, debugContext, label, false);
-      });
-
-      return;
-    }
-
     createLoot(payload, debugContext)
       .then((response) => {
         useLootStore.getState().setLastLootId(response.id);
@@ -276,14 +258,10 @@ export class LootEventProcessor {
       })
       .catch((error) => {
         if (
+          acceptanceKey &&
           getApiErrorStringField(error, "code") === NO_LOOTLOG_ACCEPTS_LOOT_CODE
         ) {
-          refreshRefusingLootlogSettings(
-            getFreshCharacterCatchingGuildIds(
-              payload.accountId,
-              payload.characterId,
-            ) ?? [],
-          );
+          this.rejectedLoots.remember(acceptanceKey);
         }
 
         logLootCreateDebug("failed", {
@@ -296,27 +274,22 @@ export class LootEventProcessor {
 
   // The API rejects these submissions for every Organization, so sending
   // them only produces a 400 response. Unknown inputs never reject: the API
-  // stays authoritative for everything the client cannot see. A promise is a
-  // refusal by Lootlog settings that are being read again to confirm it.
-  private isRejectedByEveryOrganization(
+  // stays authoritative for everything the client cannot see. The key lets a
+  // refusal by the API stand for the same loot until it expires.
+  private resolveAcceptance(
     npcs: readonly Npc[],
     loots: ReturnType<typeof getLoot>,
     game: RuntimeGameSnapshot,
     debugContext: LootCreateDebugContext,
-  ): boolean | Promise<boolean> {
-    const strongestNpc = findStrongestNpc(
-      NpcType,
-      npcs,
-      (npc) => npc.templateId ?? npc.runtimeId,
-    );
+  ): { rejected: true } | { rejected: false; key?: LootAcceptanceKey } {
+    const skip = (reason: string) => {
+      logLootCreateDebug("skipped", { ...debugContext, reason });
 
-    if (!strongestNpc || strongestNpc.wt < MIN_LOOT_NPC_WT) {
-      logLootCreateDebug("skipped", {
-        ...debugContext,
-        reason: "npc-wt-too-low",
-      });
+      return { rejected: true } as const;
+    };
 
-      return true;
+    if (!npcs.some((npc) => npc.wt >= MIN_LOOT_NPC_WT)) {
+      return skip("npc-wt-too-low");
     }
 
     const catchingGuildIds = getFreshCharacterCatchingGuildIds(
@@ -324,38 +297,24 @@ export class LootEventProcessor {
       game.hero.characterId,
     );
 
-    if (catchingGuildIds === undefined) return false;
+    if (catchingGuildIds === undefined) return { rejected: false };
 
     if (resolveLootAcceptance({ catchingGuildIds }).accepted.length === 0) {
-      logLootCreateDebug("skipped", {
-        ...debugContext,
-        reason: "no-catching-organization",
-      });
-
-      return true;
+      return skip("no-catching-organization");
     }
 
-    const refused = isLootRefusedByLootlogSettings(catchingGuildIds, {
-      npcType: getNpcType(NpcType, strongestNpc),
-      rarities: () =>
-        loots.map((item) => {
-          const rarity = getItemStat(item.stat, "rarity")?.toUpperCase();
+    // The API takes the NPC type from the strongest NPC, and the same set of
+    // types always has the same strongest one.
+    const npcTypes = new Set(npcs.map((npc) => getNpcType(NpcType, npc)));
 
-          return ITEM_RARITIES.find((known) => known === rarity);
-        }),
-    });
+    const key: LootAcceptanceKey = {
+      scope: `${catchingGuildIds.toSorted().join(",")}|${[...npcTypes].toSorted().join(",")}`,
+      rarities: loots.map((item) => getItemStat(item.stat, "rarity") ?? ""),
+    };
 
-    const skipped = () =>
-      logLootCreateDebug("skipped", {
-        ...debugContext,
-        reason: "refused-by-lootlog-settings",
-      });
-
-    if (refused === true) skipped();
-    else if (refused !== false)
-      void refused.then((confirmed) => confirmed && skipped());
-
-    return refused;
+    return this.rejectedLoots.covers(key)
+      ? skip("recently-rejected-by-lootlog-settings")
+      : { rejected: false, key };
   }
 
   private captureMapPlayers(
@@ -471,14 +430,9 @@ export class LootEventProcessor {
       },
     ];
 
-    const rejected = this.isRejectedByEveryOrganization(
-      npcs,
-      loots,
-      game,
-      debugContext,
-    );
+    const acceptance = this.resolveAcceptance(npcs, loots, game, debugContext);
 
-    if (rejected === true) {
+    if (acceptance.rejected) {
       useDialogStore.getState().clearNpcContext();
 
       return;
@@ -530,6 +484,6 @@ export class LootEventProcessor {
     });
 
     useDialogStore.getState().clearNpcContext();
-    this.submit(payload, debugContext, "dialog loot", rejected);
+    this.submit(payload, debugContext, "dialog loot", acceptance.key);
   }
 }

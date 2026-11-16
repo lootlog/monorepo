@@ -14292,7 +14292,7 @@ export const getLootlogConfigControllerGetLootlogConfigUrl = ({ guildId }: Lootl
 }
 
 /**
- * Retrieve the lootlog configuration of a guild: the item rarities it collects from each NPC type. Every member with Lootlog access can read it.
+ * Retrieve lootlog configuration for a guild
  * @summary Get lootlog configuration
  */
 export const lootlogConfigControllerGetLootlogConfig = async ({ guildId }: LootlogConfigControllerGetLootlogConfigPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<NullableLootlogConfigResponseDtoOutput | null> => {

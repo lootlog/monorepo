@@ -11413,11 +11413,6 @@ export type GameClientBootstrapResponseDtoOutputGuildTimerDocuments = {
  */
 export type GameClientBootstrapResponseDtoOutputGuildPermissions = {[key: string]: ('OWNER' | 'ADMIN' | 'LOOTLOG_MANAGE' | 'LOOTLOG_ACCESS' | 'LOOTLOG_LOOTS_READ' | 'LOOTLOG_LOOTS_WRITE' | 'LOOTLOG_LOOTS_ARCHIVE' | 'LOOTLOG_LOOTS_TITANS_READ' | 'LOOTLOG_LOOTS_HEROES_READ' | 'LOOTLOG_TIMERS_READ' | 'LOOTLOG_TIMERS_WRITE' | 'LOOTLOG_TIMERS_RESET' | 'LOOTLOG_TIMERS_DELETE' | 'LOOTLOG_TIMERS_TITANS_READ' | 'LOOTLOG_TIMERS_HEROES_READ' | 'LOOTLOG_RESERVATIONS_READ' | 'LOOTLOG_RESERVATIONS_WRITE' | 'LOOTLOG_MEMBERS_READ' | 'LOOTLOG_ONLINE_PLAYERS_READ' | 'LOOTLOG_PRESENCE_LOCATION_READ' | 'LOOTLOG_CHAT_READ' | 'LOOTLOG_CHAT_WRITE' | 'LOOTLOG_CHAT_TITANS_READ' | 'LOOTLOG_CHAT_HEROES_READ' | 'LOOTLOG_NOTIFICATIONS_READ' | 'LOOTLOG_NOTIFICATIONS_SEND' | 'LOOTLOG_NOTIFICATIONS_TITANS_READ' | 'LOOTLOG_NOTIFICATIONS_HEROES_READ' | 'LOOTLOG_EVENTS_MANAGE' | 'LOOTLOG_EVENTS_READ' | 'LOOTLOG_EVENTS_WRITE' | 'LOOTLOG_DOCS_READ' | 'LOOTLOG_DOCS_WRITE')[]} | null;
 
-/**
- * @nullable
- */
-export type GameClientBootstrapResponseDtoOutputGuildLootlogConfigs = {[key: string]: NullableLootlogConfigResponseDtoOutput | null} | null;
-
 export type GameClientBootstrapResponseDtoOutputCharacterAuraPersonalAuraIdsItem = typeof GameClientBootstrapResponseDtoOutputCharacterAuraPersonalAuraIdsItem[keyof typeof GameClientBootstrapResponseDtoOutputCharacterAuraPersonalAuraIdsItem];
 
 
@@ -11477,8 +11472,6 @@ export interface GameClientBootstrapResponseDtoOutput {
   guildTimerDocuments: GameClientBootstrapResponseDtoOutputGuildTimerDocuments;
   /** @nullable */
   guildPermissions: GameClientBootstrapResponseDtoOutputGuildPermissions;
-  /** @nullable */
-  guildLootlogConfigs: GameClientBootstrapResponseDtoOutputGuildLootlogConfigs;
   /** @nullable */
   characterAura: GameClientBootstrapResponseDtoOutputCharacterAura;
   /** @nullable */
@@ -17483,7 +17476,7 @@ export const getUsersControllerGetGameClientBootstrapUrl = (params: UsersControl
 }
 
 /**
- * Return in one request what the game client reads at startup: accessible guilds, user preferences, the Lootlog configuration of the game account, its settings documents, and the timer documents, permissions and Lootlog configuration of every accessible guild. Each part applies the access policy of its own endpoint; a part that could not be read is null and must be read from that endpoint.
+ * Return in one request what the game client reads at startup: accessible guilds, user preferences, the Lootlog configuration of the game account, its settings documents and the timer documents of every accessible guild. Each part applies the access policy of its own endpoint; a part that could not be read is null and must be read from that endpoint.
  * @summary Get the game client startup data
  */
 export const usersControllerGetGameClientBootstrap = async (params: UsersControllerGetGameClientBootstrapParams, options?: Parameters<typeof mainFetch>[1]): Promise<GameClientBootstrapResponseDtoOutput> => {
@@ -26343,7 +26336,7 @@ export const getLootlogConfigControllerGetLootlogConfigUrl = ({ guildId }: Lootl
 }
 
 /**
- * Retrieve the lootlog configuration of a guild: the item rarities it collects from each NPC type. Every member with Lootlog access can read it.
+ * Retrieve lootlog configuration for a guild
  * @summary Get lootlog configuration
  */
 export const lootlogConfigControllerGetLootlogConfig = async ({ guildId }: LootlogConfigControllerGetLootlogConfigPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<NullableLootlogConfigResponseDtoOutput | null> => {

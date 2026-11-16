@@ -549,7 +549,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: "Return in one request what the game client reads at startup: accessible guilds, user preferences, the Lootlog configuration of the game account, its settings documents, and the timer documents, permissions and Lootlog configuration of every accessible guild. Each part applies the access policy of its own endpoint; a part that could not be read is null and must be read from that endpoint."
+      description: "Return in one request what the game client reads at startup: accessible guilds, user preferences, the Lootlog configuration of the game account, its settings documents and the timer documents of every accessible guild. Each part applies the access policy of its own endpoint; a part that could not be read is null and must be read from that endpoint."
       summary: Get the game client startup data
   /users/@me/game-preferences/accounts/{accountId}:
     get:
@@ -6380,7 +6380,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: "Retrieve the lootlog configuration of a guild: the item rarities it collects from each NPC type. Every member with Lootlog access can read it."
+      description: Retrieve lootlog configuration for a guild
       summary: Get lootlog configuration
   /guilds/{guildId}/lootlog-config/{npcId}:
     put:
@@ -35863,11 +35863,6 @@ components:
                 - LOOTLOG_EVENTS_WRITE
                 - LOOTLOG_DOCS_READ
                 - LOOTLOG_DOCS_WRITE
-        guildLootlogConfigs:
-          nullable: true
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/NullableLootlogConfigResponseDto_Output"
         characterAura:
           nullable: true
           type: object
@@ -35919,7 +35914,6 @@ components:
         - settingsDocuments
         - guildTimerDocuments
         - guildPermissions
-        - guildLootlogConfigs
         - characterAura
         - characterAuras
       additionalProperties: false

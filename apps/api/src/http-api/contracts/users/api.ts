@@ -117,7 +117,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     .annotate(OpenApi.Summary, "Get the game client startup data")
     .annotate(
       OpenApi.Description,
-      "Return in one request what the game client reads at startup: accessible guilds, user preferences, the Lootlog configuration of the game account, its settings documents, and the timer documents, permissions and Lootlog configuration of every accessible guild. Each part applies the access policy of its own endpoint; a part that could not be read is null and must be read from that endpoint.",
+      "Return in one request what the game client reads at startup: accessible guilds, user preferences, the Lootlog configuration of the game account, its settings documents and the timer documents of every accessible guild. Each part applies the access policy of its own endpoint; a part that could not be read is null and must be read from that endpoint.",
     ),
   HttpApiEndpoint.get(
     "UsersControllerGetUserGameAccountPreferences",
