@@ -218,6 +218,7 @@ export type ActivitiesControllerFindByGuildPathParameters = {
 export type ActivitiesControllerFindByGuildParams = {
 type?: ActivitiesControllerFindByGuildTypeItem[];
 source?: ActivitiesControllerFindByGuildSourceItem[];
+userId?: string;
 playerName?: string;
 clanName?: string;
 world?: string;
@@ -392,72 +393,6 @@ export const ActivitiesControllerSuggestClanNames503StatusCode = {
 export type ActivitiesControllerSuggestClanNames503 = {
   message: string;
   statusCode: ActivitiesControllerSuggestClanNames503StatusCode;
-};
-
-export type ActivitiesControllerFindByUserPathParameters = {
- guildId: string,
-    userId: string,
- }
-export type ActivitiesControllerFindByUserParams = {
-type?: ActivitiesControllerFindByUserTypeItem[];
-source?: ActivitiesControllerFindByUserSourceItem[];
-playerName?: string;
-clanName?: string;
-world?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
-startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
-endDate?: string;
-cursor?: string;
-/**
- * @minimum 1
- * @maximum 100
- */
-limit?: number;
-};
-
-export type ActivitiesControllerFindByUserTypeItem = typeof ActivitiesControllerFindByUserTypeItem[keyof typeof ActivitiesControllerFindByUserTypeItem];
-
-
-export const ActivitiesControllerFindByUserTypeItem = {
-  CONNECT_EVENT: 'CONNECT_EVENT',
-  DISCONNECT_EVENT: 'DISCONNECT_EVENT',
-} as const;
-
-export type ActivitiesControllerFindByUserSourceItem = typeof ActivitiesControllerFindByUserSourceItem[keyof typeof ActivitiesControllerFindByUserSourceItem];
-
-
-export const ActivitiesControllerFindByUserSourceItem = {
-  GAME: 'GAME',
-  WEB_APP: 'WEB_APP',
-} as const;
-
-export type ActivitiesControllerFindByUser401 = {
-  message: string;
-};
-
-export type ActivitiesControllerFindByUser403 = {
-  message: string;
-};
-
-export type ActivitiesControllerFindByUser429 = {
-  message: string;
-};
-
-export type ActivitiesControllerFindByUser503StatusCode = typeof ActivitiesControllerFindByUser503StatusCode[keyof typeof ActivitiesControllerFindByUser503StatusCode];
-
-
-export const ActivitiesControllerFindByUser503StatusCode = {
-  NUMBER_503: 503,
-} as const;
-
-export type ActivitiesControllerFindByUser503 = {
-  message: string;
-  statusCode: ActivitiesControllerFindByUser503StatusCode;
 };
 
 export type ActivitiesControllerGetMemberActivityStatsPathParameters = {
@@ -697,47 +632,6 @@ export const activitiesControllerSuggestClanNames = async ({ guildId }: Activiti
     params?: ActivitiesControllerSuggestClanNamesParams, options?: Parameters<typeof activityFetch>[1]): Promise<ClanNameSuggestionsResponseDtoOutput> => {
 
   return activityFetch<ClanNameSuggestionsResponseDtoOutput>(getActivitiesControllerSuggestClanNamesUrl({ guildId },params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-export const getActivitiesControllerFindByUserUrl = ({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["type","source"];
-
-    if (Array.isArray(value) && explodeParameters.includes(key)) {
-      value.forEach((v) => {
-        normalizedParams.append(key, v === null ? 'null' : String(v));
-      });
-      return;
-    }
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/guilds/${guildId}/users/${userId}/activity-logs?${stringifiedParams}` : `/guilds/${guildId}/users/${userId}/activity-logs`
-}
-
-/**
- * @summary Get activities for a specific user in a guild
- */
-export const activitiesControllerFindByUser = async ({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params?: ActivitiesControllerFindByUserParams, options?: Parameters<typeof activityFetch>[1]): Promise<PaginatedActivitiesResponseDto> => {
-
-  return activityFetch<PaginatedActivitiesResponseDto>(getActivitiesControllerFindByUserUrl({ guildId, userId },params),
   {
     ...options,
     method: 'GET'

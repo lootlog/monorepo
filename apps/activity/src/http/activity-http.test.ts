@@ -119,6 +119,23 @@ describe("Activity HttpApi contract", () => {
     await boundary.dispose();
   });
 
+  it("filters by user inside the resolved organization only", async () => {
+    const admin = makeBoundary([Permission.ADMIN]);
+    const member = makeBoundary([]);
+    const url = "https://activity/guilds/vanity/activity-logs?userId=other";
+
+    const filtered = await admin.handler(new Request(url, { headers }));
+    const denied = await member.handler(new Request(url, { headers }));
+
+    expect(await filtered.json()).toEqual({
+      data: [{ guildId: "123", userId: "other" }],
+      hasMore: false,
+    });
+    expect(denied.status).toBe(403);
+    await admin.dispose();
+    await member.dispose();
+  });
+
   it("requires OWNER for deletion", async () => {
     const admin = makeBoundary([Permission.ADMIN]);
     const owner = makeBoundary([Permission.OWNER]);
