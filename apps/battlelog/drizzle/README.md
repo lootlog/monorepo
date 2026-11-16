@@ -39,7 +39,9 @@ one step:
   for an owner of 38,000 battles, past the 2-second read budget. In
   `battle_warrior_filters` an owner's participants are adjacent, and the
   primary key holds every column, so the battle list filters, the analytics
-  filters and the warrior search read only the index. Rows are written with
+  filters and the warrior search read only the index. Analytics also pick a
+  battle's own and opposing participant there and read `battle_warriors` only
+  for the rows they return. Rows are written with
   the battle, removed by `BattleDeletion` and never updated.
   `20261116135340_battle_warrior_filters` fills the table from the existing
   participants in one statement (about 6 minutes and 8 GB for 38 million
