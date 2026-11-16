@@ -81,13 +81,16 @@ const createFixture = () => {
   const processor = new LootEventProcessor();
   const requests: Request[] = [];
   let status = 200;
+  let rejectionCode: string | undefined;
 
   const fetch: typeof globalThis.fetch = (input, init) => {
     requests.push(new Request(input, init));
 
     return Promise.resolve(
       Response.json(
-        { id: 999, submittedGuilds: [], rejectedGuilds: [] },
+        rejectionCode === undefined
+          ? { id: 999, submittedGuilds: [], rejectedGuilds: [] }
+          : { code: rejectionCode },
         { status },
       ),
     );
@@ -109,6 +112,10 @@ const createFixture = () => {
     },
     fail: () => {
       status = 400;
+    },
+    rejectWith: (code: string) => {
+      status = 400;
+      rejectionCode = code;
     },
     succeed: () => {
       status = 200;
@@ -415,6 +422,47 @@ it.each<[string, () => Promise<void>]>([
   fixture.processor.handleDialogLoot(createLootEvent("dialog"));
   expect(await fixture.payload(0)).toMatchObject({ source: "FIGHT" });
   expect(await fixture.payload(1)).toMatchObject({ source: "DIALOG" });
+});
+
+// Lootlog settings are invisible to members, so the API's refusal is the only
+// source: it may silence nothing but loot those same settings refuse, and
+// only until a changed setting could plausibly have been missed.
+it("stops resubmitting loot the Lootlog settings refused until the refusal expires", async () => {
+  const fixture = createFixture();
+  const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+  useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+  seedCatchingGuildIds(["guild-1"]);
+
+  const loot = (rarity: string) =>
+    fixture.processor.handleLootFromBattle(createLootEvent("fight", rarity));
+
+  const refused = (count: number) =>
+    waitFor(() =>
+      expect(
+        log.mock.calls.filter(([, details]) => details.stage === "failed"),
+      ).toHaveLength(count),
+    );
+
+  fixture.rejectWith("INVALID_REQUEST");
+  loot("unique");
+  await refused(1);
+  fixture.rejectWith("NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT");
+  loot("unique");
+  await refused(2);
+
+  loot("unique");
+  loot("heroic");
+  await refused(3);
+  expect(fixture.requests).toHaveLength(3);
+  seedCatchingGuildIds(["guild-1", "guild-2"]);
+  loot("unique");
+  await refused(4);
+  seedCatchingGuildIds(["guild-1"]);
+
+  const now = Date.now();
+  vi.spyOn(Date, "now").mockReturnValue(now + 10 * 60_000);
+  loot("unique");
+  await refused(5);
 });
 
 it("ignores dialog loot without a tracked NPC", () => {
