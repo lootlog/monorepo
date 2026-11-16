@@ -1,6 +1,10 @@
 log:
   level: DEBUG
 
+# Enables the endpoint behind the compose healthcheck; the static file
+# configuration replaces every CLI flag, including --ping.
+ping: {}
+
 api:
   insecure: true
   dashboard: true
