@@ -6,7 +6,10 @@ import type {
 } from "#src/notifications/jobs/notification-job-store";
 import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
 import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
-import { NotificationJobStatus } from "#src/notifications/notification-enums";
+import {
+  NotificationJobStatus,
+  NotificationOwnerType,
+} from "#src/notifications/notification-enums";
 
 type NotificationDeliveryJob = NotificationStoredJob;
 
@@ -19,10 +22,23 @@ export interface NotificationDeliveryStore {
   ) => Effect.Effect<unknown, unknown, never>;
 }
 
+/**
+ * Codes the Discord bot reports when the target channel no longer exists:
+ * Discord's own 10003 (Unknown Channel) and the bot's empty channel lookup.
+ */
+const DELETED_CHANNEL_ERROR_CODES: ReadonlySet<string> = new Set([
+  "10003",
+  "CHANNEL_NOT_FOUND",
+]);
+
 export const makeNotificationDeliveryResult = (
   store: NotificationDeliveryStore,
   scheduler: Pick<NotificationJobScheduler, "enqueue">,
   finalize: NotificationJobFinalization,
+  removeGuildTarget: (
+    guildId: string,
+    targetId: number,
+  ) => Effect.Effect<unknown, unknown, never>,
 ) =>
   Effect.fn("notifications.deliveryResult")(function* (
     event: DiscordNotificationDeliveryResultEvent,
@@ -85,4 +101,15 @@ export const makeNotificationDeliveryResult = (
     }
 
     yield* finalize(job);
+
+    // A channel deletion the bot never reported (it was offline, or the
+    // channel left the snapshot earlier) would otherwise fail every later
+    // notification. Apply the same removal as the channel-deleted fact.
+    if (
+      job.ownerType === NotificationOwnerType.GUILD &&
+      event.errorCode !== undefined &&
+      DELETED_CHANNEL_ERROR_CODES.has(event.errorCode)
+    ) {
+      yield* removeGuildTarget(job.ownerId, job.targetId);
+    }
   });

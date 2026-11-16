@@ -9,6 +9,8 @@ import type { NotificationDeliveryUpdate } from "#src/notifications/jobs/notific
 const job = (attemptCount: number) =>
   createNotificationJobFixture({ attemptCount });
 
+const keepTarget = () => Effect.die("the target must not be removed");
+
 const failedEvent: DiscordNotificationDeliveryResultEvent = {
   notificationJobId: "job-1",
   success: false,
@@ -39,6 +41,7 @@ describe("notification delivery result", () => {
         Effect.sync(() => {
           finalizations += 1;
         }),
+      keepTarget,
     );
 
     const successEvent: DiscordNotificationDeliveryResultEvent = {
@@ -71,6 +74,7 @@ describe("notification delivery result", () => {
       },
       { enqueue: () => Effect.die("canceled jobs must not be retried") },
       () => Effect.die("canceled jobs must not be finalized again"),
+      keepTarget,
     );
 
     await Effect.runPromise(handle(failedEvent));
@@ -98,6 +102,7 @@ describe("notification delivery result", () => {
           }),
       },
       () => Effect.die("finalization should not run for a retry"),
+      keepTarget,
     );
 
     await Effect.runPromise(handle(failedEvent));
@@ -135,6 +140,7 @@ describe("notification delivery result", () => {
             scheduledRuleIds.push(ruleId);
           }),
       ),
+      keepTarget,
     );
 
     await Effect.runPromise(handle(failedEvent));
@@ -142,5 +148,37 @@ describe("notification delivery result", () => {
     expect(pruned).toBeTrue();
     expect(recorded[0]?.job.status).toBe("FAILED");
     expect(scheduledRuleIds).toEqual([scheduledJob.ruleId]);
+  });
+
+  it("removes a guild channel target once Discord reports the channel is gone", async () => {
+    const guildJob = createNotificationJobFixture({
+      ownerType: "GUILD",
+      ownerId: "guild-1",
+    });
+
+    const removed: Array<[string, number]> = [];
+
+    const handle = makeNotificationDeliveryResult(
+      { find: () => Effect.succeed(guildJob), record: () => Effect.void },
+      { enqueue: () => Effect.die("permanent failures must not be retried") },
+      () => Effect.void,
+      (guildId, targetId) =>
+        Effect.sync(() => {
+          removed.push([guildId, targetId]);
+        }),
+    );
+
+    const permanentFailure = { ...failedEvent, retryable: false };
+
+    // Missing permissions can be granted back; the target has to survive.
+    await Effect.runPromise(
+      handle({ ...permanentFailure, errorCode: "50013" }),
+    );
+    expect(removed).toEqual([]);
+
+    await Effect.runPromise(
+      handle({ ...permanentFailure, errorCode: "10003" }),
+    );
+    expect(removed).toEqual([["guild-1", guildJob.targetId]]);
   });
 });
