@@ -542,20 +542,30 @@ test("a monster's maps and former levels reach each identity and survive new loo
   }
 });
 
-test("a later loot that shows a monster as the catalog holds it writes nothing", async () => {
+test("a later loot of an unchanged monster sends nothing to the index and still outranks an older loot of another identity delivered after it", async () => {
   await catalog(({ npcs }) =>
     npcs.indexNpcs({ npcs: [{ ...reuzen, lootId: 20 }] }),
   );
 
-  const stored = await storedNpcs();
   const writes = projectionWrites;
 
   await catalog(({ npcs }) =>
     npcs.indexNpcs({ npcs: [{ ...reuzen, lootId: 30 }] }),
   );
 
-  expect(await storedNpcs()).toEqual(stored);
   expect(projectionWrites).toBe(writes);
+
+  await catalog(({ npcs }) =>
+    npcs.indexNpcs({ npcs: [{ ...formerReuzen, lootId: 25 }] }),
+  );
+
+  expect(await storedNpcs()).toEqual([
+    expect.objectContaining({
+      uid: npcCatalogKey(formerReuzen),
+      current: false,
+    }),
+    expect.objectContaining({ uid: npcCatalogKey(reuzen), current: true }),
+  ]);
 });
 
 test("a delivery that changes nothing does not wait for a writer, and changes that waited for one keep each other's worlds", async () => {

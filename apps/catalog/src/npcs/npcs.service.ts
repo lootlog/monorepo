@@ -198,17 +198,6 @@ export const mergeNpcDocument = (
   };
 };
 
-/**
- * The stored entry when a later loot shows the monster as it is stored:
- * moving only the loot id would rewrite the entry on every kill. The stored
- * id then trails the monster's latest loot, so an older loot redelivered
- * after it can win until the monster is looted again.
- */
-const keepWhenOnlyLootIsLater = (merged: NpcEntry, stored: NpcEntry) =>
-  Bun.deepEquals({ ...merged, observedLootId: stored.observedLootId }, stored)
-    ? stored
-    : merged;
-
 /** Documents of one catalog entry in one batch merge into one. */
 export const mergeNpcDocuments = (
   documents: ReadonlyArray<NpcEntry>,
@@ -282,17 +271,25 @@ export const makeNpcsModule = (write: CatalogWrite, logger: AppLogger) => {
         const changed = changedEntries(
           documents,
           storedEntries,
-          (npc, stored) => {
-            const isCurrent = current.get(npc.uid) ?? true;
-
-            return stored
-              ? keepWhenOnlyLootIsLater(
-                  { ...mergeNpcDocument(npc, stored), current: isCurrent },
-                  stored,
-                )
-              : { ...npc, current: isCurrent };
-          },
+          (npc, stored) => ({
+            ...(stored ? mergeNpcDocument(npc, stored) : npc),
+            current: current.get(npc.uid) ?? true,
+          }),
         );
+
+        // A later loot of a monster as it is stored moves only its loot id,
+        // which orders the monster's observations and is kept on every kill.
+        const [lootsOnly, changes] = partition(changed, (entry) => {
+          const stored = storedByUid.get(entry.uid);
+
+          return (
+            stored !== undefined &&
+            Bun.deepEquals(
+              { ...entry, observedLootId: stored.observedLootId },
+              stored,
+            )
+          );
+        });
 
         // The monster's other identities, when this batch changed which is current.
         const superseded = identities.flatMap((identity) =>
@@ -302,11 +299,13 @@ export const makeNpcsModule = (write: CatalogWrite, logger: AppLogger) => {
             : [],
         );
 
-        if (changed.length + superseded.length > 0) {
-          yield* change.saveNpcs([...changed, ...superseded]);
+        if (changes.length + superseded.length > 0) {
+          yield* change.saveNpcs([...changes, ...superseded]);
         }
 
-        return changed.length;
+        if (lootsOnly.length > 0) yield* change.saveNpcLoots(lootsOnly);
+
+        return changes.length;
       }),
     );
 
