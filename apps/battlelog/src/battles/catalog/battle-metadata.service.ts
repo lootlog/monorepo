@@ -1,11 +1,16 @@
 import { ContextLogger } from "@lootlog/instrumentation";
 import type { RedisStore } from "#src/infrastructure/redis-store";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { makeBattleAnalyticsCache } from "#src/battles/analytics/battle-analytics-cache.service";
 import type { BattleReadBudget } from "#src/database/battle-read-budget";
 import type { DrizzleDatabase } from "#src/database/database";
-import { battles, battleWarriors, userCharacters } from "#src/database/schema";
+import {
+  battles,
+  battleWarriorFilters,
+  battleWarriors,
+  userCharacters,
+} from "#src/database/schema";
 
 const UserCharactersResponseSchema = Schema.Struct({
   characters: Schema.Array(
@@ -208,31 +213,43 @@ export const makeBattleMetadata = (
         return { warriors: [] };
       }
 
-      // OFFSET 0 keeps this join owner-first: the global name index can otherwise
-      // scan other users' history to find ten distinct names for this user.
-      const results = yield* drizzle
-        .selectDistinctOn([sql`w.name`], {
-          name: sql<string>`w.name`,
-          icon: sql<string>`w.icon`,
-          prof: sql<string>`w.prof`,
-          lvl: sql<number>`w.lvl`,
+      const term = `%${query.trim()}%`;
+
+      // The latest appearance supplies the icon, profession and level.
+      const latest = drizzle
+        .selectDistinctOn([battleWarriorFilters.name], {
+          name: battleWarriorFilters.name,
+          lvl: battleWarriorFilters.lvl,
+          battleId: battleWarriorFilters.battleId,
+          originalId: battleWarriorFilters.originalId,
         })
-        .from(battles)
-        .innerJoinLateral(
-          sql`(
-          SELECT ${battleWarriors.name},
-                 ${battleWarriors.icon}, ${battleWarriors.prof}, ${battleWarriors.lvl}
-          FROM ${battleWarriors}
-          WHERE ${battleWarriors.battleId} = ${battles.id}
-            AND ${battleWarriors.name} ILIKE ${`%${query.trim()}%`}
-          OFFSET 0
-        ) w`,
-          sql`true`,
+        .from(battleWarriorFilters)
+        .where(
+          and(
+            eq(battleWarriorFilters.userId, userId),
+            ilike(battleWarriorFilters.name, term),
+          ),
         )
-        .where(eq(battles.userId, userId))
-        // The latest appearance supplies the icon, profession and level.
-        .orderBy(sql`w.name`, desc(battles.id))
+        .orderBy(battleWarriorFilters.name, desc(battleWarriorFilters.battleId))
         .limit(10)
+        .as("latest");
+
+      const results = yield* drizzle
+        .select({
+          name: latest.name,
+          icon: battleWarriors.icon,
+          prof: battleWarriors.prof,
+          lvl: latest.lvl,
+        })
+        .from(latest)
+        .innerJoin(
+          battleWarriors,
+          and(
+            eq(battleWarriors.battleId, latest.battleId),
+            eq(battleWarriors.originalId, latest.originalId),
+          ),
+        )
+        .orderBy(latest.name)
         .pipe(read);
 
       return { warriors: results };

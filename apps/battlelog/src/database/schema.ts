@@ -339,6 +339,41 @@ export const weaponKills = pgTable(
   ],
 );
 
+/**
+ * The columns battle filters and the warrior search read, keyed by the
+ * battle's owner. `battle_warriors` can only be read one battle at a time, so
+ * filtering a whole history there costs one scattered lookup per battle. Here
+ * an owner's warriors are adjacent, and the primary key carries every column
+ * so that reads never touch the heap. Rows are written and removed together
+ * with their `battle_warriors` row and never change.
+ */
+export const battleWarriorFilters = pgTable(
+  "battle_warrior_filters",
+  {
+    userId: text("userId").notNull(),
+    battleId: uuid("battleId").notNull(),
+    originalId: text("originalId").notNull(),
+    name: text("name").notNull(),
+    lvl: integer("lvl").notNull(),
+    ph: integer("ph").notNull(),
+    team: integer("team").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "battle_warrior_filters_pkey",
+      columns: [
+        table.userId,
+        table.battleId,
+        table.originalId,
+        table.name,
+        table.lvl,
+        table.ph,
+        table.team,
+      ],
+    }),
+  ],
+);
+
 export type Battle = typeof battles.$inferSelect;
 
 export type NewBattle = typeof battles.$inferInsert;

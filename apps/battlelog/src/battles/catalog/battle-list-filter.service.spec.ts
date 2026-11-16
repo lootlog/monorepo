@@ -6,6 +6,7 @@ import { Effect, ManagedRuntime } from "effect";
 import { relations } from "#src/database/relations";
 import { battles, battleWarriors, userCharacters } from "#src/database/schema";
 import { createBattleId } from "#src/battles/battle-id";
+import { syncBattleWarriorFilters } from "../../../test/battle-fixtures.js";
 import { makeBattleListFilter } from "./battle-list-filter.service.js";
 import type { BattleListQuery } from "./query-battles.js";
 
@@ -137,6 +138,8 @@ beforeAll(async () => {
       ]),
     );
   }
+
+  await runtime.runPromise(syncBattleWarriorFilters(database));
 }, 60_000);
 
 afterAll(() => runtime.dispose());

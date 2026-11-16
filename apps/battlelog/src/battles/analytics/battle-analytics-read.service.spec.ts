@@ -6,7 +6,10 @@ import { Effect, ManagedRuntime } from "effect";
 import { relations } from "#src/database/relations";
 import { battles, battleWarriors, userCharacters } from "#src/database/schema";
 import { createBattleId } from "#src/battles/battle-id";
-import { unusedRedisStore } from "../../../test/battle-fixtures.js";
+import {
+  syncBattleWarriorFilters,
+  unusedRedisStore,
+} from "../../../test/battle-fixtures.js";
 import { makeBattleAnalyticsCache } from "./battle-analytics-cache.service.js";
 import { makeBattleAnalyticsQuery } from "./battle-analytics-query.service.js";
 import { makeBattleAnalyticsRead } from "./battle-analytics-read.service.js";
@@ -154,6 +157,8 @@ beforeAll(async () => {
         }),
       );
   }
+
+  await runtime.runPromise(syncBattleWarriorFilters(db));
 }, 60_000);
 
 afterAll(() => runtime.dispose());
@@ -279,6 +284,7 @@ it("folds combat history across tied-date batches without losing team matchups o
       ]),
     ),
   );
+  await runtime.runPromise(syncBattleWarriorFilters(db));
 
   const filters = query({
     world: "combat-test",
@@ -365,6 +371,8 @@ it("selects the recorder among multiple owned participants and uses character or
       ),
     );
   }
+
+  await runtime.runPromise(syncBattleWarriorFilters(db));
 
   const filters = query({ world: "combat-selection" });
 
@@ -503,6 +511,7 @@ it("filters and sorts opponent records, breaking ties by latest battle", async (
       ),
     ),
   );
+  await runtime.runPromise(syncBattleWarriorFilters(db));
 
   expect(
     await runtime.runPromise(
@@ -726,6 +735,7 @@ it("keeps the strongest combat highlights, skips flees and admits battles with a
       ]),
     ),
   );
+  await runtime.runPromise(syncBattleWarriorFilters(db));
 
   const profile = await runtime.runPromise(
     makeBattleCombatProfileRead(

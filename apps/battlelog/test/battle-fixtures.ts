@@ -4,7 +4,7 @@ import type { Battles } from "../src/battles/battles.service.js";
 import type { BattleAnalytics } from "../src/battles/analytics/battle-analytics.service.js";
 import type { WeaponKills } from "#src/battles/weapon-kills/weapon-kills";
 import type { BattleWithRelations } from "#src/battles/battle-service";
-import { getColumns } from "drizzle-orm";
+import { getColumns, sql, type SQL } from "drizzle-orm";
 import { battleWarriors, type BattleWarrior } from "#src/database/schema";
 
 const warriorStatDefaults = Object.fromEntries(
@@ -156,3 +156,19 @@ export const unusedRedisStore = {
   expire: unexpectedRedisOperation,
   zremrangebyscore: unexpectedRedisOperation,
 } satisfies RedisStore;
+
+/**
+ * Fixtures insert warriors directly; this adds the filter rows a stored
+ * battle writes alongside them.
+ */
+export const SYNC_BATTLE_WARRIOR_FILTERS_SQL = `
+  INSERT INTO battle_warrior_filters ("userId", "battleId", "originalId", "name", "lvl", "ph", "team")
+  SELECT b."userId", w."battleId", w."originalId", w."name", w."lvl", w."ph", w."team"
+  FROM battle_warriors w
+  INNER JOIN battles b ON b.id = w."battleId"
+  ON CONFLICT DO NOTHING
+`;
+
+export const syncBattleWarriorFilters = <A, E>(database: {
+  execute: (query: SQL) => Effect.Effect<A, E>;
+}) => database.execute(sql.raw(SYNC_BATTLE_WARRIOR_FILTERS_SQL));

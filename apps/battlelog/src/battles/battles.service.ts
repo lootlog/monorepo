@@ -28,6 +28,7 @@ import {
   battles,
   battleSubmissions,
   battleTimelines,
+  battleWarriorFilters,
   battleWarriors,
   type Battle,
 } from "#src/database/schema";
@@ -1199,6 +1200,17 @@ export const makeBattles = (
                   );
 
                   yield* tx.insert(battleWarriors).values(warriorValues);
+                  yield* tx.insert(battleWarriorFilters).values(
+                    warriorValues.map((warrior) => ({
+                      userId,
+                      battleId: warrior.battleId,
+                      originalId: warrior.originalId,
+                      name: warrior.name,
+                      lvl: warrior.lvl,
+                      ph: warrior.ph,
+                      team: warrior.team,
+                    })),
+                  );
                   yield* tx.insert(battleTimelines).values({
                     battleId: insertedBattle.id,
                     userId,

@@ -23,6 +23,7 @@ import { makeBattleReadBudget } from "#src/database/battle-read-budget";
 import { migrateBattlelogDatabase } from "#src/database/migrate";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
 import {
+  SYNC_BATTLE_WARRIOR_FILTERS_SQL,
   unusedDeleteQueue,
   unusedWeaponKills,
 } from "../../../test/battle-fixtures.js";
@@ -193,7 +194,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await pool.query(
-    "TRUNCATE battles, battle_warriors, battle_timelines, battle_submissions, battle_legacy_ids, user_characters, battle_object_deletions",
+    "TRUNCATE battles, battle_warriors, battle_warrior_filters, battle_timelines, battle_submissions, battle_legacy_ids, user_characters, battle_object_deletions",
   );
   await runtime.runPromise(services.redisApi.send("FLUSHDB"));
 });
@@ -405,6 +406,8 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
     );
   }
 
+  await pool.query(SYNC_BATTLE_WARRIOR_FILTERS_SQL);
+
   const filters = { characterId: "hero", minLevel: 80, maxLevel: 120 };
   expect(
     await runtime.runPromise(
@@ -516,6 +519,8 @@ it("reports character metadata from the latest matching self warrior per owner a
       [id, fixture.lvl, fixture.missingSelf ? "unrelated" : "hero"],
     );
   }
+
+  await pool.query(SYNC_BATTLE_WARRIOR_FILTERS_SQL);
 
   const { characters } = await runtime.runPromise(
     services.metadata.getUserCharacters("owner"),
@@ -789,6 +794,7 @@ it("searches only owned warriors with trimmed ILIKE and preserves distinct names
     ('${earlier}','11','alpha',110,'p','case.gif',1,1,0),
     ('${foreign}','9','Alpha',999,'m','private.gif',1,1,0),
     ('${foreign}','12','Alpine',999,'m','private.gif',1,1,0)`);
+  await pool.query(SYNC_BATTLE_WARRIOR_FILTERS_SQL);
 
   const expected = [
     { name: "Alpha", lvl: 90, prof: "w", icon: "latest.gif" },
@@ -817,6 +823,7 @@ it("searches only owned warriors with trimmed ILIKE and preserves distinct names
   await pool.query(`INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
     SELECT '${earlier}'::uuid, 'ordered-' || n, 'Ordered ' || lpad(n::text,2,'0'), 100, 'w', 'hero.gif', 1, 1, 0
     FROM generate_series(12,1,-1) n`);
+  await pool.query(SYNC_BATTLE_WARRIOR_FILTERS_SQL);
 
   const ordered = await runtime.runPromise(
     services.metadata.searchWarriors("Ordered", "owner"),
@@ -875,6 +882,8 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
       [id, fixture.name ?? "Enemy", fixture.lvl ?? 100],
     );
   }
+
+  await pool.query(SYNC_BATTLE_WARRIOR_FILTERS_SQL);
 
   const result = await runtime.runPromise(
     services.battles.getDashboardBattles(
@@ -956,6 +965,9 @@ it("rolls back the battle and skips object upload when participant storage fails
   expect(
     (await pool.query(`SELECT "battleId" FROM battle_warriors`)).rows,
   ).toHaveLength(2);
+  expect(
+    (await pool.query(`SELECT "userId" FROM battle_warrior_filters`)).rows,
+  ).toEqual([{ userId }, { userId }]);
   expect(
     (await pool.query('SELECT "battleId" FROM battle_timelines')).rows,
   ).toEqual([{ battleId: retried.battleId }]);

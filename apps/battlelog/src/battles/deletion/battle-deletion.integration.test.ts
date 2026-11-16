@@ -63,7 +63,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await pool.query(
-    "TRUNCATE battles, battle_warriors, battle_timelines, battle_submissions, battle_legacy_ids, user_characters, battle_object_deletions, weapon_kills",
+    "TRUNCATE battles, battle_warriors, battle_warrior_filters, battle_timelines, battle_submissions, battle_legacy_ids, user_characters, battle_object_deletions, weapon_kills",
   );
   await pool.query(`INSERT INTO battles (id, "createdAt", "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", public)
     SELECT id, battle_id_created_at(id), owner, 'account', 'character', 'world', 1, 'pvp', 'winner', 'loser', 1, 2, true
@@ -73,6 +73,8 @@ beforeEach(async () => {
     INSERT INTO weapon_kills (world, "characterId", "killFingerprint", "itemId", "userId") VALUES ('world', 'character', 'owner-kill', 'item', 'owner'), ('world', 'character', 'other-kill', 'item', 'other-owner');
     INSERT INTO battle_warriors ("battleId", "originalId", name, lvl, prof, icon, team, turns)
     SELECT id, 'character', 'name', 1, 'w', 'icon', 1, 1 FROM battles;
+    INSERT INTO battle_warrior_filters ("userId", "battleId", "originalId", name, lvl, ph, team)
+    SELECT "userId", id, 'character', 'name', 1, 0, 1 FROM battles;
     INSERT INTO battle_submissions ("userId", "submissionId", "battleId")
     SELECT "userId", id::text, id FROM battles;
     INSERT INTO battle_timelines ("battleId", "userId", events)
@@ -154,6 +156,7 @@ for (const mode of ["single", "user"] as const) {
     // Battle hypertables have no cascading foreign keys.
     for (const table of [
       "battle_warriors",
+      "battle_warrior_filters",
       "battle_timelines",
       "battle_submissions",
     ])

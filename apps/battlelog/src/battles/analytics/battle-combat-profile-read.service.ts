@@ -18,7 +18,11 @@ import {
   warriorExists,
 } from "#src/battles/battle-warrior-query";
 import type { DrizzleDatabase } from "#src/database/database";
-import { battles, battleWarriors } from "#src/database/schema";
+import {
+  battles,
+  battleWarriorFilters,
+  battleWarriors,
+} from "#src/database/schema";
 import type { BattleAnalyticsQuery } from "./battle-analytics-query.service.js";
 import { combatProfileCalculator } from "./combat-profile-calculator.service.js";
 import type { BattleStatisticsQuery } from "./query-battle-statistics.js";
@@ -90,13 +94,13 @@ export const makeBattleCombatProfileRead = (
         ? undefined
         : warriorExists(
             battles,
-            notInArray(battleWarriors.originalId, characterIds),
+            notInArray(battleWarriorFilters.originalId, characterIds),
             query.minLevel === undefined
               ? undefined
-              : gte(battleWarriors.lvl, query.minLevel),
+              : gte(battleWarriorFilters.lvl, query.minLevel),
             query.maxLevel === undefined
               ? undefined
-              : lte(battleWarriors.lvl, query.maxLevel),
+              : lte(battleWarriorFilters.lvl, query.maxLevel),
           ),
       eq(battles.hasFlee, false),
       or(eq(user.team, battles.winningTeam), eq(user.team, battles.losingTeam)),

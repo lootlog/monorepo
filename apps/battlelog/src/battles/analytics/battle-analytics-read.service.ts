@@ -14,7 +14,11 @@ import {
 } from "drizzle-orm";
 import { Effect } from "effect";
 import type { DrizzleDatabase } from "#src/database/database";
-import { battles, battleWarriors } from "#src/database/schema";
+import {
+  battles,
+  battleWarriorFilters,
+  battleWarriors,
+} from "#src/database/schema";
 import type { BattleAnalyticsQuery } from "./battle-analytics-query.service.js";
 import type {
   BattleStatisticsQuery,
@@ -147,7 +151,7 @@ export const makeBattleAnalyticsRead = (
         ? undefined
         : queryModule.warriorExists(
             battles,
-            eq(battleWarriors.originalId, options.opponentId),
+            eq(battleWarriorFilters.originalId, options.opponentId),
           ),
       options.excludeBattleId === undefined
         ? undefined
