@@ -10,8 +10,42 @@ import {
 } from "./paint";
 import { drawMagicCircle, drawSouls, type Brush } from "./decor";
 import { groundRadius, type AuraPlacement } from "./placement";
-import type { BurstKind } from "./presets";
+import { TIMESTOP_LENGTH } from "./chrono";
+import type { BurstKind } from "./presets/preset";
 import type { AuraSilhouette } from "./silhouette";
+
+/** How long each burst runs, in seconds. */
+export const BURST_DURATION: Record<BurstKind, number> = {
+  descend: 1.2,
+  eruption: 0.6,
+  freeze: 1,
+  implode: 0.9,
+  strike: 0.4,
+  spores: 0.5,
+  bloodrain: 1.6,
+  comet: 0.9,
+  sweep: 0.8,
+  bloom: 1.4,
+  whirl: 1.4,
+  sandspout: 1.2,
+  souls: 1.6,
+  splash: 1,
+  ascend: 1.2,
+  "aurora-flare": 1.2,
+  conqueror: 0.9,
+  roar: 1.6,
+  coronation: 1.4,
+  judgement: 0.6,
+  rebirth: 1.2,
+  quake: 0.9,
+  supernova: 1.6,
+  timestop: TIMESTOP_LENGTH,
+  glaciate: 1.5,
+  powerup: 2,
+  // A kit names its own length (`burstLength`).
+  kit: 2,
+  reload: 1.2,
+};
 
 /** What every burst visual draws from: the placement, the burst's progress and the tones. */
 export interface BurstScene {

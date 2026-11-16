@@ -1,90 +1,49 @@
-import type {
-  CatalogItemObservation,
-  CatalogNpcObservation,
-} from "@lootlog/protocol/rabbit/catalog";
 import { capturesMapPlayers } from "@lootlog/domain/loot-draw";
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
-import {
-  createItemSnapshotHash,
-  createItemStatsHash,
-} from "@lootlog/database/snapshot-hash";
-import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
-import { Clock, Effect, Schema } from "effect";
-import { once } from "es-toolkit";
-import {
-  compareNpcsStrongestFirst,
-  getNpcType,
-  isDropSourceBossType,
-  MIN_LOOT_NPC_WT,
-} from "@lootlog/domain/npc-type";
-import {
-  resolveLootAcceptance,
-  type LootAcceptance,
-} from "@lootlog/domain/loot-acceptance";
-import type {
-  GuildLootCreatedEventV2,
-  GuildLootEventNpc,
-} from "@lootlog/schema/loot-events";
-import type { LootCreatedNotificationEventV2 } from "@lootlog/schema/notifications";
+import { Clock, Effect } from "effect";
+import { getNpcType, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
+import { resolveLootAcceptance } from "@lootlog/domain/loot-acceptance";
 import {
   InvalidRequestError,
   PermissionDeniedError,
 } from "#src/shared/http/http-errors";
 import { createHash } from "node:crypto";
-import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
-import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import { Permission } from "@lootlog/schema/permissions";
-import type { guildTable } from "#src/database/drizzle/organization.schema";
-import type { lootlogConfigNpcTable } from "#src/database/drizzle/loot.schema";
 import type {
   CreateLootRequest,
   CreateLootResponse,
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
-import { getItemTypeByCl } from "@lootlog/domain/item-type";
-import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
-import type { GameVersion } from "@lootlog/schema/game-version";
-import { getProfByShortname } from "@lootlog/domain/profession";
-import { parseRequiredProfessions } from "#src/loots/required-professions";
 import { parseCharacterIdentity } from "#src/shared/margonem/player-snapshot.persistence";
 
-import {
-  LootPublicationPayload,
-  type LootPublication,
-} from "./loot-publication-outbox.js";
-import type { LootShare } from "#src/loots/loot-response.schema";
+import type { LootPublication } from "./loot-publication-outbox.js";
 import type {
   AcceptedNpcSnapshot,
   LootSubmissionAcceptancePersistence,
 } from "#src/loots/submission/loot-submission-acceptance.repository";
-
-// Older game clients appended the account id to participant character ids.
-const LEGACY_ID = { legacyCombinedId: true } as const;
-
-type CreateLootSubmittedGuild = CreateLootResponse["submittedGuilds"][number];
-
-type CreateLootRejectedGuild = CreateLootResponse["rejectedGuilds"][number];
-
-type CreateLootRejectedGuildReason = CreateLootRejectedGuild["reason"];
-
-type Guild = typeof guildTable.$inferSelect;
-
-type LootlogConfigNpc = typeof lootlogConfigNpcTable.$inferSelect;
-
-type LootSubmissionData = {
-  guildId: string;
-  guildName: string;
-  memberId: number;
-};
-
-type AcceptanceOutcome = {
-  submissionData: LootSubmissionData[];
-  submittedGuilds: CreateLootSubmittedGuild[];
-  rejectedGuilds: CreateLootRejectedGuild[];
-};
+import { inferInitialAllocation } from "./loot-submission-allocation.js";
+import {
+  getItemStats,
+  LEGACY_ID,
+  mapLootItemsToPersistence,
+  mapLootNpcsToPersistence,
+  mapLootPlayersToPersistence,
+  processNpcs,
+} from "./loot-submission-normalization.js";
+import {
+  createResponse,
+  getNewSubmissions,
+  mapRejectedGuilds,
+  resolveAcceptanceOutcome,
+  type AcceptanceOutcome,
+  type LootSubmissionData,
+} from "./loot-submission-outcome.js";
+import {
+  createdPublications,
+  mapNpcEvents,
+  newLootPublications,
+} from "./loot-submission-publications.js";
 
 interface LootSubmissionLock {
   readonly withLock: <A, E>(
@@ -94,29 +53,6 @@ interface LootSubmissionLock {
     effect: Effect.Effect<A, E>,
   ) => Effect.Effect<A, unknown>;
 }
-
-/**
- * The catalog identity stored for a looted NPC. A reported template wins; a
- * spawn without one stays in the runtime namespace instead of posing as a
- * template. Clients that send only the overloaded `id` keep `legacy`.
- */
-const lootNpcIdentity = (npc: CreateLootRequest["npcs"][number]) => {
-  if (npc.templateId !== undefined && npc.templateId !== null) {
-    return {
-      identityNamespace: NpcIdentityNamespace.TEMPLATE,
-      npcId: npc.templateId,
-    };
-  }
-
-  if (npc.runtimeId !== undefined) {
-    return {
-      identityNamespace: NpcIdentityNamespace.RUNTIME,
-      npcId: npc.runtimeId,
-    };
-  }
-
-  return { identityNamespace: NpcIdentityNamespace.LEGACY, npcId: npc.id };
-};
 
 const LOOT_LOCK_TTL_MS = 30_000;
 
@@ -213,7 +149,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             code: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
             details: {
               submittedGuilds: [],
-              rejectedGuilds: this.mapRejectedGuilds(
+              rejectedGuilds: mapRejectedGuilds(
                 guildById,
                 whitelisted.rejected,
               ),
@@ -243,7 +179,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       }
 
       const npcData = yield* Effect.try({
-        try: () => this.processNpcs(options.submission.npcs),
+        try: () => processNpcs(options.submission.npcs),
         catch: (error) =>
           error instanceof InvalidRequestError
             ? error
@@ -258,7 +194,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
       const primaryNpcType = getNpcType(NpcType, npcData.primary);
 
-      const outcome = this.resolveAcceptanceOutcome({
+      const outcome = resolveAcceptanceOutcome({
         catchingGuildIds,
         guildById,
         lootlogConfigs,
@@ -283,7 +219,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       const mapPlayersSnapshot = capturesMapPlayers({
         source: options.submission.source,
         rarities: options.submission.loots.map(
-          (item) => this.getItemStats(item).rarity,
+          (item) => getItemStats(item).rarity,
         ),
       })
         ? (options.submission.mapPlayersSnapshot ?? null)
@@ -296,7 +232,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           mapPlayersSnapshot,
         );
 
-        return this.createResponse(existingLootId, outcome);
+        return createResponse(existingLootId, outcome);
       }
 
       const observedAt = new Date(yield* Clock.currentTimeMillis);
@@ -309,7 +245,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         submission: options.submission,
         uniqueId: options.uniqueId,
         publications: (lootId, npcs) =>
-          this.newLootPublications({
+          newLootPublications({
             lootId,
             npcs,
             observedAt,
@@ -318,74 +254,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           }),
       });
 
-      return this.createResponse(lootId, outcome);
-    });
-  }
-
-  private resolveAcceptanceOutcome(options: {
-    catchingGuildIds: readonly string[];
-    guildById: ReadonlyMap<string, Guild>;
-    lootlogConfigs: Array<{ id: string; npcs: LootlogConfigNpc[] }>;
-    members: Array<{ id: number; guildId: string }>;
-    organizationIds: readonly string[];
-    primaryNpcType: NpcType;
-    submission: CreateLootRequest;
-  }): AcceptanceOutcome {
-    const acceptance = resolveLootAcceptance({
-      organizationIds: options.organizationIds,
-      catchingGuildIds: options.catchingGuildIds,
-      configs: new Map(
-        options.lootlogConfigs.map((config) => [config.id, config]),
-      ),
-      members: new Map(
-        options.members.map((member) => [member.guildId, member]),
-      ),
-      loot: {
-        npcType: options.primaryNpcType,
-        rarities: once(() =>
-          options.submission.loots.map(
-            (item) => this.getItemStats(item).rarity,
-          ),
-        ),
-      },
-    });
-
-    const outcome: AcceptanceOutcome = {
-      submissionData: [],
-      submittedGuilds: [],
-      rejectedGuilds: this.mapRejectedGuilds(
-        options.guildById,
-        acceptance.rejected,
-      ),
-    };
-
-    for (const { organizationId, member } of acceptance.accepted) {
-      const guild = options.guildById.get(organizationId);
-
-      if (!guild || !member) continue;
-
-      outcome.submissionData.push({
-        guildId: guild.id,
-        guildName: guild.name,
-        memberId: member.id,
-      });
-      outcome.submittedGuilds.push({
-        guildId: guild.id,
-        guildName: guild.name,
-      });
-    }
-
-    return outcome;
-  }
-
-  private mapRejectedGuilds(
-    guildById: ReadonlyMap<string, Guild>,
-    rejected: LootAcceptance<unknown>["rejected"],
-  ): CreateLootRejectedGuild[] {
-    return rejected.flatMap(({ organizationId, reason }) => {
-      const guild = guildById.get(organizationId);
-
-      return guild ? [this.createRejectedGuild(guild, reason)] : [];
+      return createResponse(lootId, outcome);
     });
   }
 
@@ -407,7 +276,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         })),
       );
 
-      const newSubmissions = this.getNewSubmissions(
+      const newSubmissions = getNewSubmissions(
         submissions,
         existingSubmissions,
       );
@@ -420,11 +289,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         lootId,
         newSubmissions,
         (organizationIds, npcs) =>
-          this.createdPublications(
-            lootId,
-            organizationIds,
-            this.mapNpcEvents(npcs),
-          ),
+          createdPublications(lootId, organizationIds, mapNpcEvents(npcs)),
         mapPlayersSnapshot === null
           ? undefined
           : {
@@ -449,7 +314,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     ) => LootPublication[];
   }): Effect.Effect<number, unknown> {
     return Effect.gen({ self: this }, function* () {
-      const initialAllocation = yield* this.inferInitialAllocation(
+      const initialAllocation = yield* inferInitialAllocation(
+        this.repository,
         options.submission,
         options.npcData.primary,
         options.primaryNpcType,
@@ -465,15 +331,15 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           location: options.submission.location,
           lootShare: initialAllocation.share,
           lootShareSource: initialAllocation.source,
-          items: this.mapLootItemsToPersistence(
+          items: mapLootItemsToPersistence(
             options.submission.loots,
             options.submission.gameVersion,
           ),
-          players: this.mapLootPlayersToPersistence(
+          players: mapLootPlayersToPersistence(
             options.submission.players,
             options.submission.world,
           ),
-          npcs: this.mapLootNpcsToPersistence(options.submission.npcs),
+          npcs: mapLootNpcsToPersistence(options.submission.npcs),
           submissions: options.outcome.submissionData,
         },
         options.publications,
@@ -483,113 +349,6 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
       return lootId;
     });
-  }
-
-  private newLootPublications(options: {
-    lootId: number;
-    npcs: AcceptedNpcSnapshot[];
-    /** When the API accepted the loot; the catalog keeps the earliest. */
-    observedAt: Date;
-    outcome: AcceptanceOutcome;
-    submission: CreateLootRequest;
-  }): LootPublication[] {
-    const organizationIds = this.getUniqueOrganizationIds(
-      options.outcome.submissionData,
-    );
-
-    const intents = this.createdPublications(
-      options.lootId,
-      organizationIds,
-      this.mapNpcEvents(options.npcs),
-    );
-
-    const rabbit = (
-      routingKey: Extract<
-        LootPublication["payload"],
-        { kind: "rabbit" }
-      >["routingKey"],
-      data: unknown,
-    ) => {
-      intents.push({
-        organizationIds,
-        payload: Schema.decodeUnknownSync(LootPublicationPayload)({
-          kind: "rabbit",
-          routingKey,
-          data,
-        }),
-      });
-    };
-
-    rabbit(
-      RabbitRoutingKey.SEARCH_PLAYERS_INDEX,
-      this.mapPlayers(options.submission.players).map((player) => ({
-        ...player,
-        world: options.submission.world,
-      })),
-    );
-
-    const searchNpc = (npc: AcceptedNpcSnapshot) => ({
-      id: npc.npcId,
-      identityNamespace: npc.identityNamespace,
-      name: npc.name,
-      lvl: npc.lvl,
-      prof: npc.prof ?? "",
-      icon: npc.icon,
-      wt: npc.wt,
-      type: npc.type,
-      margonemType: npc.margonemType,
-      gameVersion: npc.gameVersion,
-    });
-
-    const observedAt = options.observedAt.toISOString();
-    const dropSource = this.findDropSource(options.npcs, options.submission);
-
-    rabbit(
-      RabbitRoutingKey.CATALOG_NPCS_INDEX,
-      options.npcs.map((npc): CatalogNpcObservation => ({
-        ...searchNpc(npc),
-        // The catalog keeps the latest observation of an entry; loot ids
-        // order observations even when deliveries arrive out of order.
-        lootId: options.lootId,
-        ...(npc.snapshotHash && { snapshotHash: npc.snapshotHash }),
-        world: options.submission.world,
-        observedAt,
-      })),
-    );
-    const items = this.mapItems(options.submission.loots);
-
-    if (items.length > 0)
-      rabbit(
-        RabbitRoutingKey.CATALOG_ITEMS_INDEX,
-        items.map((item): CatalogItemObservation => ({
-          id: item.id,
-          name: item.name,
-          icon: item.icon,
-          // The catalog describes revisions, not looted instances.
-          stat: splitItemStat(item.stat).revision,
-          lvl: item.lvl,
-          rarity: item.rarity,
-          type: item.type,
-          worlds: [options.submission.world],
-          gameVersion: options.submission.gameVersion,
-          observedAt,
-          ...(dropSource && { droppedBy: searchNpc(dropSource) }),
-        })),
-      );
-    rabbit(RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED, {
-      version: 2,
-      lootId: options.lootId,
-      world: options.submission.world,
-      guildIds: organizationIds,
-      itemIds: items.map((item) => item.id),
-      itemNames: items.map((item) => item.name),
-      npcs: options.npcs.map((npc) => ({
-        type: npc.type ?? null,
-        lvl: npc.lvl ?? null,
-      })),
-    } satisfies LootCreatedNotificationEventV2);
-
-    return intents;
   }
 
   private createUniqueLootId(
@@ -603,316 +362,6 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         .join("") + world;
 
     return createHash("sha256").update(source).digest("hex");
-  }
-
-  private inferInitialAllocation(
-    submission: CreateLootRequest,
-    primaryNpc: CreateLootRequest["npcs"][number],
-    primaryNpcType: NpcType,
-  ) {
-    if (primaryNpcType !== NpcType.COLOSSUS) {
-      return Effect.succeed({
-        share: {},
-        source: LootShareSource.NONE,
-      });
-    }
-
-    return this.repository.hasAmbiguousNpcVariant(primaryNpc.name).pipe(
-      Effect.map((ambiguous) => {
-        if (ambiguous) {
-          return {
-            share: {},
-            source: LootShareSource.NONE,
-          };
-        }
-
-        const share = this.mapItemOwnerAllocation(
-          submission.loots,
-          submission.players,
-        );
-
-        return share
-          ? { share, source: LootShareSource.ITEM_OWNER }
-          : {
-              share: {},
-              source: LootShareSource.NONE,
-            };
-      }),
-    );
-  }
-
-  private mapItemOwnerAllocation(
-    loots: CreateLootRequest["loots"],
-    players: CreateLootRequest["players"],
-  ): LootShare | null {
-    if (loots.length === 0 || loots.length !== players.length) return null;
-    const shareByCharacter = new Map<number, string>();
-    const shareIds = new Set<string>();
-
-    for (const player of players) {
-      const { accountId, characterId } = this.normalizeCharacterAndAccount(
-        player.id,
-        player.accountId,
-      );
-
-      const shareId = `${characterId}${accountId}`;
-
-      if (shareByCharacter.has(player.id) || shareIds.has(shareId)) return null;
-      shareByCharacter.set(player.id, shareId);
-      shareIds.add(shareId);
-    }
-
-    const assigned = new Set<number>();
-    const share: LootShare = {};
-
-    for (const loot of loots) {
-      if (loot.own === undefined || assigned.has(loot.own)) return null;
-      const shareId = shareByCharacter.get(loot.own);
-
-      if (shareId === undefined) return null;
-      assigned.add(loot.own);
-      share[shareId] = [loot.hid];
-    }
-
-    return assigned.size === players.length ? share : null;
-  }
-
-  /** The strongest NPC names the loot, as every view of it does. */
-  private processNpcs(npcs: CreateLootRequest["npcs"]) {
-    const [primary] = npcs.toSorted((left, right) =>
-      compareNpcsStrongestFirst(
-        {
-          type: getNpcType(NpcType, left),
-          wt: left.wt,
-          lvl: left.lvl,
-          npcId: lootNpcIdentity(left).npcId,
-        },
-        {
-          type: getNpcType(NpcType, right),
-          wt: right.wt,
-          lvl: right.lvl,
-          npcId: lootNpcIdentity(right).npcId,
-        },
-      ),
-    );
-
-    if (!primary) {
-      throw new InvalidRequestError({ code: ErrorKey.NPC_WT_TOO_LOW });
-    }
-
-    return { primary };
-  }
-
-  /**
-   * The NPC the items came from: a dialog's or a fight's only NPC, or the only
-   * boss of a group fight (`DROP_SOURCE_BOSS_TYPES`). Other sources, such as
-   * a lootbox, have none.
-   */
-  private findDropSource(
-    npcs: AcceptedNpcSnapshot[],
-    submission: CreateLootRequest,
-  ): AcceptedNpcSnapshot | undefined {
-    if (submission.source !== "FIGHT" && submission.source !== "DIALOG")
-      return undefined;
-
-    if (npcs.length === 1) return npcs[0];
-
-    if (submission.source === "DIALOG") return undefined;
-
-    const bosses = npcs.filter((npc) => isDropSourceBossType(npc.type));
-
-    return bosses.length === 1 ? bosses[0] : undefined;
-  }
-
-  private mapNpcEvents(npcs: AcceptedNpcSnapshot[]): GuildLootEventNpc[] {
-    return npcs
-      .toSorted(compareNpcsStrongestFirst)
-      .map(({ lvl, prof, type, wt }) => ({ lvl, prof, type, wt }));
-  }
-
-  private getItemStats(item: CreateLootRequest["loots"][number]) {
-    const parsedStats = parseItemStats(item.stat);
-    const lvl = parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0;
-    const rawRarity = parsedStats["rarity"]?.toUpperCase();
-
-    const rarity =
-      rawRarity === undefined
-        ? undefined
-        : Schema.decodeUnknownSync(ItemRaritySchema)(rawRarity);
-
-    const prof = parseRequiredProfessions(parsedStats["reqp"]);
-
-    return { lvl, rarity, prof, type: getItemTypeByCl(item.cl) };
-  }
-
-  private mapItems(items: CreateLootRequest["loots"]) {
-    return items.map((item) => ({ ...item, ...this.getItemStats(item) }));
-  }
-
-  private mapPlayers(players: CreateLootRequest["players"]) {
-    return players.map((player) => {
-      const { accountId, characterId } = this.normalizeCharacterAndAccount(
-        player.id,
-        player.accountId,
-      );
-
-      return {
-        id: `${characterId}${accountId}`,
-        name: player.name,
-        lvl: player.lvl,
-        prof: getProfByShortname(player.prof),
-        icon: player.icon,
-        characterId,
-        accountId,
-      };
-    });
-  }
-
-  private mapLootItemsToPersistence(
-    items: CreateLootRequest["loots"],
-    gameVersion: GameVersion,
-  ) {
-    return items.map((item) => {
-      const { lvl, rarity, type } = this.getItemStats(item);
-      const { revision, instance } = splitItemStat(item.stat);
-
-      return {
-        itemId: item.id,
-        gameVersion,
-        statsHash: createItemStatsHash(revision),
-        snapshotHash: createItemSnapshotHash({
-          gameVersion,
-          itemId: item.id,
-          name: item.name,
-          icon: item.icon,
-          itemType: type,
-          stat: revision,
-        }),
-        name: item.name,
-        icon: item.icon,
-        lvl,
-        rarity,
-        itemType: type,
-        statRaw: revision,
-        statsSnapshot: parseItemStats(revision),
-        hid: item.hid,
-        instanceStat: instance,
-      };
-    });
-  }
-
-  private mapLootPlayersToPersistence(
-    players: CreateLootRequest["players"],
-    world: string,
-  ) {
-    return players.map((player) => {
-      const prof = getProfByShortname(player.prof) ?? null;
-
-      const { accountId, characterId } = this.normalizeCharacterAndAccount(
-        player.id,
-        player.accountId,
-      );
-
-      return {
-        lvl: player.lvl,
-        world,
-        accountId,
-        characterId,
-        name: player.name,
-        prof,
-        icon: player.icon,
-      };
-    });
-  }
-
-  private normalizeCharacterAndAccount(
-    id: string | number,
-    accountId: string | number,
-  ) {
-    const identity = parseCharacterIdentity(id, accountId, LEGACY_ID);
-
-    // acceptWithLock rejects a loot with an invalid participant first.
-    if (!identity) throw new InvalidRequestError("Invalid player id");
-
-    return identity;
-  }
-
-  private mapLootNpcsToPersistence(npcs: CreateLootRequest["npcs"]) {
-    return npcs.map((npc) => ({
-      ...lootNpcIdentity(npc),
-      runtimeNpcId: npc.runtimeId ?? null,
-      name: npc.name,
-      type: getNpcType(NpcType, npc),
-      lvl: npc.lvl,
-      // Senders may report the rendered CDN URL of the graphic; a revision
-      // must not depend on which form a sender chose.
-      icon: normalizeNpcIcon(npc.icon),
-      wt: npc.wt,
-      margonemType: npc.type,
-      prof: getProfByShortname(npc.prof ?? "") ?? null,
-    }));
-  }
-
-  private createRejectedGuild(
-    guild: Pick<Guild, "id" | "name">,
-    reason: CreateLootRejectedGuildReason,
-  ): CreateLootRejectedGuild {
-    return { guildId: guild.id, guildName: guild.name, reason };
-  }
-
-  private createResponse(
-    id: number,
-    outcome: Omit<AcceptanceOutcome, "submissionData">,
-  ): CreateLootResponse {
-    return {
-      id,
-      submittedGuilds: outcome.submittedGuilds,
-      rejectedGuilds: outcome.rejectedGuilds,
-    };
-  }
-
-  private getNewSubmissions(
-    submissions: LootSubmissionData[],
-    existingSubmissions: Array<{ guildId: string; memberId: number }>,
-  ): LootSubmissionData[] {
-    const existingKeys = new Set(
-      existingSubmissions.map(
-        ({ guildId, memberId }) => `${guildId}:${memberId}`,
-      ),
-    );
-
-    return submissions.filter(
-      ({ guildId, memberId }) => !existingKeys.has(`${guildId}:${memberId}`),
-    );
-  }
-
-  private getUniqueOrganizationIds(
-    submissions: Array<{ guildId: string }>,
-  ): string[] {
-    return [...new Set(submissions.map(({ guildId }) => guildId))];
-  }
-
-  private createdPublications(
-    lootId: number,
-    organizationIds: string[],
-    npcs: GuildLootEventNpc[],
-  ): LootPublication[] {
-    return organizationIds.flatMap((guildId): LootPublication[] => [
-      { organizationIds: [guildId], payload: { kind: "cache" } },
-      {
-        organizationIds: [guildId],
-        payload: {
-          kind: "rabbit",
-          routingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE,
-          data: {
-            version: 2,
-            guildId,
-            lootId,
-            npcs,
-          } satisfies GuildLootCreatedEventV2,
-        },
-      },
-    ]);
   }
 }
 

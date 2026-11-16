@@ -844,24 +844,6 @@
       }
     },
     {
-      "files": ["apps/api/src/events/kills/event-kill.service.ts"],
-      "rules": {
-        "anti-slop/no-unknown-parameters": [
-          "error",
-          {
-            "boundaryFunctions": ["getPresenceByMapId"]
-          }
-        ],
-        "anti-slop/no-runtime-typeof": [
-          "error",
-          {
-            "allowInTypeGuards": true,
-            "boundaryFunctions": ["getPresenceByMapId"]
-          }
-        ]
-      }
-    },
-    {
       "files": [
         "apps/api/src/http-api/handlers/timers/timer-search.data-layer.ts"
       ],
@@ -1157,6 +1139,20 @@
       }
     },
     {
+      "files": [
+        "apps/api/src/http-api/handlers/timers/timer-auto-guild-write.ts",
+        "apps/api/src/http-api/handlers/timers/timer-auto-persistence.ts"
+      ],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeNpc"]
+          }
+        ]
+      }
+    },
+    {
       "files": ["apps/api/src/events/catalog/events-catalog-read.ts"],
       "rules": {
         "anti-slop-effect/no-service-constructor-imports": [
@@ -1215,7 +1211,7 @@
     },
     {
       "files": [
-        "apps/api/src/loots/submission/loot-submission-acceptance.service.ts"
+        "apps/api/src/loots/submission/loot-submission-publications.ts"
       ],
       "rules": {
         "anti-slop/no-unknown-parameters": [
