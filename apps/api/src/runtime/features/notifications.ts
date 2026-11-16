@@ -198,15 +198,6 @@ export const notificationsServicesLive = Layer.effect(
       finalize,
     );
 
-    const delivery = makeNotificationDeliveryResult(
-      {
-        find: jobsStore.findJob,
-        record: jobsStore.recordDelivery,
-      },
-      notificationScheduler,
-      finalize,
-    );
-
     const targets = makeNotificationGuildTargets(
       database,
       {
@@ -215,6 +206,16 @@ export const notificationsServicesLive = Layer.effect(
       {
         cancel: notificationScheduler.cancel,
       },
+    );
+
+    const delivery = makeNotificationDeliveryResult(
+      {
+        find: jobsStore.findJob,
+        record: jobsStore.recordDelivery,
+      },
+      notificationScheduler,
+      finalize,
+      targets.remove,
     );
 
     return {
