@@ -4,10 +4,8 @@ import type {
 } from "@lootlog/messaging";
 import { RabbitExchange } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Schema } from "effect";
-import {
-  RabbitBridge,
-  gatewayQueueDefinitions,
-} from "../src/rabbit/rabbit-bridge.js";
+import { gatewayQueueDefinitions } from "../src/rabbit/gateway-queues.js";
+import { RabbitBridge } from "../src/rabbit/rabbit-bridge.js";
 import type { RealtimeHub } from "../src/realtime/realtime-hub.js";
 
 const createRabbitDelivery = (

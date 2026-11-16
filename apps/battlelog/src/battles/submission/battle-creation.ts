@@ -1,0 +1,505 @@
+import {
+  ApplicationError,
+  InvalidRequestError,
+} from "#src/infrastructure/http-error";
+import { adapter } from "#src/infrastructure/infrastructure-adapter";
+import { ContextLogger } from "@lootlog/instrumentation";
+import { and, eq, gte, lt } from "drizzle-orm";
+import { Clock, Effect } from "effect";
+import type { CreateBattleInput } from "#src/battles/submission/create-battle";
+import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
+import type { BattleMetadata } from "#src/battles/catalog/battle-metadata.service";
+import type { DrizzleDatabase } from "#src/database/database";
+import {
+  battles,
+  battleSubmissions,
+  battleTimelines,
+  battleWarriorFilters,
+  battleWarriors,
+} from "#src/database/schema";
+import { encodeBattleEvents } from "#src/battles/battle-timeline";
+import { createBattleId, firstBattleIdAt } from "#src/battles/battle-id";
+import type {
+  BattleDeduplication,
+  BattleDeduplicationTiming,
+} from "#src/battles/submission/battle-deduplication";
+import {
+  createBattleSemanticFingerprint,
+  normalizeBattleSubmission,
+} from "#src/battles/submission/battle-submission";
+import { calculateBattleDuration } from "@lootlog/battle-processor/battle-log";
+import {
+  BattleProcessor,
+  type BattleAnalysis,
+} from "@lootlog/battle-processor/battle-processor";
+import type { Warrior } from "@lootlog/battle-processor/warrior";
+import type { CreateBattleParams } from "#src/battles/battle-service";
+
+type BattleCreationDatabase = Pick<
+  DrizzleDatabase,
+  "select" | "update" | "transaction"
+> & {
+  query: {
+    battles: Pick<DrizzleDatabase["query"]["battles"], "findFirst">;
+  };
+};
+
+/** Stores a submitted battle once, however often the client retries it. */
+export const makeBattleCreation = (
+  drizzle: BattleCreationDatabase,
+  battleAnalyticsService: Pick<BattleAnalytics, "invalidateAnalyticsCache">,
+  battleMetadataService: Pick<BattleMetadata, "upsertUserCharacter">,
+  deduplication: BattleDeduplication,
+  deduplicationTiming: Pick<BattleDeduplicationTiming, "cacheTtlSeconds">,
+) => {
+  const logger = new ContextLogger("Battles");
+
+  const preserveCanonicalBattleDuration = (
+    battleId: string,
+    duration: number,
+    userId: string,
+  ) => {
+    if (duration <= 0) return Effect.void;
+
+    return adapter("Battles_preserveDuration", () =>
+      drizzle
+        .update(battles)
+        .set({ duration, updatedAt: new Date() })
+        .where(and(eq(battles.id, battleId), lt(battles.duration, duration)))
+        .returning({ id: battles.id }),
+    ).pipe(
+      Effect.flatMap((updated) =>
+        updated.length > 0
+          ? battleAnalyticsService.invalidateAnalyticsCache(userId)
+          : Effect.void,
+      ),
+    );
+  };
+
+  const getRecentBattleIdBySemanticFingerprint = (
+    semanticFingerprint: string,
+    userId: string,
+  ) => {
+    return Clock.currentTimeMillis.pipe(
+      Effect.flatMap((now) =>
+        adapter("Battles_findRecentFingerprint", () =>
+          drizzle.query.battles.findFirst({
+            where: {
+              semanticFingerprint,
+              userId,
+              RAW: (table) =>
+                gte(
+                  table.id,
+                  firstBattleIdAt(
+                    new Date(now - deduplicationTiming.cacheTtlSeconds * 1_000),
+                  ),
+                ),
+            },
+            columns: { id: true },
+            orderBy: { id: "desc" },
+          }),
+        ),
+      ),
+      Effect.map((battle) => battle?.id ?? null),
+    );
+  };
+
+  const getMatchingBattleBySubmissionId = (
+    submissionId: string | undefined,
+    userId: string,
+    semanticFingerprint: string,
+  ) => {
+    if (!submissionId) {
+      return Effect.succeed(null);
+    }
+
+    return adapter("Battles_findSubmission", () =>
+      drizzle
+        .select({
+          id: battles.id,
+          semanticFingerprint: battles.semanticFingerprint,
+        })
+        .from(battleSubmissions)
+        .innerJoin(
+          battles,
+          and(
+            eq(battles.id, battleSubmissions.battleId),
+            eq(battles.userId, battleSubmissions.userId),
+          ),
+        )
+        .where(
+          and(
+            eq(battleSubmissions.userId, userId),
+            eq(battleSubmissions.submissionId, submissionId),
+          ),
+        )
+        .limit(1),
+    ).pipe(
+      Effect.flatMap(([battle]) => {
+        if (
+          battle &&
+          battle.semanticFingerprint !== null &&
+          battle.semanticFingerprint !== semanticFingerprint
+        ) {
+          return Effect.fail(
+            new InvalidRequestError(
+              "Submission ID is already used for a different battle",
+            ),
+          );
+        }
+
+        return Effect.succeed(battle ?? null);
+      }),
+    );
+  };
+
+  const analyzeBattle = (dto: CreateBattleInput): BattleAnalysis => {
+    try {
+      const processor = new BattleProcessor("statistics");
+      const analysis = processor.processBattle(dto);
+
+      return analysis;
+    } catch (error) {
+      logger.error("Failed to analyze battle data:", error);
+      throw new Error(
+        `Battle analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
+  };
+
+  const storeBattleInDatabase = (
+    data: CreateBattleInput,
+    userId: string,
+    analysis: BattleAnalysis,
+    semanticFingerprint: string,
+  ) => {
+    const store = Effect.gen(function* () {
+      const userWarrior = analysis.warriors.find(
+        (w) => w.originalId === data.characterId,
+      );
+
+      // The character upsert logs and absorbs its own failures, so it never
+      // aborts the battle transaction it runs beside.
+      const [, battle] = yield* Effect.all(
+        [
+          userWarrior
+            ? battleMetadataService.upsertUserCharacter({
+                userId,
+                characterId: data.characterId,
+                name: userWarrior.name,
+                world: data.world,
+                icon: userWarrior.icon,
+              })
+            : Effect.void,
+          adapter("Battles_storeTransaction", () =>
+            drizzle.transaction((tx) =>
+              Effect.gen(function* () {
+                const now = yield* Clock.currentTimeMillis;
+                const battleId = createBattleId(now);
+
+                // The submission row claims the ID first; a concurrent retry
+                // that loses the claim reads the winner's battle instead.
+                if (data.submissionId) {
+                  const [claimed] = yield* tx
+                    .insert(battleSubmissions)
+                    .values({
+                      userId,
+                      submissionId: data.submissionId,
+                      battleId: battleId.id,
+                    })
+                    .onConflictDoNothing()
+                    .returning({ battleId: battleSubmissions.battleId });
+
+                  if (!claimed) return null;
+                }
+
+                const [insertedBattle] = yield* tx
+                  .insert(battles)
+                  .values({
+                    ...battleId,
+                    userId,
+                    updatedAt: new Date(now),
+                    accountId: data.accountId,
+                    characterId: data.characterId,
+                    semanticFingerprint,
+                    world: data.world,
+                    duration: analysis.duration,
+                    type: analysis.type,
+                    winner: analysis.outcome.winner,
+                    loser: analysis.outcome.loser,
+                    winningTeam: analysis.outcome.winningTeam,
+                    losingTeam: analysis.outcome.losingTeam,
+                    hasFlee: analysis.outcome.hasFlee,
+                    unfinished: analysis.outcome.unfinished,
+                    matchmaking: !!analysis.matchmaking,
+                    ...(analysis.matchmaking && {
+                      difficultyRank: analysis.matchmaking.difficultyRank,
+                      result: analysis.matchmaking.result,
+                      ratingDelta: analysis.matchmaking.ratingDelta,
+                      opponentLvl: analysis.matchmaking.opponentLvl,
+                      opponentOplvl: analysis.matchmaking.opponentOplvl,
+                      opponentRating: analysis.matchmaking.opponentRating,
+                      rating: analysis.matchmaking.rating,
+                      status: analysis.matchmaking.status,
+                      pointsGained: analysis.matchmaking.pointsGained,
+                      placementCur: analysis.matchmaking.placementCur,
+                      placementMax: analysis.matchmaking.placementMax,
+                      dailyStageId: analysis.matchmaking.dailyStageId,
+                      dailyPointsCur: analysis.matchmaking.dailyPointsCur,
+                      dailyPointsMax: analysis.matchmaking.dailyPointsMax,
+                      dailyPointsStep: analysis.matchmaking.dailyPointsStep,
+                      dailyRewardsLast: analysis.matchmaking.dailyRewardsLast,
+                      dailyRewardsCur: analysis.matchmaking.dailyRewardsCur,
+                      dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
+                    }),
+                  })
+                  .returning({ id: battles.id });
+
+                const warriorValues = analysis.warriors.map(
+                  (warrior: Warrior) => ({
+                    battleId: insertedBattle.id,
+                    originalId: warrior.originalId,
+                    name: warrior.name,
+                    lvl: warrior.lvl,
+                    prof: warrior.prof,
+                    icon: warrior.icon,
+                    team: warrior.team,
+                    isDead: warrior.isDead,
+                    surrendered: warrior.surrendered,
+                    fled: warrior.fled,
+                    maxHp: warrior.maxHp,
+                    turns: warrior.turns,
+                    turnsLost: warrior.turnsLost,
+                    steps: warrior.steps,
+                    normalAttacks: warrior.normalAttacks,
+                    spellsUsed: warrior.spellsUsed,
+                    spellsUsedMap: warrior.spellsUsedMap,
+                    damageDealt: warrior.damageDealt,
+                    distanceDamage: warrior.distanceDamage,
+                    meleeDamage: warrior.meleeDamage,
+                    auxiliaryDamage: warrior.auxiliaryDamage,
+                    fireDamage: warrior.fireDamage,
+                    frostDamage: warrior.frostDamage,
+                    lightningDamage: warrior.lightningDamage,
+                    thirdAttDamage: warrior.thirdAttDamage,
+                    damageDealtAfterDefensive:
+                      warrior.damageDealtAfterDefensive,
+                    damageDealtAfterDefensivePercentage:
+                      warrior.damageDealtAfterDefensivePercentage,
+                    damageTaken: warrior.damageTaken,
+                    distanceDamageTaken: warrior.distanceDamageTaken,
+                    meleeDamageTaken: warrior.meleeDamageTaken,
+                    auxiliaryDamageTaken: warrior.auxiliaryDamageTaken,
+                    fireDamageTaken: warrior.fireDamageTaken,
+                    frostDamageTaken: warrior.frostDamageTaken,
+                    lightningDamageTaken: warrior.lightningDamageTaken,
+                    thirdAttDamageTaken: warrior.thirdAttDamageTaken,
+                    flatDamageTaken: warrior.flatDamageTaken,
+                    rageDamageDealt: warrior.rageDamageDealt,
+                    trueDamageDealt: warrior.trueDamageDealt,
+                    trueDamageTaken: warrior.trueDamageTaken,
+                    stigmaDamageDealt: warrior.stigmaDamageDealt,
+                    stigmaDamageTaken: warrior.stigmaDamageTaken,
+                    passiveHealing: warrior.passiveHealing,
+                    activeHealing: warrior.activeHealing,
+                    armorPierces: warrior.armorPierces,
+                    criticalHits: warrior.criticalHits,
+                    reducedArmor: warrior.reducedArmor,
+                    reducedPoisonResistance: warrior.reducedPoisonResistance,
+                    magicResistanceDestroyed: warrior.magicResistanceDestroyed,
+                    evasions: warrior.evasions,
+                    attacksEvaded: warrior.attacksEvaded,
+                    counters: warrior.counters,
+                    fastArrows: warrior.fastArrows,
+                    blocks: warrior.blocks,
+                    attacksBlocked: warrior.attacksBlocked,
+                    blockedDamage: warrior.blockedDamage,
+                    woundDamageTaken: warrior.woundDamageTaken,
+                    poisonDamageTaken: warrior.poisonDamageTaken,
+                    injureDamageTaken: warrior.injureDamageTaken,
+                    injures: warrior.injures,
+                    critWoundDamageTaken: warrior.critWoundDamageTaken,
+                    firePassiveDamageTaken: warrior.firePassiveDamageTaken,
+                    lightningPassiveDamageTaken:
+                      warrior.lightningPassiveDamageTaken,
+                    destroyedEnergy: warrior.destroyedEnergy,
+                    destroyedMana: warrior.destroyedMana,
+                    regeneratedEnergy: warrior.regeneratedEnergy,
+                    regeneratedMana: warrior.regeneratedMana,
+                    reflectedDamage: warrior.reflectedDamage,
+                    reflectedDamageTaken: warrior.reflectedDamageTaken,
+                    legbonCurse: warrior.legbonCurse,
+                    legbonCleanse: warrior.legbonCleanse,
+                    legbonLastheal: warrior.legbonLastheal,
+                    legbonLasthealValue: warrior.legbonLasthealValue,
+                    legbonGlare: warrior.legbonGlare,
+                    legbonHolytouch: warrior.legbonHolytouch,
+                    legbonHolytouchValue: warrior.legbonHolytouchValue,
+                    legbonCritredValue: warrior.legbonCritredValue,
+                    legbonVerycrit: warrior.legbonVerycrit,
+                    legbonAnguish: warrior.legbonAnguish,
+                    legbonFacadeValue: warrior.legbonFacadeValue,
+                    legbonPunctureValue: warrior.legbonPunctureValue,
+                    legbons: warrior.legbons,
+                    legbonAnguishDamageTaken: warrior.legbonAnguishDamageTaken,
+                    ph: warrior.ph,
+                  }),
+                );
+
+                yield* tx.insert(battleWarriors).values(warriorValues);
+                yield* tx.insert(battleWarriorFilters).values(
+                  warriorValues.map((warrior) => ({
+                    userId,
+                    battleId: warrior.battleId,
+                    originalId: warrior.originalId,
+                    name: warrior.name,
+                    lvl: warrior.lvl,
+                    ph: warrior.ph,
+                    team: warrior.team,
+                  })),
+                );
+                yield* tx.insert(battleTimelines).values({
+                  battleId: insertedBattle.id,
+                  userId,
+                  events: encodeBattleEvents(data.events),
+                });
+
+                return insertedBattle;
+              }),
+            ),
+          ),
+        ],
+        { concurrency: "unbounded" },
+      );
+
+      if (battle) return battle;
+
+      const existingBattle = yield* getMatchingBattleBySubmissionId(
+        data.submissionId,
+        userId,
+        semanticFingerprint,
+      );
+
+      if (existingBattle) return { id: existingBattle.id };
+
+      return yield* Effect.fail(
+        new Error("Battle insert did not return a row"),
+      );
+    });
+
+    return store.pipe(
+      Effect.mapError((error) => {
+        if (error instanceof ApplicationError) return error;
+        logger.error("Failed to store battle in database:", error);
+
+        return new Error(
+          `Database storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }),
+    );
+  };
+
+  const createCanonicalBattle = ({
+    data,
+    semanticFingerprint,
+    userId,
+    existingBattleId,
+  }: {
+    data: CreateBattleInput;
+    semanticFingerprint: string;
+    userId: string;
+    existingBattleId?: string;
+  }) => {
+    return Effect.gen(function* () {
+      const canonicalBattleId =
+        existingBattleId ??
+        (yield* getRecentBattleIdBySemanticFingerprint(
+          semanticFingerprint,
+          userId,
+        ));
+
+      if (canonicalBattleId) {
+        yield* preserveCanonicalBattleDuration(
+          canonicalBattleId,
+          calculateBattleDuration(data.events),
+          userId,
+        );
+
+        return { battleId: canonicalBattleId };
+      }
+
+      const analysis = analyzeBattle(data);
+
+      const battleId = (yield* storeBattleInDatabase(
+        data,
+        userId,
+        analysis,
+        semanticFingerprint,
+      )).id;
+
+      yield* battleAnalyticsService.invalidateAnalyticsCache(userId);
+
+      return { battleId };
+    });
+  };
+
+  const createBattle = (params: CreateBattleParams) => {
+    const { data, userId } = params;
+
+    return Effect.gen(function* () {
+      const normalizedData = normalizeBattleSubmission(data);
+
+      const semanticFingerprint = createBattleSemanticFingerprint({
+        data: normalizedData,
+        userId,
+      });
+
+      const existingSubmission = yield* getMatchingBattleBySubmissionId(
+        normalizedData.submissionId,
+        userId,
+        semanticFingerprint,
+      );
+
+      if (existingSubmission?.semanticFingerprint === null) {
+        return { battleId: existingSubmission.id };
+      }
+
+      if (existingSubmission) {
+        return yield* createCanonicalBattle({
+          data: normalizedData,
+          semanticFingerprint,
+          userId,
+          existingBattleId: existingSubmission.id,
+        });
+      }
+
+      return yield* deduplication.runBattleCreationSingleFlight(
+        semanticFingerprint,
+        () =>
+          createCanonicalBattle({
+            data: normalizedData,
+            semanticFingerprint,
+            userId,
+          }),
+        (result) =>
+          preserveCanonicalBattleDuration(
+            result.battleId,
+            calculateBattleDuration(normalizedData.events),
+            userId,
+          ),
+      );
+    }).pipe(
+      Effect.mapError((error) => {
+        logger.error(`Failed to create battle for user ${userId}:`, error);
+
+        if (error instanceof ApplicationError) return error;
+
+        return new Error(
+          `Battle creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }),
+    );
+  };
+
+  return { createBattle };
+};

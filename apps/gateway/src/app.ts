@@ -32,10 +32,8 @@ import {
   type BackgroundTaskRunner,
 } from "#src/platform/background-tasks";
 import { GatewayRedis } from "#src/platform/redis-store";
-import {
-  gatewayQueueDefinitions,
-  RabbitBridge,
-} from "#src/rabbit/rabbit-bridge";
+import { gatewayQueueDefinitions } from "#src/rabbit/gateway-queues";
+import { RabbitBridge } from "#src/rabbit/rabbit-bridge";
 import {
   Activity,
   type ActivityPublisher,

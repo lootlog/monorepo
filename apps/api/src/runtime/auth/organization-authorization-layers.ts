@@ -17,7 +17,7 @@ import {
   EventsAccessDenied,
   EventsAuthorization,
   EventsNotFound,
-} from "#src/http-api/handlers/events/events.handlers";
+} from "#src/http-api/handlers/events/events-authorization";
 import {
   RecordsAccessDenied,
   RecordsAuthorization,
