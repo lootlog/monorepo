@@ -4,7 +4,6 @@ import { BattlePanelBattlesSkeleton } from "@/features/user/battle-panel/battle-
 import {
   getBattlesControllerGetDashboardBattlesQueryOptions,
   getBattlesControllerGetUserCharactersQueryOptions,
-  getBattlesControllerGetUserWorldsQueryOptions,
 } from "@lootlog/client/battlelog";
 import {
   battlePanelBattlesSearchSchema,
@@ -24,10 +23,6 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
         ensureRouteQueryData(
           context.queryClient,
           getBattlesControllerGetUserCharactersQueryOptions(),
-        ),
-        ensureRouteQueryData(
-          context.queryClient,
-          getBattlesControllerGetUserWorldsQueryOptions(),
         ),
         ensureRouteQueryData(
           context.queryClient,

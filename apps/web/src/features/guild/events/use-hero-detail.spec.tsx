@@ -88,7 +88,8 @@ it.each(["self", "manager"] as const)(
               return Response.json({});
             }
 
-            if (path.endsWith("/overview")) return Response.json(event);
+            if (path.endsWith(`/events/${event.id}`))
+              return Response.json(event);
 
             if (path.endsWith("/maps"))
               return Response.json({

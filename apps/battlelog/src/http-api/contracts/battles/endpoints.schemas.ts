@@ -17,7 +17,6 @@ import {
   AbyssSeasonResponseDto_Output,
   BattleAnalyticsResponseDto_Output,
   BattleDurationStatsResponseDto_Output,
-  BattleUserWorldsResponseDto_Output,
   BattleWarriorsSearchResponseDto_Output,
   CombatProfileResponseDto_Output,
   HeadToHeadPaginatedResponseDto_Output,
@@ -326,12 +325,6 @@ export type BattlesControllerSearchWarriors200 =
 
 export const BattlesControllerSearchWarriors200 =
   BattleWarriorsSearchResponseDto_Output;
-
-export type BattlesControllerGetUserWorlds200 =
-  typeof BattlesControllerGetUserWorlds200.Type;
-
-export const BattlesControllerGetUserWorlds200 =
-  BattleUserWorldsResponseDto_Output;
 
 export type BattlesControllerGetBattleTimelinePathParams =
   typeof BattlesControllerGetBattleTimelinePathParams.Type;

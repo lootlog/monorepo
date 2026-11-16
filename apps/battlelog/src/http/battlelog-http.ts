@@ -332,11 +332,6 @@ const BattlelogHandlers = Layer.mergeAll(
           battles.searchWarriors(query.q ?? "", userId),
         ),
       )
-      .handleRaw("BattlesControllerGetUserWorlds", () =>
-        secured("BattlesController_getUserWorlds", ({ battles }, userId) =>
-          battles.getUserWorlds(userId),
-        ),
-      )
       .handleRaw("BattlesControllerGetBattleTimeline", ({ params }) =>
         secured("BattlesController_getBattleTimeline", ({ battles }, userId) =>
           battles.getBattleTimeline(params.battleId, userId),

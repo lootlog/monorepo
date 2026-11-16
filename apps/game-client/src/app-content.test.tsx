@@ -1,5 +1,5 @@
+import type { UserGameAccountPreferences } from "@lootlog/schema/account-preferences";
 import { ownerAccessPolicy } from "@/test/realtime-wire";
-import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import {
   accountPreferenceValues,
   createSettingsDocuments,
@@ -14,10 +14,12 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/client/main";
 import { createNativeRuntime } from "@/test/native-runtime";
 import { createRealtimeTest } from "@/test/realtime-test";
-import { createDetectorSettings } from "@/lib/game-account-preferences";
+import {
+  createDetectorSettings,
+  createNotificationsSettings,
+} from "@/lib/game-account-preferences";
 import { useWindowsStore } from "@/store/windows.store";
 import { useGlobalStore } from "@/store/global.store";
 import { pingInteractionController } from "@/features/pings/ping-interaction-controller";
@@ -40,9 +42,9 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
     map: { ...native.map, offset: [0, 0], size: { x: 100, y: 100 } },
   });
 
-  const preferences: UserGameAccountPreferencesResponseDtoOutput = {
+  const preferences: UserGameAccountPreferences = {
     accountId: "202",
-    notifications: createNotificationsResponse(),
+    notifications: createNotificationsSettings(),
     detector: createDetectorSettings(),
     pings: { enabled: true },
     airTags: { enabled: false },

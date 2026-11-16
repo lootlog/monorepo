@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useShowEventOverview } from "@lootlog/client/main";
+import { useShowEvent } from "@lootlog/client/main";
 
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventLoadError } from "./components/event-load-error";
@@ -70,7 +70,7 @@ export const EventKillsHistoryContent = ({
     isLoading: eventLoading,
     error: eventError,
     refetch: refetchEvent,
-  } = useShowEventOverview(
+  } = useShowEvent(
     {
       guildId: routeIds.guildId,
       eventId: routeIds.eventId,

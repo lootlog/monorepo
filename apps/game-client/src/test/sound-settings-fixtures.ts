@@ -1,8 +1,20 @@
-import type { SoundSettingsResponseDto } from "@lootlog/client/main";
+import type { StoredSoundSettings } from "@/lib/api/generated-helpers";
+import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
+
+type SoundCategoryConfig = UserSoundSettings["notificationsConfig"] | null;
+
+export type SoundSettingsFixture = Omit<
+  StoredSoundSettings,
+  "notificationsConfig" | "detectorConfig" | "timersConfig"
+> & {
+  notificationsConfig: SoundCategoryConfig;
+  detectorConfig: SoundCategoryConfig;
+  timersConfig: SoundCategoryConfig;
+};
 
 export const createSoundSettings = (
-  overrides: Partial<SoundSettingsResponseDto> = {},
-): SoundSettingsResponseDto => ({
+  overrides: Partial<SoundSettingsFixture> = {},
+): SoundSettingsFixture => ({
   userId: "user",
   masterVolume: 0,
   notificationsVolume: 0,

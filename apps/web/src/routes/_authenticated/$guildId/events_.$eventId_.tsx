@@ -3,7 +3,7 @@ import { EventRouteLayout } from "@/features/guild/events/event-route-layout";
 import { EventRoutePending } from "@/features/guild/events/event-route-pending";
 import {
   getListEventRankingQueryOptions,
-  getShowEventOverviewQueryOptions,
+  getShowEventQueryOptions,
 } from "@lootlog/client/main";
 import {
   rethrowNotFoundOrError,
@@ -37,7 +37,7 @@ export const Route = createFileRoute(
       try {
         const [event, rankings] = await Promise.all([
           context.queryClient.ensureQueryData(
-            getShowEventOverviewQueryOptions({
+            getShowEventQueryOptions({
               guildId: params.guildId,
               eventId: params.eventId,
             }),

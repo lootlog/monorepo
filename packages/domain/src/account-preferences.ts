@@ -124,7 +124,7 @@ export const cloneNotifications = (
   return copy;
 };
 
-export const normalizeNotification = (fallback: NotificationSettings) =>
+const normalizeNotification = (fallback: NotificationSettings) =>
   flow(readPreferenceRecord, (settings): NotificationSettings => {
     return {
       show: Predicate.isBoolean(settings?.show) ? settings.show : fallback.show,
@@ -145,7 +145,7 @@ export const normalizeNotification = (fallback: NotificationSettings) =>
     };
   });
 
-export const normalizeGuildIds = (fallback: string[]) =>
+const normalizeGuildIds = (fallback: string[]) =>
   flow(readPreferenceList, (raw) =>
     raw ? raw.filter(Predicate.isString) : [...fallback],
   );
@@ -181,7 +181,7 @@ export const normalizeNotifications = flow(
   },
 );
 
-export const normalizeDetectorType = (fallback: DetectorTypeSettings) =>
+const normalizeDetectorType = (fallback: DetectorTypeSettings) =>
   flow(readPreferenceRecord, (settings): DetectorTypeSettings => {
     return {
       detect: Predicate.isBoolean(settings?.detect)

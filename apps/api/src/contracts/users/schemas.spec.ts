@@ -1,26 +1,6 @@
 import { expect, test } from "bun:test";
 import * as Schema from "effect/Schema";
-import {
-  UpdateUserGameAccountPreferencesRequest,
-  UpdateUserPreferencesRequest,
-} from "./schemas.js";
-
-test("updating one notification or detector flag preserves an otherwise empty patch", () => {
-  const decode = Schema.decodeUnknownSync(
-    UpdateUserGameAccountPreferencesRequest,
-  );
-
-  const patch = {
-    notifications: { HERO: { sound: false } },
-    detector: { TITAN: { detect: false } },
-  };
-
-  expect(decode(patch)).toEqual(patch);
-  expect(decode({})).toEqual({});
-  expect(() =>
-    decode({ notifications: { HERO: { autoHideTimeout: -1 } } }),
-  ).toThrow();
-});
+import { UpdateUserPreferencesRequest } from "./schemas.js";
 
 test("NPC mute updates reject empty identifiers, fractional levels and unsafe IDs", () => {
   const decode = Schema.decodeUnknownSync(UpdateUserPreferencesRequest);

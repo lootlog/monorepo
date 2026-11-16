@@ -2945,81 +2945,6 @@
         "x-lootlog-data": "personal"
       }
     },
-    "/battles/@me/worlds": {
-      "get": {
-        "tags": ["battles"],
-        "operationId": "BattlesController_getUserWorlds",
-        "parameters": [],
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BattleUserWorldsResponseDto_Output"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get worlds used by authenticated user battles",
-        "x-lootlog-access": "read",
-        "x-lootlog-data": "personal"
-      }
-    },
     "/battles/{battleId}/timeline": {
       "get": {
         "tags": ["battles"],
@@ -5731,18 +5656,6 @@
           }
         },
         "required": ["warriors"]
-      },
-      "BattleUserWorldsResponseDto_Output": {
-        "type": "object",
-        "properties": {
-          "worlds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": ["worlds"]
       },
       "BattleTimelineResponseDto_Output": {
         "type": "object",

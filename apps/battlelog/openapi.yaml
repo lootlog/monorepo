@@ -2073,55 +2073,6 @@ paths:
                 required:
                   - message
       summary: Search warriors for authenticated user
-  /battles/@me/worlds:
-    get:
-      tags:
-        - battles
-      operationId: BattlesController_getUserWorlds
-      parameters: []
-      security:
-        - bearer: []
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BattleUserWorldsResponseDto_Output"
-        "401":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "403":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "429":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-      summary: Get worlds used by authenticated user battles
   /battles/{battleId}/timeline:
     get:
       tags:
@@ -4798,15 +4749,6 @@ components:
           type: string
       required:
         - message
-    BattleUserWorldsResponseDto_Output:
-      type: object
-      properties:
-        worlds:
-          type: array
-          items:
-            type: string
-      required:
-        - worlds
     BattleWarriorsSearchResponseDto_Output:
       type: object
       properties:

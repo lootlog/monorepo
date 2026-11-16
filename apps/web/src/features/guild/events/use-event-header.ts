@@ -3,7 +3,7 @@ import {
   type EventOverviewResponseDto,
   getListEventsQueryKey,
   useDeleteEvent,
-  useShowEventOverview,
+  useShowEvent,
   useUpdateEvent,
 } from "@lootlog/client/main";
 import {
@@ -105,7 +105,7 @@ export const useEventHeader = () => {
     isError: isEventError,
     isFetching: isEventFetching,
     refetch: refetchEvent,
-  } = useShowEventOverview(
+  } = useShowEvent(
     { guildId: queryGuildId, eventId: queryEventId },
     {
       query: {

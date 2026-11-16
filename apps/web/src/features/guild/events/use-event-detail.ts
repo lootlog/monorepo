@@ -5,7 +5,7 @@ import {
   useListEventHeroTimers,
   useListEventMaps,
   useListEventRanking,
-  useShowEventOverview,
+  useShowEvent,
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -78,7 +78,7 @@ export const useEventDetail = () => {
     isLoading,
     error,
     refetch: refetchEvent,
-  } = useShowEventOverview(
+  } = useShowEvent(
     {
       guildId: queryGuildId,
       eventId: queryEventId,

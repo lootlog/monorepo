@@ -1,13 +1,13 @@
+import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
 import type { QueryClient } from "@tanstack/react-query";
 import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import { setPath } from "@lootlog/domain/settings-paths";
-import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
-import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
 import type {
-  SoundSettingsResponseDto,
-  UserGameAccountPreferencesResponseDtoOutput,
-  UserPreferencesResponseDtoOutput,
-} from "@lootlog/client/main";
+  NotificationsSettings,
+  UserGameAccountPreferences,
+} from "@lootlog/schema/account-preferences";
+import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
+import type { UserPreferencesResponseDtoOutput } from "@lootlog/client/main";
 import { getCurrentSettingsDocumentsQueryKey } from "@/features/settings/persistence/settings-patch-client";
 import {
   getSettingsDocumentsQueryKey,
@@ -81,7 +81,7 @@ export const createSettingsDocuments = (
 };
 
 type AccountPreferenceValuesInput = Partial<
-  Omit<UserGameAccountPreferencesResponseDtoOutput, "notifications">
+  Omit<UserGameAccountPreferences, "notifications">
 > & { notifications?: NotificationsSettings };
 
 export const accountPreferenceValues = (
@@ -104,9 +104,9 @@ type SoundSettingValuesInput = {
   detectorVolume?: number;
   timersVolume?: number;
   pingsVolume?: number;
-  notificationsConfig?: SoundSettingsResponseDto["notificationsConfig"];
-  detectorConfig?: SoundSettingsResponseDto["detectorConfig"];
-  timersConfig?: SoundSettingsResponseDto["timersConfig"];
+  notificationsConfig?: UserSoundSettings["notificationsConfig"] | null;
+  detectorConfig?: UserSoundSettings["detectorConfig"] | null;
+  timersConfig?: UserSoundSettings["timersConfig"] | null;
 };
 
 export const soundSettingValues = (settings: SoundSettingValuesInput) => ({

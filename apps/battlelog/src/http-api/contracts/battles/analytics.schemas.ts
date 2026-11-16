@@ -288,10 +288,3 @@ export const BattleWarriorsSearchResponseDto_Output = Schema.Struct({
     }),
   ),
 }).annotate({ identifier: "BattleWarriorsSearchResponseDto_Output" });
-
-export type BattleUserWorldsResponseDto_Output =
-  typeof BattleUserWorldsResponseDto_Output.Type;
-
-export const BattleUserWorldsResponseDto_Output = Schema.Struct({
-  worlds: Schema.Array(Schema.String),
-}).annotate({ identifier: "BattleUserWorldsResponseDto_Output" });

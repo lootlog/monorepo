@@ -148,40 +148,17 @@ const BotHttpHandlers = HttpApiBuilder.group(
 ).pipe(
   Layer.merge(
     HttpApiBuilder.group(DiscordBotApi, "internal", (handlers) =>
-      handlers
-        .handle(
-          "DiscordBotGetGuildChannels",
-          Effect.fn("DiscordBotGetGuildChannels")(function* ({ params }) {
-            const services = yield* BotServices;
+      handlers.handle(
+        "DiscordBotRefreshGuildChannels",
+        Effect.fn("DiscordBotRefreshGuildChannels")(function* ({ params }) {
+          const services = yield* BotServices;
 
-            return yield* operation(
-              "DiscordBotGetGuildChannels",
-              services.sync.getGuildChannels(params.guildId),
-            );
-          }),
-        )
-        .handle(
-          "DiscordBotRefreshGuildChannels",
-          Effect.fn("DiscordBotRefreshGuildChannels")(function* ({ params }) {
-            const services = yield* BotServices;
-
-            return yield* operation(
-              "DiscordBotRefreshGuildChannels",
-              services.sync.refreshGuildChannels(params.guildId),
-            );
-          }),
-        )
-        .handle(
-          "DiscordBotGetGuildSyncStatus",
-          Effect.fn("DiscordBotGetGuildSyncStatus")(function* ({ params }) {
-            const services = yield* BotServices;
-
-            return yield* operation(
-              "DiscordBotGetGuildSyncStatus",
-              services.sync.getGuildSyncStatus(params.guildId),
-            );
-          }),
-        ),
+          return yield* operation(
+            "DiscordBotRefreshGuildChannels",
+            services.sync.refreshGuildChannels(params.guildId),
+          );
+        }),
+      ),
     ),
   ),
 );

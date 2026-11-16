@@ -3,6 +3,33 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-16 — Duplicate and legacy operations removed (breaking)
+
+Fifteen operations that duplicated another one are removed and return `404`.
+The replacements return the same data:
+
+- `GET /guilds/{guildId}/config` → `GET /guilds/{guildId}`.
+  `PATCH /guilds/{guildId}/config` is unchanged.
+- `GET /guilds/{guildId}/events/{eventId}/overview` →
+  `GET /guilds/{guildId}/events/{eventId}`.
+- `GET /guilds/@me` and `GET /guilds/@me/permissions` → `GET /users/@me/guilds`
+  for the Organizations of your Discord account with their access status, or
+  `GET /users/@me/guilds/accessible` for the ones you can open. Read the
+  permissions of one Organization with `GET /guilds/{guildId}/permissions`.
+- `GET` and `PATCH /timer-settings`, `GET` and
+  `PATCH /timer-settings/guilds/{guildId}`, `POST /timer-settings/migrate`,
+  `GET` and `PATCH /sound-settings`, and `GET` and
+  `PATCH /users/@me/game-preferences/accounts/{accountId}` → the settings
+  documents under `/preferences`. Stored settings are unchanged. Settings documents need a signed-in session, so API
+  keys no longer read or change game account preferences.
+- `GET /battles/@me/worlds` on Battlelog → `GET /battles/@me/characters`; the
+  worlds are the distinct `world` values of the returned characters.
+- `GET /guilds/{guildId}/users/{userId}/activity-logs` on Activity →
+  `GET /guilds/{guildId}/activity-logs?userId=`, a new optional filter that
+  combines with the other filters and the cursor.
+
+The matching functions are removed from `@lootlog/sdk` in its next release.
+
 ## 2026-11-07 — Drop rates per loot roll
 
 - `CatalogDropSourceDto_Output.dropRate` adds `rolls`, `basis` and

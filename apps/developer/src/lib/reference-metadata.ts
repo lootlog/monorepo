@@ -39,10 +39,6 @@ export const referenceMetadata: Record<ReferenceService, ServiceMetadata> = {
         description:
           "Which Organizations each of the user's characters reports to.",
       },
-      "sound-settings": {
-        name: "Sound settings",
-        description: "The user's sound settings.",
-      },
       guilds: {
         name: "Organizations",
         description:
@@ -133,7 +129,7 @@ export const referenceMetadata: Record<ReferenceService, ServiceMetadata> = {
     groups: [
       {
         name: "Account",
-        tags: ["users", "user-lootlog-config", "sound-settings"],
+        tags: ["users", "user-lootlog-config"],
       },
       {
         name: "Organizations",

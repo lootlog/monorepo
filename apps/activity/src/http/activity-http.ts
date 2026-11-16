@@ -182,14 +182,12 @@ const jsonOperation = <A, R>(effect: Effect.Effect<A, unknown, R>) =>
 const activityQuery = (
   query: ActivitiesControllerFindByGuildQuery,
   guildId: string,
-  userId?: string,
 ) => ({
   ...query,
   type: query.type ? [...query.type] : undefined,
   source: query.source ? [...query.source] : undefined,
   limit: query.limit ?? 50,
   guildId,
-  userId,
 });
 
 const BearerSecurityLive = Layer.succeed(
@@ -293,18 +291,6 @@ const ActivityHandlers = Layer.mergeAll(
             );
 
             return { suggestions };
-          }),
-        ),
-      )
-      .handleRaw("ActivitiesControllerFindByUser", ({ params, query }) =>
-        jsonOperation(
-          Effect.gen(function* () {
-            const guildId = yield* authorize(params.guildId, Permission.ADMIN);
-            const repository = yield* ActivityRepository;
-
-            return yield* repository.findMany(
-              activityQuery(query, guildId, params.userId),
-            );
           }),
         ),
       )

@@ -6,12 +6,10 @@ import { HttpApiBuilder } from "effect/http-api";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   deleteCurrentAccountHttpResponse,
-  getCurrentUserGamePreferences,
   getCurrentUserAccessibleGuilds,
   getCurrentUserGuilds,
   getCurrentUserPreferences,
   toAccountOrganizationHttpResponse,
-  updateCurrentUserGamePreferences,
   updateCurrentUserPreferences,
 } from "../account-organization/account-organization.operations.js";
 import { getGameClientBootstrap } from "./game-client-bootstrap.operations.js";
@@ -44,17 +42,5 @@ export const UsersHandlers = HttpApiBuilder.group(
       )
       .handle("UsersControllerGetGameClientBootstrap", ({ query }) =>
         getGameClientBootstrap(query),
-      )
-      .handle("UsersControllerGetUserGameAccountPreferences", ({ params }) =>
-        toAccountOrganizationHttpResponse(
-          getCurrentUserGamePreferences(params.accountId),
-        ),
-      )
-      .handle(
-        "UsersControllerUpdateUserGameAccountPreferences",
-        ({ params, payload }) =>
-          toAccountOrganizationHttpResponse(
-            updateCurrentUserGamePreferences(params.accountId, payload),
-          ),
       ),
 );

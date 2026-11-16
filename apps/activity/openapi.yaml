@@ -264,6 +264,11 @@ paths:
                 - GAME
                 - WEB_APP
           required: false
+        - name: userId
+          in: query
+          schema:
+            type: string
+          required: false
         - name: playerName
           in: query
           schema:
@@ -617,143 +622,6 @@ paths:
                   - message
                   - statusCode
       summary: Get clan name suggestions for a guild
-  /guilds/{guildId}/users/{userId}/activity-logs:
-    get:
-      tags:
-        - guilds
-      operationId: ActivitiesController_findByUser
-      parameters:
-        - name: guildId
-          in: path
-          schema:
-            type: string
-          required: true
-        - name: userId
-          in: path
-          schema:
-            type: string
-          required: true
-        - name: type
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - CONNECT_EVENT
-                - DISCONNECT_EVENT
-          required: false
-        - name: source
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - GAME
-                - WEB_APP
-          required: false
-        - name: playerName
-          in: query
-          schema:
-            type: string
-          required: false
-        - name: clanName
-          in: query
-          schema:
-            type: string
-          required: false
-        - name: world
-          in: query
-          schema:
-            type: string
-          required: false
-        - name: startDate
-          in: query
-          schema:
-            type: string
-            format: date-time
-            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-          required: false
-        - name: endDate
-          in: query
-          schema:
-            type: string
-            format: date-time
-            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-          required: false
-        - name: cursor
-          in: query
-          schema:
-            type: string
-          required: false
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          required: false
-      security:
-        - bearer: []
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PaginatedActivitiesResponseDto"
-        "401":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "403":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "429":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "503":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  statusCode:
-                    type: number
-                    enum:
-                      - 503
-                required:
-                  - message
-                  - statusCode
-      summary: Get activities for a specific user in a guild
   /guilds/{guildId}/member-activity-stats:
     get:
       tags:
@@ -1241,6 +1109,33 @@ components:
         - activeSessionCount
         - createdAt
         - updatedAt
+    ClanNameSuggestionsResponseDto_Output:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: string
+      required:
+        - suggestions
+    WorldSuggestionsResponseDto_Output:
+      type: object
+      properties:
+        worlds:
+          type: array
+          items:
+            type: string
+      required:
+        - worlds
+    ActorNameSuggestionsResponseDto_Output:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: string
+      required:
+        - suggestions
     PaginatedActivitiesResponseDto:
       type: object
       properties:
@@ -1334,33 +1229,6 @@ components:
       required:
         - data
         - hasMore
-    ClanNameSuggestionsResponseDto_Output:
-      type: object
-      properties:
-        suggestions:
-          type: array
-          items:
-            type: string
-      required:
-        - suggestions
-    WorldSuggestionsResponseDto_Output:
-      type: object
-      properties:
-        worlds:
-          type: array
-          items:
-            type: string
-      required:
-        - worlds
-    ActorNameSuggestionsResponseDto_Output:
-      type: object
-      properties:
-        suggestions:
-          type: array
-          items:
-            type: string
-      required:
-        - suggestions
   securitySchemes:
     bearer:
       type: http
