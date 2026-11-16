@@ -1031,7 +1031,7 @@
       }
     },
     {
-      "files": ["apps/api/src/http-api/handlers/events/events.handlers.ts"],
+      "files": ["apps/api/src/http-api/handlers/events/events-endpoint.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
