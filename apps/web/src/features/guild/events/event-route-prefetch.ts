@@ -2,7 +2,7 @@ import {
   getEventsRankingControllerGetEventHeroStatsQueryOptions,
   getListEventHeroTimersQueryOptions,
   getListEventMapsQueryOptions,
-  getShowEventOverviewQueryOptions,
+  getShowEventQueryOptions,
 } from "@lootlog/client/main";
 import type { QueryClient } from "@tanstack/react-query";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
@@ -19,7 +19,7 @@ const prefetchEventHeroTimers = async (
   // The parent layout loader owns the overview request and its errors; this
   // joins the same in-flight fetch only to learn the event's world.
   const event = await queryClient
-    .ensureQueryData(getShowEventOverviewQueryOptions(params))
+    .ensureQueryData(getShowEventQueryOptions(params))
     .catch(() => undefined);
 
   if (!event?.world) {

@@ -25,12 +25,6 @@ const UserCharactersResponseSchema = Schema.Struct({
   ),
 });
 
-const UserWorldsResponseSchema = Schema.Struct({
-  worlds: Schema.Array(Schema.String),
-});
-
-type UserWorldsResponse = typeof UserWorldsResponseSchema.Type;
-
 type BattleMetadataDatabase = Pick<
   DrizzleDatabase,
   "select" | "selectDistinctOn" | "insert"
@@ -46,9 +40,6 @@ export const makeBattleMetadata = (
 
   const getUserCharactersCacheKey = (userId: string) =>
     `battle-characters:list:${userId}`;
-
-  const getUserWorldsCacheKey = (userId: string) =>
-    `battle-worlds:${userId}:list`;
 
   // Keep the join inside LIMIT: an incomplete newest battle must not hide
   // the character's last recorded level/profession.
@@ -102,31 +93,6 @@ export const makeBattleMetadata = (
         Effect.map((characters) => ({ characters })),
       );
 
-  const getUserWorldsUncached = (userId: string) =>
-    drizzle
-      .selectDistinctOn([userCharacters.world], {
-        world: userCharacters.world,
-      })
-      .from(userCharacters)
-      .where(eq(userCharacters.userId, userId))
-      .orderBy(userCharacters.world)
-      .pipe(
-        read,
-        Effect.mapError((error) => {
-          logger.error("Failed to retrieve user worlds:", error);
-
-          return new Error(
-            `Failed to retrieve user worlds: ${error instanceof Error ? error.message : "Unknown error"}`,
-          );
-        }),
-        Effect.map(
-          (results) =>
-            ({
-              worlds: results.map((character) => character.world),
-            }) satisfies UserWorldsResponse,
-        ),
-      );
-
   const cached = <S extends Schema.ConstraintDecoder<unknown>>(
     userId: string,
     key: string,
@@ -146,14 +112,6 @@ export const makeBattleMetadata = (
       getUserCharactersCacheKey(userId),
       getUserCharactersUncached(userId),
       UserCharactersResponseSchema,
-    );
-
-  const getUserWorlds = (userId: string) =>
-    cached(
-      userId,
-      getUserWorldsCacheKey(userId),
-      getUserWorldsUncached(userId),
-      UserWorldsResponseSchema,
     );
 
   const upsertUserCharacter = ({
@@ -266,7 +224,6 @@ export const makeBattleMetadata = (
 
   return {
     getUserCharacters,
-    getUserWorlds,
     searchWarriors,
     upsertUserCharacter,
   };

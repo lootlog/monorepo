@@ -13,7 +13,7 @@ import {
   useListEventHeroTimers,
   useListEventMaps,
   useListEventRanking,
-  useShowEventOverview,
+  useShowEvent,
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEventHeroProfession } from "./hooks/queries/use-event-hero-profession";
@@ -289,7 +289,7 @@ export const useHeroDetail = () => {
     isLoading,
     error,
     refetch: refetchEvent,
-  } = useShowEventOverview(
+  } = useShowEvent(
     {
       guildId: queryGuildId,
       eventId: queryEventId,

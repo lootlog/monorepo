@@ -432,7 +432,11 @@ describe("Discord SDK to RabbitMQ contracts", () => {
 
   test("returns a complete channel refresh accepted by the API event contract", async () => {
     const f = await fixture();
-    const payload = await Effect.runPromise(f.sync.getGuildChannels(guildId));
+
+    const payload = await Effect.runPromise(
+      f.sync.refreshGuildChannels(guildId),
+    );
+
     expect(
       decodeRabbitEventJson(
         RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNCED,
@@ -463,7 +467,11 @@ describe("Discord SDK to RabbitMQ contracts", () => {
         {},
       ),
     );
-    const payload = await Effect.runPromise(f.sync.getGuildChannels(guildId));
+
+    const payload = await Effect.runPromise(
+      f.sync.refreshGuildChannels(guildId),
+    );
+
     expect(
       decodeRabbitEventJson(
         RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNCED,
@@ -594,7 +602,7 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     });
 
     f.gateChannels(gate);
-    const leader = Effect.runFork(f.sync.getGuildChannels(guildId));
+    const leader = Effect.runFork(f.sync.refreshGuildChannels(guildId));
 
     while (!f.restCalls.includes(channelsRoute)) {
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -640,9 +648,9 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     const payloads = await Effect.runPromise(
       Effect.all(
         [
-          f.sync.getGuildChannels(guildId),
           f.sync.refreshGuildChannels(guildId),
-          f.sync.getGuildChannels(guildId),
+          f.sync.refreshGuildChannels(guildId),
+          f.sync.refreshGuildChannels(guildId),
         ],
         { concurrency: "unbounded" },
       ),

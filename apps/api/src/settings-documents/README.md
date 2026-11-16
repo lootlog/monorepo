@@ -8,24 +8,16 @@ and write through `GET/PATCH /preferences`; the resolver layers `USER`,
 
 ## Single writer
 
-Only `settings-documents.service.ts` writes `UserSettingDocument`. The routes
-below are compatibility façades that translate to the same service and exist
-for deployed userscripts and public API keys. They are marked deprecated in the
-OpenAPI description and can be removed once no deployed client calls them:
-
-| Route                                                          | Backing documents                                                          |
-| -------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `GET/PATCH /users/@me/preferences` (`mutes`, `chatAppearance`) | `notifications`/`USER`, `appearance`/`USER`                                |
-| `GET/PATCH /users/@me/game-preferences/accounts/{accountId}`   | `gameData`/`GAME_ACCOUNT`, `notifications`/`GAME_ACCOUNT` (`presentation`) |
-| `GET/PATCH /sound-settings`                                    | `sounds`/`USER`                                                            |
-| `GET/PATCH /timer-settings*`, `POST /timer-settings/migrate`   | `timers`, `appearance.timers.*`                                            |
+Only `settings-documents.service.ts` writes `UserSettingDocument`. One
+compatibility façade remains: `GET/PATCH /users/@me/preferences` translates its
+`mutes` and `chatAppearance` fields to the `notifications`/`USER` and
+`appearance`/`USER` documents through the same service.
 
 `guildsOrder`, `hiddenGuildIds`, and `theme` stay on `UserSettings`: they are
 account settings owned by the Web app with direct database readers, written
 only through `PATCH /users/@me/preferences` (and theme activation). The catalog
 does not declare them, so `PATCH /preferences` rejects them instead of storing
-a second copy nobody reads. `timers.syncEnabled` is kept only for old clients; the current
-Game client always synchronizes timer settings and never writes the field.
+a second copy nobody reads.
 
 ## Document schema versions
 

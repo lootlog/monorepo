@@ -4,8 +4,6 @@ import { Effect, Layer, ManagedRuntime, Schema } from "effect";
 import { ApiDatabaseLive } from "#src/database/drizzle/database";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
-import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
-import { makeTimerSettings } from "#src/timer-settings/timer-settings.service";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 
 const client = new Client({ connectionString: requireIsolatedTestDatabase() });
@@ -77,8 +75,6 @@ const makeServices = async () => {
 
   return {
     documents,
-    sound: makeSoundSettings(documents),
-    timer: makeTimerSettings(documents),
   };
 };
 
@@ -221,41 +217,6 @@ it("applies a batch mixing stored, outdated, emptied, repeated and new documents
   });
 });
 
-it("keeps both of two concurrent sound patches to one category", async () => {
-  const { sound } = await makeServices();
-  const userId = crypto.randomUUID();
-
-  await client.query("SELECT pg_advisory_lock(783219)");
-
-  // The compatibility route used to read the whole category, merge its patch
-  // and write the map back, so the later write restored the other sound.
-  const patches = [
-    runtime.runPromise(
-      sound.updateSettings(userId, {
-        notificationsConfig: { HERO: { volume: 0.2 } },
-      }),
-    ),
-    runtime.runPromise(
-      sound.updateSettings(userId, {
-        notificationsConfig: { TITAN: { volume: 0.9 } },
-      }),
-    ),
-  ];
-
-  const blocked = await releaseAfterBlockedWrites(2);
-  await Promise.all(patches);
-  expect(blocked).toBe(2);
-
-  await expect(
-    runtime.runPromise(sound.getSettings(userId)),
-  ).resolves.toMatchObject({
-    notificationsConfig: {
-      HERO: { volume: 0.2, soundUrl: "" },
-      TITAN: { volume: 0.9, soundUrl: "" },
-    },
-  });
-});
-
 it("rejects a settings patch based on a stale read", async () => {
   const { documents } = await makeServices();
   const userId = crypto.randomUUID();
@@ -302,42 +263,4 @@ it("rejects a settings patch based on a stale read", async () => {
   );
 
   expect(stored.domains.general?.effective.allowWorldSelection).toBe(false);
-});
-
-it("imports local timer settings atomically without inventing a sort order", async () => {
-  const { documents, timer } = await makeServices();
-  const userId = crypto.randomUUID();
-
-  // The user is not a member of this guild, so the whole import is refused
-  // before the global settings would be written.
-  await expect(
-    runtime.runPromise(
-      timer.migrateSettings(userId, {
-        localData: {
-          generalConfig: { timersGrouping: true },
-          hiddenTimers: { "foreign-guild": ["timer-1"] },
-        },
-      }),
-    ),
-  ).rejects.toThrow("Guild settings are not accessible");
-
-  const afterRefusal = await runtime.runPromise(
-    documents.getPreferences(userId, { domains: ["appearance", "timers"] }),
-  );
-
-  expect(afterRefusal.domains.timers?.layers).toEqual([]);
-  expect(afterRefusal.domains.appearance?.layers).toEqual([]);
-
-  await runtime.runPromise(
-    timer.migrateSettings(userId, {
-      localData: { generalConfig: { timersGrouping: true } },
-    }),
-  );
-
-  await expect(
-    runtime.runPromise(timer.getGlobalSettings(userId)),
-  ).resolves.toMatchObject({
-    generalConfig: { timersGrouping: true },
-    timersSortOrder: "asc",
-  });
 });

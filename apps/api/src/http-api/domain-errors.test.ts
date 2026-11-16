@@ -76,7 +76,6 @@ const unusedEvents = {
     hydrateMutation: unexpected,
     getEvents: unexpected,
     getEvent: unexpected,
-    getEventOverview: unexpected,
     getEventMaps: unexpected,
     getWrapped: unexpected,
     createEvent: unexpected,

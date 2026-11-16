@@ -545,11 +545,6 @@ it("reports character metadata from the latest matching self warrior per owner a
       prof: "w",
     },
   ]);
-  expect(
-    await runtime.runPromise(services.metadata.getUserWorlds("owner")),
-  ).toEqual({
-    worlds: ["other-world", "world"],
-  });
 });
 
 it("coalesces concurrent analytics fills and retries factory failures without caching them", async () => {

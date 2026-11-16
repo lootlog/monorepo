@@ -61,34 +61,6 @@ const api = HttpApi.make("DeveloperScopeProof")
           OpenApi.Identifier,
           "SettingsDocumentsController_patchPreferences",
         ),
-        HttpApiEndpoint.get("timerPreferences", "/timer-settings", {
-          success: Schema.Unknown,
-        }).annotate(
-          OpenApi.Identifier,
-          "TimerSettingsController_getGlobalSettings",
-        ),
-        HttpApiEndpoint.patch("patchTimerPreferences", "/timer-settings", {
-          success: Schema.Unknown,
-        }).annotate(
-          OpenApi.Identifier,
-          "TimerSettingsController_updateGlobalSettings",
-        ),
-        HttpApiEndpoint.get(
-          "guildTimerPreferences",
-          "/timer-settings/guilds/123",
-          { success: Schema.Unknown },
-        ).annotate(
-          OpenApi.Identifier,
-          "TimerSettingsController_getGuildSettings",
-        ),
-        HttpApiEndpoint.patch(
-          "patchGuildTimerPreferences",
-          "/timer-settings/guilds/123",
-          { success: Schema.Unknown },
-        ).annotate(
-          OpenApi.Identifier,
-          "TimerSettingsController_updateGuildSettings",
-        ),
         HttpApiEndpoint.get("personal", "/personal", {
           success: Schema.Unknown,
         }).annotate(OpenApi.Identifier, "UsersController_getUserKillStats"),
@@ -197,18 +169,6 @@ it("keeps timer/feed sources scoped across concurrent keys and membership loss",
           .handleRaw("patchPreferences", () =>
             Effect.die("Key reached document writes"),
           )
-          .handleRaw("timerPreferences", () =>
-            Effect.die("Key reached raw timer preferences"),
-          )
-          .handleRaw("patchTimerPreferences", () =>
-            Effect.die("Key reached timer preference writes"),
-          )
-          .handleRaw("guildTimerPreferences", () =>
-            Effect.die("Key reached guild timer preferences"),
-          )
-          .handleRaw("patchGuildTimerPreferences", () =>
-            Effect.die("Key reached guild timer preference writes"),
-          )
           .handleRaw("personal", () =>
             Effect.die("Key without personal access reached personal data"),
           ),
@@ -256,31 +216,25 @@ it("keeps timer/feed sources scoped across concurrent keys and membership loss",
     expect((await request("/write", "123", "POST")).status).toBe(403);
     expect((await request("/personal", "123")).status).toBe(403);
 
-    for (const path of [
-      "/preferences",
-      "/timer-settings",
-      "/timer-settings/guilds/123",
-    ]) {
-      for (const method of ["GET", "PATCH"]) {
-        const response = await boundary.handler(
-          new Request(`https://api.test${path}`, {
-            method,
-            headers: {
-              ...headersFor("123"),
-              "x-auth-api-key-access": JSON.stringify({
-                keyId: "full",
-                organizationIds: ["123"],
-                personalData: true,
-                mode: "read-write",
-                expiresAt: null,
-              }),
-            },
-          }),
-        );
+    for (const method of ["GET", "PATCH"]) {
+      const response = await boundary.handler(
+        new Request("https://api.test/preferences", {
+          method,
+          headers: {
+            ...headersFor("123"),
+            "x-auth-api-key-access": JSON.stringify({
+              keyId: "full",
+              organizationIds: ["123"],
+              personalData: true,
+              mode: "read-write",
+              expiresAt: null,
+            }),
+          },
+        }),
+      );
 
-        expect(response.status).toBe(403);
-        expect(await response.text()).not.toContain("guildsOrder");
-      }
+      expect(response.status).toBe(403);
+      expect(await response.text()).not.toContain("guildsOrder");
     }
 
     expect(

@@ -28,7 +28,6 @@ const mainRoutes: ReadonlyArray<readonly [string, RegExp]> = [
   ["GET PATCH", /^\/users\/@me\/preferences$/],
   ["GET", /^\/users\/@me\/guilds\/accessible$/],
   ["GET", /^\/users\/@me\/game-client\/bootstrap$/],
-  ["GET PATCH", /^\/users\/@me\/game-preferences\/accounts\/[^/]+$/],
   ["GET PUT", /^\/users\/@me\/lootlog-config\/accounts\/[^/]+$/],
   ["POST", /^\/users\/@me\/lootlog-config\/players\/catching-guilds\/batch$/],
   [
@@ -43,8 +42,7 @@ const mainRoutes: ReadonlyArray<readonly [string, RegExp]> = [
   ["GET", /^\/guilds\/[^/]+\/timers\/[^/]+\/history$/],
   ["POST", /^\/guilds\/[^/]+\/timers\/history\/[^/]+\/restore$/],
   ["POST", /^\/guilds\/[^/]+\/timers\/manual$/],
-  ["GET PATCH", /^\/(timer-settings|sound-settings|preferences)$/],
-  ["POST", /^\/timer-settings\/migrate$/],
+  ["GET PATCH", /^\/preferences$/],
   ["GET POST DELETE", /^\/guilds\/[^/]+\/chat-messages$/],
   ["DELETE PATCH", /^\/guilds\/[^/]+\/chat-messages\/[^/]+$/],
   ["POST", /^\/messaging$/],

@@ -20,37 +20,6 @@ paths:
                 enum:
                   - OK
       summary: Health check
-  /internal/guilds/{guildId}/channels:
-    get:
-      tags:
-        - internal
-      operationId: internal.DiscordBotGetGuildChannels
-      parameters:
-        - name: guildId
-          in: path
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: DiscordGuildChannels
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DiscordGuildChannels"
-        "500":
-          description: Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    enum:
-                      - Discord synchronization failed
-                required:
-                  - message
   /internal/guilds/{guildId}/channels/refresh:
     post:
       tags:
@@ -82,39 +51,23 @@ paths:
                       - Discord synchronization failed
                 required:
                   - message
-  /internal/guilds/{guildId}/sync-status:
-    get:
-      tags:
-        - internal
-      operationId: internal.DiscordBotGetGuildSyncStatus
-      parameters:
-        - name: guildId
-          in: path
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: DiscordGuildSyncState
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DiscordGuildSyncState"
-        "500":
-          description: Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    enum:
-                      - Discord synchronization failed
-                required:
-                  - message
 components:
   schemas:
+    DiscordGuildChannels:
+      type: object
+      properties:
+        guildId:
+          type: string
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscordGuildChannel"
+        syncState:
+          $ref: "#/components/schemas/DiscordGuildSyncState"
+      required:
+        - guildId
+        - channels
+        - syncState
     DiscordGuildSyncState:
       type: object
       properties:
@@ -174,21 +127,6 @@ components:
         - lastSuccessAt
         - lastError
         - updatedAt
-    DiscordGuildChannels:
-      type: object
-      properties:
-        guildId:
-          type: string
-        channels:
-          type: array
-          items:
-            $ref: "#/components/schemas/DiscordGuildChannel"
-        syncState:
-          $ref: "#/components/schemas/DiscordGuildSyncState"
-      required:
-        - guildId
-        - channels
-        - syncState
     DiscordGuildChannel:
       type: object
       properties:

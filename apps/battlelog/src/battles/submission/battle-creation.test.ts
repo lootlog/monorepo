@@ -392,7 +392,6 @@ const createTestApplication = ({
     {
       upsertUserCharacter: mock(() => Effect.void),
       getUserCharacters: () => Effect.die("Unexpected character list"),
-      getUserWorlds: () => Effect.die("Unexpected world list"),
       searchWarriors: () => Effect.die("Unexpected warrior search"),
     },
     {

@@ -42,7 +42,6 @@ import {
   BattlesControllerGetRatingGrowth200,
   BattlesControllerGetRatingGrowthQuery,
   BattlesControllerGetUserCharacters200,
-  BattlesControllerGetUserWorlds200,
   BattlesControllerSearchWarriors200,
   BattlesControllerSearchWarriorsQuery,
   BattlesControllerUpdateBattle200,
@@ -208,12 +207,6 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "BattlesController_searchWarriors")
     .annotate(OpenApi.Summary, "Search warriors for authenticated user"),
-  HttpApiEndpoint.get("BattlesControllerGetUserWorlds", "/battles/@me/worlds", {
-    success: BattlesControllerGetUserWorlds200,
-  })
-    .middleware(BearerSecurityMiddleware)
-    .annotate(OpenApi.Identifier, "BattlesController_getUserWorlds")
-    .annotate(OpenApi.Summary, "Get worlds used by authenticated user battles"),
   HttpApiEndpoint.get(
     "BattlesControllerGetBattleTimeline",
     "/battles/:battleId/timeline",

@@ -720,26 +720,6 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
     return publishChannelDeletion(channel, "handleChannelDelete");
   };
 
-  const getGuildSyncStatus = (guildId: string) =>
-    Effect.gen(function* () {
-      const resolved = yield* resolveGuild(guildId);
-
-      if (resolved.kind === "not_found") {
-        return unavailableSyncState(guildId, {
-          status: DiscordGuildSyncStatus.NOT_FOUND,
-          lastError: resolved.lastError,
-        });
-      }
-
-      if (resolved.kind === "failed") {
-        return yield* Effect.fail(failure("resolveGuild", resolved.cause));
-      }
-
-      return yield* liveSyncStatus(resolved.guild, { source: "rest" }).pipe(
-        Effect.mapError((cause) => failure("getGuildSyncStatus", cause)),
-      );
-    });
-
   const withOperationSpan = <A, E>(
     operationId: string,
     effect: Effect.Effect<A, E>,
@@ -804,20 +784,10 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
         "DiscordSync_handleChannelDelete",
         handleChannelDelete(channel),
       ),
-    getGuildChannels: (guildId: string) =>
-      withOperationSpan(
-        "DiscordBotGetGuildChannels",
-        coalescedGuildChannelsPayload(guildId),
-      ),
     refreshGuildChannels: (guildId: string) =>
       withOperationSpan(
         "DiscordBotRefreshGuildChannels",
         coalescedGuildChannelsPayload(guildId),
-      ),
-    getGuildSyncStatus: (guildId: string) =>
-      withOperationSpan(
-        "DiscordBotGetGuildSyncStatus",
-        getGuildSyncStatus(guildId),
       ),
   };
 };

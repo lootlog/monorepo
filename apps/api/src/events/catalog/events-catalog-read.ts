@@ -233,16 +233,6 @@ export const makeEventsCatalogRead = (
         Effect.map((event) => filterEvent(event, roles, accessPolicy)),
       ),
 
-    getEventOverview: (
-      guild: { id: string },
-      eventId: string,
-      roles: Role[],
-      accessPolicy: AccessPolicy,
-    ) =>
-      getOverview(guild.id, eventId).pipe(
-        Effect.map((event) => filterEvent(event, roles, accessPolicy)),
-      ),
-
     getEventMaps: (
       guild: { id: string },
       eventId: string,

@@ -13,18 +13,6 @@ import {
 } from "@lootlog/schema/http-scalars";
 import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/domain/reservations";
 import { ErrorKey } from "#src/guilds/error-key";
-import { organizationSummaryFields } from "#src/contracts/shared";
-
-type UserOrganizationSummary = typeof UserOrganizationSummary.Type;
-
-const UserOrganizationSummary = Schema.Struct({
-  ...organizationSummaryFields,
-  reservationMaxDurationMinutes: Schema.optionalKey(FiniteNumber),
-  reservationMinDurationMinutes: Schema.optionalKey(FiniteNumber),
-  reservationTimeGranularityMinutes: Schema.optionalKey(FiniteNumber),
-  reservationMaxAdvanceDays: Schema.optionalKey(FiniteNumber),
-  reservationActiveLimitPerSpot: Schema.optionalKey(FiniteNumber),
-}).annotate({ identifier: "UserGuildListResponseDto_Output" });
 
 export type OrganizationPermissionsResponse =
   typeof OrganizationPermissionsResponse.Type;
@@ -138,16 +126,6 @@ export const DiscordGuildSyncStateResponse = Schema.Struct({
   createdAt: DateTimeString,
   updatedAt: DateTimeString,
 }).annotate({ identifier: "DiscordGuildSyncStateResponseDto" });
-
-export type UserOrganizationsQuery = typeof UserOrganizationsQuery.Type;
-
-export const UserOrganizationsQuery = Schema.Struct({
-  source: Schema.optionalKey(Schema.String),
-});
-
-export type UserOrganizationsResponse = typeof UserOrganizationsResponse.Type;
-
-export const UserOrganizationsResponse = Schema.Array(UserOrganizationSummary);
 
 export type UserOrganizationPermissionsResponse =
   typeof UserOrganizationPermissionsResponse.Type;

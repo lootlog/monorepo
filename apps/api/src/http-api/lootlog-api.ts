@@ -10,7 +10,6 @@ import { RolesGroup } from "./contracts/roles/api.js";
 import { TimersGroup } from "./contracts/timers/api.js";
 import { HeroSightingsGroup } from "./contracts/hero-sightings/api.js";
 import { UserLootlogConfigGroup } from "./contracts/user-lootlog-config/api.js";
-import { TimerSettingsGroup } from "./contracts/timer-settings/api.js";
 import { PreferencesGroup } from "./contracts/preferences/api.js";
 import { LootsGroup } from "./contracts/loots/api.js";
 import { LootlogConfigGroup } from "./contracts/lootlog-config/api.js";
@@ -22,7 +21,6 @@ import { ReservationSharingGroup } from "./contracts/reservation-sharing/api.js"
 import { NotificationsGroup } from "./contracts/notifications/api.js";
 import { MessagingGroup } from "./contracts/messaging/api.js";
 import { PartyReadyRoomGroup } from "./contracts/party-ready-room/api.js";
-import { SoundSettingsGroup } from "./contracts/sound-settings/api.js";
 import { EventsGroup } from "./contracts/events/api.js";
 import { MapsGroup } from "./contracts/maps/api.js";
 import { MapTemplatesGroup } from "./contracts/map-templates/api.js";
@@ -47,7 +45,6 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     TimersGroup,
     HeroSightingsGroup,
     UserLootlogConfigGroup,
-    TimerSettingsGroup,
     PreferencesGroup,
     LootsGroup,
     LootlogConfigGroup,
@@ -59,7 +56,6 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     NotificationsGroup,
     MessagingGroup,
     PartyReadyRoomGroup,
-    SoundSettingsGroup,
     EventsGroup,
     MapsGroup,
     MapTemplatesGroup,

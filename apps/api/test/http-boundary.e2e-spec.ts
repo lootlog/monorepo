@@ -1,4 +1,3 @@
-import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
 import { TimerResponse } from "#src/contracts/timers/schemas";
 import {
   afterAll,
@@ -53,7 +52,6 @@ import {
   watchedItemTable,
 } from "../src/database/drizzle/notification.schema.js";
 import { timerTable } from "../src/database/drizzle/timer.schema.js";
-import { userSettingDocumentTable } from "../src/database/drizzle/user.schema.js";
 
 const caller = {
   userId: "user-1",
@@ -303,77 +301,6 @@ describe("API HTTP boundary", () => {
 
     await expectSenderSummary();
     await expectSenderSummary();
-  });
-
-  it.each([
-    {},
-    { name: "", world: "   " },
-    { name: "  Heroes  " },
-    { world: "  Aldous  " },
-  ])("round-trips detector rules with optional labels %j", async (labels) => {
-    const path = "/users/@me/game-preferences/accounts/routing-test";
-
-    const rule = {
-      id: "rule-1",
-      minLevel: 0,
-      maxLevel: 500,
-      guildIds: [authorizedGuildId],
-      ...labels,
-    };
-
-    const expectedRule: DetectorRoutingRule = {
-      id: rule.id,
-      minLevel: 0,
-      maxLevel: 500,
-      guildIds: [authorizedGuildId],
-    };
-
-    if (labels.name?.trim()) expectedRule.name = labels.name.trim();
-
-    if (labels.world?.trim()) expectedRule.world = labels.world.trim();
-
-    const updated = await request(path, {
-      method: "PATCH",
-      body: JSON.stringify({ detector: { routingRules: [rule] } }),
-    });
-
-    expect(updated.status).toBe(200);
-    expect(await updated.json()).toMatchObject({
-      detector: { routingRules: [expectedRule] },
-      hasStoredDetector: true,
-    });
-    const fetched = await request(path);
-    expect(fetched.status).toBe(200);
-    expect(await fetched.json()).toMatchObject({
-      detector: { routingRules: [expectedRule] },
-    });
-  });
-
-  it("reads existing unnamed detector rules", async () => {
-    const accountId = "stored-routing-test";
-    const rule = { id: "existing", minLevel: 10, maxLevel: 100, guildIds: [] };
-    await databaseRuntime.runPromise(
-      database.insert(userSettingDocumentTable).values({
-        userId: caller.userId,
-        domain: "gameData",
-        scopeType: "GAME_ACCOUNT",
-        scopeId: accountId,
-        overrides: { detector: { routingRules: [rule] } },
-        schemaVersion: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
-    );
-
-    const fetched = await request(
-      `/users/@me/game-preferences/accounts/${accountId}`,
-    );
-
-    expect(fetched.status).toBe(200);
-    expect(await fetched.json()).toMatchObject({
-      detector: { routingRules: [rule] },
-      hasStoredDetector: true,
-    });
   });
 
   it.each(["", "/permissions"])(

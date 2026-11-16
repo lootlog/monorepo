@@ -3,7 +3,7 @@ import type { Query, QueryClient } from "@tanstack/react-query";
 import {
   getEventsRankingControllerGetEventHeroStatsQueryKey,
   getListPendingParticipationConfirmationsQueryKey,
-  getShowEventOverviewQueryKey,
+  getShowEventQueryKey,
 } from "@lootlog/client/main";
 import { invalidateRankingQueries } from "./invalidate-ranking-queries";
 
@@ -34,7 +34,7 @@ export function invalidateKillQueries(
   eventId: string,
 ) {
   queryClient.invalidateQueries({
-    queryKey: getShowEventOverviewQueryKey({ guildId, eventId }),
+    queryKey: getShowEventQueryKey({ guildId, eventId }),
   });
   queryClient.invalidateQueries({
     predicate: (query) => isEventKillQuery(query, guildId, eventId),

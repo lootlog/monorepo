@@ -306,20 +306,4 @@ export const MAIN_NOTIFICATION_OPERATIONS = [
     access: "write",
     data: "mixed",
   },
-  {
-    service: "main",
-    method: "GET",
-    path: "/sound-settings",
-    operationId: "SoundSettingsController_getSettings",
-    access: "read",
-    data: "personal",
-  },
-  {
-    service: "main",
-    method: "PATCH",
-    path: "/sound-settings",
-    operationId: "SoundSettingsController_updateSettings",
-    access: "write",
-    data: "personal",
-  },
 ] as const satisfies readonly PublicApiOperation[];
