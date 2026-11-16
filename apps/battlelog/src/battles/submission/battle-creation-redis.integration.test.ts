@@ -166,7 +166,7 @@ const createServices = () =>
 
 beforeAll(async () => {
   postgres = await new PostgreSqlContainer(
-    "timescale/timescaledb:2.24.0-pg17",
+    "timescale/timescaledb:2.32.0-pg18",
   ).start();
   redisContainer = await new GenericContainer("redis:7.4-alpine")
     .withExposedPorts(6379)

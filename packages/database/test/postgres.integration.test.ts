@@ -29,7 +29,7 @@ const records = pgTable("database_contract", {
 let postgres: StartedPostgreSqlContainer;
 
 beforeAll(async () => {
-  postgres = await new PostgreSqlContainer("postgres:17-alpine").start();
+  postgres = await new PostgreSqlContainer("postgres:18.7-alpine").start();
 }, 60_000);
 
 afterAll(async () => {

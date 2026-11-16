@@ -43,7 +43,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
   let redis: StartedTestContainer;
 
   beforeAll(async () => {
-    postgres = await new PostgreSqlContainer("postgres:17-alpine").start();
+    postgres = await new PostgreSqlContainer("postgres:18.7-alpine").start();
     redis = await new GenericContainer("redis:7-alpine")
       .withExposedPorts(6379)
       .withWaitStrategy(Wait.forListeningPorts())

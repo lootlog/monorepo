@@ -17,7 +17,7 @@ let rabbitUri: string;
 
 describe("RabbitMessaging real broker integration", () => {
   beforeAll(async () => {
-    rabbit = await new GenericContainer("rabbitmq:3.13-alpine")
+    rabbit = await new GenericContainer("rabbitmq:4.4.0-alpine")
       .withExposedPorts(5672)
       .withStartupTimeout(60_000)
       .start();
@@ -57,7 +57,7 @@ describe("RabbitMessaging real broker integration", () => {
                   name: queue,
                   exchange: RabbitExchange.DEFAULT,
                   routingKey: RabbitRoutingKey.GUILDS_CREATE,
-                  durable: false,
+                  durable: true,
                 },
               ],
             }),
@@ -134,7 +134,7 @@ describe("RabbitMessaging real broker integration", () => {
         name: mainQueue,
         exchange: RabbitExchange.DEFAULT,
         routingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE,
-        durable: false,
+        durable: true,
       },
       makeRetryQueue({
         name: retryQueue,
@@ -315,14 +315,14 @@ describe("RabbitMessaging real broker integration", () => {
                     name,
                     exchange: RabbitExchange.DEFAULT,
                     routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
-                    durable: false,
+                    durable: true,
                     singleActiveConsumer: true,
                   },
                   {
                     name: other,
                     exchange: RabbitExchange.DEFAULT,
                     routingKey: RabbitRoutingKey.GUILDS_CREATE,
-                    durable: false,
+                    durable: true,
                   },
                 ],
               }),
@@ -360,7 +360,7 @@ describe("RabbitMessaging real broker integration", () => {
                 name: queue,
                 exchange: RabbitExchange.DEFAULT,
                 routingKey: RabbitRoutingKey.GUILDS_CREATE,
-                durable: false,
+                durable: true,
               },
             ],
           }),
