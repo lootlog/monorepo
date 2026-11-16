@@ -185,6 +185,7 @@ describe("notification dispatch with BullMQ and PostgreSQL", () => {
       { find: store.findJob, record: store.recordDelivery },
       scheduler,
       finalize,
+      () => Effect.die("the target must not be removed"),
     );
 
     let publishAttempts = 0;
