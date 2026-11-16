@@ -1,68 +1,21 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { SettingsDocumentsResponseSchema } from "@lootlog/schema/settings-documents";
-import { SoundSettingsResponse } from "#src/contracts/sound-settings/schemas";
-import { TimerSettingsResponse } from "#src/contracts/timer-settings/schemas";
-
-import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
-import { makeTimerSettings } from "#src/timer-settings/timer-settings.service";
 import {
-  getGlobalTimerSettings,
   getPreferences,
-  getSoundSettings,
   patchPreferences,
   SettingsAccessDenied,
   SettingsData,
   SettingsIdentity,
-  updateGuildTimerSettings,
 } from "./settings.operations.js";
 
 const timestamp = "2026-09-02T12:00:00.000Z";
 
-const timerSettings = {
-  userId: "user-a",
-  generalConfig: {},
-  displayConfig: {},
-  customColors: {},
-  timersColors: {},
-  alwaysVisibleExpiredTimers: {},
-  defaultColorNames: {},
-  overriddenDefaultColors: {},
-  hiddenDefaultColors: [],
-  timerFiltersEnabled: false,
-  colorFiltersEnabled: false,
-  timersSortOrder: "asc" as const,
-  syncEnabled: true,
-  createdAt: timestamp,
-  updatedAt: timestamp,
-};
-
-const soundSettings = {
-  userId: "user-a",
-  masterVolume: 0.5,
-  notificationsVolume: 0.5,
-  detectorVolume: 0.5,
-  timersVolume: 0.5,
-  pingsVolume: 0,
-  notificationsConfig: {},
-  detectorConfig: {},
-  timersConfig: {},
-  createdAt: timestamp,
-  updatedAt: timestamp,
-};
-
 const makeData = (overrides: Partial<SettingsData["Service"]> = {}) =>
   SettingsData.of({
-    getGlobalTimerSettings: () => Effect.succeed(timerSettings),
-    updateGlobalTimerSettings: () => Effect.succeed(timerSettings),
-    getGuildTimerSettings: () => Effect.succeed({}),
-    updateGuildTimerSettings: () => Effect.succeed({}),
     getGuildPreferences: () => Effect.succeed({ guilds: {} }),
-    migrateTimerSettings: () => Effect.succeed({ message: "ok" }),
     getPreferences: () => Effect.succeed({ domains: {} }),
     patchPreferences: () => Effect.succeed({ domains: {} }),
-    getSoundSettings: () => Effect.succeed(soundSettings),
-    updateSoundSettings: () => Effect.succeed(soundSettings),
     ...overrides,
   });
 
@@ -78,38 +31,6 @@ const provideServices = (
   );
 
 describe("settings HttpApi handlers", () => {
-  it("decodes timer and sound responses with the HTTP contracts", async () => {
-    const settingsDocuments = {
-      getPreferences: () => Effect.succeed({ domains: {} }),
-      patchPreferences: () => Effect.succeed({ domains: {} }),
-      parseDomains: () => Effect.succeed([]),
-      parseGuildIds: () => Effect.succeed([]),
-      getGuildPreferences: () => Effect.succeed({ guilds: {} }),
-      applyOperations: () => Effect.void,
-    };
-
-    const timerService = makeTimerSettings(settingsDocuments);
-    const soundService = makeSoundSettings(settingsDocuments);
-
-    const layer = provideServices(
-      makeData({
-        getGlobalTimerSettings: (userId) =>
-          timerService.getGlobalSettings(userId).pipe(Effect.orDie),
-        getSoundSettings: (userId) =>
-          soundService.getSettings(userId).pipe(Effect.orDie),
-      }),
-    );
-
-    const [timers, sounds] = await Effect.runPromise(
-      Effect.all([getGlobalTimerSettings(), getSoundSettings()]).pipe(
-        Effect.provide(layer),
-      ),
-    );
-
-    expect(Schema.is(TimerSettingsResponse)(timers)).toBe(true);
-    expect(Schema.is(SoundSettingsResponse)(sounds)).toBe(true);
-  });
-
   it("fails closed before reading settings without an authenticated user", async () => {
     const denied = new SettingsAccessDenied({
       status: 401,
@@ -120,48 +41,23 @@ describe("settings HttpApi handlers", () => {
 
     const layer = provideServices(
       makeData({
-        getSoundSettings: () => {
+        getPreferences: () => {
           dataCalled = true;
 
-          return Effect.succeed(soundSettings);
+          return Effect.succeed({ domains: {} });
         },
       }),
       SettingsIdentity.of({ userId: Effect.fail(denied) }),
     );
 
     const error = await Effect.runPromise(
-      Effect.flip(getSoundSettings().pipe(Effect.provide(layer))),
+      Effect.flip(
+        getPreferences({ domains: "appearance" }).pipe(Effect.provide(layer)),
+      ),
     );
 
     expect(error).toBe(denied);
     expect(dataCalled).toBe(false);
-  });
-
-  it("passes the authenticated user and guild scope to timer mutations", async () => {
-    const calls: Array<[string, string]> = [];
-
-    const layer = provideServices(
-      makeData({
-        updateGuildTimerSettings: (userId, guildId) => {
-          calls.push([userId, guildId]);
-
-          return Effect.succeed({
-            userId,
-            guildId,
-            hiddenTimers: [],
-            pinnedTimers: [],
-            createdAt: timestamp,
-            updatedAt: timestamp,
-          });
-        },
-      }),
-    );
-
-    await Effect.runPromise(
-      updateGuildTimerSettings("guild-a", {}).pipe(Effect.provide(layer)),
-    );
-
-    expect(calls).toEqual([["user-a", "guild-a"]]);
   });
 
   it("delegates a multi-domain preference patch as one atomic operation", async () => {

@@ -24,10 +24,7 @@ import {
   getSelectedWarriorsFromSearch,
   resetBattlePanelCursorPagination,
 } from "@/features/user/battle-panel/battle-panel-search";
-import {
-  useBattlesControllerGetDashboardBattles,
-  useBattlesControllerGetUserWorlds,
-} from "@lootlog/client/battlelog";
+import { useBattlesControllerGetDashboardBattles } from "@lootlog/client/battlelog";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 import { upperFirst } from "es-toolkit";
@@ -72,8 +69,9 @@ export const BattlePanelBattlesList = () => {
     reset: () => void setQueryState(resetBattlePanelCursorPagination()),
   });
 
-  const { data: worldsResponse } = useBattlesControllerGetUserWorlds();
-  const worlds = worldsResponse?.worlds ?? [];
+  const worlds = [
+    ...new Set(characters.map((character) => character.world)),
+  ].sort();
 
   const filters: BattleFilters = {
     world: optionalQueryValue(queryState.world),

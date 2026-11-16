@@ -1,10 +1,9 @@
-import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
+import type { UserGameAccountPreferences } from "@lootlog/schema/account-preferences";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
   getUsersControllerGetUserPreferencesQueryKey,
-  type UserGameAccountPreferencesResponseDtoOutput,
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
 import {
@@ -14,7 +13,10 @@ import {
   userPreferenceValues,
 } from "@/test/settings-documents-fixtures";
 import { createRealtimeTest } from "@/test/realtime-test";
-import { createDetectorSettings } from "@/lib/game-account-preferences";
+import {
+  createDetectorSettings,
+  createNotificationsSettings,
+} from "@/lib/game-account-preferences";
 import { useGameStore } from "@/store/game.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -52,10 +54,10 @@ const notification = (
 const prepare = () => {
   const test = createRealtimeTest();
   useGameStore.setState({ game: null });
-  const settings = createNotificationsResponse(["guild-1"]);
+  const settings = createNotificationsSettings(["guild-1"]);
   settings["party-gathering"].sound = false;
 
-  const preferences: UserGameAccountPreferencesResponseDtoOutput = {
+  const preferences: UserGameAccountPreferences = {
     accountId: "202",
     notifications: settings,
     detector: createDetectorSettings(),

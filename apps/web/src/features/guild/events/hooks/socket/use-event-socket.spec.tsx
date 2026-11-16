@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import {
   getEventsMonitoringControllerGetActiveGapForMapQueryKey,
   getListEventMapsQueryKey,
-  getShowEventOverviewQueryKey,
+  getShowEventQueryKey,
 } from "@lootlog/client/main";
 import { createTestGateway } from "@/lib/testing/gateway";
 import { useEventSocket } from "./use-event-socket";
@@ -20,7 +20,7 @@ const routeScope = { guildId: "guild-alias", eventId: "event-1" };
 
 const mapsKey = getListEventMapsQueryKey(routeScope);
 
-const overviewKey = getShowEventOverviewQueryKey(routeScope);
+const overviewKey = getShowEventQueryKey(routeScope);
 
 type EventScope = { guildId: string; eventId: string };
 
@@ -70,7 +70,7 @@ describe("useEventSocket", () => {
   it.each([
     ["event.map-status-updated", undefined, mapGapKey],
     ["event.map-status-updated", "presence", mapGapKey],
-    ["event.hero-killed", undefined, getShowEventOverviewQueryKey],
+    ["event.hero-killed", undefined, getShowEventQueryKey],
     ["event.respawn-window-opened", undefined, getListEventMapsQueryKey],
     ["event.respawn-window-closed", undefined, getListEventMapsQueryKey],
   ] as const)(

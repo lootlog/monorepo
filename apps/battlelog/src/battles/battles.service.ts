@@ -589,10 +589,6 @@ export const makeBattles = (
       return battleMetadataService.getUserCharacters(userId);
     },
 
-    getUserWorlds(userId: string) {
-      return battleMetadataService.getUserWorlds(userId);
-    },
-
     getBattleRawData(battleId: string, requestingUserId?: string) {
       return Effect.gen(function* () {
         if (requestingUserId) {
@@ -1291,7 +1287,6 @@ export type Battles = Pick<
   | "getPublicBattleRaw"
   | "getPublicBattleTimeline"
   | "getUserCharacters"
-  | "getUserWorlds"
   | "resolveBattleId"
   | "searchWarriors"
   | "updateBattle"

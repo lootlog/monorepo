@@ -133,14 +133,6 @@ export const BATTLELOG_OPERATIONS = [
   {
     service: "battlelog",
     method: "GET",
-    path: "/battles/@me/worlds",
-    operationId: "BattlesController_getUserWorlds",
-    access: "read",
-    data: "personal",
-  },
-  {
-    service: "battlelog",
-    method: "GET",
     path: "/battles/{battleId}/timeline",
     operationId: "BattlesController_getBattleTimeline",
     access: "read",

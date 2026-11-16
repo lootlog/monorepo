@@ -191,10 +191,6 @@ const BattleWarriorsSearchResponseSchema = Schema.Struct({
   warriors: Schema.Array(BattleSearchWarriorResponseSchema),
 });
 
-const BattleUserWorldsResponseSchema = Schema.Struct({
-  worlds: Schema.Array(Schema.String),
-});
-
 const BattleCreatedResponseSchema = Schema.Struct({
   battleId: Schema.String,
 });
@@ -316,6 +312,5 @@ export const BattleResponseSchemas = {
   publicBattle: PublicBattleResponseSchema,
   raw: BattleRawResponseSchema,
   timeline: BattleTimelineResponseSchema,
-  userWorlds: BattleUserWorldsResponseSchema,
   warriorsSearch: BattleWarriorsSearchResponseSchema,
 } as const;

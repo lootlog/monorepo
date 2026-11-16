@@ -17,8 +17,6 @@ import { makeCurrentUserGuilds } from "#src/http-api/handlers/account-organizati
 import { makeGuildDiscordSyncData } from "#src/http-api/handlers/account-organization/guild-discord-sync.data-layer";
 import { makeManageableGuilds } from "#src/http-api/handlers/account-organization/manageable-guilds.data-layer";
 import { makeUserAccountDeletion } from "#src/http-api/handlers/account-organization/user-account-deletion.data-layer";
-import { makeUserGuildList } from "#src/http-api/handlers/account-organization/user-guild-list.data-layer";
-import { makeUserGuildPermissions } from "#src/http-api/handlers/account-organization/user-guild-permissions.data-layer";
 import { makeUserPreferencesData } from "#src/http-api/handlers/account-organization/user-preferences.data-layer";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
@@ -183,11 +181,6 @@ export const accountOrganizationOperationsLive = Layer.effect(
       ({ userId, discordId }) => discord.getUserGuilds(userId, discordId),
     );
 
-    const getUserGuildsWithPermissions = makeUserGuildPermissions(
-      database,
-      redis,
-    );
-
     const getCurrentUserAccessibleGuilds = makeAccessibleGuilds(
       database,
       {
@@ -205,35 +198,6 @@ export const accountOrganizationOperationsLive = Layer.effect(
         setIfAbsent: (key, value, ttl) =>
           cacheAttempt(() => redis.setNX(key, value, ttl)),
         deleteCached: (key) => cacheAttempt(() => redis.del(key)),
-        queueRefresh: refresh.queueMemberRefresh,
-      },
-      config.environment,
-    );
-
-    const getUserGuilds = makeUserGuildList(
-      database,
-      {
-        accessible: getCurrentUserAccessibleGuilds,
-        deactivateMissing: (options) =>
-          removal.deactivateMembersMissingFromDiscordGuilds({
-            ...options,
-            activeDiscordGuildIds: [...options.activeDiscordGuildIds],
-            status: MEMBER_LAST_DISCORD_STATUS.GUILD_NOT_IN_DISCORD_LIST,
-          }),
-        freshDiscordGuilds: ({ userId, discordId }) =>
-          discord
-            .getFreshCompleteUserGuilds(userId, discordId)
-            .pipe(Effect.map(({ guilds }) => guilds)),
-        getCache: (key) =>
-          Effect.tryPromise({
-            try: () => redis.get(key),
-            catch: (error) => error,
-          }),
-        setCache: (key, value, ttl) =>
-          Effect.tryPromise({
-            try: () => redis.set(key, value, ttl),
-            catch: (error) => error,
-          }),
         queueRefresh: refresh.queueMemberRefresh,
       },
       config.environment,
@@ -265,8 +229,6 @@ export const accountOrganizationOperationsLive = Layer.effect(
       getManageableUserGuilds,
       getCurrentUserAccessibleGuilds,
       getCurrentUserGuilds,
-      getUserGuilds,
-      getUserGuildsWithPermissions,
       ...preferences,
     });
   }),

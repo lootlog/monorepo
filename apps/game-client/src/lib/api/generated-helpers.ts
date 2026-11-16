@@ -6,7 +6,6 @@ import type {
   MemberSummaryResponseDtoOutput,
   MemberResponseDto,
   MemberResponseDtoRolesItem,
-  SoundSettingsResponseDto,
   TimerResponseDto,
 } from "@lootlog/client/main";
 import type { Npc } from "@/api/npcs.api";
@@ -183,8 +182,24 @@ const normalizeSoundCategoryConfig = (
   );
 };
 
+/** Sound settings as the settings documents store them, before normalization. */
+export type StoredSoundSettings = Omit<
+  UserSoundSettings,
+  | "notificationsConfig"
+  | "detectorConfig"
+  | "timersConfig"
+  | "createdAt"
+  | "updatedAt"
+> & {
+  notificationsConfig: unknown;
+  detectorConfig: unknown;
+  timersConfig: unknown;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export const normalizeSoundSettings = (
-  settings: SoundSettingsResponseDto,
+  settings: StoredSoundSettings,
 ): UserSoundSettings => {
   return {
     userId: settings.userId,

@@ -1,5 +1,5 @@
+import type { UserGameAccountPreferences } from "@lootlog/schema/account-preferences";
 import { ownerAccessPolicy } from "@/test/realtime-wire";
-import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import {
   accountPreferenceValues,
   createSettingsDocuments,
@@ -8,10 +8,12 @@ import {
 import type { GameEvent, Item } from "@lootlog/margonem/game-events";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/client/main";
 import { createNativeRuntime } from "@/test/native-runtime";
 import { createRealtimeTest } from "@/test/realtime-test";
-import { createDetectorSettings } from "@/lib/game-account-preferences";
+import {
+  createDetectorSettings,
+  createNotificationsSettings,
+} from "@/lib/game-account-preferences";
 import { useGlobalStore } from "@/store/global.store";
 import { lootSplitStore } from "./loot-split-store";
 
@@ -79,9 +81,9 @@ const setup = async (lootSplit?: { enabled: boolean; rarities: string[] }) => {
   vi.stubGlobal("Engine", native);
   vi.stubGlobal("_g", request);
 
-  const preferences: UserGameAccountPreferencesResponseDtoOutput = {
+  const preferences: UserGameAccountPreferences = {
     accountId: "202",
-    notifications: createNotificationsResponse(),
+    notifications: createNotificationsSettings(),
     detector: createDetectorSettings(),
     pings: { enabled: true },
     airTags: { enabled: false },

@@ -49,22 +49,12 @@ const services = (): BotServicesValue => ({
       Effect.die(new Error("Unexpected Discord event in HTTP test")),
     handleChannelDelete: () =>
       Effect.die(new Error("Unexpected Discord event in HTTP test")),
-    getGuildChannels: mock((guildId: string) =>
-      Effect.succeed({
-        guildId,
-        channels: [],
-        syncState: syncState(guildId),
-      }),
-    ),
     refreshGuildChannels: mock((guildId: string) =>
       Effect.succeed({
         guildId,
         channels: [],
         syncState: syncState(guildId),
       }),
-    ),
-    getGuildSyncStatus: mock((guildId: string) =>
-      Effect.succeed(syncState(guildId)),
     ),
   },
 });
@@ -82,11 +72,13 @@ describe("Discord bot HTTP contract", () => {
     expect(await response.text()).toBe("OK");
   });
 
-  test("preserves internal guild channel route", async () => {
+  test("preserves internal guild channel refresh route", async () => {
     const boundary = makeBotHttpBoundary(services());
 
     const response = await boundary.handler(
-      new Request("http://localhost/internal/guilds/guild-1/channels"),
+      new Request("http://localhost/internal/guilds/guild-1/channels/refresh", {
+        method: "POST",
+      }),
     );
 
     await boundary.dispose();

@@ -3,10 +3,7 @@ import { Effect } from "effect";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
 import { createGuildFixture } from "../../../../test/organization-fixtures.js";
 import { guildTable } from "#src/database/drizzle/organization.schema";
-import {
-  userSettingsTable,
-  userSettingDocumentTable,
-} from "#src/database/drizzle/user.schema";
+import { userSettingsTable } from "#src/database/drizzle/user.schema";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
@@ -28,7 +25,7 @@ const makeData = (
       ),
     );
 
-test("key preferences hide unselected organizations and reject destructive routing replacements", async () => {
+test("key preferences hide unselected organizations and reject Organization list replacements", async () => {
   const boundary = await createDatabaseBoundary();
 
   try {
@@ -51,41 +48,20 @@ test("key preferences hide unselected organizations and reject destructive routi
       }),
     );
     const data = await makeData(boundary);
-    await boundary.run(
-      data.updateUserGameAccountPreferences("user-1", "account", {
-        detector: {
-          routingRules: [
-            { id: "both", minLevel: 1, maxLevel: 100, guildIds: ["1", "2"] },
-            { id: "one", minLevel: 1, maxLevel: 100, guildIds: ["1"] },
-          ],
-        },
-      }),
-    );
 
     const result = await boundary.run(
       Effect.gen(function* () {
         const preferences = yield* data.getUserPreferences("user-1");
 
-        const game = yield* data.getUserGameAccountPreferences(
-          "user-1",
-          "account",
-        );
-
         const ordering = yield* data
           .updateUserPreferences("user-1", { guildsOrder: [] })
-          .pipe(Effect.result);
-
-        const routing = yield* data
-          .updateUserGameAccountPreferences("user-1", "account", {
-            detector: { routingRules: [] },
-          })
           .pipe(Effect.result);
 
         const personal = yield* data.updateUserPreferences("user-1", {
           theme: "anime",
         });
 
-        return { preferences, game, ordering, routing, personal };
+        return { preferences, ordering, personal };
       }).pipe(
         Effect.provideService(ForwardAuthIdentity, {
           userId: "user-1",
@@ -105,11 +81,7 @@ test("key preferences hide unselected organizations and reject destructive routi
       guildsOrder: ["1"],
       hiddenGuildIds: [],
     });
-    expect(result.game.detector.routingRules.map((rule) => rule.id)).toEqual([
-      "one",
-    ]);
     expect(result.ordering._tag).toBe("Failure");
-    expect(result.routing._tag).toBe("Failure");
     expect(result.personal).toMatchObject({
       theme: "anime",
       guildsOrder: ["1"],
@@ -121,20 +93,6 @@ test("key preferences hide unselected organizations and reject destructive routi
     );
 
     expect(stored[0]?.guildsOrder).toEqual(["1", "2"]);
-
-    const gameStored = await boundary.run(
-      boundary.database.select().from(userSettingDocumentTable),
-    );
-
-    expect(gameStored).toHaveLength(1);
-    expect(gameStored[0]).toMatchObject({
-      domain: "gameData",
-      scopeType: "GAME_ACCOUNT",
-      scopeId: "account",
-      overrides: {
-        detector: { routingRules: [{ id: "both" }, { id: "one" }] },
-      },
-    });
   } finally {
     await boundary.dispose();
   }

@@ -268,9 +268,7 @@ export const notificationsServicesLive = Layer.effect(
           database,
           {
             list: (discordId, userId) =>
-              userGuilds
-                .getUserGuilds({ userId, discordId })
-                .pipe(Effect.map((guilds) => guilds)),
+              userGuilds.getCurrentUserAccessibleGuilds({ userId, discordId }),
           },
           {
             cancel: notificationScheduler.cancel,

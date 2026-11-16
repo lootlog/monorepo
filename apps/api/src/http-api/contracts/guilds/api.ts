@@ -12,42 +12,11 @@ import {
   DiscordGuildSyncStateResponse,
   OrganizationCapabilitiesResponse,
   ManageableOrganizationsResponse,
-  UserOrganizationsResponse,
-  UserOrganizationsQuery,
-  UserOrganizationPermissionsResponse,
   OrganizationWorldsResponse,
   UpdateOrganizationConfigRequest,
 } from "#src/contracts/guilds/schemas";
 
 export class GuildsGroup extends HttpApiGroup.make("guilds").add(
-  HttpApiEndpoint.get("GuildsControllerGetUserGuilds", "/guilds/@me", {
-    query: UserOrganizationsQuery,
-    success: UserOrganizationsResponse,
-  })
-    .middleware(BearerSecurityMiddleware)
-    .annotate(OpenApi.Identifier, "GuildsController_getUserGuilds")
-    .annotate(OpenApi.Summary, "Get user guilds (deprecated)")
-    .annotate(
-      OpenApi.Description,
-      "Legacy endpoint for listing the authenticated user's guilds. Prefer /users/@me/guilds or /users/@me/guilds/accessible.",
-    )
-    .annotate(OpenApi.Deprecated, true),
-  HttpApiEndpoint.get(
-    "GuildsControllerGetUserGuildsWithPermissions",
-    "/guilds/@me/permissions",
-    { success: UserOrganizationPermissionsResponse },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(
-      OpenApi.Identifier,
-      "GuildsController_getUserGuildsWithPermissions",
-    )
-    .annotate(OpenApi.Summary, "Get user guilds with permissions (deprecated)")
-    .annotate(
-      OpenApi.Description,
-      "Legacy endpoint for listing the authenticated user's accessible guilds with role metadata. Prefer /users/@me/guilds for new integrations.",
-    )
-    .annotate(OpenApi.Deprecated, true),
   HttpApiEndpoint.get(
     "GuildsControllerGetManageableUserGuilds",
     "/guilds/@me/manageable",
@@ -72,19 +41,6 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     .annotate(OpenApi.Identifier, "GuildsController_getGuildById")
     .annotate(OpenApi.Summary, "Get guild by ID")
     .annotate(OpenApi.Description, "Retrieve guild information by guild ID"),
-  HttpApiEndpoint.get(
-    "GuildsControllerGetGuildConfig",
-    "/guilds/:guildId/config",
-    {
-      params: OrganizationPath,
-      success: OrganizationSummary,
-      error: [403, 404].map((status) =>
-        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
-      ),
-    },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(OpenApi.Identifier, "GuildsController_getGuildConfig"),
   HttpApiEndpoint.patch(
     "GuildsControllerUpdateGuildConfig",
     "/guilds/:guildId/config",

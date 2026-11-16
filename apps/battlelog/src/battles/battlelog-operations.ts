@@ -147,10 +147,6 @@ export const makeBattlelogOperations = (
         (query: string, userId: string) =>
           battles.searchWarriors(query, userId),
       ),
-      getUserWorlds: battlelogOperation(
-        "BattlesController_getUserWorlds",
-        (userId: string) => battles.getUserWorlds(userId),
-      ),
       getBattleTimeline: battlelogOperation(
         "BattlesController_getBattleTimeline",
         (battleId: string, userId: string) =>

@@ -45,14 +45,6 @@ export const MAIN_EVENT_OPERATIONS = [
   {
     service: "main",
     method: "GET",
-    path: "/guilds/{guildId}/events/{eventId}/overview",
-    operationId: "showEventOverview",
-    access: "read",
-    data: "organization",
-  },
-  {
-    service: "main",
-    method: "GET",
     path: "/guilds/{guildId}/events/{eventId}/wrapped",
     operationId: "showEventWrapped",
     access: "read",

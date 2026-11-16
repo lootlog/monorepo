@@ -59,12 +59,8 @@ Organizations receive your data, so they stay limited to a signed-in session:
 - In `GET /users/@me/preferences`, `guildsOrder` and `hiddenGuildIds` list only
   Organizations of the key that you can still access. Changing them returns
   `403`.
-- In `GET /users/@me/game-preferences/accounts/{id}`, detector rules for other
-  Organizations are hidden and notification `guildIds` list only the key's
-  Organizations. Changing `detector.routingRules` or notification `guildIds`
-  returns `403`.
-- Generic settings documents under `/preferences` and the `/timer-settings`
-  operations need a session. Reading and writing timers themselves does not.
+- Settings documents under `/preferences` need a session. Reading and writing
+  timers themselves does not.
 - System reservation-reminder rules are managed through reservations. A key
   cannot change them or the Discord target linked to them. Your own scheduled
   messages stay available.

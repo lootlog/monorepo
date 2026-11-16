@@ -1,5 +1,6 @@
+import type { UserGameAccountPreferences } from "@lootlog/schema/account-preferences";
+import type { SoundSettingsFixture } from "@/test/sound-settings-fixtures";
 import { ownerAccessPolicy } from "@/test/realtime-wire";
-import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import {
   accountPreferenceValues,
@@ -10,12 +11,11 @@ import {
 } from "@/test/settings-documents-fixtures";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type {
-  UserGameAccountPreferencesResponseDtoOutput,
-  SoundSettingsResponseDto,
-} from "@lootlog/client/main";
 import { createRealtimeTest } from "@/test/realtime-test";
-import { createDetectorSettings } from "@/lib/game-account-preferences";
+import {
+  createDetectorSettings,
+  createNotificationsSettings,
+} from "@/lib/game-account-preferences";
 import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
@@ -29,11 +29,9 @@ import { mapPingController } from "./map-ping-controller";
 import { battlePingStore } from "./battle-ping-store";
 import { pingInteractionController } from "./ping-interaction-controller";
 
-const preferences = (
-  enabled: boolean,
-): UserGameAccountPreferencesResponseDtoOutput => ({
+const preferences = (enabled: boolean): UserGameAccountPreferences => ({
   accountId: "1",
-  notifications: createNotificationsResponse(),
+  notifications: createNotificationsSettings(),
   detector: createDetectorSettings(),
   pings: { enabled },
   airTags: { enabled: true },
@@ -168,7 +166,7 @@ const setup = async ({
     }
   }
 
-  const sound: SoundSettingsResponseDto = {
+  const sound: SoundSettingsFixture = {
     userId: "user",
     masterVolume: 1,
     notificationsVolume: 1,

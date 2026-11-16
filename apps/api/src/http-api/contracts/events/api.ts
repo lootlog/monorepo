@@ -128,22 +128,6 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       "Update an existing event. heroNpcs lists every hero and map the event should have: heroes are matched by npcName and maps by mapId, so retained ones keep their kills and tracking history. It can add heroes and maps and rename maps; a list that omits an existing hero or map is rejected. Remove them with the hero and map delete operations.",
     ),
   HttpApiEndpoint.get(
-    "showEventOverview",
-    "/guilds/:guildId/events/:eventId/overview",
-    {
-      params: EventPath,
-      success: EventOverviewResponse,
-      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
-    },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(OpenApi.Identifier, "showEventOverview")
-    .annotate(OpenApi.Summary, "Get event overview")
-    .annotate(
-      OpenApi.Description,
-      "Get lightweight event overview for read-only views (without maps and rankings)",
-    ),
-  HttpApiEndpoint.get(
     "showEventWrapped",
     "/guilds/:guildId/events/:eventId/wrapped",
     {

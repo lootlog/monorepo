@@ -1,5 +1,5 @@
 import { AccessRequirement } from "@lootlog/domain/access-policy";
-import type { makeUserGuildList } from "./user-guild-list.data-layer.js";
+import type { makeAccessibleGuilds } from "./accessible-guilds.data-layer.js";
 import type { makeCurrentUserGuilds } from "./current-user-guilds.data-layer.js";
 import {
   statusCodeResponse,
@@ -41,8 +41,6 @@ import {
   DiscordGuildSyncStateResponse as DiscordGuildSyncStateSchema,
   OrganizationCapabilitiesResponse,
   ManageableOrganizationsResponse,
-  UserOrganizationsResponse,
-  UserOrganizationPermissionsResponse,
   OrganizationWorldsResponse,
   type UpdateOrganizationConfigRequest,
 } from "#src/contracts/guilds/schemas";
@@ -50,10 +48,8 @@ import {
 import { OrganizationSummary } from "#src/contracts/shared";
 import {
   AccountDeletionAccepted,
-  UserGameAccountPreferencesResponse,
   UserPreferencesResponse,
   CurrentOrganizationsResponse,
-  type UpdateUserGameAccountPreferencesRequest,
   type UpdateUserPreferencesRequest,
 } from "#src/contracts/users/schemas";
 import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
@@ -124,22 +120,9 @@ export class AccountOrganizationData extends Context.Service<
       payload: UpdateUserPreferencesRequest,
     ) => DataEffect;
     readonly getCurrentUserGuilds: ReturnType<typeof makeCurrentUserGuilds>;
-    readonly getCurrentUserAccessibleGuilds: (
-      identity: AuthenticatedIdentity,
-    ) => DataEffect;
-    readonly getUserGameAccountPreferences: (
-      userId: string,
-      accountId: string,
-    ) => DataEffect;
-    readonly updateUserGameAccountPreferences: (
-      userId: string,
-      accountId: string,
-      payload: UpdateUserGameAccountPreferencesRequest,
-    ) => DataEffect;
-    readonly getUserGuilds: ReturnType<typeof makeUserGuildList>;
-    readonly getUserGuildsWithPermissions: (
-      identity: AuthenticatedIdentity,
-    ) => DataEffect;
+    readonly getCurrentUserAccessibleGuilds: ReturnType<
+      typeof makeAccessibleGuilds
+    >;
     readonly getManageableUserGuilds: (
       identity: AuthenticatedIdentity,
     ) => DataEffect;
@@ -509,61 +492,6 @@ export const getCurrentUserAccessibleGuilds = Effect.fn(
   );
 
   return yield* decode(CurrentOrganizationsResponse, value);
-});
-
-export const getCurrentUserGamePreferences = Effect.fn(
-  "getCurrentUserGamePreferences",
-)(function* (accountId: string) {
-  const current = yield* identity;
-
-  const value = yield* data((service) =>
-    service.getUserGameAccountPreferences(current.userId, accountId),
-  );
-
-  return yield* decode(UserGameAccountPreferencesResponse, value);
-});
-
-export const updateCurrentUserGamePreferences = Effect.fn(
-  "updateCurrentUserGamePreferences",
-)(function* (
-  accountId: string,
-  payload: UpdateUserGameAccountPreferencesRequest,
-) {
-  const current = yield* identity;
-
-  const value = yield* data((service) =>
-    service.updateUserGameAccountPreferences(
-      current.userId,
-      accountId,
-      payload,
-    ),
-  );
-
-  return yield* decode(UserGameAccountPreferencesResponse, value);
-});
-
-export const legacyCurrentGuildList = Effect.fn("legacyCurrentGuildList")(
-  function* (source?: string) {
-    const current = yield* identity;
-
-    const value = yield* data((service) =>
-      service.getUserGuilds(current, source),
-    );
-
-    return yield* decode(UserOrganizationsResponse, value);
-  },
-);
-
-export const currentGuildPermissionsList = Effect.fn(
-  "currentGuildPermissionsList",
-)(function* () {
-  const current = yield* identity;
-
-  const value = yield* data((service) =>
-    service.getUserGuildsWithPermissions(current),
-  );
-
-  return yield* decode(UserOrganizationPermissionsResponse, value);
 });
 
 export const manageableCurrentGuildList = Effect.fn(

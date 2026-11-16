@@ -53,7 +53,7 @@ describe("DiscordBotClientService", () => {
         makeDiscordBotClient(
           httpClientFromResponses(get),
           new URL("http://discord-bot"),
-        ).getGuildSyncStatus("guild-a"),
+        ).refreshGuildChannels("guild-a"),
       ),
     ).rejects.toThrow("Discord Bot request failed: 503");
   });

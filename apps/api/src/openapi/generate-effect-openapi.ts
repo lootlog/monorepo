@@ -15,14 +15,12 @@ import {
 } from "../contracts/kills/schemas.js";
 
 const NULLABLE_JSON_SCHEMA_NAMES = [
-  "TimerSettingsResponseDto__schema0",
   "NotificationTargetResponseDto__schema0",
   "GuildNotificationRulesResponseDto__schema0",
   "NotificationRuleResponseDto__schema0",
   "NotificationJobsResponseDto__schema0",
   "NotificationTargetWithTestTriggerResponseDto__schema0",
   "WatchedItemResponseDto__schema0",
-  "SoundSettingsResponseDto__schema0",
   "EventMutationResponseDto__schema0",
   "EventOverviewResponseDto__schema0",
   "KillHistoryBonusBreakdown",

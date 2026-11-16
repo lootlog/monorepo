@@ -1,18 +1,8 @@
 import { isObjectRecord } from "@lootlog/schema/records";
 import {
-  cloneDetector,
   cloneMutes,
-  cloneNotifications,
-  normalizeAirTags,
-  normalizeDetector,
-  normalizeDetectorType,
-  normalizeGuildIds,
   normalizeMutedNpcs,
   normalizeMutedPlayers,
-  normalizeNotification,
-  normalizeNotifications,
-  normalizePings,
-  normalizeRoutingRules,
 } from "@lootlog/domain/account-preferences";
 import { and, eq } from "drizzle-orm";
 import { Clock, Effect, type Schema, Predicate } from "effect";
@@ -21,13 +11,6 @@ import {
   normalizeChatAppearanceSettings,
 } from "@lootlog/domain/chat-appearance";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
-import {
-  DETECTOR_NPC_TYPES,
-  NOTIFICATION_TYPES,
-  type NotificationSettings,
-  type NotificationType,
-  type UserGameAccountPreferences,
-} from "@lootlog/schema/account-preferences";
 import type {
   NotificationMutes,
   UserPreferences,
@@ -40,18 +23,12 @@ import {
   userSettingsTable,
   userThemeTable,
 } from "#src/database/drizzle/user.schema";
-import type {
-  SettingsDocuments,
-  SettingsDocumentsResponse,
-} from "#src/settings-documents/settings-documents.service";
+import type { SettingsDocuments } from "#src/settings-documents/settings-documents.service";
 import type {
   PatchSettingsDocuments,
   SettingsDomainResolution,
 } from "@lootlog/schema/settings-documents";
-import type {
-  UpdateUserGameAccountPreferencesRequest,
-  UpdateUserPreferencesRequest,
-} from "#src/contracts/users/schemas";
+import type { UpdateUserPreferencesRequest } from "#src/contracts/users/schemas";
 import { AccountOrganizationOperationError } from "./account-organization.operations.js";
 
 type JsonValue = typeof Schema.Json.Type;
@@ -108,198 +85,6 @@ const response = (
   mutes: cloneMutes(mutes),
 });
 
-type StoredGamePreferences = {
-  notifications?: unknown;
-  detector?: unknown;
-  pings?: unknown;
-  airTags?: unknown;
-};
-
-/**
- * Normalized preferences carry event hero settings copied from the hero ones.
- * Storing that copy would stop event heroes from following later hero changes,
- * so it is written only once event heroes were set apart before or now.
- */
-const withoutInheritedEventHero = <TSettings extends { EVENT_HERO: unknown }>(
-  settings: TSettings,
-  stored: StoredGamePreferences,
-  domain: "detector" | "notifications",
-  patch: { readonly EVENT_HERO?: unknown } | undefined,
-) => {
-  const storedSettings = stored[domain];
-
-  if (
-    (isObjectRecord(storedSettings) &&
-      storedSettings.EVENT_HERO !== undefined) ||
-    patch?.EVENT_HERO !== undefined
-  )
-    return settings;
-
-  const { EVENT_HERO: _inherited, ...rest } = settings;
-
-  return rest;
-};
-
-const hasStoredSource = (
-  resolution: SettingsDomainResolution | undefined,
-  path: string,
-) => {
-  const source = resolution?.sources[path];
-
-  return source !== undefined && source !== "DEFAULT";
-};
-
-// Only values with a stored layer count as present; catalog defaults stay "unset".
-const storedGamePreferences = (
-  documents: SettingsDocumentsResponse,
-): StoredGamePreferences => {
-  const gameData = documents.domains.gameData;
-  const notifications = documents.domains.notifications;
-  const stored: StoredGamePreferences = {};
-
-  if (hasStoredSource(notifications, "presentation"))
-    stored.notifications = notifications?.effective.presentation;
-
-  if (hasStoredSource(gameData, "detector"))
-    stored.detector = gameData?.effective.detector;
-
-  if (hasStoredSource(gameData, "pings"))
-    stored.pings = gameData?.effective.pings;
-
-  if (hasStoredSource(gameData, "airTags"))
-    stored.airTags = gameData?.effective.airTags;
-
-  return stored;
-};
-
-const gamePreferencesResponse = (
-  accountId: string,
-  stored: StoredGamePreferences,
-): UserGameAccountPreferences => {
-  const hasStoredNotifications = stored.notifications !== undefined;
-  const hasStoredDetector = stored.detector !== undefined;
-  const hasStoredPings = stored.pings !== undefined;
-  const hasStoredAirTags = stored.airTags !== undefined;
-
-  return {
-    accountId,
-    notifications: normalizeNotifications(stored.notifications),
-    detector: normalizeDetector(stored.detector),
-    pings: normalizePings(stored.pings),
-    airTags: normalizeAirTags(stored.airTags),
-    hasStoredNotifications,
-    hasStoredDetector,
-    hasStoredPings,
-    hasStoredAirTags,
-    hasStoredPreferences:
-      hasStoredNotifications ||
-      hasStoredDetector ||
-      hasStoredPings ||
-      hasStoredAirTags,
-  };
-};
-
-type LegacyNotificationSettings = NotificationSettings & { guildIds: string[] };
-
-/**
- * Deployed Game clients read the server list from every notification type, so
- * the legacy route mirrors the shared list into each type until they update.
- */
-const withLegacyTypeGuildIds = (value: UserGameAccountPreferences) => {
-  const { notifications } = value;
-
-  const mirror = (type: NotificationType): LegacyNotificationSettings => ({
-    ...notifications[type],
-    guildIds: [...notifications.guildIds],
-  });
-
-  return {
-    ...value,
-    notifications: {
-      guildIds: [...notifications.guildIds],
-      ELITE2: mirror("ELITE2"),
-      HERO: mirror("HERO"),
-      EVENT_HERO: mirror("EVENT_HERO"),
-      COLOSSUS: mirror("COLOSSUS"),
-      TITAN: mirror("TITAN"),
-      HERO_TRACKER: mirror("HERO_TRACKER"),
-      message: mirror("message"),
-      "party-gathering": mirror("party-gathering"),
-    },
-  };
-};
-
-/** Per-type lists sent by deployed Game clients; folded into the shared list. */
-const legacyTypeGuildIds = (
-  notifications: UpdateUserGameAccountPreferencesRequest["notifications"],
-) => {
-  const lists = NOTIFICATION_TYPES.flatMap(
-    (type) => notifications?.[type]?.guildIds ?? [],
-  );
-
-  const present = NOTIFICATION_TYPES.some(
-    (type) => notifications?.[type]?.guildIds !== undefined,
-  );
-
-  return present ? [...new Set(lists)] : undefined;
-};
-
-const patchGamePreferences = (
-  current: UserGameAccountPreferences,
-  payload: UpdateUserGameAccountPreferencesRequest,
-) => {
-  const notifications = cloneNotifications(current.notifications);
-
-  if (payload.notifications) {
-    const guildIds =
-      payload.notifications.guildIds ??
-      legacyTypeGuildIds(payload.notifications);
-
-    if (guildIds) {
-      notifications.guildIds = normalizeGuildIds(notifications.guildIds)(
-        guildIds,
-      );
-    }
-
-    for (const type of NOTIFICATION_TYPES) {
-      const patch = payload.notifications[type];
-
-      if (patch) {
-        notifications[type] = normalizeNotification(notifications[type])(patch);
-      }
-    }
-  }
-
-  const detector = cloneDetector(current.detector);
-
-  if (payload.detector?.routingRules) {
-    detector.routingRules = normalizeRoutingRules(
-      payload.detector.routingRules.map((rule) => ({
-        ...rule,
-        guildIds: [...rule.guildIds],
-      })),
-    );
-  }
-
-  for (const type of DETECTOR_NPC_TYPES) {
-    const patch = payload.detector?.[type];
-
-    if (patch) detector[type] = normalizeDetectorType(detector[type])(patch);
-  }
-
-  const pings = normalizePings(
-    payload.pings ? { ...current.pings, ...payload.pings } : current.pings,
-  );
-
-  const airTags = normalizeAirTags(
-    payload.airTags
-      ? { ...current.airTags, ...payload.airTags }
-      : current.airTags,
-  );
-
-  return { notifications, detector, pings, airTags };
-};
-
 const readPreferences = (
   database: typeof ApiDatabase.Service,
   settingsDocuments: SettingsDocuments,
@@ -347,38 +132,6 @@ export const makeUserPreferencesData = (
         hiddenGuildIds: value.hiddenGuildIds.filter((id) => ids.has(id)),
       };
     });
-
-  const scopeGamePreferences = (value: UserGameAccountPreferences) =>
-    Effect.gen(function* () {
-      const ids = yield* visibleOrganizationIds;
-
-      if (!ids) return value;
-      const notifications = cloneNotifications(value.notifications);
-      notifications.guildIds = notifications.guildIds.filter((id) =>
-        ids.has(id),
-      );
-
-      return {
-        ...value,
-        notifications,
-        detector: {
-          ...value.detector,
-          routingRules: value.detector.routingRules.filter(
-            (rule) =>
-              rule.guildIds.length > 0 &&
-              rule.guildIds.every((id) => ids.has(id)),
-          ),
-        },
-      };
-    });
-
-  const readGamePreferences = (userId: string, accountId: string) =>
-    settingsDocuments
-      .getPreferences(userId, {
-        domains: ["gameData", "notifications"],
-        gameAccountId: accountId,
-      })
-      .pipe(Effect.map(storedGamePreferences));
 
   const getUserPreferences = Effect.fn("getUserPreferences")(function* (
     userId: string,
@@ -500,116 +253,6 @@ export const makeUserPreferencesData = (
     return yield* getUserPreferences(userId);
   });
 
-  const getUserGameAccountPreferences = Effect.fn(
-    "getUserGameAccountPreferences",
-  )(function* (userId: string, accountId: string) {
-    return gamePreferencesResponse(
-      accountId,
-      yield* readGamePreferences(userId, accountId),
-    );
-  });
-
-  const updateUserGameAccountPreferences = Effect.fn(
-    "updateUserGameAccountPreferences",
-  )(function* (
-    userId: string,
-    accountId: string,
-    payload: UpdateUserGameAccountPreferencesRequest,
-  ) {
-    if (
-      (yield* requestApiKeyAccess) &&
-      (payload.detector?.routingRules !== undefined ||
-        payload.notifications?.guildIds !== undefined ||
-        legacyTypeGuildIds(payload.notifications) !== undefined)
-    ) {
-      return yield* new PermissionDeniedError(
-        "Organization preference routing requires a session",
-      );
-    }
-
-    const stored = yield* readGamePreferences(userId, accountId);
-    const current = gamePreferencesResponse(accountId, stored);
-
-    const patched = patchGamePreferences(current, payload);
-    const { pings, airTags } = patched;
-
-    const storedDetector = withoutInheritedEventHero(
-      patched.detector,
-      stored,
-      "detector",
-      payload.detector,
-    );
-
-    const storedNotifications = withoutInheritedEventHero(
-      patched.notifications,
-      stored,
-      "notifications",
-      payload.notifications,
-    );
-
-    const hasStoredNotifications =
-      stored.notifications !== undefined || payload.notifications !== undefined;
-
-    const hasStoredDetector =
-      stored.detector !== undefined || payload.detector !== undefined;
-
-    const hasStoredPings =
-      stored.pings !== undefined || payload.pings !== undefined;
-
-    const hasStoredAirTags =
-      stored.airTags !== undefined || payload.airTags !== undefined;
-
-    const accountScope = { type: "GAME_ACCOUNT", id: accountId } as const;
-    const gameDataSet: Record<string, JsonValue> = {};
-
-    if (payload.detector !== undefined)
-      gameDataSet.detector = toJson(storedDetector);
-
-    if (payload.pings !== undefined) gameDataSet.pings = toJson(pings);
-
-    if (payload.airTags !== undefined) gameDataSet.airTags = toJson(airTags);
-    const operations: SettingsOperation[] = [];
-
-    if (Object.keys(gameDataSet).length > 0) {
-      operations.push({
-        domain: "gameData",
-        scope: accountScope,
-        set: gameDataSet,
-        unset: [],
-      });
-    }
-
-    if (payload.notifications !== undefined) {
-      operations.push({
-        domain: "notifications",
-        scope: accountScope,
-        set: { presentation: toJson(storedNotifications) },
-        unset: [],
-      });
-    }
-
-    if (operations.length > 0) {
-      yield* settingsDocuments.patchPreferences(userId, { operations });
-    }
-
-    return {
-      accountId,
-      notifications: normalizeNotifications(storedNotifications),
-      detector: normalizeDetector(storedDetector),
-      pings,
-      airTags,
-      hasStoredNotifications,
-      hasStoredDetector,
-      hasStoredPings,
-      hasStoredAirTags,
-      hasStoredPreferences:
-        hasStoredNotifications ||
-        hasStoredDetector ||
-        hasStoredPings ||
-        hasStoredAirTags,
-    } satisfies UserGameAccountPreferences;
-  });
-
   const mapError = <A>(effect: Effect.Effect<A, unknown>) =>
     effect.pipe(
       Effect.mapError(
@@ -636,13 +279,6 @@ export const makeUserPreferencesData = (
       mapError(
         getUserPreferences(userId).pipe(Effect.flatMap(scopePreferences)),
       ),
-    getUserGameAccountPreferences: (userId: string, accountId: string) =>
-      mapError(
-        getUserGameAccountPreferences(userId, accountId).pipe(
-          Effect.flatMap(scopeGamePreferences),
-          Effect.map(withLegacyTypeGuildIds),
-        ),
-      ),
     updateUserPreferences: (
       userId: string,
       payload: UpdateUserPreferencesRequest,
@@ -650,17 +286,6 @@ export const makeUserPreferencesData = (
       mapError(
         updateUserPreferences(userId, payload).pipe(
           Effect.flatMap(scopePreferences),
-        ),
-      ),
-    updateUserGameAccountPreferences: (
-      userId: string,
-      accountId: string,
-      payload: UpdateUserGameAccountPreferencesRequest,
-    ) =>
-      mapError(
-        updateUserGameAccountPreferences(userId, accountId, payload).pipe(
-          Effect.flatMap(scopeGamePreferences),
-          Effect.map(withLegacyTypeGuildIds),
         ),
       ),
   };

@@ -14,10 +14,7 @@ import { useState } from "react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useCurrentMember } from "./hooks/queries/use-current-member";
-import {
-  useListEventRanking,
-  useShowEventOverview,
-} from "@lootlog/client/main";
+import { useListEventRanking, useShowEvent } from "@lootlog/client/main";
 
 export const EventRankingPage = () => {
   const { t } = useTranslation();
@@ -40,7 +37,7 @@ export const EventRankingPage = () => {
     isLoading: isEventLoading,
     error: eventError,
     refetch: refetchEvent,
-  } = useShowEventOverview(
+  } = useShowEvent(
     {
       guildId: queryGuildId,
       eventId: queryEventId,
