@@ -7,7 +7,6 @@ import {
 import {
   ApplicationError,
   ResourceNotFoundError,
-  AuthenticationRequiredError,
   DependencyUnavailableError,
   HttpStatus,
 } from "#src/shared/http/http-errors";
@@ -105,15 +104,6 @@ export class DiscordGuildMemberClient {
         });
         await this.redisService.set(forbiddenKey, "1", refusalCacheTtl);
         throw discordForbiddenError();
-      }
-
-      if (error instanceof AuthenticationRequiredError) {
-        this.logger.log({
-          level: "warn",
-          message: `User authentication failed for guildId: ${guildId}, userId: ${userId}`,
-          error,
-        });
-        throw error;
       }
 
       if (error instanceof ApplicationError) {
