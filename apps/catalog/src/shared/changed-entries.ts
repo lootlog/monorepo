@@ -9,31 +9,30 @@ const changedCount = Metric.counter("catalog.entries.changed");
  * merge changed. Entries compare as JSON, the way the database returns them,
  * so a redelivered observation writes nothing.
  */
-export const changedEntries = Effect.fnUntraced(function* <
-  Entry extends { uid: string },
->(
-  kind: string,
+export const changedEntries = <Entry extends { uid: string }>(
   incoming: ReadonlyArray<Entry>,
   stored: ReadonlyArray<Entry>,
   merge: (entry: Entry, stored: Entry | undefined) => Entry,
-) {
+) => {
   const storedByUid = new Map(stored.map((entry) => [entry.uid, entry]));
 
-  const changed = incoming.flatMap((entry) => {
+  return incoming.flatMap((entry) => {
     const existing = storedByUid.get(entry.uid);
     const merged: Entry = JSON.parse(JSON.stringify(merge(entry, existing)));
 
     return Bun.deepEquals(existing, merged) ? [] : [merged];
   });
+};
 
-  yield* Metric.update(
-    Metric.withAttributes(received, { kind }),
-    incoming.length,
-  );
-  yield* Metric.update(
-    Metric.withAttributes(changedCount, { kind }),
-    changed.length,
-  );
-
-  return changed;
+/**
+ * Counts one delivery's entries and how many of them it changed. A catalog
+ * change can run twice, so its delivery is counted once it is written.
+ */
+export const countEntries = Effect.fnUntraced(function* (
+  kind: string,
+  entries: number,
+  changed: number,
+) {
+  yield* Metric.update(Metric.withAttributes(received, { kind }), entries);
+  yield* Metric.update(Metric.withAttributes(changedCount, { kind }), changed);
 });

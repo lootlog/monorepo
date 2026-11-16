@@ -36,7 +36,7 @@ const catalogQueue = (
   });
 
 // Replays get their own queues, so live loots never queue behind a backfill;
-// every change still takes its turn on the catalog's writer lock.
+// every change that saves still takes its turn on the catalog's writer lock.
 export const catalogQueues = {
   items: catalogQueue(
     "catalog.items.index",
