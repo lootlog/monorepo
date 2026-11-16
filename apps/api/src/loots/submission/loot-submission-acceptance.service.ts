@@ -13,6 +13,7 @@ import { Clock, Effect, Schema } from "effect";
 import { once } from "es-toolkit";
 import {
   compareNpcsStrongestFirst,
+  findStrongestNpc,
   getNpcType,
   isDropSourceBossType,
   MIN_LOOT_NPC_WT,
@@ -679,21 +680,10 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
   /** The strongest NPC names the loot, as every view of it does. */
   private processNpcs(npcs: CreateLootRequest["npcs"]) {
-    const [primary] = npcs.toSorted((left, right) =>
-      compareNpcsStrongestFirst(
-        {
-          type: getNpcType(NpcType, left),
-          wt: left.wt,
-          lvl: left.lvl,
-          npcId: lootNpcIdentity(left).npcId,
-        },
-        {
-          type: getNpcType(NpcType, right),
-          wt: right.wt,
-          lvl: right.lvl,
-          npcId: lootNpcIdentity(right).npcId,
-        },
-      ),
+    const primary = findStrongestNpc(
+      NpcType,
+      npcs,
+      (npc) => lootNpcIdentity(npc).npcId,
     );
 
     if (!primary) {

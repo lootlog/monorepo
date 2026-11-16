@@ -166,3 +166,32 @@ export const getNpcType = <TNpcType extends string>(
 
   return npcTypes.COMMON;
 };
+
+/**
+ * The NPC that names a loot and whose type the Lootlog settings are read
+ * for: the strongest of its fight. `npcId` gives the Margonem NPC id.
+ */
+export const findStrongestNpc = <
+  TNpc extends NpcClassification & { readonly lvl?: number | null },
+  TNpcType extends string,
+>(
+  npcTypes: NpcTypeValues<TNpcType>,
+  npcs: readonly TNpc[],
+  npcId: (npc: TNpc) => number,
+): TNpc | undefined => {
+  const strength = (npc: TNpc): NpcStrength => ({
+    type: getNpcType(npcTypes, npc),
+    wt: npc.wt,
+    lvl: npc.lvl,
+    npcId: npcId(npc),
+  });
+
+  return npcs.reduce<TNpc | undefined>(
+    (strongest, npc) =>
+      strongest === undefined ||
+      compareNpcsStrongestFirst(strength(npc), strength(strongest)) < 0
+        ? npc
+        : strongest,
+    undefined,
+  );
+};

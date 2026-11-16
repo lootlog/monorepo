@@ -20,6 +20,7 @@ import {
 } from "@/features/settings/persistence/settings-documents";
 import { getGuildIds } from "@/lib/api/generated-helpers";
 import { applyGameOrganizationAccess } from "@/lib/game-access-cache";
+import { getLootlogSettingsQueryKey } from "@/lib/lootlog-settings";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 
@@ -123,6 +124,12 @@ const load = async (queryClient: QueryClient, signal: AbortSignal) => {
         getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
         capabilities,
       );
+
+  if (response.guildLootlogConfigs)
+    for (const [guildId, config] of Object.entries(
+      response.guildLootlogConfigs,
+    ))
+      seed(getLootlogSettingsQueryKey(guildId), config);
 
   if (response.userPreferences)
     seed(
