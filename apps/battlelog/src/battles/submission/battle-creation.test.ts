@@ -30,6 +30,7 @@ import {
   battles,
   battleSubmissions,
   battleTimelines,
+  battleWarriorFilters,
   battleWarriors,
 } from "#src/database/schema";
 import { decodeBattleEvents } from "#src/battles/battle-timeline";
@@ -176,6 +177,7 @@ const clearBattleTables = async () => {
   for (const table of [
     battles,
     battleWarriors,
+    battleWarriorFilters,
     battleTimelines,
     battleSubmissions,
     battleLegacyIds,

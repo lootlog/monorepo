@@ -18,7 +18,7 @@ import { EmptyFilter } from "drizzle-orm/relations";
 import { Effect } from "effect";
 import type { BattleListQuery } from "#src/battles/catalog/query-battles";
 import type { DrizzleDatabase } from "#src/database/database";
-import { battles, battleWarriors } from "#src/database/schema";
+import { battles, battleWarriorFilters } from "#src/database/schema";
 
 type BattleListFilterDatabase = {
   query: {
@@ -52,8 +52,8 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
       and(
         warriorExists(
           battlesRef,
-          inArray(battleWarriors.originalId, characterIds),
-          eq(battleWarriors.team, battlesRef[resultColumn]),
+          inArray(battleWarriorFilters.originalId, characterIds),
+          eq(battleWarriorFilters.team, battlesRef[resultColumn]),
         ),
         inArray(battlesRef[resultColumn], [1, 2]),
         eq(battlesRef.hasFlee, false),
@@ -111,10 +111,10 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
       return;
     }
 
-    const phConditions: (SQL | undefined)[] = [gt(battleWarriors.ph, 0)];
+    const phConditions: (SQL | undefined)[] = [gt(battleWarriorFilters.ph, 0)];
 
     if (characterIds.length) {
-      phConditions.push(inArray(battleWarriors.originalId, characterIds));
+      phConditions.push(inArray(battleWarriorFilters.originalId, characterIds));
     }
 
     conditions.push(warriorExists(battlesRef, ...phConditions));
@@ -155,15 +155,17 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
     const levelConditions: (SQL | undefined)[] = [];
 
     if (minLevel !== undefined) {
-      levelConditions.push(gte(battleWarriors.lvl, minLevel));
+      levelConditions.push(gte(battleWarriorFilters.lvl, minLevel));
     }
 
     if (maxLevel !== undefined) {
-      levelConditions.push(lte(battleWarriors.lvl, maxLevel));
+      levelConditions.push(lte(battleWarriorFilters.lvl, maxLevel));
     }
 
     if (characterIds.length) {
-      levelConditions.push(notInArray(battleWarriors.originalId, characterIds));
+      levelConditions.push(
+        notInArray(battleWarriorFilters.originalId, characterIds),
+      );
     }
 
     conditions.push(warriorExists(battlesRef, ...levelConditions));
@@ -244,7 +246,7 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
           conditions.push(
             warriorExists(
               battlesRef,
-              ilike(battleWarriors.name, `%${query.search}%`),
+              ilike(battleWarriorFilters.name, `%${query.search}%`),
             ),
           );
         }
