@@ -6,7 +6,7 @@ import type {
   CatalogChange,
   CatalogWriteFailure,
 } from "#src/database/catalog-store";
-import { changedEntries } from "#src/shared/changed-entries";
+import { changedEntries, countEntries } from "#src/shared/changed-entries";
 import { npcMonsterKey, type NpcEntry } from "#src/npcs/npcs.service";
 import type { AppLogger } from "#src/shared/logger";
 import type {
@@ -149,7 +149,10 @@ export const toItemDocuments = (items: ReadonlyArray<IndexItem>) =>
     upgradedAttackSpeed: upgradedAttackSpeed(item),
   }));
 
-/** Runs one change to the catalog's entries; see `makeCatalogStore`. */
+/**
+ * Runs one change to the catalog's entries; see `makeCatalogStore`. `run` can
+ * run twice, so it derives what it saves and returns from what it reads.
+ */
 export type CatalogWrite = <A, E>(
   run: (change: CatalogChange<ItemEntry, NpcEntry>) => Effect.Effect<A, E>,
 ) => Effect.Effect<A, E | CatalogWriteFailure>;
@@ -183,14 +186,13 @@ export const makeItemsModule = (write: CatalogWrite, logger: AppLogger) => {
 
     const itemsWithSearchFields = toItemDocuments(validItems);
 
-    yield* write((change) =>
+    const changedCount = yield* write((change) =>
       Effect.gen(function* () {
         const stored = yield* change.itemsByUids(
           itemsWithSearchFields.map(({ uid }) => uid),
         );
 
-        const changed = yield* changedEntries(
-          "items",
+        const changed = changedEntries(
           itemsWithSearchFields,
           stored,
           (item, existing) => ({
@@ -204,8 +206,12 @@ export const makeItemsModule = (write: CatalogWrite, logger: AppLogger) => {
         );
 
         if (changed.length > 0) yield* change.saveItems(changed);
+
+        return changed.length;
       }),
     );
+
+    yield* countEntries("items", itemsWithSearchFields.length, changedCount);
   });
 
   /**

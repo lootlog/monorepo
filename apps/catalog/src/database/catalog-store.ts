@@ -101,6 +101,14 @@ export type CatalogChange<Item, Npc> = {
   readonly saveNpcs: (
     npcs: ReadonlyArray<Npc>,
   ) => Effect.Effect<void, CatalogWriteFailure>;
+  /**
+   * Stores entries that a later loot left as they were. The loot id orders
+   * observations in the database and no search reads it, so the index keeps
+   * the entry it has and the change does not wait for a projection.
+   */
+  readonly saveNpcLoots: (
+    npcs: ReadonlyArray<Npc>,
+  ) => Effect.Effect<void, EffectDrizzleQueryError>;
 };
 
 /** Why a catalog change did not commit; only a rejected search request is final. */
@@ -203,6 +211,30 @@ export const makeCatalogStore = <
         .orderBy(asc(catalogNpcTable.uid)),
   };
 
+  const storeNpcs = (transaction: Transaction, npcs: ReadonlyArray<Npc>) =>
+    Effect.forEach(
+      chunk([...npcs], PROJECTION_BATCH),
+      (batch) =>
+        transaction
+          .insert(catalogNpcTable)
+          .values(
+            batch.map((npc) => ({
+              uid: npc.uid,
+              monsterKey: npc.monsterKey,
+              document: npc,
+            })),
+          )
+          .onConflictDoUpdate({
+            target: catalogNpcTable.uid,
+            set: {
+              monsterKey: sql`excluded."monsterKey"`,
+              document: sql`excluded."document"`,
+              updatedAt: sql`now()`,
+            },
+          }),
+      { discard: true },
+    );
+
   const change = (transaction: Transaction): CatalogChange<Item, Npc> => ({
     ...npcLookups(transaction),
     itemsByUids: (uids) =>
@@ -260,47 +292,55 @@ export const makeCatalogStore = <
       }),
     saveNpcs: (npcs) =>
       Effect.gen(function* () {
-        for (const batch of chunk([...npcs], PROJECTION_BATCH)) {
-          yield* transaction
-            .insert(catalogNpcTable)
-            .values(
-              batch.map((npc) => ({
-                uid: npc.uid,
-                monsterKey: npc.monsterKey,
-                document: npc,
-              })),
-            )
-            .onConflictDoUpdate({
-              target: catalogNpcTable.uid,
-              set: {
-                monsterKey: sql`excluded."monsterKey"`,
-                document: sql`excluded."document"`,
-                updatedAt: sql`now()`,
-              },
-            });
-        }
-
+        yield* storeNpcs(transaction, npcs);
         yield* project(NPCS_INDEX, npcs);
       }),
+    saveNpcLoots: (npcs) => storeNpcs(transaction, npcs),
   });
 
   /**
-   * Runs one catalog change. Changes run one at a time across every
-   * consumer and replica, so the index receives entries in the order the
-   * database committed them.
+   * Runs one catalog change. Most deliveries repeat what the catalog already
+   * holds, so the change first runs on a snapshot, where a save only says
+   * that there is something to write: one that saves nothing is done, without
+   * waiting for a writer. One that saves runs again on the entries as they
+   * are by then, one at a time across every consumer and replica, so the
+   * index receives entries in the order the database committed them.
    */
   const write = <A, E>(
     run: (change: CatalogChange<Item, Npc>) => Effect.Effect<A, E>,
   ) =>
-    database.transaction((transaction) =>
-      Effect.gen(function* () {
-        yield* transaction.execute(
-          sql`select pg_advisory_xact_lock(hashtext('lootlog:catalog:writer'))`,
-        );
+    Effect.gen(function* () {
+      const settled = yield* database.transaction(
+        (transaction) => {
+          let saves = false;
 
-        return yield* run(change(transaction));
-      }),
-    );
+          const noteSave = () =>
+            Effect.sync(() => {
+              saves = true;
+            });
+
+          return run({
+            ...change(transaction),
+            saveItems: noteSave,
+            saveNpcs: noteSave,
+            saveNpcLoots: noteSave,
+          }).pipe(Effect.map((result) => ({ result, saves })));
+        },
+        { isolationLevel: "repeatable read", accessMode: "read only" },
+      );
+
+      if (!settled.saves) return settled.result;
+
+      return yield* database.transaction((transaction) =>
+        Effect.gen(function* () {
+          yield* transaction.execute(
+            sql`select pg_advisory_xact_lock(hashtext('lootlog:catalog:writer'))`,
+          );
+
+          return yield* run(change(transaction));
+        }),
+      );
+    });
 
   return { read, write };
 };
