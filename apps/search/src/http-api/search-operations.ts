@@ -14,7 +14,12 @@ import type {
 
 /** The settings the search indexes run with. */
 export const searchIndexSettings = {
-  [PLAYERS_INDEX]: { filterableAttributes: ["name", "world"] },
+  [PLAYERS_INDEX]: {
+    filterableAttributes: ["name", "world"],
+    // A search finds a player by name only; ids and the icon stay out of the
+    // word index.
+    searchableAttributes: ["name"],
+  },
 };
 
 export interface SearchOperationsValue {
