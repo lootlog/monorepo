@@ -3,7 +3,7 @@ import {
   UserLootlogConfigData,
   UserLootlogConfigOperationError,
   type UserLootlogConfigCache,
-} from "#src/http-api/handlers/user-lootlog-config/user-lootlog-config.handlers";
+} from "#src/lootlog-config/user-lootlog-config-data";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
 export const userLootlogConfigData = Layer.unwrap(

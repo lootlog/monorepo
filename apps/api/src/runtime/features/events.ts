@@ -55,7 +55,7 @@ import { makeEventSummary } from "#src/events/monitoring/event-summary.service";
 import { makeEventWrappedStore } from "#src/events/wrapped/event-wrapped.repository";
 import { makeEventWrapped } from "#src/events/wrapped/event-wrapped.service";
 import { makePinnedEventsPersistence } from "#src/events/pins/pinned-events.repository";
-import { eventDataLayer } from "#src/http-api/handlers/events/events.data-layer";
+import { eventDataLayer } from "#src/events/events.data-layer";
 import { RecordsServices } from "#src/runtime/features/records";
 
 export class EventTimers extends Context.Service<

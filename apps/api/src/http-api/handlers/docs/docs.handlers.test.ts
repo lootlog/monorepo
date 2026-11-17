@@ -11,16 +11,18 @@ import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer } from "effect";
 import type { DocsService } from "#src/docs/docs.service";
 import {
+  DocsConflict,
+  DocsData,
+  type AuthorizedDocsCaller,
+} from "#src/docs/docs-data";
+import {
   createDocument,
   DocsAccessDenied,
   DocsAuthorization,
-  DocsConflict,
-  DocsData,
   getDocument,
   getHistory,
   restoreDocument,
   updateDocument,
-  type AuthorizedDocsCaller,
 } from "./docs.handlers.js";
 
 const caller: AuthorizedDocsCaller = {

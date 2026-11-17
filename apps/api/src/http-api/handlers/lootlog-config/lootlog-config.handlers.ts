@@ -1,3 +1,7 @@
+import {
+  LootlogConfigOperationError,
+  LootlogConfigData,
+} from "#src/lootlog-config/lootlog-config-data";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import {
@@ -7,17 +11,11 @@ import {
 } from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Schema } from "effect";
 
 import { HttpApiBuilder } from "effect/http-api";
 import { decodeDomainJson } from "../../domain-json.schema.js";
-import { and, desc, eq, inArray } from "drizzle-orm";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  lootlogConfigNpcTable,
-  lootlogConfigTable,
-} from "#src/database/drizzle/loot.schema";
+
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   LootlogConfigResponse,
@@ -29,11 +27,6 @@ import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 export class LootlogConfigAccessDenied extends TaggedErrorClass<LootlogConfigAccessDenied>()(
   "LootlogConfigAccessDenied",
   { status: Schema.Literals([401, 403, 404]), code: Schema.String },
-) {}
-
-export class LootlogConfigOperationError extends TaggedErrorClass<LootlogConfigOperationError>()(
-  "LootlogConfigOperationError",
-  { cause: Schema.Defect() },
 ) {}
 
 export class LootlogConfigAuthorization extends Context.Service<
@@ -48,78 +41,6 @@ export class LootlogConfigAuthorization extends Context.Service<
     >;
   }
 >()("@lootlog/api/http-api/lootlog-config/authorization") {}
-
-export class LootlogConfigData extends Context.Service<
-  LootlogConfigData,
-  {
-    readonly get: (
-      guildId: string,
-    ) => Effect.Effect<unknown, LootlogConfigOperationError>;
-    readonly updateNpc: (
-      guildId: string,
-      npcId: number,
-      payload: UpdateNpcLootlogConfigRequest,
-    ) => Effect.Effect<unknown, LootlogConfigOperationError>;
-  }
->()("@lootlog/api/http-api/lootlog-config/data") {
-  static readonly layerDatabase = Layer.effect(
-    LootlogConfigData,
-    Effect.map(ApiDatabase, (database) => {
-      const operationError = (cause: unknown) =>
-        new LootlogConfigOperationError({ cause });
-
-      return LootlogConfigData.of({
-        get: (guildId) =>
-          Effect.gen(function* () {
-            const configs = yield* database
-              .select()
-              .from(lootlogConfigTable)
-              .where(inArray(lootlogConfigTable.id, [guildId]));
-
-            const config = configs[0];
-
-            if (!config) return null;
-
-            const npcs = yield* database
-              .select()
-              .from(lootlogConfigNpcTable)
-              .where(eq(lootlogConfigNpcTable.lootlogConfigId, guildId))
-              .orderBy(desc(lootlogConfigNpcTable.id));
-
-            return { ...config, npcs };
-          }).pipe(Effect.mapError(operationError)),
-        updateNpc: (guildId, npcId, payload) =>
-          database
-            .update(lootlogConfigNpcTable)
-            .set({
-              allowedRarities: [...payload.allowedRarities],
-              updatedAt: new Date(),
-            })
-            .where(
-              and(
-                eq(lootlogConfigNpcTable.lootlogConfigId, guildId),
-                eq(lootlogConfigNpcTable.id, npcId),
-              ),
-            )
-            .returning()
-            .pipe(
-              Effect.mapError(operationError),
-              Effect.flatMap((rows) =>
-                rows[0]
-                  ? Effect.succeed(rows[0])
-                  : Effect.fail(
-                      operationError(
-                        new ResourceNotFoundError(
-                          "NPC configuration not found",
-                        ),
-                      ),
-                    ),
-              ),
-            ),
-      });
-    }),
-  );
-}
 
 const authorize = (guildId: string | undefined) => {
   if (typeof guildId !== "string") {

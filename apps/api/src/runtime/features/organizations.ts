@@ -35,7 +35,7 @@ import {
   InternalGuildsData,
   InternalGuildsOperationError,
   type InternalGuildsCache,
-} from "#src/http-api/handlers/internal/internal.handlers";
+} from "#src/guilds/internal-guilds-data";
 import { OrganizationWorkspaceOperationError } from "#src/guilds/organization-workspace-access";
 import { RolesData } from "#src/guilds/roles-data";
 import { MemberServices, membersData } from "#src/runtime/features/members";

@@ -7,11 +7,11 @@ import {
   CharacterLootlogConfigResponse,
   PlayersCatchingOrganizationsResponse,
 } from "#src/contracts/user-lootlog-config/schemas";
+import { UserLootlogConfigData } from "#src/lootlog-config/user-lootlog-config-data";
 import {
   getPlayersCatchingGuilds,
   getUserLootlogAccountConfig,
   UserLootlogConfigAccessDenied,
-  UserLootlogConfigData,
   UserLootlogConfigIdentity,
   upsertUserLootlogCharacterConfig,
 } from "./user-lootlog-config.handlers.js";

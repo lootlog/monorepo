@@ -11,10 +11,8 @@ import {
 } from "#src/shared/http/http-errors";
 import { SettingsRequestError } from "#src/settings-documents/settings-documents.service";
 import { RecordsDataError, toRecordsHttpResponse } from "./records.access.js";
-import {
-  SettingsOperationError,
-  toSettingsHttpResponse,
-} from "../handlers/preferences/preferences.operations.js";
+import { SettingsOperationError } from "#src/settings-documents/settings-data";
+import { toSettingsHttpResponse } from "../handlers/preferences/preferences.operations.js";
 import { AccountOrganizationOperationError } from "#src/guilds/account-organization-data";
 import { toAccountOrganizationHttpResponse } from "./account-organization.access.js";
 

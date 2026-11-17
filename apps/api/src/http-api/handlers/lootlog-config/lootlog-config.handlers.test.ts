@@ -6,11 +6,11 @@ import {
   LootlogConfigResponse,
   NpcLootlogConfigResponse,
 } from "#src/contracts/lootlog-config/schemas";
+import { LootlogConfigData } from "#src/lootlog-config/lootlog-config-data";
 import {
   getLootlogConfig,
   LootlogConfigAccessDenied,
   LootlogConfigAuthorization,
-  LootlogConfigData,
   updateLootlogConfigNpc,
 } from "./lootlog-config.handlers.js";
 

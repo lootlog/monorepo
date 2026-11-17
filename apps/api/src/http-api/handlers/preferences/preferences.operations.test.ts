@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { SettingsDocumentsResponseSchema } from "@lootlog/schema/settings-documents";
+import { SettingsData } from "#src/settings-documents/settings-data";
 import {
   getPreferences,
   patchPreferences,
   SettingsAccessDenied,
-  SettingsData,
   SettingsIdentity,
 } from "./preferences.operations.js";
 

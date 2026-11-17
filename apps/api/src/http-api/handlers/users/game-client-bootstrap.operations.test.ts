@@ -6,15 +6,13 @@ import {
   AccountOrganizationOperationError,
 } from "#src/guilds/account-organization-data";
 import { AccountOrganizationAuthorization } from "../../access/account-organization.access.js";
-import {
-  SettingsData,
-  SettingsIdentity,
-} from "../preferences/preferences.operations.js";
+import { SettingsData } from "#src/settings-documents/settings-data";
+import { SettingsIdentity } from "../preferences/preferences.operations.js";
 import {
   UserLootlogConfigData,
-  UserLootlogConfigIdentity,
   UserLootlogConfigOperationError,
-} from "../user-lootlog-config/user-lootlog-config.handlers.js";
+} from "#src/lootlog-config/user-lootlog-config-data";
+import { UserLootlogConfigIdentity } from "../user-lootlog-config/user-lootlog-config.handlers.js";
 import { CharacterAurasData } from "#src/character-auras/character-auras-data";
 import { CharacterAurasIdentity } from "../character-auras/character-auras.handlers.js";
 import { getGameClientBootstrap } from "./game-client-bootstrap.operations.js";

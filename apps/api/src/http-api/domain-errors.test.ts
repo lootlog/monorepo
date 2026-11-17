@@ -16,7 +16,7 @@ import { BearerSecurityMiddleware } from "./contracts/shared.js";
 import { LootlogApi } from "./lootlog-api.js";
 import { EventsHandlers } from "./handlers/events/events.handlers.js";
 import { EventsAuthorization } from "./handlers/events/events-authorization.js";
-import { EventOperations } from "./handlers/events/events.data-layer.js";
+import { EventOperations } from "#src/events/events.data-layer";
 import { TimersData } from "#src/timers/timers-data";
 import {
   TimersHandlers,
@@ -27,7 +27,7 @@ import {
   NotificationsHandlers,
   NotificationsAuthorization,
 } from "./handlers/notifications/notifications.handlers.js";
-import { NotificationOperations } from "./handlers/notifications/notifications.data-layer.js";
+import { NotificationOperations } from "#src/notifications/notifications.data-layer";
 
 const identity = { userId: "user-1", discordId: "discord-1" };
 

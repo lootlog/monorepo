@@ -1,4 +1,4 @@
-import { UserLootlogConfigData } from "#src/http-api/handlers/user-lootlog-config/user-lootlog-config.handlers";
+import { UserLootlogConfigData } from "../src/lootlog-config/user-lootlog-config-data.js";
 import { MemberReadData } from "../src/members/members-data.js";
 import { makeMemberReadDataLayer } from "../src/members/member-read.data-layer.js";
 import { afterAll, beforeAll, describe, expect, it, spyOn } from "bun:test";

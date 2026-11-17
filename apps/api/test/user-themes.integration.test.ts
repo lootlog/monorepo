@@ -15,6 +15,11 @@ import {
 } from "../src/database/drizzle/user.schema.js";
 import { makeUserAccountDeletion } from "../src/users/user-account-deletion.data-layer.js";
 import {
+  UserThemeLimitReached,
+  UserThemeNotFound,
+  UserThemesData,
+} from "../src/users/user-themes-data.js";
+import {
   createUserTheme,
   deleteUserTheme,
   getSharedUserTheme,
@@ -23,9 +28,6 @@ import {
   shareUserTheme,
   unshareUserTheme,
   updateUserTheme,
-  UserThemeLimitReached,
-  UserThemeNotFound,
-  UserThemesData,
   UserThemesIdentity,
 } from "../src/http-api/handlers/user-themes/user-themes.handlers.js";
 
