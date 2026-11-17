@@ -1,8 +1,11 @@
 import {
   API_KEY_ACCESS_HEADER,
+  API_KEY_HEADER,
   API_KEY_LEASE_MS,
+  AUTH_DISCORD_ID_HEADER,
+  AUTH_USER_ID_HEADER,
 } from "@lootlog/schema/api-key-access";
-import { readApiKeyAccess } from "@lootlog/schema/api-key-policy";
+import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
 import { Redacted, Context, Effect, Layer } from "effect";
 import {
   type GatewayConfiguration,
@@ -43,20 +46,22 @@ export const makeGatewayAuth = (
       : "web-app",
   // Only the private reverse proxy may supply these verified identity headers.
   readIdentity: (request) => {
-    const userId = request.headers.get("x-auth-user-id")?.trim();
-    const discordId = request.headers.get("x-auth-discord-id")?.trim();
+    const identity = readForwardAuthIdentity(
+      Object.fromEntries(
+        [
+          AUTH_USER_ID_HEADER,
+          AUTH_DISCORD_ID_HEADER,
+          API_KEY_ACCESS_HEADER,
+        ].map((name) => [name, request.headers.get(name) ?? undefined]),
+      ),
+    );
 
-    if (!userId || !discordId) return null;
-
-    const access = readApiKeyAccess({
-      [API_KEY_ACCESS_HEADER]:
-        request.headers.get(API_KEY_ACCESS_HEADER) ?? undefined,
-    });
-
-    if (access === null) return null;
+    if (!identity) return null;
+    const { userId, discordId, apiKey: access } = identity;
 
     if (access === undefined) {
-      if (request.headers.has("x-api-key")) return null;
+      // A key the edge did not exchange for an assertion never authenticates.
+      if (request.headers.has(API_KEY_HEADER)) return null;
 
       return { userId, discordId };
     }

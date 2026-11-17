@@ -35,9 +35,7 @@ const airTags = new AirTagService(
   {
     command: {
       mget: () => Promise.resolve([]),
-      sadd: () => Promise.resolve(1),
       smembers: () => Promise.resolve([]),
-      expire: () => Promise.resolve(1),
       eval: (_script, keys) =>
         Promise.resolve(
           keys === 7

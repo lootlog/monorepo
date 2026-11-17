@@ -1,5 +1,5 @@
 import { makeJsonCodec } from "#src/redis/redis.service";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
 import { HttpClient } from "effect/http";
@@ -15,20 +15,16 @@ export const reservationSharingData = Layer.unwrap(
   Effect.map(RabbitMessaging, (rabbit) =>
     makeReservationSharingDataLayer({
       sharingChanged: (sourceGuildId, audienceGuildIds) =>
-        rabbit.publish({
-          exchange: "default",
-          routingKey: RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2,
-          content: new TextEncoder().encode(
-            JSON.stringify({
-              version: 2,
-              action: "sharing-changed",
-              sourceGuildId,
-              audienceGuildIds,
-              reservationId: null,
-              spotId: null,
-            }),
-          ),
-        }),
+        rabbit.publish(
+          eventMessage(RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2, {
+            version: 2,
+            action: "sharing-changed",
+            sourceGuildId,
+            audienceGuildIds,
+            reservationId: null,
+            spotId: null,
+          }),
+        ),
     }),
   ),
 );
@@ -58,11 +54,7 @@ export const reservationData = Layer.unwrap(
         enqueueNotification: notifications.add,
         removeNotification: notifications.remove,
         publish: (routingKey, payload) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
+          rabbit.publish(eventMessage(routingKey, payload)),
       }),
     );
   }),

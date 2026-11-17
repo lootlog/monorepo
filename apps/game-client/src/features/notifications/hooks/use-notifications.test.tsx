@@ -28,7 +28,8 @@ const ownReport = (
         lvl: 200,
         prof: "w",
         wt: 0,
-        type: 2,
+        icon: "hydra.gif",
+        type: "COMMON" as const,
         location: "Swamp",
       },
       ...(organizer && {
@@ -109,7 +110,8 @@ describe("useNotifications", () => {
             lvl: 200,
             prof: "w",
             wt: 0,
-            type: 2,
+            icon: "tracker.gif",
+            type: "HERO_TRACKER",
             location: "Swamp",
           },
           heroTracker: {

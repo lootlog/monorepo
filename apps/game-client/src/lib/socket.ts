@@ -8,12 +8,14 @@ import type {
 import {
   CHARACTER_AURAS_FEATURE,
   type CommandSuccess,
+  type ServerEventPayload,
   type SessionJoined,
 } from "@lootlog/protocol/realtime";
 import {
   toOfflinePlayerPresence,
   toPlayerPresence,
   toPlayerPresenceResponse,
+  type PlayerPresence,
   type PlayerPresenceAck,
 } from "@/lib/online-players-presence";
 import {
@@ -27,7 +29,7 @@ import {
   type GlobalChatChannel,
 } from "@/store/global-chat.store";
 import {
-  RealtimeRequestError,
+  isOrganizationAccessDenied,
   type CommandData,
   type CommandType,
   type RealtimeConnectionState,
@@ -42,8 +44,6 @@ import {
   type AccessPolicySnapshot,
   type AccessPolicyChange,
 } from "@lootlog/protocol/realtime/access-policy";
-
-type Listener = (...arguments_: never[]) => void;
 
 /** A new access policy and what changed against the previous one. */
 export type AccessUpdate = {
@@ -81,81 +81,47 @@ export const getGameSessionIdentity = (
 /** How long a join waits for `session.hello` before it fails into a retry. */
 const SESSION_HELLO_TIMEOUT_MS = 5_000;
 
-/** Events whose data carries no Organization envelope to unwrap. */
-const UNWRAPPED_EVENT_TYPES: ReadonlySet<ServerEvent["type"]> = new Set([
-  "map-ping.received",
-  "battle-ping.received",
-  "loot-split.received",
-  "loot-split.auto-accepted",
-  "air-tag.map-threat-updated",
-  "npc-presence.updated",
-  "character-auras.changed",
-]);
-
-/** Server events delivered to listeners under their protocol type. */
-const FORWARDED_EVENT_TYPES = [
-  "chat.created",
-  "chat.updated",
-  "chat.deleted",
-  "chat.cleared",
-  "timer.created",
-  "timer.deleted",
-  "hero-sighting.updated",
-  "notification.sent",
-  "notification.going",
-  "notification.volunteer",
-  "member-refresh.updated",
-  "party-gathering.state-updated",
-  "party-gathering.updated",
-  "party-gathering.cancelled",
-  "party-ready-room.updated",
-  "map-ping.received",
-  "battle-ping.received",
-  "loot-split.received",
-  "loot-split.auto-accepted",
-  "air-tag.scope-updated",
-  "air-tag.map-threat-updated",
-  "npc-presence.updated",
-  "global-chat.created",
-  "global-chat.deleted",
-  "global-chat.pinned",
-  "global-chat.stats",
-  "character-auras.changed",
-  "event.map-status-updated",
-  "event.hero-killed",
-  "event.ranking-updated",
-] as const satisfies ReadonlyArray<ServerEvent["type"]>;
-
-type ForwardedEventType = (typeof FORWARDED_EVENT_TYPES)[number];
-
-const forwardedEventTypes: ReadonlySet<string> = new Set(FORWARDED_EVENT_TYPES);
-
-const isForwardedEventType = (type: string): type is ForwardedEventType =>
-  forwardedEventTypes.has(type);
+/** Server events this client consumes itself instead of forwarding. */
+type ConsumedEventType =
+  | "session.hello"
+  | "session.joined"
+  | "permissions.updated"
+  | "presence.delta";
 
 /**
- * What AppSocket listeners hear: forwarded server events, and the events of
- * the connection itself:
- * - `connect` and `disconnect` follow the transport;
- * - `join` carries a {@link JoinResult} once the character's session joined;
- * - `access.updated` carries an {@link AccessUpdate};
- * - `global-chat.subscribed` carries the channel once its subscription is live;
- * - `presence.published` follows an accepted presence publication;
- * - `presence.changed` carries one online player's `PlayerPresence` change.
+ * What AppSocket listeners hear: every other server event under its protocol
+ * type, and the events of the connection itself.
  */
-export type AppSocketEvent =
-  | ForwardedEventType
-  | "connect"
-  | "disconnect"
-  | "join"
-  | "access.updated"
-  | "global-chat.subscribed"
-  | "presence.published"
-  | "presence.changed";
+export type AppSocketEvents = {
+  readonly [
+    Type in Exclude<ServerEvent["type"], ConsumedEventType>
+  ]: ServerEventPayload<Type>;
+} & {
+  /** Follows the transport. */
+  readonly connect: undefined;
+  readonly disconnect: undefined;
+  /** The character's session joined. */
+  readonly join: JoinResult;
+  readonly "access.updated": AccessUpdate;
+  /** The followed channel, once its subscription is live. */
+  readonly "global-chat.subscribed": GlobalChatChannel;
+  /** A presence publication was accepted. */
+  readonly "presence.published": {
+    readonly organizationIds: readonly string[];
+  };
+  /** One online player's change. */
+  readonly "presence.changed": PlayerPresence;
+};
+
+export type AppSocketEvent = keyof AppSocketEvents;
+
+type AppSocketListener<Event extends AppSocketEvent> = (
+  payload: AppSocketEvents[Event],
+) => void;
 
 export class AppSocket {
   private readonly realtime = getGameClientPlatform().createRealtime();
-  private readonly listeners = new RealtimeEventListeners<AppSocketEvent>();
+  private readonly listeners = new RealtimeEventListeners<AppSocketEvents>();
   private readonly unsubscribeEvents: () => void;
   private readonly unsubscribeState: () => void;
   private disposed = false;
@@ -206,7 +172,7 @@ export class AppSocket {
         this.joinedOrganizationIds = [];
       }
 
-      this.listeners.emit(connected ? "connect" : "disconnect");
+      this.listeners.emit(connected ? "connect" : "disconnect", undefined);
     });
   }
 
@@ -344,13 +310,19 @@ export class AppSocket {
     return this.listeners.has(event);
   }
 
-  on(event: AppSocketEvent, listener: Listener): this {
+  on<Event extends AppSocketEvent>(
+    event: Event,
+    listener: AppSocketListener<Event>,
+  ): this {
     this.listeners.add(event, listener);
 
     return this;
   }
 
-  off(event: AppSocketEvent, listener: Listener): this {
+  off<Event extends AppSocketEvent>(
+    event: Event,
+    listener: AppSocketListener<Event>,
+  ): this {
     this.listeners.delete(event, listener);
 
     return this;
@@ -581,13 +553,8 @@ export class AppSocket {
         players: toPlayerPresenceResponse(organizationId, response.presences),
       };
     } catch (cause) {
-      // Gateway command-handler maps OrganizationAccessDenied to this exact wire response.
       // Transport failures must remain failures so presence callers can retry them.
-      if (
-        cause instanceof RealtimeRequestError &&
-        cause.code === "COMMAND_REJECTED" &&
-        cause.message === "organization access denied"
-      )
+      if (isOrganizationAccessDenied(cause))
         return { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" };
       throw cause;
     }
@@ -638,14 +605,7 @@ export class AppSocket {
       return;
     }
 
-    if (isForwardedEventType(event.type))
-      this.listeners.emit(
-        event.type,
-        UNWRAPPED_EVENT_TYPES.has(event.type) ||
-          event.type.startsWith("global-chat.")
-          ? event.data
-          : unwrapOrganizationEvent(event),
-      );
+    this.listeners.emit(event.type, unwrapOrganizationEvent(event));
   }
 
   private applyAccessPolicy(policy: AccessPolicySnapshot): void {

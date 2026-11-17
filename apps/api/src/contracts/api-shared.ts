@@ -2,11 +2,8 @@ import { Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { JsonValue } from "@lootlog/schema/http-scalars";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { HttpApiMiddleware, HttpApiSecurity, OpenApi } from "effect/http-api";
-
-const BearerSecurity = HttpApiSecurity.bearer.pipe(
-  HttpApiSecurity.annotate(OpenApi.Format, "JWT"),
-);
+import { BearerSecurity } from "@lootlog/protocol/http/bearer-security";
+import { HttpApiMiddleware } from "effect/http-api";
 
 /**
  * The caller's Discord authorization no longer works, so Lootlog cannot resolve

@@ -1,4 +1,4 @@
-import type { GatewayJoin } from "@/lib/gateway-client";
+import type { GatewayClientEvents, GatewayJoin } from "@/lib/gateway-client";
 import { invalidateReservationQueries } from "./invalidate-reservation-queries";
 import { useEffect, useRef, useState } from "react";
 import { addDays, differenceInCalendarDays, startOfWeek } from "date-fns";
@@ -10,7 +10,6 @@ import {
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "@lootlog/ui/lib/toast";
-import type { ReservationChangedEventV2 } from "@lootlog/schema/reservation-events";
 import { Permission } from "@lootlog/schema/permissions";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import {
@@ -46,12 +45,10 @@ import { ScheduleStatus } from "./schedule-status";
 import type { ReservationRange } from "./types";
 import { useCompactScheduleLayout } from "./use-compact-schedule-layout";
 
-type ReservationChangedPayload =
-  | ReservationChangedEventV2
-  | {
-      guildId: string;
-      spotId?: string;
-    };
+type ReservationChangedPayload = GatewayClientEvents[
+  | "reservation.changed"
+  | "reservation.created"
+  | "reservation.deleted"];
 
 const resolveSpotName = (
   spots: { id: string; name: string }[] | undefined,
@@ -153,14 +150,11 @@ export function ReservationsSchedule() {
     if (!organizationId || !guildId) return;
 
     const refresh = (payload: ReservationChangedPayload) => {
-      const matchesOrganization =
-        "audienceGuildIds" in payload
-          ? payload.audienceGuildIds.includes(organizationId)
-          : payload.guildId === organizationId;
+      if ("audienceGuildIds" in payload) {
+        if (!payload.audienceGuildIds.includes(organizationId)) return;
 
-      if (!matchesOrganization) return;
-
-      if (payload.spotId && payload.spotId !== spotId) return;
+        if (payload.spotId && payload.spotId !== spotId) return;
+      } else if (payload.guildId !== organizationId) return;
       void invalidateReservationQueries(queryClient, guildId, spotId);
     };
 

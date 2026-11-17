@@ -1,13 +1,17 @@
 /** Transport schemas owned by the auth HTTP module. */
 import * as Schema from "effect/Schema";
 import { FiniteNumber } from "@lootlog/schema/http-scalars";
+import {
+  AUTH_DISCORD_ID_HEADER,
+  AUTH_USER_ID_HEADER,
+} from "@lootlog/schema/api-key-access";
 
 export type AuthControllerVerifyHeaders =
   typeof AuthControllerVerifyHeaders.Type;
 
 export const AuthControllerVerifyHeaders = Schema.Struct({
-  "x-auth-user-id": Schema.optionalKey(Schema.String),
-  "x-auth-discord-id": Schema.optionalKey(Schema.String),
+  [AUTH_USER_ID_HEADER]: Schema.optionalKey(Schema.String),
+  [AUTH_DISCORD_ID_HEADER]: Schema.optionalKey(Schema.String),
   authorization: Schema.optionalKey(Schema.String),
 });
 

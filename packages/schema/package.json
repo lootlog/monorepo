@@ -45,6 +45,7 @@
     "./public-api-policy": "./src/public-api-policy.ts",
     "./api-services": "./src/api-services.ts",
     "./api-key-http": "./src/api-key-http.ts",
+    "./internal-guilds": "./src/internal-guilds.ts",
     "./custom-theme": "./src/custom-theme.ts",
     "./character-aura": "./src/character-aura.ts"
   },

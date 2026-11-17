@@ -1,5 +1,5 @@
 import { makeJsonCodec, type RedisEffects } from "#src/redis/redis.service";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
 import { makeChatOperations } from "#src/chat/chat.data-layer";
@@ -19,12 +19,15 @@ export const makeGatheringUpdatePublisher =
   (rabbit: Pick<RabbitMessaging["Service"], "publish">) =>
   (envelope: PartyGatheringUpdateEnvelope) =>
     rabbit
-      .publish({
-        exchange: "default",
-        routingKey: RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED,
-        messageId: `party-gathering:${envelope.notificationId}:${envelope.revision}:${envelope.guildId}:${envelope.update.type}`,
-        content: new TextEncoder().encode(JSON.stringify(envelope)),
-      })
+      .publish(
+        eventMessage(
+          RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED,
+          envelope,
+          {
+            messageId: `party-gathering:${envelope.notificationId}:${envelope.revision}:${envelope.guildId}:${envelope.update.type}`,
+          },
+        ),
+      )
       .pipe(Effect.asVoid);
 
 export const readyRoomPublications = Layer.effectDiscard(
@@ -52,27 +55,27 @@ export const readyRoomData = Layer.unwrap(
       publishGatheringUpdate: makeGatheringUpdatePublisher(rabbit),
       publish: (envelope) =>
         rabbit
-          .publish({
-            exchange: "default",
-            routingKey: RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED,
-            content: new TextEncoder().encode(JSON.stringify(envelope)),
-          })
+          .publish(
+            eventMessage(
+              RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED,
+              envelope,
+            ),
+          )
           .pipe(Effect.asVoid),
       publishGathering: (payload) =>
         rabbit
-          .publish({
-            exchange: "default",
-            routingKey: RabbitRoutingKey.GUILDS_PARTY_GATHERING,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          })
+          .publish(
+            eventMessage(RabbitRoutingKey.GUILDS_PARTY_GATHERING, payload),
+          )
           .pipe(Effect.asVoid),
       publishCancellation: (payload) =>
         rabbit
-          .publish({
-            exchange: "default",
-            routingKey: RabbitRoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          })
+          .publish(
+            eventMessage(
+              RabbitRoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
+              payload,
+            ),
+          )
           .pipe(Effect.asVoid),
       endPartyGatheringMessages: chat.endPartyGatheringMessages,
     });

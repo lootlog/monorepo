@@ -71,7 +71,7 @@ import {
   type CommandFailure,
   SessionNotJoined,
 } from "#src/realtime/realtime-errors";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 
 type Command = typeof ClientCommand.Type;
@@ -396,10 +396,12 @@ export class Commands extends Context.Service<Commands, CommandHandler>()(
         yield* ProofVerifier,
         (event) =>
           messaging
-            .publish({
-              routingKey: RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1,
-              content: new TextEncoder().encode(JSON.stringify(event)),
-            })
+            .publish(
+              eventMessage(
+                RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1,
+                event,
+              ),
+            )
             .pipe(Effect.asVoid),
         yield* Presence,
         yield* Hub,

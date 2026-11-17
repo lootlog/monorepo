@@ -6,7 +6,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware } from "@lootlog/protocol/http/bearer-security";
 import { UserOnlineQuery, UserOnlineResponse } from "./schemas.js";
 
 export class UsersGroup extends HttpApiGroup.make("users").add(

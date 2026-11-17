@@ -7,7 +7,7 @@ import type { NotificationJobScheduler } from "#src/notifications/jobs/notificat
 import { NOTIFICATION_DELIVERY_ATTEMPTS } from "#src/notifications/jobs/dispatch-queue";
 import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import {
-  type DiscordNotificationDeliveryResultEvent,
+  type DiscordNotificationDeliveryResult,
   NotificationJobStatus,
   NotificationOwnerType,
 } from "@lootlog/schema/notifications";
@@ -42,7 +42,7 @@ export const makeNotificationDeliveryResult = (
   ) => Effect.Effect<unknown, unknown, never>,
 ) =>
   Effect.fn("notifications.deliveryResult")(function* (
-    event: DiscordNotificationDeliveryResultEvent,
+    event: DiscordNotificationDeliveryResult,
   ) {
     const job = yield* store.find(event.notificationJobId);
 

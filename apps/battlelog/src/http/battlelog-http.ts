@@ -1,5 +1,7 @@
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
+import { BearerSecurityPassthrough } from "@lootlog/protocol/http/bearer-security";
+import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
 import { ContextLogger } from "@lootlog/instrumentation";
 import { OperationError } from "@lootlog/instrumentation/operation";
 import {
@@ -41,7 +43,6 @@ import {
   type RecordWeaponKillsInput,
 } from "#src/battles/weapon-kills/weapon-kills";
 import { BattlelogApi } from "../http-api/battlelog-api.js";
-import { BearerSecurityMiddleware } from "../http-api/contracts/battles/security.js";
 import type {
   BattlesControllerGetBattleAnalyticsQuery,
   BattlesControllerGetCombatProfileQuery,
@@ -60,10 +61,9 @@ const logger = new ContextLogger("BattlelogHttpApi");
 
 const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
   const request = yield* HttpServerRequest.HttpServerRequest;
-  const discordId = request.headers["x-auth-discord-id"];
-  const userId = request.headers["x-auth-user-id"];
+  const identity = readForwardAuthIdentity(request.headers);
 
-  if (!discordId || !userId) {
+  if (!identity) {
     return yield* Effect.fail(
       new OperationError({
         operation: "Battlelog.currentUserId",
@@ -72,7 +72,7 @@ const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
     );
   }
 
-  return userId;
+  return identity.userId;
 });
 
 const errorResponse = (cause: unknown) => {
@@ -194,11 +194,6 @@ const playerVsPlayerQuery = (
   opponentId: query.opponentId,
   excludeBattleId: query.excludeBattleId,
 });
-
-const BearerSecurityLive = Layer.succeed(
-  BearerSecurityMiddleware,
-  BearerSecurityMiddleware.of({ bearer: (httpEffect) => httpEffect }),
-);
 
 const BattlelogHandlers = Layer.mergeAll(
   HttpApiBuilder.group(BattlelogApi, "health", (handlers) =>
@@ -454,7 +449,10 @@ const BattlelogHandlers = Layer.mergeAll(
   ),
 ).pipe(
   Layer.provide(
-    Layer.merge(BearerSecurityLive, apiKeyEndpointPolicyLayer("battlelog")),
+    Layer.merge(
+      BearerSecurityPassthrough,
+      apiKeyEndpointPolicyLayer("battlelog"),
+    ),
   ),
 );
 

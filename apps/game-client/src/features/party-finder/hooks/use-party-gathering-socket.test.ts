@@ -191,7 +191,7 @@ describe("usePartyGatheringSocket", () => {
       type: "party-gathering.cancelled",
       data: {
         organizationId: "guild-1",
-        payload: { notificationId: "notification-1" },
+        payload: { notificationId: "notification-1", guildId: "guild-1" },
       },
     });
     await test.ready();

@@ -70,6 +70,7 @@ it("resolves the vanity route for refresh events and invalidates its member list
             totalMembers: 2,
             processedMembers: 2,
             failedMembers: 1,
+            completedAt: "2026-01-01T00:00:00.000Z",
             refreshedIds: ["refreshed"],
             failedIds: ["failed"],
           },

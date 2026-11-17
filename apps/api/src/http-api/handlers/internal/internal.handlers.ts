@@ -10,10 +10,8 @@ import { HttpApiBuilder } from "effect/http-api";
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 
 import { OrganizationSummary } from "#src/contracts/shared";
-import {
-  InternalMemberIdentityResponse,
-  InternalUserPermissionsResponse,
-} from "#src/contracts/internal/schemas";
+import { InternalMemberIdentityResponse } from "@lootlog/schema/internal-guilds";
+import { InternalUserPermissionsResponse } from "#src/contracts/internal/schemas";
 import { LootlogApi } from "../../lootlog-api.js";
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>

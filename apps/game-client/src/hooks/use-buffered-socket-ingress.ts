@@ -1,20 +1,29 @@
-import type { AppSocket, AppSocketEvent, AccessUpdate } from "@/lib/socket";
+import type {
+  AppSocketEvent,
+  AppSocketEvents,
+  AccessUpdate,
+} from "@/lib/socket";
 import { useEffect, useRef } from "react";
 
+type SocketListenerMethod = <Event extends AppSocketEvent>(
+  event: Event,
+  listener: (payload: AppSocketEvents[Event]) => void,
+) => void;
+
 type SocketWithListeners = {
-  on: (...args: Parameters<AppSocket["on"]>) => void;
-  off: (...args: Parameters<AppSocket["off"]>) => void;
+  on: SocketListenerMethod;
+  off: SocketListenerMethod;
 };
 
-type BufferedSocketIngressBaseOptions<TPayload> = {
+type BufferedSocketIngressBaseOptions<Event extends AppSocketEvent> = {
   socket: SocketWithListeners | null;
   connected: boolean;
   accountId: string | null | undefined;
   isReady: boolean;
-  event: AppSocketEvent;
-  onProcessBatch: (payloads: readonly TPayload[]) => void;
+  event: Event;
+  onProcessBatch: (payloads: readonly AppSocketEvents[Event][]) => void;
   maxPendingItems?: number;
-  isPayloadAllowed?: (payload: TPayload) => boolean;
+  isPayloadAllowed?: (payload: AppSocketEvents[Event]) => boolean;
 };
 
 type BufferedSocketIngressWithoutCancel = {
@@ -25,26 +34,34 @@ type BufferedSocketIngressWithoutCancel = {
   maxPendingCancels?: undefined;
 };
 
-type BufferedSocketIngressWithCancel<TPayload, TCancelPayload> = {
-  cancelEvent: AppSocketEvent;
-  onCancel: (payload: TCancelPayload) => void;
-  getPayloadId: (payload: TPayload) => string;
-  getCancelId: (payload: TCancelPayload) => string;
+type BufferedSocketIngressWithCancel<
+  Event extends AppSocketEvent,
+  CancelEvent extends AppSocketEvent,
+> = {
+  cancelEvent: CancelEvent;
+  onCancel: (payload: AppSocketEvents[CancelEvent]) => void;
+  getPayloadId: (payload: AppSocketEvents[Event]) => string;
+  getCancelId: (payload: AppSocketEvents[CancelEvent]) => string;
   maxPendingCancels?: number;
 };
 
-type UseBufferedSocketIngressOptions<TPayload, TCancelPayload> =
-  BufferedSocketIngressBaseOptions<TPayload> &
-    (
-      | BufferedSocketIngressWithoutCancel
-      | BufferedSocketIngressWithCancel<TPayload, TCancelPayload>
-    );
+type UseBufferedSocketIngressOptions<
+  Event extends AppSocketEvent,
+  CancelEvent extends AppSocketEvent,
+> = BufferedSocketIngressBaseOptions<Event> &
+  (
+    | BufferedSocketIngressWithoutCancel
+    | BufferedSocketIngressWithCancel<Event, CancelEvent>
+  );
 
 const DEFAULT_MAX_PENDING_ITEMS = 100;
 
 const DEFAULT_MAX_PENDING_CANCELS = 100;
 
-export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
+export const useBufferedSocketIngress = <
+  Event extends AppSocketEvent,
+  CancelEvent extends AppSocketEvent = never,
+>({
   socket,
   connected,
   accountId,
@@ -54,7 +71,11 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
   maxPendingItems = DEFAULT_MAX_PENDING_ITEMS,
   isPayloadAllowed,
   ...cancelOptions
-}: UseBufferedSocketIngressOptions<TPayload, TCancelPayload>) => {
+}: UseBufferedSocketIngressOptions<Event, CancelEvent>) => {
+  type TPayload = AppSocketEvents[Event];
+
+  type TCancelPayload = AppSocketEvents[CancelEvent];
+
   const isPayloadAllowedRef = useRef(isPayloadAllowed);
   const isReadyRef = useRef(isReady);
   const onProcessBatchRef = useRef(onProcessBatch);

@@ -1,7 +1,7 @@
 /** Endpoints owned by the weapon-kills HTTP module. */
 import { BadRequestResponse } from "../request-error.js";
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
-import { BearerSecurityMiddleware } from "../battles/security.js";
+import { BearerSecurityMiddleware } from "@lootlog/protocol/http/bearer-security";
 import {
   CharacterWeaponKillsResponseDto_Output,
   RecordWeaponKillsDto,

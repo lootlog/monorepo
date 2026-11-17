@@ -1,6 +1,6 @@
 import { resolveNpcType } from "@lootlog/domain/npc-routing";
 import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
-import type { AccessUpdate } from "@/lib/socket";
+import type { AccessUpdate, AppSocketEvents } from "@/lib/socket";
 import type { ChatMessage } from "@/api/chat.api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
@@ -270,23 +270,17 @@ export const useChatMessagesListener = ({
     const onDeleted = ({
       guildId,
       messageId,
-    }: {
-      guildId: string;
-      messageId: string;
-    }) => chatCacheBatcher.enqueue({ kind: "delete", guildId, messageId });
+    }: AppSocketEvents["chat.deleted"]) =>
+      chatCacheBatcher.enqueue({ kind: "delete", guildId, messageId });
 
     const onUpdated = ({
       guildId,
       messageId,
       message,
-    }: {
-      guildId: string;
-      messageId: string;
-      message: string;
-    }) =>
+    }: AppSocketEvents["chat.updated"]) =>
       chatCacheBatcher.enqueue({ kind: "update", guildId, messageId, message });
 
-    const onCleared = ({ guildId }: { guildId: string }) =>
+    const onCleared = ({ guildId }: AppSocketEvents["chat.cleared"]) =>
       chatCacheBatcher.enqueue({ kind: "clear", guildId });
 
     socket.on("chat.created", onCreated);

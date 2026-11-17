@@ -1,10 +1,17 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   RabbitExchange,
+  type ConsumerRoute,
+  type FailurePolicy,
   type RabbitExchangeName,
   type RabbitQueueDefinition,
   type RabbitRoutingKeyName,
 } from "@lootlog/protocol/rabbit/topology";
+import {
+  decodeRabbitEventJson,
+  type CanonicalRabbitEvent,
+  type CanonicalRabbitEventRoutingKey,
+} from "@lootlog/protocol/rabbit/events";
 import type { EventEmitter } from "node:events";
 import amqp, {
   type ConfirmChannel,
@@ -127,19 +134,76 @@ export interface PublishOptions {
   readonly persistent?: boolean;
 }
 
-export type FailurePolicy =
-  | { readonly strategy: "nack" }
-  | { readonly strategy: "requeue" }
-  | {
-      readonly strategy: "retry";
-      readonly maxRetries: number;
-      readonly retryRoutingKey: RabbitRoutingKeyName;
-      readonly deadLetterRoutingKey: RabbitRoutingKeyName;
-    }
-  | {
-      readonly strategy: "dead-letter";
-      readonly deadLetterRoutingKey: RabbitRoutingKeyName;
-    };
+const textEncoder = new TextEncoder();
+
+const textDecoder = new TextDecoder();
+
+/** One canonical event as a message: its routing key and JSON wire form. */
+export const eventMessage = <Key extends CanonicalRabbitEventRoutingKey>(
+  routingKey: Key,
+  payload: CanonicalRabbitEvent<Key>,
+  options: Pick<PublishOptions, "headers" | "messageId"> = {},
+): PublishOptions => ({
+  ...options,
+  routingKey,
+  content: textEncoder.encode(JSON.stringify(payload)),
+});
+
+/** Publishes canonical events; a domain receives this port instead of the broker. */
+export interface EventPublisher {
+  readonly publish: <Key extends CanonicalRabbitEventRoutingKey>(
+    routingKey: Key,
+    payload: CanonicalRabbitEvent<Key>,
+  ) => Effect.Effect<void, MessagingError>;
+}
+
+export const makeEventPublisher = (
+  rabbit: Pick<RabbitMessagingService, "publish">,
+): EventPublisher => ({
+  publish: (routingKey, payload) =>
+    rabbit.publish(eventMessage(routingKey, payload)),
+});
+
+/** A payload that does not decode now never will, so it fails as unprocessable. */
+export const decodeEventDelivery = <Key extends CanonicalRabbitEventRoutingKey>(
+  routingKey: Key,
+  delivery: RabbitDelivery,
+): Effect.Effect<CanonicalRabbitEvent<Key>, UnprocessableDelivery> =>
+  Effect.try({
+    try: () =>
+      decodeRabbitEventJson(routingKey, textDecoder.decode(delivery.content)),
+    catch: (cause) => new UnprocessableDelivery({ cause }),
+  }).pipe(
+    Effect.tapError(() =>
+      Effect.logError("RabbitMQ delivery payload is invalid").pipe(
+        Effect.annotateLogs({
+          routingKey,
+          messageId: delivery.properties.messageId,
+        }),
+      ),
+    ),
+  );
+
+/** Consumes a route's queue under its failure policy with decoded events. */
+export const consumeEvent = <Key extends CanonicalRabbitEventRoutingKey, E>(
+  rabbit: RabbitMessagingService,
+  route: ConsumerRoute<Key>,
+  handler: (
+    payload: CanonicalRabbitEvent<Key>,
+    delivery: RabbitDelivery,
+  ) => Effect.Effect<void, E>,
+): Effect.Effect<RabbitConsumer, MessagingError, Scope.Scope> =>
+  rabbit.consume(
+    {
+      queue: route.queue,
+      prefetch: route.prefetch,
+      failurePolicy: route.failurePolicy,
+    },
+    (delivery) =>
+      decodeEventDelivery(route.routingKey, delivery).pipe(
+        Effect.flatMap((payload) => handler(payload, delivery)),
+      ),
+  );
 
 interface ConsumeOptions {
   readonly queue: string;

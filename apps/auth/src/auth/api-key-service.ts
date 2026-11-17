@@ -5,6 +5,9 @@ import { and, eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer, Option, Schema } from "effect";
 import {
   API_KEY_ERROR_MESSAGES,
+  API_KEY_HEADER,
+  AUTH_DISCORD_ID_HEADER,
+  AUTH_USER_ID_HEADER,
   type ApiKeyAccess,
   ApiKeyGrant,
   type ApiKeyStatus,
@@ -25,10 +28,6 @@ export const CreateApiKey = Schema.Struct({
 });
 
 export const RenameApiKey = Schema.Struct({ name: Name });
-
-export const ApiKeyStatusRequest = Schema.Struct({
-  keyIds: Schema.Array(Schema.NonEmptyString).check(Schema.isMaxLength(100)),
-});
 
 export const ApiKeySummary = Schema.Struct({
   ...ApiKeyGrant.fields,
@@ -211,7 +210,7 @@ export class ApiKeyService extends Context.Service<
           headers,
           requireOrigin = true,
         ) {
-          if (headers.has("x-api-key") || headers.has("authorization"))
+          if (headers.has(API_KEY_HEADER) || headers.has("authorization"))
             return yield* failure(401, API_KEY_ERROR_MESSAGES.sessionRequired);
           const origin = headers.get("origin");
 
@@ -297,8 +296,8 @@ export class ApiKeyService extends Context.Service<
             const organizations = yield* client
               .get(`${config.apiUrl.replace(/\/$/, "")}/users/@me/guilds`, {
                 headers: {
-                  "x-auth-user-id": user.id,
-                  "x-auth-discord-id": user.discordId,
+                  [AUTH_USER_ID_HEADER]: user.id,
+                  [AUTH_DISCORD_ID_HEADER]: user.discordId,
                 },
               })
               .pipe(

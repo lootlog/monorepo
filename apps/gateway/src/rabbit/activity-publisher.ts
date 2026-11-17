@@ -5,7 +5,9 @@ import {
 import {
   type RabbitMessagingService,
   RabbitMessaging,
+  eventMessage,
 } from "@lootlog/messaging";
+import type { ActivityLogCreated } from "@lootlog/protocol/rabbit/events";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Clock, Effect, Redacted, Context, Layer } from "effect";
 import {
@@ -67,7 +69,7 @@ export class ActivityPublisher {
 
           if (session.platform === "game" && !player) return Effect.void;
 
-          const payload = {
+          const payload: ActivityLogCreated = {
             userId: session.userId,
             guildId,
             discordId: session.discordId,
@@ -101,11 +103,11 @@ export class ActivityPublisher {
           );
 
           return messaging
-            .publish({
-              routingKey: RabbitRoutingKey.ACTIVITY_LOG_CREATE,
-              content: new TextEncoder().encode(JSON.stringify(payload)),
-              headers: { [ACTIVITY_EVENT_SIGNATURE_HEADER]: signature },
-            })
+            .publish(
+              eventMessage(RabbitRoutingKey.ACTIVITY_LOG_CREATE, payload, {
+                headers: { [ACTIVITY_EVENT_SIGNATURE_HEADER]: signature },
+              }),
+            )
             .pipe(
               Effect.andThen(record(guildId)),
               Effect.catch((error) =>

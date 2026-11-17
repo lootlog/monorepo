@@ -4,16 +4,14 @@ import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { respawnFromSpawnWindow } from "@lootlog/domain/timers";
 import { Clock, Effect, Predicate, Schema } from "effect";
 import { ExecutionError, type RedlockService } from "#src/redis/redlock";
-import {
-  RabbitExchange,
-  RabbitRoutingKey,
-} from "@lootlog/protocol/rabbit/topology";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   mapTimerResponse,
+  toTimerEvent,
   timerNpcField,
   timerNpcTemplateId,
 } from "#src/timers/timer-projection";
-import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
+import type { EventPublisher } from "@lootlog/messaging";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import { getTimerListCacheScope } from "#src/shared/cache";
@@ -67,7 +65,7 @@ export class EventTimersError extends TaggedErrorClass<EventTimersError>()(
 interface EventTimersDependencies {
   readonly logger: ApplicationLogger;
   readonly store: EventTimerStore;
-  readonly amqp: AmqpPublisher;
+  readonly amqp: EventPublisher;
   readonly redis: RedisService;
   readonly redlock: RedlockService;
 }
@@ -110,25 +108,17 @@ export const makeEventTimersPort = ({
     );
 
   const publishUpdate = (timer: Timer) => {
-    const response = mapTimerResponse(timer);
+    const response = toTimerEvent(mapTimerResponse(timer));
 
     return Effect.all(
       [
         mapped(
           "eventTimers.rabbit.update",
-          amqp.publish(
-            RabbitExchange.DEFAULT,
-            RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
-            response,
-          ),
+          amqp.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response),
         ),
         mapped(
           "eventTimers.rabbit.notification",
-          amqp.publish(
-            RabbitExchange.DEFAULT,
-            RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-            response,
-          ),
+          amqp.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED, response),
         ),
       ],
       { concurrency: "unbounded", discard: true },
@@ -153,19 +143,11 @@ export const makeEventTimersPort = ({
       [
         mapped(
           "eventTimers.rabbit.delete",
-          amqp.publish(
-            RabbitExchange.DEFAULT,
-            RabbitRoutingKey.GUILDS_TIMERS_DELETE,
-            payload,
-          ),
+          amqp.publish(RabbitRoutingKey.GUILDS_TIMERS_DELETE, payload),
         ),
         mapped(
           "eventTimers.rabbit.notificationDelete",
-          amqp.publish(
-            RabbitExchange.DEFAULT,
-            RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
-            payload,
-          ),
+          amqp.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED, payload),
         ),
       ],
       { concurrency: "unbounded", discard: true },

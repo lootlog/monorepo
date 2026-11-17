@@ -1,25 +1,16 @@
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
-import { RabbitMessaging } from "@lootlog/messaging";
+import {
+  consumeEvent,
+  makeEventPublisher,
+  RabbitMessaging,
+} from "@lootlog/messaging";
 import { serviceHttpServer } from "@lootlog/instrumentation/service";
 import {
-  RabbitExchange,
+  consumerRoute,
   RabbitRoutingKey,
-  type RabbitQueueDefinition,
 } from "@lootlog/protocol/rabbit/topology";
-import {
-  DiscordNotificationSendCommandSchema,
-  type DiscordNotificationSendCommand,
-} from "@lootlog/schema/notifications";
 import { Client, IntentsBitField } from "discord.js";
-import {
-  Context,
-  Effect,
-  FiberSet,
-  Layer,
-  Option,
-  Redacted,
-  Schema,
-} from "effect";
+import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
 import {
   FetchHttpClient,
   HttpRouter,
@@ -36,39 +27,18 @@ import {
   makeDiscordSync,
   type DiscordSync,
 } from "#src/bot/discord-sync.service";
-import type { RabbitPublisher } from "#src/bot/rabbit-publisher";
 import { LootlogClient } from "#src/commands/lootlog-client";
 import { registerSlashCommands } from "#src/commands/slash-command-interactions";
 import type { CommandServices } from "#src/commands/slash-command";
 import { BotConfig } from "#src/config/bot-config";
 import { DiscordBotApi } from "#src/http-api/discord-bot-api";
 
-const notificationQueue: RabbitQueueDefinition = {
-  name: "discord-bot-notifications-send",
-  exchange: RabbitExchange.DEFAULT,
-  routingKey: RabbitRoutingKey.NOTIFICATIONS_DISCORD_SEND,
-  durable: true,
-};
-
-const decodeNotificationJson = Schema.decodeUnknownOption(
-  Schema.fromJsonString(Schema.JsonObject),
+// A failed send is requeued; an undecodable command is rejected and logged.
+const notificationRoute = consumerRoute(
+  "discord-bot-notifications-send",
+  RabbitRoutingKey.NOTIFICATIONS_DISCORD_SEND,
+  { failure: "requeue", prefetch: 10 },
 );
-
-const isSendCommand = Schema.is(DiscordNotificationSendCommandSchema);
-
-export const decodeNotificationCommand = (
-  content: Uint8Array,
-): DiscordNotificationSendCommand | undefined => {
-  const decoded = decodeNotificationJson(new TextDecoder().decode(content));
-
-  if (Option.isNone(decoded)) return undefined;
-  const input = { ...decoded.value };
-
-  // Non-string content historically falls back to title/message in the delivery adapter.
-  if (!Schema.is(Schema.String)(input.content)) delete input.content;
-
-  return isSendCommand(input) ? input : undefined;
-};
 
 export interface BotServicesValue {
   readonly client: Client;
@@ -85,13 +55,7 @@ class BotServices extends Context.Service<BotServices, BotServicesValue>()(
       const config = yield* BotConfig;
       const rabbit = yield* RabbitMessaging;
 
-      const publisher: RabbitPublisher = {
-        publish: (_exchange, routingKey, payload) =>
-          rabbit.publish({
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
-      };
+      const publisher = makeEventPublisher(rabbit);
 
       const client = yield* Effect.acquireRelease(
         Effect.tryPromise({
@@ -181,26 +145,8 @@ const BotConsumer = Layer.effectDiscard(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
     const services = yield* BotServices;
-    yield* rabbit.consume(
-      {
-        queue: notificationQueue.name,
-        prefetch: 10,
-        failurePolicy: { strategy: "requeue" },
-      },
-      (delivery) =>
-        Effect.gen(function* () {
-          const input = decodeNotificationCommand(delivery.content);
-
-          if (!input) {
-            yield* Effect.logError(
-              "Discord notification delivery payload was invalid",
-            );
-
-            return;
-          }
-
-          yield* services.delivery.sendNotification(input);
-        }),
+    yield* consumeEvent(rabbit, notificationRoute, (command) =>
+      services.delivery.sendNotification(command),
     );
   }),
 );
@@ -230,7 +176,7 @@ const RabbitLive = Layer.unwrap(
     return RabbitMessaging.layer({
       uri: Redacted.value(config.rabbitmqUri),
       connectionName: config.serviceName,
-      queues: [notificationQueue],
+      queues: notificationRoute.queues,
     });
   }),
 ).pipe(Layer.provide(BotConfig.layer));

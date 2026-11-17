@@ -5,7 +5,7 @@ import { makeOutboxWorker } from "#src/shared/outbox-worker";
 import { RedlockService } from "#src/redis/redlock";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/error-key";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { Effect, Layer, Schema } from "effect";
 import { makeAutoTimer } from "#src/timers/timer-auto.data-layer";
 import { makeDeleteTimer } from "#src/timers/timer-delete.data-layer";
@@ -66,11 +66,7 @@ export const timersData = Layer.unwrap(
         invalidateList,
         publishHeroSighting: makeHeroSightingPublisher(rabbit),
         publish: (routingKey, payload) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
+          rabbit.publish(eventMessage(routingKey, payload)),
         set: redis.effect.set,
         locks,
         withLock,
@@ -78,38 +74,22 @@ export const timersData = Layer.unwrap(
       createManual: makeManualTimer(database, {
         invalidateList,
         publish: (routingKey, payload) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
+          rabbit.publish(eventMessage(routingKey, payload)),
       }),
       delete: makeDeleteTimer(database, {
         invalidateList,
         publish: (routingKey, payload) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
+          rabbit.publish(eventMessage(routingKey, payload)),
       }),
       restore: makeRestoreTimer(database, {
         invalidateList,
         publish: (routingKey, payload) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
+          rabbit.publish(eventMessage(routingKey, payload)),
       }),
       reset: makeResetTimer(database, {
         invalidateList,
         publish: (routingKey, payload) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
+          rabbit.publish(eventMessage(routingKey, payload)),
         withLock,
       }),
       getAll: makeAllTimerList(database),

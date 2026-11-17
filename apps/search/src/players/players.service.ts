@@ -9,21 +9,21 @@ import {
 import type { PlayerSearchQuery } from "./player-search-query.js";
 import { playerNameQuery } from "./player-name-query.js";
 import type { IndexPlayersCommand } from "./index-players-command.js";
-import type { PlayerHit } from "./player-hit.js";
+import type { SearchPlayer } from "@lootlog/protocol/rabbit/events";
 
 export const PLAYERS_INDEX = "players";
 
-const playerNameKey = (player: Pick<PlayerHit, "world" | "name">) =>
+const playerNameKey = (player: Pick<SearchPlayer, "world" | "name">) =>
   JSON.stringify([player.world, player.name]);
 
-const uniquePlayers = (players: ReadonlyArray<PlayerHit>) => {
+const uniquePlayers = (players: ReadonlyArray<SearchPlayer>) => {
   const knownNames = new Set(
     players.flatMap((player) =>
       player.accountId > 0 ? [playerNameKey(player)] : [],
     ),
   );
 
-  const unique = new Map<string, PlayerHit>();
+  const unique = new Map<string, SearchPlayer>();
 
   for (const player of players) {
     // ponytail: name fallback for truncated legacy IDs; remove after an identity migration.
@@ -48,8 +48,8 @@ const uniquePlayers = (players: ReadonlyArray<PlayerHit>) => {
 
 type IndexPlayer = IndexPlayersCommand["players"][number];
 
-/** The stored shape of one player; the seed script and the consumer share it. */
-export const toPlayerDocument = (player: IndexPlayer) => ({
+/** The stored shape of one player. */
+const toPlayerDocument = (player: IndexPlayer) => ({
   ...player,
   uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
 });
@@ -58,7 +58,7 @@ export const makePlayersModule = (meilisearch: Meilisearch) => {
   const getPlayers = Effect.fn("SearchPlayers.get")(function* (
     input: PlayerSearchQuery,
   ) {
-    const index = meilisearch.index<PlayerHit>(PLAYERS_INDEX);
+    const index = meilisearch.index<SearchPlayer>(PLAYERS_INDEX);
     const { searchTerm, query } = playerNameQuery(input);
 
     return yield* attemptMeilisearch("search.players", () =>
@@ -105,7 +105,7 @@ export const makePlayersModule = (meilisearch: Meilisearch) => {
   return { getPlayers, indexPlayers } satisfies {
     readonly getPlayers: (
       input: PlayerSearchQuery,
-    ) => Effect.Effect<ReadonlyArray<PlayerHit>, SearchOperationFailure>;
+    ) => Effect.Effect<ReadonlyArray<SearchPlayer>, SearchOperationFailure>;
     readonly indexPlayers: (
       data: IndexPlayersCommand,
     ) => Effect.Effect<void, SearchOperationFailure>;

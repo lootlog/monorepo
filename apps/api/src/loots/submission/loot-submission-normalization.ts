@@ -1,3 +1,4 @@
+import { playerSearchId } from "@lootlog/protocol/rabbit/events";
 import {
   createItemSnapshotHash,
   createItemStatsHash,
@@ -100,7 +101,7 @@ export function mapPlayers(players: CreateLootRequest["players"]) {
     );
 
     return {
-      id: `${characterId}${accountId}`,
+      id: playerSearchId(characterId, accountId),
       name: player.name,
       lvl: player.lvl,
       prof: getProfByShortname(player.prof),

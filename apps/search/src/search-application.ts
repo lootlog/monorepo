@@ -7,7 +7,7 @@ import {
 } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer, Redacted } from "effect";
 import { SearchConfig } from "#src/config/search-config";
-import { IndexPlayersPayload } from "#src/players/index-players-command";
+import { rabbitEventSchema } from "@lootlog/protocol/rabbit/events";
 import { SearchHttpServer } from "#src/http-api/search-http";
 import { SearchOperations } from "#src/http-api/search-operations";
 
@@ -24,10 +24,11 @@ export const SearchConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
     const search = yield* SearchOperations;
 
+    // Live and replayed players share one wire shape.
     for (const { name } of Object.values(searchQueues)) {
       yield* consumeInBatches({
         queue: name,
-        schema: IndexPlayersPayload,
+        schema: rabbitEventSchema(RabbitRoutingKey.SEARCH_PLAYERS_INDEX),
         apply: (players) => search.indexPlayers({ players: [...players] }),
         isPermanent: isPermanentSearchFailure,
       });

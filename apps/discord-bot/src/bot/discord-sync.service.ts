@@ -1,6 +1,11 @@
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
+import {
+  type DiscordGuildChannel,
+  type DiscordGuildSyncState,
+  type DiscordGuildSyncStatus,
+  DISCORD_ADMINISTRATOR_PERMISSION,
+} from "@lootlog/schema/discord";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { DISCORD_ADMINISTRATOR_PERMISSION } from "@lootlog/schema/discord";
 import type {
   CanonicalRabbitEvent,
   CanonicalRabbitEventRoutingKey,
@@ -10,20 +15,7 @@ import type {
   GuildRoleDeleted,
   GuildUpdated,
 } from "@lootlog/protocol/rabbit/events";
-import {
-  RabbitExchange,
-  RabbitRoutingKey as RoutingKey,
-} from "@lootlog/protocol/rabbit/topology";
-import {
-  DiscordGuildSyncStatus,
-  type DiscordGuildChannelDeletedEvent,
-  type DiscordGuildChannelSnapshot,
-  type DiscordGuildChannelUpsertedEvent,
-  type DiscordGuildChannelsSyncFailedEvent,
-  type DiscordGuildChannelsSyncedEvent,
-  type DiscordGuildSyncState,
-  type DiscordGuildSyncStateUpdatedEvent,
-} from "@lootlog/schema/notifications";
+import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Clock, Deferred, Effect, Schema, Semaphore } from "effect";
 import {
   ChannelType,
@@ -38,7 +30,7 @@ import {
 import { ContextLogger } from "@lootlog/instrumentation";
 import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./required-notification-permissions.js";
 import { DiscordSdkReadFailure, discordSdkRead } from "./discord-sdk-read.js";
-import type { RabbitPublisher } from "./rabbit-publisher.js";
+import type { EventPublisher } from "@lootlog/messaging";
 
 type ChannelPermissionsState = ReturnType<typeof channelPermissionsState>;
 
@@ -146,7 +138,7 @@ const unavailableSyncState = (
 
   return {
     guildId,
-    status: options?.status ?? DiscordGuildSyncStatus.STALE,
+    status: options?.status ?? "STALE",
     ...permissionState(undefined),
     channelCount: 0,
     selectableChannelCount: 0,
@@ -173,8 +165,7 @@ const syncState = (options: {
     (channel) => channel.hasRequiredPermissions,
   ).length,
   lastAttemptAt: options.syncedAt,
-  lastSuccessAt:
-    options.status === DiscordGuildSyncStatus.SYNCED ? options.syncedAt : null,
+  lastSuccessAt: options.status === "SYNCED" ? options.syncedAt : null,
   lastError: options.lastError ?? null,
   updatedAt: options.syncedAt,
 });
@@ -189,7 +180,7 @@ const syncStateFromContext = (
     botPermissions: context.botMember.permissions,
     channelPermissions: context.channelPermissions,
     syncedAt: context.syncedAt,
-    status: options?.status ?? DiscordGuildSyncStatus.SYNCED,
+    status: options?.status ?? "SYNCED",
     lastError: options?.lastError,
   });
 
@@ -197,7 +188,7 @@ const channelSnapshot = (
   channel: SyncableGuildChannel,
   botUserId: string,
   syncedAt: string,
-): DiscordGuildChannelSnapshot => {
+): DiscordGuildChannel => {
   const permissions = channelPermissionsState(channel, botUserId);
 
   return {
@@ -258,13 +249,16 @@ const roleSnapshot = (role: Role): GuildCreated["roles"][number] => ({
   position: role.position,
 });
 
-export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
+export const makeDiscordSync = (publisher: EventPublisher, client: Client) => {
   const logger = new ContextLogger("DiscordSync");
   const guildLocks = new Map<string, Semaphore.Semaphore>();
 
   const inFlightRefreshes = new Map<
     string,
-    Deferred.Deferred<DiscordGuildChannelsSyncedEvent, DiscordSyncFailure>
+    Deferred.Deferred<
+      CanonicalRabbitEvent<typeof RoutingKey.DISCORD_GUILD_CHANNELS_SYNCED>,
+      DiscordSyncFailure
+    >
   >();
 
   /**
@@ -289,7 +283,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
     routingKey: Key,
     payload: CanonicalRabbitEvent<Key>,
   ) =>
-    publisher.publish(RabbitExchange.DEFAULT, routingKey, payload).pipe(
+    publisher.publish(routingKey, payload).pipe(
       Effect.mapError((cause) => failure(`publish:${routingKey}`, cause)),
       withAdapterSpan("DiscordSync_publish", "rabbitmq", { routingKey }),
     );
@@ -379,23 +373,29 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
   const guildChannelsPayload = (guild: Guild) =>
     createSyncContext(guild, { source: "rest" }).pipe(
-      Effect.map((context): DiscordGuildChannelsSyncedEvent => ({
-        guildId: guild.id,
-        channels: context.channels
-          .map((channel) =>
-            channelSnapshot(
-              channel,
-              context.botMember.user.id,
-              context.syncedAt,
+      Effect.map(
+        (
+          context,
+        ): CanonicalRabbitEvent<
+          typeof RoutingKey.DISCORD_GUILD_CHANNELS_SYNCED
+        > => ({
+          guildId: guild.id,
+          channels: context.channels
+            .map((channel) =>
+              channelSnapshot(
+                channel,
+                context.botMember.user.id,
+                context.syncedAt,
+              ),
+            )
+            .sort(
+              (first, second) =>
+                first.position - second.position ||
+                first.name.localeCompare(second.name),
             ),
-          )
-          .sort(
-            (first, second) =>
-              first.position - second.position ||
-              first.name.localeCompare(second.name),
-          ),
-        syncState: syncStateFromContext(guild.id, context),
-      })),
+          syncState: syncStateFromContext(guild.id, context),
+        }),
+      ),
     );
 
   const loadGuildChannelsPayload = (guildId: string) =>
@@ -411,10 +411,12 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
           guildId,
           channels: [],
           syncState: unavailableSyncState(guildId, {
-            status: DiscordGuildSyncStatus.NOT_FOUND,
+            status: "NOT_FOUND",
             lastError: resolved.lastError,
           }),
-        } satisfies DiscordGuildChannelsSyncedEvent;
+        } satisfies CanonicalRabbitEvent<
+          typeof RoutingKey.DISCORD_GUILD_CHANNELS_SYNCED
+        >;
       }
 
       return yield* guildChannelsPayload(resolved.guild).pipe(
@@ -435,7 +437,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       if (pending) return yield* Deferred.await(pending);
 
       const deferred = yield* Deferred.make<
-        DiscordGuildChannelsSyncedEvent,
+        CanonicalRabbitEvent<typeof RoutingKey.DISCORD_GUILD_CHANNELS_SYNCED>,
         DiscordSyncFailure
       >();
 
@@ -456,7 +458,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
   const publishSyncFailed = (guildId: string, cause: DiscordSyncFailure) =>
     Effect.gen(function* () {
       const state = unavailableSyncState(guildId, {
-        status: DiscordGuildSyncStatus.STALE,
+        status: "STALE",
         lastAttemptAt: new Date(yield* Clock.currentTimeMillis).toISOString(),
         lastError: `${cause.operation}: ${cause.reason}`,
       });
@@ -466,7 +468,9 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
         status: state.status,
         lastAttemptAt: state.lastAttemptAt ?? state.updatedAt,
         lastError: state.lastError ?? cause.reason,
-      } satisfies DiscordGuildChannelsSyncFailedEvent);
+      } satisfies CanonicalRabbitEvent<
+        typeof RoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED
+      >);
     });
 
   /**
@@ -561,7 +565,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       } satisfies GuildDeleted);
 
       const state = unavailableSyncState(guild.id, {
-        status: DiscordGuildSyncStatus.NOT_FOUND,
+        status: "NOT_FOUND",
         lastError: "Bot no longer has access to this guild",
       });
 
@@ -572,20 +576,24 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
           state.lastAttemptAt ??
           new Date(yield* Clock.currentTimeMillis).toISOString(),
         lastError: state.lastError ?? "Bot no longer has access to this guild",
-      } satisfies DiscordGuildChannelsSyncFailedEvent);
+      } satisfies CanonicalRabbitEvent<
+        typeof RoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED
+      >);
     });
 
   const publishStaleGuildSyncState = (guild: Guild) =>
     liveSyncStatus(guild, {
       source: "cache",
-      status: DiscordGuildSyncStatus.STALE,
+      status: "STALE",
     }).pipe(
       Effect.mapError((cause) => failure("buildGuildSyncStatus", cause)),
       Effect.flatMap((state) =>
         publish(RoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED, {
           guildId: guild.id,
           syncState: state,
-        } satisfies DiscordGuildSyncStateUpdatedEvent),
+        } satisfies CanonicalRabbitEvent<
+          typeof RoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED
+        >),
       ),
     );
 
@@ -658,7 +666,9 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
             guildId: channel.guild.id,
             channel: snapshotFromContext(channel, context),
             syncState: syncStateFromContext(channel.guild.id, context),
-          } satisfies DiscordGuildChannelUpsertedEvent);
+          } satisfies CanonicalRabbitEvent<
+            typeof RoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED
+          >);
         }),
       ),
     );
@@ -679,7 +689,9 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
             guildId: channel.guild.id,
             channelId: channel.id,
             syncState: syncStateFromContext(channel.guild.id, context),
-          } satisfies DiscordGuildChannelDeletedEvent),
+          } satisfies CanonicalRabbitEvent<
+            typeof RoutingKey.DISCORD_GUILD_CHANNEL_DELETED
+          >),
         ),
       ),
     );
