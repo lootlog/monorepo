@@ -1,6 +1,7 @@
 import type { Job } from "bullmq";
 import { Effect } from "effect";
 import { ContextLogger } from "@lootlog/instrumentation";
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import type { Battles } from "#src/battles/battles.service";
 
 export interface DeleteUserBattlesJobData {
@@ -20,11 +21,7 @@ export const makeDeleteUserBattlesProcessor = (
       logger.info(
         `Completed delete-user-battles job for user ${userId}: ${result.deletedCount} battles deleted`,
       );
-    }).pipe(
-      Effect.withSpan("DeleteUserBattlesProcessor_process", {
-        attributes: { adapter: "bullmq", retryCount: 0 },
-      }),
-    );
+    }).pipe(withAdapterSpan("DeleteUserBattlesProcessor_process", "bullmq"));
 
   return { process };
 };

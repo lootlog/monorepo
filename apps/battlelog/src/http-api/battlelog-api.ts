@@ -1,7 +1,7 @@
 import { ApiKeyEndpointPolicy } from "@lootlog/schema/api-key-http";
 /** Authoritative composition root for the battlelog HTTP contract. */
+import { healthGroup } from "@lootlog/instrumentation/service";
 import { HttpApi, OpenApi } from "effect/http-api";
-import { HealthGroup } from "./contracts/health/api.js";
 import { BattlesGroup } from "./contracts/battles/api.js";
 import { PublicBattlesGroup } from "./contracts/public-battles/api.js";
 import { InternalGroup } from "./contracts/internal/api.js";
@@ -13,7 +13,7 @@ export class BattlelogApi extends HttpApi.make("BattlelogApi")
   .annotate(OpenApi.Description, "The Battle Log API documentation")
   .annotate(OpenApi.Servers, [])
   .add(
-    HealthGroup,
+    healthGroup("Check the health status of the API"),
     BattlesGroup,
     WeaponKillsGroup,
     PublicBattlesGroup,

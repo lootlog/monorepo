@@ -105,11 +105,14 @@ export const unusedBattles = {
   getPublicBattle: unexpectedOperation,
   getPublicBattleRaw: unexpectedOperation,
   getPublicBattleTimeline: unexpectedOperation,
-  getUserCharacters: unexpectedOperation,
   resolveBattleId: (battleId: string) => Effect.succeed(battleId),
-  searchWarriors: unexpectedOperation,
   updateBattle: unexpectedOperation,
 } satisfies Battles;
+
+export const unusedBattleMetadata = {
+  getUserCharacters: unexpectedOperation,
+  searchWarriors: unexpectedOperation,
+};
 
 export const unusedBattleAnalytics = {
   calculateProfessionWinRate: unexpectedOperation,
@@ -136,17 +139,16 @@ export const unusedDeleteQueue = {
 };
 
 const unexpectedRedisOperation = () =>
-  Promise.reject(new Error("Unexpected Redis operation"));
+  Effect.die(new Error("Unexpected Redis operation"));
 
 export const unusedRedisStore = {
   set: unexpectedRedisOperation,
   get: unexpectedRedisOperation,
   getJson: unexpectedRedisOperation,
   setJson: unexpectedRedisOperation,
-  getOrSetJson: unexpectedRedisOperation,
   getOrSetJsonBestEffort: unexpectedRedisOperation,
   setNX: unexpectedRedisOperation,
-  eval: unexpectedRedisOperation,
+  evalScript: unexpectedRedisOperation,
   del: unexpectedRedisOperation,
   zadd: unexpectedRedisOperation,
   zcard: unexpectedRedisOperation,

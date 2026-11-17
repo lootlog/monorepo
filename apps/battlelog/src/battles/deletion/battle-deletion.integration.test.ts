@@ -96,12 +96,13 @@ for (const mode of ["single", "user"] as const) {
     let fail = true;
 
     const storage = {
-      deleteBattlesData: async (ids: readonly string[]) => {
-        const failed = ids.filter((id) => fail && id === LEGACY_ONE);
-        removed.push(...ids.filter((id) => !failed.includes(id)));
+      deleteBattlesData: (ids: readonly string[]) =>
+        Effect.sync(() => {
+          const failed = ids.filter((id) => fail && id === LEGACY_ONE);
+          removed.push(...ids.filter((id) => !failed.includes(id)));
 
-        return failed;
-      },
+          return failed;
+        }),
     };
 
     const analytics = { invalidateAnalyticsCache: () => Effect.void };
@@ -207,7 +208,7 @@ it("rolls back database removal if durable cleanup cannot be recorded", async ()
         Effect.gen(function* () {
           const deletion = makeBattleDeletion(
             yield* drizzleDatabaseEffect,
-            { deleteBattlesData: async () => [] },
+            { deleteBattlesData: () => Effect.succeed([]) },
             { invalidateAnalyticsCache: () => Effect.void },
           );
 
@@ -235,16 +236,17 @@ it("claims disjoint cleanup batches across workers and invalidates each owner on
   const releaseFirst = Promise.withResolvers<void>();
 
   const storage = {
-    deleteBattlesData: async (ids: readonly string[]) => {
-      seen.push([...ids]);
+    deleteBattlesData: (ids: readonly string[]) =>
+      Effect.promise(async () => {
+        seen.push([...ids]);
 
-      if (seen.length === 1) {
-        firstStarted.resolve();
-        await releaseFirst.promise;
-      }
+        if (seen.length === 1) {
+          firstStarted.resolve();
+          await releaseFirst.promise;
+        }
 
-      return [];
-    },
+        return [];
+      }),
   };
 
   const analytics = {

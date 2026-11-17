@@ -2,12 +2,17 @@ import { expect, it, spyOn } from "bun:test";
 import {
   ContextLogger,
   httpServerDuration,
+  httpServerMetrics,
   httpServerRouteMetrics,
   httpServerRequestCount,
 } from "@lootlog/instrumentation";
 import { Effect, Layer, Metric } from "effect";
 import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
 import { battlelogHttpMiddleware } from "./battlelog-http.js";
+
+// serviceHttpServer runs the battlelog middleware inside the metrics middleware.
+const middleware: typeof battlelogHttpMiddleware = (effect) =>
+  httpServerMetrics(battlelogHttpMiddleware(effect));
 
 for (const { status, effect } of [
   {
@@ -27,7 +32,7 @@ for (const { status, effect } of [
         Layer.provide(HttpServer.layerServices),
         Layer.provide(httpServerRouteMetrics),
       ),
-      { disableLogger: true, middleware: battlelogHttpMiddleware },
+      { disableLogger: true, middleware },
     );
 
     try {
@@ -60,7 +65,7 @@ it("does not report an aborted client request as an HTTP failure", async () => {
       Layer.provide(HttpServer.layerServices),
       Layer.provide(httpServerRouteMetrics),
     ),
-    { disableLogger: true, middleware: battlelogHttpMiddleware },
+    { disableLogger: true, middleware },
   );
 
   try {

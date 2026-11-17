@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ContextLogger } from "@lootlog/instrumentation";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import { and, desc, eq, ilike, sql } from "drizzle-orm";
@@ -160,9 +161,7 @@ export const makeBattleMetadata = (
 
           return Effect.void;
         }),
-        Effect.withSpan("BattleMetadata_upsertCharacter", {
-          attributes: { adapter: "drizzle", retryCount: 0 },
-        }),
+        withAdapterSpan("BattleMetadata_upsertCharacter", "drizzle"),
       );
 
   const searchWarriors = (query: string, userId: string) =>
@@ -217,9 +216,7 @@ export const makeBattleMetadata = (
           logger.error("Failed to search warriors:", error);
         }),
       ),
-      Effect.withSpan("BattleMetadata_searchWarriors", {
-        attributes: { adapter: "drizzle", retryCount: 0 },
-      }),
+      withAdapterSpan("BattleMetadata_searchWarriors", "drizzle"),
     );
 
   return {
