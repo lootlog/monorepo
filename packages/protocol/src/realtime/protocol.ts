@@ -2,7 +2,10 @@ import { AccessPolicySnapshot, AccessPolicyChange } from "./access-policy.js";
 import { UserFeedItem } from "../feed.js";
 import { CharacterAurasChangedSchema } from "@lootlog/schema/character-aura";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
-import { PartyGatheringClientUpdateSchema } from "@lootlog/schema/party-ready-room";
+import {
+  PartyGatheringClientUpdateSchema,
+  type PartyReadyRoomClientUpdate,
+} from "@lootlog/schema/party-ready-room";
 import {
   GlobalChatMessageSchema,
   GlobalChatStatsSchema,
@@ -37,6 +40,22 @@ import {
   MapPingSendPayloadSchema,
 } from "@lootlog/schema/map-ping";
 import { Schema } from "effect";
+import type { CanonicalRabbitEvent } from "../rabbit/events.js";
+import type { RabbitRoutingKey } from "../rabbit/topology.js";
+import type {
+  ChatMessageCreated,
+  ChatMessageDeleted,
+  ChatMessagesCleared,
+  ChatMessageUpdated,
+  HeroSightingUpdated,
+  LegacyReservationChanged,
+  MemberRefreshJobUpdated,
+  NotificationSent,
+  PartyGatheringCancelled,
+  PartyGatheringOpened,
+  TimerDeleted,
+  TimerUpdated,
+} from "./organization-events.js";
 import {
   GuildLootCreatedEventV2,
   GuildLootCreatedMessageV2,
@@ -417,6 +436,12 @@ export const CommandSuccess = {
 export type CommandSuccess<Type extends ClientCommand["type"]> =
   (typeof CommandSuccess)[Type]["Type"];
 
+/**
+ * The message of the `COMMAND_REJECTED` error that refuses a command for an
+ * Organization the session cannot access.
+ */
+export const ORGANIZATION_ACCESS_DENIED_MESSAGE = "organization access denied";
+
 const RealtimeError = Schema.Struct({
   code: Schema.NonEmptyString,
   message: Schema.NonEmptyString,
@@ -458,6 +483,11 @@ const serverEvent = <
     data,
   });
 
+/**
+ * An Organization's event that the gateway forwards from the API without
+ * reading its payload, so frames do not validate it.
+ * {@link OrganizationEventPayloads} names its shape.
+ */
 const OrganizationEvent = Schema.Struct({
   organizationId: Schema.NonEmptyString,
   payload: Schema.Unknown,
@@ -559,6 +589,73 @@ export const ServerEvent = Schema.Union([
 ]);
 
 export type ServerEvent = typeof ServerEvent.Type;
+
+/** Server events whose Organization payload frames carry unvalidated. */
+type UnreadPayloadEvents = {
+  [
+    Event in ServerEvent as Event["data"] extends { readonly payload: unknown }
+      ? unknown extends Event["data"]["payload"]
+        ? Event["type"]
+        : never
+      : never
+  ]: Event;
+};
+
+type EveryUnreadPayload<
+  Payloads extends Record<keyof UnreadPayloadEvents, unknown>,
+> = Payloads;
+
+/**
+ * The JSON payload the API publishes with each Organization event the gateway
+ * forwards unread. Receivers trust it as the API's; the gateway does not.
+ */
+export type OrganizationEventPayloads = EveryUnreadPayload<{
+  "chat.created": ChatMessageCreated;
+  "chat.updated": ChatMessageUpdated;
+  "chat.deleted": ChatMessageDeleted;
+  "chat.cleared": ChatMessagesCleared;
+  "timer.created": TimerUpdated;
+  "timer.deleted": TimerDeleted;
+  "hero-sighting.updated": HeroSightingUpdated;
+  "reservation.created": LegacyReservationChanged;
+  "reservation.deleted": LegacyReservationChanged;
+  "notification.sent": NotificationSent;
+  "notification.going": CanonicalRabbitEvent<
+    typeof RabbitRoutingKey.GUILDS_NOTIFICATIONS_GOING
+  >;
+  "member-refresh.updated": MemberRefreshJobUpdated;
+  "party-gathering.updated": PartyGatheringOpened;
+  "party-gathering.cancelled": PartyGatheringCancelled;
+  "party-ready-room.updated": PartyReadyRoomClientUpdate;
+  "event.map-status-updated": CanonicalRabbitEvent<
+    typeof RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE
+  >;
+  "event.hero-killed": CanonicalRabbitEvent<
+    typeof RabbitRoutingKey.EVENT_HERO_KILLED
+  >;
+  "event.ranking-updated": CanonicalRabbitEvent<
+    typeof RabbitRoutingKey.EVENT_RANKING_UPDATE
+  >;
+  "event.respawn-window-opened": CanonicalRabbitEvent<
+    typeof RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED
+  >;
+  "event.respawn-window-closed": CanonicalRabbitEvent<
+    typeof RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED
+  >;
+}>;
+
+/**
+ * What a server event delivers: an Organization event's payload, or the
+ * event's data.
+ */
+export type ServerEventPayload<Type extends ServerEvent["type"]> =
+  Type extends keyof OrganizationEventPayloads
+    ? OrganizationEventPayloads[Type]
+    : Extract<ServerEvent, { type: Type }>["data"] extends infer Data
+      ? Data extends { readonly payload: infer Payload }
+        ? Payload
+        : Data
+      : never;
 
 export const RealtimeFrame = Schema.Union([
   ClientCommand,

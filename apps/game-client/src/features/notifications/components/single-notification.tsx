@@ -100,7 +100,11 @@ const renderLeadingVisual = (
   }
 
   if (isRegularNotification(notification) && notification.npc) {
-    return <NpcTile npc={notification.npc} />;
+    return (
+      <NpcTile
+        npc={{ icon: notification.npc.icon, nick: notification.npc.name }}
+      />
+    );
   }
 
   return (

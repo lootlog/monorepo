@@ -290,7 +290,14 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
         type: "notification.sent",
         data: {
           organizationId: "guild-1",
-          payload: { notificationId: "next", isGatheringParty: true },
+          payload: {
+            notificationId: "next",
+            guildId: "guild-1",
+            discordId: "discord-1",
+            world: "luvia",
+            createdAt: "2026-01-01T00:00:00.000Z",
+            isGatheringParty: true,
+          },
         },
       },
       {
@@ -298,7 +305,12 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
         type: "chat.updated",
         data: {
           organizationId: "guild-1",
-          payload: { messageId: "message", message: "Edited" },
+          payload: {
+            guildId: "guild-1",
+            messageId: "message",
+            message: "Edited",
+            routing: { tier: "base" },
+          },
         },
       },
       {

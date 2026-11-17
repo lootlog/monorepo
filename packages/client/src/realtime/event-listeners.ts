@@ -1,26 +1,41 @@
-import type { ServerEvent } from "@lootlog/protocol/realtime";
+import type {
+  ServerEvent,
+  ServerEventPayload,
+} from "@lootlog/protocol/realtime";
 import { notifyListeners } from "./notify-listeners.js";
 
-type Listener = (...arguments_: never[]) => void;
+type Listener<Payload> = (payload: Payload) => void;
 
-export const unwrapOrganizationEvent = (event: ServerEvent): unknown => {
-  return "payload" in event.data ? event.data.payload : event.data;
-};
+export const unwrapOrganizationEvent = <Event extends ServerEvent>(
+  event: Event,
+): ServerEventPayload<Event["type"]> =>
+  // SAFETY: only Organization events carry `payload`, whose shape the
+  // protocol names for each type.
+  ("payload" in event.data
+    ? event.data.payload
+    : event.data) as ServerEventPayload<Event["type"]>;
 
-export class RealtimeEventListeners<Event extends string> {
-  private readonly listeners = new Map<Event, Set<Listener>>();
+/** Listeners by event name; `Events` maps each name to the payload it carries. */
+export class RealtimeEventListeners<Events extends object> {
+  private readonly listeners = new Map<keyof Events, Set<Listener<never>>>();
 
-  add(event: Event, listener: Listener): void {
+  add<Event extends keyof Events>(
+    event: Event,
+    listener: Listener<Events[Event]>,
+  ): void {
     const listeners = this.listeners.get(event) ?? new Set();
     listeners.add(listener);
     this.listeners.set(event, listeners);
   }
 
-  delete(event: Event, listener: Listener): void {
+  delete<Event extends keyof Events>(
+    event: Event,
+    listener: Listener<Events[Event]>,
+  ): void {
     this.listeners.get(event)?.delete(listener);
   }
 
-  has(event: Event): boolean {
+  has(event: keyof Events): boolean {
     return (this.listeners.get(event)?.size ?? 0) > 0;
   }
 
@@ -28,14 +43,14 @@ export class RealtimeEventListeners<Event extends string> {
     this.listeners.clear();
   }
 
-  emit(event: Event, payload?: unknown): void {
-    const emitToListener = (listener: Listener) =>
+  emit<Event extends keyof Events>(event: Event, payload: Events[Event]): void {
+    const emitToListener = (listener: Listener<never>) =>
       Reflect.apply(listener, undefined, [payload]);
 
     notifyListeners(
       this.listeners.get(event) ?? [],
       emitToListener,
-      `event ${event}`,
+      `event ${String(event)}`,
     );
   }
 }

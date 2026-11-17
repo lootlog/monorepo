@@ -1,5 +1,6 @@
 import {
   isServerEventFrame,
+  ORGANIZATION_ACCESS_DENIED_MESSAGE,
   REALTIME_JSON_SUBPROTOCOL,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
   PRESENCE_EXPIRY_MS,
@@ -86,6 +87,14 @@ export class RealtimeRequestError extends Error {
     this.name = "RealtimeRequestError";
   }
 }
+
+/** Whether the gateway refused a command for an Organization the session cannot access. */
+export const isOrganizationAccessDenied = (
+  error: unknown,
+): error is RealtimeRequestError =>
+  error instanceof RealtimeRequestError &&
+  error.code === "COMMAND_REJECTED" &&
+  error.message === ORGANIZATION_ACCESS_DENIED_MESSAGE;
 
 const normalizeUrl = (baseUrl: string, path: string): string => {
   const fallbackBase =
