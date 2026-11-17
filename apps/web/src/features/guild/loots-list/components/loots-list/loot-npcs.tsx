@@ -2,7 +2,7 @@ import { compareNpcsStrongestFirst } from "@lootlog/domain/npc-type";
 import { formatLevel } from "@lootlog/domain/profession";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WikiContextMenuItem } from "@/components/common/wiki-context-menu-item";
-import { wikiNpcUrl } from "@/config/wiki";
+import { wikiNpcUrl } from "@lootlog/domain/wiki-links";
 import type { LootNpc } from "@/lib/loots/loot-types";
 import {
   ContextMenu,

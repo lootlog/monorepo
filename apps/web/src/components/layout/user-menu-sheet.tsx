@@ -20,7 +20,7 @@ import {
   useUserMenu,
 } from "@/components/layout/use-user-menu";
 import { UserSignalAvatar } from "@/components/layout/user-signal-avatar";
-import { WIKI_URL } from "@/config/wiki";
+import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
 
 /** A 44px row, inset like the navigation rows above it. */
 const ROW_CLASS =
@@ -182,7 +182,11 @@ export const UserMenuSheet = () => {
             variant="ghost"
             nativeButton={false}
             render={
-              <a href={WIKI_URL} target="_blank" rel="noopener noreferrer" />
+              <a
+                href={PUBLIC_SITE_ORIGINS.wiki}
+                target="_blank"
+                rel="noopener noreferrer"
+              />
             }
             className={ROW_CLASS}
           >

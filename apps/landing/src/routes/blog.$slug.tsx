@@ -6,15 +6,13 @@ import { BlogGuideIcon } from "../components/blog/blog-guide-icon";
 import { BlogLayout } from "../components/blog/blog-layout";
 import { BlogNotFound } from "../components/blog/blog-not-found";
 import { blogNotFoundHead, blogPageHead, blogPosts } from "../config/blog";
-import Timers from "../content/blog/timery-zawsze-widoczne.mdx";
-import Notifications from "../content/blog/ustawienia-powiadomien.mdx";
-import Windows from "../content/blog/okna-i-skroty-klawiszowe.mdx";
+import type { ComponentType } from "react";
 
-const articleComponents = {
-  "timery-zawsze-widoczne": Timers,
-  "ustawienia-powiadomien": Notifications,
-  "okna-i-skroty-klawiszowe": Windows,
-};
+/** Each post's article is `content/blog/<slug>.mdx`. */
+const articles = import.meta.glob<ComponentType>("../content/blog/*.mdx", {
+  eager: true,
+  import: "default",
+});
 
 const articleDateFormat = new Intl.DateTimeFormat("pl-PL", {
   dateStyle: "long",
@@ -25,7 +23,8 @@ export const Route = createFileRoute("/blog/$slug")({
   loader: ({ params }) => {
     const post = blogPosts.find((candidate) => candidate.slug === params.slug);
 
-    if (!post) throw notFound();
+    if (!post || !articles[`../content/blog/${post.slug}.mdx`])
+      throw notFound();
 
     return post;
   },
@@ -45,7 +44,9 @@ export const Route = createFileRoute("/blog/$slug")({
 function BlogArticle() {
   const post = Route.useLoaderData();
   const { t } = useTranslation();
-  const Content = articleComponents[post.slug];
+  const Content = articles[`../content/blog/${post.slug}.mdx`];
+
+  if (!Content) throw notFound();
 
   const date = articleDateFormat.format(new Date(post.updatedAt));
 
