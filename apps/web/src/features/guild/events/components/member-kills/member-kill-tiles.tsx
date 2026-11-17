@@ -29,11 +29,12 @@ export const MemberKillTiles = ({
   onExpandedToggle,
 }: MemberKillTilesProps) => {
   const { t } = useTranslation();
+  const expandedIds = new Set(expandedKillIds);
 
   return (
     <ul>
       {kills.map((kill) => {
-        const isExpanded = expandedKillIds.includes(kill.id);
+        const isExpanded = expandedIds.has(kill.id);
 
         const { trackingPercentage, trackingTime } =
           getMemberKillScoringViewModel(kill, t);

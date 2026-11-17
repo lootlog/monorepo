@@ -144,10 +144,12 @@ export const QuickAccess = () => {
       minWidth={250}
       onClose={() => setOpen("quick-access", false)}
       closable={false}
-      actions=<>
-        <ConnectionStatus />
-        <QuickAccessCollapseButton collapsed={false} />
-      </>
+      actions={
+        <>
+          <ConnectionStatus />
+          <QuickAccessCollapseButton collapsed={false} />
+        </>
+      }
     >
       <ScrollArea
         className="ll:h-full ll:w-full"

@@ -130,9 +130,10 @@ export const Timers = () => {
   // A chosen group that the search or a refresh emptied stops filtering, so
   // the list never ends up blank with no pill left to clear the choice.
   const activeGroups = selectedGroups.filter((key) => key in groups);
+  const activeGroupKeys = new Set(activeGroups);
 
   const visibleGroups = Object.entries(groups).filter(
-    ([key]) => activeGroups.length === 0 || activeGroups.includes(key),
+    ([key]) => activeGroupKeys.size === 0 || activeGroupKeys.has(key),
   );
 
   const toolbar = (

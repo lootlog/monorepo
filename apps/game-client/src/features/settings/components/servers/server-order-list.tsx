@@ -3,6 +3,7 @@ import { SettingsGuildPickerItem } from "@/features/settings/components/shared/s
 import { useSortableList } from "@/hooks/ui/use-sortable-list";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
 import { cn } from "cn";
+import { xor } from "es-toolkit";
 import { GripVertical } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -54,9 +55,7 @@ export const ServerOrderList: FC<ServerOrderListProps> = ({
         disabled={disabled}
         value={selectedGuildIds}
         onValueChange={(nextGuildIds) => {
-          const toggledGuildId =
-            nextGuildIds.find((id) => !selectedGuildIds.includes(id)) ??
-            selectedGuildIds.find((id) => !nextGuildIds.includes(id));
+          const [toggledGuildId] = xor(nextGuildIds, selectedGuildIds);
 
           if (toggledGuildId) onToggle(toggledGuildId);
         }}

@@ -1,4 +1,5 @@
 import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
+import { difference } from "es-toolkit";
 import type {
   NpcPresenceReport,
   NpcPresenceReportAck,
@@ -514,7 +515,7 @@ export class AppSocket {
 
     if (
       current?.length === organizationIds.length &&
-      organizationIds.every((id) => current.includes(id))
+      difference(organizationIds, current).length === 0
     )
       return;
     this.presenceOrganizationIds = [...organizationIds];

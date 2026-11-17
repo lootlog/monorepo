@@ -13,9 +13,9 @@ import { getApiErrorStatus } from "@lootlog/client/transport";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileText, Pencil } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { Schema } from "effect";
 
 type MapTemplateFormProps =
@@ -105,7 +105,7 @@ export const useMapTemplateForm = ({
     },
   });
 
-  const maps = form.watch("maps");
+  const maps = useWatch({ control: form.control, name: "maps" });
 
   const filteredGameMaps = gameMaps
     ? filterAvailableGameMaps(

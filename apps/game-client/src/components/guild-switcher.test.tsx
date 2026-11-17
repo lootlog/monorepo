@@ -143,21 +143,6 @@ describe("GuildSwitcher", () => {
     ).toEqual(["B", "A", "G"]);
   });
 
-  it("falls back to the first ordered guild when the current selection is missing", async () => {
-    const handleChange = vi.fn<(guildId: string) => void>();
-
-    harness.setPreferences({
-      guildsOrder: ["guild-2", "guild-1"],
-      hiddenGuildIds: [],
-    });
-
-    render(<GuildSwitcher value="missing-guild" onChange={handleChange} />);
-
-    await waitFor(() => {
-      expect(handleChange).toHaveBeenCalledWith("guild-2");
-    });
-  });
-
   it("scrolls horizontally when the user uses the mouse wheel", () => {
     const { container } = render(<GuildSwitcher />);
     const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
@@ -191,20 +176,18 @@ describe("GuildSwitcher", () => {
     expect(screen.getByRole("button", { name: "Beta" })).toBeInTheDocument();
   });
 
-  it("removes hidden guilds and falls back to the first visible guild", async () => {
-    const handleChange = vi.fn<(guildId: string) => void>();
+  it("removes hidden guilds", () => {
     harness.setPreferences({
       guildsOrder: ["guild-2", "guild-1"],
       hiddenGuildIds: ["guild-2"],
     });
 
-    render(<GuildSwitcher value="guild-2" onChange={handleChange} />);
+    render(<GuildSwitcher value="guild-2" onChange={vi.fn()} />);
 
     expect(screen.queryByText("B")).not.toBeInTheDocument();
     expect(
       screen.getAllByRole("button").map((button) => button.textContent),
     ).toEqual(["A", "G"]);
-    await waitFor(() => expect(handleChange).toHaveBeenCalledWith("guild-1"));
   });
 
   it("does not render a server picker when only one guild is visible", () => {

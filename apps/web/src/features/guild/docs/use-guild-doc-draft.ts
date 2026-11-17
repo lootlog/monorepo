@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";

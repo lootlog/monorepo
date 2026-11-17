@@ -10,7 +10,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { useCopyToClipboard } from "usehooks-ts";
 
 type UseBattleTableActionsParams = {
@@ -123,51 +123,52 @@ export const useBattleTableActions = ({
     }
   };
 
-  const deleteSelectedBattles = async () => {
+  const removeSelectedBattles = async () => {
     if (selectedBattles.length === 0) {
       return;
     }
 
-    try {
-      const results = await Promise.allSettled(
-        selectedBattles.map((battle) =>
-          deleteBattleAsync({
-            pathParams: { battleId: battle.id },
-          }),
-        ),
-      );
-
-      await Promise.all(
-        createBattleVisibilityInvalidations(
-          queryClient,
-          selectedBattles.map((battle) => battle.id),
-        ),
-      );
-      results.forEach((result, index) => {
-        const battle = selectedBattles[index];
-
-        if (result.status === "fulfilled" && battle)
-          removeBattleFromSelection(battle.id);
-      });
-
-      if (results.some((result) => result.status === "rejected")) {
-        throw new Error("Some battles were not deleted.");
-      }
-
-      toast.success(
-        t("battlePanel.toasts.bulkBattlesDeleted", {
-          count: selectedBattles.length,
+    const results = await Promise.allSettled(
+      selectedBattles.map((battle) =>
+        deleteBattleAsync({
+          pathParams: { battleId: battle.id },
         }),
-        {
-          duration: 3000,
-        },
-      );
-      clearSelection();
-    } catch (error) {
+      ),
+    );
+
+    await Promise.all(
+      createBattleVisibilityInvalidations(
+        queryClient,
+        selectedBattles.map((battle) => battle.id),
+      ),
+    );
+    results.forEach((result, index) => {
+      const battle = selectedBattles[index];
+
+      if (result.status === "fulfilled" && battle)
+        removeBattleFromSelection(battle.id);
+    });
+
+    if (results.some((result) => result.status === "rejected")) {
+      throw new Error("Some battles were not deleted.");
+    }
+
+    toast.success(
+      t("battlePanel.toasts.bulkBattlesDeleted", {
+        count: selectedBattles.length,
+      }),
+      {
+        duration: 3000,
+      },
+    );
+    clearSelection();
+  };
+
+  const deleteSelectedBattles = () =>
+    removeSelectedBattles().catch((error) => {
       toast.error(t("battlePanel.toasts.bulkBattleDeleteError"));
       throw error;
-    }
-  };
+    });
 
   const deleteSingleBattle = async () => {
     if (!singleDeleteBattle) return;

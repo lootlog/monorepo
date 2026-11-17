@@ -4,6 +4,7 @@ import { settingsPickerGridClassName } from "@/features/settings/components/shar
 import { SettingsNoLootlogEmptyState } from "@/features/settings/components/shared/settings-no-lootlog-empty-state";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
 import { cn } from "cn";
+import { xor } from "es-toolkit";
 import type { FC } from "react";
 
 type SettingsGuildPickerProps = {
@@ -40,9 +41,7 @@ export const SettingsGuildPicker: FC<SettingsGuildPickerProps> = ({
       disabled={disabled}
       value={selectedGuildIds}
       onValueChange={(nextGuildIds) => {
-        const toggledGuildId =
-          nextGuildIds.find((id) => !selectedGuildIds.includes(id)) ??
-          selectedGuildIds.find((id) => !nextGuildIds.includes(id));
+        const [toggledGuildId] = xor(nextGuildIds, selectedGuildIds);
 
         if (toggledGuildId) onToggle(toggledGuildId);
       }}

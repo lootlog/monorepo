@@ -13,6 +13,8 @@ import { useTranslation } from "react-i18next";
  */
 const VISIBLE_CHARACTERS = 2;
 
+const showNames = (names: string) => names;
+
 type StatisticsLegendCharactersProps = {
   characters: UserLootStatsResponseDtoOutputLegendsItem["caughtBy"];
   /** Wraps the visible names, e.g. with a label of their own. */
@@ -23,7 +25,7 @@ type StatisticsLegendCharactersProps = {
 /** The user's characters that caught a legend, with their catches when several. */
 export function StatisticsLegendCharacters({
   characters,
-  label = (names) => names,
+  label = showNames,
   className,
 }: StatisticsLegendCharactersProps) {
   const { t } = useTranslation();

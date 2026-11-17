@@ -7,7 +7,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
 
 export function useParticipationConfirmation({

@@ -1,3 +1,4 @@
+import { intersection } from "es-toolkit";
 import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status";
 
 export type SetupStepId = "sign-in" | "join-lootlog" | "catching" | "realtime";
@@ -70,9 +71,10 @@ export const getSetupChecklist = ({
     if (!catchingGuildIds) catching = "pending";
     // A Lootlog the player has left no longer receives their data.
     else
-      catching = catchingGuildIds.some((id) => guildIds?.includes(id))
-        ? "done"
-        : "todo";
+      catching =
+        intersection(catchingGuildIds, guildIds ?? []).length > 0
+          ? "done"
+          : "todo";
   }
 
   // The gateway joins a session only for a member of some Lootlog.

@@ -76,13 +76,16 @@ export const ScoringRulesEditor = ({
     }
   }, [form, value]);
 
-  useEffect(() => {
-    const subscription = form.watch((_values, { name }) => {
-      if (name) notifyChange(form.getValues("scoringRules"));
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form]);
+  useEffect(
+    () =>
+      form.subscribe({
+        formState: { values: true },
+        callback: ({ name }) => {
+          if (name) notifyChange(form.getValues("scoringRules"));
+        },
+      }),
+    [form],
+  );
 
   const {
     control: scopedControl,

@@ -34,6 +34,9 @@ export type StatisticsDays = (typeof STATISTICS_DAYS)[number];
 
 export type StatisticsNpcType = (typeof TRACKABLE_NPC_TYPES)[number];
 
+export const toNpcType = (value: string | null) =>
+  TRACKABLE_NPC_TYPES.find((type) => type === value);
+
 export type StatisticsSearch = {
   tab: StatisticsTab;
   days: StatisticsDays;

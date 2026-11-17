@@ -1,4 +1,4 @@
-import { upperFirst } from "es-toolkit";
+import { difference, intersection, upperFirst } from "es-toolkit";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import {
@@ -34,14 +34,14 @@ export const getRecentWorldGroups = (
   recent: ReadonlyArray<string>,
   labels: { recent: string; rest: string },
 ): WorldGroup[] => {
-  const recentWorlds = recent.filter((world) => worlds.includes(world));
+  const recentWorlds = intersection(recent, worlds);
 
   return [
     { value: "recent", label: labels.recent, items: recentWorlds },
     {
       value: "rest",
       label: labels.rest,
-      items: worlds.filter((world) => !recentWorlds.includes(world)),
+      items: difference(worlds, recentWorlds),
     },
   ].flatMap(({ items, ...group }) =>
     items.length > 0 ? [{ ...group, items: items.map(toWorldOption) }] : [],

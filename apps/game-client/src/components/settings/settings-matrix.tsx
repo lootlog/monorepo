@@ -13,7 +13,6 @@ import {
   useRef,
   useState,
   type FC,
-  type MouseEvent,
   type ReactNode,
 } from "react";
 
@@ -36,7 +35,10 @@ export type SettingsMatrixColumn = {
   };
 };
 
-/** Index of the option column under the pointer, or null; rows highlight it. */
+/**
+ * Index of the option column under the pointer or holding keyboard focus, or
+ * null; rows highlight it.
+ */
 export const SettingsMatrixHoveredColumnContext = createContext<number | null>(
   null,
 );
@@ -51,7 +53,7 @@ type SettingsMatrixProps = {
   className?: string;
 };
 
-const readColumnIndex = (event: MouseEvent<HTMLElement>) => {
+const readColumnIndex = (event: { target: EventTarget }) => {
   const target = event.target;
 
   if (!(target instanceof Element)) return null;
@@ -138,6 +140,8 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
           className="ll:w-full ll:border-collapse ll:text-[13px]"
           onMouseOver={(event) => setHoveredColumn(readColumnIndex(event))}
           onMouseLeave={() => setHoveredColumn(null)}
+          onFocus={(event) => setHoveredColumn(readColumnIndex(event))}
+          onBlur={() => setHoveredColumn(null)}
         >
           <thead>
             <tr className="ll:border-0 ll:border-b ll:border-solid ll:border-border">

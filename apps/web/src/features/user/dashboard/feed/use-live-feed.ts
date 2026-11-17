@@ -87,7 +87,8 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
       }
 
       if (accessRefreshTimer !== undefined) return;
-      revalidatingAccess ||= revalidateAccess;
+
+      if (revalidateAccess) revalidatingAccess = true;
       cancel();
       const requestedGeneration = generation;
       fetching = true;
@@ -118,13 +119,13 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
           if (!permissionsChanged)
             for (const item of buffered) dispatch({ type: "entry", item });
         }
-      } finally {
-        if (requestedGeneration === generation) {
-          fetching = false;
-          revalidatingAccess = false;
-          permissionsChanged = false;
-          buffered = [];
-        }
+      }
+
+      if (requestedGeneration === generation) {
+        fetching = false;
+        revalidatingAccess = false;
+        permissionsChanged = false;
+        buffered = [];
       }
     };
 

@@ -4,7 +4,7 @@ import {
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 
 import {
@@ -21,7 +21,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { cn } from "cn";
 
 import { PERMISSION_CATEGORIES } from "../constants/permission-categories";
@@ -78,6 +78,11 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
     resetOptions: { keepDirtyValues: true },
   });
 
+  const permissionValues = useWatch({
+    control: form.control,
+    name: "permissions",
+  });
+
   function onSubmit(values: RolesFormInput) {
     if (isPending) return;
 
@@ -125,10 +130,12 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
               name="lvlRangeFrom"
               render={({ field }) => (
                 <FormItem className="w-25">
+                  <FormLabel className="sr-only">
+                    {t("settings.roles.levelRangeFrom")}
+                  </FormLabel>
                   <FormControl
                     render=<Input
                       placeholder={DEFAULT_LVL_RANGE_FROM}
-                      aria-label={t("settings.roles.levelRangeFrom")}
                       type="number"
                       max={500}
                       min={0}
@@ -147,10 +154,12 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
               name="lvlRangeTo"
               render={({ field }) => (
                 <FormItem className="w-25">
+                  <FormLabel className="sr-only">
+                    {t("settings.roles.levelRangeTo")}
+                  </FormLabel>
                   <FormControl
                     render=<Input
                       placeholder={DEFAULT_LVL_RANGE_TO}
-                      aria-label={t("settings.roles.levelRangeTo")}
                       type="number"
                       max={500}
                       min={0}
@@ -165,8 +174,8 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
         </BandSection>
 
         {PERMISSION_CATEGORIES.map((group) => {
-          const enabledCount = group.permissions.filter((permission) =>
-            form.watch(`permissions.${permission}`),
+          const enabledCount = group.permissions.filter(
+            (permission) => permissionValues[permission],
           ).length;
 
           return (

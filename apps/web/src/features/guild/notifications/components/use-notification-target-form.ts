@@ -13,7 +13,7 @@ import { NotificationTargetType } from "@lootlog/schema/notifications";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { Schema } from "effect";
 import { invalidateGuildNotificationQueries } from "../notifications-api";
 

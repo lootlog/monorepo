@@ -14,7 +14,7 @@ import { KILLED_NPC_TYPES, type KilledNpcType } from "@/constants/npc";
 import {
   KILL_STATS_PERIODS,
   type KillStatsPeriod,
-} from "@/features/kills/components/kill-stats-period-select";
+} from "@/features/kills/kill-stats-period";
 
 // An absent key is the default, so a default never reads as an active filter.
 const statsSearchParsers = {

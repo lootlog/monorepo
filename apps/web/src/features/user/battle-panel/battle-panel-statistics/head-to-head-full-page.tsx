@@ -1,10 +1,6 @@
 import { headToHeadColumns } from "./components/head-to-head-columns";
 import { HeadToHeadPageVariant } from "./head-to-head-page-variant";
-
-/** Shared with the route's pending skeleton, which renders the same titles. */
-export const headToHeadPageCopy = {
-  titleKey: "battlePanel.statistics.directMatchups.title",
-};
+import { headToHeadPageCopy } from "./head-to-head-page-copy";
 
 export function HeadToHeadFullPage() {
   return (

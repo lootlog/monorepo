@@ -152,11 +152,15 @@ const parseRarity = (stat: string) =>
 export const splitDropsRarity = (
   split: LootSplit,
   rarities: readonly ItemRarityEnum[],
-) =>
-  rarities.length === 0 ||
-  split.items.some(
-    ({ rarity }) => rarity !== null && rarities.includes(rarity),
+) => {
+  if (rarities.length === 0) return true;
+
+  const wanted = new Set(rarities);
+
+  return split.items.some(
+    ({ rarity }) => rarity !== null && wanted.has(rarity),
   );
+};
 
 /** The command's parameter for each choice: `want`, `not` and `must`. */
 const COMMAND_CHOICES: ReadonlyArray<readonly [string, LootSplitChoice]> = [

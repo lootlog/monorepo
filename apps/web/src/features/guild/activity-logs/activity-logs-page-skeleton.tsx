@@ -6,16 +6,21 @@ import { cn } from "cn";
 import { ActivityLogsMobileListSkeleton } from "./components/activity-logs-mobile-list-skeleton";
 
 // The clan, type, source and date range filters of `ActivityLogsFilterFields`.
-const FILTER_WIDTHS = ["w-[200px]", "w-[140px]", "w-[140px]", "w-[130px]"];
+const FILTER_WIDTHS = {
+  clan: "w-[200px]",
+  type: "w-[140px]",
+  source: "w-[140px]",
+  dateRange: "w-[130px]",
+};
 
 /** Route-level stand-in for the activity log: its filter bar above the entries. */
 export const ActivityLogsPageSkeleton = () => (
   <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
     {/* Narrower pages open the filters from a floating button instead. */}
     <FilterBar search={<InlineSearchFieldSkeleton />}>
-      {FILTER_WIDTHS.map((width, index) => (
+      {Object.entries(FILTER_WIDTHS).map(([filter, width]) => (
         <Skeleton
-          key={index}
+          key={filter}
           className={cn("hidden h-10 rounded-md xl:block", width)}
         />
       ))}

@@ -7,9 +7,9 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
@@ -72,7 +72,9 @@ export function useEventCreateDialog({ onOpenChange }: EventCreateDialogProps) {
     defaultValues: getDefaultValues(),
   });
 
-  const scoringMode = normalizeEventScoringMode(form.watch("scoringMode"));
+  const scoringMode = normalizeEventScoringMode(
+    useWatch({ control: form.control, name: "scoringMode" }),
+  );
 
   const handleClose = (isOpen: boolean) => {
     if (!isOpen) {

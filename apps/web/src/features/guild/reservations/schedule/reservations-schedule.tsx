@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import type { ReservationChangedEventV2 } from "@lootlog/schema/reservation-events";
 import { Permission } from "@lootlog/schema/permissions";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
@@ -225,20 +225,18 @@ export function ReservationsSchedule() {
         settings,
       });
 
-      if (!nearestRange) {
+      if (nearestRange) {
+        setDate(nearestRange.startsAt);
+        setCreateRange(nearestRange);
+      } else {
         toast.info(t("reservations.schedule.nearestFreeSlot.unavailable"));
-
-        return;
       }
-
-      setDate(nearestRange.startsAt);
-      setCreateRange(nearestRange);
     } catch {
       toast.error(t("reservations.schedule.nearestFreeSlot.error"));
-    } finally {
-      findingNearestFreeSlotRef.current = false;
-      setIsFindingNearestFreeSlot(false);
     }
+
+    findingNearestFreeSlotRef.current = false;
+    setIsFindingNearestFreeSlot(false);
   };
 
   const openSelectedRange = (range: ReservationRange) => {

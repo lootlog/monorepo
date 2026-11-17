@@ -70,17 +70,15 @@ export const useBattleSwitch = () => {
 
     if (latestBattleIdRef.current !== battleId) return;
 
-    try {
-      await navigate({
-        to: "/@me/battle-panel/battles/$battleId",
-        params: { battleId },
-      });
-    } finally {
+    await navigate({
+      to: "/@me/battle-panel/battles/$battleId",
+      params: { battleId },
+    }).finally(() => {
       if (latestBattleIdRef.current === battleId) {
         latestBattleIdRef.current = null;
         setPendingBattleId(null);
       }
-    }
+    });
   };
 
   return { pendingBattleId, prefetchBattle, openBattle };

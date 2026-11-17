@@ -173,11 +173,11 @@ export function useMobileDaySchedule({
           await animateSwipeTo(0, SWIPE_RETURN_TIMING);
         } catch {
           // Cancelled by an unmount or a reset, which leaves the track settled.
-        } finally {
-          resetSwipe();
-          swipeTransitioningRef.current = false;
-          suppressClickRef.current = false;
         }
+
+        resetSwipe();
+        swipeTransitioningRef.current = false;
+        suppressClickRef.current = false;
 
         return;
       }
@@ -202,11 +202,11 @@ export function useMobileDaySchedule({
         });
       } catch {
         // Cancelled by an unmount or a reset; the day stays as it was.
-      } finally {
-        resetSwipe();
-        swipeTransitioningRef.current = false;
-        suppressClickRef.current = false;
       }
+
+      resetSwipe();
+      swipeTransitioningRef.current = false;
+      suppressClickRef.current = false;
     },
   );
 

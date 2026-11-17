@@ -35,12 +35,15 @@ export function LiveFeedFilters({ settings, disabled, onChange }: Props) {
   const { data: guilds = [] } =
     useUsersControllerGetCurrentUserAccessibleGuilds();
 
+  const excludedGuildIds = new Set(settings.excludedGuildIds);
+  const excludedCategories = new Set(settings.excludedNpcCategories);
+
   const includedGuildIds = guilds
-    .filter((guild) => !settings.excludedGuildIds.includes(guild.id))
+    .filter((guild) => !excludedGuildIds.has(guild.id))
     .map((guild) => guild.id);
 
   const includedCategories = ACTIVITY_FEED_NPC_CATEGORIES.filter(
-    (category) => !settings.excludedNpcCategories.includes(category),
+    (category) => !excludedCategories.has(category),
   );
 
   const categoryLabel = (category: ActivityFeedNpcCategory) =>

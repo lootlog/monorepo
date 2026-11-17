@@ -62,8 +62,10 @@ export const NotificationHistoryList = ({
     statusGroups.some(([groupStatus]) => groupStatus === status),
   );
 
+  const activeStatusSet = new Set(activeStatuses);
+
   const visibleJobs = nameMatches.filter(
-    (job) => activeStatuses.length === 0 || activeStatuses.includes(job.status),
+    (job) => activeStatusSet.size === 0 || activeStatusSet.has(job.status),
   );
 
   const clearFilters = () => {
