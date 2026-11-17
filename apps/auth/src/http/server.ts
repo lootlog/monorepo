@@ -1,9 +1,8 @@
 import { ApiKeyHandlers } from "./api-key-handlers.js";
-import { BunHttpServer } from "@effect/platform-bun";
 import {
-  httpServerMetrics,
-  httpServerRouteMetrics,
-} from "@lootlog/instrumentation";
+  serviceApiRoutes,
+  serviceHttpServer,
+} from "@lootlog/instrumentation/service";
 import { Effect, Layer } from "effect";
 import {
   HttpMiddleware,
@@ -11,7 +10,6 @@ import {
   HttpServerRequest,
   HttpServerResponse,
 } from "effect/http";
-import { HttpApiBuilder } from "effect/http-api";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/provider/better-auth-url";
 import { AppConfig } from "#src/config/env";
@@ -71,7 +69,7 @@ const BetterAuthRawRoutes = HttpRouter.use((router) =>
 );
 
 export const AuthRoutes = Layer.merge(
-  HttpApiBuilder.layer(AuthApi, { openapiPath: "/openapi.json" }).pipe(
+  serviceApiRoutes(AuthApi).pipe(
     Layer.provide(Layer.merge(AuthHandlers, ApiKeyHandlers)),
   ),
   BetterAuthRawRoutes,
@@ -83,10 +81,7 @@ const TracingLive = HttpMiddleware.layerTracerDisabledForUrls(["/auth/verify"]);
 
 export const AuthHttpServer = Layer.unwrap(
   Effect.map(AppConfig, ({ port }) =>
-    HttpRouter.serve(AuthRoutes.pipe(Layer.provide(httpServerRouteMetrics)), {
-      middleware: httpServerMetrics,
-    }).pipe(
-      Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port })),
+    serviceHttpServer({ routes: AuthRoutes, port }).pipe(
       Layer.provide(TracingLive),
     ),
   ),

@@ -1,3 +1,4 @@
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { HttpClient, HttpClientResponse } from "effect/http";
 import { Redis } from "effect/persistence";
 import { ApiKeyService } from "#src/auth/api-key-service";
@@ -88,7 +89,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
           },
         }),
         config: {
-          environment: "local",
+          environment: RuntimeEnvironment.LOCAL,
           port: 4000,
           serviceName: "auth-adapter-test",
           appUrl: "https://auth.example.test",
@@ -109,12 +110,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
             database: postgres.getDatabase(),
             sslCa: undefined,
           },
-          redis: {
-            host: "unused",
-            port: 6379,
-            username: "",
-            password: Redacted.make(""),
-          },
+          redisUrl: Redacted.make("redis://unused:6379"),
           serviceNamespace: "test",
           commitSha: undefined,
         },
@@ -376,12 +372,11 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
 
       const rateLimits = AuthRedisStorage.layer.pipe(
         Layer.provideMerge(
-          createAuthRedisConnection({
-            host: redis.getHost(),
-            port: redis.getMappedPort(6379),
-            username: "",
-            password: Redacted.make(""),
-          }),
+          createAuthRedisConnection(
+            Redacted.make(
+              `redis://${redis.getHost()}:${redis.getMappedPort(6379)}`,
+            ),
+          ),
         ),
       );
 

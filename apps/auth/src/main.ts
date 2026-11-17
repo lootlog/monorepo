@@ -19,7 +19,7 @@ const InfrastructureLive = Layer.merge(
   Layer.provide(
     Layer.unwrap(
       Effect.map(AppConfig, (config) =>
-        createAuthRedisConnection(config.redis),
+        createAuthRedisConnection(config.redisUrl),
       ),
     ),
   ),

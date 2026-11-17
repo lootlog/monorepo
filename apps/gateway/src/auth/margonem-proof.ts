@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { verify as verifySignatureValue } from "node:crypto";
 import { Cause, Clock, Effect, Option, Schema, Context, Layer } from "effect";
@@ -299,9 +300,7 @@ export const makeMargonemProofVerifier = (
   return {
     verify: (options) =>
       verifyProof(options).pipe(
-        Effect.withSpan("MargonemProofVerifier_verify", {
-          attributes: { adapter: "margonem-proof", retryCount: 0 },
-        }),
+        withAdapterSpan("MargonemProofVerifier_verify", "margonem-proof"),
       ),
   };
 };

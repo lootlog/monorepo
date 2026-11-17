@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { DISCORD_ADMINISTRATOR_PERMISSION } from "@lootlog/schema/discord";
 import type {
@@ -290,9 +291,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
   ) =>
     publisher.publish(RabbitExchange.DEFAULT, routingKey, payload).pipe(
       Effect.mapError((cause) => failure(`publish:${routingKey}`, cause)),
-      Effect.withSpan("DiscordSync_publish", {
-        attributes: { adapter: "rabbitmq", retryCount: 0, routingKey },
-      }),
+      withAdapterSpan("DiscordSync_publish", "rabbitmq", { routingKey }),
     );
 
   const resolveGuild = (guildId: string): Effect.Effect<ResolveGuildResult> => {
@@ -723,12 +722,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
   const withOperationSpan = <A, E>(
     operationId: string,
     effect: Effect.Effect<A, E>,
-  ) =>
-    effect.pipe(
-      Effect.withSpan(operationId, {
-        attributes: { adapter: "discord-sdk", retryCount: 0 },
-      }),
-    );
+  ) => effect.pipe(withAdapterSpan(operationId, "discord-sdk"));
 
   return {
     handleClientReady: (readyClient: Client) =>

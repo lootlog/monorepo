@@ -155,9 +155,7 @@ const GatewayApplicationLive = GatewayApplication.layerWithoutDependencies.pipe(
   Layer.provide(
     Layer.unwrap(
       Effect.map(GatewayConfig, (config) =>
-        reconnectingBunRedisLayer({
-          url: `redis://${encodeURIComponent(config.redis.username)}:${encodeURIComponent(Redacted.value(config.redis.password))}@${config.redis.host}:${config.redis.port}`,
-        }),
+        reconnectingBunRedisLayer({ url: Redacted.value(config.redis.url) }),
       ),
     ).pipe(Layer.provide(GatewayConfig.layer)),
   ),
