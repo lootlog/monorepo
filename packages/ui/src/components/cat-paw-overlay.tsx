@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { createSeededRandom, hashString } from "@lootlog/ui/lib/seeded-random";
 
-export const PAW_SVG =
+const PAW_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='21' rx='6.5' ry='5' fill='white'/%3E%3Ccircle cx='7' cy='11' r='3' fill='white'/%3E%3Ccircle cx='13' cy='7' r='2.8' fill='white'/%3E%3Ccircle cx='19' cy='7' r='2.8' fill='white'/%3E%3Ccircle cx='25' cy='11' r='3' fill='white'/%3E%3C/svg%3E";
 
 function createCatPaws(id: string) {

@@ -37,9 +37,9 @@ const readPreferenceList = flow(
   Option.getOrUndefined,
 );
 
-const DETECTOR_LEVEL_MIN = 0;
+export const DETECTOR_LEVEL_MIN = 0;
 
-const DETECTOR_LEVEL_MAX = 500;
+export const DETECTOR_LEVEL_MAX = 500;
 
 export const cloneMutes = (
   mutes: NotificationMutes = { players: [], npcs: [] },

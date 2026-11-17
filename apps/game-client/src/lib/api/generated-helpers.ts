@@ -10,10 +10,6 @@ import type {
 } from "@lootlog/client/main";
 import type { Npc } from "@/api/npcs.api";
 import type { GuildMember } from "@/types/guild-member";
-import type {
-  NpcTypeSoundConfig,
-  UserSoundSettings,
-} from "@lootlog/schema/sound-settings";
 
 export type GuildIdentity = Pick<
   GuildResponseDtoOutput,
@@ -33,7 +29,7 @@ const guildNamesByIdCache = new WeakMap<
 
 // Legacy JSON response fields accept numeric strings; retain their historical
 // coercion and fallback rules before exposing normalized application settings.
-const getNumber = (value: unknown, fallback = 0) => {
+export const getNumber = (value: unknown, fallback = 0) => {
   if (typeof value === "number") {
     return value;
   }
@@ -47,7 +43,7 @@ const getNumber = (value: unknown, fallback = 0) => {
   return fallback;
 };
 
-const getString = (value: unknown, fallback = "") => {
+export const getString = (value: unknown, fallback = "") => {
   return typeof value === "string" ? value : fallback;
 };
 
@@ -155,66 +151,6 @@ export const normalizeTimerNpc = (npc: TimerResponseDto["npc"]): Npc => {
     type: typeof data?.type === "string" ? data.type : "NPC",
     location: typeof data?.location === "string" ? data.location : undefined,
     margonemType: getNumber(data?.margonemType),
-  };
-};
-
-const normalizeSoundCategoryConfig = (
-  value: unknown,
-): Record<string, NpcTypeSoundConfig> => {
-  if (!isPlainObject(value)) {
-    return {};
-  }
-
-  return Object.entries(value).reduce<Record<string, NpcTypeSoundConfig>>(
-    (result, [key, config]) => {
-      if (!isPlainObject(config)) {
-        return result;
-      }
-
-      result[key] = {
-        volume: getNumber(config.volume, 0.5),
-        soundUrl: getString(config.soundUrl),
-      };
-
-      return result;
-    },
-    {},
-  );
-};
-
-/** Sound settings as the settings documents store them, before normalization. */
-export type StoredSoundSettings = Omit<
-  UserSoundSettings,
-  | "notificationsConfig"
-  | "detectorConfig"
-  | "timersConfig"
-  | "createdAt"
-  | "updatedAt"
-> & {
-  notificationsConfig: unknown;
-  detectorConfig: unknown;
-  timersConfig: unknown;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export const normalizeSoundSettings = (
-  settings: StoredSoundSettings,
-): UserSoundSettings => {
-  return {
-    userId: settings.userId,
-    masterVolume: settings.masterVolume,
-    notificationsVolume: settings.notificationsVolume,
-    detectorVolume: settings.detectorVolume,
-    timersVolume: settings.timersVolume,
-    pingsVolume: settings.pingsVolume,
-    notificationsConfig: normalizeSoundCategoryConfig(
-      settings.notificationsConfig,
-    ),
-    detectorConfig: normalizeSoundCategoryConfig(settings.detectorConfig),
-    timersConfig: normalizeSoundCategoryConfig(settings.timersConfig),
-    createdAt: settings.createdAt ? new Date(settings.createdAt) : undefined,
-    updatedAt: settings.updatedAt ? new Date(settings.updatedAt) : undefined,
   };
 };
 

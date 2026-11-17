@@ -2,12 +2,12 @@ import { useEffect } from "react";
 import {
   readSoundSettings,
   useSoundSettings,
+  type SoundSettings,
 } from "@/features/settings/persistence/use-sound-settings";
 import {
   DEFAULT_SOUND_URLS,
   resolveSoundUrl,
 } from "@/features/settings/config/default-sounds";
-import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
 
 import {
   acquireSoundPlayback,
@@ -23,7 +23,7 @@ type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
 let hasAudioInteraction = navigator.userActivation?.hasBeenActive ?? false;
 
 const getSoundUrl = (
-  settings: UserSoundSettings,
+  settings: SoundSettings,
   category: SoundCategory,
   key: string,
 ) =>
@@ -98,7 +98,7 @@ export const useSoundPlayback = () => {
     };
   }, [masterVolume, soundSettings, soundsMuted]);
 
-  const getLatestSettings = (): UserSoundSettings | undefined =>
+  const getLatestSettings = (): SoundSettings | undefined =>
     readSoundSettings() ?? soundSettings;
 
   const playSounds = (category: SoundCategory, keys: Iterable<string>) => {

@@ -218,7 +218,7 @@ export const applyThemeToRoot = (
  */
 export const CUSTOM_THEME_CACHE_KEY = "lootlog-custom-theme";
 
-export const readCachedCustomTheme = (): AppliedCustomTheme | null => {
+const readCachedCustomTheme = (): AppliedCustomTheme | null => {
   try {
     return parseCachedCustomTheme(localStorage.getItem(CUSTOM_THEME_CACHE_KEY));
   } catch {
