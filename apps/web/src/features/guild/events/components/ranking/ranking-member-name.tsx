@@ -1,6 +1,8 @@
 import { InactiveMemberSuffix } from "@/components/common/inactive-member-suffix";
-import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
-import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
+import {
+  discordRoleCssColor,
+  getMemberDisplayRole,
+} from "@lootlog/domain/member-display-role";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { EventRanking } from "../../types/api";
@@ -21,7 +23,7 @@ export const RankingMemberName = ({
 }: RankingMemberNameProps) => {
   const { t } = useTranslation();
 
-  const roleCssColor = getCustomRoleCssColor(
+  const roleCssColor = discordRoleCssColor(
     getMemberDisplayRole(ranking.member?.roles)?.color,
   );
 

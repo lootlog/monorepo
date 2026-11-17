@@ -4,7 +4,7 @@ import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
 import { VerifiedMargonemAccountIcon } from "@/features/online-players/components/verified-margonem-account-icon";
 import type { FC } from "react";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { getMemberColorHex } from "@/utils/member-color";
 import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
 
 type OnlinePlayersListEntryProps = {
@@ -16,7 +16,7 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
   presences,
   guildMember,
 }) => {
-  const color = useMemberColor(guildMember);
+  const color = getMemberColorHex(guildMember);
 
   return (
     <ListRow className="ll:justify-between ll:py-0.5">

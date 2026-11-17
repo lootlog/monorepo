@@ -1,3 +1,4 @@
+import { PROFESSION_SHORTNAMES } from "@lootlog/domain/profession";
 import {
   LevelRangeFilter,
   type LevelRange,
@@ -20,7 +21,6 @@ import {
   ALL_PROFESSIONS_VALUE,
   MAX_ONLINE_PLAYER_LEVEL,
   MIN_ONLINE_PLAYER_LEVEL,
-  PROFESSION_OPTIONS,
   type OnlinePlayersFiltersValue,
   type ProfessionFilterValue,
 } from "@/features/online-players/online-players-list.helpers";
@@ -82,9 +82,9 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
             <SelectItem value={ALL_PROFESSIONS_VALUE}>
               {t("filters.allProfessions")}
             </SelectItem>
-            {PROFESSION_OPTIONS.map((profession) => (
+            {PROFESSION_SHORTNAMES.map((profession) => (
               <SelectItem key={profession} value={profession}>
-                {t(`professions.${profession}`)}
+                {t(`professions:${profession}`)}
               </SelectItem>
             ))}
           </SelectContent>

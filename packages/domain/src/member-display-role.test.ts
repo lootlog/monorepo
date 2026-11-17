@@ -1,5 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { getMemberDisplayRole } from "./member-display-role.js";
+import {
+  discordRoleColorHex,
+  getMemberDisplayRole,
+} from "./member-display-role.js";
 
 describe("getMemberDisplayRole", () => {
   it("skips a higher role without a color, as Discord does", () => {
@@ -29,5 +32,17 @@ describe("getMemberDisplayRole", () => {
         { position: 1, color: null },
       ]),
     ).toBeUndefined();
+  });
+});
+
+describe("discordRoleColorHex", () => {
+  it("treats a missing or zero color as no color", () => {
+    expect(discordRoleColorHex(undefined)).toBeNull();
+    expect(discordRoleColorHex(null)).toBeNull();
+    expect(discordRoleColorHex(0)).toBeNull();
+  });
+
+  it("pads a dark color to six digits", () => {
+    expect(discordRoleColorHex(0x0000ff)).toBe("0000ff");
   });
 });

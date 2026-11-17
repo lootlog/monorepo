@@ -16,7 +16,7 @@ import {
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 
-import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
+import { discordRoleCssColor } from "@lootlog/domain/member-display-role";
 import {
   HERO_SIGHTING_PRESET_DETAILED,
   HERO_SIGHTING_PRESET_MINIMAL,
@@ -226,7 +226,7 @@ export const useNotificationTemplateEditor = ({
         nextSelection.insertNodes([
           $createNotificationTemplateRoleNode({
             roleColor: suggestion.role
-              ? getCustomRoleCssColor(suggestion.role.color)
+              ? discordRoleCssColor(suggestion.role.color)
               : null,
             roleId: suggestion.role?.id ?? suggestion.key,
             roleName: suggestion.role?.name ?? suggestion.label.slice(1),

@@ -4,6 +4,7 @@ import type {
   PartyGatheringNotification,
   StoredNotification,
 } from "@/store/notifications.store";
+import { hashNpcKey } from "@lootlog/domain/npc-identity";
 import { getNpcType } from "@lootlog/domain/npc-type";
 import {
   isDetectorNpcType,
@@ -20,30 +21,20 @@ type MuteableNotification =
   | PartyGatheringNotification
   | StoredNotification;
 
-const MAX_NPC_NAME_LENGTH = 256;
-
+/**
+ * Colossi and Hero Trackers change their runtime id between spawn places, so
+ * their mutes are stored under a hash of the bare name. Stored mutes depend on
+ * it: a Hero Tracker is not keyed like its timers and kills
+ * (`getTimerNpcId`), which hash a prefixed, normalized name.
+ */
 const getStableNpcId = (
   npcId: number,
   npcName: string,
   npcType: DetectorNpcType,
-) => {
-  // Colossi and Hero Trackers change their runtime id between spawn places.
-  if (npcType === NpcType.COLOSSUS || npcType === NpcType.HERO_TRACKER) {
-    const safeName = String(npcName ?? "");
-    const length = Math.min(safeName.length, MAX_NPC_NAME_LENGTH);
-    let hash = 0;
-
-    for (let index = 0; index < length; index += 1) {
-      const char = safeName.charCodeAt(index);
-      hash = (hash << 5) - hash + char;
-      hash &= hash;
-    }
-
-    return -Math.abs(hash || 1);
-  }
-
-  return Math.abs(npcId);
-};
+) =>
+  npcType === NpcType.COLOSSUS || npcType === NpcType.HERO_TRACKER
+    ? hashNpcKey(String(npcName ?? ""))
+    : Math.abs(npcId);
 
 /** The NPC a notification reports, with the key its mute is stored under. */
 const getNpcMuteTarget = (notification: MuteableNotification) => {

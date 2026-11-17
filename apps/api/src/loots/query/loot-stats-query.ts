@@ -82,7 +82,7 @@ const legend = and(
 
 /**
  * The timeline point of a loot. An hour is its UTC instant; a day or a week
- * is the calendar one in `STATS_TIME_ZONE`, as kill statistics count them,
+ * is the calendar one in `MARGONEM_TIME_ZONE`, as kill statistics count them,
  * given as that local midnight written in UTC. Both PostgreSQL drivers decode
  * the native timestamp; a column codec adds a costly text cast.
  */

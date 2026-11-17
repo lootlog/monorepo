@@ -59,14 +59,6 @@
     "time": "00:21:37"
   },
   "npcTypes": {
-    "elite": "Elita",
-    "elite2": "Elita II",
-    "elite3": "Elita III",
-    "hero": "Heros",
-    "event_hero": "Heros eventowy",
-    "colossus": "Kolos",
-    "titan": "Tytan",
-    "hero_tracker": "Tropiciel herosów",
     "message": "Komunikaty",
     "partyGathering": "Zbiórki"
   },
@@ -174,5 +166,11 @@
       "subscriptionLimit": "Przekroczono limit subskrypcji tego połączenia.",
       "unknown": "Powód: {{reason}}"
     }
+  },
+  "seenAgo": {
+    "now": "przed chwilą",
+    "seconds": "{{count}} s temu",
+    "minutes": "{{count}} min temu",
+    "hours": "{{count}} godz. temu"
   }
 }

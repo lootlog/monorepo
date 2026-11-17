@@ -1,7 +1,7 @@
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { defaultUrlTransform, type Components } from "react-markdown";
 import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
-import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
+import { discordRoleCssColor } from "@lootlog/domain/member-display-role";
 
 const ROLE_LINK_PREFIX = "role:";
 
@@ -12,7 +12,7 @@ export const replaceRoleMentions = (text: string, roles: GuildRole[]) => {
     .replace(/<@&(\d+)>/g, (_match, roleId: string) => {
       const role = roleById.get(roleId);
       const name = role ? `@${role.name}` : `@${roleId}`;
-      const color = role ? (getCustomRoleCssColor(role.color) ?? "") : "";
+      const color = role ? (discordRoleCssColor(role.color) ?? "") : "";
 
       return `[${name}](${ROLE_LINK_PREFIX}${color})`;
     })

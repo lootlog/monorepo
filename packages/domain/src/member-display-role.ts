@@ -17,3 +17,20 @@ export const getMemberDisplayRole = <Role extends DisplayRoleCandidate>(
     (roles ?? []).filter((role) => Boolean(role.color)),
     (role) => role.position ?? 0,
   );
+
+/**
+ * A Discord role colour as six lowercase hex digits without `#`, or `null`
+ * for 0, which Discord uses for a role without a colour.
+ */
+export const discordRoleColorHex = (
+  color: number | null | undefined,
+): string | null => (color ? color.toString(16).padStart(6, "0") : null);
+
+/** A Discord role colour as a CSS colour, or `null` without one. */
+export const discordRoleCssColor = (
+  color: number | null | undefined,
+): string | null => {
+  const hex = discordRoleColorHex(color);
+
+  return hex ? `#${hex}` : null;
+};

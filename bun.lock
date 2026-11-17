@@ -26,6 +26,7 @@
         "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
         "@lootlog/database": "workspace:*",
+        "@lootlog/datetime": "workspace:*",
         "@lootlog/domain": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
@@ -512,6 +513,9 @@
     "packages/battle-processor": {
       "name": "@lootlog/battle-processor",
       "version": "1.0.3",
+      "dependencies": {
+        "@lootlog/domain": "workspace:*",
+      },
       "devDependencies": {
         "@lootlog/typescript-config": "workspace:*",
         "typescript": "catalog:",

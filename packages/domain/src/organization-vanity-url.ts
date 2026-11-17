@@ -1,3 +1,5 @@
+import { slug } from "./text-fold.js";
+
 // This public Web route cannot also address an Organization.
 const RESTRICTED_VANITY_URLS = new Set(["battles"]);
 
@@ -5,11 +7,9 @@ const RESTRICTED_VANITY_URLS = new Set(["battles"]);
 // id namespace, regardless of length, to prevent ambiguous lookups.
 export const isOrganizationIdLike = (value: string) => /^\d+$/.test(value);
 
-export const normalizeVanityUrl = (input: string) =>
-  input
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
+// Vanity URLs are stored, and they have always been slugged without folding
+// diacritics: `Łódź` becomes `d`.
+export const normalizeVanityUrl = (input: string) => slug(input);
 
 export const parseVanityUrl = (
   input: string,

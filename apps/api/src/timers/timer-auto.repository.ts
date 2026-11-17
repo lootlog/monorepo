@@ -28,7 +28,7 @@ import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { buildTimerKey, buildTimerLockKey } from "#src/timers/timer-key";
-import { getEventHeroSyntheticNpcId } from "#src/shared/margonem/npc-identity";
+import { getEventHeroSyntheticNpcId } from "@lootlog/domain/npc-identity";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersIdentity } from "./timers-data.js";
 import {

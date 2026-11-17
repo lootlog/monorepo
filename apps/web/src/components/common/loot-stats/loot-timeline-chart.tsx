@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import {
   ChartContainer,
   ChartTooltip,
@@ -27,7 +28,7 @@ const tooltipDayFormatter = new Intl.DateTimeFormat("pl-PL", {
 });
 
 const tooltipHourFormatter = new Intl.DateTimeFormat("pl-PL", {
-  timeZone: "Europe/Warsaw",
+  timeZone: MARGONEM_TIME_ZONE,
   weekday: "short",
   day: "numeric",
   month: "short",

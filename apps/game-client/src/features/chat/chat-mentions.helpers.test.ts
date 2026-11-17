@@ -10,7 +10,6 @@ import {
   getChatMentionSegments,
   getCurrentUserMentionNames,
   getCurrentUserMentionRoleNames,
-  getDiscordColorHex,
   hasCurrentUserMention,
 } from "./chat-mentions.helpers";
 
@@ -167,11 +166,5 @@ describe("chat mentions helpers", () => {
         "raid team": "ff8800",
       },
     });
-  });
-
-  it("treats missing or zero discord colors as no special color", () => {
-    expect(getDiscordColorHex(undefined)).toBeNull();
-    expect(getDiscordColorHex(null)).toBeNull();
-    expect(getDiscordColorHex(0)).toBeNull();
   });
 });

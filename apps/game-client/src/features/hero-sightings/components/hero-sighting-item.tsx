@@ -10,7 +10,7 @@ import { HeroSightingDetector } from "@/features/hero-sightings/components/hero-
 import { HeroSightingHistoryPopover } from "@/features/hero-sightings/components/hero-sighting-history-popover";
 import { HeroSightingPlace } from "@/features/hero-sightings/components/hero-sighting-place";
 import { HeroSightingRefresher } from "@/features/hero-sightings/components/hero-sighting-refresher";
-import { formatSightingAge } from "@/features/hero-sightings/format-sighting-age";
+import { formatSeenAgo } from "@/utils/format-seen-ago";
 import type { HeroSightingRow } from "@/features/hero-sightings/hero-sighting-rows";
 import { useHeroSightingClaim } from "@/features/hero-sightings/hooks/use-hero-sighting-claim";
 
@@ -67,7 +67,7 @@ export function HeroSightingItem({
             <HeroSightingRefresher member={row.refreshedBy} />
           ) : null}
           <span className="ll:shrink-0">
-            {formatSightingAge(t, row.lastSeenAt, now)}
+            {formatSeenAgo(now - Date.parse(row.lastSeenAt), "minute")}
           </span>
         </span>
       </span>

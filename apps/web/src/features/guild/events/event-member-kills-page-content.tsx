@@ -8,8 +8,10 @@ import {
   useListEventRanking,
   useShowEvent,
 } from "@lootlog/client/main";
-import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
-import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
+import {
+  discordRoleCssColor,
+  getMemberDisplayRole,
+} from "@lootlog/domain/member-display-role";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { HeroTabs } from "./components/shared/hero-tabs";
 import { MemberKillsList } from "./components/member-kills/member-kills-list";
@@ -128,7 +130,7 @@ const getMemberEventContext = ({
       ?.filter((stats) => !selectedHero || stats.heroId === selectedHero.id)
       .reduce((sum, stats) => sum + stats.killCount, 0),
     roleColor:
-      getCustomRoleCssColor(
+      discordRoleCssColor(
         getMemberDisplayRole(memberRankings[0]?.member.roles)?.color,
       ) ?? undefined,
   };

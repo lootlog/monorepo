@@ -5,7 +5,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import type { FC } from "react";
-import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
+import { MARGONEM_CDN_CHARACTERS_URL } from "@lootlog/domain/margonem-cdn";
 import { PlayerSpriteTile } from "@/components/tiles/player-sprite-tile";
 import { PlayerTooltipContent } from "@/components/tiles/player-tooltip-content";
 

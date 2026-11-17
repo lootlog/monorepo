@@ -1,3 +1,4 @@
+import { discordRoleColorHex } from "@lootlog/domain/member-display-role";
 import { isEqual } from "es-toolkit";
 import type {
   ChatMessageResponseDtoOutput,
@@ -63,14 +64,6 @@ export const isChatMentionBoundary = (value?: string) => {
   return value === undefined || MENTION_BOUNDARY_PATTERN.test(value);
 };
 
-export const getDiscordColorHex = (color?: number | null) => {
-  if (color === undefined || color === null || color === 0) {
-    return null;
-  }
-
-  return color.toString(16).padStart(6, "0");
-};
-
 const getNormalizedMentionColorsByName = <T extends NamedMentionValue>(
   values?: T[],
 ) => {
@@ -82,7 +75,7 @@ const getNormalizedMentionColorsByName = <T extends NamedMentionValue>(
         return result;
       }
 
-      result[normalizedName] = getDiscordColorHex(value.color);
+      result[normalizedName] = discordRoleColorHex(value.color);
 
       return result;
     },

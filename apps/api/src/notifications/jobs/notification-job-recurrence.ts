@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { scheduleNotificationOccurrence } from "./notification-scheduled-occurrence.js";
 import { Clock, Effect } from "effect";
 import type { NotificationRuleWithTargets } from "#src/notifications/jobs/notification-job.repository";
@@ -7,7 +8,6 @@ import {
   NotificationOwnerType,
   NotificationScheduleIntervalType,
 } from "@lootlog/schema/notifications";
-import { GUILD_NOTIFICATION_TIMEZONE } from "#src/notifications/rules/schedule-timezone";
 import { calculateNextOccurrenceInTimeZone } from "#src/notifications/rules/notification-schedule-time";
 import type { JsonValue } from "#src/database/json";
 
@@ -81,7 +81,7 @@ export const makeNotificationJobRecurrence = (
         timeZone:
           rule.scheduleTimezone ??
           (rule.ownerType === NotificationOwnerType.GUILD
-            ? GUILD_NOTIFICATION_TIMEZONE
+            ? MARGONEM_TIME_ZONE
             : "UTC"),
       });
 

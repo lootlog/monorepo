@@ -72,12 +72,12 @@ export function SoundsSettingsTab() {
     commitVolume(category, volumes[category] === 0 ? UNMUTED_VOLUME : 0);
 
   const notificationFields = [
-    { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
-    { label: t("common:npcTypes.hero"), key: NpcType.HERO },
-    { label: t("common:npcTypes.event_hero"), key: NpcType.EVENT_HERO },
-    { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
-    { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
-    { label: t("common:npcTypes.hero_tracker"), key: NpcType.HERO_TRACKER },
+    { label: t("npcType:ELITE2"), key: NpcType.ELITE2 },
+    { label: t("npcType:HERO"), key: NpcType.HERO },
+    { label: t("npcType:EVENT_HERO"), key: NpcType.EVENT_HERO },
+    { label: t("npcType:COLOSSUS"), key: NpcType.COLOSSUS },
+    { label: t("npcType:TITAN"), key: NpcType.TITAN },
+    { label: t("npcType:HERO_TRACKER"), key: NpcType.HERO_TRACKER },
     { label: t("common:npcTypes.message"), key: "message" },
   ];
 

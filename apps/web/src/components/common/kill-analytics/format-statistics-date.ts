@@ -1,4 +1,4 @@
-import { createCachedFormatter } from "@lootlog/datetime";
+import { createCachedFormatter, MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 
 // The analytics response carries calendar dates ("2026-09-14") already
 // resolved in the player's time zone, so they are formatted as UTC midnight to
@@ -45,15 +45,15 @@ export const formatStatisticsDay = (date: string) =>
 
 /** "2026-09-14T08:00:00.000Z" → "10:00", for chart axes. */
 export const formatStatisticsHour = (instant: string) =>
-  getHourFormatter("Europe/Warsaw").format(new Date(instant));
+  getHourFormatter(MARGONEM_TIME_ZONE).format(new Date(instant));
 
 /** "2026-09-07T23:30:00.000Z" → "8.09", for chart axes. */
 export const formatStatisticsInstantDay = (instant: string) =>
-  getDayMonthFormatter("Europe/Warsaw").format(new Date(instant));
+  getDayMonthFormatter(MARGONEM_TIME_ZONE).format(new Date(instant));
 
 /** "2026-09-14T08:00:00.000Z" → "14.09.2026, 10:00" */
 export const formatStatisticsDateHour = (instant: string) =>
-  getDateHourFormatter("Europe/Warsaw").format(new Date(instant));
+  getDateHourFormatter(MARGONEM_TIME_ZONE).format(new Date(instant));
 
 /** "2026-08-09" → "niedziela, 9.08.2026" */
 export const formatStatisticsWeekdayDate = (date: string) =>

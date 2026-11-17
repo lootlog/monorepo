@@ -1,3 +1,4 @@
+import { formatSeenAgo } from "@/utils/format-seen-ago";
 import { useTranslation } from "react-i18next";
 import { PlayerName } from "@/components/player-name";
 import { useNow } from "@/hooks/ui/use-now";
@@ -59,9 +60,7 @@ export function TimerMapThreatList({
                   {t("tooltip.afk")}
                 </span>
               )}
-              {t("tooltip.seenAgo", {
-                seconds: Math.max(0, Math.floor((now - enemy.seenAt) / 1_000)),
-              })}
+              {formatSeenAgo(now - enemy.seenAt)}
             </span>
           </>
         )}

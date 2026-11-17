@@ -1,4 +1,4 @@
-import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
+import { MARGONEM_CDN_CHARACTERS_URL } from "@lootlog/domain/margonem-cdn";
 import { cn } from "cn";
 
 type PlayerSpriteTileProps = {
