@@ -47,7 +47,7 @@ import {
   getUserLootlogConfigCacheScope,
 } from "#src/shared/cache";
 import { applicationLogger } from "#src/shared/application-logger";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "bullmq";
 import { Context, Effect, FiberSet, Layer } from "effect";
@@ -198,18 +198,13 @@ export const memberServicesLive = Layer.effect(
               { concurrency: "unbounded", discard: true },
             ),
           publishMemberRemoved: (member) =>
-            rabbit.publish({
-              exchange: "default",
-              routingKey: RabbitRoutingKey.GUILDS_MEMBERS_REMOVE,
-              content: new TextEncoder().encode(
-                JSON.stringify({
-                  id: member.discordId,
-                  discordId: member.discordId,
-                  userId: member.globalUserId,
-                  guildId: member.guildId,
-                }),
-              ),
-            }),
+            rabbit.publish(
+              eventMessage(RabbitRoutingKey.GUILDS_MEMBERS_REMOVE, {
+                discordId: member.discordId,
+                userId: member.globalUserId,
+                guildId: member.guildId,
+              }),
+            ),
           invalidateMember: ({ discordId, guildId, userId }) =>
             Effect.all(
               [
@@ -229,13 +224,13 @@ export const memberServicesLive = Layer.effect(
               { concurrency: "unbounded", discard: true },
             ),
           publishMemberUpdated: ({ discordId, guildId, userId }) =>
-            rabbit.publish({
-              exchange: "default",
-              routingKey: RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
-              content: new TextEncoder().encode(
-                JSON.stringify({ id: discordId, discordId, userId, guildId }),
-              ),
-            }),
+            rabbit.publish(
+              eventMessage(RabbitRoutingKey.GUILDS_MEMBERS_UPDATE, {
+                discordId,
+                userId,
+                guildId,
+              }),
+            ),
         });
 
         const removal = makeMemberRemoval(database, delivery);
@@ -357,12 +352,7 @@ export const membersData = Layer.unwrap(
     const publish = <Key extends keyof MemberPublishedEvents>(
       routingKey: Key,
       payload: MemberPublishedEvents[Key],
-    ) =>
-      rabbit.publish({
-        exchange: "default",
-        routingKey,
-        content: new TextEncoder().encode(JSON.stringify(payload)),
-      });
+    ) => rabbit.publish(eventMessage(routingKey, payload));
 
     return makeMembersDataLayer(
       {

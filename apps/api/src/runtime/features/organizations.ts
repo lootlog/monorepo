@@ -5,7 +5,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeDiscordBotClient } from "#src/discord-bot-client/discord-bot-client";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer, Redacted } from "effect";
 import { HttpClient } from "effect/http";
@@ -64,11 +64,9 @@ export const guildDiscordSyncLive = Layer.effect(
       staleAfterMs: 900 * 1000,
       refresh: (guildId) => discordBot.refreshGuildChannels(guildId),
       publishChannelDeleted: (payload) =>
-        rabbit.publish({
-          exchange: "default",
-          routingKey: RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
-          content: new TextEncoder().encode(JSON.stringify(payload)),
-        }),
+        rabbit.publish(
+          eventMessage(RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED, payload),
+        ),
     });
   }),
 );
@@ -163,11 +161,9 @@ export const accountOrganizationOperationsLive = Layer.effect(
       deleteCachePattern: (pattern) =>
         cacheAttempt(() => redis.deleteByPattern(pattern)),
       publishMemberRemoved: (payload) =>
-        rabbit.publish({
-          exchange: "default",
-          routingKey: RabbitRoutingKey.GUILDS_MEMBERS_REMOVE,
-          content: new TextEncoder().encode(JSON.stringify(payload)),
-        }),
+        rabbit.publish(
+          eventMessage(RabbitRoutingKey.GUILDS_MEMBERS_REMOVE, payload),
+        ),
     });
 
     const preferences = makeUserPreferencesData(
@@ -285,11 +281,9 @@ export const rolesData = Layer.unwrap(
       {
         memberPolicyChanged: (member) =>
           rabbit
-            .publish({
-              exchange: "default",
-              routingKey: RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
-              content: new TextEncoder().encode(JSON.stringify(member)),
-            })
+            .publish(
+              eventMessage(RabbitRoutingKey.GUILDS_MEMBERS_UPDATE, member),
+            )
             .pipe(Effect.asVoid),
       },
     );

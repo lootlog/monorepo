@@ -1,10 +1,13 @@
+import { eventMessage, type RabbitMessaging } from "@lootlog/messaging";
 import { guildKillActivityTable } from "#src/database/drizzle/kill-statistics.schema";
 import { and, eq, gte, inArray, lt, sql } from "drizzle-orm";
-import { Clock, Effect } from "effect";
-import type { RabbitMessaging } from "@lootlog/messaging";
+import { Clock, Effect, Schema } from "effect";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { readPublishedFeedEntry } from "#src/users/user-feed";
+
+const isNpcType = Schema.is(NpcTypeSchema);
 
 export const makeGuildKillActivityPublisher = (
   database: typeof ApiDatabase.Service,
@@ -51,21 +54,26 @@ export const makeGuildKillActivityPublisher = (
 
       if (!feedEntry || feedEntry.type !== "kill") return;
 
-      yield* rabbit.publish({
-        exchange: "default",
-        routingKey: RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1,
-        messageId: `${feedEntry.id}:${feedEntry.version}`,
-        content: new TextEncoder().encode(
-          JSON.stringify({
+      // The gateway rejects a kill whose NPC has no Margonem type or level.
+      const npcType = feedEntry.npc.type;
+      const npcLevel = feedEntry.npc.lvl;
+
+      if (!isNpcType(npcType) || npcLevel === null) return;
+
+      yield* rabbit.publish(
+        eventMessage(
+          RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1,
+          {
             version: 1,
             sourceNpcs,
             guildId: input.guildId,
             world: input.world,
-            npc: { type: feedEntry.npc.type, lvl: feedEntry.npc.lvl },
+            npc: { type: npcType, lvl: npcLevel },
             feedEntry,
-          }),
+          },
+          { messageId: `${feedEntry.id}:${feedEntry.version}` },
         ),
-      });
+      );
     },
     Effect.timeout("2 seconds"),
     Effect.catch(() =>

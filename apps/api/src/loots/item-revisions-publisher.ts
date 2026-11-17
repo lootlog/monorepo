@@ -1,5 +1,5 @@
+import { eventMessage, type RabbitMessaging } from "@lootlog/messaging";
 import type { CatalogItemRevisions } from "@lootlog/protocol/rabbit/catalog";
-import type { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { sql } from "drizzle-orm";
 import { Effect } from "effect";
@@ -49,11 +49,9 @@ export const makeItemRevisionsPublisher = (
     yield* Effect.forEach(
       chunk(items, ITEMS_PER_MESSAGE),
       (batch) =>
-        rabbit.publish({
-          exchange: "default",
-          routingKey: RabbitRoutingKey.CATALOG_ITEMS_REVISIONS,
-          content: new TextEncoder().encode(JSON.stringify(batch)),
-        }),
+        rabbit.publish(
+          eventMessage(RabbitRoutingKey.CATALOG_ITEMS_REVISIONS, batch),
+        ),
       { discard: true },
     );
 

@@ -29,7 +29,6 @@ import type {
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { selectActiveRoleHolders } from "#src/members/member-role-holders";
 import { queueMemberDeliveries } from "#src/members/member.repository";
-import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { getPermissionsCachePattern } from "#src/shared/cache";
 import { getGuildCacheKey } from "#src/guilds/guild-configuration-cache";
 
@@ -219,7 +218,7 @@ export const makeGuildLifecycle = (
             .insert(discordGuildSyncStateTable)
             .values({
               guildId: data.guildId,
-              status: DiscordGuildSyncStatus.STALE,
+              status: "STALE",
               hasRequiredPermissions: false,
               requiredPermissions: [],
               grantedPermissions: [],
@@ -234,7 +233,7 @@ export const makeGuildLifecycle = (
             })
             .onConflictDoUpdate({
               target: discordGuildSyncStateTable.guildId,
-              set: { status: DiscordGuildSyncStatus.STALE, updatedAt: now },
+              set: { status: "STALE", updatedAt: now },
             });
 
           const owners = [

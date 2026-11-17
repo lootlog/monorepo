@@ -752,6 +752,7 @@ describe("RealtimeHub federation", () => {
                 guildId: scope.organizationId,
                 eventId: "event",
                 heroId: "hidden-hero",
+                killId: "hidden-kill",
                 mapId: "hidden-map",
                 heroNpcLvl: 300,
               },

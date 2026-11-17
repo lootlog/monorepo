@@ -1,7 +1,8 @@
+import type { EventPublisher } from "@lootlog/messaging";
 import { publishTimerEvents } from "./timer-update-publication.js";
 import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
-import { timerNpcField, type TimerPublishedEvent } from "./timer-projection.js";
+import { timerNpcField } from "./timer-projection.js";
 import {
   canViewTimer,
   findTimerMatches,
@@ -33,14 +34,7 @@ import {
 
 export interface DeleteTimerPorts {
   readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
-  readonly publish: <
-    Key extends
-      | typeof RabbitRoutingKey.GUILDS_TIMERS_DELETE
-      | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
-  >(
-    routingKey: Key,
-    payload: TimerPublishedEvent<Key>,
-  ) => Effect.Effect<unknown, unknown>;
+  readonly publish: EventPublisher["publish"];
 }
 
 export const makeDeleteTimer = (

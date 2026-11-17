@@ -1,3 +1,5 @@
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
+import { eventMessage, type RabbitMessaging } from "@lootlog/messaging";
 import { readPublishedFeedEntry } from "#src/users/user-feed";
 import { and, asc, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 import { Clock, Effect, Metric, Schema } from "effect";
@@ -9,7 +11,6 @@ import { LootResponse } from "#src/loots/loot-response.schema";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { LootCreatedNotificationEventV2Schema } from "@lootlog/schema/notifications";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import type { RabbitMessaging } from "@lootlog/messaging";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { organizationLootRecordTable } from "#src/database/drizzle/loot.schema";
 import { lootPublicationOutboxTable } from "#src/database/drizzle/loot-publication-outbox.schema";
@@ -160,12 +161,15 @@ export const makeLootPublicationDispatcher = (
                 } satisfies GuildLootCreatedMessageV2;
               }
 
-              const publication = rabbit.publish({
-                exchange: "default",
-                routingKey: payload.routingKey,
-                messageId: `loot-publication:${row.id}`,
-                content: new TextEncoder().encode(JSON.stringify(data)),
-              });
+              const publication = rabbit.publish(
+                eventMessage(
+                  payload.routingKey,
+                  // SAFETY: `createdPublications` typed the data by this routing
+                  // key before it was stored, and consumers validate it again.
+                  data as CanonicalRabbitEvent<typeof payload.routingKey>,
+                  { messageId: `loot-publication:${row.id}` },
+                ),
+              );
 
               if (payload.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
                 const ageMs = Math.max(

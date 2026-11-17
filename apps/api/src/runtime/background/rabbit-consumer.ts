@@ -1,14 +1,13 @@
 import {
-  UnprocessableDelivery,
-  type FailurePolicy,
+  consumeEvent,
   type RabbitDelivery,
   type RabbitMessagingService,
 } from "@lootlog/messaging";
-import {
-  decodeRabbitEventJson,
-  type CanonicalRabbitEvent,
-  type CanonicalRabbitEventRoutingKey,
+import type {
+  CanonicalRabbitEvent,
+  CanonicalRabbitEventRoutingKey,
 } from "@lootlog/protocol/rabbit/events";
+import type { ConsumerRoute } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Schedule, Semaphore } from "effect";
 
 /**
@@ -28,52 +27,31 @@ export const makeRabbitConsumer = Effect.fnUntraced(function* (
   const handlerSlots = yield* Semaphore.make(5);
 
   return <Key extends CanonicalRabbitEventRoutingKey>(
-    queue: string,
-    routingKey: Key,
+    route: ConsumerRoute<Key>,
     handler: (
       payload: CanonicalRabbitEvent<Key>,
       delivery: RabbitDelivery,
     ) => Effect.Effect<unknown, unknown> | Promise<void> | void,
-    // No default: a rejected delivery without a retry or dead-letter route
-    // is lost, so every queue chooses where its failures go.
-    failurePolicy: FailurePolicy,
     inPlaceRetry?: Schedule.Schedule<unknown, unknown>,
   ) =>
     Effect.acquireRelease(
-      rabbit.consume({ queue, prefetch: 1, failurePolicy }, (delivery) =>
-        Effect.try({
-          try: () =>
-            decodeRabbitEventJson(
-              routingKey,
-              new TextDecoder().decode(delivery.content),
-            ),
-          // A payload that does not decode now will never decode on retry.
-          catch: (cause) => new UnprocessableDelivery({ cause }),
-        }).pipe(
-          Effect.tapError(() =>
-            Effect.logError("RabbitMQ delivery payload is invalid").pipe(
-              Effect.annotateLogs({ queue, routingKey }),
-            ),
-          ),
-          Effect.flatMap((payload) => {
-            const attempt = Effect.suspend(() => {
-              const result = handler(payload, delivery);
+      consumeEvent(rabbit, route, (payload, delivery) => {
+        const attempt = Effect.suspend(() => {
+          const result = handler(payload, delivery);
 
-              return Effect.isEffect(result)
-                ? result.pipe(Effect.asVoid)
-                : Effect.tryPromise({
-                    try: () => Promise.resolve(result),
-                    catch: (cause) => cause,
-                  });
-            }).pipe(handlerSlots.withPermits(1));
+          return Effect.isEffect(result)
+            ? result.pipe(Effect.asVoid)
+            : Effect.tryPromise({
+                try: () => Promise.resolve(result),
+                catch: (cause) => cause,
+              });
+        }).pipe(handlerSlots.withPermits(1));
 
-            // The backoff runs outside the handler slot, leaving it to other queues.
-            return inPlaceRetry
-              ? attempt.pipe(Effect.retry(inPlaceRetry))
-              : attempt;
-          }),
-        ),
-      ),
+        // The backoff runs outside the handler slot, leaving it to other queues.
+        return inPlaceRetry
+          ? attempt.pipe(Effect.retry(inPlaceRetry))
+          : attempt;
+      }),
       ({ cancel }) => cancel.pipe(Effect.ignore),
     );
 });

@@ -235,8 +235,7 @@ const setup = async () => {
   const deliverChange = async (
     routingKey:
       | typeof RabbitRoutingKey.GUILDS_MEMBERS_UPDATE
-      | typeof RabbitRoutingKey.GUILDS_MEMBERS_REMOVE
-      | typeof RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE,
+      | typeof RabbitRoutingKey.GUILDS_MEMBERS_REMOVE,
   ) => {
     await Effect.runPromise(
       rabbit.deliver(routingKey, { ...identity, guildId: "organization-1" }),
@@ -354,7 +353,7 @@ for (const change of ["role", "membership"] as const) {
     await system.deliverChange(
       change === "membership"
         ? RabbitRoutingKey.GUILDS_MEMBERS_REMOVE
-        : RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE,
+        : RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
     );
 
     // One fresh read per replica holding the member's sockets; the idle one reads none.

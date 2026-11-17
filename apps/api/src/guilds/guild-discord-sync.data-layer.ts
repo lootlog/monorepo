@@ -1,11 +1,10 @@
+import type {
+  DiscordGuildChannel,
+  DiscordGuildSyncState,
+} from "@lootlog/schema/discord";
 import { notificationChannelMetadata } from "#src/notifications/targets/notification-channel-metadata";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Predicate } from "effect";
-import {
-  DiscordGuildSyncStatus,
-  type DiscordGuildChannelSnapshot,
-  type DiscordGuildSyncState,
-} from "@lootlog/schema/notifications";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   discordGuildChannelSnapshotTable,
@@ -17,7 +16,7 @@ import { RateLimitedError } from "#src/shared/http/http-errors";
 import { AccountOrganizationOperationError } from "./account-organization-data.js";
 
 type SyncPayload = {
-  readonly channels: ReadonlyArray<DiscordGuildChannelSnapshot>;
+  readonly channels: ReadonlyArray<DiscordGuildChannel>;
   readonly syncState: DiscordGuildSyncState;
 };
 
@@ -87,13 +86,12 @@ const syncStateWrite = (guildId: string, state: DiscordGuildSyncState) => {
     updatedAt: now,
   };
 
-  if (state.status === DiscordGuildSyncStatus.SYNCED)
-    values.lastSuccessAt = lastSuccessAt;
+  if (state.status === "SYNCED") values.lastSuccessAt = lastSuccessAt;
 
   return { now, lastSuccessAt, values, guildId };
 };
 
-const channelSnapshotValues = (channel: DiscordGuildChannelSnapshot) => ({
+const channelSnapshotValues = (channel: DiscordGuildChannel) => ({
   name: channel.name,
   channelType: channel.channelType,
   parentId: channel.parentId,
@@ -108,7 +106,7 @@ const channelSnapshotValues = (channel: DiscordGuildChannelSnapshot) => ({
   lastSyncedAt: new Date(channel.lastSyncedAt),
 });
 
-const notificationTargetValues = (channel: DiscordGuildChannelSnapshot) => ({
+const notificationTargetValues = (channel: DiscordGuildChannel) => ({
   canSend: channel.hasRequiredPermissions,
   lastSyncedAt: new Date(channel.lastSyncedAt),
   metadata: notificationChannelMetadata(channel),
@@ -225,7 +223,7 @@ const recordFailure = (
   database: typeof ApiDatabase.Service,
   guildId: string,
   error: unknown,
-  status: DiscordGuildSyncState["status"] = DiscordGuildSyncStatus.FAILED,
+  status: DiscordGuildSyncState["status"] = "FAILED",
 ) =>
   Effect.gen(function* () {
     const guild = yield* database
@@ -330,22 +328,20 @@ export const makeGuildDiscordSyncData = (
     }
 
     if (
-      current.status === DiscordGuildSyncStatus.NOT_FOUND ||
-      current.status === DiscordGuildSyncStatus.FAILED ||
-      current.status === DiscordGuildSyncStatus.SYNCING
+      current.status === "NOT_FOUND" ||
+      current.status === "FAILED" ||
+      current.status === "SYNCING"
     ) {
       return current;
     }
 
     const stale =
-      current.status === DiscordGuildSyncStatus.STALE ||
+      current.status === "STALE" ||
       (yield* Clock.currentTimeMillis) - current.updatedAt.getTime() >
         ports.staleAfterMs;
 
     // Age alone is not an error; keep only an error Discord actually reported.
-    return stale
-      ? { ...current, status: DiscordGuildSyncStatus.STALE }
-      : current;
+    return stale ? { ...current, status: "STALE" } : current;
   });
 
   const mapError = <A>(effect: Effect.Effect<A, unknown>) =>
@@ -375,7 +371,7 @@ export const makeGuildDiscordSyncData = (
   const handleUpserted = Effect.fn("handleGuildChannelUpserted")(
     function* (event: {
       readonly guildId: string;
-      readonly channel: DiscordGuildChannelSnapshot;
+      readonly channel: DiscordGuildChannel;
       readonly syncState: DiscordGuildSyncState;
     }) {
       if (!(yield* guildExists(database, event.guildId))) return;
@@ -506,7 +502,7 @@ export const makeGuildDiscordSyncData = (
   ) {
     let syncState = yield* get(guildId);
 
-    if (syncState.status === DiscordGuildSyncStatus.STALE) {
+    if (syncState.status === "STALE") {
       syncState = yield* synchronize(guildId);
     }
 

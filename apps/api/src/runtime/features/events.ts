@@ -7,12 +7,15 @@ import {
 } from "#src/events/respawn/event-timers.port";
 import { RedlockService } from "#src/redis/redlock";
 import { applicationLogger } from "#src/shared/application-logger";
-import { RabbitMessaging } from "@lootlog/messaging";
+import {
+  RabbitMessaging,
+  eventMessage,
+  makeEventPublisher,
+} from "@lootlog/messaging";
 import { Queue } from "bullmq";
 import { Context, Effect, Layer } from "effect";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
-import { makeAmqpAdapter } from "#src/runtime/infrastructure/amqp-adapter";
 import { RESPAWN_WINDOW_QUEUE } from "#src/events/respawn/respawn-queue.constant";
 import { makeEventAccess } from "#src/events/event-access";
 import { makeEventCatalogMutations } from "#src/events/catalog/event-catalog-mutations";
@@ -73,7 +76,7 @@ export const eventTimersLive = Layer.effect(
     return makeEventTimersPort({
       logger: applicationLogger,
       store: makeEventTimerStore(database),
-      amqp: makeAmqpAdapter(rabbit),
+      amqp: makeEventPublisher(rabbit),
       redis,
       redlock: new RedlockService(redis),
     });
@@ -114,7 +117,7 @@ export const eventsServicesLive = Layer.effect(
         Effect.tryPromise(() => respawn.close()).pipe(Effect.orDie),
     );
 
-    const amqp = makeAmqpAdapter(rabbit);
+    const amqp = makeEventPublisher(rabbit);
     const readCache = makeEventReadCache(redis);
     const emitter = makeEventEmitter(amqp);
     const summary = makeEventSummary(makeEventSummaryStore(database));
@@ -185,11 +188,7 @@ export const eventsServicesLive = Layer.effect(
           {
             publish: (routingKey, payload) =>
               rabbit
-                .publish({
-                  exchange: "default",
-                  routingKey,
-                  content: new TextEncoder().encode(JSON.stringify(payload)),
-                })
+                .publish(eventMessage(routingKey, payload))
                 .pipe(Effect.asVoid),
           },
           applicationLogger,
@@ -265,11 +264,7 @@ export const eventsServicesLive = Layer.effect(
           {
             publish: (routingKey, payload) =>
               rabbit
-                .publish({
-                  exchange: "default",
-                  routingKey,
-                  content: new TextEncoder().encode(JSON.stringify(payload)),
-                })
+                .publish(eventMessage(routingKey, payload))
                 .pipe(Effect.asVoid),
           },
           {
@@ -305,11 +300,7 @@ export const eventsServicesLive = Layer.effect(
           {
             publish: (routingKey, payload) =>
               rabbit
-                .publish({
-                  exchange: "default",
-                  routingKey,
-                  content: new TextEncoder().encode(JSON.stringify(payload)),
-                })
+                .publish(eventMessage(routingKey, payload))
                 .pipe(Effect.asVoid),
           },
           applicationLogger,
@@ -320,11 +311,7 @@ export const eventsServicesLive = Layer.effect(
           {
             publish: (routingKey, payload) =>
               rabbit
-                .publish({
-                  exchange: "default",
-                  routingKey,
-                  content: new TextEncoder().encode(JSON.stringify(payload)),
-                })
+                .publish(eventMessage(routingKey, payload))
                 .pipe(Effect.asVoid),
           },
           applicationLogger,

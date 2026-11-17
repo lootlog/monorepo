@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { DiscordNotificationDeliveryResultEvent } from "@lootlog/schema/notifications";
+import type { DiscordNotificationDeliveryResult } from "@lootlog/schema/notifications";
 import type {
   NotificationDeliveryUpdate,
   NotificationStoredJob,
@@ -41,7 +41,7 @@ export const makeNotificationDeliveryResult = (
   ) => Effect.Effect<unknown, unknown, never>,
 ) =>
   Effect.fn("notifications.deliveryResult")(function* (
-    event: DiscordNotificationDeliveryResultEvent,
+    event: DiscordNotificationDeliveryResult,
   ) {
     const job = yield* store.find(event.notificationJobId);
 
