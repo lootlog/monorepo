@@ -3,38 +3,24 @@ import {
   CacheFillTimeoutError,
   fillJsonCache,
 } from "@lootlog/database/redis-cache-fill";
-import { Effect, Schema } from "effect";
-import * as Redis from "effect/persistence/Redis";
-
-export interface RedisOptions {
-  readonly host: string;
-  readonly port: number;
-  readonly password?: string;
-  readonly username?: string;
-  readonly prefix?: string;
-  readonly lazyConnect?: boolean;
-}
+import { Cause, Effect, Exit, Schema } from "effect";
+import type * as Redis from "effect/persistence/Redis";
 
 export interface JsonCodec<T> {
   stringify(value: T): string;
   parse(text: string): T;
 }
 
-export interface RedisGetOrSetJsonOptions<T> {
+export interface RedisGetOrSetJsonOptions<T, E, R> {
   readonly key: string;
   readonly ttlSeconds: number;
-  readonly factory: () => Promise<T>;
+  readonly factory: Effect.Effect<T, E, R>;
+  readonly codec: JsonCodec<T>;
   readonly lockTtlSeconds?: number;
   readonly waitTimeoutMs?: number;
   readonly waitIntervalMs?: number;
-  readonly signal?: AbortSignal;
-  readonly codec: JsonCodec<T>;
-}
-
-export interface RedisGetOrSetJsonBestEffortOptions<
-  T,
-> extends RedisGetOrSetJsonOptions<T> {
-  readonly onError?: (cause: unknown) => void;
+  /** Reports a Redis failure the read recovered from by running `factory`. */
+  readonly onError: (cause: unknown) => void;
 }
 
 const decodeJsonUnknown = Schema.decodeUnknownSync(
@@ -52,186 +38,128 @@ export const makeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
   };
 };
 
-export const makeRedisStore = (
-  redis: Redis.Redis["Service"],
-  runEffect: <A>(effect: Effect.Effect<A, Redis.RedisError>) => Promise<A>,
-  options: Pick<RedisOptions, "prefix"> = {},
-) => {
-  const { prefix } = options;
-  const keyPrefix = prefix ?? "";
-  const run = runEffect;
+export const makeRedisStore = (redis: Redis.Redis["Service"]) => {
   const scripts = new RedisScriptCache();
 
-  const prefixKey = (key: string): string =>
-    keyPrefix ? `${keyPrefix}:${key}` : key;
+  const set = (key: string, value: string, ttlSeconds?: number) =>
+    (ttlSeconds === undefined
+      ? redis.send("SET", key, value)
+      : redis.send("SET", key, value, "EX", String(ttlSeconds))
+    ).pipe(Effect.asVoid);
 
-  const redisStore = {
-    async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
-      const prefixedKey = prefixKey(key);
+  const get = (key: string) => redis.send<string | null>("GET", key);
 
-      if (ttlSeconds !== undefined) {
-        await run(
-          redis.send("SET", prefixedKey, value, "EX", String(ttlSeconds)),
-        );
+  const del = (...keys: string[]) => redis.send<number>("DEL", ...keys);
 
-        return;
-      }
-
-      await run(redis.send("SET", prefixedKey, value));
-    },
-
-    get(key: string): Promise<string | null> {
-      return run(redis.send("GET", prefixKey(key)));
-    },
-
-    async getJson<T>(key: string, codec: JsonCodec<T>): Promise<T | null> {
-      const cached = await redisStore.get(key);
-
-      if (cached === null) return null;
-
-      try {
-        return codec.parse(cached);
-      } catch {
-        await run(redis.send("DEL", prefixKey(key)));
-
-        return null;
-      }
-    },
-
-    async setJson<T>(
-      key: string,
-      value: T,
-      ttlSeconds?: number,
-      codec?: JsonCodec<T>,
-    ): Promise<void> {
-      await redisStore.set(
-        key,
-        codec?.stringify(value) ?? JSON.stringify(value),
-        ttlSeconds,
-      );
-    },
-
-    getOrSetJson<T>(options: RedisGetOrSetJsonOptions<T>): Promise<T> {
-      return fillJsonCache<T>(redisStore, options);
-    },
-
-    async getOrSetJsonBestEffort<T>({
-      onError,
-      ...options
-    }: RedisGetOrSetJsonBestEffortOptions<T>): Promise<T> {
-      let factoryResult: { readonly value: T } | undefined;
-      let factoryError: unknown;
-      let factoryRejected = false;
-
-      try {
-        return await redisStore.getOrSetJson({
-          ...options,
-          factory: async () => {
-            try {
-              const value = await options.factory();
-              factoryResult = { value };
-
-              return value;
-            } catch (error) {
-              factoryRejected = true;
-              factoryError = error;
-              throw error;
-            }
-          },
-        });
-      } catch (error) {
-        options.signal?.throwIfAborted();
-
-        if (error instanceof CacheFillTimeoutError) throw error;
-
-        if (factoryRejected) throw factoryError;
-        onError?.(error);
-
-        if (factoryResult !== undefined) return factoryResult.value;
-
-        return options.factory();
-      }
-    },
-
-    async setNX(
-      key: string,
-      value: string,
-      ttlSeconds?: number,
-    ): Promise<boolean> {
-      const prefixedKey = prefixKey(key);
-
-      if (ttlSeconds !== undefined) {
-        return (
-          (await run(
-            redis.send(
-              "SET",
-              prefixedKey,
-              value,
-              "EX",
-              String(ttlSeconds),
-              "NX",
+  const getJson = <T>(key: string, codec: Pick<JsonCodec<T>, "parse">) =>
+    get(key).pipe(
+      Effect.flatMap((cached) =>
+        cached === null
+          ? Effect.succeed(null)
+          : Effect.try(() => codec.parse(cached)).pipe(
+              Effect.catch(() => del(key).pipe(Effect.as(null))),
             ),
-          )) === "OK"
-        );
-      }
+      ),
+    );
 
-      return (await run(redis.send<number>("SETNX", prefixedKey, value))) === 1;
-    },
+  const setNX = (key: string, value: string, ttlSeconds: number) =>
+    redis
+      .send("SET", key, value, "EX", String(ttlSeconds), "NX")
+      .pipe(Effect.map((reply) => reply === "OK"));
 
-    eval<TResult = unknown>(
+  const evalScript = <TResult>(
+    script: string,
+    keys: readonly string[],
+    args: ReadonlyArray<string | number> = [],
+  ) =>
+    redis.eval(scripts.get<TResult>(script, keys.length))(
+      ...keys,
+      ...args.map(String),
+    );
+
+  // fillJsonCache is shared with apps/api and drives its own Promise loop.
+  const cacheFillStore = {
+    getJson: <T>(key: string, codec: { parse(text: string): T }) =>
+      Effect.runPromise(getJson(key, codec)),
+    setNX: (key: string, token: string, ttlSeconds: number) =>
+      Effect.runPromise(setNX(key, token, ttlSeconds)),
+    eval: <TResult>(
       script: string,
-      keys: readonly string[],
-      args: ReadonlyArray<string | number> = [],
-    ): Promise<TResult> {
-      const prefixedKeys = keys.map((key) => prefixKey(key));
-      const descriptor = scripts.get<TResult>(script, prefixedKeys.length);
-
-      return run(redis.eval(descriptor)(...prefixedKeys, ...args.map(String)));
-    },
-
-    del(...keys: string[]): Promise<number> {
-      return run(redis.send("DEL", ...keys.map(prefixKey)));
-    },
-
-    expire(key: string, ttlSeconds: number): Promise<number> {
-      return run(redis.send("EXPIRE", prefixKey(key), String(ttlSeconds)));
-    },
-
-    zremrangebyscore(
-      key: string,
-      min: number | "-inf",
-      max: number,
-    ): Promise<number> {
-      return run(
-        redis.send(
-          "ZREMRANGEBYSCORE",
-          prefixKey(key),
-          String(min),
-          String(max),
-        ),
-      );
-    },
-
-    zadd(key: string, score: number, member: string): Promise<number> {
-      return run(redis.send("ZADD", prefixKey(key), String(score), member));
-    },
-
-    zcard(key: string): Promise<number> {
-      return run(redis.send("ZCARD", prefixKey(key)));
-    },
-
-    zrange(key: string, start: number, stop: number): Promise<string[]> {
-      return run(
-        redis.send("ZRANGE", prefixKey(key), String(start), String(stop)),
-      );
-    },
-
-    zrem(key: string, ...members: string[]): Promise<number> {
-      return run(redis.send("ZREM", prefixKey(key), ...members));
-    },
+      keys: string[],
+      args: Array<string | number>,
+    ) => Effect.runPromise(evalScript<TResult>(script, keys, args)),
   };
 
-  return redisStore;
+  /**
+   * Reads a JSON value, or lets one caller fill it while the others wait. A
+   * Redis failure runs `factory` uncached; a `factory` failure fails the read.
+   */
+  const getOrSetJsonBestEffort = <T, E, R>({
+    factory,
+    onError,
+    ...options
+  }: RedisGetOrSetJsonOptions<T, E, R>): Effect.Effect<T, E, R> =>
+    Effect.gen(function* () {
+      const context = yield* Effect.context<R>();
+      let filled: { readonly value: T } | undefined;
+      let factoryFailure: Cause.Cause<E> | undefined;
+
+      return yield* Effect.tryPromise({
+        try: (signal) =>
+          fillJsonCache<T>(cacheFillStore, {
+            ...options,
+            signal,
+            factory: async () => {
+              const exit = await Effect.runPromiseExitWith(context)(factory, {
+                signal,
+              });
+
+              if (Exit.isFailure(exit)) {
+                factoryFailure = exit.cause;
+                throw Cause.squash(exit.cause);
+              }
+
+              filled = { value: exit.value };
+
+              return exit.value;
+            },
+          }),
+        catch: (error) => error,
+      }).pipe(
+        Effect.catch((error) => {
+          if (factoryFailure !== undefined)
+            return Effect.failCause(factoryFailure);
+
+          if (error instanceof CacheFillTimeoutError) return Effect.die(error);
+          onError(error);
+
+          return filled === undefined ? factory : Effect.succeed(filled.value);
+        }),
+      );
+    });
+
+  return {
+    set,
+    get,
+    del,
+    getJson,
+    setJson: <T>(key: string, value: T, ttlSeconds?: number) =>
+      set(key, JSON.stringify(value), ttlSeconds),
+    setNX,
+    evalScript,
+    getOrSetJsonBestEffort,
+    expire: (key: string, ttlSeconds: number) =>
+      redis.send<number>("EXPIRE", key, String(ttlSeconds)),
+    zremrangebyscore: (key: string, min: number | "-inf", max: number) =>
+      redis.send<number>("ZREMRANGEBYSCORE", key, String(min), String(max)),
+    zadd: (key: string, score: number, member: string) =>
+      redis.send<number>("ZADD", key, String(score), member),
+    zcard: (key: string) => redis.send<number>("ZCARD", key),
+    zrange: (key: string, start: number, stop: number) =>
+      redis.send<string[]>("ZRANGE", key, String(start), String(stop)),
+    zrem: (key: string, ...members: string[]) =>
+      redis.send<number>("ZREM", key, ...members),
+  };
 };
 
 export type RedisStore = ReturnType<typeof makeRedisStore>;

@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { respawnFromSpawnWindow } from "@lootlog/domain/timers";
@@ -15,6 +16,7 @@ import {
 import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
+import { getTimerListCacheScope } from "#src/shared/cache";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import { ErrorKey } from "#src/timers/error-key";
@@ -79,31 +81,23 @@ export const makeEventTimersPort = ({
   redis,
   redlock,
 }: EventTimersDependencies): EventTimersPort => {
-  const lockManager = redlock.createInstance({
-    automaticExtensionThreshold: 5_000,
-  });
+  const lockManager = redlock.createInstance();
 
   const external = <A>(operation: string, run: () => Promise<A>) =>
     Effect.tryPromise({
       try: run,
       catch: (cause) => new EventTimersError({ operation, cause }),
-    }).pipe(
-      Effect.withSpan(operation, {
-        attributes: { adapter: "event-timers", retryCount: 0 },
-      }),
-    );
+    }).pipe(withAdapterSpan(operation, "event-timers"));
 
   const mapped = <A>(operation: string, effect: Effect.Effect<A, unknown>) =>
     effect.pipe(
       Effect.mapError((cause) => new EventTimersError({ operation, cause })),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "event-timers", retryCount: 0 },
-      }),
+      withAdapterSpan(operation, "event-timers"),
     );
 
   const invalidateCache = (guildId: string) =>
     external("eventTimers.cache.invalidate", () =>
-      redis.invalidateScopes(`timer:list:${guildId}`),
+      redis.invalidateScopes(getTimerListCacheScope(guildId)),
     ).pipe(
       Effect.tap(() =>
         Effect.sync(() =>
@@ -199,19 +193,17 @@ export const makeEventTimersPort = ({
     operation: string,
     lockKey: string,
     use: () => Effect.Effect<A, unknown>,
-  ) => {
-    type AcquiredLock = Awaited<ReturnType<typeof lockManager.acquire>>;
-
-    const acquire = external<AcquiredLock>(`${operation}.lock.acquire`, () =>
-      lockManager.acquire([lockKey], LOCK_TTL_MS),
+  ) =>
+    lockManager.withLock(
+      lockKey,
+      LOCK_TTL_MS,
+      Effect.suspend(use),
+      () =>
+        new EventTimersError({
+          operation: `${operation}.lock.acquire`,
+          cause: new ExecutionError("Unable to acquire Redis lock"),
+        }),
     );
-
-    return Effect.acquireUseRelease(acquire, use, (lock) =>
-      external(`${operation}.lock.release`, () => lock.release()).pipe(
-        Effect.ignore,
-      ),
-    );
-  };
 
   const resolveTimerKeys = (lookups: ReadonlyArray<EventTimerLookupInput>) =>
     mapped(

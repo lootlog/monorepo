@@ -5,6 +5,7 @@ import {
   type ChatEvents,
   type ChatRedis,
 } from "#src/chat/chat.data-layer";
+import type { RedisEffects } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
 // Moderation-rare scan over at most CHAT_MESSAGE_LIMIT elements.
@@ -18,22 +19,17 @@ end
 return 0
 `;
 
-export const makeChatRedis = (redis: ApiRedis["Service"]): ChatRedis => {
-  const attempt = <A>(operation: () => PromiseLike<A>) =>
-    Effect.tryPromise({ try: operation, catch: (error) => error });
-
-  return {
-    rpush: (key, value) => attempt(() => redis.rpush(key, value)),
-    ltrim: (key, start, stop) => attempt(() => redis.ltrim(key, start, stop)),
-    lrange: (key, start, stop) => attempt(() => redis.lrange(key, start, stop)),
-    replace: (key, previous, next) =>
-      attempt(() =>
-        redis.eval<number>(REPLACE_SCRIPT, [key], [previous, next]),
-      ).pipe(Effect.map((replaced) => replaced === 1)),
-    lrem: (key, count, value) => attempt(() => redis.lrem(key, count, value)),
-    del: (key) => attempt(() => redis.del(key)),
-  };
-};
+export const makeChatRedis = (redis: RedisEffects): ChatRedis => ({
+  rpush: redis.rpush,
+  ltrim: redis.ltrim,
+  lrange: redis.lrange,
+  replace: (key, previous, next) =>
+    redis
+      .eval<number>(REPLACE_SCRIPT, [key], [previous, next])
+      .pipe(Effect.map((replaced) => replaced === 1)),
+  lrem: redis.lrem,
+  del: redis.del,
+});
 
 export const makeChatEvents = (
   rabbit: RabbitMessaging["Service"],
@@ -53,6 +49,9 @@ export const chatData = Layer.unwrap(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
 
-    return makeChatDataLayer(makeChatRedis(redis), makeChatEvents(rabbit));
+    return makeChatDataLayer(
+      makeChatRedis(redis.effect),
+      makeChatEvents(rabbit),
+    );
   }),
 );

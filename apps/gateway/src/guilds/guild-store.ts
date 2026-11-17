@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
@@ -260,9 +261,7 @@ export const makeGuildStore = (
   return {
     getUserGuilds: (options, readOptions) =>
       loadUserGuilds(options, readOptions).pipe(
-        Effect.withSpan("GuildStore_getUserGuilds", {
-          attributes: { adapter: "api-user-permissions", retryCount: 0 },
-        }),
+        withAdapterSpan("GuildStore_getUserGuilds", "api-user-permissions"),
       ),
     invalidate: (options) =>
       cacheCommand(() =>
@@ -272,12 +271,7 @@ export const makeGuildStore = (
           "EX",
           CACHE_TTL.MAX_STALE_CACHE_AGE,
         ),
-      ).pipe(
-        Effect.asVoid,
-        Effect.withSpan("GuildStore_invalidate", {
-          attributes: { adapter: "redis", retryCount: 0 },
-        }),
-      ),
+      ).pipe(Effect.asVoid, withAdapterSpan("GuildStore_invalidate", "redis")),
   };
 };
 

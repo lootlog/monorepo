@@ -1,6 +1,7 @@
 import {
   readGuildConfigurationCache,
   writeGuildConfigurationCache,
+  type GuildConfigurationCache,
 } from "./guild-configuration-cache.js";
 import {
   makeUserGuildPermissionsPersistence,
@@ -26,15 +27,8 @@ export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuild
   { cause: Schema.Defect() },
 ) {}
 
-export interface InternalGuildsCache extends UserGuildPermissionsCache {
-  readonly get: (key: string) => Effect.Effect<string | null, unknown>;
-  readonly set: (
-    key: string,
-    value: string,
-    ttl: number,
-  ) => Effect.Effect<void, unknown>;
-  readonly del: (key: string) => Effect.Effect<void, unknown>;
-}
+export type InternalGuildsCache = UserGuildPermissionsCache &
+  GuildConfigurationCache;
 
 export type GuildRecord = typeof guildTable.$inferSelect;
 

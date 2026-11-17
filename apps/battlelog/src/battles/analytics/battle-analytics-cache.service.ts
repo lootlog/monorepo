@@ -7,7 +7,8 @@ import type {
   BattleStatisticsQuery,
   PlayerVsPlayerQuery,
 } from "#src/battles/analytics/query-battle-statistics";
-import { type Cause, Effect, Exit } from "effect";
+import { Effect } from "effect";
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 
 const ANALYTICS_CACHE_PREFIX = "analytics";
@@ -23,7 +24,12 @@ end
 return generation
 `;
 
-export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
+export const makeBattleAnalyticsCache = (
+  redisService: Pick<
+    RedisStore,
+    "evalScript" | "getOrSetJsonBestEffort" | "set"
+  >,
+) => {
   const logger = new ContextLogger("BattleAnalyticsCache");
 
   const formatCacheSegment = (
@@ -55,64 +61,35 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
     decodeJson: (value: string) => T,
   ) =>
     Effect.gen(function* () {
-      const generation = yield* Effect.tryPromise({
-        try: () =>
-          redisService.eval<string>(
-            CACHE_GENERATION_SCRIPT,
-            [`battle-cache-generation:${userId}`],
-            [randomUUID()],
-          ),
-        catch: (cause) => cause,
-      }).pipe(
-        Effect.catch((error) => {
-          logger.warn("Battle analytics cache unavailable", error);
+      const generation = yield* redisService
+        .evalScript<string>(
+          CACHE_GENERATION_SCRIPT,
+          [`battle-cache-generation:${userId}`],
+          [randomUUID()],
+        )
+        .pipe(
+          Effect.catch((error) => {
+            logger.warn("Battle analytics cache unavailable", error);
 
-          return Effect.succeed(undefined);
-        }),
-      );
+            return Effect.succeed(undefined);
+          }),
+        );
 
       if (generation === undefined) return yield* factory();
       const versionedKey = `battle-cache:v4:${encodeURIComponent(userId)}:${generation}:${cacheKey}`;
-      const context = yield* Effect.context();
-      let failure: Cause.Cause<unknown> | undefined;
 
-      return yield* Effect.tryPromise({
-        try: (signal) =>
-          redisService.getOrSetJsonBestEffort<T>({
-            key: versionedKey,
-            signal,
-            ttlSeconds: ANALYTICS_CACHE_TTL_SECONDS,
-            codec: { stringify: JSON.stringify, parse: decodeJson },
-            factory: async () => {
-              const exit = await Effect.runPromiseExitWith(context)(
-                Effect.suspend(factory),
-                { signal },
-              );
-
-              if (Exit.isFailure(exit)) {
-                failure = exit.cause;
-                throw exit.cause;
-              }
-
-              return exit.value;
-            },
-            onError: (error) =>
-              logger.warn("Battle analytics cache unavailable", error),
-          }),
-        catch: (error) => error,
-      }).pipe(
-        Effect.catch((error) =>
-          failure === undefined ? Effect.die(error) : Effect.failCause(failure),
-        ),
-      );
+      return yield* redisService.getOrSetJsonBestEffort<T, unknown, never>({
+        key: versionedKey,
+        ttlSeconds: ANALYTICS_CACHE_TTL_SECONDS,
+        codec: { stringify: JSON.stringify, parse: decodeJson },
+        factory: Effect.suspend(factory),
+        onError: (error) =>
+          logger.warn("Battle analytics cache unavailable", error),
+      });
     });
 
   const invalidateUserAnalytics = (userId: string) =>
-    Effect.tryPromise({
-      try: () =>
-        redisService.set(`battle-cache-generation:${userId}`, randomUUID()),
-      catch: (cause) => cause,
-    }).pipe(
+    redisService.set(`battle-cache-generation:${userId}`, randomUUID()).pipe(
       Effect.catch((error) => {
         logger.warn(
           `Failed to invalidate analytics cache for user ${userId}:`,
@@ -121,9 +98,7 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
 
         return Effect.void;
       }),
-      Effect.withSpan("BattleAnalyticsCache_invalidateUser", {
-        attributes: { adapter: "redis", retryCount: 0 },
-      }),
+      withAdapterSpan("BattleAnalyticsCache_invalidateUser", "redis"),
     );
 
   const formatAnalyticsFilterSegments = (

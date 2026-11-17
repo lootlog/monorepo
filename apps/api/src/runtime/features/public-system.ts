@@ -21,11 +21,11 @@ export const publicSystemData = Layer.unwrap(
     const httpClient = yield* HttpClient.HttpClient;
     const repository = yield* PublicGuildStatsCardRepository;
 
-    const cacheOperation = <A>(operation: () => PromiseLike<A>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new PublicGuildStatsCardAdapterError({ cause }),
-      });
+    const cacheOperation = <A>(effect: Effect.Effect<A, unknown>) =>
+      Effect.mapError(
+        effect,
+        (cause) => new PublicGuildStatsCardAdapterError({ cause }),
+      );
 
     return PublicSystemData.layerServices({
       getMaps: makeMapsOperation({
@@ -40,16 +40,16 @@ export const publicSystemData = Layer.unwrap(
         environment: config.environment,
         image: new PublicGuildStatsCardImageAdapter(httpClient),
         cache: {
-          get: (key) => cacheOperation(() => redis.get(key)),
+          get: (key) => cacheOperation(redis.effect.get(key)),
           set: (key, value, ttl) =>
-            cacheOperation(() => redis.set(key, value, ttl)),
+            cacheOperation(redis.effect.set(key, value, ttl)),
           setNX: (key, value, ttl) =>
-            cacheOperation(() => redis.setNX(key, value, ttl)),
+            cacheOperation(redis.effect.setNX(key, value, ttl)),
           del: (key) =>
-            cacheOperation(() => redis.del(key)).pipe(Effect.asVoid),
+            cacheOperation(redis.effect.del(key)).pipe(Effect.asVoid),
         },
       }),
-      local: config.environment === "local",
+      local: config.isLocal,
     });
   }),
 ).pipe(Layer.provide(PublicGuildStatsCardRepository.layerDatabase));

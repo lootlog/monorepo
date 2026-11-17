@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import type { BoundaryDecoder } from "#src/shared/schema/json";
 import type { makeUserFeed } from "#src/users/user-feed";
 import { Effect, Schema } from "effect";
@@ -57,9 +58,7 @@ const lootOperation = <A>(
 ) =>
   effect.pipe(
     Effect.mapError((cause) => new RecordsDataError({ cause })),
-    Effect.withSpan(operationId, {
-      attributes: { adapter: "loots", retryCount: 0 },
-    }),
+    withAdapterSpan(operationId, "loots"),
   );
 
 const mutableNpcTypes = <

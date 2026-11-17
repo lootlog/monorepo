@@ -14,14 +14,16 @@
     "./warrior": "./src/warrior.ts"
   },
   "scripts": {
-    "lint": "oxlint src",
-    "typecheck": "bun check"
+    "lint": "oxlint src test",
+    "typecheck": "bun check",
+    "test": "bun test"
   },
   "dependencies": {
     "@lootlog/domain": "workspace:*"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
     "typescript": "catalog:"
   }
 }

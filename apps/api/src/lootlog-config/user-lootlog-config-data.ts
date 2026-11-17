@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import {
@@ -215,9 +216,10 @@ export class UserLootlogConfigData extends Context.Service<
                     }
                   : config;
               }).pipe(
-                Effect.withSpan("user-lootlog-config.upsert.persistence", {
-                  attributes: { adapter: "ApiDatabase", retryCount: 0 },
-                }),
+                withAdapterSpan(
+                  "user-lootlog-config.upsert.persistence",
+                  "ApiDatabase",
+                ),
               ),
             ),
           getPlayersCatchingGuilds: (discordId, payload) =>

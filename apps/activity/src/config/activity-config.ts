@@ -1,14 +1,12 @@
 import {
-  RuntimeEnvironment,
-  RuntimeEnvironmentSchema,
-} from "@lootlog/schema/runtime-environment";
+  baseServiceConfig,
+  type BaseServiceConfiguration,
+  redisUrlConfig,
+} from "@lootlog/instrumentation/service-config";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Config, Context, Effect, Layer, Option, Redacted } from "effect";
 
-export interface ActivityConfigValue {
-  readonly environment: RuntimeEnvironment;
-  readonly port: number;
-  readonly serviceName: string;
-  readonly serviceNamespace: string;
+export interface ActivityConfigValue extends BaseServiceConfiguration {
   readonly databaseUrl: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly redisUrl?: Redacted.Redacted<string>;
@@ -23,10 +21,8 @@ export class ActivityConfig extends Context.Service<
   static readonly layer = Layer.effect(
     ActivityConfig,
     Effect.gen(function* () {
-      const environment = yield* Config.schema(
-        RuntimeEnvironmentSchema,
-        "ENV",
-      ).pipe(Config.withDefault(RuntimeEnvironment.LOCAL));
+      const base = yield* baseServiceConfig("activity");
+      const { environment } = base;
 
       const configuredSecret = yield* Config.option(
         Config.Redacted("ACTIVITY_EVENT_SIGNATURE_SECRET"),
@@ -51,33 +47,12 @@ export class ActivityConfig extends Context.Service<
         );
       const redisHost = yield* Config.option(Config.String("REDIS_HOST"));
 
-      const redisPort = yield* Config.Int("REDIS_PORT").pipe(
-        Config.withDefault(6379),
-      );
-
-      const redisUsername = yield* Config.String("REDIS_USERNAME").pipe(
-        Config.withDefault("default"),
-      );
-
-      const redisPassword = yield* Config.String("REDIS_PASSWORD").pipe(
-        Config.withDefault(""),
-      );
-
       return ActivityConfig.of({
-        environment,
-        port: yield* Config.Int("PORT"),
-        serviceName: yield* Config.String("SERVICE_NAME").pipe(
-          Config.withDefault("activity"),
-        ),
-        serviceNamespace: yield* Config.String("SERVICE_NAMESPACE").pipe(
-          Config.withDefault("local"),
-        ),
+        ...base,
         databaseUrl: yield* Config.Redacted("POSTGRESQL_CONNECTION_URI"),
         rabbitmqUri: yield* Config.Redacted("RABBITMQ_URI"),
         redisUrl: Option.isSome(redisHost)
-          ? Redacted.make(
-              `redis://${encodeURIComponent(redisUsername)}:${encodeURIComponent(redisPassword)}@${redisHost.value}:${redisPort}`,
-            )
+          ? yield* redisUrlConfig
           : environment === RuntimeEnvironment.LOCAL
             ? undefined
             : yield* Effect.fail(

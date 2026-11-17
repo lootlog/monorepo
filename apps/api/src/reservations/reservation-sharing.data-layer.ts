@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
@@ -201,9 +202,10 @@ export const makeReservationSharingDataLayer = (
                 })),
               };
             }).pipe(
-              Effect.withSpan("listReservationShares.persistence", {
-                attributes: { adapter: "ApiDatabase", retryCount: 0 },
-              }),
+              withAdapterSpan(
+                "listReservationShares.persistence",
+                "ApiDatabase",
+              ),
             ),
           ),
         createInvitation: (guildId, userId) =>
@@ -242,9 +244,10 @@ export const makeReservationSharingDataLayer = (
                 createdAt: invitation.createdAt,
               };
             }).pipe(
-              Effect.withSpan("createReservationShareInvitation.transaction", {
-                attributes: { adapter: "ApiDatabase", retryCount: 0 },
-              }),
+              withAdapterSpan(
+                "createReservationShareInvitation.transaction",
+                "ApiDatabase",
+              ),
             ),
           ),
         revokeInvitation: (guildId, invitationId) =>
@@ -310,9 +313,10 @@ export const makeReservationSharingDataLayer = (
                 share.secondGuildId,
               ]);
             }).pipe(
-              Effect.withSpan("revokeReservationShare.transaction", {
-                attributes: { adapter: "ApiDatabase", retryCount: 0 },
-              }),
+              withAdapterSpan(
+                "revokeReservationShare.transaction",
+                "ApiDatabase",
+              ),
             ),
           ),
         previewInvitation: (token, discordId) =>
@@ -486,9 +490,10 @@ export const makeReservationSharingDataLayer = (
                 createdAt: result.share.createdAt,
               };
             }).pipe(
-              Effect.withSpan("acceptReservationShareInvitation.transaction", {
-                attributes: { adapter: "ApiDatabase", retryCount: 0 },
-              }),
+              withAdapterSpan(
+                "acceptReservationShareInvitation.transaction",
+                "ApiDatabase",
+              ),
             ),
           ),
       });

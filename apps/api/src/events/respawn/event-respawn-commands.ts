@@ -1,9 +1,12 @@
+import {
+  adapterOperation,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { queryEventHero } from "#src/events/event-scope-query";
 import { eventReadCacheScope } from "#src/events/catalog/event-read-cache.service";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, isNull } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -26,11 +29,6 @@ import type {
 } from "#src/contracts/events/schemas";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getEventHeroNpcId } from "@lootlog/domain/npc-identity";
-
-class EventRespawnCommandError extends TaggedErrorClass<EventRespawnCommandError>()(
-  "EventRespawnCommandError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 export interface EventRespawnQueue {
   readonly delayed: () => Effect.Effect<
@@ -77,15 +75,7 @@ export const makeEventRespawnCommands = (
   manualKill: EventManualKillRecorder,
   logger: Logger,
 ) => {
-  const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new EventRespawnCommandError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.respawn.drizzle", retryCount: 0 },
-      }),
-    );
+  const query = adapterOperation("events.respawn.drizzle");
 
   const bestEffort = (
     operation: string,
@@ -97,9 +87,7 @@ export const makeEventRespawnCommands = (
           logger.warn("Event respawn side effect failed", { error, operation }),
         ),
       ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.respawn", retryCount: 0 },
-      }),
+      withAdapterSpan(operation, "events.respawn"),
     );
 
   const invalidate = (guildId: string, eventId: string) =>
@@ -141,11 +129,7 @@ export const makeEventRespawnCommands = (
         (job) => job.remove,
         { concurrency: "unbounded", discard: true },
       );
-    }).pipe(
-      Effect.withSpan("events.respawn.cancelAutoClose", {
-        attributes: { adapter: "events.bullmq", retryCount: 0 },
-      }),
-    );
+    }).pipe(withAdapterSpan("events.respawn.cancelAutoClose", "events.bullmq"));
 
   return {
     open: (

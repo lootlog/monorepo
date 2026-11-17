@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { and, desc, eq, gte, isNotNull } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -425,9 +426,7 @@ export const makeMembersDataLayer = (
       ) =>
         effect.pipe(
           Effect.mapError(toError),
-          Effect.withSpan("members.data", {
-            attributes: { adapter: "members", retryCount: 0 },
-          }),
+          withAdapterSpan("members.data", "members"),
         );
 
       return MembersData.of({

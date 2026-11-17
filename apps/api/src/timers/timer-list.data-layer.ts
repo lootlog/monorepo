@@ -22,6 +22,7 @@ import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import { Permission } from "@lootlog/schema/permissions";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
+import { getTimerListCacheScope } from "#src/shared/cache";
 import type { TimersGuildAccess } from "./timers-data.js";
 import { toTimersDataFailure } from "./timer-errors.js";
 import {
@@ -122,7 +123,7 @@ export const makeGuildTimerList = (
     access: TimersGuildAccess,
     world?: string,
   ) {
-    const cacheKey = `timer:list:${access.guild.id}:${access.userId}:${world || "all"}`;
+    const cacheKey = `${getTimerListCacheScope(access.guild.id)}:${access.userId}:${world || "all"}`;
 
     const timers = yield* cache.getOrSet(
       cacheKey,

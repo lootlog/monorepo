@@ -21,10 +21,7 @@ import {
   npcCatalogKey,
   type NpcEntry,
 } from "#src/npcs/npcs.service";
-import { ITEMS_INDEX } from "#src/items/search-index";
-import { NPCS_INDEX } from "#src/npcs/search-index";
-
-const logger = { info() {}, warn() {}, error() {} };
+import { ITEMS_INDEX, NPCS_INDEX } from "#src/projection/catalog-indexes";
 
 let postgres: StartedPostgreSqlContainer;
 
@@ -112,9 +109,9 @@ const catalog = <A>(
       );
 
       return yield* run({
-        items: makeItemsModule(write, logger),
-        npcs: makeNpcsModule(write, logger),
-        reads: makeCatalogModule(meilisearch, read, logger),
+        items: makeItemsModule(write),
+        npcs: makeNpcsModule(write),
+        reads: makeCatalogModule(meilisearch, read),
       });
     }),
   );

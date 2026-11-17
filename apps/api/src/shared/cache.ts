@@ -1,5 +1,8 @@
 export const PERMISSIONS_CACHE_TTL_SECONDS = 900;
 
+/** How old an Organization's Discord channel snapshot may get before a refresh. */
+export const DISCORD_GUILD_SYNC_STALE_AFTER_SECONDS = 900;
+
 export const AUTH_TOKEN_CACHE_TTL_SECONDS = 300;
 
 // A cached Discord token must stop being served before Discord expires it.
@@ -101,6 +104,11 @@ export function getEventWrappedCachePattern(
   eventId = "*",
 ): string {
   return `${EVENT_WRAPPED_CACHE_KEY_PREFIX}:${guildId}:${eventId}:*`;
+}
+
+/** Read-cache generation scope of an Organization's timer lists. */
+export function getTimerListCacheScope(guildId: string): string {
+  return `timer:list:${guildId}`;
 }
 
 /** Read-cache generation scope of an Organization's loot list pages. */

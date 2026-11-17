@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { capturesMapPlayers } from "@lootlog/domain/loot-draw";
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
 import { Clock, Effect } from "effect";
@@ -97,9 +98,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         }),
       )
       .pipe(
-        Effect.withSpan("LootSubmissionAcceptance.accept", {
-          attributes: { adapter: "loot-submission", retryCount: 0 },
-        }),
+        withAdapterSpan("LootSubmissionAcceptance.accept", "loot-submission"),
       );
   }
 

@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { visibleReservationGuildIds } from "./reservation-visibility-query.js";
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
@@ -183,9 +184,7 @@ export const makeReservationMutationsDataLayer = (
         effect: Effect.Effect<A, E>,
       ) =>
         effect.pipe(
-          Effect.withSpan(operationId, {
-            attributes: { adapter: "drizzle", retryCount: 0 },
-          }),
+          withAdapterSpan(operationId, "drizzle"),
           Effect.mapError(
             (cause) => new OrganizationWorkspaceOperationError({ cause }),
           ),

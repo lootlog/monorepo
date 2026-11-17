@@ -6,13 +6,9 @@ import { HttpClient } from "effect/http";
 import { makeReservationCatalogAdapter } from "#src/reservations/reservation-catalog.adapter";
 import { makeReservationReadDataLayer } from "#src/reservations/reservation-read.data-layer";
 import { makeReservationSharingDataLayer } from "#src/reservations/reservation-sharing.data-layer";
-import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
+import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
-import {
-  NOTIFICATIONS_DISPATCH_QUEUE,
-  NOTIFICATION_DISPATCH_JOB_OPTIONS,
-} from "#src/notifications/jobs/dispatch-queue";
-import { Queue } from "bullmq";
+import { NotificationDispatchQueue } from "#src/runtime/queues/notification-dispatch";
 import { makeReservationMutationsDataLayer } from "#src/reservations/reservation-mutations.data-layer";
 
 export const reservationSharingData = Layer.unwrap(
@@ -37,87 +33,37 @@ export const reservationSharingData = Layer.unwrap(
   ),
 );
 
-export const reservationReadData = Layer.unwrap(
+/** Reservation reads and mutations over one cached spot catalog. */
+export const reservationData = Layer.unwrap(
   Effect.gen(function* () {
-    const redis = yield* ApiRedis;
-    const config = yield* ApiRuntimeConfig;
-    const httpClient = yield* HttpClient.HttpClient;
-
-    const attempt = <A>(operation: () => PromiseLike<A>) =>
-      Effect.tryPromise({ try: operation, catch: (error) => error });
-
-    return makeReservationReadDataLayer(
-      makeReservationCatalogAdapter({
-        cache: {
-          getJson: (key, schema) =>
-            attempt(() => redis.getJson(key, makeJsonCodec(schema))),
-          setJson: (key, value, ttl) =>
-            attempt(() => redis.setJson(key, value, ttl)),
-        },
-        httpClient,
-        url: config.reservationsCardsUrl.toString(),
-      }),
-    );
-  }),
-);
-
-export const reservationMutationsData = Layer.unwrap(
-  Effect.gen(function* () {
-    const redis = yield* ApiRedis;
+    const { effect: redis } = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const config = yield* ApiRuntimeConfig;
     const httpClient = yield* HttpClient.HttpClient;
-
-    const notificationsQueue = yield* Effect.acquireRelease(
-      Effect.sync(
-        () =>
-          new Queue(NOTIFICATIONS_DISPATCH_QUEUE, {
-            connection: { url: redisUrl(config.redis) },
-            prefix: "{bull}",
-          }),
-      ),
-      (queue) => Effect.tryPromise(() => queue.close()).pipe(Effect.orDie),
-    );
-
-    const attempt = <A>(operation: () => PromiseLike<A>) =>
-      Effect.tryPromise({ try: operation, catch: (error) => error });
+    const notifications = yield* NotificationDispatchQueue;
 
     const catalog = makeReservationCatalogAdapter({
       cache: {
-        getJson: (key, schema) =>
-          attempt(() => redis.getJson(key, makeJsonCodec(schema))),
-        setJson: (key, value, ttl) =>
-          attempt(() => redis.setJson(key, value, ttl)),
+        getJson: (key, schema) => redis.getJson(key, makeJsonCodec(schema)),
+        setJson: (key, value, ttl) => redis.setJson(key, value, ttl),
       },
       httpClient,
       url: config.reservationsCardsUrl.toString(),
     });
 
-    return makeReservationMutationsDataLayer({
-      catalog,
-      enqueueNotification: (notificationJobId, delay) =>
-        attempt(() =>
-          notificationsQueue.add(
-            notificationJobId,
-            { notificationJobId },
-            {
-              ...NOTIFICATION_DISPATCH_JOB_OPTIONS,
-              jobId: notificationJobId,
-              delay,
-            },
-          ),
-        ),
-      removeNotification: (notificationJobId) =>
-        attempt(async () => {
-          const job = await notificationsQueue.getJob(notificationJobId);
-          await job?.remove();
-        }),
-      publish: (routingKey, payload) =>
-        rabbit.publish({
-          exchange: "default",
-          routingKey,
-          content: new TextEncoder().encode(JSON.stringify(payload)),
-        }),
-    });
+    return Layer.merge(
+      makeReservationReadDataLayer(catalog),
+      makeReservationMutationsDataLayer({
+        catalog,
+        enqueueNotification: notifications.add,
+        removeNotification: notifications.remove,
+        publish: (routingKey, payload) =>
+          rabbit.publish({
+            exchange: "default",
+            routingKey,
+            content: new TextEncoder().encode(JSON.stringify(payload)),
+          }),
+      }),
+    );
   }),
 );

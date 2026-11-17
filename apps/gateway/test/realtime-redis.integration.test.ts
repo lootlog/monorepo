@@ -1,3 +1,4 @@
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { RedisClient } from "bun";
 import { slidingWindowRateLimitScript } from "@lootlog/database/sliding-window-rate-limit";
@@ -59,7 +60,7 @@ const uniquePrefix = () => `realtime-integration:${crypto.randomUUID()}`;
 
 const makeConfiguration = (keyPrefix = uniquePrefix()) =>
   ({
-    environment: "test",
+    environment: RuntimeEnvironment.DEV,
     port: 0,
     serviceName: "gateway",
     serviceNamespace: "test",
@@ -70,13 +71,7 @@ const makeConfiguration = (keyPrefix = uniquePrefix()) =>
     websocketPath: "/ws",
     allowedWebOrigins: new Set<string>(),
     allowedExtensionOrigins: new Set<string>(),
-    redis: {
-      host: dragonfly.getHost(),
-      port: redisPort,
-      username: "",
-      password: Redacted.make(""),
-      keyPrefix,
-    },
+    redis: { url: Redacted.make(redisUrl()), keyPrefix },
     maxBackpressureBytes: 1_048_576,
   }) satisfies GatewayConfiguration;
 
@@ -255,7 +250,7 @@ const openStore = async (keyPrefix = uniquePrefix()): Promise<OpenStore> => {
 
   const store = new RedisGatewayStore(
     redis,
-    { ...makeConfiguration(keyPrefix).redis, password: "" },
+    { keyPrefix },
     (effect) => runtime.runPromise(effect),
     (_label, effect) => {
       background.push(runtime.runFork(effect));

@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { type JobsOptions, Queue, QueueEvents, Worker } from "bullmq";
+import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
+import { type Job, type JobsOptions, QueueEvents } from "bullmq";
 import { eq } from "drizzle-orm";
-import { Effect, ManagedRuntime, Redacted } from "effect";
+import { Effect, Exit, ManagedRuntime, Redacted, Scope } from "effect";
 import {
   GenericContainer,
   type StartedTestContainer,
@@ -24,7 +25,6 @@ import { makeNotificationJobDispatch } from "#src/notifications/jobs/notificatio
 import { makeNotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import { makeNotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
 import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job.repository";
-import { redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { applicationLogger } from "#src/shared/application-logger";
 import { canDispatchLootNotification } from "#src/notifications/notification-loot-source-visibility";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
@@ -121,24 +121,23 @@ describe("notification dispatch with BullMQ and PostgreSQL", () => {
       }),
     );
 
-    const connection = {
-      url: redisUrl({
-        username: "",
-        password: Redacted.make(""),
-        host: redis.getHost(),
-        port: redis.getMappedPort(6379),
-      }),
-    };
+    const redisUrl = Redacted.make(
+      `redis://${redis.getHost()}:${redis.getMappedPort(6379)}`,
+    );
 
     const queueName = `notification-dispatch-${crypto.randomUUID()}`;
+    const scope = Scope.makeUnsafe();
 
-    const queue = new Queue<NotificationDispatchJobData>(queueName, {
-      connection,
-      prefix: "{bull}",
-    });
+    const queue = await Effect.runPromise(
+      Scope.provide(
+        acquireBullQueue<NotificationDispatchJobData>(queueName, redisUrl),
+        scope,
+      ),
+    );
 
+    // Opened after the queue, which installs BullMQ's Bun client factory.
     const events = new QueueEvents(queueName, {
-      connection,
+      connection: { url: Redacted.value(redisUrl) },
       prefix: "{bull}",
     });
 
@@ -262,10 +261,17 @@ describe("notification dispatch with BullMQ and PostgreSQL", () => {
       applicationLogger,
     );
 
-    const worker = new Worker<NotificationDispatchJobData>(
-      queueName,
-      (job) => runtime.runPromise(processor(job)),
-      { connection, prefix: "{bull}", autorun: false },
+    const worker = await Effect.runPromise(
+      Scope.provide(
+        acquireBullWorker(
+          queueName,
+          redisUrl,
+          (job: Job<NotificationDispatchJobData>) =>
+            runtime.runPromise(processor(job)),
+          { autorun: false },
+        ),
+        scope,
+      ),
     );
 
     try {
@@ -314,7 +320,7 @@ describe("notification dispatch with BullMQ and PostgreSQL", () => {
       await worker.close();
       await events.close();
       await queue.obliterate({ force: true });
-      await queue.close();
+      await Effect.runPromise(Scope.close(scope, Exit.void));
       await runtime.runPromise(
         Effect.gen(function* () {
           yield* database

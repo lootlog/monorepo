@@ -80,7 +80,7 @@ const guildOnlyCache = (
     ),
   set: (key, value) => Effect.sync(() => written.set(key, value)),
   del: () => Effect.void,
-  setIfAbsent: (key, value) =>
+  setNX: (key, value) =>
     Effect.sync(() => {
       if (written.has(key)) return false;
 
@@ -161,7 +161,7 @@ describe("organization context lookup", () => {
           Effect.sync(() => store.delete(key)).pipe(
             Effect.tap(() => Queue.offer(settled, undefined)),
           ),
-        setIfAbsent: (key, value) =>
+        setNX: (key, value) =>
           Effect.gen(function* () {
             const claimed = !store.has(key);
 

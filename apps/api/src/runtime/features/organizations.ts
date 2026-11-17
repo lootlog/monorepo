@@ -1,5 +1,8 @@
 import { isObjectRecord } from "@lootlog/schema/records";
-import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
+import {
+  DISCORD_GUILD_SYNC_STALE_AFTER_SECONDS,
+  getUserGuildPermissionsCacheScope,
+} from "#src/shared/cache";
 import { makeJsonCodec } from "#src/redis/redis.service";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeDiscordBotClient } from "#src/discord-bot-client/discord-bot-client";
@@ -20,22 +23,12 @@ import { makeUserAccountDeletion } from "#src/users/user-account-deletion.data-l
 import { makeUserPreferencesData } from "#src/users/user-preferences.data-layer";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
-import {
-  AccountOrganizationData,
-  AccountOrganizationOperationError,
-} from "#src/guilds/account-organization-data";
+import { AccountOrganizationData } from "#src/guilds/account-organization-data";
 import { GuildConfigurationData } from "#src/guilds/guild-configuration-data";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
-import {
-  OrganizationContextLookup,
-  type OrganizationContextCache,
-} from "#src/runtime/auth/organization-context";
-import {
-  InternalGuildsData,
-  InternalGuildsOperationError,
-  type InternalGuildsCache,
-} from "#src/guilds/internal-guilds-data";
+import { OrganizationContextLookup } from "#src/runtime/auth/organization-context";
+import { InternalGuildsData } from "#src/guilds/internal-guilds-data";
 import { OrganizationWorkspaceOperationError } from "#src/guilds/organization-workspace-access";
 import { RolesData } from "#src/guilds/roles-data";
 import { MemberServices, membersData } from "#src/runtime/features/members";
@@ -61,7 +54,7 @@ export const guildDiscordSyncLive = Layer.effect(
     );
 
     return makeGuildDiscordSyncData(database, {
-      staleAfterMs: 900 * 1000,
+      staleAfterMs: DISCORD_GUILD_SYNC_STALE_AFTER_SECONDS * 1000,
       refresh: (guildId) => discordBot.refreshGuildChannels(guildId),
       publishChannelDeleted: (payload) =>
         rabbit.publish({
@@ -75,22 +68,11 @@ export const guildDiscordSyncLive = Layer.effect(
 
 export const organizationContextLookup = Layer.unwrap(
   Effect.gen(function* () {
-    const redis = yield* ApiRedis;
+    const { effect: redis } = yield* ApiRedis;
     const { refresh } = yield* MemberServices;
 
-    const attempt = <A>(operation: () => PromiseLike<A>) =>
-      Effect.tryPromise({ try: operation, catch: (error) => error });
-
-    const cache: OrganizationContextCache = {
-      get: (key) => attempt(() => redis.get(key)),
-      set: (key, value, ttl) => attempt(() => redis.set(key, value, ttl)),
-      del: (key) => attempt(() => redis.del(key)),
-      setIfAbsent: (key, value, ttl) =>
-        attempt(() => redis.setNX(key, value, ttl)),
-    };
-
     return OrganizationContextLookup.layerDatabase(
-      cache,
+      redis,
       refresh.queueMemberRefresh,
     );
   }),
@@ -114,9 +96,6 @@ export const accountOrganizationOperationsLive = Layer.effect(
     const database = yield* ApiDatabase;
     const config = yield* ApiRuntimeConfig;
     const settingsRepository = yield* SettingsDocumentsRepository;
-
-    const cacheAttempt = <A>(operation: () => PromiseLike<A>) =>
-      Effect.tryPromise({ try: operation, catch: (cause) => cause });
 
     const deleteAccount = makeUserAccountDeletion(database, {
       cleanupBattlelog: (userId) =>
@@ -157,11 +136,9 @@ export const accountOrganizationOperationsLive = Layer.effect(
               : Effect.fail(new Error("Unexpected Battlelog cleanup response")),
           ),
         ),
-      invalidateCacheScopes: (...scopes) =>
-        cacheAttempt(() => redis.invalidateScopes(...scopes)),
-      deleteCacheKey: (key) => cacheAttempt(() => redis.del(key)),
-      deleteCachePattern: (pattern) =>
-        cacheAttempt(() => redis.deleteByPattern(pattern)),
+      invalidateCacheScopes: redis.effect.invalidateScopes,
+      deleteCacheKey: redis.effect.del,
+      deleteCachePattern: (pattern) => redis.effect.deleteByPattern(pattern),
       publishMemberRemoved: (payload) =>
         rabbit.publish({
           exchange: "default",
@@ -183,19 +160,10 @@ export const accountOrganizationOperationsLive = Layer.effect(
       database,
       {
         getCached: (key) =>
-          Effect.tryPromise({
-            try: () =>
-              redis.getJson(key, makeJsonCodec(GuildSummaryCacheSchema)),
-            catch: (error) => error,
-          }),
-        setCached: (key, value, ttl) =>
-          Effect.tryPromise({
-            try: () => redis.setJson(key, value, ttl),
-            catch: (error) => error,
-          }),
-        setIfAbsent: (key, value, ttl) =>
-          cacheAttempt(() => redis.setNX(key, value, ttl)),
-        deleteCached: (key) => cacheAttempt(() => redis.del(key)),
+          redis.effect.getJson(key, makeJsonCodec(GuildSummaryCacheSchema)),
+        setCached: (key, value, ttl) => redis.effect.setJson(key, value, ttl),
+        setIfAbsent: redis.effect.setNX,
+        deleteCached: redis.effect.del,
         queueRefresh: refresh.queueMemberRefresh,
       },
       config.environment,
@@ -240,23 +208,12 @@ export const accountOrganizationData = Layer.effect(
 );
 
 export const internalGuildsData = Layer.unwrap(
-  Effect.map(ApiRedis, (redis) => {
-    const cacheOperation = <A>(operation: () => PromiseLike<A>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new InternalGuildsOperationError({ cause }),
-      });
-
-    const cache: InternalGuildsCache = {
-      get: (key) => cacheOperation(() => redis.get(key)),
-      getOrSetJsonEffect: (options) => redis.getOrSetJsonEffect(options),
-      set: (key, value, ttl) =>
-        cacheOperation(() => redis.set(key, value, ttl)),
-      del: (key) => cacheOperation(() => redis.del(key)).pipe(Effect.asVoid),
-    };
-
-    return InternalGuildsData.layerDatabase(cache);
-  }),
+  Effect.map(ApiRedis, (redis) =>
+    InternalGuildsData.layerDatabase({
+      ...redis.effect,
+      getOrSetJsonEffect: redis.effect.getOrSetJson,
+    }),
+  ),
 );
 
 export const rolesData = Layer.unwrap(
@@ -267,20 +224,20 @@ export const rolesData = Layer.unwrap(
     return RolesData.layerDatabase(
       {
         invalidateUserGuildPermissions: (discordId) =>
-          Effect.tryPromise({
-            try: () =>
-              redis.invalidateScopes(
-                getUserGuildPermissionsCacheScope(discordId),
+          redis.effect
+            .invalidateScopes(getUserGuildPermissionsCacheScope(discordId))
+            .pipe(
+              Effect.mapError(
+                (cause) => new OrganizationWorkspaceOperationError({ cause }),
               ),
-            catch: (cause) =>
-              new OrganizationWorkspaceOperationError({ cause }),
-          }),
+            ),
         deleteByPattern: (pattern) =>
-          Effect.tryPromise({
-            try: () => redis.deleteByPattern(pattern),
-            catch: (cause) =>
-              new OrganizationWorkspaceOperationError({ cause }),
-          }).pipe(Effect.asVoid),
+          redis.effect.deleteByPattern(pattern).pipe(
+            Effect.asVoid,
+            Effect.mapError(
+              (cause) => new OrganizationWorkspaceOperationError({ cause }),
+            ),
+          ),
       },
       {
         memberPolicyChanged: (member) =>
@@ -298,22 +255,6 @@ export const rolesData = Layer.unwrap(
 
 export const guildConfigurationData = Layer.unwrap(
   Effect.map(ApiRedis, (redis) =>
-    GuildConfigurationData.layerDatabase({
-      get: (key) =>
-        Effect.tryPromise({
-          try: () => redis.get(key),
-          catch: (cause) => new AccountOrganizationOperationError({ cause }),
-        }),
-      set: (key, value, ttl) =>
-        Effect.tryPromise({
-          try: () => redis.set(key, value, ttl),
-          catch: (cause) => new AccountOrganizationOperationError({ cause }),
-        }),
-      del: (key) =>
-        Effect.tryPromise({
-          try: () => redis.del(key),
-          catch: (cause) => new AccountOrganizationOperationError({ cause }),
-        }).pipe(Effect.asVoid),
-    }),
+    GuildConfigurationData.layerDatabase(redis.effect),
   ),
 );

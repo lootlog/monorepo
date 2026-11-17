@@ -1,6 +1,5 @@
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { publishTimerEvents } from "./timer-update-publication.js";
-import { randomUUID } from "node:crypto";
 import { Effect, Predicate, Schema } from "effect";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { loadHeroSightings } from "#src/hero-sightings/hero-sighting-query";
@@ -24,6 +23,7 @@ import {
   type TimerPublishedEvent,
 } from "#src/timers/timer-projection";
 import { hasTimerWeight, makeNpc } from "./timer-auto-report.js";
+import type { RedisLockManager } from "#src/redis/redlock";
 import {
   DEDUP_TTL_SECONDS,
   persistAutoTimer,
@@ -46,10 +46,6 @@ export interface AutoTimerGuildWritePorts extends AutoTimerPersistencePorts {
     routingKey: Key,
     payload: TimerPublishedEvent<Key>,
   ) => Effect.Effect<unknown, unknown>;
-  readonly releaseDedup: (
-    key: string,
-    token: string,
-  ) => Effect.Effect<unknown, never>;
   readonly set: (
     key: string,
     value: string,
@@ -57,12 +53,11 @@ export interface AutoTimerGuildWritePorts extends AutoTimerPersistencePorts {
   ) => Effect.Effect<unknown, unknown>;
   /** Wakes the dispatcher for checks committed with a timer. */
   readonly signalEventHeroChecks: Effect.Effect<void>;
-  readonly setNx: (
-    key: string,
-    value: string,
-    ttlSeconds: number,
-  ) => Effect.Effect<boolean, unknown>;
+  readonly locks: Pick<RedisLockManager, "singleFlight">;
 }
+
+// A concurrent report of the same kill waits up to 5 s for the first one.
+const DEDUP_LOCK_WAIT = { retryCount: 100, retryDelay: 50, retryJitter: 0 };
 
 const projectionFromCache = (value: string) =>
   Effect.try({
@@ -104,38 +99,24 @@ export const writeGuildTimer = (
       );
     }
 
-    const cached = yield* ports.get(dedupKey);
-
-    if (cached) return yield* projectionFromCache(cached);
-    const token = randomUUID();
-    let acquired = yield* ports.setNx(dedupLockKey, token, DEDUP_TTL_SECONDS);
-
-    if (!acquired) {
-      for (let attempt = 0; attempt < 100; attempt += 1) {
-        yield* Effect.sleep("50 millis");
-        const result = yield* ports.get(dedupKey);
-
-        if (result) return yield* projectionFromCache(result);
-        acquired = yield* ports.setNx(dedupLockKey, token, DEDUP_TTL_SECONDS);
-
-        if (acquired) break;
-      }
-
-      if (!acquired) {
-        return yield* Effect.fail(
-          new ResourceConflictError({
-            code: ErrorKey.TIMER_RACE_CONDITION,
-          }),
-        );
-      }
-    }
-
-    return yield* Effect.ensuring(
+    return yield* ports.locks.singleFlight(
+      {
+        resource: dedupLockKey,
+        duration: DEDUP_TTL_SECONDS * 1000,
+        wait: DEDUP_LOCK_WAIT,
+        unavailable: () =>
+          new ResourceConflictError({ code: ErrorKey.TIMER_RACE_CONDITION }),
+      },
+      ports
+        .get(dedupKey)
+        .pipe(
+          Effect.flatMap((cached) =>
+            cached
+              ? Effect.asSome(projectionFromCache(cached))
+              : Effect.succeedNone,
+          ),
+        ),
       Effect.gen(function* () {
-        const cachedAfterLock = yield* ports.get(dedupKey);
-
-        if (cachedAfterLock) return yield* projectionFromCache(cachedAfterLock);
-
         const result = yield* persist;
         const response = mapTimerResponse(result.projection);
 
@@ -194,7 +175,6 @@ export const writeGuildTimer = (
 
         return response;
       }),
-      ports.releaseDedup(dedupLockKey, token),
     );
   });
 };

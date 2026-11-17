@@ -29,11 +29,8 @@ import { sql } from "drizzle-orm";
 import { describe, expect, it } from "bun:test";
 
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
-import {
-  KillCreationError,
-  makeKillCreation,
-  type KillCreationCache,
-} from "./kill-creation.js";
+import { OperationError } from "@lootlog/instrumentation/operation";
+import { makeKillCreation, type KillCreationCache } from "./kill-creation.js";
 
 const payload = {
   world: "tempest",
@@ -79,7 +76,7 @@ describe("kill creation Effect module", () => {
 
       await expect(
         boundary.run(createKill("discord-1", payload)),
-      ).rejects.toBeInstanceOf(KillCreationError);
+      ).rejects.toBeInstanceOf(OperationError);
     } finally {
       await boundary.dispose();
     }

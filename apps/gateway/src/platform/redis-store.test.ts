@@ -21,13 +21,7 @@ const subscribedStore = Effect.fnUntraced(function* (subscribe: Subscribe) {
 
   return new RedisGatewayStore(
     redis,
-    {
-      host: "unused",
-      port: 6379,
-      username: "",
-      password: "",
-      keyPrefix: "test",
-    },
+    { keyPrefix: "test" },
     Effect.runPromise,
     (_label, task) => {
       Effect.runFork(task.pipe(Effect.forkIn(scope)));

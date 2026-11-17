@@ -1,3 +1,4 @@
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { beforeEach, describe, expect, it } from "bun:test";
 import { Effect, Layer, Redacted } from "effect";
 import { FetchHttpClient } from "effect/http";
@@ -35,7 +36,7 @@ const services = LootlogClient.layer.pipe(
     Layer.succeed(
       BotConfig,
       BotConfig.of({
-        environment: "test",
+        environment: RuntimeEnvironment.DEV,
         port: 0,
         serviceName: "discord-bot",
         serviceNamespace: "test",

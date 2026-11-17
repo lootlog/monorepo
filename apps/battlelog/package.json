@@ -7,35 +7,26 @@
   "author": "",
   "type": "module",
   "imports": {
-    "#src/*": {
-      "development": "./src/*.ts",
-      "types": "./src/*.ts",
-      "default": "./dist/src/*.js"
-    }
-  },
-  "exports": {
-    "./database/schema": "./src/database/schema.ts",
-    "./battles/battle-id": "./src/battles/battle-id.ts",
-    "./battles/battle-timeline": "./src/battles/battle-timeline.ts"
+    "#src/*": "./src/*.ts"
   },
   "scripts": {
-    "dev": "bun --conditions=development --env-file=.env --watch src/main.ts",
-    "build": "rm -rf dist && tsc -p tsconfig.build.json && cp openapi.yaml dist/openapi.yaml",
+    "dev": "bun --env-file=.env --watch src/main.ts",
+    "build": "bun build src/main.ts --target=bun --packages=external --outdir=dist/src --sourcemap=linked",
     "start": "bun dist/src/main.js",
-    "start:debug": "bun --conditions=development --env-file=.env --inspect --watch src/main.ts",
+    "start:debug": "bun --env-file=.env --inspect --watch src/main.ts",
     "lint": "oxlint src test",
     "typecheck": "bun check -p tsconfig.json",
     "format": "oxfmt src test",
-    "test": "bun --conditions=development test --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' src test",
-    "test:debug": "bun --conditions=development test --path-ignore-patterns=dist --inspect-brk src test",
-    "test:watch": "bun --conditions=development test --path-ignore-patterns=dist --watch src test",
-    "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts",
+    "test": "bun test --path-ignore-patterns='**/*.integration.*' src test",
+    "test:debug": "bun test --inspect-brk src test",
+    "test:watch": "bun test --watch src test",
+    "openapi:generate": "bun src/openapi/generate-openapi.ts",
     "db:generate": "bunx drizzle-kit generate",
     "db:pull": "bunx drizzle-kit pull --config drizzle.config.ts",
     "db:migrate:deploy": "bun src/database/migrate.ts",
     "db:studio": "bunx drizzle-kit studio",
     "maintenance:audit-actions": "bun --env-file=.env scripts/audit-r2-battle-actions.ts",
-    "test:integration": "bun --conditions=development test src/database/battle-read-budget.integration.test.ts src/battles/deletion/battle-deletion.integration.test.ts src/battles/submission/battle-creation-redis.integration.test.ts src/battles/weapon-kills/weapon-kills.integration.test.ts"
+    "test:integration": "bun test src/database/battle-read-budget.integration.test.ts src/battles/deletion/battle-deletion.integration.test.ts src/battles/submission/battle-creation-redis.integration.test.ts src/battles/weapon-kills/weapon-kills.integration.test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1150.0",

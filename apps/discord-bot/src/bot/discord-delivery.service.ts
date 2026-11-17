@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Cause, Clock, Duration, Effect, Result, Schema } from "effect";
 import {
@@ -162,9 +163,7 @@ export const makeDiscordDelivery = (
             )
           : error,
       ),
-      Effect.withSpan(`DiscordDelivery_${operation}`, {
-        attributes: { adapter: "discord-sdk", retryCount: 0 },
-      }),
+      withAdapterSpan(`DiscordDelivery_${operation}`, "discord-sdk"),
     );
 
   const publishDeliveryResult = (
@@ -187,9 +186,7 @@ export const makeDiscordDelivery = (
               )
             : error,
         ),
-        Effect.withSpan("DiscordDelivery_publishResult", {
-          attributes: { adapter: "rabbitmq", retryCount: 0 },
-        }),
+        withAdapterSpan("DiscordDelivery_publishResult", "rabbitmq"),
       );
 
   const sendDirectMessage = Effect.fn("DiscordDelivery_sendDirectMessage")(

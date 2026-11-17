@@ -1,9 +1,7 @@
 import { FetchHttpClient } from "effect/http";
 import { ApiKeyService } from "#src/auth/api-key-service";
-import { BunRuntime } from "@effect/platform-bun";
-import { installScopedLogRunner } from "@lootlog/instrumentation";
+import { runService } from "@lootlog/instrumentation/service";
 import { Effect, Layer } from "effect";
-import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
 import {
   AuthRedisStorage,
   createAuthRedisConnection,
@@ -14,10 +12,6 @@ import { AppConfig } from "#src/config/env";
 import { AuthDatabaseLive } from "#src/database/drizzle";
 import { AuthHttpServer } from "#src/http/server";
 
-const ObservabilityLive = makeObservabilityLayer(AppConfig).pipe(
-  Layer.provide(AppConfig.layer),
-);
-
 const InfrastructureLive = Layer.merge(
   AuthDatabaseLive,
   AuthRedisStorage.layer,
@@ -25,7 +19,7 @@ const InfrastructureLive = Layer.merge(
   Layer.provide(
     Layer.unwrap(
       Effect.map(AppConfig, (config) =>
-        createAuthRedisConnection(config.redis),
+        createAuthRedisConnection(config.redisUrl),
       ),
     ),
   ),
@@ -51,11 +45,7 @@ const AuthServicesLive = AuthService.layer.pipe(
   Layer.provideMerge(AppConfig.layer),
 );
 
-const ApplicationLive = AuthHttpServer.pipe(Layer.provide(AuthServicesLive));
-
-BunRuntime.runMain(
-  Effect.gen(function* () {
-    yield* installScopedLogRunner;
-    yield* Layer.launch(ApplicationLive);
-  }).pipe(Effect.scoped, Effect.provide(ObservabilityLive)),
-);
+runService({
+  config: AppConfig.pipe(Effect.provide(AppConfig.layer)),
+  application: AuthHttpServer.pipe(Layer.provide(AuthServicesLive)),
+});

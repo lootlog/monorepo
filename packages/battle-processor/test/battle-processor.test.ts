@@ -1,12 +1,8 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import {
-  parseBattleMoves,
-  type BattlePayload,
-} from "@lootlog/battle-processor/battle-log";
-import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
-import { findFinishingBlows } from "@lootlog/battle-processor/finishing-blows";
-import { calculateBattleStatistics } from "@lootlog/battle-processor/statistics";
-import type { CreateBattleInput } from "#src/battles/submission/create-battle";
+import { parseBattleMoves, type BattlePayload } from "../src/battle-log.js";
+import { BattleProcessor } from "../src/battle-processor.js";
+import { findFinishingBlows } from "../src/finishing-blows.js";
+import { calculateBattleStatistics } from "../src/statistics.js";
 
 // Persisted warrior statistics must remain identical when timeline work is skipped.
 const processBattleWithStatisticsParity = (battleData: BattlePayload) => {
@@ -42,7 +38,7 @@ const duelist = (originalId: number, name: string, team: number) => ({
 });
 
 /** A battle between Attacker (1) and Defender (2) with the given rows. */
-const duel = (moves: string[]): CreateBattleInput => ({
+const duel = (moves: string[]): BattlePayload => ({
   accountId: "test-account",
   characterId: "1",
   world: "test-world",
@@ -76,7 +72,7 @@ describe("BattleProcessor", () => {
 
   describe("calculateBattleDuration", () => {
     it("should calculate battle duration correctly", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "char-1",
         world: "test-world",
@@ -97,7 +93,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should preserve zero timestamp when calculating duration", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "char-1",
         world: "test-world",
@@ -118,7 +114,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should throw error when no events provided", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "char-1",
         world: "test-world",
@@ -194,10 +190,27 @@ describe("BattleProcessor", () => {
 
       const moves = parseBattleMoves(events);
 
-      expect(moves[0].actions).toEqual([
+      expect(moves[0]?.actions).toEqual([
         { actionType: "step", param: "" },
         { actionType: "flee", param: "" },
       ]);
+    });
+
+    it("keeps unreadable rows representable in the raw battle response", () => {
+      const moves = parseBattleMoves([
+        { ev: 1000, f: { m: ["=50;2=n/a;txt=a=b;wound=2595,30"] } },
+      ]);
+
+      expect(moves[0]).toEqual({
+        attackerId: null,
+        defenderId: "2",
+        attackerHpPercentage: 50,
+        defenderHpPercentage: null,
+        actions: [
+          { actionType: "txt", param: "a" },
+          { actionType: "wound", param: "2595,30" },
+        ],
+      });
     });
   });
 
@@ -212,7 +225,7 @@ describe("BattleProcessor", () => {
         team,
       });
 
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "101",
         world: "test-world",
@@ -220,7 +233,6 @@ describe("BattleProcessor", () => {
           {
             ev: 1000,
             f: {
-              init: "1",
               w: {
                 "101": warrior(101, 1),
                 "102": warrior(102, 1),
@@ -248,7 +260,7 @@ describe("BattleProcessor", () => {
     });
 
     it("names no winner when the battle reaches the turn limit", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -295,7 +307,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should process a simple 1v1 battle", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -354,7 +366,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should preserve abyss points from match summary", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -427,7 +439,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should sum -dmga with post-defense damage taken by the defender", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -477,7 +489,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should track critical hits and armor pierces", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -520,7 +532,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should track evasions and blocks", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -568,7 +580,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should keep blocked damage finite when block action has no value", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -611,7 +623,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should track spell usage", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -657,7 +669,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should handle flee correctly", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -699,7 +711,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should calculate battle statistics", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -754,7 +766,7 @@ describe("BattleProcessor", () => {
 
   describe("battle type determination", () => {
     it("should determine 2v2 battle type", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -808,7 +820,7 @@ describe("BattleProcessor", () => {
 
   describe("damage calculations", () => {
     it("should track different damage types separately", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -858,7 +870,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should calculate damage dealt after defensive percentage", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -901,7 +913,7 @@ describe("BattleProcessor", () => {
 
   describe("turn tracking", () => {
     it("should track normal attacks and spell casts separately", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -947,7 +959,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should use skillId for follow-up attacks while keeping tspell as spell name", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -993,7 +1005,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should track steps", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -1166,7 +1178,7 @@ describe("BattleProcessor", () => {
 
   describe("combat timeline analytics", () => {
     it("should build HP timeline and team HP snapshots for group PvP", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -1225,7 +1237,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should track auxiliary taken damage, absorb, magic absorb and target healing", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -1271,7 +1283,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should expose control and defensive event flags", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -1328,7 +1340,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should expose counter without counting it as mitigation", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -1378,7 +1390,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should split resource pressure into energy and mana pressure", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -1435,7 +1447,7 @@ describe("BattleProcessor", () => {
     // Margonem prints rage and the beast's stigma as "atak +X": a bonus inside
     // the attack the row already reports, not a second damage instance.
     it("should not count attack bonuses as separate timeline damage", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -1491,7 +1503,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should classify observed modifier metadata without timeline deltas", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -1548,7 +1560,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should take destroyed energy from the target, not the actor", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -1591,7 +1603,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should expose flee and PH in timeline", () => {
-      const battleData: CreateBattleInput = {
+      const battleData: BattlePayload = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",

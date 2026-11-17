@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { activeEventCondition } from "#src/events/event-scope-query";
 import { and, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
@@ -45,11 +46,7 @@ export const makeEventPresenceTracking = (
   const redlock = redlockService.createInstance();
 
   const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.presence.drizzle", retryCount: 0 },
-      }),
-    );
+    effect.pipe(withAdapterSpan(operation, "events.presence.drizzle"));
 
   const findOpenGap = (mapId: string, gapType: GapType) =>
     query(
@@ -391,11 +388,7 @@ export const makeEventPresenceTracking = (
             5_000,
             handleInternal(guildId, mapName, discordId, hasPlayer, isAfk),
           )
-          .pipe(
-            Effect.withSpan("events.presence.lock", {
-              attributes: { adapter: "events.redlock", retryCount: 0 },
-            }),
-          );
+          .pipe(withAdapterSpan("events.presence.lock", "events.redlock"));
       });
     },
   };

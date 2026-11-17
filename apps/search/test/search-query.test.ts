@@ -60,7 +60,7 @@ test("player search preserves text search and repeated exact-name filters throug
     Layer.provide(
       ConfigProvider.layer(
         ConfigProvider.fromEnvRecord({
-          PORT: "0",
+          PORT: "3000",
           MEILISEARCH_HOST: "http://meili.invalid",
           MEILISEARCH_API_KEY: "test",
           RABBITMQ_URI: "amqp://unused",

@@ -1,13 +1,16 @@
 import {
+  adapterOperation,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
+import {
   isKillPointCountedInRanking,
   roundPoints,
 } from "#src/events/kills/event-ranking-policy";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, ne } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroKillTable,
@@ -25,11 +28,6 @@ import type {
   UpdateKillPointRequest,
   UpdateRankingPointsRequest,
 } from "#src/contracts/events/schemas";
-
-class EventPointEditError extends TaggedErrorClass<EventPointEditError>()(
-  "EventPointEditError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 export interface EventRankingPublisher {
   readonly publish: <Key extends typeof RabbitRoutingKey.EVENT_RANKING_UPDATE>(
@@ -50,13 +48,7 @@ export const makeEventPointEdits = (
   publisher: EventRankingPublisher,
   logger: Logger,
 ) => {
-  const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError((cause) => new EventPointEditError({ operation, cause })),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.points.drizzle", retryCount: 0 },
-      }),
-    );
+  const query = adapterOperation("events.points.drizzle");
 
   const afterEdit = (guildId: string, eventId: string) =>
     Effect.all(
@@ -78,9 +70,7 @@ export const makeEventPointEdits = (
                 }),
               ),
             ),
-            Effect.withSpan("events.points.publish", {
-              attributes: { adapter: "events.rabbitmq", retryCount: 0 },
-            }),
+            withAdapterSpan("events.points.publish", "events.rabbitmq"),
           ),
       ],
       { concurrency: "unbounded", discard: true },

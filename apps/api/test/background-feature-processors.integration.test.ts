@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from "bun:test";
-import { Queue, Worker } from "bullmq";
+import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
 import { asc, eq, sql } from "drizzle-orm";
-import { Effect, ManagedRuntime, Redacted, Result } from "effect";
+import { Effect, Exit, ManagedRuntime, Redacted, Result, Scope } from "effect";
 import { TestClock } from "effect/testing";
 import { MessagingError, type RabbitMessaging } from "@lootlog/messaging";
 import {
@@ -18,8 +18,8 @@ import { timerTable } from "../src/database/drizzle/timer.schema.js";
 import { makeMemberBulkRefreshProcessor } from "../src/members/member-bulk-refresh.processor.js";
 import { MEMBER_REFRESH_PRIORITY } from "../src/members/member-refresh-queue.js";
 import { makeMemberRefreshProcessor } from "../src/members/member-refresh.processor.js";
+import type { MemberRefreshJobData } from "../src/members/member-refresh-scheduler.js";
 import { makeReservationsCleanup } from "../src/reservations/reservations-cleanup.js";
-import { redisUrl } from "../src/runtime/infrastructure/api-redis.js";
 import { makeTimersCleanup } from "../src/timers/timers-cleanup.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
@@ -288,17 +288,17 @@ describe("background feature processors against migrated PostgreSQL", () => {
   });
 
   it("keeps a member refresh queued while another guild job holds the user lock, without spending an attempt", async () => {
-    const connection = {
-      url: redisUrl({
-        username: process.env.REDIS_USERNAME ?? "",
-        password: Redacted.make(process.env.REDIS_PASSWORD ?? ""),
-        host: process.env.REDIS_HOST ?? "localhost",
-        port: Number(process.env.REDIS_PORT),
-      }),
-    };
+    const redisUrl = Redacted.make(
+      `redis://${encodeURIComponent(process.env.REDIS_USERNAME ?? "")}:${encodeURIComponent(process.env.REDIS_PASSWORD ?? "")}@${process.env.REDIS_HOST ?? "localhost"}:${process.env.REDIS_PORT}`,
+    );
 
     const queueName = `member-refresh-${crypto.randomUUID()}`;
-    const queue = new Queue(queueName, { connection, prefix: "{bull}" });
+    const scope = Scope.makeUnsafe();
+
+    const queue = await Effect.runPromise(
+      Scope.provide(acquireBullQueue(queueName, redisUrl), scope),
+    );
+
     let lockOwner: string | null = "job:other-guild";
     const outcomes: string[] = [];
     const synced: string[] = [];
@@ -335,10 +335,15 @@ describe("background feature processors against migrated PostgreSQL", () => {
       },
     });
 
-    const worker = new Worker(
-      queueName,
-      (job, token) => Effect.runPromise(processRefresh(job, token)),
-      { connection, prefix: "{bull}" },
+    const worker = await Effect.runPromise(
+      Scope.provide(
+        acquireBullWorker<MemberRefreshJobData, void>(
+          queueName,
+          redisUrl,
+          (job, token) => Effect.runPromise(processRefresh(job, token)),
+        ),
+        scope,
+      ),
     );
 
     const failures: unknown[] = [];
@@ -378,7 +383,7 @@ describe("background feature processors against migrated PostgreSQL", () => {
     } finally {
       await worker.close();
       await queue.obliterate({ force: true });
-      await queue.close();
+      await Effect.runPromise(Scope.close(scope, Exit.void));
     }
 
     expect(failures).toEqual([]);

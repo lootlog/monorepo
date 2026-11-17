@@ -2,7 +2,7 @@
  * Rebuilds the catalog's search indexes from its database.
  *
  * Each index is rebuilt in a shadow index (`<name>_rebuild`) with the
- * service settings, filled from the database in large batches, then every
+ * service settings, filled from its table in large batches, then every
  * shadow index is swapped into place in one atomic task, so searches never
  * see a half-built index. Batches are enqueued without waiting, so
  * Meilisearch merges them into a few indexing runs.
@@ -11,102 +11,46 @@
  * they change after its page was read is replaced by the older copy until
  * its next change. Run it at a quiet hour.
  *
- * Usage: `bun run projection:rebuild` in `apps/catalog` with
- * `POSTGRESQL_CONNECTION_URI`, `MEILISEARCH_HOST` and `MEILISEARCH_API_KEY` set.
+ * Usage: `bun run projection:rebuild` in `apps/catalog` with the service's
+ * environment.
  */
-import { SQL } from "bun";
-import { asc, gt } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/bun-sql/postgres";
-import { SEARCH_INDEX_PRIMARY_KEY } from "@lootlog/meilisearch/index-settings";
+import { BunRuntime } from "@effect/platform-bun";
+import {
+  ensureIndex,
+  SEARCH_INDEX_PRIMARY_KEY,
+} from "@lootlog/meilisearch/index-settings";
+import {
+  attemptMeilisearch,
+  completeMeilisearchTask,
+  type SearchOperationFailure,
+} from "@lootlog/meilisearch/operation-failure";
 import { getMeilisearchErrorCode } from "@lootlog/meilisearch/query-builder";
-import { Config, Effect, Redacted } from "effect";
-import { Meilisearch, type EnqueuedTask, type Task } from "meilisearch";
-import { ITEMS_INDEX } from "#src/items/search-index";
-import { NPCS_INDEX } from "#src/npcs/search-index";
-import { catalogItemTable, catalogNpcTable } from "#src/database/schema";
-import { catalogIndexSettings } from "#src/projection/index-settings";
+import { asc, gt } from "drizzle-orm";
+import { Effect, Layer, Redacted } from "effect";
+import { type EnqueuedTaskPromise, Meilisearch } from "meilisearch";
+import { CatalogConfig } from "#src/config/catalog-config";
+import { CatalogDatabase, PgClientLive } from "#src/database/database";
+import { catalogIndexes } from "#src/projection/catalog-indexes";
 
 const ROWS_PER_PAGE = 5_000;
 
 // Meilisearch rejects request bodies over 12.5 MB.
 const BATCH_PAYLOAD_LIMIT_BYTES = 8 * 1024 * 1024;
 
-const TASK_POLL_INTERVAL_MS = 500;
-
 const TASK_TIMEOUT_MS = 30 * 60 * 1000;
 
 const rebuildIndexName = (indexName: string) => `${indexName}_rebuild`;
 
-const config = await Effect.runPromise(
-  Config.all({
-    databaseUrl: Config.Redacted("POSTGRESQL_CONNECTION_URI"),
-    meilisearchHost: Config.String("MEILISEARCH_HOST"),
-    meilisearchApiKey: Config.Redacted("MEILISEARCH_API_KEY"),
-  }),
-);
+const completeTask = (operation: string, run: () => EnqueuedTaskPromise) =>
+  completeMeilisearchTask(operation, run, { timeout: TASK_TIMEOUT_MS });
 
-const sql = new SQL({ url: Redacted.value(config.databaseUrl) });
-
-const database = drizzle({ client: sql });
-
-const meilisearch = new Meilisearch({
-  host: config.meilisearchHost,
-  apiKey: Redacted.value(config.meilisearchApiKey),
-});
+/** Whether Meilisearch answered the request, or its task, with this code. */
+const hasErrorCode = (error: SearchOperationFailure, code: string) =>
+  getMeilisearchErrorCode(error) === code ||
+  getMeilisearchErrorCode(error.cause) === code;
 
 const formatDuration = (startedAt: number) =>
   `${((performance.now() - startedAt) / 1000).toFixed(1)}s`;
-
-const assertSucceeded = (tasks: ReadonlyArray<Task>) => {
-  const failed = tasks.filter((task) => task.status !== "succeeded");
-
-  if (failed.length > 0) {
-    const [first] = failed;
-
-    throw new Error(
-      `${failed.length} Meilisearch task(s) failed, first: ${first?.error?.message ?? first?.status}`,
-    );
-  }
-};
-
-const waitForTasks = async (enqueued: ReadonlyArray<EnqueuedTask>) =>
-  assertSucceeded(
-    await meilisearch.tasks.waitForTasks(enqueued, {
-      interval: TASK_POLL_INTERVAL_MS,
-      timeout: TASK_TIMEOUT_MS,
-    }),
-  );
-
-const ignoring =
-  (code: string) =>
-  async (run: () => Promise<Task>): Promise<void> => {
-    try {
-      const task = await run();
-
-      if (task.status === "failed" && task.error?.code !== code) {
-        throw task.error;
-      }
-    } catch (error) {
-      if (getMeilisearchErrorCode(error) !== code) throw error;
-    }
-  };
-
-const waitOptions = {
-  interval: TASK_POLL_INTERVAL_MS,
-  timeout: TASK_TIMEOUT_MS,
-};
-
-const dropIndex = (indexName: string) =>
-  ignoring("index_not_found")(() =>
-    meilisearch.deleteIndex(indexName).waitTask(waitOptions),
-  );
-
-const createIndex = (indexName: string) =>
-  ignoring("index_already_exists")(() =>
-    meilisearch
-      .createIndex(indexName, { primaryKey: SEARCH_INDEX_PRIMARY_KEY })
-      .waitTask(waitOptions),
-  );
 
 /** Splits documents into batches under the payload limit. */
 const toBatches = (documents: ReadonlyArray<object>) => {
@@ -133,88 +77,123 @@ const toBatches = (documents: ReadonlyArray<object>) => {
   return batches;
 };
 
-/** Reads a table page by page in primary key order into a shadow index. */
-const rebuild = async (
-  indexName: string,
-  table: typeof catalogItemTable | typeof catalogNpcTable,
-) => {
+const rebuildProjection = Effect.gen(function* () {
+  const config = yield* CatalogConfig;
+  const database = yield* CatalogDatabase;
   const startedAt = performance.now();
-  const index = meilisearch.index(rebuildIndexName(indexName));
-  const enqueued: EnqueuedTask[] = [];
-  let after = "";
-  let count = 0;
+  const indexes = Object.entries(catalogIndexes);
+  const indexNames = indexes.map(([indexName]) => indexName);
 
-  for (;;) {
-    const rows = await database
-      .select({ uid: table.uid, document: table.document })
-      .from(table)
-      .where(gt(table.uid, after))
-      .orderBy(asc(table.uid))
-      .limit(ROWS_PER_PAGE);
+  const meilisearch = new Meilisearch({
+    host: config.meilisearchHost,
+    apiKey: Redacted.value(config.meilisearchApiKey),
+  });
 
-    for (const batch of toBatches(rows.map(({ document }) => document))) {
-      enqueued.push(
-        await index.addDocuments(batch, {
+  const dropIndex = (indexName: string) =>
+    completeTask("catalog.rebuild.drop", () =>
+      meilisearch.deleteIndex(indexName),
+    ).pipe(
+      Effect.asVoid,
+      Effect.catchIf(
+        (error) => hasErrorCode(error, "index_not_found"),
+        () => Effect.void,
+      ),
+    );
+
+  /** Reads a table page by page in primary key order into a shadow index. */
+  const fill = Effect.fnUntraced(function* (
+    indexName: string,
+    table: (typeof catalogIndexes)[keyof typeof catalogIndexes]["table"],
+  ) {
+    const filledAt = performance.now();
+    const index = meilisearch.index(rebuildIndexName(indexName));
+    const enqueued: EnqueuedTaskPromise[] = [];
+    let after = "";
+    let count = 0;
+
+    for (;;) {
+      const rows = yield* database
+        .select({ uid: table.uid, document: table.document })
+        .from(table)
+        .where(gt(table.uid, after))
+        .orderBy(asc(table.uid))
+        .limit(ROWS_PER_PAGE);
+
+      for (const batch of toBatches(rows.map(({ document }) => document))) {
+        const task = index.addDocuments(batch, {
           primaryKey: SEARCH_INDEX_PRIMARY_KEY,
-        }),
-      );
+        });
+
+        yield* attemptMeilisearch("catalog.rebuild.enqueue", () => task);
+        enqueued.push(task);
+      }
+
+      count += rows.length;
+
+      const last = rows.at(-1);
+
+      if (!last || rows.length < ROWS_PER_PAGE) break;
+      after = last.uid;
     }
 
-    count += rows.length;
-
-    const last = rows.at(-1);
-
-    if (!last || rows.length < ROWS_PER_PAGE) break;
-    after = last.uid;
-  }
-
-  await waitForTasks(enqueued);
-  console.log(`${indexName}: ${count} entries in ${formatDuration(startedAt)}`);
-};
-
-const main = async () => {
-  const startedAt = performance.now();
-  const indexNames = Object.keys(catalogIndexSettings);
-
-  console.log(`Rebuilding the catalog indexes at ${config.meilisearchHost}`);
-
-  try {
-    await Promise.all(indexNames.map(rebuildIndexName).map(dropIndex));
-    await Promise.all(
-      indexNames.flatMap((indexName) => [
-        createIndex(indexName),
-        createIndex(rebuildIndexName(indexName)),
-      ]),
+    yield* Effect.forEach(
+      enqueued,
+      (task) => completeTask("catalog.rebuild.fill", () => task),
+      { discard: true },
     );
-    await waitForTasks(
-      await Promise.all(
-        Object.entries(catalogIndexSettings).map(([indexName, settings]) =>
-          meilisearch
-            .index(rebuildIndexName(indexName))
-            .updateSettings(settings),
-        ),
-      ),
+    yield* Effect.log(
+      `${indexName}: ${count} entries in ${formatDuration(filledAt)}`,
     );
+  });
 
-    await Promise.all([
-      rebuild(ITEMS_INDEX, catalogItemTable),
-      rebuild(NPCS_INDEX, catalogNpcTable),
-    ]);
+  yield* Effect.log(
+    `Rebuilding the catalog indexes at ${config.meilisearchHost}`,
+  );
 
-    await waitForTasks([
-      await meilisearch.swapIndexes(
-        indexNames.map((indexName) => ({
-          indexes: [indexName, rebuildIndexName(indexName)],
-          rename: false,
-        })),
+  yield* Effect.forEach(indexNames.map(rebuildIndexName), dropIndex, {
+    concurrency: "unbounded",
+    discard: true,
+  });
+  yield* Effect.forEach(
+    indexNames.flatMap((indexName) => [indexName, rebuildIndexName(indexName)]),
+    (indexName) => ensureIndex(meilisearch, indexName),
+    { concurrency: "unbounded", discard: true },
+  );
+  yield* Effect.forEach(
+    indexes,
+    ([indexName, { settings }]) =>
+      completeTask("catalog.rebuild.settings", () =>
+        meilisearch.index(rebuildIndexName(indexName)).updateSettings(settings),
       ),
-    ]);
-    await Promise.all(indexNames.map(rebuildIndexName).map(dropIndex));
+    { concurrency: "unbounded", discard: true },
+  );
+  yield* Effect.forEach(
+    indexes,
+    ([indexName, { table }]) => fill(indexName, table),
+    { concurrency: "unbounded", discard: true },
+  );
+  yield* completeTask("catalog.rebuild.swap", () =>
+    meilisearch.swapIndexes(
+      indexNames.map((indexName) => ({
+        indexes: [indexName, rebuildIndexName(indexName)],
+        rename: false,
+      })),
+    ),
+  );
+  yield* Effect.forEach(indexNames.map(rebuildIndexName), dropIndex, {
+    concurrency: "unbounded",
+    discard: true,
+  });
+  yield* Effect.log(`Done in ${formatDuration(startedAt)}`);
+});
 
-    console.log(`Done in ${formatDuration(startedAt)}`);
-  } finally {
-    await sql.close();
-  }
-};
-
-await main();
+BunRuntime.runMain(
+  rebuildProjection.pipe(
+    Effect.provide(
+      Layer.mergeAll(
+        CatalogDatabase.layer.pipe(Layer.provide(PgClientLive)),
+        CatalogConfig.layer,
+      ),
+    ),
+  ),
+);

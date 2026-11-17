@@ -1,13 +1,12 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { OperationError } from "@lootlog/instrumentation/operation";
 import type { APIGuildMember } from "discord-api-types/v10";
-import { Clock, Effect, Result, Schema } from "effect";
+import { Clock, Effect, Result } from "effect";
 import {
   ApplicationError,
   ApplicationErrorKind,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
-import { DiscordOperationFailure } from "#src/discord/discord.operations";
 import {
   getTransientMemberSyncStatus,
   isDiscordRefusalSyncStatus,
@@ -16,11 +15,6 @@ import {
 import type { MemberDelivery } from "./member-delivery.operations.js";
 import type { MemberStore } from "./member.repository.js";
 import type { MemberSyncResult } from "./member.types.js";
-
-class MemberSyncFailure extends TaggedErrorClass<MemberSyncFailure>()(
-  "MemberSyncFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 export interface MemberSyncPorts {
   readonly getGuildMember: (options: {
@@ -138,7 +132,7 @@ export const makeMemberSync = (
       }
 
       const error =
-        result.failure instanceof DiscordOperationFailure
+        result.failure instanceof OperationError
           ? result.failure.cause
           : result.failure;
 
@@ -227,7 +221,7 @@ export const makeMemberSync = (
 
       if (options.throwOnUnexpectedError) {
         return yield* Effect.fail(
-          new MemberSyncFailure({
+          new OperationError({
             operation: "members.sync.discord",
             cause: error,
           }),
