@@ -11,7 +11,10 @@ import type { CommandRoutes } from "#src/realtime/command-routes";
 import { getGlobalChatStats } from "#src/realtime/gateway-metrics";
 import type { NpcPresenceService } from "#src/realtime/npc-presence-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import {
+  isGlobalChatTopic,
+  type RealtimeHub,
+} from "#src/realtime/realtime-hub";
 import {
   JoinCapacityExceeded,
   OrganizationAccessDenied,
@@ -283,12 +286,7 @@ export const sessionRoutes = (
             Effect.sync(() => {
               const counts = hub.globalChatCounts;
 
-              if (
-                !counts ||
-                (scope.topic !== "global.chat" &&
-                  scope.topic !== "global.chat.world")
-              )
-                return;
+              if (!counts || !isGlobalChatTopic(scope.topic)) return;
 
               const event: Event = {
                 v: 1,

@@ -20,9 +20,7 @@ describe("AirTagService", () => {
         command: {
           eval: unexpected("eval"),
           mget: unexpected("mget"),
-          sadd: unexpected("sadd"),
           smembers: unexpected("smembers"),
-          expire: unexpected("expire"),
         },
       },
       {
@@ -79,10 +77,11 @@ describe("AirTagService map threats", () => {
       {
         command: {
           mget: async (keys: string[]) => keys.map(() => null),
-          sadd: async () => 1,
-          expire: async () => 1,
           smembers: async () => [],
-          eval: async () => {
+          eval: async (script: string) => {
+            // Each publication attempt lists the map among threat maps.
+            if (script.includes('"SADD"')) return 1;
+
             const reply = evaluations.shift();
 
             if (reply === undefined) throw new Error("Unexpected Redis script");

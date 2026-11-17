@@ -1,4 +1,5 @@
 import { verifyGeneratedAssetReferences } from "../../../scripts/static-assets.mjs";
+import { assertRoutedTo } from "../../traffic-splitter/scripts/assert-routed.mjs";
 import assert from "node:assert/strict";
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
@@ -23,6 +24,10 @@ assert.doesNotMatch(
   /(?:href|src)="\/assets\//u,
   "root redirect uses the shared asset namespace",
 );
+
+// Paths that pages under `/docs` request on the shared `dev.lootlog.pl` host;
+// the rest of the artifact is served only on `docs.lootlog.pl`.
+const splitterPaths = ["/api/search"];
 
 const contentFiles = (await readdir(contentDirectory))
   .filter((fileName) => fileName.endsWith(".mdx"))
@@ -97,7 +102,10 @@ await Promise.all(
       ),
       `${routePath} lacks its production canonical URL`,
     );
-    verifyGeneratedAssetReferences(document, "docs", routePath);
+    splitterPaths.push(
+      `/${routePath}`,
+      ...verifyGeneratedAssetReferences(document, "docs", routePath),
+    );
   }),
 );
 
@@ -130,6 +138,7 @@ await Promise.all(
   contentFiles.map(async (fileName) => {
     const slug = fileName.slice(0, -".mdx".length);
     const markdownPath = slug === "index" ? "docs/index.md" : `docs/${slug}.md`;
+    splitterPaths.push(`/${markdownPath}`);
 
     const [source, markdown] = await Promise.all([
       readFile(path.join(contentDirectory, fileName), "utf8"),
@@ -171,6 +180,7 @@ await Promise.all(
     );
 
     JSON.parse(response);
+    splitterPaths.push(`/__tsr/staticServerFnCache/${fileName}`);
     assert.match(
       response,
       /"k":\["description","path","slugs","title","pageTree"\]/u,
@@ -184,5 +194,7 @@ await Promise.all(
     access(path.join(clientDirectory, assetPath)),
   ),
 );
+
+await assertRoutedTo(splitterPaths, "docs");
 
 process.stdout.write("Docs static artifact verified.\n");

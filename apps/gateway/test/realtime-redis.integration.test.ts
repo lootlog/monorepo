@@ -2802,6 +2802,14 @@ describe("realtime Dragonfly integration", () => {
         },
       ],
     });
+    // The threat-maps index expires with the threats it lists.
+    expect(
+      await airTags.first.store.command.eval<number>(
+        'return redis.call("PTTL",KEYS[1])',
+        1,
+        "air-tag:threat-maps:organization-1:classic",
+      ),
+    ).toBeWithin(1, 30_001);
     await expect(
       Effect.runPromise(
         recipientAirTags.fetchMapThreats(
