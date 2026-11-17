@@ -1,4 +1,10 @@
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  AnimatePresence,
+  domAnimation,
+  LazyMotion,
+  m,
+  useReducedMotion,
+} from "framer-motion";
 import { ArrowUpRight, ChartColumn, Gem, LayoutDashboard } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -199,31 +205,33 @@ export function ProductProof() {
           >
             <span aria-hidden="true" className="landing-shape landing-ring" />
             <span aria-hidden="true" className="landing-shape landing-dot" />
-            <AnimatePresence
-              initial={false}
-              mode="popLayout"
-              custom={selection.direction}
-            >
-              <motion.div
-                key={active.key}
-                className="landing-screen"
+            <LazyMotion features={domAnimation} strict>
+              <AnimatePresence
+                initial={false}
+                mode="popLayout"
                 custom={selection.direction}
-                variants={reducedMotion ? undefined : screenVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               >
-                <img
-                  src={active.image}
-                  width={1600}
-                  height={900}
-                  alt={t(`landing.proof.${active.key}.imageAlt`)}
-                  decoding="async"
-                  className="landing-screen-image"
-                />
-              </motion.div>
-            </AnimatePresence>
+                <m.div
+                  key={active.key}
+                  className="landing-screen"
+                  custom={selection.direction}
+                  variants={reducedMotion ? undefined : screenVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <img
+                    src={active.image}
+                    width={1600}
+                    height={900}
+                    alt={t(`landing.proof.${active.key}.imageAlt`)}
+                    decoding="async"
+                    className="landing-screen-image"
+                  />
+                </m.div>
+              </AnimatePresence>
+            </LazyMotion>
           </div>
         </div>
       </div>

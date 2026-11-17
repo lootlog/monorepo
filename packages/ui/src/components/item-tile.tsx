@@ -2,11 +2,8 @@ import { itemStatUpgradeLevel } from "@lootlog/domain/item-upgrade";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
 import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
-import {
-  fallbackRenderStat,
-  ITEM_RARITY_STYLES,
-  ItemTileDetails,
-} from "@lootlog/ui/components/item-tile-details";
+import { ItemTileDetails } from "@lootlog/ui/components/item-tile-details";
+import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-styles";
 import { useSharedTooltip } from "@lootlog/ui/components/shared-tooltip-provider";
 import {
   Tooltip,
@@ -71,7 +68,7 @@ export const ItemTile: FC<ItemTileProps> = ({
   item: { icon, name, rarity, stat, type },
   labels,
   render = <button type="button" />,
-  renderStat = fallbackRenderStat,
+  renderStat,
   shareIndex,
   shareNickname,
 }) => {

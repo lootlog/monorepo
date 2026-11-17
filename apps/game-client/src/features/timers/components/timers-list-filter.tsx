@@ -25,9 +25,11 @@ export const TimersListFilter: FC<TimersListFilterProps> = ({
   const { t } = useTranslation("timers");
 
   // Ids of lists deleted meanwhile no longer count as a selection.
+  const selectedIds = new Set(selectedLists);
+
   const selected = lists
-    .filter((list) => selectedLists.includes(list.id))
-    .map(({ id }) => id);
+    .map(({ id }) => id)
+    .filter((id) => selectedIds.has(id));
 
   const toggle = (id: string) => {
     onChange(
@@ -53,7 +55,7 @@ export const TimersListFilter: FC<TimersListFilterProps> = ({
       {lists.map((list) => (
         <TimersListChip
           key={list.id}
-          pressed={selected.includes(list.id)}
+          pressed={selectedIds.has(list.id)}
           title={list.name}
           onPressedChange={() => toggle(list.id)}
           onContextMenu={() => onChange([list.id])}

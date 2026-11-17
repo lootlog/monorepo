@@ -32,7 +32,7 @@ import { isEqual } from "es-toolkit";
 import { useEffect, useRef, type ComponentProps } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import {
   createThemeEditorFormSchema,
   type ThemeEditorFormValues,

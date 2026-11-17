@@ -1,6 +1,6 @@
 import { DialogActionFooter } from "./dialog-action-footer";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Schema } from "effect";
@@ -96,7 +96,10 @@ export const CloseRespawnWindowDialog = ({
     },
   });
 
-  const createNewWindow = form.watch("createNewWindow");
+  const createNewWindow = useWatch({
+    control: form.control,
+    name: "createNewWindow",
+  });
 
   const { reset } = form;
 

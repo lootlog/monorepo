@@ -2,7 +2,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { Copy } from "lucide-react";
 import { useState } from "react";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 
 type CopyLinkFieldProps = {
   url: string;

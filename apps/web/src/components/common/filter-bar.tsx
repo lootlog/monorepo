@@ -85,11 +85,12 @@ export const FilterBar = ({
   children,
   stackedFilters,
   chips = EMPTY_CHIPS,
-  activeFilterCount = chips.length,
+  activeFilterCount: activeFilterCountProp,
   clearFiltersLabel,
   onClearFilters,
   chipsPlaceholder,
 }: FilterBarProps) => {
+  const activeFilterCount = activeFilterCountProp ?? chips.length;
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const isWide = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const usesPanel = stackedFilters !== undefined && !isWide;

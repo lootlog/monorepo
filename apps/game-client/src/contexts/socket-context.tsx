@@ -131,7 +131,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [joinRetry, setJoinRetry] = useState(0);
   const joinAttempt = useRef(0);
   const joinFailures = useRef(0);
-  const joinRetryTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   // One message per run of refusals, so retries do not repeat it.
   const joinRejectionShown = useRef(false);
   const [guildIds, setJoinedGuilds] = useState<string[]>([]);
@@ -188,8 +187,10 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     setSocketState({ connected, joined, joinedGuilds });
   }, [connected, joined, joinedGuilds, setSocketState]);
 
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup -- The join callback sets retryTimer only before cleanup, which clears it.
   useEffect(() => {
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
 
     const emitJoin = async () => {
       if (gameInitialized && connected) {
@@ -246,8 +247,9 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
             // A closed socket reconnects through the realtime client's backoff
             // or, after a non-retryable refusal, through the reconnect button
-            // in the connection status.
-            if (!socket.connected) return;
+            // in the connection status. After cleanup, a later run either
+            // joins again or has no join to retry.
+            if (cancelled || !socket.connected) return;
 
             const delay = Math.min(
               JOIN_RETRY_MAX_DELAY_MS,
@@ -255,8 +257,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
             );
 
             joinFailures.current += 1;
-            clearTimeout(joinRetryTimer.current);
-            joinRetryTimer.current = setTimeout(
+            retryTimer = setTimeout(
               () => setJoinRetry((retry) => retry + 1),
               Math.round(delay * (0.5 + Math.random())),
             );
@@ -268,7 +269,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       cancelled = true;
-      clearTimeout(joinRetryTimer.current);
+      clearTimeout(retryTimer);
     };
   }, [gameInitialized, connected, socket, characterIdentity, joinRetry]);
 

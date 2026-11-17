@@ -14,7 +14,7 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
 import { useNavigate } from "@tanstack/react-router";
 import type { StatisticsTabProps } from "./statistics-content";
-import { toNpcType } from "./statistics-filters";
+import { toNpcType } from "./statistics-search";
 import { StatisticsDelta } from "./statistics-delta";
 import { StatisticsTopNpcs } from "./statistics-top-npcs";
 import { StatisticsTopLegends } from "./statistics-top-legends";

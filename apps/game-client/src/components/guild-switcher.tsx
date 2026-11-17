@@ -3,7 +3,7 @@ import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AvatarFallback } from "@/components/ui/avatar";
-import { type FC, useEffect } from "react";
+import type { FC } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { GuildButton } from "@/components/guild-button";
 import { useTranslation } from "react-i18next";
@@ -21,7 +21,7 @@ import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-ru
  * The one Lootlog picker for in-game windows: a flat, full-width tile row the
  * caller wraps in a toolbar strip. Uncontrolled, it drives the character's
  * global selection; with `value`/`onChange` the caller owns the selection
- * (chat also offers the "all" scope).
+ * and keeps it on a visible Lootlog (chat also offers the "all" scope).
  */
 type GuildSwitcherProps = {
   allowAll?: boolean;
@@ -118,26 +118,6 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   );
 
   const hiddenGuildIds = userPreferences?.hiddenGuildIds;
-  useEffect(() => {
-    if (!isFetched || !arePreferencesFetched || visibleGuilds.length === 0)
-      return;
-
-    if (!onChange) return;
-    const currentValue = value;
-
-    if (allowAll && currentValue === "all") return;
-    const exists = visibleGuilds.some((guild) => guild.id === currentValue);
-
-    if (exists) return;
-    onChange(visibleGuilds[0].id);
-  }, [
-    allowAll,
-    arePreferencesFetched,
-    isFetched,
-    onChange,
-    value,
-    visibleGuilds,
-  ]);
 
   const selectedValue = value !== undefined ? value : guildId;
 

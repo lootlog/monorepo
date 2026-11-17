@@ -658,58 +658,62 @@ export function useChatInputController({
       return;
     }
 
+    const submit = async () => {
+      try {
+        const response =
+          submitAction.kind === "notification"
+            ? (
+                await startNotificationMessage({
+                  guildIds: [selectedGuildId],
+                  world,
+                  message: submitAction.message,
+                  sendChatMessage: (resolvedGuildIds) =>
+                    sendChatMessage({
+                      pathParams: {
+                        guildId: resolvedGuildIds[0] ?? selectedGuildId,
+                      },
+                      data: buildChatMessagePayload({
+                        message: submitAction.message,
+                        type: getChatMessageTypeForSubmitAction(submitAction),
+                        characterData,
+                      }),
+                    }),
+                })
+              ).result
+            : await sendChatMessage({
+                pathParams: { guildId: selectedGuildId },
+                data: buildChatMessagePayload({
+                  message: submitAction.message,
+                  type: getChatMessageTypeForSubmitAction(submitAction),
+                  characterData,
+                }),
+              });
+
+        updateChatMessagesCache({
+          guildId: selectedGuildId,
+          queryClient,
+          updater: (old: ChatMessageResponseDtoOutput[] | undefined) =>
+            upsertChatMessage(old, response),
+        });
+        completeSubmission();
+      } catch (error) {
+        reportSendError(error);
+
+        if (error instanceof NotificationChatPublishError) {
+          completeSubmission();
+        } else {
+          focusEditorCaret(currentCaretIndex);
+        }
+      }
+    };
+
     submissionInProgressRef.current = true;
     setIsSubmitting(true);
 
-    try {
-      const response =
-        submitAction.kind === "notification"
-          ? (
-              await startNotificationMessage({
-                guildIds: [selectedGuildId],
-                world,
-                message: submitAction.message,
-                sendChatMessage: (resolvedGuildIds) =>
-                  sendChatMessage({
-                    pathParams: {
-                      guildId: resolvedGuildIds[0] ?? selectedGuildId,
-                    },
-                    data: buildChatMessagePayload({
-                      message: submitAction.message,
-                      type: getChatMessageTypeForSubmitAction(submitAction),
-                      characterData,
-                    }),
-                  }),
-              })
-            ).result
-          : await sendChatMessage({
-              pathParams: { guildId: selectedGuildId },
-              data: buildChatMessagePayload({
-                message: submitAction.message,
-                type: getChatMessageTypeForSubmitAction(submitAction),
-                characterData,
-              }),
-            });
-
-      updateChatMessagesCache({
-        guildId: selectedGuildId,
-        queryClient,
-        updater: (old: ChatMessageResponseDtoOutput[] | undefined) =>
-          upsertChatMessage(old, response),
-      });
-      completeSubmission();
-    } catch (error) {
-      reportSendError(error);
-
-      if (error instanceof NotificationChatPublishError) {
-        completeSubmission();
-      } else {
-        focusEditorCaret(currentCaretIndex);
-      }
-    } finally {
+    await submit().finally(() => {
       submissionInProgressRef.current = false;
       setIsSubmitting(false);
-    }
+    });
   };
 
   const handleInputKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {

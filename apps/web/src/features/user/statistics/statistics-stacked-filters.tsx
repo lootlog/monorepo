@@ -3,7 +3,8 @@ import { FilterPanelField } from "@/components/filters/filter-panel-field";
 import { KillStatsNpcTypeSelect } from "@/features/kills/components/kill-stats-npc-type-select";
 import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
 import { useTranslation } from "react-i18next";
-import { type StatisticsFiltersProps, toNpcType } from "./statistics-filters";
+import type { StatisticsFiltersProps } from "./statistics-filters";
+import { toNpcType } from "./statistics-search";
 import { StatisticsPeriodSelect } from "./statistics-period-select";
 import { StatisticsSortSelect } from "./statistics-sort-select";
 

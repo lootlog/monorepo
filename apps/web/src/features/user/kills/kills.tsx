@@ -43,7 +43,7 @@ import {
 import {
   KILL_STATS_PERIODS,
   type KillStatsPeriod,
-} from "@/features/kills/components/kill-stats-period-select";
+} from "@/features/kills/kill-stats-period";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { useCursorStack } from "@/hooks/use-cursor-stack";
 import { RetryButton } from "@/components/common/retry-button";

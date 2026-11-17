@@ -29,7 +29,7 @@ export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
   label,
   onRetry,
   retryLabel,
-  retryIcon = <RotateCcw aria-hidden className="ll:size-3" />,
+  retryIcon,
   className,
   layout = "inline",
 }) => {
@@ -75,7 +75,7 @@ export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
           className="ll:-my-1.5 ll:-mr-1.5"
           onClick={onRetry}
         >
-          {retryIcon}
+          {retryIcon ?? <RotateCcw aria-hidden className="ll:size-3" />}
         </IconButton>
       ) : null}
     </div>

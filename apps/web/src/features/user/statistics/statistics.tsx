@@ -17,10 +17,10 @@ import { StatisticsLoots } from "./statistics-loots";
 import { StatisticsLegendsTab } from "./statistics-legends-tab";
 import { StatisticsOverviewSkeleton } from "./statistics-overview-skeleton";
 import {
-  countActiveStatisticsFilters,
   StatisticsFilters,
   type StatisticsFiltersProps,
 } from "./statistics-filters";
+import { countActiveStatisticsFilters } from "./count-active-statistics-filters";
 import { StatisticsStackedFilters } from "./statistics-stacked-filters";
 import { StatisticsCharacterHistoryNote } from "./statistics-character-history-note";
 

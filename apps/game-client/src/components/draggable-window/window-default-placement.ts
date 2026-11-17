@@ -186,8 +186,10 @@ const placeInStack = (
     bounds: Bounds,
     clearOf: readonly StackZone[],
     keepHeroVisible: boolean,
-  ) =>
-    columns
+  ) => {
+    const clearZones = new Set(clearOf);
+
+    return columns
       .flatMap((x) => rows.map((y) => ({ x, y, ...size })))
       .find(
         (rect) =>
@@ -197,9 +199,10 @@ const placeInStack = (
           rect.y + rect.height <= bounds.bottom &&
           !(keepHeroVisible && overlaps(rect, hero)) &&
           !placed.some(
-            (other) => clearOf.includes(other.zone) && overlaps(rect, other),
+            (other) => clearZones.has(other.zone) && overlaps(rect, other),
           ),
       );
+  };
 
   const spot =
     findFreeSpot(map, [...avoid, ...preferClearOf], clearOfHero) ??

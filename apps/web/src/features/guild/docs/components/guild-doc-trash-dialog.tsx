@@ -1,5 +1,5 @@
 import { ArchiveRestore, CircleAlert, RotateCcw, Trash2 } from "lucide-react";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";

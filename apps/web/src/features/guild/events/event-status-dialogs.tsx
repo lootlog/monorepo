@@ -1,4 +1,4 @@
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import type { useEventHeader } from "./use-event-header";
 

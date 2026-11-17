@@ -2,9 +2,9 @@ import { uniqBy } from "es-toolkit";
 import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import { useEffect, useState } from "react";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { Schema } from "effect";
 
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
@@ -97,7 +97,8 @@ export function useWatchItemForm({
     },
   });
 
-  const [itemSearchValue, setItemSearchValue] = useState("");
+  // A search belongs to the world it was typed for; another world starts empty.
+  const [itemSearch, setItemSearch] = useState({ world: "", value: "" });
 
   const form = useForm<WatchFormValues>({
     resolver: standardSchemaResolver(watchFormSchema),
@@ -111,10 +112,22 @@ export function useWatchItemForm({
     },
   });
 
-  const selectedGuildIds = form.watch("guildIds");
-  const selectedWorld = form.watch("world");
-  const selectedItem = form.watch("item");
-  const isManualEntry = form.watch("manualEntry");
+  const [
+    selectedGuildIds,
+    selectedWorld,
+    selectedItem,
+    isManualEntry,
+    manualItemId,
+  ] = useWatch({
+    control: form.control,
+    name: ["guildIds", "world", "item", "manualEntry", "manualItemId"],
+  });
+
+  const itemSearchValue =
+    itemSearch.world === selectedWorld ? itemSearch.value : "";
+
+  const setItemSearchValue = (value: string) =>
+    setItemSearch({ world: selectedWorld, value });
 
   const worldQueries = useQueries({
     queries: selectedGuildIds.map((guildId) =>
@@ -144,7 +157,7 @@ export function useWatchItemForm({
   const isItemsLoading = itemSearchQuery.isFetching;
 
   const resolvedItemId = isManualEntry
-    ? Number(form.watch("manualItemId")) || null
+    ? Number(manualItemId) || null
     : (selectedItem?.id ?? null);
 
   const watchedItemsCount = watchedItems.length;
@@ -175,7 +188,6 @@ export function useWatchItemForm({
     ) {
       form.setValue("world", "");
       form.setValue("item", null);
-      setItemSearchValue("");
     }
   }, [selectedWorld, worldOptions, worldQueries, form]);
 
