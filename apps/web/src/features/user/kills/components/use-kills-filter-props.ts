@@ -1,16 +1,13 @@
 import { LIFETIME_KILL_STATS_PARAMS } from "@/features/kills/lifetime-kill-stats-params";
-import {
-  findTrackableNpcType,
-  TRACKABLE_NPC_TYPES,
-  type NpcType,
-} from "@/features/user/kills/npc-types";
+import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
+import { findKilledNpcType, type KilledNpcType } from "@/constants/npc";
 import { useKillsControllerGetUserKillStats } from "@lootlog/client/main";
 import type { KillStatsFiltersProps } from "@/features/kills/components/kill-stats-filters";
 import type { KillStatsPeriod } from "@/features/kills/kill-stats-period";
 
 export type KillsFiltersState = {
   world?: string;
-  npcTypes?: NpcType[];
+  npcTypes?: KilledNpcType[];
   search?: string;
   minLvl?: number;
   maxLvl?: number;
@@ -23,7 +20,7 @@ type UseKillsFilterPropsOptions = {
   minLvl: string;
   maxLvl: string;
   onWorldChange: (world: string | undefined) => void;
-  onNpcTypeChange: (npcTypes: NpcType[] | undefined) => void;
+  onNpcTypeChange: (npcTypes: KilledNpcType[] | undefined) => void;
   onMinLvlChange: (minLvl: string) => void;
   onMaxLvlChange: (maxLvl: string) => void;
   onPeriodChange: (period: KillStatsPeriod) => void;
@@ -54,7 +51,7 @@ export const useKillsFilterProps = ({
     : [];
 
   const handleNpcTypeChange = (value: string | null) => {
-    const npcType = value ? findTrackableNpcType(value) : undefined;
+    const npcType = value ? findKilledNpcType(value) : undefined;
 
     onNpcTypeChange(npcType ? [npcType] : undefined);
   };

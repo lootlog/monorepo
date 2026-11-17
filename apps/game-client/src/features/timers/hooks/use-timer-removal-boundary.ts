@@ -1,3 +1,4 @@
+import { getTimerRemovalAt } from "@lootlog/domain/timers";
 import type { Timer } from "@/api/timers.api";
 import { getTimerEpoch } from "@/features/timers/utils/timers-utils";
 import { useEffect, useReducer } from "react";
@@ -10,8 +11,7 @@ const MAX_TIMEOUT_DELAY_MS = 2_147_483_647;
  * the entrance is open.
  */
 const getTimerListBoundaries = (timer: Timer, removeTimerAfterMs: number) => {
-  const removal =
-    getTimerEpoch(timer.deletedAt ?? timer.maxSpawnTime) + removeTimerAfterMs;
+  const removal = getTimerRemovalAt(timer, removeTimerAfterMs, getTimerEpoch);
 
   return timer.entranceClosesAt && !timer.deletedAt
     ? [removal, getTimerEpoch(timer.entranceClosesAt)]

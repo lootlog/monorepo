@@ -4,7 +4,7 @@ import { ChartSection } from "@/components/common/chart-section";
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 import { useTranslation } from "react-i18next";
 import { KillStatsOverview } from "@/components/common/kill-analytics/kill-stats-overview";
-import { TRACKABLE_NPC_TYPES } from "./constants";
+import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
 import { FilterBar } from "@/components/common/filter-bar";
 import { StatsFiltersSkeleton } from "./components/stats-filters-skeleton";
 import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-section";

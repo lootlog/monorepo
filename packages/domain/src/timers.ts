@@ -216,3 +216,29 @@ export const isSameHeroTrackerEntrance = (
 ): boolean =>
   Math.abs(closesAtMs - otherClosesAtMs) <
   SAME_HERO_TRACKER_ENTRANCE_TOLERANCE_MS;
+
+/** One string per timer identity, for maps and sets keyed by timer. */
+export const getTimerIdentityKey = ({
+  guildId,
+  world,
+  timerKey,
+}: TimerIdentity): string => `${guildId}:${world}:${timerKey}`;
+
+/**
+ * When a timer leaves the timer lists: the player's removal delay after its
+ * maximum spawn time, or after its deletion. A pinned timer stays anyway.
+ */
+export const getTimerRemovalAt = (
+  timer: Pick<TimerSpawnTimes, "maxSpawnTime" | "deletedAt">,
+  removeTimerAfterMs: number,
+  toEpoch: (timestamp: string) => number = Date.parse,
+): number =>
+  toEpoch(timer.deletedAt ?? timer.maxSpawnTime) + removeTimerAfterMs;
+
+/** Whether an unpinned timer is still listed at `now`. */
+export const isTimerListed = (
+  timer: Pick<TimerSpawnTimes, "maxSpawnTime" | "deletedAt">,
+  removeTimerAfterMs: number,
+  now: number,
+  toEpoch: (timestamp: string) => number = Date.parse,
+): boolean => now < getTimerRemovalAt(timer, removeTimerAfterMs, toEpoch);

@@ -1,13 +1,13 @@
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { BandSection } from "@/components/common/band-section";
 import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
-import { formatDurationCompact } from "@/features/guild/events/utils/format-duration";
 import type { BattleDurationStats, Streak } from "@/lib/api/battlelog-types";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Link } from "@tanstack/react-router";
 import { Flame, Hourglass, Snowflake, Timer, Zap } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { formatDuration } from "@/utils/date/format-duration";
 
 type BattleRecordsSectionProps = {
   streak: Streak | undefined;
@@ -17,10 +17,10 @@ type BattleRecordsSectionProps = {
 
 // An average of zero means there were no battles with that result.
 const formatAverage = (seconds: number) =>
-  seconds > 0 ? formatDurationCompact(Math.round(seconds)) : "–";
+  seconds > 0 ? formatDuration(Math.round(seconds), "compact") : "–";
 
 const formatBattleDuration = (battle: { duration: number } | null) =>
-  battle ? formatDurationCompact(Math.round(battle.duration)) : "–";
+  battle ? formatDuration(Math.round(battle.duration), "compact") : "–";
 
 /** The current streak and how long battles last, the longest ones linked. */
 export function BattleRecordsSection({

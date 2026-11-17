@@ -15,9 +15,11 @@ import {
   calendarRange,
 } from "@/components/common/activity-heatmap/activity-calendar";
 import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
+import { useFormatOnlineDuration } from "@/utils/date/format-duration";
 
 export function DashboardActivity() {
   const { t } = useTranslation();
+  const formatOnlineDuration = useFormatOnlineDuration();
 
   const [storedMode, setMode] = useLocalStorage<string>(
     "lootlog:dashboard:activity-mode",
@@ -103,12 +105,7 @@ export function DashboardActivity() {
                         : [],
                     )}
                     label={t("statistics.online")}
-                    formatValue={(seconds) =>
-                      t("statistics.duration", {
-                        hours: Math.floor(seconds / 3600),
-                        minutes: Math.floor((seconds % 3600) / 60),
-                      })
-                    }
+                    formatValue={formatOnlineDuration}
                   />
                 </>
               )}

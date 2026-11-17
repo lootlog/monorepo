@@ -1,4 +1,5 @@
 import { Schema, SchemaTransformation } from "effect";
+import { Period } from "@lootlog/schema/http-scalars";
 import { requiredWithFallback } from "@lootlog/schema/stored-value";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import {
@@ -12,17 +13,6 @@ import {
 } from "nuqs";
 
 export const BATTLE_PANEL_FIRST_PAGE = 1;
-
-const PERIOD_VALUES = [
-  "24h",
-  "3d",
-  "7d",
-  "14d",
-  "30d",
-  "90d",
-  "180d",
-  "all",
-] as const;
 
 export const HEAD_TO_HEAD_SORT_BY_VALUES = [
   "wins",
@@ -60,11 +50,9 @@ type BattlePanelBattlesRouteSearch = Partial<{
   maxLevel: number;
 }>;
 
-export type Period = (typeof PERIOD_VALUES)[number];
-
 const battlePanelBaseSearchParsers = {
   characterId: parseAsString,
-  period: parseAsStringLiteral(PERIOD_VALUES).withDefault("30d"),
+  period: parseAsStringLiteral(Period.literals).withDefault("30d"),
   minLevel: parseAsInteger.withDefault(1),
   maxLevel: parseAsInteger.withDefault(500),
   startDate: parseAsString,

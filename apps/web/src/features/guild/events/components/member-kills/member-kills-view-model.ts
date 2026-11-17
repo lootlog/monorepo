@@ -38,7 +38,7 @@ export const getMemberKillScoringViewModel = (
     trackingTime:
       point.trackingDurationSeconds !== null &&
       point.trackingDurationSeconds >= 0
-        ? formatDurationHuman(point.trackingDurationSeconds)
+        ? formatDuration(point.trackingDurationSeconds, "human")
         : EMPTY_VALUE,
     scoringItems: getScoringItems({ ...scoring, t }),
   };
@@ -47,9 +47,9 @@ export const getMemberKillScoringViewModel = (
 import type { TFunction } from "i18next";
 import type { KillHistoryMemberEntry } from "@lootlog/client/main";
 import { formatPoints } from "../../utils/format-points";
-import { formatDurationHuman } from "../../utils/format-duration";
 import {
   getScoringBreakdown,
   getScoringItems,
 } from "../../utils/scoring-presentation";
 import { EMPTY_VALUE } from "@/constants/empty-value";
+import { formatDuration } from "@/utils/date/format-duration";

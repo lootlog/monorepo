@@ -12,7 +12,7 @@ import {
 } from "@/features/kills/components/kill-stats-filters";
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
 import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
-import { TRACKABLE_NPC_TYPES } from "./constants";
+import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
 import { StatsCountCell } from "@/components/common/stats-count-cell";
 import { StatsMobileListSkeleton } from "./components/stats-mobile-list-skeleton";
 import { StatsNpcCell } from "@/components/common/stats-npc-cell";

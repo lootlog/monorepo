@@ -61,6 +61,21 @@ export const NPC_TYPES_STRONGEST_FIRST = [
   "COMMON",
 ] as const;
 
+/**
+ * Monster types kill statistics break down and filter by, strongest first.
+ * Weaker monsters still count toward the totals.
+ */
+export const TRACKABLE_NPC_TYPES = [
+  "TITAN",
+  "COLOSSUS",
+  "HERO",
+  "EVENT_HERO",
+  "ELITE3",
+  "ELITE2",
+] as const satisfies ReadonlyArray<(typeof NPC_TYPES_STRONGEST_FIRST)[number]>;
+
+export type TrackableNpcType = (typeof TRACKABLE_NPC_TYPES)[number];
+
 /** Position in `NPC_TYPES_STRONGEST_FIRST`; any other type or none ranks last. */
 export const getNpcTypeStrengthRank = (type: string | null | undefined) => {
   const rank = NPC_TYPES_STRONGEST_FIRST.findIndex(
