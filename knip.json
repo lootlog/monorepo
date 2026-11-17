@@ -2,9 +2,9 @@
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["tools/**/*.{js,mjs}"],
-      "project": ["tools/**/*.{js,mjs}"],
-      "ignoreDependencies": ["k6", "wrangler"]
+      "entry": [],
+      "project": [],
+      "ignoreDependencies": ["wrangler"]
     },
     "apps/*": {
       "entry": [
@@ -95,7 +95,7 @@
     "tailwindcss",
     "tw-animate-css"
   ],
-  "ignoreBinaries": ["check", "jq", "k6"],
+  "ignoreBinaries": ["check", "jq"],
   "vite": true,
   "vitest": true
 }

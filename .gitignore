@@ -59,7 +59,6 @@ apps/api/scripts/**
 apps/api/profiles/
 /artifacts/game-client/
 perf/
-tools/k6/.secrets.local
 
 .codex
 playground

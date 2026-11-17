@@ -54,12 +54,6 @@
     "installAddon": "Zainstaluj dodatek do gry",
     "wiki": "Wiki Margonem"
   },
-  "wikiAnnouncement": {
-    "title": "Nowość: Wiki Lootloga",
-    "description": "Przedmioty, potwory i ich dropy, porównywarka przedmiotów i kalkulatory w jednym miejscu.",
-    "open": "Otwórz wiki",
-    "dismiss": "Ukryj ogłoszenie"
-  },
   "supportAnnouncement": {
     "title": "Wesprzyj Lootloga",
     "description": "Lootlog jest darmowy i\u00a0open source. Każda kawa pomaga utrzymać serwery i\u00a0rozwijać nowe funkcje.",
