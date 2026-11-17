@@ -514,6 +514,7 @@
       "version": "1.0.3",
       "devDependencies": {
         "@lootlog/typescript-config": "workspace:*",
+        "@types/bun": "catalog:",
         "typescript": "catalog:",
       },
     },
@@ -642,6 +643,7 @@
       "name": "@lootlog/meilisearch",
       "version": "0.0.0",
       "dependencies": {
+        "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
         "effect": "catalog:",
         "es-toolkit": "catalog:",
