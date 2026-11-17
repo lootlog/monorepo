@@ -1,6 +1,6 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import { and, eq, inArray, isNotNull, notInArray } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   memberTable,
@@ -10,24 +10,11 @@ import type { MemberDelivery } from "./member-delivery.operations.js";
 import { queueMemberDeliveries } from "./member.repository.js";
 import type { DeactivateMembersMissingFromDiscordGuildsOptions } from "./member.types.js";
 
-class MemberRemovalFailure extends TaggedErrorClass<MemberRemovalFailure>()(
-  "MemberRemovalFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeMemberRemoval = (
   database: ApiDatabaseValue,
   delivery: Pick<MemberDelivery, "deliverAll">,
 ) => {
-  const operation = <A>(name: string, effect: Effect.Effect<A, unknown>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new MemberRemovalFailure({ operation: name, cause }),
-      ),
-      Effect.withSpan(name, {
-        attributes: { adapter: "api.database", retryCount: 0 },
-      }),
-    );
+  const operation = adapterOperation("api.database");
 
   const deactivateMembersMissingFromDiscordGuilds = Effect.fn(
     "members.deactivateMissing",

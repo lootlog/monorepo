@@ -1,7 +1,10 @@
+import {
+  adapterOperation,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { eventReadCacheEntry } from "#src/events/catalog/event-read-cache.service";
 import { extractEventTimerNpc } from "#src/events/respawn/event-timer-npc";
 import { isObjectRecord } from "@lootlog/schema/records";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -19,26 +22,13 @@ import { EventHeroStatsResponse } from "#src/events/kills/event-kill-response.sc
 
 const organizationKills = guildKillSource();
 
-class EventHeroSummaryError extends TaggedErrorClass<EventHeroSummaryError>()(
-  "EventHeroSummaryError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeEventHeroSummary = (
   database: typeof ApiDatabase.Service,
   redis: RedisService,
   timers: EventTimersPort,
   logger: Logger,
 ) => {
-  const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new EventHeroSummaryError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.hero-summary.drizzle", retryCount: 0 },
-      }),
-    );
+  const query = adapterOperation("events.hero-summary.drizzle");
 
   const eventWithHeroes = (guildId: string, eventId: string) =>
     Effect.gen(function* () {
@@ -86,11 +76,7 @@ export const makeEventHeroSummary = (
         onError: (error) =>
           logger.warn("Event hero stats cache unavailable", error),
       })
-      .pipe(
-        Effect.withSpan("events.heroSummary.cache", {
-          attributes: { adapter: "events.redis", retryCount: 0 },
-        }),
-      );
+      .pipe(withAdapterSpan("events.heroSummary.cache", "events.redis"));
   };
 
   return {

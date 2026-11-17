@@ -36,7 +36,6 @@ export const makeNotificationDispatchProcessor = (
     yield* notifications
       .dispatch(job.data.notificationJobId, {
         retrying: job.attemptsMade > 0,
-        finalAttempt: job.attemptsMade + 1 >= (job.opts.attempts ?? 1),
       })
       .pipe(
         Effect.mapError(

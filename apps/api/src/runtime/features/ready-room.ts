@@ -1,4 +1,4 @@
-import { makeJsonCodec } from "#src/redis/redis.service";
+import { makeJsonCodec, type RedisEffects } from "#src/redis/redis.service";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
@@ -10,19 +10,10 @@ import type { PartyGatheringUpdateEnvelope } from "@lootlog/schema/party-ready-r
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { makeChatEvents, makeChatRedis } from "#src/runtime/features/chat";
 
-export const makeReadyRoomRedis = (
-  redis: ApiRedis["Service"],
-): ReadyRoomRedis => {
-  const attempt = <A>(operation: () => PromiseLike<A>) =>
-    Effect.tryPromise({ try: operation, catch: (error) => error });
-
-  return {
-    getJson: (key, schema) =>
-      attempt(() => redis.getJson(key, makeJsonCodec(schema))),
-    eval: (script, keys, arguments_) =>
-      attempt(() => redis.eval(script, [...keys], [...arguments_])),
-  };
-};
+export const makeReadyRoomRedis = (redis: RedisEffects): ReadyRoomRedis => ({
+  getJson: (key, schema) => redis.getJson(key, makeJsonCodec(schema)),
+  eval: redis.eval,
+});
 
 export const makeGatheringUpdatePublisher =
   (rabbit: Pick<RabbitMessaging["Service"], "publish">) =>
@@ -38,7 +29,7 @@ export const makeGatheringUpdatePublisher =
 
 export const readyRoomPublications = Layer.effectDiscard(
   Effect.gen(function* () {
-    const redis = yield* ApiRedis;
+    const { effect: redis } = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     yield* makeReadyRoomPublicationOutbox(
       makeReadyRoomRedis(redis),
@@ -49,7 +40,7 @@ export const readyRoomPublications = Layer.effectDiscard(
 
 export const readyRoomData = Layer.unwrap(
   Effect.gen(function* () {
-    const redis = yield* ApiRedis;
+    const { effect: redis } = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
 
     const chat = makeChatOperations(

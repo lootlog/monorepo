@@ -1,7 +1,10 @@
+import {
+  OperationError,
+  adapterOperation,
+} from "@lootlog/instrumentation/operation";
 import { selectTimersWithActors } from "#src/timers/timer-query";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/timer.schema";
 
@@ -12,11 +15,6 @@ type TimerWrite = Omit<
 
 type TimerPatch = Partial<Omit<TimerWrite, "guildId" | "world" | "timerKey">>;
 
-class EventTimerStoreFailure extends TaggedErrorClass<EventTimerStoreFailure>()(
-  "EventTimerStoreFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 const identity = (guildId: string, world: string, timerKey: string) =>
   and(
     eq(timerTable.guildId, guildId),
@@ -25,15 +23,7 @@ const identity = (guildId: string, world: string, timerKey: string) =>
   );
 
 export const makeEventTimerStore = (database: ApiDatabaseValue) => {
-  const operation = <A>(name: string, effect: Effect.Effect<A, unknown>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new EventTimerStoreFailure({ operation: name, cause }),
-      ),
-      Effect.withSpan(name, {
-        attributes: { adapter: "api.database", retryCount: 0 },
-      }),
-    );
+  const operation = adapterOperation("api.database");
 
   const findTimer = (guildId: string, world: string, timerKey: string) =>
     operation(
@@ -77,7 +67,7 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
               Effect.map((timer) => timer ?? row),
             )
           : Effect.fail(
-              new EventTimerStoreFailure({
+              new OperationError({
                 operation: "eventTimerStore.upsert.returning",
                 cause: "Timer mutation returned no row",
               }),

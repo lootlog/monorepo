@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import { createSelectSchema } from "drizzle-orm/effect-schema";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -18,6 +19,7 @@ import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
   readCachedGuild,
   writeGuildConfigurationCache,
+  type GuildConfigurationCache,
 } from "#src/guilds/guild-configuration-cache";
 import { isActiveMember } from "#src/members/member-access-query";
 import {
@@ -53,15 +55,9 @@ export type OrganizationContext = {
   readonly roles: ReadonlyArray<Role>;
 };
 
-export interface OrganizationContextCache {
-  readonly get: (key: string) => Effect.Effect<string | null, unknown>;
-  readonly set: (
-    key: string,
-    value: string,
-    ttl: number,
-  ) => Effect.Effect<unknown, unknown>;
-  readonly del: (key: string) => Effect.Effect<unknown, unknown>;
-  readonly setIfAbsent: (
+/** The `RedisEffects` commands the Organization context cache needs. */
+export interface OrganizationContextCache extends GuildConfigurationCache {
+  readonly setNX: (
     key: string,
     value: string,
     ttl: number,
@@ -235,7 +231,7 @@ export class OrganizationContextLookup extends Context.Service<
             // The marker lives until the context stops being fresh, and at
             // least a retry interval after that, so each user and guild queues
             // at most one refresh at a time.
-            const claimed = yield* cache.setIfAbsent(
+            const claimed = yield* cache.setNX(
               key,
               "1",
               Math.max(
@@ -373,12 +369,10 @@ export class OrganizationContextLookup extends Context.Service<
 
               return toOrganizationContext(guild, member, options.discordId);
             }).pipe(
-              Effect.withSpan("organization-context.lookup", {
-                attributes: {
-                  adapter: "drizzle-redis-discord",
-                  retryCount: 0,
-                },
-              }),
+              withAdapterSpan(
+                "organization-context.lookup",
+                "drizzle-redis-discord",
+              ),
             ),
         });
       }),

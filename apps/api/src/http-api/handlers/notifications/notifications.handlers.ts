@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { operationIdentifiers } from "../../operation-identifiers.js";
 import {
   optionalPathString,
@@ -124,9 +125,7 @@ const operation = <A>(
 ) =>
   effect.pipe(
     Effect.mapError(operationFailure),
-    Effect.withSpan(operationIds[endpoint], {
-      attributes: { adapter: "notifications", retryCount: 0 },
-    }),
+    withAdapterSpan(operationIds[endpoint], "notifications"),
   );
 
 const toHttpResponse = <A, R>(

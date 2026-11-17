@@ -3,13 +3,6 @@ import { Effect, Predicate } from "effect";
 import { Meilisearch, type SearchParams } from "meilisearch";
 import { searchIndexSettings } from "#src/http-api/search-operations";
 import { makePlayersModule } from "#src/players/players.service";
-import type { AppLogger } from "#src/shared/logger";
-
-const silentLogger: AppLogger = {
-  error: () => undefined,
-  info: () => undefined,
-  warn: () => undefined,
-};
 
 const makeClient = (index: (name: string) => object): Meilisearch => {
   const client = new Meilisearch({ host: "http://search.invalid" });
@@ -51,7 +44,7 @@ describe("Search Effect modules", () => {
     }));
 
     await Effect.runPromise(
-      makePlayersModule(client, silentLogger).getPlayers({
+      makePlayersModule(client).getPlayers({
         limit: 10,
         search: ["Player One", "Player Two"],
         world: "berufs",
@@ -89,7 +82,7 @@ describe("Search Effect modules", () => {
     }));
 
     await Effect.runPromise(
-      makePlayersModule(client, silentLogger).indexPlayers({
+      makePlayersModule(client).indexPlayers({
         players: [
           {
             id: "1",
@@ -124,7 +117,7 @@ describe("Search Effect modules", () => {
       search: () => Promise.reject(new Error("search unavailable")),
     }));
 
-    const players = makePlayersModule(client, silentLogger);
+    const players = makePlayersModule(client);
 
     const failure = await Effect.runPromise(
       players.getPlayers({ limit: 10 }).pipe(Effect.flip),
@@ -143,7 +136,7 @@ describe("Search Effect modules", () => {
       }),
     }));
 
-    const players = makePlayersModule(client, silentLogger);
+    const players = makePlayersModule(client);
 
     const failure = await Effect.runPromise(
       Effect.flip(

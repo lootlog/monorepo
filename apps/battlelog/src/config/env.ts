@@ -1,69 +1,47 @@
-import { Config, Context, Effect, Layer, Option, Redacted } from "effect";
+import {
+  type BaseServiceConfiguration,
+  baseServiceConfig,
+  redisUrlConfig,
+} from "@lootlog/instrumentation/service-config";
+import { Config, Context, Effect, Layer, Option, type Redacted } from "effect";
 import type { R2Config } from "#src/config/r2.config";
-import type { RedisOptions } from "#src/infrastructure/redis-store";
 
-export interface BattlelogConfiguration {
+const DEFAULT_SERVICE_NAME = "battlelog-service";
+
+/**
+ * The PostgreSQL client's settings. Migrations read only these, so they run
+ * without the rest of the service configuration.
+ */
+export const battlelogDatabaseConfig = Config.all({
+  url: Config.Redacted("POSTGRESQL_CONNECTION_URI"),
+  applicationName: Config.String("SERVICE_NAME").pipe(
+    Config.withDefault(DEFAULT_SERVICE_NAME),
+  ),
+});
+
+export interface BattlelogConfiguration extends BaseServiceConfiguration {
   readonly cleanupSecret?: Redacted.Redacted<string>;
-  readonly environment: string;
-  readonly port: number;
-  readonly serviceName: string;
-  readonly serviceNamespace: string;
-  readonly redis: Omit<RedisOptions, "password"> & {
-    readonly password: Redacted.Redacted<string>;
-  };
+  readonly redisUrl: Redacted.Redacted<string>;
   readonly r2: R2Config;
 }
 
 const loadConfiguration = Effect.gen(function* () {
-  const environment = yield* Config.String("ENV").pipe(
-    Config.withDefault("local"),
-  );
-
-  const port = yield* Config.Port("PORT");
-
-  const serviceName = yield* Config.String("SERVICE_NAME").pipe(
-    Config.withDefault("battlelog-service"),
-  );
-
-  const serviceNamespace = yield* Config.String("SERVICE_NAMESPACE").pipe(
-    Config.withDefault("local"),
-  );
-
-  const redisHost = yield* Config.String("REDIS_HOST");
-  const redisPort = yield* Config.Port("REDIS_PORT");
-  const redisPassword = yield* Config.Redacted("REDIS_PASSWORD");
-  const redisUsername = yield* Config.String("REDIS_USERNAME");
-  const r2AccessKeyId = yield* Config.Redacted("R2_ACCESS_KEY_ID");
-  const r2SecretAccessKey = yield* Config.Redacted("R2_SECRET_ACCESS_KEY");
-  const r2Endpoint = yield* Config.String("R2_ENDPOINT");
-
-  const r2Region = yield* Config.String("R2_REGION").pipe(
-    Config.withDefault("auto"),
-  );
-
-  const r2BucketName = yield* Config.String("R2_BUCKET_NAME");
+  const base = yield* baseServiceConfig(DEFAULT_SERVICE_NAME);
 
   return {
+    ...base,
     cleanupSecret: yield* Config.option(
       Config.Redacted("BATTLELOG_CLEANUP_SECRET"),
     ).pipe(Config.map(Option.getOrUndefined)),
-    environment,
-    port,
-    serviceName,
-    serviceNamespace,
-    redis: {
-      host: redisHost,
-      port: redisPort,
-      password: redisPassword,
-      username: redisUsername,
-      prefix: serviceName,
-    },
+    redisUrl: yield* redisUrlConfig,
     r2: {
-      accessKeyId: r2AccessKeyId,
-      secretAccessKey: r2SecretAccessKey,
-      endpoint: r2Endpoint,
-      region: r2Region,
-      bucketName: r2BucketName,
+      accessKeyId: yield* Config.Redacted("R2_ACCESS_KEY_ID"),
+      secretAccessKey: yield* Config.Redacted("R2_SECRET_ACCESS_KEY"),
+      endpoint: yield* Config.String("R2_ENDPOINT"),
+      region: yield* Config.String("R2_REGION").pipe(
+        Config.withDefault("auto"),
+      ),
+      bucketName: yield* Config.String("R2_BUCKET_NAME"),
     },
   } satisfies BattlelogConfiguration;
 });

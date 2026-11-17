@@ -1,3 +1,4 @@
+import { OperationError } from "@lootlog/instrumentation/operation";
 import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
 import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target.repository";
 import {
@@ -10,7 +11,6 @@ import {
   NOTIFICATION_TEST_WINDOW_MS,
   readNotificationTestUsage,
 } from "../jobs/notification-test-usage.js";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
@@ -81,11 +81,6 @@ export interface NotificationRuleDependencies {
   ) => Effect.Effect<unknown, unknown, never>;
 }
 
-class NotificationRuleOperationFailure extends TaggedErrorClass<NotificationRuleOperationFailure>()(
-  "NotificationRuleOperationFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeNotificationRuleOperations = (
   database: ApiDatabaseValue,
   dependencies: NotificationRuleDependencies,
@@ -135,7 +130,7 @@ export const makeNotificationRuleOperations = (
     }).pipe(
       Effect.mapError(
         (cause) =>
-          new NotificationRuleOperationFailure({
+          new OperationError({
             operation: "notifications.rules.list",
             cause,
           }),
@@ -146,7 +141,7 @@ export const makeNotificationRuleOperations = (
     readNotificationTestUsage(database, targetIds).pipe(
       Effect.mapError(
         (cause) =>
-          new NotificationRuleOperationFailure({
+          new OperationError({
             operation: "notifications.rules.testUsage",
             cause,
           }),
@@ -236,7 +231,7 @@ export const makeNotificationRuleOperations = (
       .pipe(
         Effect.mapError(
           (cause) =>
-            new NotificationRuleOperationFailure({
+            new OperationError({
               operation: "notifications.rules.find",
               cause,
             }),
@@ -312,7 +307,7 @@ export const makeNotificationRuleOperations = (
       Effect.mapError((cause) =>
         cause instanceof InvalidRequestError
           ? cause
-          : new NotificationRuleOperationFailure({
+          : new OperationError({
               operation: "notifications.rules.validateTargets",
               cause,
             }),

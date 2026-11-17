@@ -1,8 +1,4 @@
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  NOTIFICATIONS_DISPATCH_QUEUE,
-  NOTIFICATION_DISPATCH_JOB_OPTIONS,
-} from "#src/notifications/jobs/dispatch-queue";
 import { NOTIFICATIONS_HISTORY_RETENTION_LIMIT } from "#src/notifications/jobs/history";
 import { Error as NotificationError } from "#src/notifications/error";
 import { makeNotificationContent } from "#src/notifications/content/notification-content.service";
@@ -42,11 +38,9 @@ import { makeNotificationWatchedItems } from "#src/notifications/rules/notificat
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { Queue } from "bullmq";
 import { Context, Effect, Layer } from "effect";
 import { notificationDataLayer } from "#src/notifications/notifications.data-layer";
-import { redisUrl } from "#src/runtime/infrastructure/api-redis";
-import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
+import { NotificationDispatchQueue } from "#src/runtime/queues/notification-dispatch";
 import {
   AccountOrganizationOperations,
   GuildDiscordSync,
@@ -74,21 +68,10 @@ export const notificationsServicesLive = Layer.effect(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
     const database = yield* ApiDatabase;
-    const config = yield* ApiRuntimeConfig;
     const guildSync = yield* GuildDiscordSync;
     const userGuilds = yield* AccountOrganizationOperations;
 
-    const queue = yield* Effect.acquireRelease(
-      Effect.sync(
-        () =>
-          new Queue(NOTIFICATIONS_DISPATCH_QUEUE, {
-            connection: { url: redisUrl(config.redis) },
-            prefix: "{bull}",
-          }),
-      ),
-      (notificationsQueue) =>
-        Effect.tryPromise(() => notificationsQueue.close()).pipe(Effect.orDie),
-    );
+    const queue = yield* NotificationDispatchQueue;
 
     const store = makeNotificationEventStore(database);
     const jobsStore = makeNotificationJobStore(database);
@@ -96,30 +79,7 @@ export const notificationsServicesLive = Layer.effect(
     const content = makeNotificationContent();
     const testContent = makeNotificationTestContent(store, matching, content);
 
-    const notificationScheduler = makeNotificationJobScheduler(database, {
-      remove: (jobId) =>
-        Effect.tryPromise({
-          try: async () => {
-            const job = await queue.getJob(jobId);
-            await job?.remove();
-          },
-          catch: (cause) => cause,
-        }),
-      add: (jobId, delay) =>
-        Effect.tryPromise({
-          try: () =>
-            queue.add(
-              jobId,
-              { notificationJobId: jobId },
-              {
-                ...NOTIFICATION_DISPATCH_JOB_OPTIONS,
-                jobId,
-                delay,
-              },
-            ),
-          catch: (cause) => cause,
-        }).pipe(Effect.asVoid),
-    });
+    const notificationScheduler = makeNotificationJobScheduler(database, queue);
 
     const rebuild = makeNotificationJobRebuild(
       {

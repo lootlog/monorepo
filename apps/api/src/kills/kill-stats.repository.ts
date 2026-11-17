@@ -1,5 +1,8 @@
+import {
+  OperationError,
+  adapterOperation,
+} from "@lootlog/instrumentation/operation";
 import { readNpcKillPage, type NpcKillPageAfter } from "./npc-kill-page.js";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   and,
   desc,
@@ -16,7 +19,7 @@ import {
   type SQL,
   type SQLWrapper,
 } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildKillBucketTable,
@@ -195,11 +198,6 @@ const memberSource = (filter: KillStatsFilter) =>
 const guildSource = (filter: KillStatsFilter) =>
   guildKillSource(filter.periodStart?.gte);
 
-export class KillStatsPersistenceError extends TaggedErrorClass<KillStatsPersistenceError>()(
-  "KillStatsPersistenceError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 type Member = typeof memberTable.$inferSelect;
 
 type MemberSummary = Pick<Member, "id" | "name" | "avatar" | "userId">;
@@ -207,19 +205,11 @@ type MemberSummary = Pick<Member, "id" | "name" | "avatar" | "userId">;
 export const makeKillStatsPersistence = (
   database: typeof ApiDatabase.Service,
 ) => {
-  const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new KillStatsPersistenceError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "kills.drizzle", retryCount: 0 },
-      }),
-    );
+  const protect = adapterOperation("kills.drizzle");
 
   const findMembers = (
     memberIds: ReadonlyArray<number>,
-  ): Effect.Effect<ReadonlyArray<MemberSummary>, KillStatsPersistenceError> =>
+  ): Effect.Effect<ReadonlyArray<MemberSummary>, OperationError> =>
     memberIds.length === 0
       ? Effect.succeed([])
       : protect(

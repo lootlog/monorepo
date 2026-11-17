@@ -6,8 +6,6 @@ import { configureMeilisearchIndexes } from "@lootlog/meilisearch/index-settings
 import { completeMeilisearchTask } from "@lootlog/meilisearch/operation-failure";
 import { searchIndexSettings } from "../http-api/search-operations.js";
 
-const logger = { info() {}, warn() {}, error() {} };
-
 const player = {
   id: "1",
   name: "Player",
@@ -61,7 +59,7 @@ for (const status of ["failed", "canceled"] as const) {
     const client = clientWithTask(status, requests);
 
     const failure = await Effect.runPromise(
-      makePlayersModule(client, logger)
+      makePlayersModule(client)
         .indexPlayers({ players: [player] })
         .pipe(Effect.flip),
     );
@@ -70,7 +68,7 @@ for (const status of ["failed", "canceled"] as const) {
     expect(requests).toContain("/tasks/1");
 
     const startupFailure = await Effect.runPromise(
-      configureMeilisearchIndexes(client, searchIndexSettings, logger).pipe(
+      configureMeilisearchIndexes(client, searchIndexSettings).pipe(
         Effect.flip,
       ),
     );
@@ -82,10 +80,9 @@ for (const status of ["failed", "canceled"] as const) {
 test("indexing observes successful task completion before returning", async () => {
   const requests: string[] = [];
   await Effect.runPromise(
-    makePlayersModule(
-      clientWithTask("succeeded", requests),
-      logger,
-    ).indexPlayers({ players: [player] }),
+    makePlayersModule(clientWithTask("succeeded", requests)).indexPlayers({
+      players: [player],
+    }),
   );
   expect(requests).toEqual([
     "/indexes/players/documents",

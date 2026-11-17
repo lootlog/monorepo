@@ -1,6 +1,9 @@
 import { calculateBattleStatistics } from "@lootlog/battle-processor/statistics";
 import { Effect, Schema } from "effect";
-import { battlelogOperation } from "./battlelog-operation.js";
+import {
+  adapterOperation,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import type { Battles } from "#src/battles/battles.service";
 import type { DeleteUserBattlesJobData } from "#src/battles/deletion/delete-user-battles.processor";
 import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
@@ -18,6 +21,7 @@ import type {
   GetAllBattlesResult,
 } from "#src/battles/battle-service";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
+import type { BattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import type { DeleteUserData } from "./internal-operations.js";
 import type {
   RecordWeaponKillsInput,
@@ -48,6 +52,16 @@ const normalizePublicBattleResponse = (battle: BattleWithRelations) =>
     toBattleResponseInput(battle),
   );
 
+const traceOperation = adapterOperation("battlelog");
+
+const battlelogOperation =
+  <Arguments extends readonly unknown[], A, E>(
+    operation: string,
+    run: (...arguments_: Arguments) => Effect.Effect<A, E>,
+  ) =>
+  (...arguments_: Arguments) =>
+    traceOperation(operation, run(...arguments_));
+
 const normalizeBattlesListResponse = (response: GetAllBattlesResult) => ({
   ...response,
   battles: response.battles.map(normalizeBattleResponse),
@@ -56,6 +70,7 @@ const normalizeBattlesListResponse = (response: GetAllBattlesResult) => ({
 export const makeBattlelogOperations = (
   battles: Battles,
   analytics: BattleAnalytics,
+  metadata: Pick<BattleMetadata, "getUserCharacters" | "searchWarriors">,
   deleteQueue: {
     readonly add: (
       name: string,
@@ -85,7 +100,7 @@ export const makeBattlelogOperations = (
       ),
       getUserCharacters: battlelogOperation(
         "BattlesController_getUserCharacters",
-        (userId: string) => battles.getUserCharacters(userId),
+        (userId: string) => metadata.getUserCharacters(userId),
       ),
       getBattleAnalytics: battlelogOperation(
         "BattlesController_getBattleAnalytics",
@@ -145,7 +160,7 @@ export const makeBattlelogOperations = (
       searchWarriors: battlelogOperation(
         "BattlesController_searchWarriors",
         (query: string, userId: string) =>
-          battles.searchWarriors(query, userId),
+          metadata.searchWarriors(query, userId),
       ),
       getBattleTimeline: battlelogOperation(
         "BattlesController_getBattleTimeline",
@@ -244,9 +259,10 @@ export const makeBattlelogOperations = (
             catch: (cause) => cause,
           }).pipe(
             Effect.as({ status: "ACCEPTED" as const }),
-            Effect.withSpan("InternalController_enqueueDeleteUserData", {
-              attributes: { adapter: "bullmq", retryCount: 0 },
-            }),
+            withAdapterSpan(
+              "InternalController_enqueueDeleteUserData",
+              "bullmq",
+            ),
           ),
       ),
     },

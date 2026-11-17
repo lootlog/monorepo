@@ -5,11 +5,10 @@ import {
 } from "@lootlog/schema/api-key-policy";
 import { OnlineRepository } from "#src/online/online-repository";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { BunHttpServer } from "@effect/platform-bun";
 import {
-  httpServerMetrics,
-  httpServerRouteMetrics,
-} from "@lootlog/instrumentation";
+  serviceApiRoutes,
+  serviceHttpServer,
+} from "@lootlog/instrumentation/service";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -25,7 +24,7 @@ import {
   Schema,
   Semaphore,
 } from "effect";
-import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
+import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
 import { SqlClient } from "effect/sql";
 import { ActivityRepository } from "#src/activities/activity-repository";
@@ -333,29 +332,12 @@ const ActivityHandlers = Layer.mergeAll(
   ),
 );
 
-const DocumentationRoute = HttpRouter.use((router) =>
-  router.add(
-    "GET",
-    "/doc",
-    HttpServerResponse.raw(
-      Bun.file(new URL("../../openapi.yaml", import.meta.url)),
-      { contentType: "application/yaml" },
-    ),
-  ),
-);
-
-export const ActivityRoutes = Layer.merge(
-  HttpApiBuilder.layer(ActivityApi, { openapiPath: "/openapi.json" }).pipe(
-    Layer.provide(ActivityHandlers),
-  ),
-  DocumentationRoute,
-);
+export const ActivityRoutes = serviceApiRoutes(ActivityApi, {
+  documentation: new URL("../../openapi.yaml", import.meta.url),
+}).pipe(Layer.provide(ActivityHandlers));
 
 export const ActivityHttpServer = Layer.unwrap(
   Effect.map(ActivityConfig, ({ port }) =>
-    HttpRouter.serve(
-      ActivityRoutes.pipe(Layer.provide(httpServerRouteMetrics)),
-      { middleware: httpServerMetrics },
-    ).pipe(Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port }))),
+    serviceHttpServer({ routes: ActivityRoutes, port }),
   ),
 ).pipe(Layer.provide(ActivityConfig.layer));

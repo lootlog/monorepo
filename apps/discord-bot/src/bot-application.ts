@@ -1,9 +1,6 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { RabbitMessaging } from "@lootlog/messaging";
-import { BunHttpServer } from "@effect/platform-bun";
-import {
-  httpServerMetrics,
-  httpServerRouteMetrics,
-} from "@lootlog/instrumentation";
+import { serviceHttpServer } from "@lootlog/instrumentation/service";
 import {
   RabbitExchange,
   RabbitRoutingKey,
@@ -135,9 +132,7 @@ const operation = <A>(operationId: string, run: Effect.Effect<A, unknown>) =>
     Effect.mapError(() => ({
       message: "Discord synchronization failed" as const,
     })),
-    Effect.withSpan(operationId, {
-      attributes: { adapter: "discord", retryCount: 0 },
-    }),
+    withAdapterSpan(operationId, "discord"),
   );
 
 const BotHttpHandlers = HttpApiBuilder.group(
@@ -212,22 +207,19 @@ const BotConsumer = Layer.effectDiscard(
 
 const BotHttpServer = Layer.unwrap(
   Effect.map(BotConfig, ({ port }) =>
-    HttpRouter.serve(
-      BotHttpRoutes.pipe(Layer.provide(httpServerRouteMetrics)),
-      {
-        middleware: (effect) =>
-          httpServerMetrics(
-            Effect.catchCause(effect, () =>
-              Effect.succeed(
-                HttpServerResponse.jsonUnsafe(
-                  { message: "Internal server error" },
-                  { status: 500 },
-                ),
-              ),
+    serviceHttpServer({
+      routes: BotHttpRoutes,
+      port,
+      middleware: (effect) =>
+        Effect.catchCause(effect, () =>
+          Effect.succeed(
+            HttpServerResponse.jsonUnsafe(
+              { message: "Internal server error" },
+              { status: 500 },
             ),
           ),
-      },
-    ).pipe(Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port }))),
+        ),
+    }),
   ),
 );
 

@@ -24,8 +24,9 @@ import type {
   CatalogItemObservation,
   CatalogNpcObservation,
 } from "@lootlog/protocol/rabbit/catalog";
-import { Config, Effect, Layer, Redacted } from "effect";
+import { Effect, Layer, Redacted } from "effect";
 import { chunk, groupBy } from "es-toolkit";
+import { rabbitmqUriConfig } from "#src/config/api.config";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import { makeItemRevisionsPublisher } from "#src/loots/item-revisions-publisher";
 import { makeMonsterStatisticsPublisher } from "#src/loots/monster-statistics";
@@ -157,7 +158,7 @@ export const replayCatalog = Effect.gen(function* () {
 
 if (import.meta.main) {
   const RabbitLive = Layer.unwrap(
-    Effect.map(Config.Redacted("RABBITMQ_URI"), (uri) =>
+    Effect.map(rabbitmqUriConfig, (uri) =>
       RabbitMessaging.layer({
         uri: Redacted.value(uri),
         connectionName: "api-catalog-replay",

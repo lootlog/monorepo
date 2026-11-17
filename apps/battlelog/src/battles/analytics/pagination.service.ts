@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { Clock, Effect } from "effect";
 import { and, count, gt, lt, sql, type SQL } from "drizzle-orm";
 import type { BattleReadBudget } from "#src/database/battle-read-budget";
@@ -133,9 +134,7 @@ export const makeBattlePagination = (
 
     return validateCursor.pipe(
       Effect.andThen(readPage),
-      Effect.withSpan("BattlePagination_paginate", {
-        attributes: { adapter: "drizzle", retryCount: 0 },
-      }),
+      withAdapterSpan("BattlePagination_paginate", "drizzle"),
     );
   };
 

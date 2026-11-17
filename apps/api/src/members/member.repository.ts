@@ -1,4 +1,4 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import {
   and,
   asc,
@@ -11,7 +11,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import { chunk, isEqual, pickBy } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
@@ -33,11 +33,6 @@ type MemberWrite = {
   readonly lastDiscordSyncAt: Date;
   readonly lastDiscordStatus: string;
 };
-
-class MemberStoreFailure extends TaggedErrorClass<MemberStoreFailure>()(
-  "MemberStoreFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 type Transaction = Parameters<
   Parameters<ApiDatabaseValue["transaction"]>[0]
@@ -77,15 +72,7 @@ export const queueMemberDeliveries = (
 const DELIVERY_LEASE = "30 seconds";
 
 export const makeMemberStore = (database: ApiDatabaseValue) => {
-  const operation = <A>(name: string, effect: Effect.Effect<A, unknown>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new MemberStoreFailure({ operation: name, cause }),
-      ),
-      Effect.withSpan(name, {
-        attributes: { adapter: "api.database", retryCount: 0 },
-      }),
-    );
+  const operation = adapterOperation("api.database");
 
   const findMember = (userId: string, guildId: string) =>
     operation(

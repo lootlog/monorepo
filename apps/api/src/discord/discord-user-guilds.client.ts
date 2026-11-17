@@ -15,8 +15,8 @@ import {
   Routes,
   type RESTGetAPICurrentUserGuildsResult,
 } from "discord-api-types/v10";
-import { ExecutionError, RedlockService } from "#src/redis/redlock";
-import { Schema } from "effect";
+import { RedlockService, type LockRetry } from "#src/redis/redlock";
+import { Effect, Option, Schema } from "effect";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 
 const decodeCompleteUserGuildsEntry = Schema.decodeUnknownSync(
@@ -77,8 +77,18 @@ export class DiscordUserGuildsClient {
   // access themselves, and only a fresh list may deactivate members.
   private readonly completeGuildsStaleTtlSeconds = 24 * 60 * 60;
   private readonly completeGuildsFreshMaxAgeMs = 2000;
-  private readonly completeGuildsWaitMs = 1500;
-  private readonly completeGuildsPollMs = 100;
+  // Redlock's default contention retries for the plain list.
+  private readonly lockWait: LockRetry = {
+    retryCount: 3,
+    retryDelay: 100,
+    retryJitter: 50,
+  };
+  // A caller waits about 1.9 s for another caller's complete lookup.
+  private readonly completeGuildsLockWait: LockRetry = {
+    retryCount: 18,
+    retryDelay: 100,
+    retryJitter: 0,
+  };
   private readonly completeUserGuildRequests = new Map<
     string,
     Promise<CompleteUserGuildsEntry>
@@ -98,9 +108,7 @@ export class DiscordUserGuildsClient {
   }
 
   initialize() {
-    this.redlock = this.redlockService.createInstance({
-      automaticExtensionThreshold: 3000,
-    });
+    this.redlock = this.redlockService.createInstance();
   }
 
   async getUserGuilds(
@@ -122,34 +130,49 @@ export class DiscordUserGuildsClient {
       return cached;
     }
 
-    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
-
     try {
-      lock = await this.redlock.acquire([lockKey], this.lockTtl);
+      return await Effect.runPromise(
+        this.redlock.singleFlight(
+          {
+            resource: lockKey,
+            duration: this.lockTtl,
+            wait: this.lockWait,
+            unavailable: () => {
+              this.logger.log({
+                level: "error",
+                message: `Lock acquisition failed for getUserGuilds`,
+                userId,
+              });
 
-      const cachedAfterLock = await this.getCachedUserGuilds(cacheKey, userId);
+              return new DependencyUnavailableError({
+                code: "DISCORD_GUILDS_LOCK_UNAVAILABLE",
+              });
+            },
+          },
+          Effect.tryPromise({
+            try: () => this.getCachedUserGuilds(cacheKey, userId),
+            catch: (error) => error,
+          }).pipe(Effect.map(Option.fromNullishOr)),
+          Effect.tryPromise({
+            try: async () => {
+              const guilds = await this.fetchUserGuildsFromDiscord(
+                userId,
+                discordId,
+              );
 
-      if (cachedAfterLock) {
-        return cachedAfterLock;
-      }
+              await this.redisService.set(
+                cacheKey,
+                JSON.stringify(guilds),
+                cacheTtl,
+              );
 
-      const guilds = await this.fetchUserGuildsFromDiscord(userId, discordId);
-
-      await this.redisService.set(cacheKey, JSON.stringify(guilds), cacheTtl);
-
-      return guilds;
+              return guilds;
+            },
+            catch: (error) => error,
+          }),
+        ),
+      );
     } catch (error: unknown) {
-      if (error instanceof ExecutionError) {
-        this.logger.log({
-          level: "error",
-          message: `Lock acquisition failed for getUserGuilds`,
-          userId,
-        });
-        throw new DependencyUnavailableError({
-          code: "DISCORD_GUILDS_LOCK_UNAVAILABLE",
-        });
-      }
-
       if (error instanceof AuthenticationRequiredError) {
         this.logger.log({
           level: "warn",
@@ -169,12 +192,6 @@ export class DiscordUserGuildsClient {
         error,
       });
       throw toDiscordRequestError(error);
-    } finally {
-      await this.releaseLock(lock, {
-        action: "getUserGuilds",
-        lockKey,
-        userId,
-      });
     }
   }
 
@@ -346,67 +363,56 @@ export class DiscordUserGuildsClient {
     }
   }
 
-  private async fetchCompleteUserGuildsWithDistributedSingleFlight(
+  private fetchCompleteUserGuildsWithDistributedSingleFlight(
     identity: { userId: string; discordId: string },
     maxAgeMs: number,
   ): Promise<CompleteUserGuildsEntry> {
     const { userId, discordId } = identity;
     const cacheKey = getCompleteUserGuildsCacheKey(identity);
     const lockKey = getCompleteUserGuildsLockKey(identity);
-    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
 
-    try {
-      lock = await this.redlock.acquire([lockKey], this.completeGuildsLockTtl);
-    } catch (error) {
-      if (error instanceof ExecutionError) {
-        const waitedEntry = await this.waitForCompleteUserGuildsEntry(
-          cacheKey,
-          maxAgeMs,
-        );
+    return Effect.runPromise(
+      this.redlock.singleFlight(
+        {
+          resource: lockKey,
+          duration: this.completeGuildsLockTtl,
+          wait: this.completeGuildsLockWait,
+          unavailable: () => {
+            this.logger.log({
+              level: "warn",
+              message: "Complete guild lookup is already in progress",
+              userId,
+            });
 
-        if (waitedEntry) {
-          return waitedEntry;
-        }
+            return new DependencyUnavailableError({
+              code: "DISCORD_GUILDS_SINGLE_FLIGHT_LOCK_UNAVAILABLE",
+            });
+          },
+        },
+        Effect.tryPromise({
+          try: () => this.getCompleteUserGuildsEntry(cacheKey, maxAgeMs),
+          catch: (error) => error,
+        }).pipe(Effect.map(Option.fromNullishOr)),
+        Effect.tryPromise({
+          try: async () => {
+            const guilds = await this.fetchCompleteUserGuilds(
+              userId,
+              discordId,
+            );
 
-        this.logger.log({
-          level: "warn",
-          message: "Complete guild lookup is already in progress",
-          userId,
-        });
-        throw new DependencyUnavailableError({
-          code: "DISCORD_GUILDS_SINGLE_FLIGHT_LOCK_UNAVAILABLE",
-        });
-      }
+            const entry = { guilds, fetchedAt: Date.now() };
+            await this.redisService.set(
+              cacheKey,
+              JSON.stringify(entry),
+              this.completeGuildsStaleTtlSeconds,
+            );
 
-      throw error;
-    }
-
-    try {
-      const entryAfterLock = await this.getCompleteUserGuildsEntry(
-        cacheKey,
-        maxAgeMs,
-      );
-
-      if (entryAfterLock) {
-        return entryAfterLock;
-      }
-
-      const guilds = await this.fetchCompleteUserGuilds(userId, discordId);
-      const entry = { guilds, fetchedAt: Date.now() };
-      await this.redisService.set(
-        cacheKey,
-        JSON.stringify(entry),
-        this.completeGuildsStaleTtlSeconds,
-      );
-
-      return entry;
-    } finally {
-      await this.releaseLock(lock, {
-        action: "getCompleteUserGuilds",
-        lockKey,
-        userId,
-      });
-    }
+            return entry;
+          },
+          catch: (error) => error,
+        }),
+      ),
+    );
   }
 
   private getCacheTtl(localTtl: number, prodTtl: number): number {
@@ -474,45 +480,6 @@ export class DiscordUserGuildsClient {
     await this.redisService.del(cacheKey);
 
     return null;
-  }
-
-  private async releaseLock(
-    lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null,
-    context: { action: string; lockKey: string; userId: string },
-  ): Promise<void> {
-    if (!lock) {
-      return;
-    }
-
-    try {
-      await lock.release();
-    } catch (error) {
-      this.logger.log({
-        level: "debug",
-        message: "Failed to release Discord guilds lock",
-        action: context.action,
-        lockKey: context.lockKey,
-        userId: context.userId,
-        error,
-      });
-    }
-  }
-
-  private async waitForCompleteUserGuildsEntry(
-    key: string,
-    maxAgeMs: number,
-    deadline = Date.now() + this.completeGuildsWaitMs,
-  ): Promise<CompleteUserGuildsEntry | null> {
-    if (Date.now() >= deadline) {
-      return null;
-    }
-
-    await Bun.sleep(this.completeGuildsPollMs);
-    const entry = await this.getCompleteUserGuildsEntry(key, maxAgeMs);
-
-    return (
-      entry ?? this.waitForCompleteUserGuildsEntry(key, maxAgeMs, deadline)
-    );
   }
 
   private async fetchUserGuildsFromDiscord(

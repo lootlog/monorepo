@@ -40,20 +40,15 @@ export const heroSightingsData = Layer.unwrap(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
 
-    const redlock = new RedlockService(redis).createInstance({
-      automaticExtensionThreshold: 5000,
-    });
+    const locks = new RedlockService(redis).createInstance();
 
     const withLock = <A, E>(key: string, effect: Effect.Effect<A, E>) =>
-      Effect.acquireUseRelease(
-        Effect.tryPromise({
-          try: () => redlock.acquire([key], 30_000),
-          catch: () =>
-            new ResourceConflictError({ code: "HERO_SIGHTING_RACE_CONDITION" }),
-        }),
-        () => effect,
-        (lock: Awaited<ReturnType<typeof redlock.acquire>>) =>
-          Effect.tryPromise(() => lock.release()).pipe(Effect.ignore),
+      locks.withLock(
+        key,
+        30_000,
+        effect,
+        () =>
+          new ResourceConflictError({ code: "HERO_SIGHTING_RACE_CONDITION" }),
       );
 
     const publish = makeHeroSightingPublisher(rabbit);

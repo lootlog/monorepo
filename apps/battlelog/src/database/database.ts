@@ -1,6 +1,7 @@
 import { makeWithDefaults } from "drizzle-orm/effect-postgres";
 import { makePostgresLayer } from "@lootlog/database";
-import { Config, Effect, Layer } from "effect";
+import { Effect, Layer } from "effect";
+import { battlelogDatabaseConfig } from "#src/config/env";
 import { relations } from "./relations.js";
 
 /** The Effect-native Drizzle service. Queries retain interruption and tracing. */
@@ -10,12 +11,8 @@ export type DrizzleDatabase = Effect.Success<typeof drizzleDatabaseEffect>;
 
 export const PgClientLive = Layer.unwrap(
   Effect.gen(function* () {
-    const url = yield* Config.Redacted("POSTGRESQL_CONNECTION_URI");
+    const config = yield* battlelogDatabaseConfig;
 
-    const applicationName = yield* Config.String("SERVICE_NAME").pipe(
-      Config.withDefault("battlelog-service"),
-    );
-
-    return makePostgresLayer({ url, applicationName, maxConnections: 10 });
+    return makePostgresLayer({ ...config, maxConnections: 10 });
   }),
 );

@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import {
   selectedWarriorOrder,
   warriorExists,
@@ -80,11 +81,7 @@ export const makeBattleAnalyticsQuery = (
       });
 
       return userChars.map((character) => character.characterId);
-    }).pipe(
-      Effect.withSpan("BattleAnalyticsQuery_getCharacterIds", {
-        attributes: { adapter: "drizzle", retryCount: 0 },
-      }),
-    );
+    }).pipe(withAdapterSpan("BattleAnalyticsQuery_getCharacterIds", "drizzle"));
 
   const getDateFilter = (period?: string): Date | undefined => {
     if (!period || period === "all") {

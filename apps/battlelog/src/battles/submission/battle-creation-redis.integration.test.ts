@@ -15,7 +15,7 @@ import {
   type StartedTestContainer,
   Wait,
 } from "testcontainers";
-import { Effect, Exit, Layer, ManagedRuntime, Redacted } from "effect";
+import { Cause, Effect, Exit, Layer, ManagedRuntime, Redacted } from "effect";
 import { Redis } from "effect/persistence";
 import pg from "pg";
 import { drizzleDatabaseEffect } from "#src/database/database";
@@ -28,7 +28,7 @@ import {
   unusedWeaponKills,
 } from "../../../test/battle-fixtures.js";
 import { makeBattlelogOperations } from "#src/battles/battlelog-operations";
-import { makeBattlelogTestBoundary } from "#src/http/battlelog-http";
+import { makeBattlelogTestBoundary } from "../../../test/battlelog-test-boundary.js";
 import { makeBattles } from "#src/battles/battles.service";
 import { makeBattleAnalyticsCache } from "#src/battles/analytics/battle-analytics-cache.service";
 import { makeBattleAnalyticsQuery } from "#src/battles/analytics/battle-analytics-query.service";
@@ -105,11 +105,7 @@ const createServices = () =>
       const database = yield* drizzleDatabaseEffect;
       const redisApi = yield* Redis.Redis;
 
-      const redis = makeRedisStore(
-        redisApi,
-        (operation) => runtime.runPromise(operation),
-        { prefix: "battlelock-test" },
-      );
+      const redis = makeRedisStore(redisApi);
 
       const cache = makeBattleAnalyticsCache(redis);
       const read = makeBattleReadBudget(database);
@@ -131,13 +127,14 @@ const createServices = () =>
       const battles = makeBattles(
         database,
         {
-          getBattleData: async (id, decode) =>
-            decode(JSON.stringify(legacyObjects.get(id))),
-          deleteBattlesData: async (ids) => {
-            for (const id of ids) legacyObjects.delete(id);
+          getBattleData: (id, decode) =>
+            Effect.sync(() => decode(JSON.stringify(legacyObjects.get(id)))),
+          deleteBattlesData: (ids) =>
+            Effect.sync(() => {
+              for (const id of ids) legacyObjects.delete(id);
 
-            return [];
-          },
+              return [];
+            }),
         },
         redis,
         makeBattlePagination(database, read),
@@ -203,7 +200,7 @@ const waitForLock = async () => {
   const deadline = Date.now() + 2_000;
 
   while (Date.now() < deadline) {
-    const token = await services.redis.get(lockKey);
+    const token = await runtime.runPromise(services.redis.get(lockKey));
 
     if (token !== null) return token;
     await Bun.sleep(10);
@@ -229,11 +226,9 @@ it("renews the real Lua lock beyond its TTL while concurrent callers create one 
     );
     const token = await waitForLock();
     await Bun.sleep(1_250);
-    expect(await services.redis.get(lockKey)).toBe(token);
+    expect(await runtime.runPromise(services.redis.get(lockKey))).toBe(token);
     expect(
-      await runtime.runPromise(
-        services.redisApi.send<number>("PTTL", `battlelock-test:${lockKey}`),
-      ),
+      await runtime.runPromise(services.redisApi.send<number>("PTTL", lockKey)),
     ).toBeGreaterThan(0);
     creations.push(
       runtime.runPromise(
@@ -244,7 +239,7 @@ it("renews the real Lua lock beyond its TTL while concurrent callers create one 
       ),
     );
     await Bun.sleep(100);
-    expect(await services.redis.get(lockKey)).toBe(token);
+    expect(await runtime.runPromise(services.redis.get(lockKey))).toBe(token);
     await blocker.query("COMMIT");
     const results = await Promise.all(creations);
     expect(results[1]).toEqual(results[0]);
@@ -254,7 +249,7 @@ it("renews the real Lua lock beyond its TTL while concurrent callers create one 
     expect(
       (await pool.query('SELECT "battleId" FROM battle_timelines')).rows,
     ).toEqual([{ battleId: results[0].battleId }]);
-    expect(await services.redis.get(lockKey)).toBeNull();
+    expect(await runtime.runPromise(services.redis.get(lockKey))).toBeNull();
   } finally {
     await blocker.query("ROLLBACK");
     blocker.release();
@@ -273,16 +268,18 @@ it("does not renew or release another owner's real Redis lock after ownership ch
       Effect.exit(services.battles.createBattle({ data, userId })),
     );
     await waitForLock();
-    await services.redis.set(lockKey, "replacement-owner", 5);
+    await runtime.runPromise(
+      services.redis.set(lockKey, "replacement-owner", 5),
+    );
     await Bun.sleep(250);
     expect(
-      await runtime.runPromise(
-        services.redisApi.send<number>("PTTL", `battlelock-test:${lockKey}`),
-      ),
+      await runtime.runPromise(services.redisApi.send<number>("PTTL", lockKey)),
     ).toBeGreaterThan(3_000);
     await blocker.query("COMMIT");
     expect(Exit.isFailure(await creation)).toBe(true);
-    expect(await services.redis.get(lockKey)).toBe("replacement-owner");
+    expect(await runtime.runPromise(services.redis.get(lockKey))).toBe(
+      "replacement-owner",
+    );
   } finally {
     await blocker.query("ROLLBACK");
     blocker.release();
@@ -337,7 +334,7 @@ it("invalidates only the user's cache generation and cannot restore a stale in-f
   );
   expect(await runtime.runPromise(cached("one", 3))).toBe(3);
   expect(await runtime.runPromise(cached("two", 4))).toBe(2);
-  await services.redis.del("battle-cache-generation:two");
+  await runtime.runPromise(services.redis.del("battle-cache-generation:two"));
   expect(await runtime.runPromise(cached("two", 6))).toBe(6);
   expect(
     await runtime.runPromise(
@@ -451,12 +448,14 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
 });
 
 it("reloads corrupted metadata cache and shares invalidation with analytics", async () => {
-  await services.redis.set("battle-cache-generation:owner", "test-generation");
+  await runtime.runPromise(
+    services.redis.set("battle-cache-generation:owner", "test-generation"),
+  );
 
   const key =
     "battle-cache:v4:owner:test-generation:battle-characters:list:owner";
 
-  await services.redis.set(key, "{broken-json", 300);
+  await runtime.runPromise(services.redis.set(key, "{broken-json", 300));
   expect(
     await runtime.runPromise(services.metadata.getUserCharacters("owner")),
   ).toEqual({ characters: [] });
@@ -598,23 +597,24 @@ it("coalesces concurrent analytics fills and retries factory failures without ca
   ).toBe(7);
 });
 
-it("does not retry a loader that rejects without an error value", async () => {
+it("does not retry a loader that fails without an error value", async () => {
   let calls = 0;
 
-  const results = await Promise.allSettled([
+  const exit = await Effect.runPromiseExit(
     services.redis.getOrSetJsonBestEffort({
       key: "undefined-failure",
       ttlSeconds: 30,
       codec: { stringify: JSON.stringify, parse: Number },
-      factory: () => {
+      onError: () => {},
+      factory: Effect.suspend(() => {
         calls++;
 
-        return Promise.reject(undefined);
-      },
+        return Effect.fail(undefined);
+      }),
     }),
-  ]);
+  );
 
-  expect(results).toEqual([{ status: "rejected", reason: undefined }]);
+  expect(exit).toEqual(Exit.fail(undefined));
   expect(calls).toBe(1);
 });
 
@@ -630,31 +630,32 @@ it("times out best-effort cache waiters without duplicating the active fill", as
     codec: { stringify: JSON.stringify, parse: Number },
     waitTimeoutMs: 60,
     waitIntervalMs: 10,
-    factory: async () => {
+    onError: () => {},
+    factory: Effect.promise(() => {
       calls++;
       begin();
 
       return result;
-    },
+    }),
   };
 
-  const owner = services.redis.getOrSetJsonBestEffort(options);
+  const owner = Effect.runPromise(
+    services.redis.getOrSetJsonBestEffort(options),
+  );
 
   try {
     await started;
 
-    const waiters = await Promise.allSettled(
+    const waiters = await Promise.all(
       Array.from({ length: 8 }, () =>
-        services.redis.getOrSetJsonBestEffort(options),
+        Effect.runPromiseExit(services.redis.getOrSetJsonBestEffort(options)),
       ),
     );
 
     for (const waiter of waiters) {
-      expect(waiter.status).toBe("rejected");
-
-      if (waiter.status === "rejected") {
-        expect(waiter.reason).toBeInstanceOf(CacheFillTimeoutError);
-      }
+      expect(
+        Exit.isFailure(waiter) && Cause.squash(waiter.cause),
+      ).toBeInstanceOf(CacheFillTimeoutError);
     }
 
     expect(calls).toBe(1);
@@ -663,7 +664,7 @@ it("times out best-effort cache waiters without duplicating the active fill", as
     await owner;
   }
 
-  expect(await services.redis.get(key)).toBe("42");
+  expect(await runtime.runPromise(services.redis.get(key))).toBe("42");
 });
 
 it("prevents an expired cache owner from replacing its successor's cached result", async () => {
@@ -676,63 +677,72 @@ it("prevents an expired cache owner from replacing its successor's cached result
     ttlSeconds: 30,
     lockTtlSeconds: 1,
     codec: { stringify: JSON.stringify, parse: Number },
+    onError: () => {},
   };
 
-  const owner = services.redis.getOrSetJsonBestEffort({
-    ...options,
-    factory: async () => {
-      begin();
+  const owner = Effect.runPromise(
+    services.redis.getOrSetJsonBestEffort({
+      ...options,
+      factory: Effect.promise(() => {
+        begin();
 
-      return result;
-    },
-  });
+        return result;
+      }),
+    }),
+  );
 
   try {
     await started;
     // Let the real Redis lease expire while the original query remains pending.
     await Bun.sleep(1_100);
     expect(
-      await services.redis.getOrSetJsonBestEffort({
-        ...options,
-        factory: async () => 99,
-      }),
+      await Effect.runPromise(
+        services.redis.getOrSetJsonBestEffort({
+          ...options,
+          factory: Effect.succeed(99),
+        }),
+      ),
     ).toBe(99);
   } finally {
     finish(42);
     expect(await owner).toBe(42);
   }
 
-  expect(await services.redis.get(key)).toBe("99");
+  expect(await runtime.runPromise(services.redis.get(key))).toBe("99");
 });
 
 it("cancels a waiting best-effort reader without running its factory after lock release", async () => {
   const key = "cancelled-cache-waiter";
   const controller = new AbortController();
-  await services.redis.setNX(`${key}:single-flight`, "owner", 10);
+  await runtime.runPromise(
+    services.redis.setNX(`${key}:single-flight`, "owner", 10),
+  );
   let calls = 0;
 
-  const reading = services.redis.getOrSetJsonBestEffort({
-    key,
-    ttlSeconds: 30,
-    waitTimeoutMs: 500,
-    waitIntervalMs: 10,
-    signal: controller.signal,
-    codec: { stringify: JSON.stringify, parse: Number },
-    factory: async () => {
-      calls++;
+  const reading = Effect.runPromiseExit(
+    services.redis.getOrSetJsonBestEffort({
+      key,
+      ttlSeconds: 30,
+      waitTimeoutMs: 500,
+      waitIntervalMs: 10,
+      codec: { stringify: JSON.stringify, parse: Number },
+      onError: () => {},
+      factory: Effect.sync(() => {
+        calls++;
 
-      return 42;
-    },
-  });
+        return 42;
+      }),
+    }),
+    { signal: controller.signal },
+  );
 
-  const settled = Promise.allSettled([reading]);
   await Bun.sleep(30);
   controller.abort();
-  expect((await settled)[0]?.status).toBe("rejected");
-  await services.redis.del(`${key}:single-flight`);
+  expect(Exit.hasInterrupts(await reading)).toBe(true);
+  await runtime.runPromise(services.redis.del(`${key}:single-flight`));
   await Bun.sleep(30);
   expect(calls).toBe(0);
-  expect(await services.redis.get(key)).toBeNull();
+  expect(await runtime.runPromise(services.redis.get(key))).toBeNull();
 });
 
 it("interrupts a coalesced analytics factory and permits a subsequent fill", async () => {
@@ -758,9 +768,13 @@ it("interrupts a coalesced analytics factory and permits a subsequent fill", asy
   controller.abort();
   expect(Exit.hasInterrupts(await reading)).toBe(true);
   await canceled;
-  const generation = await services.redis.get("battle-cache-generation:abort");
+
+  const generation = await runtime.runPromise(
+    services.redis.get("battle-cache-generation:abort"),
+  );
+
   const key = `battle-cache:v4:abort:${generation}:summary`;
-  expect(await services.redis.get(key)).toBeNull();
+  expect(await runtime.runPromise(services.redis.get(key))).toBeNull();
   expect(
     await runtime.runPromise(
       services.cache.getOrSetJson(
@@ -771,8 +785,10 @@ it("interrupts a coalesced analytics factory and permits a subsequent fill", asy
       ),
     ),
   ).toBe(9);
-  expect(await services.redis.get(`${key}:single-flight`)).toBeNull();
-  expect(await services.redis.get(key)).toBe("9");
+  expect(
+    await runtime.runPromise(services.redis.get(`${key}:single-flight`)),
+  ).toBeNull();
+  expect(await runtime.runPromise(services.redis.get(key))).toBe("9");
 });
 
 it("searches only owned warriors with trimmed ILIKE and preserves distinct names from their latest battle", async () => {
@@ -973,6 +989,7 @@ it("keeps HTTP submissions durable and retry-safe during concurrent catalog read
     makeBattlelogOperations(
       services.battles,
       services.analytics,
+      services.metadata,
       unusedDeleteQueue,
       unusedWeaponKills,
     ),

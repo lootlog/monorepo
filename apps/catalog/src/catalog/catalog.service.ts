@@ -3,12 +3,11 @@ import { maxBy, orderBy, pick, uniqBy } from "es-toolkit";
 import type { Meilisearch, MultiSearchParams, SearchParams } from "meilisearch";
 import { attemptMeilisearch } from "@lootlog/meilisearch/operation-failure";
 import { buildMeilisearchInFilter } from "@lootlog/meilisearch/query-builder";
-import { ITEMS_INDEX } from "#src/items/search-index";
 import type { DropSource } from "#src/items/item-drops";
 import type { ItemDropRate } from "#src/items/items.service";
 import { isElasticLevel } from "#src/items/item-levels";
 import { collapseByNameAndType } from "#src/npcs/npcs.service";
-import { NPCS_INDEX } from "#src/npcs/search-index";
+import { ITEMS_INDEX, NPCS_INDEX } from "#src/projection/catalog-indexes";
 import {
   ELASTIC_LEVELS,
   elasticItemLevel,
@@ -26,7 +25,6 @@ import {
 } from "@lootlog/domain/item-upgrade";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import type { CatalogReads } from "#src/database/catalog-store";
-import type { AppLogger } from "#src/shared/logger";
 import type {
   CatalogControllerGetEventsQuery,
   CatalogControllerGetIndexQuery,
@@ -223,15 +221,12 @@ const toCatalogNpc = ({
 export const makeCatalogModule = (
   meilisearch: Meilisearch,
   reads: CatalogReads<CatalogNpcDocument>,
-  logger: AppLogger,
 ) => {
   const logReadError =
     (message: string) =>
     <A, E, R>(effect: Effect.Effect<A, E, R>) =>
       effect.pipe(
-        Effect.tapError((error) =>
-          Effect.sync(() => logger.error(message, { error })),
-        ),
+        Effect.tapError((error) => Effect.logError(message, { error })),
       );
 
   /**
@@ -259,7 +254,7 @@ export const makeCatalogModule = (
           : `(NOT statsKeys = "etiquette" OR ${buildMeilisearchInFilter("eventSlugs", seen)})`;
       }),
       Effect.tapError((error) =>
-        Effect.sync(() => logger.error("Catalog editions error", { error })),
+        Effect.logError("Catalog editions error", { error }),
       ),
     );
 
@@ -328,7 +323,7 @@ export const makeCatalogModule = (
           total: response.estimatedTotalHits ?? response.hits.length,
         })),
         Effect.tapError((error) =>
-          Effect.sync(() => logger.error("Catalog items error", { error })),
+          Effect.logError("Catalog items error", { error }),
         ),
       );
     };
@@ -603,7 +598,7 @@ export const makeCatalogModule = (
       }),
     ).pipe(
       Effect.tapError((error) =>
-        Effect.sync(() => logger.error("Catalog events error", { error })),
+        Effect.logError("Catalog events error", { error }),
       ),
     );
 

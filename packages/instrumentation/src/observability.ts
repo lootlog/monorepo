@@ -54,17 +54,16 @@ const sampledTracer = Layer.effect(
   }),
 );
 
-export const makeObservabilityLayer = <E, R>(
-  configuration: Effect.Effect<
-    {
-      readonly serviceName: string;
-      readonly environment: string;
-      readonly serviceNamespace: string;
-      readonly commitSha?: string | undefined;
-    },
-    E,
-    R
-  >,
+/** What a service reports about itself in logs, traces and metrics. */
+export interface ServiceIdentity {
+  readonly serviceName: string;
+  readonly environment: string;
+  readonly serviceNamespace: string;
+  readonly commitSha?: string | undefined;
+}
+
+export const observabilityLayer = <E, R>(
+  configuration: Effect.Effect<ServiceIdentity, E, R>,
 ) =>
   Layer.unwrap(
     Effect.gen(function* () {

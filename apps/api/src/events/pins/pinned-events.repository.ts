@@ -1,7 +1,7 @@
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import { activeEventCondition } from "#src/events/event-scope-query";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, gt, inArray, lte, or } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -9,23 +9,10 @@ import {
   userPinnedEventTable,
 } from "#src/database/drizzle/event.schema";
 
-class PinnedEventsPersistenceError extends TaggedErrorClass<PinnedEventsPersistenceError>()(
-  "PinnedEventsPersistenceError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makePinnedEventsPersistence = (
   database: typeof ApiDatabase.Service,
 ) => {
-  const run = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new PinnedEventsPersistenceError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.pins.drizzle", retryCount: 0 },
-      }),
-    );
+  const run = adapterOperation("events.pins.drizzle");
 
   const findHeroes = (eventIds: string[]) => {
     if (eventIds.length === 0) {

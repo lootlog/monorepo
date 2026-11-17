@@ -2,7 +2,7 @@ import {
   ApplicationError,
   InvalidRequestError,
 } from "#src/infrastructure/http-error";
-import { adapter } from "#src/infrastructure/infrastructure-adapter";
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ContextLogger } from "@lootlog/instrumentation";
 import { and, eq, gte, lt } from "drizzle-orm";
 import { Clock, Effect } from "effect";
@@ -61,19 +61,19 @@ export const makeBattleCreation = (
   ) => {
     if (duration <= 0) return Effect.void;
 
-    return adapter("Battles_preserveDuration", () =>
-      drizzle
-        .update(battles)
-        .set({ duration, updatedAt: new Date() })
-        .where(and(eq(battles.id, battleId), lt(battles.duration, duration)))
-        .returning({ id: battles.id }),
-    ).pipe(
-      Effect.flatMap((updated) =>
-        updated.length > 0
-          ? battleAnalyticsService.invalidateAnalyticsCache(userId)
-          : Effect.void,
-      ),
-    );
+    return drizzle
+      .update(battles)
+      .set({ duration, updatedAt: new Date() })
+      .where(and(eq(battles.id, battleId), lt(battles.duration, duration)))
+      .returning({ id: battles.id })
+      .pipe(
+        withAdapterSpan("Battles_preserveDuration", "battlelog-infrastructure"),
+        Effect.flatMap((updated) =>
+          updated.length > 0
+            ? battleAnalyticsService.invalidateAnalyticsCache(userId)
+            : Effect.void,
+        ),
+      );
   };
 
   const getRecentBattleIdBySemanticFingerprint = (
@@ -82,8 +82,8 @@ export const makeBattleCreation = (
   ) => {
     return Clock.currentTimeMillis.pipe(
       Effect.flatMap((now) =>
-        adapter("Battles_findRecentFingerprint", () =>
-          drizzle.query.battles.findFirst({
+        drizzle.query.battles
+          .findFirst({
             where: {
               semanticFingerprint,
               userId,
@@ -97,8 +97,13 @@ export const makeBattleCreation = (
             },
             columns: { id: true },
             orderBy: { id: "desc" },
-          }),
-        ),
+          })
+          .pipe(
+            withAdapterSpan(
+              "Battles_findRecentFingerprint",
+              "battlelog-infrastructure",
+            ),
+          ),
       ),
       Effect.map((battle) => battle?.id ?? null),
     );
@@ -113,44 +118,44 @@ export const makeBattleCreation = (
       return Effect.succeed(null);
     }
 
-    return adapter("Battles_findSubmission", () =>
-      drizzle
-        .select({
-          id: battles.id,
-          semanticFingerprint: battles.semanticFingerprint,
-        })
-        .from(battleSubmissions)
-        .innerJoin(
-          battles,
-          and(
-            eq(battles.id, battleSubmissions.battleId),
-            eq(battles.userId, battleSubmissions.userId),
-          ),
-        )
-        .where(
-          and(
-            eq(battleSubmissions.userId, userId),
-            eq(battleSubmissions.submissionId, submissionId),
-          ),
-        )
-        .limit(1),
-    ).pipe(
-      Effect.flatMap(([battle]) => {
-        if (
-          battle &&
-          battle.semanticFingerprint !== null &&
-          battle.semanticFingerprint !== semanticFingerprint
-        ) {
-          return Effect.fail(
-            new InvalidRequestError(
-              "Submission ID is already used for a different battle",
-            ),
-          );
-        }
+    return drizzle
+      .select({
+        id: battles.id,
+        semanticFingerprint: battles.semanticFingerprint,
+      })
+      .from(battleSubmissions)
+      .innerJoin(
+        battles,
+        and(
+          eq(battles.id, battleSubmissions.battleId),
+          eq(battles.userId, battleSubmissions.userId),
+        ),
+      )
+      .where(
+        and(
+          eq(battleSubmissions.userId, userId),
+          eq(battleSubmissions.submissionId, submissionId),
+        ),
+      )
+      .limit(1)
+      .pipe(
+        withAdapterSpan("Battles_findSubmission", "battlelog-infrastructure"),
+        Effect.flatMap(([battle]) => {
+          if (
+            battle &&
+            battle.semanticFingerprint !== null &&
+            battle.semanticFingerprint !== semanticFingerprint
+          ) {
+            return Effect.fail(
+              new InvalidRequestError(
+                "Submission ID is already used for a different battle",
+              ),
+            );
+          }
 
-        return Effect.succeed(battle ?? null);
-      }),
-    );
+          return Effect.succeed(battle ?? null);
+        }),
+      );
   };
 
   const analyzeBattle = (dto: CreateBattleInput): BattleAnalysis => {
@@ -191,8 +196,8 @@ export const makeBattleCreation = (
                 icon: userWarrior.icon,
               })
             : Effect.void,
-          adapter("Battles_storeTransaction", () =>
-            drizzle.transaction((tx) =>
+          drizzle
+            .transaction((tx) =>
               Effect.gen(function* () {
                 const now = yield* Clock.currentTimeMillis;
                 const battleId = createBattleId(now);
@@ -366,8 +371,13 @@ export const makeBattleCreation = (
 
                 return insertedBattle;
               }),
+            )
+            .pipe(
+              withAdapterSpan(
+                "Battles_storeTransaction",
+                "battlelog-infrastructure",
+              ),
             ),
-          ),
         ],
         { concurrency: "unbounded" },
       );

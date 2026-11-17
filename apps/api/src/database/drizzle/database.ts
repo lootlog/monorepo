@@ -1,6 +1,7 @@
 import { makePostgresLayer } from "@lootlog/database";
 import { makeWithDefaults } from "drizzle-orm/effect-postgres";
-import { Config, Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer } from "effect";
+import { databaseUrlConfig } from "#src/config/api.config";
 
 export type ApiDatabaseValue = Omit<
   Effect.Success<ReturnType<typeof makeWithDefaults>>,
@@ -15,7 +16,7 @@ export class ApiDatabase extends Context.Service<
 }
 
 const PgClientLive = Layer.unwrap(
-  Config.Redacted("POSTGRESQL_CONNECTION_URI").pipe(
+  databaseUrlConfig.pipe(
     Effect.map((url) =>
       makePostgresLayer({
         url,

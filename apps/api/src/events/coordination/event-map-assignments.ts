@@ -1,10 +1,13 @@
+import {
+  adapterOperation,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { eventMapScope } from "#src/events/event-scope-query";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { makeEventMapRead } from "#src/events/catalog/event-map-read";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, isNull } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -38,11 +41,6 @@ const ASSIGNMENT_UNAVAILABLE_MESSAGES: Record<
   TOO_EARLY: "Cannot assign members before the assignment window opens",
 };
 
-class EventMapAssignmentError extends TaggedErrorClass<EventMapAssignmentError>()(
-  "EventMapAssignmentError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export interface EventAssignmentPublisher {
   readonly publish: <
     Key extends
@@ -61,15 +59,7 @@ export const makeEventMapAssignments = (
   publisher: EventAssignmentPublisher,
   logger: Pick<Logger, "warn">,
 ) => {
-  const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new EventMapAssignmentError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.assignments.drizzle", retryCount: 0 },
-      }),
-    );
+  const query = adapterOperation("events.assignments.drizzle");
 
   const bestEffort = (
     effect: Effect.Effect<void, unknown>,
@@ -84,9 +74,7 @@ export const makeEventMapAssignments = (
           }),
         ),
       ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.rabbitmq", retryCount: 0 },
-      }),
+      withAdapterSpan(operation, "events.rabbitmq"),
     );
 
   const invalidate = (guildId: string, eventId: string) =>
