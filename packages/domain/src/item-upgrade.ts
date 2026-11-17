@@ -911,7 +911,7 @@ export type ItemUpgradeCost = {
   gold: number;
 };
 
-export const NO_UPGRADE_COST: ItemUpgradeCost = {
+const NO_UPGRADE_COST: ItemUpgradeCost = {
   points: 0,
   essence: 0,
   gold: 0,

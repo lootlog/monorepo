@@ -1,11 +1,20 @@
+import { clamp } from "es-toolkit";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { MapAuraMode } from "@lootlog/schema/character-aura";
+import { DEVICE_SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import { storageKey } from "@/lib/storage-key";
 import { createChangedOnlyStorage } from "./changed-only-storage";
 import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
 
 const STORAGE_KEY = storageKey("ll:settings:state");
+
+const {
+  animationEffectsEnabled: animationEffectsSetting,
+  mapAuras: mapAurasSetting,
+  masterVolume: masterVolumeSetting,
+  soundsMuted: soundsMutedSetting,
+} = DEVICE_SETTINGS_CATALOG;
 
 interface SettingsState {
   animationEffectsEnabled: boolean;
@@ -31,11 +40,11 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
-      animationEffectsEnabled: true,
-      mapAuras: "auto",
+      animationEffectsEnabled: animationEffectsSetting.defaultValue,
+      mapAuras: mapAurasSetting.defaultValue,
       lootDebugLoggingEnabled: false,
-      masterVolume: 0.5,
-      soundsMuted: false,
+      masterVolume: masterVolumeSetting.defaultValue,
+      soundsMuted: soundsMutedSetting.defaultValue,
       allowWorldSelection: false,
       worldByGuildId: {},
       guildIdByCharId: {},
@@ -74,7 +83,13 @@ export const useSettingsStore = create<SettingsState>()(
         set({ mapAuras });
       },
       setMasterVolume: (masterVolume) => {
-        set({ masterVolume: Math.min(1, Math.max(0, masterVolume)) });
+        set({
+          masterVolume: clamp(
+            masterVolume,
+            masterVolumeSetting.minimum,
+            masterVolumeSetting.maximum,
+          ),
+        });
       },
       setWorld: (guildId: string, world: string) => {
         set((state) => ({

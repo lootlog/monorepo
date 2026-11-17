@@ -113,9 +113,8 @@ export const getThemeGreetingSuffix = (
 export const isThemeId = (value: string): value is ThemeId =>
   THEME_IDS.some((theme) => theme === value);
 
-export const resolveStoredTheme = (
-  value: string | null | undefined,
-): ThemeId => (value && isThemeId(value) ? value : DEFAULT_THEME_ID);
+const resolveStoredTheme = (value: string | null | undefined): ThemeId =>
+  value && isThemeId(value) ? value : DEFAULT_THEME_ID;
 
 /** What the User picked: a built-in theme or one of their own. */
 export type ThemeSelection = ThemeId | CustomThemeSelection;

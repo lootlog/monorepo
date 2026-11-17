@@ -98,7 +98,7 @@ const getLevelSpreadFactor = (world: string) =>
  * level reaches `max(min(ceil((min(highest, 300) - 4) / (1 + factor)),
  * highest - 14), 1)`.
  */
-export const isLootRollLevelSpreadAllowed = (
+const isLootRollLevelSpreadAllowed = (
   levels: ReadonlyArray<number>,
   world: string,
 ) => {

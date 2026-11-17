@@ -406,16 +406,21 @@
       }
     },
     {
+      "files": ["src/features/settings/persistence/use-sound-settings.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          { "boundaryFunctions": ["normalizeSoundCategoryConfig"] }
+        ]
+      }
+    },
+    {
       "files": ["src/lib/api/generated-helpers.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
           {
-            "boundaryFunctions": [
-              "getNumber",
-              "getString",
-              "normalizeSoundCategoryConfig"
-            ]
+            "boundaryFunctions": ["getNumber", "getString"]
           }
         ],
         "anti-slop/no-runtime-typeof": [

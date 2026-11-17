@@ -1,10 +1,12 @@
 import { resolveSoundUrl } from "@/features/settings/config/default-sounds";
-import { readSoundSettings } from "@/features/settings/persistence/use-sound-settings";
+import {
+  readSoundSettings,
+  type SoundSettings,
+} from "@/features/settings/persistence/use-sound-settings";
 import {
   disposeSoundPlayback,
   playSoundRequest,
 } from "@/lib/shared-audio-playback";
-import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
 import { useSettingsStore } from "@/store/settings.store";
 
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";
@@ -14,7 +16,7 @@ export type SoundPlaybackProfile = {
   preservesPitch?: boolean;
 };
 
-const getSettings = (): UserSoundSettings | undefined => readSoundSettings();
+const getSettings = (): SoundSettings | undefined => readSoundSettings();
 
 export function playSound(
   category: SoundCategory,

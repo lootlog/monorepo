@@ -1,13 +1,58 @@
 import { storageKey } from "@/lib/storage-key";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { useSettingsStore } from "./settings.store";
 
 const SETTINGS_STORAGE_KEY = storageKey("ll:settings:state");
 
 describe("useSettingsStore", () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     localStorage.removeItem(SETTINGS_STORAGE_KEY);
     useSettingsStore.setState(useSettingsStore.getInitialState(), true);
+  });
+
+  it("restores a stored version 6 payload over the defaults", async () => {
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({
+        state: {
+          animationEffectsEnabled: false,
+          mapAuras: "nearby",
+          masterVolume: 0.3,
+          worldByGuildId: { "guild-1": "tempest" },
+        },
+        version: 6,
+      }),
+    );
+
+    await useSettingsStore.persist.rehydrate();
+
+    expect(useSettingsStore.getState()).toMatchObject({
+      animationEffectsEnabled: false,
+      mapAuras: "nearby",
+      masterVolume: 0.3,
+      soundsMuted: false,
+      lootDebugLoggingEnabled: false,
+      worldByGuildId: { "guild-1": "tempest" },
+      guildIdByCharId: {},
+    });
+  });
+
+  it("keeps the defaults when the stored payload has an older version", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ state: { masterVolume: 0.3 }, version: 5 }),
+    );
+
+    await useSettingsStore.persist.rehydrate();
+
+    expect(useSettingsStore.getState()).toMatchObject({
+      animationEffectsEnabled: true,
+      mapAuras: "auto",
+      masterVolume: 0.5,
+      soundsMuted: false,
+    });
   });
 
   it("disables loot debug logging by default", () => {

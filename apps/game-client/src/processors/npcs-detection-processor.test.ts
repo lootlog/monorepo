@@ -7,7 +7,7 @@ import {
   soundSettingValues,
   type SettingsDocumentValues,
 } from "@/test/settings-documents-fixtures";
-import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
+import type { SoundSettings } from "@/features/settings/persistence/use-sound-settings";
 import { useSettingsStore } from "@/store/settings.store";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
@@ -186,9 +186,7 @@ describe("NpcsDetectionProcessor", () => {
     useSettingsStore.setState({ soundsMuted: false, masterVolume: 1 });
     queryClient.clear();
 
-    const sound: UserSoundSettings = {
-      userId: "user-1",
-      masterVolume: 1,
+    const sound: SoundSettings = {
       detectorVolume: 1,
       notificationsVolume: 1,
       timersVolume: 1,

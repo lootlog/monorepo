@@ -496,6 +496,8 @@ export const DEVICE_SETTINGS_CATALOG = {
   masterVolume: {
     defaultValue: 0.5,
     persistence: "DEVICE",
+    minimum: 0,
+    maximum: 1,
     isValid: isNumberInRange(0, 1),
   },
   soundsMuted: {
