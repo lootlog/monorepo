@@ -1,5 +1,5 @@
 import { expect, it } from "bun:test";
-import { Deferred, Effect, Fiber, Queue } from "effect";
+import { Deferred, Effect, Fiber, Option, Queue } from "effect";
 import { eq } from "drizzle-orm";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Permission } from "@lootlog/schema/permissions";
@@ -29,7 +29,21 @@ import {
   createMemberFixture,
 } from "../../test/organization-fixtures.js";
 import { makeAutoTimer } from "./timer-auto.data-layer.js";
+import type { AutoTimerGuildWritePorts } from "./timer-auto-guild-write.js";
 import { TimerHistoryAction } from "./timers.types.js";
+
+// Reads the dedup entry, then fills it as the sole lock holder.
+const singleFlightLocks = (
+  onRelease: () => void = () => undefined,
+): AutoTimerGuildWritePorts["locks"] => ({
+  singleFlight: (_options, read, fill) =>
+    read.pipe(
+      Effect.flatMap(
+        Option.match({ onSome: Effect.succeed, onNone: () => fill }),
+      ),
+      Effect.ensuring(Effect.sync(onRelease)),
+    ),
+});
 
 it("limits independent Organization writes to three, settles delivery pairs, and preserves ordered partial results and deduplication", async () => {
   const boundary = await createDatabaseBoundary();
@@ -106,8 +120,7 @@ it("limits independent Organization writes to three, settles delivery pairs, and
           closeKilledNpcGatherings: () => Effect.void,
           get: (key) => Effect.sync(() => cache.get(key) ?? null),
           set: (key, value) => Effect.sync(() => cache.set(key, value)),
-          setNx: () => Effect.succeed(true),
-          releaseDedup: () => Effect.void,
+          locks: singleFlightLocks(),
           invalidateList: () => Effect.void,
           publishHeroSighting: () => Effect.void,
           signalEventHeroChecks: Effect.void,
@@ -304,12 +317,10 @@ it.each([false, true])(
             closeKilledNpcGatherings: () => Effect.void,
             get: () => Effect.succeed(null),
             set: () => Effect.void,
-            setNx: () => Effect.succeed(true),
             withLock: (_key, operation) => operation,
-            releaseDedup: () =>
-              Effect.sync(() => {
-                dedupReleased = true;
-              }),
+            locks: singleFlightLocks(() => {
+              dedupReleased = true;
+            }),
             invalidateList: () => Effect.void,
             publishHeroSighting: () => Effect.void,
             signalEventHeroChecks: Effect.void,
@@ -432,8 +443,7 @@ it("writes a kill within the dedup window of an event respawn window that has no
       closeKilledNpcGatherings: () => Effect.void,
       get: () => Effect.succeed(null),
       set: () => Effect.void,
-      setNx: () => Effect.succeed(true),
-      releaseDedup: () => Effect.void,
+      locks: singleFlightLocks(),
       invalidateList: () => Effect.void,
       publishHeroSighting: () => Effect.void,
       signalEventHeroChecks: Effect.void,
@@ -526,8 +536,7 @@ it.each([false, true])(
         get: () => Effect.succeed(null),
         set: () =>
           failCacheWrite ? Effect.fail("Redis unavailable") : Effect.void,
-        setNx: () => Effect.succeed(true),
-        releaseDedup: () => Effect.void,
+        locks: singleFlightLocks(),
         invalidateList: () => Effect.void,
         publishHeroSighting: () => Effect.void,
         signalEventHeroChecks: Effect.void,
@@ -690,8 +699,7 @@ it("keeps one timer per Hero Tracker across hiding places, measuring its respawn
       closeKilledNpcGatherings: () => Effect.void,
       get: () => Effect.succeed(null),
       set: () => Effect.void,
-      setNx: () => Effect.succeed(true),
-      releaseDedup: () => Effect.void,
+      locks: singleFlightLocks(),
       invalidateList: () => Effect.void,
       publishHeroSighting: () => Effect.void,
       signalEventHeroChecks: Effect.void,
@@ -795,8 +803,7 @@ it("keeps the window of an open Hero Tracker entrance when another player report
       closeKilledNpcGatherings: () => Effect.void,
       get: () => Effect.succeed(null),
       set: () => Effect.void,
-      setNx: () => Effect.succeed(true),
-      releaseDedup: () => Effect.void,
+      locks: singleFlightLocks(),
       invalidateList: () => Effect.void,
       publishHeroSighting: () => Effect.void,
       signalEventHeroChecks: Effect.void,
@@ -860,8 +867,7 @@ it("rejects a timer for an elite I, which Margonem weighs up to 19", async () =>
       closeKilledNpcGatherings: () => Effect.void,
       get: () => Effect.die("unused"),
       set: () => Effect.die("unused"),
-      setNx: () => Effect.die("unused"),
-      releaseDedup: () => Effect.void,
+      locks: singleFlightLocks(),
       invalidateList: () => Effect.die("unused"),
       publishHeroSighting: () => Effect.void,
       signalEventHeroChecks: Effect.die("unused"),

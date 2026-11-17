@@ -1,3 +1,4 @@
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import { isObjectRecord } from "@lootlog/schema/records";
 import {
   activeEventCondition,
@@ -5,7 +6,6 @@ import {
 } from "#src/events/event-scope-query";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { makeEventMapRead } from "./event-map-read.js";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import {
@@ -90,25 +90,12 @@ const isHeroNameTaken = (
 const heroNameTakenError = () =>
   new ResourceConflictError({ code: "EVENT_HERO_NAME_TAKEN" });
 
-class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationError>()(
-  "EventCatalogMutationError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeEventCatalogMutations = (
   database: typeof ApiDatabase.Service,
   redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
   logger: Pick<Logger, "warn">,
 ) => {
-  const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new EventCatalogMutationError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.catalog.drizzle", retryCount: 0 },
-      }),
-    );
+  const query = adapterOperation("events.catalog.drizzle");
 
   const invalidate = (guildId: string, eventId: string) =>
     invalidateEventCache(

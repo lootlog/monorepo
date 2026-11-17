@@ -1,3 +1,7 @@
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { notificationChannelMetadata } from "#src/notifications/targets/notification-channel-metadata";
 import {
   deleteNotificationTargetAndOrphanedRules,
@@ -5,9 +9,8 @@ import {
   readSingleTargetNotificationRuleIds,
   updateNotificationTarget,
 } from "#src/notifications/targets/notification-target.repository";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { notificationTargetTable } from "#src/database/drizzle/notification.schema";
 import type {
@@ -54,18 +57,13 @@ export interface NotificationPendingJobs {
   }) => Effect.Effect<unknown, unknown>;
 }
 
-class NotificationGuildTargetFailure extends TaggedErrorClass<NotificationGuildTargetFailure>()(
-  "NotificationGuildTargetFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeNotificationGuildTargets = (
   database: ApiDatabaseValue,
   channels: NotificationGuildChannels,
   jobs: NotificationPendingJobs,
 ) => {
   const databaseFailure = (operation: string) => (cause: unknown) =>
-    new NotificationGuildTargetFailure({ operation, cause });
+    new OperationError({ operation, cause });
 
   const find = (guildId: string, targetId: number) =>
     database
@@ -190,7 +188,7 @@ export const makeNotificationGuildTargets = (
 
     if (!target) {
       return yield* Effect.fail(
-        new NotificationGuildTargetFailure({
+        new OperationError({
           operation: "notifications.targets.create.returning",
           cause: "Notification target was not returned",
         }),
@@ -251,9 +249,10 @@ export const makeNotificationGuildTargets = (
         orphanedRuleIds,
       ).pipe(
         Effect.mapError(databaseFailure("notifications.targets.delete")),
-        Effect.withSpan("notifications.targets.delete.transaction", {
-          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-        }),
+        withAdapterSpan(
+          "notifications.targets.delete.transaction",
+          "notifications.drizzle",
+        ),
       );
 
       return { success: true as const };

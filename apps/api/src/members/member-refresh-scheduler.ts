@@ -1,6 +1,9 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import type { Job, Queue as BullQueue } from "bullmq";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 
 export interface MemberRefreshJobData {
@@ -26,11 +29,6 @@ type MemberRefreshJobState =
   | "unknown"
   | "waiting"
   | "waiting-children";
-
-class MemberRefreshSchedulerFailure extends TaggedErrorClass<MemberRefreshSchedulerFailure>()(
-  "MemberRefreshSchedulerFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 export interface MemberRefreshSchedulerPorts {
   readonly nextRefreshAt: (
@@ -99,12 +97,8 @@ export const makeMemberRefreshScheduler = (
   const bull = <A>(operation: string, run: () => Promise<A>) =>
     Effect.tryPromise({
       try: run,
-      catch: (cause) => new MemberRefreshSchedulerFailure({ operation, cause }),
-    }).pipe(
-      Effect.withSpan(operation, {
-        attributes: { adapter: "bullmq", retryCount: 0 },
-      }),
-    );
+      catch: (cause) => new OperationError({ operation, cause }),
+    }).pipe(withAdapterSpan(operation, "bullmq"));
 
   const updateExisting = async (
     job: Job<MemberRefreshJobData>,

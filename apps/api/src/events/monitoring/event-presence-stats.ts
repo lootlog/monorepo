@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { queryEventHero } from "#src/events/event-scope-query";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
@@ -153,9 +154,10 @@ export const makeEventPresenceStats = (
           ),
       };
     }).pipe(
-      Effect.withSpan("events.presence.heroStats.load", {
-        attributes: { adapter: "events.presence.drizzle", retryCount: 0 },
-      }),
+      withAdapterSpan(
+        "events.presence.heroStats.load",
+        "events.presence.drizzle",
+      ),
     );
 
   return {

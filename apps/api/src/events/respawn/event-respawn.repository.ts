@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { queryEventHero } from "#src/events/event-scope-query";
@@ -10,9 +11,7 @@ export const makeEventRespawnStore = (database: ApiDatabaseValue) => ({
 
         return row ? { ...row.hero, event: row.event } : null;
       }),
-      Effect.withSpan("events.respawn.findHero", {
-        attributes: { adapter: "events.respawn.drizzle", retryCount: 0 },
-      }),
+      withAdapterSpan("events.respawn.findHero", "events.respawn.drizzle"),
     );
   },
 });

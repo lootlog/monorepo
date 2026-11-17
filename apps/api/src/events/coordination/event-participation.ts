@@ -1,10 +1,10 @@
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import { addRankingRows } from "#src/events/kills/event-points.repository";
 import { getTrackingDurationSecondsForRanking } from "#src/events/kills/event-ranking-policy";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, asc, desc, eq, gte, inArray, isNull, lt } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroKillTable,
@@ -22,11 +22,6 @@ import type { ApplicationLogger as Logger } from "#src/shared/application-logger
 import type { AcknowledgeExpiredParticipationConfirmationsRequest } from "#src/contracts/events/schemas";
 import type { EventRankingPublisher } from "#src/events/kills/event-point-edits";
 
-class EventParticipationError extends TaggedErrorClass<EventParticipationError>()(
-  "EventParticipationError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeEventParticipation = (
   database: typeof ApiDatabase.Service,
   redis: RedisService,
@@ -39,15 +34,7 @@ export const makeEventParticipation = (
     hero: typeof eventHeroNpcTable.$inferSelect;
   };
 
-  const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new EventParticipationError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.participation.drizzle", retryCount: 0 },
-      }),
-    );
+  const query = adapterOperation("events.participation.drizzle");
 
   const participationPoints = (
     eventId: string,

@@ -181,7 +181,7 @@ describe("loot likes", () => {
       ),
     );
 
-    expect(failure._tag).toBe("LootPersistenceError");
+    expect(failure._tag).toBe("OperationError");
     expect(await likerIds(first, 1)).toEqual([]);
   });
 });

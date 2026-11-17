@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { Clock, Effect, Result } from "effect";
 import { eq } from "drizzle-orm";
 import type { RabbitMessaging } from "@lootlog/messaging";
@@ -142,8 +143,6 @@ export const makeMemberBulkRefreshProcessor = (
           return yield* Effect.fail(error);
         }),
       ),
-      Effect.withSpan("members.bulkRefresh.process", {
-        attributes: { adapter: "bullmq", retryCount: 0 },
-      }),
+      withAdapterSpan("members.bulkRefresh.process", "bullmq"),
     );
 };

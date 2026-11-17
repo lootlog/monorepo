@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
@@ -90,8 +91,6 @@ export const makeMapsOperation = (options: MapsOperationOptions) => {
         Effect.as([]),
       ),
     ),
-    Effect.withSpan("MapsController_getMaps", {
-      attributes: { adapter: "maps-catalog", retryCount: 0 },
-    }),
+    withAdapterSpan("MapsController_getMaps", "maps-catalog"),
   );
 };

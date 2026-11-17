@@ -5,6 +5,7 @@ import type {
   NotificationStoredJob,
 } from "#src/notifications/jobs/notification-job.repository";
 import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
+import { NOTIFICATION_DELIVERY_ATTEMPTS } from "#src/notifications/jobs/dispatch-queue";
 import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import {
   NotificationJobStatus,
@@ -93,7 +94,9 @@ export const makeNotificationDeliveryResult = (
     const failure =
       event.errorMessage ?? event.errorCode ?? "Notification delivery failed";
 
-    const shouldRetry = event.retryable && job.attemptCount <= 3;
+    const shouldRetry =
+      event.retryable && job.attemptCount < NOTIFICATION_DELIVERY_ATTEMPTS;
+
     yield* store.record({
       jobId: job.id,
       targetId: job.targetId,

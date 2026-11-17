@@ -1,5 +1,5 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Clock, Effect, Schema } from "effect";
+import { OperationError } from "@lootlog/instrumentation/operation";
+import { Clock, Effect } from "effect";
 import {
   isRetryableMemberRefreshStatus,
   MEMBER_DISCORD_SYNC_STATUS,
@@ -9,11 +9,6 @@ import type {
   MemberRefreshScheduler,
 } from "./member-refresh-scheduler.js";
 import type { MemberRefreshAttempt, MemberSyncResult } from "./member.types.js";
-
-class MemberRefreshFailure extends TaggedErrorClass<MemberRefreshFailure>()(
-  "MemberRefreshFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 export interface MemberRefreshPorts {
   readonly nextRefreshAt: (
@@ -172,7 +167,7 @@ export const makeMemberRefresh = (
       ),
       Effect.mapError(
         (cause) =>
-          new MemberRefreshFailure({
+          new OperationError({
             operation: "members.refresh.withinBudget",
             cause,
           }),

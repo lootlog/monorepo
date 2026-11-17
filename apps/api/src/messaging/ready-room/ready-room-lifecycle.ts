@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { Effect } from "effect";
 import { PARTY_GATHERING_LIFETIME_MS } from "@lootlog/schema/party-ready-room";
@@ -110,9 +111,7 @@ export const createRoom = (
 
     return createReadyRoomProjection(result.aggregate, identity.discordId);
   }).pipe(
-    Effect.withSpan("PartyReadyRoomControllerCreate.redis", {
-      attributes: { adapter: "ReadyRoomRedis", retryCount: 0 },
-    }),
+    withAdapterSpan("PartyReadyRoomControllerCreate.redis", "ReadyRoomRedis"),
   );
 
 export const cancelAggregate = Effect.fnUntraced(function* (
@@ -204,9 +203,7 @@ export const cancelRoom = (
       viewerGuildIds,
     );
   }).pipe(
-    Effect.withSpan("PartyReadyRoomControllerCancel.redis", {
-      attributes: { adapter: "ReadyRoomRedis", retryCount: 0 },
-    }),
+    withAdapterSpan("PartyReadyRoomControllerCancel.redis", "ReadyRoomRedis"),
   );
 
 /** Restarts the organizer's gathering lifetime from now. */
@@ -252,9 +249,7 @@ export const extendRoom = (
       viewerGuildIds,
     );
   }).pipe(
-    Effect.withSpan("PartyReadyRoomControllerExtend.redis", {
-      attributes: { adapter: "ReadyRoomRedis", retryCount: 0 },
-    }),
+    withAdapterSpan("PartyReadyRoomControllerExtend.redis", "ReadyRoomRedis"),
   );
 
 export interface ReadyRoomNpcKill {
