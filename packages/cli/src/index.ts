@@ -6,11 +6,10 @@ import { Cause, Console, Effect } from "effect";
 import { Command } from "effect/cli";
 import { env } from "./commands/env/index.js";
 import { events } from "./commands/events/index.js";
-import { seedCommand } from "./commands/seed/index.js";
 
 const cli = Command.make("lootlog").pipe(
   Command.withDescription("Lootlog development CLI"),
-  Command.withSubcommands([env, events, seedCommand]),
+  Command.withSubcommands([env, events]),
 );
 
 cli.pipe(

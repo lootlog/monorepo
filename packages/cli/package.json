@@ -10,34 +10,17 @@
     "test": "bun test",
     "env:generate": "bun src/index.ts env generate",
     "events": "bun src/index.ts events",
-    "events:publish": "bun src/index.ts events publish",
-    "seed": "bun --env-file=../../.env src/index.ts seed",
-    "seed:generate:players": "bun --env-file=../../.env src/index.ts seed generate:players",
-    "seed:scrape": "bun --env-file=../../.env src/index.ts seed scrape:all",
-    "seed:scrape:items": "bun --env-file=../../.env src/index.ts seed scrape:items",
-    "seed:scrape:npcs": "bun --env-file=../../.env src/index.ts seed scrape:npcs",
-    "seed:setup": "bun --env-file=../../.env src/index.ts seed setup"
+    "events:publish": "bun src/index.ts events publish"
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
-    "@lootlog/api": "workspace:*",
-    "@lootlog/battle-processor": "workspace:*",
-    "@lootlog/battlelog": "workspace:*",
-    "@lootlog/database": "workspace:*",
-    "@lootlog/domain": "workspace:*",
-    "@lootlog/schema": "workspace:*",
     "amqplib": "^2.2.0",
-    "drizzle-orm": "catalog:",
-    "effect": "catalog:",
-    "node-html-parser": "^9.0.4",
-    "pg": "^8.23.1",
-    "random-words": "^2.0.1"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
-    "@types/pg": "^8.23.1",
     "typescript": "catalog:"
   }
 }
