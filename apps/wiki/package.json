@@ -32,7 +32,6 @@
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-router-ssr-query": "^1.167.3",
     "@tanstack/react-start": "^1.169.1",
-    "better-auth": "1.7.16",
     "cn": "catalog:",
     "es-toolkit": "catalog:",
     "lucide-react": "^1.56.0",

@@ -8,10 +8,7 @@ import {
   itemResultsQueryOptions,
   type ItemSearchParams,
 } from "@/lib/catalog-page-queries";
-
-// Meilisearch counts hits exactly up to its `maxTotalHits`; a count that
-// reaches it means "at least this many".
-const COUNTED_HITS = 1000;
+import { CATALOG_MAX_HITS } from "@/lib/catalog-pages";
 
 // The sorts that rank by attack speed, and which one each shows.
 const ATTACK_SPEED_RANKINGS = new Map<string | undefined, AttackSpeedRanking>([
@@ -45,7 +42,9 @@ export function ItemResults({ params, query }: ItemResultsProps) {
       >
         {data
           ? t(
-              total >= COUNTED_HITS ? "search.resultsCapped" : "search.results",
+              total >= CATALOG_MAX_HITS
+                ? "search.resultsCapped"
+                : "search.results",
               {
                 count: total.toLocaleString("pl-PL"),
               },

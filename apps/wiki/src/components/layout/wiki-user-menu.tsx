@@ -15,17 +15,16 @@ import {
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useWikiContext } from "@/contexts/wiki-context";
-import { useDiscordSignIn } from "@/hooks/use-discord-sign-in";
-import { useLogout } from "@/hooks/use-logout";
+import { useDiscordSignIn, useLogout } from "@lootlog/client/auth-session";
 import { useSession } from "@/hooks/use-session";
 import { t } from "@/i18n/messages";
 
 /** Signing in is optional: it brings the User's theme from the Web app. */
 export function WikiUserMenu() {
-  const { config } = useWikiContext();
+  const { config, authClient } = useWikiContext();
   const { session, isPending } = useSession();
-  const signIn = useDiscordSignIn();
-  const { logout, isPending: isLogoutPending } = useLogout();
+  const signIn = useDiscordSignIn(authClient);
+  const { logout, isPending: isLogoutPending } = useLogout(authClient);
 
   if (isPending) {
     return <Skeleton className="size-8 shrink-0 rounded-full" />;
@@ -40,7 +39,9 @@ export function WikiUserMenu() {
         disabled={signIn.isPending}
         aria-label={t("userMenu.signIn")}
         title={signIn.hasError ? t("userMenu.signInFailed") : undefined}
-        onClick={() => void signIn.signIn()}
+        onClick={() =>
+          void signIn.signIn({ callbackURL: window.location.href })
+        }
       >
         {signIn.isPending ? (
           <Spinner className="size-4" />
