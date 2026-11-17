@@ -17,6 +17,9 @@
     "lint": "oxlint src",
     "typecheck": "bun check"
   },
+  "dependencies": {
+    "@lootlog/domain": "workspace:*"
+  },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "typescript": "catalog:"

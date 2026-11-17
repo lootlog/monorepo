@@ -5,7 +5,7 @@ import { SettingsListError } from "@/components/common/settings-list-error";
 import { RoleSettingsDetailSkeleton } from "./role-settings-detail-skeleton";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 import { RolesForm } from "@/features/guild/settings/roles/components/roles-form";
-import { getColorFromRoleColor } from "@/utils/get-color-from-role";
+import { discordRoleColorHex } from "@lootlog/domain/member-display-role";
 import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { useParams } from "@tanstack/react-router";
@@ -55,7 +55,7 @@ export const RoleSettingsDetailPage = () => {
     );
   }
 
-  const color = getColorFromRoleColor(role.color);
+  const color = discordRoleColorHex(role.color) ?? "FFF";
   const activeCategories = getActivePermissionCategories(role.permissions);
 
   return (

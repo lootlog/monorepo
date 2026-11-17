@@ -1,3 +1,5 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
+
 export type ActivityDay = {
   date: string;
   value: number | null;
@@ -35,7 +37,7 @@ export function activityLevel(
 }
 
 const calendarDateFormatter = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Europe/Warsaw",
+  timeZone: MARGONEM_TIME_ZONE,
   year: "numeric",
   month: "2-digit",
   day: "2-digit",

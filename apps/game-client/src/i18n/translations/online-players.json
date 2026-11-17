@@ -9,14 +9,6 @@
     "professionLabel": "Profesja",
     "allProfessions": "Wszystkie"
   },
-  "professions": {
-    "p": "Paladyn",
-    "w": "Wojownik",
-    "h": "Łowca",
-    "m": "Mag",
-    "b": "Tancerz ostrzy",
-    "t": "Tropiciel"
-  },
   "actions": {
     "hideFilters": "Ukryj filtry",
     "showFilters": "Pokaż filtry",

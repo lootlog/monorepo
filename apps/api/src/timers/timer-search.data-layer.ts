@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/timer.schema";
 import type { TimerNpcSearchQuery } from "#src/contracts/timers/schemas";
-import { TIMER_TYPES } from "./timer-limits.js";
+import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import { containsPattern } from "#src/shared/sql-like";
 import { parseTimerNpc, timerNpcTemplateId } from "./timer-projection.js";
 import { canViewTimer } from "./timer-selection.js";

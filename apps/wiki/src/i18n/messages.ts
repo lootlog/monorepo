@@ -1,5 +1,7 @@
 import type { CatalogControllerGetItemsSort } from "@lootlog/client/catalog";
 import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
+import npcType from "@lootlog/ui/i18n/translations/npc-type.json";
+import professions from "@lootlog/ui/i18n/translations/professions.json";
 
 const messages = {
   meta: {
@@ -680,14 +682,7 @@ const messages = {
     } satisfies Record<CatalogControllerGetItemsSort, string>,
     rarity: "Rzadkość",
     profession: "Profesja",
-    professions: {
-      w: "Wojownik",
-      p: "Paladyn",
-      h: "Łowca",
-      m: "Mag",
-      b: "Tancerz ostrzy",
-      t: "Tropiciel",
-    },
+    professions,
   },
   share: {
     share: "Udostępnij",
@@ -909,17 +904,7 @@ const messages = {
     allMaps: "Wszystkie mapy ({{count}})",
     historyTitle: "Historia",
   },
-  npcTypes: {
-    COMMON: "Zwykły",
-    ELITE: "Elita",
-    ELITE2: "Elita II",
-    ELITE3: "Elita III",
-    HERO: "Heros",
-    EVENT_HERO: "Heros eventowy",
-    COLOSSUS: "Kolos",
-    TITAN: "Tytan",
-    NPC: "NPC",
-  },
+  npcTypes: npcType,
   linkPreview: {
     droppedBy: "Wypada z: {{names}}",
     locations: "Lokacje: {{names}}",

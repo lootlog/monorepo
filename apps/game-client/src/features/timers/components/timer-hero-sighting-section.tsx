@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { formatSightingAge } from "@/features/hero-sightings/format-sighting-age";
+import { formatSeenAgo } from "@/utils/format-seen-ago";
 import { getHeroSightingRefresher } from "@/features/hero-sightings/hero-sighting-rows";
 import { useNow } from "@/hooks/ui/use-now";
 import { TimerHeroSightingIndicator } from "./timer-hero-sighting-indicator";
@@ -37,7 +37,7 @@ export function TimerHeroSightingSection({
         {sighting.mapName}
       </span>
       <span className="ll:text-muted-foreground">
-        {formatSightingAge(tHero, sighting.lastSeenAt, now)}
+        {formatSeenAgo(now - Date.parse(sighting.lastSeenAt), "minute")}
         {unconfirmed ? ` · ${tHero("status.unconfirmed")}` : null}
         {" · "}
         {tHero("detectedBy", { name: sighting.detectedBy.displayName })}

@@ -1,5 +1,5 @@
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { getMemberColorHex } from "@/utils/member-color";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { getSelectedChatGuildId, useChatStore } from "@/store/chat.store";
 
@@ -32,7 +32,7 @@ export function ChatGatheringOrganizerMember({
   );
 
   const member = members?.find((entry) => entry.userId === organizerDiscordId);
-  const color = useMemberColor(member);
+  const color = getMemberColorHex(member);
 
   if (!member) return null;
 

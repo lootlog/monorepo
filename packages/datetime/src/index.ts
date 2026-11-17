@@ -1,3 +1,6 @@
+/** The time zone Margonem runs on; Lootlog counts calendar days in it. */
+export const MARGONEM_TIME_ZONE = "Europe/Warsaw" as const;
+
 export type LocalDate = {
   year: number;
   month: number;

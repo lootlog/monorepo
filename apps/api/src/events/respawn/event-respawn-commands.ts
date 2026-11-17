@@ -25,7 +25,7 @@ import type {
   OpenRespawnWindowRequest,
 } from "#src/contracts/events/schemas";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
-import { getEventHeroNpcId } from "#src/shared/margonem/npc-identity";
+import { getEventHeroNpcId } from "@lootlog/domain/npc-identity";
 
 class EventRespawnCommandError extends TaggedErrorClass<EventRespawnCommandError>()(
   "EventRespawnCommandError",

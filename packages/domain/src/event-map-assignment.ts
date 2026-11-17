@@ -3,13 +3,13 @@ interface AssignmentTimer {
   maxSpawnTime: Date | string;
 }
 
-interface GetAssignmentAvailabilityOptions {
+interface MapAssignmentAvailabilityOptions {
   assignmentTimeoutMinutes: number;
   now?: Date;
   timer?: AssignmentTimer | null;
 }
 
-type AssignmentAvailability =
+export type MapAssignmentAvailability =
   | {
       allowed: true;
       enabledAt: null;
@@ -21,11 +21,16 @@ type AssignmentAvailability =
       reason: "NO_TIMER" | "OVERDUE" | "TOO_EARLY";
     };
 
-export const getAssignmentAvailability = ({
+/**
+ * Whether members may be assigned to an event hero's maps: only within its
+ * respawn window, from `assignmentTimeoutMinutes` before the window opens
+ * until the window is overdue.
+ */
+export const getMapAssignmentAvailability = ({
   assignmentTimeoutMinutes,
   now = new Date(),
   timer,
-}: GetAssignmentAvailabilityOptions): AssignmentAvailability => {
+}: MapAssignmentAvailabilityOptions): MapAssignmentAvailability => {
   if (!timer) {
     return {
       allowed: false,

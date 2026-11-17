@@ -28,7 +28,7 @@ import {
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
-import { TIMER_TYPES } from "#src/timers/timer-limits";
+import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import type {
   AssignEventMapLocationRequest,
   CreateEventHeroRequest,

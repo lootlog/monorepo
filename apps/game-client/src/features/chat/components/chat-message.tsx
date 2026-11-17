@@ -1,4 +1,4 @@
-import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { getMemberColorHex } from "@/utils/member-color";
 import { cn } from "cn";
 import type { FC } from "react";
 import { MessageType } from "@/api/chat.api";
@@ -56,7 +56,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   const { t } = useTranslation("chat");
   const heroName = useGameStore((state) => state.game?.hero.name);
   const gameInterface = useGameStore((state) => state.game?.interface);
-  const memberColor = useMemberColor(member);
+  const memberColor = getMemberColorHex(member);
   const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
   const messageBody = getChatMessageBody(message);
 

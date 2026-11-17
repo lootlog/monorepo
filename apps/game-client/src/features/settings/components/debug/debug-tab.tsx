@@ -34,22 +34,22 @@ const DETECTOR_NPC_ENTRIES = [
   {
     key: "titan",
     eventLabelKey: "settings.debug.events.detectTitan",
-    npcTypeKey: "common:npcTypes.titan",
+    npcTypeKey: "npcType:TITAN",
   },
   {
     key: "hero",
     eventLabelKey: "settings.debug.events.detectHero",
-    npcTypeKey: "common:npcTypes.hero",
+    npcTypeKey: "npcType:HERO",
   },
   {
     key: "colossus",
     eventLabelKey: "settings.debug.events.detectColossus",
-    npcTypeKey: "common:npcTypes.colossus",
+    npcTypeKey: "npcType:COLOSSUS",
   },
   {
     key: "elite2",
     eventLabelKey: "settings.debug.events.detectElite2",
-    npcTypeKey: "common:npcTypes.elite2",
+    npcTypeKey: "npcType:ELITE2",
   },
 ] as const;
 

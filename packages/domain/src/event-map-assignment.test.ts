@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { getAssignmentAvailability } from "./get-assignment-availability";
+import { describe, expect, it } from "bun:test";
+import { getMapAssignmentAvailability } from "./event-map-assignment.js";
 
-describe("getAssignmentAvailability", () => {
+describe("getMapAssignmentAvailability", () => {
   const timer = {
     minSpawnTime: "2026-07-28T13:00:00.000Z",
     maxSpawnTime: "2026-07-28T13:30:00.000Z",
@@ -9,7 +9,7 @@ describe("getAssignmentAvailability", () => {
 
   it("blocks assignment before the configured window opens", () => {
     expect(
-      getAssignmentAvailability({
+      getMapAssignmentAvailability({
         assignmentTimeoutMinutes: 5,
         now: new Date("2026-07-28T12:00:00.000Z"),
         timer,
@@ -23,7 +23,7 @@ describe("getAssignmentAvailability", () => {
 
   it("allows assignment exactly when the configured window opens", () => {
     expect(
-      getAssignmentAvailability({
+      getMapAssignmentAvailability({
         assignmentTimeoutMinutes: 5,
         now: new Date("2026-07-28T12:55:00.000Z"),
         timer,
@@ -37,7 +37,7 @@ describe("getAssignmentAvailability", () => {
 
   it("blocks assignment without a timer", () => {
     expect(
-      getAssignmentAvailability({
+      getMapAssignmentAvailability({
         assignmentTimeoutMinutes: 5,
         now: new Date("2026-07-28T12:55:00.000Z"),
         timer: null,
@@ -51,7 +51,7 @@ describe("getAssignmentAvailability", () => {
 
   it("blocks assignment when the respawn window is overdue", () => {
     expect(
-      getAssignmentAvailability({
+      getMapAssignmentAvailability({
         assignmentTimeoutMinutes: 5,
         now: new Date("2026-07-28T13:30:00.000Z"),
         timer,

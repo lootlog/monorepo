@@ -2,6 +2,7 @@ import type { MargonemCharacter } from "@/api/characters.api";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
+import type { ProfessionShortname } from "@lootlog/domain/profession";
 
 export type OnlinePlayerAccountEntry = {
   discordId: string;
@@ -19,11 +20,9 @@ export const MAX_ONLINE_PLAYER_LEVEL = 500;
 
 export const ALL_PROFESSIONS_VALUE = "all";
 
-export const PROFESSION_OPTIONS = ["p", "w", "h", "m", "b", "t"] as const;
-
 export type ProfessionFilterValue =
   | typeof ALL_PROFESSIONS_VALUE
-  | (typeof PROFESSION_OPTIONS)[number];
+  | ProfessionShortname;
 
 export type OnlinePlayersFiltersValue = {
   minLvl: number;

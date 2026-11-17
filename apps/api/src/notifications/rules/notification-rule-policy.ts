@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import type {
   CreateNotificationRuleRequest,
   UpdateNotificationRuleRequest,
@@ -16,7 +17,6 @@ import {
   type NotificationScheduleStrategy as NotificationScheduleStrategyValue,
   type NotificationTriggerType as NotificationTriggerTypeValue,
 } from "@lootlog/schema/notifications";
-import { GUILD_NOTIFICATION_TIMEZONE } from "#src/notifications/rules/schedule-timezone";
 import {
   calculateFirstOccurrenceInTimeZone,
   isRecurringScheduleInterval,
@@ -181,9 +181,7 @@ const scheduleTimezone = (
 
   return (
     existing ??
-    (ownerType === NotificationOwnerType.GUILD
-      ? GUILD_NOTIFICATION_TIMEZONE
-      : null)
+    (ownerType === NotificationOwnerType.GUILD ? MARGONEM_TIME_ZONE : null)
   );
 };
 
