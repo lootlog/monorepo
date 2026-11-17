@@ -33,7 +33,7 @@ import {
 } from "#src/database/drizzle/user.schema";
 import { userPinnedEventTable } from "#src/database/drizzle/event.schema";
 import { userPinnedReservationSpotTable } from "#src/database/drizzle/reservation.schema";
-import { NotificationOwnerType } from "#src/notifications/notification-enums";
+import { NotificationOwnerType } from "@lootlog/schema/notifications";
 import {
   getGuildMemberForbiddenCacheKey,
   getGuildMemberNotFoundCacheKey,

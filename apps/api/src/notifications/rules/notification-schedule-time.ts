@@ -1,7 +1,7 @@
 import {
   NotificationScheduleIntervalType,
   type NotificationScheduleIntervalType as NotificationScheduleIntervalTypeValue,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 import {
   type LocalDate,
   addDays,

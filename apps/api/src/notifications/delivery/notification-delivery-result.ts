@@ -1,5 +1,4 @@
 import { Effect } from "effect";
-import type { DiscordNotificationDeliveryResultEvent } from "@lootlog/schema/notifications";
 import type {
   NotificationDeliveryUpdate,
   NotificationStoredJob,
@@ -7,9 +6,10 @@ import type {
 import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
 import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import {
+  type DiscordNotificationDeliveryResultEvent,
   NotificationJobStatus,
   NotificationOwnerType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 type NotificationDeliveryJob = NotificationStoredJob;
 

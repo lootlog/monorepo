@@ -15,7 +15,7 @@ import {
   type NotificationScheduleIntervalType as NotificationScheduleIntervalTypeValue,
   type NotificationScheduleStrategy as NotificationScheduleStrategyValue,
   type NotificationTriggerType as NotificationTriggerTypeValue,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 import { GUILD_NOTIFICATION_TIMEZONE } from "#src/notifications/rules/schedule-timezone";
 import {
   calculateFirstOccurrenceInTimeZone,

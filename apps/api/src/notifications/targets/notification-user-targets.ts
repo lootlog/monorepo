@@ -41,7 +41,7 @@ import {
   NotificationOwnerType,
   NotificationProvider,
   NotificationTargetType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 const TEST_LIMIT = 5;
 

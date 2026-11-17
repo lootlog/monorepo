@@ -19,7 +19,7 @@ import {
   NotificationOwnerType,
   NotificationProvider,
   NotificationTargetType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 import {
   InvalidRequestError,
