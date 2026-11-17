@@ -1,4 +1,4 @@
-import { BunRedis } from "@effect/platform-bun";
+import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import { RedisClient } from "bun";
 import { createBunRedisClient, Queue, RedisConnection, Worker } from "bullmq";
 import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
@@ -126,7 +126,7 @@ export class BattlelogApplication extends Context.Service<
     Layer.provide(
       Layer.unwrap(
         Effect.map(BattlelogConfig, (config) =>
-          BunRedis.layer({ url: redisUrl(config) }),
+          reconnectingBunRedisLayer({ url: redisUrl(config) }),
         ),
       ).pipe(Layer.provide(BattlelogConfig.layer)),
     ),
