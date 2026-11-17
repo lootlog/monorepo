@@ -11,7 +11,7 @@ import { migrateApiDatabase } from "../src/database/drizzle/migrate.js";
 
 export default async function setup() {
   const postgres = await new PostgreSqlContainer(
-    "timescale/timescaledb:2.24.0-pg17",
+    "timescale/timescaledb:2.32.0-pg18",
   )
     .withDatabase("lootlog_e2e")
     .withUsername("lootlog")
@@ -23,7 +23,7 @@ export default async function setup() {
 
   try {
     redis = await new GenericContainer(
-      "docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1",
+      "docker.dragonflydb.io/dragonflydb/dragonfly:v2.1.0",
     )
       .withCommand([
         "--requirepass=test",
