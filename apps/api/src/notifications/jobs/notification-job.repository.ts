@@ -14,7 +14,7 @@ import type { JsonValue } from "#src/database/json";
 import type {
   NotificationJobStatus,
   NotificationOwnerType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 export type NotificationStoredJob = Omit<
   typeof notificationJobTable.$inferSelect,

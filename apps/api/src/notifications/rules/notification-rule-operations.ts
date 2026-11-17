@@ -32,7 +32,7 @@ import {
   NotificationJobKind,
   NotificationOwnerType,
   type NotificationOwnerType as NotificationOwnerTypeValue,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 import {
   createNotificationRuleValues,
   updateNotificationRuleValues,

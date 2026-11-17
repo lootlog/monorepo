@@ -6,7 +6,7 @@ import {
   NotificationJobStatus,
   NotificationOwnerType,
   NotificationScheduleIntervalType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 import { GUILD_NOTIFICATION_TIMEZONE } from "#src/notifications/rules/schedule-timezone";
 import { calculateNextOccurrenceInTimeZone } from "#src/notifications/rules/notification-schedule-time";
 import type { JsonValue } from "#src/database/json";

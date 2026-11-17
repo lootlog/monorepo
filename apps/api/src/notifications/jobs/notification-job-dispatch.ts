@@ -1,5 +1,4 @@
 import { isObjectRecord } from "@lootlog/schema/records";
-import type { DiscordNotificationSendCommand } from "@lootlog/schema/notifications";
 import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Effect, Result, Schema } from "effect";
@@ -9,10 +8,11 @@ import type {
 } from "#src/notifications/jobs/notification-job.repository";
 import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import {
+  type DiscordNotificationSendCommand,
   NotificationJobStatus,
   NotificationOwnerType,
   NotificationProvider,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 import { isJsonObject, type JsonValue } from "#src/database/json";
 
 export type NotificationDispatchJob = NotificationJobWithRelations;

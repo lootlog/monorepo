@@ -1,49 +1,77 @@
 import { Schema } from "effect";
 
-export enum NotificationOwnerType {
-  GUILD = "GUILD",
-  USER = "USER",
-}
+export const NotificationOwnerType = { GUILD: "GUILD", USER: "USER" } as const;
 
-export enum NotificationProvider {
-  DISCORD = "DISCORD",
-}
+export type NotificationOwnerType =
+  (typeof NotificationOwnerType)[keyof typeof NotificationOwnerType];
 
-export enum NotificationTargetType {
-  CHANNEL = "CHANNEL",
-  DM = "DM",
-}
+export const NotificationProvider = { DISCORD: "DISCORD" } as const;
 
-export enum NotificationTriggerType {
-  TIMER_BEFORE_SPAWN = "TIMER_BEFORE_SPAWN",
-  NPC_SPAWNED = "NPC_SPAWNED",
-  WATCHED_ITEM_DROPPED = "WATCHED_ITEM_DROPPED",
-  SCHEDULED_MESSAGE = "SCHEDULED_MESSAGE",
-  HERO_SIGHTED = "HERO_SIGHTED",
-}
+export type NotificationProvider =
+  (typeof NotificationProvider)[keyof typeof NotificationProvider];
 
-export enum NotificationScheduleAnchor {
-  MIN_SPAWN = "MIN_SPAWN",
-  /** @public Persisted database enum value. */
-  MAX_SPAWN = "MAX_SPAWN",
-}
+export const NotificationTargetType = { CHANNEL: "CHANNEL", DM: "DM" } as const;
 
-export enum NotificationJobKind {
-  /** @public Persisted database enum value. */
-  SCHEDULED = "SCHEDULED",
-  /** @public Persisted database enum value. */
-  INSTANT = "INSTANT",
-  TEST = "TEST",
-}
+export type NotificationTargetType =
+  (typeof NotificationTargetType)[keyof typeof NotificationTargetType];
 
-enum NotificationJobStatus {
-  PENDING = "PENDING",
-  PROCESSING = "PROCESSING",
-  SENT = "SENT",
-  FAILED = "FAILED",
-  BLOCKED = "BLOCKED",
-  CANCELED = "CANCELED",
-}
+export const NotificationTriggerType = {
+  TIMER_BEFORE_SPAWN: "TIMER_BEFORE_SPAWN",
+  NPC_SPAWNED: "NPC_SPAWNED",
+  WATCHED_ITEM_DROPPED: "WATCHED_ITEM_DROPPED",
+  SCHEDULED_MESSAGE: "SCHEDULED_MESSAGE",
+  HERO_SIGHTED: "HERO_SIGHTED",
+} as const;
+
+export type NotificationTriggerType =
+  (typeof NotificationTriggerType)[keyof typeof NotificationTriggerType];
+
+export const NotificationScheduleStrategy = {
+  SPAWN_WINDOW_RELATIVE: "SPAWN_WINDOW_RELATIVE",
+  FIXED_DATETIME: "FIXED_DATETIME",
+} as const;
+
+export type NotificationScheduleStrategy =
+  (typeof NotificationScheduleStrategy)[keyof typeof NotificationScheduleStrategy];
+
+export const NotificationScheduleAnchor = {
+  MIN_SPAWN: "MIN_SPAWN",
+  MAX_SPAWN: "MAX_SPAWN",
+} as const;
+
+export type NotificationScheduleAnchor =
+  (typeof NotificationScheduleAnchor)[keyof typeof NotificationScheduleAnchor];
+
+export const NotificationScheduleIntervalType = {
+  ONCE: "ONCE",
+  HOURLY: "HOURLY",
+  DAILY: "DAILY",
+  WEEKLY: "WEEKLY",
+} as const;
+
+export type NotificationScheduleIntervalType =
+  (typeof NotificationScheduleIntervalType)[keyof typeof NotificationScheduleIntervalType];
+
+export const NotificationJobKind = {
+  SCHEDULED: "SCHEDULED",
+  INSTANT: "INSTANT",
+  TEST: "TEST",
+} as const;
+
+export type NotificationJobKind =
+  (typeof NotificationJobKind)[keyof typeof NotificationJobKind];
+
+export const NotificationJobStatus = {
+  PENDING: "PENDING",
+  PROCESSING: "PROCESSING",
+  SENT: "SENT",
+  FAILED: "FAILED",
+  BLOCKED: "BLOCKED",
+  CANCELED: "CANCELED",
+} as const;
+
+export type NotificationJobStatus =
+  (typeof NotificationJobStatus)[keyof typeof NotificationJobStatus];
 
 export enum DiscordGuildSyncStatus {
   SYNCED = "SYNCED",
@@ -153,19 +181,17 @@ export type DiscordNotificationAllowedMentions = {
   repliedUser?: boolean;
 };
 
-export const NotificationOwnerTypeSchema = Schema.Literals([
-  `${NotificationOwnerType.GUILD}`,
-  `${NotificationOwnerType.USER}`,
-]);
-
-export const NotificationProviderSchema = Schema.Literal(
-  `${NotificationProvider.DISCORD}`,
+export const NotificationOwnerTypeSchema = Schema.Literals(
+  Object.values(NotificationOwnerType),
 );
 
-export const NotificationTargetTypeSchema = Schema.Literals([
-  `${NotificationTargetType.CHANNEL}`,
-  `${NotificationTargetType.DM}`,
-]);
+export const NotificationProviderSchema = Schema.Literal(
+  NotificationProvider.DISCORD,
+);
+
+export const NotificationTargetTypeSchema = Schema.Literals(
+  Object.values(NotificationTargetType),
+);
 
 export const DiscordNotificationSendCommandSchema = Schema.Struct({
   notificationJobId: Schema.String,
@@ -209,22 +235,13 @@ export interface DiscordNotificationDeliveryResultEvent {
   deliveredAt: string;
 }
 
-export const NotificationTriggerTypeSchema = Schema.Literals([
-  `${NotificationTriggerType.TIMER_BEFORE_SPAWN}`,
-  `${NotificationTriggerType.NPC_SPAWNED}`,
-  `${NotificationTriggerType.WATCHED_ITEM_DROPPED}`,
-  `${NotificationTriggerType.SCHEDULED_MESSAGE}`,
-  `${NotificationTriggerType.HERO_SIGHTED}`,
-]);
+export const NotificationTriggerTypeSchema = Schema.Literals(
+  Object.values(NotificationTriggerType),
+);
 
-export const NotificationJobStatusSchema = Schema.Literals([
-  `${NotificationJobStatus.PENDING}`,
-  `${NotificationJobStatus.PROCESSING}`,
-  `${NotificationJobStatus.SENT}`,
-  `${NotificationJobStatus.FAILED}`,
-  `${NotificationJobStatus.BLOCKED}`,
-  `${NotificationJobStatus.CANCELED}`,
-]);
+export const NotificationJobStatusSchema = Schema.Literals(
+  Object.values(NotificationJobStatus),
+);
 
 export const DiscordGuildSyncStatusSchema = Schema.Literals([
   DiscordGuildSyncStatus.SYNCED,
