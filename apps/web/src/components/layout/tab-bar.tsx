@@ -3,8 +3,8 @@ import * as m from "framer-motion/m";
 import { Search, type LucideIcon } from "lucide-react";
 import { cloneElement, type ReactElement, type ReactNode } from "react";
 import { cn } from "cn";
-import { useScrollCollapseProgress } from "../hooks/use-scroll-collapse-progress";
-import { GLASS_SURFACE_CLASS } from "../lib/glass-surface";
+import { useScrollCollapseProgress } from "@lootlog/ui/hooks/use-scroll-collapse-progress";
+import { GLASS_SURFACE_CLASS } from "@lootlog/ui/lib/glass-surface";
 
 const TAB_BAR_OFFSET_PROPERTY = "--tab-bar-offset";
 
@@ -54,7 +54,7 @@ type TabLinkProps = {
   children?: ReactNode;
 };
 
-export type TabBarTab = {
+type TabBarTab = {
   id: string;
   /** The section's full name, for the collapsed pill. */
   label: string;
@@ -68,7 +68,7 @@ export type TabBarTab = {
   render: ReactElement<TabLinkProps>;
 };
 
-export type TabBarMore = {
+type TabBarMore = {
   /** "More", which stays the tab's name so it reads as the way in. */
   shortLabel: string;
   icon: LucideIcon;

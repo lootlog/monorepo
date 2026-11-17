@@ -3,7 +3,7 @@ import { PlayerTile } from "@/components/battle/player-tile";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { BattleDamageTags } from "@/features/user/battle-panel/components/battle-damage-tags";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
-import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
+import { EmergencyExitIcon } from "@/components/battle/emergency-exit-icon";
 import { cn } from "cn";
 import { Flag, Skull } from "lucide-react";
 import type { FC } from "react";

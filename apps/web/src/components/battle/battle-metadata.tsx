@@ -16,7 +16,7 @@ import {
   Unlock,
   Users,
 } from "lucide-react";
-import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
+import { EmergencyExitIcon } from "@/components/battle/emergency-exit-icon";
 import type { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { formatSeconds } from "@/utils/date/format-seconds";

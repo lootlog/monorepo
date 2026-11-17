@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactElement, ReactNode } from "react";
 import { cn } from "cn";
-import { Badge } from "./badge";
-import { Button } from "./button";
+import { Badge } from "@lootlog/ui/components/badge";
+import { Button } from "@lootlog/ui/components/button";
 
 export type SidebarNavBadge = {
   content: ReactNode;
