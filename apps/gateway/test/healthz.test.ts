@@ -9,7 +9,7 @@ import {
   Schema,
   Redacted,
 } from "effect";
-import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
+import { observabilityLayer } from "@lootlog/instrumentation/observability";
 import { Permission } from "@lootlog/schema/permissions";
 import { makeGatewayAuth } from "../src/auth/auth-service.js";
 import type { UserGuildData } from "../src/guilds/guild.js";
@@ -121,7 +121,7 @@ describe("gateway HTTP boundary", () => {
     });
 
     const runtime = ManagedRuntime.make(
-      makeObservabilityLayer(
+      observabilityLayer(
         Effect.succeed({
           serviceName: "gateway",
           serviceNamespace: "test",

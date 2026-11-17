@@ -1,20 +1,12 @@
-import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
+import { runService } from "@lootlog/instrumentation/service";
 import { RabbitMessaging } from "@lootlog/messaging";
-import { BunRuntime } from "@effect/platform-bun";
-import { Layer } from "effect";
+import { Effect, Layer } from "effect";
 import { FetchHttpClient } from "effect/http";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ActivityApplication } from "./activity-application.js";
 
-const ObservabilityLive = makeObservabilityLayer(ActivityConfig).pipe(
-  Layer.provide(ActivityConfig.layer),
-);
-
-BunRuntime.runMain(
-  Layer.launch(
-    ActivityApplication.pipe(
-      Layer.provide(FetchHttpClient.layer),
-      Layer.provide(ObservabilityLive),
-    ),
-  ).pipe(RabbitMessaging.supervised),
-);
+runService({
+  config: ActivityConfig.pipe(Effect.provide(ActivityConfig.layer)),
+  application: ActivityApplication.pipe(Layer.provide(FetchHttpClient.layer)),
+  supervise: RabbitMessaging.supervised,
+});

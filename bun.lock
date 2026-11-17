@@ -565,6 +565,7 @@
         "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
         "@lootlog/schema": "workspace:*",
+        "drizzle-orm": "catalog:",
         "effect": "catalog:",
         "pg": "^8.23.1",
       },
@@ -574,7 +575,6 @@
         "@types/bun": "catalog:",
         "@types/node": "catalog:",
         "@types/pg": "^8.23.1",
-        "drizzle-orm": "catalog:",
         "testcontainers": "^12.2.1",
         "typescript": "catalog:",
       },
@@ -619,6 +619,8 @@
       "name": "@lootlog/instrumentation",
       "version": "0.0.0",
       "dependencies": {
+        "@effect/platform-bun": "catalog:",
+        "@lootlog/schema": "workspace:*",
         "effect": "catalog:",
       },
       "devDependencies": {
