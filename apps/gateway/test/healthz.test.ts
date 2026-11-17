@@ -1,3 +1,4 @@
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { afterAll, describe, expect, test } from "bun:test";
 import { httpServerRequestCount } from "@lootlog/instrumentation";
 import {
@@ -83,7 +84,7 @@ const presence: GatewayHttpDependencies["presence"] = {
 };
 
 const application = {
-  config: { websocketPath: "/ws", environment: "test" },
+  config: { websocketPath: "/ws", environment: RuntimeEnvironment.DEV },
   runPromise: Effect.runPromise,
   auth,
   hub,

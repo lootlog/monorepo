@@ -1,10 +1,10 @@
+import {
+  baseServiceConfig,
+  type BaseServiceConfiguration,
+} from "@lootlog/instrumentation/service-config";
 import { Config, Context, Effect, Layer, Redacted } from "effect";
 
-export interface BotConfigValue {
-  readonly environment: string;
-  readonly port: number;
-  readonly serviceName: string;
-  readonly serviceNamespace: string;
+export interface BotConfigValue extends BaseServiceConfiguration {
   readonly discordBotToken: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly apiServiceUrl: string;
@@ -27,18 +27,10 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
   static readonly layer = Layer.effect(
     BotConfig,
     Effect.gen(function* () {
-      const environment = yield* Config.String("ENV").pipe(
-        Config.withDefault("local"),
-      );
+      const base = yield* baseServiceConfig("discord-bot");
+      const { environment } = base;
 
       const value = yield* Config.all({
-        port: Config.Int("PORT"),
-        serviceName: Config.String("SERVICE_NAME").pipe(
-          Config.withDefault("discord-bot"),
-        ),
-        serviceNamespace: Config.String("SERVICE_NAMESPACE").pipe(
-          Config.withDefault("local"),
-        ),
         discordBotToken: Config.Redacted("DISCORD_BOT_TOKEN"),
         rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
         // Defaults are the in-cluster Service names, which slash commands
@@ -67,7 +59,7 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
         ),
       });
 
-      return BotConfig.of({ environment, ...value });
+      return BotConfig.of({ ...base, ...value });
     }),
   );
 }
