@@ -1,10 +1,8 @@
-import {
+import type {
   BUILT_IN_THEME_IDS,
-  type CustomThemeFontId,
-  type CustomThemeRadius,
+  CustomThemeFontId,
+  CustomThemeRadius,
 } from "@lootlog/schema/custom-theme";
-
-export const THEME_IDS = BUILT_IN_THEME_IDS;
 
 export const THEME_CLASS_IDS = [
   "default",
@@ -34,7 +32,7 @@ export const CAT_THEME_VARIANTS = [
   "cat-blue",
 ] as const;
 
-export type ThemeId = (typeof THEME_IDS)[number];
+export type ThemeId = (typeof BUILT_IN_THEME_IDS)[number];
 
 export type ResolvedThemeId = (typeof THEME_CLASS_IDS)[number];
 

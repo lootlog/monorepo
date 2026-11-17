@@ -87,7 +87,8 @@ export const GuildSidebarHeader = ({
     },
   });
 
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
+  const { family } = useThemeMeta();
+  const isRukiaTheme = family === "rukia";
   const currentTimestamp = useMinuteTimestamp();
 
   const { canTriggerRefresh, canTriggerRefreshText } = getPermissionRefreshInfo(
@@ -126,7 +127,7 @@ export const GuildSidebarHeader = ({
           <span
             className={cn(
               "truncate text-sm",
-              (isRukiaTheme || isRiasTheme) && "font-semibold",
+              (isRukiaTheme || family === "rias") && "font-semibold",
               // A halo in the sidebar color keeps the name readable over the
               // banner in every theme; Rukia's gradient text has its own glow.
               !isRukiaTheme &&
