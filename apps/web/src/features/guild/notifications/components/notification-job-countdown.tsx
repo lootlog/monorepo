@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
+import { formatDuration } from "@/utils/date/format-duration";
 
 type NotificationJobCountdownProps = {
   scheduledFor: string;
@@ -11,33 +12,9 @@ const getRemainingTimeLabel = (scheduledFor: string) => {
     (new Date(scheduledFor).getTime() - Date.now()) / 1000,
   );
 
-  if (remainingSeconds <= 0) {
-    return null;
-  }
-
-  if (remainingSeconds < 60 * 60) {
-    const minutes = Math.floor(remainingSeconds / 60);
-    const seconds = remainingSeconds % 60;
-
-    return `${minutes.toString().padStart(2, "0")}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
-  }
-
-  if (remainingSeconds < 60 * 60 * 24) {
-    const hours = Math.floor(remainingSeconds / (60 * 60));
-    const minutes = Math.floor((remainingSeconds % (60 * 60)) / 60);
-    const seconds = remainingSeconds % 60;
-
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-  }
-
-  const days = Math.floor(remainingSeconds / (60 * 60 * 24));
-  const hours = Math.floor((remainingSeconds % (60 * 60 * 24)) / (60 * 60));
-
-  return `${days}d ${hours}h`;
+  return remainingSeconds > 0
+    ? formatDuration(remainingSeconds, "countdown")
+    : null;
 };
 
 export const NotificationJobCountdown = ({

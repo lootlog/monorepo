@@ -12,12 +12,12 @@ import { CalendarDays, Hand, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { HeroAvatar } from "../shared/hero-avatar";
 import type { KillDetail } from "../../hooks/queries/use-kill-detail";
-import { formatDurationHuman } from "../../utils/format-duration";
 import {
   DATE_TIME_WITH_SECONDS_FORMAT,
   timestampToDate,
 } from "@/utils/date/parse-timestamp-to-date";
 import { KillRespawnGauge } from "./kill-respawn-gauge";
+import { formatDuration } from "@/utils/date/format-duration";
 
 /**
  * Where the kill landed in its respawn window. Stored durations win; older
@@ -68,12 +68,12 @@ export const KillDetailSummary = ({
   const { t } = useTranslation();
 
   const timing = getKillRespawnTiming(kill);
-  const respawnText = formatDurationHuman(timing.respawnSeconds);
+  const respawnText = formatDuration(timing.respawnSeconds, "human");
 
   const comparisonText =
     timing.overdueSeconds !== null
       ? t("events.killDetail.overdueBy", {
-          duration: formatDurationHuman(timing.overdueSeconds),
+          duration: formatDuration(timing.overdueSeconds, "human"),
         })
       : timing.windowPercentage !== null
         ? t("events.killDetail.windowShare", {
@@ -193,7 +193,7 @@ export const KillDetailSummary = ({
               </p>
               <p>
                 {t("events.killDetail.respawnWindowTime")}:{" "}
-                {formatDurationHuman(timing.windowSeconds)}
+                {formatDuration(timing.windowSeconds, "human")}
               </p>
             </TooltipContent>
           </Tooltip>

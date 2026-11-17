@@ -1,6 +1,6 @@
 import { MoreFiltersPopover } from "@/components/filters/more-filters-popover";
 import { PeriodSelector } from "@/components/filters/period-selector";
-import type { Period } from "@/features/user/battle-panel/battle-panel-search";
+import { Period } from "@lootlog/schema/http-scalars";
 import { useId } from "react";
 
 export type StatisticsFiltersProps = {
@@ -31,6 +31,7 @@ export const StatisticsFilterToolbar = ({
   return (
     <>
       <PeriodSelector
+        options={Period.literals}
         value={period}
         onValueChange={onPeriodChange}
         width="w-[170px]"

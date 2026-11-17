@@ -1,5 +1,5 @@
 import type { WrappedFactSlide } from "./build-wrapped-slides";
-import { formatDurationHuman } from "../../../utils/format-duration";
+import { formatDuration } from "@/utils/date/format-duration";
 
 const formatMetric = (value: number): string => {
   return new Intl.NumberFormat("pl-PL", {
@@ -17,7 +17,7 @@ const formatHourLabel = (hour: number | null): string => {
 
 export const getFactValue = (fact: WrappedFactSlide): string => {
   if (fact.id === "tracked-time" || fact.id === "longest-duty") {
-    return formatDurationHuman(fact.value);
+    return formatDuration(fact.value, "human");
   }
 
   if (fact.id === "busiest-hour") {

@@ -1,11 +1,11 @@
 import type { TFunction } from "i18next";
 import { cn } from "cn";
-import { formatDurationHuman } from "../../utils/format-duration";
 import {
   COVERAGE_SEGMENT_TEXT_CLASS_NAMES,
   getMapCoverageColorClassName,
 } from "../../utils/get-map-coverage-color-class-name";
 import type { KillMapTimelineDiagnostics } from "../../utils/kill-map-timeline-data";
+import { formatDuration } from "@/utils/date/format-duration";
 
 interface KillMapCoverageDiagnosticsProps {
   diagnostics: KillMapTimelineDiagnostics;
@@ -19,7 +19,7 @@ export const KillMapCoverageDiagnostics = ({
   const metrics = [
     {
       label: t("events.killDetail.mapCoverage.covered"),
-      duration: formatDurationHuman(diagnostics.coveredSeconds),
+      duration: formatDuration(diagnostics.coveredSeconds, "human"),
       detail: `${diagnostics.coveragePercent}%`,
       colorClassName: COVERAGE_SEGMENT_TEXT_CLASS_NAMES.COVERED,
       detailColorClassName: getMapCoverageColorClassName(
@@ -28,7 +28,7 @@ export const KillMapCoverageDiagnostics = ({
     },
     {
       label: t("events.killDetail.mapCoverage.uncovered"),
-      duration: formatDurationHuman(diagnostics.uncoveredSeconds),
+      duration: formatDuration(diagnostics.uncoveredSeconds, "human"),
       detail: t("events.killDetail.mapCoverage.gapCount", {
         count: diagnostics.uncoveredCount,
       }),
@@ -37,7 +37,7 @@ export const KillMapCoverageDiagnostics = ({
     },
     {
       label: t("events.killDetail.mapCoverage.unassigned"),
-      duration: formatDurationHuman(diagnostics.unassignedSeconds),
+      duration: formatDuration(diagnostics.unassignedSeconds, "human"),
       detail: t("events.killDetail.mapCoverage.gapCount", {
         count: diagnostics.unassignedCount,
       }),

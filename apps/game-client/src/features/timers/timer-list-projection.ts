@@ -1,5 +1,7 @@
 import {
+  getTimerIdentityKey,
   getTimerSortTimeLeft,
+  isTimerListed,
   type TimerTimeLeft,
 } from "@lootlog/domain/timers";
 import type { UserTimerSettings } from "@lootlog/schema/timer-settings";
@@ -121,6 +123,7 @@ const calculateTimerTimes = (
 
 const filterExpiredTimers = (
   timers: TimedTimer[],
+  epoch: number,
   removeTimerAfterMs: number,
   alwaysVisibleExpiredTimers: Record<string, string[]>,
 ): TimedTimer[] => {
@@ -140,7 +143,7 @@ const filterExpiredTimers = (
       return true;
     }
 
-    return timer.maxTimeLeft > -removeTimerAfterMs;
+    return isTimerListed(timer, removeTimerAfterMs, epoch, getTimerEpoch);
   });
 };
 
@@ -289,10 +292,7 @@ const getDeduplicatedTimers = (timers: Timer[]) => {
   const timersByCompositeKey = new Map<string, Timer>();
 
   for (const timer of timers) {
-    timersByCompositeKey.set(
-      `${timer.guildId}_${timer.world}_${timer.timerKey}`,
-      timer,
-    );
+    timersByCompositeKey.set(getTimerIdentityKey(timer), timer);
   }
 
   return Array.from(timersByCompositeKey.values());
@@ -319,6 +319,7 @@ export const projectTimerList = ({
 }: ProjectTimerListInput) => {
   const activeTimers = filterExpiredTimers(
     calculateTimerTimes(timers, epoch),
+    epoch,
     preferences.removeTimerAfterMs,
     preferences.alwaysVisibleExpiredTimers,
   );

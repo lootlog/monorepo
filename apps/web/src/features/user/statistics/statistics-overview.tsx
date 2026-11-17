@@ -11,7 +11,7 @@ import {
   formatStatisticsWeekdayDate,
 } from "@/components/common/kill-analytics/format-statistics-date";
 import { NpcTile } from "@/components/tiles/npc-tile";
-import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
+import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
 import { useNavigate } from "@tanstack/react-router";
 import type { StatisticsTabProps } from "./statistics-content";
 import { toNpcType } from "./statistics-search";

@@ -4,7 +4,7 @@ import {
   requiredWithFallback,
 } from "@lootlog/schema/stored-value";
 import { CoercedFinite } from "@/lib/lenient-schema";
-import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
+import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
 
 export const STATISTICS_TABS = [
   "overview",

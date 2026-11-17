@@ -1,5 +1,8 @@
 import { PeriodSelector } from "@/components/filters/period-selector";
-import type { KillStatsPeriod } from "@/features/kills/kill-stats-period";
+import {
+  KILL_STATS_PERIODS,
+  type KillStatsPeriod,
+} from "@/features/kills/kill-stats-period";
 
 type KillStatsPeriodSelectProps = {
   value: KillStatsPeriod;
@@ -18,12 +21,9 @@ export const KillStatsPeriodSelect: React.FC<KillStatsPeriodSelectProps> = ({
 }) => {
   return (
     <PeriodSelector
+      options={KILL_STATS_PERIODS}
       value={value}
-      onValueChange={(nextValue) => {
-        if (nextValue !== "90d" && nextValue !== "180d")
-          onValueChange(nextValue);
-      }}
-      excludePeriods={["90d", "180d"]}
+      onValueChange={onValueChange}
       allLabel={allLabel}
       width={className ?? "w-[140px]"}
       className={triggerClassName}

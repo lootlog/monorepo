@@ -34,7 +34,7 @@ import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-
 import { createKillsColumns } from "./components/kills-columns";
 import { KillsMobileList } from "./components/kills-mobile-list";
 import { KillsMobileCardSkeleton } from "./components/kills-mobile-card-skeleton";
-import { NPC_TYPES, type NpcType } from "@/features/user/kills/npc-types";
+import { KILLED_NPC_TYPES, type KilledNpcType } from "@/constants/npc";
 import {
   type KillsControllerGetUserNpcKillsParams,
   useKillsControllerGetUserNpcKills,
@@ -51,7 +51,7 @@ import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 const killsSearchParsers = {
   world: parseAsString,
-  npcType: parseAsArrayOf(parseAsStringLiteral(NPC_TYPES)),
+  npcType: parseAsArrayOf(parseAsStringLiteral(KILLED_NPC_TYPES)),
   search: parseAsString.withDefault(""),
   minLvl: parseAsString.withDefault(""),
   maxLvl: parseAsString.withDefault(""),
@@ -137,7 +137,7 @@ export const KillsPage: React.FC = () => {
     setQuery({ world: world ?? null });
   };
 
-  const handleNpcTypeChange = (npcTypes: NpcType[] | undefined) => {
+  const handleNpcTypeChange = (npcTypes: KilledNpcType[] | undefined) => {
     setQuery({ npcType: npcTypes ?? null });
   };
 
