@@ -26,7 +26,7 @@ import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations"
 import { makeLootAllocationPersistence } from "#src/loots/allocation/loot-allocation-persistence";
 import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { buildLootStatsQueries } from "#src/loots/query/loot-stats-query";
-import { makeUserFeed } from "#src/feed/user-feed";
+import { makeUserFeed } from "#src/users/user-feed";
 import { createOrganizationLootRecordFixture } from "../../../test/loot-fixtures.js";
 
 describe("filtered loot reads", () => {

@@ -32,7 +32,7 @@ import {
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "#src/shared/cache";
 import { MembersData } from "#src/members/members-data";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
 const CachedGuild = createSelectSchema(guildTable, {

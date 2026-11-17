@@ -33,7 +33,7 @@ import {
 } from "#src/contracts/docs/schemas";
 
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 const docsEndpointIdentifiers = [
   "DocsControllerGetDocuments",

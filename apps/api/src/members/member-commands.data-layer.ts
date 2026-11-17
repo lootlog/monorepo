@@ -35,7 +35,7 @@ import {
   ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import { ReauthenticationRequired } from "#src/contracts/api-shared";
 import { ErrorKey as GuildErrorKey } from "#src/guilds/error-key";
 import {
   MembersData,

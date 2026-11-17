@@ -16,7 +16,7 @@ import {
   userPersonalCharacterAuraGrantTable,
 } from "#src/database/drizzle/user.schema";
 import type { CharacterAurasResponse } from "#src/contracts/character-auras/schemas";
-import { currentMargonemAccountPlayers } from "#src/margonem-accounts/margonem-accounts";
+import { currentMargonemAccountPlayers } from "#src/users/margonem-accounts";
 import {
   CharacterAuraAccessDenied,
   type CharacterAuraCharacter,

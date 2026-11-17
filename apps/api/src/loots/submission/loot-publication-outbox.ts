@@ -1,4 +1,4 @@
-import { readPublishedFeedEntry } from "#src/feed/user-feed";
+import { readPublishedFeedEntry } from "#src/users/user-feed";
 import { and, asc, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 import { Clock, Effect, Metric, Schema } from "effect";
 import { GuildLootCreatedEventV2Schema } from "@lootlog/schema/loot-events";

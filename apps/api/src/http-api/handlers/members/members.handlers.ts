@@ -27,7 +27,7 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "../../contracts/shared.js";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import {
   MemberReferencesResponse,
   MemberSummariesResponse,

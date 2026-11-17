@@ -64,7 +64,7 @@ import type {
   LootDrawsResponse,
   VoidLootDrawRequest,
 } from "#src/contracts/loots/schemas";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 type Guild = typeof guildTable.$inferSelect;
 

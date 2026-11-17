@@ -12,7 +12,7 @@ import { Queue } from "bullmq";
 import { Context, Effect, Layer } from "effect";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
-import { makeAmqpAdapter } from "#src/runtime/infrastructure/amqp-publisher";
+import { makeAmqpAdapter } from "#src/runtime/infrastructure/amqp-adapter";
 import { RESPAWN_WINDOW_QUEUE } from "#src/events/respawn/respawn-queue.constant";
 import { makeEventAccess } from "#src/events/event-access";
 import { makeEventCatalogMutations } from "#src/events/catalog/event-catalog-mutations";

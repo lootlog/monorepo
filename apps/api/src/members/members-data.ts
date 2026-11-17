@@ -2,7 +2,7 @@ import type { ApiKeyAccess } from "@lootlog/schema/api-key-access";
 import type { MemberWithRoles, StoredMemberWithRoles } from "./member.types.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export type MembersIdentity = {
   readonly userId: string;

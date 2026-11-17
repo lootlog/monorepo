@@ -1,5 +1,5 @@
 import type { BoundaryDecoder } from "#src/shared/schema/json";
-import type { makeUserFeed } from "#src/feed/user-feed";
+import type { makeUserFeed } from "#src/users/user-feed";
 import { Effect, Schema } from "effect";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import type { UserKillQueries } from "#src/kills/user-kill-queries";

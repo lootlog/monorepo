@@ -21,7 +21,7 @@ import { ResourceConflictError } from "#src/shared/http/http-errors";
 
 import { ErrorKey } from "#src/guilds/error-key";
 
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export type AuthorizedGuild = {
   readonly guildId: string;

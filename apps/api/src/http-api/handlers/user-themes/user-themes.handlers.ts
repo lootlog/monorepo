@@ -15,7 +15,7 @@ import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import {
   SharedUserThemeResponse,
   UserThemeResponse,

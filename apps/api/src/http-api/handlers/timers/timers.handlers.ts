@@ -39,7 +39,7 @@ import {
   TimersInfrastructureError,
   type TimersNotFound,
 } from "#src/timers/timer-errors";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export class TimersAccessDenied extends TaggedErrorClass<TimersAccessDenied>()(
   "TimersAccessDenied",

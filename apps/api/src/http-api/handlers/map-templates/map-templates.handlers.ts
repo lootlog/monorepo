@@ -23,7 +23,7 @@ import {
   type CreateMapTemplate,
 } from "#src/map-templates/map-template.schema";
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export class MapTemplatesAccessDenied extends TaggedErrorClass<MapTemplatesAccessDenied>()(
   "MapTemplatesAccessDenied",

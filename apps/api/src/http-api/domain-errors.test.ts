@@ -12,7 +12,7 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import { EventTimersError } from "#src/events/respawn/event-timers.port";
-import { BearerSecurityMiddleware } from "./contracts/shared.js";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import { LootlogApi } from "./lootlog-api.js";
 import { EventsHandlers } from "./handlers/events/events.handlers.js";
 import { EventsAuthorization } from "./handlers/events/events-authorization.js";

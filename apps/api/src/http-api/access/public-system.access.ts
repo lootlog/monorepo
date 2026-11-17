@@ -7,7 +7,7 @@ import { Context, Effect, Layer, Schema } from "effect";
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import type { PublicGuildStatsCard } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 const PUBLIC_CACHE_CONTROL = "public, max-age=300, must-revalidate";
 
