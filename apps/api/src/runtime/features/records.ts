@@ -31,7 +31,7 @@ import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository
 import { LootStatsService } from "#src/loots/query/loot-stats.service";
 import { applicationLogger } from "#src/shared/application-logger";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer } from "effect";
 import { recordsDataLayer } from "#src/http-api/access/records.data-layer";
@@ -169,13 +169,11 @@ export const recordsServicesLive = Layer.effect(
           makeGuildKillActivityPublisher(database, rabbit),
           (recipientUserId) =>
             rabbit
-              .publish({
-                exchange: "default",
-                routingKey: RabbitRoutingKey.USERS_KILL_STATS_CHANGED,
-                content: new TextEncoder().encode(
-                  JSON.stringify({ recipientUserId }),
-                ),
-              })
+              .publish(
+                eventMessage(RabbitRoutingKey.USERS_KILL_STATS_CHANGED, {
+                  recipientUserId,
+                }),
+              )
               .pipe(
                 Effect.asVoid,
                 Effect.catch(() =>
@@ -223,14 +221,10 @@ export const recordsServicesLive = Layer.effect(
               }),
           },
           publisher: {
-            publish: (exchange, routingKey, event) =>
-              rabbit
-                .publish({
-                  exchange: exchange,
-                  routingKey: routingKey,
-                  content: new TextEncoder().encode(JSON.stringify(event)),
-                })
-                .pipe(Effect.asVoid),
+            publish: (event) =>
+              rabbit.publish(
+                eventMessage(RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE, event),
+              ),
           },
           logger: applicationLogger,
         }),

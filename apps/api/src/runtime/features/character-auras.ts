@@ -1,4 +1,4 @@
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
 import { CharacterAurasResponse } from "#src/contracts/character-auras/schemas";
@@ -56,11 +56,7 @@ const makeCharacterAurasEvents = (
 ): CharacterAurasEvents => ({
   publishChanged: (change) =>
     rabbit
-      .publish({
-        exchange: "default",
-        routingKey: RabbitRoutingKey.CHARACTER_AURAS_CHANGED,
-        content: new TextEncoder().encode(JSON.stringify(change)),
-      })
+      .publish(eventMessage(RabbitRoutingKey.CHARACTER_AURAS_CHANGED, change))
       .pipe(Effect.asVoid),
 });
 

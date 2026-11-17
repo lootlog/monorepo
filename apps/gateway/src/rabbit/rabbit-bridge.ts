@@ -1,4 +1,6 @@
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import {
+  consumeEvent,
   RabbitMessaging,
   type MessagingError,
   type RabbitMessagingService,
@@ -20,8 +22,8 @@ import {
 } from "#src/rabbit/coverage-publisher";
 import {
   deadLetterIdentifiers,
-  gatewayConsumerSpecs,
-  gatewayDeadLetterSpecs,
+  gatewayDeadLetterQueues,
+  gatewayRoutes,
   type ConsumedRoutingKey,
 } from "#src/rabbit/gateway-queues";
 
@@ -62,44 +64,29 @@ export class RabbitBridge {
     const handle = this.handle.bind(this);
 
     return Effect.gen(function* () {
-      for (const spec of gatewayConsumerSpecs) {
-        const consumer = yield* messaging.consume(
-          {
-            queue: spec.queue,
-            prefetch: spec.prefetch ?? 1,
-            failurePolicy:
-              spec.retryRoutingKey && spec.deadLetterRoutingKey
-                ? {
-                    strategy: "retry",
-                    maxRetries: 3,
-                    retryRoutingKey: spec.retryRoutingKey,
-                    deadLetterRoutingKey: spec.deadLetterRoutingKey,
-                  }
-                : { strategy: "nack" },
-          },
-          (delivery: RabbitDelivery) =>
-            handle(
-              spec.routingKey,
-              new TextDecoder().decode(delivery.content),
-              delivery.properties.messageId,
-            ),
+      for (const route of gatewayRoutes) {
+        const consumer = yield* consumeEvent(
+          messaging,
+          route,
+          (payload, delivery: RabbitDelivery) =>
+            handle(route.routingKey, payload, delivery.properties.messageId),
         );
 
         consumers.push(consumer);
       }
 
-      for (const spec of gatewayDeadLetterSpecs) {
+      for (const queue of gatewayDeadLetterQueues) {
         const consumer = yield* messaging.consume(
           {
-            queue: spec.queue,
+            queue: queue.name,
             prefetch: 1,
             failurePolicy: { strategy: "requeue" },
           },
           (delivery) =>
             Effect.logError("Gateway RabbitMQ delivery reached DLQ").pipe(
               Effect.annotateLogs({
-                queue: spec.queue,
-                routingKey: spec.routingKey,
+                queue: queue.name,
+                routingKey: queue.routingKey,
                 messageId: delivery.properties.messageId,
                 retryCount:
                   delivery.properties.headers?.["x-lootlog-retry-count"] ?? 0,
@@ -121,16 +108,11 @@ export class RabbitBridge {
     }).pipe(Effect.tap(() => Effect.sync(() => (this.consumers = []))));
   }
 
-  private handle(
-    routingKey: ConsumedRoutingKey,
-    serializedPayload: string,
+  private handle<Key extends ConsumedRoutingKey>(
+    routingKey: Key,
+    payload: CanonicalRabbitEvent<Key>,
     messageId?: string,
   ): Effect.Effect<void, unknown> {
-    return runBridgeRoute(
-      this.routes,
-      routingKey,
-      serializedPayload,
-      messageId,
-    );
+    return runBridgeRoute(this.routes, routingKey, payload, messageId);
   }
 }

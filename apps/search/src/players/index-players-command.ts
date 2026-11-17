@@ -1,8 +1,5 @@
-import { Schema } from "effect";
-import { PlayerHit } from "./player-hit.js";
-
-export const IndexPlayersPayload = Schema.Array(PlayerHit);
+import type { SearchPlayer } from "@lootlog/protocol/rabbit/events";
 
 export type IndexPlayersCommand = {
-  readonly players: typeof IndexPlayersPayload.Type;
+  readonly players: ReadonlyArray<SearchPlayer>;
 };

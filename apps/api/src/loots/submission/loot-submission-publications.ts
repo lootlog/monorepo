@@ -1,3 +1,4 @@
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import type {
   CatalogItemObservation,
   CatalogNpcObservation,
@@ -98,12 +99,14 @@ export function newLootPublications(options: {
     mapNpcEvents(options.npcs),
   );
 
-  const rabbit = (
-    routingKey: Extract<
+  const rabbit = <
+    Key extends Extract<
       LootPublication["payload"],
       { kind: "rabbit" }
     >["routingKey"],
-    data: unknown,
+  >(
+    routingKey: Key,
+    data: CanonicalRabbitEvent<Key>,
   ) => {
     intents.push({
       organizationIds,

@@ -1,3 +1,4 @@
+import type { EventPublisher } from "@lootlog/messaging";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { publishTimerEvents } from "./timer-update-publication.js";
 import { randomUUID } from "node:crypto";
@@ -21,7 +22,7 @@ import { TimersInfrastructureError } from "./timer-errors.js";
 import {
   CachedTimerProjectionSchema,
   mapTimerResponse,
-  type TimerPublishedEvent,
+  toTimerEvent,
 } from "#src/timers/timer-projection";
 import { hasTimerWeight, makeNpc } from "./timer-auto-report.js";
 import {
@@ -36,16 +37,7 @@ export interface AutoTimerGuildWritePorts extends AutoTimerPersistencePorts {
   readonly publishHeroSighting: (
     sighting: HeroSightingResponse,
   ) => Effect.Effect<unknown, unknown>;
-  readonly publish: <
-    Key extends
-      | typeof RabbitRoutingKey.GUILDS_TIMERS_DELETE
-      | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
-      | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED
-      | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-  >(
-    routingKey: Key,
-    payload: TimerPublishedEvent<Key>,
-  ) => Effect.Effect<unknown, unknown>;
+  readonly publish: EventPublisher["publish"];
   readonly releaseDedup: (
     key: string,
     token: string,
@@ -171,8 +163,14 @@ export const writeGuildTimer = (
         }
 
         yield* publishTimerEvents(
-          ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response),
-          ports.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED, response),
+          ports.publish(
+            RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
+            toTimerEvent(response),
+          ),
+          ports.publish(
+            RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+            toTimerEvent(response),
+          ),
         );
         yield* ports.set(
           dedupKey,

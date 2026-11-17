@@ -1,4 +1,4 @@
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
 import { makeMessagingDataLayer } from "#src/messaging/messaging.data-layer";
@@ -24,11 +24,12 @@ export const messagingData = Layer.unwrap(
 
     const publishReadyRoom: ReadyRoomEffects["publish"] = (envelope) =>
       rabbit
-        .publish({
-          exchange: "default",
-          routingKey: RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED,
-          content: new TextEncoder().encode(JSON.stringify(envelope)),
-        })
+        .publish(
+          eventMessage(
+            RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED,
+            envelope,
+          ),
+        )
         .pipe(Effect.asVoid);
 
     return makeMessagingDataLayer(
@@ -43,13 +44,7 @@ export const messagingData = Layer.unwrap(
       },
       {
         publish: (routingKey, payload) =>
-          rabbit
-            .publish({
-              exchange: "default",
-              routingKey,
-              content: new TextEncoder().encode(JSON.stringify(payload)),
-            })
-            .pipe(Effect.asVoid),
+          rabbit.publish(eventMessage(routingKey, payload)).pipe(Effect.asVoid),
       },
       {
         create: (input) =>

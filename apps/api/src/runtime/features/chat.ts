@@ -1,4 +1,4 @@
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { Effect, Layer } from "effect";
 import {
   makeChatDataLayer,
@@ -39,13 +39,7 @@ export const makeChatEvents = (
   rabbit: RabbitMessaging["Service"],
 ): ChatEvents => ({
   publish: (routingKey, payload) =>
-    rabbit
-      .publish({
-        exchange: "default",
-        routingKey,
-        content: new TextEncoder().encode(JSON.stringify(payload)),
-      })
-      .pipe(Effect.asVoid),
+    rabbit.publish(eventMessage(routingKey, payload)).pipe(Effect.asVoid),
 });
 
 export const chatData = Layer.unwrap(

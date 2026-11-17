@@ -1,4 +1,5 @@
-import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
+import type { EventPublisher } from "@lootlog/messaging";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { visibleReservationGuildIds } from "./reservation-visibility-query.js";
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
@@ -52,15 +53,7 @@ type ReservationWithGuild = Reservation & {
 
 export interface ReservationMutationPorts extends ReservationReminderPorts {
   readonly catalog: ReservationCatalogAdapter;
-  readonly publish: <
-    Key extends
-      | "guilds.reservations.create"
-      | "guilds.reservations.delete"
-      | "guilds.reservations.v2.changed",
-  >(
-    routingKey: Key,
-    payload: CanonicalRabbitEvent<Key>,
-  ) => Effect.Effect<unknown, unknown>;
+  readonly publish: EventPublisher["publish"];
 }
 
 const guildIdsGranting = (
@@ -153,23 +146,29 @@ const publishEvent = (
   };
 
   const publications = [
-    ports.publish("guilds.reservations.v2.changed", v2),
+    ports.publish(RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2, v2),
     ...(action === "updated"
       ? []
       : [
           ports.publish(
             action === "created"
-              ? "guilds.reservations.create"
-              : "guilds.reservations.delete",
+              ? RabbitRoutingKey.GUILDS_RESERVATIONS_CREATE
+              : RabbitRoutingKey.GUILDS_RESERVATIONS_DELETE,
             legacy,
           ),
         ]),
   ];
 
+  // The reservation is saved; a missed hint leaves realtime views stale until
+  // their next read, so it is logged rather than failing the mutation.
   return Effect.all(publications, {
     concurrency: "unbounded",
     discard: true,
-  }).pipe(Effect.ignore);
+  }).pipe(
+    Effect.catchCause((cause) =>
+      Effect.logWarning("Reservation publication failed", cause),
+    ),
+  );
 };
 
 export const makeReservationMutationsDataLayer = (

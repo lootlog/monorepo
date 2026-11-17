@@ -1,7 +1,8 @@
+import { eventMessage, type RabbitMessaging } from "@lootlog/messaging";
 import { Clock, Effect, Result } from "effect";
 import { eq } from "drizzle-orm";
-import type { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import type { MemberRefreshJobUpdated } from "@lootlog/protocol/realtime/organization-events";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { memberRefreshJobTable } from "#src/database/drizzle/organization.schema";
 
@@ -26,24 +27,25 @@ export const makeMemberBulkRefreshProcessor = (
         Effect.flatMap((rows) => {
           const job = rows[0];
 
-          return job
-            ? rabbit.publish({
-                exchange: "default",
-                routingKey: RabbitRoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
-                content: new TextEncoder().encode(
-                  JSON.stringify({
-                    jobId: job.id,
-                    guildId: job.guildId,
-                    status: job.status,
-                    totalMembers: job.totalMembers,
-                    processedMembers: job.processedMembers,
-                    failedMembers: job.failedMembers,
-                    completedAt: job.completedAt,
-                    ...details,
-                  }),
-                ),
-              })
-            : Effect.void;
+          if (!job) return Effect.void;
+
+          const update: MemberRefreshJobUpdated = {
+            jobId: job.id,
+            guildId: job.guildId,
+            status: job.status,
+            totalMembers: job.totalMembers,
+            processedMembers: job.processedMembers,
+            failedMembers: job.failedMembers,
+            completedAt: job.completedAt?.toISOString() ?? null,
+            ...details,
+          };
+
+          return rabbit.publish(
+            eventMessage(
+              RabbitRoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
+              update,
+            ),
+          );
         }),
       );
 

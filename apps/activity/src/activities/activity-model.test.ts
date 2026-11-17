@@ -1,8 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import {
-  decodeCreateActivity,
-  decodeGuildMemberRemoved,
-} from "./activity-model.js";
+import { decodeCreateActivity } from "./activity-model.js";
 
 describe("activity wire schemas", () => {
   it("accepts the deployed GAME activity shape", () => {
@@ -40,11 +37,5 @@ describe("activity wire schemas", () => {
         details: { sessionId: "session" },
       }),
     ).toThrow();
-  });
-
-  it("decodes guild member removal", () => {
-    expect(
-      decodeGuildMemberRemoved({ guildId: "guild", discordId: "discord" }),
-    ).toEqual({ guildId: "guild", discordId: "discord" });
   });
 });

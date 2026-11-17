@@ -1,13 +1,9 @@
-import { RabbitMessaging } from "@lootlog/messaging";
-import {
-  RabbitRoutingKey,
-  type RabbitRoutingKeyName,
-} from "@lootlog/protocol/rabbit/topology";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   GLOBAL_CHAT_MESSAGE_LIMIT,
   GLOBAL_CHAT_SEND_COOLDOWN_SECONDS,
-  type GlobalChatChannelUpdate,
-  type GlobalChatMessage,
 } from "@lootlog/schema/chat";
 import { Effect, Layer } from "effect";
 import {
@@ -131,18 +127,15 @@ export const makeGlobalChatStore = (
   };
 };
 
-const publishJson = (
+const publishJson = <
+  Key extends
+    | typeof RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE
+    | typeof RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE,
+>(
   rabbit: RabbitMessaging["Service"],
-  routingKey: RabbitRoutingKeyName,
-  content: GlobalChatMessage | GlobalChatChannelUpdate,
-) =>
-  rabbit
-    .publish({
-      exchange: "default",
-      routingKey,
-      content: new TextEncoder().encode(JSON.stringify(content)),
-    })
-    .pipe(Effect.asVoid);
+  routingKey: Key,
+  content: CanonicalRabbitEvent<Key>,
+) => rabbit.publish(eventMessage(routingKey, content)).pipe(Effect.asVoid);
 
 export const makeGlobalChatEvents = (
   rabbit: RabbitMessaging["Service"],

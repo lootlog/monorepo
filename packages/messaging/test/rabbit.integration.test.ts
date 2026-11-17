@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import {
+  deadLetterRoutingKey,
   makeDeadLetterQueue,
-  makeRetryQueue,
   RabbitExchange,
   RabbitRoutingKey,
+  retryRoutingKey,
   type RabbitQueueDefinition,
 } from "@lootlog/protocol/rabbit/topology";
 import { Deferred, Effect } from "effect";
@@ -136,15 +137,18 @@ describe("RabbitMessaging real broker integration", () => {
         routingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE,
         durable: true,
       },
-      makeRetryQueue({
+      {
         name: retryQueue,
-        retryRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_RETRY,
-        destinationRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+        exchange: RabbitExchange.RETRY,
+        routingKey: retryRoutingKey(RabbitRoutingKey.GUILDS_LOOTS_CREATE),
+        durable: true,
         messageTtl: 100,
-      }),
+        deadLetterExchange: RabbitExchange.DEFAULT,
+        deadLetterRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+      },
       makeDeadLetterQueue({
         name: deadLetterQueue,
-        routingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+        routingKey: deadLetterRoutingKey(RabbitRoutingKey.GUILDS_LOOTS_CREATE),
       }),
     ];
 
@@ -167,9 +171,12 @@ describe("RabbitMessaging real broker integration", () => {
                 failurePolicy: {
                   strategy: "retry",
                   maxRetries: 1,
-                  retryRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_RETRY,
-                  deadLetterRoutingKey:
-                    RabbitRoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+                  retryRoutingKey: retryRoutingKey(
+                    RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+                  ),
+                  deadLetterRoutingKey: deadLetterRoutingKey(
+                    RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+                  ),
                 },
               },
               (delivery) =>

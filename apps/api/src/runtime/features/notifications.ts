@@ -40,7 +40,7 @@ import { makeNotificationTestContent } from "#src/notifications/notification-tes
 import { makeNotificationUserTargets } from "#src/notifications/targets/notification-user-targets";
 import { makeNotificationWatchedItems } from "#src/notifications/rules/notification-watched-items";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "bullmq";
 import { Context, Effect, Layer } from "effect";
@@ -178,11 +178,12 @@ export const notificationsServicesLive = Layer.effect(
       {
         publish: (payload) =>
           rabbit
-            .publish({
-              exchange: "default",
-              routingKey: RabbitRoutingKey.NOTIFICATIONS_DISCORD_SEND,
-              content: new TextEncoder().encode(JSON.stringify(payload)),
-            })
+            .publish(
+              eventMessage(
+                RabbitRoutingKey.NOTIFICATIONS_DISCORD_SEND,
+                payload,
+              ),
+            )
             .pipe(Effect.asVoid),
       },
       finalize,

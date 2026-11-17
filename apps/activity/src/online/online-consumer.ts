@@ -2,19 +2,19 @@ import { RabbitMessaging, type RabbitDelivery } from "@lootlog/messaging";
 import { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
+  readActivityEventSignature,
   verifyActivityEventSignature,
 } from "@lootlog/protocol/rabbit/activity-signature";
 import {
+  consumerRoute,
   RabbitExchange,
   RabbitRoutingKey,
-  makeDeadLetterQueue,
-  makeRetryQueue,
+  deadLetterRoutingKey,
 } from "@lootlog/protocol/rabbit/topology";
 import {
   Clock,
   Effect,
   Layer,
-  Option,
   Redacted,
   Result,
   Schema,
@@ -23,26 +23,15 @@ import {
 import { ActivityConfig } from "#src/config/activity-config";
 import { OnlineIngestRejected, OnlineRepository } from "./online-repository.js";
 
-export const onlineQueues = [
-  {
-    name: "activity-user-online-checkpoint-v1",
-    exchange: RabbitExchange.DEFAULT,
-    routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
-    durable: true,
-    singleActiveConsumer: true,
-    deadLetterExchange: RabbitExchange.RETRY,
-    deadLetterRoutingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_RETRY,
-  },
-  makeRetryQueue({
-    name: "activity-user-online-checkpoint-v1.retry",
-    retryRoutingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_RETRY,
-    destinationRoutingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
-  }),
-  makeDeadLetterQueue({
-    name: "activity-user-online-checkpoint-v1.dlq",
-    routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
-  }),
-];
+// Rejected deliveries return through the retry queue in order; a checkpoint
+// that can never apply is dead-lettered by the consumer itself.
+const onlineRoute = consumerRoute(
+  "activity-user-online-checkpoint-v1",
+  RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
+  { failure: "broker-retry", singleActiveConsumer: true },
+);
+
+export const onlineQueues = onlineRoute.queues;
 
 const decode = Schema.decodeUnknownSync(UserOnlineEventV1);
 
@@ -55,7 +44,9 @@ export const OnlineConsumer = Layer.effectDiscard(
     const rejectEvent = (delivery: RabbitDelivery, message: string) =>
       rabbit.publish({
         exchange: RabbitExchange.DEAD_LETTER,
-        routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
+        routingKey: deadLetterRoutingKey(
+          RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
+        ),
         content: delivery.content,
         headers: {
           ...delivery.properties.headers,
@@ -66,9 +57,9 @@ export const OnlineConsumer = Layer.effectDiscard(
 
     yield* rabbit.consume(
       {
-        queue: "activity-user-online-checkpoint-v1",
-        prefetch: 1,
-        failurePolicy: { strategy: "nack" },
+        queue: onlineRoute.queue,
+        prefetch: onlineRoute.prefetch,
+        failurePolicy: onlineRoute.failurePolicy,
       },
       (delivery) =>
         Effect.gen(function* () {
@@ -79,16 +70,15 @@ export const OnlineConsumer = Layer.effectDiscard(
               new TextDecoder().decode(delivery.content),
             );
 
-            const signature =
-              delivery.properties.headers?.[ACTIVITY_EVENT_SIGNATURE_HEADER];
-
             if (
               !verifyActivityEventSignature({
                 payload,
                 secret: Redacted.value(config.signatureSecret),
-                signature: Schema.decodeUnknownOption(Schema.String)(
-                  signature,
-                ).pipe(Option.getOrUndefined),
+                signature: readActivityEventSignature(
+                  delivery.properties.headers?.[
+                    ACTIVITY_EVENT_SIGNATURE_HEADER
+                  ],
+                ),
               })
             )
               throw new Error("Invalid checkpoint signature");
