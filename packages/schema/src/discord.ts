@@ -36,3 +36,27 @@ export const DiscordGuildSyncStatus = Schema.Literals([
   "STALE",
   "NOT_FOUND",
 ]);
+
+export type DiscordGuildSyncStatus = typeof DiscordGuildSyncStatus.Type;
+
+/** A Discord channel as the bot last saw it; the API keeps it as a snapshot. */
+export const DiscordGuildChannel = Schema.Struct({
+  ...discordGuildChannelFields,
+  lastSyncedAt: Schema.String,
+}).annotate({ identifier: "DiscordGuildChannel" });
+
+export type DiscordGuildChannel = typeof DiscordGuildChannel.Type;
+
+export const DiscordGuildSyncState = Schema.Struct({
+  guildId: Schema.String,
+  status: DiscordGuildSyncStatus,
+  ...discordPermissionFields,
+  channelCount: Schema.Int,
+  selectableChannelCount: Schema.Int,
+  lastAttemptAt: Schema.NullOr(Schema.String),
+  lastSuccessAt: Schema.NullOr(Schema.String),
+  lastError: Schema.NullOr(Schema.String),
+  updatedAt: Schema.String,
+}).annotate({ identifier: "DiscordGuildSyncState" });
+
+export type DiscordGuildSyncState = typeof DiscordGuildSyncState.Type;

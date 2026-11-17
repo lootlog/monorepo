@@ -126,6 +126,10 @@ export const globalChatScope = (world: string | undefined): Scope =>
     ? { topic: "global.chat" }
     : { topic: "global.chat.world", world };
 
+/** Whether `topic` is a global chat channel of `globalChatScope`. */
+export const isGlobalChatTopic = (topic: Scope["topic"]): boolean =>
+  topic === "global.chat" || topic === "global.chat.world";
+
 type RealtimeFederationStore = Pick<RedisGatewayStore, "publish" | "subscribe">;
 
 export class RealtimeHub {

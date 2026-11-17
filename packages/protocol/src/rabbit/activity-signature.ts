@@ -1,7 +1,22 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
+import { Option, Schema } from "effect";
 
 export const ACTIVITY_EVENT_SIGNATURE_HEADER = "x-lootlog-activity-signature";
+
+const decodeSignature = Schema.decodeUnknownOption(
+  Schema.Union([Schema.String, Schema.NonEmptyArray(Schema.String)]),
+);
+
+/** The signature header's value; AMQP may relay a header as a list. */
+export const readActivityEventSignature = (
+  header: string | ReadonlyArray<string> | undefined,
+): string | undefined =>
+  Option.getOrUndefined(
+    Option.map(decodeSignature(header), (value) =>
+      Array.isArray(value) ? value[0] : value,
+    ),
+  );
 
 export function verifyActivityEventSignature({
   payload,

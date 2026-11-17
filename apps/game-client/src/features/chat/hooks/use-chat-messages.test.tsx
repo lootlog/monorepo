@@ -129,7 +129,11 @@ describe("useChatMessagesListener", () => {
       type: "chat.deleted",
       data: {
         organizationId: "guild-1",
-        payload: { guildId: "guild-1", messageId: "deleted" },
+        payload: {
+          guildId: "guild-1",
+          messageId: "deleted",
+          routing: { tier: "base" },
+        },
       },
     });
     flushFrame();
@@ -586,6 +590,7 @@ describe("useChatMessagesListener", () => {
             guildId: "guild-1",
             messageId: "created",
             message: "Edited",
+            routing: { tier: "base" },
           },
         },
       },
@@ -594,7 +599,11 @@ describe("useChatMessagesListener", () => {
         type: "chat.deleted",
         data: {
           organizationId: "guild-1",
-          payload: { guildId: "guild-1", messageId: "created" },
+          payload: {
+            guildId: "guild-1",
+            messageId: "created",
+            routing: { tier: "base" },
+          },
         },
       },
       {

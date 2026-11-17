@@ -25,7 +25,7 @@ export const RefreshStatusProvider = ({
     guildId: routeGuildId ?? "",
   });
 
-  const markAsRefreshed = (ids: string[]) => {
+  const markAsRefreshed = (ids: readonly string[]) => {
     setRefreshedIds((prev) => {
       const newSet = new Set(prev);
       ids.forEach((id) => newSet.add(id));
@@ -40,7 +40,7 @@ export const RefreshStatusProvider = ({
     });
   };
 
-  const markAsFailed = (ids: string[]) => {
+  const markAsFailed = (ids: readonly string[]) => {
     setFailedIds((prev) => {
       const newSet = new Set(prev);
       ids.forEach((id) => newSet.add(id));

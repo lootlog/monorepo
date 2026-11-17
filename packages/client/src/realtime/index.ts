@@ -1,4 +1,5 @@
 export {
+  isOrganizationAccessDenied,
   RealtimeClient,
   RealtimeRequestError,
   type CommandData,

@@ -25,10 +25,8 @@ import {
   ActivitiesControllerSuggestWorldsPathParams,
   ActivitiesControllerSuggestWorldsQuery,
 } from "./schemas.js";
-import {
-  AuthorizationUnavailable,
-  BearerSecurityMiddleware,
-} from "../shared.js";
+import { BearerSecurityMiddleware } from "@lootlog/protocol/http/bearer-security";
+import { AuthorizationUnavailable } from "../shared.js";
 
 export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   HttpApiEndpoint.get(

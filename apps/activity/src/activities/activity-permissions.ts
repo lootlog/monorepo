@@ -3,6 +3,7 @@ import {
   Permission,
   UserGuildPermissionsDtoSchema,
 } from "@lootlog/schema/permissions";
+import { INTERNAL_USER_PERMISSIONS_PATH } from "@lootlog/schema/internal-guilds";
 import { Context, Effect, Layer, Redacted, Schema } from "effect";
 import { Redis } from "effect/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
@@ -143,7 +144,7 @@ export class Permissions extends Context.Service<
       const getUserPermissions = Effect.fn("Permissions.getUserPermissions")(
         function* (discordId: string, userId: string) {
           const url = new URL(
-            "/internal/guilds/user-permissions",
+            INTERNAL_USER_PERMISSIONS_PATH,
             config.apiServiceUrl,
           );
 

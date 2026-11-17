@@ -5,7 +5,7 @@ import {
   type PresenceSnapshot,
   type PublishedPresence,
 } from "@lootlog/protocol/realtime";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { Context, Effect, Layer, Schedule } from "effect";
 import { GatewayRedis } from "#src/platform/redis-store";
 import {
@@ -605,10 +605,9 @@ export class Presence extends Context.Service<Presence, PresenceStore>()(
         yield* OnlineHistories,
         (event) =>
           messaging
-            .publish({
-              routingKey: RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
-              content: new TextEncoder().encode(JSON.stringify(event)),
-            })
+            .publish(
+              eventMessage(RabbitRoutingKey.GAME_CHARACTER_OFFLINE, event),
+            )
             .pipe(Effect.asVoid),
       );
 

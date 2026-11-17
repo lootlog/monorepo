@@ -1,5 +1,5 @@
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { RedlockService } from "#src/redis/redlock";
@@ -19,15 +19,11 @@ import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
  */
 export const makeHeroSightingPublisher =
   (rabbit: RabbitMessaging["Service"]) => (sighting: HeroSightingResponse) => {
-    const content = new TextEncoder().encode(JSON.stringify(sighting));
-
     return Effect.all(
       [
         RabbitRoutingKey.GUILDS_HERO_SIGHTINGS_UPDATE,
         RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED,
-      ].map((routingKey) =>
-        rabbit.publish({ exchange: "default", routingKey, content }),
-      ),
+      ].map((routingKey) => rabbit.publish(eventMessage(routingKey, sighting))),
       { concurrency: 2, mode: "result" },
     ).pipe(
       Effect.flatMap((results) => Effect.forEach(results, Effect.fromResult)),

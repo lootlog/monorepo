@@ -1,8 +1,8 @@
+import { eventMessage, type RabbitMessaging } from "@lootlog/messaging";
 import type {
   CatalogMonsterDrops,
   CatalogMonsterLocations,
 } from "@lootlog/protocol/rabbit/catalog";
-import type { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { sql } from "drizzle-orm";
 import { Effect } from "effect";
@@ -106,25 +106,15 @@ export const makeMonsterStatisticsPublisher = (
       }),
     );
 
-    const publish = (
-      routingKey:
-        | typeof RabbitRoutingKey.CATALOG_ITEMS_RETIRED_DROPS
-        | typeof RabbitRoutingKey.CATALOG_NPCS_LOCATIONS,
-      monsters: ReadonlyArray<unknown>,
-    ) =>
-      Effect.forEach(
-        chunk(monsters, MONSTERS_PER_MESSAGE),
-        (batch) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(batch)),
-          }),
-        { discard: true },
+    for (const batch of chunk(monsterDrops, MONSTERS_PER_MESSAGE))
+      yield* rabbit.publish(
+        eventMessage(RabbitRoutingKey.CATALOG_ITEMS_RETIRED_DROPS, batch),
       );
 
-    yield* publish(RabbitRoutingKey.CATALOG_ITEMS_RETIRED_DROPS, monsterDrops);
-    yield* publish(RabbitRoutingKey.CATALOG_NPCS_LOCATIONS, locations);
+    for (const batch of chunk(locations, MONSTERS_PER_MESSAGE))
+      yield* rabbit.publish(
+        eventMessage(RabbitRoutingKey.CATALOG_NPCS_LOCATIONS, batch),
+      );
 
     yield* Effect.logInfo("Monster statistics published").pipe(
       Effect.annotateLogs({

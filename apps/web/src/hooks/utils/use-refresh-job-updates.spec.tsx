@@ -37,6 +37,7 @@ it("delivers only updates for the current organization and stops after unmount",
             totalMembers: 1,
             processedMembers: 1,
             failedMembers: 0,
+            completedAt: "2026-01-01T00:00:00.000Z",
           },
         },
       });

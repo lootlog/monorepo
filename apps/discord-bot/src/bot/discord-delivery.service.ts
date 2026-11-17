@@ -1,13 +1,10 @@
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Cause, Clock, Duration, Effect, Result, Schema } from "effect";
-import {
-  RabbitExchange,
-  RabbitRoutingKey as RoutingKey,
-} from "@lootlog/protocol/rabbit/topology";
+import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   NotificationTargetType,
-  type DiscordNotificationDeliveryResultEvent,
+  type DiscordNotificationDeliveryResult,
   type DiscordNotificationSendCommand,
 } from "@lootlog/schema/notifications";
 import { ChannelType } from "discord.js";
@@ -16,7 +13,7 @@ import {
   isRetryableDiscordError,
   isRetryableDiscordSendError,
 } from "./non-retryable-discord-error-codes.js";
-import type { RabbitPublisher } from "./rabbit-publisher.js";
+import type { EventPublisher } from "@lootlog/messaging";
 
 const discordMessageLimit = 2000;
 
@@ -128,7 +125,7 @@ export interface DiscordDeliveryOptions {
 }
 
 export const makeDiscordDelivery = (
-  publisher: RabbitPublisher,
+  publisher: EventPublisher,
   client: DiscordDeliveryClient,
   options?: DiscordDeliveryOptions,
 ) => {
@@ -166,28 +163,20 @@ export const makeDiscordDelivery = (
       withAdapterSpan(`DiscordDelivery_${operation}`, "discord-sdk"),
     );
 
-  const publishDeliveryResult = (
-    payload: DiscordNotificationDeliveryResultEvent,
-  ) =>
-    publisher
-      .publish(
-        RabbitExchange.DEFAULT,
-        RoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
-        payload,
-      )
-      .pipe(
-        Effect.mapError((error) => deliveryFailure("publish", error)),
-        Effect.timeout(stepTimeout),
-        Effect.mapError((error) =>
-          Cause.isTimeoutError(error)
-            ? deliveryFailure(
-                "publish",
-                new Error("Discord result publish timed out"),
-              )
-            : error,
-        ),
-        withAdapterSpan("DiscordDelivery_publishResult", "rabbitmq"),
-      );
+  const publishDeliveryResult = (payload: DiscordNotificationDeliveryResult) =>
+    publisher.publish(RoutingKey.NOTIFICATIONS_DELIVERY_RESULT, payload).pipe(
+      Effect.mapError((error) => deliveryFailure("publish", error)),
+      Effect.timeout(stepTimeout),
+      Effect.mapError((error) =>
+        Cause.isTimeoutError(error)
+          ? deliveryFailure(
+              "publish",
+              new Error("Discord result publish timed out"),
+            )
+          : error,
+      ),
+      withAdapterSpan("DiscordDelivery_publishResult", "rabbitmq"),
+    );
 
   const sendDirectMessage = Effect.fn("DiscordDelivery_sendDirectMessage")(
     function* (command: DiscordNotificationSendCommand) {

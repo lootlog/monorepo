@@ -1,8 +1,8 @@
-import type { DiscordGuildChannelSnapshot } from "@lootlog/schema/notifications";
+import type { DiscordGuildChannel } from "@lootlog/schema/discord";
 
 export const notificationChannelMetadata = (
   channel: Pick<
-    DiscordGuildChannelSnapshot,
+    DiscordGuildChannel,
     | "channelType"
     | "requiredPermissions"
     | "grantedPermissions"

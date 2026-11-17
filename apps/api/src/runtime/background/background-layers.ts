@@ -5,9 +5,7 @@ import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
 import { recordMargonemAccountVerification } from "#src/users/margonem-accounts";
 import { Effect, FiberSet, Layer, Schedule, Schema } from "effect";
 import { RabbitMessaging } from "@lootlog/messaging";
-import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { Queue as ApiQueue } from "#src/rabbitmq/queue";
 import { makeEventHeroKillProcessor } from "#src/events/kills/event-hero-kill.processor";
 import { makeGuildLifecycle } from "#src/guilds/guild-lifecycle.operations";
 import { makeMemberRefreshProcessor } from "#src/members/member-refresh.processor";
@@ -26,7 +24,7 @@ import { acquireEventHeroKillWorker } from "#src/runtime/queues/event-hero-kill"
 import { acquireMemberBulkRefreshWorker } from "#src/runtime/queues/member-bulk-refresh";
 import { acquireMemberRefreshWorker } from "#src/runtime/queues/member-refresh";
 import { acquireNotificationDispatchWorker } from "#src/runtime/queues/notification-dispatch";
-import { apiRabbitFailurePolicies } from "#src/runtime/infrastructure/api-rabbit";
+import { apiRabbitRoutes } from "#src/runtime/infrastructure/api-rabbit";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { forkCronTask } from "#src/runtime/background/cron";
 import { makeMemberKillPurge } from "#src/kills/member-kill-purge";
@@ -79,98 +77,65 @@ export const RabbitConsumers = Layer.effectDiscard(
 
     const consume = yield* makeRabbitConsumer(rabbit);
 
-    yield* consume(
-      ApiQueue.GUILDS_CREATE,
-      RabbitRoutingKey.GUILDS_CREATE,
-      (data) => guildLifecycle.createGuild(data),
-      apiRabbitFailurePolicies.guildCreate,
+    yield* consume(apiRabbitRoutes.guildCreate, (data) =>
+      guildLifecycle.createGuild(data),
     );
-    yield* consume(
-      ApiQueue.GUILDS_UPDATE,
-      RabbitRoutingKey.GUILDS_UPDATE,
-      (data) => guildLifecycle.updateGuild(data),
-      apiRabbitFailurePolicies.guildUpdate,
+    yield* consume(apiRabbitRoutes.guildUpdate, (data) =>
+      guildLifecycle.updateGuild(data),
     );
-    yield* consume(
-      ApiQueue.GUILDS_DELETE,
-      RabbitRoutingKey.GUILDS_DELETE,
-      (data) => guildLifecycle.deleteGuild(data),
-      apiRabbitFailurePolicies.guildDelete,
+    yield* consume(apiRabbitRoutes.guildDelete, (data) =>
+      guildLifecycle.deleteGuild(data),
     );
-    yield* consume(
-      ApiQueue.GUILDS_CREATE_ROLE,
-      RabbitRoutingKey.GUILDS_CREATE_ROLE,
-      (data) => guildLifecycle.upsertRole(data),
-      apiRabbitFailurePolicies.roleCreate,
+    yield* consume(apiRabbitRoutes.roleCreate, (data) =>
+      guildLifecycle.upsertRole(data),
     );
-    yield* consume(
-      ApiQueue.GUILDS_UPDATE_ROLE,
-      RabbitRoutingKey.GUILDS_UPDATE_ROLE,
-      (data) => guildLifecycle.upsertRole(data),
-      apiRabbitFailurePolicies.roleUpdate,
+    yield* consume(apiRabbitRoutes.roleUpdate, (data) =>
+      guildLifecycle.upsertRole(data),
     );
-    yield* consume(
-      ApiQueue.GUILDS_DELETE_ROLE,
-      RabbitRoutingKey.GUILDS_DELETE_ROLE,
-      (data) => guildLifecycle.deleteRole(data),
-      apiRabbitFailurePolicies.roleDelete,
+    yield* consume(apiRabbitRoutes.roleDelete, (data) =>
+      guildLifecycle.deleteRole(data),
     );
 
     yield* consume(
-      ApiQueue.DISCORD_GUILD_CHANNELS_SYNCED,
-      RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNCED,
+      apiRabbitRoutes.discordGuildChannelsSynced,
       (data) => guildSync.handleGuildChannelsSynced(data),
-      apiRabbitFailurePolicies.discordGuildChannelsSynced,
       orderedHandlerRetry,
     );
     yield* consume(
-      ApiQueue.DISCORD_GUILD_CHANNEL_UPSERTED,
-      RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
+      apiRabbitRoutes.discordGuildChannelUpserted,
       (data) => guildSync.handleGuildChannelUpserted(data),
-      apiRabbitFailurePolicies.discordGuildChannelUpserted,
       orderedHandlerRetry,
     );
     yield* consume(
-      ApiQueue.DISCORD_GUILD_CHANNEL_DELETED,
-      RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
+      apiRabbitRoutes.discordGuildChannelDeleted,
       (data) => guildSync.handleGuildChannelDeleted(data),
-      apiRabbitFailurePolicies.discordGuildChannelDeleted,
       orderedHandlerRetry,
     );
     yield* consume(
-      ApiQueue.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
-      RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
+      apiRabbitRoutes.discordGuildChannelsSyncFailed,
       (data) => guildSync.handleGuildChannelsSyncFailed(data),
-      apiRabbitFailurePolicies.discordGuildChannelsSyncFailed,
       orderedHandlerRetry,
     );
     yield* consume(
-      ApiQueue.DISCORD_GUILD_SYNC_STATE_UPDATED,
-      RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
+      apiRabbitRoutes.discordGuildSyncStateUpdated,
       (data) => guildSync.handleGuildSyncStateUpdated(data),
-      apiRabbitFailurePolicies.discordGuildSyncStateUpdated,
       orderedHandlerRetry,
     );
 
     yield* consume(
-      ApiQueue.GAME_CHARACTER_OFFLINE,
-      RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
+      apiRabbitRoutes.characterOffline,
       (event) => readyRooms.characterOffline(event),
-      apiRabbitFailurePolicies.characterOffline,
       orderedHandlerRetry,
     );
 
     yield* consume(
-      ApiQueue.MARGONEM_ACCOUNT_VERIFIED,
-      RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1,
+      apiRabbitRoutes.margonemAccountVerified,
       (event) => recordMargonemAccountVerification(database, event),
-      apiRabbitFailurePolicies.margonemAccountVerified,
       orderedHandlerRetry,
     );
 
     yield* consume(
-      ApiQueue.PRESENCE_COVERAGE_CHECK,
-      RabbitRoutingKey.PRESENCE_COVERAGE_CHECK,
+      apiRabbitRoutes.presenceCoverage,
       ({ guildId, mapName, discordId, hasPlayer, isAfk }) =>
         tracking.handlePlayerPresenceChange(
           guildId,
@@ -179,52 +144,37 @@ export const RabbitConsumers = Layer.effectDiscard(
           hasPlayer,
           isAfk ?? false,
         ),
-      apiRabbitFailurePolicies.presenceCoverage,
       orderedHandlerRetry,
     );
 
     yield* consume(
-      ApiQueue.NOTIFICATIONS_TIMER_UPDATED,
-      RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+      apiRabbitRoutes.notificationsTimerUpdated,
       (data) => notificationEvents.handleTimerUpdated(data),
-      apiRabbitFailurePolicies.notificationsTimerUpdated,
       orderedHandlerRetry,
     );
     yield* consume(
-      ApiQueue.NOTIFICATIONS_TIMER_DELETED,
-      RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
+      apiRabbitRoutes.notificationsTimerDeleted,
       (data) => notificationEvents.handleTimerDeleted(data),
-      apiRabbitFailurePolicies.notificationsTimerDeleted,
       orderedHandlerRetry,
     );
     yield* consume(
-      ApiQueue.NOTIFICATIONS_HERO_SIGHTING_UPDATED,
-      RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED,
-      // The routed fact is the API's own sighting response; decode all of it.
+      apiRabbitRoutes.heroSightingUpdated, // The routed fact is the API's own sighting response; decode all of it.
       (data) =>
         decodeHeroSighting(data).pipe(
           Effect.flatMap(notificationEvents.handleHeroSightingUpdated),
         ),
-      apiRabbitFailurePolicies.heroSightingUpdated,
+    );
+    yield* consume(apiRabbitRoutes.lootCreated, (data) =>
+      notificationEvents.handleLootCreated(data),
     );
     yield* consume(
-      ApiQueue.NOTIFICATIONS_LOOT_CREATED,
-      RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED,
-      (data) => notificationEvents.handleLootCreated(data),
-      apiRabbitFailurePolicies.lootCreated,
-    );
-    yield* consume(
-      ApiQueue.NOTIFICATIONS_DELIVERY_RESULT,
-      RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
+      apiRabbitRoutes.notificationsDeliveryResult,
       (data) => notificationEvents.handleDeliveryResult(data),
-      apiRabbitFailurePolicies.notificationsDeliveryResult,
       orderedHandlerRetry,
     );
     yield* consume(
-      ApiQueue.NOTIFICATIONS_DISCORD_GUILD_CHANNEL_DELETED,
-      RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
+      apiRabbitRoutes.notificationsDiscordGuildChannelDeleted,
       (data) => notificationEvents.handleDiscordGuildChannelDeleted(data),
-      apiRabbitFailurePolicies.notificationsDiscordGuildChannelDeleted,
       orderedHandlerRetry,
     );
   }),

@@ -9,6 +9,7 @@
     "./loot-events": "./src/loot-events.ts",
     "./loot-summary": "./src/loot-summary.ts",
     "./http/service-auth": "./src/http/service-auth.ts",
+    "./http/bearer-security": "./src/http/bearer-security.ts",
     "./http/catalog-access": "./src/http/catalog-access.ts",
     "./openapi": "./src/openapi/sanitize.ts",
     "./rabbit/catalog": "./src/rabbit/catalog.ts",
@@ -17,6 +18,7 @@
     "./realtime": "./src/realtime/protocol.ts",
     "./realtime/access-policy": "./src/realtime/access-policy.ts",
     "./realtime/codec": "./src/realtime/codec.ts",
+    "./realtime/organization-events": "./src/realtime/organization-events.ts",
     "./rabbit/activity-signature": "./src/rabbit/activity-signature.ts"
   },
   "scripts": {

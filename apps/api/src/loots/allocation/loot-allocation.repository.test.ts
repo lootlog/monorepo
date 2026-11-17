@@ -1,8 +1,9 @@
+import type { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { eq } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
-import type { GuildLootShareUpdatedEventV2 } from "@lootlog/schema/loot-events";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -364,13 +365,16 @@ test("allocation requires a recent actor submission at the atomic update", async
         .insert(lootPlayerTable)
         .values({ lootId: 1, playerSnapshotId: 1 }),
     );
-    const published: GuildLootShareUpdatedEventV2[] = [];
+
+    const published: Array<
+      CanonicalRabbitEvent<typeof RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE>
+    > = [];
 
     const operations = makeLootAllocationOperations({
       persistence,
       cache: { invalidateScopes: () => Effect.void },
       publisher: {
-        publish: (_exchange, _routingKey, event) =>
+        publish: (event) =>
           Effect.sync(() => {
             published.push(event);
           }),

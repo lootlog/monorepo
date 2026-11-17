@@ -1,5 +1,10 @@
 import { Option, Schema } from "effect";
-import { API_KEY_ACCESS_HEADER, ApiKeyAccess } from "./api-key-access.js";
+import {
+  API_KEY_ACCESS_HEADER,
+  AUTH_DISCORD_ID_HEADER,
+  AUTH_USER_ID_HEADER,
+  ApiKeyAccess,
+} from "./api-key-access.js";
 import { getPublicApiOperation } from "./public-api-policy.js";
 
 const decodeAccess = Schema.decodeUnknownOption(
@@ -16,6 +21,29 @@ export function readApiKeyAccess(
   const decoded = decodeAccess(value);
 
   return Option.isSome(decoded) ? decoded.value : null;
+}
+
+export interface ForwardAuthIdentityValue {
+  readonly userId: string;
+  readonly discordId: string;
+  readonly apiKey?: ApiKeyAccess;
+}
+
+/** The caller the edge asserted, or undefined when the assertion is missing or malformed. */
+export function readForwardAuthIdentity(
+  headers: Readonly<Record<string, string | undefined>>,
+): ForwardAuthIdentityValue | undefined {
+  const userId = headers[AUTH_USER_ID_HEADER]?.trim();
+  const discordId = headers[AUTH_DISCORD_ID_HEADER]?.trim();
+
+  if (!userId || !discordId) return undefined;
+  const apiKey = readApiKeyAccess(headers);
+
+  if (apiKey === null) return undefined;
+
+  return apiKey === undefined
+    ? { userId, discordId }
+    : { userId, discordId, apiKey };
 }
 
 export function apiKeyAllowsOperation(

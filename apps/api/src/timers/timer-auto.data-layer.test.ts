@@ -1,6 +1,7 @@
 import { expect, it } from "bun:test";
 import { Deferred, Effect, Fiber, Option, Queue } from "effect";
 import { eq } from "drizzle-orm";
+import { MessagingError } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Permission } from "@lootlog/schema/permissions";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
@@ -331,7 +332,13 @@ it.each([false, true])(
 
                 if (routingKey === RabbitRoutingKey.GUILDS_TIMERS_DELETE) {
                   if (failRealtime)
-                    return yield* Effect.fail("Realtime delivery unavailable");
+                    return yield* Effect.fail(
+                      new MessagingError({
+                        operation: "publish",
+                        message: "Realtime delivery unavailable",
+                        cause: undefined,
+                      }),
+                    );
                   yield* Deferred.await(notificationStarted);
                 }
 

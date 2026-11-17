@@ -1,16 +1,16 @@
 import type { GatewayJoin } from "@/lib/gateway-client";
 import { useEffect, useEffectEvent } from "react";
-import type { RefreshJobUpdate } from "@/types/refresh-job";
+import type { MemberRefreshJobUpdated } from "@lootlog/protocol/realtime/organization-events";
 import { useGateway } from "./use-gateway";
 
 export const useRefreshJobUpdates = (
   guildId: string | undefined,
-  onUpdate: (update: RefreshJobUpdate) => void,
+  onUpdate: (update: MemberRefreshJobUpdated) => void,
   onRejoin: () => void,
 ) => {
   const { socket } = useGateway();
 
-  const handleUpdate = useEffectEvent((update: RefreshJobUpdate) => {
+  const handleUpdate = useEffectEvent((update: MemberRefreshJobUpdated) => {
     if (update.guildId === guildId) onUpdate(update);
   });
 

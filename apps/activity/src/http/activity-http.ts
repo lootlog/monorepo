@@ -1,8 +1,9 @@
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import {
   apiKeyAllowsOrganization,
-  readApiKeyAccess,
+  readForwardAuthIdentity,
 } from "@lootlog/schema/api-key-policy";
+import { BearerSecurityPassthrough } from "@lootlog/protocol/http/bearer-security";
 import { OnlineRepository } from "#src/online/online-repository";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
@@ -34,7 +35,6 @@ import type {
   ReadyzControllerCheck200,
   ReadyzControllerCheck503,
 } from "#src/http-api/contracts/health/schemas";
-import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
 import type { ActivitiesControllerFindByGuildQuery } from "#src/http-api/contracts/guilds/schemas";
 import { Permissions } from "#src/activities/activity-permissions";
 
@@ -114,16 +114,15 @@ const authorize = Effect.fn("Activity.authorize")(function* (
 ) {
   const request = yield* HttpServerRequest.HttpServerRequest;
   const permissions = yield* Permissions;
-  const discordId = request.headers["x-auth-discord-id"];
-  const userId = request.headers["x-auth-user-id"];
+  const identity = readForwardAuthIdentity(request.headers);
 
-  if (!discordId || !userId) return yield* fail(401, "Unauthorized");
+  if (!identity) return yield* fail(401, "Unauthorized");
 
   // The grants do not depend on the guild, so both reads start together.
   const [guildId, capabilitiesFor] = yield* Effect.all(
     [
       permissions.resolveGuildId(guildIdentifier),
-      permissions.getUserCapabilities(discordId, userId),
+      permissions.getUserCapabilities(identity.discordId, identity.userId),
     ],
     { concurrency: "unbounded" },
   ).pipe(
@@ -137,9 +136,8 @@ const authorize = Effect.fn("Activity.authorize")(function* (
   );
 
   if (!guildId) return yield* fail(403, "Insufficient permissions");
-  const apiKey = readApiKeyAccess(request.headers);
 
-  if (apiKey === null || !apiKeyAllowsOrganization(apiKey, guildId))
+  if (!apiKeyAllowsOrganization(identity.apiKey, guildId))
     return yield* fail(403, "Insufficient permissions");
 
   const capabilities = capabilitiesFor(guildId);
@@ -189,23 +187,18 @@ const activityQuery = (
   guildId,
 });
 
-const BearerSecurityLive = Layer.succeed(
-  BearerSecurityMiddleware,
-  BearerSecurityMiddleware.of({ bearer: (httpEffect) => httpEffect }),
-);
-
 const ActivityHandlers = Layer.mergeAll(
   HttpApiBuilder.group(ActivityApi, "users", (handlers) =>
     handlers.handleRaw("UsersActivityControllerGetOnline", ({ query }) =>
       jsonOperation(
         Effect.gen(function* () {
           const request = yield* HttpServerRequest.HttpServerRequest;
-          const userId = request.headers["x-auth-user-id"];
+          const identity = readForwardAuthIdentity(request.headers);
 
-          if (!userId) return yield* fail(401, "Unauthorized");
+          if (!identity) return yield* fail(401, "Unauthorized");
           const repository = yield* OnlineRepository;
 
-          return yield* repository.find(userId, query);
+          return yield* repository.find(identity.userId, query);
         }),
       ),
     ),
@@ -328,7 +321,10 @@ const ActivityHandlers = Layer.mergeAll(
   ),
 ).pipe(
   Layer.provide(
-    Layer.merge(BearerSecurityLive, apiKeyEndpointPolicyLayer("activity")),
+    Layer.merge(
+      BearerSecurityPassthrough,
+      apiKeyEndpointPolicyLayer("activity"),
+    ),
   ),
 );
 

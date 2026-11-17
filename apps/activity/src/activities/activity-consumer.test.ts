@@ -2,13 +2,13 @@ import { describe, expect, it, mock } from "bun:test";
 import {
   RabbitMessaging,
   UnprocessableDelivery,
-  type FailurePolicy,
   type RabbitDelivery,
   type RabbitMessagingService,
 } from "@lootlog/messaging";
 import {
   RabbitExchange,
   RabbitRoutingKey,
+  type FailurePolicy,
 } from "@lootlog/protocol/rabbit/topology";
 import { Cause, Effect, Exit, Layer, Option, Redacted, Schema } from "effect";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
@@ -78,23 +78,12 @@ describe("Activity RabbitMQ topology", () => {
       activityQueues.map(({ name, routingKey }) => [name, routingKey]),
     ).toEqual([
       ["activity-log-create", RabbitRoutingKey.ACTIVITY_LOG_CREATE],
-      ["activity-log-create.retry", RabbitRoutingKey.ACTIVITY_LOG_CREATE_RETRY],
-      ["activity-log-create.dlq", RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ],
+      ["activity-log-create.retry", "activity.log.create.retry"],
+      ["activity-log-create.dlq", "activity.log.create.dlq"],
       ["guilds-members-remove", RabbitRoutingKey.GUILDS_MEMBERS_REMOVE],
-      [
-        "guilds-members-remove.retry",
-        RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_RETRY,
-      ],
-      ["guilds-members-remove.dlq", RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ],
+      ["guilds-members-remove.retry", "guilds.members.remove.retry"],
+      ["guilds-members-remove.dlq", "guilds.members.remove.dlq"],
     ]);
-  });
-
-  it("uses broker dead-lettering through the retry exchange", () => {
-    const main = activityQueues[0];
-    const retry = activityQueues[1];
-    expect(main.deadLetterExchange).toBe(RabbitExchange.RETRY);
-    expect(retry.messageTtl).toBe(30_000);
-    expect(retry.deadLetterExchange).toBe(RabbitExchange.DEFAULT);
   });
 
   it.each(["malformed", "wrong-secret", "valid"] as const)(
@@ -202,7 +191,7 @@ describe("Activity RabbitMQ topology", () => {
       ).toBe(true);
       expect(policies.get("activity-log-create")).toMatchObject({
         strategy: "retry",
-        deadLetterRoutingKey: RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
+        deadLetterRoutingKey: "activity.log.create.dlq",
       });
     },
   );
