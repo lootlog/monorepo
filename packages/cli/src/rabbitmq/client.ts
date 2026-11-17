@@ -1,13 +1,33 @@
+import {
+  ACTIVITY_EVENT_SIGNATURE_HEADER,
+  signActivityEvent,
+} from "@lootlog/protocol/rabbit/activity-signature";
+import {
+  RabbitExchange,
+  RabbitRoutingKey,
+} from "@lootlog/protocol/rabbit/topology";
 import amqp from "amqplib";
 import type { Schema } from "effect";
 import { styleText } from "node:util";
 
 interface PublishOptions {
-  exchange: string;
   routingKey: string;
   payload: typeof Schema.Json.Type;
-  exchangeType?: "topic" | "direct" | "fanout";
 }
+
+// Activity rejects unsigned events; sign them as the gateway does.
+const signatureHeaders = (options: PublishOptions) => {
+  const secret = process.env.ACTIVITY_EVENT_SIGNATURE_SECRET;
+
+  return options.routingKey === RabbitRoutingKey.ACTIVITY_LOG_CREATE && secret
+    ? {
+        [ACTIVITY_EVENT_SIGNATURE_HEADER]: signActivityEvent(
+          options.payload,
+          secret,
+        ),
+      }
+    : {};
+};
 
 class RabbitMQClient {
   private connection: amqp.ChannelModel | null = null;
@@ -26,23 +46,22 @@ class RabbitMQClient {
     }
   }
 
-  async publish(options: PublishOptions): Promise<void> {
+  publish(options: PublishOptions): void {
     if (!this.channel) {
       throw new Error("Not connected to RabbitMQ");
     }
 
-    const { exchange, routingKey, payload, exchangeType = "topic" } = options;
+    const { routingKey, payload } = options;
+    // Services declare the exchanges they bind; the CLI only publishes.
+    const exchange = RabbitExchange.DEFAULT;
 
     try {
-      await this.channel.assertExchange(exchange, exchangeType, {
-        durable: true,
-      });
-
       const serializedPayload = JSON.stringify(payload, null, 2);
       const message = Buffer.from(serializedPayload);
 
       this.channel.publish(exchange, routingKey, message, {
         contentType: "application/json",
+        headers: signatureHeaders(options),
         persistent: true,
       });
 

@@ -3,19 +3,34 @@ import * as path from "node:path";
 import { styleText } from "node:util";
 import { Console, Effect, Option, Schema } from "effect";
 import { Command, Flag, Prompt } from "effect/cli";
+import {
+  decodeRabbitEvent,
+  isCanonicalRabbitEventRoutingKey,
+} from "@lootlog/protocol/rabbit/events";
 import { createRabbitMQClient } from "../../rabbitmq/client.js";
 
 const EventFixture = Schema.Struct({
-  exchange: Schema.String,
   routingKey: Schema.String,
   payload: Schema.Json,
 });
 
 type EventFixture = typeof EventFixture.Type;
 
-export const parseEventFixture = Schema.decodeUnknownSync(
-  Schema.fromJsonString(EventFixture),
-);
+/** A fixture must be a message the consumers of its routing key accept. */
+const validateEvent = (fixture: EventFixture): EventFixture => {
+  if (!isCanonicalRabbitEventRoutingKey(fixture.routingKey)) {
+    throw new Error(`Unknown routing key: ${fixture.routingKey}`);
+  }
+
+  decodeRabbitEvent(fixture.routingKey, fixture.payload);
+
+  return fixture;
+};
+
+export const parseEventFixture = (content: string): EventFixture =>
+  validateEvent(
+    Schema.decodeUnknownSync(Schema.fromJsonString(EventFixture))(content),
+  );
 
 const parsePayload = Schema.decodeUnknownSync(
   Schema.fromJsonString(Schema.Json),
@@ -94,7 +109,7 @@ const publishInteractive = Effect.fn("publishInteractive")(function* (
 
     const fixture = selected.value;
 
-    yield* Effect.promise(() => client.publish(fixture));
+    yield* Effect.sync(() => client.publish(fixture));
 
     const another =
       continuous &&
@@ -130,7 +145,6 @@ const publishFixture = async (name: string): Promise<void> => {
 };
 
 const publishCustom = async (
-  exchange: string,
   routingKey: string,
   payload: string,
 ): Promise<void> => {
@@ -145,14 +159,14 @@ const publishCustom = async (
     );
   }
 
-  await publishWith({ exchange, routingKey, payload: parsedPayload });
+  await publishWith(validateEvent({ routingKey, payload: parsedPayload }));
 };
 
 const publishWith = async (fixture: EventFixture): Promise<void> => {
   const client = await createRabbitMQClient();
 
   try {
-    await client.publish(fixture);
+    client.publish(fixture);
   } finally {
     await client.close();
   }
@@ -173,11 +187,6 @@ export const publishCommand = Command.make(
       Flag.withDescription("Publish a predefined event fixture by name"),
       Flag.optional,
     ),
-    exchange: Flag.String("exchange").pipe(
-      Flag.withAlias("x"),
-      Flag.withDescription("Custom exchange name"),
-      Flag.optional,
-    ),
     routingKey: Flag.String("routing-key").pipe(
       Flag.withAlias("r"),
       Flag.withDescription("Custom routing key"),
@@ -189,30 +198,20 @@ export const publishCommand = Command.make(
       Flag.optional,
     ),
   },
-  ({ continuous, event, exchange, routingKey, payload }) => {
+  ({ continuous, event, routingKey, payload }) => {
     if (Option.isSome(event)) {
       return Effect.promise(() => publishFixture(event.value));
     }
 
-    if (
-      Option.isSome(exchange) &&
-      Option.isSome(routingKey) &&
-      Option.isSome(payload)
-    ) {
+    if (Option.isSome(routingKey) && Option.isSome(payload)) {
       return Effect.promise(() =>
-        publishCustom(exchange.value, routingKey.value, payload.value),
+        publishCustom(routingKey.value, payload.value),
       );
     }
 
-    if (
-      Option.isSome(exchange) ||
-      Option.isSome(routingKey) ||
-      Option.isSome(payload)
-    ) {
+    if (Option.isSome(routingKey) || Option.isSome(payload)) {
       return Effect.die(
-        new Error(
-          "Either provide --event or all of --exchange, --routing-key, and --payload",
-        ),
+        new Error("Either provide --event or both --routing-key and --payload"),
       );
     }
 
@@ -220,7 +219,7 @@ export const publishCommand = Command.make(
   },
 ).pipe(
   Command.withDescription(
-    "Publish test events to RabbitMQ. Without flags it opens an interactive picker of the fixtures in src/events/fixtures.",
+    "Publish test events to RabbitMQ. Without flags it opens an interactive picker of the fixtures in src/events/fixtures. Activity events are signed with ACTIVITY_EVENT_SIGNATURE_SECRET.",
   ),
   Command.withExamples([
     {
@@ -236,7 +235,7 @@ export const publishCommand = Command.make(
       description: "Publish a predefined event",
     },
     {
-      command: `bun run events:publish --exchange lootlog.events --routing-key custom.test --payload '{"test": "data"}'`,
+      command: `bun run events:publish --routing-key users.kill-stats.changed --payload '{"recipientUserId": "user-1"}'`,
       description: "Publish a custom event",
     },
   ]),

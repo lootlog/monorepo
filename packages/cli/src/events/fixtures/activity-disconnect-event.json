@@ -1,5 +1,4 @@
 {
-  "exchange": "default",
   "routingKey": "activity.log.create",
   "payload": {
     "userId": "gy99u1OMHmQ8Sa1FVTLKjexTccPQ0yPS",
