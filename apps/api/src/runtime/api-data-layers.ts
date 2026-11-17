@@ -1,4 +1,4 @@
-import { UserThemesData } from "#src/http-api/handlers/user-themes/user-themes.handlers";
+import { UserThemesData } from "#src/users/user-themes-data";
 import {
   eventsData,
   eventsServicesLive,
@@ -20,10 +20,10 @@ import {
 } from "#src/runtime/features/organizations";
 import { Layer } from "effect";
 import { ApiDatabaseLive } from "#src/database/drizzle/database";
-import { DocsData } from "#src/http-api/handlers/docs/docs.handlers";
-import { LootlogConfigData } from "#src/http-api/handlers/lootlog-config/lootlog-config.handlers";
-import { MapTemplatesData } from "#src/http-api/handlers/map-templates/map-templates.handlers";
-import { SettingsData } from "#src/http-api/handlers/preferences/preferences.operations";
+import { DocsData } from "#src/docs/docs-data";
+import { LootlogConfigData } from "#src/lootlog-config/lootlog-config-data";
+import { MapTemplatesData } from "#src/map-templates/map-templates-data";
+import { SettingsData } from "#src/settings-documents/settings-data";
 import {
   BullWorkers,
   RabbitConsumers,

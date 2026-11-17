@@ -21,9 +21,9 @@ import {
   MessagingIdentity,
 } from "./handlers/messaging/messaging.handlers.js";
 import { makeMessagingDataLayer } from "#src/messaging/messaging.data-layer";
+import { LootlogConfigData } from "#src/lootlog-config/lootlog-config-data";
 import {
   LootlogConfigHandlers,
-  LootlogConfigData,
   LootlogConfigAuthorization,
 } from "./handlers/lootlog-config/lootlog-config.handlers.js";
 import {

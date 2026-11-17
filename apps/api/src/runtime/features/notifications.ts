@@ -44,7 +44,7 @@ import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "bullmq";
 import { Context, Effect, Layer } from "effect";
-import { notificationDataLayer } from "#src/http-api/handlers/notifications/notifications.data-layer";
+import { notificationDataLayer } from "#src/notifications/notifications.data-layer";
 import { redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import {

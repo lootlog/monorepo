@@ -1163,6 +1163,28 @@
       }
     },
     {
+      "files": ["apps/api/src/settings-documents/settings-data.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeSettingsDocuments"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/docs/docs-data.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeDocsService"]
+          }
+        ]
+      }
+    },
+    {
       "files": ["apps/api/src/messaging/ready-room/ready-room.data-layer.ts"],
       "rules": {
         "anti-slop-effect/no-service-constructor-imports": [

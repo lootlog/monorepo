@@ -8,10 +8,10 @@ import {
   ChatAuthorization,
   ChatNotFound,
 } from "#src/http-api/handlers/chat/chat.handlers";
+import { DocsNotFound } from "#src/docs/docs-data";
 import {
   DocsAccessDenied,
   DocsAuthorization,
-  DocsNotFound,
 } from "#src/http-api/handlers/docs/docs.handlers";
 import {
   EventsAccessDenied,
