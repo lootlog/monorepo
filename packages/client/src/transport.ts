@@ -1,16 +1,9 @@
 import { Predicate } from "effect";
 import { isObjectRecord as isObject } from "@lootlog/schema/records";
-
-const API_SERVICES = [
-  "activity",
-  "auth",
-  "battlelog",
-  "catalog",
-  "main",
-  "search",
-] as const;
-
-export type ApiService = (typeof API_SERVICES)[number];
+import {
+  API_SERVICE_NAMES,
+  type ApiService,
+} from "@lootlog/schema/api-services";
 
 type FetchImplementation = (
   input: RequestInfo | URL,
@@ -37,33 +30,6 @@ export type ApiClientOverride = Partial<ApiServiceConfig>;
 
 export type ApiRequestOptions = RequestInit & {
   apiClient?: ApiClientOverride;
-};
-
-export type ApiClientRequestOptions = ApiRequestOptions & {
-  params?: RawQueryParameters;
-};
-
-// Query serialization preserves nested values and delegates scalar coercion to String.
-type RawQueryParameters = Record<string, unknown>;
-
-export type ApiClient = {
-  get<T>(path: string, options?: ApiClientRequestOptions): Promise<T>;
-  post<T>(
-    path: string,
-    body?: unknown,
-    options?: ApiClientRequestOptions,
-  ): Promise<T>;
-  put<T>(
-    path: string,
-    body?: unknown,
-    options?: ApiClientRequestOptions,
-  ): Promise<T>;
-  patch<T>(
-    path: string,
-    body?: unknown,
-    options?: ApiClientRequestOptions,
-  ): Promise<T>;
-  delete<T>(path: string, options?: ApiClientRequestOptions): Promise<T>;
 };
 
 export class ApiError<TData = unknown> extends Error {
@@ -108,7 +74,7 @@ const rebuildServiceConfigurations = (): void => {
   serviceConfigurations.clear();
 
   for (const registration of configurationRegistrations) {
-    for (const service of API_SERVICES) {
+    for (const service of API_SERVICE_NAMES) {
       const configuration = registration.configurations[service];
 
       if (configuration) {
@@ -157,98 +123,11 @@ const getApiMessageFromData = (data: unknown): string | undefined => {
   return typeof message === "string" ? message.trim() || undefined : undefined;
 };
 
-const encodeQueryComponent = (value: string) => {
-  return encodeURIComponent(value).replace(
-    /[!'()*]/g,
-    (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`,
-  );
-};
-
-const appendQueryValue = (
-  entries: string[],
-  key: string,
-  value: unknown,
-  ancestors: Set<object>,
-): void => {
-  if (value === null || value === undefined) {
-    return;
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      appendQueryValue(entries, key, item, ancestors);
-    }
-
-    return;
-  }
-
-  if (value instanceof Date) {
-    entries.push(
-      `${encodeQueryComponent(key)}=${encodeQueryComponent(value.toISOString())}`,
-    );
-
-    return;
-  }
-
-  if (isObject(value)) {
-    if (ancestors.has(value)) {
-      throw new RangeError("Cannot serialize circular query parameters");
-    }
-
-    ancestors.add(value);
-
-    for (const [nestedKey, nestedValue] of Object.entries(value)) {
-      appendQueryValue(entries, `${key}[${nestedKey}]`, nestedValue, ancestors);
-    }
-
-    ancestors.delete(value);
-
-    return;
-  }
-
-  entries.push(
-    `${encodeQueryComponent(key)}=${encodeQueryComponent(String(value))}`,
-  );
-};
-
-const serializeQueryParams = (params: RawQueryParameters) => {
-  const entries: string[] = [];
-  const ancestors = new Set<object>();
-
-  for (const [key, value] of Object.entries(params)) {
-    appendQueryValue(entries, key, value, ancestors);
-  }
-
-  return entries.join("&");
-};
-
-const isAbsoluteUrl = (value: string) => {
-  return /^[a-z][a-z\d+.-]*:\/\//i.test(value);
-};
-
-const buildRequestUrl = ({
-  baseUrl,
-  params,
-  path,
-}: {
-  baseUrl: string;
-  params?: RawQueryParameters;
-  path: string;
-}) => {
+const buildRequestUrl = (baseUrl: string, path: string) => {
   const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
   const normalizedPath = path.replace(/^\/+/, "");
 
-  const url = isAbsoluteUrl(path)
-    ? new URL(path)
-    : new URL(normalizedPath, normalizedBaseUrl);
-
-  const query = params ? serializeQueryParams(params) : "";
-
-  if (query) {
-    url.search = query;
-  }
-
-  return url;
+  return new URL(normalizedPath, normalizedBaseUrl);
 };
 
 const isJsonContentType = (contentType: string | null) => {
@@ -277,47 +156,12 @@ const parseResponse = async (response: Response) => {
   }
 };
 
-const isBinaryBody = (body: unknown): body is BodyInit => {
-  return (
-    typeof body === "string" ||
-    (typeof Blob !== "undefined" && body instanceof Blob) ||
-    (typeof FormData !== "undefined" && body instanceof FormData) ||
-    (typeof URLSearchParams !== "undefined" &&
-      body instanceof URLSearchParams) ||
-    (typeof ArrayBuffer !== "undefined" && body instanceof ArrayBuffer) ||
-    (typeof ArrayBuffer !== "undefined" && ArrayBuffer.isView(body))
-  );
-};
-
-const createRequestBody = (
-  body: unknown,
-  headers: Headers,
-): BodyInit | undefined => {
-  if (body === undefined) {
-    return undefined;
-  }
-
-  if (isBinaryBody(body)) {
-    return body;
-  }
-
-  if (!headers.has("content-type")) {
-    headers.set("content-type", "application/json");
-  }
-
-  return JSON.stringify(body);
-};
-
 const resolveBaseUrl = (
   service: ApiService,
   override: ApiClientOverride | undefined,
   serviceConfiguration: ApiClientOverride | undefined,
-  path: string,
 ) => {
-  const baseUrl =
-    override?.baseUrl ??
-    serviceConfiguration?.baseUrl ??
-    (isAbsoluteUrl(path) ? new URL(path).origin : undefined);
+  const baseUrl = override?.baseUrl ?? serviceConfiguration?.baseUrl;
 
   if (!baseUrl) {
     throw new Error(`Missing base URL for ${service} API request`);
@@ -343,10 +187,9 @@ const resolveFetchImplementation = (
 const resolveRequestConfiguration = (
   service: ApiService,
   override: ApiClientOverride | undefined,
-  path: string,
 ) => {
   const serviceConfiguration = serviceConfigurations.get(service);
-  const baseUrl = resolveBaseUrl(service, override, serviceConfiguration, path);
+  const baseUrl = resolveBaseUrl(service, override, serviceConfiguration);
 
   const fetchImplementation = resolveFetchImplementation(
     service,
@@ -484,12 +327,8 @@ export const executeApiRequest = async <TData>(
   options: ApiRequestOptions = {},
 ): Promise<TData> => {
   const { apiClient, headers: requestHeaders, ...requestInit } = options;
-  const configuration = resolveRequestConfiguration(service, apiClient, path);
-
-  const url = buildRequestUrl({
-    baseUrl: configuration.baseUrl,
-    path,
-  });
+  const configuration = resolveRequestConfiguration(service, apiClient);
+  const url = buildRequestUrl(configuration.baseUrl, path);
 
   const headers = new Headers(await configuration.getHeaders?.());
 
@@ -525,112 +364,6 @@ export const executeApiRequest = async <TData>(
   // SAFETY: generated callers supply TData from the matching OpenAPI response contract.
   // This transport decodes content types; endpoint-specific validation belongs to the service contract.
   return data as TData;
-};
-
-const requestWithBody = <TData>(
-  service: ApiService,
-  method: string,
-  path: string,
-  body: unknown,
-  options: ApiClientRequestOptions = {},
-) => {
-  try {
-    const { params, ...requestOptions } = options;
-
-    const configuration = resolveRequestConfiguration(
-      service,
-      requestOptions.apiClient,
-      path,
-    );
-
-    const url = buildRequestUrl({
-      baseUrl: configuration.baseUrl,
-      params,
-      path,
-    });
-
-    const headers = new Headers(requestOptions.headers);
-    const requestBody = createRequestBody(body, headers);
-
-    return executeApiRequest<TData>(service, url.toString(), {
-      ...requestOptions,
-      body: requestBody,
-      headers,
-      method,
-    });
-  } catch (error) {
-    return Promise.reject(error);
-  }
-};
-
-export const createApiClient = (
-  service: ApiService,
-  overrides?: ApiClientOverride,
-): ApiClient => {
-  const withOverrides = (
-    options: ApiClientRequestOptions = {},
-  ): ApiClientRequestOptions => ({
-    ...options,
-    apiClient: {
-      ...overrides,
-      ...options.apiClient,
-    },
-  });
-
-  return {
-    get: <TData>(path: string, options?: ApiClientRequestOptions) =>
-      requestWithBody<TData>(
-        service,
-        "GET",
-        path,
-        undefined,
-        withOverrides(options),
-      ),
-    post: <TData>(
-      path: string,
-      body?: unknown,
-      options?: ApiClientRequestOptions,
-    ) =>
-      requestWithBody<TData>(
-        service,
-        "POST",
-        path,
-        body,
-        withOverrides(options),
-      ),
-    put: <TData>(
-      path: string,
-      body?: unknown,
-      options?: ApiClientRequestOptions,
-    ) =>
-      requestWithBody<TData>(
-        service,
-        "PUT",
-        path,
-        body,
-        withOverrides(options),
-      ),
-    patch: <TData>(
-      path: string,
-      body?: unknown,
-      options?: ApiClientRequestOptions,
-    ) =>
-      requestWithBody<TData>(
-        service,
-        "PATCH",
-        path,
-        body,
-        withOverrides(options),
-      ),
-    delete: <TData>(path: string, options?: ApiClientRequestOptions) =>
-      requestWithBody<TData>(
-        service,
-        "DELETE",
-        path,
-        undefined,
-        withOverrides(options),
-      ),
-  };
 };
 
 export const isApiError = (error: unknown): error is ApiError<unknown> => {

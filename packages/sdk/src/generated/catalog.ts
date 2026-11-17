@@ -5,7 +5,7 @@
  * Margonem items and NPCs as Lootlog observed them
  * OpenAPI spec version: 1.0
  */
-import { catalogFetch } from '../mutators';
+import { catalogFetch } from '../../../client/src/mutators';
 /**
  * `PARTY` when the rolls per kill come from the parties the kills reported; `LOOTS` while too few did, estimated from the parties of recorded loots, which counts every member as a survivor and favours larger parties.
  */

@@ -1,9 +1,7 @@
 import { expect, test } from "bun:test";
 import { projectOpenApi } from "./project-openapi";
-import type { JsonValue } from "../../client/scripts/openapi-document";
+import type { JsonObject } from "@lootlog/client/scripts/generation";
 import { PUBLIC_API_OPERATIONS } from "@lootlog/schema/public-api-policy";
-
-type JsonObject = { [key: string]: JsonValue };
 
 test("public projection excludes unknown operations and private schemas but retains transitive refs", () => {
   const operations = PUBLIC_API_OPERATIONS.filter(

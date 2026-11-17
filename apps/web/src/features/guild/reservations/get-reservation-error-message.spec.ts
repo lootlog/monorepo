@@ -1,4 +1,4 @@
-import { ApiError, createApiClient } from "@lootlog/client/transport";
+import { ApiError, executeApiRequest } from "@lootlog/client/transport";
 import i18next from "i18next";
 import { describe, expect, it } from "vitest";
 import reservations from "@/i18n/translations/reservations.json";
@@ -13,18 +13,17 @@ await translations.init({
 
 describe("reservation error messages", () => {
   it("shows the reason and limit from a rejected reservation request", async () => {
-    const client = createApiClient("main", {
-      baseUrl: "https://api.example.test",
-      fetch: async () =>
-        Response.json(
-          { code: "ACTIVE_LIMIT_REACHED", details: { limit: 3 } },
-          { status: 422 },
-        ),
-    });
-
-    const error = await client
-      .post("/reservations", {})
-      .catch((error) => error);
+    const error = await executeApiRequest("main", "/reservations", {
+      method: "POST",
+      apiClient: {
+        baseUrl: "https://api.example.test",
+        fetch: async () =>
+          Response.json(
+            { code: "ACTIVE_LIMIT_REACHED", details: { limit: 3 } },
+            { status: 422 },
+          ),
+      },
+    }).catch((error) => error);
 
     expect(getReservationErrorMessage(error, translations.t)).toBe(
       "Osiągnięto limit aktywnych i przyszłych rezerwacji na tym expowisku (3). Anuluj istniejącą rezerwację lub poczekaj na jej zakończenie.",

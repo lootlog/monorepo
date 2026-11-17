@@ -1,7 +1,7 @@
 import { isPlainObject } from "es-toolkit";
 import { parseFiniteNumber as toNumberOrNull } from "@lootlog/schema/numbers";
 import { GameVersion } from "@lootlog/schema/game-version";
-import { createApiClient } from "@lootlog/client/transport";
+import { gameClientFetch } from "@/lib/game-client-platform";
 import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { pruneByRecency } from "@/lib/prune-by-recency";
 
@@ -457,11 +457,15 @@ export async function fetchCharacterList({
       throw new Error("Missing required authentication cookie");
     }
 
-    const client = createApiClient("main", { credentials: "include" });
+    const response = await gameClientFetch(`${url}?hs3=${hs3}`, {
+      credentials: "include",
+    });
 
-    const characters = await client.get<MargonemCharacter[]>(
-      `${url}?hs3=${hs3}`,
-    );
+    if (!response.ok) {
+      throw new Error(`Character list request failed (${response.status})`);
+    }
+
+    const characters: MargonemCharacter[] = await response.json();
 
     const normalizedCharacters = normalizeCharacterList(characters);
 

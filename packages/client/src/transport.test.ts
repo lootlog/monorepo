@@ -3,7 +3,6 @@ import {
   type ApiRequestContext,
   ApiError,
   configureApiClients,
-  createApiClient,
   executeApiRequest,
   getApiErrorMessage,
   getApiErrorStringDetail,
@@ -49,27 +48,24 @@ describe("API client transport", () => {
       },
     });
 
-    const client = createApiClient("main");
-
-    const response = await client.get<{ ok: boolean }>("/users", {
-      credentials: "omit",
-      headers: {
-        "x-overridden": "request",
-        "x-request": "request",
+    const response = await executeApiRequest<{ ok: boolean }>(
+      "main",
+      "/users?guildId=one&guildId=two",
+      {
+        credentials: "omit",
+        headers: {
+          "x-overridden": "request",
+          "x-request": "request",
+        },
       },
-      params: {
-        guildId: ["one", "two"],
-        nested: { enabled: true },
-        skipped: undefined,
-      },
-    });
+    );
 
     expect(response).toEqual({ ok: true });
     expect(fetchImplementation).toHaveBeenCalledTimes(1);
 
     const [requestUrl, requestInit] = fetchImplementation.mock.calls[0] ?? [];
     expect(String(requestUrl)).toBe(
-      "https://api.example.test/root/users?guildId=one&guildId=two&nested%5Benabled%5D=true",
+      "https://api.example.test/root/users?guildId=one&guildId=two",
     );
     expect(requestInit?.credentials).toBe("omit");
 
@@ -99,7 +95,7 @@ describe("API client transport", () => {
       },
     });
 
-    await expect(createApiClient("main").get("/status")).resolves.toEqual({
+    await expect(executeApiRequest("main", "/status")).resolves.toEqual({
       ok: true,
     });
     expect(fetchImplementation).toHaveBeenCalledTimes(1);
@@ -153,7 +149,7 @@ describe("API client transport", () => {
     });
 
     await expect(
-      createApiClient("search").get("/items", {
+      executeApiRequest("search", "/items", {
         apiClient: {
           baseUrl: "https://search.example.test",
           fetch: fetchImplementation,
@@ -187,12 +183,12 @@ describe("API client transport", () => {
     });
 
     restoreFirst();
-    await expect(createApiClient("main").get("/status")).resolves.toEqual({
+    await expect(executeApiRequest("main", "/status")).resolves.toEqual({
       source: "second",
     });
 
     restoreSecond();
-    await expect(createApiClient("main").get("/status")).rejects.toThrow(
+    await expect(executeApiRequest("main", "/status")).rejects.toThrow(
       "Missing base URL for main API request",
     );
   });
@@ -216,7 +212,7 @@ describe("API client transport", () => {
       },
     });
 
-    const request = createApiClient("auth").get("/session");
+    const request = executeApiRequest("auth", "/session");
 
     await expect(request).rejects.toMatchObject({
       data: { message: ["Session expired"] },
@@ -269,16 +265,16 @@ describe("API client transport", () => {
         }),
     );
 
-    const client = createApiClient("main", {
-      baseUrl: "https://api.example.test",
-      fetch: fetchImplementation,
-      onError,
-      timeoutMs: 8_000,
-    });
-
-    const result = client
-      .post("/timers/auto", { world: "tempest" })
-      .catch((error: ApiError) => error);
+    const result = executeApiRequest("main", "/timers/auto", {
+      method: "POST",
+      body: JSON.stringify({ world: "tempest" }),
+      apiClient: {
+        baseUrl: "https://api.example.test",
+        fetch: fetchImplementation,
+        onError,
+        timeoutMs: 8_000,
+      },
+    }).catch((error: ApiError) => error);
 
     await Promise.resolve();
     await vi.advanceTimersByTimeAsync(8_000);
@@ -311,15 +307,15 @@ describe("API client transport", () => {
 
     const fetchImplementation = vi.fn<TestFetch>().mockResolvedValue(response);
 
-    const client = createApiClient("main", {
-      baseUrl: "https://api.example.test",
-      fetch: fetchImplementation,
-      timeoutMs: 8_000,
-    });
-
-    const result = client
-      .post("/timers/auto", {})
-      .catch((error: ApiError) => error);
+    const result = executeApiRequest("main", "/timers/auto", {
+      method: "POST",
+      body: "{}",
+      apiClient: {
+        baseUrl: "https://api.example.test",
+        fetch: fetchImplementation,
+        timeoutMs: 8_000,
+      },
+    }).catch((error: ApiError) => error);
 
     await Promise.resolve();
     await Promise.resolve();
@@ -340,17 +336,16 @@ describe("API client transport", () => {
       const reason = new DOMException("Caller cancelled", "AbortError");
       const fetchImplementation = vi.fn<TestFetch>(() => new Promise(() => {}));
 
-      const client = createApiClient("main", {
-        baseUrl: "https://api.example.test",
-        fetch: fetchImplementation,
-        timeoutMs: 8_000,
-      });
-
       if (when === "before") controller.abort(reason);
 
-      const result = client
-        .get("/timers", { signal: controller.signal })
-        .catch((error: ApiError) => error);
+      const result = executeApiRequest("main", "/timers", {
+        signal: controller.signal,
+        apiClient: {
+          baseUrl: "https://api.example.test",
+          fetch: fetchImplementation,
+          timeoutMs: 8_000,
+        },
+      }).catch((error: ApiError) => error);
 
       await Promise.resolve();
       controller.abort(reason);
@@ -373,52 +368,23 @@ describe("API client transport", () => {
       .fn<TestFetch>()
       .mockResolvedValue(Response.json({ saved: true }));
 
-    const client = createApiClient("main", {
-      baseUrl: "https://api.example.test",
-      fetch: fetchImplementation,
-      timeoutMs: 8_000,
-      onError,
-    });
-
     await expect(
-      client.post(
-        "/timers/auto",
-        {},
-        {
-          signal: controller.signal,
+      executeApiRequest("main", "/timers/auto", {
+        method: "POST",
+        body: "{}",
+        signal: controller.signal,
+        apiClient: {
+          baseUrl: "https://api.example.test",
+          fetch: fetchImplementation,
+          timeoutMs: 8_000,
+          onError,
         },
-      ),
+      }),
     ).resolves.toEqual({ saved: true });
     controller.abort();
     await vi.advanceTimersByTimeAsync(8_000);
     expect(fetchImplementation.mock.calls[0]?.[1]?.signal?.aborted).toBe(false);
     expect(onError).not.toHaveBeenCalled();
-  });
-
-  it("serializes JSON request bodies without replacing caller headers", async () => {
-    const fetchImplementation = vi
-      .fn<TestFetch>()
-      .mockResolvedValue(Response.json({ id: "created" }));
-
-    const client = createApiClient("main", {
-      baseUrl: "https://api.example.test",
-      fetch: fetchImplementation,
-    });
-
-    await expect(
-      client.post(
-        "/users",
-        { name: "Alice" },
-        { headers: { "x-request-id": "request-id" } },
-      ),
-    ).resolves.toEqual({ id: "created" });
-
-    const requestInit = fetchImplementation.mock.calls[0]?.[1];
-    expect(requestInit?.body).toBe(JSON.stringify({ name: "Alice" }));
-
-    const headers = new Headers(requestInit?.headers);
-    expect(headers.get("content-type")).toBe("application/json");
-    expect(headers.get("x-request-id")).toBe("request-id");
   });
 
   it("returns text and empty responses without forcing JSON parsing", async () => {
@@ -453,21 +419,6 @@ describe("API client transport", () => {
     );
   });
 
-  it("uses an absolute request URL without service configuration", async () => {
-    const fetchImplementation = vi
-      .fn<TestFetch>()
-      .mockResolvedValue(Response.json({ ok: true }));
-
-    vi.stubGlobal("fetch", fetchImplementation);
-
-    await expect(
-      createApiClient("main").get("https://public.example.test/characters"),
-    ).resolves.toEqual({ ok: true });
-    expect(String(fetchImplementation.mock.calls[0]?.[0])).toBe(
-      "https://public.example.test/characters",
-    );
-  });
-
   it("uses the global fetch fallback", async () => {
     const fetchImplementation = vi
       .fn<TestFetch>()
@@ -480,7 +431,7 @@ describe("API client transport", () => {
       },
     });
 
-    await expect(createApiClient("main").get("/status")).resolves.toEqual({
+    await expect(executeApiRequest("main", "/status")).resolves.toEqual({
       ok: true,
     });
     expect(fetchImplementation).toHaveBeenCalledTimes(1);

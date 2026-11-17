@@ -1,8 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
-import { fixGeneratedOutput } from "./fix-generated-output";
-import { clientServices } from "./client-services";
+import { API_SERVICE_NAMES } from "@lootlog/schema/api-services";
+import { fixRequestOptionsType } from "./generation";
 
 const generatedRoot = resolve("src/generated");
 
@@ -27,7 +27,7 @@ rmSync(generatedRoot, { force: true, recursive: true });
 
 mkdirSync(generatedRoot, { recursive: true });
 
-for (const service of Object.keys(clientServices)) {
+for (const service of API_SERVICE_NAMES) {
   run(process.execPath, [
     "x",
     "orval",
@@ -38,4 +38,6 @@ for (const service of Object.keys(clientServices)) {
   ]);
 }
 
-fixGeneratedOutput();
+for (const service of API_SERVICE_NAMES) {
+  fixRequestOptionsType(resolve(generatedRoot, `${service}.ts`));
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mapMemberActivityStatsByDiscordIdAndSource } from "./member-activity-stats.utils";
-import type { MemberActivityStats } from "./member-activity-stats-api";
+import type { MemberActivityStatsResponseDto as MemberActivityStats } from "@lootlog/client/activity";
 
 const buildStats = (
   overrides: Partial<MemberActivityStats>,
