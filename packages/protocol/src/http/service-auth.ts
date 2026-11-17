@@ -13,7 +13,7 @@ export const matchesServiceSecret = (
   return given.length === expected.length && timingSafeEqual(given, expected);
 };
 
-const BEARER_CREDENTIALS = /^Bearer\s+(.+)$/iu;
+const BEARER_CREDENTIALS = /^Bearer\s+(\S.*)$/iu;
 
 /** The token of an `Authorization: Bearer` header; the scheme name is case-insensitive. */
 export const readBearerToken = (
