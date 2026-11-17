@@ -23,11 +23,11 @@ import type {
   UpdateDocumentRequest,
 } from "#src/contracts/docs/schemas";
 
-export type Guild = typeof guildTable.$inferSelect;
+type Guild = typeof guildTable.$inferSelect;
 
-export type Member = typeof memberTable.$inferSelect;
+type Member = typeof memberTable.$inferSelect;
 
-export type Role = typeof roleTable.$inferSelect;
+type Role = typeof roleTable.$inferSelect;
 
 export interface AuthorizedDocsCaller {
   readonly discordId: string;

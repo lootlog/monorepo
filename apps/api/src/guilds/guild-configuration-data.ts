@@ -23,12 +23,12 @@ import type { UpdateOrganizationConfigRequest } from "#src/contracts/guilds/sche
 
 type DataEffect = Effect.Effect<unknown, AccountOrganizationOperationError>;
 
-export const invalidReservationRange = () =>
+const invalidReservationRange = () =>
   new InvalidRequestError({
     code: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
   });
 
-export const validateGuildConfiguration = (
+const validateGuildConfiguration = (
   payload: UpdateOrganizationConfigRequest,
 ) => {
   if (
@@ -41,7 +41,7 @@ export const validateGuildConfiguration = (
   }
 };
 
-export const validateGuildConfigurationAgainstStored = (
+const validateGuildConfigurationAgainstStored = (
   payload: UpdateOrganizationConfigRequest,
   stored: typeof guildTable.$inferSelect | undefined,
 ) => {
@@ -61,7 +61,7 @@ export const validateGuildConfigurationAgainstStored = (
   }
 };
 
-export const buildGuildConfigurationUpdate = (
+const buildGuildConfigurationUpdate = (
   payload: UpdateOrganizationConfigRequest,
   vanityUrl: string | null,
 ) => {

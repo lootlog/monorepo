@@ -66,18 +66,18 @@ export const SET_STAT_SECTIONS = [
   },
 ] as const satisfies ReadonlyArray<{ id: string; stats: readonly SetStat[] }>;
 
-export type SetStatSection = (typeof SET_STAT_SECTIONS)[number];
+type SetStatSection = (typeof SET_STAT_SECTIONS)[number];
 
 export type SetStatDefinition = SetStatSection["stats"][number];
 
 /** Every item stat a set adds up. */
-export const SUMMED_STAT_KEYS = [
+const SUMMED_STAT_KEYS = [
   ...new Set(
     SET_STAT_SECTIONS.flatMap(({ stats }) => stats.flatMap(({ keys }) => keys)),
   ),
 ];
 
-export type SummedStatKey = (typeof SUMMED_STAT_KEYS)[number];
+type SummedStatKey = (typeof SUMMED_STAT_KEYS)[number];
 
 export type StatTotals = Partial<Record<SummedStatKey, number>>;
 

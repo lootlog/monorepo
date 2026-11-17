@@ -34,10 +34,10 @@ const WRITE_BATCH = 500;
 const READ_BATCH = 1000;
 
 /** An item id and the name its page goes by. */
-export type CatalogItemName = { readonly id: number; readonly name: string };
+type CatalogItemName = { readonly id: number; readonly name: string };
 
 /** What the catalog index needs of a current NPC identity. */
-export type CatalogNpcName = {
+type CatalogNpcName = {
   readonly id: number;
   readonly name: string;
   readonly type: string | null;

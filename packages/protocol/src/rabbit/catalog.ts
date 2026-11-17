@@ -11,7 +11,7 @@ import { Schema } from "effect";
 const ObservedAt = Schema.String;
 
 /** The NPC a dialog or fight's items came from, in its catalog identity. */
-export const CatalogDropSource = Schema.Struct({
+const CatalogDropSource = Schema.Struct({
   id: Schema.Number,
   identityNamespace: NpcIdentityNamespaceSchema,
   name: Schema.String,
@@ -65,13 +65,13 @@ export type CatalogNpcObservation = typeof CatalogNpcObservation.Type;
  * Whether each party member rolls a loot of their own, over the items of
  * their profession, or the party shares the boss's rolls.
  */
-export const CatalogLootMode = Schema.Literals(["SHARED", "PERSONAL"]);
+const CatalogLootMode = Schema.Literals(["SHARED", "PERSONAL"]);
 
 /**
  * Where the rolls come from: the parties kills reported, or, until enough
  * did, the parties of recorded loots.
  */
-export const CatalogLootRollsBasis = Schema.Literals(["PARTY", "LOOTS"]);
+const CatalogLootRollsBasis = Schema.Literals(["PARTY", "LOOTS"]);
 
 /**
  * The items a monster no longer drops and how often its kills drop each
@@ -104,7 +104,7 @@ const Day = Schema.String.check(Schema.isPattern(/^\d{4}-\d{2}-\d{2}$/));
  * One change the game made to an item, between the day its old revision was
  * last looted and the day the new one was first looted.
  */
-export const CatalogItemRevision = Schema.Struct({
+const CatalogItemRevision = Schema.Struct({
   name: Schema.String,
   icon: Schema.String,
   lvl: Schema.Number,

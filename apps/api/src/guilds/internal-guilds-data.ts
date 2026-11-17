@@ -30,7 +30,7 @@ export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuild
 export type InternalGuildsCache = UserGuildPermissionsCache &
   GuildConfigurationCache;
 
-export type GuildRecord = typeof guildTable.$inferSelect;
+type GuildRecord = typeof guildTable.$inferSelect;
 
 export interface MemberIdentity {
   readonly userId: string;

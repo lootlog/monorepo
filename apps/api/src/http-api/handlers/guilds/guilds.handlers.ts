@@ -29,19 +29,19 @@ const guildConfigurationData = <A>(
   ) => Effect.Effect<A, AccountOrganizationOperationError>,
 ) => Effect.flatMap(GuildConfigurationData, operation);
 
-export const manageableCurrentGuildList = Effect.fn(
-  "manageableCurrentGuildList",
-)(function* () {
-  const current = yield* identity;
+const manageableCurrentGuildList = Effect.fn("manageableCurrentGuildList")(
+  function* () {
+    const current = yield* identity;
 
-  const value = yield* data((service) =>
-    service.getManageableUserGuilds(current),
-  );
+    const value = yield* data((service) =>
+      service.getManageableUserGuilds(current),
+    );
 
-  return yield* decode(ManageableOrganizationsResponse, value);
-});
+    return yield* decode(ManageableOrganizationsResponse, value);
+  },
+);
 
-export const guildRead = Effect.fn("guildRead")(function* (guildId: string) {
+const guildRead = Effect.fn("guildRead")(function* (guildId: string) {
   const authorized = yield* authorizeGuild(guildId, [
     Permission.LOOTLOG_ACCESS,
   ]);
@@ -68,19 +68,19 @@ export const updateGuildConfiguration = Effect.fn(
   return yield* decode(OrganizationSummary, value);
 });
 
-export const guildWorlds = Effect.fn("GuildsControllerGetWorldsByGuildId")(
-  function* (guildId: string) {
-    const authorized = yield* authorizeGuild(guildId, [
-      Permission.LOOTLOG_ACCESS,
-    ]);
+const guildWorlds = Effect.fn("GuildsControllerGetWorldsByGuildId")(function* (
+  guildId: string,
+) {
+  const authorized = yield* authorizeGuild(guildId, [
+    Permission.LOOTLOG_ACCESS,
+  ]);
 
-    const value = yield* guildConfigurationData((service) =>
-      service.getWorldsByGuildId(authorized.guildId),
-    );
+  const value = yield* guildConfigurationData((service) =>
+    service.getWorldsByGuildId(authorized.guildId),
+  );
 
-    return yield* decode(OrganizationWorldsResponse, value);
-  },
-);
+  return yield* decode(OrganizationWorldsResponse, value);
+});
 
 export const guildPermissions = Effect.fn("guildPermissions")(function* (
   guildId: string,
@@ -95,7 +95,7 @@ export const guildPermissions = Effect.fn("guildPermissions")(function* (
   );
 });
 
-export const guildDiscordSync = Effect.fn("guildDiscordSync")(function* (
+const guildDiscordSync = Effect.fn("guildDiscordSync")(function* (
   guildId: string,
   refresh: boolean,
 ) {

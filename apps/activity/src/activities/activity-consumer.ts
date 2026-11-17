@@ -17,7 +17,7 @@ import { ActivityRepository } from "./activity-repository.js";
 import { decodeCreateActivity } from "./activity-model.js";
 import { ActivityConfig } from "#src/config/activity-config";
 
-export const activityRoutes = {
+const activityRoutes = {
   activityLog: consumerRoute(
     "activity-log-create",
     RabbitRoutingKey.ACTIVITY_LOG_CREATE,

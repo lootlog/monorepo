@@ -126,7 +126,7 @@ export const getGuildTimers = Effect.fn("getGuildTimers")(function* (
   return yield* mapResponseError(decodeTimersResponse(value));
 });
 
-export const getGuildHeroTimers = Effect.fn("getGuildHeroTimers")(function* (
+const getGuildHeroTimers = Effect.fn("getGuildHeroTimers")(function* (
   guildId: string,
   world: string,
 ) {
@@ -149,7 +149,7 @@ export const searchTimerNpcs = Effect.fn("searchTimerNpcs")(function* (
   return yield* mapResponseError(decodeTimerNpcSearchResponse(value));
 });
 
-export const createAutoTimer = Effect.fn("createAutoTimer")(function* (
+const createAutoTimer = Effect.fn("createAutoTimer")(function* (
   payload: CreateAutoTimerRequest,
 ) {
   const current = yield* identity;

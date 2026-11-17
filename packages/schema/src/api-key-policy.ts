@@ -12,7 +12,7 @@ const decodeAccess = Schema.decodeUnknownOption(
 );
 
 /** Undefined means a session; null means a malformed proxy assertion and must fail closed. */
-export function readApiKeyAccess(
+function readApiKeyAccess(
   headers: Readonly<Record<string, string | undefined>>,
 ): ApiKeyAccess | null | undefined {
   const value = headers[API_KEY_ACCESS_HEADER];

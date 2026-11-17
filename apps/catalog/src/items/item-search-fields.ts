@@ -9,7 +9,7 @@ import { PROFESSION_SHORTNAMES } from "@lootlog/domain/profession";
 
 const numericValuePattern = /^[+-]?\d+(?:\.\d+)?$/;
 
-export type ItemStatValue = string | number | boolean | string[];
+type ItemStatValue = string | number | boolean | string[];
 
 export type ItemSearchFields = {
   stats: Record<string, ItemStatValue>;

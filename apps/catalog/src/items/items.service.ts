@@ -142,7 +142,7 @@ const mergeItemsByCatalogKey = (
  * merged, the searchable stat fields expanded and the attack speed the item
  * adds at +5. The seed script and the consumer share it.
  */
-export const toItemDocuments = (items: ReadonlyArray<IndexItem>) =>
+const toItemDocuments = (items: ReadonlyArray<IndexItem>) =>
   mergeItemsByCatalogKey(items).map((item) => ({
     ...item,
     ...createItemSearchFields(item.stat),

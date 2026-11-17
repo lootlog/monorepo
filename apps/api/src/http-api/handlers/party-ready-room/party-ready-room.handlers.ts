@@ -246,7 +246,7 @@ export const cancelReadyRoom = Effect.fn("cancelReadyRoom")(function* (
   return yield* decode(PartyReadyRoomUpdateDomainResponse, value);
 });
 
-export const extendReadyRoom = Effect.fn("extendReadyRoom")(function* (
+const extendReadyRoom = Effect.fn("extendReadyRoom")(function* (
   notificationId: string,
   payload: PartyRevisionRequest,
 ) {

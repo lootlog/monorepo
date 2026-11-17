@@ -37,7 +37,7 @@ import { buildFightSources } from "./monster-fights.js";
  * moves it by more than a percentage point. Kills that named their party
  * need as many before their rolls replace the estimate from loots.
  */
-export const MIN_DROP_RATE_KILLS = 100;
+const MIN_DROP_RATE_KILLS = 100;
 
 /**
  * Colossi whose loots give at least this many items per party member give
@@ -447,10 +447,10 @@ export type LootParties = PartyMembers & {
  * Whether each member rolls their own loot, read from the boss's type and
  * its recorded fights, or the party shares one.
  */
-export type LootMode = "SHARED" | "PERSONAL";
+type LootMode = "SHARED" | "PERSONAL";
 
 /** Where a boss's loot rolls per kill come from. */
-export type LootRollsBasis = "PARTY" | "LOOTS";
+type LootRollsBasis = "PARTY" | "LOOTS";
 
 const bossKey = ({
   gameVersion,

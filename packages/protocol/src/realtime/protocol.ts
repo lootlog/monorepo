@@ -609,7 +609,7 @@ type EveryUnreadPayload<
  * The JSON payload the API publishes with each Organization event the gateway
  * forwards unread. Receivers trust it as the API's; the gateway does not.
  */
-export type OrganizationEventPayloads = EveryUnreadPayload<{
+type OrganizationEventPayloads = EveryUnreadPayload<{
   "chat.created": ChatMessageCreated;
   "chat.updated": ChatMessageUpdated;
   "chat.deleted": ChatMessageDeleted;

@@ -25,7 +25,7 @@ export interface SettingsSearchMatchRange {
   end: number;
 }
 
-export const normalizeSearchText = (value: string): string =>
+const normalizeSearchText = (value: string): string =>
   foldText(value).toLowerCase().trim();
 
 const tokenize = (value: string): string[] =>

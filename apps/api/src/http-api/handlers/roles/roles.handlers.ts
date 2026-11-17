@@ -54,13 +54,13 @@ const getGuildRoles = Effect.fn("RolesControllerGetGuildRoles")(function* (
   return yield* decode(RolesResponse, value);
 });
 
-export const getGuildRolesFromPath = (guildId: string | undefined) =>
+const getGuildRolesFromPath = (guildId: string | undefined) =>
   toDeclaredOrganizationWorkspaceError(
     Effect.flatMap(pathString(guildId, "guildId"), getGuildRoles),
     [403],
   );
 
-export const updateGuildRoleFromPath = (
+const updateGuildRoleFromPath = (
   guildId: string | undefined,
   roleId: string,
   payload: UpdateRolePermissionsRequest,
