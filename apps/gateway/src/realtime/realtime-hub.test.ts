@@ -1047,6 +1047,36 @@ describe("RealtimeHub federation", () => {
     expect(firstTarget.sent).toHaveLength(4);
   });
 
+  test("keeps federated scope keys readable by replicas of the previous release and lists local scopes", () => {
+    const hub = makeHub();
+
+    const full = {
+      topic: "map.air-tags",
+      organizationId: "organization-1",
+      eventId: "event-1",
+      world: "tempest",
+      mapId: 0,
+    } as const;
+
+    const partial = { topic: "map.air-tags", world: "tempest" } as const;
+
+    // Federated messages carry this key; a rolling deploy mixes releases.
+    expect(getScopeKey(full)).toBe(
+      '["map.air-tags","organization-1","event-1","tempest",0]',
+    );
+    expect(getScopeKey(partial)).toBe(
+      '["map.air-tags",null,null,"tempest",null]',
+    );
+
+    const target = makeTestSocket(makeAdminSession("local-scopes"));
+    hub.register(target.socket);
+    hub.subscribe(target.socket, full);
+    hub.subscribe(target.socket, partial);
+    hub.subscribe(target.socket, { topic: "organization.chat" });
+
+    expect(hub.getLocalScopes("map.air-tags")).toEqual([full, partial]);
+  });
+
   test.each(["scope", "scopes", "user", "discord", "presence"] as const)(
     "sends canonical local and remote frames through %s publication and rejects malformed federation",
     async (publication) => {

@@ -26,4 +26,6 @@ export function verifyGeneratedAssetReferences(
       `${documentName} references a generated asset outside the ${namespace} namespace: ${reference}`,
     );
   }
+
+  return references;
 }
