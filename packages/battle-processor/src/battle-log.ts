@@ -100,12 +100,35 @@ export type ParsedBattlePayload = {
  */
 export const NO_WINNER = "?";
 
-const parseHpPercentage = (hp: string | undefined): number | null =>
-  hp ? Number.parseFloat(hp.replace(",", ".")) : null;
+const parseHpPercentage = (hp: string): number | null => {
+  const hpPercentage = Number.parseFloat(hp.replace(",", "."));
+
+  return Number.isNaN(hpPercentage) ? null : hpPercentage;
+};
 
 /**
- * Splits each `actor=hp;target=hp;action=param;...` row. An id of `0` means
- * the row has no warrior on that side, such as a damage over time tick.
+ * Reads `key=value` the way Margonem's `BattleMessages.js` does: the value is
+ * the text between the first and the second `=`.
+ */
+const splitPair = (part: string): [key: string, value: string] => {
+  const [key = "", value = ""] = part.split("=");
+
+  return [key, value];
+};
+
+const parseMoveSide = (part = "0") => {
+  const [id, hp] = splitPair(part);
+
+  return {
+    id: id !== "0" && id !== "" ? id : null,
+    hpPercentage: parseHpPercentage(hp),
+  };
+};
+
+/**
+ * Splits each `actor=hp;target=hp;action=param;...` row. An id of `0` or an
+ * empty id means the row has no warrior on that side, such as a damage over
+ * time tick. An unreadable HP reads as unknown (`null`).
  */
 export const parseBattleMoves = (
   events: readonly BattleEvent[],
@@ -114,16 +137,16 @@ export const parseBattleMoves = (
     .flatMap((event) => event.f?.m ?? [])
     .map((move) => {
       const [attackerPart, defenderPart, ...actions] = move.split(";");
-      const [attackerId = "0", attackerHp] = (attackerPart ?? "0").split("=");
-      const [defenderId = "0", defenderHp] = (defenderPart ?? "0").split("=");
+      const attacker = parseMoveSide(attackerPart);
+      const defender = parseMoveSide(defenderPart);
 
       return {
-        attackerId: attackerId !== "0" ? attackerId : null,
-        defenderId: defenderId !== "0" ? defenderId : null,
-        attackerHpPercentage: parseHpPercentage(attackerHp),
-        defenderHpPercentage: parseHpPercentage(defenderHp),
+        attackerId: attacker.id,
+        defenderId: defender.id,
+        attackerHpPercentage: attacker.hpPercentage,
+        defenderHpPercentage: defender.hpPercentage,
         actions: actions.map((action) => {
-          const [actionType = "", param = ""] = action.split("=");
+          const [actionType, param] = splitPair(action);
 
           return { actionType, param };
         }),
