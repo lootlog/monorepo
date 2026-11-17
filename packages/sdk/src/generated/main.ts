@@ -5,7 +5,7 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
-import { mainFetch } from '../../../client/src/mutators';
+import { mainFetch } from '@lootlog/client/mutators';
 export type UserFeedResponseDtoOutputItemsItem = {
   id: string;
   /**

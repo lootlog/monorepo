@@ -35,8 +35,18 @@ const result = spawnSync(
 
 if (result.status !== 0) throw new Error("Public SDK generation failed");
 
+// Orval imports the mutator by a relative path into the client's sources;
+// import it through the client package instead.
 for (const service of PUBLIC_API_SERVICES) {
-  fixRequestOptionsType(`${root}/src/generated/${service}.ts`);
+  const generatedPath = `${root}/src/generated/${service}.ts`;
+  writeFileSync(
+    generatedPath,
+    readFileSync(generatedPath, "utf8").replace(
+      /(from\s*["'])[^"']*\/client\/src\/mutators(["'])/,
+      "$1@lootlog/client/mutators$2",
+    ),
+  );
+  fixRequestOptionsType(generatedPath);
 }
 
 const formatting = spawnSync(
