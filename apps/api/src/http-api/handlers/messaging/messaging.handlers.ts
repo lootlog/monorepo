@@ -51,7 +51,7 @@ const volunteerForNotification = (
     yield* data.volunteer(authenticated.discordId, notificationId, payload);
   });
 
-export const answerNotificationGoing = (
+const answerNotificationGoing = (
   notificationId: string,
   payload: NotificationGoingRequest,
 ) =>

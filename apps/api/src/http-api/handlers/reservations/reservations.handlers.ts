@@ -70,19 +70,21 @@ export const listReservationSpots = Effect.fn("listReservationSpots")(
   },
 );
 
-export const listSpotReservations = Effect.fn("listSpotReservations")(
-  function* (guildId: string, spotId: string, query: ReservationWindowQuery) {
-    const access = yield* requireGuild(guildId, [
-      Permission.LOOTLOG_RESERVATIONS_READ,
-    ]);
+const listSpotReservations = Effect.fn("listSpotReservations")(function* (
+  guildId: string,
+  spotId: string,
+  query: ReservationWindowQuery,
+) {
+  const access = yield* requireGuild(guildId, [
+    Permission.LOOTLOG_RESERVATIONS_READ,
+  ]);
 
-    const value = yield* readData((service) =>
-      service.listWindow(toViewer(access), spotId, query.from, query.to),
-    );
+  const value = yield* readData((service) =>
+    service.listWindow(toViewer(access), spotId, query.from, query.to),
+  );
 
-    return yield* decode(ReservationWindowBoundary, value);
-  },
-);
+  return yield* decode(ReservationWindowBoundary, value);
+});
 
 export const createReservation = Effect.fn("createReservation")(function* (
   guildId: string,
@@ -101,7 +103,7 @@ export const createReservation = Effect.fn("createReservation")(function* (
   return yield* decode(ReservationBoundary, value);
 });
 
-export const deleteVisibleReservation = Effect.fn("deleteVisibleReservation")(
+const deleteVisibleReservation = Effect.fn("deleteVisibleReservation")(
   function* (guildId: string, reservationId: number) {
     const access = yield* requireGuild(guildId, [
       Permission.LOOTLOG_RESERVATIONS_READ,
@@ -130,13 +132,13 @@ const setReservationSpotPin = Effect.fn("setReservationSpotPin")(function* (
   );
 });
 
-export const pinReservationSpot = (guildId: string, spotId: string) =>
+const pinReservationSpot = (guildId: string, spotId: string) =>
   setReservationSpotPin(guildId, spotId, true);
 
-export const unpinReservationSpot = (guildId: string, spotId: string) =>
+const unpinReservationSpot = (guildId: string, spotId: string) =>
   setReservationSpotPin(guildId, spotId, false);
 
-export const listMyReservations = Effect.fn("listMyReservations")(function* (
+const listMyReservations = Effect.fn("listMyReservations")(function* (
   query: MyReservationsQuery,
 ) {
   const current = yield* identity;
@@ -148,14 +150,14 @@ export const listMyReservations = Effect.fn("listMyReservations")(function* (
   return yield* decode(MyReservationsBoundary, value);
 });
 
-export const deleteMyReservation = Effect.fn("deleteMyReservation")(function* (
+const deleteMyReservation = Effect.fn("deleteMyReservation")(function* (
   reservationId: number,
 ) {
   const current = yield* identity;
   yield* data((service) => service.deleteOwned(current, reservationId));
 });
 
-export const updateMyReservation = Effect.fn("updateMyReservation")(function* (
+const updateMyReservation = Effect.fn("updateMyReservation")(function* (
   reservationId: number,
   payload: UpdateReservationRequest,
 ) {

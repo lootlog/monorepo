@@ -236,23 +236,7 @@ export type BattleDurationStats = DeepMutable<
   typeof BattleDurationStatsResponseSchema.Type
 >;
 
-export type PhGrowthDataPoint = DeepMutable<
-  typeof PhGrowthDataPointResponseSchema.Type
->;
-
-export type RatingGrowthDataPoint = DeepMutable<
-  typeof RatingGrowthDataPointResponseSchema.Type
->;
-
-export type RatingDeltaByOpponent = DeepMutable<
-  typeof RatingDeltaByOpponentResponseSchema.Type
->;
-
 export type AbyssSeason = DeepMutable<typeof AbyssSeasonResponseSchema.Type>;
-
-export type PlayerVsPlayerBattle = DeepMutable<
-  typeof PlayerVsPlayerBattleResponseSchema.Type
->;
 
 export type PlayerVsPlayerPaginatedResponse = DeepMutable<
   typeof PlayerVsPlayerPaginatedResponseSchema.Type

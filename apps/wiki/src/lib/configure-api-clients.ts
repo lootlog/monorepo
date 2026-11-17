@@ -8,7 +8,7 @@ import { readCatalogUpstream } from "@/lib/catalog-upstream";
 const SERVER_TIMEOUT_MS = 1500;
 
 /** Where the browser reads the catalog: the Worker, which holds the token. */
-export const CATALOG_PROXY_PATH = "/api/catalog";
+const CATALOG_PROXY_PATH = "/api/catalog";
 
 let isConfigured = false;
 

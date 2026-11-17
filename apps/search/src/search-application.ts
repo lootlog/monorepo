@@ -12,7 +12,7 @@ import { SearchHttpServer } from "#src/http-api/search-http";
 import { SearchOperations } from "#src/http-api/search-operations";
 
 // Replays get their own queue, so a backfill never delays live loots.
-export const searchQueues = {
+const searchQueues = {
   players: queue("search-players-index", RabbitRoutingKey.SEARCH_PLAYERS_INDEX),
   playersReplay: queue(
     "search.players.replay",

@@ -63,7 +63,7 @@ export const acceptReservationShareInvitation = Effect.fn(
   return yield* decode(AcceptedReservationShareBoundary, value);
 });
 
-export const createReservationShareInvitation = Effect.fn(
+const createReservationShareInvitation = Effect.fn(
   "createReservationShareInvitation",
 )(function* (guildId: string) {
   const access = yield* requireSharingAdmin(guildId);
@@ -75,7 +75,7 @@ export const createReservationShareInvitation = Effect.fn(
   return yield* decode(CreatedReservationShareInvitationBoundary, value);
 });
 
-export const revokeReservationShareInvitation = Effect.fn(
+const revokeReservationShareInvitation = Effect.fn(
   "revokeReservationShareInvitation",
 )(function* (guildId: string, invitationId: string) {
   const access = yield* requireSharingAdmin(guildId);
@@ -84,14 +84,13 @@ export const revokeReservationShareInvitation = Effect.fn(
   );
 });
 
-export const revokeReservationShare = Effect.fn("revokeReservationShare")(
-  function* (guildId: string, shareId: string) {
-    const access = yield* requireSharingAdmin(guildId);
-    yield* sharingData((service) =>
-      service.revokeShare(access.guildId, shareId),
-    );
-  },
-);
+const revokeReservationShare = Effect.fn("revokeReservationShare")(function* (
+  guildId: string,
+  shareId: string,
+) {
+  const access = yield* requireSharingAdmin(guildId);
+  yield* sharingData((service) => service.revokeShare(access.guildId, shareId));
+});
 
 export const ReservationSharingHandlers = HttpApiBuilder.group(
   LootlogApi,

@@ -27,7 +27,6 @@
   },
   "dependencies": {
     "@better-auth/api-key": "1.7.16",
-    "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
     "@lootlog/database": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",

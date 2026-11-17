@@ -101,7 +101,7 @@ export const deadLetterRoutingKey = <Key extends RabbitEventRoutingKey>(
   routingKey: Key,
 ): `${Key}.dlq` => `${routingKey}.dlq`;
 
-export const DEFAULT_RETRY_TTL_MS = 30_000;
+const DEFAULT_RETRY_TTL_MS = 30_000;
 
 /** Delayed retries a failing delivery gets before it is dead-lettered. */
 const MAX_DELAYED_RETRIES = 3;

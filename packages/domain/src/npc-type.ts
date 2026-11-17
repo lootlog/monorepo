@@ -74,8 +74,6 @@ export const TRACKABLE_NPC_TYPES = [
   "ELITE2",
 ] as const satisfies ReadonlyArray<(typeof NPC_TYPES_STRONGEST_FIRST)[number]>;
 
-export type TrackableNpcType = (typeof TRACKABLE_NPC_TYPES)[number];
-
 /** Position in `NPC_TYPES_STRONGEST_FIRST`; any other type or none ranks last. */
 export const getNpcTypeStrengthRank = (type: string | null | undefined) => {
   const rank = NPC_TYPES_STRONGEST_FIRST.findIndex(

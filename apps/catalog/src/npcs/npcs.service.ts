@@ -105,7 +105,7 @@ export const collapseByNameAndType = <
  * share it. `worlds` holds every world the entry was observed in, and
  * `observedLootId` orders observations.
  */
-export const toNpcDocument = (npc: IndexNpc) => {
+const toNpcDocument = (npc: IndexNpc) => {
   const prof = npc.prof ?? "";
 
   const type = Schema.is(NpcTypeSchema)(npc.type)
@@ -153,7 +153,7 @@ export type NpcEntry = ReturnType<typeof toNpcDocument> & {
  * monster was rebalanced, is its history. The catalog lists only current
  * identities, so a monster is found at its level now and not its highest one.
  */
-export const currentRevisions = (
+const currentRevisions = (
   documents: ReadonlyArray<
     Pick<NpcEntry, "uid" | "monsterKey" | "lvl" | "observedLootId">
   >,
@@ -181,10 +181,7 @@ const isNewerObservation = (
  * Delivery order is not chronology: a retried or redelivered publication can
  * arrive after a newer one.
  */
-export const mergeNpcDocument = (
-  incoming: NpcEntry,
-  stored: NpcEntry,
-): NpcEntry => {
+const mergeNpcDocument = (incoming: NpcEntry, stored: NpcEntry): NpcEntry => {
   const locations = stored.locations ?? incoming.locations;
   const formerLevels = stored.formerLevels ?? incoming.formerLevels;
 
@@ -199,9 +196,7 @@ export const mergeNpcDocument = (
 };
 
 /** Documents of one catalog entry in one batch merge into one. */
-export const mergeNpcDocuments = (
-  documents: ReadonlyArray<NpcEntry>,
-): NpcEntry[] => {
+const mergeNpcDocuments = (documents: ReadonlyArray<NpcEntry>): NpcEntry[] => {
   const byUid = new Map<string, NpcEntry>();
 
   for (const document of documents) {

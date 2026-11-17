@@ -25,9 +25,9 @@ export class UserLootlogConfigOperationError extends TaggedErrorClass<UserLootlo
 
 export type Operation = Effect.Effect<unknown, UserLootlogConfigOperationError>;
 
-export const CACHE_TTL_SECONDS = 60;
+const CACHE_TTL_SECONDS = 60;
 
-export const getPlayerConfigKey = (
+const getPlayerConfigKey = (
   player: PlayersCatchingOrganizationsRequest["players"][number],
 ) => `${player.userId}:${player.accountId}:${player.characterId}`;
 

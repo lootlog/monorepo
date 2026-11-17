@@ -123,7 +123,7 @@ const publishJson = <
   content: CanonicalRabbitEvent<Key>,
 ) => rabbit.publish(eventMessage(routingKey, content)).pipe(Effect.asVoid);
 
-export const makeGlobalChatEvents = (
+const makeGlobalChatEvents = (
   rabbit: RabbitMessaging["Service"],
 ): GlobalChatEvents => ({
   publish: (message) =>

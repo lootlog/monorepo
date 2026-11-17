@@ -65,7 +65,7 @@ export type CharacterAuraId = typeof CharacterAuraIdSchema.Type;
 /**
  * Auras only Lootlog admins may wear; a granted User chooses among the rest.
  */
-export const ADMIN_CHARACTER_AURA_IDS = [
+const ADMIN_CHARACTER_AURA_IDS = [
   "sovereign",
   "seraph",
   "eclipse",

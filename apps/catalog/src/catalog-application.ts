@@ -37,7 +37,7 @@ const catalogQueue = (
 
 // Replays get their own queues, so live loots never queue behind a backfill;
 // every change that saves still takes its turn on the catalog's writer lock.
-export const catalogQueues = {
+const catalogQueues = {
   items: catalogQueue(
     "catalog.items.index",
     RabbitRoutingKey.CATALOG_ITEMS_INDEX,
@@ -73,7 +73,7 @@ export const catalogQueues = {
 const isPermanent = (error: CatalogWriteFailure) =>
   error instanceof SearchOperationFailure && isPermanentSearchFailure(error);
 
-export const CatalogConsumers = Layer.effectDiscard(
+const CatalogConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
     const catalog = yield* CatalogOperations;
 

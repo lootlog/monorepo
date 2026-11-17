@@ -22,14 +22,14 @@ import type { Timer } from "#src/timers/timers.types";
 import { buildTimerKey, buildTimerLockKey } from "#src/timers/timer-key";
 import type { EventTimerStore } from "#src/events/respawn/event-timer.repository";
 
-export interface EventTimerLookupInput {
+interface EventTimerLookupInput {
   readonly guildId: string;
   readonly world: string;
   readonly npcId: number;
   readonly npcName: string;
 }
 
-export interface EventRespawnTimerInput extends EventTimerLookupInput {
+interface EventRespawnTimerInput extends EventTimerLookupInput {
   readonly npcIcon: string | null;
   readonly minSpawnTime: Date;
   readonly maxSpawnTime: Date;

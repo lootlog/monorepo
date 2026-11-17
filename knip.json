@@ -21,6 +21,8 @@
       "project": [
         "src/**/*.{ts,tsx}",
         "test/**/*.{ts,tsx}",
+        "lib/**/*.{ts,tsx}",
+        "components/**/*.{ts,tsx}",
         "scripts/**/*.{ts,mjs}",
         "*.{ts,mts,js,mjs}",
         "*.config.{ts,mts,js,mjs}",

@@ -21,7 +21,7 @@ import type {
   ReactNode,
 } from "react";
 
-export type GameItem = {
+type GameItem = {
   icon: string;
   name: string;
   rarity?: DisplayItemRarity | null;
@@ -38,7 +38,7 @@ export type ItemTileLabels = {
 };
 
 /** An item the tooltip shows beside this one, such as the one worn instead. */
-export type ItemTileComparison = {
+type ItemTileComparison = {
   item: GameItem;
   /** What the compared item is, shown above it. */
   label: string;

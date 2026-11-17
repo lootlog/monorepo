@@ -165,7 +165,7 @@ export const makeEventPublisher = (
 });
 
 /** A payload that does not decode now never will, so it fails as unprocessable. */
-export const decodeEventDelivery = <Key extends CanonicalRabbitEventRoutingKey>(
+const decodeEventDelivery = <Key extends CanonicalRabbitEventRoutingKey>(
   routingKey: Key,
   delivery: RabbitDelivery,
 ): Effect.Effect<CanonicalRabbitEvent<Key>, UnprocessableDelivery> =>

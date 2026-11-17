@@ -17,14 +17,12 @@ export const GlobalChatMessageResponse = Schema.Struct({
 export type GlobalChatMessageResponse = typeof GlobalChatMessageResponse.Type;
 
 /** What the caller may do in the global chat. */
-export const GlobalChatViewer = Schema.Struct({
+const GlobalChatViewer = Schema.Struct({
   isAdmin: Schema.Boolean,
   muted: Schema.Boolean,
   /** When the caller's mute ends; null while not muted or muted until lifted. */
   mutedUntil: Schema.NullOr(DateTimeString),
 }).annotate({ identifier: "GlobalChatViewer" });
-
-export type GlobalChatViewer = typeof GlobalChatViewer.Type;
 
 export const GlobalChatMessagesResponse = Schema.Struct({
   /** Oldest first, ending with the newest message older than the cursor. */

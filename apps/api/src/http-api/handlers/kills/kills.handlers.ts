@@ -33,15 +33,16 @@ export const createKill = Effect.fn("kills.createKill")(function* (
   return yield* data((service) => service.createKill(caller, payload));
 });
 
-export const getGuildKillStats = Effect.fn("kills.getGuildKillStats")(
-  function* (guildId: string | undefined, query: GuildKillStatsQuery) {
-    const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
+const getGuildKillStats = Effect.fn("kills.getGuildKillStats")(function* (
+  guildId: string | undefined,
+  query: GuildKillStatsQuery,
+) {
+  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
 
-    return yield* data((service) => service.getGuildKillStats(caller, query));
-  },
-);
+  return yield* data((service) => service.getGuildKillStats(caller, query));
+});
 
-export const getUserKillStats = Effect.fn("kills.getUserKillStats")(function* (
+const getUserKillStats = Effect.fn("kills.getUserKillStats")(function* (
   query: UserKillStatsQuery,
 ) {
   const caller = yield* requireCaller;
@@ -49,7 +50,7 @@ export const getUserKillStats = Effect.fn("kills.getUserKillStats")(function* (
   return yield* data((service) => service.getUserKillStats(caller, query));
 });
 
-export const getUserNpcKills = Effect.fn("kills.getUserNpcKills")(function* (
+const getUserNpcKills = Effect.fn("kills.getUserNpcKills")(function* (
   query: UserNpcKillsQuery,
 ) {
   const caller = yield* requireCaller;
@@ -57,7 +58,7 @@ export const getUserNpcKills = Effect.fn("kills.getUserNpcKills")(function* (
   return yield* data((service) => service.getUserNpcKills(caller, query));
 });
 
-export const getGuildTopNpcs = Effect.fn("kills.getGuildTopNpcs")(function* (
+const getGuildTopNpcs = Effect.fn("kills.getGuildTopNpcs")(function* (
   guildId: string | undefined,
   query: GuildTopNpcsQuery,
 ) {
@@ -66,17 +67,17 @@ export const getGuildTopNpcs = Effect.fn("kills.getGuildTopNpcs")(function* (
   return yield* data((service) => service.getGuildTopNpcs(caller, query));
 });
 
-export const getGuildTopKillersByType = Effect.fn(
-  "kills.getGuildTopKillersByType",
-)(function* (guildId: string | undefined, query: GuildTopKillersQuery) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
+const getGuildTopKillersByType = Effect.fn("kills.getGuildTopKillersByType")(
+  function* (guildId: string | undefined, query: GuildTopKillersQuery) {
+    const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
 
-  return yield* data((service) =>
-    service.getGuildTopKillersByType(caller, query),
-  );
-});
+    return yield* data((service) =>
+      service.getGuildTopKillersByType(caller, query),
+    );
+  },
+);
 
-export const getNpcKillers = Effect.fn("kills.getNpcKillers")(function* (
+const getNpcKillers = Effect.fn("kills.getNpcKillers")(function* (
   guildId: string | undefined,
   npcId: string,
   query: NpcKillersQuery,
@@ -137,7 +138,7 @@ export const getUserKillActivity = Effect.fn("kills.getUserKillActivity")(
   },
 );
 
-export const getUserKillCharacters = Effect.fn("kills.getUserKillCharacters")(
+const getUserKillCharacters = Effect.fn("kills.getUserKillCharacters")(
   function* () {
     const caller = yield* requireCaller;
 

@@ -88,7 +88,6 @@
       "version": "1.0.11",
       "dependencies": {
         "@better-auth/api-key": "1.7.16",
-        "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
         "@lootlog/database": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
@@ -211,7 +210,6 @@
       "name": "@lootlog/discord-bot",
       "version": "1.0.10",
       "dependencies": {
-        "@effect/platform-bun": "catalog:",
         "@lootlog/domain": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
@@ -379,7 +377,6 @@
       "name": "@lootlog/search",
       "version": "1.0.11",
       "dependencies": {
-        "@effect/platform-bun": "catalog:",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/meilisearch": "workspace:*",
         "@lootlog/messaging": "workspace:*",

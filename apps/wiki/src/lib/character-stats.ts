@@ -79,10 +79,10 @@ export const baseAttributes = (
   return attributes;
 };
 
-export type DamageRange = { min: number; max: number };
+type DamageRange = { min: number; max: number };
 
 /** An effect a hit may cause: how likely it is and how much it deals. */
-export type ChanceDamage = { chance: number; damage: number };
+type ChanceDamage = { chance: number; damage: number };
 
 export type CharacterStats = {
   hp: number;

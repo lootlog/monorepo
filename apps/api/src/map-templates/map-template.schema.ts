@@ -25,5 +25,3 @@ export const MapTemplateResponseSchema = Schema.Struct({
   maps: Schema.Array(MapTemplateMapSchema),
   createdAt: IsoDateTime,
 }).annotate({ identifier: "MapTemplateResponseDto" });
-
-export type MapTemplateResponse = typeof MapTemplateResponseSchema.Type;

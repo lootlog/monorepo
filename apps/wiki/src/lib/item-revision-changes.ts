@@ -5,7 +5,7 @@ import {
   mapStatsToDisplaySections,
 } from "@lootlog/ui/components/item-stat-utils";
 
-export type StatRevision = {
+type StatRevision = {
   key: string;
   /** The stat as the item showed it before the change; none when added. */
   before?: ItemDisplayValue;

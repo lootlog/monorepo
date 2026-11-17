@@ -21,7 +21,6 @@
     "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts"
   },
   "dependencies": {
-    "@effect/platform-bun": "catalog:",
     "@lootlog/domain": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/messaging": "workspace:*",
