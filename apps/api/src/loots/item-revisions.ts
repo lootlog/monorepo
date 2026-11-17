@@ -1,5 +1,9 @@
 import type { GameVersion } from "@lootlog/schema/game-version";
 import { MAX_FIXED_LEVELS } from "@lootlog/domain/elastic-level";
+import {
+  parseItemStatEntries,
+  withoutItemStat,
+} from "@lootlog/domain/item-stat";
 import { and, eq, sql } from "drizzle-orm";
 import { groupBy, maxBy, minBy, sortBy } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -83,29 +87,14 @@ const warsawDay = new Intl.DateTimeFormat("en-CA", {
 const toWarsawDay = (instant: Date) => warsawDay.format(instant);
 
 const statEntries = (stat: string) =>
-  new Map(
-    stat
-      .split(";")
-      .filter(Boolean)
-      .map((entry) => {
-        const separator = entry.indexOf("=");
-
-        return separator === -1
-          ? [entry, ""]
-          : [entry.slice(0, separator), entry.slice(separator + 1)];
-      }),
-  );
+  new Map(parseItemStatEntries(stat).map(({ key, value }) => [key, value]));
 
 /**
  * The stats without `etiquette`, the events an item was last available
  * during. The game writes it onto an event item when the event ends and adds
  * a year each time it returns, which leaves the item itself as it was.
  */
-const withoutEvents = (stat: string) =>
-  stat
-    .split(";")
-    .filter((entry) => !entry.startsWith("etiquette="))
-    .join(";");
+const withoutEvents = (stat: string) => withoutItemStat(stat, "etiquette");
 
 /**
  * Revisions that differ only in their events as one revision, looted from

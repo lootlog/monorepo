@@ -3,17 +3,13 @@ import {
   itemEventSlug,
   latestItemEvent,
 } from "@lootlog/domain/item-events";
-import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
+import { itemStatValue } from "@lootlog/domain/item-stat";
 import { t } from "@/i18n/messages";
 import { isHeroTrackersEvent } from "@/lib/hero-trackers";
 
 /** The events an item's stats name, as the game writes them. */
 export const itemEvents = (stat: string) =>
-  itemEventLabels(
-    String(
-      parseItemStats(stat).find(({ key }) => key === "etiquette")?.value ?? "",
-    ),
-  );
+  itemEventLabels(itemStatValue(stat, "etiquette") ?? "");
 
 /** The event a slug names, as any of its items writes it. */
 export const eventNameOf = (

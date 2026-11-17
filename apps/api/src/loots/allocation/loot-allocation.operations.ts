@@ -1,7 +1,7 @@
 import { getLootListCacheScope } from "#src/shared/cache";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { createHash } from "node:crypto";
-import { joinItemStat } from "@lootlog/database/item-stat";
+import { joinItemStat } from "@lootlog/domain/item-stat";
 import { Clock, Effect, Schema } from "effect";
 import type {
   GuildLootEventNpc,

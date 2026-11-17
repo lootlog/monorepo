@@ -2,7 +2,7 @@ import type {
   CatalogItemObservation,
   CatalogNpcObservation,
 } from "@lootlog/protocol/rabbit/catalog";
-import { splitItemStat } from "@lootlog/database/item-stat";
+import { splitItemStat } from "@lootlog/domain/item-stat";
 import { Schema } from "effect";
 import {
   compareNpcsStrongestFirst,

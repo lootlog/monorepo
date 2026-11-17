@@ -1,9 +1,10 @@
-import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
 import {
   formatItemDisplayValue,
   getItemStatTemplateValues,
+  ITEM_STAT_TAG_CLASS_NAMES,
   type ItemDisplayValue,
 } from "@lootlog/ui/components/item-stat-utils";
+import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
 import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 
 const translations = createTranslationLookup(itemStats);
@@ -13,9 +14,11 @@ const resolveTranslation = (path: string) =>
     path.startsWith("itemStats.") ? path.slice("itemStats.".length) : path,
   );
 
+const ITEM_STAT_TAG_NAMES = Object.keys(ITEM_STAT_TAG_CLASS_NAMES).join("|");
+
 /** The tags a translated stat marks its parts with for the tooltip. */
 export const itemStatTagPattern = () =>
-  /<(value|description|gold|legbon)>(.*?)<\/\1>/gs;
+  new RegExp(`<(${ITEM_STAT_TAG_NAMES})>(.*?)</\\1>`, "gs");
 
 /**
  * A stat's line as the game's tooltip words it, its parts still in their

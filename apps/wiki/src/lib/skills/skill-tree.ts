@@ -1,4 +1,4 @@
-import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import type { Profession } from "@/lib/equipment-set";
 import type { EquipmentSlotId } from "@/lib/equipment-slots";
 
@@ -139,8 +139,8 @@ export const wornSkillWeapons = (
 
   const wornStats = new Set(
     [...wornItems.values()].flatMap(({ item }) =>
-      parseItemStats(item.stat).flatMap(({ key, value }) =>
-        value === undefined || value === false || value === "0" ? [] : [key],
+      parseItemStatEntries(item.stat).flatMap(({ key, value }) =>
+        value === "0" ? [] : [key],
       ),
     ),
   );

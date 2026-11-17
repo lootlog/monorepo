@@ -1,10 +1,8 @@
 import { ItemTile as SharedItemTile } from "@lootlog/ui/components/item-tile";
-import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
 import { DisplayItemRarity } from "@lootlog/domain/item-rarity";
 import type { Item } from "@/lib/loots/loot-types";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { TranslatedItemStat } from "./translated-item-stat";
 
 export type ItemTileProps = {
   color?: string;
@@ -14,10 +12,6 @@ export type ItemTileProps = {
   shareIndex?: number;
   shareNickname?: string;
 };
-
-const renderStat = (displayValue: ItemDisplayValue) => (
-  <TranslatedItemStat displayValue={displayValue} />
-);
 
 export const ItemTile: FC<ItemTileProps> = ({
   color = "",
@@ -52,7 +46,6 @@ export const ItemTile: FC<ItemTileProps> = ({
         rarity: item.rarity ?? DisplayItemRarity.COMMON,
       }}
       labels={labels}
-      renderStat={renderStat}
       shareIndex={shareIndex}
       shareNickname={shareNickname}
     />

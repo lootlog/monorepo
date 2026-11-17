@@ -568,6 +568,7 @@
       "dependencies": {
         "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
+        "@lootlog/domain": "workspace:*",
         "@lootlog/schema": "workspace:*",
         "effect": "catalog:",
         "pg": "^8.23.1",

@@ -1,4 +1,4 @@
-import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import type { Profession } from "@/lib/equipment-set";
 
 type SetStat = {
@@ -92,7 +92,7 @@ export const sumItemStats = (stats: ReadonlyArray<string>): StatTotals => {
   const totals: StatTotals = {};
 
   for (const stat of stats) {
-    for (const { key, value } of parseItemStats(stat)) {
+    for (const { key, value } of parseItemStatEntries(stat)) {
       const text = textValue(value);
       const summedKey = SUMMED_STAT_KEYS.find((summed) => summed === key);
 
@@ -115,7 +115,7 @@ export const findRequirementIssues = (
   stat: string,
   character: { profession: Profession | null; level: number | null },
 ): ItemRequirementIssue[] => {
-  const stats = parseItemStats(stat);
+  const stats = parseItemStatEntries(stat);
   const professions = textValue(stats.find(({ key }) => key === "reqp")?.value);
   const level = Number(stats.find(({ key }) => key === "lvl")?.value);
 
