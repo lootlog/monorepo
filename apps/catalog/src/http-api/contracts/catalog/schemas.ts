@@ -1,5 +1,6 @@
 /** Transport schemas owned by the public catalog HTTP module. */
 import * as Schema from "effect/Schema";
+import { PROFESSION_SHORTNAMES } from "@lootlog/domain/profession";
 import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { FiniteNumber, SafeInteger } from "@lootlog/schema/http-scalars";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
@@ -24,7 +25,7 @@ const CatalogItemSort = Schema.Literals([
     "`id:desc` lists the items Margonem added most recently first. `changedOn:desc` lists first the items the game changed most recently, by the day their latest revision was first looted; items without a change follow. `attackSpeed:desc` lists first the items that add the most attack speed to a character with at least 100 agility: their own attack speed plus 0.002 for each point of agility or all attributes. `upgradedAttackSpeed:desc` ranks the same attack speed with each item upgraded to +5 and given the +5 bonus that adds the most of it: attack speed on weapons, agility or all attributes on other pieces.",
 });
 
-const Profession = Schema.Literals(["w", "p", "h", "m", "b", "t"]);
+const Profession = Schema.Literals(PROFESSION_SHORTNAMES);
 
 /** Stats a public search may require; the rest stay out of the filter. */
 export const CATALOG_STAT_KEYS = [

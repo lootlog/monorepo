@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { ItemTile } from "@lootlog/ui/components/item-tile";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { renderItemStat } from "@/components/render-item-stat";
 import { useWornItem } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";

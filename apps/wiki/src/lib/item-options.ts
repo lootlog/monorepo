@@ -1,13 +1,13 @@
 import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
-import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { DisplayItemRarity } from "@lootlog/domain/item-rarity";
 import { t } from "@/i18n/messages";
 
 /** Rarities a search can filter by; common items have no rarity. */
 export const RARITY_OPTIONS = [
-  ItemRarity.UNIQUE,
-  ItemRarity.HEROIC,
-  ItemRarity.UPGRADED,
-  ItemRarity.LEGENDARY,
+  DisplayItemRarity.UNIQUE,
+  DisplayItemRarity.HEROIC,
+  DisplayItemRarity.UPGRADED,
+  DisplayItemRarity.LEGENDARY,
 ] as const;
 
 export const PROFESSION_OPTIONS = ["w", "p", "h", "m", "b", "t"] as const;
@@ -59,7 +59,7 @@ export const ITEM_TYPE_OPTIONS = [
 /** The labels `ItemTile` shows in an item's tooltip. */
 export const ITEM_TILE_LABELS = {
   rarity: Object.fromEntries(
-    [ItemRarity.COMMON, ...RARITY_OPTIONS].map((rarity) => [
+    [DisplayItemRarity.COMMON, ...RARITY_OPTIONS].map((rarity) => [
       rarity,
       t(`itemRarity.${rarity}`),
     ]),

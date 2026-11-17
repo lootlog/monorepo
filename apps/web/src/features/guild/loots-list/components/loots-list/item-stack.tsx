@@ -2,8 +2,8 @@ import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import {
   ITEM_RARITIES_BY_VALUE,
-  ItemRarity,
-} from "@lootlog/ui/lib/item-rarity";
+  DisplayItemRarity,
+} from "@lootlog/domain/item-rarity";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import { cn } from "cn";
@@ -15,7 +15,7 @@ import { Check } from "lucide-react";
 import { useItemStackExpansion } from "./use-item-stack-expansion";
 
 const rarityRank = (item: Item) =>
-  ITEM_RARITIES_BY_VALUE.indexOf(item.rarity ?? ItemRarity.COMMON);
+  ITEM_RARITIES_BY_VALUE.indexOf(item.rarity ?? DisplayItemRarity.COMMON);
 
 const sortByRarity = (items: Item[]): Item[] =>
   [...items].sort((a, b) => rarityRank(a) - rarityRank(b));
@@ -92,7 +92,7 @@ export const ItemStack: FC<Props> = ({
         )}
         <div className="relative">
           <ItemImage
-            rarity={topItem.rarity ?? ItemRarity.COMMON}
+            rarity={topItem.rarity ?? DisplayItemRarity.COMMON}
             icon={topItem.icon}
           />
         </div>
