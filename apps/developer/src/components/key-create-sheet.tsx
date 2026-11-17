@@ -30,20 +30,9 @@ import {
 import { buttonVariants } from "@lootlog/ui/lib/button-variants";
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState, type FormEvent, type RefObject } from "react";
-import {
-  decodeCreatedKey,
-  getKeyErrorMessage,
-  keyRequest,
-} from "~/lib/key-client";
+import { apiKeysCreateApiKey } from "@lootlog/client/auth";
+import { getKeyErrorMessage, readKeyForm } from "~/lib/key-client";
 import { portalText as t } from "~/lib/translations";
-
-type KeyCreateBody = {
-  name: FormDataEntryValue | null;
-  organizationIds: FormDataEntryValue[];
-  personalData: boolean;
-  mode: FormDataEntryValue | null;
-  expiresIn: number | null;
-};
 
 /** The intro with the create button, and the sheet holding the new key's form. */
 export function KeyCreateSheet({
@@ -70,10 +59,7 @@ export function KeyCreateSheet({
   const scopeErrorId = scopeInvalid ? "key-scope-error" : undefined;
 
   const createKey = useMutation({
-    mutationFn: async (body: KeyCreateBody) =>
-      decodeCreatedKey(
-        await keyRequest("", { method: "POST", body: JSON.stringify(body) }),
-      ),
+    mutationFn: (form: FormData) => apiKeysCreateApiKey(readKeyForm(form)),
     onSuccess: async (result) => {
       setOpen(false);
       setFormVersion((value) => value + 1);
@@ -101,15 +87,7 @@ export function KeyCreateSheet({
     }
 
     setScopeInvalid(false);
-    const days = data.get("expiresIn");
-
-    createKey.mutate({
-      name: data.get("name"),
-      organizationIds,
-      personalData,
-      mode: data.get("mode"),
-      expiresIn: days === "never" ? null : Number(days) * 86400,
-    });
+    createKey.mutate(data);
   }
 
   return (

@@ -1,12 +1,16 @@
+import {
+  COMMUNITY_LINKS,
+  PUBLIC_SITE_ORIGINS,
+} from "@lootlog/domain/public-sites";
 import { LootlogMark } from "@lootlog/ui/components/lootlog-mark";
 import { portalText as t } from "~/lib/translations";
 
 const links = [
-  { href: "https://lootlog.pl", label: t.footerProduct },
-  { href: "https://docs.lootlog.pl", label: t.footerUserDocs },
-  { href: "https://github.com/lootlog/monorepo", label: t.footerGitHub },
-  { href: "https://discord.gg/mPcczaeYMu", label: t.footerDiscord },
-  { href: "https://www.npmjs.com/package/@lootlog/sdk", label: t.footerNpm },
+  { href: PUBLIC_SITE_ORIGINS.web, label: t.footerProduct },
+  { href: PUBLIC_SITE_ORIGINS.docs, label: t.footerUserDocs },
+  { href: COMMUNITY_LINKS.github, label: t.footerGitHub },
+  { href: COMMUNITY_LINKS.discord, label: t.footerDiscord },
+  { href: COMMUNITY_LINKS.sdkPackage, label: t.footerNpm },
 ];
 
 export function PortalFooter() {

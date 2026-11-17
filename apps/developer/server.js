@@ -1,22 +1,45 @@
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
-import { createDeveloperServer } from "./server-handler.js";
+const clientDirectory = join(import.meta.dir, "dist", "client");
 
-const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const { default: app } = await import("./dist/server/server.js");
 
-const clientDirectory = join(__dirname, "dist", "client");
+const port = Number.parseInt(process.env.PORT ?? "3000", 10);
 
-const serverEntry = await import("./dist/server/server.js");
+const textHeaders = {
+  "Cache-Control": "no-store",
+  "Content-Type": "text/plain; charset=utf-8",
+};
 
-const PORT = Number.parseInt(process.env.PORT ?? "3000", 10);
+Bun.serve({
+  port,
+  async fetch(request) {
+    const { pathname } = new URL(request.url);
 
-const server = createDeveloperServer({
-  clientDirectory,
-  port: PORT,
-  serverEntry,
+    if (pathname === "/healthz") {
+      return new Response("OK\n", { headers: textHeaders });
+    }
+
+    if (pathname.startsWith("/assets/")) {
+      const asset = Bun.file(join(clientDirectory, pathname));
+
+      if (await asset.exists()) {
+        return new Response(asset, {
+          headers: { "Cache-Control": "public, max-age=31536000, immutable" },
+        });
+      }
+    }
+
+    return app.fetch(request);
+  },
+  error(error) {
+    console.warn("Developer portal request failed", error);
+
+    return new Response("Internal Server Error\n", {
+      status: 500,
+      headers: textHeaders,
+    });
+  },
 });
 
-server.listen(PORT, () => {
-  console.warn(`Developer portal running on http://localhost:${PORT}`);
-});
+console.warn(`Developer portal running on http://localhost:${port}`);

@@ -3,6 +3,7 @@ import {
   type AnyApiReferenceConfiguration,
 } from "@scalar/api-reference-react";
 import { useRef } from "react";
+import { PUBLIC_API_SERVICES } from "@lootlog/schema/api-services";
 import { portalText as t } from "~/lib/translations";
 import { useReferenceNavigationMotion } from "~/lib/use-reference-navigation-motion";
 // Imported here, not by the route, so only the reference page loads Scalar's CSS.
@@ -43,9 +44,7 @@ const configuration = {
     preferredSecurityScheme: "apiKey",
     securitySchemes: { apiKey: { value: "" } },
   },
-  sources: (
-    ["main", "activity", "battlelog", "catalog", "search"] as const
-  ).map((service) => ({
+  sources: PUBLIC_API_SERVICES.map((service) => ({
     title: t[service],
     url: `${import.meta.env.BASE_URL}openapi/${service}.json`,
     slug: service,
