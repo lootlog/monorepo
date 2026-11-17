@@ -565,6 +565,7 @@
         "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
         "@lootlog/schema": "workspace:*",
+        "bullmq": "^6.3.14",
         "drizzle-orm": "catalog:",
         "effect": "catalog:",
         "pg": "^8.23.1",

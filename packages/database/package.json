@@ -12,7 +12,8 @@
     "./redis-script": "./src/redis-script.ts",
     "./redis-cache-fill": "./src/redis-cache-fill.ts",
     "./sliding-window-rate-limit": "./src/sliding-window-rate-limit.ts",
-    "./bun-redis": "./src/bun-redis.ts"
+    "./bun-redis": "./src/bun-redis.ts",
+    "./bullmq": "./src/bullmq.ts"
   },
   "scripts": {
     "lint": "oxlint src test",
@@ -24,6 +25,7 @@
     "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
     "@lootlog/schema": "workspace:*",
+    "bullmq": "^6.3.14",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "pg": "^8.23.1"
