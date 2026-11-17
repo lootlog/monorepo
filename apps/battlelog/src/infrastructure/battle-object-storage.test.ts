@@ -4,8 +4,40 @@ import {
   GetObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { Redacted, Schema } from "effect";
-import { makeBattleObjectStorage } from "./battle-object-storage.js";
+import { Effect, Redacted, Schema } from "effect";
+import { Redis } from "effect/persistence";
+import {
+  type BattleObjectCache,
+  makeBattleObjectStorage,
+} from "./battle-object-storage.js";
+
+type PromiseCache = {
+  [Method in keyof BattleObjectCache]: (
+    ...args: Parameters<BattleObjectCache[Method]>
+  ) => Promise<Effect.Success<ReturnType<BattleObjectCache[Method]>>>;
+};
+
+const fromPromise = <A>(run: () => Promise<A>) =>
+  Effect.tryPromise({
+    try: run,
+    catch: (cause) => new Redis.RedisError({ cause }),
+  });
+
+const effectCache = (cache: PromiseCache): BattleObjectCache => ({
+  del: (...keys) => fromPromise(() => cache.del(...keys)),
+  zrem: (key, ...members) => fromPromise(() => cache.zrem(key, ...members)),
+  get: (key) => fromPromise(() => cache.get(key)),
+  set: (key, value, ttlSeconds) =>
+    fromPromise(() => cache.set(key, value, ttlSeconds)),
+  zadd: (key, score, member) =>
+    fromPromise(() => cache.zadd(key, score, member)),
+  zcard: (key) => fromPromise(() => cache.zcard(key)),
+  zrange: (key, start, stop) =>
+    fromPromise(() => cache.zrange(key, start, stop)),
+  expire: (key, ttlSeconds) => fromPromise(() => cache.expire(key, ttlSeconds)),
+  zremrangebyscore: (key, min, max) =>
+    fromPromise(() => cache.zremrangebyscore(key, min, max)),
+});
 
 afterEach(() => mock.restore());
 
@@ -25,7 +57,7 @@ for (const failure of ["R2", "Redis"] as const) {
     let cacheCalls = 0;
 
     const storage = makeBattleObjectStorage(
-      {
+      effectCache({
         del: async () => {
           if (++cacheCalls === 1 && failure === "Redis")
             throw new Error("Redis unavailable");
@@ -40,7 +72,7 @@ for (const failure of ["R2", "Redis"] as const) {
         zrange: async () => [],
         expire: async () => 1,
         zremrangebyscore: async () => 0,
-      },
+      }),
       {
         region: "auto",
         endpoint: "https://r2.invalid",
@@ -50,19 +82,23 @@ for (const failure of ["R2", "Redis"] as const) {
       },
     );
 
-    await expect(storage.deleteBattlesData(["one"])).rejects.toThrow(
+    const rejection = await Effect.runPromise(
+      storage.deleteBattlesData(["one"]),
+    ).catch((error) => error);
+
+    expect(failure === "R2" ? rejection.message : rejection.cause.message).toBe(
       `${failure} unavailable`,
     );
-    await expect(storage.deleteBattlesData(["one"])).resolves.toEqual([]);
+    await expect(
+      Effect.runPromise(storage.deleteBattlesData(["one"])),
+    ).resolves.toEqual([]);
     expect(send).toHaveBeenCalledTimes(2);
   });
 }
 
-const createStorage = (
-  overrides: Partial<Parameters<typeof makeBattleObjectStorage>[0]> = {},
-) =>
+const createStorage = (overrides: Partial<PromiseCache> = {}) =>
   makeBattleObjectStorage(
-    {
+    effectCache({
       del: async () => 1,
       zrem: async () => 1,
       get: async () => null,
@@ -73,7 +109,7 @@ const createStorage = (
       expire: async () => 1,
       zremrangebyscore: async () => 0,
       ...overrides,
-    },
+    }),
     {
       region: "auto",
       endpoint: "https://r2.invalid",
@@ -97,7 +133,9 @@ it("batches object removal and returns partial failures for durable retry", asyn
     return { Errors: [{ Key: "battles/two.json", Code: "InternalError" }] };
   });
   expect(
-    await createStorage().deleteBattlesData(["one", "two", "three"]),
+    await Effect.runPromise(
+      createStorage().deleteBattlesData(["one", "two", "three"]),
+    ),
   ).toEqual(["two"]);
   expect(batches).toEqual([
     ["battles/one.json", "battles/two.json", "battles/three.json"],
@@ -142,10 +180,14 @@ it("serves oversized UTF-8 objects from R2 without crowding small cached battles
   );
 
   for (let attempt = 0; attempt < 2; attempt++) {
-    expect(await storage.getBattleData("large", decode)).toEqual({
+    expect(
+      await Effect.runPromise(storage.getBattleData("large", decode)),
+    ).toEqual({
       log: "ą".repeat(150_000),
     });
-    expect(await storage.getBattleData("small", decode)).toEqual({
+    expect(
+      await Effect.runPromise(storage.getBattleData("small", decode)),
+    ).toEqual({
       log: "small battle",
     });
   }
@@ -177,7 +219,7 @@ it("prunes expired recency entries before choosing a live cache eviction", async
     zcard: async () => entries.size,
   });
 
-  await storage.cacheData("current", "{}");
+  await Effect.runPromise(storage.cacheData("current", "{}"));
   expect([...entries.keys()]).toEqual(["current"]);
 });
 
@@ -207,7 +249,9 @@ it("keeps durable raw battles readable while Redis is unavailable", async () => 
     Schema.fromJsonString(Schema.Struct({ log: Schema.String })),
   );
 
-  expect(await storage.getBattleData("durable", decode)).toEqual({
+  expect(
+    await Effect.runPromise(storage.getBattleData("durable", decode)),
+  ).toEqual({
     log: "durable battle",
   });
 });

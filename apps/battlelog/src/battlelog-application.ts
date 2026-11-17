@@ -1,13 +1,12 @@
+import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
-import { RedisClient } from "bun";
-import { createBunRedisClient, Queue, RedisConnection, Worker } from "bullmq";
 import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
 import { Redis } from "effect/persistence";
 import {
   makeBattlelogOperations,
   type BattlelogOperations,
 } from "#src/battles/battlelog-operations";
-import { makeBattles, type Battles } from "#src/battles/battles.service";
+import { makeBattles } from "#src/battles/battles.service";
 import { DELETE_USER_BATTLES_QUEUE } from "#src/battles/deletion/delete-user-battles-queue";
 import {
   makeDeleteUserBattlesProcessor,
@@ -21,20 +20,12 @@ import { makeBattleAnalytics } from "#src/battles/analytics/battle-analytics.ser
 import { makeBattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
 import { makeBattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import { makeBattlePagination } from "#src/battles/analytics/pagination.service";
-import { BattlelogConfig, type BattlelogConfiguration } from "#src/config/env";
+import { BattlelogConfig } from "#src/config/env";
 import { makeBattleReadBudget } from "#src/database/battle-read-budget";
 import { drizzleDatabaseEffect, PgClientLive } from "#src/database/database";
 import { makeBattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
 import { makeWeaponKills } from "#src/battles/weapon-kills/weapon-kills";
-
-RedisConnection.clientFactory = (options) => {
-  if (!options.url) {
-    throw new Error("BullMQ requires a Redis URL");
-  }
-
-  return createBunRedisClient(new RedisClient(options.url));
-};
 
 export interface BattlelogApplicationService {
   readonly cleanupSecret?: Redacted.Redacted<string>;
@@ -46,14 +37,12 @@ export class BattlelogApplication extends Context.Service<
   BattlelogApplication,
   BattlelogApplicationService
 >()("@lootlog/battlelog/Application") {
-  static readonly layerWithoutConfig = Layer.effect(
+  static readonly layer = Layer.effect(
     BattlelogApplication,
     Effect.gen(function* () {
       const config = yield* BattlelogConfig;
       const drizzle = yield* drizzleDatabaseEffect;
       const redisClient = yield* Redis.Redis;
-      const redisFibers = yield* FiberSet.make<unknown, unknown>();
-      const runRedis = yield* FiberSet.runtimePromise(redisFibers)<never>();
       yield* redisClient
         .send("PING")
         .pipe(
@@ -61,7 +50,7 @@ export class BattlelogApplication extends Context.Service<
             (cause) => new Error("Failed to initialize Redis", { cause }),
           ),
         );
-      const redis = makeRedisStore(redisClient, runRedis);
+      const redis = makeRedisStore(redisClient);
 
       const cacheService = makeBattleAnalyticsCache(redis);
       const queryService = makeBattleAnalyticsQuery(drizzle);
@@ -95,12 +84,25 @@ export class BattlelogApplication extends Context.Service<
         Effect.repeat(Schedule.spaced("5 seconds")),
         Effect.forkScoped,
       );
-      const queue = yield* acquireDeleteQueue(config);
-      yield* acquireDeleteWorker(config, battlesService);
+
+      const queue = yield* acquireBullQueue<DeleteUserBattlesJobData>(
+        DELETE_USER_BATTLES_QUEUE,
+        config.redisUrl,
+      );
+
+      const runWorker = yield* FiberSet.makeRuntimePromise();
+      const processor = makeDeleteUserBattlesProcessor(battlesService);
+
+      yield* acquireBullWorker<DeleteUserBattlesJobData, void>(
+        DELETE_USER_BATTLES_QUEUE,
+        config.redisUrl,
+        (job) => runWorker(processor.process(job)),
+      );
 
       const operations = makeBattlelogOperations(
         battlesService,
         analyticsService,
+        metadataService,
         { add: (name, data) => queue.add(name, data).then(() => undefined) },
         makeWeaponKills(drizzle, read),
       );
@@ -118,53 +120,15 @@ export class BattlelogApplication extends Context.Service<
         cleanupSecret: config.cleanupSecret,
       });
     }),
-  );
-
-  static readonly layer = this.layerWithoutConfig.pipe(
+  ).pipe(
     Layer.provide(PgClientLive),
-    Layer.provide(BattlelogConfig.layer),
     Layer.provide(
       Layer.unwrap(
         Effect.map(BattlelogConfig, (config) =>
-          reconnectingBunRedisLayer({ url: redisUrl(config) }),
+          reconnectingBunRedisLayer({ url: Redacted.value(config.redisUrl) }),
         ),
-      ).pipe(Layer.provide(BattlelogConfig.layer)),
+      ),
     ),
+    Layer.provide(BattlelogConfig.layer),
   );
 }
-
-const redisUrl = (config: BattlelogConfiguration): string =>
-  `redis://${encodeURIComponent(config.redis.username ?? "")}:${encodeURIComponent(Redacted.value(config.redis.password))}@${config.redis.host}:${config.redis.port}`;
-
-const acquireDeleteQueue = (config: BattlelogConfiguration) =>
-  Effect.acquireRelease(
-    Effect.sync(
-      () =>
-        new Queue<DeleteUserBattlesJobData>(DELETE_USER_BATTLES_QUEUE, {
-          connection: { url: redisUrl(config) },
-          prefix: "{bull}",
-        }),
-    ),
-    (queue) => Effect.tryPromise(() => queue.close()).pipe(Effect.orDie),
-  );
-
-const acquireDeleteWorker = (
-  config: BattlelogConfiguration,
-  battlesService: Battles,
-) =>
-  Effect.gen(function* () {
-    const runWorker = yield* FiberSet.makeRuntimePromise();
-
-    return yield* Effect.acquireRelease(
-      Effect.sync(() => {
-        const processor = makeDeleteUserBattlesProcessor(battlesService);
-
-        return new Worker<DeleteUserBattlesJobData>(
-          DELETE_USER_BATTLES_QUEUE,
-          (job) => runWorker(processor.process(job)),
-          { connection: { url: redisUrl(config) }, prefix: "{bull}" },
-        );
-      }),
-      (worker) => Effect.tryPromise(() => worker.close()).pipe(Effect.orDie),
-    );
-  });

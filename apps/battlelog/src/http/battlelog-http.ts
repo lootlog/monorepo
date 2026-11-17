@@ -1,24 +1,15 @@
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
-import { BunHttpServer } from "@effect/platform-bun";
+import { ContextLogger } from "@lootlog/instrumentation";
+import { OperationError } from "@lootlog/instrumentation/operation";
 import {
-  ContextLogger,
-  httpServerMetrics,
-  httpServerRouteMetrics,
-} from "@lootlog/instrumentation";
-import {
-  Cause,
-  Effect,
-  Layer,
-  Option,
-  Schema,
-  SchemaIssue,
-  type Redacted,
-} from "effect";
+  serviceApiRoutes,
+  serviceHttpServer,
+} from "@lootlog/instrumentation/service";
+import { Cause, Effect, Layer, Option, Schema, SchemaIssue } from "effect";
 import {
   HttpRouter,
   HttpMiddleware,
-  HttpServer,
   HttpServerRequest,
   HttpServerError,
   HttpServerResponse,
@@ -26,7 +17,6 @@ import {
 import { HttpApiBuilder } from "effect/http-api";
 import { BattlelogApplication } from "#src/battlelog-application";
 import type { BattlelogOperations } from "#src/battles/battlelog-operations";
-import { BattlelogOperationFailure } from "../battles/battlelog-operation.js";
 import {
   CreateBattleSchema,
   type CreateBattleInput,
@@ -75,7 +65,7 @@ const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
 
   if (!discordId || !userId) {
     return yield* Effect.fail(
-      new BattlelogOperationFailure({
+      new OperationError({
         operation: "Battlelog.currentUserId",
         cause: new AuthenticationRequiredError(),
       }),
@@ -134,12 +124,12 @@ const errorResponse = (cause: unknown) => {
 };
 
 const toResponse = <A, R>(
-  effect: Effect.Effect<A, BattlelogOperationFailure, R>,
+  effect: Effect.Effect<A, OperationError, R>,
   status = 200,
 ) =>
   effect.pipe(
     Effect.map((value) => HttpServerResponse.jsonUnsafe(value, { status })),
-    Effect.catchTag("BattlelogOperationFailure", (failure) =>
+    Effect.catchTag("OperationError", (failure) =>
       Effect.succeed(errorResponse(failure.cause)),
     ),
   );
@@ -150,11 +140,10 @@ const operations = Effect.map(
 );
 
 const secured = <A>(
-  _operation: string,
   run: (
     operations: BattlelogOperations,
     userId: string,
-  ) => Effect.Effect<A, BattlelogOperationFailure>,
+  ) => Effect.Effect<A, OperationError>,
   status = 200,
 ) =>
   toResponse(
@@ -168,10 +157,7 @@ const secured = <A>(
   );
 
 const publicOperation = <A>(
-  _operation: string,
-  run: (
-    operations: BattlelogOperations,
-  ) => Effect.Effect<A, BattlelogOperationFailure>,
+  run: (operations: BattlelogOperations) => Effect.Effect<A, OperationError>,
   status = 200,
 ) => toResponse(Effect.flatMap(operations, run), status);
 
@@ -231,7 +217,7 @@ const BattlelogHandlers = Layer.mergeAll(
               }).pipe(
                 Effect.mapError(
                   (cause) =>
-                    new BattlelogOperationFailure({
+                    new OperationError({
                       operation: "BattlesController_createBattle",
                       cause,
                     }),
@@ -246,24 +232,20 @@ const BattlelogHandlers = Layer.mergeAll(
         ),
       )
       .handleRaw("BattlesControllerGetDashboardBattles", ({ query }) =>
-        secured(
-          "BattlesController_getDashboardBattles",
-          ({ battles }, userId) =>
-            battles.getDashboardBattles(dashboardQuery(query), userId),
+        secured(({ battles }, userId) =>
+          battles.getDashboardBattles(dashboardQuery(query), userId),
         ),
       )
       .handleRaw("BattlesControllerGetUserCharacters", () =>
-        secured("BattlesController_getUserCharacters", ({ battles }, userId) =>
-          battles.getUserCharacters(userId),
-        ),
+        secured(({ battles }, userId) => battles.getUserCharacters(userId)),
       )
       .handleRaw("BattlesControllerGetBattleAnalytics", ({ query }) =>
-        secured("BattlesController_getBattleAnalytics", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.getBattleAnalytics(analyticsQuery(query), userId),
         ),
       )
       .handleRaw("BattlesControllerGetAbyssSeasons", ({ query }) =>
-        secured("BattlesController_getAbyssSeasons", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.getAbyssSeasons(
             {
               characterId: query.characterId,
@@ -274,76 +256,67 @@ const BattlelogHandlers = Layer.mergeAll(
         ),
       )
       .handleRaw("BattlesControllerGetCombatProfile", ({ query }) =>
-        secured("BattlesController_getCombatProfile", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.getCombatProfile(statisticsQuery(query), userId),
         ),
       )
       .handleRaw("BattlesControllerGetProfessionWinRate", ({ query }) =>
-        secured(
-          "BattlesController_getProfessionWinRate",
-          ({ battles }, userId) =>
-            battles.getProfessionWinRate(statisticsQuery(query), userId),
+        secured(({ battles }, userId) =>
+          battles.getProfessionWinRate(statisticsQuery(query), userId),
         ),
       )
       .handleRaw("BattlesControllerGetHeadToHead", ({ query }) =>
-        secured("BattlesController_getHeadToHead", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.getHeadToHead(statisticsQuery(query), userId),
         ),
       )
       .handleRaw("BattlesControllerGetCurrentStreak", ({ query }) =>
-        secured("BattlesController_getCurrentStreak", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.getCurrentStreak(statisticsQuery(query), userId),
         ),
       )
       .handleRaw("BattlesControllerGetBattleDuration", ({ query }) =>
-        secured("BattlesController_getBattleDuration", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.getBattleDuration(statisticsQuery(query), userId),
         ),
       )
       .handleRaw("BattlesControllerGetPhGrowth", ({ query }) =>
-        secured("BattlesController_getPhGrowth", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.getPhGrowth(statisticsQuery(query), userId),
         ),
       )
       .handleRaw("BattlesControllerGetRatingGrowth", ({ query }) =>
-        secured("BattlesController_getRatingGrowth", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.getRatingGrowth(statisticsQuery(query), userId),
         ),
       )
       .handleRaw("BattlesControllerGetRatingDeltaByOpponent", ({ query }) =>
-        secured(
-          "BattlesController_getRatingDeltaByOpponent",
-          ({ battles }, userId) =>
-            battles.getRatingDeltaByOpponent(statisticsQuery(query), userId),
+        secured(({ battles }, userId) =>
+          battles.getRatingDeltaByOpponent(statisticsQuery(query), userId),
         ),
       )
       .handleRaw("BattlesControllerGetPlayerVsPlayerBattles", ({ query }) =>
-        secured(
-          "BattlesController_getPlayerVsPlayerBattles",
-          ({ battles }, userId) =>
-            battles.getPlayerVsPlayerBattles(
-              playerVsPlayerQuery(query),
-              userId,
-            ),
+        secured(({ battles }, userId) =>
+          battles.getPlayerVsPlayerBattles(playerVsPlayerQuery(query), userId),
         ),
       )
       .handleRaw("BattlesControllerSearchWarriors", ({ query }) =>
-        secured("BattlesController_searchWarriors", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.searchWarriors(query.q ?? "", userId),
         ),
       )
       .handleRaw("BattlesControllerGetBattleTimeline", ({ params }) =>
-        secured("BattlesController_getBattleTimeline", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.getBattleTimeline(params.battleId, userId),
         ),
       )
       .handleRaw("BattlesControllerGetBattle", ({ params }) =>
-        secured("BattlesController_getBattle", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.getBattle(params.battleId, userId),
         ),
       )
       .handleRaw("BattlesControllerDeleteBattle", ({ params }) =>
-        secured("BattlesController_deleteBattle", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.deleteBattle(params.battleId, userId),
         ),
       )
@@ -360,7 +333,7 @@ const BattlelogHandlers = Layer.mergeAll(
             ).pipe(
               Effect.mapError(
                 (cause) =>
-                  new BattlelogOperationFailure({
+                  new OperationError({
                     operation: "BattlesController_updateBattle",
                     cause,
                   }),
@@ -378,7 +351,7 @@ const BattlelogHandlers = Layer.mergeAll(
         ),
       )
       .handleRaw("BattlesControllerGetBattleRawData", ({ params }) =>
-        secured("BattlesController_getBattleRawData", ({ battles }, userId) =>
+        secured(({ battles }, userId) =>
           battles.getBattleRawData(params.battleId, userId),
         ),
       ),
@@ -398,7 +371,7 @@ const BattlelogHandlers = Layer.mergeAll(
               }).pipe(
                 Effect.mapError(
                   (cause) =>
-                    new BattlelogOperationFailure({
+                    new OperationError({
                       operation: "WeaponKillsController_recordWeaponKills",
                       cause,
                     }),
@@ -412,34 +385,28 @@ const BattlelogHandlers = Layer.mergeAll(
         ),
       )
       .handleRaw("WeaponKillsControllerGetCharacterWeaponKills", ({ params }) =>
-        secured(
-          "WeaponKillsController_getCharacterWeaponKills",
-          ({ weaponKills }) => weaponKills.getCharacterWeaponKills(params),
+        secured(({ weaponKills }) =>
+          weaponKills.getCharacterWeaponKills(params),
         ),
       ),
   ),
   HttpApiBuilder.group(BattlelogApi, "public-battles", (handlers) =>
     handlers
       .handleRaw("PublicBattlesControllerGetPublicBattle", ({ params }) =>
-        publicOperation(
-          "PublicBattlesController_getPublicBattle",
-          ({ publicBattles }) => publicBattles.getPublicBattle(params.battleId),
+        publicOperation(({ publicBattles }) =>
+          publicBattles.getPublicBattle(params.battleId),
         ),
       )
       .handleRaw("PublicBattlesControllerGetPublicBattleRaw", ({ params }) =>
-        publicOperation(
-          "PublicBattlesController_getPublicBattleRaw",
-          ({ publicBattles }) =>
-            publicBattles.getPublicBattleRaw(params.battleId),
+        publicOperation(({ publicBattles }) =>
+          publicBattles.getPublicBattleRaw(params.battleId),
         ),
       )
       .handleRaw(
         "PublicBattlesControllerGetPublicBattleTimeline",
         ({ params }) =>
-          publicOperation(
-            "PublicBattlesController_getPublicBattleTimeline",
-            ({ publicBattles }) =>
-              publicBattles.getPublicBattleTimeline(params.battleId),
+          publicOperation(({ publicBattles }) =>
+            publicBattles.getPublicBattleTimeline(params.battleId),
           ),
       ),
   ),
@@ -456,7 +423,7 @@ const BattlelogHandlers = Layer.mergeAll(
               application.cleanupSecret,
             )
           ) {
-            return yield* new BattlelogOperationFailure({
+            return yield* new OperationError({
               operation: "InternalController_deleteUserData",
               cause: new AuthenticationRequiredError(),
             });
@@ -470,7 +437,7 @@ const BattlelogHandlers = Layer.mergeAll(
           ).pipe(
             Effect.mapError(
               (cause) =>
-                new BattlelogOperationFailure({
+                new OperationError({
                   operation: "InternalController_deleteUserData",
                   cause,
                 }),
@@ -491,49 +458,9 @@ const BattlelogHandlers = Layer.mergeAll(
   ),
 );
 
-const openApiFile = async (): Promise<Blob> => {
-  const colocated = Bun.file(new URL("../../openapi.yaml", import.meta.url));
-
-  if (await colocated.exists()) return colocated;
-
-  return Bun.file(new URL("../../../openapi.yaml", import.meta.url));
-};
-
-const DocumentationRoutes = HttpRouter.use((router) =>
-  Effect.gen(function* () {
-    const yaml = yield* Effect.tryPromise(openApiFile);
-
-    const documentationRoutes = [
-      HttpRouter.route(
-        "GET",
-        "/openapi.yaml",
-        HttpServerResponse.raw(yaml, { contentType: "application/yaml" }),
-      ),
-      HttpRouter.route(
-        "GET",
-        "/docs-yaml",
-        HttpServerResponse.raw(yaml, { contentType: "application/yaml" }),
-      ),
-      HttpRouter.route(
-        "GET",
-        "/docs",
-        HttpServerResponse.text(
-          '<!doctype html><html><head><title>Battle Log API</title></head><body><h1>Battle Log API</h1><p><a href="/docs-json">OpenAPI JSON</a></p></body></html>',
-          { contentType: "text/html; charset=utf-8" },
-        ),
-      ),
-    ];
-
-    yield* router.addAll(documentationRoutes);
-  }),
-);
-
-const BattlelogRoutes = Layer.merge(
-  HttpApiBuilder.layer(BattlelogApi, { openapiPath: "/docs-json" }).pipe(
-    Layer.provide(BattlelogHandlers),
-  ),
-  DocumentationRoutes,
-);
+export const BattlelogRoutes = serviceApiRoutes(BattlelogApi, {
+  documentation: new URL("../../openapi.yaml", import.meta.url),
+}).pipe(Layer.provide(BattlelogHandlers));
 
 export const battlelogHttpMiddleware = HttpMiddleware.make(
   <E, R>(
@@ -543,66 +470,27 @@ export const battlelogHttpMiddleware = HttpMiddleware.make(
     E,
     R | HttpServerRequest.HttpServerRequest
   > =>
-    httpServerMetrics(
-      Effect.tapCause(effect, (cause) =>
-        Effect.sync(() => {
-          const [, failure] = HttpServerError.causeResponseStripped(cause);
+    Effect.tapCause(effect, (cause) =>
+      Effect.sync(() => {
+        const [, failure] = HttpServerError.causeResponseStripped(cause);
 
-          if (
-            Option.isSome(failure) &&
-            !Cause.hasInterruptsOnly(failure.value)
-          ) {
-            logger.error("Unhandled Battlelog HTTP failure", failure.value);
-          }
-        }),
-      ),
+        if (Option.isSome(failure) && !Cause.hasInterruptsOnly(failure.value)) {
+          logger.error("Unhandled Battlelog HTTP failure", failure.value);
+        }
+      }),
     ),
 );
 
 export const BattlelogHttpServer = Layer.unwrap(
   Effect.map(BattlelogApplication, (application) =>
-    HttpRouter.serve(
-      BattlelogRoutes.pipe(
-        Layer.provide(httpServerRouteMetrics),
+    serviceHttpServer({
+      routes: BattlelogRoutes.pipe(
         HttpRouter.provideRequest(
           Layer.succeed(BattlelogApplication, application),
         ),
       ),
-      {
-        middleware: battlelogHttpMiddleware,
-      },
-    ).pipe(
-      Layer.provide(
-        BunHttpServer.layer({ hostname: "0.0.0.0", port: application.port }),
-      ),
-    ),
+      port: application.port,
+      middleware: battlelogHttpMiddleware,
+    }),
   ),
 );
-
-export const makeBattlelogTestBoundary = (
-  testOperations: BattlelogOperations,
-  cleanupSecret?: Redacted.Redacted<string>,
-) => {
-  const boundary = HttpRouter.toWebHandler(
-    BattlelogRoutes.pipe(
-      Layer.provide(httpServerRouteMetrics),
-      Layer.provideMerge(
-        Layer.succeed(
-          BattlelogApplication,
-          BattlelogApplication.of({
-            operations: testOperations,
-            port: 0,
-            cleanupSecret,
-          }),
-        ),
-      ),
-      Layer.provide(HttpServer.layerServices),
-    ),
-    { disableLogger: true, middleware: battlelogHttpMiddleware },
-  );
-
-  return {
-    dispose: boundary.dispose,
-    handler: boundary.handler,
-  };
-};

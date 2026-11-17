@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { relations } from "#src/database/relations";
 import {
   unusedBattleAnalytics,
+  unusedBattleMetadata,
   unusedDeleteQueue,
   unusedWeaponKills,
 } from "../../../test/battle-fixtures.js";
@@ -22,6 +23,7 @@ import {
 } from "bun:test";
 import { sql } from "drizzle-orm";
 import { Effect, ManagedRuntime, Schema } from "effect";
+import { Redis } from "effect/persistence";
 import { ConnectionError, SqlError } from "effect/sql/SqlError";
 import type { RawBattleData } from "#src/battles/battle-service";
 import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
@@ -38,7 +40,7 @@ import { ContextLogger } from "@lootlog/instrumentation";
 import type { JsonCodec } from "#src/infrastructure/redis-store";
 import { makeBattlelogOperations } from "#src/battles/battlelog-operations";
 import { makeBattles, type Battles } from "#src/battles/battles.service";
-import { makeBattlelogTestBoundary } from "#src/http/battlelog-http";
+import { makeBattlelogTestBoundary } from "../../../test/battlelog-test-boundary.js";
 
 type TestApplication = ReturnType<typeof makeBattlelogTestBoundary> & {
   battles: Battles;
@@ -301,42 +303,61 @@ const createRedisBoundary = ({
 
       return cached.value;
     }),
-    setJson: <T>(key: string, value: T, ttlSeconds?: number) => {
-      values.set(key, {
-        expiresAt: ttlSeconds ? now() + ttlSeconds * 1_000 : null,
-        value: JSON.stringify(value),
-      });
+    acquireLock: mock(
+      async (key: string, token: string, ttlSeconds?: number) => {
+        const existingLock = locks.get(key);
 
-      return Promise.resolve();
-    },
-    setNX: mock(async (key: string, token: string, ttlSeconds?: number) => {
-      const existingLock = locks.get(key);
+        if (
+          existingLock &&
+          (existingLock.expiresAt === null || existingLock.expiresAt > now())
+        ) {
+          onContention();
 
-      if (
-        existingLock &&
-        (existingLock.expiresAt === null || existingLock.expiresAt > now())
-      ) {
-        onContention();
+          return false;
+        }
 
-        return false;
-      }
+        locks.set(key, {
+          expiresAt: ttlSeconds ? now() + ttlSeconds * 1_000 : null,
+          token,
+        });
 
-      locks.set(key, {
-        expiresAt: ttlSeconds ? now() + ttlSeconds * 1_000 : null,
-        token,
-      });
-
-      return true;
-    }),
+        return true;
+      },
+    ),
   };
+
+  const fromPromise = <A>(run: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: run,
+      catch: (cause) => new Redis.RedisError({ cause }),
+    });
 
   return {
     ...boundary,
-    getJson: async <T>(key: string, codec: JsonCodec<T>): Promise<T | null> => {
-      const serialized = await boundary.readCachedJson(key);
+    getJson: <T>(key: string, codec: Pick<JsonCodec<T>, "parse">) =>
+      fromPromise(async () => {
+        const serialized = await boundary.readCachedJson(key);
 
-      return serialized === null ? null : codec.parse(serialized);
-    },
+        return serialized === null ? null : codec.parse(serialized);
+      }),
+    setJson: <T>(key: string, value: T, ttlSeconds?: number) =>
+      Effect.sync(() => {
+        values.set(key, {
+          expiresAt: ttlSeconds ? now() + ttlSeconds * 1_000 : null,
+          value: JSON.stringify(value),
+        });
+      }),
+    setNX: (key: string, token: string, ttlSeconds: number) =>
+      fromPromise(() => boundary.acquireLock(key, token, ttlSeconds)),
+    evalScript: <TResult>(
+      script: string,
+      keys: readonly string[],
+      args: ReadonlyArray<string | number> = [],
+    ) =>
+      fromPromise(
+        // SAFETY: deduplication's lock scripts all return a number.
+        () => boundary.eval(script, [...keys], [...args]) as Promise<TResult>,
+      ),
   };
 };
 
@@ -369,15 +390,19 @@ const createTestApplication = ({
   // R2 only serves timelines of battles saved before they moved to Postgres.
   const objectStorage = {
     readBattleData,
-    getBattleData: async <TData>(
+    getBattleData: <TData>(
       battleId: string,
       decodeJson: (value: string) => TData,
-    ) => decodeJson(await readBattleData(battleId)),
-    deleteBattlesData: async (battleIds: readonly string[]) => {
-      for (const battleId of battleIds) objects.delete(battleId);
+    ) =>
+      Effect.promise(() => readBattleData(battleId)).pipe(
+        Effect.map(decodeJson),
+      ),
+    deleteBattlesData: (battleIds: readonly string[]) =>
+      Effect.sync(() => {
+        for (const battleId of battleIds) objects.delete(battleId);
 
-      return [];
-    },
+        return [];
+      }),
   };
 
   const battlesModule = makeBattles(
@@ -409,6 +434,7 @@ const createTestApplication = ({
     makeBattlelogOperations(
       battlesModule,
       analyticsService,
+      unusedBattleMetadata,
       unusedDeleteQueue,
       unusedWeaponKills,
     ),
@@ -1345,7 +1371,7 @@ describe("battle creation deduplication", () => {
     spyOn(ContextLogger.prototype, "error").mockImplementation(() => undefined);
     const redis = createRedisBoundary();
     redis.readCachedJson.mockResolvedValue(null);
-    redis.setNX.mockResolvedValue(false);
+    redis.acquireLock.mockResolvedValue(false);
 
     const testApplication = createTestApplication({
       redis,
