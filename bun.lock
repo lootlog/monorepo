@@ -522,6 +522,7 @@
       "version": "1.0.10",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
+        "@lootlog/protocol": "workspace:*",
         "amqplib": "^2.2.0",
         "effect": "catalog:",
       },
