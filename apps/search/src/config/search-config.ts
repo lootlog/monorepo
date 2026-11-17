@@ -1,10 +1,10 @@
+import {
+  type BaseServiceConfiguration,
+  baseServiceConfig,
+} from "@lootlog/instrumentation/service-config";
 import { Config, Context, Effect, Layer, type Redacted } from "effect";
 
-export interface SearchConfigValue {
-  readonly environment: string;
-  readonly port: number;
-  readonly serviceName: string;
-  readonly serviceNamespace: string;
+export interface SearchConfigValue extends BaseServiceConfiguration {
   readonly meilisearchHost: string;
   readonly meilisearchApiKey: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
@@ -17,21 +17,14 @@ export class SearchConfig extends Context.Service<
   static readonly layer = Layer.effect(
     SearchConfig,
     Effect.gen(function* () {
-      const value = yield* Config.all({
-        environment: Config.String("ENV").pipe(Config.withDefault("local")),
-        port: Config.Int("PORT"),
-        serviceName: Config.String("SERVICE_NAME").pipe(
-          Config.withDefault("search"),
-        ),
-        serviceNamespace: Config.String("SERVICE_NAMESPACE").pipe(
-          Config.withDefault("local"),
-        ),
+      const { base, ...search } = yield* Config.all({
+        base: baseServiceConfig("search"),
         meilisearchHost: Config.String("MEILISEARCH_HOST"),
         meilisearchApiKey: Config.Redacted("MEILISEARCH_API_KEY"),
         rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
       });
 
-      return SearchConfig.of(value);
+      return SearchConfig.of({ ...base, ...search });
     }),
   );
 }

@@ -1,17 +1,17 @@
-import { indexChangedDocuments } from "@lootlog/meilisearch/index-changed-documents";
+import { indexChangedDocuments } from "@lootlog/meilisearch/projection";
 import { Effect } from "effect";
 import { partition } from "es-toolkit";
 import type { Meilisearch } from "meilisearch";
-import { buildMeilisearchNameQuery } from "@lootlog/meilisearch/query-builder";
 import {
   attemptMeilisearch,
   type SearchOperationFailure,
 } from "@lootlog/meilisearch/operation-failure";
-import type { AppLogger } from "#src/shared/logger";
 import type { PlayerSearchQuery } from "./player-search-query.js";
-import { PLAYERS_INDEX } from "./search-index.js";
+import { playerNameQuery } from "./player-name-query.js";
 import type { IndexPlayersCommand } from "./index-players-command.js";
 import type { PlayerHit } from "./player-hit.js";
+
+export const PLAYERS_INDEX = "players";
 
 const playerNameKey = (player: Pick<PlayerHit, "world" | "name">) =>
   JSON.stringify([player.world, player.name]);
@@ -54,29 +54,19 @@ export const toPlayerDocument = (player: IndexPlayer) => ({
   uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
 });
 
-export const makePlayersModule = (
-  meilisearch: Meilisearch,
-  logger: AppLogger,
-) => {
-  const getPlayers = Effect.fn("SearchPlayers.get")(function* ({
-    limit,
-    search,
-    world,
-  }: PlayerSearchQuery) {
+export const makePlayersModule = (meilisearch: Meilisearch) => {
+  const getPlayers = Effect.fn("SearchPlayers.get")(function* (
+    input: PlayerSearchQuery,
+  ) {
     const index = meilisearch.index<PlayerHit>(PLAYERS_INDEX);
-
-    const { searchTerm, query } = buildMeilisearchNameQuery({
-      limit,
-      search,
-      world,
-    });
+    const { searchTerm, query } = playerNameQuery(input);
 
     return yield* attemptMeilisearch("search.players", () =>
       index.search(searchTerm, query),
     ).pipe(
       Effect.map((response) => uniquePlayers(response.hits)),
       Effect.tapError((error) =>
-        Effect.sync(() => logger.error("Players search error", { error })),
+        Effect.logError("Players search error", { error }),
       ),
     );
   });
@@ -89,15 +79,16 @@ export const makePlayersModule = (
     );
 
     if (validPlayers.length === 0) {
-      logger.warn("No valid players to index (missing required fields)", {
-        players: data.players,
-      });
+      yield* Effect.logWarning(
+        "No valid players to index (missing required fields)",
+        { players: data.players },
+      );
 
       return;
     }
 
     if (validPlayers.length !== data.players.length) {
-      logger.warn(
+      yield* Effect.logWarning(
         `Skipped ${invalidPlayers.length} players due to missing required fields`,
         { invalidPlayers },
       );

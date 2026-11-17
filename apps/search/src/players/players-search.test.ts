@@ -50,7 +50,7 @@ test("player search prefers known accounts over legacy duplicate identities with
   });
 
   const result = await Effect.runPromise(
-    makePlayersModule(client, { info() {}, warn() {}, error() {} }).getPlayers({
+    makePlayersModule(client).getPlayers({
       search: "cash",
       limit: 10,
     }),

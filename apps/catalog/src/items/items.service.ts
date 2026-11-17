@@ -6,9 +6,9 @@ import type {
   CatalogChange,
   CatalogWriteFailure,
 } from "#src/database/catalog-store";
-import { changedEntries, countEntries } from "#src/shared/changed-entries";
+import { changedDocuments } from "@lootlog/meilisearch/projection";
+import { countEntries } from "#src/shared/entry-metrics";
 import { npcMonsterKey, type NpcEntry } from "#src/npcs/npcs.service";
-import type { AppLogger } from "#src/shared/logger";
 import type {
   CatalogItemObservation,
   CatalogItemRevisions,
@@ -164,7 +164,7 @@ export type ItemEntry = ReturnType<typeof toItemDocuments>[number] &
     "retiredDropMonsterKeys" | "dropRates" | "revisions" | "changedOn"
   >;
 
-export const makeItemsModule = (write: CatalogWrite, logger: AppLogger) => {
+export const makeItemsModule = (write: CatalogWrite) => {
   const indexItems = Effect.fn("CatalogItems.index")(function* (
     data: IndexItemsCommand,
   ) {
@@ -173,13 +173,15 @@ export const makeItemsModule = (write: CatalogWrite, logger: AppLogger) => {
     );
 
     if (validItems.length === 0) {
-      logger.warn("No valid items to index (missing required fields)");
+      yield* Effect.logWarning(
+        "No valid items to index (missing required fields)",
+      );
 
       return;
     }
 
     if (validItems.length !== data.items.length) {
-      logger.warn(
+      yield* Effect.logWarning(
         `Skipped ${data.items.length - validItems.length} items due to missing required fields`,
       );
     }
@@ -192,7 +194,7 @@ export const makeItemsModule = (write: CatalogWrite, logger: AppLogger) => {
           itemsWithSearchFields.map(({ uid }) => uid),
         );
 
-        const changed = changedEntries(
+        const changed = changedDocuments(
           itemsWithSearchFields,
           stored,
           (item, existing) => ({

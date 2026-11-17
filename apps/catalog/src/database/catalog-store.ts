@@ -1,18 +1,14 @@
 import type { GameVersion } from "@lootlog/schema/game-version";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
-import { SEARCH_INDEX_PRIMARY_KEY } from "@lootlog/meilisearch/index-settings";
-import {
-  completeMeilisearchTask,
-  type SearchOperationFailure,
-} from "@lootlog/meilisearch/operation-failure";
+import type { SearchOperationFailure } from "@lootlog/meilisearch/operation-failure";
+import { projectDocuments } from "@lootlog/meilisearch/projection";
 import { and, arrayContains, asc, eq, inArray, sql } from "drizzle-orm";
 import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import type { SqlError } from "effect/sql/SqlError";
 import { Effect } from "effect";
 import { chunk } from "es-toolkit";
 import type { Meilisearch } from "meilisearch";
-import { ITEMS_INDEX } from "#src/items/search-index";
-import { NPCS_INDEX } from "#src/npcs/search-index";
+import { ITEMS_INDEX, NPCS_INDEX } from "#src/projection/catalog-indexes";
 import type { CatalogDatabaseValue } from "./database.js";
 import { catalogItemTable, catalogNpcTable } from "./schema.js";
 
@@ -33,7 +29,7 @@ type Transaction = Parameters<
   Parameters<CatalogDatabaseValue["transaction"]>[0]
 >[0];
 
-const PROJECTION_BATCH = 500;
+const WRITE_BATCH = 500;
 
 const READ_BATCH = 1000;
 
@@ -130,15 +126,10 @@ export const makeCatalogStore = <
   meilisearch: Meilisearch,
 ) => {
   const project = (indexName: string, entries: ReadonlyArray<object>) =>
-    Effect.forEach(
-      chunk([...entries], PROJECTION_BATCH),
-      (batch) =>
-        completeMeilisearchTask(`catalog.${indexName}.project`, () =>
-          meilisearch
-            .index(indexName)
-            .addDocuments(batch, { primaryKey: SEARCH_INDEX_PRIMARY_KEY }),
-        ),
-      { discard: true },
+    projectDocuments(
+      meilisearch.index(indexName),
+      entries,
+      `catalog.${indexName}.project`,
     );
 
   const npcLookups = (executor: CatalogDatabaseValue | Transaction) => ({
@@ -213,7 +204,7 @@ export const makeCatalogStore = <
 
   const storeNpcs = (transaction: Transaction, npcs: ReadonlyArray<Npc>) =>
     Effect.forEach(
-      chunk([...npcs], PROJECTION_BATCH),
+      chunk([...npcs], WRITE_BATCH),
       (batch) =>
         transaction
           .insert(catalogNpcTable)
@@ -264,7 +255,7 @@ export const makeCatalogStore = <
       ).pipe(Effect.map((pages) => documents<Item>(pages.flat()))),
     saveItems: (items) =>
       Effect.gen(function* () {
-        for (const batch of chunk([...items], PROJECTION_BATCH)) {
+        for (const batch of chunk([...items], WRITE_BATCH)) {
           yield* transaction
             .insert(catalogItemTable)
             .values(

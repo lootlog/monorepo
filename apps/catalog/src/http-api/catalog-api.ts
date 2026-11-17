@@ -1,9 +1,9 @@
+import { healthGroup } from "@lootlog/instrumentation/service";
 import { ApiKeyEndpointPolicy } from "@lootlog/schema/api-key-http";
 /** Authoritative composition root for the catalog HTTP contract. */
 import { HttpApi, OpenApi } from "effect/http-api";
 import { CatalogAccess } from "./catalog-access.js";
 import { CatalogGroup } from "./contracts/catalog/api.js";
-import { HealthGroup } from "./contracts/health/api.js";
 
 export class CatalogApi extends HttpApi.make("CatalogApi")
   .annotate(OpenApi.Title, "Catalog API")
@@ -13,6 +13,9 @@ export class CatalogApi extends HttpApi.make("CatalogApi")
     "Margonem items and NPCs as Lootlog observed them",
   )
   .annotate(OpenApi.Servers, [])
-  .add(HealthGroup, CatalogGroup)
+  .add(
+    healthGroup("Check the health status of the catalog service"),
+    CatalogGroup,
+  )
   .middleware(CatalogAccess)
   .middleware(ApiKeyEndpointPolicy) {}

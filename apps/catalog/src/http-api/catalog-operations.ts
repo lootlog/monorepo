@@ -23,8 +23,7 @@ import {
   type MonsterLocationsCommand,
   type NpcEntry,
 } from "#src/npcs/npcs.service";
-import { catalogIndexSettings } from "#src/projection/index-settings";
-import { effectLogger } from "#src/shared/logger";
+import { catalogIndexSettings } from "#src/projection/catalog-indexes";
 import type {
   CatalogControllerGetEventsQuery,
   CatalogControllerGetIndexQuery,
@@ -89,15 +88,11 @@ export class CatalogOperations extends Context.Service<
         meilisearch,
       );
 
-      const items = makeItemsModule(write, effectLogger);
-      const npcs = makeNpcsModule(write, effectLogger);
-      const catalog = makeCatalogModule(meilisearch, read, effectLogger);
+      const items = makeItemsModule(write);
+      const npcs = makeNpcsModule(write);
+      const catalog = makeCatalogModule(meilisearch, read);
 
-      yield* configureMeilisearchIndexes(
-        meilisearch,
-        catalogIndexSettings,
-        effectLogger,
-      );
+      yield* configureMeilisearchIndexes(meilisearch, catalogIndexSettings);
 
       return CatalogOperations.of({
         catalogItems: catalog.getItems,

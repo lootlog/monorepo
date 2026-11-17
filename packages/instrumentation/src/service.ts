@@ -115,16 +115,19 @@ export const serviceHttpServer = <A, E, R>(options: {
   readonly middleware?: HttpMiddleware.HttpMiddleware;
 }) => {
   const inner = options.middleware;
+  const routes = options.routes.pipe(Layer.provide(httpServerRouteMetrics));
+  const measured = HttpRouter.serve(routes, { middleware: httpServerMetrics });
 
-  return HttpRouter.serve(
-    options.routes.pipe(Layer.provide(httpServerRouteMetrics)),
-    {
-      middleware:
-        inner === undefined
-          ? httpServerMetrics
-          : (effect) => httpServerMetrics(inner(effect)),
-    },
-  ).pipe(
+  // `HttpMiddleware` erases requirements to `any`; the server keeps the
+  // requirements of its routes, which an inner middleware must not add to.
+  const served: typeof measured =
+    inner === undefined
+      ? measured
+      : HttpRouter.serve(routes, {
+          middleware: (effect) => httpServerMetrics(inner(effect)),
+        });
+
+  return served.pipe(
     Layer.provide(
       BunHttpServer.layer({ hostname: "0.0.0.0", port: options.port }),
     ),
