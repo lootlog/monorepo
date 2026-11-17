@@ -20,7 +20,7 @@ import {
 } from "#src/notifications/jobs/notification-job-recovery";
 import { makeNotificationJobRecurrence } from "#src/notifications/jobs/notification-job-recurrence";
 import { makeNotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
-import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job-store";
+import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job.repository";
 
 describe("notification job recovery", () => {
   it("dispatches or closes PENDING jobs whose queue entry was lost", async () => {

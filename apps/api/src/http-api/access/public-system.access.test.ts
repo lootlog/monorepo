@@ -1,0 +1,148 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
+import { describe, expect, it } from "bun:test";
+import { Effect, Layer, Predicate, Schema } from "effect";
+import { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
+import { GameMapsResponse } from "#src/contracts/maps/schemas";
+
+import { healthCheck } from "../handlers/health/health.handlers.js";
+import { getMaps } from "../handlers/maps/maps.handlers.js";
+import { refreshStatsCard } from "../handlers/guild-stats-card/guild-stats-card.handlers.js";
+import { getPublicStatsCard } from "../handlers/public-guild-stats-card/public-guild-stats-card.handlers.js";
+import {
+  PublicSystemAccessDenied,
+  PublicSystemAuthorization,
+  PublicSystemData,
+} from "./public-system.access.js";
+
+const png = Uint8Array.from([137, 80, 78, 71]);
+
+const makeData = (overrides: Partial<PublicSystemData["Service"]> = {}) =>
+  PublicSystemData.of({
+    healthCheck: Effect.void,
+    getMaps: Effect.succeed([{ id: 1, name: "Ithan" }]),
+    refreshStatsCard: () =>
+      Effect.succeed({ nextRefreshAt: "2026-09-02T12:00:00.000Z" }),
+    getStatsCard: () => Effect.succeed(png),
+    statsCardCacheControl: "public, max-age=300, must-revalidate",
+    ...overrides,
+  });
+
+const makeAuthorization = (
+  overrides: Partial<PublicSystemAuthorization["Service"]> = {},
+) =>
+  PublicSystemAuthorization.of({
+    requireCapability: ({ guildId }) => Effect.succeed({ guildId }),
+    ...overrides,
+  });
+
+const provideServices = (
+  data: PublicSystemData["Service"],
+  authorization = makeAuthorization(),
+) =>
+  Layer.merge(
+    Layer.succeed(PublicSystemData, data),
+    Layer.succeed(PublicSystemAuthorization, authorization),
+  );
+
+describe("public system HttpApi handlers", () => {
+  it("keeps health and maps public and validates the maps response", async () => {
+    const data = makeData();
+
+    const [health, maps] = await Effect.runPromise(
+      Effect.all([healthCheck(), getMaps()]).pipe(
+        Effect.provideService(PublicSystemData, data),
+      ),
+    );
+
+    expect(health).toBeUndefined();
+    expect(maps).toEqual([{ id: 1, name: "Ithan" }]);
+    expect(Schema.is(GameMapsResponse)(maps)).toBe(true);
+  });
+
+  it("requires OWNER or ADMIN before refreshing an Organization card", async () => {
+    const authorizationCalls: Array<{
+      guildId: string;
+      anyOf: ReadonlyArray<string>;
+    }> = [];
+
+    const refreshedGuilds: string[] = [];
+
+    const layer = provideServices(
+      makeData({
+        refreshStatsCard: (guildId) => {
+          refreshedGuilds.push(guildId);
+
+          return Effect.succeed({
+            nextRefreshAt: "2026-09-02T12:00:00.000Z",
+          });
+        },
+      }),
+      makeAuthorization({
+        requireCapability: (options) => {
+          authorizationCalls.push(options);
+
+          return Effect.succeed({ guildId: options.guildId });
+        },
+      }),
+    );
+
+    const response = await Effect.runPromise(
+      refreshStatsCard("guild-a").pipe(Effect.provide(layer)),
+    );
+
+    expect(authorizationCalls).toEqual([
+      {
+        guildId: "guild-a",
+        anyOf: AccessRequirement.ADMINISTER,
+      },
+    ]);
+    expect(refreshedGuilds).toEqual(["guild-a"]);
+    expect(Schema.is(RefreshStatsCardResponse)(response)).toBe(true);
+  });
+
+  it("fails closed before a forbidden stats-card refresh reaches data", async () => {
+    const denied = new PublicSystemAccessDenied({
+      status: 403,
+      code: "GUILD_MANAGE_REQUIRED",
+    });
+
+    let dataCalled = false;
+
+    const layer = provideServices(
+      makeData({
+        refreshStatsCard: () => {
+          dataCalled = true;
+
+          return Effect.succeed({ nextRefreshAt: "never" });
+        },
+      }),
+      makeAuthorization({ requireCapability: () => Effect.fail(denied) }),
+    );
+
+    const error = await Effect.runPromise(
+      Effect.flip(refreshStatsCard("guild-b").pipe(Effect.provide(layer))),
+    );
+
+    expect(error).toBe(denied);
+    expect(dataCalled).toBe(false);
+  });
+
+  it("returns the public PNG with the established cache headers", async () => {
+    const response = await Effect.runPromise(
+      getPublicStatsCard("guild-a").pipe(
+        Effect.provideService(PublicSystemData, makeData()),
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toBe("image/png");
+    expect(response.headers["cache-control"]).toBe(
+      "public, max-age=300, must-revalidate",
+    );
+    expect(response.body._tag).toBe("Uint8Array");
+
+    if (Predicate.isTagged(response.body, "Uint8Array")) {
+      expect(response.body.body).toEqual(png);
+    }
+  });
+});

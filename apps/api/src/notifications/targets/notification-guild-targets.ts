@@ -4,7 +4,7 @@ import {
   readNotificationTargetRuleIds,
   readSingleTargetNotificationRuleIds,
   updateNotificationTarget,
-} from "#src/notifications/targets/notification-target-store";
+} from "#src/notifications/targets/notification-target.repository";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";

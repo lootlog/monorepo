@@ -5,19 +5,15 @@ import { BunHttpServer } from "@effect/platform-bun";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { HttpRouter } from "effect/http";
 import { HttpApi, HttpApiBuilder } from "effect/http-api";
-import { ChatGroup } from "../../contracts/chat/api.js";
-import { BearerSecurityMiddleware } from "../../contracts/shared.js";
+import { ChatGroup } from "#src/contracts/chat/api";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
-import {
-  ChatOperationError,
-  ChatHandlers,
-  ChatData,
-  ChatAuthorization,
-} from "./chat.handlers.js";
-import { makeChatOperations, type ChatRedis } from "./chat.data-layer.js";
+import { ChatOperationError, ChatData } from "#src/chat/chat-data";
+import { ChatHandlers, ChatAuthorization } from "./chat.handlers.js";
+import { makeChatOperations, type ChatRedis } from "#src/chat/chat.data-layer";
 
 const message = {
   id: "message",

@@ -15,7 +15,7 @@ import type {
   CreateLootResponse,
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
-import { parseCharacterIdentity } from "#src/shared/margonem/player-snapshot.persistence";
+import { parseCharacterIdentity } from "#src/shared/margonem/player-snapshot.repository";
 
 import type { LootPublication } from "./loot-publication-outbox.js";
 import type {

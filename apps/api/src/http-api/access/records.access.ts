@@ -1,0 +1,304 @@
+import type {
+  UserFeedQuery,
+  UserFeedResponse,
+} from "#src/contracts/users/feed-schemas";
+import type {
+  UserKillAnalyticsQuery,
+  UserKillAnalyticsResponse,
+  UserKillActivityQuery,
+  UserKillActivityResponse,
+  UserKillCharactersResponse,
+} from "#src/contracts/kills/analytics-schemas";
+import {
+  statusCodeResponse,
+  reauthenticationRequiredResponse,
+} from "#src/shared/http/handler-response";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
+import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import { Context, Effect, Layer, Schema } from "effect";
+import { applicationErrorResponse } from "../application-error-response.js";
+
+import type {
+  guildTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
+import type {
+  CreateKillResponse,
+  CreateKillRequest,
+  GuildKillStatsResponse,
+  GuildKillStatsQuery,
+  GuildTopKillersByTypeResponse,
+  GuildTopKillersQuery,
+  GuildTopNpcsResponse,
+  GuildTopNpcsQuery,
+  MemberKillsResponse,
+  MemberKillsQuery,
+  NpcKillersResponse,
+  NpcKillersQuery,
+  UserKillStatsResponse,
+  UserKillStatsQuery,
+  UserNpcKillsResponse,
+  UserNpcKillsQuery,
+} from "#src/contracts/kills/schemas";
+import type {
+  LootsQuery,
+  LootCommentResponse,
+  CreateLootCommentRequest,
+  CreateLootResponse,
+  CreateLootRequest,
+  LootDetailResponse,
+  LootListResponse,
+  LootCommentsResponse,
+  LootLikesResponse,
+  LootStatsResponse,
+  LootStatsQuery,
+  UserLootStatsQuery,
+  UserLootStatsResponse,
+  ResolvedLootItemResponse,
+  ResolveLootItemQuery,
+  LootShareResponse,
+  UpdateLootShareRequest,
+  CreateLootDrawRequest,
+  LootDrawResponse,
+  LootDrawsResponse,
+  VoidLootDrawRequest,
+} from "#src/contracts/loots/schemas";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
+
+type Guild = typeof guildTable.$inferSelect;
+
+type Role = typeof roleTable.$inferSelect;
+
+export interface AuthenticatedCaller {
+  readonly discordId: string;
+  readonly userId: string;
+}
+
+export interface AuthorizedGuildCaller extends AuthenticatedCaller {
+  readonly guild: Guild;
+  readonly accessPolicy: AccessPolicy;
+  readonly roles: ReadonlyArray<Role>;
+}
+
+export class RecordsAccessDenied extends TaggedErrorClass<RecordsAccessDenied>()(
+  "RecordsAccessDenied",
+  {
+    status: Schema.Literals([401, 403]),
+    code: Schema.String,
+  },
+) {}
+
+export class RecordsNotFound extends TaggedErrorClass<RecordsNotFound>()(
+  "RecordsNotFound",
+  {
+    status: Schema.Literal(404),
+    code: Schema.String,
+  },
+) {}
+
+class RecordsBadRequest extends TaggedErrorClass<RecordsBadRequest>()(
+  "RecordsBadRequest",
+  {
+    status: Schema.Literal(400),
+    code: Schema.String,
+  },
+) {}
+
+export class RecordsDataError extends TaggedErrorClass<RecordsDataError>()(
+  "RecordsDataError",
+  { cause: Schema.Defect() },
+) {}
+
+export class RecordsAuthorization extends Context.Service<
+  RecordsAuthorization,
+  {
+    readonly requireCaller: Effect.Effect<
+      AuthenticatedCaller,
+      RecordsAccessDenied
+    >;
+    readonly requireGuild: (options: {
+      readonly guildId: string;
+      readonly capability: PermissionValue;
+    }) => Effect.Effect<
+      AuthorizedGuildCaller,
+      RecordsAccessDenied | RecordsNotFound | ReauthenticationRequired
+    >;
+  }
+>()("@lootlog/api/http-api/records/authorization") {}
+
+type DataEffect<A> = Effect.Effect<A, RecordsDataError>;
+
+export class RecordsData extends Context.Service<
+  RecordsData,
+  {
+    readonly createKill: (
+      caller: AuthenticatedCaller,
+      payload: CreateKillRequest,
+    ) => DataEffect<CreateKillResponse>;
+    readonly getGuildKillStats: (
+      caller: AuthorizedGuildCaller,
+      query: GuildKillStatsQuery,
+    ) => DataEffect<GuildKillStatsResponse>;
+    readonly getUserFeed: (
+      caller: AuthenticatedCaller,
+      query: UserFeedQuery,
+    ) => DataEffect<UserFeedResponse>;
+    readonly getUserKillAnalytics: (
+      caller: AuthenticatedCaller,
+      query: UserKillAnalyticsQuery,
+    ) => DataEffect<UserKillAnalyticsResponse>;
+    readonly getUserKillActivity: (
+      caller: AuthenticatedCaller,
+      query: UserKillActivityQuery,
+    ) => DataEffect<UserKillActivityResponse>;
+    readonly getUserKillCharacters: (
+      caller: AuthenticatedCaller,
+    ) => DataEffect<UserKillCharactersResponse>;
+    readonly getUserKillStats: (
+      caller: AuthenticatedCaller,
+      query: UserKillStatsQuery,
+    ) => DataEffect<UserKillStatsResponse>;
+    readonly getUserNpcKills: (
+      caller: AuthenticatedCaller,
+      query: UserNpcKillsQuery,
+    ) => DataEffect<UserNpcKillsResponse>;
+    readonly getGuildTopNpcs: (
+      caller: AuthorizedGuildCaller,
+      query: GuildTopNpcsQuery,
+    ) => DataEffect<GuildTopNpcsResponse>;
+    readonly getGuildTopKillersByType: (
+      caller: AuthorizedGuildCaller,
+      query: GuildTopKillersQuery,
+    ) => DataEffect<GuildTopKillersByTypeResponse>;
+    readonly getNpcKillers: (
+      caller: AuthorizedGuildCaller,
+      npcId: number,
+      query: NpcKillersQuery,
+    ) => DataEffect<NpcKillersResponse | null>;
+    readonly getMemberKills: (
+      caller: AuthorizedGuildCaller,
+      memberId: number,
+      query: MemberKillsQuery,
+    ) => DataEffect<MemberKillsResponse | null>;
+    readonly fetchLoots: (
+      caller: AuthorizedGuildCaller,
+      query: LootsQuery,
+    ) => DataEffect<LootListResponse>;
+    readonly getLootStats: (
+      caller: AuthorizedGuildCaller,
+      query: LootStatsQuery,
+    ) => DataEffect<LootStatsResponse>;
+    readonly getUserLootStats: (
+      caller: AuthenticatedCaller,
+      query: UserLootStatsQuery,
+    ) => DataEffect<UserLootStatsResponse>;
+    readonly resolveLootItem: (
+      caller: AuthorizedGuildCaller,
+      query: ResolveLootItemQuery,
+    ) => DataEffect<ResolvedLootItemResponse>;
+    readonly fetchLoot: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+    ) => DataEffect<LootDetailResponse>;
+    readonly archiveLoot: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+    ) => DataEffect<boolean>;
+    readonly createLoot: (
+      caller: AuthenticatedCaller,
+      payload: CreateLootRequest,
+    ) => DataEffect<CreateLootResponse>;
+    readonly getComments: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+    ) => DataEffect<LootCommentsResponse | null>;
+    readonly createComment: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+      payload: CreateLootCommentRequest,
+    ) => DataEffect<LootCommentResponse | null>;
+    readonly getDraws: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+    ) => DataEffect<LootDrawsResponse | null>;
+    readonly createDraw: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+      payload: CreateLootDrawRequest,
+    ) => DataEffect<LootDrawResponse | null>;
+    readonly voidDraw: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+      drawId: number,
+      payload: VoidLootDrawRequest,
+    ) => DataEffect<LootDrawResponse | null>;
+    readonly setLike: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+      liked: boolean,
+    ) => DataEffect<LootLikesResponse | null>;
+    readonly updateLoot: (
+      caller: AuthenticatedCaller,
+      lootId: number,
+      payload: UpdateLootShareRequest,
+    ) => DataEffect<LootShareResponse | null>;
+  }
+>()("@lootlog/api/http-api/records/data") {
+  static layer(service: RecordsData["Service"]) {
+    return Layer.succeed(RecordsData, RecordsData.of(service));
+  }
+}
+
+export const requireCaller = Effect.flatMap(
+  RecordsAuthorization,
+  (authorization) => authorization.requireCaller,
+);
+
+export const requireGuild = (
+  guildId: string | undefined,
+  capability: PermissionValue,
+) => {
+  if (typeof guildId !== "string") {
+    return Effect.fail(
+      new RecordsAccessDenied({
+        status: 403,
+        code: "ORGANIZATION_SCOPE_REQUIRED",
+      }),
+    );
+  }
+
+  return Effect.flatMap(RecordsAuthorization, (authorization) =>
+    authorization.requireGuild({ guildId, capability }),
+  );
+};
+
+export const data = <A>(
+  operation: (service: RecordsData["Service"]) => DataEffect<A>,
+) => Effect.flatMap(RecordsData, operation);
+
+export const parseIdentifier = (value: string, code: string) => {
+  const parsed = Number.parseInt(value, 10);
+
+  return Number.isSafeInteger(parsed) && parsed >= 0
+    ? Effect.succeed(parsed)
+    : Effect.fail(new RecordsBadRequest({ status: 400, code }));
+};
+
+type HttpFailure =
+  | RecordsAccessDenied
+  | RecordsBadRequest
+  | RecordsNotFound
+  | RecordsDataError
+  | ReauthenticationRequired;
+
+export const toRecordsHttpResponse = <A, R>(
+  effect: Effect.Effect<A, HttpFailure, R>,
+) =>
+  Effect.catchTags(effect, {
+    RecordsAccessDenied: statusCodeResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
+    RecordsBadRequest: statusCodeResponse,
+    RecordsNotFound: statusCodeResponse,
+    RecordsDataError: (error) => applicationErrorResponse(error.cause),
+  });

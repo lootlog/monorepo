@@ -22,7 +22,7 @@ import {
   guildTable,
   memberTable,
 } from "../src/database/drizzle/organization.schema.js";
-import { makeUserAccountDeletion } from "../src/http-api/handlers/account-organization/user-account-deletion.data-layer.js";
+import { makeUserAccountDeletion } from "../src/users/user-account-deletion.data-layer.js";
 import { makeMemberKillPurge } from "../src/kills/member-kill-purge.js";
 import { createGuildFixture } from "./organization-fixtures.js";
 

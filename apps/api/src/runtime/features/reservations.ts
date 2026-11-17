@@ -3,9 +3,9 @@ import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
 import { HttpClient } from "effect/http";
-import { makeReservationCatalogAdapter } from "#src/http-api/handlers/organization-workspace/reservation-catalog.adapter";
-import { makeReservationReadDataLayer } from "#src/http-api/handlers/organization-workspace/reservation-read.data-layer";
-import { makeReservationSharingDataLayer } from "#src/http-api/handlers/organization-workspace/reservation-sharing.data-layer";
+import { makeReservationCatalogAdapter } from "#src/reservations/reservation-catalog.adapter";
+import { makeReservationReadDataLayer } from "#src/reservations/reservation-read.data-layer";
+import { makeReservationSharingDataLayer } from "#src/reservations/reservation-sharing.data-layer";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import {
@@ -13,7 +13,7 @@ import {
   NOTIFICATION_DISPATCH_JOB_OPTIONS,
 } from "#src/notifications/jobs/dispatch-queue";
 import { Queue } from "bullmq";
-import { makeReservationMutationsDataLayer } from "#src/http-api/handlers/organization-workspace/reservation-mutations.data-layer";
+import { makeReservationMutationsDataLayer } from "#src/reservations/reservation-mutations.data-layer";
 
 export const reservationSharingData = Layer.unwrap(
   Effect.map(RabbitMessaging, (rabbit) =>

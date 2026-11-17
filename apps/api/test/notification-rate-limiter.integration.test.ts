@@ -19,7 +19,7 @@ import {
   NOTIFICATION_RATE_LIMIT_WINDOW_MS,
   type MessagingRedis,
   type NotificationRateLimitOutcome,
-} from "../src/http-api/handlers/messaging/messaging.data-layer.js";
+} from "../src/messaging/messaging.data-layer.js";
 
 describe("Notification rate limiter Dragonfly integration", () => {
   let firstRedis: RedisService;

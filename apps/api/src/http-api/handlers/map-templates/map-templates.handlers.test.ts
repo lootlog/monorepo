@@ -7,11 +7,13 @@ import {
 } from "#src/map-templates/map-template.schema";
 
 import {
-  createMapTemplate,
   MapTemplateNotFound,
+  MapTemplatesData,
+} from "#src/map-templates/map-templates-data";
+import {
+  createMapTemplate,
   MapTemplatesAccessDenied,
   MapTemplatesAuthorization,
-  MapTemplatesData,
   updateMapTemplate,
 } from "./map-templates.handlers.js";
 

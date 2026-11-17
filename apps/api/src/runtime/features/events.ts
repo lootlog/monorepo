@@ -1,6 +1,6 @@
 import { makeEventKillHistory } from "#src/events/history/event-kill-history";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { makeEventTimerStore } from "#src/events/respawn/event-timer.store";
+import { makeEventTimerStore } from "#src/events/respawn/event-timer.repository";
 import {
   makeEventTimersPort,
   type EventTimersPort,
@@ -12,7 +12,7 @@ import { Queue } from "bullmq";
 import { Context, Effect, Layer } from "effect";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
-import { makeAmqpAdapter } from "#src/runtime/infrastructure/amqp-publisher";
+import { makeAmqpAdapter } from "#src/runtime/infrastructure/amqp-adapter";
 import { RESPAWN_WINDOW_QUEUE } from "#src/events/respawn/respawn-queue.constant";
 import { makeEventAccess } from "#src/events/event-access";
 import { makeEventCatalogMutations } from "#src/events/catalog/event-catalog-mutations";
@@ -55,7 +55,7 @@ import { makeEventSummary } from "#src/events/monitoring/event-summary.service";
 import { makeEventWrappedStore } from "#src/events/wrapped/event-wrapped.repository";
 import { makeEventWrapped } from "#src/events/wrapped/event-wrapped.service";
 import { makePinnedEventsPersistence } from "#src/events/pins/pinned-events.repository";
-import { eventDataLayer } from "#src/http-api/handlers/events/events.data-layer";
+import { eventDataLayer } from "#src/events/events.data-layer";
 import { RecordsServices } from "#src/runtime/features/records";
 
 export class EventTimers extends Context.Service<

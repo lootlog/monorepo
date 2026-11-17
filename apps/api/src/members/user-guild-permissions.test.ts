@@ -18,10 +18,8 @@ import {
   ForwardAuthIdentity,
   type ForwardAuthIdentityValue,
 } from "#src/runtime/auth/forward-auth-identity";
-import {
-  getInternalUserPermissions,
-  InternalGuildsData,
-} from "#src/http-api/handlers/internal/internal.handlers";
+import { InternalGuildsData } from "#src/guilds/internal-guilds-data";
+import { getInternalUserPermissions } from "#src/http-api/handlers/internal/internal.handlers";
 import {
   makeUserGuildPermissionsPersistence,
   makeUserGuildPermissionsProjection,

@@ -7,7 +7,7 @@ import { RedisService, makeJsonCodec } from "#src/redis/redis.service";
 import {
   makeReadyRoomRepository,
   type ReadyRoomRedis,
-} from "#src/http-api/handlers/party-ready-room/ready-room.repository";
+} from "../src/messaging/ready-room/ready-room.repository.js";
 import {
   makeReadyRoomPublicationOutbox,
   READY_ROOM_PUBLICATION_KEYS,

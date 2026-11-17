@@ -1,6 +1,6 @@
 import { scheduleNotificationOccurrence } from "./notification-scheduled-occurrence.js";
 import { Clock, Effect } from "effect";
-import type { NotificationRuleWithTargets } from "#src/notifications/jobs/notification-job-store";
+import type { NotificationRuleWithTargets } from "#src/notifications/jobs/notification-job.repository";
 import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
 import {
   NotificationJobStatus,

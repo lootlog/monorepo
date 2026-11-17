@@ -21,7 +21,7 @@ import {
   type NotificationMatching,
 } from "#src/notifications/rules/notification-matching.service";
 import { timerNpcIdentity } from "#src/timers/timer-projection";
-import type { NotificationEventStore } from "#src/notifications/delivery/notification-event-store";
+import type { NotificationEventStore } from "#src/notifications/delivery/notification-event.repository";
 import {
   WATCHED_ITEM_DROPPED_TITLE,
   watchedItemDroppedMessage,

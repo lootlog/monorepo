@@ -1,6 +1,6 @@
 import { getOrSetStaleJson } from "#src/redis/stale-json-cache";
 import { getLootListCacheScope } from "#src/shared/cache";
-import { makeUserFeed } from "#src/feed/user-feed";
+import { makeUserFeed } from "#src/users/user-feed";
 import { makeUserLootStats } from "#src/loots/query/user-loot-stats";
 import { makeGuildKillActivityPublisher } from "#src/kills/guild-kill-activity";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -8,13 +8,13 @@ import { makeJsonCodec } from "#src/redis/redis.service";
 import { makeGuildKillQueries } from "#src/kills/guild-kill-queries";
 import { makeKillCreation } from "#src/kills/kill-creation";
 import type { KillQueryCache } from "#src/kills/kill-query-support";
-import { makeKillStatsPersistence } from "#src/kills/kill-stats-persistence";
+import { makeKillStatsPersistence } from "#src/kills/kill-stats.repository";
 import { makeMemberKillQuery } from "#src/kills/member-kill-query";
 import { makeUserKillQueries } from "#src/kills/user-kill-queries";
 import { ExecutionError, RedlockService } from "#src/redis/redlock";
-import { makeLootAllocationPersistence } from "#src/loots/allocation/loot-allocation-persistence";
+import { makeLootAllocationPersistence } from "#src/loots/allocation/loot-allocation.repository";
 import { makeLootAllocationOperations } from "#src/loots/allocation/loot-allocation.operations";
-import { makeLootPersistence } from "#src/loots/loot-persistence";
+import { makeLootPersistence } from "#src/loots/loot.repository";
 import { makeLootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
 import {
   makeLootPublicationDispatcher,
@@ -27,14 +27,14 @@ import {
   type LootsOperations,
 } from "#src/loots/loots.operations";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
-import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
+import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
 import { LootStatsService } from "#src/loots/query/loot-stats.service";
 import { applicationLogger } from "#src/shared/application-logger";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer } from "effect";
-import { recordsDataLayer } from "#src/http-api/handlers/records/records.data-layer";
+import { recordsDataLayer } from "#src/http-api/access/records.data-layer";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
 interface RecordsServicesValue {

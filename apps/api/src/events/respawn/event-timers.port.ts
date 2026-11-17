@@ -20,7 +20,7 @@ import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import type { Timer } from "#src/timers/timers.types";
 import { buildTimerKey, buildTimerLockKey } from "#src/timers/timer-key";
-import type { EventTimerStore } from "#src/events/respawn/event-timer.store";
+import type { EventTimerStore } from "#src/events/respawn/event-timer.repository";
 
 export interface EventTimerLookupInput {
   readonly guildId: string;

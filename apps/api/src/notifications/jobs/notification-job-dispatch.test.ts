@@ -29,7 +29,7 @@ import {
   notificationRuleTable,
   notificationTargetTable,
 } from "#src/database/drizzle/notification.schema";
-import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job-store";
+import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job.repository";
 import { canDispatchLootNotification } from "#src/notifications/notification-loot-source-visibility";
 import {
   makeNotificationJobDispatch,

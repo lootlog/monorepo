@@ -1,11 +1,11 @@
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
-import { makeMessagingDataLayer } from "#src/http-api/handlers/messaging/messaging.data-layer";
+import { makeMessagingDataLayer } from "#src/messaging/messaging.data-layer";
 import {
   createReadyRoomForNotification,
   type ReadyRoomEffects,
-} from "#src/http-api/handlers/party-ready-room/ready-room.data-layer";
+} from "#src/messaging/ready-room/ready-room.data-layer";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import {
   makeReadyRoomRedis,

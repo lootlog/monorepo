@@ -12,22 +12,22 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import { EventTimersError } from "#src/events/respawn/event-timers.port";
-import { BearerSecurityMiddleware } from "./contracts/shared.js";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import { LootlogApi } from "./lootlog-api.js";
 import { EventsHandlers } from "./handlers/events/events.handlers.js";
 import { EventsAuthorization } from "./handlers/events/events-authorization.js";
-import { EventOperations } from "./handlers/events/events.data-layer.js";
+import { EventOperations } from "#src/events/events.data-layer";
+import { TimersData } from "#src/timers/timers-data";
 import {
   TimersHandlers,
   TimersAuthorization,
-  TimersData,
 } from "./handlers/timers/timers.handlers.js";
-import { toTimersDataFailure } from "./handlers/timers/timer-errors.js";
+import { toTimersDataFailure } from "#src/timers/timer-errors";
 import {
   NotificationsHandlers,
   NotificationsAuthorization,
 } from "./handlers/notifications/notifications.handlers.js";
-import { NotificationOperations } from "./handlers/notifications/notifications.data-layer.js";
+import { NotificationOperations } from "#src/notifications/notifications.data-layer";
 
 const identity = { userId: "user-1", discordId: "discord-1" };
 

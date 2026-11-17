@@ -10,7 +10,7 @@ import {
   memberTable,
   memberToRoleTable,
 } from "#src/database/drizzle/organization.schema";
-import { RolesData } from "#src/http-api/handlers/organization-workspace/organization-workspace.operations";
+import { RolesData } from "../src/guilds/roles-data.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 

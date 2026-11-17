@@ -4,7 +4,7 @@ import {
   makeChatDataLayer,
   type ChatEvents,
   type ChatRedis,
-} from "#src/http-api/handlers/chat/chat.data-layer";
+} from "#src/chat/chat.data-layer";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
 // Moderation-rare scan over at most CHAT_MESSAGE_LIMIT elements.

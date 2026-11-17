@@ -13,9 +13,9 @@ import {
   timerHistoryEntryTable,
   timerTable,
 } from "#src/database/drizzle/timer.schema";
-import { makeDeleteTimer } from "#src/http-api/handlers/timers/timer-delete.data-layer";
-import { makeRestoreTimer } from "#src/http-api/handlers/timers/timer-restore.data-layer";
-import { makeResetTimer } from "#src/http-api/handlers/timers/timer-reset.data-layer";
+import { makeDeleteTimer } from "../src/timers/timer-delete.data-layer.js";
+import { makeRestoreTimer } from "../src/timers/timer-restore.data-layer.js";
+import { makeResetTimer } from "../src/timers/timer-reset.data-layer.js";
 import { makeTimersCleanup } from "#src/timers/timers-cleanup";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 import { createGuildFixture } from "./organization-fixtures.js";

@@ -18,7 +18,7 @@ import {
   mapNpc,
 } from "#src/loots/query/loot-snapshot-mappers";
 import { DEFAULT_PAGE_SIZE } from "#src/shared/keyset-page";
-import type { LootQueryPersistence } from "#src/loots/query/loot-query.persistence";
+import type { LootQueryPersistence } from "#src/loots/query/loot-query.repository";
 import type { LootQueryFilters } from "#src/loots/query/loot-query-filter";
 
 type Guild = typeof guildTable.$inferSelect;

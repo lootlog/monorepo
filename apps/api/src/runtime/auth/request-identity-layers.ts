@@ -3,7 +3,7 @@ import { CharacterAurasIdentity } from "#src/http-api/handlers/character-auras/c
 import { GlobalChatIdentity } from "#src/http-api/handlers/global-chat/global-chat.handlers";
 import { MessagingIdentity } from "#src/http-api/handlers/messaging/messaging.handlers";
 import { ReadyRoomAuthorization } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
-import { SettingsIdentity } from "#src/http-api/handlers/settings/settings.operations";
+import { SettingsIdentity } from "#src/http-api/handlers/preferences/preferences.operations";
 import { UserLootlogConfigIdentity } from "#src/http-api/handlers/user-lootlog-config/user-lootlog-config.handlers";
 import { UserThemesIdentity } from "#src/http-api/handlers/user-themes/user-themes.handlers";
 import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";

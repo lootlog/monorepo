@@ -2,7 +2,7 @@ import { applicationLogger as logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import { describe, expect, it } from "bun:test";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
-import type { LootAllocationPersistence } from "#src/loots/allocation/loot-allocation-persistence";
+import type { LootAllocationPersistence } from "#src/loots/allocation/loot-allocation.repository";
 import type { LootShare } from "#src/loots/loot-response.schema";
 import {
   PermissionDeniedError,

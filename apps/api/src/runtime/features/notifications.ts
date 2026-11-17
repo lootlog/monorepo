@@ -11,7 +11,7 @@ import { makeNotificationDeliveryResult } from "#src/notifications/delivery/noti
 import {
   makeNotificationEventStore,
   type NotificationEventStore,
-} from "#src/notifications/delivery/notification-event-store";
+} from "#src/notifications/delivery/notification-event.repository";
 import {
   makeNotificationGuildTargets,
   type NotificationGuildTargets,
@@ -30,7 +30,7 @@ import {
 } from "#src/notifications/jobs/notification-job-recovery";
 import { makeNotificationJobRecurrence } from "#src/notifications/jobs/notification-job-recurrence";
 import { makeNotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
-import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job-store";
+import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job.repository";
 import {
   makeNotificationMatching,
   type NotificationMatching,
@@ -44,7 +44,7 @@ import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "bullmq";
 import { Context, Effect, Layer } from "effect";
-import { notificationDataLayer } from "#src/http-api/handlers/notifications/notifications.data-layer";
+import { notificationDataLayer } from "#src/notifications/notifications.data-layer";
 import { redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import {
