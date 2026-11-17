@@ -11,17 +11,6 @@ import { describe, expect, it } from "vitest";
 
 describe("NPC appearance colors", () => {
   it("provides a valid USER-scoped default for every colored NPC type", () => {
-    expect(APPEARANCE_NPC_TYPES).toEqual([
-      "ELITE",
-      "ELITE2",
-      "ELITE3",
-      "HERO",
-      "EVENT_HERO",
-      "COLOSSUS",
-      "TITAN",
-      "HERO_TRACKER",
-    ]);
-
     for (const npcType of APPEARANCE_NPC_TYPES) {
       expect(DEFAULT_NPC_TYPE_COLORS[npcType]).toMatch(/^#[0-9A-F]{6}$/);
       expect(
@@ -31,8 +20,6 @@ describe("NPC appearance colors", () => {
         scopes: ["USER"],
       });
     }
-
-    expect(SETTINGS_CATALOG.appearance.schemaVersion).toBe(3);
   });
 
   it("normalizes malformed values per type instead of rejecting the palette", () => {

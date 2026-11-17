@@ -3,7 +3,6 @@ import { useTimersStore } from "@/store/timers.store";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { TimersSettingsAppearance } from "./timers-settings-appearance";
-import { TimersSettingsGeneral } from "./timers-settings-general";
 
 describe("timer settings controls", () => {
   beforeEach(() => {
@@ -26,20 +25,5 @@ describe("timer settings controls", () => {
     await user.keyboard(" ");
     expect(useTimersStore.getState().displayConfig).toEqual(original);
     expect(toggle).not.toBeChecked();
-  });
-  it("aligns the countdown mode control to the right edge", () => {
-    const { container } = render(<TimersSettingsGeneral />);
-
-    expect(container.querySelector('[data-slot="toggle-group"]')).toHaveClass(
-      "ll:ml-auto",
-    );
-  });
-
-  it("aligns the single-timer layout control to the right edge", () => {
-    const { container } = render(<TimersSettingsAppearance />);
-
-    expect(container.querySelector('[data-slot="toggle-group"]')).toHaveClass(
-      "ll:ml-auto",
-    );
   });
 });

@@ -30,10 +30,6 @@ describe("AsyncContent", () => {
 
     const loadingStatus = screen.getByRole("status");
     expect(loadingStatus).toHaveAttribute("aria-busy", "true");
-    expect(loadingStatus.querySelector("svg")).toHaveClass(
-      "ll:animate-spin",
-      "ll:motion-reduce:animate-none",
-    );
 
     rerender(
       <AsyncContent

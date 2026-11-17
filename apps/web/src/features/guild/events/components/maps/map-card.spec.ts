@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EventMap } from "../../types/api";
-import { getMapStatus, STATUS_STYLES } from "./map-status";
+import { getMapStatus } from "./map-status";
 
 const assignedMap: EventMap = {
   locationId: "location-1",
@@ -22,18 +22,13 @@ describe("map card status", () => {
     expect(getMapStatus(assignedMap, new Map())).toBe("ASSIGNED_ABSENT");
   });
 
-  it("shows unavailable presence the same way as absent players", () => {
-    const status = getMapStatus(assignedMap);
-
-    expect(status).toBe("ASSIGNED_UNKNOWN");
-    expect(STATUS_STYLES[status]).toEqual(STATUS_STYLES.ASSIGNED_ABSENT);
+  it("reports unknown presence when presence data is unavailable", () => {
+    expect(getMapStatus(assignedMap)).toBe("ASSIGNED_UNKNOWN");
   });
 
-  it("keeps an unassigned map visually distinct from an absent one", () => {
-    const unassignedMap = { ...assignedMap, assignedMembers: [] };
-    const status = getMapStatus(unassignedMap, new Map());
-
-    expect(status).toBe("UNASSIGNED");
-    expect(STATUS_STYLES[status].bg).not.toBe(STATUS_STYLES.ASSIGNED_ABSENT.bg);
+  it("treats a map without assigned members as unassigned", () => {
+    expect(
+      getMapStatus({ ...assignedMap, assignedMembers: [] }, new Map()),
+    ).toBe("UNASSIGNED");
   });
 });

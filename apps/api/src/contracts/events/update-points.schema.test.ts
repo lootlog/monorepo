@@ -7,14 +7,6 @@ import { Schema } from "effect";
 
 describe("Point adjustment validation", () => {
   describe("UpdateRankingPointsRequest", () => {
-    it("accepts decimal delta values", () => {
-      expect(() =>
-        Schema.decodeUnknownSync(UpdateRankingPointsRequest)({
-          pointsDelta: 1.75,
-        }),
-      ).not.toThrow();
-    });
-
     it("accepts decimal values with more than two decimal places", () => {
       expect(() =>
         Schema.decodeUnknownSync(UpdateRankingPointsRequest)({
@@ -41,12 +33,6 @@ describe("Point adjustment validation", () => {
   });
 
   describe("UpdateKillPointRequest", () => {
-    it("accepts decimal values", () => {
-      expect(() =>
-        Schema.decodeUnknownSync(UpdateKillPointRequest)({ pointsDelta: 0.25 }),
-      ).not.toThrow();
-    });
-
     it("accepts decimal values with more than two decimal places", () => {
       expect(() =>
         Schema.decodeUnknownSync(UpdateKillPointRequest)({

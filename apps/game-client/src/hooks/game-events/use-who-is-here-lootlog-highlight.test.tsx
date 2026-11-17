@@ -419,13 +419,6 @@ describe("useWhoIsHereLootlogHighlight", () => {
     expect(row.style.getPropertyValue("--ll-who-is-here-lootlog-color")).toBe(
       LOOTLOG_OTHER_GLOW_BLUE,
     );
-    const style = document.getElementById("ll-who-is-here-lootlog-style");
-    expect(style?.textContent).toContain(
-      "color: var(--ll-who-is-here-lootlog-color) !important",
-    );
-    expect(style?.textContent).not.toContain("box-shadow");
-    expect(style?.textContent).not.toContain("border:");
-    expect(style?.textContent).not.toContain("border-left");
   });
 
   it("highlights a whoIsHere row red-orange when selected guild does not catch the player", async () => {

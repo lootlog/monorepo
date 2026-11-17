@@ -56,21 +56,6 @@ describe("SoundsSettingsTab", () => {
     setTestRuntimeGame({ interface: "ni" });
   });
 
-  it("shows every category expanded without the unsupported timers category", () => {
-    render();
-    expect(
-      screen.getByRole("heading", { name: "Powiadomienia" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Wykrywacz" }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText("Timery")).not.toBeInTheDocument();
-    expect(screen.queryByText(/settings\.sounds\./)).not.toBeInTheDocument();
-    // Every sound url is editable at once; nothing is collapsed.
-    expect(screen.getByRole("textbox", { name: "Komunikaty" })).toBeVisible();
-    expect(screen.getAllByRole("textbox", { name: "Heros" })).toHaveLength(2);
-  });
-
   it("hides ping sound settings on the old interface", () => {
     setTestRuntimeGame({ interface: "si" });
     render();

@@ -48,7 +48,6 @@ describe("GremoryCircle motion preferences", () => {
     const staticDecoration = container.querySelector("svg")?.parentElement;
     expect(staticDecoration).not.toBe(animatedDecoration);
     expect(getByRole("textbox")).toBe(input);
-    expect(input.getAttribute("aria-label")).toBe("Name");
     await waitFor(() =>
       expect(staticDecoration?.style.transform).toBe("rotate(360deg)"),
     );

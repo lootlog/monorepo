@@ -90,15 +90,13 @@ const getNormalizedMentionColorsByName = <T extends NamedMentionValue>(
   );
 };
 
-export const getChatMentionMemberColorsByName = (
+const getChatMentionMemberColorsByName = (
   members?: MemberSummaryResponseDtoOutput[],
 ) => {
   return getNormalizedMentionColorsByName(members);
 };
 
-export const getChatMentionRoleColorsByName = (
-  roles?: RoleResponseDtoOutput[],
-) => {
+const getChatMentionRoleColorsByName = (roles?: RoleResponseDtoOutput[]) => {
   return getNormalizedMentionColorsByName(roles);
 };
 

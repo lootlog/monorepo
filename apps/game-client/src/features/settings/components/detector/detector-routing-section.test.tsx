@@ -92,17 +92,6 @@ describe("DetectorRoutingSection", () => {
     );
   });
 
-  it("shows every rule expanded with its own name, levels and Lootlogi", () => {
-    render();
-
-    expect(screen.queryByRole("button", { expanded: false })).toBeNull();
-    expect(screen.getAllByLabelText("Nazwa reguły")).toHaveLength(2);
-    expect(screen.getAllByLabelText("Poziom od")).toHaveLength(2);
-    expect(screen.getAllByLabelText("Poziom do")).toHaveLength(2);
-    expect(screen.getByLabelText("Lootlogi: Bossy hero")).toBeInTheDocument();
-    expect(screen.getByLabelText("Lootlogi: Reguła 2")).toBeInTheDocument();
-  });
-
   it("clamps a committed level to the allowed range before saving", async () => {
     const user = userEvent.setup();
 

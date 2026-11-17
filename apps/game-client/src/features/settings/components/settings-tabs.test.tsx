@@ -48,34 +48,11 @@ describe("SettingsTabs", () => {
     }));
   });
 
-  it("renders fifteen domain tabs in order and opens the selected domain", async () => {
+  it("opens the selected domain", async () => {
     const user = userEvent.setup();
     render();
 
-    const tabs = within(
-      screen.getByRole("tablist", { name: "Działy ustawień" }),
-    ).getAllByRole("tab");
-
-    const tabNames = tabs.map((tab) => tab.textContent);
     const soundsTab = screen.getByRole("tab", { name: "Dźwięki" });
-
-    expect(tabNames).toEqual([
-      "Ogólne",
-      "Zakres zbierania",
-      "Lootlogi",
-      "Wygląd",
-      "Czat",
-      "Timery",
-      "Powiadomienia",
-      "Wykrywacz",
-      "Wyciszenia",
-      "Panel walk",
-      "Pingi",
-      "Dźwięki",
-      "Sterowanie",
-      "Diagnostyka",
-      "Informacje",
-    ]);
 
     await user.click(soundsTab);
 

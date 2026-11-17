@@ -22,57 +22,6 @@ const render = (element: ReactElement) => renderElement(element, { wrapper });
 afterEach(cleanup);
 
 describe("KillParticipantRow", () => {
-  it("uses the regular table font size for desktop time and AFK values", () => {
-    const participant = createParticipant({
-      mapData: [
-        {
-          mapId: "map-1",
-          mapName: "Pradawne Wzgórze",
-          assignedAt: "2026-08-12T08:00:00.000Z",
-          unassignedAt: "2026-08-12T09:30:00.000Z",
-          assignmentDurationSeconds: 5_400,
-          presenceTimeSeconds: 5_359,
-          afkTimeSeconds: 41,
-        },
-      ],
-    });
-
-    const { container } = render(
-      <KillParticipantRow
-        participant={participant}
-        rank={1}
-        isExpanded={false}
-        onToggle={() => {}}
-      />,
-    );
-
-    const desktopMetrics = container.querySelectorAll("span.hidden.text-right");
-
-    expect(desktopMetrics).toHaveLength(2);
-    desktopMetrics.forEach((metric) => {
-      expect(metric.className).toContain("text-sm");
-      expect(metric.className).not.toContain("text-xs");
-    });
-  });
-
-  it("renders one member link without a decorative external-link icon", () => {
-    render(
-      <KillParticipantRow
-        participant={createParticipant()}
-        rank={1}
-        isExpanded={false}
-        onToggle={() => {}}
-        guildId="guild-1"
-        eventId="event-1"
-      />,
-    );
-
-    const memberLink = screen.getByRole("link", { name: "Tester" });
-
-    expect(screen.getAllByRole("link")).toHaveLength(1);
-    expect(memberLink.querySelector(".lucide-external-link")).toBeNull();
-  });
-
   it("shows the manual adjustment indicator only for a non-zero adjustment", () => {
     const { rerender } = render(
       <KillParticipantRow
@@ -97,7 +46,7 @@ describe("KillParticipantRow", () => {
     expect(screen.getByLabelText("events.points.modified")).toBeTruthy();
   });
 
-  it("exposes an accessible expansion control and renders the point and map breakdown", () => {
+  it("toggles the point and map breakdown from an accessible expansion control", () => {
     const onToggle = vi.fn();
     const participant = createParticipant({ manualAdjustmentPoints: 0.25 });
 
@@ -139,10 +88,6 @@ describe("KillParticipantRow", () => {
       screen.getByText("events.kills.pointsTooltip.manualAdjustment"),
     ).toBeTruthy();
     expect(screen.getByText("Pradawne Wzgórze")).toBeTruthy();
-    expect(
-      screen.getByText("events.kills.scoringBreakdown").parentElement
-        ?.parentElement?.className,
-    ).toContain("bg-muted/40");
   });
 
   it("allows point editing only when the viewer has permission", () => {

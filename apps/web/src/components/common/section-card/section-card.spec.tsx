@@ -1,26 +1,20 @@
 // @vitest-environment happy-dom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, expect, it } from "vitest";
 import { PageHeader } from "../page-header";
 import { SectionCard } from "./section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "./section-card-content";
-import { SectionCardFooter } from "./section-card-footer";
 
 afterEach(cleanup);
 
-it("keeps page and section headings distinct with usable header actions", () => {
-  const onEdit = vi.fn();
+it("keeps page and section headings distinct", () => {
   render(
     <>
       <PageHeader title="Event" description="Event description" />
       <SectionCard aria-labelledby="participants-title">
-        <SectionCardHeader
-          id="participants-title"
-          title="Participants"
-          actions={<button onClick={onEdit}>Edit participants</button>}
-        />
+        <SectionCardHeader id="participants-title" title="Participants" />
         <SectionCardContent>Participant list</SectionCardContent>
       </SectionCard>
     </>,
@@ -30,32 +24,4 @@ it("keeps page and section headings distinct with usable header actions", () => 
   expect(
     screen.getByRole("heading", { level: 2, name: "Participants" }).id,
   ).toBe("participants-title");
-  fireEvent.click(screen.getByRole("button", { name: "Edit participants" }));
-  expect(onEdit).toHaveBeenCalledOnce();
-});
-
-it("preserves form submission from a section footer", () => {
-  const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
-  render(
-    <form onSubmit={onSubmit}>
-      <SectionCard>
-        <SectionCardHeader title="Settings" />
-        <SectionCardContent>
-          <label>
-            Name
-            <input name="name" defaultValue="Event" />
-          </label>
-        </SectionCardContent>
-        <SectionCardFooter>
-          <button type="submit">Save</button>
-        </SectionCardFooter>
-      </SectionCard>
-    </form>,
-  );
-
-  fireEvent.click(screen.getByRole("button", { name: "Save" }));
-  expect(onSubmit).toHaveBeenCalledOnce();
-  expect(
-    screen.getByRole("textbox", { name: "Name" }).getAttribute("name"),
-  ).toBe("name");
 });

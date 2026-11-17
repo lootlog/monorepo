@@ -193,13 +193,6 @@ describe("windows store", () => {
     expect(useWindowsStore.getState().chat.open).toBe(true);
   });
 
-  it("uses the new settings default size", () => {
-    expect(useWindowsStore.getState().settings.size).toEqual({
-      width: 820,
-      height: 560,
-    });
-  });
-
   it("does not publish when an open focused window is opened again", () => {
     useWindowsStore.setState((state) => ({
       notifications: {

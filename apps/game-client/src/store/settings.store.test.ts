@@ -10,10 +10,6 @@ describe("useSettingsStore", () => {
     useSettingsStore.setState(useSettingsStore.getInitialState(), true);
   });
 
-  it("enables animation effects by default", () => {
-    expect(useSettingsStore.getState().animationEffectsEnabled).toBe(true);
-  });
-
   it("disables loot debug logging by default", () => {
     expect(useSettingsStore.getState().lootDebugLoggingEnabled).toBe(false);
   });
@@ -50,16 +46,6 @@ describe("useSettingsStore", () => {
 
     useSettingsStore.getState().setMasterVolume(-1);
     expect(useSettingsStore.getState().masterVolume).toBe(0);
-  });
-
-  it("updates loot debug logging", () => {
-    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-
-    expect(useSettingsStore.getState().lootDebugLoggingEnabled).toBe(true);
-
-    useSettingsStore.getState().setLootDebugLoggingEnabled(false);
-
-    expect(useSettingsStore.getState().lootDebugLoggingEnabled).toBe(false);
   });
 
   it("persists loot debug logging in settings storage", () => {

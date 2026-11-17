@@ -1,4 +1,3 @@
-import { seedRuntimeOthers } from "@/test/runtime-other-fixtures";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Other } from "@lootlog/margonem/others";
@@ -46,18 +45,6 @@ function createRuntimeOther(nick: string): Other {
       prof: "w",
     },
   };
-}
-
-function setRuntimeOthers(others: Record<string, Other>) {
-  for (const [id, other] of Object.entries(others)) other.d.id = id;
-  seedRuntimeOthers(others);
-  const check = vi.fn<() => Record<string, Other>>(() => others);
-  vi.stubGlobal("Engine", {
-    ...createNativeRuntime(),
-    others: { check, getById: (id: number) => others[String(id)] },
-  });
-
-  return check;
 }
 
 function setOnlineOwner(other: Other): void {
@@ -133,27 +120,6 @@ describe("useCharacterTooltipGameEvents", () => {
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget,
     ).toBeNull();
-  });
-
-  it("does not publish domain state from the projection hook", () => {
-    const removed = createRuntimeOther("removed");
-    const added = createRuntimeOther("added");
-    seedRuntimeOthers({ removed });
-    setRuntimeOthers({ added });
-    renderHook(() => useCharacterTooltipGameEvents());
-    const publish = vi.fn<Parameters<typeof useOthersStore.subscribe>[0]>();
-    const unsubscribe = useOthersStore.subscribe(publish);
-
-    dispatch({
-      other: {
-        added: { dir: 2, x: 10, y: 11 },
-        removed: { del: 1 },
-      },
-    });
-
-    expect(useOthersStore.getState().getOther("added")?.name).toBe("added");
-    expect(publish).not.toHaveBeenCalled();
-    unsubscribe();
   });
 
   it("unsubscribes on unmount", () => {

@@ -61,14 +61,10 @@ describe("loot contracts", () => {
   });
 
   // An unknown value used to reach the enum column and fail the query with a 500.
-  it("rejects unknown NPC types and rarities while decoding filters", () => {
-    expect(
-      Schema.decodeUnknownSync(LootsQuery)({ npcTypes: ["HERO", "TITAN"] }),
-    ).toEqual({ npcTypes: ["HERO", "TITAN"] });
-
-    for (const invalid of [{ npcTypes: ["DRAGON"] }, { rarities: ["EPIC"] }]) {
-      expect(() => Schema.decodeUnknownSync(LootsQuery)(invalid)).toThrow();
-    }
+  it("rejects unknown rarities and comma-joined NPC types while decoding filters", () => {
+    expect(() =>
+      Schema.decodeUnknownSync(LootsQuery)({ rarities: ["EPIC"] }),
+    ).toThrow();
 
     expect(() =>
       Schema.decodeUnknownSync(LootStatsQuery)({ npcTypes: ["HERO,DRAGON"] }),

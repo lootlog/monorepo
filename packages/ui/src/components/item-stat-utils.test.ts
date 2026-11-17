@@ -31,6 +31,14 @@ function getTranslatedValuePaths(displayValue: ItemDisplayValue): string[] {
 }
 
 describe("item stat utilities", () => {
+  it("preserves equals signs inside stat values", () => {
+    expect(parseItemStats("custom=a=b=c;flag;empty=")).toEqual([
+      { key: "custom", value: "a=b=c" },
+      { key: "flag", value: true },
+      { key: "empty", value: "" },
+    ]);
+  });
+
   it("uses the canonical Margonem wording for damage modifiers", () => {
     expect(itemStats).toMatchObject({
       combo_multiplier: "Obrażenia nieuchronne <value>{{value}}%</value>",

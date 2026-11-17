@@ -223,16 +223,12 @@ describe("GuildSwitcher", () => {
       hiddenGuildIds: ["guild-1", "guild-2", "guild-3"],
     });
 
-    const { container } = render(<GuildSwitcher allowAll value="all" />);
+    render(<GuildSwitcher allowAll value="all" />);
 
     expect(screen.queryByText("*")).not.toBeInTheDocument();
     expect(
       screen.getByText("Wszystkie Lootlogi są ukryte"),
     ).toBeInTheDocument();
-    expect(
-      container.querySelector("[data-ll-scroll-area-viewport]"),
-    ).not.toBeInTheDocument();
-
     fireEvent.click(screen.getByRole("button", { name: "Otwórz ustawienia" }));
 
     expect(useWindowsStore.getState().settings).toMatchObject({

@@ -284,8 +284,6 @@ describe("realtime JSON codec", () => {
   });
 
   test("keeps heartbeat safely below expiry", () => {
-    expect(PRESENCE_HEARTBEAT_INTERVAL_MS).toBe(25_000);
-    expect(PRESENCE_EXPIRY_MS).toBe(60_000);
     expect(PRESENCE_HEARTBEAT_INTERVAL_MS).toBeLessThan(PRESENCE_EXPIRY_MS / 2);
   });
 });

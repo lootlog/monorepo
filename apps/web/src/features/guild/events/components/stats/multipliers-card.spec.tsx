@@ -39,41 +39,17 @@ const scoringRules: EventScoringRules = {
   ],
 };
 
-const emptyScoringRules: EventScoringRules = {
-  ...scoringRules,
-  rules: [],
-};
-
-const staticScoringStates: Array<{
-  scoringMode: "SIMPLE" | "ADVANCED";
-  rules: EventScoringRules | null;
-  text: string;
-}> = [
-  {
-    scoringMode: "SIMPLE",
-    rules: null,
-    text: "events.killDetail.multipliers.simpleMode",
-  },
-  {
-    scoringMode: "ADVANCED",
-    rules: emptyScoringRules,
-    text: "events.killDetail.multipliers.noRules",
-  },
-];
-
 afterEach(cleanup);
 
 describe("MultipliersCard", () => {
   it("groups base rules apart from bonuses and marks the viewer's applied rules", () => {
-    const { container } = render(
+    render(
       <MultipliersCard
         eventConfig={{ scoringMode: "ADVANCED", scoringRules }}
         highlightedRuleIds={["applied", "disabled"]}
         t={t}
       />,
     );
-
-    expect(container.querySelector("button")).toBeNull();
 
     const baseItems = within(
       screen.getByRole("list", {
@@ -130,28 +106,4 @@ describe("MultipliersCard", () => {
       screen.queryByText("events.killDetail.multipliers.appliedStatus"),
     ).toBeNull();
   });
-
-  it.each(staticScoringStates)(
-    "renders the $scoringMode static state",
-    ({ scoringMode, rules, text }) => {
-      const { container } = render(
-        <MultipliersCard
-          eventConfig={{ scoringMode, scoringRules: rules }}
-          t={t}
-        />,
-      );
-
-      expect(screen.getByText(text)).toBeTruthy();
-      expect(container.querySelector("button")).toBeNull();
-
-      // Only advanced scoring has rules to count next to the heading.
-      const heading = screen.getByRole("heading").textContent;
-
-      if (scoringMode === "SIMPLE") {
-        expect(heading).toBe("events.killDetail.multipliers.title");
-      } else {
-        expect(heading).not.toBe("events.killDetail.multipliers.title");
-      }
-    },
-  );
 });

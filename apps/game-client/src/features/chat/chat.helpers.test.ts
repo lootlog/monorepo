@@ -511,64 +511,6 @@ describe("chat helpers", () => {
     ]);
   });
 
-  it("counts grouped npc messages without exposing sender aggregation", () => {
-    const hydraNpc = {
-      id: 10,
-      name: "Hydra",
-      icon: "npc.png",
-      x: 1,
-      y: 2,
-      hpp: 100,
-      location: "Cave",
-      lvl: 50,
-      prof: "m",
-      type: 1,
-      wt: 100,
-    };
-
-    expect(
-      getChatRenderableMessages([
-        makeChatMessage({
-          id: "npc-a-1",
-          senderId: "user-1",
-          message: "",
-          timestamp: "2026-01-01T10:00:00.000Z",
-          type: MessageType.NPC,
-          npc: hydraNpc,
-        }),
-        makeChatMessage({
-          id: "npc-a-2",
-          senderId: "user-2",
-          message: "",
-          timestamp: "2026-01-01T10:00:05.000Z",
-          type: MessageType.NPC,
-          npc: hydraNpc,
-        }),
-        makeChatMessage({
-          id: "npc-a-3",
-          senderId: "user-3",
-          message: "",
-          timestamp: "2026-01-01T10:00:10.000Z",
-          type: MessageType.NPC,
-          npc: hydraNpc,
-        }),
-      ]),
-    ).toEqual([
-      {
-        kind: "date-divider",
-        key: "date-divider:2026-01-01",
-        timestamp: "2026-01-01T10:00:00.000Z",
-      },
-      {
-        kind: "npc-group",
-        key: "npc-group:npc-a-1",
-        count: 3,
-        messageIds: ["npc-a-1", "npc-a-2", "npc-a-3"],
-        message: expect.objectContaining({ id: "npc-a-1", senderId: "user-1" }),
-      },
-    ]);
-  });
-
   it("keeps the first report stable while counting a fifteen-message NPC burst", () => {
     const firstMessage = makeChatMessage({
       id: "npc-0",

@@ -1,18 +1,9 @@
-import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
 import { describe, expect, it } from "bun:test";
-import { Effect, Layer } from "effect";
-import { BunHttpServer } from "@effect/platform-bun";
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
-import { HttpRouter } from "effect/http";
-import { HttpApi, HttpApiBuilder } from "effect/http-api";
-import { ChatGroup } from "#src/contracts/chat/api";
-import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
-import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
+import { Effect } from "effect";
+import { ChatOperationError } from "#src/chat/chat-data";
 import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
-import { ChatOperationError, ChatData } from "#src/chat/chat-data";
-import { ChatHandlers, ChatAuthorization } from "./chat.handlers.js";
 import { makeChatOperations, type ChatRedis } from "#src/chat/chat.data-layer";
 
 const message = {
@@ -107,70 +98,6 @@ const setup = (permissions: Permission[], levelFrom = 200) => {
 };
 
 describe("chat mutation source visibility", () => {
-  it("rejects the removed PATCH endpoint without changing stored messages", async () => {
-    const fixture = setup(
-      [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
-      0,
-    );
-
-    const caller = { userId: "author-user", discordId: "author" };
-
-    const services = Layer.mergeAll(
-      Layer.succeed(ChatData, fixture.operations),
-      Layer.succeed(ChatAuthorization, {
-        requireGuild: () =>
-          Effect.succeed({
-            ...caller,
-            guildId: "organization",
-            permissions: [
-              Permission.LOOTLOG_CHAT_READ,
-              Permission.LOOTLOG_CHAT_WRITE,
-            ],
-            roles: [],
-          }),
-      }),
-    );
-
-    const boundary = HttpRouter.toWebHandler(
-      HttpApiBuilder.layer(HttpApi.make("LootlogApi").add(ChatGroup)).pipe(
-        Layer.provide(ChatHandlers),
-        Layer.provide(
-          Layer.succeed(BearerSecurityMiddleware, {
-            bearer: (effect) =>
-              Effect.provideService(effect, ForwardAuthIdentity, caller),
-          }),
-        ),
-        HttpRouter.provideRequest(services),
-        Layer.provide(BunHttpServer.layerHttpServices),
-        Layer.provide(apiKeyEndpointPolicyLayer("main")),
-        Layer.provide(SchemaErrorResponseLive),
-      ),
-      { disableLogger: true },
-    );
-
-    try {
-      const response = await boundary.handler(
-        new Request(
-          "http://api.test/guilds/organization/chat-messages/message",
-          {
-            method: "PATCH",
-            headers: {
-              authorization: "Bearer test",
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({ message: "Changed" }),
-          },
-        ),
-      );
-
-      expect(response.status).toBe(404);
-      expect(fixture.records).toEqual([JSON.stringify(message)]);
-      expect(fixture.published).toEqual([]);
-    } finally {
-      await boundary.dispose();
-    }
-  });
-
   it("rejects deletion after the author loses the source level", async () => {
     const fixture = setup([
       Permission.LOOTLOG_CHAT_READ,

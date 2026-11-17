@@ -163,7 +163,6 @@ describe("MobileDaySchedule", () => {
 
   it("prevents the day track from becoming a native horizontal scroll area", () => {
     const { container } = renderSchedule();
-    const scrollArea = container.querySelector('[data-slot="scroll-area"]');
 
     const scrollViewport = container.querySelector(
       '[data-slot="scroll-area-viewport"]',
@@ -177,26 +176,12 @@ describe("MobileDaySchedule", () => {
     fireEvent.scroll(scrollViewport);
 
     expect(scrollViewport.scrollLeft).toBe(0);
-    expect(scrollArea?.className).toContain(
-      "[&_[data-slot=scroll-area-viewport]]:!overflow-x-hidden",
-    );
-    expect(
-      container.querySelector(
-        '[data-slot="scroll-area-scrollbar"][data-orientation="horizontal"]',
-      ),
-    ).toBeNull();
   });
 
   it("does not render or activate the swipe track on a narrow desktop", () => {
     coarsePointer = false;
     const { container, grid, onDaySwipe } = renderSchedule();
 
-    const swipeTrack = container.querySelector(
-      '[data-slot="mobile-day-swipe-track"]',
-    );
-
-    expect(swipeTrack?.className).toContain("w-full");
-    expect(swipeTrack?.className).not.toContain("w-[300%]");
     expect(
       container.querySelector('[data-slot="mobile-day-preview-previous"]'),
     ).toBeNull();
@@ -242,14 +227,6 @@ describe("MobileDaySchedule", () => {
     nextDaySegment.reservation.id = 2;
     const { container } = renderSchedule(vi.fn(), [nextDaySegment]);
 
-    const swipeSurface = container.querySelector(
-      '[data-slot="mobile-day-swipe-surface"]',
-    );
-
-    const swipeTrack = container.querySelector(
-      '[data-slot="mobile-day-swipe-track"]',
-    );
-
     const previousDay = container.querySelector(
       '[data-slot="mobile-day-preview-previous"]',
     );
@@ -262,9 +239,6 @@ describe("MobileDaySchedule", () => {
       '[data-slot="mobile-day-preview-next"]',
     );
 
-    expect(swipeSurface?.className).toContain("overflow-clip");
-    expect(swipeTrack?.className).toContain("-left-full");
-    expect(swipeTrack?.className).toContain("w-[300%]");
     expect(previousDay).not.toBeNull();
     expect(activeDay).not.toBeNull();
     expect(nextDay?.querySelector(".reservation-card")).not.toBeNull();

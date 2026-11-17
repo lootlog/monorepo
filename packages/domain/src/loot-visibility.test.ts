@@ -62,12 +62,26 @@ describe("canViewLoot", () => {
     ).toBe(true);
   });
 
-  it("fails closed for missing NPC facts and does not give ADMIN a bypass", () => {
+  it("fails closed for missing NPC facts", () => {
     expect(
       canViewLoot({
-        permissions: ["ADMIN", "LOOTLOG_LOOTS_READ"],
+        permissions: ["LOOTLOG_LOOTS_READ"],
         roles: [baseRole],
         npcs: [{ type: null, level: 100 }],
+      }),
+    ).toBe(false);
+  });
+
+  it("does not give ADMIN a bypass without a covering role grant", () => {
+    expect(
+      canViewLoot({
+        permissions: [
+          "ADMIN",
+          "LOOTLOG_LOOTS_READ",
+          "LOOTLOG_LOOTS_HEROES_READ",
+        ],
+        roles: [baseRole],
+        npcs: [{ type: "HERO", level: 100 }],
       }),
     ).toBe(false);
   });
