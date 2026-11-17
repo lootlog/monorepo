@@ -4,15 +4,15 @@ import { Effect, Layer, Predicate, Schema } from "effect";
 import { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
 import { GameMapsResponse } from "#src/contracts/maps/schemas";
 
+import { healthCheck } from "../handlers/health/health.handlers.js";
+import { getMaps } from "../handlers/maps/maps.handlers.js";
+import { refreshStatsCard } from "../handlers/guild-stats-card/guild-stats-card.handlers.js";
+import { getPublicStatsCard } from "../handlers/public-guild-stats-card/public-guild-stats-card.handlers.js";
 import {
-  getMaps,
-  getPublicStatsCard,
-  healthCheck,
   PublicSystemAccessDenied,
   PublicSystemAuthorization,
   PublicSystemData,
-  refreshStatsCard,
-} from "./public-system.operations.js";
+} from "./public-system.access.js";
 
 const png = Uint8Array.from([137, 80, 78, 71]);
 

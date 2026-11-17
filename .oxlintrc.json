@@ -580,9 +580,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/public-system/public-system.operations.ts"
-      ],
+      "files": ["apps/api/src/http-api/access/public-system.access.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -646,9 +644,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/account-organization/account-organization.operations.ts"
-      ],
+      "files": ["apps/api/src/http-api/access/account-organization.access.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -684,7 +680,7 @@
     },
     {
       "files": [
-        "apps/api/src/http-api/handlers/organization-workspace/organization-workspace.operations.ts"
+        "apps/api/src/http-api/access/organization-workspace.access.ts"
       ],
       "rules": {
         "anti-slop/no-unknown-parameters": [
@@ -732,7 +728,7 @@
       }
     },
     {
-      "files": ["apps/api/src/http-api/handlers/records/records.data-layer.ts"],
+      "files": ["apps/api/src/http-api/access/records.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -783,7 +779,7 @@
       }
     },
     {
-      "files": ["apps/api/src/http-api/handlers/records/records.operations.ts"],
+      "files": ["apps/api/src/http-api/access/records.access.ts"],
       "rules": {
         "anti-slop/no-runtime-typeof": [
           "error",
@@ -989,7 +985,7 @@
     },
     {
       "files": [
-        "apps/api/src/http-api/handlers/settings/settings.operations.ts"
+        "apps/api/src/http-api/handlers/preferences/preferences.operations.ts"
       ],
       "rules": {
         "anti-slop/no-unknown-parameters": [

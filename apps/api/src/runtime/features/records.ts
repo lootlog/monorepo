@@ -34,7 +34,7 @@ import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer } from "effect";
-import { recordsDataLayer } from "#src/http-api/handlers/records/records.data-layer";
+import { recordsDataLayer } from "#src/http-api/access/records.data-layer";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
 interface RecordsServicesValue {

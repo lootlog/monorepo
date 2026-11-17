@@ -5,11 +5,11 @@ import {
   AccountOrganizationData,
   AccountOrganizationOperationError,
 } from "#src/guilds/account-organization-data";
-import { AccountOrganizationAuthorization } from "../account-organization/account-organization.operations.js";
+import { AccountOrganizationAuthorization } from "../../access/account-organization.access.js";
 import {
   SettingsData,
   SettingsIdentity,
-} from "../settings/settings.operations.js";
+} from "../preferences/preferences.operations.js";
 import {
   UserLootlogConfigData,
   UserLootlogConfigIdentity,

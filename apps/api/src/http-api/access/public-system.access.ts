@@ -1,15 +1,12 @@
-import { AccessRequirement } from "@lootlog/domain/access-policy";
 import {
   statusCodeResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
-import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import type { PublicGuildStatsCard } from "#src/public-guild-stats-card/public-guild-stats-card.service";
-import { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
-import { GameMapsResponse } from "#src/contracts/maps/schemas";
+
 import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 const PUBLIC_CACHE_CONTROL = "public, max-age=300, must-revalidate";
@@ -91,54 +88,13 @@ export class PublicSystemData extends Context.Service<
   }
 }
 
-const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
+export const decode = <A, I, R>(
+  schema: Schema.Codec<A, I, R>,
+  value: unknown,
+) =>
   Schema.decodeUnknownEffect(schema)(value).pipe(
     Effect.mapError((cause) => new PublicSystemOperationError({ cause })),
   );
-
-export const healthCheck = Effect.fn("HealthzControllerHealthCheck")(
-  function* () {
-    const data = yield* PublicSystemData;
-    yield* data.healthCheck;
-  },
-);
-
-export const getMaps = Effect.fn("MapsControllerGetMaps")(function* () {
-  const data = yield* PublicSystemData;
-
-  return yield* decode(GameMapsResponse, yield* data.getMaps);
-});
-
-export const refreshStatsCard = Effect.fn(
-  "AuthenticatedGuildStatsCardControllerRefreshStatsCard",
-)(function* (guildId: string) {
-  const authorization = yield* PublicSystemAuthorization;
-
-  const access = yield* authorization.requireCapability({
-    guildId,
-    anyOf: AccessRequirement.ADMINISTER,
-  });
-
-  const data = yield* PublicSystemData;
-
-  return yield* decode(
-    RefreshStatsCardResponse,
-    yield* data.refreshStatsCard(access.guildId),
-  );
-});
-
-export const getPublicStatsCard = Effect.fn(
-  "PublicGuildStatsCardControllerGetStatsCard",
-)(function* (guildId: string) {
-  const data = yield* PublicSystemData;
-  const image = yield* data.getStatsCard(guildId);
-
-  return HttpServerResponse.uint8Array(image, {
-    status: 200,
-    contentType: "image/png",
-    headers: { "Cache-Control": data.statsCardCacheControl },
-  });
-});
 
 export const toPublicSystemHttpResponse = <A, R>(
   effect: Effect.Effect<

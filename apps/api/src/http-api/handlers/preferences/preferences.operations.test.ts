@@ -7,7 +7,7 @@ import {
   SettingsAccessDenied,
   SettingsData,
   SettingsIdentity,
-} from "./settings.operations.js";
+} from "./preferences.operations.js";
 
 const timestamp = "2026-09-02T12:00:00.000Z";
 

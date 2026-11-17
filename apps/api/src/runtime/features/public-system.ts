@@ -10,7 +10,7 @@ import { HttpClient } from "effect/http";
 import {
   PublicSystemData,
   PublicSystemOperationError,
-} from "#src/http-api/handlers/public-system/public-system.operations";
+} from "#src/http-api/access/public-system.access";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 

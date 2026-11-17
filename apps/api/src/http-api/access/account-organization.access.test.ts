@@ -6,23 +6,27 @@ import { Effect, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { Etag, HttpPlatform, HttpRouter } from "effect/http";
 import { HttpApiTest } from "effect/http-api";
-import { BearerSecurityMiddleware } from "../../contracts/shared.js";
+import { BearerSecurityMiddleware } from "../contracts/shared.js";
 import { OrganizationSummary } from "#src/contracts/shared";
 import { UserPreferencesResponse } from "#src/contracts/users/schemas";
-import { LootlogApi } from "../../lootlog-api.js";
+import { LootlogApi } from "../lootlog-api.js";
 
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { GuildsHandlers } from "../guilds/guilds.handlers.js";
+import {
+  GuildsHandlers,
+  updateGuildConfiguration,
+} from "../handlers/guilds/guilds.handlers.js";
 import { AccountOrganizationData } from "#src/guilds/account-organization-data";
 import { GuildConfigurationData } from "#src/guilds/guild-configuration-data";
 import {
   getCurrentUserPreferences,
   updateCurrentUserPreferences,
-  updateGuildConfiguration,
+} from "../handlers/users/users.handlers.js";
+import {
   AccountOrganizationAccessDenied,
   AccountOrganizationAuthorization,
   AccountOrganizationNotFound,
-} from "./account-organization.operations.js";
+} from "./account-organization.access.js";
 
 import { makeManageableGuilds } from "#src/guilds/manageable-guilds.data-layer";
 
