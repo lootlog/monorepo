@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import { renderItemStat } from "@/components/render-item-stat";
+import { ItemStatLine } from "@lootlog/ui/components/item-stat-line";
 import { t } from "@/i18n/messages";
 import type { StatChange } from "@/lib/stat-changes";
 
@@ -37,7 +37,7 @@ export function ItemUpgradeChanges({
             className="flex items-center justify-between gap-4 px-4 py-2.5 text-sm"
           >
             <span className="min-w-0 text-pretty text-foreground/90">
-              {renderItemStat(displayValue)}
+              <ItemStatLine displayValue={displayValue} />
             </span>
             {share === null ? null : (
               <span

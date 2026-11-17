@@ -3,7 +3,6 @@ import { TriangleAlert, X } from "lucide-react";
 import { ItemTile } from "@lootlog/ui/components/item-tile";
 import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { cn } from "cn";
-import { renderItemStat } from "@/components/render-item-stat";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import type { WornItem } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
@@ -78,7 +77,6 @@ export function EquipmentSetSlot({ slot, worn }: EquipmentSetSlotProps) {
             type: item.type,
           }}
           labels={ITEM_TILE_LABELS}
-          renderStat={renderItemStat}
         />
       </span>
       {issues.length > 0 ? (

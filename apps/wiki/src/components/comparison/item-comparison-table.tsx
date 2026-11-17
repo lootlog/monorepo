@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@lootlog/ui/components/table";
 import { cn } from "cn";
-import { renderItemStat } from "@/components/render-item-stat";
+import { ItemStatLine } from "@lootlog/ui/components/item-stat-line";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import { itemForCharacter } from "@lootlog/domain/elastic-level";
@@ -73,7 +73,9 @@ export function ItemComparisonTable({ items }: ItemComparisonTableProps) {
                   >
                     {value ? (
                       <span className="flex items-start gap-1.5">
-                        <span className="min-w-0">{renderItemStat(value)}</span>
+                        <span className="min-w-0">
+                          <ItemStatLine displayValue={value} />
+                        </span>
                         {isBest ? (
                           <>
                             <Crown

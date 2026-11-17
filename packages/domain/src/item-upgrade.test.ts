@@ -3,12 +3,12 @@ import {
   attackSpeedUpgrade,
   itemAtLevel,
   itemUpgradeCost,
-  itemStatValue,
   upgradeBonusOptions,
   upgradedAttackSpeed,
   upgradedItemLevel,
   upgradeItemStat,
 } from "./item-upgrade.js";
+import { itemStatValue } from "./item-stat.js";
 
 const statOf = (stat: string, key: string) => itemStatValue(stat, key);
 

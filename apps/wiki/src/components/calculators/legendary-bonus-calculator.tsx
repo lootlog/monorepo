@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { useWornItems } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
@@ -107,7 +107,7 @@ export function LegendaryBonusCalculator() {
 
   const fillFromSet = () => {
     const worn = [...wornItems.values()].filter(({ item }) =>
-      parseItemStats(item.stat).some(
+      parseItemStatEntries(item.stat).some(
         ({ key, value }) => key === "legbon" && value === bonus,
       ),
     );
