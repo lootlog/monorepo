@@ -10,16 +10,13 @@ import {
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { SettingsRequestError } from "#src/settings-documents/settings-documents.service";
-import {
-  RecordsDataError,
-  toRecordsHttpResponse,
-} from "./records.operations.js";
+import { RecordsDataError, toRecordsHttpResponse } from "./records.access.js";
 import {
   SettingsOperationError,
   toSettingsHttpResponse,
-} from "../settings/settings.operations.js";
+} from "../handlers/preferences/preferences.operations.js";
 import { AccountOrganizationOperationError } from "#src/guilds/account-organization-data";
-import { toAccountOrganizationHttpResponse } from "../account-organization/account-organization.operations.js";
+import { toAccountOrganizationHttpResponse } from "./account-organization.access.js";
 
 describe("business failures survive HTTP mapping", () => {
   it.each([

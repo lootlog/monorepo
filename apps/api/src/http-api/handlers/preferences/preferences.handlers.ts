@@ -5,7 +5,7 @@ import {
   getPreferences,
   patchPreferences,
   toSettingsHttpResponse,
-} from "../settings/settings.operations.js";
+} from "./preferences.operations.js";
 
 export const PreferencesHandlers = HttpApiBuilder.group(
   LootlogApi,

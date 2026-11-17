@@ -23,7 +23,7 @@ import { ApiDatabaseLive } from "#src/database/drizzle/database";
 import { DocsData } from "#src/http-api/handlers/docs/docs.handlers";
 import { LootlogConfigData } from "#src/http-api/handlers/lootlog-config/lootlog-config.handlers";
 import { MapTemplatesData } from "#src/http-api/handlers/map-templates/map-templates.handlers";
-import { SettingsData } from "#src/http-api/handlers/settings/settings.operations";
+import { SettingsData } from "#src/http-api/handlers/preferences/preferences.operations";
 import {
   BullWorkers,
   RabbitConsumers,

@@ -27,7 +27,7 @@ import {
   LootLikesResponse,
 } from "#src/contracts/loots/schemas";
 
-import { RecordsData, RecordsDataError } from "./records.operations.js";
+import { RecordsData, RecordsDataError } from "./records.access.js";
 
 export interface RecordsServices {
   readonly createKill: (

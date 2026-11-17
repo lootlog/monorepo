@@ -8,8 +8,8 @@ import {
   CreatedReservationShareInvitationBoundary,
   ReservationShareInvitationPreviewBoundary,
   AcceptedReservationShareBoundary,
-} from "./organization-workspace-response.schema.js";
-import { decodeDomainJson } from "../../domain-json.schema.js";
+} from "../handlers/reservations/reservation-response.schema.js";
+import { decodeDomainJson } from "../domain-json.schema.js";
 import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { describe, expect, it } from "bun:test";
@@ -53,23 +53,27 @@ import {
 } from "#src/reservations/reservations-data";
 import { RolesData } from "#src/guilds/roles-data";
 import {
-  acceptReservationShareInvitation,
   createReservation,
   listReservationSpots,
+  ReservationsHandlers,
+} from "../handlers/reservations/reservations.handlers.js";
+import {
+  acceptReservationShareInvitation,
   listReservationShares,
   previewReservationShareInvitation,
+} from "../handlers/reservation-sharing/reservation-sharing.handlers.js";
+import { updateGuildRole } from "../handlers/roles/roles.handlers.js";
+import {
   OrganizationWorkspaceAccessDenied,
   OrganizationWorkspaceAuthorization,
   OrganizationWorkspaceNotFound,
-  updateGuildRole,
   toOrganizationWorkspaceHttpResponse,
-} from "./organization-workspace.operations.js";
+} from "./organization-workspace.access.js";
 
 import { Etag, HttpPlatform, HttpRouter } from "effect/http";
 import { HttpApiTest } from "effect/http-api";
-import { LootlogApi } from "../../lootlog-api.js";
-import { ReservationsHandlers } from "../reservations/reservations.handlers.js";
-import { BearerSecurityMiddleware } from "../../contracts/shared.js";
+import { LootlogApi } from "../lootlog-api.js";
+import { BearerSecurityMiddleware } from "../contracts/shared.js";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 
 const identity = { userId: "user-a", discordId: "discord-owner" };

@@ -1,4 +1,4 @@
-import { createGuildFixture } from "../../../../test/organization-fixtures.js";
+import { createGuildFixture } from "../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
@@ -15,14 +15,18 @@ import type {
 import {
   createComment,
   createLootDraw,
-  createKill,
   createLoot,
   fetchLoot,
   fetchLoots,
+} from "../handlers/loots/loots.handlers.js";
+import {
+  createKill,
   getMemberKills,
   getUserKillAnalytics,
   getUserKillActivity,
-  getUserFeed,
+} from "../handlers/kills/kills.handlers.js";
+import { getUserFeed } from "../handlers/users/users.handlers.js";
+import {
   RecordsAccessDenied,
   RecordsAuthorization,
   RecordsData,
@@ -30,7 +34,7 @@ import {
   RecordsNotFound,
   type AuthenticatedCaller,
   type AuthorizedGuildCaller,
-} from "./records.operations.js";
+} from "./records.access.js";
 
 const caller: AuthenticatedCaller = {
   discordId: "discord-1",

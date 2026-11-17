@@ -22,7 +22,7 @@ import {
   RecordsAccessDenied,
   RecordsAuthorization,
   RecordsNotFound,
-} from "#src/http-api/handlers/records/records.operations";
+} from "#src/http-api/access/records.access";
 import {
   LootlogConfigAccessDenied,
   LootlogConfigAuthorization,
@@ -45,11 +45,11 @@ import {
   OrganizationWorkspaceAccessDenied,
   OrganizationWorkspaceAuthorization,
   OrganizationWorkspaceNotFound,
-} from "#src/http-api/handlers/organization-workspace/organization-workspace.operations";
+} from "#src/http-api/access/organization-workspace.access";
 import {
   PublicSystemAccessDenied,
   PublicSystemAuthorization,
-} from "#src/http-api/handlers/public-system/public-system.operations";
+} from "#src/http-api/access/public-system.access";
 import {
   TimersAccessDenied,
   TimersAuthorization,
@@ -64,7 +64,7 @@ import {
   AccountOrganizationAccessDenied,
   AccountOrganizationAuthorization,
   AccountOrganizationNotFound,
-} from "#src/http-api/handlers/account-organization/account-organization.operations";
+} from "#src/http-api/access/account-organization.access";
 import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import {
