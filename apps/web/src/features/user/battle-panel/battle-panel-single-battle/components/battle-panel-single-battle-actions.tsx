@@ -22,7 +22,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Copy, Lock, MoreHorizontal, Share2, Trash2 } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { RecentOpponentBattlesDialog } from "./recent-opponent-battles-dialog";
 
 export type BattlePanelSingleBattleActionsProps = {

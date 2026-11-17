@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 
 /**
  * Copies an item identifier (`ITEM#…`) and reports the result. `copyingId` is
@@ -19,9 +19,9 @@ export const useCopyItemId = () => {
       toast.success(t("loots.details.copySuccess"));
     } catch {
       toast.error(t("loots.details.copyError"));
-    } finally {
-      setCopyingId(null);
     }
+
+    setCopyingId(null);
   };
 
   return { copyItemId, copyingId };

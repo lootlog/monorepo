@@ -6,12 +6,15 @@ import {
   createEditor,
 } from "lexical";
 import { guildDocEditorNodes } from "./guild-doc-editor-nodes";
-import { serializeGuildDocEditorState } from "./guild-doc-editor-content";
+import {
+  serializeGuildDocEditorState,
+  type GuildDocEditorContent,
+} from "./guild-doc-editor-content";
 import {
   $createGuildDocItemNode,
   type GuildDocItem,
 } from "./guild-doc-item-node";
-import { registerGuildDocItemIdTransform } from "./guild-doc-item-id-plugin";
+import { registerGuildDocItemIdTransform } from "./guild-doc-item-id-transform";
 import { $createGuildDocMemberNode } from "./guild-doc-member-node";
 
 const createDocEditor = () =>
@@ -42,9 +45,7 @@ describe("serializeGuildDocEditorState", () => {
   it("keeps an edit that Lexical serializes with undefined node fields", () => {
     const state = serializeParagraph("hello");
 
-    expect(serializeGuildDocEditorState(state)).toEqual(
-      JSON.parse(JSON.stringify(state)),
-    );
+    expect(serializeGuildDocEditorState(state)).toEqual(structuredClone(state));
   });
 });
 
@@ -122,6 +123,19 @@ describe("document items and mentions", () => {
   });
 });
 
+type SavedDocument = {
+  root: {
+    children: [
+      { children: { type: string; text?: string; itemId?: string }[] },
+    ];
+  };
+};
+
+/** The inline nodes of a saved document's first paragraph. */
+const firstParagraphNodes = (saved: GuildDocEditorContent | null) =>
+  // SAFETY: each test writes one paragraph, which Lexical saves as the root's first child.
+  (saved as SavedDocument).root.children[0].children;
+
 const HID = "c58b884a4fc56dc0621a296aaf24a7286b1dcff3dab1b2e89f1f2559c247a492";
 
 const writeParagraph = (text: string) => {
@@ -139,9 +153,8 @@ const writeParagraph = (text: string) => {
 
   const saved = serializeGuildDocEditorState(editor.getEditorState().toJSON());
 
-  return JSON.parse(JSON.stringify(saved)).root.children[0].children.map(
-    (node: { type: string; text?: string; itemId?: string }) =>
-      node.type === "text" ? node.text : node.itemId,
+  return firstParagraphNodes(saved).map((node) =>
+    node.type === "text" ? node.text : node.itemId,
   );
 };
 
@@ -194,11 +207,10 @@ describe("item identifiers in the text", () => {
       editor.getEditorState().toJSON(),
     );
 
-    expect(
-      JSON.parse(JSON.stringify(saved)).root.children[0].children.map(
-        (node: { type: string }) => node.type,
-      ),
-    ).toEqual(["guild-doc-item", "text"]);
+    expect(firstParagraphNodes(saved).map((node) => node.type)).toEqual([
+      "guild-doc-item",
+      "text",
+    ]);
   });
 
   it("stay text while they are not a full identifier", () => {

@@ -12,7 +12,7 @@ import {
 } from "@lootlog/client/main";
 
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import {
   addPinnedEvent,
   removePinnedEvent,

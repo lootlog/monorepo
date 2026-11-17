@@ -27,10 +27,14 @@ export function useTranscriptWindow<Row extends { key: string }>(
 
   let start = -1;
 
-  for (const key of anchorKeys ?? []) {
-    start = rows.findIndex((row) => row.key === key);
+  if (anchorKeys !== null) {
+    const indexByKey = new Map(rows.map((row, index) => [row.key, index]));
 
-    if (start !== -1) break;
+    for (const key of anchorKeys) {
+      start = indexByKey.get(key) ?? -1;
+
+      if (start !== -1) break;
+    }
   }
 
   if (start === -1) {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 
 export type WindowStatus = "OPEN" | "WAITING" | "OVERDUE" | "NONE";
 
@@ -6,60 +6,40 @@ export function isWindowActive(status: WindowStatus): boolean {
   return status === "OPEN" || status === "OVERDUE";
 }
 
-const scheduleStatusRecalculation = (
-  recalculate: () => void,
-  delay: number,
-) => {
-  if (delay <= 0) return () => undefined;
+/** Notifies just after each future boundary, where the status changes. */
+const subscribeToBoundaries =
+  (boundaries: readonly number[]) => (onChange: () => void) => {
+    const now = Date.now();
 
-  const timeoutId = setTimeout(recalculate, delay);
+    const timeoutIds = boundaries.flatMap((boundary) =>
+      now < boundary ? [setTimeout(onChange, boundary - now + 100)] : [],
+    );
 
-  return () => clearTimeout(timeoutId);
-};
+    return () => timeoutIds.forEach((timeoutId) => clearTimeout(timeoutId));
+  };
+
+const subscribeToNothing = () => () => undefined;
 
 export function useWindowStatus(
   minSpawnTime: string | null,
   maxSpawnTime: string | null,
 ): WindowStatus {
-  const [status, setStatus] = useState<WindowStatus>("NONE");
+  const min = minSpawnTime ? new Date(minSpawnTime).getTime() : null;
+  const max = maxSpawnTime ? new Date(maxSpawnTime).getTime() : null;
+  const hasWindow = min !== null && max !== null;
 
-  useEffect(() => {
-    if (!minSpawnTime || !maxSpawnTime) {
-      setStatus("NONE");
+  return useSyncExternalStore(
+    hasWindow ? subscribeToBoundaries([min, max]) : subscribeToNothing,
+    () => {
+      if (!hasWindow) return "NONE";
 
-      return () => undefined;
-    }
-
-    const min = new Date(minSpawnTime).getTime();
-    const max = new Date(maxSpawnTime).getTime();
-
-    const recalc = () => {
       const now = Date.now();
 
-      if (now >= max) setStatus("OVERDUE");
-      else if (now >= min) setStatus("OPEN");
-      else setStatus("WAITING");
-    };
+      if (now >= max) return "OVERDUE";
 
-    recalc();
+      if (now >= min) return "OPEN";
 
-    const now = Date.now();
-
-    const cancelMinRecalculation = scheduleStatusRecalculation(
-      recalc,
-      now < min ? min - now + 100 : 0,
-    );
-
-    const cancelMaxRecalculation = scheduleStatusRecalculation(
-      recalc,
-      now < max ? max - now + 100 : 0,
-    );
-
-    return () => {
-      cancelMinRecalculation();
-      cancelMaxRecalculation();
-    };
-  }, [minSpawnTime, maxSpawnTime]);
-
-  return status;
+      return "WAITING";
+    },
+  );
 }

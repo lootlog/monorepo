@@ -1,13 +1,8 @@
 import { cn } from "cn";
 import type { FC } from "react";
 
+import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
 import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
-
-const MARGONEM_CDN_ITEMS_URL = "https://micc.garmory-cdn.cloud/obrazki/itemy";
-
-/** Where Margonem serves an item's icon. */
-export const itemIconUrl = (icon: string) =>
-  `${MARGONEM_CDN_ITEMS_URL}/${icon}`;
 
 type ItemImageProps = {
   className?: string;

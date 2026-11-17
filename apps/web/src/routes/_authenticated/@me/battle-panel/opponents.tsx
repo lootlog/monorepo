@@ -1,8 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import {
-  HeadToHeadFullPage,
-  headToHeadPageCopy,
-} from "@/features/user/battle-panel/battle-panel-statistics/head-to-head-full-page";
+import { HeadToHeadFullPage } from "@/features/user/battle-panel/battle-panel-statistics/head-to-head-full-page";
+import { headToHeadPageCopy } from "@/features/user/battle-panel/battle-panel-statistics/head-to-head-page-copy";
 import { BattlePanelH2hSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
 import { BattlePanelH2hCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-h2h-card-skeleton";
 import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";

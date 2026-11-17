@@ -1,11 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { itemEventSlug } from "@lootlog/domain/item-events";
-import { itemIconUrl } from "@lootlog/ui/components/item-image";
-import {
-  ITEM_RARITY_STYLES,
-  ItemTileDetails,
-} from "@lootlog/ui/components/item-tile-details";
+import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
+import { ItemTileDetails } from "@lootlog/ui/components/item-tile-details";
+import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-styles";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
 import { Infobox } from "@/components/article/infobox";

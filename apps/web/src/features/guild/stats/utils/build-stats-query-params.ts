@@ -9,7 +9,7 @@ import type {
   LootsControllerGetLootStatsPeriod,
 } from "@lootlog/client/main";
 
-import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
+import type { KillStatsPeriod } from "@/features/kills/kill-stats-period";
 import { parseKillStatsLevel } from "@/features/kills/parse-kill-stats-level";
 import type { StatsSettings } from "../hooks/use-stats-settings";
 

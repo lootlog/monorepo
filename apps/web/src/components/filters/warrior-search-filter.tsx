@@ -75,8 +75,10 @@ export const WarriorSearchFilter = ({
       : (placeholder ?? t("ui.warriorSearch.defaultPlaceholder"));
 
   const handleValueChange = (nextNames: string[]) => {
-    const added = nextNames.find((name) => !selectedNames.includes(name));
-    const removed = selectedNames.find((name) => !nextNames.includes(name));
+    const selected = new Set(selectedNames);
+    const next = new Set(nextNames);
+    const added = nextNames.find((name) => !selected.has(name));
+    const removed = selectedNames.find((name) => !next.has(name));
 
     const warrior =
       searchResults.find((result) => result.name === added) ??

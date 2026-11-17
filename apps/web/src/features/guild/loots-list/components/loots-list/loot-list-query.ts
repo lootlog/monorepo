@@ -26,10 +26,10 @@ const knownValues = <Value extends string>(
   allowed: Readonly<Record<string, Value>>,
   values: string[],
 ) => {
-  const known: ReadonlyArray<string> = Object.values(allowed);
+  const known: ReadonlySet<string> = new Set(Object.values(allowed));
 
   return optionalValues(
-    values.filter((value): value is Value => known.includes(value)),
+    values.filter((value): value is Value => known.has(value)),
   );
 };
 

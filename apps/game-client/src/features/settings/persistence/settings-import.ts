@@ -191,6 +191,7 @@ const collectGuildTimerListImports = (
   guildDocuments: GuildSettingsDocuments | undefined,
 ) => {
   const patches: EnqueueSettingsPatchInput[] = [];
+  const accessible = new Set(accessibleGuildIds);
 
   for (const field of ["hiddenTimers", "pinnedTimers"] as const) {
     for (const [guildId, list] of Object.entries(timers[field] ?? {})) {
@@ -199,7 +200,7 @@ const collectGuildTimerListImports = (
       if (
         guildId === GLOBAL_TIMER_SETTINGS_KEY ||
         list.length === 0 ||
-        !accessibleGuildIds.includes(guildId) ||
+        !accessible.has(guildId) ||
         !isImportable(guildDocuments?.guilds[guildId], `timers.${field}`)
       ) {
         continue;

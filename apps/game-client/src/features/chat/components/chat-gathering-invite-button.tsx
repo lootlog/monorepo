@@ -34,10 +34,10 @@ export function ChatGatheringInviteButton({
       await inviteParticipants();
     } catch {
       onErrorChange(true);
-    } finally {
-      inFlight.current = false;
-      setPending(false);
     }
+
+    inFlight.current = false;
+    setPending(false);
   };
 
   return (

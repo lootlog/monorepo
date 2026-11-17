@@ -23,39 +23,43 @@ export const useNotificationChatOrchestration = () => {
   const [isCreatingNotificationMessage, setIsCreatingNotificationMessage] =
     useState(false);
 
-  const startNotificationMessage = async <TResult>({
+  const publishNotificationMessage = async <TResult>({
     guildIds,
     world,
     message,
     sendChatMessage,
   }: StartNotificationMessageOptions<TResult>) => {
+    const response = await createNotificationAsync({
+      data: {
+        guildIds,
+        message,
+        world,
+      },
+    });
+
+    const resolvedGuildIds = response.guildIds ?? guildIds;
+
+    const result = await sendChatMessage(resolvedGuildIds).catch(
+      (cause: unknown) => {
+        throw new NotificationChatPublishError(cause);
+      },
+    );
+
+    return {
+      guildIds: resolvedGuildIds,
+      notificationId: response.notificationId,
+      result,
+    };
+  };
+
+  const startNotificationMessage = <TResult>(
+    options: StartNotificationMessageOptions<TResult>,
+  ) => {
     setIsCreatingNotificationMessage(true);
 
-    try {
-      const response = await createNotificationAsync({
-        data: {
-          guildIds,
-          message,
-          world,
-        },
-      });
-
-      const resolvedGuildIds = response.guildIds ?? guildIds;
-
-      const result = await sendChatMessage(resolvedGuildIds).catch(
-        (cause: unknown) => {
-          throw new NotificationChatPublishError(cause);
-        },
-      );
-
-      return {
-        guildIds: resolvedGuildIds,
-        notificationId: response.notificationId,
-        result,
-      };
-    } finally {
+    return publishNotificationMessage(options).finally(() => {
       setIsCreatingNotificationMessage(false);
-    }
+    });
   };
 
   return {

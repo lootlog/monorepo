@@ -10,7 +10,7 @@ import {
   CommandList,
 } from "@lootlog/ui/components/command";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { ITEM_RARITY_STYLES } from "@lootlog/ui/components/item-tile-details";
+import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-styles";
 import { Kbd } from "@lootlog/ui/components/kbd";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";

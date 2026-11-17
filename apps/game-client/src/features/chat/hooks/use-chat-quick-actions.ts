@@ -64,9 +64,9 @@ export const useChatQuickActions = () => {
       });
     } catch (error) {
       reportSendError(error);
-    } finally {
-      pendingActions.delete("position");
     }
+
+    pendingActions.delete("position");
   };
 
   const sendHelp = async (selectedGuildId = getSelectedChatGuildId()) => {
@@ -127,9 +127,9 @@ export const useChatQuickActions = () => {
       });
     } catch (error) {
       reportSendError(error);
-    } finally {
-      pendingActions.delete("help");
     }
+
+    pendingActions.delete("help");
   };
 
   return {

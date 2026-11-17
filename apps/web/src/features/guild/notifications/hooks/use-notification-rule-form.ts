@@ -5,7 +5,7 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import {
@@ -507,9 +507,11 @@ export const useNotificationRuleForm = () => {
   }, [draftIdentity, form, rule, ruleId]);
 
   const mergedTargets = mergeGuildNotificationTargets(targets, extraTargets);
-  const contentTemplate = form.watch("contentTemplate");
-  const watchedTriggerType = form.watch("triggerType");
-  const watchedIntervalType = form.watch("scheduleIntervalType");
+
+  const [contentTemplate, watchedTriggerType, watchedIntervalType] = useWatch({
+    control: form.control,
+    name: ["contentTemplate", "triggerType", "scheduleIntervalType"],
+  });
 
   const {
     isScheduledMessage,
@@ -653,22 +655,26 @@ export const useNotificationRuleForm = () => {
               };
             })();
 
-    try {
-      if (isCreateMode) {
-        if (!guildId) {
-          throw new Error("Missing guild id.");
-        }
+    const saveErrorMessage = t(
+      isCreateMode
+        ? "settings.notifications.toasts.ruleCreateError"
+        : "settings.notifications.toasts.ruleUpdateError",
+    );
 
+    if (!guildId && (isCreateMode || rule)) {
+      toast.error(saveErrorMessage);
+
+      return;
+    }
+
+    try {
+      if (isCreateMode && guildId) {
         await createRule.mutateAsync({
           pathParams: { guildId },
           data: payload,
         });
         toast.success(t("settings.notifications.toasts.ruleCreated"));
-      } else if (rule) {
-        if (!guildId) {
-          throw new Error("Missing guild id.");
-        }
-
+      } else if (rule && guildId) {
         await updateRule.mutateAsync({
           pathParams: { guildId, ruleId: rule.id },
           data: payload,
@@ -678,14 +684,7 @@ export const useNotificationRuleForm = () => {
 
       navigateBack();
     } catch (error) {
-      toast.error(
-        getApiErrorMessage(error) ??
-          t(
-            isCreateMode
-              ? "settings.notifications.toasts.ruleCreateError"
-              : "settings.notifications.toasts.ruleUpdateError",
-          ),
-      );
+      toast.error(getApiErrorMessage(error) ?? saveErrorMessage);
     }
   };
 

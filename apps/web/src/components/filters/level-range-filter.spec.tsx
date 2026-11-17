@@ -6,21 +6,26 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { LevelRangeFilter } from "./level-range-filter";
 
 // A URL-backed caller: each committed bound comes back as a prop.
 function CommittedRange({ onChange }: { onChange: (range: string) => void }) {
   const [range, setRange] = useState<{ min?: number; max?: number }>({});
+  // The latest range, so a commit merges with one made earlier in the same batch.
+  const latestRange = useRef(range);
 
   const update = (next: { min?: number; max?: number }) => {
-    setRange((current) => {
-      const merged = { ...current, ...next };
-      onChange(`${merged.min ?? ""}-${merged.max ?? ""}`);
+    const merged = { ...latestRange.current, ...next };
+    latestRange.current = merged;
+    setRange(merged);
+    onChange(`${merged.min ?? ""}-${merged.max ?? ""}`);
+  };
 
-      return merged;
-    });
+  const reset = () => {
+    latestRange.current = {};
+    setRange({});
   };
 
   return (
@@ -31,7 +36,7 @@ function CommittedRange({ onChange }: { onChange: (range: string) => void }) {
         onMinLevelChange={(min) => update({ min })}
         onMaxLevelChange={(max) => update({ max })}
       />
-      <button type="button" onClick={() => setRange({})}>
+      <button type="button" onClick={reset}>
         reset
       </button>
     </>

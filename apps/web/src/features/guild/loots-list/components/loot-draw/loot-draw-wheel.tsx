@@ -1,6 +1,6 @@
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { cn } from "cn";
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { lootDrawSegmentColor } from "./loot-draw-colors";
 
@@ -141,18 +141,19 @@ export const LootDrawWheel = ({
   // A spin rests at 0 for its first frame, so the transition has a distance to run.
   const [hasStarted, setHasStarted] = useState(false);
   const rotation = animate && !hasStarted ? 0 : settled;
+  const settle = useEffectEvent(() => onSettled?.());
 
   useEffect(() => {
     if (!animate) return;
 
     const frame = requestAnimationFrame(() => setHasStarted(true));
-    const done = setTimeout(() => onSettled?.(), SPIN_MS);
+    const done = setTimeout(settle, SPIN_MS);
 
     return () => {
       cancelAnimationFrame(frame);
       clearTimeout(done);
     };
-  }, [animate, onSettled]);
+  }, [animate]);
 
   // Neighbouring tickets of one entrant share a slice.
   const runs = ticketOrder.reduce<
