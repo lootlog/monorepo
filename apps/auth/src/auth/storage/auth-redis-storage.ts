@@ -1,4 +1,4 @@
-import { BunRedis } from "@effect/platform-bun";
+import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import { reveal, type AuthConfig } from "#src/config/env";
 import type { SecondaryStorage } from "better-auth";
 import { Context, Effect, FiberSet, Layer } from "effect";
@@ -8,7 +8,7 @@ import { createFailOpenSecondaryStorage } from "./secondary-storage-fail-open.js
 const secondaryStorageKey = (key: string) => `auth:better-auth:${key}`;
 
 export const createAuthRedisConnection = (config: AuthConfig["redis"]) =>
-  BunRedis.layer({
+  reconnectingBunRedisLayer({
     url: `redis://${encodeURIComponent(config.username)}:${encodeURIComponent(reveal(config.password))}@${config.host}:${config.port}`,
     connectionTimeout: 1_000,
     // Bun connects lazily; retain the first OAuth write while connecting.

@@ -6,8 +6,10 @@ x-logging: &default-logging
 
 services:
   rabbitmq:
-    image: rabbitmq:3.13-management
+    image: rabbitmq:4.4.0-management
     container_name: "rabbitmq-lootlog"
+    # A fixed node name keeps the broker state across container recreation.
+    hostname: rabbitmq-lootlog
     restart: unless-stopped
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
@@ -35,7 +37,7 @@ services:
     logging: *default-logging
 
   lootlog-users-db:
-    image: postgres:17-alpine
+    image: postgres:18.7-alpine
     container_name: "lootlog-users-db"
     restart: unless-stopped
     shm_size: 128mb
@@ -52,7 +54,7 @@ services:
       - -c
       - max_connections=30
     volumes:
-      - lootlog-users-db:/var/lib/postgresql/data
+      - lootlog-users-db-pg18:/var/lib/postgresql
     environment:
       POSTGRES_DB: ${USERS_DB_NAME}
       POSTGRES_USER: ${USERS_DB_USER}
@@ -73,9 +75,7 @@ services:
     logging: *default-logging
 
   lootlog-db:
-    # The production API cluster runs TimescaleDB 2.24.0. The flag also loads
-    # the library into data directories created by the former plain image.
-    image: timescale/timescaledb:2.24.0-pg17
+    image: timescale/timescaledb:2.32.0-pg18
     container_name: "lootlog-db"
     restart: unless-stopped
     shm_size: 512mb
@@ -98,7 +98,7 @@ services:
       - -c
       - max_wal_size=2GB
     volumes:
-      - lootlog-db:/var/lib/postgresql/data
+      - lootlog-db-pg18:/var/lib/postgresql
     environment:
       POSTGRES_DB: ${LOOTLOG_DB_NAME}
       POSTGRES_USER: ${LOOTLOG_DB_USER}
@@ -119,9 +119,7 @@ services:
     logging: *default-logging
 
   battle-log-db:
-    # The production Battlelog cluster runs TimescaleDB 2.24.0. The flag also
-    # loads the library into data directories created by the former plain image.
-    image: timescale/timescaledb:2.24.0-pg17
+    image: timescale/timescaledb:2.32.0-pg18
     container_name: "battle-log-db"
     restart: unless-stopped
     shm_size: 128mb
@@ -140,7 +138,7 @@ services:
       - -c
       - max_connections=30
     volumes:
-      - battle-log-db:/var/lib/postgresql/data
+      - battle-log-db-pg18:/var/lib/postgresql
     environment:
       POSTGRES_DB: ${BATTLE_LOG_DB_NAME}
       POSTGRES_USER: ${BATTLE_LOG_DB_USER}
@@ -161,12 +159,14 @@ services:
     logging: *default-logging
 
   activity-log-db:
-    image: timescale/timescaledb:latest-pg17
+    image: timescale/timescaledb:2.32.0-pg18
     container_name: "activity-log-db"
     restart: unless-stopped
     shm_size: 128mb
     command:
       - postgres
+      - -c
+      - shared_preload_libraries=timescaledb
       - -c
       - shared_buffers=128MB
       - -c
@@ -178,7 +178,7 @@ services:
       - -c
       - max_connections=30
     volumes:
-      - activity-log-db:/var/lib/postgresql/data
+      - activity-log-db-pg18:/var/lib/postgresql
     environment:
       POSTGRES_DB: ${ACTIVITY_LOG_DB_NAME}
       POSTGRES_USER: ${ACTIVITY_LOG_DB_USER}
@@ -199,7 +199,7 @@ services:
     logging: *default-logging
 
   catalog-db:
-    image: postgres:17-alpine
+    image: postgres:18.7-alpine
     container_name: "catalog-db"
     restart: unless-stopped
     shm_size: 128mb
@@ -216,7 +216,7 @@ services:
       - -c
       - max_connections=30
     volumes:
-      - catalog-db:/var/lib/postgresql/data
+      - catalog-db-pg18:/var/lib/postgresql
     environment:
       POSTGRES_DB: ${CATALOG_DB_NAME}
       POSTGRES_USER: ${CATALOG_DB_USER}
@@ -237,13 +237,15 @@ services:
     logging: *default-logging
 
   meilisearch:
-    image: "getmeili/meilisearch:v1.22.2"
+    image: "getmeili/meilisearch:v1.57.0"
     restart: unless-stopped
     environment:
       MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY}
       MEILI_MAX_INDEXING_MEMORY: 768MiB
       MEILI_MAX_INDEXING_THREADS: 2
       MEILI_LOG_LEVEL: WARN
+      # Upgrades a database left by an older Meilisearch in place on start.
+      MEILI_UPGRADE_DB: "true"
     ports:
       - 7700:7700
     volumes:
@@ -262,7 +264,7 @@ services:
     logging: *default-logging
 
   redis:
-    image: "docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1"
+    image: "docker.dragonflydb.io/dragonflydb/dragonfly:v2.1.0"
     container_name: "redis-lootlog"
     restart: unless-stopped
     ports:
@@ -296,7 +298,7 @@ services:
     logging: *default-logging
 
   traefik:
-    image: "traefik:v3.6.10"
+    image: "traefik:v3.7.19"
     container_name: "traefik"
     restart: unless-stopped
     # network_mode: "host"
@@ -331,13 +333,13 @@ services:
 volumes:
   rabbitdata:
   rabbitlog:
-  lootlog-db:
-  lootlog-users-db:
+  lootlog-db-pg18:
+  lootlog-users-db-pg18:
   meilisearch:
   redis:
-  battle-log-db:
-  activity-log-db:
-  catalog-db:
+  battle-log-db-pg18:
+  activity-log-db-pg18:
+  catalog-db-pg18:
 
 configs:
   rabbitmq-local-resources:

@@ -4,7 +4,7 @@ import { TAU, noise1, type Rgb } from "./math";
 import { drawRunes, pixelEllipse, pixelLine, plot, softEllipse } from "./paint";
 import { drawMagicCircle, type Brush } from "./decor";
 import { groundRadius, type AuraPlacement } from "./placement";
-import type { AuraPreset } from "./presets";
+import type { AuraPreset } from "./presets/preset";
 
 /**
  * The preset's ground piece under the feet; `beat` is the preset's pulse and `flash` the

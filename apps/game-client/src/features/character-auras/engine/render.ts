@@ -28,13 +28,16 @@ import {
 } from "./paint";
 import {
   Dragon,
+  DRAGON_FIRE,
   drawClouds,
   drawDragon,
   drawPearl,
+  PEARL_SPARK,
   project,
+  pushOutOfBox,
   type Point3,
 } from "./dragon";
-import { alphaBounds, posterizeAlpha, type PixelBounds } from "./pixel";
+import { alphaBounds, posterizeAlpha } from "./pixel";
 import {
   drawCloud,
   drawCurtain,
@@ -45,10 +48,29 @@ import {
   type Brush,
 } from "./decor";
 import type { CharacterAuraId } from "@lootlog/schema/character-aura";
-import { AURAS, type AuraPreset, type BurstKind } from "./presets";
-import { context2d, createCanvas, type AuraSilhouette } from "./silhouette";
+import { AURAS } from "./presets";
+import type { AuraPreset, BurstKind } from "./presets/preset";
+import {
+  blitSnapshot,
+  boxOf,
+  createSnapshot,
+  type Box,
+  type Layer,
+  type Snapshot,
+} from "./layers";
+import {
+  blitComposite,
+  colorAt,
+  compositeCanvas,
+  createComposite,
+  paintPixels,
+  RAINBOW_RUN,
+  tint,
+  WHITE,
+  writePixel,
+} from "./composite";
 import { groundRadius, spawnFrame, type AuraPlacement } from "./placement";
-import { drawBurstScene } from "./bursts";
+import { BURST_DURATION, drawBurstScene } from "./bursts";
 import { drawGround } from "./ground";
 import { ARRIVAL_BURST, arrivalEvent, pulseStarted } from "./arrival";
 import { drawSummonBack, drawSummonFront, type Summon } from "./summon";
@@ -59,7 +81,6 @@ import {
   stillness,
   STOP_FROM,
   STOP_TO,
-  TIMESTOP_LENGTH,
   TRAIL_STEPS,
   type TrailStep,
 } from "./chrono";
@@ -116,9 +137,6 @@ import {
  */
 const TICK = 0.1;
 
-/** Room around the padded silhouette for particles drifting away from it. */
-const MARGIN = 28;
-
 /** Alpha and colour steps of the pixel finish. */
 const ALPHA_LEVELS = 4;
 
@@ -162,135 +180,10 @@ const DOMINION_ONLY = { gloom: 0, veil: [4, 2, 10] } as const;
 /** Seconds an aura of realms wears its first one at least. */
 const FIRST_REALM = 4;
 
-/** How long each burst runs, in seconds. */
-const BURST_DURATION: Record<BurstKind, number> = {
-  descend: 1.2,
-  eruption: 0.6,
-  freeze: 1,
-  implode: 0.9,
-  strike: 0.4,
-  spores: 0.5,
-  bloodrain: 1.6,
-  comet: 0.9,
-  sweep: 0.8,
-  bloom: 1.4,
-  whirl: 1.4,
-  sandspout: 1.2,
-  souls: 1.6,
-  splash: 1,
-  ascend: 1.2,
-  "aurora-flare": 1.2,
-  conqueror: 0.9,
-  roar: 1.6,
-  coronation: 1.4,
-  judgement: 0.6,
-  rebirth: 1.2,
-  quake: 0.9,
-  supernova: 1.6,
-  timestop: TIMESTOP_LENGTH,
-  glaciate: 1.5,
-  powerup: 2,
-  // A kit names its own length (`burstLength`).
-  kit: 2,
-  reload: 1.2,
-};
-
-/** An offscreen buffer of one side's light (`lit`) or covering (`dim`) pixels. */
-interface Layer {
-  canvas: HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D;
-  used: boolean;
-  /** Something soft (gradient blobs) was drawn, so it needs the pixel finish; pixel-only layers skip it. */
-  soft: boolean;
-  /**
-   * What the finish found drawn, so every frame copies only that: a layer's content
-   * covers about a tenth of its box, and copying the rest costs the most without a GPU.
-   */
-  bounds: PixelBounds | null;
-}
-
 /** A point in screen or particle space, px. */
 interface Point {
   x: number;
   y: number;
-}
-
-interface Box {
-  ox: number;
-  oy: number;
-  w: number;
-  h: number;
-}
-
-function createLayer(): Layer {
-  const canvas = createCanvas(1, 1);
-
-  return {
-    canvas,
-    ctx: context2d(canvas, { willReadFrequently: true }),
-    used: false,
-    soft: true,
-    bounds: null,
-  };
-}
-
-/**
- * One side (behind or in front of the character) rendered at a tick. What hangs on the body
- * (ground, rays, flames, orbits…) and the particles, which live on the map, sit in separate
- * buffers: between ticks the first moves with the character and the second with the camera,
- * so neither needs redrawing until the next tick.
- */
-interface Snapshot {
-  key: string;
-  box: Box;
-  /**
-   * What the body buffers were last rendered for: the tick for most auras, a coarser step
-   * for lite ones (`AuraPreset.lite`), whose body buffers outlive ticks.
-   */
-  bodyKey: string;
-  bodySilhouette: AuraSilhouette | null;
-  bodyBox: Box;
-  /** The character's screen position when the body buffers were rendered. */
-  x: number;
-  y: number;
-  /** The camera's screen position when the world buffers were rendered. */
-  viewX: number;
-  viewY: number;
-  bodyLit: Layer;
-  bodyDim: Layer;
-  worldLit: Layer;
-  worldDim: Layer;
-}
-
-function createSnapshot(): Snapshot {
-  return {
-    key: "",
-    box: { ox: 0, oy: 0, w: 0, h: 0 },
-    bodyKey: "",
-    bodySilhouette: null,
-    bodyBox: { ox: 0, oy: 0, w: 0, h: 0 },
-    x: 0,
-    y: 0,
-    viewX: 0,
-    viewY: 0,
-    bodyLit: createLayer(),
-    bodyDim: createLayer(),
-    worldLit: createLayer(),
-    worldDim: createLayer(),
-  };
-}
-
-/** A tinted mask composited once per tick and silhouette, then only copied each frame. */
-interface Composite {
-  silhouette: AuraSilhouette | null;
-  key: string;
-  canvas: HTMLCanvasElement;
-  /** The pixel buffer written into `canvas`, reused while its size holds. */
-  image: ImageData | null;
-}
-
-function createComposite(): Composite {
-  return { silhouette: null, key: "", canvas: createCanvas(1, 1), image: null };
 }
 
 /** The outline bands' alpha, inner to outer. */
@@ -755,11 +648,11 @@ export class Aura {
       if (summon) drawSummonBack(ctx, place, summon);
 
       if (place.ground) this.drawDoubles(ctx, place, false, intensity);
-      this.blit(ctx, this.back, place, "dim");
+      blitSnapshot(ctx, this.back, place, "dim");
 
       if (!(p.bare && place.ground))
         this.drawOutline(ctx, place, glow, this.compositeKey(intensity));
-      this.blit(ctx, this.back, place, "lit");
+      blitSnapshot(ctx, this.back, place, "lit");
     } finally {
       ctx.restore();
     }
@@ -804,8 +697,8 @@ export class Aura {
     try {
       if (place.ground)
         this.drawInner(ctx, place, glow, this.compositeKey(intensity));
-      this.blit(ctx, this.front, place, "dim");
-      this.blit(ctx, this.front, place, "lit");
+      blitSnapshot(ctx, this.front, place, "dim");
+      blitSnapshot(ctx, this.front, place, "lit");
 
       if (place.ground) this.drawDoubles(ctx, place, true, intensity);
       const summon = this.summon(place, intensity);
@@ -995,37 +888,6 @@ export class Aura {
     else drawGhosts(ctx, place, level, this.tick, intensity);
   }
 
-  /** Copies a side's buffers to the screen: body ones follow the character, world ones the camera. */
-  private blit(
-    ctx: CanvasRenderingContext2D,
-    snap: Snapshot,
-    place: AuraPlacement,
-    which: "lit" | "dim",
-  ): void {
-    const mode = which === "lit" ? "lighter" : "source-over";
-    const bodyX = Math.round(place.x) - snap.x;
-    const bodyY = Math.round(place.y) - snap.y;
-    const worldX = snap.viewX - Math.round(place.viewX);
-    const worldY = snap.viewY - Math.round(place.viewY);
-
-    blitLayer(
-      ctx,
-      which === "lit" ? snap.bodyLit : snap.bodyDim,
-      snap.bodyBox,
-      mode,
-      bodyX,
-      bodyY,
-    );
-    blitLayer(
-      ctx,
-      which === "lit" ? snap.worldLit : snap.worldDim,
-      snap.box,
-      mode,
-      worldX,
-      worldY,
-    );
-  }
-
   /** Clears a buffer pair for a render at `box`. */
   private prepare(lit: Layer, dim: Layer, box: Box): void {
     for (const layer of [lit, dim]) {
@@ -1144,8 +1006,8 @@ export class Aura {
       // The flash adds white over the inner band (the prism's own rainbow on the prism).
       const flashColors = prism ? (bandColors[0] ?? []) : [WHITE];
 
-      const composite = this.composite(this.outline, silhouette, key, (octx) =>
-        this.paintPixels(octx, this.outline, (data, width, height) => {
+      const composite = compositeCanvas(this.outline, silhouette, key, (octx) =>
+        paintPixels(octx, this.outline, (data, width, height) => {
           for (let n = 0; n < outline.length; n++) {
             const b = band[n] ?? 0;
             const a = bandAlpha[b] ?? 0;
@@ -1179,7 +1041,7 @@ export class Aura {
       );
 
       ctx.globalCompositeOperation = "source-over";
-      this.blitComposite(ctx, place, composite);
+      blitComposite(ctx, place, composite);
 
       return;
     }
@@ -1209,7 +1071,7 @@ export class Aura {
       ? this.rainbowStops(0)
       : [this.rgb.tones[0]];
 
-    const composite = this.composite(
+    const composite = compositeCanvas(
       this.inner,
       place.silhouette,
       key,
@@ -1223,7 +1085,7 @@ export class Aura {
         }
 
         const { body, bodyAlpha } = pixels;
-        this.paintPixels(octx, this.inner, (data, width, height) => {
+        paintPixels(octx, this.inner, (data, width, height) => {
           for (let n = 0; n < body.length; n++) {
             const i = body[n] ?? 0;
             const a = (alpha * (bodyAlpha[n] ?? 0)) / 255;
@@ -1234,63 +1096,7 @@ export class Aura {
     );
 
     ctx.globalCompositeOperation = "lighter";
-    this.blitComposite(ctx, place, composite);
-  }
-
-  /** Rebuilds `composite` for `key` and the silhouette when stale, via `paint` on a cleared canvas. */
-  private composite(
-    composite: Composite,
-    silhouette: AuraSilhouette,
-    key: string,
-    paint: (ctx: CanvasRenderingContext2D) => void,
-  ): HTMLCanvasElement {
-    if (composite.silhouette === silhouette && composite.key === key)
-      return composite.canvas;
-    composite.silhouette = silhouette;
-    composite.key = key;
-    const { canvas } = composite;
-    const width = silhouette.width + silhouette.pad * 2;
-    const height = silhouette.height + silhouette.pad * 2;
-
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-    }
-
-    const octx = context2d(canvas);
-    octx.globalCompositeOperation = "source-over";
-    octx.globalAlpha = 1;
-    octx.clearRect(0, 0, canvas.width, canvas.height);
-    paint(octx);
-    octx.globalAlpha = 1;
-    octx.globalCompositeOperation = "source-over";
-
-    return canvas;
-  }
-
-  /** Writes `fill`'s pixels into a cleared composite through its reused buffer. */
-  private paintPixels(
-    octx: CanvasRenderingContext2D,
-    composite: Composite,
-    fill: (data: Uint8ClampedArray, width: number, height: number) => void,
-  ): void {
-    const { width, height } = composite.canvas;
-    let image = composite.image;
-
-    if (image?.width === width && image.height === height) image.data.fill(0);
-    else image = composite.image = new ImageData(width, height);
-    fill(image.data, width, height);
-    octx.putImageData(image, 0, 0);
-  }
-
-  private blitComposite(
-    ctx: CanvasRenderingContext2D,
-    place: AuraPlacement,
-    canvas: HTMLCanvasElement,
-  ): void {
-    const pad = place.silhouette.pad;
-    ctx.globalAlpha = 1;
-    ctx.drawImage(canvas, Math.round(place.x) - pad, Math.round(place.y) - pad);
+    blitComposite(ctx, place, composite);
   }
 
   /** Draws `mask` tinted (rainbow for the prism) at `alpha` onto a padded-silhouette-sized canvas. */
@@ -2682,34 +2488,6 @@ function colorsOf(preset: AuraPreset): AuraColors {
   };
 }
 
-/** Heavenly Dragon: the spark the pearl sheds, drifting down as it fades. */
-const PEARL_SPARK: EmitterSpec = {
-  kind: "mote",
-  rate: 0,
-  from: "feet",
-  life: [0.5, 0.9],
-  speed: [2, 6],
-  dir: Math.PI / 2,
-  spread: 1,
-  size: [0.8, 1.2],
-  colors: 2,
-  front: 0.5,
-};
-
-/** Heavenly Dragon: golden fire from the jaws; `dir` and `front` follow the head. */
-const DRAGON_FIRE: EmitterSpec = {
-  kind: "ember",
-  rate: 0,
-  from: "feet",
-  life: [0.45, 0.8],
-  speed: [70, 110],
-  spread: 0.45,
-  drag: 0.6,
-  size: [2.6, 3.6],
-  colors: 4,
-  front: 0.5,
-};
-
 /** Heavenly Dragon: the gold raining round the character as the roar ends. */
 const GOLD_RAIN: EmitterSpec = {
   kind: "spark",
@@ -2743,181 +2521,4 @@ function tipPathAt(
   if ((d -= side) < top) return { x: x + w + out - d, y: y + h + out };
 
   return { x: x - out, y: y + h + out - (d - top) };
-}
-
-/**
- * Keeps the dragon flat and out of a tooltip: a segment that cut a corner into the box,
- * grown by `margin`, is pushed back out through its nearest side, so it never crosses the text.
- */
-function pushOutOfBox(
-  dragon: Dragon,
-  { x, y, w, h }: { x: number; y: number; w: number; h: number },
-  margin: number,
-): void {
-  for (const seg of dragon.segments) {
-    seg.z = 0;
-    const left = seg.x - (x - margin);
-    const right = x + w + margin - seg.x;
-    const top = seg.y - (y - margin);
-    const bottom = y + h + margin - seg.y;
-
-    if (left <= 0 || right <= 0 || top <= 0 || bottom <= 0) continue;
-    const nearest = Math.min(left, right, top, bottom);
-
-    if (nearest === left) seg.x = x - margin;
-    else if (nearest === right) seg.x = x + w + margin;
-    else if (nearest === top) seg.y = y - margin;
-    else seg.y = y + h + margin;
-  }
-}
-
-/** Camera drift a world buffer can move by between ticks. */
-const VIEW_SLACK = 16;
-
-/** Whether an aura at `place` lands inside a `width`×`height` view at all. */
-export function isAuraInView(
-  place: AuraPlacement,
-  width: number,
-  height: number,
-): boolean {
-  const box = boxOf(place);
-
-  return (
-    box.ox < width + VIEW_SLACK &&
-    box.oy < height + VIEW_SLACK &&
-    box.ox + box.w > -VIEW_SLACK &&
-    box.oy + box.h > -VIEW_SLACK
-  );
-}
-
-/**
- * The screen rect an aura at `place` can paint into this frame: its buffers
- * plus the drift a character or the camera makes between ticks.
- */
-export function auraScreenBox(place: AuraPlacement) {
-  const box = boxOf(place);
-
-  return {
-    x: box.ox - VIEW_SLACK,
-    y: box.oy - VIEW_SLACK,
-    width: box.w + VIEW_SLACK * 2,
-    height: box.h + VIEW_SLACK * 2,
-  };
-}
-
-function boxOf(place: AuraPlacement): Box {
-  const pad = place.silhouette.pad + MARGIN;
-
-  return {
-    ox: Math.round(place.x) - pad,
-    oy: Math.round(place.y) - pad,
-    w: place.silhouette.width + pad * 2,
-    h: place.silhouette.height + pad * 2,
-  };
-}
-
-function blitLayer(
-  ctx: CanvasRenderingContext2D,
-  layer: Layer,
-  box: Box,
-  mode: GlobalCompositeOperation,
-  dx: number,
-  dy: number,
-): void {
-  const { bounds } = layer;
-
-  if (!layer.used || !bounds) return;
-  const w = bounds.right - bounds.left + 1;
-  const h = bounds.bottom - bounds.top + 1;
-  ctx.globalCompositeOperation = mode;
-  ctx.globalAlpha = 1;
-  ctx.drawImage(
-    layer.canvas,
-    bounds.left,
-    bounds.top,
-    w,
-    h,
-    box.ox + dx + bounds.left,
-    box.oy + dy + bounds.top,
-    w,
-    h,
-  );
-}
-
-const WHITE: Rgb = [255, 255, 255];
-
-/** The prism gradient runs from the top-left corner to this fraction of the width at the bottom. */
-const RAINBOW_RUN = 0.3;
-
-/**
- * The colour at pixel `i` of a `width`×`height` buffer: the only colour, or the rainbow
- * gradient through evenly spaced `stops` sampled at the pixel centre, as `rainbow` paints it.
- */
-function colorAt(
-  stops: readonly Rgb[],
-  i: number,
-  width: number,
-  height: number,
-): Rgb {
-  const first = stops[0] ?? WHITE;
-
-  if (stops.length < 2) return first;
-  const gx = width * RAINBOW_RUN;
-  const x = (i % width) + 0.5;
-  const y = Math.floor(i / width) + 0.5;
-  const t = clamp((x * gx + y * height) / (gx * gx + height * height), 0, 1);
-  const position = t * (stops.length - 1);
-  const index = Math.min(stops.length - 2, Math.floor(position));
-  const from = stops[index] ?? first;
-  const to = stops[index + 1] ?? from;
-  const k = position - index;
-
-  return [
-    from[0] + (to[0] - from[0]) * k,
-    from[1] + (to[1] - from[1]) * k,
-    from[2] + (to[2] - from[2]) * k,
-  ];
-}
-
-/** Sets pixel `i` to `color` at `alpha`; the clamped buffer rounds the channels. */
-function writePixel(
-  data: Uint8ClampedArray,
-  i: number,
-  color: Rgb,
-  alpha: number,
-): void {
-  const o = i * 4;
-  data[o] = color[0];
-  data[o + 1] = color[1];
-  data[o + 2] = color[2];
-  data[o + 3] = alpha * 255;
-}
-
-let scratch: HTMLCanvasElement | null = null;
-
-/** `mask` filled with `fill` through its alpha, on a shared scratch canvas valid until the next call. */
-function tint(
-  mask: HTMLCanvasElement,
-  fill: (
-    ctx: CanvasRenderingContext2D,
-    w: number,
-    h: number,
-  ) => string | CanvasGradient,
-): HTMLCanvasElement {
-  if (!scratch || scratch.width < mask.width || scratch.height < mask.height) {
-    scratch = createCanvas(
-      Math.max(mask.width, scratch?.width ?? 0),
-      Math.max(mask.height, scratch?.height ?? 0),
-    );
-  }
-
-  const ctx = context2d(scratch);
-  ctx.globalCompositeOperation = "copy";
-  ctx.drawImage(mask, 0, 0);
-  ctx.globalCompositeOperation = "source-in";
-  ctx.fillStyle = fill(ctx, mask.width, mask.height);
-  ctx.fillRect(0, 0, mask.width, mask.height);
-  ctx.globalCompositeOperation = "source-over";
-
-  return scratch;
 }

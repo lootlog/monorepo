@@ -12,7 +12,7 @@ import {
   type ShownArrival,
   type ShownAura,
 } from "./character-aura-renderer";
-import { isAuraInView } from "./engine/render";
+import { isAuraInView } from "./engine/layers";
 
 /** Just under and just over the character in the draw order, between it and the next row. */
 const ORDER_EPSILON = 0.001;

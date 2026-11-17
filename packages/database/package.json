@@ -11,15 +11,17 @@
     "./snapshot-hash": "./src/snapshot-hash.ts",
     "./redis-script": "./src/redis-script.ts",
     "./redis-cache-fill": "./src/redis-cache-fill.ts",
-    "./sliding-window-rate-limit": "./src/sliding-window-rate-limit.ts"
+    "./sliding-window-rate-limit": "./src/sliding-window-rate-limit.ts",
+    "./bun-redis": "./src/bun-redis.ts"
   },
   "scripts": {
     "lint": "oxlint src test",
     "typecheck": "bun check",
     "test": "bun test --path-ignore-patterns='**/*.integration.*'",
-    "test:integration": "bun test test/postgres.integration.test.ts"
+    "test:integration": "bun test test/postgres.integration.test.ts test/bun-redis.integration.test.ts"
   },
   "dependencies": {
+    "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
     "@lootlog/schema": "workspace:*",
     "effect": "catalog:",
@@ -32,6 +34,7 @@
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
     "drizzle-orm": "catalog:",
+    "testcontainers": "^12.2.1",
     "typescript": "catalog:"
   }
 }
