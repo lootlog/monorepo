@@ -15,6 +15,7 @@
     "./battlelog": "./src/generated/battlelog.ts",
     "./catalog": "./src/generated/catalog.ts",
     "./main": "./src/generated/main.ts",
+    "./mutators": "./src/mutators.ts",
     "./realtime": "./src/realtime/index.ts",
     "./realtime/event-listeners": "./src/realtime/event-listeners.ts",
     "./scripts/generation": "./scripts/generation.ts",

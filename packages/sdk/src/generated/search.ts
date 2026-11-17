@@ -5,7 +5,7 @@
  * Player search
  * OpenAPI spec version: 1.0
  */
-import { searchFetch } from '../../../client/src/mutators';
+import { searchFetch } from '@lootlog/client/mutators';
 /**
  * Player search hit
  */
