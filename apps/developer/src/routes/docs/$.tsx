@@ -14,7 +14,8 @@ import {
 } from "fumadocs-ui/page";
 import { use } from "react";
 import { PageMarkdownActions } from "@lootlog/ui/components/page-markdown-actions";
-import { getMarkdownPath } from "@lootlog/ui/lib/docs-markdown";
+import { COMMUNITY_LINKS } from "@lootlog/domain/public-sites";
+import { portalSite } from "~/lib/llms";
 import { pageHead } from "~/lib/seo";
 import { docs, source } from "~/lib/source";
 import { portalText } from "~/lib/translations";
@@ -38,7 +39,7 @@ const loadPage = createServerFn({ method: "GET" })
       title: page.data.title,
       description: page.data.description,
       url: page.url,
-      markdownPath: getMarkdownPath(page.url, page.slugs),
+      markdownPath: portalSite.getPageMarkdownPath(page),
       pageTree: await source.serializePageTree(source.getPageTree()),
     };
   });
@@ -109,7 +110,7 @@ function Documentation() {
           <MDX components={mdxComponents} />
         </DocsBody>
         <EditOnGitHub
-          href={`https://github.com/lootlog/monorepo/blob/main/apps/developer/content/docs/${path}`}
+          href={`${COMMUNITY_LINKS.github}/blob/main/apps/developer/content/docs/${path}`}
           className="self-start"
         >
           {portalText.editOnGitHub}

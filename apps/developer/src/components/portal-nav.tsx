@@ -22,6 +22,7 @@ export function PortalNav() {
 
   const hydrated = useHydrated();
   const environment = hydrated ? getPortalEnvironment(location.hostname) : null;
+  const production = environment === "production";
 
   const activeSection =
     pathname
@@ -48,8 +49,8 @@ export function PortalNav() {
       compactSearch=<SearchTrigger />
       status={
         environment && (
-          <Badge variant={environment.production ? "outline" : "timer"}>
-            {environment.production ? t.production : t.dev}
+          <Badge variant={production ? "outline" : "timer"}>
+            {production ? t.production : t.dev}
           </Badge>
         )
       }

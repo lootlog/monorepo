@@ -22,6 +22,19 @@ export const API_KEY_ACCESS_HEADER = "x-auth-api-key-access";
 
 export const API_KEY_LEASE_MS = 60_000;
 
+/**
+ * Messages the auth service answers API key management failures with; the
+ * developer portal shows its own copy for each of them.
+ */
+export const API_KEY_ERROR_MESSAGES = {
+  disabled: "API keys are disabled",
+  organizationServiceUnavailable: "Organization service unavailable",
+  organizationAccessRequired: "Organization access required",
+  limitReached: "Maximum active API keys reached",
+  sessionRequired: "Session required",
+  creationFailed: "API key creation failed",
+} as const;
+
 export const ApiKeyStatus = Schema.Union([
   Schema.Struct({ keyId: Schema.NonEmptyString, valid: Schema.Literal(false) }),
   Schema.Struct({

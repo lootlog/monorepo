@@ -1,16 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
+import { getPortalEnvironment, requestHostname } from "~/lib/environment";
 
 export const Route = createFileRoute("/robots.txt")({
   server: {
     handlers: {
       GET: ({ request }) => {
-        const hostname =
-          request.headers.get("host")?.split(":")[0] ??
-          new URL(request.url).hostname;
-
         const body =
-          hostname === "developer.lootlog.pl"
-            ? "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /openapi/\n\nSitemap: https://developer.lootlog.pl/sitemap.xml\n"
+          getPortalEnvironment(requestHostname(request)) === "production"
+            ? `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /openapi/\n\nSitemap: ${PUBLIC_SITE_ORIGINS.developer}/sitemap.xml\n`
             : "User-agent: *\nDisallow: /\n";
 
         return new Response(body, {

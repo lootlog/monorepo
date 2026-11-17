@@ -4,6 +4,7 @@ import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { and, eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer, Option, Schema } from "effect";
 import {
+  API_KEY_ERROR_MESSAGES,
   type ApiKeyAccess,
   ApiKeyGrant,
   type ApiKeyStatus,
@@ -211,7 +212,7 @@ export class ApiKeyService extends Context.Service<
           requireOrigin = true,
         ) {
           if (headers.has("x-api-key") || headers.has("authorization"))
-            return yield* failure(401, "Session required");
+            return yield* failure(401, API_KEY_ERROR_MESSAGES.sessionRequired);
           const origin = headers.get("origin");
 
           if (
@@ -225,7 +226,8 @@ export class ApiKeyService extends Context.Service<
             catch: () => failure(503, "Session unavailable"),
           });
 
-          if (!session) return yield* failure(401, "Session required");
+          if (!session)
+            return yield* failure(401, API_KEY_ERROR_MESSAGES.sessionRequired);
 
           const users = yield* query(
             database
@@ -238,7 +240,7 @@ export class ApiKeyService extends Context.Service<
           const user = users[0];
 
           if (!user || isUserBanned(user, Date.now()))
-            return yield* failure(401, "Session required");
+            return yield* failure(401, API_KEY_ERROR_MESSAGES.sessionRequired);
 
           return user.id;
         }),
@@ -261,7 +263,7 @@ export class ApiKeyService extends Context.Service<
         }),
         create: Effect.fn("ApiKeyService.create")(function* (userId, input) {
           if (config.apiKeysEnabled !== true)
-            return yield* failure(403, "API keys are disabled");
+            return yield* failure(403, API_KEY_ERROR_MESSAGES.disabled);
 
           if (input.organizationIds.length === 0 && !input.personalData)
             return yield* failure(
@@ -271,7 +273,10 @@ export class ApiKeyService extends Context.Service<
 
           if (input.organizationIds.length > 0) {
             if (!config.apiUrl)
-              return yield* failure(503, "Organization service unavailable");
+              return yield* failure(
+                503,
+                API_KEY_ERROR_MESSAGES.organizationServiceUnavailable,
+              );
 
             const users = yield* query(
               database
@@ -283,7 +288,11 @@ export class ApiKeyService extends Context.Service<
 
             const user = users[0];
 
-            if (!user) return yield* failure(401, "Session required");
+            if (!user)
+              return yield* failure(
+                401,
+                API_KEY_ERROR_MESSAGES.sessionRequired,
+              );
 
             const organizations = yield* client
               .get(`${config.apiUrl.replace(/\/$/, "")}/users/@me/guilds`, {
@@ -306,7 +315,10 @@ export class ApiKeyService extends Context.Service<
                 ),
                 Effect.timeout("5 seconds"),
                 Effect.mapError(() =>
-                  failure(503, "Organization service unavailable"),
+                  failure(
+                    503,
+                    API_KEY_ERROR_MESSAGES.organizationServiceUnavailable,
+                  ),
                 ),
               );
 
@@ -321,7 +333,10 @@ export class ApiKeyService extends Context.Service<
             );
 
             if (input.organizationIds.some((id) => !allowed.has(id)))
-              return yield* failure(403, "Organization access required");
+              return yield* failure(
+                403,
+                API_KEY_ERROR_MESSAGES.organizationAccessRequired,
+              );
           }
 
           const rows = yield* query(
@@ -332,7 +347,7 @@ export class ApiKeyService extends Context.Service<
           );
 
           if (rows.filter((row) => active(row, Date.now())).length >= 10)
-            return yield* failure(409, "Maximum active API keys reached");
+            return yield* failure(409, API_KEY_ERROR_MESSAGES.limitReached);
           const api = auth.apiKeys;
 
           if (!api) return yield* failure(503, "API keys unavailable");
@@ -353,7 +368,7 @@ export class ApiKeyService extends Context.Service<
 
           const created = yield* Effect.tryPromise({
             try: () => api.createApiKey({ body }),
-            catch: () => failure(503, "API key creation failed"),
+            catch: () => failure(503, API_KEY_ERROR_MESSAGES.creationFailed),
           });
 
           const row = yield* owned(userId, created.id);
@@ -393,7 +408,7 @@ export class ApiKeyService extends Context.Service<
         }),
         verify: Effect.fn("ApiKeyService.verify")(function* (key) {
           if (config.apiKeysEnabled !== true)
-            return yield* failure(401, "API keys are disabled");
+            return yield* failure(401, API_KEY_ERROR_MESSAGES.disabled);
 
           // Read-only on purpose: Better Auth's verifyApiKey writes the key
           // row twice per call (lastRequest, updatedAt) and cannot be told

@@ -1,39 +1,19 @@
-export function getPortalEnvironment(hostname: string) {
-  if (hostname === "developer.lootlog.pl") {
-    return {
-      production: true,
-      auth: "https://auth.lootlog.pl",
-      main: "https://api.lootlog.pl",
-      activity: "https://activity.lootlog.pl",
-      battlelog: "https://battlelog.lootlog.pl",
-      search: "https://search.lootlog.pl",
-      catalog: "https://catalog.lootlog.pl",
-    };
-  }
+import type { DeploymentEnvironment } from "@lootlog/schema/api-services";
 
-  if (hostname === "dev-developer.lootlog.pl") {
-    return {
-      production: false,
-      auth: "https://dev-auth.lootlog.pl",
-      main: "https://dev-api.lootlog.pl",
-      activity: "https://dev-activity.lootlog.pl",
-      battlelog: "https://dev-battlelog.lootlog.pl",
-      search: "https://dev-search.lootlog.pl",
-      catalog: "https://dev-catalog.lootlog.pl",
-    };
-  }
+const PORTAL_HOSTS = new Map<string, DeploymentEnvironment>([
+  ["developer.lootlog.pl", "production"],
+  ["dev-developer.lootlog.pl", "development"],
+  ["localhost", "local"],
+  ["127.0.0.1", "local"],
+]);
 
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    return {
-      production: false,
-      auth: "http://localhost/api/auth",
-      main: "http://localhost/api/lootlog",
-      activity: "http://localhost/api/activity",
-      battlelog: "http://localhost/api/battlelog",
-      search: "http://localhost/api/search",
-      catalog: "http://localhost/api/catalog",
-    };
-  }
+/**
+ * The environment whose services a portal host talks to. An unknown host,
+ * such as a preview deployment, never reaches production.
+ */
+export const getPortalEnvironment = (hostname: string): DeploymentEnvironment =>
+  PORTAL_HOSTS.get(hostname) ?? "development";
 
-  throw new Error("Unsupported developer portal host");
-}
+/** The host a portal request was sent to, as the reverse proxy forwards it. */
+export const requestHostname = (request: Request) =>
+  request.headers.get("host")?.split(":")[0] ?? new URL(request.url).hostname;

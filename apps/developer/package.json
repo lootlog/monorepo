@@ -10,16 +10,17 @@
     "start": "bun server.js",
     "typecheck": "bun check",
     "lint": "oxlint .",
-    "test": "bun test server-handler.test.js src"
+    "test": "bun test src"
   },
   "dependencies": {
+    "@lootlog/client": "workspace:*",
+    "@lootlog/domain": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "@lootlog/ui": "workspace:*",
     "@scalar/api-reference-react": "^0.9.80",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "^1.169.1",
-    "better-auth": "1.7.16",
     "effect": "catalog:",
     "fumadocs-core": "^16.17.2",
     "fumadocs-mdx": "^15.4.7",

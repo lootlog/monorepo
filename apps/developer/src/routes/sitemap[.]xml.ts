@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
 import { source } from "~/lib/source";
 
 export const Route = createFileRoute("/sitemap.xml")({
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         const urls = paths
           .map(
             (path) =>
-              `<url><loc>https://developer.lootlog.pl${path}</loc></url>`,
+              `<url><loc>${PUBLIC_SITE_ORIGINS.developer}${path}</loc></url>`,
           )
           .join("");
 

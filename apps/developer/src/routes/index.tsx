@@ -4,6 +4,10 @@ import { buttonVariants } from "@lootlog/ui/lib/button-variants";
 import { PortalFooter } from "~/components/portal-footer";
 import { RequestSample } from "~/components/request-sample";
 import { ResourceCard } from "~/components/resource-card";
+import {
+  apiServiceOrigin,
+  PUBLIC_API_SERVICES,
+} from "@lootlog/schema/api-services";
 import { pageHead } from "~/lib/seo";
 import { portalText as t } from "~/lib/translations";
 
@@ -59,30 +63,6 @@ const integrations = [
     title: t.gameClient,
     description: t.gameClientDescription,
     link: { to: "/docs/$", params: { _splat: "game-client" } },
-  },
-] as const;
-
-const services = [
-  { slug: "main", host: "api.lootlog.pl", description: t.mainDescription },
-  {
-    slug: "activity",
-    host: "activity.lootlog.pl",
-    description: t.activityDescription,
-  },
-  {
-    slug: "battlelog",
-    host: "battlelog.lootlog.pl",
-    description: t.battlelogDescription,
-  },
-  {
-    slug: "catalog",
-    host: "catalog.lootlog.pl",
-    description: t.catalogDescription,
-  },
-  {
-    slug: "search",
-    host: "search.lootlog.pl",
-    description: t.searchDescription,
   },
 ] as const;
 
@@ -175,23 +155,23 @@ function Overview() {
             </p>
           </div>
           <ul className="overflow-hidden rounded-xl border border-border bg-card">
-            {services.map((service) => (
+            {PUBLIC_API_SERVICES.map((service) => (
               <li
-                key={service.slug}
+                key={service}
                 className="group/service relative grid gap-1 border-b border-border px-5 py-4 transition-colors last:border-b-0 hover:bg-accent/35 md:grid-cols-[12rem_minmax(0,1fr)_auto] md:items-center md:gap-6"
               >
                 <Link
                   to="/reference"
-                  hash={service.slug}
+                  hash={service}
                   className="text-sm font-semibold outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring"
                 >
-                  {t[service.slug]}
+                  {t[service]}
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  {service.description}
+                  {t[`${service}Description`]}
                 </p>
                 <code className="font-mono text-xs text-text-supporting">
-                  {service.host}
+                  {new URL(apiServiceOrigin(service, "production")).host}
                 </code>
               </li>
             ))}

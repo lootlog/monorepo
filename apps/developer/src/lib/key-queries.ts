@@ -1,10 +1,6 @@
 import { QueryClient, queryOptions } from "@tanstack/react-query";
-import { getPortalEnvironment } from "~/lib/environment";
-import {
-  decodeKeyList,
-  decodeOrganizations,
-  keyRequest,
-} from "~/lib/key-client";
+import { apiKeysListApiKeys } from "@lootlog/client/auth";
+import { usersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 
 /** Keys change only through this page, so nothing refetches on its own. */
 export const createKeyQueryClient = () =>
@@ -18,21 +14,12 @@ export const createKeyQueryClient = () =>
 export const apiKeysQueryOptions = (userId: string) =>
   queryOptions({
     queryKey: ["api-keys", userId],
-    queryFn: async ({ signal }) =>
-      decodeKeyList(await keyRequest("", { signal })).keys,
+    queryFn: async ({ signal }) => (await apiKeysListApiKeys({ signal })).keys,
   });
 
 export const keyOrganizationsQueryOptions = (userId: string) =>
   queryOptions({
     queryKey: ["key-organizations", userId],
-    queryFn: async ({ signal }) => {
-      const response = await fetch(
-        `${getPortalEnvironment(location.hostname).main}/users/@me/guilds/accessible`,
-        { credentials: "include", signal },
-      );
-
-      if (!response.ok) throw new Error("Organization request failed");
-
-      return decodeOrganizations(await response.json());
-    },
+    queryFn: ({ signal }) =>
+      usersControllerGetCurrentUserAccessibleGuilds({ signal }),
   });
