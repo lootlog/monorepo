@@ -92,7 +92,7 @@ SELECT timescaledb_pre_restore();
 SELECT timescaledb_post_restore();
 ```
 
-Restore with the same TimescaleDB version as the dump (2.24.0).
+Restore with the same TimescaleDB version as the dump.
 
 ## Object cleanup
 

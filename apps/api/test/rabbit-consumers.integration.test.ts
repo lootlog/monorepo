@@ -19,7 +19,7 @@ import {
 let broker: StartedTestContainer;
 
 beforeAll(async () => {
-  broker = await new GenericContainer("rabbitmq:3.13-alpine")
+  broker = await new GenericContainer("rabbitmq:4.4.0-alpine")
     .withExposedPorts(5672)
     .withStartupTimeout(120_000)
     .start();
@@ -160,7 +160,7 @@ test("API backlog shares handler capacity across queues while ordered failures r
             name,
             exchange: RabbitExchange.DEFAULT,
             routingKey: RabbitRoutingKey.GUILDS_DELETE,
-            durable: false,
+            durable: true,
           })),
         }),
       ),
