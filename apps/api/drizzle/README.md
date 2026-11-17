@@ -936,10 +936,10 @@ Where the `timescaledb` extension is installed, the migration creates it,
 turns the three bucket tables into hypertables with 7-day chunks
 and compresses chunks two days after they close, segmented by `discordUserId`
 for personal buckets and `guildId` for Organization buckets. The production API
-cluster preloads TimescaleDB 2.24.0. The extension is trusted, so the database
+cluster preloads TimescaleDB 2.32.0. The extension is trusted, so the database
 owner creates it without superuser rights. PGlite test databases keep plain
 tables with the same keys; the queries are the same for both. Integration tests and
-the local `lootlog-db` run `timescale/timescaledb:2.24.0-pg17`.
+the local `lootlog-db` run `timescale/timescaledb:2.32.0-pg18`.
 
 Kills always land in the current hour, so upserts never touch a compressed
 chunk. Account deletion deletes buckets by user inside compressed chunks. The

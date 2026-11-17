@@ -81,7 +81,7 @@ describe("durable private online history", () => {
     );
 
   beforeAll(async () => {
-    postgres = await new PostgreSqlContainer("postgres:17-alpine")
+    postgres = await new PostgreSqlContainer("postgres:18.7-alpine")
       .withDatabase("online_history")
       .withUsername("lootlog")
       .withPassword("lootlog")

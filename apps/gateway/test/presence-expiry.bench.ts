@@ -18,7 +18,7 @@ const workloads = [
 ];
 
 const container = await new GenericContainer(
-  "docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1",
+  "docker.dragonflydb.io/dragonflydb/dragonfly:v2.1.0",
 )
   .withCommand(["--logtostderr", "--proactor_threads=2"])
   .withExposedPorts(6379)

@@ -18,7 +18,7 @@ describe("ActivityRepository", () => {
 
   beforeAll(async () => {
     postgres = await new PostgreSqlContainer(
-      "timescale/timescaledb:latest-pg17",
+      "timescale/timescaledb:2.32.0-pg18",
     )
       .withDatabase("activity_repository")
       .withUsername("lootlog")
