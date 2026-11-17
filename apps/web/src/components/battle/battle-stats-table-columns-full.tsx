@@ -3,7 +3,7 @@ import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { cn } from "cn";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Flag, Skull } from "lucide-react";
-import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
+import { EmergencyExitIcon } from "@/components/battle/emergency-exit-icon";
 import type { TFunction } from "i18next";
 import type { sortedTableFeatures } from "@/lib/tanstack-table-features";
 import { BattleStatsExpandButton } from "./battle-stats-expand-button";

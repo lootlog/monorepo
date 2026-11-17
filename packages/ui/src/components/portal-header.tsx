@@ -15,7 +15,7 @@ import {
 import { TextLink } from "./text-link";
 import { cn } from "cn";
 
-export type PortalHeaderLink = {
+type PortalHeaderLink = {
   id: string;
   label: string;
   render: ReactElement;

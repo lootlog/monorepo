@@ -3,7 +3,7 @@ import { Input } from "@lootlog/ui/components/input";
 import { ArrowRight } from "lucide-react";
 import { cn } from "cn";
 
-export type LevelRangeLabels = {
+type LevelRangeLabels = {
   group: string;
   min: string;
   max: string;

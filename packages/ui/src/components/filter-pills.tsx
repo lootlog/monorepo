@@ -7,7 +7,7 @@ import { cn } from "cn";
 import { useId } from "react";
 import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 
-export type FilterPillOption = {
+type FilterPillOption = {
   value: string;
   label: string;
   /** Recolors one pill, e.g. in its item rarity's frame color. */

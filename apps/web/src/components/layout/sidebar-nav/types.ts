@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { SidebarNavBadge } from "@lootlog/ui/components/sidebar-nav-button";
+import type { SidebarNavBadge } from "@/components/layout/sidebar-nav/sidebar-nav-button";
 
 export interface MenuItem {
   active: boolean;

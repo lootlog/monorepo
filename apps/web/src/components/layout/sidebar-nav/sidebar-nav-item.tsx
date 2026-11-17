@@ -1,4 +1,4 @@
-import { SidebarNavButton } from "@lootlog/ui/components/sidebar-nav-button";
+import { SidebarNavButton } from "@/components/layout/sidebar-nav/sidebar-nav-button";
 import { type MouseEvent, type ReactNode, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import * as m from "framer-motion/m";
