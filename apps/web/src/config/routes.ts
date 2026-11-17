@@ -1,7 +1,9 @@
+import { WEB_SIGN_IN_PATH } from "@lootlog/domain/public-sites";
+
 const USER_BASE = "/@me";
 
 const ROUTES = {
-  signin: "/signin",
+  signin: WEB_SIGN_IN_PATH,
   init: "/init",
 
   user: {

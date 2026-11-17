@@ -16,6 +16,8 @@
     "./event-hero-visibility": "./src/event-hero-visibility.ts",
     "./hero-sightings": "./src/hero-sightings.ts",
     "./catalog-slug": "./src/catalog-slug.ts",
+    "./public-sites": "./src/public-sites.ts",
+    "./wiki-links": "./src/wiki-links.ts",
     "./item-events": "./src/item-events.ts",
     "./item-type": "./src/item-type.ts",
     "./item-upgrade": "./src/item-upgrade.ts",

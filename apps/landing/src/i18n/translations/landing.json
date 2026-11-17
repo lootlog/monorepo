@@ -169,12 +169,6 @@
     "copyright": "© {{year}} Lootlog · open source",
     "blog": "Poradniki"
   },
-  "cookieConsent": {
-    "title": "Ustawienia plików cookie",
-    "description": "Używamy plików cookie, aby utrzymać działanie serwisu i\u00a0zapamiętać wybrane ustawienia.",
-    "accept": "Akceptuję",
-    "reject": "Odrzuć"
-  },
   "policyLayout": {
     "backToHome": "Powrót do strony głównej",
     "lastUpdated": "Data ostatniej aktualizacji: {{date}}"

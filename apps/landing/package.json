@@ -10,14 +10,16 @@
     "preview": "vite preview",
     "typecheck": "bun check",
     "lint": "oxlint .",
-    "test": "vitest run",
     "doctor": "react-doctor ."
   },
   "dependencies": {
+    "@lootlog/client": "workspace:*",
+    "@lootlog/domain": "workspace:*",
+    "@lootlog/schema": "workspace:*",
     "@lootlog/ui": "workspace:*",
+    "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "^1.169.1",
-    "better-auth": "1.7.16",
     "framer-motion": "^14.2.0",
     "i18next": "^26.4.4",
     "lucide-react": "^1.56.0",
@@ -36,7 +38,6 @@
     "@vitejs/plugin-react": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
-    "vite": "catalog:",
-    "vitest": "catalog:"
+    "vite": "catalog:"
   }
 }

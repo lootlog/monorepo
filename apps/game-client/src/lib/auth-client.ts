@@ -1,21 +1,9 @@
 import { gameClientFetch } from "./game-client-platform";
 import { AUTH_SERVICE_URL } from "@/config/auth";
-import { createAuthClient } from "better-auth/react";
-import { inferAdditionalFields } from "better-auth/client/plugins";
+import { createLootlogAuthClient } from "@lootlog/client/auth-session";
 
-export const authClient = createAuthClient({
-  baseURL: `${AUTH_SERVICE_URL}/idp`,
-  fetchOptions: { customFetchImpl: gameClientFetch },
-  plugins: [
-    inferAdditionalFields({
-      user: {
-        discordId: {
-          type: "string",
-          required: true,
-        },
-      },
-    }),
-  ],
+export const authClient = createLootlogAuthClient(AUTH_SERVICE_URL, {
+  fetch: gameClientFetch,
 });
 
 type SessionState = ReturnType<typeof authClient.useSession>;

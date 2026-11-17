@@ -4,8 +4,7 @@ import {
   Scripts,
   createRootRoute,
 } from "@tanstack/react-router";
-import { CookieConsent } from "@/src/components/cookie-consent";
-import { I18nProvider } from "@/src/components/i18n-provider";
+import "@/src/i18n/config";
 import { BlogNotFound } from "@/src/components/blog/blog-not-found";
 import landingTranslations from "@/src/i18n/translations/landing.json";
 import uiCss from "@lootlog/ui/globals.css?url";
@@ -67,10 +66,7 @@ function RootDocument() {
         className="bg-[#070908] text-[#e9e7de] antialiased"
         style={{ fontFamily: "var(--font-geist-sans)" }}
       >
-        <I18nProvider>
-          <Outlet />
-          <CookieConsent />
-        </I18nProvider>
+        <Outlet />
         <Scripts />
       </body>
     </html>
