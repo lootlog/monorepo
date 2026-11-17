@@ -1,15 +1,15 @@
-import { Schema } from "effect";
-
-const decodeDocument = Schema.decodeUnknownSync(
-  Schema.Record(Schema.String, Schema.Json),
-);
-
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse } from "yaml";
+import {
+  assertNoGeneratedDrift,
+  decodeJsonObject,
+  fixRequestOptionsType,
+  serviceSpecPath,
+} from "@lootlog/client/scripts/generation";
+import { PUBLIC_API_SERVICES } from "@lootlog/schema/api-services";
 import { projectOpenApi } from "./project-openapi";
-import { sdkServices } from "./sdk-services";
 
 const root = resolve(import.meta.dirname, "..");
 
@@ -19,11 +19,11 @@ mkdirSync(`${root}/openapi`, { recursive: true });
 
 mkdirSync(`${root}/src/generated`, { recursive: true });
 
-for (const { service, app } of sdkServices) {
+for (const service of PUBLIC_API_SERVICES) {
   const specPath = `${root}/openapi/${service}.json`;
   writeFileSync(
     specPath,
-    `${JSON.stringify(projectOpenApi(decodeDocument(parse(readFileSync(`${root}/../../apps/${app}/openapi.yaml`, "utf8"))), service), null, 2)}\n`,
+    `${JSON.stringify(projectOpenApi(decodeJsonObject(parse(readFileSync(serviceSpecPath(service), "utf8"))), service), null, 2)}\n`,
   );
 }
 
@@ -35,15 +35,8 @@ const result = spawnSync(
 
 if (result.status !== 0) throw new Error("Public SDK generation failed");
 
-for (const { service } of sdkServices) {
-  const path = `${root}/src/generated/${service}.ts`;
-  writeFileSync(
-    path,
-    readFileSync(path, "utf8").replaceAll(
-      "options?: RequestInit",
-      `options?: Parameters<typeof ${service}Fetch>[1]`,
-    ),
-  );
+for (const service of PUBLIC_API_SERVICES) {
+  fixRequestOptionsType(`${root}/src/generated/${service}.ts`);
 }
 
 const formatting = spawnSync(
@@ -51,7 +44,7 @@ const formatting = spawnSync(
   [
     "x",
     "oxfmt",
-    ...sdkServices.map(({ service }) => `${root}/openapi/${service}.json`),
+    ...PUBLIC_API_SERVICES.map((service) => `${root}/openapi/${service}.json`),
   ],
   { cwd: root, stdio: "inherit" },
 );
@@ -60,22 +53,8 @@ if (formatting.status !== 0)
   throw new Error("Public OpenAPI formatting failed");
 
 if (check) {
-  const status = Bun.spawnSync(
-    [
-      "git",
-      "status",
-      "--porcelain=v1",
-      "--untracked-files=all",
-      "--",
-      "packages/sdk/openapi",
-      "packages/sdk/src/generated",
-    ],
-    { cwd: resolve(root, "../.."), stdout: "pipe", stderr: "inherit" },
+  assertNoGeneratedDrift(
+    ["packages/sdk/openapi", "packages/sdk/src/generated"],
+    "Public SDK files",
   );
-
-  if (status.exitCode !== 0)
-    throw new Error("Unable to inspect generated public SDK files");
-  const drift = status.stdout.toString().trim();
-
-  if (drift) throw new Error(`Public SDK drift:\n${drift}`);
 }

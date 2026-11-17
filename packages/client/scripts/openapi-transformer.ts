@@ -3,7 +3,7 @@ import {
   decodeOpenApiDocument,
   isJsonObject,
   type JsonValue,
-} from "./openapi-document.js";
+} from "./generation.js";
 import { sanitizeOpenApiDocument } from "@lootlog/protocol/openapi";
 
 type MutableOpenApiDocument = {

@@ -1,14 +1,19 @@
 import { defineConfig } from "orval";
-import { sdkServices } from "./scripts/sdk-services";
+import {
+  mutatorsPath,
+  openApiTransformerPath,
+  serviceMutatorName,
+} from "@lootlog/client/scripts/generation";
+import { PUBLIC_API_SERVICES } from "@lootlog/schema/api-services";
 
 export default defineConfig(
   Object.fromEntries(
-    sdkServices.map(({ service }) => [
+    PUBLIC_API_SERVICES.map((service) => [
       service,
       {
         input: {
           target: `openapi/${service}.json`,
-          override: { transformer: "../client/scripts/openapi-transformer.ts" },
+          override: { transformer: openApiTransformerPath },
         },
         output: {
           target: `src/generated/${service}.ts`,
@@ -17,7 +22,7 @@ export default defineConfig(
           override: {
             useNamedParameters: true,
             fetch: { includeHttpResponseReturnType: false },
-            mutator: { path: "src/mutators.ts", name: `${service}Fetch` },
+            mutator: { path: mutatorsPath, name: serviceMutatorName(service) },
           },
         },
       },

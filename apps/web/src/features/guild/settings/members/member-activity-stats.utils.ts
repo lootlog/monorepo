@@ -1,4 +1,4 @@
-import type { MemberActivityStats } from "@/features/guild/settings/members/member-activity-stats-api";
+import type { MemberActivityStatsResponseDto as MemberActivityStats } from "@lootlog/client/activity";
 
 export type MemberActivityStatsByDiscordId = Map<
   string,

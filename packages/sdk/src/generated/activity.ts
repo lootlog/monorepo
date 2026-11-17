@@ -5,7 +5,7 @@
  * The Activity Logger API documentation
  * OpenAPI spec version: 1.0
  */
-import { activityFetch } from '../mutators';
+import { activityFetch } from '../../../client/src/mutators';
 export type PaginatedActivitiesResponseDtoDataItemType = typeof PaginatedActivitiesResponseDtoDataItemType[keyof typeof PaginatedActivitiesResponseDtoDataItemType];
 
 
