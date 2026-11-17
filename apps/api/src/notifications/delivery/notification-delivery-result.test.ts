@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import type { DiscordNotificationDeliveryResultEvent } from "@lootlog/schema/notifications";
 import { makeNotificationDeliveryResult } from "#src/notifications/delivery/notification-delivery-result";
 import { makeNotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
-import type { NotificationDeliveryUpdate } from "#src/notifications/jobs/notification-job-store";
+import type { NotificationDeliveryUpdate } from "#src/notifications/jobs/notification-job.repository";
 
 const job = (attemptCount: number) =>
   createNotificationJobFixture({ attemptCount });

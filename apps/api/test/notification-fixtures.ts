@@ -2,7 +2,7 @@ import type {
   NotificationStoredTarget,
   NotificationStoredJob,
   NotificationStoredRule,
-} from "../src/notifications/jobs/notification-job-store.js";
+} from "../src/notifications/jobs/notification-job.repository.js";
 
 export const createNotificationJobFixture = (
   overrides: Partial<NotificationStoredJob> = {},

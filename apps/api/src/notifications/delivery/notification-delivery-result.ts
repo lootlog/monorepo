@@ -3,7 +3,7 @@ import type { DiscordNotificationDeliveryResultEvent } from "@lootlog/schema/not
 import type {
   NotificationDeliveryUpdate,
   NotificationStoredJob,
-} from "#src/notifications/jobs/notification-job-store";
+} from "#src/notifications/jobs/notification-job.repository";
 import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
 import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import {

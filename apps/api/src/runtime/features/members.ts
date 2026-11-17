@@ -38,7 +38,7 @@ import {
   makeMemberSync,
   type MemberSync,
 } from "#src/members/member-sync.operations";
-import { makeMemberStore } from "#src/members/member.store";
+import { makeMemberStore } from "#src/members/member.repository";
 import type { MemberBulkRefreshJobData } from "#src/members/member.types";
 import {
   getMemberReadCacheScope,

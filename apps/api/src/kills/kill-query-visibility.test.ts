@@ -10,7 +10,7 @@ import {
   visibilityFilter,
   type KillQueryRole,
 } from "./kill-query-support.js";
-import { buildKillStatsCondition } from "./kill-stats-persistence.js";
+import { buildKillStatsCondition } from "./kill-stats.repository.js";
 
 const role = (
   permissions: KillQueryRole["permissions"],

@@ -28,7 +28,7 @@ import type {
 } from "@lootlog/protocol/rabbit/events";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { selectActiveRoleHolders } from "#src/members/member-role-holders";
-import { queueMemberDeliveries } from "#src/members/member.store";
+import { queueMemberDeliveries } from "#src/members/member.repository";
 import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { getPermissionsCachePattern } from "#src/shared/cache";
 import { getGuildCacheKey } from "#src/guilds/guild-configuration-cache";

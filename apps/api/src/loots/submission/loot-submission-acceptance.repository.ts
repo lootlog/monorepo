@@ -1,12 +1,12 @@
 import {
   captureLootMapPlayers,
   mapPlayersToSnapshotInputs,
-} from "./loot-map-players.persistence.js";
+} from "./loot-map-players.repository.js";
 import {
   resolveItemSnapshotIds,
   resolveNpcSnapshots,
-} from "./loot-snapshot.persistence.js";
-import { resolvePlayerSnapshots } from "#src/shared/margonem/player-snapshot.persistence";
+} from "./loot-snapshot.repository.js";
+import { resolvePlayerSnapshots } from "#src/shared/margonem/player-snapshot.repository";
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
 import {
   selectAccessibleGuilds,

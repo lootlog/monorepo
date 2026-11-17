@@ -3,7 +3,7 @@ import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   parseCharacterIdentity,
   resolvePlayerSnapshots,
-} from "#src/shared/margonem/player-snapshot.persistence";
+} from "#src/shared/margonem/player-snapshot.repository";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import type { ResetTimerRequest } from "#src/contracts/timers/schemas";
 

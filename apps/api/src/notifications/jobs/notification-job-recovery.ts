@@ -1,5 +1,5 @@
 import { Clock, Effect } from "effect";
-import type { NotificationJobStore } from "#src/notifications/jobs/notification-job-store";
+import type { NotificationJobStore } from "#src/notifications/jobs/notification-job.repository";
 import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 
 /** The `lastError` of a job closed because it was not sent in time. */

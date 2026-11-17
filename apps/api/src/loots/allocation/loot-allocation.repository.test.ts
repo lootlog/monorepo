@@ -26,7 +26,7 @@ import {
   playerSnapshotTable,
 } from "#src/database/drizzle/loot.schema";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { makeLootAllocationPersistence } from "./loot-allocation-persistence.js";
+import { makeLootAllocationPersistence } from "./loot-allocation.repository.js";
 import { makeLootAllocationOperations } from "./loot-allocation.operations.js";
 import { applicationLogger } from "#src/shared/application-logger";
 import { createOrganizationLootRecordFixture } from "../../../test/loot-fixtures.js";

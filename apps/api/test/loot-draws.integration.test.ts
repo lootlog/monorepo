@@ -14,7 +14,7 @@ import {
   organizationLootRecordTable,
 } from "../src/database/drizzle/loot.schema.js";
 import { ErrorKey } from "../src/loots/error-key.js";
-import { makeLootPersistence } from "../src/loots/loot-persistence.js";
+import { makeLootPersistence } from "../src/loots/loot.repository.js";
 import {
   createGuildFixture,
   createMemberFixture,

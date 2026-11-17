@@ -1,4 +1,4 @@
-import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
+import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target.repository";
 import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";

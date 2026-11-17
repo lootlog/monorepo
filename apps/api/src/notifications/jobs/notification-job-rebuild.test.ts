@@ -27,14 +27,14 @@ import {
 } from "#src/database/drizzle/timer.schema";
 import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { makeNotificationContent } from "#src/notifications/content/notification-content.service";
-import { makeNotificationEventStore } from "#src/notifications/delivery/notification-event-store";
+import { makeNotificationEventStore } from "#src/notifications/delivery/notification-event.repository";
 import { makeNotificationsEvents } from "#src/notifications/delivery/notifications-events.handler";
 import {
   makeNotificationJobRebuild,
   timerSourceEntityId,
 } from "#src/notifications/jobs/notification-job-rebuild";
 import { makeNotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
-import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job-store";
+import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job.repository";
 import { makeNotificationMatching } from "#src/notifications/rules/notification-matching.service";
 import { makeNotificationGuildTargets } from "#src/notifications/targets/notification-guild-targets";
 import { applicationLogger } from "#src/shared/application-logger";

@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { NotificationRuleWithTargets } from "./notification-job-store.js";
+import type { NotificationRuleWithTargets } from "./notification-job.repository.js";
 import {
   enqueuePendingNotificationJob,
   type NotificationJobScheduler,

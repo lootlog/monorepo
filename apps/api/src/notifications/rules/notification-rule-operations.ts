@@ -1,5 +1,5 @@
 import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
-import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
+import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target.repository";
 import {
   notificationRulesInApiKeyScope,
   requireNotificationRuleApiKeyScope,
