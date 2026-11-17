@@ -1,0 +1,42 @@
+/** Endpoints owned by the guild-stats-card HTTP module. */
+import {
+  HttpApiEndpoint,
+  HttpApiGroup,
+  HttpApiSchema,
+  OpenApi,
+} from "effect/http-api";
+import {
+  BearerSecurityMiddleware,
+  HttpErrorResponse,
+} from "#src/contracts/api-shared";
+import {
+  RefreshStatsCardResponse,
+  StatsCardOrganizationPath,
+} from "./schemas.js";
+
+export class GuildStatsCardGroup extends HttpApiGroup.make(
+  "guild-stats-card",
+).add(
+  HttpApiEndpoint.post(
+    "AuthenticatedGuildStatsCardControllerRefreshStatsCard",
+    "/guilds/:guildId/stats-card/refresh",
+    {
+      params: StatsCardOrganizationPath,
+      success: RefreshStatsCardResponse,
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(429)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(
+      OpenApi.Identifier,
+      "AuthenticatedGuildStatsCardController_refreshStatsCard",
+    )
+    .annotate(OpenApi.Summary, "Refresh public guild stats card")
+    .annotate(
+      OpenApi.Description,
+      "Regenerate the public guild stats card and update the cached PNG.",
+    ),
+) {}

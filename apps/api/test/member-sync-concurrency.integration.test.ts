@@ -11,7 +11,7 @@ import {
   roleTable,
 } from "#src/database/drizzle/organization.schema";
 import { makeMemberDelivery } from "#src/members/member-delivery.operations";
-import { makeMemberStore } from "#src/members/member.store";
+import { makeMemberStore } from "#src/members/member.repository";
 import { makeMemberSync } from "#src/members/member-sync.operations";
 import { applicationLogger } from "#src/shared/application-logger";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import { LootlogApi } from "#src/http-api/lootlog-api";
 
 const PUBLIC_ENDPOINTS = [

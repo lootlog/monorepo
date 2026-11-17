@@ -18,7 +18,7 @@ import {
   userKillBucketTable,
   userKillTotalTable,
 } from "../src/database/drizzle/kill-statistics.schema.js";
-import { makeKillStatsPersistence } from "../src/kills/kill-stats-persistence.js";
+import { makeKillStatsPersistence } from "../src/kills/kill-stats.repository.js";
 import { makeMemberKillQuery } from "../src/kills/member-kill-query.js";
 import { makeUserKillQueries } from "../src/kills/user-kill-queries.js";
 import type { KillQueryCache } from "../src/kills/kill-query-support.js";

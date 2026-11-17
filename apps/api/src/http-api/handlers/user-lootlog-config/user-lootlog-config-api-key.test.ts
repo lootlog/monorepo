@@ -17,7 +17,7 @@ import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   UserLootlogConfigData,
   type UserLootlogConfigCache,
-} from "./user-lootlog-config.handlers.js";
+} from "#src/lootlog-config/user-lootlog-config-data";
 
 test("key config updates preserve other organizations and never reuse the unrestricted account cache", async () => {
   const boundary = await createDatabaseBoundary();

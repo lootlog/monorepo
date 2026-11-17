@@ -1,8 +1,8 @@
-import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
+import { ReadyRoomData } from "#src/messaging/ready-room/ready-room-data";
 import { makeNotificationContent } from "#src/notifications/content/notification-content.service";
 import { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
-import { recordMargonemAccountVerification } from "#src/margonem-accounts/margonem-accounts";
+import { recordMargonemAccountVerification } from "#src/users/margonem-accounts";
 import { Effect, FiberSet, Layer, Schedule, Schema } from "effect";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";

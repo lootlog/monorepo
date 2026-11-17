@@ -14,7 +14,7 @@ import {
   MEMBER_DISCORD_SYNC_STATUS,
 } from "./member-discord-sync-status.js";
 import type { MemberDelivery } from "./member-delivery.operations.js";
-import type { MemberStore } from "./member.store.js";
+import type { MemberStore } from "./member.repository.js";
 import type { MemberSyncResult } from "./member.types.js";
 
 class MemberSyncFailure extends TaggedErrorClass<MemberSyncFailure>()(

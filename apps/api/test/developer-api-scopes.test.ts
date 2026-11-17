@@ -15,11 +15,11 @@ import {
   OpenApi,
 } from "effect/http-api";
 import { Permission } from "@lootlog/schema/permissions";
-import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
+import { BearerSecurityMiddleware } from "../src/contracts/api-shared.js";
 import { ForwardAuthMiddlewareLive } from "#src/runtime/auth/forward-auth-middleware";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { makeAllTimerList } from "#src/http-api/handlers/timers/timer-list.data-layer";
-import { makeUserFeed } from "#src/feed/user-feed";
+import { makeAllTimerList } from "../src/timers/timer-list.data-layer.js";
+import { makeUserFeed } from "../src/users/user-feed.js";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,

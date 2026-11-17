@@ -1,0 +1,281 @@
+import type { GuildSummary } from "./accessible-guilds.data-layer.js";
+import { readGuildOrderPreference } from "./guild-order-query.js";
+import { sortGuildsByPreference } from "./guild-order.js";
+import { hydrateMemberRoles } from "#src/members/member-role-hydration";
+import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
+import { and, eq, inArray } from "drizzle-orm";
+import { Clock, Effect } from "effect";
+import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
+import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
+import { ApiDatabase } from "#src/database/drizzle/database";
+import {
+  guildTable,
+  memberTable,
+} from "#src/database/drizzle/organization.schema";
+import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
+import { getMemberCacheSoftTtl } from "#src/members/member-cache";
+import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
+import {
+  ApplicationError,
+  ApplicationErrorKind,
+} from "#src/shared/http/http-errors";
+import {
+  type AuthenticatedIdentity,
+  AccountOrganizationOperationError,
+} from "./account-organization-data.js";
+
+export interface CurrentUserGuildPorts {
+  readonly accessibleFallback: (
+    identity: AuthenticatedIdentity,
+  ) => Effect.Effect<ReadonlyArray<GuildSummary>, unknown>;
+  readonly deactivateMissing: (options: {
+    readonly discordId: string;
+    readonly userId: string;
+    readonly activeDiscordGuildIds: ReadonlyArray<string>;
+  }) => Effect.Effect<unknown, unknown>;
+  /**
+   * Serves the list from a cache unless `refresh` is set. `fresh` is false for
+   * a cached list, which may miss a server the user has joined since. `stale`
+   * marks a list past its max age that is shown while it is replaced.
+   */
+  readonly discordGuilds: (
+    identity: AuthenticatedIdentity,
+    options: { readonly refresh: boolean },
+  ) => Effect.Effect<
+    {
+      readonly guilds: ReadonlyArray<RESTAPIPartialCurrentUserGuild>;
+      readonly fresh: boolean;
+      readonly stale: boolean;
+    },
+    unknown
+  >;
+  readonly queueMember: (options: {
+    readonly discordId: string;
+    readonly guildId: string;
+    readonly userId: string;
+    readonly priority: number;
+    readonly reason: string;
+  }) => Effect.Effect<unknown, unknown>;
+  readonly refreshMember: (options: {
+    readonly discordId: string;
+    readonly guildId: string;
+    readonly userId: string;
+    readonly priority: number;
+    readonly reason: string;
+  }) => Effect.Effect<unknown, unknown>;
+}
+
+const fallbackEligible = (error: unknown) => {
+  if (!(error instanceof ApplicationError)) return false;
+
+  return (
+    error.kind === ApplicationErrorKind.RATE_LIMITED ||
+    error.kind === ApplicationErrorKind.TIMEOUT ||
+    error.kind === ApplicationErrorKind.DEPENDENCY_UNAVAILABLE ||
+    error.kind === ApplicationErrorKind.INTERNAL
+  );
+};
+
+export const makeCurrentUserGuilds = (
+  database: typeof ApiDatabase.Service,
+  ports: CurrentUserGuildPorts,
+  environment: RuntimeEnvironment,
+) => {
+  const readMembers = (discordId: string, guildIds: ReadonlyArray<string>) =>
+    Effect.gen(function* () {
+      if (guildIds.length === 0) return [];
+
+      const members = yield* database
+        .select()
+        .from(memberTable)
+        .where(
+          and(
+            eq(memberTable.userId, discordId),
+            inArray(memberTable.guildId, [...guildIds]),
+          ),
+        );
+
+      return yield* hydrateMemberRoles(database, members);
+    });
+
+  const operation = Effect.fn("getCurrentUserGuilds")(function* (
+    identity: AuthenticatedIdentity,
+    refresh: boolean,
+  ) {
+    if (yield* requestApiKeyAccess)
+      return yield* ports.accessibleFallback(identity);
+
+    const discordGuilds = yield* ports
+      .discordGuilds(identity, { refresh })
+      .pipe(
+        Effect.map((result) => ({ kind: "discord" as const, ...result })),
+        Effect.catchIf(fallbackEligible, () =>
+          ports.accessibleFallback(identity).pipe(
+            Effect.map((guilds) => ({
+              kind: "fallback" as const,
+              guilds: guilds.map((guild) => ({
+                ...guild,
+                isAccessDataStale: true,
+              })),
+            })),
+          ),
+        ),
+      );
+
+    if (discordGuilds.kind === "fallback") return discordGuilds.guilds;
+    const apiGuilds = discordGuilds.guilds;
+    const discordGuildIds = apiGuilds.map(({ id }) => id);
+
+    // A cached list can predate a join, so only a fresh one may deactivate.
+    if (discordGuilds.fresh) {
+      yield* ports.deactivateMissing({
+        ...identity,
+        activeDiscordGuildIds: discordGuildIds,
+      });
+    }
+
+    if (discordGuildIds.length === 0) return [];
+
+    const guilds = yield* database
+      .select()
+      .from(guildTable)
+      .where(inArray(guildTable.id, discordGuildIds))
+      .pipe(Effect.map((rows) => rows.filter(({ active }) => active)));
+
+    let members = yield* readMembers(
+      identity.discordId,
+      guilds.map(({ id }) => id),
+    );
+
+    const memberByGuild = new Map(
+      members.map((member) => [member.guildId, member]),
+    );
+
+    const staleThreshold =
+      (yield* Clock.currentTimeMillis) - getMemberCacheSoftTtl(environment);
+
+    const discordById = new Map(apiGuilds.map((guild) => [guild.id, guild]));
+
+    const candidates = guilds
+      .flatMap((guild) => {
+        const member = memberByGuild.get(guild.id);
+        const lastSync = member?.lastDiscordSyncAt ?? member?.updatedAt;
+
+        if (
+          member?.active &&
+          lastSync &&
+          lastSync.getTime() >= staleThreshold
+        ) {
+          return [];
+        }
+
+        const hasAccess = Boolean(
+          member?.active &&
+          createAccessPolicy({
+            capabilities: member.roles.flatMap(
+              ({ permissions }) => permissions,
+            ),
+          }).allows(Permission.LOOTLOG_ACCESS),
+        );
+
+        const discordGuild = discordById.get(guild.id);
+
+        const privileged = Boolean(
+          discordGuild &&
+          (discordGuild.owner || isDiscordAdministrator(discordGuild)),
+        );
+
+        return [
+          {
+            guildId: guild.id,
+            grantsAccessOnRefresh: !hasAccess,
+            rank: !member ? 0 : !hasAccess ? 1 : privileged ? 2 : 3,
+          },
+        ];
+      })
+      .sort(
+        (left, right) =>
+          left.rank - right.rank || left.guildId.localeCompare(right.guildId),
+      );
+
+    // Only a refresh that can grant missing access waits on Discord, and at
+    // most twice per request; stored access is shown until the queue refreshes it.
+    let immediate = 0;
+
+    for (const candidate of candidates) {
+      if (candidate.grantsAccessOnRefresh && immediate < 2) {
+        immediate += 1;
+        yield* ports.refreshMember({
+          ...identity,
+          guildId: candidate.guildId,
+          priority: MEMBER_REFRESH_PRIORITY.CONNECT,
+          reason: "guild-connect",
+        });
+      } else {
+        yield* ports.queueMember({
+          ...identity,
+          guildId: candidate.guildId,
+          priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+          reason: "guild-connect-background",
+        });
+      }
+    }
+
+    if (candidates.length > 0) {
+      members = yield* readMembers(
+        identity.discordId,
+        guilds.map(({ id }) => id),
+      );
+    }
+
+    const refreshedByGuild = new Map(
+      members.map((member) => [member.guildId, member]),
+    );
+
+    const summaries = guilds.map((guild): GuildSummary => {
+      const member = refreshedByGuild.get(guild.id);
+      const owner = guild.ownerId === identity.discordId;
+      const lastSync = member?.lastDiscordSyncAt ?? member?.updatedAt;
+
+      return {
+        id: guild.id,
+        name: guild.name,
+        icon: guild.icon,
+        vanityUrl: guild.vanityUrl,
+        ownerId: guild.ownerId,
+        publicStatsCardEnabled: guild.publicStatsCardEnabled,
+        hasLootlogAccess: Boolean(
+          owner ||
+          (member?.active &&
+            createAccessPolicy({
+              capabilities: member.roles.flatMap(
+                ({ permissions }) => permissions,
+              ),
+            }).allows(Permission.LOOTLOG_ACCESS)),
+        ),
+        // A list past its max age may still show a departed Organization
+        // or miss a new one, so every entry from it is reported stale.
+        isAccessDataStale: Boolean(
+          discordGuilds.stale ||
+          (!owner && (!lastSync || lastSync.getTime() < staleThreshold)),
+        ),
+      };
+    });
+
+    const preferredIds = yield* readGuildOrderPreference(
+      database,
+      identity.userId,
+    );
+
+    return sortGuildsByPreference(summaries, preferredIds);
+  });
+
+  return (identity: AuthenticatedIdentity, refresh = false) =>
+    operation(identity, refresh).pipe(
+      Effect.mapError(
+        (cause) => new AccountOrganizationOperationError({ cause }),
+      ),
+    );
+};

@@ -8,10 +8,10 @@ import {
   ChatAuthorization,
   ChatNotFound,
 } from "#src/http-api/handlers/chat/chat.handlers";
+import { DocsNotFound } from "#src/docs/docs-data";
 import {
   DocsAccessDenied,
   DocsAuthorization,
-  DocsNotFound,
 } from "#src/http-api/handlers/docs/docs.handlers";
 import {
   EventsAccessDenied,
@@ -22,7 +22,7 @@ import {
   RecordsAccessDenied,
   RecordsAuthorization,
   RecordsNotFound,
-} from "#src/http-api/handlers/records/records.operations";
+} from "#src/http-api/access/records.access";
 import {
   LootlogConfigAccessDenied,
   LootlogConfigAuthorization,
@@ -45,28 +45,28 @@ import {
   OrganizationWorkspaceAccessDenied,
   OrganizationWorkspaceAuthorization,
   OrganizationWorkspaceNotFound,
-} from "#src/http-api/handlers/organization-workspace/organization-workspace.operations";
+} from "#src/http-api/access/organization-workspace.access";
 import {
   PublicSystemAccessDenied,
   PublicSystemAuthorization,
-} from "#src/http-api/handlers/public-system/public-system.operations";
+} from "#src/http-api/access/public-system.access";
 import {
   TimersAccessDenied,
   TimersAuthorization,
 } from "#src/http-api/handlers/timers/timers.handlers";
-import { TimersNotFound } from "#src/http-api/handlers/timers/timer-errors";
+import { TimersNotFound } from "#src/timers/timer-errors";
 import {
   HeroSightingsAccessDenied,
   HeroSightingsAuthorization,
 } from "#src/http-api/handlers/hero-sightings/hero-sightings.handlers";
-import { HeroSightingsNotFound } from "#src/http-api/handlers/hero-sightings/hero-sighting-errors";
+import { HeroSightingsNotFound } from "#src/hero-sightings/hero-sighting-errors";
 import {
   AccountOrganizationAccessDenied,
   AccountOrganizationAuthorization,
   AccountOrganizationNotFound,
-} from "#src/http-api/handlers/account-organization/account-organization.operations";
+} from "#src/http-api/access/account-organization.access";
 import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import { ReauthenticationRequired } from "#src/contracts/api-shared";
 import {
   OrganizationContextLookup,
   OrganizationNotFound,

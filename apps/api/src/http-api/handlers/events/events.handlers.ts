@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import { LootlogApi } from "../../lootlog-api.js";
-import { EventOperations } from "./events.data-layer.js";
+import { EventOperations } from "#src/events/events.data-layer";
 import { eventAssignmentHandlers } from "./events-assignment.handlers.js";
 import { EventsAuthorization } from "./events-authorization.js";
 import { eventCatalogHandlers } from "./events-catalog.handlers.js";

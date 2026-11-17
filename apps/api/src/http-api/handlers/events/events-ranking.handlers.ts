@@ -6,7 +6,7 @@ import {
 import { EventHeroStatsResponse } from "#src/events/kills/event-kill-response.schema";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { Effect } from "effect";
-import type { EventDataOperations } from "./events.data-layer.js";
+import type { EventDataOperations } from "#src/events/events.data-layer";
 import { eventRequirements } from "./events-authorization.js";
 import {
   stringParameter,

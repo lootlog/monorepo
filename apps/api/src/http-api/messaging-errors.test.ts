@@ -12,25 +12,27 @@ import {
   ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { MessagingGroup } from "./contracts/messaging/api.js";
-import { LootlogConfigGroup } from "./contracts/lootlog-config/api.js";
-import { PartyReadyRoomGroup } from "./contracts/party-ready-room/api.js";
-import { BearerSecurityMiddleware } from "./contracts/shared.js";
+import { MessagingGroup } from "#src/contracts/messaging/api";
+import { LootlogConfigGroup } from "#src/contracts/lootlog-config/api";
+import { PartyReadyRoomGroup } from "#src/contracts/party-ready-room/api";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import {
   MessagingHandlers,
   MessagingIdentity,
 } from "./handlers/messaging/messaging.handlers.js";
-import { makeMessagingDataLayer } from "./handlers/messaging/messaging.data-layer.js";
+import { makeMessagingDataLayer } from "#src/messaging/messaging.data-layer";
+import { LootlogConfigData } from "#src/lootlog-config/lootlog-config-data";
 import {
   LootlogConfigHandlers,
-  LootlogConfigData,
   LootlogConfigAuthorization,
 } from "./handlers/lootlog-config/lootlog-config.handlers.js";
 import {
-  PartyReadyRoomHandlers,
-  ReadyRoomAuthorization,
   ReadyRoomData,
   ReadyRoomOperationError,
+} from "#src/messaging/ready-room/ready-room-data";
+import {
+  PartyReadyRoomHandlers,
+  ReadyRoomAuthorization,
 } from "./handlers/party-ready-room/party-ready-room.handlers.js";
 
 const caller = { userId: "user", discordId: "discord" };

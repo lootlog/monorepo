@@ -7,7 +7,7 @@ import {
   httpErrorResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
-import { ReauthenticationRequired } from "./contracts/shared.js";
+import { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export const applicationErrorResponse = (cause: unknown) => {
   if (!Schema.is(ApplicationError)(cause)) return Effect.die(cause);

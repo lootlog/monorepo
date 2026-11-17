@@ -29,7 +29,7 @@ import {
 } from "../src/database/drizzle/kill-statistics.schema.js";
 import { makeEventCatalogMutations } from "../src/events/catalog/event-catalog-mutations.js";
 import { makeEventPointsStore } from "../src/events/kills/event-points.repository.js";
-import { makeKillStatsPersistence } from "../src/kills/kill-stats-persistence.js";
+import { makeKillStatsPersistence } from "../src/kills/kill-stats.repository.js";
 import { makeGuildKillQueries } from "../src/kills/guild-kill-queries.js";
 import {
   getKillStatsBucketStart,

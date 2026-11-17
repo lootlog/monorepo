@@ -3,7 +3,7 @@ import { KillDetailResponse } from "#src/events/kills/event-kill-response.schema
 import { KillTimelineMapResponse } from "#src/events/monitoring/event-monitoring-response.schema";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { Effect } from "effect";
-import type { EventDataOperations } from "./events.data-layer.js";
+import type { EventDataOperations } from "#src/events/events.data-layer";
 import {
   eventRequirements,
   type AuthorizedEventCaller,

@@ -1,4 +1,4 @@
-import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import { BunHttpServer } from "@effect/platform-bun";
 import {
   HttpApi,

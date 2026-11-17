@@ -4,7 +4,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { getGuildCacheKey } from "#src/guilds/guild-configuration-cache";
-import { MembersData } from "#src/http-api/handlers/members/members.handlers";
+import { MembersData } from "#src/members/members-data";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { getPermissionsCacheKey } from "#src/shared/cache";

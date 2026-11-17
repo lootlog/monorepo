@@ -7,12 +7,12 @@ import type { GameClientBootstrapQuery } from "#src/contracts/users/game-client-
 import {
   getCurrentUserAccessibleGuilds,
   getCurrentUserPreferences,
-  guildPermissions as getGuildPermissions,
-} from "../account-organization/account-organization.operations.js";
+} from "./users.handlers.js";
+import { guildPermissions as getGuildPermissions } from "../guilds/guilds.handlers.js";
 import {
   getGuildPreferences,
   getPreferences,
-} from "../settings/settings.operations.js";
+} from "../preferences/preferences.operations.js";
 import { getUserLootlogAccountConfig } from "../user-lootlog-config/user-lootlog-config.handlers.js";
 import {
   getCharacterAuras,

@@ -9,12 +9,14 @@ import { Permission } from "@lootlog/schema/permissions";
 import { OrganizationSummary } from "#src/contracts/shared";
 import { InternalUserPermissionsResponse } from "#src/contracts/internal/schemas";
 import {
-  getInternalGuild,
-  getInternalUserPermissions,
   InternalGuildsData,
   makeInternalGuildsData,
   type InternalGuildsCache,
   type InternalGuildsPersistence,
+} from "#src/guilds/internal-guilds-data";
+import {
+  getInternalGuild,
+  getInternalUserPermissions,
 } from "./internal.handlers.js";
 
 const guild = {

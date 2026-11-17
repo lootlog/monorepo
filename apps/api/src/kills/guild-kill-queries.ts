@@ -18,7 +18,7 @@ import {
 } from "#src/contracts/kills/schemas";
 import type { MemberSummary } from "#src/contracts/shared";
 
-import type { KillStatsPersistence } from "./kill-stats-persistence.js";
+import type { KillStatsPersistence } from "./kill-stats.repository.js";
 import {
   buildKillQueryCacheKey,
   buildNpcLevelFilter,

@@ -19,7 +19,7 @@ import {
 import { MEMBER_LAST_DISCORD_STATUS } from "./member-discord-status.js";
 import { makeMemberDelivery } from "./member-delivery.operations.js";
 import { makeMemberRemoval } from "./member-removal.operations.js";
-import { makeMemberStore } from "./member.store.js";
+import { makeMemberStore } from "./member.repository.js";
 import { makeMemberSync } from "./member-sync.operations.js";
 
 test("member sync retries invalidation after a committed role change and clears access on removal", async () => {

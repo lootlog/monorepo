@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { SentNotificationResponse } from "#src/contracts/messaging/schemas";
+import { MessagingData } from "#src/messaging/messaging-data";
 import {
   MessagingAccessDenied,
-  MessagingData,
   MessagingIdentity,
   sendNotification,
 } from "./messaging.handlers.js";

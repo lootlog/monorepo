@@ -3,7 +3,7 @@ import { HttpServerResponse } from "effect/http";
 import {
   type HttpErrorResponse,
   ReauthenticationRequired,
-} from "#src/http-api/contracts/shared";
+} from "#src/contracts/api-shared";
 
 /** The only way a handler writes an error body; see `HttpErrorResponse`. */
 export const httpErrorResponse = (

@@ -1,0 +1,879 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
+import {
+  ReservationBoundary,
+  MyReservationsBoundary,
+  ReservationWindowBoundary,
+  ReservationSpotsBoundary,
+  ReservationSharesBoundary,
+  CreatedReservationShareInvitationBoundary,
+  ReservationShareInvitationPreviewBoundary,
+  AcceptedReservationShareBoundary,
+} from "../handlers/reservations/reservation-response.schema.js";
+import { decodeDomainJson } from "../domain-json.schema.js";
+import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { describe, expect, it } from "bun:test";
+import {
+  Cause,
+  Effect,
+  Exit,
+  FileSystem,
+  Layer,
+  Path,
+  Predicate,
+  Schema,
+} from "effect";
+import { Permission } from "@lootlog/schema/permissions";
+import {
+  InvalidEntityError,
+  ResourceConflictError,
+  PermissionDeniedError,
+  ResourceNotFoundError,
+} from "#src/shared/http/http-errors";
+import {
+  MyReservationsResponse,
+  ReservationSpotsResponse,
+  ReservationWindowResponse,
+  ReservationResponse,
+} from "#src/contracts/reservations/schemas";
+import {
+  AcceptedReservationShareResponse,
+  CreatedReservationShareInvitationResponse,
+  ReservationShareInvitationPreviewResponse,
+  ReservationSharesResponse,
+} from "#src/contracts/reservation-sharing/schemas";
+import { RoleResponse } from "#src/contracts/roles/schemas";
+
+import { OrganizationWorkspaceOperationError } from "#src/guilds/organization-workspace-access";
+import {
+  OrganizationWorkspaceData,
+  MyReservationsData,
+  ReservationSharingData,
+  ReservationReadData,
+} from "#src/reservations/reservations-data";
+import { RolesData } from "#src/guilds/roles-data";
+import {
+  createReservation,
+  listReservationSpots,
+  ReservationsHandlers,
+} from "../handlers/reservations/reservations.handlers.js";
+import {
+  acceptReservationShareInvitation,
+  listReservationShares,
+  previewReservationShareInvitation,
+} from "../handlers/reservation-sharing/reservation-sharing.handlers.js";
+import { updateGuildRole } from "../handlers/roles/roles.handlers.js";
+import {
+  OrganizationWorkspaceAccessDenied,
+  OrganizationWorkspaceAuthorization,
+  OrganizationWorkspaceNotFound,
+  toOrganizationWorkspaceHttpResponse,
+} from "./organization-workspace.access.js";
+
+import { Etag, HttpPlatform, HttpRouter } from "effect/http";
+import { HttpApiTest } from "effect/http-api";
+import { LootlogApi } from "../lootlog-api.js";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
+
+const identity = { userId: "user-a", discordId: "discord-owner" };
+
+const guildAccess = {
+  ...identity,
+  guildId: "guild-a",
+  ownerId: identity.discordId,
+  permissions: [
+    Permission.LOOTLOG_ACCESS,
+    Permission.LOOTLOG_RESERVATIONS_READ,
+    Permission.LOOTLOG_RESERVATIONS_WRITE,
+    Permission.ADMIN,
+  ],
+};
+
+const reservation = {
+  id: 41,
+  spotId: "titan-a",
+  spotName: "Titan A",
+  startsAt: new Date("2026-09-03T10:00:00.000Z"),
+  endsAt: new Date("2026-09-03T10:30:00.000Z"),
+  comment: null,
+  createdAt: new Date("2026-09-02T10:00:00.000Z"),
+  author: { displayName: "Owner", avatarUrl: null },
+  sourceOrganization: {
+    name: "Guild A",
+    iconUrl: null,
+    isCurrent: true,
+    calendarPath: "/guild-a/reservations/titan-a",
+  },
+  isMine: true,
+  canEdit: true,
+  canCancel: true,
+  editingConstraints: {
+    reservationMaxDurationMinutes: 120,
+    reservationMinDurationMinutes: 15,
+    reservationTimeGranularityMinutes: 15,
+    reservationMaxAdvanceDays: 14,
+  },
+  reminderMinutesBefore: 15 as const,
+};
+
+const role = {
+  id: "role-a",
+  guildId: "guild-a",
+  name: "Admins",
+  color: null,
+  position: 1,
+  permissions: [Permission.ADMIN],
+  lvlRangeFrom: 1,
+  lvlRangeTo: 300,
+};
+
+const sharingList = {
+  shares: [
+    {
+      id: "share-a",
+      partner: { name: "Partner Guild", iconUrl: null },
+      createdAt: new Date("2026-09-02T12:00:00.000Z"),
+    },
+  ],
+  pendingInvitations: [],
+};
+
+const makeData = (
+  overrides: Partial<OrganizationWorkspaceData["Service"]> = {},
+) =>
+  OrganizationWorkspaceData.of({
+    create: () => Effect.succeed(reservation),
+    deleteVisible: () => Effect.succeed(undefined),
+    deleteOwned: () => Effect.succeed(undefined),
+    updateOwned: () => Effect.succeed(reservation),
+    ...overrides,
+  });
+
+const makeReadData = (
+  overrides: Partial<ReservationReadData["Service"]> = {},
+) =>
+  ReservationReadData.of({
+    listSpots: () => Effect.succeed([]),
+    listWindow: () => Effect.succeed({ items: [], window: {} }),
+    pinSpot: () => Effect.succeed(undefined),
+    unpinSpot: () => Effect.succeed(undefined),
+    ...overrides,
+  });
+
+const makeSharingData = (
+  overrides: Partial<ReservationSharingData["Service"]> = {},
+) =>
+  ReservationSharingData.of({
+    listShares: () => Effect.succeed({ shares: [], pendingInvitations: [] }),
+    createInvitation: () => Effect.succeed({}),
+    revokeInvitation: () => Effect.succeed(undefined),
+    revokeShare: () => Effect.succeed(undefined),
+    previewInvitation: () => Effect.succeed({}),
+    acceptInvitation: () => Effect.succeed({}),
+    ...overrides,
+  });
+
+const makeRolesData = (overrides: Partial<RolesData["Service"]> = {}) =>
+  RolesData.of({
+    getRoles: () => Effect.succeed([role]),
+    updateRole: () => Effect.succeed(role),
+    ...overrides,
+  });
+
+const makeAuthorization = (
+  overrides: Partial<OrganizationWorkspaceAuthorization["Service"]> = {},
+) =>
+  OrganizationWorkspaceAuthorization.of({
+    identity: Effect.succeed(identity),
+    requireGuild: () => Effect.succeed(guildAccess),
+    ...overrides,
+  });
+
+const provideServices = (
+  authorization: OrganizationWorkspaceAuthorization["Service"],
+  data: OrganizationWorkspaceData["Service"],
+  roles: RolesData["Service"] = makeRolesData(),
+  sharing: ReservationSharingData["Service"] = makeSharingData(),
+  reads: ReservationReadData["Service"] = makeReadData(),
+  mine: MyReservationsData["Service"] = MyReservationsData.of({
+    listMine: () => Effect.succeed({ items: [] }),
+  }),
+) =>
+  Layer.mergeAll(
+    Layer.succeed(OrganizationWorkspaceAuthorization, authorization),
+    Layer.succeed(OrganizationWorkspaceData, data),
+    Layer.succeed(RolesData, roles),
+    Layer.succeed(ReservationSharingData, sharing),
+    Layer.succeed(ReservationReadData, reads),
+    Layer.succeed(MyReservationsData, mine),
+  );
+
+describe("Reservations and Roles HttpApi handlers", () => {
+  it("creates a reservation only after visibility and action authorization", async () => {
+    const authorizationCalls: Array<{
+      guildId: string;
+      allOf?: ReadonlyArray<string>;
+      anyOf?: ReadonlyArray<string>;
+    }> = [];
+
+    const createContexts: unknown[] = [];
+
+    const layer = provideServices(
+      makeAuthorization({
+        requireGuild: (options) => {
+          authorizationCalls.push(options);
+
+          return Effect.succeed(guildAccess);
+        },
+      }),
+      makeData({
+        create: (context) => {
+          createContexts.push(context);
+
+          return Effect.succeed(reservation);
+        },
+      }),
+    );
+
+    const response = await Effect.runPromise(
+      createReservation("guild-alias", "titan-a", {
+        startsAt: "2026-09-03T10:00:00.000Z",
+        endsAt: "2026-09-03T10:30:00.000Z",
+        reminderMinutesBefore: 15,
+      }).pipe(Effect.provide(layer)),
+    );
+
+    expect(authorizationCalls).toEqual([
+      {
+        guildId: "guild-alias",
+        allOf: [
+          Permission.LOOTLOG_RESERVATIONS_READ,
+          Permission.LOOTLOG_RESERVATIONS_WRITE,
+        ],
+      },
+    ]);
+    expect(createContexts).toEqual([
+      {
+        guildId: "guild-a",
+        userId: identity.userId,
+        discordId: identity.discordId,
+        permissions: guildAccess.permissions,
+      },
+    ]);
+    expect(response.startsAt).toBe("2026-09-03T10:00:00.000Z");
+    expect(Schema.is(ReservationResponse)(response)).toBe(true);
+  });
+
+  it("fails closed before reservation data access when authorization fails", async () => {
+    const denied = new OrganizationWorkspaceAccessDenied({
+      status: 403,
+      code: "RESERVATIONS_READ_REQUIRED",
+    });
+
+    let dataCalled = false;
+
+    const layer = provideServices(
+      makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
+      makeData(),
+      makeRolesData(),
+      makeSharingData(),
+      makeReadData({
+        listSpots: () => {
+          dataCalled = true;
+
+          return Effect.succeed([]);
+        },
+      }),
+    );
+
+    const error = await Effect.runPromise(
+      Effect.flip(listReservationSpots("guild-a").pipe(Effect.provide(layer))),
+    );
+
+    expect(error).toBe(denied);
+    expect(dataCalled).toBe(false);
+  });
+
+  it("keeps a cross-Organization hidden reservation indistinguishable from not-found", async () => {
+    const hidden = new OrganizationWorkspaceNotFound({
+      status: 404,
+      code: "RESERVATION_NOT_FOUND",
+    });
+
+    let dataCalled = false;
+
+    const layer = provideServices(
+      makeAuthorization({ requireGuild: () => Effect.fail(hidden) }),
+      makeData(),
+      makeRolesData(),
+      makeSharingData(),
+      makeReadData({
+        listSpots: () => {
+          dataCalled = true;
+
+          return Effect.succeed([]);
+        },
+      }),
+    );
+
+    const error = await Effect.runPromise(
+      Effect.flip(
+        listReservationSpots("partner-guild").pipe(Effect.provide(layer)),
+      ),
+    );
+
+    expect(error).toBe(hidden);
+    expect(dataCalled).toBe(false);
+  });
+
+  it("passes OWNER identity and canonical Organization to role recovery", async () => {
+    const authorizationCalls: Array<ReadonlyArray<string>> = [];
+
+    const updateCalls: Array<{
+      discordId: string;
+      guildId: string;
+      roleId: string;
+    }> = [];
+
+    const layer = provideServices(
+      makeAuthorization({
+        requireGuild: (options) => {
+          authorizationCalls.push(options.anyOf);
+
+          return Effect.succeed(guildAccess);
+        },
+      }),
+      makeData(),
+      makeRolesData({
+        updateRole: (discordId, guildId, roleId) => {
+          updateCalls.push({ discordId, guildId, roleId });
+
+          return Effect.succeed(role);
+        },
+      }),
+    );
+
+    const response = await Effect.runPromise(
+      updateGuildRole("guild-alias", role.id, {
+        permissions: [Permission.ADMIN],
+        lvlRangeFrom: 1,
+        lvlRangeTo: 300,
+      }).pipe(Effect.provide(layer)),
+    );
+
+    expect(authorizationCalls).toEqual([AccessRequirement.ADMINISTER]);
+    expect(updateCalls).toEqual([
+      {
+        discordId: identity.discordId,
+        guildId: "guild-a",
+        roleId: role.id,
+      },
+    ]);
+    expect(Schema.is(RoleResponse)(response)).toBe(true);
+  });
+
+  it("preserves the role service rejection for non-owner admin-bit changes", async () => {
+    const serviceForbidden = new PermissionDeniedError("Forbidden");
+
+    const failure = new OrganizationWorkspaceOperationError({
+      cause: serviceForbidden,
+    });
+
+    const layer = provideServices(
+      makeAuthorization({
+        requireGuild: () =>
+          Effect.succeed({
+            ...guildAccess,
+            discordId: "discord-admin",
+          }),
+      }),
+      makeData(),
+      makeRolesData({ updateRole: () => Effect.fail(failure) }),
+    );
+
+    const error = await Effect.runPromise(
+      Effect.flip(
+        updateGuildRole("guild-a", role.id, {
+          permissions: [],
+          lvlRangeFrom: 1,
+          lvlRangeTo: 300,
+        }).pipe(Effect.provide(layer)),
+      ),
+    );
+
+    expect(error).toBe(failure);
+    expect(error).toHaveProperty("cause", serviceForbidden);
+  });
+
+  it("lists reciprocal partner Organizations with OWNER-or-ADMIN authority", async () => {
+    const authorizationCalls: unknown[] = [];
+    const guildIds: string[] = [];
+
+    const layer = provideServices(
+      makeAuthorization({
+        requireGuild: (options) => {
+          authorizationCalls.push(options);
+
+          return Effect.succeed(guildAccess);
+        },
+      }),
+      makeData(),
+      makeRolesData(),
+      makeSharingData({
+        listShares: (guildId) => {
+          guildIds.push(guildId);
+
+          return Effect.succeed(sharingList);
+        },
+      }),
+    );
+
+    const response = await Effect.runPromise(
+      listReservationShares("guild-alias").pipe(Effect.provide(layer)),
+    );
+
+    expect(authorizationCalls).toEqual([
+      {
+        guildId: "guild-alias",
+        anyOf: AccessRequirement.ADMINISTER,
+      },
+    ]);
+    expect(guildIds).toEqual(["guild-a"]);
+    expect(Schema.is(ReservationSharesResponse)(response)).toBe(true);
+  });
+
+  it("does not reveal sharing state for a hidden Organization", async () => {
+    const hidden = new OrganizationWorkspaceNotFound({
+      status: 404,
+      code: "GUILD_NOT_FOUND",
+    });
+
+    let dataCalled = false;
+
+    const layer = provideServices(
+      makeAuthorization({ requireGuild: () => Effect.fail(hidden) }),
+      makeData(),
+      makeRolesData(),
+      makeSharingData({
+        listShares: () => {
+          dataCalled = true;
+
+          return Effect.succeed(sharingList);
+        },
+      }),
+    );
+
+    const error = await Effect.runPromise(
+      Effect.flip(
+        listReservationShares("partner-hidden").pipe(Effect.provide(layer)),
+      ),
+    );
+
+    expect(error).toBe(hidden);
+    expect(dataCalled).toBe(false);
+  });
+
+  it("preserves invalid single-use invitation status and code", async () => {
+    const invitationNotFound = new ResourceNotFoundError({
+      code: "INVITATION_NOT_FOUND",
+    });
+
+    const failure = new OrganizationWorkspaceOperationError({
+      cause: invitationNotFound,
+    });
+
+    const layer = provideServices(
+      makeAuthorization(),
+      makeData(),
+      makeRolesData(),
+      makeSharingData({ previewInvitation: () => Effect.fail(failure) }),
+    );
+
+    const error = await Effect.runPromise(
+      Effect.flip(
+        previewReservationShareInvitation("invalid-token").pipe(
+          Effect.provide(layer),
+        ),
+      ),
+    );
+
+    expect(error).toBe(failure);
+    expect(error).toHaveProperty("cause", invitationNotFound);
+  });
+
+  it("keeps an unauthorized target Organization hidden during invitation acceptance", async () => {
+    const targetHidden = new ResourceNotFoundError({
+      code: "TARGET_ORGANIZATION_NOT_FOUND",
+    });
+
+    const failure = new OrganizationWorkspaceOperationError({
+      cause: targetHidden,
+    });
+
+    const acceptCalls: unknown[] = [];
+
+    const layer = provideServices(
+      makeAuthorization(),
+      makeData(),
+      makeRolesData(),
+      makeSharingData({
+        acceptInvitation: (token, payload, current) => {
+          acceptCalls.push({ token, payload, current });
+
+          return Effect.fail(failure);
+        },
+      }),
+    );
+
+    const error = await Effect.runPromise(
+      Effect.flip(
+        acceptReservationShareInvitation("valid-token", {
+          targetGuildId: "guild-hidden",
+        }).pipe(Effect.provide(layer)),
+      ),
+    );
+
+    expect(error).toBe(failure);
+    expect(acceptCalls).toEqual([
+      {
+        token: "valid-token",
+        payload: { targetGuildId: "guild-hidden" },
+        current: identity,
+      },
+    ]);
+  });
+});
+
+describe("reservation HTTP error responses", () => {
+  it.each([
+    {
+      cause: new InvalidEntityError({
+        code: "ACTIVE_LIMIT_REACHED",
+        details: { limit: 1 },
+      }),
+      status: 422,
+      body: { code: "ACTIVE_LIMIT_REACHED", details: { limit: 1 } },
+    },
+    {
+      cause: new ResourceConflictError({ code: "RESERVATION_OVERLAP" }),
+      status: 409,
+      body: { code: "RESERVATION_OVERLAP" },
+    },
+    {
+      cause: new PermissionDeniedError({ code: "RESERVATION_MEMBER_REQUIRED" }),
+      status: 403,
+      body: { code: "RESERVATION_MEMBER_REQUIRED" },
+    },
+  ])("returns $status with a safe reason", async ({ cause, status, body }) => {
+    const services = provideServices(
+      makeAuthorization(),
+      makeData({
+        create: () =>
+          Effect.fail(new OrganizationWorkspaceOperationError({ cause })),
+      }),
+    );
+
+    const bearer = BearerSecurityMiddleware.of({
+      bearer: (effect) =>
+        Effect.provideService(effect, ForwardAuthIdentity, identity),
+    });
+
+    const platform = Layer.mergeAll(
+      Path.layer,
+      Etag.layerWeak,
+      HttpPlatform.layer,
+    ).pipe(Layer.provideMerge(FileSystem.layerNoop({})));
+
+    const request = Effect.scoped(
+      Effect.gen(function* () {
+        const client = yield* HttpApiTest.groups(LootlogApi, [
+          "reservations",
+        ]).pipe(
+          Effect.provide(
+            ReservationsHandlers.pipe(HttpRouter.provideRequest(services)),
+          ),
+          Effect.provideService(BearerSecurityMiddleware, bearer),
+          Effect.provide(apiKeyEndpointPolicyLayer("main")),
+          Effect.provide(SchemaErrorResponseLive),
+        );
+
+        const response = yield* client.reservations.createReservation({
+          params: { guildId: "guild-a", spotId: "driady" },
+          payload: {
+            startsAt: "2026-09-06T10:00:00.000Z",
+            endsAt: "2026-09-06T10:30:00.000Z",
+          },
+          responseMode: "response-only",
+        });
+
+        return { status: response.status, text: yield* response.text };
+      }),
+    ).pipe(Effect.provide(services), Effect.provide(platform));
+
+    const response = await Effect.runPromise(request);
+    expect(response.status).toBe(status);
+    expect(JSON.parse(response.text)).toEqual(body);
+  });
+});
+
+it("keeps unknown infrastructure failures out of domain error responses", async () => {
+  const cause = new Error("private database detail");
+
+  const exit = await Effect.runPromiseExit(
+    toOrganizationWorkspaceHttpResponse(
+      Effect.fail(new OrganizationWorkspaceOperationError({ cause })),
+    ),
+  );
+
+  expect(Exit.isFailure(exit)).toBe(true);
+
+  if (Exit.isFailure(exit)) {
+    expect(Cause.squash(exit.cause)).toBe(cause);
+  }
+});
+
+it.each([
+  new OrganizationWorkspaceAccessDenied({ status: 403, code: "FORBIDDEN" }),
+  new OrganizationWorkspaceNotFound({ status: 404, code: "GUILD_NOT_FOUND" }),
+])("preserves access denial status and code", async (error) => {
+  const response = await Effect.runPromise(
+    toOrganizationWorkspaceHttpResponse(Effect.fail(error)),
+  );
+
+  expect(response.status).toBe(error.status);
+  expect(response.body._tag).toBe("Uint8Array");
+
+  if (Predicate.isTagged(response.body, "Uint8Array")) {
+    expect(JSON.parse(new TextDecoder().decode(response.body.body))).toEqual({
+      code: error.code,
+    });
+  }
+});
+
+describe("organization workspace response boundaries", () => {
+  const date = new Date("2026-09-03T10:00:00.000Z");
+
+  const richReservation = {
+    ...reservation,
+    endsAt: "2026-09-03T10:30:00.000Z",
+    editingConstraints: {
+      ...reservation.editingConstraints,
+      futureRule: { dates: [date, null], enabled: false },
+    },
+    privateField: "stripped",
+  };
+
+  const spot = {
+    id: "titan-a",
+    name: "Titan A",
+    level: 300,
+    images: [],
+    maps: [],
+    isPinned: false,
+    isAvailableNow: true,
+    availableUntil: date,
+    activeReservationCount: 1,
+    hasPartnerReservations: true,
+    currentReservation: { ...richReservation, futureField: { date } },
+    nextReservation: null,
+  };
+
+  const invitation = {
+    id: "invite-a",
+    createdAt: date,
+    expiresAt: date,
+    invitePath: "/reservation-sharing/invitations/token-a",
+  };
+
+  it("preserves dates, nullable values, open fields and stripping in reservation projections", () => {
+    expect(
+      Effect.runSync(
+        Schema.decodeUnknownEffect(ReservationBoundary)(richReservation),
+      ),
+    ).toEqual(
+      Effect.runSync(decodeDomainJson(ReservationResponse, richReservation)),
+    );
+    const mine = { items: [richReservation] };
+    expect(
+      Effect.runSync(Schema.decodeUnknownEffect(MyReservationsBoundary)(mine)),
+    ).toEqual(Effect.runSync(decodeDomainJson(MyReservationsResponse, mine)));
+    const window = { ...mine, window: { from: date, to: date.toISOString() } };
+    expect(
+      Effect.runSync(
+        Schema.decodeUnknownEffect(ReservationWindowBoundary)(window),
+      ),
+    ).toEqual(
+      Effect.runSync(decodeDomainJson(ReservationWindowResponse, window)),
+    );
+    expect(
+      Effect.runSync(
+        Schema.decodeUnknownEffect(ReservationSpotsBoundary)([spot]),
+      ),
+    ).toEqual(
+      Effect.runSync(decodeDomainJson(ReservationSpotsResponse, [spot])),
+    );
+  });
+
+  it.each([
+    { ...spot, availableUntil: "2026-09-03T10:00:00+02:00" },
+    { ...spot, currentReservation: undefined },
+    {
+      ...spot,
+      nextReservation: { ...richReservation, futureField: undefined },
+    },
+    { ...spot, nextReservation: { ...richReservation, futureField: () => 1 } },
+  ])("rejects malformed nullable and open reservation spot fields", (value) => {
+    expect(
+      Exit.isFailure(
+        Effect.runSyncExit(decodeDomainJson(ReservationSpotsResponse, [value])),
+      ),
+    ).toBe(true);
+    expect(
+      Exit.isFailure(
+        Effect.runSyncExit(
+          Schema.decodeUnknownEffect(ReservationSpotsBoundary)([value]),
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("preserves sharing list and invitation response projections", () => {
+    const shares = { ...sharingList, pendingInvitations: [invitation] };
+    expect(
+      Effect.runSync(
+        Schema.decodeUnknownEffect(ReservationSharesBoundary)(shares),
+      ),
+    ).toEqual(
+      Effect.runSync(decodeDomainJson(ReservationSharesResponse, shares)),
+    );
+    expect(
+      Effect.runSync(
+        Schema.decodeUnknownEffect(CreatedReservationShareInvitationBoundary)(
+          invitation,
+        ),
+      ),
+    ).toEqual(
+      Effect.runSync(
+        decodeDomainJson(CreatedReservationShareInvitationResponse, invitation),
+      ),
+    );
+
+    const preview = {
+      sourceOrganization: sharingList.shares[0].partner,
+      expiresAt: date,
+      eligibleTargetOrganizations: [],
+    };
+
+    expect(
+      Effect.runSync(
+        Schema.decodeUnknownEffect(ReservationShareInvitationPreviewBoundary)(
+          preview,
+        ),
+      ),
+    ).toEqual(
+      Effect.runSync(
+        decodeDomainJson(ReservationShareInvitationPreviewResponse, preview),
+      ),
+    );
+    expect(
+      Effect.runSync(
+        Schema.decodeUnknownEffect(AcceptedReservationShareBoundary)(
+          sharingList.shares[0],
+        ),
+      ),
+    ).toEqual(
+      Effect.runSync(
+        decodeDomainJson(
+          AcceptedReservationShareResponse,
+          sharingList.shares[0],
+        ),
+      ),
+    );
+  });
+
+  it.each([
+    { ...reservation, startsAt: "2026-02-30T10:00:00.000Z" },
+    { ...reservation, endsAt: new Date(Number.NaN) },
+    { ...reservation, id: 1.5 },
+    {
+      ...reservation,
+      editingConstraints: {
+        ...reservation.editingConstraints,
+        reservationMaxAdvanceDays: 0,
+      },
+    },
+    {
+      ...reservation,
+      editingConstraints: { ...reservation.editingConstraints, bad: () => 1 },
+    },
+  ])(
+    "keeps malformed reservation output as an operation error",
+    async (value) => {
+      expect(
+        Exit.isFailure(
+          Effect.runSyncExit(decodeDomainJson(ReservationResponse, value)),
+        ),
+      ).toBe(true);
+
+      const layer = provideServices(
+        makeAuthorization(),
+        makeData({ create: () => Effect.succeed(value) }),
+      );
+
+      const error = await Effect.runPromise(
+        Effect.flip(
+          createReservation("guild-a", "titan-a", {
+            startsAt: date.toISOString(),
+            endsAt: date.toISOString(),
+          }).pipe(Effect.provide(layer)),
+        ),
+      );
+
+      expect(error).toBeInstanceOf(OrganizationWorkspaceOperationError);
+    },
+  );
+
+  it("still rejects invalid role fields while stripping database metadata", async () => {
+    const { position: _position, ...roleWithoutPosition } = role;
+    const value = { ...roleWithoutPosition, createdAt: date, updatedAt: date };
+
+    const layer = provideServices(
+      makeAuthorization(),
+      makeData(),
+      makeRolesData({ updateRole: () => Effect.succeed(value) }),
+    );
+
+    const response = await Effect.runPromise(
+      updateGuildRole("guild-a", role.id, {
+        permissions: [],
+        lvlRangeFrom: 1,
+        lvlRangeTo: 300,
+      }).pipe(Effect.provide(layer)),
+    );
+
+    expect(response).toEqual(
+      Effect.runSync(decodeDomainJson(RoleResponse, value)),
+    );
+
+    const invalid = provideServices(
+      makeAuthorization(),
+      makeData(),
+      makeRolesData({
+        updateRole: () => Effect.succeed({ ...role, color: Number.NaN }),
+      }),
+    );
+
+    const error = await Effect.runPromise(
+      Effect.flip(
+        updateGuildRole("guild-a", role.id, {
+          permissions: [],
+          lvlRangeFrom: 1,
+          lvlRangeTo: 300,
+        }).pipe(Effect.provide(invalid)),
+      ),
+    );
+
+    expect(error).toBeInstanceOf(OrganizationWorkspaceOperationError);
+  });
+});

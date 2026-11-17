@@ -1,6 +1,6 @@
-import { UserLootlogConfigData } from "#src/http-api/handlers/user-lootlog-config/user-lootlog-config.handlers";
-import { MemberReadData } from "#src/http-api/handlers/members/members.handlers";
-import { makeMemberReadDataLayer } from "#src/http-api/handlers/members/member-read.data-layer";
+import { UserLootlogConfigData } from "../src/lootlog-config/user-lootlog-config-data.js";
+import { MemberReadData } from "../src/members/members-data.js";
+import { makeMemberReadDataLayer } from "../src/members/member-read.data-layer.js";
 import { afterAll, beforeAll, describe, expect, it, spyOn } from "bun:test";
 import { createDatabaseBoundary } from "./database-fixtures.js";
 import { randomUUID } from "node:crypto";
@@ -31,9 +31,9 @@ import {
   eventMapCoverageGapTable,
 } from "#src/database/drizzle/event.schema";
 import { makeLootsOperations } from "#src/loots/loots.operations";
-import { makeLootPersistence } from "#src/loots/loot-persistence";
+import { makeLootPersistence } from "#src/loots/loot.repository";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
-import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
+import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
 import { makeEventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import { makeEventGapReads } from "#src/events/monitoring/event-gap-reads";
 import { makeEventReadCache } from "#src/events/catalog/event-read-cache.service";

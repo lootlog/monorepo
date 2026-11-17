@@ -7,7 +7,7 @@ import { Effect, Schema } from "effect";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import type { StaleJson } from "#src/redis/stale-json-cache";
-import type { KillStatsFilter } from "./kill-stats-persistence.js";
+import type { KillStatsFilter } from "./kill-stats.repository.js";
 
 export type KillQueryRole = typeof roleTable.$inferSelect;
 

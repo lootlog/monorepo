@@ -430,9 +430,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/account-organization/user-preferences.data-layer.ts"
-      ],
+      "files": ["apps/api/src/users/user-preferences.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -582,9 +580,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/public-system/public-system.operations.ts"
-      ],
+      "files": ["apps/api/src/http-api/access/public-system.access.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -648,9 +644,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/account-organization/account-organization.operations.ts"
-      ],
+      "files": ["apps/api/src/http-api/access/account-organization.access.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -686,7 +680,7 @@
     },
     {
       "files": [
-        "apps/api/src/http-api/handlers/organization-workspace/organization-workspace.operations.ts"
+        "apps/api/src/http-api/access/organization-workspace.access.ts"
       ],
       "rules": {
         "anti-slop/no-unknown-parameters": [
@@ -734,7 +728,7 @@
       }
     },
     {
-      "files": ["apps/api/src/http-api/handlers/records/records.data-layer.ts"],
+      "files": ["apps/api/src/http-api/access/records.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -774,9 +768,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/timers/timer-list.data-layer.ts"
-      ],
+      "files": ["apps/api/src/timers/timer-list.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -787,7 +779,7 @@
       }
     },
     {
-      "files": ["apps/api/src/http-api/handlers/records/records.operations.ts"],
+      "files": ["apps/api/src/http-api/access/records.access.ts"],
       "rules": {
         "anti-slop/no-runtime-typeof": [
           "error",
@@ -844,9 +836,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/timers/timer-search.data-layer.ts"
-      ],
+      "files": ["apps/api/src/timers/timer-search.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -875,9 +865,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/account-organization/guild-discord-sync.data-layer.ts"
-      ],
+      "files": ["apps/api/src/guilds/guild-discord-sync.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -895,9 +883,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/account-organization/current-user-guilds.data-layer.ts"
-      ],
+      "files": ["apps/api/src/guilds/current-user-guilds.data-layer.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -981,7 +967,7 @@
     },
     {
       "files": [
-        "apps/api/src/http-api/handlers/settings/settings.operations.ts"
+        "apps/api/src/http-api/handlers/preferences/preferences.operations.ts"
       ],
       "rules": {
         "anti-slop/no-unknown-parameters": [
@@ -1101,9 +1087,7 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/party-ready-room/ready-room.repository.ts"
-      ],
+      "files": ["apps/api/src/messaging/ready-room/ready-room.repository.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -1140,8 +1124,8 @@
     },
     {
       "files": [
-        "apps/api/src/http-api/handlers/timers/timer-auto-guild-write.ts",
-        "apps/api/src/http-api/handlers/timers/timer-auto-persistence.ts"
+        "apps/api/src/timers/timer-auto-guild-write.ts",
+        "apps/api/src/timers/timer-auto.repository.ts"
       ],
       "rules": {
         "anti-slop-effect/no-service-constructor-imports": [
@@ -1175,14 +1159,37 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/http-api/handlers/party-ready-room/ready-room.data-layer.ts"
-      ],
+      "files": ["apps/api/src/settings-documents/settings-data.ts"],
       "rules": {
         "anti-slop-effect/no-service-constructor-imports": [
           "error",
           {
-            "nonServiceImports": ["makeReadyRoomRepository"]
+            "nonServiceImports": ["makeSettingsDocuments"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/docs/docs-data.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeDocsService"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/messaging/ready-room/ready-room.data-layer.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": [
+              "makeReadyRoomRepository",
+              "makeReadyRoomPublicationOutbox"
+            ]
           }
         ]
       }
@@ -1223,7 +1230,7 @@
       }
     },
     {
-      "files": ["apps/api/src/kills/kill-stats-persistence.ts"],
+      "files": ["apps/api/src/kills/kill-stats.repository.ts"],
       "rules": {
         "anti-slop/no-runtime-typeof": [
           "error",

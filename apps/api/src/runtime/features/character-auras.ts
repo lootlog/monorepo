@@ -7,7 +7,7 @@ import {
   characterAurasDataLayer,
   type CharacterAurasCache,
   type CharacterAurasEvents,
-} from "#src/http-api/handlers/character-auras/character-auras.data-layer";
+} from "#src/character-auras/character-auras.data-layer";
 import { makeJsonCodec } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";

@@ -7,7 +7,7 @@ import {
   memberToRoleTable,
 } from "#src/database/drizzle/organization.schema";
 import type { MemberDelivery } from "./member-delivery.operations.js";
-import { queueMemberDeliveries } from "./member.store.js";
+import { queueMemberDeliveries } from "./member.repository.js";
 import type { DeactivateMembersMissingFromDiscordGuildsOptions } from "./member.types.js";
 
 class MemberRemovalFailure extends TaggedErrorClass<MemberRemovalFailure>()(

@@ -1,3 +1,4 @@
+import { ChatOperationError, ChatData } from "#src/chat/chat-data";
 import {
   pathString,
   statusCodeResponse,
@@ -21,7 +22,7 @@ import {
 import { DomainDateTime } from "#src/shared/schema/response-codecs";
 
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 
 export type ChatIdentity = {
@@ -44,11 +45,6 @@ export class ChatNotFound extends TaggedErrorClass<ChatNotFound>()(
   { status: Schema.Literal(404), code: Schema.String },
 ) {}
 
-export class ChatOperationError extends TaggedErrorClass<ChatOperationError>()(
-  "ChatOperationError",
-  { cause: Schema.Defect() },
-) {}
-
 type AccessFailure = ChatAccessDenied | ChatNotFound | ReauthenticationRequired;
 
 export class ChatAuthorization extends Context.Service<
@@ -60,32 +56,6 @@ export class ChatAuthorization extends Context.Service<
     }) => Effect.Effect<ChatGuildAccess, AccessFailure>;
   }
 >()("@lootlog/api/http-api/chat/authorization") {}
-
-type DataEffect = Effect.Effect<unknown, ChatOperationError>;
-
-export class ChatData extends Context.Service<
-  ChatData,
-  {
-    readonly getMessages: (
-      viewer: ChatMessageViewer,
-      guildId: string,
-    ) => DataEffect;
-    readonly sendMessage: (
-      discordId: string,
-      guildId: string,
-      payload: SendChatMessageRequest,
-    ) => DataEffect;
-    readonly clearMessages: (
-      viewer: ChatMessageViewer,
-      guildId: string,
-    ) => DataEffect;
-    readonly deleteMessage: (
-      viewer: ChatMessageViewer,
-      guildId: string,
-      messageId: string,
-    ) => DataEffect;
-  }
->()("@lootlog/api/http-api/chat/data") {}
 
 const requireGuild = (guildId: string, allOf: ReadonlyArray<PermissionValue>) =>
   Effect.flatMap(ChatAuthorization, (authorization) =>

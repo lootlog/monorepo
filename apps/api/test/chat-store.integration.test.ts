@@ -11,7 +11,7 @@ import { Effect, ManagedRuntime } from "effect";
 import { Redis } from "effect/persistence";
 import { RedisService } from "#src/redis/redis.service";
 import { makeChatRedis } from "#src/runtime/features/chat";
-import type { ChatRedis } from "#src/http-api/handlers/chat/chat.data-layer";
+import type { ChatRedis } from "../src/chat/chat.data-layer.js";
 
 describe("Organization chat store Dragonfly integration", () => {
   let redis: RedisService;

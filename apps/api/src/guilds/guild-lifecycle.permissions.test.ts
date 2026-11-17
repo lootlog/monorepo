@@ -14,7 +14,7 @@ import {
 } from "#src/database/drizzle/organization.schema";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { makeMemberDelivery } from "#src/members/member-delivery.operations";
-import { makeMemberStore } from "#src/members/member.store";
+import { makeMemberStore } from "#src/members/member.repository";
 import { makeGuildLifecycle } from "./guild-lifecycle.operations.js";
 
 test("Discord role revocation and deletion rebalance only active holders, survive failed delivery, and ignore cosmetic edits", async () => {

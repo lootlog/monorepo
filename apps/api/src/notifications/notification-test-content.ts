@@ -5,7 +5,7 @@ import {
   FALLBACK_WORLD_NAME,
 } from "#src/notifications/content/notification-messages";
 import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
-import type { NotificationEventStore } from "#src/notifications/delivery/notification-event-store";
+import type { NotificationEventStore } from "#src/notifications/delivery/notification-event.repository";
 import type { NotificationMatching } from "#src/notifications/rules/notification-matching.service";
 import { timerNpcIdentity } from "#src/timers/timer-projection";
 import {

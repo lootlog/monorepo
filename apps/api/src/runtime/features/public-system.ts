@@ -1,4 +1,4 @@
-import { makeMapsOperation } from "#src/maps/maps.operation";
+import { makeMapsOperation } from "#src/maps/maps.operations";
 import { PublicGuildStatsCardRepository } from "#src/public-guild-stats-card/public-guild-stats-card.repository";
 import {
   PublicGuildStatsCardAdapterError,
@@ -10,7 +10,7 @@ import { HttpClient } from "effect/http";
 import {
   PublicSystemData,
   PublicSystemOperationError,
-} from "#src/http-api/handlers/public-system/public-system.operations";
+} from "#src/http-api/access/public-system.access";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
