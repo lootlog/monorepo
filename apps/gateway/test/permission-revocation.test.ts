@@ -7,9 +7,9 @@ import { Permission } from "@lootlog/schema/permissions";
 import {
   InternalGuildsData,
   makeInternalGuildsData,
-  getInternalUserPermissions,
   type InternalGuildsPersistence,
-} from "../../api/src/http-api/handlers/internal/internal.handlers.js";
+} from "../../api/src/guilds/internal-guilds-data.js";
+import { getInternalUserPermissions } from "../../api/src/http-api/handlers/internal/internal.handlers.js";
 import { InternalUserPermissionsQuery } from "../../api/src/contracts/internal/schemas.js";
 import { createPermissionCacheBoundary } from "../../api/test/permission-cache-fixtures.js";
 import {

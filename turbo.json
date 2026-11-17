@@ -143,10 +143,6 @@
       "interactive": true,
       "passThroughEnv": ["POSTGRESQL_*"]
     },
-    "db:push": {
-      "cache": false,
-      "interactive": true
-    },
     "db:studio": {
       "cache": false,
       "interactive": true,
@@ -160,34 +156,7 @@
       "cache": false,
       "interactive": true
     },
-    "seed": {
-      "cache": false,
-      "interactive": true
-    },
-    "seed:generate:players": {
-      "cache": false,
-      "interactive": true
-    },
-    "seed:scrape": {
-      "cache": false,
-      "interactive": true
-    },
-    "seed:scrape:items": {
-      "cache": false,
-      "interactive": true
-    },
-    "seed:scrape:npcs": {
-      "cache": false,
-      "interactive": true
-    },
-    "seed:setup": {
-      "cache": false,
-      "interactive": true
-    },
     "maintenance:audit-actions": {
-      "cache": false
-    },
-    "maintenance:backfill-warrior-stats": {
       "cache": false
     },
     "deploy": {
