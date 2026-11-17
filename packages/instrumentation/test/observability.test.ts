@@ -17,7 +17,7 @@ import {
   recordHttpServerMetrics,
   runLogEffect,
 } from "../src/instrumentation.js";
-import { makeObservabilityLayer } from "../src/observability.js";
+import { observabilityLayer } from "../src/observability.js";
 
 const configuration = Effect.succeed({
   serviceName: "api",
@@ -26,7 +26,7 @@ const configuration = Effect.succeed({
 });
 
 const observability = (env: Record<string, string>) =>
-  makeObservabilityLayer(configuration).pipe(
+  observabilityLayer(configuration).pipe(
     Layer.provide(ConfigProvider.layer(ConfigProvider.fromEnvRecord(env))),
   );
 
@@ -67,7 +67,7 @@ describe("observability contract", () => {
           "http.status": 500,
         }),
         Effect.provide(
-          makeObservabilityLayer(
+          observabilityLayer(
             Effect.succeed({
               serviceName: "api",
               serviceNamespace: "lootlog-test",

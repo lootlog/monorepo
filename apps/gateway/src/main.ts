@@ -1,25 +1,12 @@
-import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
+import { runService } from "@lootlog/instrumentation/service";
 import { RabbitMessaging } from "@lootlog/messaging";
-import { BunRuntime } from "@effect/platform-bun";
-import { installScopedLogRunner } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
 import { FetchHttpClient } from "effect/http";
 import { GatewayServer } from "#src/app";
 import { GatewayConfig } from "#src/config/gateway-config";
 
-const ObservabilityLive = makeObservabilityLayer(GatewayConfig).pipe(
-  Layer.provide(GatewayConfig.layer),
-);
-
-BunRuntime.runMain(
-  Effect.gen(function* () {
-    yield* installScopedLogRunner;
-    yield* Layer.launch(
-      GatewayServer.pipe(Layer.provide(FetchHttpClient.layer)),
-    );
-  }).pipe(
-    Effect.scoped,
-    Effect.provide(ObservabilityLive),
-    RabbitMessaging.supervised,
-  ),
-);
+runService({
+  config: GatewayConfig.pipe(Effect.provide(GatewayConfig.layer)),
+  application: GatewayServer.pipe(Layer.provide(FetchHttpClient.layer)),
+  supervise: RabbitMessaging.supervised,
+});
