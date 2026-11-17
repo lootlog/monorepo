@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { visibleReservationGuildIds } from "./reservation-visibility-query.js";
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import { and, asc, eq, gt, inArray, lt } from "drizzle-orm";
@@ -142,9 +143,10 @@ export const makeReservationReadDataLayer = (
                 };
               });
             }).pipe(
-              Effect.withSpan("listReservationSpots.persistence", {
-                attributes: { adapter: "ApiDatabase", retryCount: 0 },
-              }),
+              withAdapterSpan(
+                "listReservationSpots.persistence",
+                "ApiDatabase",
+              ),
             ),
           ),
         listWindow: (context, spotId, fromValue, toValue) =>
@@ -194,9 +196,10 @@ export const makeReservationReadDataLayer = (
                 window: { from, to },
               };
             }).pipe(
-              Effect.withSpan("listSpotReservations.persistence", {
-                attributes: { adapter: "ApiDatabase", retryCount: 0 },
-              }),
+              withAdapterSpan(
+                "listSpotReservations.persistence",
+                "ApiDatabase",
+              ),
             ),
           ),
         pinSpot: (userId, guildId, spotId) =>

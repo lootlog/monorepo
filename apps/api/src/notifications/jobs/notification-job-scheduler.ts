@@ -1,7 +1,10 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { randomUUID } from "node:crypto";
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { notificationJobTable } from "#src/database/drizzle/notification.schema";
 import type { JsonObject, JsonValue } from "#src/database/json";
@@ -65,11 +68,6 @@ export interface NotificationCancellationFilters {
   readonly sourceEntityId?: string;
 }
 
-class NotificationJobSchedulerFailure extends TaggedErrorClass<NotificationJobSchedulerFailure>()(
-  "NotificationJobSchedulerFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const notificationJobIdempotencyKey = (options: NotificationJobInput) =>
   options.jobKind === NotificationJobKind.SCHEDULED
     ? [
@@ -92,7 +90,7 @@ export const makeNotificationJobScheduler = (
   queue: NotificationQueue,
 ) => {
   const failure = (operation: string) => (cause: unknown) =>
-    new NotificationJobSchedulerFailure({ operation, cause });
+    new OperationError({ operation, cause });
 
   const cancel = Effect.fn("notifications.scheduler.cancel")(function* (
     filters: NotificationCancellationFilters,
@@ -273,9 +271,10 @@ export const makeNotificationJobScheduler = (
       )
       .pipe(
         Effect.mapError(failure("notifications.scheduler.recreateCanceled")),
-        Effect.withSpan("notifications.scheduler.create.transaction", {
-          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-        }),
+        withAdapterSpan(
+          "notifications.scheduler.create.transaction",
+          "notifications.drizzle",
+        ),
       );
   });
 

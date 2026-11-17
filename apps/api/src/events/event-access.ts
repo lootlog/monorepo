@@ -1,11 +1,11 @@
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import { eventHeroScope } from "#src/events/event-scope-query";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { and, eq } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -18,21 +18,10 @@ import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 
 type Role = typeof roleTable.$inferSelect;
 
-class EventAccessError extends TaggedErrorClass<EventAccessError>()(
-  "EventAccessError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeEventAccess = (
   database: Pick<typeof ApiDatabase.Service, "select">,
 ) => {
-  const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError((cause) => new EventAccessError({ operation, cause })),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.access.drizzle", retryCount: 0 },
-      }),
-    );
+  const query = adapterOperation("events.access.drizzle");
 
   const visible = (
     hero: { npcLvl: number | null },

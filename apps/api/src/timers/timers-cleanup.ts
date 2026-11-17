@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { and, eq, exists, sql } from "drizzle-orm";
@@ -52,9 +53,7 @@ export const makeTimersCleanup = (
       Effect.annotateLogs({ deleted: deleted.length, cutoff }),
     );
   }).pipe(
-    Effect.withSpan("timers.cleanup", {
-      attributes: { adapter: "drizzle", retryCount: 0 },
-    }),
+    withAdapterSpan("timers.cleanup", "drizzle"),
     Effect.catch((error) =>
       Effect.logError("Timer cleanup failed").pipe(
         Effect.annotateLogs({ cause: error }),

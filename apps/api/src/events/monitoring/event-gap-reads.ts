@@ -1,5 +1,8 @@
+import {
+  adapterOperation,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { eventMapScope } from "#src/events/event-scope-query";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { eventReadCacheEntry } from "#src/events/catalog/event-read-cache.service";
@@ -19,23 +22,12 @@ import {
   NullableCoverageGapResponse,
 } from "#src/events/monitoring/event-monitoring-response.schema";
 
-class EventGapReadError extends TaggedErrorClass<EventGapReadError>()(
-  "EventGapReadError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeEventGapReads = (
   database: typeof ApiDatabase.Service,
   redis: RedisService,
   logger: Logger,
 ) => {
-  const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError((cause) => new EventGapReadError({ operation, cause })),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.gaps.drizzle", retryCount: 0 },
-      }),
-    );
+  const query = adapterOperation("events.gaps.drizzle");
 
   const cached = <
     S extends Schema.ConstraintDecoder<unknown>,
@@ -58,11 +50,7 @@ export const makeEventGapReads = (
         factory: load,
         onError: (error) => logger.warn("Event gap cache unavailable", error),
       })
-      .pipe(
-        Effect.withSpan("events.gaps.cache", {
-          attributes: { adapter: "events.redis", retryCount: 0 },
-        }),
-      );
+      .pipe(withAdapterSpan("events.gaps.cache", "events.redis"));
   };
 
   const requireMap = (guildId: string, eventId: string, mapId: string) =>

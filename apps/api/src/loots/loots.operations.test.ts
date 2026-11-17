@@ -4,10 +4,8 @@ import { MaxOpsBeforeYield } from "effect/Scheduler";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { makeLootsOperations } from "#src/loots/loots.operations";
-import {
-  LootQueryError,
-  type LootQueryOperations,
-} from "#src/loots/query/loot-query.operations";
+import { OperationError } from "@lootlog/instrumentation/operation";
+import type { LootQueryOperations } from "#src/loots/query/loot-query.operations";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import { applicationLogger } from "#src/shared/application-logger";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
@@ -184,7 +182,7 @@ describe("loot detail concurrent reads", () => {
         yield* Effect.promise(() => finish.promise);
 
         if (reads === 1)
-          return yield* new LootQueryError({
+          return yield* new OperationError({
             operation: "detail",
             cause: "database unavailable",
           });

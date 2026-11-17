@@ -1,5 +1,8 @@
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { getLootListCacheScope } from "#src/shared/cache";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { createHash } from "node:crypto";
 import { joinItemStat } from "@lootlog/database/item-stat";
 import { Clock, Effect, Schema } from "effect";
@@ -48,11 +51,6 @@ export interface LootAllocationPublisher {
     event: GuildLootShareUpdatedEventV2,
   ) => Effect.Effect<void, unknown>;
 }
-
-class LootAllocationOperationError extends TaggedErrorClass<LootAllocationOperationError>()(
-  "LootAllocationOperationError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 const parseChatAllocation = (message: string) => {
   const allocation: Record<string, string[]> = {};
@@ -127,11 +125,9 @@ export const makeLootAllocationOperations = (options: {
       Effect.mapError((cause) =>
         Schema.is(ApplicationError)(cause)
           ? cause
-          : new LootAllocationOperationError({ operation, cause }),
+          : new OperationError({ operation, cause }),
       ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "loot-allocation", retryCount: 0 },
-      }),
+      withAdapterSpan(operation, "loot-allocation"),
     );
 
   const assertMatching = <Persisted>(

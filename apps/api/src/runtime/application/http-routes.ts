@@ -1,12 +1,7 @@
 import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
-import { BunHttpServer } from "@effect/platform-bun";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
-import {
-  httpServerMetrics,
-  httpServerRouteMetrics,
-} from "@lootlog/instrumentation";
+import { serviceHttpServer } from "@lootlog/instrumentation/service";
 import { Effect, Layer } from "effect";
-import { HttpRouter } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
 import { LootlogApiHandlers } from "#src/http-api/handlers/handlers-layer";
 import { LootlogApi } from "#src/http-api/lootlog-api";
@@ -52,17 +47,10 @@ export const LootlogApiRouter = LootlogApiRoutes.pipe(
   Layer.provideMerge(HandlerInfrastructure),
 );
 
-const LootlogApiHttp = HttpRouter.serve(
-  LootlogApiRoutes.pipe(Layer.provide(httpServerRouteMetrics)),
-  {
-    middleware: httpServerMetrics,
-  },
-).pipe(Layer.provide(ProcessHandlerInfrastructure));
-
 export const ApiHttpServerLive = Layer.unwrap(
   Effect.map(ApiRuntimeConfig, ({ port }) =>
-    LootlogApiHttp.pipe(
-      Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port })),
+    serviceHttpServer({ routes: LootlogApiRoutes, port }).pipe(
+      Layer.provide(ProcessHandlerInfrastructure),
     ),
   ),
 );

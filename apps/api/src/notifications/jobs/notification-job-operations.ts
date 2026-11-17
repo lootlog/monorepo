@@ -1,6 +1,6 @@
+import { OperationError } from "@lootlog/instrumentation/operation";
 import { notificationJobVisibilityFilter } from "../notification-api-key-scope.js";
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -41,17 +41,12 @@ export interface NotificationJobCancellation {
   }) => Effect.Effect<unknown, unknown>;
 }
 
-class NotificationJobOperationFailure extends TaggedErrorClass<NotificationJobOperationFailure>()(
-  "NotificationJobOperationFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeNotificationJobOperations = (
   database: ApiDatabaseValue,
   cancellation: NotificationJobCancellation,
 ) => {
   const databaseFailure = (operation: string) => (cause: unknown) =>
-    new NotificationJobOperationFailure({ operation, cause });
+    new OperationError({ operation, cause });
 
   const listByStatuses = (
     ownerType: NotificationOwnerTypeValue,

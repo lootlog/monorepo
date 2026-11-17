@@ -1,10 +1,10 @@
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import { LootSummary, LootShareResponse } from "@lootlog/protocol/loot-summary";
 import {
   mapItem,
   mapPlayer,
   mapNpc,
 } from "#src/loots/query/loot-snapshot-mappers";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   and,
   asc,
@@ -48,23 +48,10 @@ import {
   type ResolvedLootSearch,
 } from "#src/loots/query/loot-query-filter";
 
-class LootQueryPersistenceError extends TaggedErrorClass<LootQueryPersistenceError>()(
-  "LootQueryPersistenceError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeLootQueryPersistence = (
   database: Pick<typeof ApiDatabase.Service, "select">,
 ) => {
-  const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new LootQueryPersistenceError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "loots.drizzle", retryCount: 0 },
-      }),
-    );
+  const protect = adapterOperation("loots.drizzle");
 
   const findItemSnapshotIds = (names: ReadonlyArray<string>) =>
     names.length === 0

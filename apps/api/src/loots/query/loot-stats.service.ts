@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
@@ -136,9 +137,7 @@ export class LootStatsService {
         this.logger.warn("Loot statistics cache unavailable", error),
     }).pipe(
       Effect.map(({ value, computedAt }) => ({ ...value, computedAt })),
-      Effect.withSpan("LootsController_getLootStats", {
-        attributes: { adapter: "loot-stats", retryCount: 0 },
-      }),
+      withAdapterSpan("LootsController_getLootStats", "loot-stats"),
     );
   }
 

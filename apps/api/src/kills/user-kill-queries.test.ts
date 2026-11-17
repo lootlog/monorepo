@@ -4,10 +4,8 @@ import type { KillQueryCache } from "./kill-query-support.js";
 import { Effect, Schema } from "effect";
 import { describe, expect, it } from "bun:test";
 
-import {
-  makeUserKillQueries,
-  UserKillQueriesError,
-} from "./user-kill-queries.js";
+import { OperationError } from "@lootlog/instrumentation/operation";
+import { makeUserKillQueries } from "./user-kill-queries.js";
 import { makeKillCreation, type KillCreationCache } from "./kill-creation.js";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
 import {
@@ -63,7 +61,7 @@ describe("user kill queries Effect module", () => {
 
       await expect(
         boundary.run(queries.getUserKillStats("discord-1", {})),
-      ).rejects.toBeInstanceOf(UserKillQueriesError);
+      ).rejects.toBeInstanceOf(OperationError);
     } finally {
       await boundary.dispose();
     }

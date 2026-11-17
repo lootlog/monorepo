@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { Clock, Effect, Schema } from "effect";
 import { formatLevel } from "@lootlog/domain/profession";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
@@ -172,11 +173,14 @@ export const makeNotificationsEvents = (options: {
 
       const [guilds, memberships] = yield* Effect.all(
         [
-          options.findGuilds(event.guildIds).pipe(
-            Effect.withSpan("notifications.guilds.findMany", {
-              attributes: { adapter: "notifications.guilds", retryCount: 0 },
-            }),
-          ),
+          options
+            .findGuilds(event.guildIds)
+            .pipe(
+              withAdapterSpan(
+                "notifications.guilds.findMany",
+                "notifications.guilds",
+              ),
+            ),
           options.matching.activeMemberships(
             watchedItems
               .map((item) => item.notificationRule?.ownerId)

@@ -31,7 +31,7 @@ describe("Organization chat store Dragonfly integration", () => {
       {},
       (effect) => redisRuntime.runPromise(effect),
     );
-    chat = makeChatRedis(redis);
+    chat = makeChatRedis(redis.effect);
   });
 
   afterAll(async () => {

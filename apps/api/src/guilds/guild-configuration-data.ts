@@ -1,8 +1,10 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { AccountOrganizationOperationError } from "#src/guilds/account-organization-data";
 import {
   getGuildCacheKey,
   readGuildConfigurationCache,
   writeGuildConfigurationCache,
+  type GuildConfigurationCache,
 } from "./guild-configuration-cache.js";
 import { Context, Effect, Layer } from "effect";
 import { eq } from "drizzle-orm";
@@ -213,9 +215,10 @@ export class GuildConfigurationData extends Context.Service<
 
                 return guild;
               }).pipe(
-                Effect.withSpan("guild-configuration.update.persistence", {
-                  attributes: { adapter: "ApiDatabase", retryCount: 0 },
-                }),
+                withAdapterSpan(
+                  "guild-configuration.update.persistence",
+                  "ApiDatabase",
+                ),
               ),
             ),
           getWorldsByGuildId: (guildId) =>
@@ -230,14 +233,4 @@ export class GuildConfigurationData extends Context.Service<
       }),
     );
   }
-}
-
-export interface GuildConfigurationCache {
-  readonly get: (key: string) => Effect.Effect<string | null, unknown>;
-  readonly set: (
-    key: string,
-    value: string,
-    ttl: number,
-  ) => Effect.Effect<void, unknown>;
-  readonly del: (key: string) => Effect.Effect<void, unknown>;
 }

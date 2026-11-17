@@ -1,4 +1,4 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import {
   and,
   asc,
@@ -26,7 +26,7 @@ import {
 } from "#src/loots/query/user-loot-scopes";
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -101,11 +101,6 @@ const authorizedSubmissionExists = (
       ),
   );
 
-class LootAllocationPersistenceError extends TaggedErrorClass<LootAllocationPersistenceError>()(
-  "LootAllocationPersistenceError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeLootAllocationPersistence = (
   database: typeof ApiDatabase.Service,
 ) => {
@@ -175,15 +170,7 @@ export const makeLootAllocationPersistence = (
       );
     });
 
-  const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new LootAllocationPersistenceError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "loot-allocation.drizzle", retryCount: 0 },
-      }),
-    );
+  const protect = adapterOperation("loot-allocation.drizzle");
 
   const findAuthorizedLoot = (options: AuthorizedLootOptions) =>
     protect(
