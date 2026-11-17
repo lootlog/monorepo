@@ -4,6 +4,10 @@ import type {
 } from "@lootlog/client/main";
 import { NpcType } from "@/api/npcs.api";
 import type { Timer } from "@/api/timers.api";
+import type {
+  TimerDeleted,
+  TimerUpdated,
+} from "@lootlog/protocol/realtime/organization-events";
 import type { GuildMember } from "@/types/guild-member";
 
 export const createTimerFixture = (overrides: Partial<Timer> = {}): Timer => ({
@@ -27,6 +31,45 @@ export const createTimerFixture = (overrides: Partial<Timer> = {}): Timer => ({
     location: "Ruins",
   },
   ...overrides,
+});
+
+/** `timer.created` as the API publishes it; it normalizes to `createTimerFixture()`. */
+export const createTimerEventFixture = (
+  overrides: Partial<TimerUpdated> = {},
+): TimerUpdated => ({
+  guildId: "guild-1",
+  timerKey: "timer-1",
+  world: "luvia",
+  npcId: 10,
+  minSpawnTime: "2026-04-22T10:00:00.000Z",
+  maxSpawnTime: "2026-04-22T10:05:00.000Z",
+  updatedAt: "2026-04-22T09:59:00.000Z",
+  wasReset: false,
+  deletedAt: null,
+  entranceClosesAt: null,
+  npc: {
+    id: 10,
+    templateId: null,
+    name: "Tanroth",
+    lvl: 120,
+    prof: "W",
+    icon: "icon.gif",
+    wt: "85",
+    type: NpcType.HERO,
+    margonemType: "2",
+    location: "Ruins",
+  },
+  ...overrides,
+});
+
+export const createTimerDeletedEventFixture = (
+  timer: Pick<TimerUpdated, "guildId" | "timerKey" | "world" | "npcId">,
+): TimerDeleted => ({
+  guildId: timer.guildId,
+  timerKey: timer.timerKey,
+  world: timer.world,
+  npcId: timer.npcId,
+  routing: { tier: "heroes", npcLevel: 120 },
 });
 
 export const createTimerMemberFixture = (

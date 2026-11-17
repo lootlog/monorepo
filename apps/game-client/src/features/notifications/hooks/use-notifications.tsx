@@ -8,30 +8,14 @@ import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-g
 import { useCurrentUserNotificationMutes } from "@/features/settings/persistence/use-notification-mutes";
 import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
 import { useGameStore } from "@/store/game.store";
-import type { GameNpc } from "@lootlog/margonem/npcs";
-import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
-import {
-  toLocalEntranceDeadline,
-  type HeroTrackerNotificationState,
-} from "@/features/notifications/utils/hero-tracker-notification";
+import type { NotificationSent } from "@lootlog/protocol/realtime/organization-events";
+import { toLocalEntranceDeadline } from "@/features/notifications/utils/hero-tracker-notification";
 import {
   getNotificationSettingsKey,
   isAllowedByNotificationSettings,
 } from "@/features/notifications/utils/get-notification-settings-key";
 
-export type Notification = {
-  npc?: GameNpc & { location: string; name: string };
-  message?: string;
-  discordId: string;
-  guildId: string;
-  notificationId: string;
-  world: string;
-  createdAt: string;
-  isGatheringParty?: boolean;
-  /** The organizer character of a party gathering report. */
-  character?: PartyGatheringCharacterBase;
-  heroTracker?: HeroTrackerNotificationState;
-};
+export type Notification = NotificationSent;
 
 export const useNotifications = () => {
   const { connected, socket } = useSocket();

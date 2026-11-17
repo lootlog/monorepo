@@ -47,7 +47,18 @@ const notification = (id = 500): StoredNotification => ({
   discordId: "user-1",
   createdAt: new Date().toISOString(),
   message: "NPC",
-  npc: { ...trackedNpc(id), name: "Stwór" },
+  npc: {
+    id,
+    x: 1,
+    y: 1,
+    icon: "npc.gif",
+    name: "Stwór",
+    prof: "m",
+    wt: 90,
+    lvl: 250,
+    type: "COLOSSUS",
+    location: "Urwisko",
+  },
 });
 
 const configKey =

@@ -14,6 +14,14 @@ export type LootNpc = LootNpcResponseDto;
 
 export type LootComment = LootCommentResponseDto;
 
+/** A realtime loot share, as the HTTP response's mutable arrays. */
+export const lootShareFromEvent = (
+  lootShare: Readonly<Record<string, readonly string[]>>,
+): Loot["lootShare"] =>
+  Object.fromEntries(
+    Object.entries(lootShare).map(([key, players]) => [key, [...players]]),
+  );
+
 /** A realtime snapshot carries the HTTP response; only its arrays are readonly. */
 export const lootFromSnapshot = (snapshot: LootSnapshot): Loot => ({
   ...snapshot,
@@ -23,12 +31,7 @@ export const lootFromSnapshot = (snapshot: LootSnapshot): Loot => ({
     ...snapshot.mapPlayersSnapshot,
   ],
   npcs: [...snapshot.npcs],
-  lootShare: Object.fromEntries(
-    Object.entries(snapshot.lootShare).map(([key, players]) => [
-      key,
-      [...players],
-    ]),
-  ),
+  lootShare: lootShareFromEvent(snapshot.lootShare),
   submissions: snapshot.submissions && [...snapshot.submissions],
   likes: snapshot.likes ? [...snapshot.likes] : [],
 });

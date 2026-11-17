@@ -90,14 +90,12 @@ it("stops counting grouped npc reports that arrived through a revoked organizati
       createdAt: "2026-09-07T00:00:00Z",
       npc: {
         id: 500,
-        nick: "Hydra",
         name: "Hydra",
         icon: "npc.gif",
         lvl: 80,
         prof: "w",
         wt: 20,
-        type: 2,
-        tpl: 1,
+        type: "ELITE2" as const,
         x: 1,
         y: 2,
         location: "Swamp",
@@ -127,19 +125,19 @@ it("applies the server's NPC tier and level rules to numeric game NPC types", ()
   expect(
     canReadNotification(policy, {
       guildId: "b",
-      npc: { type: 2, wt: 100, lvl: 80, prof: "w" },
+      npc: { type: "TITAN" as const, wt: 100, lvl: 80, prof: "w" },
     }),
   ).toBe(false);
   expect(
     canReadNotification(policy, {
       guildId: "b",
-      npc: { type: 2, wt: 20, lvl: 80, prof: "w" },
+      npc: { type: "ELITE2" as const, wt: 20, lvl: 80, prof: "w" },
     }),
   ).toBe(true);
   expect(
     canReadNotification(policy, {
       guildId: "b",
-      npc: { type: 2, wt: 20, lvl: 101, prof: "w" },
+      npc: { type: "ELITE2" as const, wt: 20, lvl: 101, prof: "w" },
     }),
   ).toBe(false);
   expect(canReadNotification(policy, { guildId: "a" })).toBe(false);
@@ -157,7 +155,7 @@ it("removes a stored titan mention when chat tier access is revoked", () => {
         world: "alpha",
         createdAt: "2026-09-07T00:00:00Z",
         message: "NPC message",
-        sourceNpc: { type: "TITAN", lvl: 80 },
+        sourceNpc: { type: "TITAN" as const, lvl: 80 },
       },
     },
   ]);

@@ -11,7 +11,11 @@ import {
   useResetScrollTop,
   useVirtualInfiniteScroll,
 } from "@/hooks/utils/use-virtual-infinite-scroll";
-import { lootFromSnapshot, type Loot } from "@/lib/loots/loot-types";
+import {
+  lootFromSnapshot,
+  lootShareFromEvent,
+  type Loot,
+} from "@/lib/loots/loot-types";
 import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
   type LootPageResponseDto,
@@ -42,9 +46,10 @@ import { findGuildByRouteId } from "@/lib/current-user-guilds";
 import type {
   GuildLootCreatedEventV2,
   GuildLootShareUpdatedEventV2,
-} from "@lootlog/schema/loot-events";
+} from "@lootlog/protocol/loot-events";
 import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
 import type { LootSnapshotEvent } from "@lootlog/protocol/realtime";
+import type { GatewayAccessUpdate, GatewayJoin } from "@/lib/gateway-client";
 import {
   hashKey,
   useInfiniteQuery,
@@ -182,7 +187,8 @@ export const useLiveLootList = () => {
   const handleLootShareUpdate = useEffectEvent(
     (payload: GuildLootShareUpdatedEventV2) => {
       if (!guildId || payload.guildId !== currentGuildId) return;
-      const { lootId, lootShare } = payload;
+      const lootId = payload.lootId;
+      const lootShare = lootShareFromEvent(payload.lootShare);
       patchLoot(queryClient, guildId, lootId, { lootShare });
       setPending((current) => ({
         ...current,
@@ -297,21 +303,15 @@ export const useLiveLootList = () => {
       });
     };
 
-    const onPermissions = (payload?: {
-      accessPolicyChanges?: readonly AccessPolicyChange[];
-    }) => {
+    const onPermissions = (payload: GatewayAccessUpdate) => {
       revalidateAccess(
-        payload?.accessPolicyChanges
+        payload.accessPolicyChanges
           ? restrictedOrganizations(payload.accessPolicyChanges)
           : undefined,
       );
     };
 
-    const onJoin = (payload: {
-      guildIds: string[];
-      accessPolicyChanges: readonly AccessPolicyChange[];
-      recover: boolean;
-    }) => {
+    const onJoin = (payload: GatewayJoin) => {
       const restricted = restrictedOrganizations(payload.accessPolicyChanges);
 
       // Until guilds load, currentGuildId may still be the route's alias.
