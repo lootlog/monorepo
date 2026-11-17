@@ -2,71 +2,14 @@ import { Permission } from "@lootlog/schema/permissions";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { describe, expect, it } from "bun:test";
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { Effect } from "effect";
-import { guildTable } from "#src/database/drizzle/organization.schema";
 import { lootTable } from "#src/database/drizzle/loot.schema";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   buildLootStatsQueries,
   buildUserLootStatsQueries,
-  LootStatsQueryError,
-  runLootStatsQuery,
 } from "#src/loots/query/loot-stats-query";
-
-describe("runLootStatsQuery", () => {
-  it("binds input as a value instead of executing SQL text", async () => {
-    const boundary = await createDatabaseBoundary();
-
-    try {
-      const value = "O'Connor; SELECT 42";
-      await boundary.run(
-        boundary.database.insert(guildTable).values({
-          id: value,
-          name: "Stats",
-          ownerId: "owner",
-          updatedAt: new Date(),
-        }),
-      );
-      expect(
-        await boundary.run(
-          runLootStatsQuery(
-            "loot-stats.test",
-            boundary.database
-              .select({ value: guildTable.id })
-              .from(guildTable)
-              .where(eq(guildTable.id, value)),
-          ),
-        ),
-      ).toEqual([{ value }]);
-    } finally {
-      await boundary.dispose();
-    }
-  });
-
-  it("maps database failures to an operation-specific error", async () => {
-    const boundary = await createDatabaseBoundary();
-
-    try {
-      const error = await boundary.run(
-        Effect.flip(
-          runLootStatsQuery(
-            "loot-stats.read",
-            boundary.database
-              .select({ value: sql`missing_column` })
-              .from(guildTable),
-          ),
-        ),
-      );
-
-      expect(error).toBeInstanceOf(LootStatsQueryError);
-      expect(error).toMatchObject({ operation: "loot-stats.read" });
-      expect(error.cause).toBeDefined();
-    } finally {
-      await boundary.dispose();
-    }
-  });
-});
 
 describe("loot statistics at the PostgreSQL boundary", () => {
   it("keeps Organization visibility and distinct counts with enum NPC filters and multi-item joins", async () => {

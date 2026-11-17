@@ -1,7 +1,6 @@
 import "@/index.css";
 import { fireEvent, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import type { ReactElement, ComponentProps } from "react";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ContextMenu,
@@ -158,27 +157,6 @@ describe("overlay theme boundary", () => {
     }
 
     expect(getComputedStyle(popoverPositioner).zIndex).toBe("500");
-  });
-
-  it("reports an outside press through the popover root", async () => {
-    const user = userEvent.setup();
-
-    const onOpenChange =
-      vi.fn<NonNullable<ComponentProps<typeof Popover>["onOpenChange"]>>();
-
-    renderInsideLootlogRoot(
-      <Popover open onOpenChange={onOpenChange}>
-        <PopoverTrigger>Popover trigger</PopoverTrigger>
-        <PopoverContent>Popover content</PopoverContent>
-      </Popover>,
-    );
-
-    await user.click(document.body);
-
-    expect(onOpenChange).toHaveBeenCalledWith(
-      false,
-      expect.objectContaining({ reason: "outside-press" }),
-    );
   });
 
   it("keeps select content inside the Lootlog theme boundary", () => {

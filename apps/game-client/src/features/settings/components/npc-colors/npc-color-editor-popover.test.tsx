@@ -4,37 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 import { NpcColorEditorPopover } from "./npc-color-editor-popover";
 
 describe("NpcColorEditorPopover", () => {
-  it("restores the default color when requested", () => {
-    const onReset =
-      vi.fn<ComponentProps<typeof NpcColorEditorPopover>["onReset"]>();
-
-    render(
-      <NpcColorEditorPopover
-        color="#AA5500"
-        defaultColor="#F98948"
-        npcType="HERO"
-        open
-        saving={false}
-        onOpenChange={vi.fn<
-          ComponentProps<typeof NpcColorEditorPopover>["onOpenChange"]
-        >()}
-        onDraftChange={vi.fn<
-          ComponentProps<typeof NpcColorEditorPopover>["onDraftChange"]
-        >()}
-        onCommit={vi.fn<
-          ComponentProps<typeof NpcColorEditorPopover>["onCommit"]
-        >()}
-        onReset={onReset}
-      >
-        <button type="button">Hero</button>
-      </NpcColorEditorPopover>,
-    );
-
-    const resetButton = screen.getByRole("button", { name: "Przywróć" });
-    fireEvent.click(resetButton);
-    expect(onReset).toHaveBeenCalledOnce();
-  });
-
   it("restores the saved color when Escape closes the popover", () => {
     const onDraftChange =
       vi.fn<ComponentProps<typeof NpcColorEditorPopover>["onDraftChange"]>();

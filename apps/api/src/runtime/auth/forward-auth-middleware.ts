@@ -11,7 +11,7 @@ const USER_ID_HEADER = "x-auth-user-id";
 
 const DISCORD_ID_HEADER = "x-auth-discord-id";
 
-export const readForwardAuthIdentity = (
+const readForwardAuthIdentity = (
   headers: Readonly<Record<string, string | undefined>>,
 ): ForwardAuthIdentityValue | undefined => {
   const userId = headers[USER_ID_HEADER]?.trim();

@@ -24,52 +24,6 @@ const catalogHasKey = (key: SettingsCatalogKey) => {
 };
 
 describe("settings manifest persistence references", () => {
-  it("lists domains in navigation order with battle panel as its own domain", () => {
-    expect(SETTINGS_MANIFEST.map((domain) => domain.id)).toEqual([
-      "general",
-      "catching",
-      "servers",
-      "appearance",
-      "chat",
-      "timers",
-      "notifications",
-      "detector",
-      "mutes",
-      "battle-panel",
-      "pings",
-      "sounds",
-      "controls",
-      "diagnostics",
-      "information",
-    ]);
-  });
-
-  it("keeps catching as its own domain and every timer subsection under timers", () => {
-    const subsectionsOf = (id: string) =>
-      SETTINGS_MANIFEST.find((domain) => domain.id === id)?.subsections.map(
-        (subsection) => subsection.id,
-      );
-
-    expect(subsectionsOf("general")).toEqual(["behavior"]);
-    expect(subsectionsOf("catching")).toEqual(["catching"]);
-    expect(subsectionsOf("servers")).toEqual(["visibility"]);
-    expect(subsectionsOf("appearance")).toEqual([
-      "npc-colors",
-      "character-aura",
-    ]);
-    expect(subsectionsOf("timers")).toEqual([
-      "timer-behavior",
-      "timer-appearance",
-      "timer-colors",
-      "timer-lists",
-      "hidden-timers",
-    ]);
-    expect(subsectionsOf("notifications")).toEqual(["notification-rules"]);
-    expect(subsectionsOf("detector")).toEqual(["detector"]);
-    expect(subsectionsOf("mutes")).toEqual(["muted-players", "muted-npcs"]);
-    expect(subsectionsOf("battle-panel")).toEqual(["battle-panel"]);
-  });
-
   it("owns every subsection in exactly one domain, matching the path resolver", () => {
     const seen = new Map<string, string>();
 

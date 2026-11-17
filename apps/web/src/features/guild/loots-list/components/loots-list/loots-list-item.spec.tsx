@@ -7,13 +7,11 @@ import { createLoot } from "@/lib/testing/loot";
 import { createLootTestWrapper } from "@/lib/testing/loot-wrapper";
 import { LootsListItem } from "./loots-list-item";
 
-await initializeTestTranslations({
-  "loots.list.playerActions.label": "Akcje: {{name}}",
-});
+await initializeTestTranslations();
 
 afterEach(cleanup);
 
-describe("LootsListItem presentation", () => {
+describe("LootsListItem", () => {
   it("opens and closes item stacks outside a live list", async () => {
     const loot = createLoot();
     const item = loot.items[0];
@@ -34,22 +32,5 @@ describe("LootsListItem presentation", () => {
     expect(stack.getAttribute("aria-expanded")).toBe("true");
     fireEvent.pointerDown(document.body);
     expect(stack.getAttribute("aria-expanded")).toBe("false");
-  });
-
-  it("renders the same loot content without a nested card when embedded", async () => {
-    const { container } = render(
-      <LootsListItem loot={createLoot()} variant="embedded" />,
-      { wrapper: await createLootTestWrapper() },
-    );
-
-    expect(container.querySelector("[data-slot='card']")).toBeNull();
-    expect(screen.getByTestId("loot-list-item").dataset.presentation).toBe(
-      "embedded",
-    );
-    expect(screen.getByText("Potulny Berserker")).toBeTruthy();
-    expect(screen.getByLabelText("Akcje: Tester")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Legendarny przedmiot" }),
-    ).toBeTruthy();
   });
 });

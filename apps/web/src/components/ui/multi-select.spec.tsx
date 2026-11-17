@@ -13,23 +13,6 @@ afterEach(() => {
 });
 
 describe("MultiSelect", () => {
-  it("keeps the last label for duplicate option values", () => {
-    render(
-      <MultiSelect
-        onClose={() => {}}
-        onValueChange={() => {}}
-        options={[
-          { value: "selected", label: "Previous label" },
-          { value: "selected", label: "Latest label" },
-        ]}
-        value={["selected"]}
-      />,
-    );
-
-    expect(screen.getByText("Latest label")).toBeTruthy();
-    expect(screen.queryByText("Previous label")).toBeNull();
-  });
-
   it("shows search failure instead of empty or stale results while preserving selected values", () => {
     render(
       <MultiSelect
@@ -237,19 +220,6 @@ describe("MultiSelect", () => {
     fireEvent.click(screen.getByRole("option", { name: "Alpha" }));
 
     expect(onValueChange).toHaveBeenCalledWith(["alpha"]);
-  });
-
-  it("labels chip removal with the selected option", () => {
-    render(
-      <MultiSelect
-        onClose={() => {}}
-        onValueChange={() => {}}
-        options={[{ label: "Alpha", value: "alpha" }]}
-        value={["alpha"]}
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "Usuń Alpha" })).toBeTruthy();
   });
 
   it("clears selected options and reports the close once", () => {

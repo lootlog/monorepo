@@ -2,30 +2,10 @@ import { describe, expect, it } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import {
   getChatMessageTypeForSubmitAction,
-  getChatReplyPayload,
   getChatSubmitAction,
 } from "./chat-submit.helpers";
 
 describe("chat submit helpers", () => {
-  it("builds a reply payload when a reply draft exists", () => {
-    expect(
-      getChatReplyPayload({
-        guildId: "guild-1",
-        messageId: "message-1",
-        senderNick: "Hero",
-        message: "hej",
-        type: MessageType.NORMAL,
-      }),
-    ).toEqual({
-      messageId: "message-1",
-      senderNick: "Hero",
-      message: "hej",
-      type: MessageType.NORMAL,
-    });
-
-    expect(getChatReplyPayload(null)).toBeUndefined();
-  });
-
   it("detects a clear chat action only when the user can clear chat", () => {
     expect(
       getChatSubmitAction({

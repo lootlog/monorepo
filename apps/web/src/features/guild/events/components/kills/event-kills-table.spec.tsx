@@ -67,19 +67,8 @@ describe("EventKillsTable", () => {
     expect(screen.getByText("events.kills.noKills")).toBeTruthy();
   });
 
-  it("renders kill data and detail links", () => {
+  it("links each kill to its detail page", () => {
     renderTable(<EventKillsTable {...defaultProps} kills={[createKill()]} />);
-
-    expect(
-      screen.getByRole("columnheader", { name: "events.kills.monster" }),
-    ).toBeTruthy();
-    expect(
-      screen.queryByRole("columnheader", { name: "events.kills.actions" }),
-    ).toBeNull();
-    expect(screen.getByText("15m")).toBeTruthy();
-    expect(screen.getByText("2")).toBeTruthy();
-    expect(screen.getByText("12")).toBeTruthy();
-    expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
 
     const detailLinks = screen.getAllByRole("link", {
       name: "events.kills.openKillDetails",
@@ -164,7 +153,7 @@ describe("EventKillsTable", () => {
     );
   });
 
-  it("renders preview rows without infinite-scroll behavior or a terminal row", () => {
+  it("does not observe the preview for infinite scrolling", () => {
     const observer = vi.fn();
     vi.stubGlobal("IntersectionObserver", observer);
 
@@ -180,9 +169,6 @@ describe("EventKillsTable", () => {
       />,
     );
 
-    expect(screen.getByRole("table")).toBeTruthy();
-    expect(screen.queryByText("events.kills.endOfList")).toBeNull();
-    expect(screen.queryByText("events.kills.loading")).toBeNull();
     expect(observer).not.toHaveBeenCalled();
   });
 

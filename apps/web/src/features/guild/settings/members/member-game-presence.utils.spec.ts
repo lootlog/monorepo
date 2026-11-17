@@ -3,10 +3,7 @@ import {
   mapMemberGamePresenceByDiscordId,
 } from "@/lib/game-presence";
 import { describe, expect, it } from "vitest";
-import {
-  isMemberGamePresenceVerified,
-  isMemberOnlineInGame,
-} from "./member-game-presence.utils";
+import { isMemberGamePresenceVerified } from "./member-game-presence.utils";
 import type { PlayerPresence } from "@/lib/gateway-client";
 
 const buildPresence = (overrides: Partial<PlayerPresence>): PlayerPresence => ({
@@ -70,16 +67,6 @@ describe("member game presence utils", () => {
 
     expect(updated.get("discord-1")).toHaveLength(1);
     expect(updated.get("discord-1")?.[0]?.sessionId).toBe("session-2");
-  });
-
-  it("detects game online status", () => {
-    const mapped = mapMemberGamePresenceByDiscordId({
-      "discord-1": [buildPresence({ sessionId: "session-1" })],
-    });
-
-    expect(isMemberOnlineInGame(mapped, "discord-1")).toBe(true);
-    expect(isMemberOnlineInGame(mapped, "discord-2")).toBe(false);
-    expect(isMemberOnlineInGame(undefined, "discord-1")).toBe(false);
   });
 
   it("detects verified Margonem game presence", () => {

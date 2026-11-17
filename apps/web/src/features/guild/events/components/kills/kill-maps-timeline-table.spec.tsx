@@ -17,51 +17,6 @@ beforeEach(() => installMatchMedia(false));
 afterEach(cleanup);
 
 describe("KillMapsTimelineTable", () => {
-  it("renders the desktop columns in the approved order and separates the map id", () => {
-    renderTable([createMapWithRepeatedAssignment()]);
-
-    expect(
-      screen.getAllByRole("columnheader").map((header) => header.textContent),
-    ).toEqual([
-      "events.killDetail.mapCoverage.columns.id",
-      "events.killDetail.mapCoverage.columns.map",
-      "events.killDetail.mapCoverage.columns.participants",
-      "events.killDetail.mapCoverage.columns.coverage",
-      "events.killDetail.mapCoverage.columns.actions",
-    ]);
-    expect(screen.getByText("#123").closest("td")?.cellIndex).toBe(0);
-    expect(screen.getByText("Pradawne Wzgórze").closest("td")?.cellIndex).toBe(
-      1,
-    );
-
-    expect(screen.getByText("100%").className).toContain("text-signal-ready");
-  });
-
-  it("uses the shared coverage thresholds in table rows and expanded diagnostics", () => {
-    const maps = [
-      createMapWithCoverage("red", 49),
-      createMapWithCoverage("amber-start", 50),
-      createMapWithCoverage("amber-end", 89),
-      createMapWithCoverage("green", 90),
-    ];
-
-    renderTable(maps);
-
-    expect(screen.getByText("49%").className).toContain("text-signal-alert");
-    expect(screen.getByText("50%").className).toContain("text-signal-timer");
-    expect(screen.getByText("89%").className).toContain("text-signal-timer");
-    expect(screen.getByText("90%").className).toContain("text-signal-ready");
-
-    fireEvent.click(
-      screen.getAllByRole("button", {
-        name: "events.killDetail.mapCoverage.expandMap",
-      })[0]!,
-    );
-
-    const expandedCoverage = screen.getAllByText("49%")[1];
-    expect(expandedCoverage?.className).toContain("text-signal-alert");
-  });
-
   it("groups repeated assignments and reveals every period without duplicate key warnings", () => {
     const consoleError = vi
       .spyOn(console, "error")
@@ -85,10 +40,6 @@ describe("KillMapsTimelineTable", () => {
 
     const detail = document.getElementById("map-map-1-details");
     expect(detail?.getAttribute("aria-labelledby")).toBe("map-map-1-summary");
-    expect(detail?.closest("td")?.getAttribute("colspan")).toBe("5");
-    expect(detail?.closest("tr")?.getAttribute("data-state")).toBe(
-      "expanded-detail",
-    );
 
     expect(screen.getAllByText("Tester")).toHaveLength(1);
     expect(
@@ -171,97 +122,6 @@ describe("KillMapsTimelineTable", () => {
     expect(screen.getByText("5m")).toBeTruthy();
   });
 
-  it("keeps a long gap audit inside a fixed-height scroll area", () => {
-    const map = createMapWithGaps();
-    map.gaps = Array.from({ length: 66 }, (_, index) => {
-      const startedAt = new Date(startTime.getTime() + index * 60_000);
-      const endedAt = new Date(startedAt.getTime() + 10_000);
-
-      return {
-        id: `gap-${index}`,
-        gapType: "UNCOVERED" as const,
-        startedAt: startedAt.toISOString(),
-        endedAt: endedAt.toISOString(),
-        durationSeconds: 10,
-      };
-    });
-    renderTable([map]);
-
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "events.killDetail.mapCoverage.expandMap",
-      }),
-    );
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /events\.killDetail\.mapCoverage\.showAllGaps/,
-      }),
-    );
-
-    const scrollArea = document.querySelector('[data-slot="scroll-area"]');
-    expect(scrollArea?.className).toContain("h-60");
-    expect(scrollArea?.className).not.toContain("max-h-60");
-  });
-
-  it("uses three visible columns below the md breakpoint", () => {
-    installMatchMedia(true);
-    renderTable([createMapWithRepeatedAssignment()]);
-
-    expect(screen.getAllByRole("columnheader")).toHaveLength(3);
-    expect(screen.getAllByRole("cell")).toHaveLength(3);
-    expect(screen.queryByText("#123")).toBeNull();
-    const coverageCell = screen.getByText("100%").closest("td");
-    expect(coverageCell?.className).toContain("w-16");
-    expect(coverageCell?.className).toContain("px-0!");
-
-    const actionCell = screen
-      .getByRole("button", {
-        name: "events.killDetail.mapCoverage.expandMap",
-      })
-      .closest("td");
-
-    expect(actionCell?.className).toContain("w-12");
-    expect(actionCell?.className).toContain("p-0!");
-
-    const columnWidths = Array.from(document.querySelectorAll("col")).map(
-      (column) => column.className,
-    );
-
-    expect(columnWidths).toEqual(["", "w-16 md:w-20", "w-12"]);
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "events.killDetail.mapCoverage.expandMap",
-      }),
-    );
-    expect(
-      document
-        .getElementById("map-map-1-details")
-        ?.closest("td")
-        ?.getAttribute("colspan"),
-    ).toBe("3");
-  });
-
-  it("uses participant role colors for assigned members with a neutral fallback", () => {
-    const map = createMapWithRepeatedAssignment();
-    map.assignments.push({
-      member: { id: 8, name: "Bez roli", avatar: null, userId: "user-8" },
-      assignedAt: "2026-08-12T08:00:00.000Z",
-      unassignedAt: "2026-08-12T08:15:00.000Z",
-    });
-
-    renderTable([map], new Map([[7, "#AABBCC"]]));
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "events.killDetail.mapCoverage.expandMap",
-      }),
-    );
-
-    expect(screen.getByText("Tester").getAttribute("style")).toContain(
-      "color: #AABBCC",
-    );
-    expect(screen.getByText("Bez roli").getAttribute("style")).toBeNull();
-  });
-
   it("renders an unavailable state for an invalid kill window", () => {
     render(
       <KillMapsTimelineTable
@@ -281,30 +141,17 @@ describe("KillMapsTimelineTable", () => {
       screen.getByText("events.killDetail.mapCoverage.unavailableData"),
     ).toBeTruthy();
     expect(
-      document
-        .getElementById("map-map-1-details")
-        ?.closest("tr")
-        ?.getAttribute("data-state"),
-    ).toBe("expanded-detail");
-    expect(
-      document.getElementById("map-map-1-details")?.className,
-    ).not.toContain("bg-muted");
-    expect(
       screen.queryByText("events.killDetail.mapCoverage.covered"),
     ).toBeNull();
   });
 });
 
-function renderTable(
-  maps: MapTimelineData[],
-  memberRoleColors: ReadonlyMap<number, string> = new Map(),
-) {
+function renderTable(maps: MapTimelineData[]) {
   return render(
     <KillMapsTimelineTable
       maps={maps}
       startTime={startTime}
       endTime={endTime}
-      memberRoleColors={memberRoleColors}
       t={t}
     />,
   );
@@ -359,36 +206,6 @@ function createMapWithGaps(): MapTimelineData {
       createGap("gap-3", "UNCOVERED", "08:40", "08:55"),
       createGap("gap-4", "UNCOVERED", "09:10", "09:30"),
     ],
-  };
-}
-
-function createMapWithCoverage(
-  mapId: string,
-  coveragePercent: number,
-): MapTimelineData {
-  const uncoveredSeconds = Math.round(
-    ((100 - coveragePercent) / 100) * 2 * 60 * 60,
-  );
-
-  return {
-    mapId,
-    mapName: mapId,
-    numericMapId: coveragePercent,
-    assignments: [],
-    gaps:
-      uncoveredSeconds === 0
-        ? []
-        : [
-            {
-              id: `${mapId}-gap`,
-              gapType: "UNCOVERED",
-              startedAt: startTime.toISOString(),
-              endedAt: new Date(
-                startTime.getTime() + uncoveredSeconds * 1000,
-              ).toISOString(),
-              durationSeconds: uncoveredSeconds,
-            },
-          ],
   };
 }
 

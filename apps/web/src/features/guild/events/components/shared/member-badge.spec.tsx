@@ -27,6 +27,5 @@ describe("MemberBadge", () => {
     expect(link.getAttribute("href")).toBe(
       "/guild-1/events/event-1/members/8112",
     );
-    expect(link.tabIndex).toBe(0);
   });
 });

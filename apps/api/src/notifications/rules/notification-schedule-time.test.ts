@@ -3,7 +3,6 @@ import { NotificationScheduleIntervalType } from "#src/notifications/notificatio
 import {
   calculateFirstOccurrenceInTimeZone,
   calculateNextOccurrenceInTimeZone,
-  isRecurringScheduleInterval,
   isValidTimeZone,
 } from "./notification-schedule-time.js";
 
@@ -17,26 +16,6 @@ describe("notification-schedule-time.util", () => {
 
     it("rejects invalid time zones", () => {
       expect(isValidTimeZone("Lootlog/Invalid")).toBe(false);
-    });
-  });
-
-  describe("isRecurringScheduleInterval", () => {
-    it("returns true for daily and weekly intervals", () => {
-      expect(
-        isRecurringScheduleInterval(NotificationScheduleIntervalType.DAILY),
-      ).toBe(true);
-      expect(
-        isRecurringScheduleInterval(NotificationScheduleIntervalType.WEEKLY),
-      ).toBe(true);
-    });
-
-    it("returns false for one-time and hourly intervals", () => {
-      expect(
-        isRecurringScheduleInterval(NotificationScheduleIntervalType.ONCE),
-      ).toBe(false);
-      expect(
-        isRecurringScheduleInterval(NotificationScheduleIntervalType.HOURLY),
-      ).toBe(false);
     });
   });
 

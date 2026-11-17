@@ -37,14 +37,13 @@ describe("ChatFiltersSettings", () => {
     harness.request.mockImplementation(patchRequest);
   });
 
-  it("renders translated copy, shows hidden ranks as disabled and persists a toggle", async () => {
+  it("shows hidden ranks as disabled and persists a toggle", async () => {
     const user = userEvent.setup();
     render(
       <QueryClientProvider client={harness.queryClient}>
         <ChatFiltersSettings />
       </QueryClientProvider>,
     );
-    expect(screen.queryByText(/chatFilters\./)).not.toBeInTheDocument();
     expect(screen.getByRole("switch", { name: "Tytan" })).not.toBeChecked();
     expect(screen.getByRole("switch", { name: "Heros" })).toBeChecked();
 

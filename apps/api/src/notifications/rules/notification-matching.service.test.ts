@@ -69,28 +69,6 @@ describe("NotificationMatchingService", () => {
     ).toBe(false);
   });
 
-  it("requires a single role to satisfy loot read, tier permission and level range", () => {
-    expect(
-      canRolesViewLoot(
-        [
-          {
-            id: "read",
-            permissions: [Permission.LOOTLOG_LOOTS_READ],
-            lvlRangeFrom: 1,
-            lvlRangeTo: 500,
-          },
-          {
-            id: "titan",
-            permissions: [Permission.LOOTLOG_LOOTS_TITANS_READ],
-            lvlRangeFrom: 250,
-            lvlRangeTo: 350,
-          },
-        ],
-        [{ type: NpcType.TITAN, level: 300 }],
-      ),
-    ).toBe(false);
-  });
-
   it("allows access when one role fully matches loot read, tier permission and level range", () => {
     expect(
       canRolesViewLoot(

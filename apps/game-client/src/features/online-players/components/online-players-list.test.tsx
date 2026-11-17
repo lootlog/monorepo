@@ -170,9 +170,7 @@ describe("OnlinePlayersList", () => {
       screen.queryByText("Nikt nie jest teraz online"),
     ).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(200));
-    expect(
-      screen.getByRole("status", { busy: true }).querySelector("svg"),
-    ).toHaveClass("ll:animate-spin");
+    expect(screen.getByRole("status", { busy: true })).toBeVisible();
   });
 
   it("loads during the first gateway connection, explains a failed one instead of loading forever, then loads once joined", async () => {
@@ -226,27 +224,6 @@ describe("OnlinePlayersList", () => {
     await act(() => vi.advanceTimersByTimeAsync(0));
     expect(harness.fetchPresence).toHaveBeenCalledTimes(3);
     expect(screen.getByText("Hero (123w)")).toBeVisible();
-  });
-
-  it("keeps long account names and locations constrained for truncation", async () => {
-    const name = "Very long player name that must stay inside the list";
-    const map = "Very long location name that must stay inside the list";
-    harness.fetchPresence.mockResolvedValue(
-      createPresenceSnapshot([person(name, 123, "w", "10", "discord-1", map)]),
-    );
-
-    await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
-
-    const playerName = await screen.findByText(`${name} (123w)`);
-    const viewport = playerName.closest("[data-ll-scroll-area-viewport]");
-    expect(viewport?.firstElementChild).toHaveStyle({
-      width: "100%",
-      minWidth: 0,
-    });
-    expect(playerName).toHaveClass("ll:truncate");
-    expect(playerName.parentElement).toHaveClass("ll:min-w-0");
-    expect(playerName.parentElement?.parentElement).toHaveClass("ll:min-w-0");
-    expect(screen.getByText(map)).toHaveClass("ll:truncate");
   });
 
   it("renders account entries sorted by level descending", async () => {

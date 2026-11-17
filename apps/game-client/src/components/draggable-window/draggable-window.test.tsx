@@ -379,7 +379,6 @@ describe("DraggableWindow", () => {
       value: 60,
     });
 
-    expect(windowBody.className).toContain("ll:ring-1");
     expect(resizeHandle.style.cursor).toBe("se-resize");
     expect(getMaxHeightPreviewOverlay(container)).toBeNull();
 

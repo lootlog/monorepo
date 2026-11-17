@@ -36,36 +36,38 @@ function role(id: string, permissions: Permission[]): Role {
 }
 
 describe("LootStatsService access-scoped caching", () => {
-  it("separates cache entries for different effective loot visibility", () => {
+  it("separates cache entries for different effective loot visibility", async () => {
+    const keys: string[] = [];
+
     const service = new LootStatsService(database, {
-      getOrSetJsonEffect: () => Effect.die("Unexpected cache read"),
+      getOrSetJsonEffect: (options) => {
+        keys.push(options.key);
+
+        return Effect.die("Stop after the cache lookup");
+      },
       setNX: () => Promise.resolve(true),
       setJson: () => Promise.resolve(),
     });
 
-    const base = role("role", [Permission.LOOTLOG_LOOTS_READ]);
+    const read = (permissions: Permission[]) =>
+      Effect.runPromiseExit(
+        service.getLootStatsEffect(
+          "guild-1",
+          createAccessPolicy({ capabilities: permissions }),
+          [role("role", permissions)],
+          "7d",
+        ),
+      );
 
-    const titan = role("role", [
+    await read([Permission.LOOTLOG_LOOTS_READ]);
+    await read([
       Permission.LOOTLOG_LOOTS_READ,
       Permission.LOOTLOG_LOOTS_TITANS_READ,
     ]);
 
-    const baseKey = service["buildCacheKey"](
-      "guild-1",
-      [Permission.LOOTLOG_LOOTS_READ],
-      [base],
-      "7d",
-    );
-
-    const titanKey = service["buildCacheKey"](
-      "guild-1",
-      [Permission.LOOTLOG_LOOTS_READ, Permission.LOOTLOG_LOOTS_TITANS_READ],
-      [titan],
-      "7d",
-    );
-
-    expect(baseKey).not.toBe(titanKey);
-    expect(baseKey).toMatch(/^loot-stats:guild-1:[^:]+:7d$/);
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).not.toBe(keys[1]);
+    expect(keys[0]).toMatch(/^loot-stats:guild-1:[^:]+:7d$/);
   });
 
   it("returns a cached Effect result without executing SQL", async () => {

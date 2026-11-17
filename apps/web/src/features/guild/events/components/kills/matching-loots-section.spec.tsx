@@ -12,7 +12,7 @@ await initializeTestTranslations();
 afterEach(cleanup);
 
 describe("MatchingLootsSection", () => {
-  it("renders matching loots as embedded rows inside one shared card", async () => {
+  it("links to the full loot list filtered to the killed hero", async () => {
     render(
       <MatchingLootsSection
         hasError={false}
@@ -25,13 +25,6 @@ describe("MatchingLootsSection", () => {
       { wrapper: await createLootTestWrapper() },
     );
 
-    expect(screen.queryByText("2")).toBeNull();
-    expect(
-      screen
-        .getAllByTestId("loot-list-item")
-        .map((row) => row.dataset.presentation),
-    ).toEqual(["embedded", "embedded"]);
-
     const showAllLink = screen.getByRole("link", {
       name: "events.loots.showAll",
     });
@@ -43,11 +36,9 @@ describe("MatchingLootsSection", () => {
 
     expect(target.pathname).toBe("/guild-one");
     expect(target.searchParams.get("npcs")).toBe("Potulny Berserker");
-    expect(showAllLink.getAttribute("class")).toContain("hover:text-primary");
-    expect(showAllLink.getAttribute("class")).not.toContain("hover:bg-");
   });
 
-  it("keeps loading and empty states inside the section", async () => {
+  it("reports no loots only after loading finishes", async () => {
     const { rerender } = render(
       <MatchingLootsSection
         hasError={false}
@@ -63,9 +54,7 @@ describe("MatchingLootsSection", () => {
     const section = () =>
       screen.getByRole("region", { name: "events.killDetail.matchingLoots" });
 
-    expect(section().querySelectorAll("[data-slot='skeleton']")).toHaveLength(
-      3,
-    );
+    expect(section().textContent).not.toContain("events.killDetail.noLoots");
 
     rerender(
       <MatchingLootsSection

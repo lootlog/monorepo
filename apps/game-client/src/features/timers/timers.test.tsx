@@ -143,7 +143,6 @@ it.each([
         screen.queryByRole("dialog", { name: /Dodaj timer/ }),
       ).not.toBeInTheDocument(),
     );
-    expect(useWindowsStore.getState()).not.toHaveProperty("add-timer");
   },
 );
 

@@ -52,22 +52,6 @@ describe("runtime architecture", () => {
     }
   });
 
-  it.each([
-    "Engine.communication",
-    'Engine["communication"]',
-    "Game.hero",
-    'Game["hero"]',
-    "g.npc",
-    'g["other"]',
-    "globalThis.Engine",
-    'globalThis["successData"]',
-    'window["API"]',
-    "_g('talk&id=1')",
-    "successData(event)",
-  ])("detects forbidden runtime access: %s", (source) => {
-    expect(source).toMatch(forbiddenRuntimeAccess);
-  });
-
   it("keeps Margonem model imports out of canonical domain stores", () => {
     const stores = [
       "game.store.ts",

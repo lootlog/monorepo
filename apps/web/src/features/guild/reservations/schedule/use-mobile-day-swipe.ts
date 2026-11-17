@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
-export const MOBILE_DAY_SWIPE_MEDIA_QUERY =
-  "(pointer: coarse) and (hover: none)";
+const MOBILE_DAY_SWIPE_MEDIA_QUERY = "(pointer: coarse) and (hover: none)";
 
 const getIsMobileDaySwipeEnabled = () =>
   window.matchMedia(MOBILE_DAY_SWIPE_MEDIA_QUERY).matches;

@@ -18,7 +18,6 @@ interface OthersState {
   applyBatch: (batch: OthersBatch) => void;
   clearOthers: (mapChanged?: boolean) => void;
   getOther: (id: string) => RuntimeOther | undefined;
-  removeOther: (id: string) => void;
   replaceOthers: (othersById: OthersById, mapChanged?: boolean) => void;
 }
 
@@ -102,7 +101,6 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
       status: "uninitialized",
     })),
   getOther: (id) => get().othersById[id],
-  removeOther: (id) => get().applyBatch({ removeIds: [id] }),
   replaceOthers: (othersById, mapChanged = false) =>
     set((state) => {
       const reconciledOthersById = reconcileOthersById(

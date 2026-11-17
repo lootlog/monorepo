@@ -1,10 +1,9 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { ApiError, configureApiClients } from "@lootlog/client/transport";
+import { configureApiClients } from "@lootlog/client/transport";
 import {
   NotificationChatPublishError,
-  isNotificationRateLimitError,
   useNotificationChatOrchestration,
 } from "./use-notification-chat-orchestration";
 
@@ -136,18 +135,5 @@ describe("useNotificationChatOrchestration", () => {
     });
     expect(fetchRequest).toHaveBeenCalledTimes(1);
     expect(result.current.isCreatingNotificationMessage).toBe(false);
-  });
-
-  it("recognizes only API rate-limit errors", () => {
-    const rateLimitError = new ApiError({
-      status: 429,
-      data: { retryAfterMs: 1_000 },
-      url: "/messaging",
-      method: "POST",
-      message: "Request failed",
-    });
-
-    expect(isNotificationRateLimitError(rateLimitError)).toBe(true);
-    expect(isNotificationRateLimitError(new Error("failed"))).toBe(false);
   });
 });

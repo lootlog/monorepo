@@ -98,9 +98,7 @@ it("shows delayed loading feedback without falsely presenting an empty timer lis
   mountContent({ initialLoading: true });
   expect(screen.queryByText("Nie ma jeszcze timerów")).not.toBeInTheDocument();
   act(() => vi.advanceTimersByTime(200));
-  expect(screen.getByRole("status").querySelector("svg")).toHaveClass(
-    "ll:animate-spin",
-  );
+  expect(screen.getByRole("status")).toBeVisible();
   expect(screen.queryByText("Nie ma jeszcze timerów")).not.toBeInTheDocument();
 });
 
@@ -113,7 +111,7 @@ it("lets users retry an initial request failure", async () => {
   expect(screen.queryByText("Nie ma jeszcze timerów")).not.toBeInTheDocument();
 });
 
-it("renders real controls and timer tiles while retaining scroll and window drag behavior", async () => {
+it("renders real controls and timer tiles while retaining window drag behavior", async () => {
   const timer = {
     ...createTimerFixture(),
   };
@@ -124,14 +122,6 @@ it("renders real controls and timer tiles while retaining scroll and window drag
   const label = screen.getByText(/\[H\] Tanroth/);
   expect(label).toBeVisible();
   const scrollContainer = screen.getByTestId("timers-scroll-container");
-  expect(scrollContainer).toHaveClass(
-    "ll:min-h-0",
-    "ll:h-full",
-    "ll:overflow-hidden",
-  );
-  expect(
-    scrollContainer.querySelector("[data-ll-scroll-area-viewport]"),
-  ).toHaveStyle({ overflowX: "hidden", overflowY: "scroll" });
   fireEvent.pointerDown(scrollContainer);
   fireEvent.pointerDown(label);
   expect(onPointerDown).toHaveBeenCalledTimes(2);

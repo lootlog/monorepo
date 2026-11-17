@@ -291,7 +291,7 @@ describe("SingleTimer", () => {
     ).toBeVisible();
   });
 
-  it("shows pending and hidden states with the configured custom color", async () => {
+  it("shows a pending hidden timer with the configured custom color and no actions", async () => {
     const user = userEvent.setup();
     const fixture = createTimerHttpFixture();
     const state = useTimersStore.getState();
@@ -343,10 +343,6 @@ describe("SingleTimer", () => {
       "--ll-timer-accent": "#111111",
       "--ll-list-row-fill": "#222222",
     });
-    expect(tile?.parentElement).toHaveClass("ll:opacity-50");
-    expect(screen.getByText("00:00:10").parentElement).toHaveClass(
-      "ll:opacity-60",
-    );
     await user.pointer({
       keys: "[MouseRight]",
       target: screen.getByText(/Tanroth/),

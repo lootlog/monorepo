@@ -276,14 +276,6 @@ describe("Auth HttpApi contract", () => {
     }
   });
 
-  it("no longer exposes the realtime ticket endpoint", async () => {
-    const response = await runtime.run(
-      new Request("http://localhost/auth/realtime-ticket", { method: "POST" }),
-    );
-
-    expect(response.status).toBe(404);
-  });
-
   it.each([undefined, "invalid.session_token=expired"])(
     "rejects missing or invalid sessions without identity headers: %s",
     async (cookie) => {

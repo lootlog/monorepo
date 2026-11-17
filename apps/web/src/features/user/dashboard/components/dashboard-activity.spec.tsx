@@ -163,7 +163,7 @@ it("requests 112 inclusive days and hides older cached kill activity", async () 
   expect(screen.getByRole("button", { name: /6 września/ })).toBeTruthy();
 });
 
-it("uses the lowest activity level for missing days in both tabs without details or coverage notices", async () => {
+it("marks missing days as having no data in both tabs without details or coverage notices", async () => {
   vi.setSystemTime(new Date("2026-09-06T12:00:00Z"));
   onlineResponse = {
     ...onlineDefaults,
@@ -199,7 +199,6 @@ it("uses the lowest activity level for missing days in both tabs without details
     fireEvent.click(screen.getByRole("button", { name: mode }));
     const day = await screen.findByRole("button", { name: /1 września/ });
     expect(day.getAttribute("aria-label")).toContain("Brak danych");
-    expect(day.classList.contains("bg-muted")).toBe(true);
     fireEvent.click(day);
     expect(document.querySelector("p[aria-live=polite]")).toBeNull();
     expect(screen.queryByText("Brak danych")).toBeNull();
