@@ -1,11 +1,5 @@
 import { useTheme } from "@/hooks/context/use-theme";
-import {
-  getThemeFamily,
-  getThemeGreetingSuffix,
-  isCatTheme,
-  isRiasTheme,
-  isRukiaTheme,
-} from "@lootlog/ui/themes/resolver";
+import { getThemeFamily } from "@lootlog/ui/themes/resolver";
 
 export const useThemeMeta = () => {
   const themeState = useTheme();
@@ -15,9 +9,5 @@ export const useThemeMeta = () => {
     ...themeState,
     family: getThemeFamily(theme),
     resolvedFamily: getThemeFamily(resolvedTheme),
-    isCatTheme: isCatTheme(theme),
-    isRukiaTheme: isRukiaTheme(theme),
-    isRiasTheme: isRiasTheme(theme),
-    greetingSuffix: getThemeGreetingSuffix(theme),
   };
 };

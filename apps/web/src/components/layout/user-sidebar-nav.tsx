@@ -2,14 +2,14 @@ import { useTranslation } from "react-i18next";
 import { useSession } from "@/hooks/auth/use-session";
 import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
-import { useThemeMeta } from "@/themes/use-theme-meta";
+import { useThemeGreetingSuffix } from "@/themes/adapters";
 import { useMatches } from "@tanstack/react-router";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
 
 export const UserSidebarNav = () => {
   const { data: session } = useSession();
-  const { greetingSuffix } = useThemeMeta();
+  const greetingSuffix = useThemeGreetingSuffix();
   const { t } = useTranslation();
   const matches = useMatches();
   const navigation = resolveAppNavigation({ matches });

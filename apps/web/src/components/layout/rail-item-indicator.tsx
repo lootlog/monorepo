@@ -14,9 +14,9 @@ export const RailItemIndicator = ({
   isActive: boolean;
   isLoading?: boolean;
 }) => {
-  const { isRukiaTheme } = useThemeMeta();
+  const { family } = useThemeMeta();
 
-  if (isRukiaTheme) return null;
+  if (family === "rukia") return null;
 
   return (
     <span
