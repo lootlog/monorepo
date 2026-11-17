@@ -9,17 +9,8 @@ import { Config, Option, type Redacted, Schema } from "effect";
 const optionalRedacted = (name: string) =>
   Config.option(Config.Redacted(name)).pipe(Config.map(Option.getOrUndefined));
 
-/**
- * `1`, `true`, `yes` and `on` (any case) enable a flag; any other value
- * disables it, and an unset variable keeps the default.
- */
 const flag = (name: string, defaultValue: boolean) =>
-  Config.String(name).pipe(
-    Config.map((value) =>
-      ["1", "true", "yes", "on"].includes(value.toLowerCase()),
-    ),
-    Config.withDefault(defaultValue),
-  );
+  Config.Boolean(name).pipe(Config.withDefault(defaultValue));
 
 /** Read by the API and by the catalog replay script. */
 export const rabbitmqUriConfig = Config.Redacted("RABBITMQ_URI");

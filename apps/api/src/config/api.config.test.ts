@@ -33,6 +33,12 @@ describe("apiConfiguration", () => {
     expect(disabled.reservationsCleanup.enabled).toBe(false);
   });
 
+  it("refuses to start on an unrecognised flag value instead of turning cleanup off", async () => {
+    await expect(
+      loadWith({ TIMER_CLEANUP_ENABLED: "enabled" }),
+    ).rejects.toBeDefined();
+  });
+
   it("reads global chat admins as a comma-separated User id list", async () => {
     const config = await loadWith({
       GLOBAL_CHAT_ADMIN_USER_IDS: " user-1, ,user-2,",
