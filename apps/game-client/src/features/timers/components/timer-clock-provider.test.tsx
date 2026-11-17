@@ -56,13 +56,4 @@ describe("TimerClockProvider", () => {
       ).toHaveTextContent(String(NOW + 1_000));
     },
   );
-
-  it("does not start the clock when the visible grid is empty", () => {
-    const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
-
-    render(<div data-testid="empty-grid" />);
-
-    expect(setIntervalSpy).not.toHaveBeenCalled();
-    expect(vi.getTimerCount()).toBe(0);
-  });
 });

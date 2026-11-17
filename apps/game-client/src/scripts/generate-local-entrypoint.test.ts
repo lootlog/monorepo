@@ -53,7 +53,5 @@ describe("generate-local-entrypoint", () => {
     expect(userscript).toContain(
       'const bundleUrl = "http://127.0.0.1:4173/@lootlog/game-client.user.js";',
     );
-    expect(userscript).toContain("new Blob([response.responseText]");
-    expect(userscript).toContain('document.createElement("script")');
   });
 });

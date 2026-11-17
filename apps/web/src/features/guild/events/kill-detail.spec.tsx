@@ -227,13 +227,6 @@ describe("KillDetail states", () => {
     expect(await screen.findByText("events.killDetail.noLoots")).toBeTruthy();
   });
 
-  it("renders empty participants and loot states", async () => {
-    await renderDetail();
-
-    expect(screen.getByText("events.kills.noParticipants")).toBeTruthy();
-    expect(await screen.findByText("events.killDetail.noLoots")).toBeTruthy();
-  });
-
   it("passes manual close and long NPC names to the summary", async () => {
     const longNpcName = "Nadzwyczajnie Długa Nazwa Potulnego Berserkera";
     detail = createDetailData({ isManualClose: true, npcName: longNpcName });

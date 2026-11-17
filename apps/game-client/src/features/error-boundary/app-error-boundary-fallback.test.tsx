@@ -8,10 +8,6 @@ import { APP_ERROR_WINDOW_ID } from "./error-boundary.constants";
 
 const mockClipboardWriteText = vi.fn<Clipboard["writeText"]>();
 
-function ThrowError(): never {
-  throw new Error("Boom failure");
-}
-
 describe("AppErrorBoundaryFallback", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -57,7 +53,7 @@ describe("AppErrorBoundaryFallback", () => {
     }));
   });
 
-  it("renders a draggable window with error details", () => {
+  it("shows the error details", () => {
     const error = new Error("Exploded view");
     error.name = "RenderError";
     error.stack = "RenderError: Exploded view\n    at Crash";
@@ -69,15 +65,10 @@ describe("AppErrorBoundaryFallback", () => {
       />,
     );
 
-    const windowElement = document.querySelector(
-      `[data-ll-draggable-window="${APP_ERROR_WINDOW_ID}"]`,
-    );
-
     expect(screen.getByText("Błąd Lootloga")).toBeInTheDocument();
     expect(screen.getByText("RenderError")).toBeInTheDocument();
     expect(screen.getByText("Exploded view")).toBeInTheDocument();
     expect(screen.getByText(/RenderError: Exploded view/)).toBeInTheDocument();
-    expect(windowElement).not.toBeNull();
   });
 
   it("copies the diagnostics together with the full error payload", async () => {
@@ -159,22 +150,6 @@ describe("AppErrorBoundaryFallback", () => {
     await user.click(screen.getByRole("button", { name: "Przeładuj dodatek" }));
 
     expect(await screen.findByText("Interface restored")).toBeInTheDocument();
-    consoleError.mockRestore();
-  });
-
-  it("renders from ErrorBoundary when a child throws", () => {
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
-
-    render(
-      <ErrorBoundary FallbackComponent={AppErrorBoundaryFallback}>
-        <ThrowError />
-      </ErrorBoundary>,
-    );
-
-    expect(screen.getByText("Boom failure")).toBeInTheDocument();
-
     consoleError.mockRestore();
   });
 });

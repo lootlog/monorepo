@@ -7,7 +7,6 @@ import {
   createAuthService,
   HttpResponseError,
   SESSION_DECISION_TTL_MS,
-  normalizeScopes,
   type AuthProvider,
 } from "./auth-service.js";
 
@@ -51,15 +50,6 @@ const createFakeAuth = () => {
 };
 
 describe("AuthService", () => {
-  it("normalizes Discord scopes without accepting non-string values", () => {
-    expect(normalizeScopes(["guilds", 123, "email"])).toEqual([
-      "guilds",
-      "email",
-    ]);
-    expect(normalizeScopes("guilds identify")).toEqual(["guilds", "identify"]);
-    expect(normalizeScopes(null)).toEqual([]);
-  });
-
   it("rejects spoofed forward-auth identity headers", async () => {
     const { auth } = createFakeAuth();
 

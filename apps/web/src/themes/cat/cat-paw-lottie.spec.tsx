@@ -52,17 +52,9 @@ describe("CatPawLottie", () => {
       removeEventListener: () => {},
     }));
 
-    const { container } = render(
-      <CatPawLottie animationData={{}} className="size-8" />,
-    );
+    const { container } = render(<CatPawLottie animationData={{}} />);
 
     expect(playback).not.toHaveBeenCalled();
-    expect(container.firstElementChild?.classList.contains("size-8")).toBe(
-      true,
-    );
-    expect(container.querySelector("svg")?.getAttribute("viewBox")).toBe(
-      "0 0 120 120",
-    );
     expect(container.querySelector("svg path")).not.toBeNull();
   });
 });

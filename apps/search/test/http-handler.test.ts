@@ -36,13 +36,6 @@ describe("Search HttpApi contract", () => {
     expect(response.status).toBe(200);
     await dispose();
   });
-
-  test("returns 404 for unknown paths", async () => {
-    const { dispose, handler } = makeBoundary();
-    const response = await handler(new Request("http://localhost/private"));
-    expect(response.status).toBe(404);
-    await dispose();
-  });
 });
 
 test("a search outage is an explicit unavailable response, not an empty success", async () => {

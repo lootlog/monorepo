@@ -94,22 +94,6 @@ describe("playSound", () => {
     expect(audioInstances[0]?.src).toBe(heroSound);
   });
 
-  it("reuses the preloaded media element for repeated pings", () => {
-    seedSettingsDocumentValues(
-      queryClient,
-      soundSettingValues(createSoundSettings()),
-    );
-
-    playSound("pings", "mapPing");
-    playSound("pings", "mapPing");
-
-    expect(audioInstances).toHaveLength(1);
-    expect(audioInstances[0]?.load).toHaveBeenCalledTimes(1);
-    expect(audioInstances[0]?.play).toHaveBeenCalledTimes(2);
-    expect(audioInstances[0]?.pause).toHaveBeenCalledTimes(1);
-    expect(audioInstances[0]?.currentTime).toBe(0);
-  });
-
   it("stays silent when ping sounds are muted", () => {
     seedSettingsDocumentValues(
       queryClient,

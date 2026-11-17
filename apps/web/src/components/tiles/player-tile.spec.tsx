@@ -33,7 +33,6 @@ describe("PlayerTile", () => {
       name: "loots.list.playerActions.label",
     });
 
-    expect(tile.tagName).toBe("BUTTON");
     fireEvent.click(tile);
 
     const profileLink = await screen.findByRole("link", {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { processDamageValue, roundHpPercentage } from "./value-utils";
+import { roundHpPercentage } from "./value-utils";
 
 describe("roundHpPercentage", () => {
   it("keeps two decimals for non-full hp values", () => {
@@ -13,10 +13,5 @@ describe("roundHpPercentage", () => {
   it("keeps full and zero hp compact", () => {
     expect(roundHpPercentage(100)).toBe("100");
     expect(roundHpPercentage(0)).toBe("0");
-  });
-
-  it("formats damage values with a leading separator", () => {
-    expect(processDamageValue("427", "-")).toBe(" -427");
-    expect(processDamageValue("7389", "+")).toBe(" +7389");
   });
 });

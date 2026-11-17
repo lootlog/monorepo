@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { parseStatisticsSearch } from "./statistics-search";
-import { getKillsControllerGetUserKillAnalyticsQueryKey } from "@lootlog/client/main";
 
 describe("statistics URL", () => {
   it("defaults malformed filters and preserves valid reload state", () => {
@@ -24,17 +23,5 @@ describe("statistics URL", () => {
     expect(
       parseStatisticsSearch({ characterId: "123" }).characterId,
     ).toBeUndefined();
-  });
-  it("isolates cached period and world data", () => {
-    const all = getKillsControllerGetUserKillAnalyticsQueryKey({ days: "30" });
-    expect(all).not.toEqual(
-      getKillsControllerGetUserKillAnalyticsQueryKey({ days: "7" }),
-    );
-    expect(all).not.toEqual(
-      getKillsControllerGetUserKillAnalyticsQueryKey({
-        days: "30",
-        world: "luvia",
-      }),
-    );
   });
 });

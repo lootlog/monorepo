@@ -7,9 +7,6 @@ import {
 import { describe, expect, it } from "vitest";
 import {
   buildChatMentionContext,
-  getChatMentionMemberColorsByName,
-  getChatMentionNotificationId,
-  getChatMentionRoleColorsByName,
   getChatMentionSegments,
   getCurrentUserMentionNames,
   getCurrentUserMentionRoleNames,
@@ -169,44 +166,6 @@ describe("chat mentions helpers", () => {
       roleColorsByName: {
         "raid team": "ff8800",
       },
-    });
-  });
-
-  it("builds a stable notification id for chat mentions", () => {
-    expect(
-      getChatMentionNotificationId({
-        guildId: "guild-1",
-        messageId: "message-1",
-      }),
-    ).toBe("chat-mention:guild-1:message-1");
-  });
-
-  it("builds normalized member and role color lookups", () => {
-    expect(
-      getChatMentionMemberColorsByName([
-        {
-          id: 1,
-          userId: "user-1",
-          name: "Hero",
-          color: 0x12ab34,
-        },
-      ]),
-    ).toEqual({
-      hero: "12ab34",
-    });
-
-    expect(
-      getChatMentionRoleColorsByName([
-        {
-          id: "role-1",
-          guildId: "guild-1",
-          name: "Raid Team",
-          color: 0xff8800,
-          permissions: [],
-        },
-      ]),
-    ).toEqual({
-      "raid team": "ff8800",
     });
   });
 

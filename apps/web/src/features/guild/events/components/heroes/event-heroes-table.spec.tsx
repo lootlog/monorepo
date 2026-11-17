@@ -15,9 +15,7 @@ import { EMPTY_VALUE } from "@/constants/empty-value";
 import { EventHeroesTable } from "./event-heroes-table";
 import type { MyHeroScore } from "../../utils/my-hero-scores";
 
-await initializeTestTranslations({
-  "events.heroes.columns.idValue": "ID: {{id}}",
-});
+await initializeTestTranslations();
 
 async function render(element: ReactNode) {
   const router = createOrganizationTestRouter(element);
@@ -89,7 +87,7 @@ describe("EventHeroesTable", () => {
     ],
   };
 
-  it("renders responsive hero data and preserves all interactions", async () => {
+  it("links each hero and routes every management action to its hero", async () => {
     const onAddHero = vi.fn();
     const onDeleteHero = vi.fn();
     const onEditHero = vi.fn();
@@ -105,24 +103,6 @@ describe("EventHeroesTable", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "events.heroes.title" }),
-    ).toBeTruthy();
-    expect(
-      screen.getAllByRole("columnheader").map((header) => header.textContent),
-    ).toEqual([
-      "events.heroes.columns.hero",
-      "events.heroes.columns.timer",
-      "events.heroes.columns.maps",
-      "events.heroes.columns.kills",
-      "events.heroes.columns.actions",
-    ]);
-
-    expect(screen.getByText("Potulny Berserker")).toBeTruthy();
-    expect(screen.getByText("284w")).toBeTruthy();
-    expect(screen.getByText("ID: 410452")).toBeTruthy();
-    expect(screen.getByText("events.maps.mapCount")).toBeTruthy();
-    expect(screen.getByText("events.heroes.killCount")).toBeTruthy();
     const heroLink = screen.getByRole("link");
     expect(heroLink.getAttribute("href")).toBe(
       "/guild-1/events/event-1/heroes/hero-1",

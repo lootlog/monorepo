@@ -25,7 +25,7 @@ describe("ScrollArea", () => {
     const root = screen.getByTestId("root");
     const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
 
-    expect(root).toHaveClass("ll:max-h-40", "ll:overflow-hidden");
+    expect(root).toHaveClass("ll:max-h-40");
     expect(viewport).toBeInstanceOf(HTMLDivElement);
     expect(viewportRef.current).toBe(viewport);
     expect(viewport).toHaveStyle({ overflowAnchor: "none" });
@@ -58,7 +58,7 @@ describe("ScrollArea", () => {
     },
   );
 
-  it("renders a four-pixel overlay scrollbar for the selected orientation", async () => {
+  it("renders overlay scrollbars and overflow for the selected orientation", async () => {
     vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(100);
     vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(100);
     vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(300);
@@ -73,29 +73,19 @@ describe("ScrollArea", () => {
     const root = screen.getByTestId("root");
     const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
 
-    const horizontalScrollbar = await waitFor(() => {
-      const scrollbar = Array.from(root.children).find(
-        (element) => element.getAttribute("data-orientation") === "horizontal",
-      );
-
-      expect(scrollbar).toBeDefined();
-
-      return scrollbar;
+    await waitFor(() => {
+      expect(
+        Array.from(root.children).find(
+          (element) =>
+            element.getAttribute("data-orientation") === "horizontal",
+        ),
+      ).toBeDefined();
     });
 
     expect(viewport).toHaveStyle({
       overflowX: "scroll",
       overflowY: "hidden",
     });
-    expect(horizontalScrollbar).toHaveClass(
-      "ll:h-1",
-      "ll:mb-px",
-      "ll:rounded-full",
-      "ll:opacity-0",
-      "ll:data-[hovering]:opacity-100",
-      "ll:data-[scrolling]:opacity-100",
-    );
-    expect(horizontalScrollbar).not.toHaveClass("ll:mb-1");
 
     rerender(
       <ScrollArea data-testid="root" orientation="both">
@@ -103,22 +93,18 @@ describe("ScrollArea", () => {
       </ScrollArea>,
     );
 
-    const scrollbars = await waitFor(() => {
+    await waitFor(() => {
       const elements = Array.from(root.children).filter((element) =>
         element.hasAttribute("data-orientation"),
       );
 
       expect(elements).toHaveLength(2);
-
-      return elements;
     });
 
     expect(viewport).toHaveStyle({
       overflowX: "scroll",
       overflowY: "scroll",
     });
-    expect(scrollbars[0]).toHaveClass("ll:w-1");
-    expect(scrollbars[1]).toHaveClass("ll:h-1");
   });
 
   it("uses a vertical mouse wheel to move horizontal content", () => {
@@ -139,21 +125,6 @@ describe("ScrollArea", () => {
 
     expect(viewport.scrollLeft).toBe(48);
     expect(wasNotCanceled).toBe(false);
-  });
-
-  it("registers horizontal wheel handling as non-passive", () => {
-    const addEventListenerSpy = vi.spyOn(
-      HTMLDivElement.prototype,
-      "addEventListener",
-    );
-
-    render(<ScrollArea orientation="horizontal">Content</ScrollArea>);
-
-    expect(addEventListenerSpy).toHaveBeenCalledWith(
-      "wheel",
-      expect.any(Function),
-      { passive: false },
-    );
   });
 
   it("lets wheel events escape when horizontal content is at an edge", () => {

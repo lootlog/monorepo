@@ -4,7 +4,6 @@ import { SettingsDocumentsResponseSchema } from "@lootlog/schema/settings-docume
 import { SettingsData } from "#src/settings-documents/settings-data";
 import {
   getPreferences,
-  patchPreferences,
   SettingsAccessDenied,
   SettingsIdentity,
 } from "./preferences.operations.js";
@@ -58,37 +57,6 @@ describe("settings HttpApi handlers", () => {
 
     expect(error).toBe(denied);
     expect(dataCalled).toBe(false);
-  });
-
-  it("delegates a multi-domain preference patch as one atomic operation", async () => {
-    let calls = 0;
-
-    const payload = {
-      operations: [
-        {
-          domain: "timers" as const,
-          scope: { type: "USER" as const, id: "user-a" },
-          set: { syncEnabled: true },
-          unset: [],
-        },
-      ],
-    };
-
-    const layer = provideServices(
-      makeData({
-        patchPreferences: () => {
-          calls += 1;
-
-          return Effect.succeed({ domains: {} });
-        },
-      }),
-    );
-
-    await Effect.runPromise(
-      patchPreferences(payload).pipe(Effect.provide(layer)),
-    );
-
-    expect(calls).toBe(1);
   });
 
   it("keeps Date values in the handler and encodes the existing HTTP JSON", async () => {

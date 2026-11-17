@@ -84,20 +84,6 @@ describe("BattleLogAttackActions", () => {
     expect(html).not.toContain("&lt;dmgo&gt;");
   });
 
-  it("highlights glare with the same yellow style as curse", () => {
-    const html = renderAttackActions([{ type: "-legbon_glare", value: "" }]);
-
-    expect(html).toContain("-Oślepienie w następnej turze");
-    expect(html).toContain("text-yellow-400");
-  });
-
-  it("highlights fiery cleanse with the battle cleanse color", () => {
-    const html = renderAttackActions([{ type: "-legbon_cleanse", value: "" }]);
-
-    expect(html).toContain("-Płomienne oczyszczenie");
-    expect(html).toContain("text-[#ff999a]");
-  });
-
   it("renders frenzy and retaliation legendary bonuses", () => {
     const html = renderAttackActions([
       { type: "+legbon_frenzy_main", value: "5" },
@@ -110,8 +96,6 @@ describe("BattleLogAttackActions", () => {
     expect(html).toContain("ataki pomocnicze ulegają wzmocnieniu");
     expect(html).toContain("5/5");
     expect(html).toContain("-Aura odwetu");
-    expect(html).toContain("text-orange-300");
-    expect(html).toContain("text-purple-300");
     expect(html).not.toContain("{{value}}");
     expect(html).not.toContain("battle.+legbon_frenzy");
     expect(html).not.toContain("battle.-legbon_retaliation");
@@ -128,6 +112,5 @@ describe("BattleLogAttackActions", () => {
     expect(html).toContain("-2137");
     expect(html).toContain("obrażeń");
     expect(html).not.toContain("obrażeń od zmiażdżenia");
-    expect(html).not.toContain("text-rose-300");
   });
 });

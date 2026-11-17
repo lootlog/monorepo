@@ -4,11 +4,7 @@ import { filterHeroesByLevel } from "./event-hero-visibility.js";
 
 type Role = Parameters<typeof filterHeroesByLevel>[1][number];
 
-function createRole(
-  _permissions: Permission[],
-  lvlRangeFrom = 1,
-  lvlRangeTo = 500,
-): Role {
+function createRole(lvlRangeFrom = 1, lvlRangeTo = 500): Role {
   return {
     lvlRangeFrom,
     lvlRangeTo,
@@ -28,7 +24,7 @@ describe("filterHeroesByLevel", () => {
     expect(
       filterHeroesByLevel(
         heroes,
-        [createRole([])],
+        [createRole()],
         [Permission.LOOTLOG_EVENTS_READ],
       ),
     ).toEqual(heroes);
@@ -40,7 +36,7 @@ describe("filterHeroesByLevel", () => {
     expect(
       filterHeroesByLevel(
         heroes,
-        [createRole([Permission.LOOTLOG_EVENTS_READ], 100, 200)],
+        [createRole(100, 200)],
         [Permission.LOOTLOG_EVENTS_READ],
       ),
     ).toEqual([{ npcLvl: 120 }]);
@@ -50,7 +46,7 @@ describe("filterHeroesByLevel", () => {
     expect(
       filterHeroesByLevel(
         [{ npcLvl: 320 }],
-        [createRole([Permission.LOOTLOG_EVENTS_READ], 100, 200)],
+        [createRole(100, 200)],
         [Permission.LOOTLOG_EVENTS_READ],
       ),
     ).toEqual([]);

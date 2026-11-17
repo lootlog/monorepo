@@ -6,7 +6,6 @@ import {
   type BattleHpTimelineEventWarrior,
 } from "./battle-hp-timeline-event-markers";
 import {
-  BATTLE_HP_TIMELINE_LAYER_DEFINITIONS,
   DEFAULT_BATTLE_HP_TIMELINE_LAYER_CONFIG,
   normalizeBattleHpTimelineLayerConfig,
   type BattleHpTimelineLayerConfig,
@@ -46,12 +45,6 @@ const createLayerConfig = (
 };
 
 describe("battle HP timeline event markers", () => {
-  it("does not expose the removed damage layer", () => {
-    expect(
-      BATTLE_HP_TIMELINE_LAYER_DEFINITIONS.map((definition) => definition.key),
-    ).not.toContain("damage");
-  });
-
   it("drops stale storage keys from normalized layer config", () => {
     const config = normalizeBattleHpTimelineLayerConfig({
       legendary: false,

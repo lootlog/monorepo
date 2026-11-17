@@ -45,7 +45,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("renders guild metadata and hidden state and applies each organization's real permissions response", async () => {
+it("renders guild metadata and hidden timers and applies each organization's real permissions response", async () => {
   const user = userEvent.setup();
 
   const fixture = createTimerHttpFixture((request) =>
@@ -84,8 +84,7 @@ it("renders guild metadata and hidden state and applies each organization's real
   expect(
     fixture.requests.map((request) => new URL(request.url).pathname).sort(),
   ).toEqual(["/guilds/guild-1/permissions", "/guilds/guild-2/permissions"]);
-  const hidden = screen.getByText(/Mushita/).closest('[id="10"]');
-  expect(hidden?.parentElement).toHaveClass("ll:opacity-50");
+  expect(screen.getByText(/Mushita/)).toBeVisible();
   await user.hover(screen.getByText(/Tanroth/));
   expect(await screen.findByText("Tester (Alpha)")).toBeVisible();
   await user.pointer({

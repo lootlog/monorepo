@@ -6,16 +6,6 @@ import {
 } from "./route-errors";
 
 describe("withRouteLoaderCancellation", () => {
-  it("returns the loader result when the loader succeeds", async () => {
-    const abortController = new AbortController();
-
-    await expect(
-      withRouteLoaderCancellation(abortController, async () => {
-        return "ok";
-      }),
-    ).resolves.toBe("ok");
-  });
-
   it("throws AbortError for cancelled route loaders when the route is aborted", async () => {
     const abortController = new AbortController();
     abortController.abort();

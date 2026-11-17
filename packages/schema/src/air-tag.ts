@@ -176,7 +176,7 @@ const AirTagClanSchema = Schema.Struct({
   name: ShortString,
 });
 
-export const AirTagObservationSchema = Schema.Struct({
+const AirTagObservationSchema = Schema.Struct({
   targetId: ShortString,
   nickname: ShortString,
   clan: Schema.optionalKey(AirTagClanSchema),

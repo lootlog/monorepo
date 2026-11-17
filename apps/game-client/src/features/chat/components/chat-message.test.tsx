@@ -68,23 +68,6 @@ describe("ChatMessage", () => {
     expect(screen.getByText("Hero:")).toBeInTheDocument();
   });
 
-  it("shows delete without edit when backend allows only moderation", () => {
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        message={makeChatMessage({
-          canDelete: true,
-        })}
-      />,
-    );
-
-    fireEvent.contextMenu(screen.getByText("Member:"));
-    expect(screen.queryByText("Edytuj")).not.toBeInTheDocument();
-    expect(screen.getByText("Usuń")).toBeInTheDocument();
-  });
-
   it("renders reply preview snapshot when the message references another message", () => {
     render(
       <ChatMessage

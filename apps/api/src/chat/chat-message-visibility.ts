@@ -22,11 +22,9 @@ const isNpcScopedMessage = (data: ChatStoredMessage) => {
 };
 
 export const canViewChatMessage = (
-  data: ChatStoredMessage | null | undefined,
+  data: ChatStoredMessage,
   roles: ReadonlyArray<Role>,
 ) => {
-  if (!data) return false;
-
   if (!isNpcScopedMessage(data)) return canReadChatNpcSource(roles, null);
   const npc = data.npc;
 

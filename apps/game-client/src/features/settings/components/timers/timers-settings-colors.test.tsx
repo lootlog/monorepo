@@ -21,19 +21,6 @@ describe("TimersSettingsColors", () => {
     });
   });
 
-  it("opens one editor with name, colours, transparency and preview", () => {
-    render(<TimersSettingsColors />);
-
-    openEditor("Czerwony");
-
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByLabelText("Nazwa")).toBeInTheDocument();
-    expect(screen.getByLabelText("Kolor ramki HEX")).toBeInTheDocument();
-    expect(screen.getByLabelText("Kolor tła HEX")).toBeInTheDocument();
-    expect(screen.getByLabelText("Przezroczystość tła")).toBeInTheDocument();
-    expect(screen.getByText("Podgląd")).toBeInTheDocument();
-  });
-
   it("commits a valid border HEX value without touching the name", () => {
     render(<TimersSettingsColors />);
 

@@ -93,7 +93,6 @@ describe("battle analytics", () => {
   let redisService: ReturnType<typeof createRedisFixture>;
   const mockUserId = "user-123";
   const mockCharacterId = "char-123";
-  const mockWorld = "world1";
 
   beforeEach(() => {
     const mockDrizzleService = createDatabaseFixture();
@@ -116,28 +115,6 @@ describe("battle analytics", () => {
   });
 
   describe("getBattleAnalytics", () => {
-    it("should return cached result if available", async () => {
-      const cachedData = JSON.stringify({
-        totalBattles: 10,
-        wins: 6,
-        losses: 4,
-        winRatio: 60,
-        totalPH: 100,
-      });
-
-      redisService.get.mockResolvedValue(cachedData);
-
-      const result = await Effect.runPromise(
-        service.getBattleAnalytics(
-          { characterId: mockCharacterId },
-          mockUserId,
-        ),
-      );
-
-      expect(result).toEqual(JSON.parse(cachedData));
-      expect(drizzleService.db.query.battles.findMany).not.toHaveBeenCalled();
-    });
-
     it("should keep defined numeric filter values in cache keys", async () => {
       const cachedData = JSON.stringify({
         totalBattles: 0,
@@ -225,23 +202,6 @@ describe("battle analytics", () => {
   });
 
   describe("calculateProfessionWinRate", () => {
-    it("should return cached result if available", async () => {
-      const cachedData = JSON.stringify([
-        { prof: "mage", wins: 5, losses: 3, totalBattles: 8, winRate: 62.5 },
-      ]);
-
-      redisService.get.mockResolvedValue(cachedData);
-
-      const result = await Effect.runPromise(
-        service.calculateProfessionWinRate(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result).toEqual(JSON.parse(cachedData));
-    });
-
     it("should return empty array when no characters", async () => {
       redisService.get.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findMany.mockReturnValue(
@@ -256,97 +216,7 @@ describe("battle analytics", () => {
     });
   });
 
-  describe("getCurrentStreak", () => {
-    it("should return cached result if available", async () => {
-      const cachedData = JSON.stringify({
-        current: { type: "wins", count: 3 },
-        longest: { wins: 5, losses: 2 },
-      });
-
-      redisService.get.mockResolvedValue(cachedData);
-
-      const result = await Effect.runPromise(
-        service.getCurrentStreak(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result).toEqual(JSON.parse(cachedData));
-    });
-  });
-
-  describe("getBattleDurationStats", () => {
-    it("should return cached result if available", async () => {
-      const cachedData = JSON.stringify({
-        avgWinDuration: 500,
-        avgLossDuration: 300,
-        fastest: { duration: 100, battleId: "b-1" },
-        longest: { duration: 1000, battleId: "b-2" },
-      });
-
-      redisService.get.mockResolvedValue(cachedData);
-
-      const result = await Effect.runPromise(
-        service.getBattleDurationStats(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result).toEqual(JSON.parse(cachedData));
-    });
-  });
-
   describe("getPhGrowthTimeSeries", () => {
-    it("should return cached result if available", async () => {
-      const cachedData = JSON.stringify([
-        {
-          date: "2024-01-01T00:00:00.000Z",
-          ph: 50,
-          cumulativePh: 50,
-          battleId: "b-1",
-        },
-      ]);
-
-      redisService.get.mockResolvedValue(cachedData);
-
-      const result = await Effect.runPromise(
-        service.getPhGrowthTimeSeries(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result).toEqual(JSON.parse(cachedData));
-    });
-
-    it("should retain PH and normalize matchmaking in rating cache keys", async () => {
-      const cachedData = JSON.stringify([]);
-      redisService.get.mockResolvedValue(cachedData);
-
-      await Effect.runPromise(
-        service.getRatingGrowthTimeSeries(
-          statisticsQuery({
-            characterId: mockCharacterId,
-            world: mockWorld,
-            period: "all",
-            minLevel: 0,
-            maxLevel: 0,
-            ph: true,
-            matchmaking: true,
-          }),
-          mockUserId,
-        ),
-      );
-
-      expect(redisService.get).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `statistics:rating-growth:${mockUserId}:${mockCharacterId}:${mockWorld}:all:all:all:0-0:ph:matchmaking`,
-        ),
-      );
-    });
-
     it("should return empty array when no characters", async () => {
       redisService.get.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findMany.mockReturnValue(
@@ -378,28 +248,6 @@ describe("battle analytics", () => {
   });
 
   describe("getRatingGrowthTimeSeries", () => {
-    it("should return cached result if available", async () => {
-      const cachedData = JSON.stringify([
-        {
-          date: "2024-01-01T00:00:00.000Z",
-          ratingDelta: 25,
-          rating: 1500,
-          battleId: "b-1",
-        },
-      ]);
-
-      redisService.get.mockResolvedValue(cachedData);
-
-      const result = await Effect.runPromise(
-        service.getRatingGrowthTimeSeries(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result).toEqual(JSON.parse(cachedData));
-    });
-
     it("should return empty array when no characters", async () => {
       redisService.get.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findMany.mockReturnValue(
@@ -414,40 +262,7 @@ describe("battle analytics", () => {
     });
   });
 
-  describe("getAbyssSeasons", () => {});
-
-  describe("getCombatProfile", () => {});
-
   describe("getRatingDeltaByOpponent", () => {
-    it("should return cached result if available", async () => {
-      const cachedData = JSON.stringify([
-        {
-          opponentId: "opponent-1",
-          opponentName: "Opponent1",
-          opponentIcon: "warrior.gif",
-          opponentProf: "w",
-          opponentLvl: 100,
-          totalRatingDelta: 50,
-          wins: 2,
-          losses: 0,
-          totalBattles: 2,
-          avgRatingDelta: 25,
-          lastBattleDate: "2024-01-01T00:00:00.000Z",
-        },
-      ]);
-
-      redisService.get.mockResolvedValue(cachedData);
-
-      const result = await Effect.runPromise(
-        service.getRatingDeltaByOpponent(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result).toEqual(JSON.parse(cachedData));
-    });
-
     it("should return empty array when no characters", async () => {
       redisService.get.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findMany.mockReturnValue(

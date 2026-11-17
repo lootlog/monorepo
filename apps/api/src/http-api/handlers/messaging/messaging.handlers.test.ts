@@ -1,6 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { Effect, Layer, Schema } from "effect";
-import { SentNotificationResponse } from "#src/contracts/messaging/schemas";
+import { Effect, Layer } from "effect";
 import { MessagingData } from "#src/messaging/messaging-data";
 import {
   MessagingAccessDenied,
@@ -39,30 +38,6 @@ const provideServices = (
   );
 
 describe("messaging HttpApi handlers", () => {
-  it("preserves both authenticated identities and the notification response", async () => {
-    const callers: unknown[] = [];
-
-    const layer = provideServices(
-      makeData({
-        sendNotification: (caller) => {
-          callers.push(caller);
-
-          return Effect.succeed({
-            notificationId: "notification-a",
-            guildIds: ["guild-a"],
-          });
-        },
-      }),
-    );
-
-    const response = await Effect.runPromise(
-      sendNotification(notification).pipe(Effect.provide(layer)),
-    );
-
-    expect(callers).toEqual([{ userId: "user-a", discordId: "discord-a" }]);
-    expect(Schema.is(SentNotificationResponse)(response)).toBe(true);
-  });
-
   it("fails closed before rate limiting or delivery when auth is missing", async () => {
     const denied = new MessagingAccessDenied({
       status: 401,

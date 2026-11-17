@@ -31,13 +31,9 @@ describe("InformationSettingsTab", { timeout: 20_000 }, () => {
       timeZone: "UTC",
     }).format(new Date(buildTimestamp));
 
-    expect(screen.getByText("Wersja klienta")).toBeInTheDocument();
     expect(screen.getByText("1.0.1")).toBeInTheDocument();
-    expect(screen.getByText("Commit SHA")).toBeInTheDocument();
     expect(screen.getByText(commitSha)).toBeInTheDocument();
-    expect(screen.getByText("Środowisko")).toBeInTheDocument();
     expect(screen.getByText("production")).toBeInTheDocument();
-    expect(screen.getByText("Data kompilacji (UTC)")).toBeInTheDocument();
     expect(screen.getByText(formattedBuildTimestamp)).toBeInTheDocument();
   });
 

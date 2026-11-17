@@ -41,10 +41,6 @@ function createMessage(
 }
 
 describe("canViewChatMessage", () => {
-  it("returns false when data is missing", () => {
-    expect(canViewChatMessage(undefined, [])).toBe(false);
-  });
-
   it("returns false without base chat permission", () => {
     const roles = [createRole([Permission.LOOTLOG_CHAT_TITANS_READ])];
 
