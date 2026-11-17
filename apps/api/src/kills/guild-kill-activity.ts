@@ -4,7 +4,7 @@ import { Clock, Effect } from "effect";
 import type { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import { readPublishedFeedEntry } from "#src/feed/user-feed";
+import { readPublishedFeedEntry } from "#src/users/user-feed";
 
 export const makeGuildKillActivityPublisher = (
   database: typeof ApiDatabase.Service,

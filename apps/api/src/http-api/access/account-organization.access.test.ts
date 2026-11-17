@@ -6,7 +6,7 @@ import { Effect, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { Etag, HttpPlatform, HttpRouter } from "effect/http";
 import { HttpApiTest } from "effect/http-api";
-import { BearerSecurityMiddleware } from "../contracts/shared.js";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import { OrganizationSummary } from "#src/contracts/shared";
 import { UserPreferencesResponse } from "#src/contracts/users/schemas";
 import { LootlogApi } from "../lootlog-api.js";

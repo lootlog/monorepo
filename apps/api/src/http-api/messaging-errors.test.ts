@@ -12,10 +12,10 @@ import {
   ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { MessagingGroup } from "./contracts/messaging/api.js";
-import { LootlogConfigGroup } from "./contracts/lootlog-config/api.js";
-import { PartyReadyRoomGroup } from "./contracts/party-ready-room/api.js";
-import { BearerSecurityMiddleware } from "./contracts/shared.js";
+import { MessagingGroup } from "#src/contracts/messaging/api";
+import { LootlogConfigGroup } from "#src/contracts/lootlog-config/api";
+import { PartyReadyRoomGroup } from "#src/contracts/party-ready-room/api";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import {
   MessagingHandlers,
   MessagingIdentity,

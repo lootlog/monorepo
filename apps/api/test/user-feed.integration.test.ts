@@ -20,7 +20,7 @@ import {
   makeUserFeed,
   buildUserFeedQuery,
   readPublishedFeedEntry,
-} from "#src/feed/user-feed";
+} from "../src/users/user-feed.js";
 import {
   makeGuildKillActivityCleanup,
   makeGuildKillActivityPublisher,

@@ -1,6 +1,6 @@
 import { getOrSetStaleJson } from "#src/redis/stale-json-cache";
 import { getLootListCacheScope } from "#src/shared/cache";
-import { makeUserFeed } from "#src/feed/user-feed";
+import { makeUserFeed } from "#src/users/user-feed";
 import { makeUserLootStats } from "#src/loots/query/user-loot-stats";
 import { makeGuildKillActivityPublisher } from "#src/kills/guild-kill-activity";
 import { ApiDatabase } from "#src/database/drizzle/database";

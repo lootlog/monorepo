@@ -1,4 +1,4 @@
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import type {
   guildTable,
   memberTable,

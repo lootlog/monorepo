@@ -49,7 +49,7 @@ import {
   getEventHeroKillWindowKey,
 } from "#src/events/kills/event-hero-kill-job";
 import { getProfByShortname } from "@lootlog/domain/profession";
-import type { JsonValue } from "#src/http-api/contracts/shared";
+import type { JsonValue } from "#src/contracts/api-shared";
 import {
   ApplicationError,
   InvalidRequestError,

@@ -66,7 +66,7 @@ import {
   AccountOrganizationNotFound,
 } from "#src/http-api/access/account-organization.access";
 import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import { ReauthenticationRequired } from "#src/contracts/api-shared";
 import {
   OrganizationContextLookup,
   OrganizationNotFound,

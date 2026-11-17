@@ -73,7 +73,7 @@ import {
 import { Etag, HttpPlatform, HttpRouter } from "effect/http";
 import { HttpApiTest } from "effect/http-api";
 import { LootlogApi } from "../lootlog-api.js";
-import { BearerSecurityMiddleware } from "../contracts/shared.js";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 
 const identity = { userId: "user-a", discordId: "discord-owner" };

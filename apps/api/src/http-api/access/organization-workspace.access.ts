@@ -19,7 +19,7 @@ import {
   applicationErrorStatusOrUndefined,
 } from "#src/shared/http/http-errors";
 
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export type OrganizationWorkspaceGuildAccess = OrganizationWorkspaceIdentity & {
   readonly guildId: string;

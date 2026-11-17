@@ -22,7 +22,7 @@ import {
 import { DomainDateTime } from "#src/shared/schema/response-codecs";
 
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 
 export type ChatIdentity = {

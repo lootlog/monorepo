@@ -36,8 +36,8 @@ import {
   createGuildFixture,
   createMemberFixture,
 } from "../../../../test/organization-fixtures.js";
-import { PartyReadyRoomGroup } from "../../contracts/party-ready-room/api.js";
-import { BearerSecurityMiddleware } from "../../contracts/shared.js";
+import { PartyReadyRoomGroup } from "#src/contracts/party-ready-room/api";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import {
   PartyReadyRoomHandlers,
   ReadyRoomAuthorization,

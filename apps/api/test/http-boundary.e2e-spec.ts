@@ -19,7 +19,7 @@ import { FetchHttpClient, HttpRouter } from "effect/http";
 import { Redis } from "effect/persistence";
 import { fingerprintAccessToken } from "#src/auth/auth.service";
 import { getCompleteUserGuildsCacheKey } from "#src/discord/discord-cache.util";
-import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import { ReauthenticationRequired } from "../src/contracts/api-shared.js";
 import { RedisService } from "#src/redis/redis.service";
 import {
   getPermissionsCacheKey,

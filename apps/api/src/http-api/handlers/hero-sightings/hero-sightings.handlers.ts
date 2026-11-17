@@ -20,7 +20,7 @@ import {
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 import type {
   HeroSightingsDataFailure,

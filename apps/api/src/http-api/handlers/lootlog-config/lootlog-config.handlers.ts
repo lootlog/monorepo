@@ -22,7 +22,7 @@ import {
   NpcLootlogConfigResponse,
   type UpdateNpcLootlogConfigRequest,
 } from "#src/contracts/lootlog-config/schemas";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export class LootlogConfigAccessDenied extends TaggedErrorClass<LootlogConfigAccessDenied>()(
   "LootlogConfigAccessDenied",

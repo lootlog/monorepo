@@ -1,4 +1,4 @@
-import { makeMapsOperation } from "#src/maps/maps.operation";
+import { makeMapsOperation } from "#src/maps/maps.operations";
 import { PublicGuildStatsCardRepository } from "#src/public-guild-stats-card/public-guild-stats-card.repository";
 import {
   PublicGuildStatsCardAdapterError,

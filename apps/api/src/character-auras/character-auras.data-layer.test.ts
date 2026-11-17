@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import { makeUserAccountDeletion } from "#src/users/user-account-deletion.data-layer";
-import { recordMargonemAccountVerification } from "#src/margonem-accounts/margonem-accounts";
+import { recordMargonemAccountVerification } from "#src/users/margonem-accounts";
 import type {
   CharacterAuraId,
   CharacterAurasChanged,

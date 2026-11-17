@@ -1,9 +1,6 @@
 import { Predicate, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import {
-  HttpErrorResponse,
-  type JsonValue,
-} from "#src/http-api/contracts/shared";
+import { HttpErrorResponse, type JsonValue } from "#src/contracts/api-shared";
 
 export const HttpStatus = {
   BAD_REQUEST: 400,

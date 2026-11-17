@@ -31,7 +31,7 @@ import { applicationErrorResponse } from "../../application-error-response.js";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { LootlogApi } from "../../lootlog-api.js";
 import { NotificationOperations } from "#src/notifications/notifications.data-layer";
-import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 type Guild = typeof guildTable.$inferSelect;
 
