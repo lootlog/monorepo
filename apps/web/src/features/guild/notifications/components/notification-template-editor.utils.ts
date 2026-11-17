@@ -13,7 +13,7 @@ import {
   type CreateNotificationRuleDtoTriggerType,
   type RoleResponseDtoOutput as GuildRole,
 } from "@lootlog/client/main";
-import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
+import { discordRoleCssColor } from "@lootlog/domain/member-display-role";
 import {
   $createNotificationTemplateRoleNode,
   $isNotificationTemplateRoleNode,
@@ -118,7 +118,7 @@ export const createTemplateEditorNodes = (
         const role = roleById.get(match[2]);
         paragraphNode.append(
           $createNotificationTemplateRoleNode({
-            roleColor: role ? getCustomRoleCssColor(role.color) : null,
+            roleColor: role ? discordRoleCssColor(role.color) : null,
             roleId: match[2],
             roleName: role?.name ?? match[2],
           }),

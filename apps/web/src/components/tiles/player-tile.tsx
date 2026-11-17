@@ -1,7 +1,5 @@
-import {
-  MARGONEM_CDN_CHARACTERS_URL,
-  getMargonemProfileUrl,
-} from "@/constants/margonem";
+import { getMargonemProfileUrl } from "@/constants/margonem";
+import { MARGONEM_CDN_CHARACTERS_URL } from "@lootlog/domain/margonem-cdn";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Popover,

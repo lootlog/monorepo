@@ -11,7 +11,7 @@ import {
   type NotificationOwnerType,
   type NotificationTargetType,
   type NotificationTriggerType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 export interface NotificationQueue {
   readonly remove: (jobId: string) => Effect.Effect<void, unknown, never>;

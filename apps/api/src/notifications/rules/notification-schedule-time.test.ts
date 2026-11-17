@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { NotificationScheduleIntervalType } from "#src/notifications/notification-enums";
+import { NotificationScheduleIntervalType } from "@lootlog/schema/notifications";
 import {
   calculateFirstOccurrenceInTimeZone,
   calculateNextOccurrenceInTimeZone,

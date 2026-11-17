@@ -3,10 +3,11 @@ import { formatLevel } from "@lootlog/domain/profession";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import type {
-  DiscordGuildChannelDeletedEvent,
-  DiscordNotificationDeliveryResultEvent,
-  LootCreatedNotificationEventV2,
+import {
+  type DiscordGuildChannelDeletedEvent,
+  type DiscordNotificationDeliveryResultEvent,
+  type LootCreatedNotificationEventV2,
+  NotificationJobKind,
 } from "@lootlog/schema/notifications";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { NotificationGuildTargets } from "#src/notifications/targets/notification-guild-targets";
@@ -26,7 +27,6 @@ import {
   WATCHED_ITEM_DROPPED_TITLE,
   watchedItemDroppedMessage,
 } from "#src/notifications/content/notification-messages";
-import { NotificationJobKind } from "#src/notifications/notification-enums";
 
 export interface TimerDeletedEvent {
   readonly guildId: string;

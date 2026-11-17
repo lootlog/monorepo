@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { and, eq, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { DateTime } from "effect";
@@ -7,10 +8,10 @@ import {
   userKillCharacterTable,
   userKillTotalTable,
 } from "#src/database/drizzle/kill-statistics.schema";
-import { STATS_TIME_ZONE, statsLocalTime } from "./kill-stats-period.js";
+import { statsLocalTime } from "./kill-stats-period.js";
 
 export const getKillAnalyticsRange = (now: DateTime.Utc, days: number) => {
-  const zoned = DateTime.setZoneNamedUnsafe(now, STATS_TIME_ZONE);
+  const zoned = DateTime.setZoneNamedUnsafe(now, MARGONEM_TIME_ZONE);
   const today = DateTime.startOf(zoned, "day");
   const start = DateTime.subtract(today, { days: days - 1 });
   const previousStart = DateTime.subtract(start, { days });
@@ -18,7 +19,7 @@ export const getKillAnalyticsRange = (now: DateTime.Utc, days: number) => {
   const through = DateTime.startOf(now, "hour");
 
   const previousThrough = DateTime.subtract(
-    DateTime.setZoneNamedUnsafe(through, STATS_TIME_ZONE),
+    DateTime.setZoneNamedUnsafe(through, MARGONEM_TIME_ZONE),
     { days },
   );
 

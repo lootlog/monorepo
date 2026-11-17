@@ -1,3 +1,4 @@
+import { formatSeenAgo } from "@/utils/format-seen-ago";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -68,14 +69,6 @@ export const BattlePingWindow = () => {
     return () => battlePingStore.highlightWarrior(null);
   }, [visible]);
 
-  const formatAgo = (receivedAt: number) => {
-    const seconds = Math.floor((now - receivedAt) / 1_000);
-
-    return seconds < 1
-      ? t("battle.justNow")
-      : t("battle.secondsAgo", { seconds });
-  };
-
   const formatSender = (senderName: string) =>
     senderName === heroName ? t("battle.you") : senderName;
 
@@ -116,7 +109,7 @@ export const BattlePingWindow = () => {
                 {t("battle.target")}
               </h3>
               <BattlePingTargetRow
-                ago={formatAgo(target.receivedAt)}
+                ago={formatSeenAgo(now - target.receivedAt)}
                 sender={
                   target.senderName === heroName ? null : target.senderName
                 }
@@ -143,7 +136,7 @@ export const BattlePingWindow = () => {
                 return (
                   <BattlePingHistoryRow
                     key={entry.id}
-                    ago={formatAgo(entry.receivedAt)}
+                    ago={formatSeenAgo(now - entry.receivedAt)}
                     dead={warrior ? isWarriorDead(warrior) : false}
                     forMe={entry.forMe}
                     icon={presentation.icon}

@@ -15,7 +15,7 @@ import {
   type NotificationScheduleStrategy,
   type NotificationTargetType,
   type NotificationTriggerType as NotificationTriggerTypeValue,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 import type { JsonValue } from "#src/database/json";
 
 export interface NotificationTestContentInput {

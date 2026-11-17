@@ -28,12 +28,12 @@ export const DetectorSettingsTab = () => {
   const { setSwitch, setSwitchForAll, types } = useDetectorTypesForm();
 
   const categories: Array<{ label: string; key: DetectorNpcType }> = [
-    { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
-    { label: t("common:npcTypes.hero"), key: NpcType.HERO },
-    { label: t("common:npcTypes.event_hero"), key: NpcType.EVENT_HERO },
-    { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
-    { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
-    { label: t("common:npcTypes.hero_tracker"), key: NpcType.HERO_TRACKER },
+    { label: t("npcType:ELITE2"), key: NpcType.ELITE2 },
+    { label: t("npcType:HERO"), key: NpcType.HERO },
+    { label: t("npcType:EVENT_HERO"), key: NpcType.EVENT_HERO },
+    { label: t("npcType:COLOSSUS"), key: NpcType.COLOSSUS },
+    { label: t("npcType:TITAN"), key: NpcType.TITAN },
+    { label: t("npcType:HERO_TRACKER"), key: NpcType.HERO_TRACKER },
   ];
 
   const columns: SettingsMatrixColumn[] = COLUMNS.map((column) => {

@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
@@ -130,7 +131,7 @@ const getNotificationRuleTileViewModel = (
     rule.scheduledAt
       ? formatNotificationDateInTimeZone(
           rule.scheduledAt,
-          rule.scheduleTimezone ?? "Europe/Warsaw",
+          rule.scheduleTimezone ?? MARGONEM_TIME_ZONE,
         )
       : undefined;
 

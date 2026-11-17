@@ -22,7 +22,7 @@ import { buildTimerKey } from "./timer-key.js";
 import {
   getEventHeroSyntheticNpcId,
   getTimerNpcId,
-} from "#src/shared/margonem/npc-identity";
+} from "@lootlog/domain/npc-identity";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,

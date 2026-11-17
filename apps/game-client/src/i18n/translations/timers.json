@@ -67,7 +67,6 @@
     "enemiesStaleHeading_few": "wrogowie widziani niedawno",
     "enemiesStaleHeading_many": "wrogów widzianych niedawno",
     "enemiesStaleHeading_other": "wroga widzianego niedawno",
-    "seenAgo": "{{seconds}} s temu",
     "heroSighting": "Wykrywacz herosów",
     "heroSightingMap": "Wykrywacz herosów – heros {{state}} {{map}}",
     "heroSightingMapUnconfirmed": "Wykrywacz herosów – heros {{state}} {{map}}, {{status}}",

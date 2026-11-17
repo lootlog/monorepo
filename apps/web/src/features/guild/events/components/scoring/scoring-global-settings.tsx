@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { useId } from "react";
 import type { Control, UseFormRegister } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -59,7 +60,7 @@ export const ScoringGlobalSettings = ({
         <Input
           id={`${idPrefix}-timezone`}
           {...register("scoringRules.timezone")}
-          placeholder="Europe/Warsaw"
+          placeholder={MARGONEM_TIME_ZONE}
         />
       </ScoringField>
     </div>

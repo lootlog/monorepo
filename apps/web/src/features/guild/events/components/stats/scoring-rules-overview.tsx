@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { EmptyState } from "@/components/common/empty-state";
 import type { EventScoringRules } from "@lootlog/domain/scoring";
 import type { TFunction } from "i18next";
@@ -28,7 +29,7 @@ export const ScoringRulesOverview = ({
   const minTrackingPercentForBonuses =
     scoringRules?.minTrackingPercentForBonuses ?? 50;
 
-  const timezone = scoringRules?.timezone ?? "Europe/Warsaw";
+  const timezone = scoringRules?.timezone ?? MARGONEM_TIME_ZONE;
 
   if (rules.length === 0) {
     return (

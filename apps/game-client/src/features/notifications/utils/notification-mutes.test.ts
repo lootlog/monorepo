@@ -83,6 +83,8 @@ describe("notification mutes", () => {
     });
 
     expect(firstKey).toBe(secondKey);
+    // Mute keys are stored in the user's preferences.
+    expect(firstKey).toBe("npc:-1793111531");
   });
 
   it("keeps a Hero Tracker muted after it moves to a hiding place with another id", () => {
@@ -115,6 +117,9 @@ describe("notification mutes", () => {
     ).toBe(
       getNotificationNpcMuteKey(trackerNotification(190999, "Grobowiec Seta")),
     );
+    expect(
+      getNotificationNpcMuteKey(trackerNotification(190436, "Grobowiec Seta")),
+    ).toBe("npc:-298421138");
   });
 
   it("replaces duplicated mute entries with the latest payload", () => {

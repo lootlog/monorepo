@@ -1,7 +1,7 @@
+import { PROFESSION_SHORTNAMES } from "@lootlog/domain/profession";
 import { isObjectRecord } from "@lootlog/schema/records";
 import {
   ALL_PROFESSIONS_VALUE,
-  PROFESSION_OPTIONS,
   type ProfessionFilterValue,
   type OnlinePlayersFiltersValue,
 } from "@/features/online-players/online-players-list.helpers";
@@ -22,7 +22,7 @@ const DEFAULT_FILTERS_VISIBLE = true;
 
 const VALID_PROFESSIONS: readonly ProfessionFilterValue[] = [
   ALL_PROFESSIONS_VALUE,
-  ...PROFESSION_OPTIONS,
+  ...PROFESSION_SHORTNAMES,
 ];
 
 const isProfessionFilterValue = (

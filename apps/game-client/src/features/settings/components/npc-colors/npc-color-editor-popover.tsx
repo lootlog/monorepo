@@ -42,7 +42,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
   /** The stored colour that Escape restores. */
   const savedColor = useRef(color);
   const surfaceColors = deriveNpcSurfaceColors(color);
-  const npcTypeLabel = t(`common:npcTypes.${npcType.toLowerCase()}`);
+  const npcTypeLabel = t(`npcType:${npcType}`);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) savedColor.current = color;

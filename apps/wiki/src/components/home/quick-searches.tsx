@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@lootlog/ui/components/button";
-import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { DisplayItemRarity } from "@lootlog/domain/item-rarity";
 import { t } from "@/i18n/messages";
 import type { ItemsSearch } from "@/lib/items-search";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
@@ -12,19 +12,19 @@ const QUICK_SEARCHES: ReadonlyArray<{
 }> = [
   {
     key: "titanLegendaries",
-    search: { rarities: ItemRarity.LEGENDARY, bosses: "TITAN" },
+    search: { rarities: DisplayItemRarity.LEGENDARY, bosses: "TITAN" },
   },
   {
     key: "colossusLegendaries",
-    search: { rarities: ItemRarity.LEGENDARY, bosses: "COLOSSUS" },
+    search: { rarities: DisplayItemRarity.LEGENDARY, bosses: "COLOSSUS" },
   },
   {
     key: "heroHeroics",
-    search: { rarities: ItemRarity.HEROIC, bosses: "HERO,EVENT_HERO" },
+    search: { rarities: DisplayItemRarity.HEROIC, bosses: "HERO,EVENT_HERO" },
   },
   {
     key: "highLevelLegendaries",
-    search: { rarities: ItemRarity.LEGENDARY, minLevel: 250 },
+    search: { rarities: DisplayItemRarity.LEGENDARY, minLevel: 250 },
   },
   // Group fights go to whoever moves first, so players gear for speed.
   {

@@ -16,11 +16,15 @@ export const useUserPreferences = () =>
     },
   });
 
+type UserPreferencesUpdater = (
+  current: UserPreferencesResponseDtoOutput | undefined,
+) => UpdateUserPreferencesDto;
+
 export const useUpdateUserPreferences = () => {
   const queryClient = useQueryClient();
   const queryKey = getUsersControllerGetUserPreferencesQueryKey();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationKey: ["usersControllerUpdateUserPreferences"],
     scope: { id: "user-preferences" },
     mutationFn: (payload: UpdateUserPreferencesDto) =>
@@ -64,4 +68,19 @@ export const useUpdateUserPreferences = () => {
       void queryClient.invalidateQueries({ queryKey });
     },
   });
+
+  // Derived from the cache at call time: rapid changes each build on the
+  // previous optimistic state instead of the one a render was given.
+  const mutateFromCurrent = (
+    updater: UserPreferencesUpdater,
+    options?: Parameters<typeof mutation.mutate>[1],
+  ) =>
+    mutation.mutate(
+      updater(
+        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(queryKey),
+      ),
+      options,
+    );
+
+  return { ...mutation, mutateFromCurrent };
 };

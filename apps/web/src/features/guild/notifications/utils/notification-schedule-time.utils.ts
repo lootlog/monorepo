@@ -4,8 +4,6 @@ import {
   toUtcDateFromLocal,
 } from "@lootlog/datetime";
 
-export const GUILD_NOTIFICATION_TIMEZONE = "Europe/Warsaw" as const;
-
 export const formatDateTimeLocalInputValue = (
   value: string | null | undefined,
   timeZone: string,

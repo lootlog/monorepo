@@ -14,7 +14,7 @@ import {
 } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/error-key";
 import { buildTimerKey } from "#src/timers/timer-key";
-import { getTimerNpcId } from "#src/shared/margonem/npc-identity";
+import { getTimerNpcId } from "@lootlog/domain/npc-identity";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersIdentity } from "./timers-data.js";
 import { TimersInfrastructureError } from "./timer-errors.js";

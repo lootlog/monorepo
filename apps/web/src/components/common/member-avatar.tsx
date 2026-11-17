@@ -3,7 +3,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import { cn } from "cn";
 
 type MemberAvatarSource =

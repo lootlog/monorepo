@@ -18,10 +18,10 @@ import {
   itemEventLabels,
   itemEventSlug,
 } from "@lootlog/domain/item-events";
+import { itemStatValue } from "@lootlog/domain/item-stat";
 import {
   itemAtLevel,
   itemStatAttackSpeed,
-  itemStatValue,
   upgradedAttackSpeed,
 } from "@lootlog/domain/item-upgrade";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";

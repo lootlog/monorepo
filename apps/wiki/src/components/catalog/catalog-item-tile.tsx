@@ -1,8 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { ItemTile } from "@lootlog/ui/components/item-tile";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
-import { renderItemStat } from "@/components/render-item-stat";
+import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { useWornItem } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 import { itemPageParams, itemPageSearch } from "@/lib/catalog-links";
@@ -60,7 +59,6 @@ export function CatalogItemTile({
           : undefined
       }
       labels={ITEM_TILE_LABELS}
-      renderStat={renderItemStat}
       render={
         <Link
           to="/items/$itemSlug"

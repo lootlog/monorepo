@@ -30,6 +30,7 @@
     "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
     "@lootlog/database": "workspace:*",
+    "@lootlog/datetime": "workspace:*",
     "@lootlog/domain": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/messaging": "workspace:*",

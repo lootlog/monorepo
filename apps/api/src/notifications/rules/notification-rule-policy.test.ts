@@ -1,10 +1,10 @@
-import { NotificationTriggerType } from "@lootlog/schema/notifications";
 import { afterEach, describe, expect, it, setSystemTime } from "bun:test";
 import { createNotificationRuleFixture } from "../../../test/notification-fixtures.js";
 import {
   NotificationOwnerType,
   NotificationScheduleIntervalType,
-} from "#src/notifications/notification-enums";
+  NotificationTriggerType,
+} from "@lootlog/schema/notifications";
 import {
   createNotificationRuleValues,
   updateNotificationRuleValues,

@@ -16,7 +16,7 @@ import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger } from "#src/shared/application-logger";
-import { TIMER_TYPES } from "#src/timers/timer-limits";
+import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import { ErrorKey } from "#src/timers/error-key";
 import type { Timer } from "#src/timers/timers.types";
 import { buildTimerKey, buildTimerLockKey } from "#src/timers/timer-key";

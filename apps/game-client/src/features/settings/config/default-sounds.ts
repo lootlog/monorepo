@@ -1,4 +1,4 @@
-import type { NpcTypeSoundConfig } from "@lootlog/schema/sound-settings";
+import type { NpcTypeSoundConfig } from "@/features/settings/persistence/use-sound-settings";
 
 export const DEFAULT_SOUND_URLS = {
   message: "https://gordion.margonem.pl/sounds/new_mail.mp3",

@@ -1,7 +1,7 @@
 import type { KillHistoryEntry } from "@lootlog/client/main";
 import { differenceInSeconds } from "date-fns";
 import { useTranslation } from "react-i18next";
-import { formatDurationHuman } from "../../utils/format-duration";
+import { formatDuration } from "@/utils/date/format-duration";
 
 type KillRespawnTimeProps = {
   kill: Pick<
@@ -29,7 +29,7 @@ export const KillRespawnTime = ({ kill }: KillRespawnTimeProps) => {
 
   return (
     <span className="block text-right font-medium tabular-nums">
-      {formatDurationHuman(respawnTimeSeconds)}
+      {formatDuration(respawnTimeSeconds, "human")}
     </span>
   );
 };

@@ -6,6 +6,7 @@ import { Cause, Console, Effect } from "effect";
 import { Command } from "effect/cli";
 import { env } from "./commands/env/index.js";
 import { events } from "./commands/events/index.js";
+import cliPackage from "../package.json" with { type: "json" };
 
 const cli = Command.make("lootlog").pipe(
   Command.withDescription("Lootlog development CLI"),
@@ -13,7 +14,7 @@ const cli = Command.make("lootlog").pipe(
 );
 
 cli.pipe(
-  Command.run({ version: "1.0.0" }),
+  Command.run({ version: cliPackage.version }),
   Effect.catchDefect((defect) =>
     Console.error(
       styleText(

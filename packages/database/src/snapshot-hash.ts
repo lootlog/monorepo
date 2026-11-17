@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { GameVersion } from "@lootlog/schema/game-version";
-import { splitItemStat } from "./item-stat.js";
+import { splitItemStat } from "@lootlog/domain/item-stat";
 
 function hashSnapshotPayload(payload: string): string {
   return createHash("sha256").update(payload).digest("hex");

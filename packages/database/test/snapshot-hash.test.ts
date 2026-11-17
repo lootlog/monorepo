@@ -17,6 +17,18 @@ test("seed and live ingestion keep item identity despite ordering and transient 
   expect(createItemStatsHash("ac=15;ac=15;lvl=100")).not.toBe(expected);
 });
 
+test("the stats hash of an irregular stat string stays pinned", () => {
+  expect(
+    createItemStatsHash(
+      "lvl=5;opis=a=b;;bound;=x;created=1;lvl=6;gold=;amount=2;rarity=heroic",
+    ),
+  ).toBe(
+    createHash("sha256")
+      .update("bound;lvl=5;lvl=6;rarity=heroic")
+      .digest("hex"),
+  );
+});
+
 test("item revisions separate edition and presentation but not per-instance stats", () => {
   const observation = {
     gameVersion: "pl" as const,

@@ -3,6 +3,7 @@ import { clamp } from "es-toolkit";
 import {
   calculateLocalWindowOverlapMs,
   isLocalTimeInRange,
+  MARGONEM_TIME_ZONE,
 } from "@lootlog/datetime";
 import {
   GROUP_COUNTINGS,
@@ -16,8 +17,6 @@ import {
 } from "./scoring-presence.js";
 
 const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
-const EVENT_SCORING_TIMEZONE = "Europe/Warsaw" as const;
 
 export const EVENT_SCORING_MODES = ["SIMPLE", "ADVANCED"] as const;
 
@@ -212,7 +211,7 @@ type EventScoringAppliedRule = {
 
 export const DEFAULT_ADVANCED_EVENT_SCORING_RULES: EventScoringRules = {
   version: 1,
-  timezone: EVENT_SCORING_TIMEZONE,
+  timezone: MARGONEM_TIME_ZONE,
   hardCapPoints: 2,
   minTrackingPercentForBonuses: 50,
   rules: [
@@ -580,7 +579,7 @@ export function normalizeEventScoringRules(value: unknown): EventScoringRules {
     timezone:
       typeof value.timezone === "string" && value.timezone.trim()
         ? value.timezone.trim()
-        : EVENT_SCORING_TIMEZONE,
+        : MARGONEM_TIME_ZONE,
     hardCapPoints: toNumber(
       value.hardCapPoints,
       DEFAULT_ADVANCED_EVENT_SCORING_RULES.hardCapPoints,

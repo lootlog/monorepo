@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { ONLINE_HISTORY_RETENTION_DAYS } from "#src/online/online-retention";
 import { Schema } from "effect";
 import {
@@ -36,7 +37,7 @@ export const UserOnlineQuery = Schema.Struct({
 export type UserOnlineQuery = typeof UserOnlineQuery.Type;
 
 export const UserOnlineResponse = Schema.Struct({
-  timezone: Schema.Literal("Europe/Warsaw"),
+  timezone: Schema.Literal(MARGONEM_TIME_ZONE),
   trackingStartedAt: Schema.NullOr(DateTimeWithOffsetString),
   lastObservedAt: Schema.NullOr(DateTimeWithOffsetString),
   status: Schema.Literals(["fresh", "stale", "unavailable"]),

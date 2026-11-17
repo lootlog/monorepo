@@ -6,7 +6,8 @@ type LocalDatePattern =
   | "dd.MM.yyyy HH:mm"
   | "dd.MM HH:mm:ss"
   | "dd.MM.yyyy HH:mm:ss"
-  | "dd.MM.yyyy - HH:mm:ss";
+  | "dd.MM.yyyy - HH:mm:ss"
+  | "yyyy-MM-dd";
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
@@ -33,6 +34,8 @@ export const format = (date: Date, pattern: LocalDatePattern): string => {
       return `${dateWithYear} ${timeWithSeconds}`;
     case "dd.MM.yyyy - HH:mm:ss":
       return `${dateWithYear} - ${timeWithSeconds}`;
+    case "yyyy-MM-dd":
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   }
 };
 

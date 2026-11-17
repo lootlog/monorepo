@@ -8,6 +8,7 @@ import { StatisticsPlayTimeChart } from "./statistics-play-time-chart";
 import { StatisticsPlayTimeTiles } from "./statistics-play-time-tiles";
 import { StatisticsWeeks } from "./statistics-weeks";
 import { summarizePlayTime } from "./summarize-play-time";
+import { useFormatOnlineDuration } from "@/utils/date/format-duration";
 
 /** How much online history an activity revision before the yearly one keeps. */
 const PREVIOUS_ONLINE_HISTORY_DAYS = 112;
@@ -46,11 +47,7 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
 
   const online = rejected ? previous : yearly;
 
-  const formatDuration = (seconds: number) =>
-    t("statistics.duration", {
-      hours: Math.floor(seconds / 3600),
-      minutes: Math.floor((seconds % 3600) / 60),
-    });
+  const formatOnlineDuration = useFormatOnlineDuration();
 
   // An older activity revision ignores the world and counts every world.
   const countedWorld = (online.data?.world ?? null) === (search.world ?? null);
@@ -84,7 +81,7 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
               })
             : undefined
         }
-        formatDuration={formatDuration}
+        formatDuration={formatOnlineDuration}
       />
       <StatsSectionColumns className="xl:grid-cols-3 xl:*:first:col-span-2">
         <ChartSection
@@ -109,7 +106,7 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
               seconds: day.onlineSeconds,
               kills: killsByDate.get(day.date) ?? null,
             }))}
-            formatDuration={formatDuration}
+            formatDuration={formatOnlineDuration}
           />
         </ChartSection>
         <KillStatsActivity

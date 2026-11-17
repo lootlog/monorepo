@@ -3,6 +3,7 @@ import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/c
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
 import type { ChatFilter } from "@/store/chat.store";
 import { MessageType } from "@/api/chat.api";
+import { format } from "@/utils/local-date";
 import { resolveNpcType } from "@lootlog/domain/npc-routing";
 import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
 
@@ -12,14 +13,9 @@ const CHAT_NPC_GROUP_WINDOW_MS = 60_000;
 
 export const CHAT_VISIBLE_MESSAGE_LIMIT = 500;
 
-const padDatePart = (value: number) => String(value).padStart(2, "0");
-
 /** The player's local calendar day, which the date dividers label. */
-const getChatMessageDayKey = (timestamp: string) => {
-  const date = new Date(timestamp);
-
-  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
-};
+const getChatMessageDayKey = (timestamp: string) =>
+  format(new Date(timestamp), "yyyy-MM-dd");
 
 /** Inserts a divider before the first item of each local day. */
 export const withChatDateDividers = <Item>(

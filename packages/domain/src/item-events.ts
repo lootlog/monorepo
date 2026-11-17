@@ -58,7 +58,7 @@ const EVENTS_ENDING_NEXT_YEAR = new Set(["gwiazdka"]);
  * a year, which comes back. An event the schedule does not know ends with
  * its year, so its items show rather than hide.
  */
-export const itemEventEditionEnd = (slug: string) => {
+const itemEventEditionEnd = (slug: string) => {
   const edition = EDITION_SLUG.exec(slug);
 
   if (!edition) return undefined;

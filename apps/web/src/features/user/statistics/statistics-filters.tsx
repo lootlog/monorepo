@@ -1,6 +1,6 @@
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { KillStatsNpcTypeSelect } from "@/features/kills/components/kill-stats-npc-type-select";
-import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
+import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
 import { StatisticsPeriodSelect } from "./statistics-period-select";
 import {
   toNpcType,

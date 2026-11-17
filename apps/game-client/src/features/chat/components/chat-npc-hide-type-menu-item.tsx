@@ -37,7 +37,7 @@ export const ChatNpcHideTypeMenuItem: FC<ChatNpcHideTypeMenuItemProps> = ({
         className="ll:mr-2 ll:size-3.5 ll:shrink-0"
       />
       {t("contextMenu.hideNpcType", {
-        npcType: t(`common:npcTypes.${npcType.toLowerCase()}`),
+        npcType: t(`npcType:${npcType}`),
       })}
     </ContextMenuItem>
   );

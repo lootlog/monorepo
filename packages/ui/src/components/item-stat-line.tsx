@@ -3,12 +3,17 @@ import {
   ITEM_STAT_TAG_CLASS_NAMES,
   type ItemDisplayValue,
 } from "@lootlog/ui/components/item-stat-utils";
-import type { ReactNode } from "react";
-import { itemStatTagPattern, itemStatTemplate } from "@/lib/item-stat-text";
+import {
+  itemStatTagPattern,
+  itemStatTemplate,
+} from "@lootlog/ui/lib/item-stat-text";
+import type { FC, ReactNode } from "react";
 
-const tagClassNames = new Map(Object.entries(ITEM_STAT_TAG_CLASS_NAMES));
+const tagClassNames = new Map<string, string>(
+  Object.entries(ITEM_STAT_TAG_CLASS_NAMES),
+);
 
-function renderTaggedTemplate(template: string) {
+const renderTaggedTemplate = (template: string): ReactNode[] => {
   const tagPattern = itemStatTagPattern();
   const nodes: ReactNode[] = [];
   let currentIndex = 0;
@@ -37,12 +42,15 @@ function renderTaggedTemplate(template: string) {
   }
 
   return nodes;
-}
+};
 
-export function renderItemStat(displayValue: ItemDisplayValue) {
-  if (!displayValue.key) {
-    return null;
-  }
+type ItemStatLineProps = {
+  displayValue: ItemDisplayValue;
+};
+
+/** One item stat as the game's tooltip words it, or `key: value` without a wording. */
+export const ItemStatLine: FC<ItemStatLineProps> = ({ displayValue }) => {
+  if (!displayValue.key) return null;
 
   const template = itemStatTemplate(displayValue);
 
@@ -58,4 +66,4 @@ export function renderItemStat(displayValue: ItemDisplayValue) {
   }
 
   return <>{renderTaggedTemplate(template)}</>;
-}
+};
