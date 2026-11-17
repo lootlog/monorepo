@@ -49,7 +49,7 @@ import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import type { GameVersion } from "@lootlog/schema/game-version";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { parseRequiredProfessions } from "#src/loots/required-professions";
-import { parseCharacterIdentity } from "#src/shared/margonem/player-snapshot.persistence";
+import { parseCharacterIdentity } from "#src/shared/margonem/player-snapshot.repository";
 
 import {
   LootPublicationPayload,

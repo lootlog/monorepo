@@ -42,7 +42,7 @@ import { ErrorKey } from "#src/loots/error-key";
 import type {
   LootPersistence,
   LootPersistenceError,
-} from "#src/loots/loot-persistence";
+} from "#src/loots/loot.repository";
 import type {
   LootListParams,
   LootNpcNameSummary,

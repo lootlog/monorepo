@@ -1,4 +1,4 @@
-import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
+import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
 import { strongestNpcFirst } from "#src/loots/strongest-npc-order";
 import { UserFeedItem } from "@lootlog/protocol/feed";
 import {
@@ -41,7 +41,7 @@ import {
   type UserLootScope,
 } from "#src/loots/query/user-loot-scopes";
 import { readableRoles, visibilityFilter } from "#src/kills/kill-query-support";
-import { buildKillStatsCondition } from "#src/kills/kill-stats-persistence";
+import { buildKillStatsCondition } from "#src/kills/kill-stats.repository";
 import {
   UserFeedResponse,
   type UserFeedQuery,

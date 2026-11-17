@@ -4,7 +4,7 @@ import type {
   NotificationJobStore,
   NotificationRuleWithTargets,
   NotificationStoredRule,
-} from "#src/notifications/jobs/notification-job-store";
+} from "#src/notifications/jobs/notification-job.repository";
 import {
   enqueuePendingNotificationJob,
   type NotificationJobScheduler,

@@ -12,7 +12,7 @@ import {
   getEffectiveWindowEndAt,
 } from "#src/events/monitoring/tracking-window";
 import type { EventPoints } from "#src/events/kills/event-points.service";
-import type { EventKillHistoryStore } from "#src/events/history/event-kill-history.store";
+import type { EventKillHistoryStore } from "#src/events/history/event-kill-history.repository";
 
 export const makeEventKillHistoryProjection = (
   repository: EventKillHistoryStore,

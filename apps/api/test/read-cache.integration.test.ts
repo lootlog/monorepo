@@ -31,9 +31,9 @@ import {
   eventMapCoverageGapTable,
 } from "#src/database/drizzle/event.schema";
 import { makeLootsOperations } from "#src/loots/loots.operations";
-import { makeLootPersistence } from "#src/loots/loot-persistence";
+import { makeLootPersistence } from "#src/loots/loot.repository";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
-import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
+import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
 import { makeEventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import { makeEventGapReads } from "#src/events/monitoring/event-gap-reads";
 import { makeEventReadCache } from "#src/events/catalog/event-read-cache.service";

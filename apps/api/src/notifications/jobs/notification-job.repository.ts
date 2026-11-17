@@ -1,5 +1,5 @@
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
-import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
+import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target.repository";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, asc, desc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";

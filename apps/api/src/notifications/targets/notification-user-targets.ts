@@ -5,7 +5,7 @@ import {
   readNotificationTargetRuleIds,
   readSingleTargetNotificationRuleIds,
   updateNotificationTarget,
-} from "#src/notifications/targets/notification-target-store";
+} from "#src/notifications/targets/notification-target.repository";
 import {
   getNotificationTestUsageResponse,
   readNotificationTestUsage,

@@ -4,7 +4,7 @@ import { playerSnapshotTable } from "#src/database/drizzle/loot.schema";
 import {
   parseCharacterIdentity,
   resolvePlayerSnapshots,
-} from "./player-snapshot.persistence.js";
+} from "./player-snapshot.repository.js";
 
 const character = {
   world: "nomada",

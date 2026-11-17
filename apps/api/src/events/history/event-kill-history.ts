@@ -31,7 +31,7 @@ import { DEFAULT_PAGE_SIZE } from "#src/shared/keyset-page";
 import {
   makeEventKillHistoryStore,
   type LeanHistoryRow,
-} from "#src/events/history/event-kill-history.store";
+} from "#src/events/history/event-kill-history.repository";
 
 export type HistoryContext = {
   guildId: string;

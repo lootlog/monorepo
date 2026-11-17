@@ -6,7 +6,7 @@ import { Clock, Effect, Result, Schema } from "effect";
 import type {
   NotificationJobStore,
   NotificationJobWithRelations,
-} from "#src/notifications/jobs/notification-job-store";
+} from "#src/notifications/jobs/notification-job.repository";
 import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import {
   NotificationJobStatus,

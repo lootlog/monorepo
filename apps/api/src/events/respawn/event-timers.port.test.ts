@@ -15,7 +15,7 @@ import { RedisService } from "#src/redis/redis.service";
 import { RedlockService } from "#src/redis/redlock";
 import { applicationLogger } from "#src/shared/application-logger";
 import { buildTimerKey } from "#src/timers/timer-key";
-import { makeEventTimerStore } from "./event-timer.store.js";
+import { makeEventTimerStore } from "./event-timer.repository.js";
 import { makeEventTimersPort } from "./event-timers.port.js";
 
 it("credits a reopened respawn window to the member who opened it", async () => {

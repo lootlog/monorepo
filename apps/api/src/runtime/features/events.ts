@@ -1,6 +1,6 @@
 import { makeEventKillHistory } from "#src/events/history/event-kill-history";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { makeEventTimerStore } from "#src/events/respawn/event-timer.store";
+import { makeEventTimerStore } from "#src/events/respawn/event-timer.repository";
 import {
   makeEventTimersPort,
   type EventTimersPort,

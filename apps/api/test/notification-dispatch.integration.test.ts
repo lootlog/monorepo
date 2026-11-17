@@ -23,7 +23,7 @@ import { NOTIFICATION_DISPATCH_JOB_OPTIONS } from "#src/notifications/jobs/dispa
 import { makeNotificationJobDispatch } from "#src/notifications/jobs/notification-job-dispatch";
 import { makeNotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import { makeNotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
-import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job-store";
+import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job.repository";
 import { redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { applicationLogger } from "#src/shared/application-logger";
 import { canDispatchLootNotification } from "#src/notifications/notification-loot-source-visibility";

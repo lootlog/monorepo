@@ -1234,7 +1234,7 @@
       }
     },
     {
-      "files": ["apps/api/src/kills/kill-stats-persistence.ts"],
+      "files": ["apps/api/src/kills/kill-stats.repository.ts"],
       "rules": {
         "anti-slop/no-runtime-typeof": [
           "error",

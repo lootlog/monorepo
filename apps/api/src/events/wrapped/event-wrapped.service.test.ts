@@ -24,10 +24,10 @@ import {
 } from "#src/database/drizzle/loot.schema";
 import { makeEventWrappedStore } from "#src/events/wrapped/event-wrapped.repository";
 import { makeEventWrapped } from "#src/events/wrapped/event-wrapped.service";
-import { makeLootPersistence } from "#src/loots/loot-persistence";
+import { makeLootPersistence } from "#src/loots/loot.repository";
 import { makeLootsOperations } from "#src/loots/loots.operations";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
-import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
+import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
 import { applicationLogger } from "#src/shared/application-logger";
 import { createOrganizationLootRecordFixture } from "../../../test/loot-fixtures.js";
 

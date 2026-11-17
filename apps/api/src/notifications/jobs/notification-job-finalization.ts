@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { NotificationStoredJob } from "#src/notifications/jobs/notification-job-store";
+import type { NotificationStoredJob } from "#src/notifications/jobs/notification-job.repository";
 
 export const makeNotificationJobFinalization = (
   prune: (

@@ -16,7 +16,7 @@ import {
 import { Effect } from "effect";
 import type { StaleKillQueryCache } from "./kill-query-support.js";
 import { makeGuildKillQueries } from "./guild-kill-queries.js";
-import { makeKillStatsPersistence } from "./kill-stats-persistence.js";
+import { makeKillStatsPersistence } from "./kill-stats.repository.js";
 
 const passthrough: StaleKillQueryCache = {
   getOrSetStale: (_key, _schema, load) =>

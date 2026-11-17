@@ -12,7 +12,7 @@ import {
 } from "#src/database/drizzle/organization.schema";
 import { ErrorKey } from "./error-key.js";
 import { makeMemberDelivery } from "./member-delivery.operations.js";
-import { makeMemberStore } from "./member.store.js";
+import { makeMemberStore } from "./member.repository.js";
 import {
   applicationErrorStatusOrUndefined,
   InvalidRequestError,

@@ -9,7 +9,7 @@ import {
   type CreateLootRequest,
 } from "#src/contracts/loots/schemas";
 import { Permission } from "@lootlog/schema/permissions";
-import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
+import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import { createHash, randomInt, randomUUID } from "node:crypto";
@@ -58,7 +58,7 @@ import {
 import { GuildLootCreatedMessageV2 } from "@lootlog/protocol/loot-events";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { makeLootsOperations } from "#src/loots/loots.operations";
-import { makeLootPersistence } from "#src/loots/loot-persistence";
+import { makeLootPersistence } from "#src/loots/loot.repository";
 import { applicationLogger } from "#src/shared/application-logger";
 import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
 

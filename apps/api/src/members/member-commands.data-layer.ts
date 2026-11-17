@@ -19,7 +19,7 @@ import {
 } from "./member-cache.js";
 import { MEMBER_LAST_DISCORD_STATUS } from "./member-discord-status.js";
 import { MEMBER_REFRESH_PRIORITY } from "./member-refresh-queue.js";
-import { queueMemberDeliveries } from "./member.store.js";
+import { queueMemberDeliveries } from "./member.repository.js";
 import { ErrorKey } from "./error-key.js";
 import { isTransientMemberSyncStatus } from "./member-discord-sync-status.js";
 import type {

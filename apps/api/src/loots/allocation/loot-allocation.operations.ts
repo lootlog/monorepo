@@ -31,7 +31,7 @@ import {
 } from "#src/shared/http/http-errors";
 import type { LootShare } from "#src/loots/loot-response.schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
-import type { LootAllocationPersistence } from "#src/loots/allocation/loot-allocation-persistence";
+import type { LootAllocationPersistence } from "#src/loots/allocation/loot-allocation.repository";
 
 const SUBMISSION_WINDOW_MS = 10 * 60 * 1000;
 

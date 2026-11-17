@@ -9,9 +9,9 @@ import {
   lootTable,
   organizationLootRecordTable,
 } from "#src/database/drizzle/loot.schema";
-import { makeLootPersistence } from "#src/loots/loot-persistence";
+import { makeLootPersistence } from "#src/loots/loot.repository";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
-import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
+import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,

@@ -18,7 +18,7 @@ import {
 } from "../src/database/drizzle/organization.schema.js";
 import { makeGuildLifecycle } from "../src/guilds/guild-lifecycle.operations.js";
 import { makeMemberDelivery } from "../src/members/member-delivery.operations.js";
-import { makeMemberStore } from "../src/members/member.store.js";
+import { makeMemberStore } from "../src/members/member.repository.js";
 import { getGuildCacheKey } from "../src/guilds/guild-configuration-cache.js";
 import { getPermissionsCachePattern } from "../src/shared/cache.js";
 import {

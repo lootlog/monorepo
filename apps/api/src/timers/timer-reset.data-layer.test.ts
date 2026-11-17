@@ -13,7 +13,7 @@ import {
   memberTable,
 } from "#src/database/drizzle/organization.schema";
 import { timerTable } from "#src/database/drizzle/timer.schema";
-import { makeEventTimerStore } from "#src/events/respawn/event-timer.store";
+import { makeEventTimerStore } from "#src/events/respawn/event-timer.repository";
 import { makeEventTimersPort } from "#src/events/respawn/event-timers.port";
 import { RedisService } from "#src/redis/redis.service";
 import { RedlockService } from "#src/redis/redlock";

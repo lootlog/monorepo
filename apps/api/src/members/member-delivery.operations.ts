@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 import type { memberTable } from "#src/database/drizzle/organization.schema";
-import type { MemberStore } from "./member.store.js";
+import type { MemberStore } from "./member.repository.js";
 import type { MemberRemovalNotificationTarget } from "./member.types.js";
 
 export interface MemberDeliveryPorts {

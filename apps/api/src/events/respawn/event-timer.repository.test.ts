@@ -9,7 +9,7 @@ import {
   memberTable,
 } from "#src/database/drizzle/organization.schema";
 import { timerTable } from "#src/database/drizzle/timer.schema";
-import { makeEventTimerStore } from "./event-timer.store.js";
+import { makeEventTimerStore } from "./event-timer.repository.js";
 
 describe("event timer name lookup", () => {
   it.each([
