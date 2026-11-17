@@ -17,9 +17,9 @@ import {
 } from "@lootlog/ui/components/item-stat-utils";
 import {
   ITEM_RARITIES_BY_VALUE,
-  type ItemRarity,
+  type DisplayItemRarity,
   resolveItemRarity,
-} from "@lootlog/ui/lib/item-rarity";
+} from "@lootlog/domain/item-rarity";
 import { LOOT_RARITY_COLORS } from "@lootlog/ui/lib/item-rarity-colors";
 import { sortBy } from "es-toolkit";
 import { t } from "@/i18n/messages";
@@ -41,7 +41,8 @@ export const canonicalLink = (path: string) => ({
 });
 
 // Common and upgraded items keep the chat's own edge.
-const RARITY_COLORS: Partial<Record<ItemRarity, string>> = LOOT_RARITY_COLORS;
+const RARITY_COLORS: Partial<Record<DisplayItemRarity, string>> =
+  LOOT_RARITY_COLORS;
 
 // Discord shows a few names before the line grows past its preview.
 const LISTED_NAMES = 4;

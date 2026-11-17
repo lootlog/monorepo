@@ -10,11 +10,11 @@ import {
   CommandList,
 } from "@lootlog/ui/components/command";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-styles";
+import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-colors";
 import { Kbd } from "@lootlog/ui/components/kbd";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { cn } from "cn";
 import { HighlightedText } from "@/components/highlighted-text";
 import { t } from "@/i18n/messages";

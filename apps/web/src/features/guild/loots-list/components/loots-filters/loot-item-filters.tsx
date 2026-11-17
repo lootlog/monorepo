@@ -1,7 +1,10 @@
 import { Button } from "@lootlog/ui/components/button";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { Label } from "@lootlog/ui/components/label";
-import { ItemRarity, resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import {
+  DisplayItemRarity,
+  resolveItemRarity,
+} from "@lootlog/domain/item-rarity";
 import { cn } from "cn";
 import { X } from "lucide-react";
 import {
@@ -122,7 +125,7 @@ export const LootItemFilters = ({
             {hidItem && (
               <ItemImage
                 icon={hidItem.icon}
-                rarity={hidItem.rarity ?? ItemRarity.COMMON}
+                rarity={hidItem.rarity ?? DisplayItemRarity.COMMON}
               />
             )}
             <div className="min-w-0 flex-1">

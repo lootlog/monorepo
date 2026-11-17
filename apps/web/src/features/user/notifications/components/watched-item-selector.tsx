@@ -14,7 +14,7 @@ import {
 } from "@lootlog/ui/components/combobox";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { cn } from "cn";
 

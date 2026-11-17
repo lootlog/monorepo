@@ -1,6 +1,6 @@
 import type { CatalogItemRevisionDtoOutput } from "@lootlog/client/catalog";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { ArrowRight } from "lucide-react";
 import { renderItemStat } from "@/components/render-item-stat";
 import { t } from "@/i18n/messages";

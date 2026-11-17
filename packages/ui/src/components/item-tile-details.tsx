@@ -1,7 +1,7 @@
 import { itemStatUpgradeLevel } from "@lootlog/domain/item-upgrade";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import type { ItemRarity } from "@lootlog/ui/lib/item-rarity";
-import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-styles";
+import type { DisplayItemRarity } from "@lootlog/domain/item-rarity";
+import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-colors";
 import {
   ITEM_STAT_FOOTER_SECTIONS,
   mapStatsToDisplaySections,
@@ -57,7 +57,7 @@ type ItemTileDetailsProps = {
   renderStat?: (displayValue: ItemDisplayValue) => ReactNode;
   icon: string;
   name: string;
-  rarity: ItemRarity;
+  rarity: DisplayItemRarity;
   shareNickname?: string;
   stat: string;
   type: string;

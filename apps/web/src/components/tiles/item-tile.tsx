@@ -1,6 +1,6 @@
 import { ItemTile as SharedItemTile } from "@lootlog/ui/components/item-tile";
 import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
-import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { DisplayItemRarity } from "@lootlog/domain/item-rarity";
 import type { Item } from "@/lib/loots/loot-types";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,7 +9,7 @@ import { TranslatedItemStat } from "./translated-item-stat";
 export type ItemTileProps = {
   color?: string;
   item: Pick<Item, "name" | "icon" | "stat" | "type"> & {
-    rarity?: ItemRarity | null;
+    rarity?: DisplayItemRarity | null;
   };
   shareIndex?: number;
   shareNickname?: string;
@@ -34,11 +34,11 @@ export const ItemTile: FC<ItemTileProps> = ({
   const labels = {
     obtainedBy: t("loots.list.obtainedBy"),
     rarity: {
-      [ItemRarity.COMMON]: t("itemRarity.COMMON"),
-      [ItemRarity.HEROIC]: t("itemRarity.HEROIC"),
-      [ItemRarity.LEGENDARY]: t("itemRarity.LEGENDARY"),
-      [ItemRarity.UNIQUE]: t("itemRarity.UNIQUE"),
-      [ItemRarity.UPGRADED]: t("itemRarity.UPGRADED"),
+      [DisplayItemRarity.COMMON]: t("itemRarity.COMMON"),
+      [DisplayItemRarity.HEROIC]: t("itemRarity.HEROIC"),
+      [DisplayItemRarity.LEGENDARY]: t("itemRarity.LEGENDARY"),
+      [DisplayItemRarity.UNIQUE]: t("itemRarity.UNIQUE"),
+      [DisplayItemRarity.UPGRADED]: t("itemRarity.UPGRADED"),
     },
     type: typeLabels,
     upgradeLevel: t("loots.list.upgradeLevel"),
@@ -49,7 +49,7 @@ export const ItemTile: FC<ItemTileProps> = ({
       color={color}
       item={{
         ...item,
-        rarity: item.rarity ?? ItemRarity.COMMON,
+        rarity: item.rarity ?? DisplayItemRarity.COMMON,
       }}
       labels={labels}
       renderStat={renderStat}

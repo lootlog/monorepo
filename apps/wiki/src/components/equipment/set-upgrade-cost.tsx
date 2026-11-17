@@ -12,7 +12,7 @@ import {
 import {
   ITEM_RARITIES_BY_VALUE,
   resolveItemRarity,
-} from "@lootlog/ui/lib/item-rarity";
+} from "@lootlog/domain/item-rarity";
 import { ArticleSection } from "@/components/article/article-section";
 import { ItemNameLink } from "@/components/catalog/item-name-link";
 import { StatTiles } from "@/components/common/stat-tiles";

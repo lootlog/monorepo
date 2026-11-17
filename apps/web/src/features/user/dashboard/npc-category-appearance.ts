@@ -1,4 +1,10 @@
 import type { ActivityFeedNpcCategory } from "@lootlog/domain/activity-feed";
+import {
+  NPC_TYPE_SURFACE_CLASS,
+  NPC_TYPE_TEXT_CLASS,
+  npcTypeColorStyle,
+} from "@lootlog/ui/lib/npc-type-colors";
+import type { CSSProperties } from "react";
 
 /** Colors per NPC group. */
 type NpcCategoryAppearance = {
@@ -6,27 +12,18 @@ type NpcCategoryAppearance = {
   color: string;
   /** Tinted background behind an icon or label. */
   surface: string;
+  /** Sets the colours on an element containing both. */
+  style: CSSProperties | undefined;
 };
 
-export const NPC_CATEGORY_APPEARANCE = {
-  ELITE2: {
-    color: "text-blue-500",
-    surface: "bg-blue-500/10",
-  },
-  HERO: {
-    color: "text-amber-500",
-    surface: "bg-amber-500/10",
-  },
-  COLOSSUS: {
-    color: "text-cyan-500",
-    surface: "bg-cyan-500/10",
-  },
-  TITAN: {
-    color: "text-red-500",
-    surface: "bg-red-500/10",
-  },
-  OTHER: {
-    color: "text-muted-foreground",
-    surface: "bg-muted",
-  },
-} as const satisfies Record<ActivityFeedNpcCategory, NpcCategoryAppearance>;
+/** NPC types take the colours the game client gives them; the rest stay muted. */
+export const npcCategoryAppearance = (
+  category: ActivityFeedNpcCategory,
+): NpcCategoryAppearance =>
+  category === "OTHER"
+    ? { color: "text-muted-foreground", surface: "bg-muted", style: undefined }
+    : {
+        color: NPC_TYPE_TEXT_CLASS,
+        surface: NPC_TYPE_SURFACE_CLASS,
+        style: npcTypeColorStyle(category),
+      };
