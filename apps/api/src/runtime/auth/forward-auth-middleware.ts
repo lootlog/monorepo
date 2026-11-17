@@ -1,31 +1,8 @@
 import { Effect, Layer } from "effect";
-import { readApiKeyAccess } from "@lootlog/schema/api-key-policy";
+import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
-import {
-  ForwardAuthIdentity,
-  type ForwardAuthIdentityValue,
-} from "#src/runtime/auth/forward-auth-identity";
-
-const USER_ID_HEADER = "x-auth-user-id";
-
-const DISCORD_ID_HEADER = "x-auth-discord-id";
-
-const readForwardAuthIdentity = (
-  headers: Readonly<Record<string, string | undefined>>,
-): ForwardAuthIdentityValue | undefined => {
-  const userId = headers[USER_ID_HEADER]?.trim();
-  const discordId = headers[DISCORD_ID_HEADER]?.trim();
-
-  if (!userId || !discordId) return undefined;
-  const apiKey = readApiKeyAccess(headers);
-
-  if (apiKey === null) return undefined;
-
-  return apiKey === undefined
-    ? { userId, discordId }
-    : { userId, discordId, apiKey };
-};
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 
 const forwardAuthMiddleware = BearerSecurityMiddleware.of({
   bearer: (httpEffect) =>

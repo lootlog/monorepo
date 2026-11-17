@@ -1,4 +1,5 @@
 /** Player-facing Polish copy for slash commands, matching the Web app's terms. */
+import type { Period } from "@lootlog/schema/http-scalars";
 import type { CommandFailure } from "./lootlog-client.js";
 
 const NPC_TYPE_LABELS = new Map(
@@ -18,7 +19,14 @@ const NPC_TYPE_LABELS = new Map(
 
 export const npcTypeLabel = (type: string) => NPC_TYPE_LABELS.get(type) ?? type;
 
-export const KILL_PERIODS = ["24h", "3d", "7d", "14d", "30d", "all"] as const;
+export const KILL_PERIODS = [
+  "24h",
+  "3d",
+  "7d",
+  "14d",
+  "30d",
+  "all",
+] as const satisfies ReadonlyArray<Period>;
 
 export type KillPeriod = (typeof KILL_PERIODS)[number];
 

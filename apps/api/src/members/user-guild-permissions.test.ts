@@ -14,10 +14,8 @@ import {
   memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/organization.schema";
-import {
-  ForwardAuthIdentity,
-  type ForwardAuthIdentityValue,
-} from "#src/runtime/auth/forward-auth-identity";
+import type { ForwardAuthIdentityValue } from "@lootlog/schema/api-key-policy";
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { InternalGuildsData } from "#src/guilds/internal-guilds-data";
 import { getInternalUserPermissions } from "#src/http-api/handlers/internal/internal.handlers";
 import {
