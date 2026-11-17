@@ -126,6 +126,7 @@ export function useWhoIsHereAirTagEnemies() {
     (state) => state.socketState.joinedGuilds,
   );
 
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup -- Cleanup releases every subscription, including the conditional others-store one, and the pending frame.
   useEffect(() => {
     let frame: number | null = null;
 
@@ -137,7 +138,7 @@ export function useWhoIsHereAirTagEnemies() {
     };
 
     const schedule = () => {
-      frame ??= window.requestAnimationFrame(check);
+      if (frame === null) frame = window.requestAnimationFrame(check);
     };
 
     // Re-read when the map turns red, or, while players are reported, when

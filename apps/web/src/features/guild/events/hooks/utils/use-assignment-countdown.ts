@@ -1,68 +1,26 @@
-import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
-import { useState, useEffect } from "react";
+import { useSecondClockValue } from "@/hooks/utils/use-second-clock-value";
 import { formatDurationCompact } from "../../utils/format-duration";
-
-const formatTimeRemaining = (targetTime: number): string => {
-  const diffMs = targetTime - Date.now();
-
-  if (diffMs <= 0) return "0:00";
-
-  return formatDurationCompact(Math.floor(diffMs / 1000));
-};
 
 export const useAssignmentCountdown = (
   assignmentDisabled: boolean,
   assignmentEnabledAt?: number | null,
 ) => {
-  const [isEnabled, setIsEnabled] = useState(!assignmentDisabled);
+  const hasCountdown =
+    assignmentDisabled &&
+    assignmentEnabledAt !== null &&
+    assignmentEnabledAt !== undefined;
 
-  const [formattedTime, setFormattedTime] = useState<string | null>(() => {
-    if (
-      !assignmentDisabled ||
-      assignmentEnabledAt === null ||
-      assignmentEnabledAt === undefined
-    ) {
-      return null;
-    }
+  // The time left until assignments unlock, or null once they have.
+  const formattedTime = useSecondClockValue(() => {
+    if (!hasCountdown) return null;
 
-    return formatTimeRemaining(assignmentEnabledAt);
-  });
+    const diffMs = assignmentEnabledAt - Date.now();
 
-  useEffect(() => {
-    if (!assignmentDisabled) {
-      setIsEnabled(true);
-      setFormattedTime(null);
-
-      return;
-    }
-
-    if (assignmentEnabledAt === null || assignmentEnabledAt === undefined) {
-      setIsEnabled(false);
-      setFormattedTime(null);
-
-      return;
-    }
-
-    const updateCountdown = () => {
-      const now = Date.now();
-      const diff = assignmentEnabledAt - now;
-
-      if (diff <= 0) {
-        setIsEnabled(true);
-        setFormattedTime(null);
-      } else {
-        setIsEnabled(false);
-        setFormattedTime(formatTimeRemaining(assignmentEnabledAt));
-      }
-    };
-
-    updateCountdown();
-
-    return subscribeToSecondClock(updateCountdown);
-  }, [assignmentDisabled, assignmentEnabledAt]);
+    return diffMs > 0 ? formatDurationCompact(Math.floor(diffMs / 1000)) : null;
+  }, hasCountdown);
 
   return {
-    isEnabled,
+    isEnabled: !assignmentDisabled || (hasCountdown && formattedTime === null),
     formattedTime,
   };
 };

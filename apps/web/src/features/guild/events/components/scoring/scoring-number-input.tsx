@@ -38,13 +38,14 @@ export const ScoringNumberInput = ({
   label,
   id,
   bounds,
-  step = bounds?.integer ? 1 : 0.01,
+  step: stepProp,
   unit,
   error: extraError,
   className,
 }: ScoringNumberInputProps) => {
   const { t } = useTranslation();
   const errorId = useId();
+  const step = stepProp ?? (bounds?.integer ? 1 : 0.01);
 
   const error =
     getScoringNumberError(useWatch({ control, name }), bounds) ?? extraError;

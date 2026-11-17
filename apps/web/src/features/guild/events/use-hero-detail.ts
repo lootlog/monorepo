@@ -21,7 +21,7 @@ import { useParams } from "@tanstack/react-router";
 import { Timer, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { getMapStatus } from "./components/maps/map-status";
 import { useEventPresence } from "./hooks/socket/use-event-presence";
 import {
@@ -148,9 +148,6 @@ const getHeroDetailRouteQuery = (
 const getHeroTimerQuery = (world: string | null | undefined) => ({
   world: world ?? "",
 });
-
-const getHeroTimerWindow = (timer: ReturnType<typeof findEventHeroTimer>) =>
-  [timer?.minSpawnTime ?? null, timer?.maxSpawnTime ?? null] as const;
 
 const getHeroAssignmentAvailability = (
   event: EventOverview | undefined,
@@ -378,8 +375,10 @@ export const useHeroDetail = () => {
     heroName: hero?.npcName,
   });
 
-  const heroTimerWindow = getHeroTimerWindow(heroTimer);
-  const windowStatus = useWindowStatus(...heroTimerWindow);
+  const windowStatus = useWindowStatus(
+    heroTimer?.minSpawnTime ?? null,
+    heroTimer?.maxSpawnTime ?? null,
+  );
 
   if (isHeroDetailLoading(isLoading, isMapsLoading))
     return { status: "loading" as const };
@@ -433,23 +432,23 @@ export const useHeroDetail = () => {
   const handleSelfAssignClick = async (mapId: string) => {
     if (!eventId) return;
 
+    const availability = getHeroAssignmentAvailability(event, heroTimer);
+
+    if (!availability.allowed) {
+      const assignmentErrorCandidate = getAssignmentDisabledMessage(
+        availability.reason,
+        t,
+      );
+
+      const assignmentErrorFallback = t("events.maps.assignError");
+      toast.error(assignmentErrorCandidate ?? assignmentErrorFallback);
+
+      return;
+    }
+
     setPendingAssignmentCount((count) => count + 1);
 
     try {
-      const availability = getHeroAssignmentAvailability(event, heroTimer);
-
-      if (!availability.allowed) {
-        const assignmentErrorCandidate = getAssignmentDisabledMessage(
-          availability.reason,
-          t,
-        );
-
-        const assignmentErrorFallback = t("events.maps.assignError");
-        toast.error(assignmentErrorCandidate ?? assignmentErrorFallback);
-
-        return;
-      }
-
       await selfAssignMember.mutateAsync({
         pathParams: {
           guildId: queryGuildId,
@@ -460,9 +459,9 @@ export const useHeroDetail = () => {
       toast.success(t("events.maps.assignSuccess"));
     } catch {
       toast.error(t("events.maps.assignError"));
-    } finally {
-      setPendingAssignmentCount((count) => count - 1);
     }
+
+    setPendingAssignmentCount((count) => count - 1);
   };
 
   const handleSelfUnassignClick = async (mapId: string) => {
@@ -481,9 +480,9 @@ export const useHeroDetail = () => {
       toast.success(t("events.maps.unassignSuccess"));
     } catch {
       toast.error(t("events.maps.unassignError"));
-    } finally {
-      setPendingAssignmentCount((count) => count - 1);
     }
+
+    setPendingAssignmentCount((count) => count - 1);
   };
 
   const handleManageClick = (mapId: string) => {
@@ -494,23 +493,23 @@ export const useHeroDetail = () => {
   const handleAssignFromModal = async (memberId: number) => {
     if (!selectedMapId || !guildId || !eventId) return;
 
+    const availability = getHeroAssignmentAvailability(event, heroTimer);
+
+    if (!availability.allowed) {
+      const assignmentErrorCandidate = getAssignmentDisabledMessage(
+        availability.reason,
+        t,
+      );
+
+      const assignmentErrorFallback = t("events.maps.assignError");
+      toast.error(assignmentErrorCandidate ?? assignmentErrorFallback);
+
+      return;
+    }
+
     setPendingAssignmentCount((count) => count + 1);
 
     try {
-      const availability = getHeroAssignmentAvailability(event, heroTimer);
-
-      if (!availability.allowed) {
-        const assignmentErrorCandidate = getAssignmentDisabledMessage(
-          availability.reason,
-          t,
-        );
-
-        const assignmentErrorFallback = t("events.maps.assignError");
-        toast.error(assignmentErrorCandidate ?? assignmentErrorFallback);
-
-        return;
-      }
-
       await assignMember.mutateAsync({
         pathParams: {
           guildId,
@@ -524,9 +523,9 @@ export const useHeroDetail = () => {
       toast.success(t("events.maps.assignSuccess"));
     } catch {
       toast.error(t("events.maps.assignError"));
-    } finally {
-      setPendingAssignmentCount((count) => count - 1);
     }
+
+    setPendingAssignmentCount((count) => count - 1);
   };
 
   const handleUnassignFromModal = async (memberId: number) => {
@@ -548,9 +547,9 @@ export const useHeroDetail = () => {
       toast.success(t("events.maps.unassignSuccess"));
     } catch {
       toast.error(t("events.maps.unassignError"));
-    } finally {
-      setPendingAssignmentCount((count) => count - 1);
     }
+
+    setPendingAssignmentCount((count) => count - 1);
   };
 
   const selectedMap = allMaps.find((m) => m.id === selectedMapId);
@@ -579,9 +578,9 @@ export const useHeroDetail = () => {
       }
     } catch {
       toast.error(t("events.maps.clearAllError"));
-    } finally {
-      setIsClearingAssignments(false);
     }
+
+    setIsClearingAssignments(false);
   };
 
   const handleCloseRespawnWindow = async (options: {

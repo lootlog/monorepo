@@ -9,7 +9,7 @@ import {
   upgradeItemStat,
 } from "@lootlog/domain/item-upgrade";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
-import { itemIconUrl } from "@lootlog/ui/components/item-image";
+import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
 import {
   ITEM_STAT_FOOTER_SECTIONS,
   mapStatsToDisplaySections,

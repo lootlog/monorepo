@@ -6,7 +6,7 @@ import {
 } from "@/features/user/kills/npc-types";
 import { useKillsControllerGetUserKillStats } from "@lootlog/client/main";
 import type { KillStatsFiltersProps } from "@/features/kills/components/kill-stats-filters";
-import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
+import type { KillStatsPeriod } from "@/features/kills/kill-stats-period";
 
 export type KillsFiltersState = {
   world?: string;

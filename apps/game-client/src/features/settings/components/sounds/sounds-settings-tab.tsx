@@ -5,6 +5,7 @@ import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { SettingsVolumeControl } from "@/components/settings/settings-volume-row";
 import { getFallbackSoundUrl } from "@/features/settings/config/default-sounds";
+import { omit } from "es-toolkit";
 import { Play } from "lucide-react";
 import { SoundCategorySection } from "./sound-category-section";
 import { SoundFieldInput } from "./sound-field-input";
@@ -157,8 +158,8 @@ export function SoundsSettingsTab() {
 
             if (!errors || !(key in errors)) return previous;
 
-            const { [key]: _removed, ...remaining } = errors;
-            const { [category.id]: _previous, ...others } = previous;
+            const remaining = omit(errors, [key]);
+            const others = omit(previous, [category.id]);
 
             return Object.keys(remaining).length > 0
               ? { ...others, [category.id]: remaining }

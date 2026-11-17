@@ -11,7 +11,7 @@ import { useSession } from "@/hooks/auth/use-session";
 import { useUpdateUserPreferences } from "@/hooks/api/user/use-user-preferences";
 import { useUserThemes } from "@/hooks/api/user/use-user-themes";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { useUsersControllerGetUserPreferences } from "@lootlog/client/main";
 import type { CustomThemeDefinition } from "@lootlog/schema/custom-theme";
 import {
@@ -93,18 +93,16 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
     }
   }, [customThemeId, customTheme, userThemes]);
 
+  // The root keeps the applied class, so a cat roulette keeps its cat.
   useLayoutEffect(() => {
-    const root = document.documentElement;
-
     setResolvedTheme(
       applyThemeToDocument({
-        root,
+        root: document.documentElement,
         theme,
         definition,
-        currentResolvedTheme: getRootResolvedTheme(root) ?? resolvedTheme,
       }),
     );
-  }, [theme, definition, resolvedTheme]);
+  }, [theme, definition]);
 
   const setTheme = (nextSelection: ThemeSelection) => {
     setHasThemeOverride(true);

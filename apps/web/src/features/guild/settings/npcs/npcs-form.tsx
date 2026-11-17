@@ -4,7 +4,7 @@ import {
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Schema } from "effect";
 
@@ -27,7 +27,7 @@ import {
 } from "@lootlog/client/main";
 
 import { cn } from "cn";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -98,9 +98,8 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
     );
   }
 
-  const enabledCount = NPC_RARITY_CONFIG.filter((r) =>
-    form.watch(r.key),
-  ).length;
+  const rarities = useWatch({ control: form.control });
+  const enabledCount = NPC_RARITY_CONFIG.filter((r) => rarities[r.key]).length;
 
   return (
     <Form {...form}>

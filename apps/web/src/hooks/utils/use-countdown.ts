@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
+import { useSecondClockValue } from "@/hooks/utils/use-second-clock-value";
 
 interface TimeRemaining {
   minutes: number;
@@ -7,38 +6,25 @@ interface TimeRemaining {
   isExpired: boolean;
 }
 
-const EXPIRED: TimeRemaining = { minutes: 0, seconds: 0, isExpired: true };
+const EXPIRED_SECONDS = -1;
 
 export const useCountdown = (targetDate: string | null): TimeRemaining => {
-  const [timeRemaining, setTimeRemaining] = useState<TimeRemaining>(EXPIRED);
+  // Whole seconds left, or -1 once the target has passed.
+  const remainingSeconds = useSecondClockValue(() => {
+    if (!targetDate) return EXPIRED_SECONDS;
 
-  useEffect(() => {
-    if (!targetDate) {
-      setTimeRemaining(EXPIRED);
+    const difference = new Date(targetDate).getTime() - Date.now();
 
-      return;
-    }
+    return difference <= 0 ? EXPIRED_SECONDS : Math.floor(difference / 1000);
+  }, Boolean(targetDate));
 
-    const calculateTimeRemaining = () => {
-      const difference = new Date(targetDate).getTime() - Date.now();
+  if (remainingSeconds === EXPIRED_SECONDS) {
+    return { minutes: 0, seconds: 0, isExpired: true };
+  }
 
-      if (difference <= 0) {
-        setTimeRemaining(EXPIRED);
-
-        return;
-      }
-
-      setTimeRemaining({
-        minutes: Math.floor(difference / (1000 * 60)),
-        seconds: Math.floor((difference % (1000 * 60)) / 1000),
-        isExpired: false,
-      });
-    };
-
-    calculateTimeRemaining();
-
-    return subscribeToSecondClock(calculateTimeRemaining);
-  }, [targetDate]);
-
-  return timeRemaining;
+  return {
+    minutes: Math.floor(remainingSeconds / 60),
+    seconds: remainingSeconds % 60,
+    isExpired: false,
+  };
 };

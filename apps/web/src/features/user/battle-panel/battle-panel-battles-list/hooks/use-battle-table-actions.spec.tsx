@@ -1,6 +1,6 @@
 import { configureApiClients } from "@lootlog/client/transport";
 import { getBattlesControllerGetDashboardBattlesQueryKey } from "@lootlog/client/battlelog";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 // @vitest-environment happy-dom
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { act, cleanup, renderHook } from "@testing-library/react";

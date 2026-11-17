@@ -16,7 +16,7 @@ import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshStatusContext } from "@/features/guild/settings/members/contexts/refresh-status-context";
-import { toast } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";

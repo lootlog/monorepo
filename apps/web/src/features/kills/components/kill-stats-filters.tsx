@@ -3,10 +3,8 @@ import {
   KillStatsLevelRange,
   type KillStatsLevelRangeValue,
 } from "@/features/kills/components/kill-stats-level-range";
-import {
-  KillStatsPeriodSelect,
-  type KillStatsPeriod,
-} from "@/features/kills/components/kill-stats-period-select";
+import { KillStatsPeriodSelect } from "@/features/kills/components/kill-stats-period-select";
+import type { KillStatsPeriod } from "@/features/kills/kill-stats-period";
 import { KillStatsNpcTypeSelect } from "@/features/kills/components/kill-stats-npc-type-select";
 
 export type KillStatsFiltersProps = {

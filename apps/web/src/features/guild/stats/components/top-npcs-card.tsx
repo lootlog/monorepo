@@ -6,7 +6,7 @@ import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
-import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
+import type { KillStatsPeriod } from "@/features/kills/kill-stats-period";
 import { buildGuildTopNpcsParams } from "../utils/build-stats-query-params";
 import {
   LEADERBOARD_SIZE,

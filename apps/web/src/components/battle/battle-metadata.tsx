@@ -132,7 +132,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({ battle }) => {
   return items.map((item) => (
     <Tooltip key={item.key}>
       <TooltipTrigger
-        render={<span className="flex cursor-help" tabIndex={0} />}
+        render={<button type="button" className="flex cursor-help" />}
       >
         <MetaItem
           icon={item.icon}
