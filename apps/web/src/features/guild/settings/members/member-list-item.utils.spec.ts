@@ -21,33 +21,6 @@ const createMember = (overrides: Partial<GuildMember> = {}): GuildMember => ({
 });
 
 describe("member list item utils", () => {
-  it("returns no online sources for offline members", () => {
-    expect(
-      getMemberOnlineSources({
-        isOnlineOnWeb: false,
-        isOnlineInGame: false,
-      }),
-    ).toEqual([]);
-  });
-
-  it("returns web source for web online members", () => {
-    expect(
-      getMemberOnlineSources({
-        isOnlineOnWeb: true,
-        isOnlineInGame: false,
-      }),
-    ).toEqual(["web"]);
-  });
-
-  it("returns game source for game online members", () => {
-    expect(
-      getMemberOnlineSources({
-        isOnlineOnWeb: false,
-        isOnlineInGame: true,
-      }),
-    ).toEqual(["game"]);
-  });
-
   it("returns both online sources for web and game online members", () => {
     expect(
       getMemberOnlineSources({

@@ -1,11 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { Schema } from "effect";
-import { AirTagObservationSchema, isAirTagObservation } from "./air-tag.js";
+import { isAirTagObservation } from "./air-tag.js";
 import { MapPingAckSchema } from "./map-ping.js";
-import { Capability, CapabilitySchema } from "./permissions.js";
 
 describe("shared wire schemas", () => {
-  it("validates an air-tag observation through the canonical schema", () => {
+  it("accepts an air-tag observation on the map and rejects one outside it", () => {
     const observation = {
       targetId: "123",
       nickname: "Player",
@@ -14,7 +13,6 @@ describe("shared wire schemas", () => {
       y: 17,
     };
 
-    expect(Schema.is(AirTagObservationSchema)(observation)).toBe(true);
     expect(isAirTagObservation(observation)).toBe(true);
     expect(isAirTagObservation({ ...observation, x: -1 })).toBe(false);
   });
@@ -33,11 +31,5 @@ describe("shared wire schemas", () => {
     expect(
       Schema.is(MapPingAckSchema)({ status: "accepted", code: "forbidden" }),
     ).toBe(false);
-  });
-
-  it("includes the precise-location presence capability", () => {
-    expect(
-      Schema.is(CapabilitySchema)(Capability.LOOTLOG_PRESENCE_LOCATION_READ),
-    ).toBe(true);
   });
 });

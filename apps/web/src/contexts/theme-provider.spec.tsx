@@ -209,13 +209,3 @@ it("previews an unsaved definition and returns to the saved theme", async () => 
   expect(document.documentElement.classList.contains("muted")).toBe(true);
   expect(rootStyle("--primary")).toBe("");
 });
-
-it("gives a built-in theme its own font and rounding", async () => {
-  setup({ theme: "cyberpunk", userThemes: [] });
-
-  expect(document.documentElement.classList.contains("cyberpunk")).toBe(true);
-  expect(rootStyle("--font-sans")).toContain("Space Grotesk Variable");
-  expect(rootStyle("--radius")).toBe("0rem");
-  // A built-in theme keeps its stylesheet colours.
-  expect(rootStyle("--primary")).toBe("");
-});

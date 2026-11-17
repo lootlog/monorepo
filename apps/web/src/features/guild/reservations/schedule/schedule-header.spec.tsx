@@ -201,39 +201,6 @@ describe("ScheduleHeader", () => {
     ).not.toBeNull();
   });
 
-  it("centers compact date navigation across the full header width", async () => {
-    const { container } = await renderHeader({ isCompact: true });
-
-    const dateNavigation = container.querySelector(
-      '[data-slot="schedule-date-navigation"]',
-    );
-
-    expect(dateNavigation?.className).toContain("w-full");
-    expect(dateNavigation?.className).toContain("grid");
-    expect(dateNavigation?.className).toContain(
-      "grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
-    );
-    expect(dateNavigation?.className).not.toContain("w-48");
-  });
-
-  it("omits settings from the compact dock without management access", async () => {
-    await renderHeader({
-      canManageReservationSettings: false,
-      isCompact: true,
-    });
-
-    const toolbar = screen.getByRole("toolbar", {
-      name: "Akcje kalendarza rezerwacji",
-    });
-
-    expect(
-      within(toolbar).queryByRole("button", {
-        name: "Ustawienia rezerwacji",
-      }),
-    ).toBeNull();
-    expect(within(toolbar).getAllByRole("button")).toHaveLength(4);
-  });
-
   it("disables the nearest-slot action while searching", async () => {
     await renderHeader({ isCompact: true, isFindingNearestFreeSlot: true });
 

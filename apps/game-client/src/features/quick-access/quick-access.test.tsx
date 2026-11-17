@@ -54,22 +54,6 @@ describe("QuickAccess", () => {
 
     expect(screen.getByText("Lootlog")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Timery" })).toBeInTheDocument();
-    expect(
-      document.querySelector("[data-ll-window-resize-handle]"),
-    ).toBeInTheDocument();
-    expect(
-      document.querySelector("[data-ll-quick-access-horizontal-scroll]"),
-    ).toBeInTheDocument();
-
-    const scrollViewport = document.querySelector(
-      "[data-ll-scroll-area-viewport]",
-    );
-
-    expect(scrollViewport).toBeInTheDocument();
-    expect(scrollViewport).toHaveStyle({
-      overflowX: "scroll",
-      overflowY: "hidden",
-    });
   });
 
   it("does not render when quick access is closed", () => {

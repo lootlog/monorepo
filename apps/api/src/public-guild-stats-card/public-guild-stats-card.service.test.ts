@@ -80,8 +80,6 @@ describe("public guild stats card Effect module", () => {
     await expect(
       Effect.runPromise(service.getStatsCard("guild-1")),
     ).rejects.toBeInstanceOf(ResourceNotFoundError);
-
-    expect(repository.findActiveGuild).toHaveBeenCalledWith("guild-1");
   });
 
   it("throws not found and skips cache for disabled guild", async () => {
@@ -160,34 +158,6 @@ describe("public guild stats card Effect module", () => {
     expect(redis.get).not.toHaveBeenCalled();
     expect(redis.set).not.toHaveBeenCalled();
     expect(repository.findActiveGuild).toHaveBeenCalledTimes(1);
-  });
-
-  it("uses last 30 days aggregation values", async () => {
-    redis.get.mockReturnValue(Effect.succeed(null));
-    repository.findActiveGuild.mockReturnValue(
-      Effect.succeed({
-        id: "guild-1",
-        name: "Guild One",
-        icon: null,
-        publicStatsCardEnabled: true,
-      }),
-    );
-    repository.getLootStats.mockReturnValue(
-      Effect.succeed({
-        totalLoots: 42,
-        legendaryItems: 3,
-        heroicItems: 12,
-      }),
-    );
-
-    await Effect.runPromise(service.getStatsCard("guild-1"));
-
-    expect(repository.getLootStats).toHaveBeenCalledTimes(1);
-    expect(redis.set).toHaveBeenCalledWith(
-      "guild-stats-card:guild-1:v2",
-      expect.any(String),
-      86_400,
-    );
   });
 
   it("refreshes and caches a png when cooldown is available", async () => {

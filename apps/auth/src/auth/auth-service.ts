@@ -124,7 +124,7 @@ const parseExpiresAt = Function.compose(
   Option.flatMap(DateTime.make),
 );
 
-export const normalizeScopes = Function.compose(
+const normalizeScopes = Function.compose(
   Schema.decodeUnknownOption(
     Schema.Union([Schema.String, Schema.Array(Schema.Unknown)]),
   ),

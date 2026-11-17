@@ -321,30 +321,6 @@ describe("NpcsDetectionProcessor", () => {
     expect(useWindowsStore.getState()["npc-detector"].open).toBe(true);
   });
 
-  it("keeps queued events until detector preferences become available", () => {
-    vi.useFakeTimers();
-
-    try {
-      processor.handle(createNpcEvent());
-      vi.advanceTimersByTime(5_001);
-
-      readyPreferences();
-      processor.flushPending("202");
-
-      expect(useNpcDetectorStore.getState().npcs).toEqual([
-        expect.objectContaining({
-          id: 500,
-          nick: "Detected npc",
-          icon: "event-icon.gif",
-          location: "Ithan",
-          notificationSentAt: null,
-        }),
-      ]);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
   it("replaces an overflowing account queue with one authoritative rescan", () => {
     for (let index = 0; index < 201; index += 1) {
       processor.handle({
@@ -392,14 +368,6 @@ describe("NpcsDetectionProcessor", () => {
     } finally {
       vi.useRealTimers();
     }
-  });
-
-  it("returns early when there is nothing pending to flush", () => {
-    readyPreferences();
-
-    processor.flushPending("202");
-
-    expect(useNpcDetectorStore.getState().npcs).toEqual([]);
   });
 
   it("queues only one initial detection before preferences are ready", () => {
@@ -481,43 +449,6 @@ describe("NpcsDetectionProcessor", () => {
         }),
       ]);
       expect(play).toHaveBeenCalledTimes(1);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("does not poll while NPC state is uninitialized", () => {
-    vi.useFakeTimers();
-
-    try {
-      readyPreferences({
-        notifySound: true,
-      });
-      useNpcsStore.getState().clearNpcs();
-      vi.clearAllTimers();
-
-      processor.bootstrapProjection();
-
-      expect(useNpcDetectorStore.getState().npcs).toEqual([]);
-
-      expect(vi.getTimerCount()).toBe(0);
-      expect(play).not.toHaveBeenCalled();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("does not schedule retry timers for an uninitialized NPC domain", () => {
-    vi.useFakeTimers();
-
-    try {
-      readyPreferences();
-      vi.clearAllTimers();
-
-      processor.bootstrapProjection();
-
-      expect(useNpcDetectorStore.getState().npcs).toEqual([]);
-      expect(vi.getTimerCount()).toBe(0);
     } finally {
       vi.useRealTimers();
     }

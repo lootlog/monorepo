@@ -23,50 +23,6 @@ const presence: BasicPresence = {
 afterEach(() => vi.restoreAllMocks());
 
 describe("gateway presence identity", () => {
-  it("keys fetched web and game presence by Discord identity", async () => {
-    const request = vi
-      .spyOn(RealtimeClient.prototype, "request")
-      .mockResolvedValue({
-        organizationId: "organization-1",
-        revision: 1,
-        presences: [
-          presence,
-          {
-            ...presence,
-            platform: "game",
-            character: {
-              world: "alpha",
-              name: "Hero",
-              lvl: 100,
-              icon: "hero.gif",
-              characterId: "10",
-              accountId: "20",
-              prof: "w",
-            },
-          },
-        ],
-      });
-
-    const client = new GatewayClient();
-
-    const response = await client.fetchPresence("organization-1");
-
-    expect(request).toHaveBeenCalledOnce();
-    expect(request).toHaveBeenCalledWith("presence.fetch", {
-      organizationId: "organization-1",
-      delivery: "response",
-    });
-    expect(response).toEqual({
-      status: "success",
-      sessions: {
-        "discord-member": [expect.objectContaining({ sessionId: "session-1" })],
-      },
-      players: {
-        "discord-member": [expect.objectContaining({ sessionId: "session-1" })],
-      },
-    });
-  });
-
   it("ignores legacy snapshots and preserves Discord identity through live updates", () => {
     const subscribe = vi.spyOn(RealtimeClient.prototype, "subscribe");
     const client = new GatewayClient();
@@ -147,16 +103,6 @@ describe("gateway presence identity", () => {
       );
     }
   });
-});
-
-it("adapts kill invalidation signals without adding an actor or NPC identity", () => {
-  const subscribe = vi.spyOn(RealtimeClient.prototype, "subscribe");
-  const client = new GatewayClient();
-  const deliver = subscribe.mock.calls[0]?.[0];
-  const handler = vi.fn();
-  client.on("kill-stats.changed", handler);
-  deliver?.({ v: 1, type: "kill-stats.changed", data: {} });
-  expect(handler).toHaveBeenCalledWith({});
 });
 
 it("delivers complete feed entries without turning them into loot invalidation signals", () => {

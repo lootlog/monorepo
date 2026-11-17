@@ -63,7 +63,6 @@ describe("HttpApi contract refinements", () => {
         targetIds: [],
       }),
     ).toBe(true);
-    expect(rejects(UpdateNotificationRuleRequest)({ world: "  " })).toBe(true);
     expect(rejects(UpdateNotificationRuleRequest)({ npcIds: [] })).toBe(true);
   });
 

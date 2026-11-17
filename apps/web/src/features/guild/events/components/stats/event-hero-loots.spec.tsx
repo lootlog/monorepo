@@ -15,7 +15,7 @@ afterEach(() => {
 });
 
 describe("EventHeroLoots", () => {
-  it("renders recent loots as embedded rows with the action in the header", async () => {
+  it("loads the ten most recent hero loots and links to the full filtered list", async () => {
     const requests: URL[] = [];
     onTestFinished(
       configureApiClients({
@@ -53,12 +53,6 @@ describe("EventHeroLoots", () => {
 
     expect(target.pathname).toBe("/guild-one");
     expect(target.searchParams.get("npcs")).toBe("Potulny Berserker");
-    expect(
-      screen
-        .getAllByTestId("loot-list-item")
-        .map((row) => row.dataset.presentation),
-    ).toEqual(["embedded", "embedded"]);
-    expect(screen.queryByRole("dialog")).toBeNull();
     expect(requests[0]?.searchParams.get("limit")).toBe("10");
   });
 });

@@ -120,21 +120,13 @@ function createContext(
 }
 
 describe("evaluateEventScoring", () => {
-  it("sets base points when tracking meets threshold", () => {
+  it("lets the last matching SET_BASE rule win", () => {
     const context = createContext({ trackingDurationPercentage: 80 });
     const result = evaluateEventScoring(BASE_RULES, context);
 
     expect(result.basePoints).toBe(0.5);
     expect(result.appliedRules.some((r) => r.ruleId === "base-75")).toBe(true);
     expect(result.appliedRules.some((r) => r.ruleId === "base-50")).toBe(true);
-  });
-
-  it("last matching SET_BASE wins", () => {
-    const context = createContext({ trackingDurationPercentage: 80 });
-    const result = evaluateEventScoring(BASE_RULES, context);
-
-    // base-75 sets 1.0, then base-50 overwrites to 0.5 (evaluated in order)
-    expect(result.basePoints).toBe(0.5);
   });
 
   it("does not set base when tracking is below all thresholds", () => {

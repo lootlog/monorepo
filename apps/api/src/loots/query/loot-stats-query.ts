@@ -41,7 +41,7 @@ import { NON_LEGEND_ITEM_TYPES } from "@lootlog/domain/item-type";
 import { strongestNpcFirst } from "#src/loots/strongest-npc-order";
 import { statsLocalTimeOfUtc } from "#src/kills/kill-stats-period";
 
-export class LootStatsQueryError extends TaggedErrorClass<LootStatsQueryError>()(
+class LootStatsQueryError extends TaggedErrorClass<LootStatsQueryError>()(
   "LootStatsQueryError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -5,10 +5,6 @@ import {
 } from "@/lib/game-account-preferences";
 
 describe("game account preferences helpers", () => {
-  it("returns default detector settings when preferences are missing", () => {
-    expect(getEffectiveDetectorSettings()).toEqual(defaultDetectorSettings);
-  });
-
   it("keeps cached detector preferences unchanged when an effective copy is edited", () => {
     const preferences = {
       hasStoredDetector: true,

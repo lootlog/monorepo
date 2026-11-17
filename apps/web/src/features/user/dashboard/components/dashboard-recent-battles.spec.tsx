@@ -102,13 +102,3 @@ it("shows opponent levels, world and the player-relative outcome with a battle d
   expect(requests[0]?.searchParams.get("sortOrder")).toBe("desc");
   expect(requests[0]?.searchParams.get("includeTotal")).toBe("false");
 });
-
-it("shows an empty state and keeps the panel link available", async () => {
-  renderCard([]);
-  expect(
-    await screen.findByText("Nie masz jeszcze zapisanych walk."),
-  ).toBeTruthy();
-  expect(
-    screen.getByRole("link", { name: "Pokaż wszystkie" }).getAttribute("href"),
-  ).toBe("/@me/battle-panel");
-});

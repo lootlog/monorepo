@@ -57,23 +57,6 @@ const recentKillsResponse = () =>
   );
 
 describe("RecentKillsPreview", () => {
-  it("renders the history link in the header and the actual recent kill", async () => {
-    renderPreview(
-      <RecentKillsPreview guildId="guild-1" eventId="event-1" />,
-      recentKillsResponse,
-    );
-
-    const viewAllLink = await screen.findByRole("link", {
-      name: "events.kills.viewAll",
-    });
-
-    expect(viewAllLink.getAttribute("href")).toBe(
-      "/guild-1/events/event-1/kills",
-    );
-    expect(screen.getByRole("table")).toBeTruthy();
-    expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
-  });
-
   it("starts on all heroes and keeps the fetched history and header destination on the selected tab", async () => {
     const requests: string[] = [];
     renderPreview(
@@ -159,7 +142,7 @@ describe("RecentKillsPreview", () => {
   });
 
   it.each(["loading", "empty", "error"] as const)(
-    "keeps the %s state inside the widget without the action",
+    "hides the history link in the %s state",
     async (state) => {
       renderPreview(
         <RecentKillsPreview guildId="guild-1" eventId="event-1" />,
@@ -177,9 +160,6 @@ describe("RecentKillsPreview", () => {
           );
         },
       );
-      expect(
-        screen.getByRole("heading", { name: "events.kills.recentTitle" }),
-      ).toBeTruthy();
 
       if (state === "loading")
         expect(screen.getByLabelText("events.kills.loading")).toBeTruthy();

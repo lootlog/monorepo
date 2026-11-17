@@ -670,7 +670,7 @@ it("uses same-event map, hero and membership updates and freezes them before the
 
   projection.apply(envelope);
   fixture.processor.handleLootFromBattle(event, envelope.ingress);
-  useOthersStore.getState().removeOther("303");
+  useOthersStore.getState().applyBatch({ removeIds: ["303"] });
   expect(await fixture.payload()).toMatchObject({
     location: "New map",
     mapPlayersSnapshot: [

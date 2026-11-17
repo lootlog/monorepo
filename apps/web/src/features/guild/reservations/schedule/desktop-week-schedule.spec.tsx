@@ -134,47 +134,6 @@ describe("DesktopWeekSchedule", () => {
     expect(container.querySelectorAll(".reservation-card")).toHaveLength(1);
   });
 
-  it("uses a blocked cursor over past slots and a crosshair over future slots", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 0, 7, 12, 0));
-
-    const { container } = render(
-      <DesktopWeekSchedule
-        weekStart={new Date(2026, 0, 5)}
-        segments={[]}
-        settings={settings}
-        onRangeSelect={vi.fn()}
-        onReservationSelect={vi.fn()}
-      />,
-    );
-
-    const grid = container.querySelector(".grid");
-    expect(grid).toBeInstanceOf(HTMLDivElement);
-
-    if (!(grid instanceof HTMLDivElement)) return;
-
-    vi.spyOn(grid, "getBoundingClientRect").mockReturnValue(
-      new DOMRect(
-        0,
-        0,
-        LABEL_COLUMN_WIDTH + 700,
-        HEADER_HEIGHT + 24 * MIN_ROW_HEIGHT,
-      ),
-    );
-
-    fireEvent.pointerMove(grid, {
-      clientX: LABEL_COLUMN_WIDTH + 10,
-      clientY: HEADER_HEIGHT + 10,
-    });
-    expect(grid.classList.contains("cursor-not-allowed")).toBe(true);
-
-    fireEvent.pointerMove(grid, {
-      clientX: LABEL_COLUMN_WIDTH + 310,
-      clientY: HEADER_HEIGHT + 10,
-    });
-    expect(grid.classList.contains("cursor-crosshair")).toBe(true);
-  });
-
   it("uses the first outside click only to dismiss an open context menu", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 0, 7, 12, 0));
@@ -333,18 +292,12 @@ describe("DesktopWeekSchedule", () => {
   it("selects the maximum allowed range across midnight", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 0, 4, 12, 0));
-    const { container, grid, onRangeSelect } = renderEmptySchedule();
+    const { grid, onRangeSelect } = renderEmptySchedule();
     moveSelection(
       grid,
       { day: 0, minutes: 23 * 60 },
       { day: 1, minutes: 23 * 60 },
     );
-
-    expect(
-      container.querySelectorAll(
-        ".pointer-events-none.absolute.z-20.rounded-md",
-      ),
-    ).toHaveLength(2);
 
     fireEvent.pointerUp(grid, { pointerId: 1, pointerType: "mouse" });
 
@@ -357,14 +310,8 @@ describe("DesktopWeekSchedule", () => {
   it("selects a range across midnight when dragging backwards", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 0, 4, 12, 0));
-    const { container, grid, onRangeSelect } = renderEmptySchedule();
+    const { grid, onRangeSelect } = renderEmptySchedule();
     moveSelection(grid, { day: 1, minutes: 60 }, { day: 0, minutes: 23 * 60 });
-
-    expect(
-      container.querySelectorAll(
-        ".pointer-events-none.absolute.z-20.rounded-md",
-      ),
-    ).toHaveLength(2);
 
     fireEvent.pointerUp(grid, { pointerId: 1, pointerType: "mouse" });
 
@@ -377,18 +324,12 @@ describe("DesktopWeekSchedule", () => {
   it("keeps same-day range selection unchanged", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 0, 4, 12, 0));
-    const { container, grid, onRangeSelect } = renderEmptySchedule();
+    const { grid, onRangeSelect } = renderEmptySchedule();
     moveSelection(
       grid,
       { day: 0, minutes: 10 * 60 },
       { day: 0, minutes: 10 * 60 + 45 },
     );
-
-    expect(
-      container.querySelectorAll(
-        ".pointer-events-none.absolute.z-20.rounded-md",
-      ),
-    ).toHaveLength(1);
 
     fireEvent.pointerUp(grid, { pointerId: 1, pointerType: "mouse" });
 

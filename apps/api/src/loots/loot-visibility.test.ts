@@ -6,10 +6,7 @@ import {
   npcSnapshotTable,
 } from "#src/database/drizzle/loot.schema";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
-import {
-  buildLootNpcVisibilityCondition,
-  toLootVisibilityRoles,
-} from "./loot-visibility.js";
+import { buildLootNpcVisibilityCondition } from "./loot-visibility.js";
 
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 
@@ -36,21 +33,6 @@ function role(
 }
 
 describe("loot visibility", () => {
-  it("maps database roles to the domain visibility contract", () => {
-    expect(
-      toLootVisibilityRoles([
-        role("complete", [Permission.LOOTLOG_LOOTS_READ], 100, 200),
-      ]),
-    ).toEqual([
-      {
-        id: "complete",
-        levelFrom: 100,
-        levelTo: 200,
-        permissions: [Permission.LOOTLOG_LOOTS_READ],
-      },
-    ]);
-  });
-
   it("checks complete grants, empty encounters, owner bypass and normalized level bounds in the database", async () => {
     const boundary = await createDatabaseBoundary();
 

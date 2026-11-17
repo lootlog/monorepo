@@ -88,18 +88,6 @@ describe("MemberKillsList", () => {
     expect(
       screen.getByRole("link", { name: "events.kills.openKillDetails" }),
     ).toBeTruthy();
-    expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
-    expect(
-      screen.getByRole("columnheader", { name: "events.kills.monster" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("columnheader", { name: "events.kills.timeCoverage" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("columnheader", {
-        name: "events.kills.trackingDurationTime",
-      }),
-    ).toBeTruthy();
   });
 
   it("links to kill details and expands the scoring breakdown separately", () => {

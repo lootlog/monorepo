@@ -10,10 +10,7 @@ import { expect, test } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { HttpRouter, HttpServerResponse } from "effect/http";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
-import {
-  ForwardAuthMiddlewareLive,
-  readForwardAuthIdentity,
-} from "#src/runtime/auth/forward-auth-middleware";
+import { ForwardAuthMiddlewareLive } from "#src/runtime/auth/forward-auth-middleware";
 
 const endpoint = HttpApiEndpoint.get("protected", "/protected", {
   success: Schema.String,
@@ -56,15 +53,6 @@ const runProtected = async (
     await boundary.dispose();
   }
 };
-
-test("reads the complete trusted forward-auth identity", () => {
-  expect(
-    readForwardAuthIdentity({
-      "x-auth-user-id": " user-1 ",
-      "x-auth-discord-id": " discord-1 ",
-    }),
-  ).toEqual({ userId: "user-1", discordId: "discord-1" });
-});
 
 test.each([
   {},
@@ -109,15 +97,6 @@ test("does not execute the protected handler after a failed forward-auth check",
 
   expect(response.status).toBe(401);
   expect(handlerExecuted).toBe(false);
-});
-
-test("matches header names case-insensitively through the Web request boundary", async () => {
-  const response = await runProtected({
-    "X-Auth-User-Id": "user-1",
-    "X-Auth-Discord-Id": "discord-1",
-  });
-
-  expect(await response.text()).toBe("user-1:discord-1");
 });
 
 test("keeps concurrent request identities isolated", async () => {

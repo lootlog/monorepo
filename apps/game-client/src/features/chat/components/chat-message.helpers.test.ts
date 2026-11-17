@@ -3,7 +3,6 @@ import { MessageType } from "@/api/chat.api";
 import { createChatMessage } from "../chat-test-fixtures";
 import {
   getChatNpcLocation,
-  getChatNpcTextColor,
   getChatMessageBody,
   isChatMessageYesterdayOrOlder,
 } from "./chat-message.helpers";
@@ -41,24 +40,6 @@ describe("chat-message helpers", () => {
         wt: 100,
       }),
     ).toBe("Swamp (7, 9)");
-  });
-
-  it("returns NPC highlight color based on its category", () => {
-    expect(
-      getChatNpcTextColor({
-        id: 10,
-        name: "Hydra",
-        icon: "npc.png",
-        x: 7,
-        y: 9,
-        hpp: 100,
-        location: "Swamp",
-        lvl: 250,
-        prof: "m",
-        type: 1,
-        wt: 100,
-      }),
-    ).toEqual(expect.any(String));
   });
 
   it("builds the notification body text", () => {

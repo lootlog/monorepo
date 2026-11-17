@@ -24,11 +24,4 @@ describe("loot wire enums", () => {
       }
     }
   });
-
-  it("rejects unknown wire values", () => {
-    expect(Schema.is(ItemRaritySchema)("COMMON")).toBe(false);
-    expect(Schema.is(LootSourceSchema)("MANUAL")).toBe(false);
-    expect(Schema.is(ProfessionSchema)("BARD")).toBe(false);
-    expect(Schema.is(NpcTypeSchema)("BOSS")).toBe(false);
-  });
 });

@@ -11,7 +11,6 @@ import {
   loadBattlePanelPlayerVsPlayerSearch,
   loadBattlePanelSingleBattleSearch,
   loadBattlePanelStatisticsSearch,
-  resetBattlePanelCursorPagination,
 } from "./battle-panel-search";
 
 describe("battle panel search params", () => {
@@ -190,13 +189,6 @@ describe("battle panel battle list route search schema", () => {
 });
 
 describe("battle panel cursor pagination helpers", () => {
-  it("resets cursor pagination to the first page", () => {
-    expect(resetBattlePanelCursorPagination()).toEqual({
-      cursor: null,
-      page: BATTLE_PANEL_FIRST_PAGE,
-    });
-  });
-
   it("converts URL pages into zero-based page indexes for table footers", () => {
     expect(getBattlePanelPageIndex(1)).toBe(0);
     expect(getBattlePanelPageIndex(3)).toBe(2);

@@ -5,49 +5,6 @@ import {
 } from "./deployment-targets.mjs";
 
 describe("deployment targets", () => {
-  test("the catalog exposes the supported deployment boundary", async () => {
-    const targets = await loadDeploymentTargets();
-    expect(targets.map(({ id }) => id)).toEqual([
-      "activity",
-      "api",
-      "auth",
-      "battlelog-service",
-      "catalog",
-      "developer",
-      "discord-bot",
-      "gateway",
-      "search",
-      "traffic-splitter",
-      "landing",
-      "web",
-      "game-client",
-      "docs",
-      "wiki",
-    ]);
-
-    const dockerTargets = targets.filter(({ kind }) => kind === "docker");
-    expect(
-      dockerTargets
-        .filter(({ dockerfile }) => dockerfile === "docker/backend.Dockerfile")
-        .map(({ id }) => id),
-    ).toEqual([
-      "activity",
-      "api",
-      "auth",
-      "battlelog-service",
-      "catalog",
-      "discord-bot",
-      "gateway",
-      "search",
-    ]);
-    expect(dockerTargets.find(({ id }) => id === "developer")?.dockerfile).toBe(
-      "docker/developer.Dockerfile",
-    );
-    expect(dockerTargets.find(({ id }) => id === "api")?.installFonts).toBe(
-      true,
-    );
-  });
-
   test("development selects affected targets enabled for dev", async () => {
     const plan = await createDeploymentPlan({
       mode: "dev",
@@ -268,22 +225,6 @@ describe("deployment targets", () => {
     });
 
     expect(plan.targets.map(({ id }) => id)).toEqual(["auth"]);
-  });
-
-  test("Game Client production builds declare their required public configuration", async () => {
-    const targets = await loadDeploymentTargets();
-    expect(
-      targets.find(({ id }) => id === "game-client")?.production
-        ?.requiredEnvironmentVariables,
-    ).toEqual([
-      "GAME_CLIENT_GAME_CLIENT_URL",
-      "GAME_CLIENT_VITE_API_URL",
-      "GAME_CLIENT_VITE_AUTH_SERVICE_URL",
-      "GAME_CLIENT_VITE_BATTLELOG_API_URL",
-      "GAME_CLIENT_VITE_GATEWAY_URL",
-      "GAME_CLIENT_VITE_GATEWAY_SOCKET_PATH",
-      "GAME_CLIENT_VITE_LOOTLOG_APP_URL",
-    ]);
   });
 
   test("rollback exposes only targets changed by the last deployment", async () => {

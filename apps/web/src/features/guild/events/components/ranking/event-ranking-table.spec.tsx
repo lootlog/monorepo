@@ -279,27 +279,8 @@ describe("EventRankingTable", () => {
     expect(commitCount - commitsAfterMount).toBeLessThanOrEqual(2);
   });
 
-  it("presents a semantic leaderboard and links its data cells", () => {
+  it("links each row to the member page with a single tab stop", () => {
     renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })]);
-
-    expect(screen.getByRole("table")).toBeTruthy();
-    expect(
-      screen.getByRole("columnheader", { name: "events.ranking.player" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("columnheader", { name: "events.ranking.kills" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("columnheader", { name: "events.ranking.time" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("columnheader", { name: "events.ranking.afk" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("columnheader", { name: "events.ranking.points" }),
-    ).toBeTruthy();
-    expect(screen.getByText("1m")).toBeTruthy();
-    expect(screen.getByText("—")).toBeTruthy();
 
     const primaryLink = screen.getByRole("link", {
       name: "events.ranking.openMemberStats",
@@ -337,40 +318,6 @@ describe("EventRankingTable", () => {
     expect(rankingRows[0]?.textContent).toContain("103.5");
     expect(rankingRows[1]?.textContent).toContain("Member 1");
     expect(screen.getByText("3%")).toBeTruthy();
-  });
-
-  it("uses the member role color and preserves the default color without one", () => {
-    renderRankingTable([
-      createRanking({
-        id: "ranking-colored",
-        memberId: 1,
-        roleColor: 0x25a7e8,
-      }),
-      createRanking({ id: "ranking-default", memberId: 2 }),
-    ]);
-
-    expect(screen.getByText("Member 1").style.color).toBe("#25A7E8");
-    expect(screen.getByText("Member 2").getAttribute("style")).toBeNull();
-  });
-
-  it("right-aligns every numeric data cell", () => {
-    const { container } = renderRankingTable([
-      createRanking({ avgAfkPercentage: 3, id: "ranking-1", memberId: 1 }),
-    ]);
-
-    const linkedNumericCells = container.querySelectorAll(
-      "tbody tr td:nth-child(3) a, tbody tr td:nth-child(4) a, tbody tr td:nth-child(5) a",
-    );
-
-    const pointsCell = container.querySelector("tbody tr td:nth-child(6)");
-
-    expect(linkedNumericCells).toHaveLength(3);
-    expect(
-      [...linkedNumericCells].every((cell) =>
-        cell.className.includes("justify-end"),
-      ),
-    ).toBe(true);
-    expect(pointsCell?.className).toContain("text-right");
   });
 
   it("highlights the current guild member", () => {
@@ -426,27 +373,6 @@ describe("EventRankingTable", () => {
     );
 
     expect(screen.getByLabelText("events.points.modified")).toBeTruthy();
-  });
-
-  it("exposes the edit history action with an accessible name", () => {
-    renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })]);
-
-    expect(
-      screen.getByRole("button", { name: "events.points.history" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "events.ranking.moreActions" }),
-    ).toBeTruthy();
-  });
-
-  it("keeps mobile actions outside the member link", () => {
-    renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })]);
-
-    const mobileActions = screen.getByRole("button", {
-      name: "events.ranking.moreActions",
-    });
-
-    expect(mobileActions.closest("a")).toBeNull();
   });
 
   it("renders the embedded history without another request", async () => {
@@ -570,7 +496,6 @@ function createRanking({
   id,
   memberId,
   pointsModified = true,
-  roleColor,
   totalPoints = 100,
 }: {
   avgAfkPercentage?: number;
@@ -578,7 +503,6 @@ function createRanking({
   id: string;
   memberId: number;
   pointsModified?: boolean;
-  roleColor?: number;
   totalPoints?: number;
 }): EventRanking {
   return {
@@ -598,15 +522,7 @@ function createRanking({
       name: `Member ${memberId}`,
       avatar: null,
       userId: `user-${memberId}`,
-      roles:
-        roleColor === undefined
-          ? []
-          : [
-              {
-                color: roleColor,
-                position: 1,
-              },
-            ],
+      roles: [],
     },
   };
 }

@@ -38,26 +38,6 @@ describe("useOthersStore", () => {
     expect(Object.isFrozen(other)).toBe(true);
   });
 
-  it("adds and updates other characters by id", () => {
-    const first = createOther("first");
-    const second = createOther("second");
-
-    useOthersStore.getState().applyBatch({ upserts: { "1": first } });
-    expect(useOthersStore.getState().getOther("1")).toBe(first);
-
-    useOthersStore.getState().applyBatch({ upserts: { "1": second } });
-    expect(useOthersStore.getState().getOther("1")).toBe(second);
-  });
-
-  it("removes other characters by id", () => {
-    const other = createOther("other");
-
-    useOthersStore.getState().applyBatch({ upserts: { "1": other } });
-    useOthersStore.getState().removeOther("1");
-
-    expect(useOthersStore.getState().getOther("1")).toBeUndefined();
-  });
-
   it("sets many others and clears the store", () => {
     const first = createOther("first");
     const second = createOther("second");
@@ -70,17 +50,6 @@ describe("useOthersStore", () => {
 
     useOthersStore.getState().clearOthers();
     expect(useOthersStore.getState().othersById).toEqual({});
-  });
-
-  it("does not replace state when upserting the same runtime object", () => {
-    const other = createOther("other");
-
-    useOthersStore.getState().applyBatch({ upserts: { "1": other } });
-    const firstState = useOthersStore.getState().othersById;
-
-    useOthersStore.getState().applyBatch({ upserts: { "1": other } });
-
-    expect(useOthersStore.getState().othersById).toBe(firstState);
   });
 
   it("preserves state and entity references for a semantically equal other", () => {

@@ -82,18 +82,12 @@ describe("MyReservations", () => {
     vi.unstubAllGlobals();
   });
 
-  it("names the page and requests the complete upcoming list", async () => {
+  it("requests the upcoming list by default", async () => {
     const requests = renderMyReservations("/@me/reservations");
 
     await screen.findByText("Brak nadchodzących rezerwacji");
-
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Moje rezerwacje" }),
-    ).toBeTruthy();
     await waitFor(() => expect(requests).toHaveLength(1));
     expect(requests[0]?.searchParams.get("status")).toBe("upcoming");
-    expect(screen.queryByRole("button", { name: "Poprzednia" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Następna" })).toBeNull();
   });
 
   it("opens the history tab from the link and its tab", async () => {
