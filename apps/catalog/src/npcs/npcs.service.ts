@@ -6,9 +6,9 @@ import type { GameVersion } from "@lootlog/schema/game-version";
 import type { CatalogWriteFailure } from "#src/database/catalog-store";
 import { Effect, Schema } from "effect";
 import { groupBy, maxBy, partition } from "es-toolkit";
-import { changedEntries, countEntries } from "#src/shared/changed-entries";
+import { changedDocuments } from "@lootlog/meilisearch/projection";
+import { countEntries } from "#src/shared/entry-metrics";
 import type { CatalogWrite } from "#src/items/items.service";
-import type { AppLogger } from "#src/shared/logger";
 import { getNpcType } from "@lootlog/domain/npc-type";
 import type {
   CatalogMonsterFormerLevel,
@@ -216,7 +216,7 @@ export const mergeNpcDocuments = (
   return [...byUid.values()];
 };
 
-export const makeNpcsModule = (write: CatalogWrite, logger: AppLogger) => {
+export const makeNpcsModule = (write: CatalogWrite) => {
   const indexNpcs = Effect.fn("CatalogNpcs.index")(function* (
     data: IndexNpcsCommand,
   ) {
@@ -225,15 +225,16 @@ export const makeNpcsModule = (write: CatalogWrite, logger: AppLogger) => {
     );
 
     if (validNpcs.length === 0) {
-      logger.warn("No valid npcs to index (missing required fields)", {
-        npcs: data.npcs,
-      });
+      yield* Effect.logWarning(
+        "No valid npcs to index (missing required fields)",
+        { npcs: data.npcs },
+      );
 
       return;
     }
 
     if (validNpcs.length !== data.npcs.length) {
-      logger.warn(
+      yield* Effect.logWarning(
         `Skipped ${invalidNpcs.length} npcs due to missing required fields`,
         { invalidNpcs },
       );
@@ -268,7 +269,7 @@ export const makeNpcsModule = (write: CatalogWrite, logger: AppLogger) => {
           ]).map((revision) => [revision.uid, revision.current]),
         );
 
-        const changed = changedEntries(
+        const changed = changedDocuments(
           documents,
           storedEntries,
           (npc, stored) => ({

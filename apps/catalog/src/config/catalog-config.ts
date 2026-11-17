@@ -1,14 +1,11 @@
 import {
-  RuntimeEnvironment,
-  RuntimeEnvironmentSchema,
-} from "@lootlog/schema/runtime-environment";
+  type BaseServiceConfiguration,
+  baseServiceConfig,
+} from "@lootlog/instrumentation/service-config";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Config, Context, Effect, Layer, Option, Redacted } from "effect";
 
-export interface CatalogConfigValue {
-  readonly environment: RuntimeEnvironment;
-  readonly port: number;
-  readonly serviceName: string;
-  readonly serviceNamespace: string;
+export interface CatalogConfigValue extends BaseServiceConfiguration {
   readonly databaseUrl: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly meilisearchHost: string;
@@ -26,10 +23,7 @@ export class CatalogConfig extends Context.Service<
   static readonly layer = Layer.effect(
     CatalogConfig,
     Effect.gen(function* () {
-      const environment = yield* Config.schema(
-        RuntimeEnvironmentSchema,
-        "ENV",
-      ).pipe(Config.withDefault(RuntimeEnvironment.LOCAL));
+      const base = yield* baseServiceConfig("catalog");
 
       const configuredToken = yield* Config.option(
         Config.Redacted("CATALOG_SERVICE_TOKEN"),
@@ -37,11 +31,11 @@ export class CatalogConfig extends Context.Service<
 
       const serviceToken = Option.isSome(configuredToken)
         ? configuredToken.value
-        : environment === RuntimeEnvironment.LOCAL
+        : base.environment === RuntimeEnvironment.LOCAL
           ? Redacted.make(LOCAL_SERVICE_TOKEN)
           : yield* Effect.fail(
               new Error(
-                `CATALOG_SERVICE_TOKEN is required when ENV=${environment}`,
+                `CATALOG_SERVICE_TOKEN is required when ENV=${base.environment}`,
               ),
             );
 
@@ -53,14 +47,7 @@ export class CatalogConfig extends Context.Service<
         );
 
       return CatalogConfig.of({
-        environment,
-        port: yield* Config.Int("PORT"),
-        serviceName: yield* Config.String("SERVICE_NAME").pipe(
-          Config.withDefault("catalog"),
-        ),
-        serviceNamespace: yield* Config.String("SERVICE_NAMESPACE").pipe(
-          Config.withDefault("local"),
-        ),
+        ...base,
         databaseUrl: yield* Config.Redacted("POSTGRESQL_CONNECTION_URI"),
         rabbitmqUri: yield* Config.Redacted("RABBITMQ_URI"),
         meilisearchHost: yield* Config.String("MEILISEARCH_HOST"),

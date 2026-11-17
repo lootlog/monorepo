@@ -55,9 +55,7 @@ test("startup skips unchanged settings and preserves searchable attribute order"
   });
 
   const configure = () =>
-    Effect.runPromise(
-      configureMeilisearchIndexes(client, indexSettings, { error() {} }),
-    );
+    Effect.runPromise(configureMeilisearchIndexes(client, indexSettings));
 
   await configure();
   expect(updates.map((update) => update.index).sort()).toEqual([

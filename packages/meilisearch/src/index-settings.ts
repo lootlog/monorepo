@@ -22,15 +22,8 @@ export type IndexSettings = Pick<
 
 export const SEARCH_INDEX_PRIMARY_KEY = "uid";
 
-type ConfigurationLogger = {
-  readonly error: (message: string, context: { error: unknown }) => void;
-};
-
-const ensureIndex = (
-  meilisearch: Meilisearch,
-  indexName: string,
-  primaryKey: string,
-) =>
+/** Creates the index unless it exists. */
+export const ensureIndex = (meilisearch: Meilisearch, indexName: string) =>
   attemptMeilisearch("meilisearch.index.get", () =>
     meilisearch.getIndex(indexName),
   ).pipe(
@@ -40,7 +33,9 @@ const ensureIndex = (
       }
 
       return completeMeilisearchTask("meilisearch.index.create", () =>
-        meilisearch.createIndex(indexName, { primaryKey }),
+        meilisearch.createIndex(indexName, {
+          primaryKey: SEARCH_INDEX_PRIMARY_KEY,
+        }),
       );
     }),
     Effect.asVoid,
@@ -50,13 +45,12 @@ const ensureIndex = (
 export const configureMeilisearchIndexes = (
   meilisearch: Meilisearch,
   settings: Readonly<Record<string, IndexSettings>>,
-  logger: ConfigurationLogger,
 ) =>
   Effect.gen(function* () {
     yield* Effect.all(
       Object.entries(settings).map(([indexName, desired]) =>
         Effect.gen(function* () {
-          yield* ensureIndex(meilisearch, indexName, SEARCH_INDEX_PRIMARY_KEY);
+          yield* ensureIndex(meilisearch, indexName);
           const index = meilisearch.index(indexName);
 
           const current = yield* attemptMeilisearch(
@@ -96,8 +90,6 @@ export const configureMeilisearchIndexes = (
     );
   }).pipe(
     Effect.tapError((error) =>
-      Effect.sync(() =>
-        logger.error("Failed to configure Meilisearch indexes", { error }),
-      ),
+      Effect.logError("Failed to configure Meilisearch indexes", { error }),
     ),
   );
