@@ -1,5 +1,6 @@
 import { CATALOG_SERVICE_TOKEN_HEADER } from "@lootlog/protocol/http/catalog-access";
 import { matchesServiceSecret } from "@lootlog/protocol/http/service-auth";
+import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { HttpApiMiddleware, HttpApiSchema, OpenApi } from "effect/http-api";
@@ -38,7 +39,7 @@ export class CatalogAccess extends HttpApiMiddleware.Service<CatalogAccess>()(
               headers[CATALOG_SERVICE_TOKEN_HEADER],
               serviceToken,
             ) ||
-            headers["x-auth-user-id"]
+            readForwardAuthIdentity(headers) !== undefined
           ) {
             return httpEffect;
           }

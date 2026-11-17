@@ -1011,6 +1011,7 @@ describe("durable private online history", () => {
       const headers = {
         authorization: "Bearer forwarded",
         "x-auth-user-id": "union",
+        "x-auth-discord-id": "union-discord",
       };
 
       const response = await boundary.handler(

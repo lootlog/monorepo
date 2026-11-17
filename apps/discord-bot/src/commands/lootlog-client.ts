@@ -3,6 +3,14 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { CATALOG_SERVICE_TOKEN_HEADER } from "@lootlog/protocol/http/catalog-access";
 import { Context, Effect, Layer, Redacted, Schema } from "effect";
 import { HttpClient, HttpClientRequest } from "effect/http";
+import {
+  AUTH_DISCORD_ID_HEADER,
+  AUTH_USER_ID_HEADER,
+} from "@lootlog/schema/api-key-access";
+import {
+  InternalMemberIdentityResponse,
+  internalMemberIdentityPath,
+} from "@lootlog/schema/internal-guilds";
 import { BotConfig } from "#src/config/bot-config";
 
 /**
@@ -51,11 +59,6 @@ export interface LootlogClientValue {
     path: string,
   ) => Effect.Effect<Uint8Array, CommandFailure>;
 }
-
-const MemberIdentity = Schema.Struct({
-  userId: Schema.String,
-  memberId: Schema.Number,
-});
 
 const failureForStatus = (status: number): CommandFailure | undefined => {
   if (status >= 200 && status < 300) return undefined;
@@ -134,12 +137,14 @@ export class LootlogClient extends Context.Service<
         guildId: string,
         discordId: string,
       ) {
-        const identityPath = `/internal/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(discordId)}/identity`;
-
         const { userId, memberId } = yield* read(
           httpClient,
           config.apiServiceUrl,
-        )(identityPath, {}, MemberIdentity).pipe(
+        )(
+          internalMemberIdentityPath({ guildId, discordId }),
+          {},
+          InternalMemberIdentityResponse,
+        ).pipe(
           Effect.catchIf(
             (failure) => failure.reason === "not-found",
             () => Effect.fail(new CommandFailure({ reason: "not-linked" })),
@@ -151,8 +156,8 @@ export class LootlogClient extends Context.Service<
         const asMember = HttpClient.mapRequest(
           httpClient,
           HttpClientRequest.setHeaders({
-            "x-auth-user-id": userId,
-            "x-auth-discord-id": discordId,
+            [AUTH_USER_ID_HEADER]: userId,
+            [AUTH_DISCORD_ID_HEADER]: discordId,
           }),
         );
 

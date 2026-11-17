@@ -10,7 +10,7 @@ import {
   type InternalGuildsPersistence,
 } from "../../api/src/guilds/internal-guilds-data.js";
 import { getInternalUserPermissions } from "../../api/src/http-api/handlers/internal/internal.handlers.js";
-import { InternalUserPermissionsQuery } from "../../api/src/contracts/internal/schemas.js";
+import { InternalUserPermissionsQuery } from "@lootlog/schema/internal-guilds";
 import { createPermissionCacheBoundary } from "../../api/test/permission-cache-fixtures.js";
 import {
   createGuildFixture,

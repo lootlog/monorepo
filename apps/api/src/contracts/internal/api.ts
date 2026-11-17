@@ -8,17 +8,21 @@ import {
 import { OrganizationSummary } from "#src/contracts/shared";
 import { HttpErrorResponse } from "#src/contracts/api-shared";
 import {
+  INTERNAL_MEMBER_IDENTITY_PATH,
+  INTERNAL_USER_PERMISSIONS_PATH,
   InternalMemberIdentityPath,
   InternalMemberIdentityResponse,
+  InternalUserPermissionsQuery,
+} from "@lootlog/schema/internal-guilds";
+import {
   OrganizationLookupPath,
   InternalUserPermissionsResponse,
-  InternalUserPermissionsQuery,
 } from "./schemas.js";
 
 export class InternalGroup extends HttpApiGroup.make("internal").add(
   HttpApiEndpoint.get(
     "GuildsInternalControllerGetUserPermissions",
-    "/internal/guilds/user-permissions",
+    INTERNAL_USER_PERMISSIONS_PATH,
     {
       query: InternalUserPermissionsQuery,
       success: InternalUserPermissionsResponse,
@@ -49,7 +53,7 @@ export class InternalGroup extends HttpApiGroup.make("internal").add(
     ),
   HttpApiEndpoint.get(
     "GuildsInternalControllerGetMemberIdentity",
-    "/internal/guilds/:guildId/members/:discordId/identity",
+    INTERNAL_MEMBER_IDENTITY_PATH,
     {
       params: InternalMemberIdentityPath,
       success: InternalMemberIdentityResponse,

@@ -1,6 +1,12 @@
 import { ApiKeyService } from "#src/auth/api-key-service";
-import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
-import type { ApiKeyAccess } from "@lootlog/schema/api-key-access";
+import {
+  hasServiceAuthorization,
+  readBearerToken,
+} from "@lootlog/protocol/http/service-auth";
+import {
+  API_KEY_HEADER,
+  type ApiKeyAccess,
+} from "@lootlog/schema/api-key-access";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { APIError } from "better-auth/api";
 import { and, eq } from "drizzle-orm";
@@ -262,11 +268,7 @@ export const createAuthService = ({
       } satisfies VerifiedIdentity;
     }
 
-    if (!authorizationHeader) {
-      return null;
-    }
-
-    const token = authorizationHeader.replace(/^Bearer\s+/i, "");
+    const token = readBearerToken(authorizationHeader);
 
     if (!token) {
       return null;
@@ -291,8 +293,8 @@ export const createAuthService = ({
         return yield* unauthorized();
       }
 
-      if (headers.has("x-api-key")) {
-        const key = headers.get("x-api-key")?.trim();
+      if (headers.has(API_KEY_HEADER)) {
+        const key = headers.get(API_KEY_HEADER)?.trim();
 
         if (!key || !verifyApiKey) return yield* unauthorized();
 
@@ -520,7 +522,6 @@ export const createAuthService = ({
   );
 
   return {
-    buildVerifiedIdentityFromRequest,
     getCurrentUserScopes,
     getIdpTokenResponse,
     verifyRequestIdentity,
