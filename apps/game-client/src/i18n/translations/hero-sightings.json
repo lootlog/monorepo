@@ -11,11 +11,6 @@
     "PROBABLY_KILLED": "prawdopodobnie zbity",
     "KILLED": "zbity"
   },
-  "age": {
-    "now": "przed chwilą",
-    "minutes": "{{count}} min temu",
-    "hours": "{{count}} godz. temu"
-  },
   "detectedBy": "Wykrycie: {{name}}",
   "refreshedBy": "Odświeżenie: {{name}}",
   "claims": {

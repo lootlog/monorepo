@@ -37,7 +37,7 @@ import {
   type NotificationDispatchJob,
   type NotificationDispatchStore,
 } from "#src/notifications/jobs/notification-job-dispatch";
-import { NotificationJobStatus } from "#src/notifications/notification-enums";
+import { NotificationJobStatus } from "@lootlog/schema/notifications";
 import { createOrganizationLootRecordFixture } from "../../../test/loot-fixtures.js";
 
 const job = (active: boolean): NotificationDispatchJob => ({

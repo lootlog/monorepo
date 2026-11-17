@@ -1,4 +1,3 @@
-import type { DiscordNotificationAllowedMentions } from "@lootlog/schema/notifications";
 import {
   isJsonObject,
   type JsonObject,
@@ -29,10 +28,11 @@ import {
 import { formatDiscordRelativeTimestamp } from "#src/notifications/content/discord-timestamp";
 import {
   NotificationScheduleAnchor,
+  type DiscordNotificationAllowedMentions,
   type NotificationScheduleStrategy,
   NotificationTargetType,
   NotificationTriggerType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 type AllowedMention = "roles" | "users" | "everyone";
 

@@ -31,7 +31,7 @@ import {
 } from "./hooks/use-window-status";
 import { canManageEvent } from "./utils/event-access";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
-import { getAssignmentAvailability } from "./utils/get-assignment-availability";
+import { getMapAssignmentAvailability } from "@lootlog/domain/event-map-assignment";
 
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
 import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
@@ -131,7 +131,7 @@ function assertDefined<Value>(
 }
 
 const getAssignmentDisabledMessage = (
-  reason: ReturnType<typeof getAssignmentAvailability>["reason"],
+  reason: ReturnType<typeof getMapAssignmentAvailability>["reason"],
   t: ReturnType<typeof useTranslation>["t"],
 ) => (reason === "OVERDUE" ? t("events.maps.assignmentDisabledOverdue") : null);
 
@@ -153,7 +153,7 @@ const getHeroAssignmentAvailability = (
   event: EventOverview | undefined,
   timer: ReturnType<typeof findEventHeroTimer>,
 ) =>
-  getAssignmentAvailability({
+  getMapAssignmentAvailability({
     assignmentTimeoutMinutes: event?.assignmentTimeoutMinutes ?? 5,
     timer,
   });

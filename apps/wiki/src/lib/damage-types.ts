@@ -6,7 +6,7 @@ import {
   Snowflake,
   Zap,
 } from "lucide-react";
-import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 
 /** The kinds of harm a weapon deals beyond plain blows, each as a colored icon. */
 const DAMAGE_TYPES = [
@@ -20,7 +20,7 @@ const DAMAGE_TYPES = [
 
 /** The damage types the item deals, in a fixed order. */
 export const findDamageTypes = (stat: string) => {
-  const keys = new Set(parseItemStats(stat).map(({ key }) => key));
+  const keys = new Set(parseItemStatEntries(stat).map(({ key }) => key));
 
   return DAMAGE_TYPES.filter(({ key }) => keys.has(key));
 };

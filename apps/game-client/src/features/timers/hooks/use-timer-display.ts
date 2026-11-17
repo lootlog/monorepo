@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { getNpcTypeNames } from "@/constants/margonem";
 import type { Timer } from "@/api/timers.api";
 import { useTimersStore } from "@/store/timers.store";
@@ -66,7 +67,7 @@ export const useTimerDisplay = (timer: Timer) => {
 
   const npcDetails =
     displayConfig.showLevel && timer.npc.lvl > 0 && timer.npc.prof
-      ? ` (${timer.npc.lvl}${timer.npc.prof.charAt(0).toLowerCase()})`
+      ? ` (${formatLevel(timer.npc.lvl, timer.npc.prof)})`
       : "";
 
   return {

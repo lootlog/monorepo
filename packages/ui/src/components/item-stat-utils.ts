@@ -1,9 +1,5 @@
 import { getLocalDate } from "@lootlog/datetime";
-
-export type ItemStat = {
-  key: string;
-  value: string | boolean;
-};
+import type { ItemStatEntry as ItemStat } from "@lootlog/domain/item-stat";
 
 export type ItemDisplayValue = {
   key: string | undefined;
@@ -969,23 +965,6 @@ function createStatDefinitions(): ReadonlyMap<string, StatDefinition> {
 const STAT_DEFINITIONS = createStatDefinitions();
 
 export const SUPPORTED_ITEM_STAT_KEYS = [...STAT_DEFINITIONS.keys()];
-
-const parseItemStat = (stat: string): ItemStat => {
-  const separatorIndex = stat.indexOf("=");
-
-  if (separatorIndex === -1) {
-    return { key: stat, value: true };
-  }
-
-  return {
-    key: stat.slice(0, separatorIndex),
-    value: stat.slice(separatorIndex + 1),
-  };
-};
-
-export const parseItemStats = (stats: string): ItemStat[] => {
-  return stats.split(";").filter(Boolean).map(parseItemStat);
-};
 
 type OrderedDisplayValue = {
   order: number;

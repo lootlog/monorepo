@@ -1,12 +1,11 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
-import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 import itemRarity from "./translations/item-rarity.json";
 import itemType from "./translations/item-type.json";
-import npcType from "./translations/npc-type.json";
+import npcType from "@lootlog/ui/i18n/translations/npc-type.json";
 import permissions from "./translations/permissions.json";
-import professions from "./translations/professions.json";
+import professions from "@lootlog/ui/i18n/translations/professions.json";
 import battle from "./translations/battle.json";
 import battlePanel from "./translations/battle-panel.json";
 import battleUi from "./translations/battle-ui.json";
@@ -27,7 +26,6 @@ i18n.use(initReactI18next).init({
   resources: {
     pl: {
       translation: {
-        itemStats,
         itemRarity,
         itemType,
         npcType,

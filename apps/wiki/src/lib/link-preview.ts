@@ -1,3 +1,4 @@
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import type {
   CatalogItemDtoOutput,
   CatalogNpcDtoOutput,
@@ -14,18 +15,17 @@ import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
 import {
   ITEM_STAT_FOOTER_SECTIONS,
   mapStatsToDisplaySections,
-  parseItemStats,
 } from "@lootlog/ui/components/item-stat-utils";
 import {
   ITEM_RARITIES_BY_VALUE,
-  type ItemRarity,
+  type DisplayItemRarity,
   resolveItemRarity,
-} from "@lootlog/ui/lib/item-rarity";
+} from "@lootlog/domain/item-rarity";
 import { LOOT_RARITY_COLORS } from "@lootlog/ui/lib/item-rarity-colors";
 import { sortBy } from "es-toolkit";
 import { t } from "@/i18n/messages";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
-import { itemStatText } from "@/lib/item-stat-text";
+import { itemStatText } from "@lootlog/ui/lib/item-stat-text";
 import { monsterIdentity } from "@/lib/group-items-by-monster";
 import { npcSummary } from "@/lib/npc-summary";
 
@@ -39,7 +39,8 @@ export const canonicalLink = (path: string) => ({
 });
 
 // Common and upgraded items keep the chat's own edge.
-const RARITY_COLORS: Partial<Record<ItemRarity, string>> = LOOT_RARITY_COLORS;
+const RARITY_COLORS: Partial<Record<DisplayItemRarity, string>> =
+  LOOT_RARITY_COLORS;
 
 // Discord shows a few names before the line grows past its preview.
 const LISTED_NAMES = 4;
@@ -110,7 +111,7 @@ export const itemLinkPreview = (
   const stat = shown > 0 ? upgradeItemStat(looted, upgrade) : looted.stat;
   const rarity = resolveItemRarity(item.rarity);
 
-  const stats = mapStatsToDisplaySections(parseItemStats(stat))
+  const stats = mapStatsToDisplaySections(parseItemStatEntries(stat))
     .filter(({ index }) => !ITEM_STAT_FOOTER_SECTIONS.has(index))
     .flatMap(({ values }) => values.map(itemStatText));
 

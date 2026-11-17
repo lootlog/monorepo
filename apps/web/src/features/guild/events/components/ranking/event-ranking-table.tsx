@@ -19,7 +19,6 @@ import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import type { EventRanking } from "../../types/api";
 import { invalidateRankingQueries } from "../../hooks/mutations/invalidate-ranking-queries";
-import { formatDurationHuman } from "../../utils/format-duration";
 import { EventRankingActions } from "./event-ranking-actions";
 import { EventRankingPoints } from "./event-ranking-points";
 import { EventRankingPointsDialog } from "./event-ranking-points-dialog";
@@ -31,6 +30,7 @@ import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
+import { formatDuration } from "@/utils/date/format-duration";
 
 type EventRankingTableProps = {
   rankings: EventRanking[];
@@ -187,7 +187,7 @@ export const EventRankingTable = ({
       header: t("events.ranking.time"),
       cell: ({ row }) => (
         <span className="block text-right text-sm tabular-nums">
-          {formatDurationHuman(row.original.totalTimeSeconds)}
+          {formatDuration(row.original.totalTimeSeconds, "human")}
         </span>
       ),
       enableSorting: false,

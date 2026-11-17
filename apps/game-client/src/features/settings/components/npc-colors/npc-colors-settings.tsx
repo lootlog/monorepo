@@ -94,7 +94,7 @@ export const NpcColorsSettings = () => {
           const color = draft[npcType];
           const surfaceColors = deriveNpcSurfaceColors(color);
           const isModified = color !== DEFAULT_NPC_TYPE_COLORS[npcType];
-          const npcTypeLabel = t(`common:npcTypes.${npcType.toLowerCase()}`);
+          const npcTypeLabel = t(`npcType:${npcType}`);
 
           return (
             <SettingsColorRow

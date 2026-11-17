@@ -27,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { getTimersControllerGetTimersQueryKey } from "@lootlog/client/main";
 import {
+  getTimerIdentityKey,
   getTimerPhase,
   getTimerSortTimeLeft,
   getTimerTimeLeft,
@@ -237,7 +238,7 @@ export const Timers = () => {
                 <div className={getTimerGroupClassName(viewMode)}>
                   {groupTimers.map((timer) => (
                     <div
-                      key={`${timer.world}:${timer.timerKey}`}
+                      key={getTimerIdentityKey(timer)}
                       data-list-tile
                       className={cn(
                         getTimerCellClassName(viewMode),

@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import type { TOptions } from "i18next";
 import { Result, Schema, SchemaParser } from "effect";
 import {
@@ -6,10 +7,7 @@ import {
   CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
 } from "@lootlog/client/main";
 
-import {
-  GUILD_NOTIFICATION_TIMEZONE,
-  parseDateTimeLocalInputToIsoString,
-} from "./notification-schedule-time.utils";
+import { parseDateTimeLocalInputToIsoString } from "./notification-schedule-time.utils";
 import { parseManualNotificationRuleNpcIds } from "./notification-rule-form-npc.utils";
 
 export const ALL_WORLDS_VALUE = "__all_worlds__";
@@ -177,7 +175,7 @@ const validateScheduledAt = (
 
   const scheduledAt = parseDateTimeLocalInputToIsoString(
     data.scheduledAt,
-    GUILD_NOTIFICATION_TIMEZONE,
+    MARGONEM_TIME_ZONE,
   );
 
   if (!scheduledAt || new Date(scheduledAt).getTime() <= Date.now()) {

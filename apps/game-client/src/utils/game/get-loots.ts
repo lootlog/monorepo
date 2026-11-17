@@ -1,6 +1,6 @@
 import type { CreateLootDtoLootsItem } from "@lootlog/client/main";
 import type { ItemEvent, LootEvent } from "@lootlog/margonem/game-events";
-import { getItemStat } from "@/utils/game/get-item-stat";
+import { itemStatValue } from "@lootlog/domain/item-stat";
 
 export const getLoot = (
   items: ItemEvent = {},
@@ -13,7 +13,7 @@ export const getLoot = (
       if (!lootItemKeys.has(key)) return acc;
 
       const { hid, icon, name, pr, prc, stat, cl, tpl, loc, own } = item;
-      const rarity = getItemStat(stat, "rarity");
+      const rarity = itemStatValue(stat, "rarity");
 
       if (rarity && (loc === "l" || loc === "k") && rarity !== "common") {
         acc.push({

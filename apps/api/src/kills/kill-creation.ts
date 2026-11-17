@@ -36,7 +36,7 @@ import {
   userKillTotalTable,
 } from "#src/database/drizzle/kill-statistics.schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
-import { getKillNpcId } from "#src/shared/margonem/npc-identity";
+import { getKillNpcId } from "@lootlog/domain/npc-identity";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
 import {
   buildBossKillDedupKey,

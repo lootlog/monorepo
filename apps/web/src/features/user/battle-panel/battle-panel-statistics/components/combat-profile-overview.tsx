@@ -3,7 +3,6 @@ import {
   formatSignedBattleMetric,
 } from "@/components/battle/utils/value-utils";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
-import { formatDurationCompact } from "@/features/guild/events/utils/format-duration";
 import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
 import type { CombatProfileResponseDtoOutput } from "@lootlog/client/battlelog";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
@@ -16,6 +15,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { formatDuration } from "@/utils/date/format-duration";
 
 type CombatProfileOverviewProps = {
   data: CombatProfileResponseDtoOutput | undefined;
@@ -127,7 +127,10 @@ export function CombatProfileOverview({
         detail={
           summary
             ? t("battlePanel.statistics.combatProfile.details.duration", {
-                value: formatDurationCompact(Math.round(summary.avgDuration)),
+                value: formatDuration(
+                  Math.round(summary.avgDuration),
+                  "compact",
+                ),
               })
             : loadingDetail
         }

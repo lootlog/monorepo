@@ -10,14 +10,16 @@ import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
+export type NpcTileNpc = {
+  icon?: string | null;
+  lvl?: number;
+  name?: string;
+};
+
 type NpcTileProps = {
   className?: string;
   imageClassName?: string;
-  npc: {
-    icon?: string | null;
-    lvl?: number;
-    name?: string;
-  };
+  npc: NpcTileNpc;
 };
 
 export const NpcTile: FC<NpcTileProps> = ({

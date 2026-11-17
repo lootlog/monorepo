@@ -1,8 +1,8 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { describe, expect, it } from "vitest";
 import {
   formatDateTimeLocalInputValue,
   formatNotificationDateInTimeZone,
-  GUILD_NOTIFICATION_TIMEZONE,
   parseDateTimeLocalInputToIsoString,
 } from "@/features/guild/notifications/utils/notification-schedule-time.utils";
 
@@ -12,15 +12,12 @@ describe("notificationScheduleTimeUtils", () => {
 
     const inputValue = formatDateTimeLocalInputValue(
       isoString,
-      GUILD_NOTIFICATION_TIMEZONE,
+      MARGONEM_TIME_ZONE,
     );
 
     expect(inputValue).toBe("2026-05-10T12:30");
     expect(
-      parseDateTimeLocalInputToIsoString(
-        inputValue,
-        GUILD_NOTIFICATION_TIMEZONE,
-      ),
+      parseDateTimeLocalInputToIsoString(inputValue, MARGONEM_TIME_ZONE),
     ).toBe(isoString);
   });
 
@@ -29,15 +26,12 @@ describe("notificationScheduleTimeUtils", () => {
 
     const inputValue = formatDateTimeLocalInputValue(
       isoString,
-      GUILD_NOTIFICATION_TIMEZONE,
+      MARGONEM_TIME_ZONE,
     );
 
     expect(inputValue).toBe("2026-01-10T11:30");
     expect(
-      parseDateTimeLocalInputToIsoString(
-        inputValue,
-        GUILD_NOTIFICATION_TIMEZONE,
-      ),
+      parseDateTimeLocalInputToIsoString(inputValue, MARGONEM_TIME_ZONE),
     ).toBe(isoString);
   });
 
@@ -45,7 +39,7 @@ describe("notificationScheduleTimeUtils", () => {
     expect(
       formatNotificationDateInTimeZone(
         "2026-07-03T19:45:00.000Z",
-        GUILD_NOTIFICATION_TIMEZONE,
+        MARGONEM_TIME_ZONE,
       ),
     ).toBe("03.07.2026, 21:45");
   });

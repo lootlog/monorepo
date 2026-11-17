@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { UserLootStatsResponseDtoOutputMonstersItem } from "@lootlog/client/main";
 import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
 import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-section";
-import { NpcTile } from "@/components/tiles/npc-tile";
+import { StatsLeaderboardNpcMedia } from "@/components/common/stats-leaderboard-npc-media";
 
 type StatisticsMonsterLegendsProps = {
   monsters?: UserLootStatsResponseDtoOutputMonstersItem[];
@@ -37,17 +37,13 @@ export function StatisticsMonsterLegends({
           rank={index + 1}
           media={
             monster.npc.icon && (
-              <span className="w-8 shrink-0">
-                <NpcTile
-                  className="h-9"
-                  imageClassName="max-h-9"
-                  npc={{
-                    name: monster.npc.name,
-                    lvl: monster.npc.lvl ?? undefined,
-                    icon: monster.npc.icon,
-                  }}
-                />
-              </span>
+              <StatsLeaderboardNpcMedia
+                npc={{
+                  name: monster.npc.name,
+                  lvl: monster.npc.lvl ?? undefined,
+                  icon: monster.npc.icon,
+                }}
+              />
             )
           }
           title={monster.npc.name}

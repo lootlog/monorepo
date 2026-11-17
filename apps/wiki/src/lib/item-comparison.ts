@@ -1,8 +1,8 @@
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import { uniqBy } from "es-toolkit";
 import {
   type ItemDisplayValue,
   mapStatsToDisplaySections,
-  parseItemStats,
 } from "@lootlog/ui/components/item-stat-utils";
 import {
   decodeItemUpgrade,
@@ -87,8 +87,8 @@ export type ComparisonRow = {
 
 /** An item's stats as its tooltip lists them, each with its section. */
 const displayValues = (stat: string) =>
-  mapStatsToDisplaySections(parseItemStats(stat)).flatMap(({ index, values }) =>
-    values.map((value) => ({ value, section: index })),
+  mapStatsToDisplaySections(parseItemStatEntries(stat)).flatMap(
+    ({ index, values }) => values.map((value) => ({ value, section: index })),
   );
 
 /**
@@ -101,7 +101,7 @@ export const compareItemStats = (
 ): ComparisonRow[] => {
   const items = stats.map((stat) => {
     const raw = new Map(
-      parseItemStats(stat).map(({ key, value }) => [key, value]),
+      parseItemStatEntries(stat).map(({ key, value }) => [key, value]),
     );
 
     return {

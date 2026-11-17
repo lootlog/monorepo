@@ -4,11 +4,11 @@ import { SettingsNumberField } from "@/components/settings/settings-number-field
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsTextField } from "@/components/settings/settings-text-field";
 import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
+import { normalizeRoutingRuleText } from "@/features/settings/components/detector/use-detector-routing-form";
 import {
-  LEVEL_MAX,
-  LEVEL_MIN,
-  normalizeRoutingRuleText,
-} from "@/features/settings/components/detector/use-detector-routing-form";
+  DETECTOR_LEVEL_MAX,
+  DETECTOR_LEVEL_MIN,
+} from "@lootlog/domain/account-preferences";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
 import { MapPin, Trash2, TriangleAlert } from "lucide-react";
 import { useId, type FC } from "react";
@@ -127,8 +127,8 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
             <SettingsNumberField
               aria-label={t("settings.detector.routing.minLevelLabel")}
               value={minLevel}
-              min={LEVEL_MIN}
-              max={LEVEL_MAX}
+              min={DETECTOR_LEVEL_MIN}
+              max={DETECTOR_LEVEL_MAX}
               onCommit={(value) => onLevelRangeCommit([value, maxLevel])}
             />
             <span
@@ -140,8 +140,8 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
             <SettingsNumberField
               aria-label={t("settings.detector.routing.maxLevelLabel")}
               value={maxLevel}
-              min={LEVEL_MIN}
-              max={LEVEL_MAX}
+              min={DETECTOR_LEVEL_MIN}
+              max={DETECTOR_LEVEL_MAX}
               onCommit={(value) => onLevelRangeCommit([minLevel, value])}
             />
           </SettingsRow>

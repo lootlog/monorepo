@@ -1,5 +1,5 @@
+import { discordRoleColorHex } from "@lootlog/domain/member-display-role";
 import {
-  getDiscordColorHex,
   isChatMentionBoundary,
   normalizeChatMentionName,
 } from "./chat-mentions.helpers";
@@ -94,7 +94,7 @@ export const getChatMentionMemberSuggestions = (
   return getMentionSuggestionEntries({
     values: members ?? [],
     getLabel: (member) => member.name,
-    getColor: (member) => getDiscordColorHex(member.color),
+    getColor: (member) => discordRoleColorHex(member.color),
   });
 };
 
@@ -104,7 +104,7 @@ export const getChatMentionRoleSuggestions = (
   return getMentionSuggestionEntries({
     values: roles ?? [],
     getLabel: (role) => role.name,
-    getColor: (role) => getDiscordColorHex(role.color),
+    getColor: (role) => discordRoleColorHex(role.color),
   });
 };
 

@@ -4,8 +4,10 @@ import { Permission } from "@lootlog/schema/permissions";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useIsViewer } from "@/hooks/auth/use-is-viewer";
-import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
-import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
+import {
+  discordRoleCssColor,
+  getMemberDisplayRole,
+} from "@lootlog/domain/member-display-role";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { KillDetailSummary } from "./components/kills/kill-detail-summary";
 import { KillMapsTimelineSection } from "./components/kills/kill-maps-timeline-section";
@@ -100,7 +102,7 @@ export const KillDetail = () => {
     const colors = new Map<number, string>();
 
     for (const participant of participants) {
-      const roleColor = getCustomRoleCssColor(
+      const roleColor = discordRoleCssColor(
         getMemberDisplayRole(participant.member.roles)?.color,
       );
 

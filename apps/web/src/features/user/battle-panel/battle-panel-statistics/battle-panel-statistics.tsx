@@ -1,3 +1,4 @@
+import type { Period } from "@lootlog/schema/http-scalars";
 import { isLevelRangeActive } from "@/features/user/battle-panel/components/battle-panel-filter-state";
 import { startTransition, useEffect } from "react";
 import { useBattlesControllerGetUserCharacters } from "@lootlog/client/battlelog";
@@ -8,7 +9,6 @@ import { useQueryStates } from "nuqs";
 import {
   battlePanelStatisticsSearchParsers,
   normalizeBattlePanelCharacterId,
-  type Period,
 } from "@/features/user/battle-panel/battle-panel-search";
 import { BattleCharacterSelect } from "@/features/user/battle-panel/components/battle-character-select";
 import { StatisticsQueryPanel } from "./components/statistics-query-panel";

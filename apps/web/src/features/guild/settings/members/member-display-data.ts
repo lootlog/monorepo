@@ -8,7 +8,7 @@ import {
   type MemberWebPresenceByDiscordId,
 } from "@/lib/web-presence";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
-import { getColorFromRole } from "@/utils/get-color-from-role";
+import { getMemberColor } from "@/utils/get-member-color";
 import type { MemberActivityStatsByDiscordId } from "./member-activity-stats.utils";
 import type { MemberGamePresenceByDiscordId } from "./member-game-presence.utils";
 
@@ -55,7 +55,7 @@ export const getMemberDisplayData = (
     isOnlineInGame,
   });
 
-  const color = getColorFromRole(member.roles);
+  const color = getMemberColor(member);
 
   return {
     webActivityStats,

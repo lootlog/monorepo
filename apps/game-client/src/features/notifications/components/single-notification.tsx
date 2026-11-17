@@ -5,7 +5,7 @@ import { ListRowArrival } from "@/components/list-row-arrival";
 import { NpcTile } from "@/components/npc-tile";
 import { IconButton } from "@/components/ui/icon-button";
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { getMemberColorHex } from "@/utils/member-color";
 import { useGameStore } from "@/store/game.store";
 import {
   isMentionNotification,
@@ -15,7 +15,7 @@ import {
   type NotificationWithServers,
   type StoredNotification,
 } from "@/store/notifications.store";
-import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import {
   getArrivalStrength,
   getNotificationColors,
@@ -232,7 +232,7 @@ export const SingleNotification = memo(function SingleNotification({
     guildMember?.avatar,
   );
 
-  const memberColor = useMemberColor(guildMember);
+  const memberColor = getMemberColorHex(guildMember);
 
   const {
     arrivalStrength,

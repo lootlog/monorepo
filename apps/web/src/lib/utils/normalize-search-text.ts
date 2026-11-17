@@ -1,18 +1,4 @@
-const DIACRITICS_REGEX = /\p{Diacritic}/gu;
-
-const POLISH_CHARACTER_REPLACEMENTS = new Map([
-  ["Ł", "L"],
-  ["ł", "l"],
-]);
+import { foldText } from "@lootlog/domain/text-fold";
 
 export const normalizeSearchText = (value: string): string =>
-  value
-    .replace(
-      /[Łł]/g,
-      (character) => POLISH_CHARACTER_REPLACEMENTS.get(character) ?? character,
-    )
-    .normalize("NFD")
-    .replace(DIACRITICS_REGEX, "")
-    .toLocaleLowerCase("pl-PL")
-    .replace(/\s+/g, " ")
-    .trim();
+  foldText(value).toLowerCase().replace(/\s+/g, " ").trim();

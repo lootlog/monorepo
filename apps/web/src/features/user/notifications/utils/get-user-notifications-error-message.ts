@@ -1,6 +1,7 @@
 import type { TOptions } from "i18next";
 import {
   getApiErrorMessage,
+  getApiErrorNumberDetail,
   getApiErrorStringField,
 } from "@lootlog/client/transport";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
@@ -27,7 +28,9 @@ export const getUserNotificationsErrorMessage = (
 
   if (code === "USER_WATCHED_ITEM_LIMIT_REACHED") {
     return t("settings.userNotifications.validation.watchLimitReached", {
-      limit: USER_WATCHED_ITEMS_LIMIT,
+      limit:
+        getApiErrorNumberDetail(cause, "watchedItemLimit") ??
+        USER_WATCHED_ITEMS_LIMIT,
     });
   }
 

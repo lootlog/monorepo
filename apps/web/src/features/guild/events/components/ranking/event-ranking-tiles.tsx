@@ -10,11 +10,11 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { EventRanking } from "../../types/api";
-import { formatDurationHuman } from "../../utils/format-duration";
 import { EventRankingActions } from "./event-ranking-actions";
 import { EventRankingPoints } from "./event-ranking-points";
 import { getRankingMemberName } from "./get-ranking-member-name";
 import { RankingMemberName } from "./ranking-member-name";
+import { formatDuration } from "@/utils/date/format-duration";
 
 type EventRankingTilesProps = {
   /** Already ordered by points. */
@@ -79,7 +79,7 @@ export const EventRankingTiles = ({
                 <span className="block truncate text-xs text-muted-foreground tabular-nums">
                   {t("events.ranking.kills")} {ranking.totalKills} ·{" "}
                   {t("events.ranking.time")}{" "}
-                  {formatDurationHuman(ranking.totalTimeSeconds)}
+                  {formatDuration(ranking.totalTimeSeconds, "human")}
                   {afkPercentage > 0 &&
                     ` · ${t("events.kills.afkTime")} ${afkPercentage}%`}
                 </span>

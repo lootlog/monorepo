@@ -33,7 +33,6 @@ describe("SoundsSettingsTab", () => {
       harness.queryClient,
       soundSettingValues(
         createSoundSettings({
-          masterVolume: 0.8,
           notificationsVolume: 0.6,
           detectorVolume: 0.5,
           timersVolume: 0.4,

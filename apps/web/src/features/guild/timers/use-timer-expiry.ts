@@ -1,16 +1,12 @@
 import { useEffect, useEffectEvent, useRef } from "react";
 import { hashKey, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import type { TimerResponseDto } from "@lootlog/client/main";
+import { getTimerIdentityKey, getTimerRemovalAt } from "@lootlog/domain/timers";
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 
 // A response reflects expiries that preceded its evaluation on the server,
 // which can lag its receipt by the request's latency.
 const RESPONSE_LATENCY_ALLOWANCE_MS = 60_000;
-
-// One NPC has a timer on every world it spawns on.
-const getTimerIdentity = (
-  timer: Pick<TimerResponseDto, "world" | "timerKey">,
-) => `${timer.world}:${timer.timerKey}`;
 
 /**
  * Refetches the timer lists under `queryKey` once one of their timers has been
@@ -19,7 +15,10 @@ const getTimerIdentity = (
  */
 export function useTimerExpiry(
   timers:
-    | Pick<TimerResponseDto, "world" | "timerKey" | "maxSpawnTime">[]
+    | Pick<
+        TimerResponseDto,
+        "guildId" | "world" | "timerKey" | "maxSpawnTime" | "deletedAt"
+      >[]
     | undefined,
   queryKey: QueryKey | null,
   fetchedAt: number,
@@ -35,14 +34,14 @@ export function useTimerExpiry(
     let hasNewExpiry = false;
 
     for (const timer of timers ?? []) {
-      const removedAt = Date.parse(timer.maxSpawnTime) + removeTimerAfterMs;
+      const removedAt = getTimerRemovalAt(timer, removeTimerAfterMs);
 
       if (
         removedAt > currentTime ||
         removedAt <= fetchedAt - RESPONSE_LATENCY_ALLOWANCE_MS
       )
         continue;
-      const identity = getTimerIdentity(timer);
+      const identity = getTimerIdentityKey(timer);
 
       expired.set(identity, timer.maxSpawnTime);
 

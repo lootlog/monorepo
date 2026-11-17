@@ -1,3 +1,4 @@
+import { Period } from "@lootlog/schema/http-scalars";
 import { DEFAULT_LOOT_STATS_PERIOD } from "../hooks/use-loot-stats-settings";
 import { FilterBar } from "@/components/common/filter-bar";
 import { PeriodSelector } from "@/components/filters/period-selector";
@@ -33,6 +34,7 @@ export const LootStatsFilterBar = ({
       onClearFilters={onClearFilters}
     >
       <PeriodSelector
+        options={Period.literals}
         value={props.period}
         onValueChange={props.onPeriodChange}
         active={props.period !== DEFAULT_LOOT_STATS_PERIOD}

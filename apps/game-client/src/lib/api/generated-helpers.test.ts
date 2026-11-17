@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  normalizeSoundSettings,
   normalizeTimerNpc,
   getGuildIds,
   getGuildNamesById,
@@ -62,34 +61,5 @@ describe("generated response normalization", () => {
       icon: "",
       location: "Cave",
     });
-  });
-
-  it("normalizes legacy sound JSON without treating malformed entries as settings", () => {
-    const result = normalizeSoundSettings({
-      userId: "user-1",
-      masterVolume: 1,
-      notificationsVolume: 1,
-      detectorVolume: 1,
-      timersVolume: 1,
-      pingsVolume: 1,
-      notificationsConfig: {
-        HERO: { volume: "0.25", soundUrl: "custom.mp3" },
-        TITAN: { volume: "invalid", soundUrl: false },
-        ELITE: null,
-        ELITE2: [],
-      },
-      detectorConfig: false,
-      timersConfig: null,
-      createdAt: "2026-01-01T00:00:00Z",
-      updatedAt: "2026-01-02T00:00:00Z",
-    });
-
-    expect(result.notificationsConfig).toEqual({
-      HERO: { volume: 0.25, soundUrl: "custom.mp3" },
-      TITAN: { volume: 0.5, soundUrl: "" },
-    });
-    expect(result.detectorConfig).toEqual({});
-    expect(result.timersConfig).toEqual({});
-    expect(result.createdAt).toEqual(new Date("2026-01-01T00:00:00Z"));
   });
 });

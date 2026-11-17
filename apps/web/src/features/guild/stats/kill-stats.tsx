@@ -18,7 +18,7 @@ import { KillStatsRecords } from "./components/kill-stats-records";
 import { KillStatsTimeline } from "./components/kill-stats-timeline";
 import { MemberLeaderboardCard } from "./components/member-leaderboard-card";
 import { TopNpcsCard } from "./components/top-npcs-card";
-import { TRACKABLE_NPC_TYPES } from "./constants";
+import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
 import { formatNumber } from "@/lib/format-number";
@@ -35,9 +35,8 @@ export const KillStats = () => {
     "ELITE2",
   );
 
-  const npcType = TRACKABLE_NPC_TYPES.includes(storedNpcType)
-    ? storedNpcType
-    : "ELITE2";
+  const npcType =
+    TRACKABLE_NPC_TYPES.find((type) => type === storedNpcType) ?? "ELITE2";
 
   const {
     settings,

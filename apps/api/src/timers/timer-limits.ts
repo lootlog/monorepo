@@ -7,7 +7,3 @@ export const TIMER_LIMITS = {
   MAX_HERO_TRACKER_ENTRANCE_SECONDS: 30 * 60,
   MAX_HERO_TRACKER_ENTRANCE_PAST_SECONDS: 60,
 } as const;
-
-export const TIMER_TYPES = {
-  CUSTOM_MANUAL: 999,
-} as const;

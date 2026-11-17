@@ -2,13 +2,14 @@ import { cn } from "cn";
 import type { FC } from "react";
 
 import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
-import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
+import type { DisplayItemRarity } from "@lootlog/domain/item-rarity";
+import { ITEM_RARITY_FRAME_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 
 type ItemImageProps = {
   className?: string;
   color?: string;
   icon: string;
-  rarity: ItemRarity;
+  rarity: DisplayItemRarity;
   shareIndex?: number;
   /** Shown over the icon as `+N`, as the game does, when above 0. */
   upgradeLevel?: number;
@@ -27,16 +28,7 @@ export const ItemImage: FC<ItemImageProps> = ({
       <div
         className={cn(
           "relative box-content h-8 w-8 cursor-pointer rounded-md border-2 bg-cover bg-center",
-          {
-            "border-orange-600 bg-card/80 shadow-[0_0_12px_rgba(234,88,12,0.5)]":
-              rarity === ItemRarity.LEGENDARY,
-            "border-blue-500 bg-card/80 shadow-[0_0_10px_rgba(59,130,246,0.4)]":
-              rarity === ItemRarity.HEROIC,
-            "border-amber-300 bg-card/80 shadow-[0_0_10px_rgba(252,211,77,0.4)]":
-              rarity === ItemRarity.UNIQUE,
-            "border-border/50 bg-muted/30": rarity === ItemRarity.COMMON,
-            "border-primary/40 bg-muted/50": rarity === ItemRarity.UPGRADED,
-          },
+          ITEM_RARITY_FRAME_CLASS[rarity],
         )}
         style={{
           backgroundImage: `url(${itemIconUrl(icon)})`,

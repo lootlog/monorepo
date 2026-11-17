@@ -1,7 +1,7 @@
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { FilterPanelField } from "@/components/filters/filter-panel-field";
 import { KillStatsNpcTypeSelect } from "@/features/kills/components/kill-stats-npc-type-select";
-import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
+import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
 import { useTranslation } from "react-i18next";
 import type { StatisticsFiltersProps } from "./statistics-filters";
 import { toNpcType } from "./statistics-search";

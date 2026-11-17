@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowUp, Pause, Play, Radio, SlidersHorizontal } from "lucide-react";
 import { DEFAULT_ACTIVITY_FEED_SETTINGS } from "@lootlog/domain/activity-feed";
 import { Button } from "@lootlog/ui/components/button";
+import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { LiveFeedSkeleton } from "./live-feed-skeleton";
 import { EmptyState } from "@/components/common/empty-state";
 import { BandSection } from "@/components/common/band-section";
@@ -110,9 +111,7 @@ export function DashboardLiveFeed() {
     applyPending();
     top.current?.scrollIntoView({
       block: "center",
-      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
-        : "smooth",
+      behavior: getPrefersReducedMotion() ? "auto" : "smooth",
     });
   };
 

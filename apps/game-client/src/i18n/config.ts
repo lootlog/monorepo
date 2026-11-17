@@ -10,6 +10,8 @@ import globalChat from "./translations/global-chat.json";
 import heroSightings from "./translations/hero-sightings.json";
 import lootSplit from "./translations/loot-split.json";
 import notifications from "./translations/notifications.json";
+import npcType from "@lootlog/ui/i18n/translations/npc-type.json";
+import professions from "@lootlog/ui/i18n/translations/professions.json";
 import npcDetector from "./translations/npc-detector.json";
 import onlinePlayers from "./translations/online-players.json";
 import partyFinder from "./translations/party-finder.json";
@@ -35,6 +37,8 @@ i18n.use(initReactI18next).init({
         lootSplit,
         npcDetector,
         notifications,
+        npcType,
+        professions,
         partyFinder,
         pings,
         settings,
@@ -53,6 +57,8 @@ i18n.use(initReactI18next).init({
       lootSplit,
       npcDetector,
       notifications,
+      npcType,
+      professions,
       partyFinder,
       pings,
       settings,

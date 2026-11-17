@@ -1,8 +1,11 @@
 import { Predicate } from "effect";
 import { itemAttackSpeed } from "@lootlog/domain/attack-speed";
 import { itemEventLabels, itemEventSlug } from "@lootlog/domain/item-events";
-
-const DEFAULT_REQUIRED_PROFESSIONS = ["w", "p", "h", "m", "b", "t"] as const;
+import {
+  parseItemStatEntries,
+  truncateAtSecondSeparator,
+} from "@lootlog/domain/item-stat";
+import { PROFESSION_SHORTNAMES } from "@lootlog/domain/profession";
 
 const numericValuePattern = /^[+-]?\d+(?:\.\d+)?$/;
 
@@ -44,16 +47,18 @@ export const createItemSearchFields = (statRaw: string): ItemSearchFields => {
   const stats: Record<string, ItemStatValue> = {};
   const numericStats: Record<string, number> = {};
   const statsKeys: string[] = [];
-  let requiredProfessions: string[] = [...DEFAULT_REQUIRED_PROFESSIONS];
+  let requiredProfessions: string[] = [...PROFESSION_SHORTNAMES];
   let legendaryBonus: string | null = null;
   let eventSlugs: string[] = [];
 
-  for (const statEntry of statRaw.split(";")) {
-    const [key, value] = statEntry.split("=");
-
-    if (!key || value === undefined) {
+  // Indexed values end at a second `=`, as they always have.
+  for (const entry of parseItemStatEntries(statRaw)) {
+    if (!entry.key || entry.value === true) {
       continue;
     }
+
+    const { key } = entry;
+    const value = truncateAtSecondSeparator(entry.value);
 
     statsKeys.push(key);
 

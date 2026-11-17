@@ -1,11 +1,13 @@
-import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
-import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
+import {
+  discordRoleCssColor,
+  getMemberDisplayRole,
+} from "@lootlog/domain/member-display-role";
 
-type MemberRole = { position: number; color?: number | null };
+type MemberRole = { position?: number | null; color?: number | null };
 
-/** Resolves the CSS color of the member's Discord display role. */
+/** The CSS colour of the member's Discord display role; without one the name keeps the text colour. */
 export const getMemberColor = (
-  guildMember: { roles?: MemberRole[] } | undefined,
+  guildMember: { roles?: readonly MemberRole[] | null } | undefined,
 ) =>
-  getCustomRoleCssColor(getMemberDisplayRole(guildMember?.roles)?.color) ??
+  discordRoleCssColor(getMemberDisplayRole(guildMember?.roles)?.color) ??
   "inherit";

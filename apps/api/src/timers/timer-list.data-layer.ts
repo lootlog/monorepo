@@ -18,7 +18,7 @@ import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/timer.schema";
 import { userSettingDocumentTable } from "#src/database/drizzle/user.schema";
-import { TIMER_TYPES } from "./timer-limits.js";
+import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import { Permission } from "@lootlog/schema/permissions";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";

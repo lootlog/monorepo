@@ -19,12 +19,12 @@ import {
 import { EmergencyExitIcon } from "@/components/battle/emergency-exit-icon";
 import type { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { formatSeconds } from "@/utils/date/format-seconds";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { upperFirst } from "es-toolkit";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { isBattleDraw } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
+import { formatDuration } from "@/utils/date/format-duration";
 
 export type BattleMetadataProps = {
   battle: Battle;
@@ -56,7 +56,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({ battle }) => {
     {
       key: "duration",
       icon: Clock,
-      label: formatSeconds(battle.duration),
+      label: formatDuration(battle.duration, "minutesSeconds"),
       tooltip: t("battleUi.metadata.duration"),
     },
     {

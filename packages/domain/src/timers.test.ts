@@ -3,6 +3,7 @@ import {
   getTimerCountdownMs,
   getTimerPhase,
   getTimerTimeLeft,
+  isTimerListed,
 } from "./timers.js";
 
 const NOW = Date.parse("2026-10-14T12:00:00.000Z");
@@ -72,4 +73,35 @@ describe("timer phases, as the game client and web app show them", () => {
       getTimerCountdownMs({ minTimeLeft: -1, maxTimeLeft: 10_000 }, "min"),
     ).toBe(10_000);
   });
+
+  it.each([
+    { name: "a timer", deletedAt: undefined, removedAfter: 120_000 },
+    { name: "a deleted timer", deletedAt: at(-5_000), removedAfter: -5_000 },
+  ])(
+    "lists $name until its phase turns expired, counting from its deletion",
+    ({ deletedAt, removedAfter }) => {
+      const timer = {
+        minSpawnTime: at(60_000),
+        maxSpawnTime: at(120_000),
+        deletedAt,
+      };
+
+      for (const now of [
+        NOW + removedAfter + 29_999,
+        NOW + removedAfter + 30_000,
+      ]) {
+        const isExpired =
+          getTimerPhase(getTimerTimeLeft(timer, now), 30_000) === "expired";
+
+        expect(isTimerListed(timer, 30_000, now)).toBe(!isExpired);
+      }
+
+      expect(isTimerListed(timer, 30_000, NOW + removedAfter + 29_999)).toBe(
+        true,
+      );
+      expect(isTimerListed(timer, 30_000, NOW + removedAfter + 30_000)).toBe(
+        false,
+      );
+    },
+  );
 });

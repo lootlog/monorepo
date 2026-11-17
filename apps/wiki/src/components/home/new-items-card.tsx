@@ -6,7 +6,7 @@ import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import {
   ITEM_RARITIES_BY_VALUE,
   resolveItemRarity,
-} from "@lootlog/ui/lib/item-rarity";
+} from "@lootlog/domain/item-rarity";
 import { CatalogItemTile } from "@/components/catalog/catalog-item-tile";
 import { useGridColumnCount } from "@/hooks/use-grid-column-count";
 import { t } from "@/i18n/messages";

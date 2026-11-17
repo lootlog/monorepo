@@ -1,3 +1,4 @@
+import { getActorCharacterLabel } from "@/features/timers/utils/timer-helpers";
 import { IconButton } from "@/components/ui/icon-button";
 import {
   Tooltip,
@@ -16,12 +17,6 @@ type TimerHistoryListEntryProps = {
   onRestore: (entry: TimerHistoryResponseDto) => void;
   restorePending: boolean;
   rowLayout: "member" | "npcWithMember";
-};
-
-const getCharacterLabel = (
-  actorCharacter: NonNullable<TimerHistoryResponseDto["actorCharacter"]>,
-) => {
-  return `${actorCharacter.name} (${actorCharacter.lvl ?? ""}${actorCharacter.prof?.charAt(0).toLowerCase() ?? ""})`;
 };
 
 const getEntryMainLabel = (entry: TimerHistoryResponseDto) => {
@@ -189,7 +184,7 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
                     {t("history.details.character")}
                   </div>
                   <div className="ll:truncate ll:text-[11px] ll:text-popover-foreground">
-                    {getCharacterLabel(entry.actorCharacter)}
+                    {getActorCharacterLabel(entry.actorCharacter)}
                   </div>
                 </div>
               )}

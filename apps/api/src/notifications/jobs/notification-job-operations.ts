@@ -21,7 +21,7 @@ import {
   NotificationOwnerType,
   type NotificationJobStatus as NotificationJobStatusValue,
   type NotificationOwnerType as NotificationOwnerTypeValue,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 const cancelableStatuses = [
   NotificationJobStatus.PENDING,

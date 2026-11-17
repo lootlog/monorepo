@@ -9,8 +9,8 @@ import {
 import { MemberAvatar } from "@/components/common/member-avatar";
 import { cn } from "cn";
 import { formatTimeShort } from "../../utils/format-date";
-import { formatDurationHuman } from "../../utils/format-duration";
 import type { GroupedMapAssignment } from "../../utils/kill-map-timeline-data";
+import { formatDuration } from "@/utils/date/format-duration";
 
 interface KillMapAssignmentGroupProps {
   assignment: GroupedMapAssignment;
@@ -42,7 +42,7 @@ export const KillMapAssignmentGroup = ({
         {assignment.memberName}
       </span>
       <span className="w-16 shrink-0 text-right text-xs font-medium tabular-nums">
-        {formatDurationHuman(assignment.totalDurationSeconds)}
+        {formatDuration(assignment.totalDurationSeconds, "human")}
       </span>
       {hasMultiplePeriods ? (
         <ChevronDown
@@ -92,7 +92,7 @@ export const KillMapAssignmentGroup = ({
                 {formatTimeShort(new Date(period.unassignedAt))}
               </span>
               <span className="text-2xs font-medium tabular-nums">
-                {formatDurationHuman(period.durationSeconds)}
+                {formatDuration(period.durationSeconds, "human")}
               </span>
             </div>
           ))}

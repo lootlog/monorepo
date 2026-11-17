@@ -11,6 +11,7 @@ import { cn } from "cn";
 import type { EventTimer } from "../../types/api";
 import { formatTime } from "../../utils/format-date";
 import type { TFunction } from "i18next";
+import { formatDuration } from "@/utils/date/format-duration";
 
 interface HeroTimerDisplayProps {
   timer: EventTimer | undefined;
@@ -20,21 +21,6 @@ interface HeroTimerDisplayProps {
 
 const getHeroTimerTimeLeft = (timer: EventTimer) =>
   new Date(timer.maxSpawnTime).getTime() - Date.now();
-
-function formatNegativeElapsed(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  const pad = (n: number) => String(n).padStart(2, "0");
-
-  if (hours > 0) {
-    return `-${hours}:${pad(minutes)}:${pad(seconds)}`;
-  }
-
-  return `-${minutes}:${pad(seconds)}`;
-}
 
 export const HeroTimerDisplay = ({
   timer,
@@ -88,7 +74,7 @@ const HeroTimerDisplayContent = ({
   const isClose = !isOverdue && timeLeft < 60000;
 
   const displayTime = isOverdue
-    ? formatNegativeElapsed(Math.abs(timeLeft))
+    ? `-${formatDuration(Math.floor(Math.abs(timeLeft) / 1000), "clock")}`
     : parseMsToTime(timeLeft);
 
   return (

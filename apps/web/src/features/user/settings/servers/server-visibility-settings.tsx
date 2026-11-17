@@ -11,7 +11,11 @@ import { SettingsListError } from "@/components/common/settings-list-error";
 import { SettingsTabPage } from "@/components/common/settings-tab-page";
 import {
   filterGuildsByVisibility,
+  GUILD_VISIBILITY_FILTERS,
   orderGuilds,
+  showAllGuilds,
+  toggleHiddenGuild,
+  type GuildVisibilityFilter,
 } from "@lootlog/domain/guild-preferences";
 import {
   useUpdateUserPreferences,
@@ -36,10 +40,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RetryButton } from "@/components/common/retry-button";
 
-const VISIBILITY_FILTERS = ["all", "visible", "hidden"] as const;
-
-type VisibilityFilter = (typeof VISIBILITY_FILTERS)[number];
-
 const showPreferencesSaved = ({
   isError,
   isPending,
@@ -61,7 +61,7 @@ export const ServerVisibilitySettings = () => {
   const [query, setQuery] = useState("");
 
   const [visibilityFilter, setVisibilityFilter] =
-    useState<VisibilityFilter>("all");
+    useState<GuildVisibilityFilter>("all");
 
   const hiddenGuildIds = preferencesQuery.data?.hiddenGuildIds ?? [];
   const hiddenGuildIdSet = new Set(hiddenGuildIds);
@@ -84,7 +84,7 @@ export const ServerVisibilitySettings = () => {
     hiddenGuildIdSet.has(guild.id),
   ).length;
 
-  const filterCounts: Record<VisibilityFilter, number> = {
+  const filterCounts: Record<GuildVisibilityFilter, number> = {
     all: searchedGuilds.length,
     visible: searchedGuilds.length - searchedHiddenCount,
     hidden: searchedHiddenCount,
@@ -106,22 +106,21 @@ export const ServerVisibilitySettings = () => {
   const loadError = guildsQuery.error ?? preferencesQuery.error;
   const isSaved = showPreferencesSaved(updatePreferences);
 
-  const updateGuildVisibility = (guildId: string, isVisible: boolean) => {
-    updatePreferences.mutate({
-      hiddenGuildIds: isVisible
-        ? hiddenGuildIds.filter((hiddenGuildId) => hiddenGuildId !== guildId)
-        : [...hiddenGuildIds, guildId],
-    });
+  const toggleGuildVisibility = (guildId: string) => {
+    updatePreferences.mutateFromCurrent((current) => ({
+      hiddenGuildIds: toggleHiddenGuild(current?.hiddenGuildIds ?? [], guildId),
+    }));
   };
 
   const showAll = () => {
     setIsShowingAll(true);
-    updatePreferences.mutate(
-      {
-        hiddenGuildIds: hiddenGuildIds.filter(
-          (hiddenGuildId) => !accessibleGuildIdSet.has(hiddenGuildId),
+    updatePreferences.mutateFromCurrent(
+      (current) => ({
+        hiddenGuildIds: showAllGuilds(
+          current?.hiddenGuildIds ?? [],
+          accessibleGuildIdSet,
         ),
-      },
+      }),
       { onSettled: () => setIsShowingAll(false) },
     );
   };
@@ -222,9 +221,7 @@ export const ServerVisibilitySettings = () => {
                 aria-label={t("settings.servers.switchLabel", {
                   name: guild.name,
                 })}
-                onCheckedChange={(checked) =>
-                  updateGuildVisibility(guild.id, checked)
-                }
+                onCheckedChange={() => toggleGuildVisibility(guild.id)}
               />
             </li>
           );
@@ -256,7 +253,7 @@ export const ServerVisibilitySettings = () => {
             value={[visibilityFilter]}
             // One filter is always chosen: pressing it again keeps it.
             onValueChange={([pressed]) => {
-              const filter = VISIBILITY_FILTERS.find(
+              const filter = GUILD_VISIBILITY_FILTERS.find(
                 (value) => value === pressed,
               );
 
@@ -265,7 +262,7 @@ export const ServerVisibilitySettings = () => {
             aria-label={t("settings.servers.visibilityFilterLabel")}
             className="flex-wrap max-sm:w-max max-sm:flex-nowrap"
           >
-            {VISIBILITY_FILTERS.map((filter) => (
+            {GUILD_VISIBILITY_FILTERS.map((filter) => (
               <ToggleGroupItem
                 key={filter}
                 value={filter}

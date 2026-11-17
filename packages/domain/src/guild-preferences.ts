@@ -3,10 +3,15 @@ type GuildIdentity = {
   name: string;
 };
 
+/** Which Lootlogs a settings list shows by whether the game client hides them. */
+export const GUILD_VISIBILITY_FILTERS = ["all", "visible", "hidden"] as const;
+
+export type GuildVisibilityFilter = (typeof GUILD_VISIBILITY_FILTERS)[number];
+
 export const filterGuildsByVisibility = <Guild extends GuildIdentity>(
   guilds: Guild[],
   hiddenGuildIds: string[],
-  visibility: "all" | "visible" | "hidden",
+  visibility: GuildVisibilityFilter,
   query: string,
 ): Guild[] => {
   const hiddenGuildIdSet = new Set(hiddenGuildIds);
@@ -26,6 +31,27 @@ export const filterGuildsByVisibility = <Guild extends GuildIdentity>(
     return guild.name.toLocaleLowerCase().includes(normalizedQuery);
   });
 };
+
+/** Hides a shown Lootlog in the game client, or shows a hidden one. */
+export const toggleHiddenGuild = (
+  hiddenGuildIds: readonly string[],
+  guildId: string,
+): string[] =>
+  hiddenGuildIds.includes(guildId)
+    ? hiddenGuildIds.filter((hiddenGuildId) => hiddenGuildId !== guildId)
+    : [...hiddenGuildIds, guildId];
+
+/**
+ * Shows every Lootlog the user can access. Hidden ids of Lootlogs they lost
+ * access to stay, so regaining access restores the choice.
+ */
+export const showAllGuilds = (
+  hiddenGuildIds: readonly string[],
+  accessibleGuildIds: ReadonlySet<string>,
+): string[] =>
+  hiddenGuildIds.filter(
+    (hiddenGuildId) => !accessibleGuildIds.has(hiddenGuildId),
+  );
 
 export const orderGuilds = <Guild extends GuildIdentity>(
   guilds: Guild[],

@@ -1,4 +1,4 @@
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { t } from "@/i18n/messages";
 
 /** A whole amount grouped as Polish players read it: `1 960 000`. */

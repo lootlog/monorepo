@@ -1,5 +1,5 @@
 import { useSecondClockValue } from "@/hooks/utils/use-second-clock-value";
-import { formatDurationCompact } from "../../utils/format-duration";
+import { formatDuration } from "@/utils/date/format-duration";
 
 export const useAssignmentCountdown = (
   assignmentDisabled: boolean,
@@ -16,7 +16,9 @@ export const useAssignmentCountdown = (
 
     const diffMs = assignmentEnabledAt - Date.now();
 
-    return diffMs > 0 ? formatDurationCompact(Math.floor(diffMs / 1000)) : null;
+    return diffMs > 0
+      ? formatDuration(Math.floor(diffMs / 1000), "compact")
+      : null;
   }, hasCountdown);
 
   return {

@@ -52,8 +52,6 @@ export const createNotificationTest = () => {
   };
 
   const soundSettings: SoundSettingsFixture = {
-    userId: "user",
-    masterVolume: 1,
     notificationsVolume: 0.5,
     detectorVolume: 0,
     timersVolume: 0,
@@ -61,8 +59,6 @@ export const createNotificationTest = () => {
     notificationsConfig: { message: { volume: 0.5, soundUrl: "" } },
     detectorConfig: {},
     timersConfig: {},
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
   };
 
   const setPreferences = () =>

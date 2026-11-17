@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { DateTime, Effect, Match, Schema } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -16,7 +17,7 @@ import {
   type KillAnalyticsRange,
   type UserKillAnalyticsScope,
 } from "./user-kill-analytics-query.js";
-import { STATS_TIME_ZONE, toStatsDate } from "./kill-stats-period.js";
+import { toStatsDate } from "./kill-stats-period.js";
 
 const RawDaily = Schema.Struct({
   date: Schema.String,
@@ -79,7 +80,7 @@ type DailyPoint = UserKillActivityResponse["daily"][number];
 
 const localDate = (date: string) =>
   DateTime.makeZonedUnsafe(date, {
-    timeZone: STATS_TIME_ZONE,
+    timeZone: MARGONEM_TIME_ZONE,
     adjustForTimeZone: true,
   });
 
@@ -150,7 +151,7 @@ export const buildKillActivity = (
 
   return {
     meta: {
-      timezone: STATS_TIME_ZONE,
+      timezone: MARGONEM_TIME_ZONE,
       generatedAt: range.generatedAt,
       days: range.days,
       world: scope.world ?? null,

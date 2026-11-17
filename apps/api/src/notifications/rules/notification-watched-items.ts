@@ -34,7 +34,7 @@ import { Error as NotificationError } from "#src/notifications/error";
 import {
   NotificationOwnerType,
   NotificationTargetType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 const WATCHED_ITEM_LIMIT = 20;
 
