@@ -1,4 +1,7 @@
-import type { CatalogControllerGetItemsSort } from "@lootlog/client/catalog";
+import type {
+  CatalogControllerGetItemsSort,
+  CatalogNpcDtoOutputType,
+} from "@lootlog/client/catalog";
 import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
 
 const messages = {
@@ -918,8 +921,9 @@ const messages = {
     EVENT_HERO: "Heros eventowy",
     COLOSSUS: "Kolos",
     TITAN: "Tytan",
+    HERO_TRACKER: "Tropiciel Herosów",
     NPC: "NPC",
-  },
+  } satisfies Record<CatalogNpcDtoOutputType, string>,
   linkPreview: {
     droppedBy: "Wypada z: {{names}}",
     locations: "Lokacje: {{names}}",

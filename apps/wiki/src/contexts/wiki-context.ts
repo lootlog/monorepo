@@ -1,10 +1,10 @@
 import { createContext, useContext } from "react";
 import type { RuntimeConfig } from "@/config/runtime-config";
-import type { WikiAuthClient } from "@/lib/auth-client";
+import type { LootlogAuthClient } from "@lootlog/client/auth-session";
 
 type WikiContextValue = {
   config: RuntimeConfig;
-  authClient: WikiAuthClient;
+  authClient: LootlogAuthClient;
 };
 
 export const WikiContext = createContext<WikiContextValue | null>(null);

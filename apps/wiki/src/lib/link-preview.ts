@@ -9,6 +9,7 @@ import {
   upgradeItemStat,
 } from "@lootlog/domain/item-upgrade";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
+import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
 import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
 import {
   ITEM_STAT_FOOTER_SECTIONS,
@@ -29,15 +30,12 @@ import { monsterIdentity } from "@/lib/group-items-by-monster";
 import { npcSummary } from "@/lib/npc-summary";
 
 /**
- * The production wiki, which search results and previews name as each page's
- * address; development hosts point at it too.
+ * The address search engines should index a page under, without its options:
+ * always the production wiki, development hosts too.
  */
-export const WIKI_ORIGIN = "https://wiki.lootlog.pl";
-
-/** The address search engines should index a page under, without its options. */
 export const canonicalLink = (path: string) => ({
   rel: "canonical",
-  href: `${WIKI_ORIGIN}${path}`,
+  href: `${PUBLIC_SITE_ORIGINS.wiki}${path}`,
 });
 
 // Common and upgraded items keep the chat's own edge.

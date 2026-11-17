@@ -1,15 +1,7 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import {
-  type CatalogItemDtoOutput,
-  catalogControllerGetItems,
-  getCatalogControllerGetItemsQueryKey,
-} from "@lootlog/client/catalog";
+import { getCatalogControllerGetItemsQueryKey } from "@lootlog/client/catalog";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
-
-const PAGE_SIZE = 96;
-
-// Meilisearch serves no hits past its `maxTotalHits`.
-const MAX_ITEMS = 1000;
+import { readCatalogItems } from "@/lib/catalog-pages";
 
 /**
  * Every item of one event, highest level first. The page groups them by
@@ -24,24 +16,7 @@ export const eventItemsQueryOptions = (eventSlug: string) => {
 
   return queryOptions({
     queryKey: [...getCatalogControllerGetItemsQueryKey(params), "all"],
-    queryFn: async ({ signal }) => {
-      const items: CatalogItemDtoOutput[] = [];
-      let total = MAX_ITEMS;
-
-      while (items.length < Math.min(total, MAX_ITEMS)) {
-        const page = await catalogControllerGetItems(
-          { ...params, limit: PAGE_SIZE, offset: items.length },
-          { signal },
-        );
-
-        items.push(...page.hits);
-        total = page.estimatedTotalHits;
-
-        if (page.hits.length < PAGE_SIZE) break;
-      }
-
-      return items;
-    },
+    queryFn: ({ signal }) => readCatalogItems(params, { signal }),
   });
 };
 
