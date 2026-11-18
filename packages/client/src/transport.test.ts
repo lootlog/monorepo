@@ -447,6 +447,40 @@ describe("API client transport", () => {
     ).rejects.toThrow("Fetch is unavailable for main API request");
   });
 
+  it.each([
+    ["delay seconds", "160", Date.parse("2026-11-18T12:02:40Z")],
+    [
+      "an HTTP date",
+      "Wed, 18 Nov 2026 12:05:00 GMT",
+      Date.parse("2026-11-18T12:05:00Z"),
+    ],
+    ["an unreadable value", "soon", undefined],
+  ])(
+    "reads the retry time of a refused request from %s",
+    async (_, retryAfter, retryAt) => {
+      vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-11-18T12:00:00Z"));
+      restoreConfiguration = configureApiClients({
+        main: {
+          baseUrl: "https://api.example.test",
+          fetch: async () =>
+            new Response(JSON.stringify({ code: "RATE_LIMITED" }), {
+              headers: {
+                "content-type": "application/json",
+                "retry-after": retryAfter,
+              },
+              status: 429,
+            }),
+        },
+      });
+
+      const error = await executeApiRequest("main", "/refresh").catch(
+        (cause: unknown) => cause,
+      );
+
+      expect(isApiError(error) && error.retryAt).toBe(retryAt);
+    },
+  );
+
   it("exposes stable helpers for API and router-like errors", () => {
     const error = new ApiError({
       data: { message: "Invalid request" },

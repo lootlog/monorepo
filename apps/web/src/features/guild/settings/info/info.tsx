@@ -1,5 +1,6 @@
 import { BandSection } from "@/components/common/band-section";
 import { DetailField } from "@/components/common/detail-field";
+import { RefreshCooldown } from "@/components/common/refresh-cooldown";
 import { GuildDiscordSyncNotice } from "@/components/common/guild-discord-sync-notice";
 import { useGuildDiscordSync } from "@/hooks/api/use-guild-discord-sync";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -41,6 +42,7 @@ export const InfoSettings = () => {
     query,
     isRefreshing,
     isRefreshError,
+    refreshCooldown,
     permissionStatus,
     refresh,
   } = sync;
@@ -83,7 +85,9 @@ export const InfoSettings = () => {
             title={t("settings.guildInfo.syncStatus")}
             description={t("settings.guildInfo.syncStatusDescription")}
             trailing={
-              hasRequiredPermissions ? (
+              hasRequiredPermissions && !refreshCooldown.isExpired ? (
+                <RefreshCooldown time={refreshCooldown.label} />
+              ) : hasRequiredPermissions ? (
                 <Button
                   size="sm"
                   variant="outline"

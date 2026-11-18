@@ -38,7 +38,10 @@
   "permissionRefresh": {
     "upToDate": "Uprawnienia są aktualne",
     "available": "Odśwież swoje uprawnienia",
-    "retryIn": "Spróbuj ponownie za {{minutes}} min"
+    "retryIn": "Spróbuj ponownie za {{time}}"
+  },
+  "cooldown": {
+    "nextRefreshIn": "Kolejne odświeżenie za {{time}}"
   },
   "boolean": {
     "yes": "Tak",
