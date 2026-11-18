@@ -11,11 +11,6 @@ import {
 } from "@/components/common/stats-leaderboard-section";
 import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
 import { useIsViewer } from "@/hooks/auth/use-is-viewer";
-import {
-  LIST_TILE_INSET_CLASS,
-  LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
-import { cn } from "cn";
 
 type MemberLeaderboardCardProps = {
   data?: GuildKillStatsResponseDtoOutputMemberRankingItem[];
@@ -43,12 +38,16 @@ export const MemberLeaderboardCard = ({
     })
     .sort((a, b) => b.participations - a.participations);
 
-  const leaders = ranked.slice(0, LEADERBOARD_SIZE);
-
-  // The viewer's own place follows the leaders when it falls outside them.
+  // The viewer's own place takes the last row when it falls outside the
+  // leaders, so the card keeps the height of its paired leaderboard.
   const ownIndex = ranked.findIndex(
     (member, index) =>
       index >= LEADERBOARD_SIZE && isViewer(member.member.userId),
+  );
+
+  const leaders = ranked.slice(
+    0,
+    ownIndex === -1 ? LEADERBOARD_SIZE : LEADERBOARD_SIZE - 1,
   );
 
   // The whole row is a link to the member's stats, so the member inside it
@@ -117,22 +116,7 @@ export const MemberLeaderboardCard = ({
       }
     >
       {leaders.map((member, index) => renderRow(member, index + 1))}
-      {ownMember && (
-        <>
-          {/* The places skipped between the leaders and the viewer's own. */}
-          <li
-            aria-hidden="true"
-            className={cn(
-              "flex h-6 items-center text-xs leading-none text-muted-foreground",
-              LIST_TILE_RULE_CLASS,
-              LIST_TILE_INSET_CLASS,
-            )}
-          >
-            ⋯
-          </li>
-          {renderRow(ownMember, ownIndex + 1)}
-        </>
-      )}
+      {ownMember && renderRow(ownMember, ownIndex + 1)}
     </StatsLeaderboardSection>
   );
 };
