@@ -1,7 +1,7 @@
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { eventMessage, type RabbitMessaging } from "@lootlog/messaging";
 import { readPublishedFeedEntry } from "#src/users/user-feed";
-import { and, asc, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { Clock, Effect, Metric, Schema } from "effect";
 import { GuildLootCreatedEventV2Schema } from "@lootlog/schema/loot-events";
 import type { GuildLootCreatedMessageV2 } from "@lootlog/protocol/loot-events";
@@ -14,6 +14,7 @@ import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { organizationLootRecordTable } from "#src/database/drizzle/loot.schema";
 import { lootPublicationOutboxTable } from "#src/database/drizzle/loot-publication-outbox.schema";
+import { makeOutboxDispatcher } from "#src/shared/outbox-worker";
 
 const RabbitPublication = Schema.Union([
   Schema.Struct({
@@ -76,163 +77,100 @@ export const makeLootPublicationDispatcher = (
     guildId: string,
     lootId: number,
   ) => Effect.Effect<LootSnapshot | null, unknown>,
-) => {
+) =>
   // ponytail: one delivery holds one DB transaction; use leased batches if measured throughput requires it.
-  const dispatchOne = (attempted: number[]) => {
-    let selectedId: number | undefined;
+  makeOutboxDispatcher(
+    "LootPublicationOutbox",
+    database,
+    lootPublicationOutboxTable,
+    (row, transaction) =>
+      Effect.gen(function* () {
+        const payload = yield* Schema.decodeUnknownEffect(
+          LootPublicationPayload,
+        )(row.payload);
 
-    return database
-      .transaction((transaction) =>
-        Effect.gen(function* () {
-          const [row] = yield* transaction
-            .select()
-            .from(lootPublicationOutboxTable)
-            .where(
-              attempted.length > 0
-                ? notInArray(lootPublicationOutboxTable.id, attempted)
-                : undefined,
-            )
-            .orderBy(
-              sql`${lootPublicationOutboxTable.lastAttemptAt} ASC NULLS FIRST`,
-              asc(lootPublicationOutboxTable.id),
-            )
-            .limit(1)
-            .for("update", { skipLocked: true });
+        const records = yield* transaction
+          .select({ guildId: organizationLootRecordTable.guildId })
+          .from(organizationLootRecordTable)
+          .where(
+            and(
+              eq(organizationLootRecordTable.lootId, row.lootId),
+              inArray(organizationLootRecordTable.guildId, row.organizationIds),
+              isNull(organizationLootRecordTable.archivedAt),
+            ),
+          );
 
-          if (!row) return undefined;
-          selectedId = row.id;
+        const organizationIds = records.map(({ guildId }) => guildId);
 
-          const payload = yield* Schema.decodeUnknownEffect(
-            LootPublicationPayload,
-          )(row.payload);
+        if (organizationIds.length > 0) {
+          if (payload.kind === "cache") {
+            yield* invalidateCaches(organizationIds);
+          } else {
+            let data =
+              payload.routingKey === RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED
+                ? { ...payload.data, guildIds: organizationIds }
+                : payload.data;
 
-          const records = yield* transaction
-            .select({ guildId: organizationLootRecordTable.guildId })
-            .from(organizationLootRecordTable)
-            .where(
-              and(
-                eq(organizationLootRecordTable.lootId, row.lootId),
-                inArray(
-                  organizationLootRecordTable.guildId,
-                  row.organizationIds,
-                ),
-                isNull(organizationLootRecordTable.archivedAt),
-              ),
-            );
+            if (payload.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
+              const feedEntry = yield* readPublishedFeedEntry(
+                transaction,
+                payload.data.guildId,
+                { lootId: payload.data.lootId },
+              );
 
-          const organizationIds = records.map(({ guildId }) => guildId);
-
-          if (organizationIds.length > 0) {
-            if (payload.kind === "cache") {
-              yield* invalidateCaches(organizationIds);
-            } else {
-              let data =
-                payload.routingKey ===
-                RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED
-                  ? { ...payload.data, guildIds: organizationIds }
-                  : payload.data;
-
-              if (payload.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
-                const feedEntry = yield* readPublishedFeedEntry(
-                  transaction,
-                  payload.data.guildId,
-                  { lootId: payload.data.lootId },
-                );
-
-                // Without a snapshot, web clients read the loot back instead.
-                const loot = yield* readLoot(
-                  payload.data.guildId,
-                  payload.data.lootId,
-                ).pipe(
-                  Effect.catch((error) =>
-                    Effect.logWarning(
-                      "Loot publication continues without a snapshot",
-                    ).pipe(
-                      Effect.annotateLogs({ publicationId: row.id, error }),
-                      Effect.as(null),
-                    ),
+              // Without a snapshot, web clients read the loot back instead.
+              const loot = yield* readLoot(
+                payload.data.guildId,
+                payload.data.lootId,
+              ).pipe(
+                Effect.catch((error) =>
+                  Effect.logWarning(
+                    "Loot publication continues without a snapshot",
+                  ).pipe(
+                    Effect.annotateLogs({ publicationId: row.id, error }),
+                    Effect.as(null),
                   ),
-                );
-
-                data = {
-                  ...payload.data,
-                  ...(feedEntry && { feedEntry }),
-                  ...(loot && { loot }),
-                } satisfies GuildLootCreatedMessageV2;
-              }
-
-              const publication = rabbit.publish(
-                eventMessage(
-                  payload.routingKey,
-                  // SAFETY: `createdPublications` typed the data by this routing
-                  // key before it was stored, and consumers validate it again.
-                  data as CanonicalRabbitEvent<typeof payload.routingKey>,
-                  { messageId: `loot-publication:${row.id}` },
                 ),
               );
 
-              if (payload.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
-                const ageMs = Math.max(
-                  0,
-                  (yield* Clock.currentTimeMillis) - row.createdAt.getTime(),
-                );
+              data = {
+                ...payload.data,
+                ...(feedEntry && { feedEntry }),
+                ...(loot && { loot }),
+              } satisfies GuildLootCreatedMessageV2;
+            }
 
-                yield* publication.pipe(
-                  Effect.withSpan("loots.publishCreated", {
-                    attributes: {
-                      "organization.id": payload.data.guildId,
-                      "loot.id": row.lootId,
-                      "messaging.message.id": `loot-publication:${row.id}`,
-                      "loot.publication.age_ms": ageMs,
-                    },
-                  }),
-                );
-                yield* Metric.update(lootPublicationAge, ageMs);
-              } else {
-                yield* publication;
-              }
+            const publication = rabbit.publish(
+              eventMessage(
+                payload.routingKey,
+                // SAFETY: `createdPublications` typed the data by this routing
+                // key before it was stored, and consumers validate it again.
+                data as CanonicalRabbitEvent<typeof payload.routingKey>,
+                { messageId: `loot-publication:${row.id}` },
+              ),
+            );
+
+            if (payload.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
+              const ageMs = Math.max(
+                0,
+                (yield* Clock.currentTimeMillis) - row.createdAt.getTime(),
+              );
+
+              yield* publication.pipe(
+                Effect.withSpan("loots.publishCreated", {
+                  attributes: {
+                    "organization.id": payload.data.guildId,
+                    "loot.id": row.lootId,
+                    "messaging.message.id": `loot-publication:${row.id}`,
+                    "loot.publication.age_ms": ageMs,
+                  },
+                }),
+              );
+              yield* Metric.update(lootPublicationAge, ageMs);
+            } else {
+              yield* publication;
             }
           }
-
-          yield* transaction
-            .delete(lootPublicationOutboxTable)
-            .where(eq(lootPublicationOutboxTable.id, row.id));
-
-          return row.id;
-        }).pipe(Effect.timeout("10 seconds")),
-      )
-      .pipe(
-        Effect.catch((error) =>
-          selectedId === undefined
-            ? Effect.fail(error)
-            : Effect.gen(function* () {
-                const publicationId = selectedId;
-
-                if (publicationId === undefined) return undefined;
-                yield* database
-                  .update(lootPublicationOutboxTable)
-                  .set({
-                    lastAttemptAt: new Date(yield* Clock.currentTimeMillis),
-                  })
-                  .where(eq(lootPublicationOutboxTable.id, publicationId));
-                yield* Effect.logError(
-                  "Loot publication remains pending after delivery failure",
-                ).pipe(Effect.annotateLogs({ publicationId }));
-
-                return publicationId;
-              }),
-        ),
-      );
-  };
-
-  return Effect.fn("LootPublicationOutbox.dispatch")(function* () {
-    const attempted: number[] = [];
-
-    for (let processed = 0; processed < 100; processed++) {
-      const id = yield* dispatchOne(attempted);
-
-      if (id === undefined) break;
-      attempted.push(id);
-    }
-  });
-};
+        }
+      }),
+  );
