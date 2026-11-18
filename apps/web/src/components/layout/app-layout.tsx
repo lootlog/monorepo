@@ -12,13 +12,11 @@ import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
 import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { Outlet, useMatches } from "@tanstack/react-router";
 import { usePresentedPathname } from "@/lib/router/use-presented-location";
-import { useTranslation } from "react-i18next";
 import { GlobalModals } from "@/components/common/global-modals";
 import { SupportAnnouncement } from "@/components/common/support-announcement";
 import { getRouteErrorStatus } from "@/lib/router/route-errors";
 
 export const AppLayout = () => {
-  const { t } = useTranslation();
   // The shell follows the page on screen, which stays until the next loads.
   const pathname = usePresentedPathname();
 
@@ -74,12 +72,6 @@ export const AppLayout = () => {
       className="flex min-h-dvh w-full flex-col bg-background text-foreground md:h-dvh md:overflow-hidden"
       data-design-system="signal-v2"
     >
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:outline-2 focus:outline-ring"
-      >
-        {t("layout.navigation.skipToContent")}
-      </a>
       {/* Loaded with the shell: arriving later, it would push the page down. */}
       <SupportAnnouncement />
       {/* Desktop navigation stays expanded; only the mobile sheet opens and
