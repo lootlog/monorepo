@@ -62,7 +62,7 @@ const refreshOneMinuteAfterAttempt = async (
 
           return { channels: [], syncState: syncedState(new Date()) };
         }),
-      publishChannelDeleted: () => Effect.void,
+      signalChannelDeletions: Effect.void,
     });
 
     const result = await boundary.run(
