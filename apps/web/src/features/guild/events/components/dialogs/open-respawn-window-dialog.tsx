@@ -1,4 +1,4 @@
-import { DialogActionFooter } from "./dialog-action-footer";
+import { DialogActionFooter } from "@/components/common/dialog-action-footer";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";

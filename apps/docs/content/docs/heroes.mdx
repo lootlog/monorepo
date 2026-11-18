@@ -1,6 +1,6 @@
 ---
 title: Wykrywacz NPC i herosi
-description: Wykrywanie potworów na mapie, autowysyłka do Lootloga, tropiciele herosów i zapisywanie wyników zwoju wykrywającego herosa.
+description: Wykrywanie potworów na mapie, autowysyłka do Lootloga, tropiciele herosów, zapisywanie wyników zwoju wykrywającego herosa i ręczne dodawanie wykryć.
 ---
 
 Lootlog sam zauważa ważne potwory na Twojej mapie i daje znać reszcie grupy.
@@ -86,6 +86,29 @@ przyciskiem **Obstawiam**.
   pewność.
 - Gdy herosa zabije ktoś z Lootloga, wpis jest **zbity**.
 - Grasujący heros bez potwierdzenia przez 30 minut jest **niepotwierdzony**.
+- Ręczny wpis usunięty przez autora jest **usunięty**.
+
+### Ręczne dodawanie wykrycia
+
+Gdy dodatek nie zapisał odpowiedzi zwoju albo użyłeś zwoju bez dodatku,
+dodasz wykrycie ręcznie: w grze przyciskiem **+** w oknie **Wykryci herosi**
+albo w panelu webowym przyciskiem **Dodaj herosa**. W grze wpis trafia, tak
+jak wykrycie zwojem, do Lootlogów z zakresu zbierania Twojej postaci. Podajesz herosa, jego poziom, stan
+(**Grasuje** albo **Pojawi się**) i mapę. Możesz też wkleić w pole herosa całą
+wiadomość z czatu gry, np. `Tepeyollotl (258b) grasuje w: Oztotl Tzacua p.2 - sala 2`.
+Formularz wypełni się sam.
+
+- Ręczny wpis działa jak wykrycie: potwierdza aktualny wpis albo, gdy mu
+  przeczy, oznacza go jako **prawdopodobnie zbity**. Czasem wykrycia jest
+  moment dodania.
+- Zamiast „wykrył" wpis pokazuje **dodał ręcznie**, bo gra go nie
+  potwierdziła. Oznaczenie znika, gdy ktoś potwierdzi herosa zwojem.
+- Herosa i mapę, które Lootlog już zna, zapisuje w ich dotychczasowej
+  pisowni i z dotychczasowym poziomem.
+- Pomyłkę cofniesz przyciskiem **Usuń wpis** (ikona kosza), dopóki nikt nie
+  potwierdził herosa zwojem. Może to zrobić autor wpisu, a w panelu webowym
+  także administrator Lootloga.
+- Ręcznie dodasz tylko herosa, którego poziom widzą Twoje role.
 
 Timer herosa z aktualnym wykryciem dostaje mapę z wykrycia. Widać wtedy na
 nim liczby graczy z Lootloga i wrogów, a podpowiedź timera ma sekcję
@@ -114,11 +137,16 @@ mógł się od tego czasu pojawić bez nowego timera.
 Ikona historii otwiera 20 ostatnich wykryć herosa. **Obstawiam** i
 **Wycofaj** działają tak jak w grze. Zmiany pojawiają się na żywo.
 
+**Dodaj herosa** w górnym pasku otwiera formularz
+[ręcznego wykrycia](#ręczne-dodawanie-wykrycia). Wpis trafia na wybrany świat;
+przy widoku wszystkich światów formularz pyta o świat. Ikona kosza przy
+ręcznym wpisie go usuwa.
+
 Wiadomość na Discordzie o nowym wykryciu ustawisz regułą **Wykrycie herosa**
 ([Discord](/docs/discord#reguły-powiadomień)).
 
 ## Uprawnienia
 
 Wykrycia korzystają z uprawnień timerów. Widzisz je z `LOOTLOG_TIMERS_READ` i
-`LOOTLOG_TIMERS_HEROES_READ` w zakresie poziomu herosa. Obstawianie wymaga
-`LOOTLOG_TIMERS_WRITE`.
+`LOOTLOG_TIMERS_HEROES_READ` w zakresie poziomu herosa. Obstawianie, ręczne
+dodawanie i usuwanie własnego ręcznego wpisu wymagają `LOOTLOG_TIMERS_WRITE`.

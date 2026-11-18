@@ -6,7 +6,7 @@
   "loadError": "Nie udało się pobrać wykrytych herosów",
   "refreshError": "Nie udało się odświeżyć wykrytych herosów. Widoczne dane mogą być nieaktualne. Spróbuj ponownie.",
   "empty": "Brak wykrytych herosów",
-  "emptyDescription": "Gdy ktoś z Lootloga użyje w grze wykrywacza herosów, wynik pojawi się tutaj.",
+  "emptyDescription": "Gdy ktoś z Lootloga użyje w grze wykrywacza herosów, wynik pojawi się tutaj. Wykrycie, którego dodatek nie zapisał, dodasz ręcznie.",
   "noResults": "Brak pasujących herosów",
   "map": "Mapa",
   "status": {
@@ -15,6 +15,7 @@
     "STALE": "Niepotwierdzony",
     "PROBABLY_KILLED": "Prawdopodobnie zbity",
     "KILLED": "Zbity",
+    "WITHDRAWN": "Usunięty",
     "CLOSED": "Nieaktualny"
   },
   "groups": {
@@ -26,6 +27,7 @@
   "staleDescription": "Nikt nie potwierdził herosa od ponad 30 minut. Mógł już zostać zbity.",
   "lastDetected": "ostatnio wykryty",
   "detectedByShort": "wykrył",
+  "addedByHandShort": "dodał ręcznie",
   "lastSeenByShort": "ostatnio {{name}}",
   "respawn": "Respawn herosa",
   "noTimer": "Brak timera",
@@ -35,6 +37,7 @@
   "timerDeleted": "Usunięty",
   "lostTrackingDescription": "Od tego momentu heros mógł się pojawić, a Lootlog nie zna jego nowego timera.",
   "detectedBy": "Wykrył",
+  "addedByHand": "Dodał ręcznie",
   "claims": "Obstawiają",
   "noClaims": "Nikt nie obstawia",
   "detectorClaim": "(wykrył herosa)",
@@ -67,5 +70,45 @@
     "claims_few": "· {{count}} obstawiają",
     "claims_many": "· {{count}} obstawia",
     "claims_other": "· {{count}} obstawia"
+  },
+  "add": {
+    "open": "Dodaj herosa",
+    "title": "Dodaj wykrytego herosa",
+    "description": "Dla wykrycia, którego dodatek nie zapisał. Wpis będzie oznaczony jako dodany ręcznie.",
+    "hero": "Heros",
+    "heroPlaceholder": "np. Tepeyollotl",
+    "heroHint": "Możesz wkleić całą wiadomość wykrywacza z czatu gry.",
+    "knownHeroes": "Znani herosi",
+    "level": "Poziom",
+    "world": "Świat",
+    "worldPlaceholder": "Wybierz świat",
+    "state": "Stan",
+    "states": {
+      "ROAMING": {
+        "title": "Grasuje",
+        "description": "Heros żyje na tej mapie."
+      },
+      "SPAWNING": {
+        "title": "Pojawi się",
+        "description": "Tam wylosowano jego następne odrodzenie."
+      }
+    },
+    "map": "Mapa",
+    "mapPlaceholder": "np. Oztotl Tzacua p.2 - sala 2",
+    "submit": "Dodaj",
+    "validation": {
+      "heroRequired": "Podaj nazwę herosa",
+      "levelRange": "Podaj poziom od {{min}} do {{max}}",
+      "mapRequired": "Podaj nazwę mapy",
+      "worldRequired": "Wybierz świat"
+    },
+    "success": "Dodano: {{hero}}",
+    "levelNotVisible": "Twoje role nie widzą herosów na tym poziomie.",
+    "error": "Nie udało się dodać herosa. Spróbuj ponownie."
+  },
+  "withdraw": {
+    "label": "Usuń wpis: {{hero}}",
+    "notWithdrawable": "Tego wpisu nie można już usunąć. Lista została odświeżona.",
+    "error": "Nie udało się usunąć wpisu. Spróbuj ponownie."
   }
 }

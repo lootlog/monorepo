@@ -7,7 +7,7 @@ import { Textarea } from "@lootlog/ui/components/textarea";
 import { BookOpenText, Settings, Trophy } from "lucide-react";
 import { useId } from "react";
 import { Controller } from "react-hook-form";
-import { DialogActionFooter } from "./dialog-action-footer";
+import { DialogActionFooter } from "@/components/common/dialog-action-footer";
 import {
   useEventCreateDialog,
   type EventCreateDialogProps,

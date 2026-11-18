@@ -30,6 +30,7 @@ const sighting: HeroSightingResponseDto = {
   },
   state: "ROAMING",
   mapName: "Oztotl Tzacua p.2 - sala 2",
+  manual: false,
   firstSeenAt: "2026-11-03T10:00:00.000Z",
   lastSeenAt: "2026-11-03T10:05:00.000Z",
   spawnedAt: null,

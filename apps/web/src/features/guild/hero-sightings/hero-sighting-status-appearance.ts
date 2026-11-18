@@ -4,6 +4,7 @@ import {
   Footprints,
   Hourglass,
   Skull,
+  Trash2,
   type LucideIcon,
 } from "lucide-react";
 import type { HeroSightingStatus } from "./hero-sighting-status";
@@ -36,5 +37,6 @@ export const HERO_SIGHTING_STATUS_APPEARANCE = {
   STALE: { icon: CircleDashed, ...SETTLED },
   PROBABLY_KILLED: { icon: Skull, ...SETTLED },
   KILLED: { icon: Skull, ...SETTLED },
+  WITHDRAWN: { icon: Trash2, ...SETTLED },
   CLOSED: { icon: CircleSlash, ...SETTLED },
 } satisfies Record<HeroSightingStatus, HeroSightingStatusAppearance>;

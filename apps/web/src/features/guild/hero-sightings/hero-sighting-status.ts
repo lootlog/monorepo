@@ -12,6 +12,7 @@ export type HeroSightingStatus =
   | "STALE"
   | "PROBABLY_KILLED"
   | "KILLED"
+  | "WITHDRAWN"
   | "CLOSED";
 
 export const getHeroSightingStatus = (
@@ -39,7 +40,9 @@ export type HeroSightingGroup = (typeof HERO_SIGHTING_GROUPS)[number];
 export const getHeroSightingGroup = (
   status: HeroSightingStatus,
 ): HeroSightingGroup =>
-  status === "KILLED" || status === "PROBABLY_KILLED" ? "CLOSED" : status;
+  status === "KILLED" || status === "PROBABLY_KILLED" || status === "WITHDRAWN"
+    ? "CLOSED"
+    : status;
 
 /** Orders a board by status, then by the latest news within each status. */
 export const sortHeroSightings = (

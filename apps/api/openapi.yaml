@@ -3481,6 +3481,180 @@ paths:
                 additionalProperties: false
       description: The latest sighting of each hero in a world from the last day, limited to heroes the caller's roles can see.
       summary: Get Organization hero sightings
+    post:
+      tags:
+        - hero-sightings
+      operationId: HeroSightingsController_addHeroSighting
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            example: guild_123
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "201":
+          description: HeroSightingResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeroSightingResponseDto"
+        "400":
+          description: HttpErrorResponse | RequestValidationError
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: "Record where a hero roams or will spawn without a detector answer, for a Member who used the detector outside Lootlog. The sighting is dated by the API and marked manual until a detector answer confirms it. It follows the rules of a detection: repeating the current sighting confirms it, and contradicting it closes it as probably killed. The caller's roles must see heroes of the hero's level."
+      summary: Add a hero sighting by hand
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddHeroSightingDto"
+        required: true
+  /guilds/{guildId}/hero-sightings/{sightingId}/withdraw:
+    post:
+      tags:
+        - hero-sightings
+      operationId: HeroSightingsController_withdrawHeroSighting
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            example: guild_123
+          required: true
+        - name: sightingId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: HeroSightingResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeroSightingResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Close a current manual sighting as withdrawn. Only the Member who added it or an Organization administrator can withdraw it, and only until a detector answer confirms it.
+      summary: Withdraw a hero sighting added by hand
   /guilds/{guildId}/hero-sightings/history:
     get:
       tags:
@@ -31245,6 +31419,9 @@ components:
         mapName:
           type: string
           description: Map name from the detector answer. Margonem sends no map id, and several maps can share a name.
+        manual:
+          type: boolean
+          description: True for a sighting a Member entered by hand that no detector answer has confirmed since.
         firstSeenAt:
           type: string
           format: date-time
@@ -31265,12 +31442,13 @@ components:
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         closeReason:
-          description: PROBABLY_KILLED when a later detection contradicted the sighting; KILLED when Lootlog recorded the kill.
+          description: PROBABLY_KILLED when a later detection contradicted the sighting; KILLED when Lootlog recorded the kill; WITHDRAWN when a Member took back a sighting entered by hand.
           nullable: true
           type: string
           enum:
             - KILLED
             - PROBABLY_KILLED
+            - WITHDRAWN
         detectedBy:
           $ref: "#/components/schemas/HeroSightingMemberDto"
         detectorCharacter:
@@ -31354,6 +31532,7 @@ components:
         - hero
         - state
         - mapName
+        - manual
         - firstSeenAt
         - lastSeenAt
         - spawnedAt
@@ -31413,6 +31592,73 @@ components:
             - characterId
             - name
           additionalProperties: false
+      additionalProperties: false
+    AddHeroSightingDto:
+      type: object
+      properties:
+        world:
+          type: string
+          minLength: 1
+          maxLength: 64
+        hero:
+          type: object
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+            lvl:
+              type: integer
+              minimum: 1
+              maximum: 500
+              description: Used for a hero the Organization has not sighted in this world yet; a known hero keeps its recorded level.
+            prof:
+              type: string
+              description: Margonem profession shortname of the hero.
+          required:
+            - name
+            - lvl
+          additionalProperties: false
+        state:
+          type: string
+          enum:
+            - ROAMING
+            - SPAWNING
+        mapName:
+          type: string
+          minLength: 1
+          maxLength: 200
+        actorCharacter:
+          type: object
+          properties:
+            accountId:
+              type: string
+              minLength: 1
+            characterId:
+              type: string
+              minLength: 1
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+            prof:
+              type: string
+            icon:
+              type: string
+            lvl:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+          required:
+            - accountId
+            - characterId
+            - name
+          additionalProperties: false
+      required:
+        - world
+        - hero
+        - state
+        - mapName
       additionalProperties: false
     CreateHeroSightingResponseDto:
       type: object
