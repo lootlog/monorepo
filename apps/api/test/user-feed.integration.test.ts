@@ -2,6 +2,7 @@ import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { Client } from "pg";
+import { refreshOrganizationLootRecordFactsSql } from "./loot-fixtures.js";
 import { eq } from "drizzle-orm";
 import { Effect, ManagedRuntime, Schema } from "effect";
 import { UserFeedItem } from "@lootlog/protocol/feed";
@@ -119,7 +120,7 @@ const insertLoot = async (
         `WITH loot AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") VALUES ($1,'tempest','pl','FIGHT','map',now()) RETURNING id,world,"createdAt"),
         npc AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,prof,"gameVersion") VALUES ($2,$1,$3::"NpcType",100,'WARRIOR','pl') RETURNING id),
         linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId","runtimeNpcId") SELECT loot.id, npc.id, $6::integer FROM loot, npc)
-        INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt") SELECT id,$4,$5,now(),world,"createdAt" FROM loot RETURNING "lootId" AS id`,
+        INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt","lootRarityMask","npcTypeMask","npcVisibility") SELECT id,$4,$5,now(),world,"createdAt",0,0,'{[-1,0)}' FROM loot RETURNING "lootId" AS id`,
         [
           randomUUID(),
           npc.npcId,
@@ -133,6 +134,7 @@ const insertLoot = async (
   );
 
   if (!loot) throw new Error("Missing loot");
+  await client.query(refreshOrganizationLootRecordFactsSql);
 
   return loot.id;
 };
@@ -250,8 +252,8 @@ describe("personal Organization activity feed", () => {
 
     if (!loot) throw new Error("Missing loot");
     await client.query(
-      `INSERT INTO "OrganizationLootRecord" ("lootId","guildId","updatedAt","lootWorld","lootCreatedAt")
-       SELECT "Loot".id,g,now(),"Loot".world,"Loot"."createdAt"
+      `INSERT INTO "OrganizationLootRecord" ("lootId","guildId","updatedAt","lootWorld","lootCreatedAt","lootRarityMask","npcTypeMask","npcVisibility")
+       SELECT "Loot".id,g,now(),"Loot".world,"Loot"."createdAt",0,0,'{[-1,0)}'
        FROM "Loot", unnest(ARRAY[$2,$3]) AS g WHERE "Loot".id = $1`,
       [loot.id, guild.id, other.guild.id],
     );
@@ -280,6 +282,7 @@ describe("personal Organization activity feed", () => {
       `WITH inserted AS (INSERT INTO "PlayerSnapshot" (world,"accountId","characterId","snapshotHash",name,prof,icon) VALUES ('tempest',1,2,$2,'Participant','WARRIOR','player.png') RETURNING id) INSERT INTO "LootPlayer" ("lootId","playerSnapshotId",lvl,hpp) SELECT $1,id,120,75 FROM inserted`,
       [loot.id, randomUUID()],
     );
+    await client.query(refreshOrganizationLootRecordFactsSql);
     await client.query(
       `UPDATE "Loot" SET "lootShare"='{"Participant":["1"]}'::jsonb WHERE id=$1`,
       [loot.id],
@@ -336,9 +339,12 @@ describe("personal Organization activity feed", () => {
 
     expect(ownerItems[0]?.groupKey).toBe(ownerItems[1]?.groupKey);
     expect((await run(makeUserFeed(database)(reader))).items).toHaveLength(1);
+    // Records hold their loot's NPC visibility, so a change to a stored
+    // snapshot reaches them only when the records are rewritten with it.
     await client.query(`UPDATE "NpcSnapshot" SET type='HERO' WHERE id=$1`, [
       npc.id,
     ]);
+    await client.query(refreshOrganizationLootRecordFactsSql);
     expect((await run(makeUserFeed(database)(reader))).items).toEqual([]);
     await client.query(
       `UPDATE "OrganizationLootRecord" SET "archivedAt"=now() WHERE "lootId"=$1`,
@@ -428,13 +434,14 @@ describe("personal Organization activity feed", () => {
           `WITH loot AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") VALUES ($1,'tempest','pl','FIGHT','map',now()) RETURNING id,world,"createdAt"),
           npc AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,wt,prof,"gameVersion") VALUES (21,$1 || 'boss','ELITE2',50,25,'WARRIOR','pl'), (22,$1 || 'escort','ELITE',70,15,'WARRIOR','pl') RETURNING id),
           linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId") SELECT loot.id, npc.id FROM loot, npc)
-          INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt") SELECT id,$2,$3,now(),world,"createdAt" FROM loot RETURNING "lootId" AS id`,
+          INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt","lootRarityMask","npcTypeMask","npcVisibility") SELECT id,$2,$3,now(),world,"createdAt",0,0,'{[-1,0)}' FROM loot RETURNING "lootId" AS id`,
           [randomUUID(), guild.id, new Date(recent.getTime() + 5000)],
         )
       ).rows,
     );
 
     if (!loot) throw new Error("Missing loot");
+    await client.query(refreshOrganizationLootRecordFactsSql);
 
     const feed = (query: UserFeedQuery = {}) =>
       run(makeUserFeed(database)(owner, query)).then(({ items }) =>
@@ -718,9 +725,10 @@ describe("personal Organization activity feed", () => {
       `WITH npcs AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,"gameVersion") SELECT n,'NPC '||n||$2,CASE WHEN n%2=0 THEN 'ELITE2'::"NpcType" ELSE 'HERO'::"NpcType" END,100,'pl' FROM generate_series(0,199)n RETURNING id,"npcId"),
       loots AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") SELECT $2||n,'tempest','pl','FIGHT','map',now() FROM generate_series(1,30000)n RETURNING id,world,"createdAt"),
       linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId") SELECT loots.id, npcs.id FROM loots JOIN npcs ON npcs."npcId"=loots.id%200)
-      INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt") SELECT id,$1,now()-(id%86400)*interval '1 second',now(),world,"createdAt" FROM loots`,
+      INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt","lootRarityMask","npcTypeMask","npcVisibility") SELECT id,$1,now()-(id%86400)*interval '1 second',now(),world,"createdAt",0,0,'{[-1,0)}' FROM loots`,
       [guild.id, randomUUID()],
     );
+    await client.query(refreshOrganizationLootRecordFactsSql);
     await client.query(
       `ANALYZE "GuildKillActivity"; ANALYZE "OrganizationLootRecord"; ANALYZE "LootNpc"; ANALYZE "NpcSnapshot"`,
     );

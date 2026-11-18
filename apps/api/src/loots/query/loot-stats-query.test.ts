@@ -4,12 +4,15 @@ import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { describe, expect, it } from "bun:test";
 import { sql } from "drizzle-orm";
 import { Effect } from "effect";
-import { lootTable } from "#src/database/drizzle/loot.schema";
+import { organizationLootRecordTable } from "#src/database/drizzle/loot.schema";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   buildLootStatsQueries,
   buildUserLootStatsQueries,
 } from "#src/loots/query/loot-stats-query";
+import { organizationLootRecordFactsOf } from "#src/loots/loot-record-facts";
+
+const facts = organizationLootRecordFactsOf(sql`"Loot".id`);
 
 describe("loot statistics at the PostgreSQL boundary", () => {
   it("keeps Organization visibility and distinct counts with enum NPC filters and multi-item joins", async () => {
@@ -29,9 +32,6 @@ describe("loot statistics at the PostgreSQL boundary", () => {
             sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt", "gameVersion") values (1, 'stats-1', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl'), (2, 'stats-2', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl'), (3, 'stats-3', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl')`,
           );
           yield* db.execute(
-            sql`insert into "OrganizationLootRecord" (id, "lootId", "guildId", "archivedAt", "updatedAt", "lootWorld", "lootCreatedAt") select v.id, v."lootId", v."guildId", v."archivedAt", now(), "Loot".world, "Loot"."createdAt" from (values (1, 1, 'stats-a', null::timestamp), (2, 1, 'stats-b', null), (3, 2, 'stats-a', null), (4, 3, 'stats-a', now()::timestamp)) as v(id, "lootId", "guildId", "archivedAt") join "Loot" on "Loot".id = v."lootId"`,
-          );
-          yield* db.execute(
             sql`insert into "NpcSnapshot" (id, "npcId", name, type, lvl, "gameVersion") values (1, 100, 'Hero', 'HERO', 100, 'pl'), (2, 200, 'Elite', 'ELITE2', 100, 'pl'), (3, 300, 'Titan', 'TITAN', 100, 'pl')`,
           );
           yield* db.execute(
@@ -42,6 +42,9 @@ describe("loot statistics at the PostgreSQL boundary", () => {
           );
           yield* db.execute(
             sql`insert into "LootItem" ("lootId", "itemSnapshotId", hid) values (1,1,'legendary-b'), (1,1,'legendary-a'), (1,2,'heroic'), (2,1,'hidden'), (3,1,'archived')`,
+          );
+          yield* db.execute(
+            sql`insert into "OrganizationLootRecord" (id, "lootId", "guildId", "archivedAt", "updatedAt", "lootWorld", "lootCreatedAt", "lootRarityMask", "npcTypeMask", "npcVisibility") select v.id, v."lootId", v."guildId", v."archivedAt", now(), "Loot".world, "Loot"."createdAt", ${facts.lootRarityMask}, ${facts.npcTypeMask}, ${facts.npcVisibility} from (values (1, 1, 'stats-a', null::timestamp), (2, 1, 'stats-b', null), (3, 2, 'stats-a', null), (4, 3, 'stats-a', now()::timestamp)) as v(id, "lootId", "guildId", "archivedAt") join "Loot" on "Loot".id = v."lootId"`,
           );
           yield* db.execute(
             sql`insert into "LootSubmission" ("organizationLootRecordId", "memberId", "updatedAt") values (1,1,now()), (2,2,now()), (3,1,now()), (4,1,now())`,
@@ -55,7 +58,7 @@ describe("loot statistics at the PostgreSQL boundary", () => {
       ];
 
       const visibility = buildLootNpcVisibilityCondition(
-        lootTable.id,
+        organizationLootRecordTable.npcVisibility,
         permissions,
         [{ permissions, lvlRangeFrom: 1, lvlRangeTo: 500 }],
       );
@@ -149,9 +152,6 @@ describe("loot statistics at the PostgreSQL boundary", () => {
             sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt", "gameVersion") values (1, 'day-1', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 23:30:00', now(), 'pl')`,
           );
           yield* db.execute(
-            sql`insert into "OrganizationLootRecord" (id, "lootId", "guildId", "updatedAt", "lootWorld", "lootCreatedAt") select 1, 1, 'stats-day', now(), world, "createdAt" from "Loot" where id = 1`,
-          );
-          yield* db.execute(
             sql`insert into "NpcSnapshot" (id, "npcId", name, type, lvl, wt, "gameVersion") values (1, 400, 'Escort', 'ELITE', 70, 15, 'pl'), (2, 300, 'Boss', 'ELITE2', 50, 25, 'pl')`,
           );
           yield* db.execute(
@@ -162,6 +162,9 @@ describe("loot statistics at the PostgreSQL boundary", () => {
           );
           yield* db.execute(
             sql`insert into "LootItem" ("lootId", "itemSnapshotId", hid) values (1,1,'legendary')`,
+          );
+          yield* db.execute(
+            sql`insert into "OrganizationLootRecord" (id, "lootId", "guildId", "updatedAt", "lootWorld", "lootCreatedAt", "lootRarityMask", "npcTypeMask", "npcVisibility") select 1, 1, 'stats-day', now(), world, "createdAt", ${facts.lootRarityMask}, ${facts.npcTypeMask}, ${facts.npcVisibility} from "Loot" where id = 1`,
           );
         }),
       );

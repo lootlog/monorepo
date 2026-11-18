@@ -1324,3 +1324,140 @@ DROP INDEX CONCURRENTLY IF EXISTS "OrganizationLootRecord_createdAt_brin_idx";
 ```
 
 An older API revision keeps working with or without the index.
+
+## Loot list facts on Organization records
+
+The loot list tested its rarity filter, its NPC type filter and the NPC
+visibility rule with correlated subqueries on `LootItem`/`ItemSnapshot` and
+`LootNpc`/`NpcSnapshot` for every record a page scanned. On production
+(2026-11-15) the page with a rarity filter averaged 257 ms and 197k buffers per
+call, 8.1% of the database's execution time, and the page with visibility alone
+51k buffers.
+
+`OrganizationLootRecord` now carries the three facts, written in the
+transaction that accepts a loot (`organizationLootRecordFactsOf` in
+`src/loots/loot-record-facts.ts`):
+
+- `lootRarityMask` (`smallint`): one bit per rarity its items have, `UNIQUE` 1,
+  `HEROIC` 2, `LEGENDARY` 4, `UPGRADED` 8. The filter is
+  `("lootRarityMask" & <mask>) <> 0`.
+- `npcTypeMask` (`smallint`): one bit per type its NPCs have, `COMMON` 1,
+  `ELITE` 2, `ELITE2` 4, `ELITE3` 8, `HERO` 16, `EVENT_HERO` 32, `TITAN` 64,
+  `COLOSSUS` 128, `NPC` 256, `HERO_TRACKER` 512. The filter is the same mask
+  test.
+- `npcVisibility` (`int4multirange`): one integer per NPC, its level plus
+  1,000,000 for a hero or event hero and 2,000,000 for a titan. An NPC without
+  a level or type, and a loot without NPCs, is `-1`, which no role grants. A
+  member's readable roles become ranges the same way, and the rule "every NPC
+  is covered by some role" is `"npcVisibility" <@ <granted ranges>`. Unlike a
+  minimum and maximum level, this stays exact for a member whose roles cover
+  disjoint level ranges.
+
+`OrganizationLootRecord_guildId_world_lootId_page_active_idx` replaces
+`OrganizationLootRecord_guildId_world_lootId_active_idx` and adds the three
+columns as trailing keys, so a page that rejects most records is an index-only
+scan. Every query that tests loot visibility reads the column: the list, loot
+details, the NPC summary, statistics, the user feed, allocation and
+notification history.
+
+The item filter (`itemNames`) starts from the chosen snapshots' rows in
+`LootItem_itemSnapshotId_lootId_idx`, as the NPC name filter already did,
+instead of testing each scanned record. With visibility now a cheap test the
+planner otherwise walked the Organization's whole history for an item it holds
+once.
+
+Measured on a local production copy, on a table holding the three largest
+Organizations' 1,132,426 records, pages of 26 ids for the largest one (414,908
+records, 354,120 on its largest world), warm cache. "Before" is the subqueries
+with the index they used, "after" these columns and this index:
+
+| Page                                         | Before              | After               |
+| -------------------------------------------- | ------------------- | ------------------- |
+| member limited to levels 0-100               | 801k buffers, 2.7 s | 65 buffers, 0.04 ms |
+| the same without a world                     | 919k, 2.0 s         | 158, 0.3 ms         |
+| legendary                                    | 9.7k, 44 ms         | 310, 0.1 ms         |
+| titans, member with the titan grant          | 274k, 540 ms        | 14k, 2.9 ms         |
+| titans, member without it (matches nothing)  | 3.5M, 4.2 s         | 156k, 37 ms         |
+| item the Organization holds 20 times         | 154k, 35 ms         | 3.2k, 2.4 ms        |
+| item with 263k rows everywhere, levels 0-100 | 319k, 1.5 s         | 840, 31 ms          |
+| the same item, member who sees every loot    | 40k, 9 ms           | 840, 33 ms          |
+| NPC name with 109k rows everywhere           | 715, 17 ms          | 544, 14 ms          |
+
+The last item row is the cost of the array form: it reads every loot of the
+snapshots before probing, so a snapshot that is common everywhere pays for its
+global row count (549k rows for the most common item) where the scan used to
+stop at the first 26 matches. In exchange the worst case is bounded: with the
+columns in place and the correlated item test, the planner walked the whole
+history for an item held 20 times (383k buffers without a world). Buffer counts
+of the index-only scans include a visibility map page pin per heap block
+change; the times show their real cost.
+
+The new rule returned the same records as the previous subqueries for three
+role shapes over all 414,908 records of the largest Organization, and the
+backfill wrote the same rarity mask and visibility as that comparison used. The
+index measured 95 MB there against 54 MB for the one it replaces. These are
+local measurements, not production latency.
+
+A loot's items and NPCs do not change after acceptance, and snapshots are
+immutable revisions. A data migration that deletes or relinks `LootItem` or
+`LootNpc` rows, or changes the rarity, type or level of a stored snapshot,
+must rewrite the three columns of the affected records in the same migration;
+`refreshOrganizationLootRecordFactsSql` in `test/loot-fixtures.ts` renders the
+statement.
+
+### Rollout
+
+The two migrations ship in separate API revisions, because the runner applies
+all pending migrations in one transaction and the second one refuses to run
+until steps 2-4 are done:
+
+1. Apply `20261118151009_loot_record_list_facts` and deploy the API revision
+   that introduced it. It writes the three columns and reads none. Wait until
+   no older API replica is running.
+2. Fill existing records, newest first, in 50,000-`lootId` windows, each its
+   own transaction. The run can be interrupted and resumes; repeat it until it
+   reports 0, which also covers records an older API replica wrote during the
+   deploy. Do not build the index first: updating an indexed column rewrites
+   every index of the table. On the local copy 1.13M records took 58 s, which
+   puts the 15.8M of production near 14 minutes.
+
+   ```sh
+   cd apps/api
+   bun --conditions=development src/loots/backfill-organization-loot-record-facts.ts
+   ```
+
+3. Prove that no record misses its facts. Run the two statements separately,
+   not in one transaction: the first takes `ACCESS EXCLUSIVE` only for an
+   instant, and the second scans under `SHARE UPDATE EXCLUSIVE`, which lets
+   reads and loot submissions through. In one transaction the scan would run
+   under the first statement's lock.
+
+   ```sql
+   SET lock_timeout = '3s';
+   ALTER TABLE "OrganizationLootRecord" ADD CONSTRAINT "OrganizationLootRecord_listFacts_present" CHECK ("lootRarityMask" IS NOT NULL AND "npcTypeMask" IS NOT NULL AND "npcVisibility" IS NOT NULL) NOT VALID;
+   ALTER TABLE "OrganizationLootRecord" VALIDATE CONSTRAINT "OrganizationLootRecord_listFacts_present";
+   ```
+
+   From the first statement on, a record without its facts is rejected, so an
+   API older than step 1 fails every loot submission. If the validation finds
+   a record, repeat step 2 and validate again.
+
+4. Build the index outside a transaction, then vacuum and analyze. The vacuum
+   matters here: the backfill rewrote every row, and until the visibility map
+   is rebuilt the index-only scan fetches a heap row per record it rejects.
+
+   ```sql
+   CREATE INDEX CONCURRENTLY IF NOT EXISTS "OrganizationLootRecord_guildId_world_lootId_page_active_idx" ON "OrganizationLootRecord" ("guildId","lootWorld","lootId" DESC,"lootRarityMask","npcTypeMask","npcVisibility") WHERE "archivedAt" IS NULL;
+   VACUUM (ANALYZE) "OrganizationLootRecord";
+   ```
+
+5. Apply `20261118151017_loot_record_page_index`, then deploy the API revision
+   that introduced it. With the constraint validated, the migration sets the
+   columns `NOT NULL` without scanning the table, drops the constraint and the
+   old index, and took 8 ms on the local copy. The API then reads the columns;
+   a record without them would be hidden from everyone but the owner, which is
+   why the migration refuses to run before step 3.
+
+The API from step 1 keeps working after step 5. Do not roll back past step 1
+after step 3. The bulk rewrite leaves the same free space as the loot facts
+backfill; see "After a bulk rewrite" above.
