@@ -6,9 +6,12 @@
  * Every strip is 30px tall: a 28px (`h-7`) content row plus the 1px rule on
  * each side. Keep the guild switcher tiles, the world selector trigger, and
  * filter rows on that size so stacked strips line up.
+ *
+ * A strip whose only content rendered nothing (the guild switcher with a
+ * single Lootlog) collapses to one rule instead of two touching ones.
  */
 export const toolbarStripClassName =
-  "ll:border-y ll:border-x-0 ll:border-gray-400/40 ll:bg-black/20";
+  "ll:border-y ll:border-x-0 ll:border-gray-400/40 ll:bg-black/20 ll:empty:border-b-0";
 
 /** Single-row content of a strip: 28px tall, controls stretched to the rules. */
 export const toolbarStripRowClassName =
