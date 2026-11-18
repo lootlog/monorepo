@@ -20,7 +20,8 @@ export const useFillRemainingHeight = (
   const [height, setHeight] = useState<number>();
 
   useLayoutEffect(() => {
-    if (!element) return;
+    // A section marked `data-page-fill` already grows to the bottom edge.
+    if (!element || element.parentElement?.closest("[data-page-fill]")) return;
 
     const viewport = element.closest<HTMLElement>(
       "[data-slot=scroll-area-viewport]",

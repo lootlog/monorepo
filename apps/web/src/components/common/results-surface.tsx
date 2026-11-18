@@ -38,7 +38,8 @@ type ResultsSurfaceProps = {
 /**
  * A page of filtered results, edge to edge in the page scroller marked
  * `data-under-top-bar`: the `FilterBar` stays on top, a table header pins
- * right under it, and the footer stays at the bottom edge.
+ * right under it, and the footer stays at the bottom edge, also when a few
+ * results leave the page short.
  */
 export const ResultsSurface = ({
   search,
@@ -68,7 +69,11 @@ export const ResultsSurface = ({
   });
 
   return (
-    <div ref={surfaceRef} className={cn("flex min-w-0 flex-col", className)}>
+    <div
+      ref={surfaceRef}
+      data-page-fill
+      className={cn("flex min-w-0 flex-col", className)}
+    >
       {(search || filters) && (
         <FilterBar
           ariaLabel={filtersLabel}
@@ -83,7 +88,7 @@ export const ResultsSurface = ({
           {filters}
         </FilterBar>
       )}
-      <TableScroller className="min-w-0">{children}</TableScroller>
+      <TableScroller className="min-w-0 grow">{children}</TableScroller>
       {(selectionBar || footer) && (
         // Overlaps the last row's rule while it sits right after the rows.
         <div
