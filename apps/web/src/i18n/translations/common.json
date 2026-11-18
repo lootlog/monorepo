@@ -43,6 +43,7 @@
   "cooldown": {
     "nextRefreshIn": "Kolejne odświeżenie za {{time}}",
     "started": "Odświeżanie jest chwilowo wstrzymane. Kolejne odświeżenie za {{time}}.",
+    "ended": "Odświeżanie jest znowu dostępne.",
     "rateLimited": "Odświeżano niedawno. Spróbuj ponownie za chwilę."
   },
   "boolean": {
