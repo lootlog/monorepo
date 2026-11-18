@@ -91,6 +91,11 @@ export const REALTIME_SERVER_CLOSE_CODES = {
   tryAgainLater: 1013,
 } as const;
 
+// Sent by a gateway to a connection whose peer sent no frame, not even a pong,
+// for too long. It is not a shedding code: a client that still receives it
+// reconnects at once.
+export const REALTIME_INBOUND_TIMEOUT_CLOSE_CODE = 4009;
+
 // Clients closed by REALTIME_SERVER_CLOSE_CODES reconnect after a uniformly
 // random delay up to this window, so a deploy spreads rejoins and their HTTP
 // resyncs across it instead of hitting the API at once.
