@@ -12,7 +12,7 @@ import {
   getMembersControllerGetGuildMembersQueryKey,
   useMembersControllerRefreshMember,
 } from "@lootlog/client/main";
-import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
+import { usePermissionRefreshInfo } from "@/hooks/utils/use-permission-refresh-info";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshStatusContext } from "@/features/guild/settings/members/contexts/refresh-status-context";
@@ -108,7 +108,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
 
   const canRefresh = Boolean(member.globalUserId);
   const refreshReferenceAt = member.lastDiscordSyncAt;
-  const permissionRefreshInfo = getPermissionRefreshInfo(refreshReferenceAt);
+  const permissionRefreshInfo = usePermissionRefreshInfo(refreshReferenceAt);
 
   const canTriggerRefresh = refreshReferenceAt
     ? permissionRefreshInfo.canTriggerRefresh

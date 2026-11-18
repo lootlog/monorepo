@@ -36,6 +36,8 @@ export class ApiError<TData = unknown> extends Error {
   public readonly cause: unknown;
   public readonly status?: number;
   public readonly data: TData | undefined;
+  /** When the server allows a retry (epoch ms), read from `Retry-After`. */
+  public readonly retryAt?: number;
   public readonly url: string;
   public readonly method: string;
 
@@ -44,6 +46,7 @@ export class ApiError<TData = unknown> extends Error {
     data,
     message,
     method,
+    retryAt,
     status,
     url,
   }: {
@@ -51,12 +54,14 @@ export class ApiError<TData = unknown> extends Error {
     data?: TData;
     message: string;
     method: string;
+    retryAt?: number;
     status?: number;
     url: string;
   }) {
     super(message);
     this.cause = cause;
     this.name = "ApiError";
+    this.retryAt = retryAt;
     this.status = status;
     this.data = data;
     this.url = url;
@@ -321,6 +326,25 @@ const executeRequest = async ({
   }
 };
 
+/** RFC 9110 IMF-fixdate, the HTTP-date form servers must send. */
+const IMF_FIXDATE =
+  /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/;
+
+/**
+ * `Retry-After` carries delay seconds or an HTTP-date. Anything else, or a
+ * deadline a `Date` cannot represent, leaves the retry time unknown.
+ */
+const parseRetryAt = (value: string | null, now: number) => {
+  const trimmed = value?.trim() ?? "";
+
+  let retryAt = Number.NaN;
+
+  if (/^\d+$/.test(trimmed)) retryAt = now + Number(trimmed) * 1000;
+  else if (IMF_FIXDATE.test(trimmed)) retryAt = Date.parse(trimmed);
+
+  return Number.isNaN(new Date(retryAt).getTime()) ? undefined : retryAt;
+};
+
 export const executeApiRequest = async <TData>(
   service: ApiService,
   path: string,
@@ -353,6 +377,7 @@ export const executeApiRequest = async <TData>(
       message:
         getApiMessageFromData(data) || response.statusText || "Request failed",
       method,
+      retryAt: parseRetryAt(response.headers.get("retry-after"), Date.now()),
       status: response.status,
       url: url.toString(),
     });

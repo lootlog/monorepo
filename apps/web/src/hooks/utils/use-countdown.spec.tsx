@@ -25,6 +25,7 @@ describe("useCountdown", () => {
     expect(result.current).toEqual({
       minutes: 65,
       seconds: 30,
+      label: "65:30",
       isExpired: false,
     });
   });
@@ -41,6 +42,7 @@ describe("useCountdown", () => {
     expect(result.current).toEqual({
       minutes: 0,
       seconds: 1,
+      label: "0:01",
       isExpired: false,
     });
 

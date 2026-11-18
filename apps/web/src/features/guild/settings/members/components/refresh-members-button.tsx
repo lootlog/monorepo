@@ -1,3 +1,4 @@
+import { CooldownAnnouncement } from "@/components/common/cooldown-announcement";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useCountdown } from "@/hooks/utils/use-countdown";
 import { useRefreshJob } from "@/hooks/utils/use-refresh-job";
@@ -96,11 +97,14 @@ export const RefreshMembersButton = () => {
   };
 
   return (
-    <RefreshMembersStatus
-      countdown={countdown}
-      displayJob={currentJob}
-      isPending={isPending}
-      onRefresh={handleRefresh}
-    />
+    <>
+      <CooldownAnnouncement countdown={countdown} />
+      <RefreshMembersStatus
+        countdown={countdown}
+        displayJob={currentJob}
+        isPending={isPending}
+        onRefresh={handleRefresh}
+      />
+    </>
   );
 };

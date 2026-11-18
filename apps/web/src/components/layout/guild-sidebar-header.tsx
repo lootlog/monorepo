@@ -1,4 +1,3 @@
-import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import {
   Avatar,
   AvatarFallback,
@@ -11,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
-import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
+import { usePermissionRefreshInfo } from "@/hooks/utils/use-permission-refresh-info";
 import { RefreshCw } from "lucide-react";
 import { useThemeMeta } from "@/themes/use-theme-meta";
 import {
@@ -89,11 +88,9 @@ export const GuildSidebarHeader = ({
 
   const { family } = useThemeMeta();
   const isRukiaTheme = family === "rukia";
-  const currentTimestamp = useMinuteTimestamp();
 
-  const { canTriggerRefresh, canTriggerRefreshText } = getPermissionRefreshInfo(
+  const { canTriggerRefresh, canTriggerRefreshText } = usePermissionRefreshInfo(
     member?.updatedAt,
-    currentTimestamp,
   );
 
   const handleRefreshPermissions = () => {
