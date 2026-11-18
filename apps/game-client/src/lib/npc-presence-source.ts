@@ -11,10 +11,26 @@ import {
 
 type Listener = () => void;
 
+/** A standing NPC: when it was first reported, and on which map when known. */
+export type NpcStanding = { readonly since: number; readonly map?: string };
+
+const sameStanding = (
+  first: NpcStanding | undefined,
+  second: NpcStanding | undefined,
+) => first?.since === second?.since && first?.map === second?.map;
+
+const toStanding = ({
+  since,
+  map,
+}: {
+  since: number;
+  map?: string;
+}): NpcStanding => (map === undefined ? { since } : { since, map });
+
 /** Timer NPCs that members of one Organization see standing in one world. */
 export class NpcPresenceSource {
-  /** Gateway time each standing NPC was first reported, by runtime NPC id. */
-  private readonly standing = new Map<number, number>();
+  /** Each standing NPC, by runtime NPC id. */
+  private readonly standing = new Map<number, NpcStanding>();
   /** Revisions of updates newer than the snapshot, by runtime NPC id. */
   private readonly revisions = new Map<number, number>();
   private readonly npcListeners = new KeyedListeners<number>();
@@ -29,8 +45,8 @@ export class NpcPresenceSource {
     readonly world: string,
   ) {}
 
-  /** When the NPC was first reported standing, or undefined when it is not. */
-  getStandingSince = (npcId: number): number | undefined =>
+  /** When and where the NPC stands, or undefined when it does not. */
+  getStanding = (npcId: number): NpcStanding | undefined =>
     this.standing.get(npcId);
 
   retain = (): (() => void) => {
@@ -84,15 +100,15 @@ export class NpcPresenceSource {
     if (fetchId !== this.fetchId) return;
 
     const next = new Map(
-      snapshot.npcs.map(({ npc, since }) => [npc.id, since]),
+      snapshot.npcs.map((record) => [record.npc.id, toStanding(record)]),
     );
 
     for (const [npcId, revision] of this.revisions) {
       if (revision <= snapshot.revision) continue;
-      const since = this.standing.get(npcId);
+      const standing = this.standing.get(npcId);
 
-      if (since === undefined) next.delete(npcId);
-      else next.set(npcId, since);
+      if (standing === undefined) next.delete(npcId);
+      else next.set(npcId, standing);
     }
 
     this.snapshotRevision = snapshot.revision;
@@ -119,7 +135,7 @@ export class NpcPresenceSource {
       return;
     this.revisions.set(npcId, event.revision);
 
-    if (event.standing) this.standing.set(npcId, event.since);
+    if (event.standing) this.standing.set(npcId, toStanding(event));
     else this.standing.delete(npcId);
     this.notify([npcId]);
   };
@@ -130,14 +146,22 @@ export class NpcPresenceSource {
     this.replace(new Map());
   };
 
-  private replace(next: Map<number, number>): void {
+  private replace(next: Map<number, NpcStanding>): void {
     const changed = [...this.standing.keys(), ...next.keys()].filter(
-      (npcId) => this.standing.get(npcId) !== next.get(npcId),
+      (npcId) => !sameStanding(this.standing.get(npcId), next.get(npcId)),
     );
+
+    // An unchanged NPC keeps its record, so its readers see no new snapshot.
+    for (const npcId of next.keys()) {
+      const current = this.standing.get(npcId);
+
+      if (current && sameStanding(current, next.get(npcId)))
+        next.set(npcId, current);
+    }
 
     this.standing.clear();
 
-    for (const [npcId, since] of next) this.standing.set(npcId, since);
+    for (const [npcId, standing] of next) this.standing.set(npcId, standing);
     this.notify(new Set(changed));
   }
 

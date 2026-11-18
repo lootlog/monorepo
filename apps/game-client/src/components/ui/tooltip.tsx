@@ -110,6 +110,8 @@ type TooltipPositioningProps = Pick<
 > & {
   collisionPadding?: number;
   sideOffset?: number;
+  /** The content grows while open; see `CursorTooltipOffsets.growsWhileOpen`. */
+  growsWhileOpen?: boolean;
 };
 
 type TooltipContentProps = BaseTooltip.Popup.Props & TooltipPositioningProps;
@@ -120,6 +122,7 @@ function TooltipContent({
   collisionBoundary,
   collisionPadding = CURSOR_OFFSETS.padding,
   sideOffset = CURSOR_OFFSETS.sideOffset,
+  growsWhileOpen = false,
   ...props
 }: TooltipContentProps) {
   const followsCursor = React.useContext(TooltipFollowsCursorContext);
@@ -129,6 +132,7 @@ function TooltipContent({
     ...CURSOR_OFFSETS,
     sideOffset,
     padding: collisionPadding,
+    growsWhileOpen,
   };
 
   const registerFollower = (element: HTMLDivElement | null) => {
@@ -146,6 +150,9 @@ function TooltipContent({
         className="ll:z-[500]"
         collisionBoundary={collisionBoundary}
         collisionPadding={collisionPadding}
+        // A followed tooltip is placed only by the cursor follower: Base UI
+        // repositioning it on resize would fight it and flip its side.
+        disableAnchorTracking={followsCursor}
         ref={registerFollower}
         side="bottom"
         sideOffset={sideOffset}

@@ -32,6 +32,25 @@ describe("placeTooltipAtCursor", () => {
     ).toEqual({ left: 26, top: 546, side: "top", align: "start" });
   });
 
+  it("keeps a growing tooltip on one side of the cursor while it unfolds", () => {
+    const growing = { ...offsets, growsWhileOpen: true };
+    const cursor = { x: 400, y: 380 };
+
+    // In the lower half it opens above the cursor although it fits below,
+    // so unfolding to a height that would not fit below does not flip it.
+    const collapsed = placeTooltipAtCursor(cursor, size, viewport, growing);
+
+    const unfolded = placeTooltipAtCursor(
+      cursor,
+      { width: 100, height: 300 },
+      viewport,
+      growing,
+    );
+
+    expect(collapsed).toMatchObject({ side: "top", top: 336 });
+    expect(unfolded).toMatchObject({ side: "top", top: 66 });
+  });
+
   it("keeps the tooltip inside the viewport padding when flipping is not enough", () => {
     const placement = placeTooltipAtCursor(
       { x: 780, y: 10 },

@@ -3112,6 +3112,7 @@ describe("realtime Dragonfly integration", () => {
       world,
       organizationIds: ["organization-1"],
       npcs,
+      map: "Mroczny Przesmyk",
     });
 
     await expect(
@@ -3127,6 +3128,7 @@ describe("realtime Dragonfly integration", () => {
         world: "classic",
         npc: elite,
         standing: true,
+        map: "Mroczny Przesmyk",
       }),
     ]);
     // An NPC above the reader's level range stays hidden, like its timer.
@@ -3136,7 +3138,9 @@ describe("realtime Dragonfly integration", () => {
       Effect.runPromise(
         service.fetch(second.socket, "organization-1", "classic"),
       ),
-    ).resolves.toMatchObject({ npcs: [{ npc: elite }] });
+    ).resolves.toMatchObject({
+      npcs: [{ npc: elite, map: "Mroczny Przesmyk" }],
+    });
     await expect(
       Effect.runPromise(
         service.fetch(lowLevelReader.socket, "organization-1", "classic"),

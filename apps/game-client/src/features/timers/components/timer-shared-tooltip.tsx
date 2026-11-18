@@ -26,7 +26,7 @@ export const TimerSharedTooltip: FC<TimerSharedTooltipProps> = ({
   const occupancy = useTimerMapPresence(timer);
   const threat = useTimerMapThreat(timer);
   const heroSighting = useTimerHeroSighting(timer);
-  const isStanding = useTimerNpcPresence(timer);
+  const standing = useTimerNpcPresence(timer);
   const expanded = useDelayedVisibility(true, TIMER_TOOLTIP_EXPAND_DELAY_MS);
 
   return (
@@ -36,7 +36,7 @@ export const TimerSharedTooltip: FC<TimerSharedTooltipProps> = ({
       occupancy={occupancy}
       threat={threat}
       heroSighting={heroSighting}
-      isStanding={isStanding}
+      standing={standing}
       expanded={expanded}
     />
   );

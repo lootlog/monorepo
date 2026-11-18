@@ -36,7 +36,6 @@ type SingleTimerProps = {
   timer: TimerWithTimeLeft;
   settingsKey: string;
   isHidden?: boolean;
-  showColorStripe?: boolean;
 };
 
 export const SingleTimer: FC<SingleTimerProps> = ({
@@ -47,7 +46,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   timer,
   settingsKey,
   isHidden = false,
-  showColorStripe = true,
 }) => {
   const {
     customColors,
@@ -106,7 +104,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const occupancy = useTimerMapPresence(timer);
   const threat = useTimerMapThreat(timer);
   const heroSighting = useTimerHeroSighting(timer);
-  const isStanding = useTimerNpcPresence(timer);
+  const isStanding = useTimerNpcPresence(timer) !== undefined;
 
   const menuProps: TimerContextMenuContentProps = {
     timer,
@@ -167,7 +165,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             id={timer.npc.id.toString()}
             paint={paint}
             legacyAppearance={displayConfig.legacyAppearance}
-            showColorStripe={showColorStripe}
             displayMode={displayConfig.singleTimerDisplayMode}
             fontSize={displayConfig.fontSize}
             isPending={isPending}
