@@ -2,6 +2,10 @@ import { MemberAvatar } from "@/components/common/member-avatar";
 import { MemberProfileLink } from "@/components/common/member-profile-link";
 import { MemberProfileRoles } from "@/components/common/member-profile-roles";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import {
+  discordProfileWebUrl,
+  openDiscordProfile,
+} from "@/lib/discord-profile";
 import type { MemberReferenceResponseDtoOutput as GuildMemberReference } from "@lootlog/client/main";
 import { Capability } from "@lootlog/domain/access-policy";
 import { discordRoleCssColor } from "@lootlog/domain/member-display-role";
@@ -179,9 +183,21 @@ export const MemberProfileCard = ({
 
       <div className="border-t p-3">
         <a
-          href={`https://discord.com/users/${member.userId}`}
+          href={discordProfileWebUrl(member.userId)}
           target="_blank"
           rel="noreferrer"
+          onClick={(event) => {
+            // A modified click opens the web profile where the user asked.
+            if (
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey
+            )
+              return;
+            event.preventDefault();
+            openDiscordProfile(member.userId);
+          }}
           className={buttonVariants({ size: "sm", className: "w-full" })}
         >
           <ExternalLink aria-hidden className="size-4" />
