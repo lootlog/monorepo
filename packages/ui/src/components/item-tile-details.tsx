@@ -129,7 +129,7 @@ export const ItemTileDetails: FC<ItemTileDetailsProps> = ({
         <span className="h-px flex-1 bg-[color-mix(in_oklab,var(--item-rarity)_45%,transparent)]" />
       </div>
       {bodySections.length > 0 ? (
-        <div className="flex flex-col divide-y divide-border px-3 text-xs leading-5 text-pretty text-foreground/85">
+        <div className="flex flex-col divide-y divide-border px-3 text-xs leading-5 text-foreground/85">
           {bodySections.map(({ index, values }) => (
             <div key={index} className="flex flex-col gap-0.5 py-2">
               {renderStatRows(values, renderStat)}
@@ -138,7 +138,7 @@ export const ItemTileDetails: FC<ItemTileDetailsProps> = ({
         </div>
       ) : null}
       {footerValues.length > 0 || showObtainedBy ? (
-        <div className="flex flex-col gap-0.5 border-t border-border bg-muted/30 px-3 py-2 text-xs leading-5 text-pretty text-muted-foreground">
+        <div className="flex flex-col gap-0.5 border-t border-border bg-muted/30 px-3 py-2 text-xs leading-5 text-muted-foreground">
           {renderStatRows(footerValues, renderStat)}
           {showObtainedBy ? (
             <div>
