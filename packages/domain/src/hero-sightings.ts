@@ -190,6 +190,16 @@ export const isHeroSightingClaimedBy = (
   sighting.claims.some((claim) => claim.member.userId === userId);
 
 /**
+ * Camping is declared for a hero that will spawn. A roaming hero is already
+ * there to fight, so nobody waits for it; claims made before it spawned stay.
+ */
+export const isHeroSightingClaimable = (sighting: {
+  readonly closedAt: string | null;
+  readonly state: string;
+}): boolean =>
+  sighting.closedAt === null && sighting.state === HeroSightingState.SPAWNING;
+
+/**
  * A sighting that places the hero now: open and, for a roaming hero,
  * confirmed recently enough to still be believed.
  */

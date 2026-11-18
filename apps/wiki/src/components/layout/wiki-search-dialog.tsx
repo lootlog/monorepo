@@ -18,7 +18,7 @@ import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { cn } from "cn";
 import { HighlightedText } from "@/components/highlighted-text";
 import { t } from "@/i18n/messages";
-import { npcSummary } from "@/lib/npc-summary";
+import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
 import {
   MIN_SEARCH_QUERY_LENGTH,
   useWikiSearchHits,
@@ -27,6 +27,7 @@ import { itemPageParams, npcPageParams } from "@/lib/catalog-links";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import {
   EMPTY_ITEMS_SEARCH,
+  EMPTY_NPCS_SEARCH,
   WIKI_NAVIGATION,
 } from "@/navigation/wiki-navigation";
 
@@ -269,7 +270,7 @@ export function WikiSearchDialog({
                     <HighlightedText text={npc.name} query={debouncedQuery} />
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {npcSummary(npc)}
+                    <NpcKindLevel npc={npc} />
                   </span>
                 </span>
               </CommandItem>
@@ -281,7 +282,7 @@ export function WikiSearchDialog({
                 go(() =>
                   navigate({
                     to: "/npcs",
-                    search: { query: debouncedQuery, types: "" },
+                    search: { ...EMPTY_NPCS_SEARCH, query: debouncedQuery },
                   }),
                 )
               }

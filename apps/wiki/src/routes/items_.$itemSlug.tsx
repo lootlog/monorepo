@@ -8,6 +8,7 @@ import {
   getCatalogControllerGetItemsQueryOptions,
   useCatalogControllerGetItems,
 } from "@lootlog/client/catalog";
+import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
 import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-colors";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { resolveItemRarity } from "@lootlog/domain/item-rarity";
@@ -16,7 +17,8 @@ import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
 import { ItemDropSources } from "@/components/items/item-drop-sources";
-import { ItemInfobox } from "@/components/items/item-infobox";
+import { ItemEventLinks } from "@/components/items/item-event-links";
+import { ItemPageTooltip } from "@/components/items/item-page-tooltip";
 import { ItemRelatedDrops } from "@/components/items/item-related-drops";
 import { ItemRevisions } from "@/components/items/item-revisions";
 import { ItemElasticLevelSection } from "@/components/items/item-elastic-level-section";
@@ -138,7 +140,7 @@ const searchedUpgrade = ({ upgrade, bonus }: ItemPageSearch): ItemUpgrade =>
   upgrade ? { level: upgrade, bonus } : NO_UPGRADE;
 
 function ItemRoute() {
-  const infoboxSticky = useStickyTop();
+  const tooltipSticky = useStickyTop();
   const { itemSlug } = Route.useParams();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -173,9 +175,9 @@ function ItemRoute() {
       <div className="flex flex-col gap-6 py-6">
         <Skeleton className="h-4 w-64" />
         <Skeleton className="h-12 w-96 max-w-full" />
-        <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_21rem]">
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
           <Skeleton className="h-96 w-full rounded-xl" />
-          <Skeleton className="h-[36rem] w-full rounded-xl max-xl:order-first" />
+          <Skeleton className="h-96 w-full max-w-sm rounded-xl max-lg:order-first" />
         </div>
       </div>
     );
@@ -232,24 +234,35 @@ function ItemRoute() {
       />
 
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className="text-sm">
-            <span className={cn("font-semibold", styles.label)}>
-              {ITEM_TILE_LABELS.rarity[rarity]}
-            </span>
-            {typeLabel ? (
-              <span className="text-muted-foreground"> · {typeLabel}</span>
-            ) : null}
-            {looted.lvl > 0 ? (
-              <span className="text-muted-foreground tabular-nums">
-                {" "}
-                · {t("common.levelShort", { level: looted.lvl })}
+        <div className="flex min-w-0 items-center gap-4">
+          <span className="flex size-16 shrink-0 items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--item-rarity)_45%,var(--border))] bg-[radial-gradient(60%_60%_at_50%_50%,color-mix(in_oklab,var(--item-rarity)_25%,var(--background)),var(--background))] md:size-20">
+            <img
+              src={itemIconUrl(item.icon)}
+              alt=""
+              width={64}
+              height={64}
+              className="size-12 [image-rendering:pixelated] md:size-16"
+            />
+          </span>
+          <div className="flex min-w-0 flex-col gap-1">
+            <p className="text-sm">
+              <span className={cn("font-semibold", styles.label)}>
+                {ITEM_TILE_LABELS.rarity[rarity]}
               </span>
-            ) : null}
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
-            {item.name}
-          </h1>
+              {typeLabel ? (
+                <span className="text-muted-foreground"> · {typeLabel}</span>
+              ) : null}
+              {looted.lvl > 0 ? (
+                <span className="text-muted-foreground tabular-nums">
+                  {" "}
+                  · {t("common.levelShort", { level: looted.lvl })}
+                </span>
+              ) : null}
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
+              {item.name}
+            </h1>
+          </div>
         </div>
         <div
           role="group"
@@ -261,12 +274,14 @@ function ItemRoute() {
         </div>
       </header>
 
-      <div className="grid items-start gap-x-8 gap-y-10 xl:grid-cols-[minmax(0,1fr)_21rem]">
+      <ItemEventLinks stat={item.stat} />
+
+      <div className="grid items-start gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
         <div
-          {...infoboxSticky}
-          className="xl:sticky xl:col-start-2 xl:row-start-1"
+          {...tooltipSticky}
+          className="w-full max-w-sm lg:sticky lg:col-start-2 lg:row-start-1"
         >
-          <ItemInfobox
+          <ItemPageTooltip
             item={looted}
             stat={stat}
             upgradeLevel={upgrade.level}
@@ -274,7 +289,7 @@ function ItemRoute() {
           />
         </div>
 
-        <div className="flex min-w-0 flex-col gap-12 xl:col-start-1 xl:row-start-1">
+        <div className="flex min-w-0 flex-col gap-12 lg:col-start-1 lg:row-start-1">
           <ItemDropSources sources={item.droppedBy} />
           <ItemElasticLevelSection
             item={item}

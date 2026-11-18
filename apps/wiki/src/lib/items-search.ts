@@ -80,7 +80,7 @@ export const EVENT_OPTIONS = ["exclude", "only"] as const;
 
 type EventOption = (typeof EVENT_OPTIONS)[number];
 
-const isEventOption = (value: unknown): value is EventOption =>
+export const isEventOption = (value: unknown): value is EventOption =>
   EVENT_OPTIONS.some((option) => option === value);
 
 export const splitList = (value: string) =>
@@ -137,7 +137,7 @@ export function validateItemsSearch(search: {
  * A level the address bar holds: the router reads `?minLevel=200` as a
  * number, and links written before levels were numbers hold `"200"`.
  */
-const readLevel = (value: string) => {
+export const readLevel = (value: string) => {
   const level = Number.parseInt(value.replaceAll('"', ""), 10);
 
   return Number.isInteger(level) && level > 0 ? level : undefined;

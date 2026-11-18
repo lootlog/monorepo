@@ -1,15 +1,14 @@
 /** Transport schemas owned by the public catalog HTTP module. */
 import * as Schema from "effect/Schema";
+import { BOSS_ORIGINS } from "@lootlog/domain/npc-type";
 import { PROFESSION_SHORTNAMES } from "@lootlog/domain/profession";
 import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { FiniteNumber, SafeInteger } from "@lootlog/schema/http-scalars";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 
-// When Lootlog first saw an item or a boss tells when that boss was killed,
-// and so when it respawns; the public catalog never serves or orders by it.
 // Margonem numbers items in the order it adds them, so `id:desc` lists the
-// game's newest items without dating anyone's drop.
+// game's newest items.
 const CatalogItemSort = Schema.Literals([
   "relevance",
   "id:desc",
@@ -284,6 +283,10 @@ const CatalogNpcDto_Output = Schema.Struct({
     description:
       "Levels the NPC had before the game changed it, oldest first. Lootlog recomputes them daily from recorded fights and leaves out NPCs whose level follows the player's.",
   }),
+  firstSeenOn: Schema.NullOr(Schema.String).annotate({
+    description:
+      "The day (`YYYY-MM-DD`, UTC) a loot of the NPC first reached Lootlog, under any of its catalog identities. Margonem adds an NPC to every world at once, so it dates the NPC's arrival in the game for NPCs added since Lootlog records them; `null` for an NPC without a recorded first sighting.",
+  }),
 }).annotate({
   description: "A Margonem NPC in the public catalog",
   identifier: "CatalogNpcDto_Output",
@@ -298,6 +301,17 @@ export const CatalogNpcsResponseDto_Output = Schema.Struct({
 }).annotate({
   description: "Public catalog NPCs",
   identifier: "CatalogNpcsResponseDto_Output",
+});
+
+const CatalogNpcSort = Schema.Literals([
+  "lvl:desc",
+  "lvl:asc",
+  "name:asc",
+  "name:desc",
+  "firstSeenOn:desc",
+]).annotate({
+  description:
+    "The order of the NPCs, `lvl:desc` by default; NPCs of one level follow by name. `firstSeenOn:desc` lists first the NPCs Lootlog saw for the first time most recently; NPCs without a first sighting follow. A `search` still ranks by how well a name matches before it.",
 });
 
 export type CatalogControllerGetNpcsQuery =
@@ -318,6 +332,33 @@ export const CatalogControllerGetNpcsQuery = Schema.Struct({
     }),
   ),
   types: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
+  bossOrigins: Schema.optionalKey(
+    Schema.Array(Schema.Literals(BOSS_ORIGINS)).annotate({
+      description:
+        "Titans and colossi of any of these origins only: `REGULAR` for the bosses of the regular game, `HERO_TRACKERS` for the heroes fought as colossi in their hideouts during Tropiciele Herosów, `EVENT` for the bosses of every other event. NPCs of other types are not narrowed.",
+    }),
+  ),
+  minLevel: Schema.optionalKey(
+    FiniteNumber.annotate({
+      description:
+        "NPCs of at least this level; an NPC whose level follows the player's has none and is left out.",
+    }),
+  ),
+  maxLevel: Schema.optionalKey(
+    FiniteNumber.annotate({
+      description:
+        "NPCs of at most this level; an NPC whose level follows the player's has none and is left out.",
+    }),
+  ),
+  firstSeenMonth: Schema.optionalKey(
+    Schema.String.check(
+      Schema.isPattern(/^\d{4}-(?:0[1-9]|1[0-2])$/u),
+    ).annotate({
+      description:
+        "NPCs Lootlog saw for the first time in this month (`YYYY-MM`, UTC), as `CatalogNpcDto_Output.firstSeenOn`.",
+    }),
+  ),
+  sort: Schema.optionalKey(CatalogNpcSort),
   limit: Schema.optionalKey(FiniteNumber.annotate({ default: 24 })),
   offset: Schema.optionalKey(FiniteNumber.annotate({ default: 0 })),
 });

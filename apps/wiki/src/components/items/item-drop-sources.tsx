@@ -9,7 +9,7 @@ import { ItemDropRate } from "@/components/catalog/item-drop-rate";
 import { NpcPortrait } from "@/components/common/npc-portrait";
 import { t } from "@/i18n/messages";
 import { npcPageParams } from "@/lib/catalog-links";
-import { npcSummary } from "@/lib/npc-summary";
+import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
 
 /**
  * The monsters the item drops from, each a link with its sprite, kind and
@@ -53,7 +53,7 @@ export function ItemDropSources({
                       {npc.name}
                     </Link>
                     <span className="truncate text-xs text-muted-foreground">
-                      {npcSummary(npc)}
+                      <NpcKindLevel npc={npc} />
                     </span>
                     {npc.retired ? (
                       <span className="text-xs text-muted-foreground">

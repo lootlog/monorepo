@@ -66,11 +66,6 @@
     "pasteHint": "Możesz wkleić całą wiadomość wykrywacza z czatu.",
     "lvlLabel": "Poziom",
     "lvlPlaceholder": "np. 258",
-    "stateLabel": "Stan",
-    "state": {
-      "ROAMING": "Grasuje",
-      "SPAWNING": "Pojawi się"
-    },
     "mapLabel": "Mapa",
     "mapPlaceholder": "np. Oztotl Tzacua p.2 - sala 2",
     "targets": "Trafi do: {{names}}",

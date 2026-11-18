@@ -7,7 +7,7 @@ import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { NpcPortrait } from "@/components/common/npc-portrait";
 import { ItemsByRarity } from "@/components/catalog/items-by-rarity";
 import { t } from "@/i18n/messages";
-import { npcSummary } from "@/lib/npc-summary";
+import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
 import { npcPageParams } from "@/lib/catalog-links";
 
 type EventMonsterItemsProps = {
@@ -37,7 +37,7 @@ export function EventMonsterItems({ monster, items }: EventMonsterItemsProps) {
           </h2>
           {monster ? (
             <p className="truncate text-xs text-muted-foreground">
-              {npcSummary(monster)}
+              <NpcKindLevel npc={monster} />
             </p>
           ) : null}
         </div>

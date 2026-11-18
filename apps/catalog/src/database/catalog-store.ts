@@ -8,7 +8,13 @@ import type { SqlError } from "effect/sql/SqlError";
 import { Effect } from "effect";
 import { chunk } from "es-toolkit";
 import type { Meilisearch } from "meilisearch";
-import { ITEMS_INDEX, NPCS_INDEX } from "#src/projection/catalog-indexes";
+import {
+  catalogIndexes,
+  earliestSeenByMonster,
+  ITEMS_INDEX,
+  type MonsterFirstSeen,
+  NPCS_INDEX,
+} from "#src/projection/catalog-indexes";
 import type { CatalogDatabaseValue } from "./database.js";
 import { catalogItemTable, catalogNpcTable } from "./schema.js";
 
@@ -125,10 +131,14 @@ export const makeCatalogStore = <
   database: CatalogDatabaseValue,
   meilisearch: Meilisearch,
 ) => {
-  const project = (indexName: string, entries: ReadonlyArray<object>) =>
+  const project = (
+    indexName: keyof typeof catalogIndexes,
+    entries: ReadonlyArray<object>,
+    monsterFirstSeen: MonsterFirstSeen = new Map(),
+  ) =>
     projectDocuments(
       meilisearch.index(indexName),
-      entries,
+      catalogIndexes[indexName].toDocuments(entries, monsterFirstSeen),
       `catalog.${indexName}.project`,
     );
 
@@ -284,7 +294,18 @@ export const makeCatalogStore = <
     saveNpcs: (npcs) =>
       Effect.gen(function* () {
         yield* storeNpcs(transaction, npcs);
-        yield* project(NPCS_INDEX, npcs);
+
+        // Every identity of a monster shows when the monster was first seen,
+        // so a save projects all of them, as they are after it.
+        const identities = yield* npcLookups(transaction).npcsByMonsterKeys([
+          ...new Set(npcs.map(({ monsterKey }) => monsterKey)),
+        ]);
+
+        yield* project(
+          NPCS_INDEX,
+          identities,
+          earliestSeenByMonster(identities),
+        );
       }),
     saveNpcLoots: (npcs) => storeNpcs(transaction, npcs),
   });
