@@ -14,7 +14,6 @@ interface KillMapsTimelineSectionProps {
   killId: string;
   minSpawnTimeAtKill: string;
   killedAt: string;
-  memberRoleColors: ReadonlyMap<number, string>;
   t: TFunction;
 }
 
@@ -24,7 +23,6 @@ export const KillMapsTimelineSection = ({
   killId,
   minSpawnTimeAtKill,
   killedAt,
-  memberRoleColors,
   t,
 }: KillMapsTimelineSectionProps) => {
   const { guildId } = useParams({ strict: false });
@@ -120,7 +118,6 @@ export const KillMapsTimelineSection = ({
           maps={sortedMaps}
           startTime={startTime}
           endTime={endTime}
-          memberRoleColors={memberRoleColors}
           t={t}
         />
       </div>

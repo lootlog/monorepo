@@ -6737,6 +6737,8 @@ export interface ReservationSharesResponseDto {
 }
 
 export type ReservationResponseDtoAuthor = {
+  /** @nullable */
+  userId: string | null;
   displayName: string;
   /** @nullable */
   avatarUrl: string | null;
@@ -6845,6 +6847,8 @@ export interface UpdateReservationDto {
 }
 
 export type MyReservationsResponseDtoItemsItemAuthor = {
+  /** @nullable */
+  userId: string | null;
   displayName: string;
   /** @nullable */
   avatarUrl: string | null;
@@ -6954,6 +6958,8 @@ export interface CreateReservationDto {
 }
 
 export type ReservationWindowResponseDtoItemsItemAuthor = {
+  /** @nullable */
+  userId: string | null;
   displayName: string;
   /** @nullable */
   avatarUrl: string | null;
@@ -7047,6 +7053,8 @@ export interface ReservationWindowResponseDto {
 }
 
 export type ReservationSpotsResponseDtoItemCurrentReservationAuthor = {
+  /** @nullable */
+  userId: string | null;
   displayName: string;
   /** @nullable */
   avatarUrl: string | null;
@@ -7131,6 +7139,8 @@ export type ReservationSpotsResponseDtoItemCurrentReservation = {[key: string]: 
 } | null) | null;
 
 export type ReservationSpotsResponseDtoItemNextReservationAuthor = {
+  /** @nullable */
+  userId: string | null;
   displayName: string;
   /** @nullable */
   avatarUrl: string | null;
@@ -10201,14 +10211,37 @@ export interface MemberSummaryResponseDtoOutput {
   color?: number | null;
 }
 
+export type MemberReferenceResponseDtoOutputRolesItem = {
+  id: string;
+  name: string;
+  /** @nullable */
+  color: number | null;
+};
+
 export interface MemberReferenceResponseDtoOutput {
   id: number;
   userId: string;
+  /** @nullable */
+  globalUserId: string | null;
   name: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  username: string | null;
   /** @nullable */
   avatar?: string | null;
   /** @nullable */
+  globalAvatar: string | null;
+  /** @nullable */
+  bannerUrl: string | null;
+  /** @nullable */
   color: number | null;
+  roles: MemberReferenceResponseDtoOutputRolesItem[];
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  joinedAt: string | null;
   active: boolean;
 }
 

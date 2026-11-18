@@ -1,5 +1,5 @@
 import { Link, type LinkProps } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
   LIST_TILE_INSET_CLASS,
@@ -36,8 +36,10 @@ export const StatsLeaderboardRow = ({
   isViewer = false,
   pinned = false,
 }: StatsLeaderboardRowProps) => {
+  const contentId = useId();
+
   const content = (
-    <span className="flex min-w-0 flex-1 items-center gap-3">
+    <span id={contentId} className="flex min-w-0 flex-1 items-center gap-3">
       <RankBadge rank={rank} />
       {media}
       <span className="flex min-w-0 flex-1 flex-col">
@@ -71,17 +73,25 @@ export const StatsLeaderboardRow = ({
       )}
     >
       {link ? (
-        <Link
-          {...link}
+        // The link lies under the content, so a member in `media` or `title`
+        // opens their profile while the rest of the row navigates.
+        <div
           className={cn(
             className,
-            "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+            "relative",
             LIST_TILE_HOVER_CLASS,
             isViewer && VIEWER_ROW_CLASS,
           )}
         >
-          {content}
-        </Link>
+          <Link
+            {...link}
+            aria-labelledby={contentId}
+            className="absolute inset-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+          />
+          <span className="pointer-events-none relative flex min-w-0 flex-1">
+            {content}
+          </span>
+        </div>
       ) : (
         <div className={cn(className, isViewer && VIEWER_ROW_CLASS)}>
           {content}

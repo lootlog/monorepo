@@ -22,7 +22,7 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { ReservationOrganizationBadge } from "@/components/reservation-organization-badge";
 import { useReservationOrganizationIcon } from "@/features/user/reservations/use-reservation-organization-icon";
 import { getReservationErrorMessage } from "../get-reservation-error-message";
@@ -94,18 +94,33 @@ export function ReservationDetails({
     spot: displayedReservation.spotName,
   });
 
+  const { author } = displayedReservation;
+  const authorMember = author.userId ? { userId: author.userId } : undefined;
+
+  const authorFallback = {
+    name: author.displayName,
+    avatarUrl: author.avatarUrl,
+  };
+
   const content = (
     <div className="space-y-4">
       <div className="flex min-w-0 items-center gap-3">
-        <MemberAvatar
-          avatarUrl={displayedReservation.author.avatarUrl ?? null}
-          name={displayedReservation.author.displayName}
-          className="size-10 border border-border"
+        <MemberIdentity
+          member={authorMember}
+          fallback={authorFallback}
+          display="avatar"
+          className="shrink-0"
+          avatarClassName="size-10 border border-border"
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">
-            {displayedReservation.author.displayName}
-          </p>
+          <div className="flex min-w-0">
+            <MemberIdentity
+              member={authorMember}
+              fallback={authorFallback}
+              display="name"
+              nameClassName="font-semibold"
+            />
+          </div>
           <ReservationOrganizationBadge
             name={displayedReservation.sourceOrganization.name}
             iconUrl={organizationIconUrl}

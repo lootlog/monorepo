@@ -5,7 +5,6 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
-import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import type { EventRanking } from "../../types/api";
 import { formatPoints } from "../../utils/format-points";
 import { getRankingLeaders } from "./event-ranking-selection";
@@ -33,14 +32,6 @@ export const EventRankingLeaderboard = ({
   pinViewer = false,
 }: EventRankingLeaderboardProps) => {
   const { t } = useTranslation();
-  const membersMap = useGuildMemberMap(guildId);
-
-  const inactiveMemberIds = new Set(
-    [...membersMap.values()].flatMap((member) =>
-      member.active ? [] : [member.id],
-    ),
-  );
-
   const { leaders, own } = getRankingLeaders(rankings, limit, currentMemberId);
 
   const renderRow = ({
@@ -56,7 +47,10 @@ export const EventRankingLeaderboard = ({
       title={
         <RankingMemberName
           ranking={ranking}
-          inactive={inactiveMemberIds.has(ranking.memberId)}
+          guildId={guildId}
+          eventId={eventId}
+          className="flex"
+          nameClassName="font-semibold leading-tight"
         />
       }
       subtitle={[

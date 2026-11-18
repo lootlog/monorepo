@@ -15,7 +15,7 @@ const reservation = {
   endsAt: "2026-09-04T13:00:00Z",
   comment: null,
   createdAt: "2026-09-04T11:00:00Z",
-  author: { displayName: "Player", avatarUrl: null },
+  author: { userId: "user-1", displayName: "Player", avatarUrl: null },
   sourceOrganization: {
     name: "Organization",
     iconUrl: null,

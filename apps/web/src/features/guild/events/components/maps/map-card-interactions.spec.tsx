@@ -9,11 +9,14 @@ import {
   screen,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
 import type { EventMap } from "../../types/api";
 import { MapCard } from "./map-card";
 import { STATUS_STYLES } from "./map-status";
 
 await initializeTestTranslations();
+
+const wrapper = await createMemberDirectoryTestWrapper();
 
 const createMap = (assignedToCurrentMember: boolean): EventMap => ({
   id: "map-1",
@@ -62,6 +65,7 @@ const renderMapCard = ({
       onSelfUnassignClick={onSelfUnassignClick}
       windowStatus="OPEN"
     />,
+    { wrapper },
   );
 
   return { map, onSelfAssignClick, onSelfUnassignClick };

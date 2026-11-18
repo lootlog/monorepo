@@ -23,8 +23,6 @@ type EventRankingTilesProps = {
   eventId: string;
   canEdit: boolean;
   currentMemberId?: number;
-  /** Members who have left the Lootlog. */
-  inactiveMemberIds: ReadonlySet<number>;
   onEditPoints: (rankingId: string) => void;
   isEditPending: boolean;
 };
@@ -36,7 +34,6 @@ export const EventRankingTiles = ({
   eventId,
   canEdit,
   currentMemberId,
-  inactiveMemberIds,
   onEditPoints,
   isEditPending,
 }: EventRankingTilesProps) => {
@@ -61,30 +58,46 @@ export const EventRankingTiles = ({
               isCurrentMember && VIEWER_ROW_CLASS,
             )}
           >
-            <Link
-              to="/$guildId/events/$eventId/members/$memberId"
-              params={{ guildId, eventId, memberId: String(ranking.memberId) }}
-              aria-label={t("events.ranking.openMemberStats", {
-                memberName: getRankingMemberName(ranking, t),
-              })}
-              className={getListTileLinkClassName(true)}
-            >
-              <RankBadge rank={index + 1} />
-              <span className="min-w-0 flex-1">
-                <RankingMemberName
-                  ranking={ranking}
-                  inactive={inactiveMemberIds.has(ranking.memberId)}
-                  className="text-sm"
-                />
-                <span className="block truncate text-xs text-muted-foreground tabular-nums">
-                  {t("events.ranking.kills")} {ranking.totalKills} ·{" "}
-                  {t("events.ranking.time")}{" "}
-                  {formatDuration(ranking.totalTimeSeconds, "human")}
-                  {afkPercentage > 0 &&
-                    ` · ${t("events.kills.afkTime")} ${afkPercentage}%`}
+            {/* The tile opens the member's kills; their name opens their profile. */}
+            <div className="relative flex min-w-0 flex-1 self-stretch">
+              <Link
+                to="/$guildId/events/$eventId/members/$memberId"
+                params={{
+                  guildId,
+                  eventId,
+                  memberId: String(ranking.memberId),
+                }}
+                aria-label={t("events.ranking.openMemberStats", {
+                  memberName: getRankingMemberName(ranking, t),
+                })}
+                className="absolute inset-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+              />
+              <div
+                className={cn(
+                  getListTileLinkClassName(true),
+                  "pointer-events-none relative",
+                )}
+              >
+                <RankBadge rank={index + 1} />
+                <span className="min-w-0 flex-1">
+                  <span className="pointer-events-auto flex w-fit max-w-full min-w-0">
+                    <RankingMemberName
+                      ranking={ranking}
+                      guildId={guildId}
+                      eventId={eventId}
+                      nameClassName="text-sm font-semibold"
+                    />
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground tabular-nums">
+                    {t("events.ranking.kills")} {ranking.totalKills} ·{" "}
+                    {t("events.ranking.time")}{" "}
+                    {formatDuration(ranking.totalTimeSeconds, "human")}
+                    {afkPercentage > 0 &&
+                      ` · ${t("events.kills.afkTime")} ${afkPercentage}%`}
+                  </span>
                 </span>
-              </span>
-            </Link>
+              </div>
+            </div>
             <div data-ranking-actions className={LIST_TILE_ACTIONS_CLASS}>
               <EventRankingPoints ranking={ranking} canViewHistory={canEdit} />
               <EventRankingActions

@@ -7,7 +7,7 @@ import { MapPin } from "lucide-react";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { RelativeTime } from "@/components/common/relative-time";
 import { HeroSightingClaimButton } from "./hero-sighting-claim-button";
 import { HeroSightingClaims } from "./hero-sighting-claims";
@@ -53,6 +53,13 @@ export const HeroSightingRow = ({
   const lastSeenByOther =
     sighting.lastSeenBy.memberId !== sighting.detectedBy.memberId;
 
+  const detector = { memberId: sighting.detectedBy.memberId };
+
+  const detectorFallback = {
+    name: sighting.detectedBy.displayName,
+    avatarUrl: sighting.detectedBy.avatarUrl,
+  };
+
   return (
     <article
       aria-labelledby={titleId}
@@ -97,30 +104,47 @@ export const HeroSightingRow = ({
           <span className="min-w-0 break-words">{sighting.mapName}</span>
         </p>
         <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-          <MemberAvatar
-            avatarUrl={sighting.detectedBy.avatarUrl}
-            name={sighting.detectedBy.displayName}
-            imageSize={32}
-            className="size-4 text-2xs"
+          <MemberIdentity
+            member={detector}
+            fallback={detectorFallback}
+            display="avatar"
+            className="shrink-0"
+            avatarClassName="size-4"
           />
-          <span className="min-w-0 truncate">
-            {t(
-              sighting.manual
-                ? "heroSightings.addedByHandShort"
-                : "heroSightings.detectedByShort",
-            )}{" "}
-            <span className={DETECTOR_NAME_CLASS}>
-              {sighting.detectedBy.displayName}
+          {/* A row of pieces, so a long name shortens without hiding the rest. */}
+          <span className="flex min-w-0 items-center whitespace-pre">
+            <span className="shrink-0">
+              {t(
+                sighting.manual
+                  ? "heroSightings.addedByHandShort"
+                  : "heroSightings.detectedByShort",
+              )}{" "}
             </span>
+            <MemberIdentity
+              member={detector}
+              fallback={detectorFallback}
+              display="name"
+              nameClassName={cn("text-xs", DETECTOR_NAME_CLASS)}
+            />
             {sighting.detectorCharacter && (
-              <> ({sighting.detectorCharacter.name})</>
+              <span className="min-w-0 truncate">
+                {` (${sighting.detectorCharacter.name})`}
+              </span>
             )}
             {lastSeenByOther && (
               <>
-                {" · "}
-                {t("heroSightings.lastSeenByShort", {
-                  name: sighting.lastSeenBy.displayName,
-                })}
+                <span className="shrink-0">
+                  {` · ${t("heroSightings.lastSeenByShort")} `}
+                </span>
+                <MemberIdentity
+                  member={{ memberId: sighting.lastSeenBy.memberId }}
+                  fallback={{
+                    name: sighting.lastSeenBy.displayName,
+                    avatarUrl: sighting.lastSeenBy.avatarUrl,
+                  }}
+                  display="name"
+                  nameClassName="text-xs font-normal"
+                />
               </>
             )}
           </span>

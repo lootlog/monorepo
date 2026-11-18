@@ -20,7 +20,8 @@ import {
 } from "@lootlog/domain/npc-type";
 import { StatsCountCell } from "@/components/common/stats-count-cell";
 import { StatsDetailMeta } from "./components/stats-detail-meta";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import { StatsNpcCell } from "@/components/common/stats-npc-cell";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
@@ -161,11 +162,13 @@ export const MemberStatsPage = () => {
       name={member.name}
       nameStyle={{ color: memberColor }}
       media={
-        <MemberAvatar
-          userId={member.userId}
-          avatar={member.avatar}
-          name={member.name}
-          className="size-5"
+        <MemberIdentity
+          member={{ memberId: member.id }}
+          fallback={{
+            name: member.name,
+            avatarUrl: getDiscordAvatarUrl(member.userId, member.avatar, 64),
+          }}
+          display="avatar"
         />
       }
       meta={

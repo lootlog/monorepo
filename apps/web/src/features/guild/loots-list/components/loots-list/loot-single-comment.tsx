@@ -1,7 +1,7 @@
 import type { LootComment } from "@/lib/loots/loot-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
-import { MemberAvatar } from "@/components/common/member-avatar";
-import { getMemberColor } from "@/utils/get-member-color";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import type { FC } from "react";
 
 export type LootSingleCommentProps = {
@@ -10,21 +10,34 @@ export type LootSingleCommentProps = {
 
 export const LootSingleComment: FC<LootSingleCommentProps> = ({ comment }) => {
   const relativeTime = getRelativeTime(comment.createdAt);
-  const color = getMemberColor(comment.member);
+  const member = { memberId: comment.member.id };
 
   return (
     <li className="flex flex-row gap-3 border-b border-border/50 bg-card/10 px-3 py-2.5 text-sm transition-colors hover:bg-card/30 sm:px-4">
-      <MemberAvatar
-        userId={comment.member.userId}
-        avatar={comment.member.avatar}
-        name={comment.member.name}
-        className="size-7"
+      {/* The name beside it opens the profile; one target per member. */}
+      <MemberIdentity
+        member={member}
+        fallback={{
+          name: comment.member.name,
+          avatarUrl: getDiscordAvatarUrl(
+            comment.member.userId,
+            comment.member.avatar,
+            64,
+          ),
+        }}
+        display="avatar"
+        interactive={false}
+        className="self-start"
+        avatarClassName="size-7"
       />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="font-semibold" style={{ color }}>
-            {comment.member.name}
-          </span>
+          <MemberIdentity
+            member={member}
+            fallback={{ name: comment.member.name }}
+            display="name"
+            nameClassName="font-semibold"
+          />
           <div className="text-xs text-muted-foreground">{relativeTime}</div>
         </div>
         <div className="mt-0.5 break-words text-foreground">

@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { getOffsetPagination } from "./utils/offset-pagination";
 
 import { useKillsControllerGetNpcKillers } from "@lootlog/client/main";
-import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import {
   buildNpcKillersParams,
@@ -45,8 +44,6 @@ export function useNpcKillersPage() {
     },
   );
 
-  const membersMap = useGuildMemberMap(guildId);
-
   const killers = data?.killers ?? [];
   const isCapped = killers.length >= NPC_KILLERS_LIMIT;
 
@@ -81,7 +78,6 @@ export function useNpcKillersPage() {
     paginatedKillers,
     cursor,
     guildId,
-    membersMap,
     total,
     isCapped,
     hasPrev,

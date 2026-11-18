@@ -4,7 +4,7 @@ import type {
 } from "@lootlog/client/main";
 import { formatLevel } from "@lootlog/domain/profession";
 import { cn } from "cn";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
 import {
   DETECTOR_AVATAR_CLASS,
   DETECTOR_NAME_CLASS,
@@ -24,29 +24,35 @@ export const HeroSightingMember = ({
   character,
   highlighted = false,
   className,
-}: HeroSightingMemberProps) => (
-  <span className={cn("flex min-w-0 items-center gap-2", className)}>
-    <MemberAvatar
-      avatarUrl={member.avatarUrl}
-      name={member.displayName}
-      className={cn("size-7", highlighted && DETECTOR_AVATAR_CLASS)}
-    />
-    <span className="flex min-w-0 flex-col leading-tight">
-      <span
-        className={cn(
-          "truncate text-sm",
-          highlighted ? DETECTOR_NAME_CLASS : "font-medium",
+}: HeroSightingMemberProps) => {
+  const memberKey = { memberId: member.memberId };
+  const fallback = { name: member.displayName, avatarUrl: member.avatarUrl };
+
+  return (
+    <span className={cn("flex min-w-0 items-center gap-2", className)}>
+      <MemberIdentity
+        member={memberKey}
+        fallback={fallback}
+        display="avatar"
+        className="shrink-0"
+        avatarClassName={cn("size-7", highlighted && DETECTOR_AVATAR_CLASS)}
+      />
+      <span className="flex min-w-0 flex-col leading-tight">
+        <MemberIdentity
+          member={memberKey}
+          fallback={fallback}
+          display="name"
+          className="self-start"
+          nameClassName={highlighted ? DETECTOR_NAME_CLASS : undefined}
+        />
+        {character && (
+          <span className="truncate text-xs text-muted-foreground">
+            {character.lvl === null
+              ? character.name
+              : `${character.name} (${formatLevel(character.lvl, character.prof)})`}
+          </span>
         )}
-      >
-        {member.displayName}
       </span>
-      {character && (
-        <span className="truncate text-xs text-muted-foreground">
-          {character.lvl === null
-            ? character.name
-            : `${character.name} (${formatLevel(character.lvl, character.prof)})`}
-        </span>
-      )}
     </span>
-  </span>
-);
+  );
+};

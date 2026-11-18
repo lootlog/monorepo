@@ -11,6 +11,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { MetaItem } from "@/components/common/meta-item";
 import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import type { ViewMode } from "@/hooks/use-view-mode";
@@ -96,9 +97,21 @@ export function ReservationCard({
         />
         <span className="shrink-0 font-medium">{statusTitle}</span>
         {currentReservation && (
-          <span className="min-w-0 truncate text-muted-foreground">
-            {currentReservation.author.displayName}
-          </span>
+          <MemberIdentity
+            member={
+              currentReservation.author.userId
+                ? { userId: currentReservation.author.userId }
+                : undefined
+            }
+            fallback={{
+              name: currentReservation.author.displayName,
+              avatarUrl: currentReservation.author.avatarUrl,
+            }}
+            display="name"
+            // Above the schedule link, which covers the whole tile.
+            className="relative z-[2]"
+            nameClassName="leading-tight font-normal text-muted-foreground"
+          />
         )}
       </p>
       {nextReservation && (
@@ -107,11 +120,27 @@ export function ReservationCard({
           label={t("reservations.card.next")}
           className="min-w-0 pl-0.5"
         >
-          <span className="min-w-0 truncate">
-            {nextReservation.author.displayName} ·{" "}
-            {format(new Date(nextReservation.startsAt), "EEE, d MMM, HH:mm", {
-              locale: pl,
-            })}
+          <span className="flex min-w-0 items-center whitespace-pre">
+            <MemberIdentity
+              member={
+                nextReservation.author.userId
+                  ? { userId: nextReservation.author.userId }
+                  : undefined
+              }
+              fallback={{
+                name: nextReservation.author.displayName,
+                avatarUrl: nextReservation.author.avatarUrl,
+              }}
+              display="name"
+              className="relative z-[2]"
+              nameClassName="text-xs leading-tight font-normal"
+            />
+            <span className="shrink-0">
+              {" · "}
+              {format(new Date(nextReservation.startsAt), "EEE, d MMM, HH:mm", {
+                locale: pl,
+              })}
+            </span>
           </span>
         </MetaItem>
       )}

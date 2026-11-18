@@ -3,6 +3,22 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-18 — Member profiles
+
+- A Member's `avatar` is the hash of the user's own avatar or, for a member
+  who set a per-server avatar, the absolute address of that image. Until now
+  it carried the per-server hash, which `/avatars/{userId}/{avatar}` cannot
+  resolve. Use a value that starts with `https://` as the address and build
+  the address from the hash otherwise. This applies wherever a Member is
+  returned, including `PublicMember` in the game client.
+- `GET /guilds/{guildId}/members/references` adds `globalUserId`,
+  `displayName`, `username`, `globalAvatar` (the hash of the user's own
+  avatar), `bannerUrl`, `roles` (`id`, `name`, `color`, highest first) and
+  `joinedAt`. `username` and `joinedAt` are `null` until the member's next
+  Discord sync.
+- A reservation's `author` adds `userId`: the author's internal User id, or
+  `null` for a reservation shared from another Organization.
+
 ## 2026-11-18 — NPC catalog levels, order, boss origins and first sightings
 
 - `GET /catalog/npcs` accepts `minLevel` and `maxLevel`. An NPC whose level

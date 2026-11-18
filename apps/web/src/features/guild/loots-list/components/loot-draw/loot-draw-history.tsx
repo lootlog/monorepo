@@ -1,5 +1,6 @@
 import type { LootDrawResponseDto } from "@lootlog/client/main";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 /** Voided results of one item, newest first, with who voided them and why. */
@@ -27,11 +28,23 @@ export const LootDrawHistory = ({
             </p>
             {draw.voided && (
               <p className="mt-0.5 break-words text-xs text-muted-foreground">
-                {t("loots.details.draw.voidedBy", {
-                  name: draw.voided.by.name,
-                  date: timestampToDate(draw.voided.at),
-                  reason: draw.voided.reason,
-                })}
+                <Trans
+                  i18nKey="loots.details.draw.voidedBy"
+                  values={{ date: timestampToDate(draw.voided.at) }}
+                  components={{
+                    // Written by a member, so it stays out of the markup the
+                    // sentence is parsed for.
+                    reason: <span>{draw.voided.reason}</span>,
+                    member: (
+                      <MemberIdentity
+                        member={{ memberId: draw.voided.by.id }}
+                        fallback={{ name: draw.voided.by.name }}
+                        display="name"
+                        nameClassName="text-xs font-normal"
+                      />
+                    ),
+                  }}
+                />
               </p>
             )}
           </li>
