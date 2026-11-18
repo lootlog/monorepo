@@ -14,6 +14,7 @@ import { TimerTileView } from "@/features/timers/components/timer-tile-view";
 import { TimerTooltip } from "@/features/timers/components/timer-tooltip";
 import type { MapThreat, MapThreatEnemy } from "@/lib/map-threat-source";
 import type { MapOccupancy } from "@/lib/presence-map-index";
+import { PreviewTimerTooltip } from "./preview-timer-tooltip";
 
 const PROFESSIONS = ["w", "m", "p", "b", "h", "t"];
 
@@ -208,8 +209,8 @@ function PreviewTile({
           />
         </span>
       </TooltipTrigger>
-      <TooltipContent className="ll:w-64 ll:max-w-64">
-        <TimerTooltip
+      <TooltipContent className="ll:w-64 ll:max-w-64" growsWhileOpen>
+        <PreviewTimerTooltip
           timer={timer}
           guildNamesById={{ "guild-1": "Lootlog" }}
           occupancy={occupancy}

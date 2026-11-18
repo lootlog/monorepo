@@ -64,7 +64,8 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   const hiddenMembersCount = Math.max(membersWithGuilds.length - 1, 0);
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-1.5 ll:py-0.5">
+    // Balanced wrapping suits a short tip; here it halves long lines early.
+    <div className="ll:flex ll:flex-col ll:gap-1.5 ll:py-0.5 ll:text-wrap">
       <div className="ll:flex ll:flex-col ll:gap-0.5">
         <div className="ll:text-sm ll:font-semibold ll:leading-4">
           {timer.npc.name}
