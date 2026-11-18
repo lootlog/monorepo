@@ -1,12 +1,15 @@
 import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
+import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventTable,
@@ -27,11 +30,6 @@ export interface EventDeletionQueue {
   readonly pending: () => Promise<ReadonlyArray<EventDeletionJob>>;
   readonly delayed: () => Promise<ReadonlyArray<EventDeletionJob>>;
 }
-
-class EventDeletionError extends TaggedErrorClass<EventDeletionError>()(
-  "EventDeletionError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 export const makeEventDeletion =
   (
@@ -57,7 +55,7 @@ export const makeEventDeletion =
         .pipe(
           Effect.mapError(
             (cause) =>
-              new EventDeletionError({
+              new OperationError({
                 operation: "events.delete.find",
                 cause,
               }),
@@ -75,7 +73,7 @@ export const makeEventDeletion =
         .pipe(
           Effect.mapError(
             (cause) =>
-              new EventDeletionError({
+              new OperationError({
                 operation: "events.delete.heroes",
                 cause,
               }),
@@ -97,7 +95,7 @@ export const makeEventDeletion =
           pending: Effect.tryPromise({
             try: queue.pending,
             catch: (cause) =>
-              new EventDeletionError({
+              new OperationError({
                 operation: "events.delete.pendingJobs",
                 cause,
               }),
@@ -105,7 +103,7 @@ export const makeEventDeletion =
           delayed: Effect.tryPromise({
             try: queue.delayed,
             catch: (cause) =>
-              new EventDeletionError({
+              new OperationError({
                 operation: "events.delete.delayedJobs",
                 cause,
               }),
@@ -133,14 +131,12 @@ export const makeEventDeletion =
         .pipe(
           Effect.mapError(
             (cause) =>
-              new EventDeletionError({
+              new OperationError({
                 operation: "events.delete.transaction",
                 cause,
               }),
           ),
-          Effect.withSpan("events.delete.transaction", {
-            attributes: { adapter: "events.drizzle", retryCount: 0 },
-          }),
+          withAdapterSpan("events.delete.transaction", "events.drizzle"),
         );
 
       yield* invalidateEventCache(

@@ -1,5 +1,5 @@
 import { joinList, splitList } from "@/lib/items-search";
-import { NPC_TYPE_OPTIONS, type NpcTypeOption } from "@/lib/npc-types";
+import { isNpcType } from "@/lib/npc-types";
 
 export type QueryRouteSearch = {
   query: string;
@@ -9,9 +9,6 @@ export type QueryRouteSearch = {
 export type NpcsRouteSearch = QueryRouteSearch & {
   types: string;
 };
-
-const isNpcType = (value: string): value is NpcTypeOption =>
-  NPC_TYPE_OPTIONS.some((type) => type === value);
 
 export function validateNpcsRouteSearch(search: {
   query?: unknown;

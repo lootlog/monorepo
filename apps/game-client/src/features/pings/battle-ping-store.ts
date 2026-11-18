@@ -21,7 +21,7 @@ export type BattlePingTarget = {
 };
 
 /** One ping of the current fight, kept after its mark leaves the warrior. */
-export type BattlePingEntry = {
+type BattlePingEntry = {
   id: number;
   forMe: boolean;
   /** `performance.now()` time the ping arrived or was sent. */
@@ -31,7 +31,7 @@ export type BattlePingEntry = {
   warriorId: number;
 };
 
-export type BattlePingSnapshot = {
+type BattlePingSnapshot = {
   marks: ReadonlyMap<number, BattlePingMark>;
   /** The team's shared attack target; the latest `attack` ping wins. */
   target: BattlePingTarget | null;
@@ -76,7 +76,7 @@ const defaultDependencies: StoreDependencies = {
  * target stays until it is replaced, its warrior dies, or the battle ends.
  * The history keeps the fight's latest pings until the battle ends.
  */
-export class BattlePingStore {
+class BattlePingStore {
   private readonly dependencies: StoreDependencies;
   private readonly listeners = new Set<() => void>();
   private snapshot = EMPTY_SNAPSHOT;

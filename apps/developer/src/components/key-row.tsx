@@ -3,10 +3,10 @@ import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { useState } from "react";
 import { KeyRenameDialog } from "~/components/key-rename-dialog";
+import { apiKeysDeleteApiKey } from "@lootlog/client/auth";
 import {
   getKeyErrorMessage,
   isApiKeyActive,
-  keyRequest,
   type ApiKey,
 } from "~/lib/key-client";
 import { portalText as t } from "~/lib/translations";
@@ -35,9 +35,7 @@ export function KeyRow({
     setError(null);
 
     try {
-      await keyRequest(`/${encodeURIComponent(apiKey.id)}`, {
-        method: "DELETE",
-      });
+      await apiKeysDeleteApiKey({ id: apiKey.id });
       await onChange();
     } catch (error) {
       setError(getKeyErrorMessage(error));

@@ -1,3 +1,8 @@
+import {
+  baseServiceConfig,
+  type BaseServiceConfiguration,
+  redisUrlConfig,
+} from "@lootlog/instrumentation/service-config";
 import { Config, Context, Effect, Layer, Redacted, Schema } from "effect";
 
 import {
@@ -5,11 +10,7 @@ import {
   FirefoxExtensionOrigin,
 } from "@lootlog/schema/browser-extension";
 
-export interface GatewayConfiguration {
-  readonly environment: string;
-  readonly port: number;
-  readonly serviceName: string;
-  readonly serviceNamespace: string;
+export interface GatewayConfiguration extends BaseServiceConfiguration {
   readonly apiUrl: string;
   readonly authUrl?: string;
   readonly apiKeyStatusSecret?: Redacted.Redacted<string>;
@@ -17,10 +18,7 @@ export interface GatewayConfiguration {
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly activityEventSignatureSecret: Redacted.Redacted<string>;
   readonly redis: {
-    readonly host: string;
-    readonly port: number;
-    readonly username: string;
-    readonly password: Redacted.Redacted<string>;
+    readonly url: Redacted.Redacted<string>;
     readonly keyPrefix: string;
   };
   readonly websocketPath: string;
@@ -38,23 +36,10 @@ const splitOrigins = (value: string): ReadonlySet<string> =>
   );
 
 export const loadGatewayConfiguration = Effect.gen(function* () {
-  const environment = yield* Config.String("ENV").pipe(
-    Config.withDefault("local"),
-  );
-
-  const serviceName = yield* Config.String("SERVICE_NAME").pipe(
-    Config.withDefault("gateway"),
-  );
-
-  const redisPassword = yield* Config.Redacted("REDIS_PASSWORD");
+  const base = yield* baseServiceConfig("gateway");
 
   return {
-    environment,
-    port: yield* Config.Port("PORT"),
-    serviceName,
-    serviceNamespace: yield* Config.String("SERVICE_NAMESPACE").pipe(
-      Config.withDefault("local"),
-    ),
+    ...base,
     authUrl: yield* Config.String("AUTH_URL").pipe(Config.withDefault("")),
     apiKeyStatusSecret: yield* Config.Redacted("API_KEY_STATUS_SECRET").pipe(
       Config.withDefault(Redacted.make("")),
@@ -70,11 +55,8 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
       "ACTIVITY_EVENT_SIGNATURE_SECRET",
     ),
     redis: {
-      host: yield* Config.String("REDIS_HOST"),
-      port: yield* Config.Port("REDIS_PORT"),
-      username: yield* Config.String("REDIS_USERNAME"),
-      password: redisPassword,
-      keyPrefix: `${serviceName}:${environment}`,
+      url: yield* redisUrlConfig,
+      keyPrefix: `${base.serviceName}:${base.environment}`,
     },
     websocketPath: yield* Config.String("WEBSOCKET_PATH").pipe(
       Config.withDefault("/ws"),

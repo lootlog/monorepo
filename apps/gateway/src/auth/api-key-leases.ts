@@ -1,4 +1,10 @@
-import { API_KEY_LEASE_MS, ApiKeyStatus } from "@lootlog/schema/api-key-access";
+import {
+  API_KEY_LEASE_MS,
+  API_KEY_STATUS_PATH,
+  type ApiKeyStatus,
+  type ApiKeyStatusRequest,
+  ApiKeyStatusResponse,
+} from "@lootlog/schema/api-key-access";
 import { Effect, Layer, Redacted, Schedule, Schema } from "effect";
 import { REALTIME_SERVER_CLOSE_CODES } from "@lootlog/protocol/realtime";
 import { chunk } from "es-toolkit";
@@ -10,8 +16,6 @@ import {
 import { Commands } from "#src/realtime/command-handler";
 import { Hub } from "#src/realtime/realtime-hub";
 import { hasValidApiKeyLease, type GatewaySocket } from "#src/realtime/session";
-
-const StatusResponse = Schema.Struct({ keys: Schema.Array(ApiKeyStatus) });
 
 export class ApiKeyLeases {
   /** Renews the leases of this replica's API key sessions while it runs. */
@@ -106,7 +110,7 @@ export class ApiKeyLeases {
 
       for (const batch of chunk(keyIds, 100)) {
         const request = HttpClientRequest.post(
-          `${config.authUrl.replace(/\/$/, "")}/auth/internal/api-keys/status`,
+          `${config.authUrl.replace(/\/$/, "")}${API_KEY_STATUS_PATH}`,
           {
             headers: {
               Authorization: `Bearer ${Redacted.value(config.apiKeyStatusSecret)}`,
@@ -115,7 +119,7 @@ export class ApiKeyLeases {
         ).pipe(
           HttpClientRequest.bodyJsonUnsafe({
             keyIds: batch,
-          }),
+          } satisfies typeof ApiKeyStatusRequest.Type),
         );
 
         const response = yield* client.execute(request);
@@ -126,9 +130,9 @@ export class ApiKeyLeases {
           return;
         }
 
-        const statuses = yield* Schema.decodeUnknownEffect(StatusResponse)(
-          yield* response.json,
-        );
+        const statuses = yield* Schema.decodeUnknownEffect(
+          ApiKeyStatusResponse,
+        )(yield* response.json);
 
         for (const status of statuses.keys)
           if (status.valid) valid.set(status.keyId, status);

@@ -3,7 +3,8 @@ import { SectionCardContent } from "@/components/common/section-card/section-car
 import { Button } from "@lootlog/ui/components/button";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { useSearch } from "@tanstack/react-router";
-import { useDiscordSignIn } from "@/hooks/auth/use-discord-sign-in";
+import { useDiscordSignIn } from "@lootlog/client/auth-session";
+import { authClient } from "@/lib/auth-client";
 import { signinRedirectPath } from "@/features/signin/signin-redirect-path";
 import { useTranslation } from "react-i18next";
 
@@ -19,7 +20,7 @@ const callbackErrorMessages = new Map([
 
 export const SignIn: React.FC = () => {
   const search = useSearch({ from: "/signin" });
-  const { signIn, isPending, hasError } = useDiscordSignIn();
+  const { signIn, isPending, hasError } = useDiscordSignIn(authClient);
   const { t } = useTranslation();
 
   const handleDiscordSignIn = () =>

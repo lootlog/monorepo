@@ -14,8 +14,10 @@ import {
 } from "@/features/kills/components/kill-stats-filters";
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
 import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
-import { TRACKABLE_NPC_TYPES } from "./constants";
-import { NPC_TYPES_STRONGEST_FIRST } from "@lootlog/domain/npc-type";
+import {
+  NPC_TYPES_STRONGEST_FIRST,
+  TRACKABLE_NPC_TYPES,
+} from "@lootlog/domain/npc-type";
 import { StatsCountCell } from "@/components/common/stats-count-cell";
 import { StatsDetailMeta } from "./components/stats-detail-meta";
 import { MemberAvatar } from "@/components/common/member-avatar";

@@ -1,4 +1,3 @@
-import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { describe, expect, it, vi } from "bun:test";
 import { Effect } from "effect";
 import { httpClientFromResponses } from "../../test/http-fixtures.js";
@@ -10,7 +9,7 @@ describe("DiscordBotClientService", () => {
       channels: [],
       syncState: {
         guildId: "guild-a",
-        status: DiscordGuildSyncStatus.SYNCED,
+        status: "SYNCED" as const,
         hasRequiredPermissions: true,
         requiredPermissions: [],
         grantedPermissions: [],

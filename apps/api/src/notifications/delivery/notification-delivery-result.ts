@@ -1,15 +1,16 @@
 import { Effect } from "effect";
-import type { DiscordNotificationDeliveryResultEvent } from "@lootlog/schema/notifications";
 import type {
   NotificationDeliveryUpdate,
   NotificationStoredJob,
 } from "#src/notifications/jobs/notification-job.repository";
 import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
+import { NOTIFICATION_DELIVERY_ATTEMPTS } from "#src/notifications/jobs/dispatch-queue";
 import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import {
+  type DiscordNotificationDeliveryResult,
   NotificationJobStatus,
   NotificationOwnerType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 type NotificationDeliveryJob = NotificationStoredJob;
 
@@ -41,7 +42,7 @@ export const makeNotificationDeliveryResult = (
   ) => Effect.Effect<unknown, unknown, never>,
 ) =>
   Effect.fn("notifications.deliveryResult")(function* (
-    event: DiscordNotificationDeliveryResultEvent,
+    event: DiscordNotificationDeliveryResult,
   ) {
     const job = yield* store.find(event.notificationJobId);
 
@@ -93,7 +94,9 @@ export const makeNotificationDeliveryResult = (
     const failure =
       event.errorMessage ?? event.errorCode ?? "Notification delivery failed";
 
-    const shouldRetry = event.retryable && job.attemptCount <= 3;
+    const shouldRetry =
+      event.retryable && job.attemptCount < NOTIFICATION_DELIVERY_ATTEMPTS;
+
     yield* store.record({
       jobId: job.id,
       targetId: job.targetId,

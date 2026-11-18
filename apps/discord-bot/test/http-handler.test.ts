@@ -1,4 +1,3 @@
-import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { describe, expect, mock, test } from "bun:test";
 import { Client } from "discord.js";
 import { Effect } from "effect";
@@ -9,7 +8,7 @@ import {
 
 const syncState = (guildId: string) => ({
   guildId,
-  status: DiscordGuildSyncStatus.SYNCED,
+  status: "SYNCED" as const,
   hasRequiredPermissions: true,
   requiredPermissions: [],
   grantedPermissions: [],

@@ -1,5 +1,6 @@
 import { useAuthScopes } from "@/hooks/api/use-auth-scopes";
-import { useDiscordSignIn } from "@/hooks/auth/use-discord-sign-in";
+import { useDiscordSignIn } from "@lootlog/client/auth-session";
+import { authClient } from "@/lib/auth-client";
 import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
 import { isReauthenticationError } from "@/lib/api-reauthentication";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
@@ -27,7 +28,7 @@ export const AuthenticationGuard = ({ children }: Props) => {
     signIn,
     isPending: reauthenticationPending,
     hasError: hasSignInError,
-  } = useDiscordSignIn();
+  } = useDiscordSignIn(authClient);
 
   const { t } = useTranslation();
 

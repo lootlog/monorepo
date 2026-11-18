@@ -13,6 +13,7 @@ import {
 } from "#src/realtime/command-admission";
 import {
   globalChatScope,
+  isGlobalChatTopic,
   Hub,
   type RealtimeHub,
 } from "#src/realtime/realtime-hub";
@@ -254,11 +255,7 @@ export class GatewayMetrics {
 
     for (const { data } of sockets) {
       for (const scope of data.subscriptions.values()) {
-        if (
-          scope.topic !== "global.chat" &&
-          scope.topic !== "global.chat.world"
-        )
-          continue;
+        if (!isGlobalChatTopic(scope.topic)) continue;
         addUser(chatListeners, scope.world ?? SHARED_CHANNEL, data.discordId);
       }
 

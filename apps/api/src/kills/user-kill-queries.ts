@@ -1,3 +1,4 @@
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import { makeUserKillAnalytics } from "./user-kill-analytics.js";
 import {
   UserKillCharactersResponse,
@@ -9,7 +10,6 @@ import {
   readNpcKillPage,
   toNpcKillPage,
 } from "./npc-kill-page.js";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, gte, ilike, inArray, lte, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -40,11 +40,6 @@ import { userKillSource, type UserKillSource } from "./kill-source.js";
 
 const CACHE_TTL_SECONDS = 30;
 
-export class UserKillQueriesError extends TaggedErrorClass<UserKillQueriesError>()(
-  "UserKillQueriesError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 type NpcType = (typeof userKillBucketTable.npcType.enumValues)[number];
 
 export const makeUserKillQueries = (
@@ -52,15 +47,7 @@ export const makeUserKillQueries = (
   cache: KillQueryCache,
   _logger: ApplicationLogger,
 ) => {
-  const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new UserKillQueriesError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "kills.drizzle", retryCount: 0 },
-      }),
-    );
+  const protect = adapterOperation("kills.drizzle");
 
   const statsCondition = (
     source: UserKillSource,

@@ -5,9 +5,9 @@ import { useEffect, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 
+import { useDiscordSignIn } from "@lootlog/client/auth-session";
+import { WEB_SIGN_IN_PATH } from "@lootlog/domain/public-sites";
 import { links } from "@/src/config/links";
-import { createAuthCallbackUrl } from "@/src/config/auth";
-import { useSession } from "@/src/hooks/use-session";
 import { authClient } from "@/src/lib/auth-client";
 import { useMatchingBackgroundMask } from "@/src/hooks/use-matching-background-mask";
 import { MenuIcon } from "./menu-icon";
@@ -22,14 +22,19 @@ const closeNavigation = (event: MouseEvent<HTMLAnchorElement>) => {
 
 export function LandingHeader() {
   const { t } = useTranslation();
-  const session = useSession();
+  const session = authClient.useSession();
   const reducedMotion = useReducedMotion();
   const overlapRef = useMatchingBackgroundMask();
   const isClientReady = useHydrated();
   const isAuthenticated = !!session.data;
   const isLoading = !isClientReady || session.isPending;
-  const [isSigningIn, setIsSigningIn] = useState(false);
-  const [signInError, setSignInError] = useState(false);
+
+  const {
+    signIn,
+    isPending: isSigningIn,
+    hasError: signInError,
+  } = useDiscordSignIn(authClient);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -41,26 +46,8 @@ export function LandingHeader() {
     return () => window.removeEventListener("scroll", updateScroll);
   }, []);
 
-  const handleLoginAction = async () => {
-    setIsSigningIn(true);
-    setSignInError(false);
-
-    try {
-      const result = await authClient.signIn.social({
-        provider: "discord",
-        callbackURL: createAuthCallbackUrl(window.location.origin),
-        scopes: ["guilds.members.read", "guilds", "identify", "email"],
-      });
-
-      if (result.error) {
-        setSignInError(true);
-      }
-    } catch {
-      setSignInError(true);
-    } finally {
-      setIsSigningIn(false);
-    }
-  };
+  const handleLoginAction = () =>
+    signIn({ callbackURL: `${window.location.origin}${WEB_SIGN_IN_PATH}` });
 
   const navigationLinks = (
     <>

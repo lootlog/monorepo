@@ -25,7 +25,7 @@ import { LootlogApi } from "../../lootlog-api.js";
 import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 
-export type ChatIdentity = {
+type ChatIdentity = {
   readonly userId: string;
   readonly discordId: string;
 };
@@ -133,7 +133,7 @@ export const sendChatMessage = Effect.fn("sendChatMessage")(function* (
   return yield* decode(ChatMessageDomainResponse, value);
 });
 
-export const clearChatMessages = Effect.fn("clearChatMessages")(function* (
+const clearChatMessages = Effect.fn("clearChatMessages")(function* (
   guildId: string,
 ) {
   const access = yield* requireGuild(guildId, writeCapabilities);

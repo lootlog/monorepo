@@ -47,7 +47,7 @@ import {
   makeNotificationJobScheduler,
   type NotificationJobInput,
 } from "#src/notifications/jobs/notification-job-scheduler";
-import { NotificationJobKind } from "#src/notifications/notification-enums";
+import { NotificationJobKind } from "@lootlog/schema/notifications";
 import { makeLootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
 import { makeLootSubmissionAcceptance } from "#src/loots/submission/loot-submission-acceptance.service";
 import {

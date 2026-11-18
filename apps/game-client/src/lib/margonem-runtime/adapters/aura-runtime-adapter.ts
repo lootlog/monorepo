@@ -135,7 +135,7 @@ function hasPixels(image: CanvasImageSource): boolean {
  * Asks the character which frame it draws now through the game's own
  * `drawIcon` (Character.js:285), so water, animated outfits and offsets match.
  */
-export function captureCharacterFrame(
+function captureCharacterFrame(
   character: RuntimeCanvasCharacter,
 ): RuntimeCharacterFrame | null {
   if (!character.imgLoaded || !character.drawIcon) return null;

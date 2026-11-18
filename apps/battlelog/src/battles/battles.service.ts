@@ -1,5 +1,4 @@
 import { makeBattleDeletion } from "#src/battles/deletion/battle-deletion";
-import type { Effect } from "effect";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import { makeBattleCatalog } from "#src/battles/catalog/battle-catalog";
 import type { BattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
@@ -85,27 +84,6 @@ export const makeBattles = (
     deleteUserBattles: deletion.deleteUserBattles,
     deleteBattle: deletion.deleteBattle,
     drainObjectDeletions: deletion.drain,
-
-    getUserCharacters(userId: string) {
-      return battleMetadataService.getUserCharacters(userId);
-    },
-
-    searchWarriors(
-      query: string,
-      userId: string,
-    ): Effect.Effect<
-      {
-        warriors: Array<{
-          name: string;
-          icon: string;
-          prof: string;
-          lvl: number;
-        }>;
-      },
-      unknown
-    > {
-      return battleMetadataService.searchWarriors(query, userId);
-    },
   };
 };
 

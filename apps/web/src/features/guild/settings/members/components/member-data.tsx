@@ -4,7 +4,7 @@ import { BandSection } from "@/components/common/band-section";
 import { DetailField } from "@/components/common/detail-field";
 import { ListTileEmpty } from "@/components/common/list-tile-empty";
 import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
-import type { MemberActivityStats } from "@/features/guild/settings/members/member-activity-stats-api";
+import type { MemberActivityStatsResponseDto as MemberActivityStats } from "@lootlog/client/activity";
 import { useTranslation } from "react-i18next";
 import {
   Activity,

@@ -17,7 +17,7 @@ import { getRuntimeConfig } from "@/config/runtime-config";
 import { getStoredTheme } from "@/config/theme-cookie";
 import { WikiContext } from "@/contexts/wiki-context";
 import { t } from "@/i18n/messages";
-import { createWikiAuthClient } from "@/lib/auth-client";
+import { createLootlogAuthClient } from "@lootlog/client/auth-session";
 import { configureWikiApiClients } from "@/lib/configure-api-clients";
 import { getDocumentTheme } from "@/lib/document-theme";
 import appCss from "@/styles.css?url";
@@ -101,7 +101,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const [wikiContext] = useState(() => {
     configureWikiApiClients(config);
 
-    return { config, authClient: createWikiAuthClient(config.authServiceUrl) };
+    return {
+      config,
+      authClient: createLootlogAuthClient(config.authServiceUrl),
+    };
   });
 
   useEffect(preventIosFocusZoom, []);

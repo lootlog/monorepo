@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { DependencyUnavailableError } from "#src/infrastructure/http-error";
-import { adapter } from "#src/infrastructure/infrastructure-adapter";
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import {
   makeJsonCodec,
   type RedisStore,
@@ -44,20 +44,19 @@ return 0
 
 export type BattleDeduplicationStore = Pick<
   RedisStore,
-  "getJson" | "setJson" | "setNX"
-> & {
-  eval(...args: Parameters<RedisStore["eval"]>): Promise<number>;
-};
+  "getJson" | "setJson" | "setNX" | "evalScript"
+>;
 
 /** Lets one of several concurrent submissions of a battle create it; the others reuse its result. */
 export const makeBattleDeduplication = (
   redisService: BattleDeduplicationStore,
   deduplicationTiming: BattleDeduplicationTiming,
 ) => {
-  const requireBattleDeduplicationRedis = <Result>(
-    operation: () => Promise<Result>,
+  const requireBattleDeduplicationRedis = <Result, E>(
+    operation: Effect.Effect<Result, E>,
   ) => {
-    return adapter("Battles_deduplicationRedis", operation).pipe(
+    return operation.pipe(
+      withAdapterSpan("Battles_deduplicationRedis", "battlelog-infrastructure"),
       Effect.mapError(
         (error) =>
           new DependencyUnavailableError(
@@ -86,16 +85,20 @@ export const makeBattleDeduplication = (
     lockKey: string,
     lockToken: string,
   ) => {
-    return adapter("Battles_releaseDeduplicationLock", () =>
-      redisService.eval(
+    return redisService
+      .evalScript<number>(
         RELEASE_BATTLE_DEDUPLICATION_LOCK_SCRIPT,
         [lockKey],
         [lockToken],
-      ),
-    ).pipe(
-      Effect.asVoid,
-      Effect.catch(() => Effect.void),
-    );
+      )
+      .pipe(
+        withAdapterSpan(
+          "Battles_releaseDeduplicationLock",
+          "battlelog-infrastructure",
+        ),
+        Effect.asVoid,
+        Effect.catch(() => Effect.void),
+      );
   };
 
   const runWithRenewedBattleDeduplicationLock = <Result>(
@@ -106,8 +109,8 @@ export const makeBattleDeduplication = (
     const renewal = Effect.forever(
       Effect.sleep(`${deduplicationTiming.lockRefreshIntervalMs} millis`).pipe(
         Effect.andThen(
-          requireBattleDeduplicationRedis(() =>
-            redisService.eval(
+          requireBattleDeduplicationRedis(
+            redisService.evalScript<number>(
               EXTEND_BATTLE_DEDUPLICATION_LOCK_SCRIPT,
               [lockKey],
               [lockToken, deduplicationTiming.lockTtlSeconds],
@@ -150,7 +153,7 @@ export const makeBattleDeduplication = (
         const activeDeadline =
           deadline ?? currentTime + deduplicationTiming.waitTimeoutMs;
 
-        const cachedResult = yield* requireBattleDeduplicationRedis(() =>
+        const cachedResult = yield* requireBattleDeduplicationRedis(
           redisService.getJson(cacheKey, CreateBattleResultCodec),
         );
 
@@ -164,7 +167,7 @@ export const makeBattleDeduplication = (
 
         const lockToken = randomUUID();
 
-        const lockAcquired = yield* requireBattleDeduplicationRedis(() =>
+        const lockAcquired = yield* requireBattleDeduplicationRedis(
           redisService.setNX(
             lockKey,
             lockToken,
@@ -178,7 +181,7 @@ export const makeBattleDeduplication = (
             lockToken,
             Effect.gen(function* () {
               const cachedAfterLock = yield* requireBattleDeduplicationRedis(
-                () => redisService.getJson(cacheKey, CreateBattleResultCodec),
+                redisService.getJson(cacheKey, CreateBattleResultCodec),
               );
 
               if (cachedAfterLock) {
@@ -188,7 +191,7 @@ export const makeBattleDeduplication = (
               }
 
               const result = yield* createBattle();
-              yield* requireBattleDeduplicationRedis(() =>
+              yield* requireBattleDeduplicationRedis(
                 redisService.setJson(
                   cacheKey,
                   result,

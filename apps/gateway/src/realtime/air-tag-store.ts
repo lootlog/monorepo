@@ -40,6 +40,12 @@ for _,key in ipairs(KEYS) do redis.call("ZADD",key,expiresAt,ARGV[1]); redis.cal
 return #KEYS
 `;
 
+// The threat-maps index and its expiry change together.
+const RECORD_THREAT_MAP_SCRIPT = `
+redis.call("SADD",KEYS[1],ARGV[1])
+return redis.call("PEXPIRE",KEYS[1],ARGV[2])
+`;
+
 // A still enemy is sighted at most 6.5 s apart; re-reporting a sighting this old keeps its
 // age under `AIR_TAG_MAP_THREAT_FRESH_MS` on recipients.
 const THREAT_REFRESH_MS = 4_000;
@@ -502,10 +508,7 @@ const ThreatSnapshotJson = Schema.fromJsonString(
 );
 
 export type ScriptStore = {
-  command: Pick<
-    RedisGatewayStore["command"],
-    "mget" | "sadd" | "smembers" | "expire"
-  > & {
+  command: Pick<RedisGatewayStore["command"], "mget" | "smembers"> & {
     eval(
       ...args: Parameters<RedisGatewayStore["command"]["eval"]>
     ): Promise<RedisScriptReply>;
@@ -539,7 +542,7 @@ const anyMapInterestKey = (organizationId: string): string =>
 const interestKey = (scope: ThreatScope): string =>
   `${mapKeyPrefix(scope)}:replicas`;
 
-export const threatMapsKey = (guildId: string, world: string): string =>
+const threatMapsKey = (guildId: string, world: string): string =>
   `air-tag:threat-maps:${guildId}:${world}`;
 
 /** A scope without a world or map follows every map of its Organization. */
@@ -692,6 +695,19 @@ export const loadScopeSnapshot = (
       targets: [...snapshot.targets],
     };
   });
+
+/** Lists the map of `scope` among the threat maps of its Organization and world. */
+export const recordThreatMap = (
+  redis: ScriptStore,
+  scope: ThreatScope,
+): Promise<RedisScriptReply> =>
+  redis.command.eval(
+    RECORD_THREAT_MAP_SCRIPT,
+    1,
+    threatMapsKey(scope.guildId, scope.world),
+    scope.mapId,
+    AIR_TAG_MAP_THREAT_TTL_MS,
+  );
 
 /** Maps of one Organization and world that published a threat within its TTL. */
 export const readThreatMapIds = (

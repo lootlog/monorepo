@@ -5,7 +5,7 @@ import { SkeletonLine } from "@/components/common/skeleton-line";
 import { KillStatsOverview } from "@/components/common/kill-analytics/kill-stats-overview";
 import { KillAnalyticsTrendSkeleton } from "@/components/common/kill-analytics/kill-analytics-trend-skeleton";
 import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
-import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
+import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
 import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-section";
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 import { StatisticsLegends } from "./statistics-legends";

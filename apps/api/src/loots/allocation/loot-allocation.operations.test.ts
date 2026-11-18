@@ -1,3 +1,5 @@
+import type { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { applicationLogger as logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import { describe, expect, it } from "bun:test";
@@ -83,7 +85,12 @@ const authorizedLoot: AuthorizedLoot = {
 
 const setup = (loot: AuthorizedLoot | null, visible = true) => {
   const writes: LootShare[] = [];
-  const published: LootShare[] = [];
+
+  const published: Array<
+    CanonicalRabbitEvent<
+      typeof RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE
+    >["lootShare"]
+  > = [];
 
   const operations = makeLootAllocationOperations({
     persistence: {
@@ -99,7 +106,7 @@ const setup = (loot: AuthorizedLoot | null, visible = true) => {
     },
     cache: { invalidateScopes: () => Effect.void },
     publisher: {
-      publish: (_exchange, _routingKey, event) => {
+      publish: (event) => {
         published.push(event.lootShare);
 
         return Effect.void;

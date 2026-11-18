@@ -1,3 +1,8 @@
+import {
+  baseServiceConfig,
+  type BaseServiceConfiguration,
+  redisUrlConfig,
+} from "@lootlog/instrumentation/service-config";
 import { Config, Context, Layer, Option, Redacted } from "effect";
 
 const splitCommaSeparated = (value: string): string[] =>
@@ -8,14 +13,11 @@ const splitCommaSeparated = (value: string): string[] =>
 
 const optionalString = (name: string) => Config.option(Config.String(name));
 
-export interface AuthConfig {
+export interface AuthConfig extends BaseServiceConfiguration {
   readonly idpTokenSecret?: Redacted.Redacted<string>;
   readonly apiUrl?: string;
   readonly apiKeysEnabled?: boolean;
   readonly apiKeyStatusSecret?: Redacted.Redacted<string>;
-  readonly environment: string;
-  readonly port: number;
-  readonly serviceName: string;
   readonly trustedOrigins: ReadonlyArray<string>;
   readonly cookieDomain: string;
   readonly cookiePrefix: string;
@@ -32,17 +34,12 @@ export interface AuthConfig {
   };
   readonly discordClientId: string;
   readonly discordClientSecret: Redacted.Redacted<string>;
-  readonly redis: {
-    readonly host: string;
-    readonly port: number;
-    readonly username: string;
-    readonly password: Redacted.Redacted<string>;
-  };
-  readonly serviceNamespace: string;
+  readonly redisUrl: Redacted.Redacted<string>;
   readonly commitSha: string | undefined;
 }
 
-const authConfig = Config.all({
+const authConfig: Config.Config<AuthConfig> = Config.all({
+  base: baseServiceConfig("auth"),
   idpTokenSecret: Config.option(Config.Redacted("AUTH_IDP_TOKEN_SECRET")).pipe(
     Config.map(Option.getOrUndefined),
   ),
@@ -55,11 +52,6 @@ const authConfig = Config.all({
   apiKeyStatusSecret: Config.option(
     Config.Redacted("API_KEY_STATUS_SECRET"),
   ).pipe(Config.map(Option.getOrUndefined)),
-  environment: Config.Literals(["local", "dev", "staging", "prod"], "ENV").pipe(
-    Config.withDefault("local"),
-  ),
-  port: Config.Int("PORT"),
-  serviceName: Config.String("SERVICE_NAME").pipe(Config.withDefault("auth")),
   trustedOrigins: Config.String("TRUSTED_ORIGINS").pipe(
     Config.map(splitCommaSeparated),
   ),
@@ -82,19 +74,11 @@ const authConfig = Config.all({
   }),
   discordClientId: Config.String("DISCORD_CLIENT_ID"),
   discordClientSecret: Config.Redacted("DISCORD_CLIENT_SECRET"),
-  redis: Config.all({
-    host: Config.String("REDIS_HOST"),
-    port: Config.Int("REDIS_PORT"),
-    username: Config.String("REDIS_USERNAME"),
-    password: Config.Redacted("REDIS_PASSWORD"),
-  }),
-  serviceNamespace: Config.String("SERVICE_NAMESPACE").pipe(
-    Config.withDefault("local"),
-  ),
+  redisUrl: redisUrlConfig,
   commitSha: optionalString("COMMIT_SHA").pipe(
     Config.map(Option.getOrUndefined),
   ),
-});
+}).pipe(Config.map(({ base, ...config }) => ({ ...base, ...config })));
 
 export class AppConfig extends Context.Service<AppConfig, AuthConfig>()(
   "@lootlog/auth/AppConfig",

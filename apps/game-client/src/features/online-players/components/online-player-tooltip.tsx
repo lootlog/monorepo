@@ -71,7 +71,7 @@ export const OnlinePlayerTooltip: FC<OnlinePlayerTooltipProps> = ({
           <span className="ll:text-muted-foreground">
             {t("tooltip.levelAndProfession", {
               level: player.lvl,
-              profession: t(`professions.${player.prof}`, {
+              profession: t(`professions:${player.prof}`, {
                 defaultValue: player.prof,
               }),
             })}

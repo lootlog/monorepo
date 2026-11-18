@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { uniqBy } from "es-toolkit";
 import type { Timer } from "@/api/timers.api";
 import type { GuildMember } from "@/types/guild-member";
@@ -5,8 +6,18 @@ import type { GuildMember } from "@/types/guild-member";
 export const getLevelSuffix = (npc: Timer["npc"]) => {
   if (npc.lvl === 0) return "";
 
-  return ` (${npc.lvl}${npc.prof?.charAt(0).toLowerCase() ?? ""})`;
+  return ` (${formatLevel(npc.lvl, npc.prof)})`;
 };
+
+/** A character as timers name it: `Name (300m)`, or the name alone without a level. */
+export const getActorCharacterLabel = (character: {
+  name: string;
+  lvl: number | null;
+  prof?: string | null;
+}) =>
+  character.lvl === null
+    ? character.name
+    : `${character.name} (${formatLevel(character.lvl, character.prof)})`;
 
 export const getTimerMembers = (timer: Timer): GuildMember[] => {
   if (timer.members && timer.members.length > 0) return timer.members;
@@ -30,7 +41,7 @@ export const getMembersWithGuilds = (
     const actorCharacter = actorCharactersByMemberId[String(member.id)];
 
     const characterLabel = actorCharacter
-      ? `${actorCharacter.name} (${actorCharacter.lvl ?? ""}${actorCharacter.prof?.charAt(0).toLowerCase() ?? ""})`
+      ? getActorCharacterLabel(actorCharacter)
       : undefined;
 
     const memberLabel = guildName

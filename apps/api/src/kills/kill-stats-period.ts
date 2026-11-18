@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { sql, type SQLWrapper } from "drizzle-orm";
 import { DateTime, Effect } from "effect";
 import { DEFAULT_PERIOD, type Period } from "@lootlog/schema/http-scalars";
@@ -6,7 +7,6 @@ import { DEFAULT_PERIOD, type Period } from "@lootlog/schema/http-scalars";
  * Statistics of loots and kills count calendar days and weeks in this zone,
  * the zone Margonem's Polish worlds and their players live in.
  */
-export const STATS_TIME_ZONE = "Europe/Warsaw";
 
 const PERIOD_HOURS: Record<Exclude<Period, "all">, number> = {
   "24h": 24,
@@ -64,28 +64,34 @@ export function getStatsPeriodStart(
 export const currentStatsPeriodStart = (period: StatsPeriod | undefined) =>
   Effect.map(DateTime.nowAsDate, (now) => getStatsPeriodStart(period, now));
 
-/** The calendar day of an instant in `STATS_TIME_ZONE`, as `YYYY-MM-DD`. */
+/** The calendar day of an instant in `MARGONEM_TIME_ZONE`, as `YYYY-MM-DD`. */
 export const toStatsDate = (instant: Date | string) =>
   DateTime.formatIsoDate(
-    DateTime.setZoneNamedUnsafe(DateTime.makeUnsafe(instant), STATS_TIME_ZONE),
+    DateTime.setZoneNamedUnsafe(
+      DateTime.makeUnsafe(instant),
+      MARGONEM_TIME_ZONE,
+    ),
   );
 
-/** The wall-clock hour (0-23) of an instant in `STATS_TIME_ZONE`. */
+/** The wall-clock hour (0-23) of an instant in `MARGONEM_TIME_ZONE`. */
 export const toStatsHour = (instant: Date) =>
   DateTime.getPart(
-    DateTime.setZoneNamedUnsafe(DateTime.makeUnsafe(instant), STATS_TIME_ZONE),
+    DateTime.setZoneNamedUnsafe(
+      DateTime.makeUnsafe(instant),
+      MARGONEM_TIME_ZONE,
+    ),
     "hour",
   );
 
 // A literal, not a parameter: grouping repeats the expression of the
 // selection, and PostgreSQL matches them by text.
-const statsTimeZone = sql.raw(`'${STATS_TIME_ZONE}'`);
+const statsTimeZone = sql.raw(`'${MARGONEM_TIME_ZONE}'`);
 
-/** Wall time in `STATS_TIME_ZONE` of a `timestamptz`. */
+/** Wall time in `MARGONEM_TIME_ZONE` of a `timestamptz`. */
 export const statsLocalTime = (instant: SQLWrapper) =>
   sql`(${instant} at time zone ${statsTimeZone})`;
 
-/** Wall time in `STATS_TIME_ZONE` of a `timestamp` that holds UTC. */
+/** Wall time in `MARGONEM_TIME_ZONE` of a `timestamp` that holds UTC. */
 export const statsLocalTimeOfUtc = (timestamp: SQLWrapper) =>
   sql`(${timestamp} at time zone 'UTC' at time zone ${statsTimeZone})`;
 

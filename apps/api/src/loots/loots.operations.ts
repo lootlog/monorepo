@@ -1,6 +1,9 @@
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { getLootListCacheScope } from "#src/shared/cache";
 import { buildLootVisibilityCacheScope } from "#src/loots/loot-visibility-cache";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
@@ -39,14 +42,10 @@ import { PositiveSafeInteger } from "@lootlog/schema/http-scalars";
 
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import { ErrorKey } from "#src/loots/error-key";
-import type {
-  LootPersistence,
-  LootPersistenceError,
-} from "#src/loots/loot.repository";
+import type { LootPersistence } from "#src/loots/loot.repository";
 import type {
   LootListParams,
   LootNpcNameSummary,
-  LootQueryError,
   LootQueryOperations,
 } from "#src/loots/query/loot-query.operations";
 import type { LootQueryFilters } from "#src/loots/query/loot-query-filter";
@@ -71,11 +70,6 @@ type LootLikes = NonNullable<
   Effect.Success<ReturnType<LootPersistence["setLike"]>>
 >;
 
-class LootsOperationError extends TaggedErrorClass<LootsOperationError>()(
-  "LootsOperationError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 type LootPage = {
   readonly items: LootQueryResult[];
   readonly nextCursor: string | null;
@@ -85,9 +79,7 @@ type LootsFailure =
   | InvalidRequestError
   | PermissionDeniedError
   | ResourceConflictError
-  | LootPersistenceError
-  | LootQueryError
-  | LootsOperationError
+  | OperationError
   | ResourceNotFoundError;
 
 type LootsEffect<A> = Effect.Effect<A, LootsFailure>;
@@ -257,12 +249,8 @@ export const makeLootsOperations = ({
       catch: (cause) =>
         cause instanceof ResourceNotFoundError
           ? cause
-          : new LootsOperationError({ operation, cause }),
-    }).pipe(
-      Effect.withSpan(operation, {
-        attributes: { adapter: "loots", retryCount: 0 },
-      }),
-    );
+          : new OperationError({ operation, cause }),
+    }).pipe(withAdapterSpan(operation, "loots"));
 
   const invalidateList = (guildIds: ReadonlyArray<string>) =>
     Effect.forEach(

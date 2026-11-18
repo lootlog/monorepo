@@ -434,7 +434,17 @@ it.each(["guild-1", "organization-alias"])(
         type: "reservation.created",
         data: {
           organizationId: "guild-1",
-          payload: { guildId: "guild-1", spotId: "driady" },
+          payload: {
+            guildId: "guild-1",
+            reservation: {
+              id: 3,
+              reservationId: "driady",
+              createdDate: "2026-01-01T00:00:00.000Z",
+              fromDate: "2026-01-01T00:00:00.000Z",
+              toDate: "2026-01-01T01:00:00.000Z",
+              createdBy: "discord-1",
+            },
+          },
         },
       }),
     );

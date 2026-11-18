@@ -13,7 +13,7 @@ import {
   RejectedLootMemory,
   type LootAcceptanceKey,
 } from "@/processors/rejected-loot-memory";
-import { getItemStat } from "@/utils/game/get-item-stat";
+import { itemStatValue } from "@lootlog/domain/item-stat";
 import { useOthersStore } from "@/store/others.store";
 import {
   createLootDebugContext,
@@ -309,7 +309,7 @@ export class LootEventProcessor {
 
     const key: LootAcceptanceKey = {
       scope: `${catchingGuildIds.toSorted().join(",")}|${[...npcTypes].toSorted().join(",")}`,
-      rarities: loots.map((item) => getItemStat(item.stat, "rarity") ?? ""),
+      rarities: loots.map((item) => itemStatValue(item.stat, "rarity") ?? ""),
     };
 
     return this.rejectedLoots.covers(key)
@@ -326,7 +326,7 @@ export class LootEventProcessor {
       !capturesMapPlayers({
         source,
         rarities: loots.map((item) =>
-          getItemStat(item.stat ?? "", "rarity")?.toUpperCase(),
+          itemStatValue(item.stat ?? "", "rarity")?.toUpperCase(),
         ),
       })
     )

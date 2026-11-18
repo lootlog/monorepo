@@ -8,9 +8,9 @@ import {
   getCatalogControllerGetItemsQueryOptions,
   useCatalogControllerGetItems,
 } from "@lootlog/client/catalog";
-import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-styles";
+import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-colors";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { cn } from "cn";
 import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";

@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import {
   LOOT_RARITY_PILL_CLASS,
   LOOT_RARITY_TEXT_CLASS,

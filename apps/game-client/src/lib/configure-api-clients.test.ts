@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApiClient } from "@lootlog/client/transport";
+import { executeApiRequest } from "@lootlog/client/transport";
 import { createPageTransport } from "@/extension/page-transport";
 import {
   decodeMessage,
@@ -26,13 +26,11 @@ describe("game API request deadlines", () => {
     const restore = configureGameApiClients();
 
     try {
-      const request = createApiClient("main")
-        .post(
-          "/timers/auto",
-          {},
-          { apiClient: { timeoutMs: AUTO_TIMER_REQUEST_TIMEOUT_MS } },
-        )
-        .catch((error: Error) => error);
+      const request = executeApiRequest("main", "/timers/auto", {
+        method: "POST",
+        body: "{}",
+        apiClient: { timeoutMs: AUTO_TIMER_REQUEST_TIMEOUT_MS },
+      }).catch((error: Error) => error);
 
       await vi.advanceTimersByTimeAsync(AUTO_TIMER_REQUEST_TIMEOUT_MS);
       expect(await request).toMatchObject({
@@ -56,11 +54,12 @@ describe("game API request deadlines", () => {
     try {
       let settled = false;
 
-      void createApiClient("battlelog")
-        .post("/battles", {})
-        .finally(() => {
-          settled = true;
-        });
+      void executeApiRequest("battlelog", "/battles", {
+        method: "POST",
+        body: "{}",
+      }).finally(() => {
+        settled = true;
+      });
 
       await vi.advanceTimersByTimeAsync(60_000);
       expect(settled).toBe(false);
@@ -84,13 +83,11 @@ describe("game API request deadlines", () => {
     const restoreClients = configureGameApiClients();
 
     try {
-      const request = createApiClient("main")
-        .post(
-          "/timers/auto",
-          {},
-          { apiClient: { timeoutMs: AUTO_TIMER_REQUEST_TIMEOUT_MS } },
-        )
-        .catch((error: Error) => error);
+      const request = executeApiRequest("main", "/timers/auto", {
+        method: "POST",
+        body: "{}",
+        apiClient: { timeoutMs: AUTO_TIMER_REQUEST_TIMEOUT_MS },
+      }).catch((error: Error) => error);
 
       await vi.waitFor(() => expect(messages).toHaveLength(1));
       await vi.advanceTimersByTimeAsync(AUTO_TIMER_REQUEST_TIMEOUT_MS);

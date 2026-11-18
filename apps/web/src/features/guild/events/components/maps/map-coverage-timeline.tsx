@@ -7,9 +7,9 @@ import {
 import type { TFunction } from "i18next";
 import { formatTime } from "../../utils/format-date";
 import { COVERAGE_SEGMENT_BG_CLASS_NAMES } from "../../utils/get-map-coverage-color-class-name";
-import { formatDurationFromMs } from "../../utils/format-duration";
 import { calculateTimelineSegments } from "../../utils/timeline-segments";
 import type { MapGap } from "../../types/api";
+import { formatDuration } from "@/utils/date/format-duration";
 
 interface MapCoverageTimelineProps {
   startTime: Date;
@@ -68,8 +68,12 @@ export const MapCoverageTimeline = ({
                 {formatTime(segment.startTime)} - {formatTime(segment.endTime)}
               </span>
               <span>
-                {formatDurationFromMs(
-                  segment.endTime.getTime() - segment.startTime.getTime(),
+                {formatDuration(
+                  Math.floor(
+                    (segment.endTime.getTime() - segment.startTime.getTime()) /
+                      1000,
+                  ),
+                  "human",
                 )}
               </span>
             </div>

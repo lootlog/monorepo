@@ -1,6 +1,7 @@
 import {
   unusedBattles,
   unusedBattleAnalytics,
+  unusedBattleMetadata,
   unusedDeleteQueue,
   unusedWeaponKills,
   createBattleFixture,
@@ -23,6 +24,7 @@ describe("Battlelog operations", () => {
     const operations = makeBattlelogOperations(
       { ...unusedBattles, getBattleTimeline },
       unusedBattleAnalytics,
+      unusedBattleMetadata,
       unusedDeleteQueue,
       unusedWeaponKills,
     );
@@ -47,6 +49,7 @@ describe("Battlelog operations", () => {
     const operations = makeBattlelogOperations(
       { ...unusedBattles, assertBattleOwner, resolveBattleId, updateBattle },
       unusedBattleAnalytics,
+      unusedBattleMetadata,
       unusedDeleteQueue,
       unusedWeaponKills,
     );
@@ -79,6 +82,7 @@ describe("Battlelog operations", () => {
     const operations = makeBattlelogOperations(
       { ...unusedBattles, getPublicBattle },
       unusedBattleAnalytics,
+      unusedBattleMetadata,
       unusedDeleteQueue,
       unusedWeaponKills,
     );

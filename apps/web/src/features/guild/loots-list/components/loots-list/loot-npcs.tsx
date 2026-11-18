@@ -2,13 +2,17 @@ import { compareNpcsStrongestFirst } from "@lootlog/domain/npc-type";
 import { formatLevel } from "@lootlog/domain/profession";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WikiContextMenuItem } from "@/components/common/wiki-context-menu-item";
-import { wikiNpcUrl } from "@/config/wiki";
+import { wikiNpcUrl } from "@lootlog/domain/wiki-links";
 import type { LootNpc } from "@/lib/loots/loot-types";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@lootlog/ui/components/context-menu";
+import {
+  NPC_TYPE_BADGE_CLASS,
+  npcTypeColorStyle,
+} from "@lootlog/ui/lib/npc-type-colors";
 import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,20 +29,6 @@ export type LootNpcsProps = {
 const SPECIAL_NPC_TYPES = ["TITAN", "COLOSSUS", "HERO", "EVENT_HERO"] as const;
 
 type SpecialNpcType = (typeof SPECIAL_NPC_TYPES)[number];
-
-// Get badge styling based on NPC type
-const getNpcBadgeStyle = (type: SpecialNpcType) => {
-  switch (type) {
-    case "TITAN":
-      return "bg-primary/10 text-primary border-primary/20";
-    case "COLOSSUS":
-      return "bg-purple-500/10 text-purple-500 border-purple-500/20";
-    case "HERO":
-      return "bg-destructive/10 text-destructive border-destructive/20";
-    case "EVENT_HERO":
-      return "bg-orange-500/10 text-orange-500 border-orange-500/20";
-  }
-};
 
 const isSpecialNpcType = (type: LootNpc["type"]): type is SpecialNpcType =>
   SPECIAL_NPC_TYPES.some((specialType) => specialType === type);
@@ -110,8 +100,9 @@ export const LootNpcs: FC<LootNpcsProps> = ({
         <span
           className={cn(
             "inline-flex h-5 w-fit shrink-0 items-center rounded-md border px-2 text-2xs font-semibold leading-none",
-            getNpcBadgeStyle(specialNpcType),
+            NPC_TYPE_BADGE_CLASS,
           )}
+          style={npcTypeColorStyle(specialNpcType)}
         >
           {t(`npcType.${specialNpcType}`)}
         </span>

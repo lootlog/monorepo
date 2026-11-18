@@ -13,7 +13,6 @@ import {
   Layer,
   Predicate,
   Queue,
-  Redacted,
   Schedule,
   Schema,
 } from "effect";
@@ -29,9 +28,7 @@ import {
 } from "./background-tasks.js";
 import { FederationSequence } from "./federation-sequence.js";
 
-type RedisGatewayConfig = Omit<GatewayConfiguration["redis"], "password"> & {
-  readonly password: string;
-};
+type RedisGatewayConfig = Pick<GatewayConfiguration["redis"], "keyPrefix">;
 
 export interface FederatedRealtimeMessage {
   readonly id: string;
@@ -442,10 +439,7 @@ export class GatewayRedis extends Context.Service<
         try: async () => {
           const store = new RedisGatewayStore(
             client,
-            {
-              ...config.redis,
-              password: Redacted.value(config.redis.password),
-            },
+            { keyPrefix: config.redis.keyPrefix },
             background.runPromise,
             background.run,
           );

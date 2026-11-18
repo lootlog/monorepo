@@ -1,5 +1,5 @@
 import { useSharedContextMenuTarget } from "@/components/common/shared-context-menu-registry";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { getMemberColorHex } from "@/utils/member-color";
 import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
   MemberSummaryResponseDtoOutput as GuildMember,
@@ -31,7 +31,7 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
   message,
   npcTypeColors,
 }) => {
-  const memberColor = useMemberColor(member);
+  const memberColor = getMemberColorHex(member);
   const { npc } = message;
 
   const menuTarget = useSharedContextMenuTarget(

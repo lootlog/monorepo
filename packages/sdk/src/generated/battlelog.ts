@@ -5,7 +5,7 @@
  * The Battle Log API documentation
  * OpenAPI spec version: 1.0
  */
-import { battlelogFetch } from '../mutators';
+import { battlelogFetch } from '@lootlog/client/mutators';
 export interface BattleCreatedResponseDtoOutput {
   battleId: string;
 }

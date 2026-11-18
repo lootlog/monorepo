@@ -74,7 +74,7 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
           aria-label={t("filters.npcTypesLabel")}
           items={NPC_TYPE_FILTER_OPTIONS.map((type) => ({
             value: type,
-            label: t(`common:npcTypes.${type.toLowerCase()}`),
+            label: t(`npcType:${type}`),
           }))}
           selected={selected}
           onToggle={toggle}

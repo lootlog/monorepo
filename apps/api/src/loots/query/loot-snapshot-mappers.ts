@@ -1,4 +1,4 @@
-import { joinItemStat } from "@lootlog/database/item-stat";
+import { itemStatValue, joinItemStat } from "@lootlog/domain/item-stat";
 import type { LootItemDto } from "#src/loots/query/loot-item";
 import type { LootNpcDto } from "#src/loots/query/loot-npc";
 import { parseRequiredProfessions } from "#src/loots/required-professions";
@@ -33,13 +33,6 @@ const parseNumber = (
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const parseStatValue = (statRaw: string, key: string): string | null => {
-  const prefix = `${key}=`;
-  const segment = statRaw.split(";").find((entry) => entry.startsWith(prefix));
-
-  return segment?.slice(prefix.length) ?? null;
-};
-
 export const mapItem = (lootItem: LootItemWithSnapshot): LootItemDto => {
   const statRaw = joinItemStat(
     lootItem.itemSnapshot.statRaw,
@@ -48,7 +41,7 @@ export const mapItem = (lootItem: LootItemWithSnapshot): LootItemDto => {
 
   const lvl =
     lootItem.itemSnapshot.lvl ??
-    parseNumber(parseStatValue(statRaw, "lvl")) ??
+    parseNumber(itemStatValue(statRaw, "lvl")) ??
     0;
 
   return {
@@ -60,7 +53,7 @@ export const mapItem = (lootItem: LootItemWithSnapshot): LootItemDto => {
     type: lootItem.itemSnapshot.itemType,
     rarity: lootItem.itemSnapshot.rarity,
     lvl,
-    prof: parseRequiredProfessions(parseStatValue(statRaw, "reqp")),
+    prof: parseRequiredProfessions(itemStatValue(statRaw, "reqp")),
   };
 };
 

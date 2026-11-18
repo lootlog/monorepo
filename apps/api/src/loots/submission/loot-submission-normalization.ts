@@ -1,8 +1,9 @@
+import { playerSearchId } from "@lootlog/protocol/rabbit/events";
 import {
   createItemSnapshotHash,
   createItemStatsHash,
 } from "@lootlog/database/snapshot-hash";
-import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
+import { itemStatRecord, splitItemStat } from "@lootlog/domain/item-stat";
 import { Schema } from "effect";
 import {
   compareNpcsStrongestFirst,
@@ -74,7 +75,7 @@ export function processNpcs(npcs: CreateLootRequest["npcs"]) {
 }
 
 export function getItemStats(item: CreateLootRequest["loots"][number]) {
-  const parsedStats = parseItemStats(item.stat);
+  const parsedStats = itemStatRecord(item.stat);
   const lvl = parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0;
   const rawRarity = parsedStats["rarity"]?.toUpperCase();
 
@@ -100,7 +101,7 @@ export function mapPlayers(players: CreateLootRequest["players"]) {
     );
 
     return {
-      id: `${characterId}${accountId}`,
+      id: playerSearchId(characterId, accountId),
       name: player.name,
       lvl: player.lvl,
       prof: getProfByShortname(player.prof),
@@ -137,7 +138,7 @@ export function mapLootItemsToPersistence(
       rarity,
       itemType: type,
       statRaw: revision,
-      statsSnapshot: parseItemStats(revision),
+      statsSnapshot: itemStatRecord(revision),
       hid: item.hid,
       instanceStat: instance,
     };

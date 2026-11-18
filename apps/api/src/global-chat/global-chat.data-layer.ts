@@ -30,7 +30,7 @@ import {
 } from "./global-chat-data.js";
 
 /** A kept message with its position in the channel; higher positions are newer. */
-export type GlobalChatStoredEntry = {
+type GlobalChatStoredEntry = {
   readonly position: number;
   readonly value: string;
 };

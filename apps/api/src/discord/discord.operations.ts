@@ -1,12 +1,10 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Effect, Schema } from "effect";
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
+import { Effect } from "effect";
 import type { DiscordGuildMemberClient } from "./discord-guild-member.client.js";
 import type { DiscordUserGuildsClient } from "./discord-user-guilds.client.js";
-
-export class DiscordOperationFailure extends TaggedErrorClass<DiscordOperationFailure>()(
-  "DiscordOperationFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 export const makeDiscordOperations = (
   userGuilds: DiscordUserGuildsClient,
@@ -15,12 +13,8 @@ export const makeDiscordOperations = (
   const adapter = <A>(operation: string, run: () => Promise<A>) =>
     Effect.tryPromise({
       try: run,
-      catch: (cause) => new DiscordOperationFailure({ operation, cause }),
-    }).pipe(
-      Effect.withSpan(operation, {
-        attributes: { adapter: "discord", retryCount: 0 },
-      }),
-    );
+      catch: (cause) => new OperationError({ operation, cause }),
+    }).pipe(withAdapterSpan(operation, "discord"));
 
   return {
     getUserGuilds: (userId: string, discordId: string) =>

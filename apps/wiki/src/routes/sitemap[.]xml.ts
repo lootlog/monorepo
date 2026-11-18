@@ -10,7 +10,7 @@ import {
   npcPageParams,
 } from "@/lib/catalog-links";
 import { configureWikiServerApiClients } from "@/lib/configure-api-clients";
-import { WIKI_ORIGIN } from "@/lib/link-preview";
+import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
 
 // The whole catalog arrives in one response; it may take longer than a page.
 const CATALOG_TIMEOUT_MS = 10_000;
@@ -65,7 +65,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         const urls = paths
           .map(
             (path) =>
-              `<url><loc>${escape(`${WIKI_ORIGIN}${path}`)}</loc></url>`,
+              `<url><loc>${escape(`${PUBLIC_SITE_ORIGINS.wiki}${path}`)}</loc></url>`,
           )
           .join("");
 

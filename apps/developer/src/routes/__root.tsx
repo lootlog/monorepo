@@ -9,7 +9,10 @@ import { useEffect } from "react";
 import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
 import { portalText } from "~/lib/translations";
 import { PortalNav } from "~/components/portal-nav";
-import { PORTAL_ORIGIN } from "~/lib/seo";
+import {
+  COMMUNITY_LINKS,
+  PUBLIC_SITE_ORIGINS,
+} from "@lootlog/domain/public-sites";
 import appCss from "~/styles/app.css?url";
 import favicon from "~/assets/favicon.svg?no-inline";
 import appleTouchIcon from "~/assets/lootlog-apple-touch.png?no-inline";
@@ -18,14 +21,14 @@ const structuredData = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: portalText.title,
-  url: `${PORTAL_ORIGIN}/`,
+  url: `${PUBLIC_SITE_ORIGINS.developer}/`,
   description: portalText.description,
   inLanguage: "en",
   publisher: {
     "@type": "Organization",
     name: "Lootlog",
-    url: "https://lootlog.pl",
-    sameAs: ["https://github.com/lootlog/monorepo"],
+    url: PUBLIC_SITE_ORIGINS.web,
+    sameAs: [COMMUNITY_LINKS.github],
   },
 });
 

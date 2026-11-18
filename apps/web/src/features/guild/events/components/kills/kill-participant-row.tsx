@@ -13,11 +13,12 @@ import {
 import { ChevronDown, Info, MapPin, Pencil } from "lucide-react";
 import { cn } from "cn";
 import { MemberAvatar } from "@/components/common/member-avatar";
-import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
-import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
+import {
+  discordRoleCssColor,
+  getMemberDisplayRole,
+} from "@lootlog/domain/member-display-role";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { aggregateMapData } from "../../utils/aggregate-map-data";
-import { formatDurationHuman } from "../../utils/format-duration";
 import { formatPoints } from "../../utils/format-points";
 import {
   getScoringBreakdown,
@@ -30,6 +31,7 @@ import type { KillParticipantScoring } from "../../utils/scoring-applied-rules";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { InactiveMemberSuffix } from "@/components/common/inactive-member-suffix";
+import { formatDuration } from "@/utils/date/format-duration";
 
 interface KillParticipantRowProps {
   participant: KillDetailParticipant;
@@ -80,7 +82,7 @@ const buildParticipantScoringView = (
     trackingDuration:
       participant.trackingDurationSeconds !== null &&
       participant.trackingDurationSeconds !== undefined
-        ? formatDurationHuman(participant.trackingDurationSeconds)
+        ? formatDuration(participant.trackingDurationSeconds, "human")
         : EMPTY_VALUE,
     trackingPercentage:
       participant.trackingDurationPercentage !== null &&
@@ -117,7 +119,7 @@ export const KillParticipantRow = ({
     trackingPercentage,
   } = buildParticipantScoringView(participant, t);
 
-  const roleCssColor = getCustomRoleCssColor(
+  const roleCssColor = discordRoleCssColor(
     getMemberDisplayRole(participant.member.roles)?.color,
   );
 
@@ -196,7 +198,7 @@ export const KillParticipantRow = ({
                   <span aria-hidden="true">·</span>
                   <span className="text-amber-400">
                     {t("events.kills.afkTime")}:{" "}
-                    {formatDurationHuman(totalAfkSeconds)}
+                    {formatDuration(totalAfkSeconds, "human")}
                   </span>
                 </>
               ) : null}
@@ -210,7 +212,7 @@ export const KillParticipantRow = ({
         <span className="hidden text-right text-sm tabular-nums text-muted-foreground lg:block">
           {totalAfkSeconds > 0 ? (
             <span className="text-amber-400">
-              {formatDurationHuman(totalAfkSeconds)}
+              {formatDuration(totalAfkSeconds, "human")}
             </span>
           ) : (
             EMPTY_VALUE
@@ -336,7 +338,10 @@ export const KillParticipantRow = ({
                       {mapInfo.mapName}
                     </span>
                     <span className="text-right tabular-nums text-muted-foreground">
-                      {formatDurationHuman(mapInfo.assignmentDurationSeconds)}
+                      {formatDuration(
+                        mapInfo.assignmentDurationSeconds,
+                        "human",
+                      )}
                     </span>
                   </div>
                 ))}

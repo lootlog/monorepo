@@ -1,6 +1,6 @@
 import { cn } from "cn";
 
-export type StatTile = {
+type StatTile = {
   label: string;
   value: string;
   /** A gain beside the value, such as `+7`. */

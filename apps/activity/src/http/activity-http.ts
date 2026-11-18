@@ -1,15 +1,15 @@
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import {
   apiKeyAllowsOrganization,
-  readApiKeyAccess,
+  readForwardAuthIdentity,
 } from "@lootlog/schema/api-key-policy";
+import { BearerSecurityPassthrough } from "@lootlog/protocol/http/bearer-security";
 import { OnlineRepository } from "#src/online/online-repository";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { BunHttpServer } from "@effect/platform-bun";
 import {
-  httpServerMetrics,
-  httpServerRouteMetrics,
-} from "@lootlog/instrumentation";
+  serviceApiRoutes,
+  serviceHttpServer,
+} from "@lootlog/instrumentation/service";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -25,7 +25,7 @@ import {
   Schema,
   Semaphore,
 } from "effect";
-import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
+import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
 import { SqlClient } from "effect/sql";
 import { ActivityRepository } from "#src/activities/activity-repository";
@@ -35,7 +35,6 @@ import type {
   ReadyzControllerCheck200,
   ReadyzControllerCheck503,
 } from "#src/http-api/contracts/health/schemas";
-import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
 import type { ActivitiesControllerFindByGuildQuery } from "#src/http-api/contracts/guilds/schemas";
 import { Permissions } from "#src/activities/activity-permissions";
 
@@ -115,16 +114,15 @@ const authorize = Effect.fn("Activity.authorize")(function* (
 ) {
   const request = yield* HttpServerRequest.HttpServerRequest;
   const permissions = yield* Permissions;
-  const discordId = request.headers["x-auth-discord-id"];
-  const userId = request.headers["x-auth-user-id"];
+  const identity = readForwardAuthIdentity(request.headers);
 
-  if (!discordId || !userId) return yield* fail(401, "Unauthorized");
+  if (!identity) return yield* fail(401, "Unauthorized");
 
   // The grants do not depend on the guild, so both reads start together.
   const [guildId, capabilitiesFor] = yield* Effect.all(
     [
       permissions.resolveGuildId(guildIdentifier),
-      permissions.getUserCapabilities(discordId, userId),
+      permissions.getUserCapabilities(identity.discordId, identity.userId),
     ],
     { concurrency: "unbounded" },
   ).pipe(
@@ -138,9 +136,8 @@ const authorize = Effect.fn("Activity.authorize")(function* (
   );
 
   if (!guildId) return yield* fail(403, "Insufficient permissions");
-  const apiKey = readApiKeyAccess(request.headers);
 
-  if (apiKey === null || !apiKeyAllowsOrganization(apiKey, guildId))
+  if (!apiKeyAllowsOrganization(identity.apiKey, guildId))
     return yield* fail(403, "Insufficient permissions");
 
   const capabilities = capabilitiesFor(guildId);
@@ -190,23 +187,18 @@ const activityQuery = (
   guildId,
 });
 
-const BearerSecurityLive = Layer.succeed(
-  BearerSecurityMiddleware,
-  BearerSecurityMiddleware.of({ bearer: (httpEffect) => httpEffect }),
-);
-
 const ActivityHandlers = Layer.mergeAll(
   HttpApiBuilder.group(ActivityApi, "users", (handlers) =>
     handlers.handleRaw("UsersActivityControllerGetOnline", ({ query }) =>
       jsonOperation(
         Effect.gen(function* () {
           const request = yield* HttpServerRequest.HttpServerRequest;
-          const userId = request.headers["x-auth-user-id"];
+          const identity = readForwardAuthIdentity(request.headers);
 
-          if (!userId) return yield* fail(401, "Unauthorized");
+          if (!identity) return yield* fail(401, "Unauthorized");
           const repository = yield* OnlineRepository;
 
-          return yield* repository.find(userId, query);
+          return yield* repository.find(identity.userId, query);
         }),
       ),
     ),
@@ -329,33 +321,19 @@ const ActivityHandlers = Layer.mergeAll(
   ),
 ).pipe(
   Layer.provide(
-    Layer.merge(BearerSecurityLive, apiKeyEndpointPolicyLayer("activity")),
-  ),
-);
-
-const DocumentationRoute = HttpRouter.use((router) =>
-  router.add(
-    "GET",
-    "/doc",
-    HttpServerResponse.raw(
-      Bun.file(new URL("../../openapi.yaml", import.meta.url)),
-      { contentType: "application/yaml" },
+    Layer.merge(
+      BearerSecurityPassthrough,
+      apiKeyEndpointPolicyLayer("activity"),
     ),
   ),
 );
 
-export const ActivityRoutes = Layer.merge(
-  HttpApiBuilder.layer(ActivityApi, { openapiPath: "/openapi.json" }).pipe(
-    Layer.provide(ActivityHandlers),
-  ),
-  DocumentationRoute,
-);
+export const ActivityRoutes = serviceApiRoutes(ActivityApi, {
+  documentation: new URL("../../openapi.yaml", import.meta.url),
+}).pipe(Layer.provide(ActivityHandlers));
 
 export const ActivityHttpServer = Layer.unwrap(
   Effect.map(ActivityConfig, ({ port }) =>
-    HttpRouter.serve(
-      ActivityRoutes.pipe(Layer.provide(httpServerRouteMetrics)),
-      { middleware: httpServerMetrics },
-    ).pipe(Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port }))),
+    serviceHttpServer({ routes: ActivityRoutes, port }),
   ),
 ).pipe(Layer.provide(ActivityConfig.layer));

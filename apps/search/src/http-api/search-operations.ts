@@ -3,9 +3,7 @@ import type { SearchOperationFailure } from "@lootlog/meilisearch/operation-fail
 import { Context, Effect, Layer, Predicate, Redacted } from "effect";
 import { Meilisearch } from "meilisearch";
 import { SearchConfig } from "#src/config/search-config";
-import { makePlayersModule } from "#src/players/players.service";
-import { PLAYERS_INDEX } from "#src/players/search-index";
-import { effectLogger } from "#src/shared/logger";
+import { makePlayersModule, PLAYERS_INDEX } from "#src/players/players.service";
 import type { IndexPlayersCommand } from "#src/players/index-players-command";
 import type {
   PlayersControllerGetPlayersQuery,
@@ -48,13 +46,9 @@ export class SearchOperations extends Context.Service<
         apiKey: Redacted.value(config.meilisearchApiKey),
       });
 
-      const players = makePlayersModule(meilisearch, effectLogger);
+      const players = makePlayersModule(meilisearch);
 
-      yield* configureMeilisearchIndexes(
-        meilisearch,
-        searchIndexSettings,
-        effectLogger,
-      );
+      yield* configureMeilisearchIndexes(meilisearch, searchIndexSettings);
 
       return SearchOperations.of({
         searchPlayers: (query) =>

@@ -1,10 +1,13 @@
+import {
+  adapterOperation,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { eventMapScope } from "#src/events/event-scope-query";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { makeEventMapRead } from "#src/events/catalog/event-map-read";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, isNull } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -23,12 +26,20 @@ import {
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
-import { getEventHeroNpcId } from "#src/shared/margonem/npc-identity";
+import { getEventHeroNpcId } from "@lootlog/domain/npc-identity";
+import {
+  getMapAssignmentAvailability,
+  type MapAssignmentAvailability,
+} from "@lootlog/domain/event-map-assignment";
 
-class EventMapAssignmentError extends TaggedErrorClass<EventMapAssignmentError>()(
-  "EventMapAssignmentError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
+const ASSIGNMENT_UNAVAILABLE_MESSAGES: Record<
+  Extract<MapAssignmentAvailability, { allowed: false }>["reason"],
+  string
+> = {
+  NO_TIMER: "Cannot assign members without an active respawn window",
+  OVERDUE: "Cannot assign members after the respawn window is overdue",
+  TOO_EARLY: "Cannot assign members before the assignment window opens",
+};
 
 export interface EventAssignmentPublisher {
   readonly publish: <
@@ -48,15 +59,7 @@ export const makeEventMapAssignments = (
   publisher: EventAssignmentPublisher,
   logger: Pick<Logger, "warn">,
 ) => {
-  const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new EventMapAssignmentError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.assignments.drizzle", retryCount: 0 },
-      }),
-    );
+  const query = adapterOperation("events.assignments.drizzle");
 
   const bestEffort = (
     effect: Effect.Effect<void, unknown>,
@@ -71,9 +74,7 @@ export const makeEventMapAssignments = (
           }),
         ),
       ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.rabbitmq", retryCount: 0 },
-      }),
+      withAdapterSpan(operation, "events.rabbitmq"),
     );
 
   const invalidate = (guildId: string, eventId: string) =>
@@ -254,30 +255,18 @@ export const makeEventMapAssignments = (
           npcName: scoped.hero.npcName,
         });
 
-        if (!timer)
-          return yield* Effect.fail(
-            new InvalidRequestError(
-              "Cannot assign members without an active respawn window",
-            ),
-          );
         const now = new Date(yield* Clock.currentTimeMillis);
 
-        if (now >= new Date(timer.maxSpawnTime))
+        const availability = getMapAssignmentAvailability({
+          assignmentTimeoutMinutes: scoped.event.assignmentTimeoutMinutes,
+          now,
+          timer,
+        });
+
+        if (!availability.allowed)
           return yield* Effect.fail(
             new InvalidRequestError(
-              "Cannot assign members after the respawn window is overdue",
-            ),
-          );
-
-        const enabledAt = new Date(
-          new Date(timer.minSpawnTime).getTime() -
-            scoped.event.assignmentTimeoutMinutes * 60 * 1000,
-        );
-
-        if (now < enabledAt)
-          return yield* Effect.fail(
-            new InvalidRequestError(
-              "Cannot assign members before the assignment window opens",
+              ASSIGNMENT_UNAVAILABLE_MESSAGES[availability.reason],
             ),
           );
         const cap = scoped.event.mapAssignmentCap;

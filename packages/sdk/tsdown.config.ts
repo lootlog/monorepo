@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
@@ -8,7 +9,7 @@ export default defineConfig({
     battlelog: "src/generated/battlelog.ts",
     search: "src/generated/search.ts",
     catalog: "src/generated/catalog.ts",
-    realtime: "../client/src/realtime/index.ts",
+    realtime: fileURLToPath(import.meta.resolve("@lootlog/client/realtime")),
   },
   format: ["esm"],
   target: "es2022",

@@ -47,13 +47,11 @@ describe("notification mutes", () => {
       npc: {
         id: 999999,
         name: "Tezaur",
-        nick: "Tezaur",
         lvl: 300,
         prof: "m",
         icon: "tezaur.png",
-        tpl: 1,
         wt: 95,
-        type: 10,
+        type: "COLOSSUS" as const,
         x: 1,
         y: 1,
         location: "Kwieciste Przejście",
@@ -69,13 +67,11 @@ describe("notification mutes", () => {
       npc: {
         id: 111111,
         name: "Tezaur",
-        nick: "Tezaur",
         lvl: 300,
         prof: "m",
         icon: "tezaur.png",
-        tpl: 1,
         wt: 95,
-        type: 10,
+        type: "COLOSSUS" as const,
         x: 1,
         y: 1,
         location: "Kwieciste Przejście",
@@ -83,6 +79,8 @@ describe("notification mutes", () => {
     });
 
     expect(firstKey).toBe(secondKey);
+    // Mute keys are stored in the user's preferences.
+    expect(firstKey).toBe("npc:-1793111531");
   });
 
   it("keeps a Hero Tracker muted after it moves to a hiding place with another id", () => {
@@ -95,13 +93,11 @@ describe("notification mutes", () => {
       npc: {
         id,
         name: "Doświadczony Tropiciel Herosów",
-        nick: "Doświadczony Tropiciel Herosów",
         lvl: 282,
         prof: "",
         icon: "npc/tropiciel.gif",
-        tpl: 190436,
         wt: 0,
-        type: 0,
+        type: "HERO_TRACKER" as const,
         x: 1,
         y: 1,
         location,
@@ -115,6 +111,9 @@ describe("notification mutes", () => {
     ).toBe(
       getNotificationNpcMuteKey(trackerNotification(190999, "Grobowiec Seta")),
     );
+    expect(
+      getNotificationNpcMuteKey(trackerNotification(190436, "Grobowiec Seta")),
+    ).toBe("npc:-298421138");
   });
 
   it("replaces duplicated mute entries with the latest payload", () => {
@@ -127,13 +126,11 @@ describe("notification mutes", () => {
       npc: {
         id: 123,
         name: "Mushita",
-        nick: "Mushita",
         lvl: 23,
         prof: "m",
         icon: "mushita.png",
-        tpl: 1,
         wt: 80,
-        type: 10,
+        type: "HERO" as const,
         x: 1,
         y: 1,
         location: "Las Tropicieli",

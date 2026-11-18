@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import { EventTimersError } from "#src/events/respawn/event-timers.port";
 import {
@@ -74,9 +75,7 @@ const operation = <A>(
 ) =>
   effect.pipe(
     Effect.mapError(operationFailure),
-    Effect.withSpan(operationIds[endpoint], {
-      attributes: { adapter: "events", retryCount: 0 },
-    }),
+    withAdapterSpan(operationIds[endpoint], "events"),
   );
 
 export const stringParameter = (value: unknown, key: string) =>

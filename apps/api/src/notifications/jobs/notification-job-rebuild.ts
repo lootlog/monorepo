@@ -15,7 +15,7 @@ import {
   NotificationScheduleAnchor,
   NotificationScheduleStrategy,
   NotificationTriggerType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 import type { JsonValue } from "#src/database/json";
 import { notificationMatchingPolicy } from "#src/notifications/rules/notification-matching.service";
 import {

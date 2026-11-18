@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { Meilisearch } from "meilisearch";
-import type { PlayerHit } from "./player-hit.js";
+import type { SearchPlayer } from "@lootlog/protocol/rabbit/events";
 import { makePlayersModule } from "./players.service.js";
 
 const player = (
@@ -9,7 +9,7 @@ const player = (
   accountId: number,
   name = "cashtelan",
   world = "luvia",
-): PlayerHit => ({
+): SearchPlayer => ({
   id: `${characterId}${accountId}`,
   characterId,
   accountId,
@@ -50,7 +50,7 @@ test("player search prefers known accounts over legacy duplicate identities with
   });
 
   const result = await Effect.runPromise(
-    makePlayersModule(client, { info() {}, warn() {}, error() {} }).getPlayers({
+    makePlayersModule(client).getPlayers({
       search: "cash",
       limit: 10,
     }),

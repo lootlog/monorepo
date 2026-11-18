@@ -1,6 +1,6 @@
+import type { EventPublisher } from "@lootlog/messaging";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { publishTimerEvents } from "./timer-update-publication.js";
-import { randomUUID } from "node:crypto";
 import { Effect, Predicate, Schema } from "effect";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { loadHeroSightings } from "#src/hero-sightings/hero-sighting-query";
@@ -14,16 +14,17 @@ import {
 } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/error-key";
 import { buildTimerKey } from "#src/timers/timer-key";
-import { getTimerNpcId } from "#src/shared/margonem/npc-identity";
+import { getTimerNpcId } from "@lootlog/domain/npc-identity";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersIdentity } from "./timers-data.js";
 import { TimersInfrastructureError } from "./timer-errors.js";
 import {
   CachedTimerProjectionSchema,
   mapTimerResponse,
-  type TimerPublishedEvent,
+  toTimerEvent,
 } from "#src/timers/timer-projection";
 import { hasTimerWeight, makeNpc } from "./timer-auto-report.js";
+import type { RedisLockManager } from "#src/redis/redlock";
 import {
   DEDUP_TTL_SECONDS,
   persistAutoTimer,
@@ -36,20 +37,7 @@ export interface AutoTimerGuildWritePorts extends AutoTimerPersistencePorts {
   readonly publishHeroSighting: (
     sighting: HeroSightingResponse,
   ) => Effect.Effect<unknown, unknown>;
-  readonly publish: <
-    Key extends
-      | typeof RabbitRoutingKey.GUILDS_TIMERS_DELETE
-      | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
-      | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED
-      | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-  >(
-    routingKey: Key,
-    payload: TimerPublishedEvent<Key>,
-  ) => Effect.Effect<unknown, unknown>;
-  readonly releaseDedup: (
-    key: string,
-    token: string,
-  ) => Effect.Effect<unknown, never>;
+  readonly publish: EventPublisher["publish"];
   readonly set: (
     key: string,
     value: string,
@@ -57,12 +45,11 @@ export interface AutoTimerGuildWritePorts extends AutoTimerPersistencePorts {
   ) => Effect.Effect<unknown, unknown>;
   /** Wakes the dispatcher for checks committed with a timer. */
   readonly signalEventHeroChecks: Effect.Effect<void>;
-  readonly setNx: (
-    key: string,
-    value: string,
-    ttlSeconds: number,
-  ) => Effect.Effect<boolean, unknown>;
+  readonly locks: Pick<RedisLockManager, "singleFlight">;
 }
+
+// A concurrent report of the same kill waits up to 5 s for the first one.
+const DEDUP_LOCK_WAIT = { retryCount: 100, retryDelay: 50, retryJitter: 0 };
 
 const projectionFromCache = (value: string) =>
   Effect.try({
@@ -104,38 +91,24 @@ export const writeGuildTimer = (
       );
     }
 
-    const cached = yield* ports.get(dedupKey);
-
-    if (cached) return yield* projectionFromCache(cached);
-    const token = randomUUID();
-    let acquired = yield* ports.setNx(dedupLockKey, token, DEDUP_TTL_SECONDS);
-
-    if (!acquired) {
-      for (let attempt = 0; attempt < 100; attempt += 1) {
-        yield* Effect.sleep("50 millis");
-        const result = yield* ports.get(dedupKey);
-
-        if (result) return yield* projectionFromCache(result);
-        acquired = yield* ports.setNx(dedupLockKey, token, DEDUP_TTL_SECONDS);
-
-        if (acquired) break;
-      }
-
-      if (!acquired) {
-        return yield* Effect.fail(
-          new ResourceConflictError({
-            code: ErrorKey.TIMER_RACE_CONDITION,
-          }),
-        );
-      }
-    }
-
-    return yield* Effect.ensuring(
+    return yield* ports.locks.singleFlight(
+      {
+        resource: dedupLockKey,
+        duration: DEDUP_TTL_SECONDS * 1000,
+        wait: DEDUP_LOCK_WAIT,
+        unavailable: () =>
+          new ResourceConflictError({ code: ErrorKey.TIMER_RACE_CONDITION }),
+      },
+      ports
+        .get(dedupKey)
+        .pipe(
+          Effect.flatMap((cached) =>
+            cached
+              ? Effect.asSome(projectionFromCache(cached))
+              : Effect.succeedNone,
+          ),
+        ),
       Effect.gen(function* () {
-        const cachedAfterLock = yield* ports.get(dedupKey);
-
-        if (cachedAfterLock) return yield* projectionFromCache(cachedAfterLock);
-
         const result = yield* persist;
         const response = mapTimerResponse(result.projection);
 
@@ -171,8 +144,14 @@ export const writeGuildTimer = (
         }
 
         yield* publishTimerEvents(
-          ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response),
-          ports.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED, response),
+          ports.publish(
+            RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
+            toTimerEvent(response),
+          ),
+          ports.publish(
+            RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+            toTimerEvent(response),
+          ),
         );
         yield* ports.set(
           dedupKey,
@@ -194,7 +173,6 @@ export const writeGuildTimer = (
 
         return response;
       }),
-      ports.releaseDedup(dedupLockKey, token),
     );
   });
 };

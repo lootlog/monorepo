@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { lt } from "drizzle-orm";
@@ -21,9 +22,7 @@ export const makeReservationsCleanup = (
       Effect.annotateLogs({ deleted: deleted.length, cutoff }),
     );
   }).pipe(
-    Effect.withSpan("reservations.cleanup", {
-      attributes: { adapter: "drizzle", retryCount: 0 },
-    }),
+    withAdapterSpan("reservations.cleanup", "drizzle"),
     Effect.catch((error) =>
       Effect.logError("Reservation cleanup failed").pipe(
         Effect.annotateLogs({ cause: error }),

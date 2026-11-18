@@ -6,8 +6,8 @@ import {
   DEFAULT_THEME_ID,
   THEME_CATALOG,
   THEME_CLASS_IDS,
-  THEME_IDS,
 } from "./catalog";
+import { BUILT_IN_THEME_IDS } from "@lootlog/schema/custom-theme";
 import {
   applyThemeClassToRoot,
   getThemeFamily,
@@ -19,7 +19,9 @@ import {
 
 describe("theme registry", () => {
   it("covers every supported theme in the catalog", () => {
-    expect(THEME_CATALOG.map((theme) => theme.name)).toEqual(THEME_IDS);
+    expect(THEME_CATALOG.map((theme) => theme.name)).toEqual(
+      BUILT_IN_THEME_IDS,
+    );
   });
 
   it("classifies cat themes and rukia correctly", () => {

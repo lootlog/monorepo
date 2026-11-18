@@ -37,9 +37,7 @@
     "markedByYou": "od Ciebie",
     "you": "Ty",
     "dead": "nie żyje",
-    "unknownWarrior": "Nieznany wojownik",
-    "justNow": "teraz",
-    "secondsAgo": "{{seconds}} s temu"
+    "unknownWarrior": "Nieznany wojownik"
   },
   "settings": {
     "sectionTitle": "Pingi",

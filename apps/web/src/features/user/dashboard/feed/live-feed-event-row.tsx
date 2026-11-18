@@ -8,7 +8,7 @@ import {
   LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { LEGENDARY_LOOT_ROW_CLASS } from "@/features/guild/loots-list/loots-list-layout";
-import { NPC_CATEGORY_APPEARANCE } from "../npc-category-appearance";
+import { npcCategoryAppearance } from "../npc-category-appearance";
 import { LiveFeedEventLoot } from "./live-feed-event-loot";
 import { LiveFeedEventMeta } from "./live-feed-event-meta";
 import { LiveFeedEventTitle } from "./live-feed-event-title";
@@ -29,7 +29,7 @@ export function LiveFeedEventRow({ group, now }: Props) {
   const { npc, world, location, legendary } = describeFeedGroup(group);
 
   const category = activityFeedNpcCategory(npc?.type);
-  const appearance = NPC_CATEGORY_APPEARANCE[category];
+  const appearance = npcCategoryAppearance(category);
   const count = group.kill?.count ?? 0;
 
   return (
@@ -40,6 +40,7 @@ export function LiveFeedEventRow({ group, now }: Props) {
         LIST_TILE_INSET_CLASS,
         legendary && LEGENDARY_LOOT_ROW_CLASS,
       )}
+      style={appearance.style}
     >
       <span className="flex size-10 items-center justify-center">
         {npc?.icon ? (

@@ -1,5 +1,5 @@
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { RedlockService } from "#src/redis/redlock";
@@ -19,15 +19,11 @@ import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
  */
 export const makeHeroSightingPublisher =
   (rabbit: RabbitMessaging["Service"]) => (sighting: HeroSightingResponse) => {
-    const content = new TextEncoder().encode(JSON.stringify(sighting));
-
     return Effect.all(
       [
         RabbitRoutingKey.GUILDS_HERO_SIGHTINGS_UPDATE,
         RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED,
-      ].map((routingKey) =>
-        rabbit.publish({ exchange: "default", routingKey, content }),
-      ),
+      ].map((routingKey) => rabbit.publish(eventMessage(routingKey, sighting))),
       { concurrency: 2, mode: "result" },
     ).pipe(
       Effect.flatMap((results) => Effect.forEach(results, Effect.fromResult)),
@@ -40,20 +36,15 @@ export const heroSightingsData = Layer.unwrap(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
 
-    const redlock = new RedlockService(redis).createInstance({
-      automaticExtensionThreshold: 5000,
-    });
+    const locks = new RedlockService(redis).createInstance();
 
     const withLock = <A, E>(key: string, effect: Effect.Effect<A, E>) =>
-      Effect.acquireUseRelease(
-        Effect.tryPromise({
-          try: () => redlock.acquire([key], 30_000),
-          catch: () =>
-            new ResourceConflictError({ code: "HERO_SIGHTING_RACE_CONDITION" }),
-        }),
-        () => effect,
-        (lock: Awaited<ReturnType<typeof redlock.acquire>>) =>
-          Effect.tryPromise(() => lock.release()).pipe(Effect.ignore),
+      locks.withLock(
+        key,
+        30_000,
+        effect,
+        () =>
+          new ResourceConflictError({ code: "HERO_SIGHTING_RACE_CONDITION" }),
       );
 
     const publish = makeHeroSightingPublisher(rabbit);

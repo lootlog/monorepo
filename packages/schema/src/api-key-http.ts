@@ -1,7 +1,11 @@
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { HttpApiMiddleware, HttpApiSchema, OpenApi } from "effect/http-api";
-import { apiKeyAllowsOperation, readApiKeyAccess } from "./api-key-policy.js";
+import { API_KEY_ACCESS_HEADER } from "./api-key-access.js";
+import {
+  apiKeyAllowsOperation,
+  readForwardAuthIdentity,
+} from "./api-key-policy.js";
 
 const ApiKeyHttpErrors = [401, 403, 429].map((status) =>
   Schema.Struct({ message: Schema.String }).pipe(HttpApiSchema.status(status)),
@@ -18,15 +22,11 @@ export const apiKeyEndpointPolicyLayer = (service: string) =>
     ApiKeyEndpointPolicy,
     ApiKeyEndpointPolicy.of((httpEffect, { endpoint }) =>
       Effect.flatMap(HttpServerRequest.HttpServerRequest, ({ headers }) => {
-        const access = readApiKeyAccess(headers);
+        // Without an API key assertion this is a session; services authorize it.
+        if (!headers[API_KEY_ACCESS_HEADER]) return httpEffect;
+        const access = readForwardAuthIdentity(headers)?.apiKey;
 
-        if (access === undefined) return httpEffect;
-
-        if (
-          access === null ||
-          !headers["x-auth-user-id"] ||
-          !headers["x-auth-discord-id"]
-        ) {
+        if (access === undefined) {
           return Effect.succeed(
             HttpServerResponse.jsonUnsafe(
               { message: "Unauthorized" },

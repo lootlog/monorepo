@@ -2,7 +2,7 @@ import {
   ApplicationError,
   ResourceNotFoundError,
 } from "#src/infrastructure/http-error";
-import { adapter } from "#src/infrastructure/infrastructure-adapter";
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ContextLogger } from "@lootlog/instrumentation";
 import {
   makeJsonCodec,
@@ -143,12 +143,15 @@ export const makeBattleTimelineRead = (
 
   /** R2 keeps timelines of battles saved before UUIDv7 IDs under their legacy ID. */
   const getBattleObjectId = (battleId: string) => {
-    return adapter("Battles_getObjectId", () =>
-      drizzle.query.battleLegacyIds.findFirst({
+    return drizzle.query.battleLegacyIds
+      .findFirst({
         where: { battleId },
         columns: { legacyId: true },
-      }),
-    ).pipe(Effect.map((legacy) => legacy?.legacyId ?? battleId));
+      })
+      .pipe(
+        withAdapterSpan("Battles_getObjectId", "battlelog-infrastructure"),
+        Effect.map((legacy) => legacy?.legacyId ?? battleId),
+      );
   };
 
   /**
@@ -156,34 +159,40 @@ export const makeBattleTimelineRead = (
    * events there. Older battles keep theirs in R2 under their object ID.
    */
   const loadRawBattleData = (battle: RawBattleSource) => {
-    return adapter("Battles_getTimeline", () =>
-      drizzle.query.battleTimelines.findFirst({
+    return drizzle.query.battleTimelines
+      .findFirst({
         where: { battleId: battle.id, userId: battle.userId },
         columns: { events: true },
-      }),
-    ).pipe(
-      Effect.flatMap((timeline) =>
-        timeline
-          ? Effect.succeed<RawBattleData>({
-              battleId: battle.id,
-              timestamp: battle.createdAt.toISOString(),
-              rawData: {
-                accountId: battle.accountId,
-                characterId: battle.characterId,
-                world: battle.world,
-                events: [],
-                sourceEvents: decodeBattleEvents(timeline.events),
-              },
-            })
-          : getBattleObjectId(battle.id).pipe(
-              Effect.flatMap((objectId) =>
-                adapter("BattleObjectStorage_getBattleData", () =>
-                  r2Service.getBattleData(objectId, decodeRawBattleDataJson),
+      })
+      .pipe(
+        withAdapterSpan("Battles_getTimeline", "battlelog-infrastructure"),
+        Effect.flatMap((timeline) =>
+          timeline
+            ? Effect.succeed<RawBattleData>({
+                battleId: battle.id,
+                timestamp: battle.createdAt.toISOString(),
+                rawData: {
+                  accountId: battle.accountId,
+                  characterId: battle.characterId,
+                  world: battle.world,
+                  events: [],
+                  sourceEvents: decodeBattleEvents(timeline.events),
+                },
+              })
+            : getBattleObjectId(battle.id).pipe(
+                Effect.flatMap((objectId) =>
+                  r2Service
+                    .getBattleData(objectId, decodeRawBattleDataJson)
+                    .pipe(
+                      withAdapterSpan(
+                        "BattleObjectStorage_getBattleData",
+                        "battlelog-infrastructure",
+                      ),
+                    ),
                 ),
               ),
-            ),
-      ),
-    );
+        ),
+      );
   };
 
   const buildTimelineResponse = (battle: BattleWithRelations) => {
@@ -226,9 +235,15 @@ export const makeBattleTimelineRead = (
     return Effect.gen(function* () {
       const cacheKey = `battle-timeline:v1:${battle.userId}:${battle.id}:${battle.updatedAt.getTime()}`;
 
-      const cached = yield* adapter("Battles_getCachedTimeline", () =>
-        redisService.getJson(cacheKey, BattleTimelineCodec),
-      ).pipe(Effect.catch(() => Effect.succeed(null)));
+      const cached = yield* redisService
+        .getJson(cacheKey, BattleTimelineCodec)
+        .pipe(
+          withAdapterSpan(
+            "Battles_getCachedTimeline",
+            "battlelog-infrastructure",
+          ),
+          Effect.catch(() => Effect.succeed(null)),
+        );
 
       if (cached) return cached;
 
@@ -238,13 +253,15 @@ export const makeBattleTimelineRead = (
         Buffer.byteLength(JSON.stringify(response), "utf8") <=
         BATTLE_TIMELINE_MAX_CACHE_BYTES
       ) {
-        yield* adapter("Battles_cacheTimeline", () =>
-          redisService.setJson(
-            cacheKey,
-            response,
-            BATTLE_TIMELINE_CACHE_TTL_SECONDS,
-          ),
-        ).pipe(Effect.catch(() => Effect.void));
+        yield* redisService
+          .setJson(cacheKey, response, BATTLE_TIMELINE_CACHE_TTL_SECONDS)
+          .pipe(
+            withAdapterSpan(
+              "Battles_cacheTimeline",
+              "battlelog-infrastructure",
+            ),
+            Effect.catch(() => Effect.void),
+          );
       }
 
       return response;
@@ -257,12 +274,14 @@ export const makeBattleTimelineRead = (
         yield* catalog.checkBattleAccess(battleId, requestingUserId);
       }
 
-      const battle = yield* adapter("Battles_getRawSource", () =>
-        drizzle.query.battles.findFirst({
+      const battle = yield* drizzle.query.battles
+        .findFirst({
           where: { id: battleId },
           columns: rawBattleSourceColumns,
-        }),
-      );
+        })
+        .pipe(
+          withAdapterSpan("Battles_getRawSource", "battlelog-infrastructure"),
+        );
 
       if (!battle)
         return yield* Effect.fail(
@@ -286,12 +305,14 @@ export const makeBattleTimelineRead = (
 
   const getPublicBattleRaw = (battleId: string) => {
     return Effect.gen(function* () {
-      const battle = yield* adapter("Battles_getPublicRaw", () =>
-        drizzle.query.battles.findFirst({
+      const battle = yield* drizzle.query.battles
+        .findFirst({
           where: { id: battleId, public: true },
           columns: rawBattleSourceColumns,
-        }),
-      );
+        })
+        .pipe(
+          withAdapterSpan("Battles_getPublicRaw", "battlelog-infrastructure"),
+        );
 
       if (!battle)
         return yield* Effect.fail(

@@ -1,39 +1,11 @@
 import { expect, test } from "bun:test";
 import { getPortalEnvironment } from "./environment";
-import { decodeCreatedKey, isApiKeyActive } from "./key-client";
+import { isApiKeyActive } from "./key-client";
 
-test("developer hosts never cross environments and unknown hosts fail closed", () => {
-  const development = getPortalEnvironment("dev-developer.lootlog.pl");
-
-  for (const [key, value] of Object.entries(development)) {
-    if (key !== "production") expect(String(value)).toMatch(/^https:\/\/dev-/);
-  }
-
-  const production = getPortalEnvironment("developer.lootlog.pl");
-
-  for (const [key, value] of Object.entries(production)) {
-    if (key !== "production") expect(String(value)).not.toContain("dev-");
-  }
-
-  expect(() => getPortalEnvironment("preview.example.com")).toThrow();
-});
-
-test("key creation validates the one-time secret and scope before displaying success", () => {
-  const key = {
-    id: "key-1",
-    name: "Test",
-    start: null,
-    createdAt: "2026-09-08T00:00:00.000Z",
-    expiresAt: null,
-    organizationIds: ["org-1"],
-    mode: "read",
-    personalData: false,
-    key: "secret",
-  };
-
-  expect(decodeCreatedKey(key).key).toBe("secret");
-  expect(() => decodeCreatedKey({ ...key, key: undefined })).toThrow();
-  expect(() => decodeCreatedKey({ ...key, mode: "admin" })).toThrow();
+test("only the production portal host reaches production services", () => {
+  expect(getPortalEnvironment("developer.lootlog.pl")).toBe("production");
+  expect(getPortalEnvironment("dev-developer.lootlog.pl")).toBe("development");
+  expect(getPortalEnvironment("preview.example.com")).toBe("development");
 });
 
 test("expired keys do not consume the UI limit of active keys", () => {

@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import {
   memberDisplayRolesQuery,
@@ -84,9 +85,7 @@ export const makeEventRankingRead = (
         },
       }));
     }).pipe(
-      Effect.withSpan("events.ranking.read.load", {
-        attributes: { adapter: "events.ranking.drizzle", retryCount: 0 },
-      }),
+      withAdapterSpan("events.ranking.read.load", "events.ranking.drizzle"),
     );
 
   return {
@@ -137,9 +136,7 @@ export const makeEventRankingRead = (
           (history) => history.rankingId,
         );
       }).pipe(
-        Effect.withSpan("events.ranking.editHistory", {
-          attributes: { adapter: "events.ranking.drizzle", retryCount: 0 },
-        }),
+        withAdapterSpan("events.ranking.editHistory", "events.ranking.drizzle"),
       );
     },
   };

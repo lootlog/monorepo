@@ -10,7 +10,7 @@ import {
   NotificationScheduleStrategy,
   NotificationTargetType,
   NotificationTriggerType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 import {
   jsonValueSchema,
   nullableIsoDatetimeCodec,

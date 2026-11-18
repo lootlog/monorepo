@@ -11,11 +11,14 @@
   "exports": {
     "./activity": "./src/generated/activity.ts",
     "./auth": "./src/generated/auth.ts",
+    "./auth-session": "./src/auth-session.ts",
     "./battlelog": "./src/generated/battlelog.ts",
     "./catalog": "./src/generated/catalog.ts",
     "./main": "./src/generated/main.ts",
+    "./mutators": "./src/mutators.ts",
     "./realtime": "./src/realtime/index.ts",
     "./realtime/event-listeners": "./src/realtime/event-listeners.ts",
+    "./scripts/generation": "./scripts/generation.ts",
     "./search": "./src/generated/search.ts",
     "./transport": "./src/transport.ts"
   },
@@ -28,13 +31,15 @@
   },
   "dependencies": {
     "@lootlog/protocol": "workspace:*",
-    "@lootlog/schema": "workspace:*"
+    "@lootlog/schema": "workspace:*",
+    "better-auth": "1.7.16"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
+    "@types/react": "catalog:",
     "effect": "catalog:",
     "orval": "^8.42.0",
     "react": "catalog:",

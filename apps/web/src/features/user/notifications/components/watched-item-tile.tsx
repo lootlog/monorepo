@@ -7,7 +7,10 @@ import { cn } from "cn";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { ItemRarity, resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import {
+  DisplayItemRarity,
+  resolveItemRarity,
+} from "@lootlog/domain/item-rarity";
 import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
@@ -65,7 +68,7 @@ export const WatchedItemTile = ({
 
   const snapshot = watchedItem.itemSnapshot;
   const rarity = resolveItemRarity(snapshot?.rarity);
-  const apiRarity = rarity === ItemRarity.COMMON ? null : rarity;
+  const apiRarity = rarity === DisplayItemRarity.COMMON ? null : rarity;
   const displayName = snapshot?.name ?? watchedItem.itemName;
   const displayIcon = snapshot?.icon ?? null;
   const hasMissingGuilds = missingGuildIds.length > 0;

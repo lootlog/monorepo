@@ -18,7 +18,6 @@
     "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts"
   },
   "dependencies": {
-    "@effect/platform-bun": "catalog:",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/meilisearch": "workspace:*",
     "@lootlog/messaging": "workspace:*",

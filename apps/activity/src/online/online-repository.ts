@@ -1,9 +1,6 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { onlineHistoryCutoff } from "./online-retention.js";
-import {
-  ONLINE_TIME_ZONE,
-  rebuildOnlineDays,
-  upsertOnlineDays,
-} from "./online-days.js";
+import { rebuildOnlineDays, upsertOnlineDays } from "./online-days.js";
 import { PgClient } from "@effect/sql-pg";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -174,8 +171,8 @@ export class OnlineRepository extends Context.Service<
           worldsComplete: boolean;
         }>`
         WITH days AS (
-          SELECT d::date AS date, d::timestamp AT TIME ZONE ${ONLINE_TIME_ZONE} AS start,
-            (d::date + 1)::timestamp AT TIME ZONE ${ONLINE_TIME_ZONE} AS finish
+          SELECT d::date AS date, d::timestamp AT TIME ZONE ${MARGONEM_TIME_ZONE} AS start,
+            (d::date + 1)::timestamp AT TIME ZONE ${MARGONEM_TIME_ZONE} AS finish
           FROM generate_series(${query.from}::date::timestamp, ${query.to}::date::timestamp, interval '1 day') d
         ), retained AS (
           SELECT date, world, spans * tstzmultirange(tstzrange(${cutoff}::timestamptz, NULL)) AS spans
@@ -213,7 +210,7 @@ export class OnlineRepository extends Context.Service<
         ORDER BY days.date`;
 
         return {
-          timezone: "Europe/Warsaw" as const,
+          timezone: MARGONEM_TIME_ZONE,
           trackingStartedAt,
           lastObservedAt,
           status: !trackingStartedAt
@@ -319,7 +316,7 @@ export class OnlineRepository extends Context.Service<
                 .where(
                   lt(
                     userOnlineDays.date,
-                    drizzleSql<string>`(${current.cutoff}::timestamptz AT TIME ZONE ${ONLINE_TIME_ZONE})::date`,
+                    drizzleSql<string>`(${current.cutoff}::timestamptz AT TIME ZONE ${MARGONEM_TIME_ZONE})::date`,
                   ),
                 )
                 .limit(1000)

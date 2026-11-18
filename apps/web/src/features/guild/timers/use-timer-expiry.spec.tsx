@@ -46,6 +46,7 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
   client.setQueryData(otherKey, []);
 
   const timers = Array.from({ length: 100 }, (_, index) => ({
+    guildId: "one",
     world: "tempest",
     timerKey: String(index),
     maxSpawnTime: "2026-09-05T12:00:01Z",
@@ -84,6 +85,7 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
   rerender({
     currentTimers: [
       {
+        guildId: "one",
         world: "tempest",
         timerKey: "0",
         maxSpawnTime: "2026-09-05T12:00:03Z",
@@ -130,7 +132,14 @@ it.each([
     const { unmount } = renderHook(
       () =>
         useTimerExpiry(
-          [{ world: "tempest", timerKey: "expired", maxSpawnTime: expiredAt }],
+          [
+            {
+              guildId: "one",
+              world: "tempest",
+              timerKey: "expired",
+              maxSpawnTime: expiredAt,
+            },
+          ],
           queryKey,
           Date.parse("2026-09-05T12:00:00Z"),
           0,

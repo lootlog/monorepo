@@ -1,6 +1,11 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
+import {
+  INTERNAL_USER_PERMISSIONS_PATH,
+  type InternalUserPermissionsQuery,
+} from "@lootlog/schema/internal-guilds";
 import { Clock, Effect, Option, Result, Schema, Context, Layer } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import {
@@ -122,12 +127,16 @@ export const makeGuildStore = (
     options: GetUserGuildsOptions,
     readOptions?: { readonly freshness: "required" },
   ) {
-    const url = new URL(`${config.apiUrl}/internal/guilds/user-permissions`);
-    url.searchParams.set("discordId", options.discordId);
-    url.searchParams.set("userId", options.userId);
+    const query: InternalUserPermissionsQuery = {
+      discordId: options.discordId,
+      userId: options.userId,
+      ...(readOptions?.freshness === "required" && { freshness: "required" }),
+    };
 
-    if (readOptions?.freshness === "required")
-      url.searchParams.set("freshness", "required");
+    const url = new URL(`${config.apiUrl}${INTERNAL_USER_PERMISSIONS_PATH}`);
+
+    for (const [name, value] of Object.entries(query))
+      url.searchParams.set(name, value);
 
     return yield* boundedHttpGet({
       client: httpClient,
@@ -260,9 +269,7 @@ export const makeGuildStore = (
   return {
     getUserGuilds: (options, readOptions) =>
       loadUserGuilds(options, readOptions).pipe(
-        Effect.withSpan("GuildStore_getUserGuilds", {
-          attributes: { adapter: "api-user-permissions", retryCount: 0 },
-        }),
+        withAdapterSpan("GuildStore_getUserGuilds", "api-user-permissions"),
       ),
     invalidate: (options) =>
       cacheCommand(() =>
@@ -272,12 +279,7 @@ export const makeGuildStore = (
           "EX",
           CACHE_TTL.MAX_STALE_CACHE_AGE,
         ),
-      ).pipe(
-        Effect.asVoid,
-        Effect.withSpan("GuildStore_invalidate", {
-          attributes: { adapter: "redis", retryCount: 0 },
-        }),
-      ),
+      ).pipe(Effect.asVoid, withAdapterSpan("GuildStore_invalidate", "redis")),
   };
 };
 

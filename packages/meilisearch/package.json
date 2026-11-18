@@ -6,9 +6,9 @@
   "sideEffects": false,
   "exports": {
     "./batch-consumer": "./src/batch-consumer.ts",
-    "./index-changed-documents": "./src/index-changed-documents.ts",
     "./index-settings": "./src/index-settings.ts",
     "./operation-failure": "./src/operation-failure.ts",
+    "./projection": "./src/projection.ts",
     "./query-builder": "./src/query-builder.ts",
     "./search-unavailable": "./src/search-unavailable.ts"
   },
@@ -18,6 +18,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@lootlog/instrumentation": "workspace:*",
     "@lootlog/messaging": "workspace:*",
     "effect": "catalog:",
     "es-toolkit": "catalog:",

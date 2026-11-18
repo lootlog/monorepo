@@ -9,7 +9,7 @@ import {
   GatewayRedis,
 } from "#src/platform/redis-store";
 import type { SessionData } from "./session.js";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
@@ -286,16 +286,20 @@ export class OnlineHistories extends Context.Service<
         (yield* GatewayRedis).command,
         (payload) =>
           messaging
-            .publish({
-              routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
-              content: new TextEncoder().encode(JSON.stringify(payload)),
-              headers: {
-                [ACTIVITY_EVENT_SIGNATURE_HEADER]: signActivityEvent(
-                  payload,
-                  Redacted.value(config.activityEventSignatureSecret),
-                ),
-              },
-            })
+            .publish(
+              eventMessage(
+                RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
+                payload,
+                {
+                  headers: {
+                    [ACTIVITY_EVENT_SIGNATURE_HEADER]: signActivityEvent(
+                      payload,
+                      Redacted.value(config.activityEventSignatureSecret),
+                    ),
+                  },
+                },
+              ),
+            )
             .pipe(Effect.asVoid),
       );
 

@@ -1,9 +1,4 @@
-export type ReferenceService =
-  | "main"
-  | "activity"
-  | "battlelog"
-  | "catalog"
-  | "search";
+import type { PublicApiService } from "@lootlog/schema/api-services";
 
 type TagMetadata = { name: string; description: string };
 
@@ -25,7 +20,7 @@ const authentication =
  * OpenAPI documents carry only operations, so the portal adds the reading
  * order and the copy a developer needs to find them.
  */
-export const referenceMetadata: Record<ReferenceService, ServiceMetadata> = {
+export const referenceMetadata: Record<PublicApiService, ServiceMetadata> = {
   main: {
     description: `Organizations, Members, timers, loot, kills, events and coordination features of Lootlog.\n\n${authentication}\n\n${guides}`,
     tags: {

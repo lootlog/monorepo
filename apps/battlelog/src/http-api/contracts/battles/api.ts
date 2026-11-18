@@ -48,7 +48,7 @@ import {
   BattlesControllerUpdateBattlePathParams,
   BattlesControllerUpdateBattleRequestJson,
 } from "./endpoints.schemas.js";
-import { BearerSecurityMiddleware } from "./security.js";
+import { BearerSecurityMiddleware } from "@lootlog/protocol/http/bearer-security";
 
 export class BattlesGroup extends HttpApiGroup.make("battles").add(
   HttpApiEndpoint.post("BattlesControllerCreateBattle", "/battles", {

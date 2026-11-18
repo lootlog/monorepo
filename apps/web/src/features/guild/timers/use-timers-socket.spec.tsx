@@ -4,8 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   getTimersControllerGetTimersQueryKey,
   useTimersControllerGetTimers,
-  type TimerResponseDto,
 } from "@lootlog/client/main";
+import type { TimerUpdated } from "@lootlog/protocol/realtime/organization-events";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { configureApiClients } from "@lootlog/client/transport";
@@ -18,7 +18,7 @@ import {
 } from "@/lib/testing/gateway";
 import { useTimersSocket } from "./use-timers-socket";
 
-const timer: TimerResponseDto = {
+const timer: TimerUpdated = {
   guildId: "one",
   world: "tempest",
   timerKey: "npc:1",
@@ -39,6 +39,8 @@ const timer: TimerResponseDto = {
     icon: null,
     margonemType: "npc",
   },
+  deletedAt: null,
+  entranceClosesAt: null,
 };
 
 const guilds = [
@@ -100,7 +102,7 @@ it("patches matching create, reset and delete without HTTP, ignoring other scope
 
   client.setQueryData(inactive, [timer]);
 
-  const deliver = (payload: TimerResponseDto) =>
+  const deliver = (payload: TimerUpdated) =>
     gateway.deliver({
       v: 1,
       type: "timer.created",
@@ -123,7 +125,13 @@ it("patches matching create, reset and delete without HTTP, ignoring other scope
       type: "timer.deleted",
       data: {
         organizationId: "one",
-        payload: { guildId: "one", world: "tempest", timerKey: "npc:1" },
+        payload: {
+          guildId: "one",
+          world: "tempest",
+          timerKey: "npc:1",
+          npcId: 1,
+          routing: { tier: "base" },
+        },
       },
     }),
   );

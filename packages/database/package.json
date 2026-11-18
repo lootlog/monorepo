@@ -7,12 +7,12 @@
   "exports": {
     ".": "./src/postgres.ts",
     "./migration": "./src/migration.ts",
-    "./item-stat": "./src/item-stat.ts",
     "./snapshot-hash": "./src/snapshot-hash.ts",
     "./redis-script": "./src/redis-script.ts",
     "./redis-cache-fill": "./src/redis-cache-fill.ts",
     "./sliding-window-rate-limit": "./src/sliding-window-rate-limit.ts",
-    "./bun-redis": "./src/bun-redis.ts"
+    "./bun-redis": "./src/bun-redis.ts",
+    "./bullmq": "./src/bullmq.ts"
   },
   "scripts": {
     "lint": "oxlint src test",
@@ -23,7 +23,10 @@
   "dependencies": {
     "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
+    "@lootlog/domain": "workspace:*",
     "@lootlog/schema": "workspace:*",
+    "bullmq": "^6.3.14",
+    "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "pg": "^8.23.1"
   },
@@ -33,7 +36,6 @@
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
-    "drizzle-orm": "catalog:",
     "testcontainers": "^12.2.1",
     "typescript": "catalog:"
   }

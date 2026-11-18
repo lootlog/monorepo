@@ -1,4 +1,4 @@
-import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import type { Profession } from "@/lib/equipment-set";
 import type { SkillBonuses } from "@/lib/skills/skill-stats";
 import { SKILL_LEVEL_CAP } from "@/lib/skills/skill-tree";
@@ -79,10 +79,10 @@ export const baseAttributes = (
   return attributes;
 };
 
-export type DamageRange = { min: number; max: number };
+type DamageRange = { min: number; max: number };
 
 /** An effect a hit may cause: how likely it is and how much it deals. */
-export type ChanceDamage = { chance: number; damage: number };
+type ChanceDamage = { chance: number; damage: number };
 
 export type CharacterStats = {
   hp: number;
@@ -180,7 +180,7 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
   for (const { item } of wornItems) {
     const isOffhand = item.type === "HELP_WEAPON";
 
-    for (const { key, value } of parseItemStats(item.stat)) {
+    for (const { key, value } of parseItemStatEntries(item.stat)) {
       const numbers = statNumbers(value);
 
       if (numbers.length === 0) continue;

@@ -1,26 +1,22 @@
-import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
+import { runService } from "@lootlog/instrumentation/service";
 import { RabbitMessaging } from "@lootlog/messaging";
-import { BunRuntime } from "@effect/platform-bun";
-import { installScopedLogRunner } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
 import { FetchHttpClient } from "effect/http";
 import { registerNodeWarningDiagnostics } from "#src/shared/diagnostics/node-warning-diagnostics";
 import { apiConfiguration } from "#src/config/api.config";
 import { ApiApplicationLive } from "./runtime/application/api-application.js";
 
-const ObservabilityLive = makeObservabilityLayer(apiConfiguration);
-
-BunRuntime.runMain(
-  Effect.gen(function* () {
-    yield* installScopedLogRunner;
-    const config = yield* apiConfiguration;
-    yield* Effect.sync(() => registerNodeWarningDiagnostics(config));
-    yield* Layer.launch(
-      ApiApplicationLive.pipe(Layer.provide(FetchHttpClient.layer)),
-    );
-  }).pipe(
-    Effect.scoped,
-    Effect.provide(ObservabilityLive),
-    RabbitMessaging.supervised,
+const NodeWarningDiagnosticsLive = Layer.effectDiscard(
+  Effect.flatMap(apiConfiguration, (config) =>
+    Effect.sync(() => registerNodeWarningDiagnostics(config)),
   ),
 );
+
+runService({
+  config: apiConfiguration,
+  application: ApiApplicationLive.pipe(
+    Layer.provide(FetchHttpClient.layer),
+    Layer.provide(NodeWarningDiagnosticsLive),
+  ),
+  supervise: RabbitMessaging.supervised,
+});

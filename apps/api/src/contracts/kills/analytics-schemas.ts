@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { FiniteNumber, WorldParam } from "@lootlog/schema/http-scalars";
 import { Schema } from "effect";
 import { NpcType } from "./schemas.js";
@@ -44,7 +45,7 @@ export const UserKillActivityQuery = Schema.Struct({
 export type UserKillActivityQuery = typeof UserKillActivityQuery.Type;
 
 const KillAnalyticsMeta = Schema.Struct({
-  timezone: Schema.Literal("Europe/Warsaw"),
+  timezone: Schema.Literal(MARGONEM_TIME_ZONE),
   generatedAt: Schema.String,
   days: Count,
   world: NullableString,

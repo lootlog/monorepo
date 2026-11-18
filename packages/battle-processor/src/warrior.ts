@@ -1,3 +1,4 @@
+import { foldText } from "@lootlog/domain/text-fold";
 import type { BattleWarriorSnapshot } from "./battle-log.js";
 
 /** One warrior's combat totals. Battlelog persists every field. */
@@ -197,10 +198,7 @@ const createWarrior = (data: BattleWarriorSnapshot): Warrior => ({
 });
 
 export const normalizeName = (name: string): string =>
-  name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+  foldText(name).toLowerCase();
 
 /** Warriors keyed by battle id, looked up by the names the log prints. */
 export class WarriorRoster {

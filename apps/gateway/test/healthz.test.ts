@@ -1,3 +1,4 @@
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { afterAll, describe, expect, test } from "bun:test";
 import { httpServerRequestCount } from "@lootlog/instrumentation";
 import {
@@ -9,7 +10,7 @@ import {
   Schema,
   Redacted,
 } from "effect";
-import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
+import { observabilityLayer } from "@lootlog/instrumentation/observability";
 import { Permission } from "@lootlog/schema/permissions";
 import { makeGatewayAuth } from "../src/auth/auth-service.js";
 import type { UserGuildData } from "../src/guilds/guild.js";
@@ -83,7 +84,7 @@ const presence: GatewayHttpDependencies["presence"] = {
 };
 
 const application = {
-  config: { websocketPath: "/ws", environment: "test" },
+  config: { websocketPath: "/ws", environment: RuntimeEnvironment.DEV },
   runPromise: Effect.runPromise,
   auth,
   hub,
@@ -121,7 +122,7 @@ describe("gateway HTTP boundary", () => {
     });
 
     const runtime = ManagedRuntime.make(
-      makeObservabilityLayer(
+      observabilityLayer(
         Effect.succeed({
           serviceName: "gateway",
           serviceNamespace: "test",

@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { WindowFooter } from "@/components/draggable-window/window-footer";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,10 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  CreateManualTimerDtoType,
-  type SearchTimersNpcResponseDtoOutput,
-} from "@lootlog/client/main";
+import type { SearchTimersNpcResponseDtoOutput } from "@lootlog/client/main";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { getNpcTypeNames } from "@/constants/margonem";
 import { cn } from "cn";
@@ -30,14 +28,6 @@ import {
   resolveManualTimerNpcType,
   type AddTimerFormProps,
 } from "./use-add-timer-form";
-
-const MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS = {
-  [CreateManualTimerDtoType.ELITE2]: "elite2",
-  [CreateManualTimerDtoType.ELITE3]: "elite3",
-  [CreateManualTimerDtoType.HERO]: "hero",
-  [CreateManualTimerDtoType.EVENT_HERO]: "event_hero",
-  [CreateManualTimerDtoType.TITAN]: "titan",
-} as const satisfies Record<(typeof MANUAL_TIMER_NPC_TYPES)[number], string>;
 
 const getFieldErrorMessage = (error?: { message?: string }) => error?.message;
 
@@ -153,13 +143,11 @@ export function AddTimerForm(props: AddTimerFormProps) {
               keyExtractor={(npc) => npc.npcId}
               renderItem={(npc, _index, isSelected) => {
                 const longname = getNpcTypeNames(npc.type)
-                  ? t(`common:npcTypes.${npc.type.toLowerCase()}`)
+                  ? t(`npcType:${npc.type}`)
                   : t("addForm.mobFallback");
 
                 const npcDetails =
-                  npc.lvl > 0 && npc.prof
-                    ? `${npc.lvl}${npc.prof.charAt(0).toLowerCase()}`
-                    : "";
+                  npc.lvl > 0 && npc.prof ? formatLevel(npc.lvl, npc.prof) : "";
 
                 return (
                   <div
@@ -243,9 +231,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
                   </SelectItem>
                   {MANUAL_TIMER_NPC_TYPES.map((npcType) => (
                     <SelectItem key={npcType} value={npcType}>
-                      {t(
-                        `common:npcTypes.${MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS[npcType]}`,
-                      )}
+                      {t(`npcType:${npcType}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>

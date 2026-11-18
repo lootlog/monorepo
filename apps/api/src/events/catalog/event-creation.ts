@@ -1,11 +1,14 @@
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { eventReadCacheScope } from "#src/events/catalog/event-read-cache.service";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   normalizeEventScoringMode,
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -17,11 +20,6 @@ import { InvalidRequestError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { CreateEventRequest } from "#src/contracts/events/schemas";
 import { attachComputedEventActive } from "#src/events/monitoring/event-activity";
-
-class EventCreationError extends TaggedErrorClass<EventCreationError>()(
-  "EventCreationError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 export const makeEventCreation =
   (
@@ -75,7 +73,7 @@ export const makeEventCreation =
       catch: (cause) =>
         cause instanceof InvalidRequestError
           ? cause
-          : new EventCreationError({
+          : new OperationError({
               operation: "events.create.normalize",
               cause,
             }),
@@ -108,7 +106,7 @@ export const makeEventCreation =
 
             if (!event) {
               return yield* Effect.fail(
-                new EventCreationError({
+                new OperationError({
                   operation: "events.create.insert",
                   cause: new Error("Event was not returned"),
                 }),
@@ -161,16 +159,14 @@ export const makeEventCreation =
         )
         .pipe(
           Effect.mapError((cause) =>
-            cause instanceof EventCreationError
+            cause instanceof OperationError
               ? cause
-              : new EventCreationError({
+              : new OperationError({
                   operation: "events.create.transaction",
                   cause,
                 }),
           ),
-          Effect.withSpan("events.create.transaction", {
-            attributes: { adapter: "events.drizzle", retryCount: 0 },
-          }),
+          withAdapterSpan("events.create.transaction", "events.drizzle"),
         );
 
       yield* Effect.tryPromise({

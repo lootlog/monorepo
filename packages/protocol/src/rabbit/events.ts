@@ -7,9 +7,22 @@ import {
   SafeInteger,
 } from "@lootlog/schema/http-scalars";
 import {
-  discordPermissionFields,
+  DiscordGuildChannel,
+  DiscordGuildSyncState,
   DiscordGuildSyncStatus,
 } from "@lootlog/schema/discord";
+import {
+  DiscordNotificationDeliveryResultSchema,
+  DiscordNotificationSendCommandSchema,
+  LootCreatedNotificationEventV2Schema,
+} from "@lootlog/schema/notifications";
+import {
+  CatalogItemObservation,
+  CatalogItemRevisions,
+  CatalogMonsterDrops,
+  CatalogMonsterLocations,
+  CatalogNpcObservation,
+} from "./catalog.js";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
 import { PartyGatheringUpdateEnvelopeSchema } from "@lootlog/schema/party-ready-room";
 import { CharacterAurasChangedSchema } from "@lootlog/schema/character-aura";
@@ -52,8 +65,6 @@ export const MargonemAccountVerifiedV1 = Schema.Struct({
 export type MargonemAccountVerifiedV1 = typeof MargonemAccountVerifiedV1.Type;
 
 const NullableString = Schema.NullOr(Schema.String);
-
-const NullableNumber = Schema.NullOr(Schema.Number);
 
 const GuildRole = Schema.Struct({
   id: Schema.NonEmptyString,
@@ -123,32 +134,6 @@ const PresenceCoverageChecked = Schema.Struct({
   discordId: Schema.NonEmptyString,
   hasPlayer: Schema.Boolean,
   isAfk: Schema.optional(Schema.Boolean),
-});
-
-const DiscordGuildChannel = Schema.Struct({
-  guildId: Schema.NonEmptyString,
-  channelId: Schema.NonEmptyString,
-  name: Schema.NonEmptyString,
-  channelType: Schema.NonEmptyString,
-  parentId: NullableString,
-  position: Schema.Number,
-  active: Schema.Boolean,
-  canView: Schema.Boolean,
-  canSend: Schema.Boolean,
-  ...discordPermissionFields,
-  lastSyncedAt: Schema.NonEmptyString,
-});
-
-const DiscordGuildSyncState = Schema.Struct({
-  guildId: Schema.NonEmptyString,
-  status: DiscordGuildSyncStatus,
-  ...discordPermissionFields,
-  channelCount: NonNegativeInt,
-  selectableChannelCount: NonNegativeInt,
-  lastAttemptAt: NullableString,
-  lastSuccessAt: NullableString,
-  lastError: NullableString,
-  updatedAt: Schema.NonEmptyString,
 });
 
 const DiscordGuildChannelsSynced = Schema.Struct({
@@ -238,7 +223,7 @@ const EventMapStatusUpdated = Schema.Struct({
 const EventHeroKilled = Schema.Struct({
   ...EventScope.fields,
   heroNpcLvl: Schema.optional(Schema.NullOr(NonNegativeInt)),
-  heroId: Schema.optional(Schema.NonEmptyString),
+  killId: Schema.NonEmptyString,
 });
 
 const EventRespawnWindowChanged = Schema.Struct({
@@ -247,14 +232,48 @@ const EventRespawnWindowChanged = Schema.Struct({
   heroId: Schema.NonEmptyString,
 });
 
-const ActivityLogCreated = Schema.Struct({
-  userId: Schema.NonEmptyString,
-  guildId: Schema.optional(Schema.NonEmptyString),
-  action: Schema.NonEmptyString,
-  entityType: Schema.optional(Schema.NonEmptyString),
-  entityId: Schema.optional(Schema.Union([Schema.String, Schema.Number])),
-  metadata: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
+const ActivityActorSnapshot = Schema.Struct({
+  accountId: Schema.optional(Schema.Number),
+  characterId: Schema.optional(Schema.Number),
+  name: Schema.optional(Schema.String),
+  clanName: Schema.optional(Schema.String),
+  clanId: Schema.optional(Schema.Number),
+  icon: Schema.optional(Schema.String),
+  lvl: Schema.optional(Schema.Number),
+  prof: Schema.optional(Schema.String),
 });
+
+/** A signed session activity; see `activity-signature`. */
+export const ActivityLogCreated = Schema.Struct({
+  userId: Schema.NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  discordId: Schema.NonEmptyString,
+  type: Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"]),
+  source: Schema.Literals(["GAME", "WEB_APP"]),
+  world: Schema.optional(Schema.String),
+  details: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
+  actorSnapshot: Schema.optional(ActivityActorSnapshot),
+  idempotencyKey: Schema.NonEmptyString,
+});
+
+export type ActivityLogCreated = typeof ActivityLogCreated.Type;
+
+/** A player as the search index keeps it, under `playerSearchId`. */
+export const SearchPlayer = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  lvl: Schema.Number,
+  prof: Schema.String,
+  icon: Schema.String,
+  characterId: Schema.Number,
+  accountId: Schema.Number,
+  world: Schema.String,
+});
+
+export type SearchPlayer = typeof SearchPlayer.Type;
+
+export const playerSearchId = (characterId: number, accountId: number) =>
+  `${characterId}${accountId}`;
 
 const NotificationTimerUpdated = Schema.Struct({
   guildId: Schema.NonEmptyString,
@@ -278,31 +297,6 @@ const NotificationTimerDeleted = Schema.Struct({
   world: Schema.NonEmptyString,
   timerKey: Schema.NonEmptyString,
   npcId: Schema.optional(SafeInteger),
-});
-
-const LootCreatedNotificationEventV2 = Schema.Struct({
-  version: Schema.Literal(2),
-  lootId: NonNegativeInt,
-  world: Schema.NonEmptyString,
-  guildIds: Schema.Array(Schema.NonEmptyString),
-  itemIds: Schema.Array(NonNegativeInt),
-  itemNames: Schema.Array(Schema.String),
-  npcs: Schema.Array(
-    Schema.Struct({
-      type: NullableString,
-      lvl: NullableNumber,
-    }),
-  ),
-});
-
-const DiscordNotificationDeliveryResult = Schema.Struct({
-  notificationJobId: Schema.NonEmptyString,
-  success: Schema.Boolean,
-  retryable: Schema.Boolean,
-  providerMessageId: Schema.optional(NullableString),
-  errorCode: Schema.optional(NullableString),
-  errorMessage: Schema.optional(NullableString),
-  deliveredAt: Schema.NonEmptyString,
 });
 
 const DiscordGuildChannelDeleted = Schema.Struct({
@@ -380,10 +374,7 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.GUILDS_CREATE_ROLE]: GuildRoleChanged,
   [RabbitRoutingKey.GUILDS_DELETE_ROLE]: GuildRoleDeleted,
   [RabbitRoutingKey.GUILDS_UPDATE_ROLE]: GuildRoleChanged,
-  [RabbitRoutingKey.GUILDS_MEMBERS_ADD]: OrganizationScopedEvent,
-  [RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE]: GuildMemberChanged,
   [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE]: GuildMemberChanged,
-  [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE]: GuildMemberChanged,
   [RabbitRoutingKey.GUILDS_MEMBERS_UPDATE]: GuildMemberChanged,
   [RabbitRoutingKey.GUILDS_HERO_SIGHTINGS_UPDATE]: GuildHeroSightingUpdated,
   [RabbitRoutingKey.GUILDS_TIMERS_UPDATE]: OrganizationScopedEvent,
@@ -404,20 +395,49 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2]: ReservationChangedEventV2,
   [RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT]:
-    DiscordNotificationDeliveryResult,
+    DiscordNotificationDeliveryResultSchema,
+  [RabbitRoutingKey.NOTIFICATIONS_DISCORD_SEND]:
+    DiscordNotificationSendCommandSchema,
   [RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED]:
     GuildHeroSightingUpdated,
-  [RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED]: LootCreatedNotificationEventV2,
+  [RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED]:
+    LootCreatedNotificationEventV2Schema,
   [RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED]: NotificationTimerDeleted,
   [RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED]: NotificationTimerUpdated,
   [RabbitRoutingKey.PRESENCE_CHECK_REQUEST]: PresenceCheckRequested,
   [RabbitRoutingKey.PRESENCE_COVERAGE_CHECK]: PresenceCoverageChecked,
   [RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED]: PartyReadyRoomUpdated,
   [RabbitRoutingKey.USERS_KILL_STATS_CHANGED]: UserKillStatsChanged,
+  [RabbitRoutingKey.SEARCH_PLAYERS_INDEX]: Schema.Array(SearchPlayer),
+  [RabbitRoutingKey.SEARCH_PLAYERS_REPLAY]: Schema.Array(SearchPlayer),
+  [RabbitRoutingKey.CATALOG_ITEMS_INDEX]: Schema.Array(CatalogItemObservation),
+  [RabbitRoutingKey.CATALOG_ITEMS_REPLAY]: Schema.Array(CatalogItemObservation),
+  [RabbitRoutingKey.CATALOG_NPCS_INDEX]: Schema.Array(CatalogNpcObservation),
+  [RabbitRoutingKey.CATALOG_NPCS_REPLAY]: Schema.Array(CatalogNpcObservation),
+  [RabbitRoutingKey.CATALOG_ITEMS_RETIRED_DROPS]:
+    Schema.Array(CatalogMonsterDrops),
+  [RabbitRoutingKey.CATALOG_ITEMS_REVISIONS]:
+    Schema.Array(CatalogItemRevisions),
+  [RabbitRoutingKey.CATALOG_NPCS_LOCATIONS]: Schema.Array(
+    CatalogMonsterLocations,
+  ),
 } as const;
+
+/** The schema of each event, for consumers that decode with their own reader. */
+export const rabbitEventSchema = <
+  RoutingKey extends CanonicalRabbitEventRoutingKey,
+>(
+  routingKey: RoutingKey,
+): (typeof canonicalRabbitEventSchemas)[RoutingKey] =>
+  canonicalRabbitEventSchemas[routingKey];
 
 export type CanonicalRabbitEventRoutingKey =
   keyof typeof canonicalRabbitEventSchemas;
+
+export const isCanonicalRabbitEventRoutingKey = (
+  routingKey: string,
+): routingKey is CanonicalRabbitEventRoutingKey =>
+  Object.prototype.hasOwnProperty.call(canonicalRabbitEventSchemas, routingKey);
 
 export type CanonicalRabbitEvent<
   RoutingKey extends CanonicalRabbitEventRoutingKey,

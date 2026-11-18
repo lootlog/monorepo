@@ -1,10 +1,10 @@
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
 import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 import { describe, expect, it } from "vitest";
 import {
   getItemStatTemplateValues,
   mapStatsToDisplaySections,
-  parseItemStats,
   SUPPORTED_ITEM_STAT_KEYS,
   type ItemDisplayValue,
 } from "./item-stat-utils";
@@ -31,14 +31,6 @@ function getTranslatedValuePaths(displayValue: ItemDisplayValue): string[] {
 }
 
 describe("item stat utilities", () => {
-  it("preserves equals signs inside stat values", () => {
-    expect(parseItemStats("custom=a=b=c;flag;empty=")).toEqual([
-      { key: "custom", value: "a=b=c" },
-      { key: "flag", value: true },
-      { key: "empty", value: "" },
-    ]);
-  });
-
   it("uses the canonical Margonem wording for damage modifiers", () => {
     expect(itemStats).toMatchObject({
       combo_multiplier: "Obrażenia nieuchronne <value>{{value}}%</value>",
@@ -77,7 +69,7 @@ describe("item stat utilities", () => {
 
   it("preserves stat formatting across tooltip sections", () => {
     const sections = mapStatsToDisplaySections(
-      parseItemStats(
+      parseItemStatEntries(
         "created=1767225600;hp=10;dmg=5,8;lvl=20;reqp=wm;opis=Created #YEAR#[br]Line;teleport=x,10,20,Karka-han;legbon=curse,1;amount=2;lvlupgs=3;unknown=value;rarity=legendary;rkey=x",
       ),
     );
@@ -110,7 +102,7 @@ describe("item stat utilities", () => {
 
   it("uses Margonem section and stat order instead of raw input order", () => {
     const sections = mapStatsToDisplaySections(
-      parseItemStats(
+      parseItemStatEntries(
         "unknown=x;lvl=20;permbound;opis=Opis;legbon=curse;amount=1;wound=5,10;hp=20;crit=2;lowreq=3",
       ),
     );
@@ -127,7 +119,7 @@ describe("item stat utilities", () => {
 
   it("keeps etiquette in a separate section after the item description", () => {
     const sections = mapStatsToDisplaySections(
-      parseItemStats(
+      parseItemStatEntries(
         "permbound;etiquette=event|Wakacje 2026 r.;opis=Opis przedmiotu",
       ),
     );
@@ -144,7 +136,7 @@ describe("item stat utilities", () => {
 
   it("uses source class casing and Polish bag inflection", () => {
     const sections = mapStatsToDisplaySections(
-      parseItemStats("bag=1;btype=1,8;target_class=1,8"),
+      parseItemStatEntries("bag=1;btype=1,8;target_class=1,8"),
     );
 
     expect(sections.find(({ index }) => index === 3)?.values).toEqual([
@@ -168,7 +160,7 @@ describe("item stat utilities", () => {
 
   it("formats missing combat, enhancement, action and metadata families", () => {
     const sections = mapStatsToDisplaySections(
-      parseItemStats(
+      parseItemStatEntries(
         "dmgmul=-5;afterheal2=10,250;resmanaendest=9;leczy=-120;bonus=sa,250;action=fightperheal,10,20;expire_duration=2d;expire_date=1767225600;target_class=WEAPONS;cansplit=0;enhancement_refund=3;custom_teleport=id,12,34,Tuzmer;socket_content=0;enhancement_upgrade_lvl=4;nodepoclan",
       ),
     );
@@ -213,7 +205,7 @@ describe("item stat utilities", () => {
 
   it("formats description dates in the Warsaw timezone", () => {
     const sections = mapStatsToDisplaySections(
-      parseItemStats(
+      parseItemStatEntries(
         "created=1735687800;opis=#DATE#|#YEAR#|#YEAR,-1,D#|#YEAR,12,M#",
       ),
     );
@@ -228,7 +220,7 @@ describe("item stat utilities", () => {
 
   it("selects the outfit hour form from the rounded hour count", () => {
     const sections = mapStatsToDisplaySections(
-      parseItemStats("outfit=299,x,Tuzmer"),
+      parseItemStatEntries("outfit=299,x,Tuzmer"),
     );
 
     expect(sections.find(({ index }) => index === 3)?.values).toEqual([

@@ -1,3 +1,4 @@
+import { ORGANIZATION_ACCESS_DENIED_MESSAGE } from "@lootlog/protocol/realtime";
 import { Effect, Match, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
@@ -109,7 +110,7 @@ export const commandFailureDetails = (
       retryable: false,
     }),
     OrganizationAccessDenied: () => ({
-      message: "organization access denied",
+      message: ORGANIZATION_ACCESS_DENIED_MESSAGE,
       retryable: false,
     }),
     GameCharacterRequired: () => ({

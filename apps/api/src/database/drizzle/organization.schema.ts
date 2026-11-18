@@ -1,3 +1,4 @@
+import { DEFAULT_RESERVATION_SETTINGS } from "@lootlog/domain/reservations";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -88,21 +89,21 @@ export const guildTable = pgTable(
       .default(false)
       .notNull(),
     reservationMaxDurationMinutes: integer("reservationMaxDurationMinutes")
-      .default(180)
+      .default(DEFAULT_RESERVATION_SETTINGS.reservationMaxDurationMinutes)
       .notNull(),
     reservationMinDurationMinutes: integer("reservationMinDurationMinutes")
-      .default(30)
+      .default(DEFAULT_RESERVATION_SETTINGS.reservationMinDurationMinutes)
       .notNull(),
     reservationTimeGranularityMinutes: integer(
       "reservationTimeGranularityMinutes",
     )
-      .default(15)
+      .default(DEFAULT_RESERVATION_SETTINGS.reservationTimeGranularityMinutes)
       .notNull(),
     reservationMaxAdvanceDays: integer("reservationMaxAdvanceDays")
-      .default(7)
+      .default(DEFAULT_RESERVATION_SETTINGS.reservationMaxAdvanceDays)
       .notNull(),
     reservationActiveLimitPerSpot: integer("reservationActiveLimitPerSpot")
-      .default(3)
+      .default(DEFAULT_RESERVATION_SETTINGS.reservationActiveLimitPerSpot)
       .notNull(),
     documentLimit: integer("documentLimit").default(50).notNull(),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })

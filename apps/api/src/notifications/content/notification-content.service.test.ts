@@ -3,7 +3,7 @@ import { makeNotificationContent } from "#src/notifications/content/notification
 import {
   NotificationTargetType,
   NotificationTriggerType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 const content = makeNotificationContent();
 

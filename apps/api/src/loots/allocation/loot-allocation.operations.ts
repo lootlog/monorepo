@@ -1,21 +1,17 @@
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { getLootListCacheScope } from "#src/shared/cache";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { createHash } from "node:crypto";
-import { joinItemStat } from "@lootlog/database/item-stat";
+import { joinItemStat } from "@lootlog/domain/item-stat";
 import { Clock, Effect, Schema } from "effect";
-import type {
-  GuildLootEventNpc,
-  GuildLootShareUpdatedEventV2,
-} from "@lootlog/schema/loot-events";
+import type { GuildLootEventNpc } from "@lootlog/schema/loot-events";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
-import {
-  RabbitExchange,
-  RabbitRoutingKey,
-  type RabbitExchangeName,
-  type RabbitRoutingKeyName,
-} from "@lootlog/protocol/rabbit/topology";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   LOOT_SHARE_ITEM_REGEX,
   LOOT_SHARE_MSG_REGEX,
@@ -43,16 +39,11 @@ export interface LootAllocationCache {
 
 export interface LootAllocationPublisher {
   readonly publish: (
-    exchange: RabbitExchangeName,
-    routingKey: RabbitRoutingKeyName,
-    event: GuildLootShareUpdatedEventV2,
+    event: CanonicalRabbitEvent<
+      typeof RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE
+    >,
   ) => Effect.Effect<void, unknown>;
 }
-
-class LootAllocationOperationError extends TaggedErrorClass<LootAllocationOperationError>()(
-  "LootAllocationOperationError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 const parseChatAllocation = (message: string) => {
   const allocation: Record<string, string[]> = {};
@@ -127,11 +118,9 @@ export const makeLootAllocationOperations = (options: {
       Effect.mapError((cause) =>
         Schema.is(ApplicationError)(cause)
           ? cause
-          : new LootAllocationOperationError({ operation, cause }),
+          : new OperationError({ operation, cause }),
       ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "loot-allocation", retryCount: 0 },
-      }),
+      withAdapterSpan(operation, "loot-allocation"),
     );
 
   const assertMatching = <Persisted>(
@@ -320,17 +309,13 @@ export const makeLootAllocationOperations = (options: {
         yield* Effect.forEach(
           organizationIds,
           (guildId) =>
-            options.publisher.publish(
-              RabbitExchange.DEFAULT,
-              RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
-              {
-                version: 2,
-                guildId,
-                lootId: input.lootId,
-                lootShare: allocation,
-                npcs: socketNpcs(authorized.lootNpcs),
-              },
-            ),
+            options.publisher.publish({
+              version: 2,
+              guildId,
+              lootId: input.lootId,
+              lootShare: allocation,
+              npcs: socketNpcs(authorized.lootNpcs),
+            }),
           { concurrency: "unbounded", discard: true },
         );
 

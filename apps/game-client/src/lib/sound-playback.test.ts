@@ -1,4 +1,4 @@
-import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
+import type { SoundSettings } from "@/features/settings/persistence/use-sound-settings";
 import {
   seedSettingsDocumentValues,
   soundSettingValues,
@@ -34,10 +34,8 @@ class AudioMock {
 }
 
 const createSoundSettings = (
-  overrides: Partial<UserSoundSettings> = {},
-): UserSoundSettings => ({
-  userId: "user-1",
-  masterVolume: 0.5,
+  overrides: Partial<SoundSettings> = {},
+): SoundSettings => ({
   notificationsVolume: 0.5,
   detectorVolume: 0.5,
   timersVolume: 0.5,
@@ -108,7 +106,7 @@ describe("playSound", () => {
   it("uses device-local master volume instead of the server value", () => {
     seedSettingsDocumentValues(
       queryClient,
-      soundSettingValues(createSoundSettings({ masterVolume: 0.1 })),
+      soundSettingValues(createSoundSettings()),
     );
     useSettingsStore.getState().setMasterVolume(0.75);
 

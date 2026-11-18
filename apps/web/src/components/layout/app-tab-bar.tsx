@@ -1,5 +1,5 @@
 import { useSidebar } from "@lootlog/ui/components/sidebar";
-import { TabBar } from "@lootlog/ui/components/tab-bar";
+import { TabBar } from "@/components/layout/tab-bar";
 import { Link } from "@tanstack/react-router";
 import { Ellipsis } from "lucide-react";
 import { useTranslation } from "react-i18next";

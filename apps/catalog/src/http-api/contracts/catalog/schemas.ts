@@ -1,5 +1,6 @@
 /** Transport schemas owned by the public catalog HTTP module. */
 import * as Schema from "effect/Schema";
+import { PROFESSION_SHORTNAMES } from "@lootlog/domain/profession";
 import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { FiniteNumber, SafeInteger } from "@lootlog/schema/http-scalars";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
@@ -24,10 +25,10 @@ const CatalogItemSort = Schema.Literals([
     "`id:desc` lists the items Margonem added most recently first. `changedOn:desc` lists first the items the game changed most recently, by the day their latest revision was first looted; items without a change follow. `attackSpeed:desc` lists first the items that add the most attack speed to a character with at least 100 agility: their own attack speed plus 0.002 for each point of agility or all attributes. `upgradedAttackSpeed:desc` ranks the same attack speed with each item upgraded to +5 and given the +5 bonus that adds the most of it: attack speed on weapons, agility or all attributes on other pieces.",
 });
 
-const Profession = Schema.Literals(["w", "p", "h", "m", "b", "t"]);
+const Profession = Schema.Literals(PROFESSION_SHORTNAMES);
 
 /** Stats a public search may require; the rest stay out of the filter. */
-export const CATALOG_STAT_KEYS = [
+const CATALOG_STAT_KEYS = [
   "legbon",
   "hp",
   "crit",
@@ -47,7 +48,7 @@ export const CATALOG_STAT_KEYS = [
 const CatalogStatKey = Schema.Literals(CATALOG_STAT_KEYS);
 
 /** Legendary bonuses Margonem items carry, by their stat names. */
-export const CATALOG_LEGENDARY_BONUSES = [
+const CATALOG_LEGENDARY_BONUSES = [
   "anguish",
   "cleanse",
   "critred",
@@ -67,7 +68,7 @@ export const CATALOG_LEGENDARY_BONUSES = [
 
 const CatalogLegendaryBonus = Schema.Literals(CATALOG_LEGENDARY_BONUSES);
 
-export const CatalogDropSourceDto_Output = Schema.Struct({
+const CatalogDropSourceDto_Output = Schema.Struct({
   key: Schema.String.annotate({
     description: "The NPC's catalog key, as `CatalogNpcDto_Output.key`.",
   }),
@@ -111,7 +112,7 @@ export const CatalogDropSourceDto_Output = Schema.Struct({
   identifier: "CatalogDropSourceDto_Output",
 });
 
-export const CatalogItemRevisionDto_Output = Schema.Struct({
+const CatalogItemRevisionDto_Output = Schema.Struct({
   name: Schema.String,
   icon: Schema.String,
   lvl: FiniteNumber.annotate({
@@ -135,7 +136,7 @@ export const CatalogItemRevisionDto_Output = Schema.Struct({
   identifier: "CatalogItemRevisionDto_Output",
 });
 
-export const CatalogItemDto_Output = Schema.Struct({
+const CatalogItemDto_Output = Schema.Struct({
   id: FiniteNumber,
   name: Schema.String,
   icon: Schema.String,
@@ -245,7 +246,7 @@ export const CatalogControllerGetItemsQuery = Schema.Struct({
   offset: Schema.optionalKey(FiniteNumber.annotate({ default: 0 })),
 });
 
-export const CatalogNpcDto_Output = Schema.Struct({
+const CatalogNpcDto_Output = Schema.Struct({
   key: Schema.String.annotate({
     description: "Stable catalog key of the NPC, used to link its page.",
   }),
@@ -321,7 +322,7 @@ export const CatalogControllerGetNpcsQuery = Schema.Struct({
   offset: Schema.optionalKey(FiniteNumber.annotate({ default: 0 })),
 });
 
-export const CatalogEventDto_Output = Schema.Struct({
+const CatalogEventDto_Output = Schema.Struct({
   slug: Schema.String.annotate({
     description:
       "The event's slug, its name and year, such as `halloween-2026`; `CatalogControllerGetItemsQuery.event` lists its items.",

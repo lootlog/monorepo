@@ -1,4 +1,4 @@
-import type { UserFeedResponseDtoOutput } from "@lootlog/client/main";
+import type { UserFeedItem } from "@lootlog/protocol/feed";
 import {
   ACTIVITY_FEED_LOOT_AFTER_KILL_MS,
   activityFeedNpcCategory,
@@ -7,9 +7,9 @@ import {
   type ActivityFeedSettings,
 } from "@lootlog/domain/activity-feed";
 
-type FeedItems = UserFeedResponseDtoOutput["items"];
+type FeedItems = readonly UserFeedItem[];
 
-type FeedItem = FeedItems[number];
+type FeedItem = UserFeedItem;
 
 type FeedKill = Extract<FeedItem, { type: "kill" }>;
 

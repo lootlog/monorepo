@@ -18,7 +18,7 @@ import {
   SIGNAL_LABEL_COLOR,
   useUserMenu,
 } from "@/components/layout/use-user-menu";
-import { WIKI_URL } from "@/config/wiki";
+import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
 
 /** The avatar column continues the server rail above it. */
 const BAR_GRID =
@@ -162,7 +162,11 @@ export const UserMenu = () => {
           </DropdownMenuItem>
           <DropdownMenuItem
             render={
-              <a href={WIKI_URL} target="_blank" rel="noopener noreferrer" />
+              <a
+                href={PUBLIC_SITE_ORIGINS.wiki}
+                target="_blank"
+                rel="noopener noreferrer"
+              />
             }
             className="rounded-lg px-2.5 py-2"
           >

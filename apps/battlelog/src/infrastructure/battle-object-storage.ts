@@ -8,7 +8,7 @@ import type { R2Config } from "#src/config/r2.config";
 import { ContextLogger } from "@lootlog/instrumentation";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import { chunk } from "es-toolkit";
-import { Redacted } from "effect";
+import { Effect, Redacted } from "effect";
 
 const CACHE_PREFIX = "battle:raw";
 
@@ -21,19 +21,24 @@ const MAX_CACHE_ENTRY_BYTES = 256 * 1024;
 
 const CACHE_TTL = 24 * 60 * 60;
 
+export type BattleObjectCache = Pick<
+  RedisStore,
+  | "get"
+  | "set"
+  | "del"
+  | "expire"
+  | "zremrangebyscore"
+  | "zadd"
+  | "zcard"
+  | "zrange"
+  | "zrem"
+>;
+
+const r2 = <A>(send: (signal: AbortSignal) => Promise<A>) =>
+  Effect.tryPromise({ try: send, catch: (cause) => cause });
+
 export const makeBattleObjectStorage = (
-  redisStore: Pick<
-    RedisStore,
-    | "get"
-    | "set"
-    | "del"
-    | "expire"
-    | "zremrangebyscore"
-    | "zadd"
-    | "zcard"
-    | "zrange"
-    | "zrem"
-  >,
+  redisStore: BattleObjectCache,
   config: R2Config,
 ) => {
   const logger = new ContextLogger("BattleObjectStorage");
@@ -49,99 +54,204 @@ export const makeBattleObjectStorage = (
 
   logger.info(`R2 client initialized for bucket: ${config.bucketName}`);
 
-  const objectStorage = {
-    async getBattleData<TData>(
-      battleId: string,
-      decodeJson: (value: string) => TData,
-    ): Promise<TData> {
-      try {
-        const cacheKey = `${CACHE_PREFIX}:${battleId}`;
+  const forgetCached = (battleId: string) =>
+    Effect.all(
+      [
+        redisStore.del(`${CACHE_PREFIX}:${battleId}`),
+        redisStore.zrem(LRU_KEY, battleId),
+      ],
+      { concurrency: "unbounded", discard: true },
+    );
 
-        const cachedData = await redisStore.get(cacheKey).catch((error) => {
-          logger.warn("Raw battle cache unavailable", error);
+  const updateLRU = (battleId: string) =>
+    Effect.all(
+      [
+        redisStore.expire(`${CACHE_PREFIX}:${battleId}`, CACHE_TTL),
+        redisStore.zadd(LRU_KEY, Date.now(), battleId),
+      ],
+      { concurrency: "unbounded", discard: true },
+    ).pipe(
+      Effect.catch((error) =>
+        Effect.sync(() =>
+          logger.warn(`Failed to update LRU for battle ${battleId}:`, error),
+        ),
+      ),
+    );
 
-          return null;
-        });
+  const enforceLRULimit = Effect.gen(function* () {
+    yield* redisStore.zremrangebyscore(
+      LRU_KEY,
+      "-inf",
+      Date.now() - CACHE_TTL * 1_000,
+    );
+    const count = yield* redisStore.zcard(LRU_KEY);
 
-        if (cachedData) {
-          logger.debug(`Cache hit for battle ${battleId}`);
+    if (count <= MAX_CACHE_SIZE) return;
 
-          if (Buffer.byteLength(cachedData, "utf8") <= MAX_CACHE_ENTRY_BYTES) {
-            await objectStorage.updateLRU(battleId);
-          } else {
-            await Promise.all([
-              redisStore.del(cacheKey),
-              redisStore.zrem(LRU_KEY, battleId),
-            ]).catch((error) =>
-              logger.warn("Raw battle cache cleanup failed", error),
-            );
-          }
+    const oldestBattles = yield* redisStore.zrange(
+      LRU_KEY,
+      0,
+      count - MAX_CACHE_SIZE - 1,
+    );
 
-          return decodeJson(cachedData);
-        }
+    if (oldestBattles.length === 0) return;
 
-        logger.debug(`Cache miss for battle ${battleId}, fetching from R2`);
-        const key = `battles/${battleId}.json`;
+    yield* Effect.all(
+      [
+        redisStore.del(
+          ...oldestBattles.map((battleId) => `${CACHE_PREFIX}:${battleId}`),
+        ),
+        redisStore.zrem(LRU_KEY, ...oldestBattles),
+      ],
+      { concurrency: "unbounded", discard: true },
+    );
 
-        const command = new GetObjectCommand({
-          Bucket: config.bucketName,
-          Key: key,
-        });
+    logger.info(
+      `Evicted ${oldestBattles.length} battles from cache (LRU limit: ${MAX_CACHE_SIZE})`,
+    );
+  }).pipe(
+    Effect.catch((error) =>
+      Effect.sync(() => logger.warn("Failed to enforce LRU limit:", error)),
+    ),
+  );
 
-        const response = await client.send(command);
+  const cacheData = (battleId: string, data: string) =>
+    (Buffer.byteLength(data, "utf8") > MAX_CACHE_ENTRY_BYTES
+      ? forgetCached(battleId)
+      : Effect.all(
+          [
+            redisStore.set(`${CACHE_PREFIX}:${battleId}`, data, CACHE_TTL),
+            redisStore.zadd(LRU_KEY, Date.now(), battleId),
+          ],
+          { concurrency: "unbounded", discard: true },
+        ).pipe(Effect.andThen(enforceLRULimit))
+    ).pipe(
+      Effect.catch((error) =>
+        Effect.sync(() =>
+          logger.warn(`Failed to cache data for battle ${battleId}:`, error),
+        ),
+      ),
+    );
 
-        if (!response.Body) {
-          throw new Error(`No data found for battle ${battleId}`);
-        }
+  const readObject = (battleId: string) =>
+    Effect.gen(function* () {
+      logger.debug(`Cache miss for battle ${battleId}, fetching from R2`);
 
-        const isCompressed =
-          response.Metadata?.compressed === "gzip" ||
-          response.ContentEncoding === "gzip";
+      const response = yield* r2((abortSignal) =>
+        client.send(
+          new GetObjectCommand({
+            Bucket: config.bucketName,
+            Key: `battles/${battleId}.json`,
+          }),
+          { abortSignal },
+        ),
+      );
 
-        let decompressedData: string;
+      const body = response.Body;
 
-        if (isCompressed) {
-          const compressedBuffer = await response.Body.transformToByteArray();
-          const decompressedBuffer = gunzipSync(compressedBuffer);
-          decompressedData = decompressedBuffer.toString("utf-8");
-          logger.debug(`Decompressed battle ${battleId} data`);
+      if (!body) {
+        return yield* Effect.fail(
+          new Error(`No data found for battle ${battleId}`),
+        );
+      }
+
+      const isCompressed =
+        response.Metadata?.compressed === "gzip" ||
+        response.ContentEncoding === "gzip";
+
+      if (isCompressed) {
+        const compressed = yield* r2(() => body.transformToByteArray());
+        logger.debug(`Decompressed battle ${battleId} data`);
+
+        return gunzipSync(compressed).toString("utf-8");
+      }
+
+      logger.debug(`Battle ${battleId} data is not compressed (legacy format)`);
+
+      return yield* r2(() => body.transformToString());
+    });
+
+  const getBattleData = <TData>(
+    battleId: string,
+    decodeJson: (value: string) => TData,
+  ) =>
+    Effect.gen(function* () {
+      const cacheKey = `${CACHE_PREFIX}:${battleId}`;
+
+      const cachedData = yield* redisStore.get(cacheKey).pipe(
+        Effect.catch((error) =>
+          Effect.sync(() => {
+            logger.warn("Raw battle cache unavailable", error);
+
+            return null;
+          }),
+        ),
+      );
+
+      if (cachedData) {
+        logger.debug(`Cache hit for battle ${battleId}`);
+
+        if (Buffer.byteLength(cachedData, "utf8") <= MAX_CACHE_ENTRY_BYTES) {
+          yield* updateLRU(battleId);
         } else {
-          decompressedData = await response.Body.transformToString();
-          logger.debug(
-            `Battle ${battleId} data is not compressed (legacy format)`,
+          yield* forgetCached(battleId).pipe(
+            Effect.catch((error) =>
+              Effect.sync(() =>
+                logger.warn("Raw battle cache cleanup failed", error),
+              ),
+            ),
           );
         }
 
-        const parsedData = decodeJson(decompressedData);
-
-        await objectStorage.cacheData(battleId, decompressedData);
-        logger.info(`Battle data retrieved from R2 for battle ${battleId}`);
-
-        return parsedData;
-      } catch (error) {
-        logger.error(`Failed to retrieve battle data for ${battleId}:`, error);
-        throw error;
+        return yield* Effect.try({
+          try: () => decodeJson(cachedData),
+          catch: (cause) => cause,
+        });
       }
-    },
 
-    async deleteBattlesData(battleIds: readonly string[]): Promise<string[]> {
+      const data = yield* readObject(battleId);
+
+      const parsedData = yield* Effect.try({
+        try: () => decodeJson(data),
+        catch: (cause) => cause,
+      });
+
+      yield* cacheData(battleId, data);
+      logger.info(`Battle data retrieved from R2 for battle ${battleId}`);
+
+      return parsedData;
+    }).pipe(
+      Effect.tapError((error) =>
+        Effect.sync(() =>
+          logger.error(
+            `Failed to retrieve battle data for ${battleId}:`,
+            error,
+          ),
+        ),
+      ),
+    );
+
+  const deleteBattlesData = (battleIds: readonly string[]) =>
+    Effect.gen(function* () {
       const failed: string[] = [];
 
       for (const batch of chunk(battleIds, 1_000)) {
-        const response = await client.send(
-          new DeleteObjectsCommand({
-            Bucket: config.bucketName,
-            Delete: {
-              Objects: batch.map((id) => ({ Key: `battles/${id}.json` })),
-              Quiet: true,
-            },
-          }),
-          { abortSignal: AbortSignal.timeout(10_000) },
+        const response = yield* r2(() =>
+          client.send(
+            new DeleteObjectsCommand({
+              Bucket: config.bucketName,
+              Delete: {
+                Objects: batch.map((id) => ({ Key: `battles/${id}.json` })),
+                Quiet: true,
+              },
+            }),
+            { abortSignal: AbortSignal.timeout(10_000) },
+          ),
         );
 
         if (response.Errors?.some((error) => !error.Key)) {
-          throw new Error(
-            "R2 returned an unidentified object deletion failure",
+          return yield* Effect.fail(
+            new Error("R2 returned an unidentified object deletion failure"),
           );
         }
 
@@ -155,98 +265,23 @@ export const makeBattleObjectStorage = (
 
         if (completed.length > 0) {
           // Redis failure keeps the durable cleanup intent for a safe retry.
-          await Promise.all([
-            redisStore.del(...completed.map((id) => `${CACHE_PREFIX}:${id}`)),
-            redisStore.zrem(LRU_KEY, ...completed),
-          ]);
+          yield* Effect.all(
+            [
+              redisStore.del(...completed.map((id) => `${CACHE_PREFIX}:${id}`)),
+              redisStore.zrem(LRU_KEY, ...completed),
+            ],
+            { concurrency: "unbounded", discard: true },
+          );
         }
       }
 
       return failed;
-    },
+    });
 
-    async cacheData(battleId: string, data: string): Promise<void> {
-      try {
-        const cacheKey = `${CACHE_PREFIX}:${battleId}`;
-        const timestamp = Date.now();
-
-        if (Buffer.byteLength(data, "utf8") > MAX_CACHE_ENTRY_BYTES) {
-          await Promise.all([
-            redisStore.del(cacheKey),
-            redisStore.zrem(LRU_KEY, battleId),
-          ]);
-
-          return;
-        }
-
-        await Promise.all([
-          redisStore.set(cacheKey, data, CACHE_TTL),
-          redisStore.zadd(LRU_KEY, timestamp, battleId),
-        ]);
-
-        await objectStorage.enforceLRULimit();
-      } catch (error) {
-        logger.warn(`Failed to cache data for battle ${battleId}:`, error);
-      }
-    },
-
-    async updateLRU(battleId: string): Promise<void> {
-      try {
-        const timestamp = Date.now();
-        await Promise.all([
-          redisStore.expire(`${CACHE_PREFIX}:${battleId}`, CACHE_TTL),
-          redisStore.zadd(LRU_KEY, timestamp, battleId),
-        ]);
-      } catch (error) {
-        logger.warn(`Failed to update LRU for battle ${battleId}:`, error);
-      }
-    },
-
-    async enforceLRULimit(): Promise<void> {
-      try {
-        await redisStore.zremrangebyscore(
-          LRU_KEY,
-          "-inf",
-          Date.now() - CACHE_TTL * 1_000,
-        );
-        const count = await redisStore.zcard(LRU_KEY);
-
-        if (count > MAX_CACHE_SIZE) {
-          const toRemove = count - MAX_CACHE_SIZE;
-
-          const oldestBattles = await redisStore.zrange(
-            LRU_KEY,
-            0,
-            toRemove - 1,
-          );
-
-          if (oldestBattles.length > 0) {
-            await Promise.all([
-              redisStore.del(
-                ...oldestBattles.map(
-                  (battleId) => `${CACHE_PREFIX}:${battleId}`,
-                ),
-              ),
-              redisStore.zrem(LRU_KEY, ...oldestBattles),
-            ]);
-
-            logger.info(
-              `Evicted ${oldestBattles.length} battles from cache (LRU limit: ${MAX_CACHE_SIZE})`,
-            );
-          }
-        }
-      } catch (error) {
-        logger.warn("Failed to enforce LRU limit:", error);
-      }
-    },
-  };
-
-  return objectStorage;
+  return { getBattleData, deleteBattlesData, cacheData };
 };
 
-type BattleObjectStorageModule = ReturnType<typeof makeBattleObjectStorage>;
-
 export type BattleObjectStorage = Pick<
-  BattleObjectStorageModule,
+  ReturnType<typeof makeBattleObjectStorage>,
   "deleteBattlesData" | "getBattleData"
 >;

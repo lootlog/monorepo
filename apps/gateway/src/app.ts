@@ -12,6 +12,7 @@ import {
   REALTIME_SERVER_CLOSE_CODES,
 } from "@lootlog/protocol/realtime";
 import { Context, Duration, Effect, Layer, Option, Redacted } from "effect";
+import { API_KEY_HEADER } from "@lootlog/schema/api-key-access";
 import { Headers, HttpTraceContext } from "effect/http";
 import { Auth, type GatewayAuth } from "#src/auth/auth-service";
 import { ApiKeyLeases } from "#src/auth/api-key-leases";
@@ -155,9 +156,7 @@ const GatewayApplicationLive = GatewayApplication.layerWithoutDependencies.pipe(
   Layer.provide(
     Layer.unwrap(
       Effect.map(GatewayConfig, (config) =>
-        reconnectingBunRedisLayer({
-          url: `redis://${encodeURIComponent(config.redis.username)}:${encodeURIComponent(Redacted.value(config.redis.password))}@${config.redis.host}:${config.redis.port}`,
-        }),
+        reconnectingBunRedisLayer({ url: Redacted.value(config.redis.url) }),
       ),
     ).pipe(Layer.provide(GatewayConfig.layer)),
   ),
@@ -172,7 +171,7 @@ const hasCredentialQuery = (url: URL): boolean =>
     "access_token",
     "api_key",
     "apiKey",
-    "x-api-key",
+    API_KEY_HEADER,
   ].some((key) => url.searchParams.has(key));
 
 interface UpgradeServer {

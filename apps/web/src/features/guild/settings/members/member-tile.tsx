@@ -119,7 +119,7 @@ export const MemberTile = ({
             <span className="flex h-5 min-w-0 items-center gap-1">
               <span
                 className="mr-1 truncate text-sm font-semibold"
-                style={{ color: `#${color}` }}
+                style={{ color }}
               >
                 {member.name}
               </span>

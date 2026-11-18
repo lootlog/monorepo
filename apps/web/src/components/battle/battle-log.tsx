@@ -22,7 +22,6 @@ import {
   buildBattleLogRawSearchText,
   findBattleLogSearchMatches,
 } from "./utils/battle-log-search";
-import { getDisplayBattleEvents } from "./utils/raw-battle-events";
 
 export type BattleLogProps = {
   /** The scroller the log lives in; the log has no scroll container of its own. */
@@ -63,7 +62,7 @@ export const BattleLog: FC<BattleLogProps> = ({
     (warrior) => warrior.originalId === rawBattle.characterId,
   )?.team;
 
-  const events = getDisplayBattleEvents(rawBattle);
+  const { events } = rawBattle;
 
   // Keep the index outside the virtualizer component: its mutable API opts that
   // component out of React Compiler caching.

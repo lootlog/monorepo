@@ -7,7 +7,7 @@ import {
   notificationTargetTable,
 } from "#src/database/drizzle/notification.schema";
 
-import type { NotificationOwnerType } from "#src/notifications/notification-enums";
+import type { NotificationOwnerType } from "@lootlog/schema/notifications";
 import type { UpdateNotificationTargetRequest } from "#src/contracts/notifications/schemas";
 
 export const readNotificationRuleTargets = Effect.fnUntraced(function* (

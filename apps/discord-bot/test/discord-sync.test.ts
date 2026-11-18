@@ -1,3 +1,4 @@
+import { MessagingError } from "@lootlog/messaging";
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import {
   ChannelType,
@@ -154,14 +155,20 @@ async function fixture(cacheMembers = true) {
 
   const sync = makeDiscordSync(
     {
-      publish: (_exchange, routingKey, payload) =>
+      publish: (routingKey, payload) =>
         Effect.suspend(() => {
           if (
             rejectedGuildId &&
             "guildId" in payload &&
             payload.guildId === rejectedGuildId
           ) {
-            return Effect.fail(new Error("Publisher confirm failed"));
+            return Effect.fail(
+              new MessagingError({
+                operation: "publish",
+                message: "Publisher confirm failed",
+                cause: undefined,
+              }),
+            );
           }
 
           return Effect.sync(() => {

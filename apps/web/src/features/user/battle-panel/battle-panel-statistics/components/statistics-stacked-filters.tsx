@@ -1,3 +1,4 @@
+import { Period } from "@lootlog/schema/http-scalars";
 import { FilterPanelField } from "@/components/filters/filter-panel-field";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { PeriodSelector } from "@/components/filters/period-selector";
@@ -26,6 +27,7 @@ export const StatisticsStackedFilters = ({
     <>
       <FilterPanelField label={t("battlePanel.filters.period")}>
         <PeriodSelector
+          options={Period.literals}
           value={period}
           onValueChange={onPeriodChange}
           width="w-full"

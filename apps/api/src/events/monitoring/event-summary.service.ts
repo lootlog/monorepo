@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { Logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import type { eventMapCoverageGapTable } from "#src/database/drizzle/event.schema";
@@ -235,9 +236,7 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
             windowClosedAt,
           })
           .pipe(
-            Effect.withSpan("events.summary.save", {
-              attributes: { adapter: "events.summary.drizzle", retryCount: 0 },
-            }),
+            withAdapterSpan("events.summary.save", "events.summary.drizzle"),
           );
 
         logger.log({

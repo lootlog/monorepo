@@ -1,5 +1,10 @@
 import { maxBy, minBy, range } from "es-toolkit";
 import { itemAttackSpeed } from "./attack-speed.js";
+import {
+  hasItemStat,
+  itemStatValue,
+  parseItemStatEntries,
+} from "./item-stat.js";
 
 /**
  * Margonem's item upgrade (ulepszanie), from the game's rules at
@@ -197,13 +202,6 @@ const statRules = (rarity: string | null, type: string | null) => {
   );
 };
 
-/** A stat's value in the game's stat format; none for a flag or a stat it lacks. */
-export const itemStatValue = (stat: string, key: string) =>
-  stat
-    .split(";")
-    .find((entry) => entry.startsWith(`${key}=`))
-    ?.slice(key.length + 1);
-
 /** The level an item is upgraded to, 0 when it is not. */
 export const itemStatUpgradeLevel = (stat: string) =>
   Number(itemStatValue(stat, "enhancement_upgrade_lvl") ?? 0);
@@ -278,9 +276,8 @@ const EQUIPMENT_TYPES = new Set([
 export const isUpgradable = (item: UpgradableItem) =>
   EQUIPMENT_TYPES.has(item.type ?? "") &&
   item.lvl >= MIN_UPGRADE_ITEM_LEVEL &&
-  !item.stat
-    .split(";")
-    .some((entry) => /^(cursed|expire_duration)(=|$)/.test(entry));
+  !hasItemStat(item.stat, "cursed") &&
+  !hasItemStat(item.stat, "expire_duration");
 
 const ARMOR_PIECES = new Set(["ARMOR", "HELMET", "GLOVES", "BOOTS", "SHIELD"]);
 
@@ -392,21 +389,13 @@ const defenseScale = (item: UpgradableItem, key: string, shown: number) => {
 const scaleStats = (item: UpgradableItem, toLevel: number) => {
   const rules = statRules(item.rarity, item.type);
 
-  return item.stat
-    .split(";")
-    .filter(Boolean)
-    .filter(
-      (entry) =>
-        !entry.startsWith("enhancement_upgrade_lvl=") &&
-        !entry.startsWith("bonus="),
-    )
-    .map((entry) => {
-      const separator = entry.indexOf("=");
+  return parseItemStatEntries(item.stat)
+    .filter(({ key }) => key !== "enhancement_upgrade_lvl" && key !== "bonus")
+    .map(({ key, value }) => {
+      if (value === true) return key;
 
-      if (separator === -1) return entry;
-
-      const key = entry.slice(0, separator);
-      const values = entry.slice(separator + 1).split(",");
+      const entry = `${key}=${value}`;
+      const values = value.split(",");
 
       // A legendary bonus is as strong as its item's virtual level.
       if (key === "legbon" && values.length === 2) {
@@ -911,7 +900,7 @@ export type ItemUpgradeCost = {
   gold: number;
 };
 
-export const NO_UPGRADE_COST: ItemUpgradeCost = {
+const NO_UPGRADE_COST: ItemUpgradeCost = {
   points: 0,
   essence: 0,
   gold: 0,

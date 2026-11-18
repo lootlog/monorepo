@@ -1,10 +1,13 @@
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
 import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target.repository";
 import {
   notificationRulesInApiKeyScope,
   requireNotificationRuleApiKeyScope,
 } from "../notification-api-key-scope.js";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, count, desc, eq, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -34,7 +37,7 @@ import { Error as NotificationError } from "#src/notifications/error";
 import {
   NotificationOwnerType,
   NotificationTargetType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 const WATCHED_ITEM_LIMIT = 20;
 
@@ -54,18 +57,13 @@ export interface NotificationWatchedItemJobs {
   }) => Effect.Effect<unknown, unknown>;
 }
 
-class NotificationWatchedItemFailure extends TaggedErrorClass<NotificationWatchedItemFailure>()(
-  "NotificationWatchedItemFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeNotificationWatchedItems = (
   database: ApiDatabaseValue,
   guilds: NotificationWatchedItemGuilds,
   jobs: NotificationWatchedItemJobs,
 ) => {
   const databaseFailure = (operation: string) => (cause: unknown) =>
-    new NotificationWatchedItemFailure({ operation, cause });
+    new OperationError({ operation, cause });
 
   const mapRule = (
     rule: typeof notificationRuleTable.$inferSelect,
@@ -418,9 +416,10 @@ export const makeNotificationWatchedItems = (
       )
       .pipe(
         Effect.mapError(databaseFailure("notifications.watchedItems.upsert")),
-        Effect.withSpan("notifications.watchedItems.upsert.transaction", {
-          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-        }),
+        withAdapterSpan(
+          "notifications.watchedItems.upsert.transaction",
+          "notifications.drizzle",
+        ),
       );
 
     return yield* findByScope(discordId, params.itemId, params.world);
@@ -502,9 +501,10 @@ export const makeNotificationWatchedItems = (
       )
       .pipe(
         Effect.mapError(databaseFailure("notifications.watchedItems.delete")),
-        Effect.withSpan("notifications.watchedItems.delete.transaction", {
-          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-        }),
+        withAdapterSpan(
+          "notifications.watchedItems.delete.transaction",
+          "notifications.drizzle",
+        ),
       );
 
     return { success: true as const };

@@ -1,12 +1,15 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { Clock, Effect, Schema } from "effect";
 import { formatLevel } from "@lootlog/domain/profession";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import type {
-  DiscordGuildChannelDeletedEvent,
-  DiscordNotificationDeliveryResultEvent,
-  LootCreatedNotificationEventV2,
+import {
+  type DiscordNotificationDeliveryResult,
+  type LootCreatedNotificationEventV2,
+  NotificationJobKind,
 } from "@lootlog/schema/notifications";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { NotificationGuildTargets } from "#src/notifications/targets/notification-guild-targets";
@@ -26,7 +29,6 @@ import {
   WATCHED_ITEM_DROPPED_TITLE,
   watchedItemDroppedMessage,
 } from "#src/notifications/content/notification-messages";
-import { NotificationJobKind } from "#src/notifications/notification-enums";
 
 export interface TimerDeletedEvent {
   readonly guildId: string;
@@ -97,7 +99,7 @@ export const makeNotificationsEvents = (options: {
     unknown
   >;
   readonly delivery: (
-    event: DiscordNotificationDeliveryResultEvent,
+    event: DiscordNotificationDeliveryResult,
   ) => Effect.Effect<void, unknown, never>;
   readonly rebuild: NotificationJobRebuild;
   readonly content: NotificationContentModule;
@@ -172,11 +174,14 @@ export const makeNotificationsEvents = (options: {
 
       const [guilds, memberships] = yield* Effect.all(
         [
-          options.findGuilds(event.guildIds).pipe(
-            Effect.withSpan("notifications.guilds.findMany", {
-              attributes: { adapter: "notifications.guilds", retryCount: 0 },
-            }),
-          ),
+          options
+            .findGuilds(event.guildIds)
+            .pipe(
+              withAdapterSpan(
+                "notifications.guilds.findMany",
+                "notifications.guilds",
+              ),
+            ),
           options.matching.activeMemberships(
             watchedItems
               .map((item) => item.notificationRule?.ownerId)
@@ -341,13 +346,17 @@ export const makeNotificationsEvents = (options: {
   });
 
   const handleDeliveryResult = Effect.fn("notifications.events.deliveryResult")(
-    (event: DiscordNotificationDeliveryResultEvent) => options.delivery(event),
+    (event: DiscordNotificationDeliveryResult) => options.delivery(event),
   );
 
   const handleDiscordGuildChannelDeleted = Effect.fn(
     "notifications.events.discordGuildChannelDeleted",
-  )((event: DiscordGuildChannelDeletedEvent) =>
-    options.guildTargets.removeChannel(event.guildId, event.channelId),
+  )(
+    (
+      event: CanonicalRabbitEvent<
+        typeof RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED
+      >,
+    ) => options.guildTargets.removeChannel(event.guildId, event.channelId),
   );
 
   return {

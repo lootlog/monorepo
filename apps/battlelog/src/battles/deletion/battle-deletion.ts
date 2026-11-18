@@ -54,9 +54,7 @@ export const makeBattleDeletion = (
           { concurrency: 8, discard: true },
         );
 
-        const deleted = yield* Effect.result(
-          Effect.tryPromise(() => objects.deleteBattlesData(ids)),
-        );
+        const deleted = yield* Effect.result(objects.deleteBattlesData(ids));
 
         const retry = Result.isFailure(deleted) ? ids : deleted.success;
 

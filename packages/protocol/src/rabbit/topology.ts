@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { Match, Schema } from "effect";
 
 export const RabbitExchange = {
   DEFAULT: "default",
@@ -16,149 +16,60 @@ export type RabbitExchangeName = typeof RabbitExchangeName.Type;
 
 export const RabbitRoutingKey = {
   USERS_ONLINE_CHECKPOINT_V1: "users.online.checkpoint.v1",
-  USERS_ONLINE_CHECKPOINT_V1_RETRY: "users.online.checkpoint.v1.retry",
-  USERS_ONLINE_CHECKPOINT_V1_DLQ: "users.online.checkpoint.v1.dlq",
   ACTIVITY_LOG_CREATE: "activity.log.create",
-  ACTIVITY_LOG_CREATE_DLQ: "activity.log.create.dlq",
-  ACTIVITY_LOG_CREATE_RETRY: "activity.log.create.retry",
   DISCORD_GUILD_CHANNEL_DELETED: "discord.guild.channel.deleted",
-  DISCORD_GUILD_CHANNEL_DELETED_DLQ: "discord.guild.channel.deleted.dlq",
   DISCORD_GUILD_CHANNEL_UPSERTED: "discord.guild.channel.upserted",
-  DISCORD_GUILD_CHANNEL_UPSERTED_DLQ: "discord.guild.channel.upserted.dlq",
   DISCORD_GUILD_CHANNELS_SYNC_FAILED: "discord.guild.channels.sync.failed",
-  DISCORD_GUILD_CHANNELS_SYNC_FAILED_DLQ:
-    "discord.guild.channels.sync.failed.dlq",
   DISCORD_GUILD_CHANNELS_SYNCED: "discord.guild.channels.synced",
-  DISCORD_GUILD_CHANNELS_SYNCED_DLQ: "discord.guild.channels.synced.dlq",
   DISCORD_GUILD_SYNC_STATE_UPDATED: "discord.guild.sync-state.updated",
-  DISCORD_GUILD_SYNC_STATE_UPDATED_DLQ: "discord.guild.sync-state.updated.dlq",
   EVENT_HERO_KILLED: "event.hero.killed",
   EVENT_MAP_STATUS_UPDATE: "event.map-status.update",
   EVENT_RANKING_UPDATE: "event.ranking.update",
   EVENT_RESPAWN_WINDOW_CLOSED: "event.respawn-window.closed",
   EVENT_RESPAWN_WINDOW_OPENED: "event.respawn-window.opened",
   CHARACTER_AURAS_CHANGED: "character-auras.changed",
-  CHARACTER_AURAS_CHANGED_DLQ: "character-auras.changed.dlq",
-  CHARACTER_AURAS_CHANGED_RETRY: "character-auras.changed.retry",
   GLOBAL_CHAT_CHANNEL_UPDATE: "global-chat.channel.update",
-  GLOBAL_CHAT_CHANNEL_UPDATE_DLQ: "global-chat.channel.update.dlq",
-  GLOBAL_CHAT_CHANNEL_UPDATE_RETRY: "global-chat.channel.update.retry",
   GLOBAL_CHAT_SEND_MESSAGE: "global-chat.send.message",
-  GLOBAL_CHAT_SEND_MESSAGE_DLQ: "global-chat.send.message.dlq",
-  GLOBAL_CHAT_SEND_MESSAGE_RETRY: "global-chat.send.message.retry",
   GUILDS_CLEAR_MESSAGES: "guilds.clear.messages",
   GUILDS_CREATE: "guilds.create",
-  GUILDS_CREATE_DLQ: "guilds.create.dlq",
-  GUILDS_CREATE_RETRY: "guilds.create.retry",
   GUILDS_CREATE_ROLE: "guilds.create.role",
-  GUILDS_CREATE_ROLE_DLQ: "guilds.create.role.dlq",
-  GUILDS_CREATE_ROLE_RETRY: "guilds.create.role.retry",
   GUILDS_DELETE: "guilds.delete",
-  GUILDS_DELETE_DLQ: "guilds.delete.dlq",
   GUILDS_DELETE_MESSAGE: "guilds.delete.message",
-  GUILDS_DELETE_RETRY: "guilds.delete.retry",
   GUILDS_DELETE_ROLE: "guilds.delete.role",
-  GUILDS_DELETE_ROLE_DLQ: "guilds.delete.role.dlq",
-  GUILDS_DELETE_ROLE_RETRY: "guilds.delete.role.retry",
   GUILDS_HERO_SIGHTINGS_UPDATE: "guilds.hero-sightings.update",
-  GUILDS_HERO_SIGHTINGS_UPDATE_DLQ: "guilds.hero-sightings.update.dlq",
-  GUILDS_HERO_SIGHTINGS_UPDATE_RETRY: "guilds.hero-sightings.update.retry",
-  GUILDS_INITIALIZE: "guilds.initialize",
-  GUILDS_INITIALIZE_BOT: "guilds.initialize-bot",
-  GUILDS_INITIALIZE_DLQ: "guilds.initialize.dlq",
-  GUILDS_INITIALIZE_RETRY: "guilds.initialize.retry",
   GUILDS_KILLS_ACCEPTED_V1: "guilds.kills.accepted.v1",
-  GUILDS_KILLS_ACCEPTED_V1_RETRY: "guilds.kills.accepted.v1.retry",
-  GUILDS_KILLS_ACCEPTED_V1_DLQ: "guilds.kills.accepted.v1.dlq",
   GUILDS_LOOTS_CREATE: "guilds.loots.create",
-  GUILDS_LOOTS_CREATE_DLQ: "guilds.loots.create.dlq",
-  GUILDS_LOOTS_CREATE_RETRY: "guilds.loots.create.retry",
-  GUILDS_LOOTS_DELETE: "guilds.loots.delete",
   GUILDS_LOOTS_SHARE_UPDATE: "guilds.loots.share.update",
-  GUILDS_LOOTS_SHARE_UPDATE_DLQ: "guilds.loots.share.update.dlq",
-  GUILDS_LOOTS_SHARE_UPDATE_RETRY: "guilds.loots.share.update.retry",
-  GUILDS_LOOTS_UPDATE: "guilds.loots.update",
-  GUILDS_MEMBERS_ADD: "guilds.members.add",
-  GUILDS_MEMBERS_ADD_DLQ: "guilds.members.add.dlq",
-  GUILDS_MEMBERS_ADD_RETRY: "guilds.members.add.retry",
-  GUILDS_MEMBERS_ADD_ROLE: "guilds.members.add.role",
-  GUILDS_MEMBERS_ADD_ROLE_DLQ: "guilds.members.add.role.dlq",
-  GUILDS_MEMBERS_ADD_ROLE_RETRY: "guilds.members.add.role.retry",
   GUILDS_MEMBERS_REFRESH_JOB_UPDATE: "guilds.members.refresh.job.update",
   GUILDS_MEMBERS_REMOVE: "guilds.members.remove",
-  GUILDS_MEMBERS_REMOVE_DLQ: "guilds.members.remove.dlq",
-  GUILDS_MEMBERS_REMOVE_RETRY: "guilds.members.remove.retry",
-  GUILDS_MEMBERS_REMOVE_ROLE: "guilds.members.remove.role",
-  GUILDS_MEMBERS_REMOVE_ROLE_DLQ: "guilds.members.remove.role.dlq",
-  GUILDS_MEMBERS_REMOVE_ROLE_RETRY: "guilds.members.remove.role.retry",
   GUILDS_MEMBERS_UPDATE: "guilds.members.update",
-  GUILDS_MEMBERS_UPDATE_DLQ: "guilds.members.update.dlq",
-  GUILDS_MEMBERS_UPDATE_RETRY: "guilds.members.update.retry",
   GUILDS_NOTIFICATIONS_SEND: "guilds.notifications.send",
-  GUILDS_NOTIFICATIONS_SEND_DLQ: "guilds.notifications.send.dlq",
-  GUILDS_NOTIFICATIONS_SEND_RETRY: "guilds.notifications.send.retry",
   GUILDS_NOTIFICATIONS_VOLUNTEER: "guilds.notifications.volunteer",
   GUILDS_NOTIFICATIONS_GOING: "guilds.notifications.going",
-  GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ: "guilds.notifications.volunteer.dlq",
-  GUILDS_NOTIFICATIONS_VOLUNTEER_RETRY: "guilds.notifications.volunteer.retry",
   GUILDS_PARTY_GATHERING: "guilds.party-gathering",
   GUILDS_PARTY_GATHERING_CANCEL: "guilds.party-gathering.cancel",
   GUILDS_PARTY_GATHERING_UPDATED: "guilds.party-gathering.updated",
-  GUILDS_PARTY_GATHERING_UPDATED_RETRY: "guilds.party-gathering.updated.retry",
-  GUILDS_PARTY_GATHERING_UPDATED_DLQ: "guilds.party-gathering.updated.dlq",
-  GUILDS_PARTY_GATHERING_DLQ: "guilds.party-gathering.dlq",
-  GUILDS_PARTY_GATHERING_RETRY: "guilds.party-gathering.retry",
   GUILDS_RESERVATIONS_CHANGED_V2: "guilds.reservations.v2.changed",
-  GUILDS_RESERVATIONS_CHANGED_V2_DLQ: "guilds.reservations.v2.changed.dlq",
-  GUILDS_RESERVATIONS_CHANGED_V2_RETRY: "guilds.reservations.v2.changed.retry",
   GUILDS_RESERVATIONS_CREATE: "guilds.reservations.create",
-  GUILDS_RESERVATIONS_CREATE_DLQ: "guilds.reservations.create.dlq",
-  GUILDS_RESERVATIONS_CREATE_RETRY: "guilds.reservations.create.retry",
   GUILDS_RESERVATIONS_DELETE: "guilds.reservations.delete",
-  GUILDS_RESERVATIONS_DELETE_DLQ: "guilds.reservations.delete.dlq",
-  GUILDS_RESERVATIONS_DELETE_RETRY: "guilds.reservations.delete.retry",
   GUILDS_SEND_MESSAGE: "guilds.send.message",
-  GUILDS_SEND_MESSAGE_DLQ: "guilds.send.message.dlq",
-  GUILDS_SEND_MESSAGE_RETRY: "guilds.send.message.retry",
-  GUILDS_SYNC: "guilds.sync",
-  GUILDS_SYNC_TRIGGER: "guilds.sync.trigger",
   GUILDS_TIMERS_DELETE: "guilds.timers.delete",
-  GUILDS_TIMERS_DELETE_DLQ: "guilds.timers.delete.dlq",
-  GUILDS_TIMERS_DELETE_RETRY: "guilds.timers.delete.retry",
   GUILDS_TIMERS_UPDATE: "guilds.timers.update",
-  GUILDS_TIMERS_UPDATE_DLQ: "guilds.timers.update.dlq",
-  GUILDS_TIMERS_UPDATE_RETRY: "guilds.timers.update.retry",
   GUILDS_UPDATE: "guilds.update",
-  GUILDS_UPDATE_DLQ: "guilds.update.dlq",
   GUILDS_UPDATE_MESSAGE: "guilds.update.message",
-  GUILDS_UPDATE_RETRY: "guilds.update.retry",
   GUILDS_UPDATE_ROLE: "guilds.update.role",
-  GUILDS_UPDATE_ROLE_DLQ: "guilds.update.role.dlq",
-  GUILDS_UPDATE_ROLE_RETRY: "guilds.update.role.retry",
   NOTIFICATIONS_DELIVERY_RESULT: "notifications.delivery.result",
-  NOTIFICATIONS_DELIVERY_RESULT_DLQ: "notifications.delivery.result.dlq",
   NOTIFICATIONS_DISCORD_GUILD_CHANNEL_DELETED_DLQ:
     "notifications.discord.guild.channel.deleted.dlq",
   NOTIFICATIONS_DISCORD_SEND: "notifications.discord.send",
   NOTIFICATIONS_HERO_SIGHTING_UPDATED: "notifications.hero-sighting.updated",
-  NOTIFICATIONS_HERO_SIGHTING_UPDATED_DLQ:
-    "notifications.hero-sighting.updated.dlq",
-  NOTIFICATIONS_HERO_SIGHTING_UPDATED_RETRY:
-    "notifications.hero-sighting.updated.retry",
   NOTIFICATIONS_LOOT_CREATED: "notifications.loot.created",
-  NOTIFICATIONS_LOOT_CREATED_DLQ: "notifications.loot.created.dlq",
-  NOTIFICATIONS_LOOT_CREATED_RETRY: "notifications.loot.created.retry",
   NOTIFICATIONS_TIMER_DELETED: "notifications.timer.deleted",
-  NOTIFICATIONS_TIMER_DELETED_DLQ: "notifications.timer.deleted.dlq",
   NOTIFICATIONS_TIMER_UPDATED: "notifications.timer.updated",
-  NOTIFICATIONS_TIMER_UPDATED_DLQ: "notifications.timer.updated.dlq",
   GAME_CHARACTER_OFFLINE: "game.character.offline",
-  GAME_CHARACTER_OFFLINE_DLQ: "game.character.offline.dlq",
   MARGONEM_ACCOUNT_VERIFIED_V1: "margonem.account.verified.v1",
-  MARGONEM_ACCOUNT_VERIFIED_V1_DLQ: "margonem.account.verified.v1.dlq",
   PRESENCE_CHECK_REQUEST: "presence.check.request",
   PRESENCE_COVERAGE_CHECK: "presence.coverage.check",
-  PRESENCE_COVERAGE_CHECK_DLQ: "presence.coverage.check.dlq",
   CATALOG_ITEMS_INDEX: "catalog.items.index",
   CATALOG_ITEMS_REPLAY: "catalog.items.replay",
   CATALOG_ITEMS_RETIRED_DROPS: "catalog.items.retired-drops",
@@ -170,46 +81,56 @@ export const RabbitRoutingKey = {
   SEARCH_PLAYERS_INDEX: "search.players.index",
   SEARCH_PLAYERS_REPLAY: "search.players.replay",
   USERS_PARTY_READY_ROOM_UPDATED: "users.party-ready-room.updated",
-  USERS_PARTY_READY_ROOM_UPDATED_DLQ: "users.party-ready-room.updated.dlq",
-  USERS_PARTY_READY_ROOM_UPDATED_RETRY: "users.party-ready-room.updated.retry",
   USERS_KILL_STATS_CHANGED: "users.kill-stats.changed",
 } as const;
 
-export const RabbitRoutingKeyName = Schema.Literals(
-  Object.values(RabbitRoutingKey),
-);
+export type RabbitEventRoutingKey =
+  (typeof RabbitRoutingKey)[keyof typeof RabbitRoutingKey];
 
-export type RabbitRoutingKeyName = typeof RabbitRoutingKeyName.Type;
+/** Every routing key: an event's own key and its derived retry and dead-letter keys. */
+export type RabbitRoutingKeyName =
+  | RabbitEventRoutingKey
+  | `${RabbitEventRoutingKey}.retry`
+  | `${RabbitEventRoutingKey}.dlq`;
 
-export const DEFAULT_RETRY_TTL_MS = 30_000;
+export const retryRoutingKey = <Key extends RabbitEventRoutingKey>(
+  routingKey: Key,
+): `${Key}.retry` => `${routingKey}.retry`;
 
-export const RabbitQueueDefinition = Schema.Struct({
-  name: Schema.String,
-  exchange: RabbitExchangeName,
-  routingKey: RabbitRoutingKeyName,
-  durable: Schema.Boolean,
-  messageTtl: Schema.optional(Schema.Int),
-  singleActiveConsumer: Schema.optional(Schema.Boolean),
-  deadLetterExchange: Schema.optional(RabbitExchangeName),
-  deadLetterRoutingKey: Schema.optional(RabbitRoutingKeyName),
-});
+export const deadLetterRoutingKey = <Key extends RabbitEventRoutingKey>(
+  routingKey: Key,
+): `${Key}.dlq` => `${routingKey}.dlq`;
 
-export type RabbitQueueDefinition = typeof RabbitQueueDefinition.Type;
+const DEFAULT_RETRY_TTL_MS = 30_000;
 
-export const makeRetryQueue = (options: {
-  name: string;
-  retryRoutingKey: RabbitRoutingKeyName;
-  destinationRoutingKey: RabbitRoutingKeyName;
-  messageTtl?: number;
-}): RabbitQueueDefinition => ({
-  name: options.name,
-  exchange: RabbitExchange.RETRY,
-  routingKey: options.retryRoutingKey,
-  durable: true,
-  messageTtl: options.messageTtl ?? DEFAULT_RETRY_TTL_MS,
-  deadLetterExchange: RabbitExchange.DEFAULT,
-  deadLetterRoutingKey: options.destinationRoutingKey,
-});
+/** Delayed retries a failing delivery gets before it is dead-lettered. */
+const MAX_DELAYED_RETRIES = 3;
+
+export interface RabbitQueueDefinition {
+  readonly name: string;
+  readonly exchange: RabbitExchangeName;
+  readonly routingKey: RabbitRoutingKeyName;
+  readonly durable: boolean;
+  readonly messageTtl?: number;
+  readonly singleActiveConsumer?: boolean;
+  readonly deadLetterExchange?: RabbitExchangeName;
+  readonly deadLetterRoutingKey?: RabbitRoutingKeyName;
+}
+
+/** Where a consumer sends a delivery its handler failed. */
+export type FailurePolicy =
+  | { readonly strategy: "nack" }
+  | { readonly strategy: "requeue" }
+  | {
+      readonly strategy: "retry";
+      readonly maxRetries: number;
+      readonly retryRoutingKey: RabbitRoutingKeyName;
+      readonly deadLetterRoutingKey: RabbitRoutingKeyName;
+    }
+  | {
+      readonly strategy: "dead-letter";
+      readonly deadLetterRoutingKey: RabbitRoutingKeyName;
+    };
 
 export const makeDeadLetterQueue = (options: {
   name: string;
@@ -223,7 +144,7 @@ export const makeDeadLetterQueue = (options: {
 
 export const makeQueue = (
   name: string,
-  routingKey: RabbitQueueDefinition["routingKey"],
+  routingKey: RabbitRoutingKeyName,
   options: Partial<RabbitQueueDefinition> = {},
 ): RabbitQueueDefinition => ({
   name,
@@ -232,3 +153,111 @@ export const makeQueue = (
   durable: true,
   ...options,
 });
+
+/**
+ * - `retry`: delayed retries through `<queue>.retry`, then `<queue>.dlq`.
+ * - `broker-retry`: a rejected delivery returns through `<queue>.retry`; the
+ *   consumer dead-letters permanent failures itself.
+ * - `dead-letter`: straight to `<queue>.dlq`.
+ * - `requeue`: back to the queue at once.
+ * - `nack`: dropped, for a hint the next event replaces.
+ */
+export type ConsumerFailure =
+  | "retry"
+  | "broker-retry"
+  | "dead-letter"
+  | "requeue"
+  | "nack";
+
+/** One consumed event: the queues it needs and the failure policy they bind. */
+export interface ConsumerRoute<
+  Key extends RabbitEventRoutingKey = RabbitEventRoutingKey,
+> {
+  readonly queue: string;
+  readonly routingKey: Key;
+  readonly prefetch: number;
+  readonly failurePolicy: FailurePolicy;
+  readonly queues: ReadonlyArray<RabbitQueueDefinition>;
+}
+
+export const consumerRoute = <Key extends RabbitEventRoutingKey>(
+  queue: string,
+  routingKey: Key,
+  options: {
+    readonly failure: ConsumerFailure;
+    /** Deliveries handled at once; 1, the default, keeps the queue's order. */
+    readonly prefetch?: number;
+    readonly singleActiveConsumer?: true;
+    /** Overrides `<routingKey>.dlq` when two queues consume one event. */
+    readonly deadLetterRoutingKey?: RabbitRoutingKeyName;
+    /**
+     * False for a queue declared before broker rejections went to its retry
+     * queue: a live queue's arguments cannot change.
+     */
+    readonly rejectToRetryQueue?: false;
+  },
+): ConsumerRoute<Key> => {
+  const retryKey = retryRoutingKey(routingKey);
+
+  const deadLetterKey =
+    options.deadLetterRoutingKey ?? deadLetterRoutingKey(routingKey);
+
+  const retries =
+    options.failure === "retry" || options.failure === "broker-retry";
+
+  const deadLetters = retries || options.failure === "dead-letter";
+
+  const main = makeQueue(queue, routingKey, {
+    ...(options.singleActiveConsumer && { singleActiveConsumer: true }),
+    ...(retries &&
+      options.rejectToRetryQueue !== false && {
+        deadLetterExchange: RabbitExchange.RETRY,
+        deadLetterRoutingKey: retryKey,
+      }),
+  });
+
+  const retryQueue: RabbitQueueDefinition = {
+    name: `${queue}.retry`,
+    exchange: RabbitExchange.RETRY,
+    routingKey: retryKey,
+    durable: true,
+    messageTtl: DEFAULT_RETRY_TTL_MS,
+    deadLetterExchange: RabbitExchange.DEFAULT,
+    deadLetterRoutingKey: routingKey,
+  };
+
+  const deadLetterQueue = makeDeadLetterQueue({
+    name: `${queue}.dlq`,
+    routingKey: deadLetterKey,
+  });
+
+  const failurePolicy = Match.value(options.failure).pipe(
+    Match.withReturnType<FailurePolicy>(),
+    Match.when("retry", () => ({
+      strategy: "retry",
+      maxRetries: MAX_DELAYED_RETRIES,
+      retryRoutingKey: retryKey,
+      deadLetterRoutingKey: deadLetterKey,
+    })),
+    Match.when("dead-letter", () => ({
+      strategy: "dead-letter",
+      deadLetterRoutingKey: deadLetterKey,
+    })),
+    Match.when("broker-retry", () => ({ strategy: "nack" })),
+    Match.when("requeue", () => ({ strategy: "requeue" })),
+    Match.when("nack", () => ({ strategy: "nack" })),
+    Match.exhaustive,
+  );
+
+  return {
+    queue,
+    routingKey,
+    prefetch: options.prefetch ?? 1,
+    failurePolicy,
+    queues: [
+      main,
+      ...(retries ? [retryQueue] : []),
+      ...(deadLetters ? [deadLetterQueue] : []),
+    ],
+  };
+};

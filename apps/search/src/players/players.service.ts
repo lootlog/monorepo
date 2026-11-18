@@ -1,29 +1,29 @@
-import { indexChangedDocuments } from "@lootlog/meilisearch/index-changed-documents";
+import { indexChangedDocuments } from "@lootlog/meilisearch/projection";
 import { Effect } from "effect";
 import { partition } from "es-toolkit";
 import type { Meilisearch } from "meilisearch";
-import { buildMeilisearchNameQuery } from "@lootlog/meilisearch/query-builder";
 import {
   attemptMeilisearch,
   type SearchOperationFailure,
 } from "@lootlog/meilisearch/operation-failure";
-import type { AppLogger } from "#src/shared/logger";
 import type { PlayerSearchQuery } from "./player-search-query.js";
-import { PLAYERS_INDEX } from "./search-index.js";
+import { playerNameQuery } from "./player-name-query.js";
 import type { IndexPlayersCommand } from "./index-players-command.js";
-import type { PlayerHit } from "./player-hit.js";
+import type { SearchPlayer } from "@lootlog/protocol/rabbit/events";
 
-const playerNameKey = (player: Pick<PlayerHit, "world" | "name">) =>
+export const PLAYERS_INDEX = "players";
+
+const playerNameKey = (player: Pick<SearchPlayer, "world" | "name">) =>
   JSON.stringify([player.world, player.name]);
 
-const uniquePlayers = (players: ReadonlyArray<PlayerHit>) => {
+const uniquePlayers = (players: ReadonlyArray<SearchPlayer>) => {
   const knownNames = new Set(
     players.flatMap((player) =>
       player.accountId > 0 ? [playerNameKey(player)] : [],
     ),
   );
 
-  const unique = new Map<string, PlayerHit>();
+  const unique = new Map<string, SearchPlayer>();
 
   for (const player of players) {
     // ponytail: name fallback for truncated legacy IDs; remove after an identity migration.
@@ -48,35 +48,25 @@ const uniquePlayers = (players: ReadonlyArray<PlayerHit>) => {
 
 type IndexPlayer = IndexPlayersCommand["players"][number];
 
-/** The stored shape of one player; the seed script and the consumer share it. */
-export const toPlayerDocument = (player: IndexPlayer) => ({
+/** The stored shape of one player. */
+const toPlayerDocument = (player: IndexPlayer) => ({
   ...player,
   uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
 });
 
-export const makePlayersModule = (
-  meilisearch: Meilisearch,
-  logger: AppLogger,
-) => {
-  const getPlayers = Effect.fn("SearchPlayers.get")(function* ({
-    limit,
-    search,
-    world,
-  }: PlayerSearchQuery) {
-    const index = meilisearch.index<PlayerHit>(PLAYERS_INDEX);
-
-    const { searchTerm, query } = buildMeilisearchNameQuery({
-      limit,
-      search,
-      world,
-    });
+export const makePlayersModule = (meilisearch: Meilisearch) => {
+  const getPlayers = Effect.fn("SearchPlayers.get")(function* (
+    input: PlayerSearchQuery,
+  ) {
+    const index = meilisearch.index<SearchPlayer>(PLAYERS_INDEX);
+    const { searchTerm, query } = playerNameQuery(input);
 
     return yield* attemptMeilisearch("search.players", () =>
       index.search(searchTerm, query),
     ).pipe(
       Effect.map((response) => uniquePlayers(response.hits)),
       Effect.tapError((error) =>
-        Effect.sync(() => logger.error("Players search error", { error })),
+        Effect.logError("Players search error", { error }),
       ),
     );
   });
@@ -89,15 +79,16 @@ export const makePlayersModule = (
     );
 
     if (validPlayers.length === 0) {
-      logger.warn("No valid players to index (missing required fields)", {
-        players: data.players,
-      });
+      yield* Effect.logWarning(
+        "No valid players to index (missing required fields)",
+        { players: data.players },
+      );
 
       return;
     }
 
     if (validPlayers.length !== data.players.length) {
-      logger.warn(
+      yield* Effect.logWarning(
         `Skipped ${invalidPlayers.length} players due to missing required fields`,
         { invalidPlayers },
       );
@@ -114,7 +105,7 @@ export const makePlayersModule = (
   return { getPlayers, indexPlayers } satisfies {
     readonly getPlayers: (
       input: PlayerSearchQuery,
-    ) => Effect.Effect<ReadonlyArray<PlayerHit>, SearchOperationFailure>;
+    ) => Effect.Effect<ReadonlyArray<SearchPlayer>, SearchOperationFailure>;
     readonly indexPlayers: (
       data: IndexPlayersCommand,
     ) => Effect.Effect<void, SearchOperationFailure>;

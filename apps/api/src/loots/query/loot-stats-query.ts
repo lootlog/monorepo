@@ -1,5 +1,4 @@
-import { Effect, Schema } from "effect";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import {
   and,
   asc,
@@ -41,21 +40,7 @@ import { NON_LEGEND_ITEM_TYPES } from "@lootlog/domain/item-type";
 import { strongestNpcFirst } from "#src/loots/strongest-npc-order";
 import { statsLocalTimeOfUtc } from "#src/kills/kill-stats-period";
 
-class LootStatsQueryError extends TaggedErrorClass<LootStatsQueryError>()(
-  "LootStatsQueryError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
-export const runLootStatsQuery = <A, E>(
-  operation: string,
-  query: Effect.Effect<A, E>,
-) =>
-  query.pipe(
-    Effect.mapError((cause) => new LootStatsQueryError({ operation, cause })),
-    Effect.withSpan(operation, {
-      attributes: { adapter: "loot-stats.postgres", retryCount: 0 },
-    }),
-  );
+export const runLootStatsQuery = adapterOperation("loot-stats.postgres");
 
 /** Items of legendary rarity, whatever their type. */
 const legendary =
@@ -82,7 +67,7 @@ const legend = and(
 
 /**
  * The timeline point of a loot. An hour is its UTC instant; a day or a week
- * is the calendar one in `STATS_TIME_ZONE`, as kill statistics count them,
+ * is the calendar one in `MARGONEM_TIME_ZONE`, as kill statistics count them,
  * given as that local midnight written in UTC. Both PostgreSQL drivers decode
  * the native timestamp; a column codec adds a costly text cast.
  */

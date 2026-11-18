@@ -1,6 +1,9 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   lootCommentTable,
@@ -25,16 +28,11 @@ import { ErrorKey } from "#src/loots/error-key";
 import { memberDisplayRolesQuery } from "#src/members/member-display-role";
 import { findActiveGuildMember } from "#src/members/member-access-query";
 
-export class LootPersistenceError extends TaggedErrorClass<LootPersistenceError>()(
-  "LootPersistenceError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 type PersistenceFailure =
   | PermissionDeniedError
   | ResourceConflictError
   | ResourceNotFoundError
-  | LootPersistenceError;
+  | OperationError;
 
 type PersistenceEffect<A> = Effect.Effect<A, PersistenceFailure>;
 
@@ -100,11 +98,9 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
         cause instanceof ResourceConflictError ||
         cause instanceof ResourceNotFoundError
           ? cause
-          : new LootPersistenceError({ operation, cause }),
+          : new OperationError({ operation, cause }),
       ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "loots.drizzle", retryCount: 0 },
-      }),
+      withAdapterSpan(operation, "loots.drizzle"),
     );
 
   const attachMembers = (
@@ -184,7 +180,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
 
         if (!member) {
           return Effect.fail(
-            new LootPersistenceError({
+            new OperationError({
               operation: "loots.draws.project.member",
               cause: "member-missing",
             }),
@@ -342,7 +338,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
 
               if (!member) {
                 return yield* Effect.fail(
-                  new LootPersistenceError({
+                  new OperationError({
                     operation: "loots.comments.create.member",
                     cause: "member-missing",
                   }),
@@ -363,7 +359,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
 
               if (!comment) {
                 return yield* Effect.fail(
-                  new LootPersistenceError({
+                  new OperationError({
                     operation: "loots.comments.create.insert",
                     cause: "insert-failed",
                   }),
@@ -379,7 +375,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
 
           if (!comment) {
             return yield* Effect.fail(
-              new LootPersistenceError({
+              new OperationError({
                 operation: "loots.comments.create.projection",
                 cause: "projection-missing",
               }),
@@ -488,7 +484,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
 
               if (!created) {
                 return yield* Effect.fail(
-                  new LootPersistenceError({
+                  new OperationError({
                     operation: "loots.draws.create.insert",
                     cause: "insert-failed",
                   }),
@@ -503,7 +499,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
 
           if (!projected) {
             return yield* Effect.fail(
-              new LootPersistenceError({
+              new OperationError({
                 operation: "loots.draws.create.projection",
                 cause: "projection-missing",
               }),
@@ -579,7 +575,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
 
               if (!voided) {
                 return yield* Effect.fail(
-                  new LootPersistenceError({
+                  new OperationError({
                     operation: "loots.draws.void.update",
                     cause: "update-failed",
                   }),
@@ -594,7 +590,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
 
           if (!projected) {
             return yield* Effect.fail(
-              new LootPersistenceError({
+              new OperationError({
                 operation: "loots.draws.void.projection",
                 cause: "projection-missing",
               }),
@@ -634,7 +630,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
 
             if (!member) {
               return yield* Effect.fail(
-                new LootPersistenceError({
+                new OperationError({
                   operation: "loots.likes.set.member",
                   cause: "member-missing",
                 }),

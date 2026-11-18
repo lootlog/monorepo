@@ -7,19 +7,20 @@ import {
   RealtimeEventListeners,
   unwrapOrganizationEvent,
 } from "@lootlog/client/realtime/event-listeners";
-import { KILL_STATS_FEATURE } from "@lootlog/protocol/realtime";
+import {
+  KILL_STATS_FEATURE,
+  type ServerEventPayload,
+} from "@lootlog/protocol/realtime";
 import { GATEWAY_SOCKET_PATH, GATEWAY_URL } from "@/config/gateway";
 import {
+  isOrganizationAccessDenied,
   RealtimeClient,
-  RealtimeRequestError,
   type BasicPresence,
   type PresenceWithLocation,
   type ServerEvent,
 } from "@lootlog/client/realtime";
 import type { GamePresenceUpdatePayload } from "@/lib/game-presence";
 import type { MemberWebPresenceUpdatePayload } from "@/lib/web-presence";
-
-type Listener = (...arguments_: never[]) => void;
 
 const toPlayerPresence = (
   presence: BasicPresence | PresenceWithLocation,
@@ -88,33 +89,11 @@ const groupPresence = <TValue>(
   return grouped;
 };
 
-/** Server events delivered to listeners under their protocol type. */
-const FORWARDED_EVENT_TYPES = [
-  "feed.entry",
-  "kill-stats.changed",
-  "loot.created",
-  "loot.share-updated",
-  "loot.snapshot",
-  "timer.created",
-  "timer.deleted",
-  "hero-sighting.updated",
-  "reservation.created",
-  "reservation.deleted",
-  "reservation.changed",
-  "member-refresh.updated",
-  "event.map-status-updated",
-  "event.hero-killed",
-  "event.ranking-updated",
-  "event.respawn-window-opened",
-  "event.respawn-window-closed",
-] as const satisfies ReadonlyArray<ServerEvent["type"]>;
-
-type ForwardedEventType = (typeof FORWARDED_EVENT_TYPES)[number];
-
-const forwardedEventTypes: ReadonlySet<string> = new Set(FORWARDED_EVENT_TYPES);
-
-const isForwardedEventType = (type: string): type is ForwardedEventType =>
-  forwardedEventTypes.has(type);
+/** Server events this client consumes itself instead of forwarding. */
+type ConsumedEventType =
+  | "session.joined"
+  | "permissions.updated"
+  | "presence.delta";
 
 /** A joined session and what changed in its access since the previous one. */
 export type GatewayJoin = {
@@ -131,22 +110,28 @@ export type GatewayAccessUpdate = {
 };
 
 /**
- * What GatewayClient listeners hear: forwarded server events, and the events
- * of the connection itself:
- * - `connect` and `disconnect` follow the transport;
- * - `join` carries a {@link GatewayJoin};
- * - `access.updated` carries a {@link GatewayAccessUpdate};
- * - `game-presence.changed` carries a `GamePresenceUpdatePayload`;
- * - `web-presence.changed` carries a `MemberWebPresenceUpdatePayload`.
+ * What GatewayClient listeners hear: every other server event under its
+ * protocol type, and the events of the connection itself.
  */
-export type GatewayClientEvent =
-  | ForwardedEventType
-  | "connect"
-  | "disconnect"
-  | "join"
-  | "access.updated"
-  | "game-presence.changed"
-  | "web-presence.changed";
+export type GatewayClientEvents = {
+  readonly [
+    Type in Exclude<ServerEvent["type"], ConsumedEventType>
+  ]: ServerEventPayload<Type>;
+} & {
+  /** Follows the transport. */
+  readonly connect: undefined;
+  readonly disconnect: undefined;
+  readonly join: GatewayJoin;
+  readonly "access.updated": GatewayAccessUpdate;
+  readonly "game-presence.changed": GamePresenceUpdatePayload;
+  readonly "web-presence.changed": MemberWebPresenceUpdatePayload;
+};
+
+export type GatewayClientEvent = keyof GatewayClientEvents;
+
+type GatewayClientListener<Event extends GatewayClientEvent> = (
+  payload: GatewayClientEvents[Event],
+) => void;
 
 // Production joins complete 150–250 ms after the first connect. A slower first
 // join may follow events that the page's initial HTTP reads could not include.
@@ -157,7 +142,8 @@ export class GatewayClient {
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
   });
-  private readonly listeners = new RealtimeEventListeners<GatewayClientEvent>();
+  private readonly listeners =
+    new RealtimeEventListeners<GatewayClientEvents>();
   private wasConnected = false;
   private accessPolicy: AccessPolicySnapshot | undefined;
   private hasJoined = false;
@@ -173,7 +159,7 @@ export class GatewayClient {
 
       if (connected === this.wasConnected) return;
       this.wasConnected = connected;
-      this.listeners.emit(connected ? "connect" : "disconnect");
+      this.listeners.emit(connected ? "connect" : "disconnect", undefined);
     });
   }
 
@@ -190,13 +176,19 @@ export class GatewayClient {
     this.realtime.disconnect();
   }
 
-  on(event: GatewayClientEvent, listener: Listener): this {
+  on<Event extends GatewayClientEvent>(
+    event: Event,
+    listener: GatewayClientListener<Event>,
+  ): this {
     this.listeners.add(event, listener);
 
     return this;
   }
 
-  off(event: GatewayClientEvent, listener: Listener): this {
+  off<Event extends GatewayClientEvent>(
+    event: Event,
+    listener: GatewayClientListener<Event>,
+  ): this {
     this.listeners.delete(event, listener);
 
     return this;
@@ -228,15 +220,8 @@ export class GatewayClient {
         })),
       };
     } catch (error) {
-      // The deployed gateway uses COMMAND_REJECTED for all command failures.
-      if (
-        error instanceof RealtimeRequestError &&
-        error.code === "COMMAND_REJECTED" &&
-        !error.retryable &&
-        error.message === "organization access denied"
-      ) {
+      if (isOrganizationAccessDenied(error))
         return { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" };
-      }
 
       return { status: "unavailable" };
     }
@@ -323,8 +308,7 @@ export class GatewayClient {
       return;
     }
 
-    if (isForwardedEventType(event.type))
-      this.listeners.emit(event.type, unwrapOrganizationEvent(event));
+    this.listeners.emit(event.type, unwrapOrganizationEvent(event));
   }
 
   private dispatchPresence(

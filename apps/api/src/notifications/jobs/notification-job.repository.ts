@@ -1,8 +1,11 @@
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
 import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target.repository";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, asc, desc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   notificationJobTable,
@@ -14,7 +17,7 @@ import type { JsonValue } from "#src/database/json";
 import type {
   NotificationJobStatus,
   NotificationOwnerType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 export type NotificationStoredJob = Omit<
   typeof notificationJobTable.$inferSelect,
@@ -53,11 +56,6 @@ export type NotificationDeliveryUpdate = {
   readonly targetFirst?: boolean;
 };
 
-class NotificationJobStoreFailure extends TaggedErrorClass<NotificationJobStoreFailure>()(
-  "NotificationJobStoreFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 // A queued retry may claim or block a job its failed attempt left PROCESSING;
 // a first attempt never overrides another worker's claim.
 const eligibleJobForAttempt = (jobId: string, retrying: boolean) =>
@@ -71,7 +69,7 @@ const eligibleJobForAttempt = (jobId: string, retrying: boolean) =>
 
 export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
   const failure = (operation: string) => (cause: unknown) =>
-    new NotificationJobStoreFailure({ operation, cause });
+    new OperationError({ operation, cause });
 
   const findJob = (jobId: string) =>
     database
@@ -256,9 +254,10 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       )
       .pipe(
         Effect.mapError(failure("notifications.jobStore.recordDelivery")),
-        Effect.withSpan("notifications.jobStore.recordDelivery.transaction", {
-          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-        }),
+        withAdapterSpan(
+          "notifications.jobStore.recordDelivery.transaction",
+          "notifications.drizzle",
+        ),
       );
 
   const findRules = (ruleIds: readonly number[]) =>

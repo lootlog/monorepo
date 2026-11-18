@@ -12,7 +12,8 @@ import {
 import { Field, FieldLabel } from "@lootlog/ui/components/field";
 import { Input } from "@lootlog/ui/components/input";
 import { useState } from "react";
-import { getKeyErrorMessage, keyRequest, type ApiKey } from "~/lib/key-client";
+import { apiKeysRenameApiKey } from "@lootlog/client/auth";
+import { getKeyErrorMessage, type ApiKey } from "~/lib/key-client";
 import { portalText as t } from "~/lib/translations";
 
 export function KeyRenameDialog({
@@ -35,10 +36,7 @@ export function KeyRenameDialog({
     setError(null);
 
     try {
-      await keyRequest(`/${encodeURIComponent(apiKey.id)}`, {
-        method: "PATCH",
-        body: JSON.stringify({ name }),
-      });
+      await apiKeysRenameApiKey({ id: apiKey.id }, { name });
       await onChange();
       setOpen(false);
     } catch (error) {

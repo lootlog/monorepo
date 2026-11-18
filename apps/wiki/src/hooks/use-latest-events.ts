@@ -3,20 +3,18 @@ import { groupBy } from "es-toolkit";
 import {
   type CatalogControllerGetItemsParams,
   type CatalogItemDtoOutput,
-  catalogControllerGetItems,
   getCatalogControllerGetItemsQueryKey,
 } from "@lootlog/client/catalog";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
+import { readCatalogItems } from "@/lib/catalog-pages";
 import { eventsByPriority } from "@/lib/hero-trackers";
 import { latestEventOf } from "@/lib/item-events";
 
 /** The events the home page shows: two rows of its two-column grid. */
 export const HOME_EVENTS_SHOWN = 4;
 
-const PAGE_SIZE = 96;
-
-// Meilisearch serves no hits past its `maxTotalHits`.
-const MAX_ITEMS = 1000;
+const eventsOf = (items: readonly CatalogItemDtoOutput[]) =>
+  new Set(items.flatMap(({ stat }) => latestEventOf(stat) ?? []));
 
 /**
  * The latest events with their items, newest first. Event items carry the
@@ -40,25 +38,12 @@ export const latestEventsQueryOptions = (count: number) => {
       count,
     ],
     queryFn: async ({ signal }) => {
-      const items: CatalogItemDtoOutput[] = [];
-      const events = new Set<string>();
+      const items = await readCatalogItems(params, {
+        signal,
+        isEnough: (read) => eventsOf(read).size > count,
+      });
 
-      while (events.size <= count && items.length < MAX_ITEMS) {
-        const page = await catalogControllerGetItems(
-          { ...params, limit: PAGE_SIZE, offset: items.length },
-          { signal },
-        );
-
-        items.push(...page.hits);
-
-        for (const { stat } of page.hits) {
-          const event = latestEventOf(stat);
-
-          if (event !== undefined) events.add(event);
-        }
-
-        if (page.hits.length < PAGE_SIZE) break;
-      }
+      const events = eventsOf(items);
 
       const byEvent = groupBy(
         items.filter(({ stat }) => latestEventOf(stat) !== undefined),

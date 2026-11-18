@@ -1,9 +1,12 @@
 import { Schema } from "effect";
 import { HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "effect/http-api";
-import { ApiKeyStatus } from "@lootlog/schema/api-key-access";
+import {
+  API_KEY_STATUS_PATH,
+  ApiKeyStatusRequest,
+  ApiKeyStatusResponse,
+} from "@lootlog/schema/api-key-access";
 import {
   ApiKeySummary,
-  ApiKeyStatusRequest,
   CreateApiKey,
   RenameApiKey,
 } from "#src/auth/api-key-service";
@@ -33,9 +36,9 @@ export class ApiKeysGroup extends HttpApiGroup.make("apiKeys").add(
     params: Schema.Struct({ id: Schema.NonEmptyString }),
     success: Schema.Struct({ success: Schema.Literal(true) }),
   }),
-  HttpApiEndpoint.post("ApiKeyStatuses", "/auth/internal/api-keys/status", {
+  HttpApiEndpoint.post("ApiKeyStatuses", API_KEY_STATUS_PATH, {
     error,
     payload: ApiKeyStatusRequest,
-    success: Schema.Struct({ keys: Schema.Array(ApiKeyStatus) }),
+    success: ApiKeyStatusResponse,
   }),
 ) {}

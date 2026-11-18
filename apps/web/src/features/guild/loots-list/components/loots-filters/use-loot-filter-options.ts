@@ -1,5 +1,5 @@
 import { LootItemResponseDtoProfItem, NpcType } from "@lootlog/client/main";
-import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { DisplayItemRarity } from "@lootlog/domain/item-rarity";
 import { useTranslation } from "react-i18next";
 
 import { getShortnameByProf } from "@lootlog/domain/profession";
@@ -19,9 +19,9 @@ export function useLootFilterOptions() {
   const { t } = useTranslation();
 
   const rarityOptions = [
-    { value: ItemRarity.LEGENDARY, label: t("itemRarity.LEGENDARY") },
-    { value: ItemRarity.HEROIC, label: t("itemRarity.HEROIC") },
-    { value: ItemRarity.UNIQUE, label: t("itemRarity.UNIQUE") },
+    { value: DisplayItemRarity.LEGENDARY, label: t("itemRarity.LEGENDARY") },
+    { value: DisplayItemRarity.HEROIC, label: t("itemRarity.HEROIC") },
+    { value: DisplayItemRarity.UNIQUE, label: t("itemRarity.UNIQUE") },
   ];
 
   // Strongest groups first: they are what players filter by most.
@@ -54,7 +54,7 @@ export function useLootFilterOptions() {
       label: t("loots.filtersPanel.quickFilters.legendaryLabel"),
       category: t("loots.filtersPanel.quickFilters.itemCategory"),
       filters: {
-        rarities: [ItemRarity.LEGENDARY],
+        rarities: [DisplayItemRarity.LEGENDARY],
       },
       isDefault: true,
     },

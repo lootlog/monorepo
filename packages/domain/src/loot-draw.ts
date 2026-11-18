@@ -1,3 +1,5 @@
+import { hasItemStat } from "./item-stat.js";
+
 /**
  * The draw a Lootlog runs for a looted legendary item among the players who
  * could not join the party, because Margonem fits ten players in one.
@@ -20,11 +22,6 @@ export type LootDrawItem = Readonly<{
 
 export type LootDrawCandidate = Readonly<{ prof: string | null }>;
 
-const hasStatFlag = (stat: string, flag: string) =>
-  stat
-    .split(";")
-    .some((entry) => entry === flag || entry.startsWith(`${flag}=`));
-
 /**
  * Only legendary items are drawn among the players left out of the party,
  * and only those the winner can hand over: colossi and titans drop items
@@ -33,7 +30,7 @@ const hasStatFlag = (stat: string, flag: string) =>
 export const isLootDrawItem = (item: {
   rarity: string | null | undefined;
   stat: string;
-}) => item.rarity === "LEGENDARY" && !hasStatFlag(item.stat, "permbound");
+}) => item.rarity === "LEGENDARY" && !hasItemStat(item.stat, "permbound");
 
 /**
  * Whether a loot keeps the players on the map at the drop: a fight that

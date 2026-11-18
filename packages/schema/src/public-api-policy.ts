@@ -11,15 +11,9 @@ import { ACTIVITY_OPERATIONS } from "./public-api-operations/activity.js";
 import { BATTLELOG_OPERATIONS } from "./public-api-operations/battlelog.js";
 import { SEARCH_OPERATIONS } from "./public-api-operations/search.js";
 import { CATALOG_OPERATIONS } from "./public-api-operations/catalog.js";
+import type { PublicApiService } from "./api-services.js";
 
 /** Explicit supported HTTP inventory. Unknown operations are session-only. */
-export type PublicApiService =
-  | "main"
-  | "activity"
-  | "battlelog"
-  | "search"
-  | "catalog";
-
 export type PublicApiOperation = {
   readonly service: PublicApiService;
   readonly method: string;

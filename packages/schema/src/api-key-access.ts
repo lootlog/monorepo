@@ -18,9 +18,34 @@ export const ApiKeyAccess = Schema.Struct({
 
 export type ApiKeyAccess = typeof ApiKeyAccess.Type;
 
+/**
+ * Forward-auth headers: the auth service asserts them for every request the
+ * edge proxies, and the edge strips any copy a client sent. Services on the
+ * private network trust them as the caller's identity.
+ */
+export const AUTH_USER_ID_HEADER = "x-auth-user-id";
+
+export const AUTH_DISCORD_ID_HEADER = "x-auth-discord-id";
+
 export const API_KEY_ACCESS_HEADER = "x-auth-api-key-access";
 
+/** The developer credential the edge exchanges for forward-auth headers. */
+export const API_KEY_HEADER = "x-api-key";
+
 export const API_KEY_LEASE_MS = 60_000;
+
+/**
+ * Messages the auth service answers API key management failures with; the
+ * developer portal shows its own copy for each of them.
+ */
+export const API_KEY_ERROR_MESSAGES = {
+  disabled: "API keys are disabled",
+  organizationServiceUnavailable: "Organization service unavailable",
+  organizationAccessRequired: "Organization access required",
+  limitReached: "Maximum active API keys reached",
+  sessionRequired: "Session required",
+  creationFailed: "API key creation failed",
+} as const;
 
 export const ApiKeyStatus = Schema.Union([
   Schema.Struct({ keyId: Schema.NonEmptyString, valid: Schema.Literal(false) }),
@@ -34,3 +59,14 @@ export const ApiKeyStatus = Schema.Union([
 ]);
 
 export type ApiKeyStatus = typeof ApiKeyStatus.Type;
+
+/** Auth's internal endpoint that the gateway polls to renew API key leases. */
+export const API_KEY_STATUS_PATH = "/auth/internal/api-keys/status";
+
+export const ApiKeyStatusRequest = Schema.Struct({
+  keyIds: Schema.Array(Schema.NonEmptyString).check(Schema.isMaxLength(100)),
+});
+
+export const ApiKeyStatusResponse = Schema.Struct({
+  keys: Schema.Array(ApiKeyStatus),
+});

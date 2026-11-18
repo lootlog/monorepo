@@ -13,7 +13,7 @@ import { UserLootlogConfigGroup } from "#src/contracts/user-lootlog-config/api";
 import { PreferencesGroup } from "#src/contracts/preferences/api";
 import { LootsGroup } from "#src/contracts/loots/api";
 import { LootlogConfigGroup } from "#src/contracts/lootlog-config/api";
-import { HealthGroup } from "#src/contracts/health/api";
+import { healthGroup } from "@lootlog/instrumentation/service";
 import { ChatGroup } from "#src/contracts/chat/api";
 import { GlobalChatGroup } from "#src/contracts/global-chat/api";
 import { ReservationsGroup } from "#src/contracts/reservations/api";
@@ -48,7 +48,7 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     PreferencesGroup,
     LootsGroup,
     LootlogConfigGroup,
-    HealthGroup,
+    healthGroup("Check the health status of the API"),
     ChatGroup,
     GlobalChatGroup,
     ReservationsGroup,

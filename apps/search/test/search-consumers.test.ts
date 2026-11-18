@@ -116,8 +116,7 @@ const setup = async () => {
     },
   });
 
-  const logger = { info() {}, warn() {}, error() {} };
-  const players = makePlayersModule(client, logger);
+  const players = makePlayersModule(client);
 
   const operations = Layer.succeed(
     SearchOperations,

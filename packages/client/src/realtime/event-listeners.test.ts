@@ -4,7 +4,7 @@ import { RealtimeEventListeners } from "./event-listeners.js";
 afterEach(() => vi.restoreAllMocks());
 
 test("listeners retain set ordering, duplicate suppression and removal", () => {
-  const events = new RealtimeEventListeners<"changed">();
+  const events = new RealtimeEventListeners<{ changed: number | undefined }>();
   const received: (number | undefined)[] = [];
   const listener = (value?: number) => received.push(value);
   events.add("changed", listener);
@@ -15,7 +15,7 @@ test("listeners retain set ordering, duplicate suppression and removal", () => {
   events.emit("changed", 43);
   expect(received).toEqual([42]);
   events.clear();
-  expect(() => events.emit("changed")).not.toThrow();
+  expect(() => events.emit("changed", undefined)).not.toThrow();
 });
 
 test.each([false, true])(
@@ -26,7 +26,7 @@ test.each([false, true])(
     });
 
     const failure = new Error("listener failed");
-    const events = new RealtimeEventListeners<"changed">();
+    const events = new RealtimeEventListeners<{ changed: number }>();
     const received: number[] = [];
     events.add("changed", () => {
       throw failure;

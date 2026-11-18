@@ -8,6 +8,11 @@ import {
 import { HttpApiBuilder } from "effect/http-api";
 import { AuthService, HttpResponseError } from "#src/auth/auth-service";
 import { AuthApi } from "#src/http-api/auth-api";
+import {
+  API_KEY_ACCESS_HEADER,
+  AUTH_DISCORD_ID_HEADER,
+  AUTH_USER_ID_HEADER,
+} from "@lootlog/schema/api-key-access";
 
 const NonEmptyTrimmedString = Schema.Trim.check(Schema.isMinLength(1));
 
@@ -53,8 +58,8 @@ const verify = Effect.fn("AuthController_verify")(function* () {
   const { identity, setCookie } = yield* auth.verifyRequestIdentity({
     headers,
     authorizationHeader: headers.get("authorization") ?? undefined,
-    authDiscordId: headers.get("x-auth-discord-id") ?? undefined,
-    authUserId: headers.get("x-auth-user-id") ?? undefined,
+    authDiscordId: headers.get(AUTH_DISCORD_ID_HEADER) ?? undefined,
+    authUserId: headers.get(AUTH_USER_ID_HEADER) ?? undefined,
   });
 
   return { identity, setCookie, body: { status: "OK" as const } };
@@ -104,9 +109,9 @@ export const AuthHandlers = Layer.merge(
           toHttpResponse(verify(), ({ body, identity, setCookie }) => {
             const response = HttpServerResponse.jsonUnsafe(body, {
               headers: {
-                "X-Auth-Discord-Id": identity.discordId,
-                "X-Auth-User-Id": identity.userId,
-                "X-Auth-Api-Key-Access": identity.apiKeyAccess
+                [AUTH_DISCORD_ID_HEADER]: identity.discordId,
+                [AUTH_USER_ID_HEADER]: identity.userId,
+                [API_KEY_ACCESS_HEADER]: identity.apiKeyAccess
                   ? JSON.stringify(identity.apiKeyAccess)
                   : "",
               },

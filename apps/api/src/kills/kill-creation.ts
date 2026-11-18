@@ -1,3 +1,4 @@
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import { selectCharacterCatchingGuildIds } from "#src/members/character-catching-guilds";
 import {
   ForwardAuthIdentity,
@@ -7,11 +8,10 @@ import {
   selectAccessibleGuilds,
   selectActiveGuildMembers,
 } from "#src/members/member-access-query";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { mapValues } from "es-toolkit";
-import { Clock, Effect, Option, Schema } from "effect";
+import { Clock, Effect, Option } from "effect";
 import { activityFeedNpcCategory } from "@lootlog/domain/activity-feed";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcType, isDropSourceBossType } from "@lootlog/domain/npc-type";
@@ -36,7 +36,7 @@ import {
   userKillTotalTable,
 } from "#src/database/drizzle/kill-statistics.schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
-import { getKillNpcId } from "#src/shared/margonem/npc-identity";
+import { getKillNpcId } from "@lootlog/domain/npc-identity";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
 import {
   buildBossKillDedupKey,
@@ -51,11 +51,6 @@ import {
 } from "./kill-stats-period.js";
 
 const DEDUP_TTL_SECONDS = 30;
-
-export class KillCreationError extends TaggedErrorClass<KillCreationError>()(
-  "KillCreationError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 export interface KillCreationCache {
   readonly invalidateScopes: (
@@ -110,13 +105,7 @@ export const makeKillCreation = (
   publishPersonalStatsChanged: (userId: string) => Effect.Effect<void> = () =>
     Effect.void,
 ) => {
-  const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError((cause) => new KillCreationError({ operation, cause })),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "kills.drizzle", retryCount: 0 },
-      }),
-    );
+  const protect = adapterOperation("kills.drizzle");
 
   const invalidate = (scope: string) =>
     cache.invalidateScopes(scope).pipe(

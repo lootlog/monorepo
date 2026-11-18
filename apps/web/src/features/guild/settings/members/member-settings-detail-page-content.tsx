@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Permission } from "@lootlog/schema/permissions";
-import { getColorFromRole } from "@/utils/get-color-from-role";
+import { getMemberColor } from "@/utils/get-member-color";
 import { MemberAvatar } from "@/components/common/member-avatar";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
@@ -119,7 +119,7 @@ export const MemberSettingsDetailPageContent = () => {
     );
   }
 
-  const memberColor = getColorFromRole(member.roles);
+  const memberColor = getMemberColor(member);
 
   const activityStats = memberActivityStatsByDiscordIdAndSource.get(
     member.userId,

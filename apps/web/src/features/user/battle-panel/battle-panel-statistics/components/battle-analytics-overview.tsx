@@ -1,5 +1,5 @@
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
-import type { Period } from "@/features/user/battle-panel/battle-panel-search";
+import type { Period } from "@lootlog/schema/http-scalars";
 import {
   useBattlesControllerGetBattleDuration,
   useBattlesControllerGetCombatProfile,

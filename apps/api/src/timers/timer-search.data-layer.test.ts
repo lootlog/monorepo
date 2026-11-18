@@ -11,7 +11,7 @@ import {
   memberTable,
 } from "#src/database/drizzle/organization.schema";
 import { timerTable } from "#src/database/drizzle/timer.schema";
-import { TIMER_TYPES } from "./timer-limits.js";
+import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import type { Role } from "./timers.types.js";
 import { makeTimerSearch } from "./timer-search.data-layer.js";
 import type { TimersGuildAccess } from "./timers-data.js";

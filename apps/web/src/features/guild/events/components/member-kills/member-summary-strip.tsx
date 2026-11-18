@@ -2,11 +2,11 @@ import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
 import { formatPoints } from "../../utils/format-points";
 import { useTranslation } from "react-i18next";
 import { Clock, Moon, Sparkles, Swords } from "lucide-react";
-import { formatDurationHuman } from "../../utils/format-duration";
 import {
   type MemberStatsSummary,
   formatPercentage,
 } from "./member-kills-view-model";
+import { formatDuration } from "@/utils/date/format-duration";
 
 type MemberSummaryStripProps = {
   contextStats: MemberStatsSummary;
@@ -80,10 +80,11 @@ export const MemberSummaryStrip = ({
       <StatsTile
         icon={Clock}
         label={t("events.kills.kpiTotalTime")}
-        value={formatDurationHuman(contextStats.totalTimeSeconds)}
+        value={formatDuration(contextStats.totalTimeSeconds, "human")}
         detail={t("events.kills.kpiPerKill", {
-          value: formatDurationHuman(
+          value: formatDuration(
             Math.round(contextStats.avgTimePerKillSeconds),
+            "human",
           ),
         })}
       />

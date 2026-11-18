@@ -97,9 +97,7 @@ export const TimerHistoryResponse = Schema.Struct({
   createdAt: DateTimeString,
 }).annotate({ identifier: "TimerHistoryResponseDto" });
 
-export type TimerNpcSearchResult = typeof TimerNpcSearchResult.Type;
-
-export const TimerNpcSearchResult = Schema.Struct({
+const TimerNpcSearchResult = Schema.Struct({
   npcId: FiniteNumber,
   templateId: Schema.NullOr(PositiveSafeInteger),
   timerKey: Schema.String,

@@ -5,7 +5,7 @@ import {
   makeNotificationJobRecurrence,
   type NotificationRecurringRule,
 } from "#src/notifications/jobs/notification-job-recurrence";
-import { NotificationJobStatus } from "#src/notifications/notification-enums";
+import { NotificationJobStatus } from "@lootlog/schema/notifications";
 
 const recurringRule: NotificationRecurringRule = {
   ...createNotificationRuleFixture(),

@@ -1,35 +1,35 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { respawnFromSpawnWindow } from "@lootlog/domain/timers";
 import { Clock, Effect, Predicate, Schema } from "effect";
 import { ExecutionError, type RedlockService } from "#src/redis/redlock";
-import {
-  RabbitExchange,
-  RabbitRoutingKey,
-} from "@lootlog/protocol/rabbit/topology";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   mapTimerResponse,
+  toTimerEvent,
   timerNpcField,
   timerNpcTemplateId,
 } from "#src/timers/timer-projection";
-import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
+import type { EventPublisher } from "@lootlog/messaging";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
+import { getTimerListCacheScope } from "#src/shared/cache";
 import type { ApplicationLogger } from "#src/shared/application-logger";
-import { TIMER_TYPES } from "#src/timers/timer-limits";
+import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import { ErrorKey } from "#src/timers/error-key";
 import type { Timer } from "#src/timers/timers.types";
 import { buildTimerKey, buildTimerLockKey } from "#src/timers/timer-key";
 import type { EventTimerStore } from "#src/events/respawn/event-timer.repository";
 
-export interface EventTimerLookupInput {
+interface EventTimerLookupInput {
   readonly guildId: string;
   readonly world: string;
   readonly npcId: number;
   readonly npcName: string;
 }
 
-export interface EventRespawnTimerInput extends EventTimerLookupInput {
+interface EventRespawnTimerInput extends EventTimerLookupInput {
   readonly npcIcon: string | null;
   readonly minSpawnTime: Date;
   readonly maxSpawnTime: Date;
@@ -65,7 +65,7 @@ export class EventTimersError extends TaggedErrorClass<EventTimersError>()(
 interface EventTimersDependencies {
   readonly logger: ApplicationLogger;
   readonly store: EventTimerStore;
-  readonly amqp: AmqpPublisher;
+  readonly amqp: EventPublisher;
   readonly redis: RedisService;
   readonly redlock: RedlockService;
 }
@@ -79,31 +79,23 @@ export const makeEventTimersPort = ({
   redis,
   redlock,
 }: EventTimersDependencies): EventTimersPort => {
-  const lockManager = redlock.createInstance({
-    automaticExtensionThreshold: 5_000,
-  });
+  const lockManager = redlock.createInstance();
 
   const external = <A>(operation: string, run: () => Promise<A>) =>
     Effect.tryPromise({
       try: run,
       catch: (cause) => new EventTimersError({ operation, cause }),
-    }).pipe(
-      Effect.withSpan(operation, {
-        attributes: { adapter: "event-timers", retryCount: 0 },
-      }),
-    );
+    }).pipe(withAdapterSpan(operation, "event-timers"));
 
   const mapped = <A>(operation: string, effect: Effect.Effect<A, unknown>) =>
     effect.pipe(
       Effect.mapError((cause) => new EventTimersError({ operation, cause })),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "event-timers", retryCount: 0 },
-      }),
+      withAdapterSpan(operation, "event-timers"),
     );
 
   const invalidateCache = (guildId: string) =>
     external("eventTimers.cache.invalidate", () =>
-      redis.invalidateScopes(`timer:list:${guildId}`),
+      redis.invalidateScopes(getTimerListCacheScope(guildId)),
     ).pipe(
       Effect.tap(() =>
         Effect.sync(() =>
@@ -116,25 +108,17 @@ export const makeEventTimersPort = ({
     );
 
   const publishUpdate = (timer: Timer) => {
-    const response = mapTimerResponse(timer);
+    const response = toTimerEvent(mapTimerResponse(timer));
 
     return Effect.all(
       [
         mapped(
           "eventTimers.rabbit.update",
-          amqp.publish(
-            RabbitExchange.DEFAULT,
-            RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
-            response,
-          ),
+          amqp.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response),
         ),
         mapped(
           "eventTimers.rabbit.notification",
-          amqp.publish(
-            RabbitExchange.DEFAULT,
-            RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-            response,
-          ),
+          amqp.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED, response),
         ),
       ],
       { concurrency: "unbounded", discard: true },
@@ -159,19 +143,11 @@ export const makeEventTimersPort = ({
       [
         mapped(
           "eventTimers.rabbit.delete",
-          amqp.publish(
-            RabbitExchange.DEFAULT,
-            RabbitRoutingKey.GUILDS_TIMERS_DELETE,
-            payload,
-          ),
+          amqp.publish(RabbitRoutingKey.GUILDS_TIMERS_DELETE, payload),
         ),
         mapped(
           "eventTimers.rabbit.notificationDelete",
-          amqp.publish(
-            RabbitExchange.DEFAULT,
-            RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
-            payload,
-          ),
+          amqp.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED, payload),
         ),
       ],
       { concurrency: "unbounded", discard: true },
@@ -199,19 +175,17 @@ export const makeEventTimersPort = ({
     operation: string,
     lockKey: string,
     use: () => Effect.Effect<A, unknown>,
-  ) => {
-    type AcquiredLock = Awaited<ReturnType<typeof lockManager.acquire>>;
-
-    const acquire = external<AcquiredLock>(`${operation}.lock.acquire`, () =>
-      lockManager.acquire([lockKey], LOCK_TTL_MS),
+  ) =>
+    lockManager.withLock(
+      lockKey,
+      LOCK_TTL_MS,
+      Effect.suspend(use),
+      () =>
+        new EventTimersError({
+          operation: `${operation}.lock.acquire`,
+          cause: new ExecutionError("Unable to acquire Redis lock"),
+        }),
     );
-
-    return Effect.acquireUseRelease(acquire, use, (lock) =>
-      external(`${operation}.lock.release`, () => lock.release()).pipe(
-        Effect.ignore,
-      ),
-    );
-  };
 
   const resolveTimerKeys = (lookups: ReadonlyArray<EventTimerLookupInput>) =>
     mapped(

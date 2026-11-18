@@ -6,7 +6,7 @@ import type {
 import {
   ITEM_RARITIES_BY_VALUE,
   resolveItemRarity,
-} from "@lootlog/ui/lib/item-rarity";
+} from "@lootlog/domain/item-rarity";
 import { LOOT_RARITY_TEXT_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { t } from "@/i18n/messages";

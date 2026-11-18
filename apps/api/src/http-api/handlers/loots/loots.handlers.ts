@@ -32,7 +32,7 @@ export const fetchLoots = Effect.fn("loots.fetchLoots")(function* (
   return yield* data((service) => service.fetchLoots(caller, query));
 });
 
-export const getLootStats = Effect.fn("loots.getLootStats")(function* (
+const getLootStats = Effect.fn("loots.getLootStats")(function* (
   guildId: string | undefined,
   query: LootStatsQuery,
 ) {
@@ -41,7 +41,7 @@ export const getLootStats = Effect.fn("loots.getLootStats")(function* (
   return yield* data((service) => service.getLootStats(caller, query));
 });
 
-export const getUserLootStats = Effect.fn("loots.getUserLootStats")(function* (
+const getUserLootStats = Effect.fn("loots.getUserLootStats")(function* (
   query: UserLootStatsQuery,
 ) {
   const caller = yield* requireCaller;
@@ -49,7 +49,7 @@ export const getUserLootStats = Effect.fn("loots.getUserLootStats")(function* (
   return yield* data((service) => service.getUserLootStats(caller, query));
 });
 
-export const resolveLootItem = Effect.fn("loots.resolveLootItem")(function* (
+const resolveLootItem = Effect.fn("loots.resolveLootItem")(function* (
   guildId: string | undefined,
   query: ResolveLootItemQuery,
 ) {
@@ -88,7 +88,7 @@ export const fetchLoot = Effect.fn("loots.fetchLoot")(function* (
   return loot;
 });
 
-export const archiveLoot = Effect.fn("loots.archiveLoot")(function* (
+const archiveLoot = Effect.fn("loots.archiveLoot")(function* (
   guildId: string | undefined,
   lootId: number,
 ) {
@@ -116,7 +116,7 @@ export const createLoot = Effect.fn("loots.createLoot")(function* (
   return yield* data((service) => service.createLoot(caller, payload));
 });
 
-export const getComments = Effect.fn("loots.getComments")(function* (
+const getComments = Effect.fn("loots.getComments")(function* (
   guildId: string | undefined,
   lootId: number,
 ) {
@@ -160,7 +160,7 @@ export const createComment = Effect.fn("loots.createComment")(function* (
 const lootNotFound = () =>
   new RecordsNotFound({ status: 404, code: "LOOT_NOT_FOUND" });
 
-export const getLootDraws = Effect.fn("loots.getDraws")(function* (
+const getLootDraws = Effect.fn("loots.getDraws")(function* (
   guildId: string | undefined,
   lootId: number,
 ) {
@@ -189,7 +189,7 @@ export const createLootDraw = Effect.fn("loots.createDraw")(function* (
   return draw;
 });
 
-export const voidLootDraw = Effect.fn("loots.voidDraw")(function* (
+const voidLootDraw = Effect.fn("loots.voidDraw")(function* (
   guildId: string | undefined,
   lootId: number,
   drawId: number,
@@ -206,7 +206,7 @@ export const voidLootDraw = Effect.fn("loots.voidDraw")(function* (
   return draw;
 });
 
-export const setLootLike = Effect.fn("loots.setLike")(function* (
+const setLootLike = Effect.fn("loots.setLike")(function* (
   guildId: string | undefined,
   lootId: number,
   liked: boolean,
@@ -227,7 +227,7 @@ export const setLootLike = Effect.fn("loots.setLike")(function* (
   return likes;
 });
 
-export const updateLoot = Effect.fn("loots.updateLoot")(function* (
+const updateLoot = Effect.fn("loots.updateLoot")(function* (
   lootId: number,
   payload: UpdateLootShareRequest,
 ) {

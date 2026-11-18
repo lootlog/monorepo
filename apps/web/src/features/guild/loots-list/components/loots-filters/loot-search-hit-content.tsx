@@ -3,7 +3,7 @@ import { ItemSearchHitContent } from "@/components/tiles/item-search-hit-content
 import { PlayerSearchTile } from "@/components/tiles/player-search-tile";
 import { formatLevel } from "@lootlog/domain/profession";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { DisplayItemRarity } from "@lootlog/domain/item-rarity";
 
 import { upperFirst } from "es-toolkit";
 import { DatabaseZap } from "lucide-react";
@@ -79,7 +79,7 @@ export const LootSearchHitContent = ({ hit }: { hit: LootSearchHit }) => {
         <>
           <ItemImage
             icon={hit.item.icon}
-            rarity={hit.item.rarity ?? ItemRarity.COMMON}
+            rarity={hit.item.rarity ?? DisplayItemRarity.COMMON}
           />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-semibold">

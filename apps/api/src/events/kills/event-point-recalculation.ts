@@ -1,3 +1,4 @@
+import { OperationError } from "@lootlog/instrumentation/operation";
 import {
   getTrackingDurationSecondsForRanking,
   isKillPointCountedInRanking,
@@ -5,9 +6,8 @@ import {
   roundPoints,
 } from "#src/events/kills/event-ranking-policy";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq } from "drizzle-orm";
-import { Array as Arr, Effect, Schema } from "effect";
+import { Array as Arr, Effect } from "effect";
 import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
@@ -40,11 +40,6 @@ export interface EventPointRecalculator {
   ) => Effect.Effect<void, unknown>;
 }
 
-class EventPointRecalculationError extends TaggedErrorClass<EventPointRecalculationError>()(
-  "EventPointRecalculationError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeEventPointRecalculation =
   (
     database: typeof ApiDatabase.Service,
@@ -67,7 +62,7 @@ export const makeEventPointRecalculation =
         .pipe(
           Effect.mapError(
             (cause) =>
-              new EventPointRecalculationError({
+              new OperationError({
                 operation: "events.points.findEvent",
                 cause,
               }),

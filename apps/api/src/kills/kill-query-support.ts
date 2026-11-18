@@ -128,7 +128,7 @@ export const cachedKillQuery = <
  * are served for `FRESH_SECONDS` and refreshed in the background; kills do not
  * invalidate them.
  */
-export const GUILD_KILL_STATS_FRESH_SECONDS = 3_600;
+const GUILD_KILL_STATS_FRESH_SECONDS = 3_600;
 
 export const cachedStaleKillQuery = <
   S extends Schema.ConstraintDecoder<unknown>,

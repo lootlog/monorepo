@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGateway } from "@/hooks/utils/use-gateway";
+import type { GatewayClientEvents } from "@/lib/gateway-client";
 import { invalidateKillQueries } from "../mutations/invalidate-kill-queries";
 import {
   invalidateMapQueries,
@@ -14,19 +15,14 @@ interface UseEventSocketOptions {
   routeGuildId?: string;
 }
 
-type EventPayload = {
-  eventId: string;
-  guildId: string;
-};
+type EventPayload = GatewayClientEvents["event.ranking-updated"];
 
-type EventMapStatusUpdatePayload = EventPayload & {
-  mapId: string;
-  reason?: string;
-};
+type EventMapStatusUpdatePayload =
+  GatewayClientEvents["event.map-status-updated"];
 
-type EventRespawnWindowPayload = EventPayload & {
-  heroId: string;
-};
+type EventRespawnWindowPayload = GatewayClientEvents[
+  | "event.respawn-window-opened"
+  | "event.respawn-window-closed"];
 
 const isMatchingEventPayload = (
   payload: EventPayload,
