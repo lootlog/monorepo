@@ -36,6 +36,8 @@ export class ApiError<TData = unknown> extends Error {
   public readonly cause: unknown;
   public readonly status?: number;
   public readonly data: TData | undefined;
+  /** When the server allows a retry (epoch ms), read from `Retry-After`. */
+  public readonly retryAt?: number;
   public readonly url: string;
   public readonly method: string;
 
@@ -44,6 +46,7 @@ export class ApiError<TData = unknown> extends Error {
     data,
     message,
     method,
+    retryAt,
     status,
     url,
   }: {
@@ -51,12 +54,14 @@ export class ApiError<TData = unknown> extends Error {
     data?: TData;
     message: string;
     method: string;
+    retryAt?: number;
     status?: number;
     url: string;
   }) {
     super(message);
     this.cause = cause;
     this.name = "ApiError";
+    this.retryAt = retryAt;
     this.status = status;
     this.data = data;
     this.url = url;
@@ -321,6 +326,19 @@ const executeRequest = async ({
   }
 };
 
+/** `Retry-After` carries either delay seconds or an HTTP date. */
+const parseRetryAt = (value: string | null, now: number) => {
+  if (!value) return undefined;
+
+  const trimmed = value.trim();
+
+  if (/^\d+$/.test(trimmed)) return now + Number(trimmed) * 1000;
+
+  const date = Date.parse(trimmed);
+
+  return Number.isNaN(date) ? undefined : date;
+};
+
 export const executeApiRequest = async <TData>(
   service: ApiService,
   path: string,
@@ -353,6 +371,7 @@ export const executeApiRequest = async <TData>(
       message:
         getApiMessageFromData(data) || response.statusText || "Request failed",
       method,
+      retryAt: parseRetryAt(response.headers.get("retry-after"), Date.now()),
       status: response.status,
       url: url.toString(),
     });

@@ -1,4 +1,6 @@
 import { BandSection } from "@/components/common/band-section";
+import { RefreshCooldown } from "@/components/common/refresh-cooldown";
+import { useCountdown } from "@/hooks/utils/use-countdown";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Copy, ImageOff, RefreshCw } from "lucide-react";
@@ -37,6 +39,16 @@ export const StatsCardSettingsSection = ({
   const [previewToken, setPreviewToken] = useState(() => Date.now());
   const [isCopying, setIsCopying] = useState(false);
   const [imageError, setImageError] = useState(false);
+
+  // Keyed by Organization so one server's cooldown never shows on another.
+  const [nextRefresh, setNextRefresh] = useState<{
+    guildId: string;
+    at: string | number;
+  }>();
+
+  const refreshCooldown = useCountdown(
+    nextRefresh?.guildId === guild.id ? nextRefresh.at : null,
+  );
 
   const refreshStatsCard =
     useAuthenticatedGuildStatsCardControllerRefreshStatsCard();
@@ -81,14 +93,15 @@ export const StatsCardSettingsSection = ({
         },
       },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
           setImageError(false);
           setPreviewToken(Date.now());
+          setNextRefresh({ guildId: guild.id, at: data.nextRefreshAt });
           toast.success(t("settings.general.statsCard.refreshSuccess"));
         },
         onError: (error) => {
-          if (error.status === 429) {
-            toast.error(t("settings.general.statsCard.refreshRateLimited"));
+          if (error.status === 429 && error.retryAt !== undefined) {
+            setNextRefresh({ guildId: guild.id, at: error.retryAt });
 
             return;
           }
@@ -165,16 +178,20 @@ export const StatsCardSettingsSection = ({
           >
             {t("settings.general.statsCard.copyLink")}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!savedEnabled || refreshStatsCard.isPending}
-            loading={refreshStatsCard.isPending}
-            icon=<RefreshCw className="size-4" />
-            onClick={handleRefresh}
-          >
-            {t("settings.general.statsCard.refresh")}
-          </Button>
+          {refreshCooldown.isExpired ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!savedEnabled || refreshStatsCard.isPending}
+              loading={refreshStatsCard.isPending}
+              icon=<RefreshCw className="size-4" />
+              onClick={handleRefresh}
+            >
+              {t("settings.general.statsCard.refresh")}
+            </Button>
+          ) : (
+            <RefreshCooldown time={refreshCooldown.label} />
+          )}
           <p className="text-xs text-muted-foreground">
             {t("settings.general.statsCard.refreshHint")}
           </p>

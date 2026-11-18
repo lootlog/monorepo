@@ -7,6 +7,7 @@ import {
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useCountdown } from "@/hooks/utils/use-countdown";
 import { getGuildDiscordPermissionStatus } from "@/features/guild/settings/utils/get-guild-discord-permission-status";
 
 export const useGuildDiscordSync = () => {
@@ -42,10 +43,20 @@ export const useGuildDiscordSync = () => {
     refreshMutation.variables?.pathParams.guildId === guildId;
 
   // A later successful read supersedes a failed refresh of the same Organization.
-  const isRefreshError =
+  const hasCurrentRefreshFailure =
     refreshMutation.isError &&
     refreshMutation.variables?.pathParams.guildId === guildId &&
     refreshMutation.submittedAt >= query.dataUpdatedAt;
+
+  // A refused refresh (cooldown) read nothing new, so the last status stands.
+  const isRefreshRateLimited =
+    hasCurrentRefreshFailure && refreshMutation.error.status === 429;
+
+  const isRefreshError = hasCurrentRefreshFailure && !isRefreshRateLimited;
+
+  const refreshCooldown = useCountdown(
+    isRefreshRateLimited ? refreshMutation.error.retryAt : null,
+  );
 
   const refresh = () => {
     if (!guildId || isRefreshing || query.isFetching) return;
@@ -70,6 +81,7 @@ export const useGuildDiscordSync = () => {
     query,
     isRefreshing,
     isRefreshError,
+    refreshCooldown,
     permissionStatus,
     refresh,
   };
