@@ -10,7 +10,7 @@ export function createSiGlobals(world: SandboxWorld) {
       init: 5,
       npc: world.npcs,
       other: world.others,
-      worldConfig: { getWorldName: () => world.world },
+      worldConfig: { getWorldName: () => world.world, getNpcResp: () => 1 },
     },
     hero: world.hero,
     map: world.map,
