@@ -8,7 +8,8 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { UserPlus, X, AlertTriangle, Users, ChevronDown } from "lucide-react";
 import { cn } from "cn";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import { PlayerTile } from "@/components/tiles/player-tile";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import type { EventMap } from "../../types/api";
@@ -193,7 +194,11 @@ export const MapCard = ({
         >
           {memberCount > 0 ? (
             <>
-              <div className="flex shrink-0 -space-x-1.5">
+              <div
+                className="flex shrink-0 -space-x-1.5"
+                // Opening a profile must not also toggle the viewer's assignment.
+                onDoubleClick={(event) => event.stopPropagation()}
+              >
                 {displayedAssignedMembers.map((member) => {
                   const memberPlayers = presenceData?.get(member.userId) ?? [];
 
@@ -213,13 +218,23 @@ export const MapCard = ({
                   }
 
                   return (
-                    <MemberAvatar
+                    <MemberIdentity
                       key={member.id}
-                      userId={member.userId}
-                      avatar={member.avatar}
-                      name={member.name}
-                      imageSize={32}
-                      className={cn("size-5 border-2", avatarBorderClassName)}
+                      member={{ memberId: member.id }}
+                      fallback={{
+                        name: member.name,
+                        avatarUrl: getDiscordAvatarUrl(
+                          member.userId,
+                          member.avatar,
+                          32,
+                        ),
+                      }}
+                      display="avatar"
+                      className="shrink-0"
+                      avatarClassName={cn(
+                        "size-5 border-2",
+                        avatarBorderClassName,
+                      )}
                     />
                   );
                 })}

@@ -1,7 +1,6 @@
-import { MemberAvatar } from "@/components/common/member-avatar";
-import { MemberNameWithColor } from "@/components/common/member-name-with-color";
-import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
-import { useGuildId } from "@/hooks/context/use-guild-id";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import type { GuildDocMember } from "./guild-doc-member-node";
 
 type GuildDocMemberChipProps = {
@@ -13,19 +12,20 @@ type GuildDocMemberChipProps = {
  * name saved with the mention stands in once they are no longer known.
  */
 export const GuildDocMemberChip = ({ member }: GuildDocMemberChipProps) => {
-  const guildMember = useGuildMemberMap(useGuildId()).get(member.userId);
-  const name = guildMember?.name ?? member.name;
+  // While the document is being written a click on the chip places the caret.
+  const editable = useLexicalEditable();
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 py-0.5 pr-2 pl-0.5 align-middle whitespace-nowrap">
-      <MemberAvatar
-        userId={member.userId}
-        avatar={guildMember?.avatar ?? null}
-        name={name}
-        className="size-5"
-        imageSize={40}
+    <span className="inline-flex items-center rounded-full bg-muted/60 py-0.5 pr-2 pl-0.5 align-middle whitespace-nowrap">
+      <MemberIdentity
+        member={{ discordId: member.userId }}
+        fallback={{
+          name: member.name,
+          avatarUrl: getDiscordAvatarUrl(member.userId, null, 40),
+        }}
+        interactive={!editable}
+        nameClassName="text-[length:inherit]"
       />
-      <MemberNameWithColor name={name} member={guildMember} />
     </span>
   );
 };

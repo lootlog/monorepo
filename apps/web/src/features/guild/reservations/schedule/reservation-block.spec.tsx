@@ -1,8 +1,14 @@
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 // @vitest-environment happy-dom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render as renderTestingLibrary,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
 import { ReservationBlock } from "./reservation-block";
 import type { ReservationSegment } from "./types";
 
@@ -14,6 +20,10 @@ await initializeTestTranslations({
   "reservations.details.title": "reservations.details.title:",
   "reservations.details.cancel": "reservations.details.cancel:",
 });
+
+const wrapper = await createMemberDirectoryTestWrapper([]);
+
+const render = (ui: React.ReactNode) => renderTestingLibrary(ui, { wrapper });
 
 afterEach(cleanup);
 
@@ -44,7 +54,7 @@ const createSegment = (
       endsAt,
       createdAt: startsAt,
       comment: "Komentarz",
-      author: { displayName, avatarUrl: null },
+      author: { userId: null, displayName, avatarUrl: null },
       sourceOrganization: {
         name: isCurrent ? "Zgarbieni" : "Gildia partnerska",
         iconUrl: null,

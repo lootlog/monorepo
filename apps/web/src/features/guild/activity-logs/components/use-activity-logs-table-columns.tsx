@@ -6,6 +6,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Gamepad2, Monitor } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { ActivityLogActor } from "./activity-log-actor";
 import { ActivityLogDetailsPopover } from "./activity-log-details-popover";
 import { ActivityLogEvent } from "./activity-log-event";
@@ -22,13 +23,7 @@ const ACTIVITY_LOG_SOURCE_ICONS = {
 
 export const ACTIVITY_LOGS_DETAILS_COLUMN_ID = "details";
 
-type UseActivityLogsTableColumnsOptions = {
-  memberNameByDiscordId: Map<string, string>;
-};
-
-export const useActivityLogsTableColumns = ({
-  memberNameByDiscordId,
-}: UseActivityLogsTableColumnsOptions): ColumnDef<
+export const useActivityLogsTableColumns = (): ColumnDef<
   typeof coreTableFeatures,
   Activity
 >[] => {
@@ -49,9 +44,13 @@ export const useActivityLogsTableColumns = ({
       id: "member",
       header: () => t("activityLogs.table.columns.member"),
       cell: ({ row: { original: activity } }) => (
-        <span className="block truncate text-sm">
-          {memberNameByDiscordId.get(activity.discordId) ?? activity.discordId}
-        </span>
+        <MemberIdentity
+          member={{ discordId: activity.discordId }}
+          // An audit entry names who acted even once they are unknown.
+          fallback={{ name: activity.discordId }}
+          display="name"
+          nameClassName="font-normal"
+        />
       ),
     },
     {

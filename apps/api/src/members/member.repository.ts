@@ -24,9 +24,12 @@ import {
 
 type MemberWrite = {
   readonly avatar: string | null;
+  readonly globalAvatar: string | null;
   readonly banner: string | null;
   readonly name: string;
   readonly discordDisplayName: string;
+  readonly username: string;
+  readonly joinedAt: Date | null;
   readonly active: boolean;
   readonly globalUserId: string;
   readonly lastDiscordAttemptAt: Date;

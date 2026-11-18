@@ -23,7 +23,7 @@ import { HeroDetailResponsiveLayout } from "./components/heroes/hero-detail-resp
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { EventMapGrid } from "./components/maps/event-map-grid";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
-import { MemberBadge } from "./components/shared/member-badge";
+import { EventParticipantTile } from "./components/shared/event-participant-tile";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { HeroDetailHeader } from "./hero-detail-header";
 
@@ -253,7 +253,7 @@ export const HeroDetail = () => {
                 <div className="@container/participants overflow-hidden">
                   <div className="-mb-px -mr-px grid grid-cols-1 @sm/participants:grid-cols-2 @lg/participants:grid-cols-3 @2xl/participants:grid-cols-4">
                     {uniqueMembers.map((member) => (
-                      <MemberBadge
+                      <EventParticipantTile
                         key={member.id}
                         member={member}
                         guildId={queryGuildId}

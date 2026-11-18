@@ -71,7 +71,8 @@ export function getGuildMemberReferencesCacheKey(
   guildId: string,
   includeInactive: boolean,
 ): string {
-  return `${MEMBER_READ_CACHE_KEY_PREFIX}:${guildId}:references:${
+  // `v2`: an entry cached before the profile fields does not decode.
+  return `${MEMBER_READ_CACHE_KEY_PREFIX}:${guildId}:references:v2:${
     includeInactive ? "all" : "active"
   }`;
 }

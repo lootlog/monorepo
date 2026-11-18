@@ -1,12 +1,21 @@
 // @vitest-environment happy-dom
 
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render as renderTestingLibrary,
+} from "@testing-library/react";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReservationSettings } from "@lootlog/domain/reservations";
+import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
 import { HEADER_HEIGHT, LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import { DesktopWeekSchedule } from "./desktop-week-schedule";
 import type { ReservationSegment } from "./types";
+
+const wrapper = await createMemberDirectoryTestWrapper([]);
+
+const render = (ui: React.ReactNode) => renderTestingLibrary(ui, { wrapper });
 
 afterEach(() => {
   cleanup();
@@ -43,7 +52,7 @@ const createSegment = (dayIdx = 3): ReservationSegment => {
       endsAt,
       createdAt: startsAt,
       comment: null,
-      author: { displayName: "Alderaan", avatarUrl: null },
+      author: { userId: null, displayName: "Alderaan", avatarUrl: null },
       sourceOrganization: {
         name: "Zgarbieni",
         iconUrl: null,

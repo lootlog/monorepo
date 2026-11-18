@@ -15,7 +15,7 @@ const createReservation = (
   endsAt,
   createdAt: new Date(2026, 0, 1, 12),
   comment: null,
-  author: { displayName: `Gracz ${id}`, avatarUrl: null },
+  author: { userId: null, displayName: `Gracz ${id}`, avatarUrl: null },
   sourceOrganization: {
     name: organization,
     iconUrl: null,

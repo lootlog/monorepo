@@ -1,5 +1,4 @@
-import { MemberAvatar } from "@/components/common/member-avatar";
-import { MemberNameWithColor } from "@/components/common/member-name-with-color";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
@@ -103,7 +102,7 @@ export const GuildDocMemberMentionPlugin = () => {
                       aria-selected={selectedIndex === index}
                       tabIndex={-1}
                       className={cn(
-                        "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
+                        "flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm",
                         selectedIndex === index && "bg-primary/15",
                       )}
                       onMouseEnter={() => setHighlightedIndex(index)}
@@ -112,19 +111,14 @@ export const GuildDocMemberMentionPlugin = () => {
                         selectOptionAndCleanUp(option);
                       }}
                     >
-                      <MemberAvatar
-                        userId={option.member.userId}
-                        avatar={option.member.avatar ?? null}
-                        name={option.member.name}
-                        className="size-6"
-                        imageSize={48}
+                      <MemberIdentity
+                        member={{ discordId: option.member.userId }}
+                        fallback={{ name: option.member.name }}
+                        // The option itself is what gets picked.
+                        interactive={false}
+                        className="gap-2"
+                        avatarClassName="size-6"
                       />
-                      <span className="min-w-0 truncate">
-                        <MemberNameWithColor
-                          name={option.member.name}
-                          member={option.member}
-                        />
-                      </span>
                     </li>
                   ))}
                 </ul>

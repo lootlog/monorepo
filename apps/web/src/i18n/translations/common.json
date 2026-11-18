@@ -202,5 +202,20 @@
     "title": "Filtry",
     "activeCount": "Aktywne filtry: {{count}}"
   },
-  "inactiveMember": "(nieaktywny)"
+  "inactiveMember": "(nieaktywny)",
+  "memberProfile": {
+    "label": "Profil: {{name}}",
+    "leftServer": "Poza serwerem",
+    "joinedAt": "Na serwerze od",
+    "roles": "Role",
+    "copyMention": "Kopiuj wzmiankę",
+    "mentionCopied": "Skopiowano wzmiankę",
+    "copyId": "Kopiuj ID Discorda",
+    "idCopied": "Skopiowano ID",
+    "copyFailed": "Nie udało się skopiować",
+    "openInDiscord": "Otwórz profil na Discordzie",
+    "stats": "Statystyki członka",
+    "settings": "Ustawienia członka",
+    "eventKills": "Ubicia w tym evencie"
+  }
 }

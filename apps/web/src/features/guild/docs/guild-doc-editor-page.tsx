@@ -3,6 +3,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { MetaItem } from "@/components/common/meta-item";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
@@ -160,7 +161,14 @@ export const GuildDocEditorPage = () => {
   const readerDetails = (
     <>
       <MetaItem icon={PenLine} label={t("docs.list.editorLabel")}>
-        {document.updatedBy.name ?? t("docs.list.unknownEditor")}
+        <MemberIdentity
+          member={{ discordId: document.updatedBy.memberId }}
+          fallback={{
+            name: document.updatedBy.name ?? t("docs.list.unknownEditor"),
+          }}
+          display="name"
+          nameClassName="text-xs leading-tight font-normal"
+        />
       </MetaItem>
       {updatedAt}
       {version}

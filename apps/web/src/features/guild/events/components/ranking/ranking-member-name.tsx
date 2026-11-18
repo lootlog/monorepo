@@ -1,39 +1,49 @@
-import { InactiveMemberSuffix } from "@/components/common/inactive-member-suffix";
-import {
-  discordRoleCssColor,
-  getMemberDisplayRole,
-} from "@lootlog/domain/member-display-role";
-import { cn } from "cn";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { useTranslation } from "react-i18next";
 import type { EventRanking } from "../../types/api";
+import { EventMemberKillsProfileLink } from "../shared/event-member-kills-profile-link";
 import { getRankingMemberName } from "./get-ranking-member-name";
 
 type RankingMemberNameProps = {
   ranking: EventRanking;
+  /** With `eventId`, the profile card leads to the member's kills in the event. */
+  guildId?: string;
+  eventId?: string;
+  /** False where the name sits inside the row's own link. */
+  interactive?: boolean;
   className?: string;
-  /** The member has left the Lootlog. */
-  inactive?: boolean;
+  nameClassName?: string;
 };
 
-/** A ranked member's name in their role's colour. */
+/** A ranked member's name, opening their profile. */
 export const RankingMemberName = ({
   ranking,
+  guildId,
+  eventId,
+  interactive,
   className,
-  inactive = false,
+  nameClassName,
 }: RankingMemberNameProps) => {
   const { t } = useTranslation();
 
-  const roleCssColor = discordRoleCssColor(
-    getMemberDisplayRole(ranking.member?.roles)?.color,
-  );
-
   return (
-    <span
-      className={cn("block min-w-0 truncate font-semibold", className)}
-      style={roleCssColor ? { color: roleCssColor } : undefined}
-    >
-      {getRankingMemberName(ranking, t)}
-      {inactive && <InactiveMemberSuffix />}
-    </span>
+    <MemberIdentity
+      member={{ memberId: ranking.memberId }}
+      fallback={{ name: getRankingMemberName(ranking, t) }}
+      display="name"
+      interactive={interactive}
+      profileLinks={
+        guildId &&
+        eventId && (
+          <EventMemberKillsProfileLink
+            guildId={guildId}
+            eventId={eventId}
+            memberId={ranking.memberId}
+          />
+        )
+      }
+      className={className}
+      nameClassName={nameClassName}
+    />
   );
 };

@@ -1,10 +1,16 @@
 // @vitest-environment happy-dom
 
 import { initializeTestTranslations } from "@/lib/testing/i18n";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render as renderTestingLibrary,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReservationSpotsResponseDtoItem } from "@lootlog/client/main";
 import { ReservationCard } from "./reservation-card";
+import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
 
 await initializeTestTranslations({
   "reservations.card.freeNow": "Wolne teraz",
@@ -15,6 +21,10 @@ await initializeTestTranslations({
   "reservations.card.level": "lvl",
   "reservations.card.open": "Terminy expowiska",
 });
+
+const wrapper = await createMemberDirectoryTestWrapper([]);
+
+const render = (ui: React.ReactNode) => renderTestingLibrary(ui, { wrapper });
 
 afterEach(cleanup);
 
@@ -55,7 +65,7 @@ describe("ReservationCard", () => {
         id: 1,
         spotId: "driady",
         spotName: "Driady",
-        author: { displayName: "goat", avatarUrl: null },
+        author: { userId: null, displayName: "goat", avatarUrl: null },
         startsAt: "2026-08-29T18:00:00.000Z",
         endsAt: "2026-08-29T20:00:00.000Z",
         comment: null,
@@ -77,6 +87,7 @@ describe("ReservationCard", () => {
         spotId: "driady",
         spotName: "Driady",
         author: {
+          userId: null,
           displayName: "Dominik v2",
           avatarUrl: null,
         },

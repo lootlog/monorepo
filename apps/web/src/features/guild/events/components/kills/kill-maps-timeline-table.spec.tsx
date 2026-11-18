@@ -1,12 +1,23 @@
 // @vitest-environment happy-dom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render as renderElement,
+  screen,
+} from "@testing-library/react";
+import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
+import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
 import type { MapTimelineData } from "../../types/api";
 import { KillMapsTimelineTable } from "./kill-maps-timeline-table";
 
 const { t } = await initializeTestTranslations();
+
+const wrapper = await createMemberDirectoryTestWrapper();
+
+const render = (element: ReactElement) => renderElement(element, { wrapper });
 
 const startTime = new Date("2026-08-12T08:00:00.000Z");
 

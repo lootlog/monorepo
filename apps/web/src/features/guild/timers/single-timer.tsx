@@ -7,7 +7,7 @@ import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
 import { Globe, User } from "lucide-react";
-import { useEffect, useState, type FC } from "react";
+import { useEffect, useId, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   HeroSightingResponseDto,
@@ -21,6 +21,7 @@ import {
 } from "@lootlog/domain/timers";
 import { formatLevel } from "@lootlog/domain/profession";
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { MetaItem } from "@/components/common/meta-item";
 import {
   LIST_TILE_INSET_CLASS,
@@ -58,6 +59,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 }) => {
   const { t } = useTranslation();
   const [now, setNow] = useState(Date.now);
+  const contentId = useId();
 
   useEffect(() => subscribeToSecondClock(() => setNow(Date.now())), []);
 
@@ -80,78 +82,91 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       : null;
 
   return (
-    <Popover>
-      <PopoverTrigger
-        openOnHover
-        render={
-          <button
-            type="button"
-            // The player's colour tints the row the way it fills the game tile.
-            style={{
-              backgroundImage: `linear-gradient(${wash}, ${wash})`,
-            }}
+    <div
+      // The player's colour tints the row the way it fills the game tile.
+      style={{
+        backgroundImage: `linear-gradient(${wash}, ${wash})`,
+      }}
+      className={cn(
+        "relative h-full w-full",
+        LIST_TILE_HOVER_CLASS,
+        phase === "expired" && "opacity-75",
+      )}
+    >
+      {/* The row shows the spawn window; the member's name opens their profile. */}
+      <Popover>
+        <PopoverTrigger
+          openOnHover
+          render={
+            <button
+              type="button"
+              aria-labelledby={contentId}
+              className="absolute inset-0 outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+            />
+          }
+        />
+        <PopoverContent className="grid w-auto gap-2 px-3 py-2">
+          <TimerDetails timer={timer} phase={phase} />
+        </PopoverContent>
+      </Popover>
+      <div
+        id={contentId}
+        className={cn(
+          "pointer-events-none relative flex h-full w-full items-center gap-3 py-2.5 text-left",
+          LIST_TILE_INSET_CLASS,
+        )}
+      >
+        {npcIcon && <NpcSearchTile icon={npcIcon} />}
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex min-w-0 items-baseline gap-1.5">
+            <span className="min-w-0 truncate text-sm font-semibold">
+              {npcName}
+            </span>
+            {npcLevel && (
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {npcLevel}
+              </span>
+            )}
+          </span>
+          <span
             className={cn(
-              "flex h-full w-full items-center gap-3 py-2.5 text-left outline-none focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-              LIST_TILE_HOVER_CLASS,
-              LIST_TILE_INSET_CLASS,
-              phase === "expired" && "opacity-75",
+              "flex min-w-0 items-center gap-x-3",
+              // The sighting's map needs the line's width on phones, so
+              // the member moves under it instead of overlapping it.
+              heroSighting && "flex-wrap gap-y-1",
             )}
           >
-            {npcIcon && <NpcSearchTile icon={npcIcon} />}
-            <span className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="flex min-w-0 items-baseline gap-1.5">
-                <span className="min-w-0 truncate text-sm font-semibold">
-                  {npcName}
-                </span>
-                {npcLevel && (
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {npcLevel}
-                  </span>
-                )}
-              </span>
-              <span
-                className={cn(
-                  "flex min-w-0 items-center gap-x-3",
-                  // The sighting's map needs the line's width on phones, so
-                  // the member moves under it instead of overlapping it.
-                  heroSighting && "flex-wrap gap-y-1",
-                )}
+            {showWorld && (
+              <MetaItem
+                icon={Globe}
+                label={t("loots.list.worldLabel")}
+                className="shrink-0"
               >
-                {showWorld && (
-                  <MetaItem
-                    icon={Globe}
-                    label={t("loots.list.worldLabel")}
-                    className="shrink-0"
-                  >
-                    {upperFirst(timer.world)}
-                  </MetaItem>
-                )}
-                {heroSighting && (
-                  <HeroSightingTimerLocation
-                    sighting={heroSighting}
-                    now={now}
-                  />
-                )}
-                {timer.member?.name && (
-                  <MetaItem icon={User} className="min-w-0">
-                    <span className="min-w-0 truncate">
-                      {timer.member.name}
-                    </span>
-                  </MetaItem>
-                )}
-              </span>
-            </span>
-            <TimerCountdown
-              timeLeft={timeLeft}
-              phase={phase}
-              countdownMode={countdownMode}
-            />
-          </button>
-        }
-      />
-      <PopoverContent className="grid w-auto gap-2 px-3 py-2">
-        <TimerDetails timer={timer} phase={phase} />
-      </PopoverContent>
-    </Popover>
+                {upperFirst(timer.world)}
+              </MetaItem>
+            )}
+            {heroSighting && (
+              <HeroSightingTimerLocation sighting={heroSighting} now={now} />
+            )}
+            {timer.member?.name && (
+              <MetaItem icon={User} className="min-w-0">
+                <MemberIdentity
+                  member={{ memberId: timer.member.id }}
+                  fallback={{ name: timer.member.name }}
+                  display="name"
+                  className="pointer-events-auto"
+                  nameClassName="text-xs leading-tight font-normal"
+                />
+              </MetaItem>
+            )}
+          </span>
+        </span>
+        <TimerCountdown
+          timeLeft={timeLeft}
+          phase={phase}
+          countdownMode={countdownMode}
+        />
+      </div>
+    </div>
   );
 };

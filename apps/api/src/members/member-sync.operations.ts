@@ -1,4 +1,5 @@
 import { OperationError } from "@lootlog/instrumentation/operation";
+import { getDiscordServerAvatarUrl } from "@lootlog/domain/discord-avatar";
 import type { APIGuildMember } from "discord-api-types/v10";
 import { Clock, Effect, Result } from "effect";
 import {
@@ -76,8 +77,19 @@ export const makeMemberSync = (
       discordMember.user.id,
       discordMember.guildId,
       {
-        avatar: discordMember.avatar ?? discordMember.user.avatar ?? null,
+        avatar: discordMember.avatar
+          ? getDiscordServerAvatarUrl(
+              discordMember.guildId,
+              discordMember.user.id,
+              discordMember.avatar,
+            )
+          : (discordMember.user.avatar ?? null),
+        globalAvatar: discordMember.user.avatar ?? null,
         banner: discordMember.banner ?? null,
+        username: discordMember.user.username,
+        joinedAt: discordMember.joined_at
+          ? new Date(discordMember.joined_at)
+          : null,
         name:
           discordMember.nick ??
           discordMember.user.global_name ??

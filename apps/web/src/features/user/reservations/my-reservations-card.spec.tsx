@@ -83,7 +83,7 @@ it("keeps cached reservations visible and marks them stale after a refresh failu
         endsAt: "2026-09-06T17:00:00Z",
         comment: null,
         createdAt: "2026-09-01T12:00:00Z",
-        author: { displayName: "Wild", avatarUrl: null },
+        author: { userId: null, displayName: "Wild", avatarUrl: null },
         reminderMinutesBefore: null,
         canEdit: false,
         canCancel: false,

@@ -41,7 +41,7 @@ const reservation: MyReservationsResponseDtoItemsItem = {
   endsAt: "2026-08-15T19:00:00.000Z",
   comment: null,
   createdAt: "2026-08-01T12:00:00.000Z",
-  author: { displayName: "Wild", avatarUrl: null },
+  author: { userId: null, displayName: "Wild", avatarUrl: null },
   sourceOrganization: {
     name: "ZGARBIENI",
     iconUrl: null,
