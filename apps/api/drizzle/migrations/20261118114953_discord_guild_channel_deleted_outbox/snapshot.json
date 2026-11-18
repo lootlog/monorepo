@@ -1,0 +1,235 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "50a00b33-1a68-4372-8a89-ae7a3e1b8e01",
+  "prevIds": ["d6d6e93f-6d32-454b-99d7-57854f4950d5"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "DiscordGuildChannelDeletedOutbox"
+      ],
+      "writes": [
+        "s|tbl|public.DiscordGuildChannelDeletedOutbox",
+        "n|tbl|public.DiscordGuildChannelDeletedOutbox",
+        "e|tbl|public.DiscordGuildChannelDeletedOutbox",
+        "n|rel|public.DiscordGuildChannelDeletedOutbox",
+        "n|type|public.DiscordGuildChannelDeletedOutbox",
+        "n|rel|public.DiscordGuildChannelDeletedOutbox_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "DiscordGuildChannelDeletedOutbox",
+        "DiscordGuildChannelDeletedOutbox_lastAttemptAt_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.DiscordGuildChannelDeletedOutbox_lastAttemptAt_id_idx",
+        "n|idx|public.DiscordGuildChannelDeletedOutbox_lastAttemptAt_id_idx",
+        "e|idx|public.DiscordGuildChannelDeletedOutbox_lastAttemptAt_id_idx",
+        "n|rel|public.DiscordGuildChannelDeletedOutbox_lastAttemptAt_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.DiscordGuildChannelDeletedOutbox",
+        "n|sch|public",
+        "n|col|public.DiscordGuildChannelDeletedOutbox.lastAttemptAt",
+        "n|col|public.DiscordGuildChannelDeletedOutbox.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "DiscordGuildChannelDeletedOutbox"
+      ],
+      "writes": [
+        "s|fk|public.DiscordGuildChannelDeletedOutbox.DiscordGuildChannelDeletedOutbox_guildId_fkey",
+        "n|fk|public.DiscordGuildChannelDeletedOutbox.DiscordGuildChannelDeletedOutbox_guildId_fkey",
+        "e|fk|public.DiscordGuildChannelDeletedOutbox.DiscordGuildChannelDeletedOutbox_guildId_fkey",
+        "n|con|public.DiscordGuildChannelDeletedOutbox.DiscordGuildChannelDeletedOutbox_guildId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.DiscordGuildChannelDeletedOutbox",
+        "n|sch|public",
+        "n|tbl|public.Guild",
+        "n|sch|public",
+        "n|col|public.DiscordGuildChannelDeletedOutbox.guildId",
+        "n|col|public.Guild.id",
+        "e|uniqueness|public.Guild.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "DiscordGuildChannelDeletedOutbox",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "DiscordGuildChannelDeletedOutbox",
+        "name": "id",
+        "type": "serial",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "DiscordGuildChannelDeletedOutbox",
+        "name": "guildId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "DiscordGuildChannelDeletedOutbox",
+        "name": "channelId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "DiscordGuildChannelDeletedOutbox",
+        "name": "syncState",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "DiscordGuildChannelDeletedOutbox",
+        "name": "lastAttemptAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "DiscordGuildChannelDeletedOutbox",
+        "name": "createdAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "DiscordGuildChannelDeletedOutbox",
+        "name": "DiscordGuildChannelDeletedOutbox_lastAttemptAt_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "lastAttemptAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": true,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "DiscordGuildChannelDeletedOutbox",
+        "name": "DiscordGuildChannelDeletedOutbox_guildId_fkey",
+        "nameExplicit": true,
+        "columns": ["guildId"],
+        "schemaTo": "public",
+        "tableTo": "Guild",
+        "columnsTo": ["id"],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "DiscordGuildChannelDeletedOutbox",
+        "name": "DiscordGuildChannelDeletedOutbox_pkey",
+        "columns": ["id"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

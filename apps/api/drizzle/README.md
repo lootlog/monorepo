@@ -62,6 +62,27 @@ older API versions do not drain it, so retain a compatible dispatcher until its
 backlog is empty. The migration cannot reconstruct publications lost before it
 was installed; those require reconciliation from their owning data domains.
 
+## Durable Discord channel deletions
+
+Apply `20261118114953_discord_guild_channel_deleted_outbox` before deploying the
+API that uses it. A full channel synchronization (manual refresh, stale read or
+the bot's `discord.guild.channels.synced` fact) deletes removed channel
+snapshots and stores their `discord.guild.channel.deleted` facts in one
+transaction. The API process publishes them through the shared outbox
+dispatcher with the stable `discord-guild-channel-deleted:<id>` message id;
+broker failures retain the rows for retry. Consumers remove the snapshot and the
+notification target idempotently, so a replay after an unconfirmed delete is
+harmless. Rows cascade with their Organization.
+
+Single-channel deletions reported by the bot are not stored here: the
+notifications consumer already receives the bot's own fact.
+
+```sql
+SELECT "id", "guildId", "channelId", "createdAt", "lastAttemptAt"
+FROM "DiscordGuildChannelDeletedOutbox"
+ORDER BY "createdAt";
+```
+
 ## Recent Organization activity feed
 
 The API owns `GuildKillActivity`, a 24-hour journal of accepted Organization
