@@ -20,6 +20,10 @@ export const DEFAULT_HERO_SIGHTING_TEMPLATE = [
   "Wykrył: **{{detectedBy}}**",
 ].join("\n");
 
+/** Names the Member behind a sighting no detector answer backs. */
+export const heroSightingAddedByHand = (memberName: string) =>
+  `${memberName} (ręcznie)`;
+
 export const HERO_SIGHTED_TITLE = "Wykryto herosa";
 
 export const HERO_SPAWNED_TITLE = "Heros się pojawił";

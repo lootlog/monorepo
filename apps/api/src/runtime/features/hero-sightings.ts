@@ -9,6 +9,7 @@ import {
   makeCreateHeroSighting,
   makeHeroSightingClaims,
   makeHeroSightingReads,
+  makeManualHeroSightings,
 } from "#src/hero-sightings/hero-sightings.data-layer";
 import { HeroSightingsData } from "#src/hero-sightings/hero-sightings-data";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
@@ -55,6 +56,7 @@ export const heroSightingsData = Layer.unwrap(
         create: makeCreateHeroSighting(database, { publish, withLock }),
         ...makeHeroSightingReads(database),
         ...makeHeroSightingClaims(database, { publish }),
+        ...makeManualHeroSightings(database, { publish, withLock }),
       }),
     );
   }),

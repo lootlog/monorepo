@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Schema } from "effect";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -6,6 +6,7 @@ import type { CreateManualTimerOptions } from "@/api/timers.api";
 import { useCreateManualTimer } from "@/hooks/api/use-create-manual-timer";
 import { parseDurationToSeconds } from "@/features/timers/helpers/add-timer-form-helpers";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
+import { useSuggestionList } from "@/hooks/ui/use-suggestion-list";
 import {
   DEFAULT_RESPAWN_RANDOMNESS,
   spawnWindowFromRespawn,
@@ -318,12 +319,9 @@ export function useAddTimerForm({
   const { mutate: createManualTimer, isPending } = useCreateManualTimer();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [customDatesEnabled, setCustomDatesEnabled] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const selectedNpcRef = useRef<SearchTimersNpcResponseDtoOutput | null>(null);
-  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const selectedGuildId = resolveTargetGuildId(guildId);
@@ -345,6 +343,9 @@ export function useAddTimerForm({
       },
     },
   );
+
+  const suggestions = useSuggestionList(npcResults ?? []);
+  const showSuggestions = suggestions.isOpen;
 
   const {
     register,
@@ -382,8 +383,7 @@ export function useAddTimerForm({
     setValue("type", resolveManualTimerNpcType(npc.type));
     selectedNpcRef.current = npc;
     setSearchQuery("");
-    setShowSuggestions(false);
-    setSelectedIndex(-1);
+    suggestions.close();
   };
 
   const handleCustomDatesToggle = (enabled: boolean) => {
@@ -398,39 +398,8 @@ export function useAddTimerForm({
     }
   };
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.nativeEvent.isComposing) return;
-
-    if (!npcResults || npcResults.length === 0) return;
-
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setSelectedIndex((prev) =>
-        prev < npcResults.length - 1 ? prev + 1 : prev,
-      );
-      setShowSuggestions(true);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
-      setShowSuggestions(true);
-    } else if (e.key === "Enter" && selectedIndex >= 0) {
-      e.preventDefault();
-      handleNpcSelect(npcResults[selectedIndex]);
-    } else if (e.key === "Escape" && showSuggestions) {
-      // Escape dismisses the suggestions first; the panel closes on the next one.
-      e.stopPropagation();
-      setShowSuggestions(false);
-      setSelectedIndex(-1);
-    }
-  };
-
-  useEffect(() => {
-    const blurTimeout = blurTimeoutRef;
-
-    return () => {
-      if (blurTimeout.current) clearTimeout(blurTimeout.current);
-    };
-  }, []);
+  const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) =>
+    suggestions.handleKeyDown(event, handleNpcSelect);
 
   const onSubmit = (data: FormValues) => {
     if (!world || !selectedGuildId) return;
@@ -505,12 +474,9 @@ export function useAddTimerForm({
     searchQuery,
     setSearchQuery,
     showSuggestions,
-    setShowSuggestions,
+    suggestions,
     customDatesEnabled,
-    selectedIndex,
-    setSelectedIndex,
     selectedNpcRef,
-    blurTimeoutRef,
     selectedGuildId,
     npcResults,
     npcSearchFailed,

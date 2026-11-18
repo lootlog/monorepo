@@ -16,6 +16,7 @@ import {
   type RolePermissionData,
 } from "@lootlog/domain/npc-permissions";
 import { getProfByShortname } from "@lootlog/domain/profession";
+import { normalizeNpcName } from "@lootlog/schema/npc-identity";
 import {
   HeroSightingCloseReason,
   HeroSightingState,
@@ -44,6 +45,7 @@ import {
   ResourceConflictError,
 } from "#src/shared/http/http-errors";
 import type {
+  AddHeroSightingRequest,
   ClaimHeroSightingRequest,
   CreateHeroSightingRequest,
   CreateHeroSightingResponse,
@@ -87,7 +89,7 @@ const canRead = (
     readonly administers: boolean;
     readonly roles: readonly RolePermissionData[];
   },
-  sighting: Pick<HeroSightingResponse, "hero">,
+  sighting: { readonly hero: { readonly lvl: number } },
 ) => access.administers || canReadHeroSighting(access.roles, sighting.hero.lvl);
 
 const guildReader = (access: HeroSightingsGuildAccess) => ({
@@ -136,6 +138,21 @@ const getObservedAt = (observedAt: string, now: number) => {
   return Effect.succeed(new Date(Math.min(time, now)));
 };
 
+type HeroIdentity = Pick<
+  typeof heroSightingTable.$inferInsert,
+  "heroName" | "heroLvl" | "heroProf"
+>;
+
+/** Where a hero was placed, by a detector answer or by a Member's hand. */
+type Detection = Pick<
+  CreateHeroSightingRequest,
+  "state" | "mapName" | "actorCharacter"
+> & {
+  readonly hero: HeroIdentity;
+  readonly observedAt: Date;
+  readonly manual: boolean;
+};
+
 /**
  * Applies one detection to an Organization's sightings of the hero and
  * returns the current sighting and every sighting it changed.
@@ -145,12 +162,12 @@ const recordDetection = Effect.fnUntraced(function* (
   options: {
     readonly identity: HeroSightingsIdentity;
     readonly scope: HeroSightingScope;
-    readonly payload: CreateHeroSightingRequest;
-    readonly observedAt: Date;
+    readonly detection: Detection;
   },
 ) {
-  const { scope, payload, observedAt } = options;
+  const { scope, detection: payload } = options;
   const { guildId } = scope;
+  const { hero, observedAt } = payload;
 
   const member = yield* findActiveGuildMember(
     transaction,
@@ -181,12 +198,6 @@ const recordDetection = Effect.fnUntraced(function* (
     },
   );
 
-  const hero = {
-    heroName: payload.hero.name,
-    heroLvl: payload.hero.lvl,
-    heroProf: getProfByShortname(payload.hero.prof ?? "") ?? null,
-  };
-
   const now = new Date(yield* Clock.currentTimeMillis);
 
   if (current && transition === "STALE")
@@ -204,6 +215,9 @@ const recordDetection = Effect.fnUntraced(function* (
           state: payload.state,
           spawnedAt: observedAt,
         }),
+        // A detector answer is the game's word: it confirms a sighting that
+        // was entered by hand.
+        ...(!payload.manual && { manual: false }),
         updatedAt: now,
       })
       .where(eq(heroSightingTable.id, current.id));
@@ -227,7 +241,7 @@ const recordDetection = Effect.fnUntraced(function* (
 
   const actorCharacter = yield* upsertActorCharacter(
     transaction,
-    payload.world,
+    scope.world,
     payload.actorCharacter,
   );
 
@@ -238,6 +252,7 @@ const recordDetection = Effect.fnUntraced(function* (
       ...scope,
       state: payload.state,
       mapName: payload.mapName,
+      manual: payload.manual,
       firstSeenAt: observedAt,
       lastSeenAt: observedAt,
       detectedById: member.id,
@@ -258,32 +273,19 @@ const recordDetection = Effect.fnUntraced(function* (
   return { currentId, changedIds: [...changedIds, currentId] };
 });
 
-export const makeCreateHeroSighting = (
-  database: Database,
-  ports: HeroSightingPorts,
-) => {
-  const writeGuildSighting = (
+/** Records a detection in one Organization and tells its clients. */
+const makeGuildSightingWriter =
+  (database: Database, ports: HeroSightingPorts) =>
+  (
     identity: HeroSightingsIdentity,
-    guildId: string,
-    payload: CreateHeroSightingRequest,
-    observedAt: Date,
+    scope: HeroSightingScope,
+    detection: Detection,
   ) =>
     Effect.gen(function* () {
-      const scope = {
-        guildId,
-        world: payload.world,
-        heroKey: getHeroSightingKey(payload.hero.name),
-      };
-
       const result = yield* ports.withLock(
         buildHeroSightingLockKey(scope),
         database.transaction((transaction) =>
-          recordDetection(transaction, {
-            identity,
-            scope,
-            payload,
-            observedAt,
-          }),
+          recordDetection(transaction, { identity, scope, detection }),
         ),
       );
 
@@ -301,13 +303,32 @@ export const makeCreateHeroSighting = (
       return current;
     });
 
+export const makeCreateHeroSighting = (
+  database: Database,
+  ports: HeroSightingPorts,
+) => {
+  const writeGuildSighting = makeGuildSightingWriter(database, ports);
+
   const operation = Effect.fn("createHeroSightingData")(function* (
     identity: HeroSightingsIdentity,
     payload: CreateHeroSightingRequest,
   ) {
     const now = yield* Clock.currentTimeMillis;
 
-    const observedAt = yield* getObservedAt(payload.observedAt, now);
+    const detection: Detection = {
+      hero: {
+        heroName: payload.hero.name,
+        heroLvl: payload.hero.lvl,
+        heroProf: getProfByShortname(payload.hero.prof ?? "") ?? null,
+      },
+      state: payload.state,
+      mapName: payload.mapName,
+      actorCharacter: payload.actorCharacter,
+      observedAt: yield* getObservedAt(payload.observedAt, now),
+      manual: false,
+    };
+
+    const heroKey = getHeroSightingKey(payload.hero.name);
 
     // The response follows read visibility: writing to an Organization does
     // not let a role outside the hero's level range read its sighting there.
@@ -352,7 +373,11 @@ export const makeCreateHeroSighting = (
     const outcomes = yield* Effect.forEach(
       targets,
       ({ guild }) =>
-        writeGuildSighting(identity, guild.id, payload, observedAt).pipe(
+        writeGuildSighting(
+          identity,
+          { guildId: guild.id, world: payload.world, heroKey },
+          detection,
+        ).pipe(
           Effect.result,
           Effect.map((result) => ({ guild, result })),
         ),
@@ -628,6 +653,143 @@ export const makeHeroSightingClaims = (
       ),
     unclaim: (access: HeroSightingsGuildAccess, sightingId: number) =>
       unclaim(access, sightingId).pipe(
+        Effect.mapError(toHeroSightingsDataFailure),
+      ),
+  };
+};
+
+const typedName = (name: string) => name.trim().replace(/\s+/g, " ");
+
+/**
+ * Sightings a Member enters by hand, for a detector used outside Lootlog. A
+ * typed name can differ from the game's spelling, so a hero and a map the
+ * Organization already recorded keep their recorded spelling: a differently
+ * typed map would otherwise read as the hero having moved.
+ */
+export const makeManualHeroSightings = (
+  database: Database,
+  ports: HeroSightingPorts,
+) => {
+  const writeGuildSighting = makeGuildSightingWriter(database, ports);
+
+  const add = Effect.fn("addManualHeroSightingData")(function* (
+    access: HeroSightingsGuildAccess,
+    payload: AddHeroSightingRequest,
+  ) {
+    const scope = {
+      guildId: access.guild.id,
+      world: payload.world,
+      heroKey: getHeroSightingKey(payload.hero.name),
+    };
+
+    const known = yield* database
+      .select({
+        heroName: heroSightingTable.heroName,
+        heroLvl: heroSightingTable.heroLvl,
+        heroProf: heroSightingTable.heroProf,
+        mapName: heroSightingTable.mapName,
+      })
+      .from(heroSightingTable)
+      .where(heroSightingScopeCondition(scope))
+      .orderBy(desc(heroSightingTable.id))
+      .limit(HERO_SIGHTING_HISTORY_LIMIT);
+
+    const [latest] = known;
+
+    // A typed level must not move a known hero into another role's range.
+    const hero: HeroIdentity = latest
+      ? {
+          heroName: latest.heroName,
+          heroLvl: latest.heroLvl,
+          heroProf: latest.heroProf,
+        }
+      : {
+          heroName: typedName(payload.hero.name),
+          heroLvl: payload.hero.lvl,
+          heroProf: getProfByShortname(payload.hero.prof ?? "") ?? null,
+        };
+
+    if (!canRead(guildReader(access), { hero: { lvl: hero.heroLvl } }))
+      return yield* Effect.fail(
+        new PermissionDeniedError({ code: "HERO_SIGHTING_LEVEL_NOT_VISIBLE" }),
+      );
+
+    const mapKey = normalizeNpcName(payload.mapName);
+
+    return yield* writeGuildSighting(access, scope, {
+      hero,
+      state: payload.state,
+      mapName:
+        known.find(({ mapName }) => normalizeNpcName(mapName) === mapKey)
+          ?.mapName ?? typedName(payload.mapName),
+      actorCharacter: payload.actorCharacter,
+      observedAt: new Date(yield* Clock.currentTimeMillis),
+      manual: true,
+    });
+  });
+
+  const withdraw = Effect.fn("withdrawHeroSightingData")(function* (
+    access: HeroSightingsGuildAccess,
+    sightingId: number,
+  ) {
+    const sighting = yield* loadVisibleSighting(database, access, sightingId);
+
+    if (
+      sighting.detectedBy.memberId !== access.member.id &&
+      !guildReader(access).administers
+    )
+      return yield* Effect.fail(new PermissionDeniedError());
+
+    const closed = () =>
+      new ResourceConflictError({ code: "HERO_SIGHTING_NOT_WITHDRAWABLE" });
+
+    if (!sighting.manual || sighting.closedAt !== null)
+      return yield* Effect.fail(closed());
+
+    const now = new Date(yield* Clock.currentTimeMillis);
+
+    // Under the hero's lock, so a detection confirming the sighting at the
+    // same moment either makes it unwithdrawable or opens a new one after.
+    const withdrawn = yield* ports.withLock(
+      buildHeroSightingLockKey({
+        guildId: sighting.guildId,
+        world: sighting.world,
+        heroKey: sighting.hero.key,
+      }),
+      database
+        .update(heroSightingTable)
+        .set({
+          closedAt: now,
+          closeReason: HeroSightingCloseReason.WITHDRAWN,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(heroSightingTable.id, sightingId),
+            eq(heroSightingTable.manual, true),
+            isNull(heroSightingTable.closedAt),
+          ),
+        )
+        .returning({ id: heroSightingTable.id }),
+    );
+
+    if (withdrawn.length === 0) return yield* Effect.fail(closed());
+
+    const [updated] = yield* loadHeroSightings(database, [sightingId]);
+
+    if (!updated) return yield* Effect.fail(notFound());
+    yield* ports.publish(updated);
+
+    return updated;
+  });
+
+  return {
+    addManual: (
+      access: HeroSightingsGuildAccess,
+      payload: AddHeroSightingRequest,
+    ) => add(access, payload).pipe(Effect.mapError(toHeroSightingsDataFailure)),
+    withdraw: (access: HeroSightingsGuildAccess, sightingId: number) =>
+      withdraw(access, sightingId).pipe(
         Effect.mapError(toHeroSightingsDataFailure),
       ),
   };

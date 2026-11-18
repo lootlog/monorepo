@@ -2,19 +2,25 @@ import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { AlertCircle, Radar, SearchX } from "lucide-react";
+import { AlertCircle, Plus, Radar, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "@/components/common/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
+import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import {
   HeroSightingHistoryDialog,
   type HeroSightingHistoryTarget,
 } from "./hero-sighting-history-dialog";
+import { HeroSightingAddDialog } from "./hero-sighting-add-dialog";
 import { sortHeroSightings } from "./hero-sighting-status";
+import { canClaimHeroSightings } from "./hero-sightings-permissions";
+import { getKnownHeroes } from "./known-heroes";
 import { HeroSightingsBoard } from "./hero-sightings-board";
 import { HeroSightingsResultsSkeleton } from "./hero-sightings-results-skeleton";
 import { useGuildHeroSightings } from "./use-guild-hero-sightings";
@@ -25,12 +31,17 @@ import { RetryButton } from "@/components/common/retry-button";
 
 /**
  * The latest sighting of each hero that members found with the in-game hero
- * detector: where it roams or will spawn, who found it, and who camps it.
+ * detector, or added by hand: where it roams or will spawn, who found it, and
+ * who camps it.
  */
 export const HeroSightings = () => {
   const { t } = useTranslation();
   const now = useMinuteTimestamp();
+  const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const { data: accessPolicy } = useGuildPermissions();
+  const canAdd = canClaimHeroSightings(accessPolicy);
 
   const [historyTarget, setHistoryTarget] =
     useState<HeroSightingHistoryTarget | null>(null);
@@ -99,6 +110,17 @@ export const HeroSightings = () => {
               icon={Radar}
               title={t("heroSightings.empty")}
               description={t("heroSightings.emptyDescription")}
+              action={
+                canAdd ? (
+                  <Button
+                    type="button"
+                    onClick={() => setIsAdding(true)}
+                    icon=<Plus className="size-4" />
+                  >
+                    {t("heroSightings.add.open")}
+                  </Button>
+                ) : undefined
+              }
             />
           )}
         </div>
@@ -123,6 +145,31 @@ export const HeroSightings = () => {
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("heroSightings.title")}</h1>
       <GuildWorldHeaderSwitcher />
+      {canAdd && (
+        <HeaderSlotPortal slot="actions">
+          {isMobile ? (
+            // Phones keep the bar to icons; the prominent action is round.
+            <Button
+              type="button"
+              size="icon-lg"
+              className="rounded-full"
+              aria-label={t("heroSightings.add.open")}
+              onClick={() => setIsAdding(true)}
+            >
+              <Plus />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setIsAdding(true)}
+              icon=<Plus className="size-4" />
+            >
+              {t("heroSightings.add.open")}
+            </Button>
+          )}
+        </HeaderSlotPortal>
+      )}
       {isError && sightings !== undefined && (
         <Alert
           variant="destructive"
@@ -150,6 +197,13 @@ export const HeroSightings = () => {
         target={historyTarget}
         onClose={() => setHistoryTarget(null)}
       />
+      {canAdd && (
+        <HeroSightingAddDialog
+          open={isAdding}
+          onOpenChange={setIsAdding}
+          knownHeroes={getKnownHeroes(sightings ?? [], heroTimers)}
+        />
+      )}
     </div>
   );
 };

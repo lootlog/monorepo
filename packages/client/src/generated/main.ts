@@ -8944,7 +8944,7 @@ export const HeroSightingResponseDtoState = {
 } as const;
 
 /**
- * PROBABLY_KILLED when a later detection contradicted the sighting; KILLED when Lootlog recorded the kill.
+ * PROBABLY_KILLED when a later detection contradicted the sighting; KILLED when Lootlog recorded the kill; WITHDRAWN when a Member took back a sighting entered by hand.
  * @nullable
  */
 export type HeroSightingResponseDtoCloseReason = typeof HeroSightingResponseDtoCloseReason[keyof typeof HeroSightingResponseDtoCloseReason] | null;
@@ -8953,6 +8953,7 @@ export type HeroSightingResponseDtoCloseReason = typeof HeroSightingResponseDtoC
 export const HeroSightingResponseDtoCloseReason = {
   KILLED: 'KILLED',
   PROBABLY_KILLED: 'PROBABLY_KILLED',
+  WITHDRAWN: 'WITHDRAWN',
 } as const;
 
 /**
@@ -9039,6 +9040,8 @@ export interface HeroSightingResponseDto {
   state: HeroSightingResponseDtoState;
   /** Map name from the detector answer. Margonem sends no map id, and several maps can share a name. */
   mapName: string;
+  /** True for a sighting a Member entered by hand that no detector answer has confirmed since. */
+  manual: boolean;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   firstSeenAt: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
@@ -9055,7 +9058,7 @@ export interface HeroSightingResponseDto {
      */
   closedAt: string | null;
   /**
-     * PROBABLY_KILLED when a later detection contradicted the sighting; KILLED when Lootlog recorded the kill.
+     * PROBABLY_KILLED when a later detection contradicted the sighting; KILLED when Lootlog recorded the kill; WITHDRAWN when a Member took back a sighting entered by hand.
      * @nullable
      */
   closeReason: HeroSightingResponseDtoCloseReason;
@@ -9087,6 +9090,65 @@ export type ClaimHeroSightingDtoActorCharacter = {
 
 export interface ClaimHeroSightingDto {
   actorCharacter?: ClaimHeroSightingDtoActorCharacter;
+}
+
+export type AddHeroSightingDtoHero = {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  name: string;
+  /**
+     * Used for a hero the Organization has not sighted in this world yet; a known hero keeps its recorded level.
+     * @minimum 1
+     * @maximum 500
+     */
+  lvl: number;
+  /** Margonem profession shortname of the hero. */
+  prof?: string;
+};
+
+export type AddHeroSightingDtoState = typeof AddHeroSightingDtoState[keyof typeof AddHeroSightingDtoState];
+
+
+export const AddHeroSightingDtoState = {
+  ROAMING: 'ROAMING',
+  SPAWNING: 'SPAWNING',
+} as const;
+
+export type AddHeroSightingDtoActorCharacter = {
+  /** @minLength 1 */
+  accountId: string;
+  /** @minLength 1 */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  name: string;
+  prof?: string;
+  icon?: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  lvl?: number;
+};
+
+export interface AddHeroSightingDto {
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  world: string;
+  hero: AddHeroSightingDtoHero;
+  state: AddHeroSightingDtoState;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  mapName: string;
+  actorCharacter?: AddHeroSightingDtoActorCharacter;
 }
 
 export type CreateHeroSightingResponseDtoSubmittedGuildsItem = {
@@ -12113,6 +12175,37 @@ export type HeroSightingsControllerGetHeroSightings403 = HttpErrorResponse | {
 };
 
 export type HeroSightingsControllerGetHeroSightings429 = {
+  message: string;
+};
+
+export type HeroSightingsControllerAddHeroSightingPathParameters = {
+ guildId: string,
+ }
+export type HeroSightingsControllerAddHeroSighting401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type HeroSightingsControllerAddHeroSighting403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type HeroSightingsControllerAddHeroSighting429 = {
+  message: string;
+};
+
+export type HeroSightingsControllerWithdrawHeroSightingPathParameters = {
+ guildId: string,
+    sightingId: string,
+ }
+export type HeroSightingsControllerWithdrawHeroSighting401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type HeroSightingsControllerWithdrawHeroSighting403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type HeroSightingsControllerWithdrawHeroSighting429 = {
   message: string;
 };
 
@@ -21263,6 +21356,171 @@ export const useGetHeroSightingsControllerGetHeroSightingsQueryData = () => {
 }
 
 
+
+export const getHeroSightingsControllerAddHeroSightingUrl = ({ guildId }: HeroSightingsControllerAddHeroSightingPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/hero-sightings`
+}
+
+/**
+ * Record where a hero roams or will spawn without a detector answer, for a Member who used the detector outside Lootlog. The sighting is dated by the API and marked manual until a detector answer confirms it. It follows the rules of a detection: repeating the current sighting confirms it, and contradicting it closes it as probably killed. The caller's roles must see heroes of the hero's level.
+ * @summary Add a hero sighting by hand
+ */
+export const heroSightingsControllerAddHeroSighting = async ({ guildId }: HeroSightingsControllerAddHeroSightingPathParameters,
+    addHeroSightingDto: AddHeroSightingDto, options?: Parameters<typeof mainFetch>[1]): Promise<HeroSightingResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<HeroSightingResponseDto>(getHeroSightingsControllerAddHeroSightingUrl({ guildId }),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(addHeroSightingDto)
+  }
+);}
+
+
+
+
+
+export const getHeroSightingsControllerAddHeroSightingMutationKey = () => ['heroSightingsControllerAddHeroSighting'] as const;
+
+export const getHeroSightingsControllerAddHeroSightingMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | HeroSightingsControllerAddHeroSighting401 | HeroSightingsControllerAddHeroSighting403 | HeroSightingsControllerAddHeroSighting429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerAddHeroSighting>>, TError,HeroSightingsControllerAddHeroSightingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerAddHeroSighting>>, TError,HeroSightingsControllerAddHeroSightingMutationVariables, TContext> => {
+
+const mutationKey = getHeroSightingsControllerAddHeroSightingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof heroSightingsControllerAddHeroSighting>>, HeroSightingsControllerAddHeroSightingMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  heroSightingsControllerAddHeroSighting(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type HeroSightingsControllerAddHeroSightingMutationResult = NonNullable<Awaited<ReturnType<typeof heroSightingsControllerAddHeroSighting>>>
+    export type HeroSightingsControllerAddHeroSightingMutationBody = BodyType<AddHeroSightingDto>
+    export type HeroSightingsControllerAddHeroSightingMutationError = ErrorType<HttpErrorResponse | RequestValidationError | HeroSightingsControllerAddHeroSighting401 | HeroSightingsControllerAddHeroSighting403 | HeroSightingsControllerAddHeroSighting429>
+    export type HeroSightingsControllerAddHeroSightingMutationVariables = {pathParams: HeroSightingsControllerAddHeroSightingPathParameters;data: BodyType<AddHeroSightingDto>}
+
+    /**
+ * @summary Add a hero sighting by hand
+ */
+export const useHeroSightingsControllerAddHeroSighting = <TError = ErrorType<HttpErrorResponse | RequestValidationError | HeroSightingsControllerAddHeroSighting401 | HeroSightingsControllerAddHeroSighting403 | HeroSightingsControllerAddHeroSighting429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerAddHeroSighting>>, TError,HeroSightingsControllerAddHeroSightingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof heroSightingsControllerAddHeroSighting>>,
+        TError,
+        HeroSightingsControllerAddHeroSightingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getHeroSightingsControllerAddHeroSightingMutationOptions(options), queryClient);
+    }
+
+export const getHeroSightingsControllerWithdrawHeroSightingUrl = ({ guildId, sightingId }: HeroSightingsControllerWithdrawHeroSightingPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/hero-sightings/${sightingId}/withdraw`
+}
+
+/**
+ * Close a current manual sighting as withdrawn. Only the Member who added it or an Organization administrator can withdraw it, and only until a detector answer confirms it.
+ * @summary Withdraw a hero sighting added by hand
+ */
+export const heroSightingsControllerWithdrawHeroSighting = async ({ guildId, sightingId }: HeroSightingsControllerWithdrawHeroSightingPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<HeroSightingResponseDto> => {
+
+  return mainFetch<HeroSightingResponseDto>(getHeroSightingsControllerWithdrawHeroSightingUrl({ guildId, sightingId }),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getHeroSightingsControllerWithdrawHeroSightingMutationKey = () => ['heroSightingsControllerWithdrawHeroSighting'] as const;
+
+export const getHeroSightingsControllerWithdrawHeroSightingMutationOptions = <TError = ErrorType<RequestValidationError | HeroSightingsControllerWithdrawHeroSighting401 | HeroSightingsControllerWithdrawHeroSighting403 | HttpErrorResponse | HeroSightingsControllerWithdrawHeroSighting429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerWithdrawHeroSighting>>, TError,HeroSightingsControllerWithdrawHeroSightingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerWithdrawHeroSighting>>, TError,HeroSightingsControllerWithdrawHeroSightingMutationVariables, TContext> => {
+
+const mutationKey = getHeroSightingsControllerWithdrawHeroSightingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof heroSightingsControllerWithdrawHeroSighting>>, HeroSightingsControllerWithdrawHeroSightingMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  heroSightingsControllerWithdrawHeroSighting(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type HeroSightingsControllerWithdrawHeroSightingMutationResult = NonNullable<Awaited<ReturnType<typeof heroSightingsControllerWithdrawHeroSighting>>>
+
+    export type HeroSightingsControllerWithdrawHeroSightingMutationError = ErrorType<RequestValidationError | HeroSightingsControllerWithdrawHeroSighting401 | HeroSightingsControllerWithdrawHeroSighting403 | HttpErrorResponse | HeroSightingsControllerWithdrawHeroSighting429>
+    export type HeroSightingsControllerWithdrawHeroSightingMutationVariables = {pathParams: HeroSightingsControllerWithdrawHeroSightingPathParameters}
+
+    /**
+ * @summary Withdraw a hero sighting added by hand
+ */
+export const useHeroSightingsControllerWithdrawHeroSighting = <TError = ErrorType<RequestValidationError | HeroSightingsControllerWithdrawHeroSighting401 | HeroSightingsControllerWithdrawHeroSighting403 | HttpErrorResponse | HeroSightingsControllerWithdrawHeroSighting429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerWithdrawHeroSighting>>, TError,HeroSightingsControllerWithdrawHeroSightingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof heroSightingsControllerWithdrawHeroSighting>>,
+        TError,
+        HeroSightingsControllerWithdrawHeroSightingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getHeroSightingsControllerWithdrawHeroSightingMutationOptions(options), queryClient);
+    }
 
 export const getHeroSightingsControllerGetHeroSightingHistoryUrl = ({ guildId }: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
     params: HeroSightingsControllerGetHeroSightingHistoryParams,) => {

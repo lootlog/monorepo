@@ -3,7 +3,10 @@ import {
   createHeroSighting,
   createHeroSightingMember,
 } from "./hero-sighting-fixtures";
-import { projectHeroSightingRows } from "./hero-sighting-rows";
+import {
+  isWithdrawableHeroSighting,
+  projectHeroSightingRows,
+} from "./hero-sighting-rows";
 
 const claimBy = (userId: string, memberId: number) => ({
   member: createHeroSightingMember({ userId, memberId }),
@@ -93,4 +96,22 @@ it("names who confirmed the hero last unless the detector did, across Organizati
 
   expect(project(friend)?.refreshedBy?.userId).toBe("user-2");
   expect(project(detector)?.refreshedBy).toBeNull();
+});
+
+it("lets only the author remove a sighting, and only while it is open and still entered by hand", () => {
+  const own = createHeroSighting({ manual: true });
+
+  const removable = [
+    own,
+    // A detector answer confirmed it since.
+    createHeroSighting({ manual: false }),
+    createHeroSighting({ manual: true, closedAt: "2026-11-03T13:00:00.000Z" }),
+    createHeroSighting({
+      manual: true,
+      detectedBy: createHeroSightingMember({ userId: "user-2" }),
+    }),
+  ].filter((sighting) => isWithdrawableHeroSighting(sighting, "user-1"));
+
+  expect(removable).toEqual([own]);
+  expect(isWithdrawableHeroSighting(own, undefined)).toBe(false);
 });

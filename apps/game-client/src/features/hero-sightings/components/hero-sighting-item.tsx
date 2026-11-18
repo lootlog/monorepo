@@ -1,18 +1,23 @@
 import { cn } from "cn";
+import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatLevel } from "@lootlog/domain/profession";
 import { isHeroSightingClaimedBy } from "@lootlog/domain/hero-sightings";
 import { ListRow } from "@/components/list-row";
 import { TruncatedText } from "@/components/truncated-text";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { HeroSightingClaimers } from "@/features/hero-sightings/components/hero-sighting-claimers";
 import { HeroSightingDetector } from "@/features/hero-sightings/components/hero-sighting-detector";
 import { HeroSightingHistoryPopover } from "@/features/hero-sightings/components/hero-sighting-history-popover";
 import { HeroSightingPlace } from "@/features/hero-sightings/components/hero-sighting-place";
 import { HeroSightingRefresher } from "@/features/hero-sightings/components/hero-sighting-refresher";
 import { formatSeenAgo } from "@/utils/format-seen-ago";
-import type { HeroSightingRow } from "@/features/hero-sightings/hero-sighting-rows";
-import { useHeroSightingClaim } from "@/features/hero-sightings/hooks/use-hero-sighting-claim";
+import {
+  isWithdrawableHeroSighting,
+  type HeroSightingRow,
+} from "@/features/hero-sightings/hero-sighting-rows";
+import { useHeroSightingActions } from "@/features/hero-sightings/hooks/use-hero-sighting-actions";
 
 type HeroSightingItemProps = {
   row: HeroSightingRow;
@@ -25,7 +30,7 @@ type HeroSightingItemProps = {
 /**
  * One sighted hero: where it roams or will spawn, how long ago, who found it
  * and who claims it. Claiming is an explicit choice; finding a hero does not
- * claim it.
+ * claim it. The author of a sighting entered by hand may remove it.
  */
 export function HeroSightingItem({
   row,
@@ -34,7 +39,7 @@ export function HeroSightingItem({
   writableGuildIds,
 }: HeroSightingItemProps) {
   const { t } = useTranslation("heroSightings");
-  const { claim, unclaim, isPending } = useHeroSightingClaim();
+  const { claim, unclaim, withdraw, isPending } = useHeroSightingActions();
 
   const claimedSightings = row.sightings.filter((sighting) =>
     isHeroSightingClaimedBy(sighting, userId),
@@ -47,6 +52,10 @@ export function HeroSightingItem({
   );
 
   const isClaimed = claimedSightings.length > 0;
+
+  const withdrawableSightings = row.sightings.filter((sighting) =>
+    isWithdrawableHeroSighting(sighting, userId),
+  );
 
   return (
     <ListRow
@@ -73,11 +82,21 @@ export function HeroSightingItem({
       </span>
       <HeroSightingPlace sighting={row} isCurrent={row.isCurrent} now={now} />
       <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-1">
-        <HeroSightingDetector member={row.detectedBy} />
+        <HeroSightingDetector member={row.detectedBy} manual={row.manual} />
         <span className="ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-1 ll:font-normal">
           <HeroSightingClaimers claims={row.claims} />
         </span>
         <HeroSightingHistoryPopover row={row} now={now} />
+        {withdrawableSightings.length > 0 ? (
+          <IconButton
+            label={t("actions.withdraw")}
+            variant="quiet-destructive"
+            disabled={isPending}
+            onClick={() => withdraw(withdrawableSightings)}
+          >
+            <Trash2 aria-hidden className="ll:size-3.5" />
+          </IconButton>
+        ) : null}
         {row.isCurrent && (isClaimed || claimableSightings.length > 0) ? (
           <Button
             type="button"

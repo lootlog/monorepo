@@ -10,6 +10,7 @@ import {
   HttpErrorResponse,
 } from "#src/contracts/api-shared";
 import {
+  AddHeroSightingRequest,
   ClaimHeroSightingRequest,
   CreateHeroSightingRequest,
   CreateHeroSightingResponse,
@@ -75,6 +76,51 @@ export class HeroSightingsGroup extends HttpApiGroup.make("hero-sightings").add(
     .annotate(
       OpenApi.Description,
       "The latest sighting of each hero in a world from the last day, limited to heroes the caller's roles can see.",
+    ),
+  HttpApiEndpoint.post(
+    "HeroSightingsControllerAddHeroSighting",
+    "/guilds/:guildId/hero-sightings",
+    {
+      params: HeroSightingOrganizationPath,
+      payload: AddHeroSightingRequest,
+      success: HeroSightingResponse.pipe(HttpApiSchema.status(201)),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "HeroSightingsController_addHeroSighting")
+    .annotate(OpenApi.Summary, "Add a hero sighting by hand")
+    .annotate(
+      OpenApi.Description,
+      "Record where a hero roams or will spawn without a detector answer, for a Member who used the detector outside Lootlog. The sighting is dated by the API and marked manual until a detector answer confirms it. It follows the rules of a detection: repeating the current sighting confirms it, and contradicting it closes it as probably killed. The caller's roles must see heroes of the hero's level.",
+    ),
+  HttpApiEndpoint.post(
+    "HeroSightingsControllerWithdrawHeroSighting",
+    "/guilds/:guildId/hero-sightings/:sightingId/withdraw",
+    {
+      params: HeroSightingPath,
+      success: HeroSightingResponse,
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(
+      OpenApi.Identifier,
+      "HeroSightingsController_withdrawHeroSighting",
+    )
+    .annotate(OpenApi.Summary, "Withdraw a hero sighting added by hand")
+    .annotate(
+      OpenApi.Description,
+      "Close a current manual sighting as withdrawn. Only the Member who added it or an Organization administrator can withdraw it, and only until a detector answer confirms it.",
     ),
   HttpApiEndpoint.get(
     "HeroSightingsControllerGetHeroSightingHistory",

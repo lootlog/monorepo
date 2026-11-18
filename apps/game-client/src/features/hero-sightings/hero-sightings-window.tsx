@@ -1,11 +1,16 @@
+import { Plus } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AsyncContent } from "@/components/async-content";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { IconButton } from "@/components/ui/icon-button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AddHeroSightingPanel } from "@/features/hero-sightings/components/add-hero-sighting-panel";
 import { HeroDetectionNotice } from "@/features/hero-sightings/components/hero-detection-notice";
 import { HeroSightingsList } from "@/features/hero-sightings/components/hero-sightings-list";
 import { useHeroSightingRows } from "@/features/hero-sightings/hooks/use-hero-sighting-rows";
 import { useHeroSightingWriteAccess } from "@/features/hero-sightings/hooks/use-hero-sighting-write-access";
+import { useTimersWorld } from "@/features/timers/hooks/use-timers-world";
 import { useSession } from "@/hooks/auth/use-session";
 import { useHeroSightingsStore } from "@/store/hero-sightings.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -17,6 +22,8 @@ type HeroSightingsWindowProps = {
 /**
  * Heroes found with detectors in the timers' world. Like the timers, it shows
  * the selected Lootlog, or every Lootlog merged while timer grouping is on.
+ * The "+" action covers the list with the form that adds a hero by hand and
+ * stays lit while it does.
  */
 export const HeroSightingsWindow = ({ isOpen }: HeroSightingsWindowProps) => {
   const { t } = useTranslation("heroSightings");
@@ -29,6 +36,8 @@ export const HeroSightingsWindow = ({ isOpen }: HeroSightingsWindowProps) => {
   );
 
   const { query, sightings, rows } = useHeroSightingRows();
+  const { world } = useTimersWorld();
+  const [addOpen, setAddOpen] = useState(false);
 
   const writableGuildIds = useHeroSightingWriteAccess([
     ...new Set([
@@ -50,8 +59,17 @@ export const HeroSightingsWindow = ({ isOpen }: HeroSightingsWindowProps) => {
       resizable
       minHeight={82}
       minWidth={242}
+      actions={
+        <IconButton
+          label={t("actions.add")}
+          active={addOpen}
+          onClick={() => setAddOpen((open) => !open)}
+        >
+          <Plus size={14} aria-hidden="true" />
+        </IconButton>
+      }
     >
-      <div className="ll:flex ll:h-full ll:flex-col">
+      <div className="ll:relative ll:flex ll:h-full ll:flex-col">
         {ownDetection ? (
           <HeroDetectionNotice
             detection={ownDetection}
@@ -79,6 +97,14 @@ export const HeroSightingsWindow = ({ isOpen }: HeroSightingsWindowProps) => {
             </ScrollArea>
           </AsyncContent>
         </div>
+        {/* The window frame is rounded; the panel follows its bottom corners. */}
+        {addOpen ? (
+          <AddHeroSightingPanel
+            world={world}
+            onClose={() => setAddOpen(false)}
+            className="ll:rounded-b-md"
+          />
+        ) : null}
       </div>
     </DraggableWindow>
   );

@@ -7,7 +7,7 @@ import { TruncatedText } from "@/components/truncated-text";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import { HeroSightingPlace } from "@/features/hero-sightings/components/hero-sighting-place";
-import { useHeroSightingClaim } from "@/features/hero-sightings/hooks/use-hero-sighting-claim";
+import { useHeroSightingActions } from "@/features/hero-sightings/hooks/use-hero-sighting-actions";
 import { useNow } from "@/hooks/ui/use-now";
 import type { OwnHeroDetection } from "@/store/hero-sightings.store";
 
@@ -21,8 +21,9 @@ type HeroDetectionNoticeProps = {
 };
 
 /**
- * Names the hero the player's own detector just found and offers to claim it
- * in every Organization that accepted the detection.
+ * Names the hero the player's own detector just found, or the player just
+ * entered by hand, and offers to claim it in every Organization that accepted
+ * it.
  */
 export function HeroDetectionNotice({
   detection,
@@ -32,7 +33,7 @@ export function HeroDetectionNotice({
   onDismiss,
 }: HeroDetectionNoticeProps) {
   const { t } = useTranslation("heroSightings");
-  const { claim, isPending } = useHeroSightingClaim();
+  const { claim, isPending } = useHeroSightingActions();
   const now = useNow(60_000);
 
   const latest = detection.sightings.map(
@@ -56,7 +57,9 @@ export function HeroDetectionNotice({
       className="ll:-mt-px ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-x-0 ll:border-y ll:border-solid ll:border-amber-400/40 ll:bg-amber-400/10 ll:px-2 ll:py-1.5 ll:text-[11px] ll:font-semibold"
     >
       <span className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-0.5">
-        <span className="ll:text-amber-200">{t("notice.title")}</span>
+        <span className="ll:text-amber-200">
+          {t(first.manual ? "notice.manualTitle" : "notice.title")}
+        </span>
         <TruncatedText className="ll:text-white">
           {first.hero.name}
           <span className="ll:ml-1 ll:font-normal ll:text-muted-foreground">

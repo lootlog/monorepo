@@ -18,6 +18,7 @@ import { getHeroSightingStatus } from "./hero-sighting-status";
 import { HeroSightingStatusIcon } from "./hero-sighting-status-icon";
 import { HeroSightingStatusLabel } from "./hero-sighting-status-label";
 import { HeroSightingTimer } from "./hero-sighting-timer";
+import { HeroSightingWithdrawButton } from "./hero-sighting-withdraw-button";
 
 type HeroSightingRowProps = {
   sighting: HeroSightingResponseDto;
@@ -57,7 +58,7 @@ export const HeroSightingRow = ({
       aria-labelledby={titleId}
       className={cn(
         "grid grid-cols-[2.25rem_minmax(0,1fr)_auto] gap-x-3 gap-y-2.5 py-3",
-        "xl:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1fr)_12rem_minmax(0,0.5fr)_9rem] xl:items-center xl:gap-x-4",
+        "xl:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1fr)_12rem_minmax(0,0.5fr)_11.5rem] xl:items-center xl:gap-x-4",
         LIST_TILE_INSET_CLASS,
       )}
     >
@@ -103,7 +104,11 @@ export const HeroSightingRow = ({
             className="size-4 text-2xs"
           />
           <span className="min-w-0 truncate">
-            {t("heroSightings.detectedByShort")}{" "}
+            {t(
+              sighting.manual
+                ? "heroSightings.addedByHandShort"
+                : "heroSightings.detectedByShort",
+            )}{" "}
             <span className={DETECTOR_NAME_CLASS}>
               {sighting.detectedBy.displayName}
             </span>
@@ -137,6 +142,7 @@ export const HeroSightingRow = ({
 
       <div className="col-start-3 row-start-4 flex items-center justify-end gap-1 self-center xl:col-start-6 xl:row-start-1">
         <HeroSightingClaimButton sighting={sighting} />
+        <HeroSightingWithdrawButton sighting={sighting} />
         <HeroSightingHistoryButton sighting={sighting} onOpen={onOpenHistory} />
       </div>
     </article>

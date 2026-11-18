@@ -863,6 +863,7 @@ describe("notification job rebuild", () => {
       };
 
       const sighting: HeroSightingResponse = {
+        manual: false,
         id: 41,
         guildId: "guild-1",
         world: "fobos",
