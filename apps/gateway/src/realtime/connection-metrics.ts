@@ -1,5 +1,6 @@
 import {
   REALTIME_CLIENT_CLOSE_CODES,
+  REALTIME_INBOUND_TIMEOUT_CLOSE_CODE,
   type ClientCommand,
 } from "@lootlog/protocol/realtime";
 import { Effect, Metric } from "effect";
@@ -73,6 +74,8 @@ const closeClassification = (code: number, reason: string) => {
       return { close_code: "4007", cause: "malformed_frame" };
     case REALTIME_CLIENT_CLOSE_CODES.sessionJoinFailed:
       return { close_code: "4008", cause: "session_join_failed" };
+    case REALTIME_INBOUND_TIMEOUT_CLOSE_CODE:
+      return { close_code: "4009", cause: "inbound_timeout" };
     default:
       return { close_code: "other", cause: "other" };
   }
