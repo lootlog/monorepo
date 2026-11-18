@@ -96,10 +96,19 @@ it("offers withdrawal to the member whose Lootlog user already claims the hero",
   expect(await screen.findByRole("button", { name: /Wycofaj/ })).toBeTruthy();
 });
 
-it("offers a claim to another member and none on a closed sighting", async () => {
-  await mount([HERO_SIGHTING_WRITE_PERMISSION], { ...sighting, claims: [] });
+it("offers a claim to another member on a hero that will spawn, none on a roaming or closed one", async () => {
+  await mount([HERO_SIGHTING_WRITE_PERMISSION], {
+    ...sighting,
+    state: "SPAWNING",
+    claims: [],
+  });
 
   expect(await screen.findByRole("button", { name: /Obstawiam/ })).toBeTruthy();
+
+  cleanup();
+  await mount([HERO_SIGHTING_WRITE_PERMISSION], { ...sighting, claims: [] });
+
+  expect(screen.queryByRole("button")).toBeNull();
 
   cleanup();
   await mount([HERO_SIGHTING_WRITE_PERMISSION], {

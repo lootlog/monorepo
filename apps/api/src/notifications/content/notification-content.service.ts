@@ -7,7 +7,6 @@ import {
   DEFAULT_HERO_SIGHTING_TEMPLATE,
   HERO_SIGHTED_TITLE,
   HERO_SIGHTING_STATE_LABEL,
-  HERO_SPAWNED_TITLE,
   heroSightingMessage,
   DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
   DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
@@ -200,10 +199,9 @@ class NotificationContent {
       readonly mapName: string;
       readonly detectedBy: string;
     };
-    transition: keyof typeof HERO_SIGHTING_STATE_LABEL;
   }) {
     const { sighting } = params;
-    const state = HERO_SIGHTING_STATE_LABEL[params.transition];
+    const state = HERO_SIGHTING_STATE_LABEL;
 
     const template =
       params.notificationRule.contentTemplate ?? DEFAULT_HERO_SIGHTING_TEMPLATE;
@@ -225,10 +223,7 @@ class NotificationContent {
     );
 
     return {
-      title:
-        params.transition === "SPAWNED"
-          ? HERO_SPAWNED_TITLE
-          : HERO_SIGHTED_TITLE,
+      title: HERO_SIGHTED_TITLE,
       message: heroSightingMessage(
         sighting.hero.name,
         state,

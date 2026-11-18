@@ -54,11 +54,11 @@ kanałów.
 
 ### Reguły powiadomień
 
-| Typ                             | Kiedy bot pisze                                                                   |
-| ------------------------------- | --------------------------------------------------------------------------------- |
-| **Przypomnienie przed spawnem** | Przed respawnem potwora z timerem, z wybranym wyprzedzeniem                       |
-| **Wykrycie herosa**             | Gdy ktoś [wykryje herosa](/docs/heroes) i gdy heros pojawi się w wykrytym miejscu |
-| **Zaplanowana wiadomość**       | O wybranej porze: jednorazowo, co X godzin, codziennie, co tydzień                |
+| Typ                             | Kiedy bot pisze                                                    |
+| ------------------------------- | ------------------------------------------------------------------ |
+| **Przypomnienie przed spawnem** | Przed respawnem potwora z timerem, z wybranym wyprzedzeniem        |
+| **Wykrycie herosa**             | Gdy ktoś [wykryje](/docs/heroes), gdzie pojawi się heros           |
+| **Zaplanowana wiadomość**       | O wybranej porze: jednorazowo, co X godzin, codziennie, co tydzień |
 
 **Przypomnienie przed spawnem**
 
@@ -71,8 +71,10 @@ kanałów.
 - Potwora bez timera dodasz, wpisując jego ID ręcznie.
 - Reguła bez wybranych potworów obejmuje wszystkie timery, także ręczne.
 
-**Wykrycie herosa** wysyła wiadomość przy nowym miejscu herosa i drugi raz,
-gdy heros się pojawi. Kolejne potwierdzenia nic nie wysyłają. **Poziom herosa
+**Wykrycie herosa** wysyła wiadomość, gdy wykrywacz pokaże nowe miejsce, w
+którym heros się pojawi. Kolejne potwierdzenia nic nie wysyłają. O grasującym
+herosie reguła nie wysyła nic, także gdy heros stanie w wykrytym miejscu: wpis
+jest od razu na liście, a wykrywający ma czas dojść na miejsce. **Poziom herosa
 od / do** zawęża regułę. Przy wykryciu
 [dodanym ręcznie](/docs/heroes#ręczne-dodawanie-wykrycia) nazwa osoby ma
 dopisek „(ręcznie)".

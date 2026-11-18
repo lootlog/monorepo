@@ -22,18 +22,18 @@ const SETTLED = {
   textClassName: "text-muted-foreground",
 };
 
-/** Live signals keep their colour; heroes no longer to act on go quiet. */
+/**
+ * A spawn to camp keeps its colour. A roaming hero is a record of where it
+ * was found, not a call to run there, so it goes quiet like the heroes no
+ * longer to act on.
+ */
 export const HERO_SIGHTING_STATUS_APPEARANCE = {
-  ROAMING: {
-    icon: Footprints,
-    tileClassName: "bg-signal-live/12 text-signal-live",
-    textClassName: "text-signal-live",
-  },
   SPAWNING: {
     icon: Hourglass,
     tileClassName: "bg-signal-timer/12 text-signal-timer",
     textClassName: "text-signal-timer",
   },
+  ROAMING: { icon: Footprints, ...SETTLED },
   STALE: { icon: CircleDashed, ...SETTLED },
   PROBABLY_KILLED: { icon: Skull, ...SETTLED },
   KILLED: { icon: Skull, ...SETTLED },
