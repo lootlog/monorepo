@@ -707,3 +707,61 @@ it("explains an elite battle that began before Lootlog saw it, once", async () =
   expect(fixture.kills()).toHaveLength(1);
   expect(skippedKills()).toHaveLength(1);
 });
+
+it("submits a battle whose final packet was replaced by the start of the next one", async () => {
+  const fixture = createBattleTest();
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart(["first"]));
+  await processor.handle({ f: { m: ["first-winner"] } });
+  await processor.handle(pvpStart(["second"]));
+  await processor.handle(end);
+
+  const submissions = await Promise.all(
+    fixture.battles().map((request) => request.json()),
+  );
+
+  expect(
+    submissions.map((submission) =>
+      submission.events.flatMap((event: { f: { m?: string[] } }) => event.f.m),
+    ),
+  ).toEqual([
+    ["first", "first-winner"],
+    ["second", "end"],
+  ]);
+});
+
+it("keeps one battle when Margonem sends it again from its start", async () => {
+  const fixture = createBattleTest();
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart(["first"]));
+  await processor.handle({ f: { m: ["second"] } });
+  await processor.handle(pvpStart(["first", "second", "third"]));
+  await processor.handle(end);
+
+  expect(fixture.battles()).toHaveLength(1);
+  const submission = await fixture.battles()[0]?.json();
+  expect(
+    submission.events.flatMap((event: { f: { m?: string[] } }) => event.f.m),
+  ).toEqual(["first", "second", "third", "end"]);
+});
+
+it("records the kill of a battle interrupted by the next one only when every NPC died", async () => {
+  const fixture = createBattleTest();
+  const processor = new BattleEventProcessor();
+
+  const bossBattle = (hpp: number): GameEvent => ({
+    f: { init: "1", w: { "-100": createBattleWarrior(-100, { hpp }) } },
+  });
+
+  await processor.handle(bossBattle(100));
+  await processor.handle(pvpStart());
+  expect(fixture.kills()).toHaveLength(0);
+
+  await processor.handle(end);
+  await processor.handle(bossBattle(100));
+  await processor.handle({
+    f: { w: { "-100": createBattleWarrior(-100, { hpp: 0 }) } },
+  });
+  await processor.handle(pvpStart(["later"]));
+  expect(fixture.kills()).toHaveLength(1);
+});
