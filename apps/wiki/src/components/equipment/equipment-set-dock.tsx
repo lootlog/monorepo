@@ -1,3 +1,4 @@
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Link } from "@tanstack/react-router";
 import { ChevronUp } from "lucide-react";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
@@ -56,19 +57,18 @@ export function EquipmentSetDock() {
           </SheetTrigger>
         </div>
       </div>
-      <SheetContent
-        side="bottom"
-        className="max-h-[85dvh] overflow-y-auto p-5 md:p-8"
-      >
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-          <SheetTitle className="sr-only">{t("equipment.title")}</SheetTitle>
-          <EquipmentSetHeader titleId="set-dock-title">
-            <ChevronLink className="ml-2" render={<Link to="/set" />}>
-              {t("setLayout.openPage")}
-            </ChevronLink>
-          </EquipmentSetHeader>
-          <EquipmentSetWindow />
-        </div>
+      <SheetContent side="bottom" className="max-h-[85dvh] gap-0 p-0">
+        <ScrollArea orientation="vertical" className="min-h-0 flex-1">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 p-5 md:p-8">
+            <SheetTitle className="sr-only">{t("equipment.title")}</SheetTitle>
+            <EquipmentSetHeader titleId="set-dock-title">
+              <ChevronLink className="ml-2" render={<Link to="/set" />}>
+                {t("setLayout.openPage")}
+              </ChevronLink>
+            </EquipmentSetHeader>
+            <EquipmentSetWindow />
+          </div>
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   );

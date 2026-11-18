@@ -10,11 +10,12 @@ type NpcPortraitProps = {
 };
 
 // The box, how many times a sprite that fits is enlarged in it, and how far
-// it stands from the box's bottom edge.
+// it stands from the box's bottom edge. The limit leaves the tallest sprite
+// the same gap above its head.
 const SIZES = {
   sm: { box: "size-16", scale: 1, limit: 56, lift: "mb-1" },
-  md: { box: "size-24", scale: 1, limit: 88, lift: "mb-2" },
-  lg: { box: "h-44 w-full", scale: 2, limit: 160, lift: "mb-3" },
+  md: { box: "size-24", scale: 1, limit: 80, lift: "mb-2" },
+  lg: { box: "h-44 w-full", scale: 2, limit: 152, lift: "mb-3" },
 } as const;
 
 /**

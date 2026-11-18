@@ -1,7 +1,8 @@
 import type { CatalogNpcDtoOutput } from "@lootlog/client/catalog";
 import type { ReactNode } from "react";
 import { t } from "@/i18n/messages";
-import { npcKind } from "@/lib/npc-summary";
+import { formatCatalogDay } from "@/lib/catalog-days";
+import { npcKind, npcProfession } from "@/lib/npc-summary";
 
 type Fact = { label: string; value: ReactNode };
 
@@ -12,15 +13,26 @@ type Fact = { label: string; value: ReactNode };
  */
 export function NpcFacts({ npc }: { npc: CatalogNpcDtoOutput }) {
   const kind = npcKind(npc);
+  const profession = npcProfession(npc.prof);
   const topLocation = npc.locations[0];
   const hasOtherMaps = npc.locations.length > 1;
 
   const facts: Fact[] = [
     ...(kind ? [{ label: t("npc.type"), value: kind }] : []),
+    ...(profession ? [{ label: t("npc.profession"), value: profession }] : []),
     {
       label: t("item.level"),
       value: npc.lvl > 0 ? npc.lvl : t("npc.elasticLevel"),
     },
+    // A catalog released before first sightings were served sends none.
+    ...(npc.firstSeenOn
+      ? [
+          {
+            label: t("npc.firstSeenOn"),
+            value: formatCatalogDay(npc.firstSeenOn),
+          },
+        ]
+      : []),
     ...(topLocation
       ? [
           {

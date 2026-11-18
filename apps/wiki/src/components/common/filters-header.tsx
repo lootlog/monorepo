@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";
 
-type ItemsFiltersHeaderProps = {
+type FiltersHeaderProps = {
   /** How many filters narrow the search now. */
   count: number;
   /** The title element, such as a sheet's accessible title. */
@@ -12,13 +12,13 @@ type ItemsFiltersHeaderProps = {
 };
 
 /** The top of the filters: what they are and how many apply. */
-export function ItemsFiltersHeader({
+export function FiltersHeader({
   count,
   renderTitle = (title) => (
     <h2 className="text-sm font-semibold text-foreground">{title}</h2>
   ),
   className,
-}: ItemsFiltersHeaderProps) {
+}: FiltersHeaderProps) {
   return (
     <div
       className={cn(
