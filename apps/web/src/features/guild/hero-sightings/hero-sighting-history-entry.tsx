@@ -83,7 +83,6 @@ export const HeroSightingHistoryEntry = ({
               <HeroSightingMember
                 member={sighting.detectedBy}
                 character={sighting.detectorCharacter}
-                highlighted
               />
             </dd>
           </div>

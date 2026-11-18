@@ -2,20 +2,13 @@ import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { MemberIdentity } from "@/components/common/member-identity";
-import {
-  DETECTOR_AVATAR_CLASS,
-  DETECTOR_NAME_CLASS,
-} from "./hero-sighting-detector-highlight";
 
 type HeroSightingClaimsProps = {
   sighting: HeroSightingResponseDto;
   className?: string;
 };
 
-/**
- * The members who declared camping the hero, in the order they did; the
- * detector among them stands out as they do beside the sighting.
- */
+/** The members who declared camping the hero, in the order they did. */
 export const HeroSightingClaims = ({
   sighting,
   className,
@@ -41,7 +34,10 @@ export const HeroSightingClaims = ({
   return (
     <ul
       aria-label={t("heroSightings.claims")}
-      className={cn("flex min-w-0 flex-wrap gap-1.5", className)}
+      className={cn(
+        "flex min-h-7 min-w-0 flex-wrap items-center gap-x-3 gap-y-1",
+        className,
+      )}
     >
       {sighting.claims.map((claim) => {
         const isDetector =
@@ -50,7 +46,7 @@ export const HeroSightingClaims = ({
         return (
           <li
             key={claim.member.memberId}
-            className="flex h-7 min-w-0 items-center gap-1.5 rounded-full bg-muted/70 pr-2.5 pl-0.5 text-xs"
+            className="flex min-w-0"
             title={claim.character?.name}
           >
             <MemberIdentity
@@ -59,11 +55,7 @@ export const HeroSightingClaims = ({
                 name: claim.member.displayName,
                 avatarUrl: claim.member.avatarUrl,
               }}
-              avatarClassName={cn(
-                "size-6",
-                isDetector && DETECTOR_AVATAR_CLASS,
-              )}
-              nameClassName={cn("text-xs", isDetector && DETECTOR_NAME_CLASS)}
+              display="name"
             />
             {isDetector && (
               <span className="sr-only">
