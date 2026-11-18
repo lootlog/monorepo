@@ -11,7 +11,8 @@ import {
  * How likely a boss is to drop the item: the chance of one loot roll, and
  * for a boss that rolls per survivor, the chance of a full party's kill; for
  * a personal loot, the chance of each member who wears the item. An estimate
- * says so. The counts behind it show on hover; a boss Lootlog has too few
+ * says so. Under it, the drops, rolls and kills it is counted from, so a
+ * reader can tell how much the chance rests on; a boss Lootlog has too few
  * kills of says so.
  */
 export function ItemDropRate({
@@ -44,17 +45,19 @@ export function ItemDropRate({
           });
 
   return (
-    <span
-      className="truncate text-xs text-muted-foreground tabular-nums"
-      title={t("catalog.dropRateCounts", {
-        drops: rate.drops.toLocaleString("pl-PL"),
-        rolls: Math.round(rate.rolls).toLocaleString("pl-PL"),
-        kills: rate.kills.toLocaleString("pl-PL"),
-      })}
-    >
-      {rate.basis === "LOOTS"
-        ? t("catalog.dropRateEstimate", { chance })
-        : chance}
+    <span className="flex min-w-0 flex-col text-xs text-muted-foreground tabular-nums">
+      <span className="truncate">
+        {rate.basis === "LOOTS"
+          ? t("catalog.dropRateEstimate", { chance })
+          : chance}
+      </span>
+      <span>
+        {t("catalog.dropRateCounts", {
+          drops: rate.drops.toLocaleString("pl-PL"),
+          rolls: Math.round(rate.rolls).toLocaleString("pl-PL"),
+          kills: rate.kills.toLocaleString("pl-PL"),
+        })}
+      </span>
     </span>
   );
 }
