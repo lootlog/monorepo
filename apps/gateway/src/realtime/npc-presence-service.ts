@@ -53,6 +53,8 @@ local now = nowMs()
 local connection = ARGV[1]
 local ttl = tonumber(ARGV[2])
 local suffix = "|" .. connection
+local map = ARGV[5]
+if map == "" then map = nil end
 local reported = {}
 for _, npc in ipairs(cjson.decode(ARGV[3])) do reported[tostring(npc.id)] = npc end
 local function standing()
@@ -77,19 +79,19 @@ for _, field in ipairs(redis.call("HKEYS", KEYS[1])) do
 end
 for id, npc in pairs(reported) do
   local field = id .. suffix
-  redis.call("HSETNX", KEYS[1], field, cjson.encode({ npc = npc, since = now }))
+  redis.call("HSETNX", KEYS[1], field, cjson.encode({ npc = npc, since = now, map = map }))
   redis.call("ZADD", KEYS[2], now + ttl, field)
 end
 local after = standing()
 local changes = {}
 for id, record in pairs(before) do
   if after[id] == nil then
-    table.insert(changes, { npc = record.npc, standing = false, since = record.since, revision = redis.call("INCR", KEYS[3]) })
+    table.insert(changes, { npc = record.npc, standing = false, since = record.since, map = record.map, revision = redis.call("INCR", KEYS[3]) })
   end
 end
 for id, record in pairs(after) do
   if before[id] == nil then
-    table.insert(changes, { npc = record.npc, standing = true, since = record.since, revision = redis.call("INCR", KEYS[3]) })
+    table.insert(changes, { npc = record.npc, standing = true, since = record.since, map = record.map, revision = redis.call("INCR", KEYS[3]) })
   end
 end
 if redis.call("HLEN", KEYS[1]) > 0 then
@@ -126,6 +128,7 @@ const ChangesJson = Schema.fromJsonString(
       npc: NpcPresenceNpcSchema,
       standing: Schema.Boolean,
       since: Schema.Number,
+      map: Schema.optionalKey(Schema.String),
       revision: Schema.Number,
     }),
   ),
@@ -144,6 +147,7 @@ type Operation = {
   organizationId: string;
   world: string;
   npcs: NpcPresenceNpc[];
+  map: string | undefined;
 };
 
 const keys = (organizationId: string, world: string) => {
@@ -159,6 +163,7 @@ const presenceEvent = (
     npc: NpcPresenceNpc;
     standing: boolean;
     since: number;
+    map?: string;
     revision: number;
   },
 ): Event => ({
@@ -171,7 +176,12 @@ const operation = (
   organizationId: string,
   state: NpcPresenceState,
   npcs: readonly NpcPresenceNpc[] = [...state.npcs.values()],
-): Operation => ({ organizationId, world: state.world, npcs: [...npcs] });
+): Operation => ({
+  organizationId,
+  world: state.world,
+  npcs: [...npcs],
+  map: state.map,
+});
 
 const sameNpcs = (
   first: ReadonlyMap<number, NpcPresenceNpc>,
@@ -398,6 +408,7 @@ export class NpcPresenceService {
               characterId: character.characterId,
               organizationIds,
               npcs,
+              map: payload.map,
             }
           : undefined;
 
@@ -409,6 +420,7 @@ export class NpcPresenceService {
             organizationId,
             world: payload.world,
             npcs: [...npcs.values()],
+            map: payload.map,
           }));
 
       // A failed report is resent whole and replaces whatever this connection
@@ -459,7 +471,7 @@ export class NpcPresenceService {
     // failed one does not stop the others.
     return Effect.forEach(
       operations,
-      ({ organizationId, world, npcs }) =>
+      ({ organizationId, world, npcs, map }) =>
         storeCall("npc-presence.apply", async () =>
           decodeChanges(
             String(
@@ -471,6 +483,7 @@ export class NpcPresenceService {
                 NPC_PRESENCE_TTL_MS,
                 JSON.stringify(npcs),
                 REVISION_TTL_MS,
+                map ?? "",
               ),
             ),
           ),

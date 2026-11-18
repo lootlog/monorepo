@@ -1,5 +1,6 @@
 import type { Timer } from "@/api/timers.api";
 import type { MapThreat } from "@/lib/map-threat-source";
+import type { NpcStanding } from "@/lib/npc-presence-source";
 import type { MapOccupancy } from "@/lib/presence-map-index";
 import { format } from "@/utils/local-date";
 import {
@@ -30,7 +31,8 @@ type TimerTooltipProps = {
   occupancy?: MapOccupancy;
   threat?: MapThreat;
   heroSighting?: TimerHeroSighting;
-  isStanding?: boolean;
+  /** Where an Organization member sees the NPC standing now. */
+  standing?: NpcStanding;
   expanded?: boolean;
 };
 
@@ -42,7 +44,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   occupancy,
   threat,
   heroSighting,
-  isStanding = false,
+  standing,
   expanded = false,
 }) => {
   const { t } = useTranslation("timers");
@@ -76,10 +78,14 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
             {t("tooltip.reset")}
           </div>
         )}
-        {isStanding && (
+        {standing && (
           <div className="ll:flex ll:items-center ll:gap-1 ll:font-semibold ll:text-green-400">
-            <Swords size={12} aria-hidden="true" />
-            {t("tooltip.standing")}
+            <Swords size={12} aria-hidden="true" className="ll:shrink-0" />
+            <span className="ll:min-w-0 ll:wrap-break-word">
+              {standing.map
+                ? t("tooltip.standingOnMap", { map: standing.map })
+                : t("tooltip.standing")}
+            </span>
           </div>
         )}
       </div>
