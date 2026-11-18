@@ -303,13 +303,21 @@ export const makeGuildDiscordSyncData = (
     const current = yield* loadState(database, guildId);
 
     if (current) {
-      const cooldownMs =
-        current.status === "SYNCED" && current.lastError === null
-          ? REFRESH_COOLDOWN_MS
-          : UNCONFIRMED_REFRESH_COOLDOWN_MS;
+      const isConfirmed =
+        current.status === "SYNCED" && current.lastError === null;
+
+      const cooldownMs = isConfirmed
+        ? REFRESH_COOLDOWN_MS
+        : UNCONFIRMED_REFRESH_COOLDOWN_MS;
+
+      // The retry window follows the last attempt, so a later state-only write
+      // (a gateway event) does not extend it.
+      const cooldownFrom = isConfirmed
+        ? current.updatedAt
+        : (current.lastAttemptAt ?? current.updatedAt);
 
       const elapsedMs =
-        (yield* Clock.currentTimeMillis) - current.updatedAt.getTime();
+        (yield* Clock.currentTimeMillis) - cooldownFrom.getTime();
 
       if (elapsedMs < cooldownMs) {
         return yield* Effect.fail(

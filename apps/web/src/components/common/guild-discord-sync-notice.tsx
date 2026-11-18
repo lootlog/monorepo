@@ -84,7 +84,9 @@ export const GuildDiscordSyncNotice = ({
   });
 
   return (
-    <Alert variant={variant} role={hasError ? "alert" : "status"}>
+    // Only the description is live: the cooldown countdown below it must not
+    // be re-announced on every tick.
+    <Alert variant={variant} role={undefined}>
       <Icon />
       <AlertTitle>
         {t(
@@ -94,7 +96,7 @@ export const GuildDiscordSyncNotice = ({
         )}
       </AlertTitle>
       <AlertDescription className="flex flex-col gap-2.5">
-        <p>{t(descriptionKey)}</p>
+        <p role={hasError ? "alert" : "status"}>{t(descriptionKey)}</p>
         {isMissing && query.data?.missingPermissions.length ? (
           <div className="flex flex-wrap gap-1.5">
             {query.data.missingPermissions.map((permission) => (

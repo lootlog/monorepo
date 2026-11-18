@@ -373,6 +373,18 @@ describe.each([
     ).toBeNull();
     expect(getReinstallButton()).not.toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
+
+    // A newer status read does not lift the server's refresh deadline.
+    await client.invalidateQueries({
+      queryKey: getGuildsControllerGetGuildDiscordSyncStatusQueryKey({
+        guildId: "guild-1",
+      }),
+    });
+    await waitFor(() => expect(client.isFetching()).toBe(0));
+    expect(screen.getByText("common.cooldown.nextRefreshIn")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "settings.guildInfo.refresh" }),
+    ).toBeNull();
   });
 
   it("offers installation when Discord confirms the bot cannot access the server", async () => {

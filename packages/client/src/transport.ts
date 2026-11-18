@@ -326,17 +326,23 @@ const executeRequest = async ({
   }
 };
 
-/** `Retry-After` carries either delay seconds or an HTTP date. */
+/** RFC 9110 IMF-fixdate, the HTTP-date form servers must send. */
+const IMF_FIXDATE =
+  /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/;
+
+/**
+ * `Retry-After` carries delay seconds or an HTTP-date. Anything else, or a
+ * deadline a `Date` cannot represent, leaves the retry time unknown.
+ */
 const parseRetryAt = (value: string | null, now: number) => {
-  if (!value) return undefined;
+  const trimmed = value?.trim() ?? "";
 
-  const trimmed = value.trim();
+  let retryAt = Number.NaN;
 
-  if (/^\d+$/.test(trimmed)) return now + Number(trimmed) * 1000;
+  if (/^\d+$/.test(trimmed)) retryAt = now + Number(trimmed) * 1000;
+  else if (IMF_FIXDATE.test(trimmed)) retryAt = Date.parse(trimmed);
 
-  const date = Date.parse(trimmed);
-
-  return Number.isNaN(date) ? undefined : date;
+  return Number.isNaN(new Date(retryAt).getTime()) ? undefined : retryAt;
 };
 
 export const executeApiRequest = async <TData>(

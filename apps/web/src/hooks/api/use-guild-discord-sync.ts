@@ -6,6 +6,8 @@ import {
   useGuildsControllerRefreshGuildDiscordSync,
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "@lootlog/ui/lib/toast";
+import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useCountdown } from "@/hooks/utils/use-countdown";
 import { getGuildDiscordPermissionStatus } from "@/features/guild/settings/utils/get-guild-discord-permission-status";
@@ -13,6 +15,7 @@ import { getGuildDiscordPermissionStatus } from "@/features/guild/settings/utils
 export const useGuildDiscordSync = () => {
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const query = useGuildsControllerGetGuildDiscordSyncStatus(
     { guildId: guildId ?? "" },
@@ -25,6 +28,12 @@ export const useGuildDiscordSync = () => {
         ...getGuildsControllerRefreshGuildDiscordSyncMutationKey(),
         guildId,
       ],
+      onError: (error) => {
+        // Without a deadline there is no countdown to show.
+        if (error.status === 429 && error.retryAt === undefined) {
+          toast.error(t("common.cooldown.rateLimited"));
+        }
+      },
       onSuccess: async (data, { pathParams }) => {
         queryClient.setQueryData(
           getGuildsControllerGetGuildDiscordSyncStatusQueryKey(pathParams),
@@ -42,17 +51,20 @@ export const useGuildDiscordSync = () => {
     refreshMutation.isPending &&
     refreshMutation.variables?.pathParams.guildId === guildId;
 
-  // A later successful read supersedes a failed refresh of the same Organization.
-  const hasCurrentRefreshFailure =
+  const hasRefreshFailure =
     refreshMutation.isError &&
-    refreshMutation.variables?.pathParams.guildId === guildId &&
-    refreshMutation.submittedAt >= query.dataUpdatedAt;
+    refreshMutation.variables?.pathParams.guildId === guildId;
 
-  // A refused refresh (cooldown) read nothing new, so the last status stands.
+  // A refused refresh (cooldown) read nothing new, so the last status stands,
+  // and the server's deadline holds even after a later status read.
   const isRefreshRateLimited =
-    hasCurrentRefreshFailure && refreshMutation.error.status === 429;
+    hasRefreshFailure && refreshMutation.error.status === 429;
 
-  const isRefreshError = hasCurrentRefreshFailure && !isRefreshRateLimited;
+  // A later successful read supersedes a failed refresh of the same Organization.
+  const isRefreshError =
+    hasRefreshFailure &&
+    !isRefreshRateLimited &&
+    refreshMutation.submittedAt >= query.dataUpdatedAt;
 
   const refreshCooldown = useCountdown(
     isRefreshRateLimited ? refreshMutation.error.retryAt : null,
