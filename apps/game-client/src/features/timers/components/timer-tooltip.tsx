@@ -80,8 +80,13 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
           </div>
         )}
         {standing && (
-          <div className="ll:flex ll:items-center ll:gap-1 ll:font-semibold ll:text-green-400">
-            <Swords size={12} aria-hidden="true" className="ll:shrink-0" />
+          // A long map name wraps, so the icon sits on the first line.
+          <div className="ll:flex ll:items-start ll:gap-1 ll:font-semibold ll:text-green-400">
+            <Swords
+              size={12}
+              aria-hidden="true"
+              className="ll:mt-0.5 ll:shrink-0"
+            />
             <span className="ll:min-w-0 ll:wrap-break-word">
               {standing.map
                 ? t("tooltip.standingOnMap", { map: standing.map })
