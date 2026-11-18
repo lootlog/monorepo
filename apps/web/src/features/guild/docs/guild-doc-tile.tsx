@@ -1,4 +1,5 @@
 import { cn } from "cn";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { MetaItem } from "@/components/common/meta-item";
 import {
   getListTileLinkClassName,
@@ -11,6 +12,7 @@ import type { GuildDocumentListResponseDtoItemsItem } from "@lootlog/client/main
 import { Button } from "@lootlog/ui/components/button";
 import { Link } from "@tanstack/react-router";
 import { Clock3, FileText, History, PenLine, Trash2 } from "lucide-react";
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 
 type GuildDocTileProps = {
@@ -32,14 +34,29 @@ export const GuildDocTile = ({
 }: GuildDocTileProps) => {
   const { t } = useTranslation();
   const editorName = document.updatedBy.name ?? t("docs.list.unknownEditor");
+  const contentId = useId();
 
   return (
     <div data-list-tile className={LIST_TILE_RULE_CLASS}>
-      <div className={cn("flex h-full items-center", LIST_TILE_HOVER_CLASS)}>
+      <div
+        className={cn(
+          "relative flex h-full items-center",
+          LIST_TILE_HOVER_CLASS,
+        )}
+      >
+        {/* The tile opens the document; the editor's name opens their profile. */}
         <Link
           to="/$guildId/docs/$docId"
           params={{ guildId, docId: document.id }}
-          className={getListTileLinkClassName(canWrite)}
+          aria-labelledby={contentId}
+          className="absolute inset-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        />
+        <div
+          id={contentId}
+          className={cn(
+            getListTileLinkClassName(canWrite),
+            "pointer-events-none relative",
+          )}
         >
           <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
             <FileText aria-hidden className="size-4 text-muted-foreground" />
@@ -54,7 +71,13 @@ export const GuildDocTile = ({
                 label={t("docs.list.editorLabel")}
                 className="min-w-0"
               >
-                <span className="min-w-0 truncate">{editorName}</span>
+                <MemberIdentity
+                  member={{ discordId: document.updatedBy.memberId }}
+                  fallback={{ name: editorName }}
+                  display="name"
+                  className="pointer-events-auto"
+                  nameClassName="text-xs leading-tight font-normal"
+                />
               </MetaItem>
               <MetaItem
                 icon={Clock3}
@@ -68,9 +91,9 @@ export const GuildDocTile = ({
               </MetaItem>
             </span>
           </span>
-        </Link>
+        </div>
         {canWrite && (
-          <div className={LIST_TILE_ACTIONS_CLASS}>
+          <div className={cn("relative", LIST_TILE_ACTIONS_CLASS)}>
             <Button
               type="button"
               size="icon-sm"

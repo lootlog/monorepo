@@ -2,7 +2,8 @@ import type { LootDrawResponseDto } from "@lootlog/client/main";
 import { Trophy } from "lucide-react";
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { LootDrawEntrantRow } from "./loot-draw-entrant-row";
 import { LootDrawLayout } from "./loot-draw-layout";
@@ -74,10 +75,20 @@ export const LootDrawResult = ({
                   {t("loots.details.draw.winner", { name: winner.name })}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {t("loots.details.draw.drawnBy", {
-                    name: draw.createdBy.name,
-                    date: timestampToDate(draw.createdAt),
-                  })}
+                  <Trans
+                    i18nKey="loots.details.draw.drawnBy"
+                    values={{ date: timestampToDate(draw.createdAt) }}
+                    components={{
+                      member: (
+                        <MemberIdentity
+                          member={{ memberId: draw.createdBy.id }}
+                          fallback={{ name: draw.createdBy.name }}
+                          display="name"
+                          nameClassName="text-xs font-normal"
+                        />
+                      ),
+                    }}
+                  />
                 </p>
               </div>
             </div>

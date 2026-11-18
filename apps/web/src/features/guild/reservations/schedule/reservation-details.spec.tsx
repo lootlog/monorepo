@@ -43,7 +43,7 @@ const reservation: NormalizedReservation = {
   endsAt: new Date("2026-08-26T11:00:00.000Z"),
   createdAt: new Date("2026-08-25T10:00:00.000Z"),
   comment: null,
-  author: { displayName: "Wild", avatarUrl: null },
+  author: { userId: null, displayName: "Wild", avatarUrl: null },
   sourceOrganization: {
     name: "ZGARBIENI - EVENTOWY",
     iconUrl: null,

@@ -1,8 +1,6 @@
 import { EmptyState } from "@/components/common/empty-state";
 import type { TOptions } from "i18next";
-import { TextLink } from "@lootlog/ui/components/text-link";
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -12,11 +10,8 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { ChevronDown, Info, MapPin, Pencil } from "lucide-react";
 import { cn } from "cn";
-import { MemberAvatar } from "@/components/common/member-avatar";
-import {
-  discordRoleCssColor,
-  getMemberDisplayRole,
-} from "@lootlog/domain/member-display-role";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { aggregateMapData } from "../../utils/aggregate-map-data";
 import { formatPoints } from "../../utils/format-points";
@@ -26,11 +21,11 @@ import {
 } from "../../utils/scoring-presentation";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
 import { ScoringBreakdownList } from "../shared/scoring-breakdown-list";
+import { EventMemberKillsProfileLink } from "../shared/event-member-kills-profile-link";
 import { ScoringPresenceBreakdown } from "../shared/scoring-presence-breakdown";
 import type { KillParticipantScoring } from "../../utils/scoring-applied-rules";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
-import { InactiveMemberSuffix } from "@/components/common/inactive-member-suffix";
 import { formatDuration } from "@/utils/date/format-duration";
 
 interface KillParticipantRowProps {
@@ -40,8 +35,6 @@ interface KillParticipantRowProps {
   rank: number;
   /** Marks the viewer's own place. */
   isViewer?: boolean;
-  /** The member has left the Lootlog. */
-  isInactive?: boolean;
   isExpanded: boolean;
   onToggle: () => void;
   guildId?: string;
@@ -98,7 +91,6 @@ export const KillParticipantRow = ({
   participantNames,
   rank,
   isViewer,
-  isInactive,
   isExpanded,
   onToggle,
   guildId,
@@ -119,18 +111,25 @@ export const KillParticipantRow = ({
     trackingPercentage,
   } = buildParticipantScoringView(participant, t);
 
-  const roleCssColor = discordRoleCssColor(
-    getMemberDisplayRole(participant.member.roles)?.color,
-  );
+  const memberKey = { memberId: participant.member.id };
 
-  const memberLinkParams =
-    guildId && eventId
-      ? {
-          guildId,
-          eventId,
-          memberId: String(participant.member.id),
-        }
-      : null;
+  const memberFallback = {
+    name: participant.member.name,
+    avatarUrl: getDiscordAvatarUrl(
+      participant.member.userId,
+      participant.member.avatar,
+      64,
+    ),
+  };
+
+  const profileLinks =
+    guildId && eventId ? (
+      <EventMemberKillsProfileLink
+        guildId={guildId}
+        eventId={eventId}
+        memberId={participant.member.id}
+      />
+    ) : undefined;
 
   const handleDialogSubmit = async ({
     pointsDelta,
@@ -141,13 +140,6 @@ export const KillParticipantRow = ({
   }) => {
     await onEditPoints?.(participant.id, pointsDelta, comment);
   };
-
-  const memberName = (
-    <>
-      {participant.member.name}
-      {isInactive && <InactiveMemberSuffix />}
-    </>
-  );
 
   return (
     <div
@@ -165,30 +157,23 @@ export const KillParticipantRow = ({
         </span>
 
         <div className="flex min-w-0 items-center gap-2">
-          <MemberAvatar
-            userId={participant.member.userId}
-            avatar={participant.member.avatar}
-            name={participant.member.name}
+          <MemberIdentity
+            member={memberKey}
+            fallback={memberFallback}
+            display="avatar"
+            profileLinks={profileLinks}
+            className="shrink-0"
+            avatarClassName="size-8"
           />
           <div className="min-w-0 flex-1">
-            {memberLinkParams ? (
-              <TextLink
-                className="inline-flex w-fit max-w-full min-w-0 items-center text-sm"
-                render=<Link
-                  to="/$guildId/events/$eventId/members/$memberId"
-                  params={memberLinkParams}
-                />
-              >
-                <span className="truncate">{memberName}</span>
-              </TextLink>
-            ) : (
-              <span
-                className="block truncate text-sm font-semibold"
-                style={roleCssColor ? { color: roleCssColor } : undefined}
-              >
-                {memberName}
-              </span>
-            )}
+            <MemberIdentity
+              member={memberKey}
+              fallback={memberFallback}
+              display="name"
+              profileLinks={profileLinks}
+              className="flex w-fit"
+              nameClassName="text-sm font-semibold"
+            />
             <div className="mt-0.5 flex min-w-0 items-center gap-1.5 truncate text-2xs tabular-nums text-muted-foreground lg:hidden">
               <span>{trackingDuration}</span>
               <span aria-hidden="true">·</span>

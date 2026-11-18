@@ -166,8 +166,18 @@ export const memberTable = pgTable(
     name: text("name").notNull(),
     /** The User's Discord display name, independent of the server nickname in `name`. */
     discordDisplayName: text("discordDisplayName"),
+    /** The Discord handle, which stays the same when the names above change. */
+    username: text("username"),
+    /**
+     * The avatar shown for the member: the address of their per-server avatar,
+     * or the hash of the User's own avatar when they set none for this server.
+     */
     avatar: text("avatar"),
+    /** The hash of the User's own avatar, also when a per-server one hides it. */
+    globalAvatar: text("globalAvatar"),
+    /** The hash of the per-server banner. */
     banner: text("banner"),
+    joinedAt: timestamp("joinedAt", { mode: "date", precision: 3 }),
     active: boolean("active").default(true).notNull(),
     globalUserId: text("globalUserId"),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })

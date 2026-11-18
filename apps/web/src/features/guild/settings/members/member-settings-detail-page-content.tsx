@@ -11,7 +11,8 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Permission } from "@lootlog/schema/permissions";
 import { getMemberColor } from "@/utils/get-member-color";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   useGuildsControllerGetGuildById,
@@ -139,12 +140,16 @@ export const MemberSettingsDetailPageContent = () => {
     <DetailPage
       name={member.name}
       media={
-        <MemberAvatar
-          userId={member.userId}
-          avatar={member.avatar}
-          name={member.name}
-          imageSize={32}
-          className="size-5"
+        // The page is the member, so the avatar opens nothing.
+        <MemberIdentity
+          member={{ memberId: member.id }}
+          fallback={{
+            name: member.name,
+            avatarUrl: getDiscordAvatarUrl(member.userId, member.avatar, 64),
+          }}
+          display="avatar"
+          interactive={false}
+          className="shrink-0"
         />
       }
       nameStyle={{ color: memberColor }}

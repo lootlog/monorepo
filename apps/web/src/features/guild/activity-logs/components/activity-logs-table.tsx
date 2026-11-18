@@ -18,6 +18,7 @@ import {
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { useTranslation } from "react-i18next";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { ActivityLogDetailsPopover } from "./activity-log-details-popover";
 import { ActivityLogEvent } from "./activity-log-event";
 import {
@@ -29,7 +30,6 @@ type ActivityLogsTableProps = {
   activities: Activity[];
   /** Wide pages show a table; narrower ones list each entry on two lines. */
   usesTable: boolean;
-  memberNameByDiscordId: Map<string, string>;
   virtualRows: VirtualItem[];
   /** Spacer heights standing in for the rows outside the rendered range. */
   padding: { top: number; bottom: number };
@@ -41,12 +41,11 @@ const NO_TABLE_ROWS: Activity[] = [];
 export const ActivityLogsTable = ({
   activities,
   usesTable,
-  memberNameByDiscordId,
   virtualRows,
   padding,
 }: ActivityLogsTableProps) => {
   const { t } = useTranslation();
-  const columns = useActivityLogsTableColumns({ memberNameByDiscordId });
+  const columns = useActivityLogsTableColumns();
 
   const table = useTable({
     features: coreTableFeatures,
@@ -102,15 +101,17 @@ export const ActivityLogsTable = ({
                   </>
                 )}
                 {/* The member stays visible next to the character: an audit entry must name who acted. */}
-                <span
-                  className={cn(
-                    "truncate",
-                    !activity.actorSnapshot && "font-medium text-foreground",
+                <MemberIdentity
+                  member={{ discordId: activity.discordId }}
+                  fallback={{ name: activity.discordId }}
+                  display="name"
+                  nameClassName={cn(
+                    "text-xs",
+                    activity.actorSnapshot
+                      ? "font-normal"
+                      : "font-medium text-foreground",
                   )}
-                >
-                  {memberNameByDiscordId.get(activity.discordId) ??
-                    activity.discordId}
-                </span>
+                />
                 <span aria-hidden="true">·</span>
                 <span className="shrink-0">
                   {t(`activityLogs.list.sources.${activity.source}`)}

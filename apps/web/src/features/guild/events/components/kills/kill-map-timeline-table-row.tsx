@@ -22,7 +22,6 @@ interface KillMapTimelineTableRowProps {
   visibleColumnCount: number;
   startTime: Date;
   endTime: Date;
-  memberRoleColors: ReadonlyMap<number, string>;
   t: TFunction;
 }
 
@@ -33,7 +32,6 @@ export const KillMapTimelineTableRow = ({
   visibleColumnCount,
   startTime,
   endTime,
-  memberRoleColors,
   t,
 }: KillMapTimelineTableRowProps) => {
   const map = row.original;
@@ -132,9 +130,6 @@ export const KillMapTimelineTableRow = ({
                           <KillMapAssignmentGroup
                             key={assignment.memberId}
                             assignment={assignment}
-                            roleColor={memberRoleColors.get(
-                              assignment.memberId,
-                            )}
                             t={t}
                           />
                         ))}

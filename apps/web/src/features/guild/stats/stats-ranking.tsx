@@ -2,7 +2,6 @@ import { countActiveKillStatsFilters } from "@/features/kills/components/count-a
 import { cn } from "cn";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
-import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import {
@@ -11,9 +10,10 @@ import {
 } from "@/features/kills/components/kill-stats-filters";
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
 import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
-import { MemberNameWithColor } from "@/components/common/member-name-with-color";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { StatsCountCell } from "@/components/common/stats-count-cell";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
+import { useId } from "react";
 import { StatsMobileListSkeleton } from "./components/stats-mobile-list-skeleton";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
@@ -48,7 +48,6 @@ export const StatsRanking = () => {
     handleRowClick,
     activeNpcTypes,
     guildId,
-    membersMap,
     total,
     hasPrev,
     hasNext,
@@ -59,6 +58,7 @@ export const StatsRanking = () => {
   } = useStatsRankingModel();
 
   const isViewer = useIsViewer();
+  const tileId = useId();
 
   type RankingColumn = ColumnDef<
     typeof coreTableFeatures,
@@ -75,29 +75,20 @@ export const StatsRanking = () => {
       id: "member",
       header: () => t("kills.memberRanking.member"),
       cell: ({ row: { original: member } }) => (
-        <div className="flex items-center gap-2.5">
-          <MemberAvatar
-            userId={member.member.userId}
-            avatar={member.member.avatar}
-            name={member.member.name}
-            className="size-7"
+        <div className="flex min-w-0 items-center">
+          <MemberIdentity
+            member={{ memberId: member.member.id }}
+            fallback={{
+              name: member.member.name,
+              avatarUrl: getDiscordAvatarUrl(
+                member.member.userId,
+                member.member.avatar,
+                64,
+              ),
+            }}
+            className="gap-2.5"
+            avatarClassName="size-7"
           />
-          <TextLink
-            className="text-sm"
-            onClick={(event) => event.stopPropagation()}
-            render=<Link
-              to="/$guildId/stats/members/$memberId"
-              params={{
-                guildId,
-                memberId: String(member.member.id),
-              }}
-            />
-          >
-            <MemberNameWithColor
-              name={member.member.name}
-              member={membersMap.get(member.member.userId)}
-            />
-          </TextLink>
         </div>
       ),
     },
@@ -180,57 +171,74 @@ export const StatsRanking = () => {
           }
         >
           <ul className="xl:hidden">
-            {paginatedData.map((member, index) => (
-              <li
-                key={member.member.id}
-                data-list-tile
-                aria-current={isViewer(member.member.userId) || undefined}
-                className={LIST_TILE_RULE_CLASS}
-              >
-                <Link
-                  to="/$guildId/stats/members/$memberId"
-                  params={{ guildId, memberId: String(member.member.id) }}
+            {paginatedData.map((member, index) => {
+              const contentId = `${tileId}-${member.member.id}`;
+
+              return (
+                <li
+                  key={member.member.id}
+                  data-list-tile
+                  aria-current={isViewer(member.member.userId) || undefined}
                   className={cn(
-                    "block py-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                    "relative",
+                    LIST_TILE_RULE_CLASS,
                     LIST_TILE_HOVER_CLASS,
-                    LIST_TILE_INSET_CLASS,
                     isViewer(member.member.userId) && VIEWER_ROW_CLASS,
                   )}
                 >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <RankBadge rank={cursor + index + 1} />
-                    <MemberAvatar
-                      userId={member.member.userId}
-                      avatar={member.member.avatar}
-                      name={member.member.name}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-sm">
-                      <MemberNameWithColor
-                        name={member.member.name}
-                        member={membersMap.get(member.member.userId)}
-                      />
+                  {/* The tile opens the member's stats; their name opens their profile. */}
+                  <Link
+                    to="/$guildId/stats/members/$memberId"
+                    params={{ guildId, memberId: String(member.member.id) }}
+                    aria-labelledby={contentId}
+                    className="absolute inset-0 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  />
+                  <div
+                    id={contentId}
+                    className={cn(
+                      "pointer-events-none relative py-3",
+                      LIST_TILE_INSET_CLASS,
+                    )}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <RankBadge rank={cursor + index + 1} />
+                      <span className="flex min-w-0 flex-1">
+                        <MemberIdentity
+                          member={{ memberId: member.member.id }}
+                          fallback={{
+                            name: member.member.name,
+                            avatarUrl: getDiscordAvatarUrl(
+                              member.member.userId,
+                              member.member.avatar,
+                              64,
+                            ),
+                          }}
+                          className="pointer-events-auto gap-3"
+                          avatarClassName="size-8"
+                        />
+                      </span>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums">
+                        {formatNumber(member.totalParticipations)}
+                      </span>
                     </span>
-                    <span className="shrink-0 text-sm font-semibold tabular-nums">
-                      {formatNumber(member.totalParticipations)}
-                    </span>
-                  </span>
-                  {activeNpcTypes.length > 0 && (
-                    <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 pl-9 text-xs text-muted-foreground">
-                      {activeNpcTypes.map((type) => (
-                        <span key={type}>
-                          {t(`npcType.${type}`)}{" "}
-                          <span className="font-medium tabular-nums text-foreground">
-                            {formatNumber(
-                              member.participationsByType[type] ?? 0,
-                            )}
+                    {activeNpcTypes.length > 0 && (
+                      <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 pl-9 text-xs text-muted-foreground">
+                        {activeNpcTypes.map((type) => (
+                          <span key={type}>
+                            {t(`npcType.${type}`)}{" "}
+                            <span className="font-medium tabular-nums text-foreground">
+                              {formatNumber(
+                                member.participationsByType[type] ?? 0,
+                              )}
+                            </span>
                           </span>
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                </Link>
-              </li>
-            ))}
+                        ))}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
           <StatsTable
             table={table}

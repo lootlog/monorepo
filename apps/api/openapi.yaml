@@ -28256,12 +28256,16 @@ components:
         author:
           type: object
           properties:
+            userId:
+              nullable: true
+              type: string
             displayName:
               type: string
             avatarUrl:
               nullable: true
               type: string
           required:
+            - userId
             - displayName
             - avatarUrl
           additionalProperties: false
@@ -28404,12 +28408,16 @@ components:
               author:
                 type: object
                 properties:
+                  userId:
+                    nullable: true
+                    type: string
                   displayName:
                     type: string
                   avatarUrl:
                     nullable: true
                     type: string
                 required:
+                  - userId
                   - displayName
                   - avatarUrl
                 additionalProperties: false
@@ -28557,12 +28565,16 @@ components:
               author:
                 type: object
                 properties:
+                  userId:
+                    nullable: true
+                    type: string
                   displayName:
                     type: string
                   avatarUrl:
                     nullable: true
                     type: string
                 required:
+                  - userId
                   - displayName
                   - avatarUrl
                 additionalProperties: false
@@ -28732,12 +28744,16 @@ components:
               author:
                 type: object
                 properties:
+                  userId:
+                    nullable: true
+                    type: string
                   displayName:
                     type: string
                   avatarUrl:
                     nullable: true
                     type: string
                 required:
+                  - userId
                   - displayName
                   - avatarUrl
                 additionalProperties: false
@@ -28854,12 +28870,16 @@ components:
               author:
                 type: object
                 properties:
+                  userId:
+                    nullable: true
+                    type: string
                   displayName:
                     type: string
                   avatarUrl:
                     nullable: true
                     type: string
                 required:
+                  - userId
                   - displayName
                   - avatarUrl
                 additionalProperties: false
@@ -33114,21 +33134,65 @@ components:
           type: number
         userId:
           type: string
+        globalUserId:
+          nullable: true
+          type: string
         name:
           type: string
+        displayName:
+          nullable: true
+          type: string
+        username:
+          nullable: true
+          type: string
         avatar:
+          nullable: true
+          type: string
+        globalAvatar:
+          nullable: true
+          type: string
+        bannerUrl:
           nullable: true
           type: string
         color:
           nullable: true
           type: number
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              color:
+                nullable: true
+                type: number
+            required:
+              - id
+              - name
+              - color
+            additionalProperties: false
+        joinedAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         active:
           type: boolean
       required:
         - id
         - userId
+        - globalUserId
         - name
+        - displayName
+        - username
+        - globalAvatar
+        - bannerUrl
         - color
+        - roles
+        - joinedAt
         - active
       additionalProperties: false
     MemberResponseDto:

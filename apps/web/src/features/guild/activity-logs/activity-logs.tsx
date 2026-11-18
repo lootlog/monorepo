@@ -8,7 +8,6 @@ import {
   useVirtualInfiniteScroll,
 } from "@/hooks/utils/use-virtual-infinite-scroll";
 import { useThemedKey } from "@/themes/adapters";
-import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   getVirtualListPadding,
@@ -83,15 +82,6 @@ export const ActivityLogs = () => {
       clanName: filters.clanName,
       limit: ACTIVITY_LOGS_PAGE_LIMIT,
     }),
-  );
-
-  const { data: members } = useMembersControllerGetGuildMemberReferences(
-    { guildId },
-    { includeInactive: true },
-  );
-
-  const memberNameByDiscordId = new Map(
-    members?.map((member) => [member.userId, member.name]),
   );
 
   const activities = activityLogs?.pages.flatMap((page) => page.data) ?? [];
@@ -173,7 +163,6 @@ export const ActivityLogs = () => {
         <ActivityLogsTable
           activities={activities}
           usesTable={usesTable}
-          memberNameByDiscordId={memberNameByDiscordId}
           virtualRows={virtualRows}
           padding={getVirtualListPadding(
             virtualRows,

@@ -32,7 +32,6 @@ interface KillMapsTimelineTableProps {
   maps: MapTimelineData[];
   startTime: Date;
   endTime: Date;
-  memberRoleColors?: ReadonlyMap<number, string>;
   t: TFunction;
 }
 
@@ -42,7 +41,6 @@ export const KillMapsTimelineTable = ({
   maps,
   startTime,
   endTime,
-  memberRoleColors = new Map(),
   t,
 }: KillMapsTimelineTableProps) => {
   const [expanded, setExpanded] = useState<ExpandedState>({});
@@ -224,7 +222,6 @@ export const KillMapsTimelineTable = ({
             visibleColumnCount={row.getVisibleCells().length}
             startTime={startTime}
             endTime={endTime}
-            memberRoleColors={memberRoleColors}
             t={t}
           />
         ))}

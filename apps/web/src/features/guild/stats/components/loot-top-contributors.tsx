@@ -1,9 +1,7 @@
 import type { LootStatsResponseDtoOutputTopContributorsItem } from "@lootlog/client/main";
-import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useTranslation } from "react-i18next";
-import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
-import { MemberNameWithColor } from "@/components/common/member-name-with-color";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import {
   LEADERBOARD_SIZE,
   StatsLeaderboardSection,
@@ -21,7 +19,6 @@ export const LootTopContributors = ({
   isLoading,
 }: LootTopContributorsProps) => {
   const { t } = useTranslation();
-  const membersMap = useGuildMemberMap(useGuildId());
   const isViewer = useIsViewer();
   const contributors = data?.slice(0, LEADERBOARD_SIZE) ?? [];
 
@@ -41,16 +38,28 @@ export const LootTopContributors = ({
           key={member.userId}
           rank={index + 1}
           media={
-            <MemberAvatar
-              userId={member.userId}
-              avatar={member.avatar}
-              name={member.name}
+            // The name beside it opens the profile; one target per member.
+            <MemberIdentity
+              member={{ memberId: member.memberId }}
+              fallback={{
+                name: member.name,
+                avatarUrl: getDiscordAvatarUrl(
+                  member.userId,
+                  member.avatar,
+                  64,
+                ),
+              }}
+              display="avatar"
+              interactive={false}
+              avatarClassName="size-8"
             />
           }
           title={
-            <MemberNameWithColor
-              name={member.name}
-              member={membersMap.get(member.userId)}
+            <MemberIdentity
+              member={{ memberId: member.memberId }}
+              fallback={{ name: member.name }}
+              display="name"
+              nameClassName="leading-tight"
             />
           }
           value={member.count}

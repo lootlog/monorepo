@@ -1,7 +1,7 @@
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
 import {
   DETECTOR_AVATAR_CLASS,
   DETECTOR_NAME_CLASS,
@@ -50,22 +50,23 @@ export const HeroSightingClaims = ({
             className="flex h-7 min-w-0 items-center gap-1.5 rounded-full bg-muted/70 pr-2.5 pl-0.5 text-xs"
             title={claim.character?.name}
           >
-            <MemberAvatar
-              avatarUrl={claim.member.avatarUrl}
-              name={claim.member.displayName}
-              className={cn("size-6", isDetector && DETECTOR_AVATAR_CLASS)}
+            <MemberIdentity
+              member={{ memberId: claim.member.memberId }}
+              fallback={{
+                name: claim.member.displayName,
+                avatarUrl: claim.member.avatarUrl,
+              }}
+              avatarClassName={cn(
+                "size-6",
+                isDetector && DETECTOR_AVATAR_CLASS,
+              )}
+              nameClassName={cn("text-xs", isDetector && DETECTOR_NAME_CLASS)}
             />
-            <span
-              className={cn(
-                "truncate",
-                isDetector ? DETECTOR_NAME_CLASS : "font-medium",
-              )}
-            >
-              {claim.member.displayName}
-              {isDetector && (
-                <span className="sr-only">{` ${t("heroSightings.detectorClaim")}`}</span>
-              )}
-            </span>
+            {isDetector && (
+              <span className="sr-only">
+                {t("heroSightings.detectorClaim")}
+              </span>
+            )}
           </li>
         );
       })}

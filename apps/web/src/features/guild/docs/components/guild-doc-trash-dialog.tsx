@@ -16,9 +16,10 @@ import {
   invalidateGuildDocsQueries,
 } from "../docs-api";
 import { EmptyState } from "@/components/common/empty-state";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { RetryButton } from "@/components/common/retry-button";
 import { useGuildDocTrash } from "../use-guild-doc-trash";
 
@@ -141,10 +142,22 @@ export const GuildDocTrashDialog = ({
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {t("docs.trash.deletedBy", {
-                          date: deletedAt,
-                          name: deletedByName,
-                        })}
+                        <Trans
+                          i18nKey="docs.trash.deletedBy"
+                          values={{ date: deletedAt }}
+                          components={{
+                            member: (
+                              <MemberIdentity
+                                member={{
+                                  discordId: document.deletedBy.memberId,
+                                }}
+                                fallback={{ name: deletedByName }}
+                                display="name"
+                                nameClassName="text-xs font-normal"
+                              />
+                            ),
+                          }}
+                        />
                       </p>
                     </div>
 

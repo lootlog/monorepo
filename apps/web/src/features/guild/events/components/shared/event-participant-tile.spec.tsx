@@ -1,10 +1,10 @@
 // @vitest-environment happy-dom
 
-import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
 import type { Member } from "../../types/api";
-import { MemberBadge } from "./member-badge";
+import { EventParticipantTile } from "./event-participant-tile";
 
 const member: Member = {
   id: 8112,
@@ -15,17 +15,20 @@ const member: Member = {
 
 afterEach(cleanup);
 
-describe("MemberBadge", () => {
+describe("EventParticipantTile", () => {
   it("links the complete participant tile to the member event page", async () => {
     render(
-      <MemberBadge member={member} guildId="guild-1" eventId="event-1" />,
-      { wrapper: await createOrganizationTestWrapper() },
+      <EventParticipantTile
+        member={member}
+        guildId="guild-1"
+        eventId="event-1"
+      />,
+      { wrapper: await createMemberDirectoryTestWrapper() },
     );
 
-    const link = screen.getByRole("link", { name: "KobraK" });
-
-    expect(link.getAttribute("href")).toBe(
+    expect(screen.getByRole("link").getAttribute("href")).toBe(
       "/guild-1/events/event-1/members/8112",
     );
+    expect(screen.getByText("KobraK")).toBeTruthy();
   });
 });
