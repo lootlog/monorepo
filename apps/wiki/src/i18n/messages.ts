@@ -561,12 +561,20 @@ const messages = {
     dropRateSingle: "Szansa {{rate}}",
     dropRatePersonal: "{{rate}} na gracza",
     dropRateEstimate: "ok. {{chance}}",
-    dropRateCounts: "{{drops}} szt. w {{rolls}} losowaniach z {{kills}} zabić",
+    dropRateCounts: {
+      open: "Z czego policzono szansę",
+      drops: "Sztuki",
+      rolls: "Losowania",
+      kills: "Zabicia",
+      since: "Liczone od",
+    },
+    dropRatesSinceDay: "7 listopada 2026 r.",
+    dropRatesSince: "Szanse liczymy z zabić zapisanych od {{since}}",
     dropRateUnknown: "Szansa: za mało zabić",
     dropRateMethod: {
       title: "Jak liczymy szansę",
       perRoll:
-        "Szansa na losowanie to liczba sztuk przedmiotu podzielona przez liczbę losowań łupu w zabiciach zapisanych przez Lootlogi. Liczymy tylko zabicia, które zapisał choć jeden Lootlog zapisujący przedmioty tej rzadkości, i tylko od listopada 2026 r. Zabicie i jego łup liczą się raz, nawet gdy zapisało je kilka Lootlogów.",
+        "Szansa na losowanie to liczba sztuk przedmiotu podzielona przez liczbę losowań łupu w zabiciach zapisanych przez Lootlogi. Liczymy tylko zabicia, które zapisał choć jeden Lootlog zapisujący przedmioty tej rzadkości, i tylko od {{since}} Zabicie i jego łup liczą się raz, nawet gdy zapisało je kilka Lootlogów.",
       shared:
         "Elity II, herosi, tytani i kolosy przyzywane przez Tropicieli Herosów losują łup raz na dwie osoby, które przeżyły walkę: losowania = min(10, 1 + ⌊(ocalali − 1) / 2 + r⌋), gdzie r to 0 albo 0,5 z równą szansą. Pełna drużyna 10 osób dostaje 5 albo 6 losowań, średnio 5,5. Elity II i herosi losują tylko raz, gdy poziomy w drużynie za bardzo się różnią; tytani tego nie sprawdzają. Elity III losują zawsze raz.",
       fullParty:
