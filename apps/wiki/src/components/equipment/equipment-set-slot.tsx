@@ -1,15 +1,16 @@
-import { Link } from "@tanstack/react-router";
 import { TriangleAlert, X } from "lucide-react";
 import { ItemTile } from "@lootlog/ui/components/item-tile";
 import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { cn } from "cn";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
-import type { WornItem } from "@/hooks/use-worn-items";
+import { useSetItemPicker } from "@/contexts/set-item-picker-context";
+import { useWornItem, type WornItem } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
-import type { EquipmentSlot } from "@/lib/equipment-slots";
-import { findRequirementIssues } from "@/lib/item-stat-totals";
-import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
+import {
+  type EquipmentSlot,
+  weaponTakesBothHands,
+} from "@/lib/equipment-slots";
 import { EquipmentSlotMenu } from "./equipment-slot-menu";
 
 const SLOT_FRAME =
@@ -21,38 +22,51 @@ type EquipmentSetSlotProps = {
 };
 
 /**
- * One worn item, or an empty slot that opens a search for it. An item put on
- * grows into the slot.
+ * One slot of the set. Pressing it opens the item picker for it, worn or
+ * empty; the other hand beside a two-handed weapon holds nothing. An item put
+ * on grows into the slot.
  */
 export function EquipmentSetSlot({ slot, worn }: EquipmentSetSlotProps) {
-  const { set, unequip } = useEquipmentSet();
+  const { unequip } = useEquipmentSet();
+  const { pickItem } = useSetItemPicker();
   const label = t(`slots.${slot.id}`);
   const Icon = slot.icon;
+  const weapon = useWornItem(slot.id === "secondary" ? "weapon" : undefined);
 
-  if (!worn) {
+  if (!worn && weaponTakesBothHands(weapon?.item.type)) {
     return (
-      <Link
-        to="/items"
-        search={{
-          ...EMPTY_ITEMS_SEARCH,
-          slot: slot.id,
-          professions: set.profession ?? "",
-          maxLevel: set.level ?? undefined,
-        }}
-        aria-label={t("equipment.findForSlot", { slot: label })}
-        title={label}
+      <span
+        role="img"
+        aria-label={`${label}: ${t("equipment.slotBlocked")}`}
+        title={t("equipment.slotBlocked")}
         className={cn(
           SLOT_FRAME,
-          "border-border/60 text-muted-foreground outline-none hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring",
+          "border-dashed border-border/40 bg-transparent text-muted-foreground/40 shadow-none",
         )}
       >
         <Icon aria-hidden="true" className="size-5" />
-      </Link>
+      </span>
     );
   }
 
-  const { item } = worn;
-  const issues = findRequirementIssues(item.stat, set);
+  if (!worn) {
+    return (
+      <button
+        type="button"
+        aria-label={t("equipment.pickForSlot", { slot: label })}
+        title={label}
+        onClick={() => pickItem(slot.id)}
+        className={cn(
+          SLOT_FRAME,
+          "cursor-pointer border-border/60 text-muted-foreground outline-none hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring",
+        )}
+      >
+        <Icon aria-hidden="true" className="size-5" />
+      </button>
+    );
+  }
+
+  const { item, issues } = worn;
 
   return (
     <EquipmentSlotMenu
@@ -77,6 +91,13 @@ export function EquipmentSetSlot({ slot, worn }: EquipmentSetSlotProps) {
             type: item.type,
           }}
           labels={ITEM_TILE_LABELS}
+          render={
+            <button
+              type="button"
+              aria-label={t("equipment.changeItem", { item: item.name })}
+              onClick={() => pickItem(slot.id)}
+            />
+          }
         />
       </span>
       {issues.length > 0 ? (
