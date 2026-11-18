@@ -1,3 +1,4 @@
+import { RefreshCooldown } from "@/components/common/refresh-cooldown";
 import { Button } from "@lootlog/ui/components/button";
 import { Progress } from "@lootlog/ui/components/progress";
 import { Clock, RefreshCw } from "lucide-react";
@@ -12,8 +13,7 @@ type RefreshDisplayJob = {
 
 type RefreshCountdown = {
   isExpired: boolean;
-  minutes: number;
-  seconds: number;
+  label: string;
 };
 
 type RefreshMembersStatusProps = {
@@ -63,10 +63,7 @@ export const RefreshMembersStatus = ({
   }
 
   if (!countdown.isExpired) {
-    const cooldown = {
-      minutes: countdown.minutes,
-      seconds: countdown.seconds.toString().padStart(2, "0"),
-    };
+    const cooldown = { time: countdown.label };
 
     if (displayJob?.status === "COMPLETED") {
       return (
@@ -90,12 +87,7 @@ export const RefreshMembersStatus = ({
       );
     }
 
-    return (
-      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <Clock className="size-4" />
-        <span>{t("settings.members.nextRefreshIn", cooldown)}</span>
-      </div>
-    );
+    return <RefreshCooldown time={countdown.label} />;
   }
 
   // Phones keep the icon alone, so the button fits beside the member filter.

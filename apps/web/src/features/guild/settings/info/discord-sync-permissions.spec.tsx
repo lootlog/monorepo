@@ -355,6 +355,38 @@ describe.each([
     expect(getReinstallButton()).toBeNull();
   });
 
+  it("keeps confirmed missing permissions and waits out a refused refresh", async () => {
+    const { client } = await renderSettings(
+      Component,
+      async () => Response.json(missingPermissions),
+      async () =>
+        Response.json({}, { status: 429, headers: { "retry-after": "160" } }),
+    );
+
+    await waitFor(() => expect(getReinstallButton()).not.toBeNull());
+    refreshSync();
+
+    await screen.findByText("common.cooldown.nextRefreshIn");
+    await waitFor(() => expect(client.isMutating()).toBe(0));
+    expect(
+      screen.queryByRole("button", { name: "settings.guildInfo.refresh" }),
+    ).toBeNull();
+    expect(getReinstallButton()).not.toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    // A newer status read does not lift the server's refresh deadline.
+    await client.invalidateQueries({
+      queryKey: getGuildsControllerGetGuildDiscordSyncStatusQueryKey({
+        guildId: "guild-1",
+      }),
+    });
+    await waitFor(() => expect(client.isFetching()).toBe(0));
+    expect(screen.getByText("common.cooldown.nextRefreshIn")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "settings.guildInfo.refresh" }),
+    ).toBeNull();
+  });
+
   it("offers installation when Discord confirms the bot cannot access the server", async () => {
     await renderSettings(Component, async () =>
       Response.json({ ...missingPermissions, status: "NOT_FOUND" }),

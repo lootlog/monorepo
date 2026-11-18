@@ -74,8 +74,7 @@
       "refresh": "Odśwież obraz",
       "refreshHint": "Regeneracja jest dostępna raz na 5 minut.",
       "refreshSuccess": "Obraz statystyk został odświeżony",
-      "refreshError": "Nie udało się odświeżyć obrazu statystyk",
-      "refreshRateLimited": "Obraz można odświeżać nie częściej niż raz na 5 minut."
+      "refreshError": "Nie udało się odświeżyć obrazu statystyk"
     }
   },
   "roles": {
@@ -222,13 +221,12 @@
       "viewDetails": "Zobacz szczegóły"
     },
     "refreshingProgress": "Odświeżanie {{processed}}/{{total}}",
-    "nextRefreshIn": "Kolejne odświeżenie za {{minutes}}:{{seconds}}",
     "refreshSuccess": "Odświeżono pomyślnie",
-    "refreshSuccessWithCooldown": "Odświeżono. Kolejne odświeżenie za {{minutes}}:{{seconds}}",
+    "refreshSuccessWithCooldown": "Odświeżono. Kolejne odświeżenie za {{time}}",
     "refreshAccessDisabled": "Odświeżenie dezaktywowało dostęp członka",
     "refreshNotFound": "Discord nie potwierdził członkostwa na serwerze tego Lootloga",
     "refreshError": "Błąd odświeżania",
-    "refreshErrorWithCooldown": "Błąd odświeżania. Kolejna próba za {{minutes}}:{{seconds}}",
+    "refreshErrorWithCooldown": "Błąd odświeżania. Kolejna próba za {{time}}",
     "refreshUnavailable": "Nie można odświeżyć tego członka",
     "refreshNoDiscordSync": "Brak potwierdzonej synchronizacji z Discordem",
     "refreshQueued": "Odświeżenie jest już w kolejce",
@@ -881,7 +879,7 @@
       "manualItemIdInvalid": "ID przedmiotu musi być liczbą.",
       "worldRequired": "Najpierw wybierz świat.",
       "watchLimitReached": "Osiągnięto limit {{limit}} obserwowanych przedmiotów. Usuń jedną obserwację, aby dodać kolejną.",
-      "dmTestLimitReached": "Osiągnięto limit testowych wiadomości. Spróbuj ponownie za kilka minut."
+      "dmTestLimitReached": "Osiągnięto limit testowych wiadomości. Spróbuj ponownie za chwilę."
     },
     "toasts": {
       "dmEnabled": "Powiadomienia zostały włączone.",
@@ -916,7 +914,7 @@
     "syncStatusDescription": "Ten widok pokazuje aktualny stan połączenia bota z serwerem Discord i kanałami.",
     "syncUnknown": {
       "title": "Uprawnienia bota nie są jeszcze potwierdzone",
-      "description": "Brak aktualnego wyniku synchronizacji z Discordem. Odśwież status, aby sprawdzić uprawnienia bota.",
+      "description": "Lootlog nie ma jeszcze aktualnych danych o uprawnieniach bota na tym serwerze. Odśwież status, aby je sprawdzić.",
       "loading": "Trwa sprawdzanie stanu synchronizacji z Discordem.",
       "error": "Nie udało się sprawdzić stanu synchronizacji z Discordem. Spróbuj ponownie."
     },
