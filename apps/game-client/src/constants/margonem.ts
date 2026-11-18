@@ -16,9 +16,3 @@ export const getNpcTypeNames = (type: NpcTypeEnum) => {
 
   return NPC_NAMES[type];
 };
-
-/**
- * Hero Trackers return about 90 minutes after their entrance closes on public
- * worlds. The API keeps a faster base observed on a private world instead.
- */
-export const HERO_TRACKER_RESP_BASE_SECONDS = 90 * 60;

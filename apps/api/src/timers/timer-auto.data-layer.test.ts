@@ -658,107 +658,124 @@ it.each([false, true])(
   },
 );
 
-it("keeps one timer per Hero Tracker across hiding places, measuring its respawn from the entrance closing", async () => {
-  const boundary = await createDatabaseBoundary();
+it.each([
+  // A private world: the tracker left its previous hiding place reporting a
+  // one-hour respawn, and an older client still reports the public default.
+  { stored: 3600, reported: 5400, counted: 3600 },
+  // A world respawning three times faster: the stored public default was
+  // never observed, so the base the client scaled replaces it.
+  { stored: 5400, reported: 1800, counted: 1800 },
+])(
+  "keeps one timer per Hero Tracker across hiding places, counting a $counted s respawn from the entrance closing when $stored s is stored and $reported s reported",
+  async ({ stored, reported, counted }) => {
+    const boundary = await createDatabaseBoundary();
 
-  try {
-    const { database } = boundary;
-    const guild = createGuildFixture();
+    try {
+      const { database } = boundary;
+      const guild = createGuildFixture();
 
-    const member = createMemberFixture({
-      userId: guild.ownerId,
-      globalUserId: "user",
-    });
+      const member = createMemberFixture({
+        userId: guild.ownerId,
+        globalUserId: "user",
+      });
 
-    const now = new Date();
-    const trackerName = "Doświadczony Tropiciel Herosów";
-    await boundary.run(database.insert(guildTable).values(guild));
-    await boundary.run(database.insert(memberTable).values(member));
-    await boundary.run(
-      database.insert(userCharactersLootlogSettingsTable).values({
-        userId: member.userId,
-        accountId: "1",
-        characterId: "2",
-        catchingGuildIds: [guild.id],
-        updatedAt: now,
-      }),
-    );
-    const trackerTimerNpcId = getTimerNpcId({ id: 190436, name: trackerName });
-
-    // A private world: the tracker left its previous hiding place reporting
-    // a one-hour respawn.
-    await boundary.run(
-      database.insert(timerTable).values({
-        guildId: guild.id,
-        world: "world",
-        npcId: trackerTimerNpcId,
-        timerKey: buildTimerKey(trackerTimerNpcId, trackerName),
-        createdById: member.id,
-        npc: { id: 190436, name: trackerName, lvl: 282, type: "HERO_TRACKER" },
-        latestRespBaseSeconds: 3600,
-        minSpawnTime: new Date(now.getTime() - 60 * 60_000),
-        maxSpawnTime: new Date(now.getTime() - 30 * 60_000),
-        updatedAt: now,
-      }),
-    );
-
-    const create = makeAutoTimer(database, {
-      closeKilledNpcGatherings: () => Effect.void,
-      get: () => Effect.succeed(null),
-      set: () => Effect.void,
-      locks: singleFlightLocks(),
-      invalidateList: () => Effect.void,
-      publishHeroSighting: () => Effect.void,
-      signalEventHeroChecks: Effect.void,
-      withLock: (_key, operation) => operation,
-      publish: () => Effect.void,
-    });
-
-    const reportedAt = Date.now();
-
-    await boundary.run(
-      create(
-        { discordId: member.userId, userId: "user" },
-        {
-          respBaseSeconds: 5400,
-          respawnRandomness: 50,
-          entranceSecondsLeft: 1200,
-          world: "world",
-          npc: {
-            // The next hiding place may give the tracker another runtime id.
-            id: 190999,
-            name: trackerName,
-            location: "Jaskinia Piaskowej Burzy s.1",
-            lvl: 282,
-            // Tracker templates carry no weight or profession.
-            wt: 0,
-            icon: "npc/tropiciel.gif",
-            type: 0,
-          },
+      const now = new Date();
+      const trackerName = "Doświadczony Tropiciel Herosów";
+      await boundary.run(database.insert(guildTable).values(guild));
+      await boundary.run(database.insert(memberTable).values(member));
+      await boundary.run(
+        database.insert(userCharactersLootlogSettingsTable).values({
+          userId: member.userId,
           accountId: "1",
           characterId: "2",
-        },
-      ),
-    );
+          catchingGuildIds: [guild.id],
+          updatedAt: now,
+        }),
+      );
 
-    const timers = await boundary.run(database.select().from(timerTable));
+      const trackerTimerNpcId = getTimerNpcId({
+        id: 190436,
+        name: trackerName,
+      });
 
-    expect(timers).toHaveLength(1);
-    const entranceClosesAt = timers[0]?.entranceClosesAt?.getTime() ?? 0;
+      await boundary.run(
+        database.insert(timerTable).values({
+          guildId: guild.id,
+          world: "world",
+          npcId: trackerTimerNpcId,
+          timerKey: buildTimerKey(trackerTimerNpcId, trackerName),
+          createdById: member.id,
+          npc: {
+            id: 190436,
+            name: trackerName,
+            lvl: 282,
+            type: "HERO_TRACKER",
+          },
+          latestRespBaseSeconds: stored,
+          minSpawnTime: new Date(now.getTime() - 60 * 60_000),
+          maxSpawnTime: new Date(now.getTime() - 30 * 60_000),
+          updatedAt: now,
+        }),
+      );
 
-    // The countdown is placed on the server clock, not the reporter's.
-    expect(entranceClosesAt).toBeGreaterThanOrEqual(reportedAt + 1_200_000);
-    expect(entranceClosesAt).toBeLessThanOrEqual(Date.now() + 1_200_000);
-    expect(timers[0]).toMatchObject({
-      latestRespBaseSeconds: 3600,
-      minSpawnTime: new Date(entranceClosesAt + 30 * 60_000),
-      maxSpawnTime: new Date(entranceClosesAt + 90 * 60_000),
-      npc: { id: 190999, type: "HERO_TRACKER" },
-    });
-  } finally {
-    await boundary.dispose();
-  }
-});
+      const create = makeAutoTimer(database, {
+        closeKilledNpcGatherings: () => Effect.void,
+        get: () => Effect.succeed(null),
+        set: () => Effect.void,
+        locks: singleFlightLocks(),
+        invalidateList: () => Effect.void,
+        publishHeroSighting: () => Effect.void,
+        signalEventHeroChecks: Effect.void,
+        withLock: (_key, operation) => operation,
+        publish: () => Effect.void,
+      });
+
+      const reportedAt = Date.now();
+
+      await boundary.run(
+        create(
+          { discordId: member.userId, userId: "user" },
+          {
+            respBaseSeconds: reported,
+            respawnRandomness: 50,
+            entranceSecondsLeft: 1200,
+            world: "world",
+            npc: {
+              // The next hiding place may give the tracker another runtime id.
+              id: 190999,
+              name: trackerName,
+              location: "Jaskinia Piaskowej Burzy s.1",
+              lvl: 282,
+              // Tracker templates carry no weight or profession.
+              wt: 0,
+              icon: "npc/tropiciel.gif",
+              type: 0,
+            },
+            accountId: "1",
+            characterId: "2",
+          },
+        ),
+      );
+
+      const timers = await boundary.run(database.select().from(timerTable));
+
+      expect(timers).toHaveLength(1);
+      const entranceClosesAt = timers[0]?.entranceClosesAt?.getTime() ?? 0;
+
+      // The countdown is placed on the server clock, not the reporter's.
+      expect(entranceClosesAt).toBeGreaterThanOrEqual(reportedAt + 1_200_000);
+      expect(entranceClosesAt).toBeLessThanOrEqual(Date.now() + 1_200_000);
+      expect(timers[0]).toMatchObject({
+        latestRespBaseSeconds: counted,
+        minSpawnTime: new Date(entranceClosesAt + counted * 500),
+        maxSpawnTime: new Date(entranceClosesAt + counted * 1500),
+        npc: { id: 190999, type: "HERO_TRACKER" },
+      });
+    } finally {
+      await boundary.dispose();
+    }
+  },
+);
 
 it("keeps the window of an open Hero Tracker entrance when another player reports it", async () => {
   const boundary = await createDatabaseBoundary();

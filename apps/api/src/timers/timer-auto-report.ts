@@ -5,6 +5,7 @@ import {
 } from "@lootlog/domain/npc-type";
 import {
   DEFAULT_RESPAWN_RANDOMNESS,
+  HERO_TRACKER_RESP_BASE_SECONDS,
   isSameHeroTrackerEntrance,
   spawnWindowFromRespawn,
 } from "@lootlog/domain/timers";
@@ -35,6 +36,22 @@ export const getReportedEntranceClosesAt = (
 
   return payload.entranceClosesAt ? new Date(payload.entranceClosesAt) : null;
 };
+
+/**
+ * The respawn an entrance report counts. A base observed when a tracker left
+ * this world stays authoritative for the following entrances: clients older
+ * than the world's respawn multiplier report the public default on every
+ * world. A stored public default is no observation, so the report replaces it.
+ */
+export const getEntranceRespBaseSeconds = (
+  payload: CreateAutoTimerRequest,
+  previousTimer: typeof timerTable.$inferSelect | null,
+) =>
+  previousTimer &&
+  previousTimer.latestRespBaseSeconds > 0 &&
+  previousTimer.latestRespBaseSeconds !== HERO_TRACKER_RESP_BASE_SECONDS
+    ? previousTimer.latestRespBaseSeconds
+    : payload.respBaseSeconds;
 
 /**
  * The stored timer when a report repeats the entrance it already counts:

@@ -1,7 +1,7 @@
-import { HERO_TRACKER_RESP_BASE_SECONDS } from "@/constants/margonem";
 import { createAutoTimer } from "@/api/timers.api";
 import { isSignedOut } from "@/lib/auth-client";
 import { getFreshCharacterCatchingGuildIds } from "@/hooks/api/use-lootlog-characters-config";
+import { getNpcRespawnMultiplier } from "@/lib/margonem-runtime/adapters/world-config-runtime-adapter";
 import type {
   RuntimeGameSnapshot,
   RuntimeIngressSnapshot,
@@ -10,7 +10,10 @@ import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { getEntranceClosesAt } from "@/utils/game/hero-tracker-entrance";
 import { isHeroTrackerName } from "@lootlog/domain/npc-type";
-import { isSameHeroTrackerEntrance } from "@lootlog/domain/timers";
+import {
+  getHeroTrackerRespBaseSeconds,
+  isSameHeroTrackerEntrance,
+} from "@lootlog/domain/timers";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
 type EventNpc = NonNullable<GameEvent["npcs"]>[number];
@@ -102,7 +105,7 @@ export class HeroTrackerTimerProcessor {
 
     createAutoTimer({
       respawnRandomness: tracker.respawnRandomness,
-      respBaseSeconds: HERO_TRACKER_RESP_BASE_SECONDS,
+      respBaseSeconds: getHeroTrackerRespBaseSeconds(getNpcRespawnMultiplier()),
       entranceSecondsLeft: tracker.entranceSecondsLeft,
       characterId,
       accountId,
