@@ -1407,24 +1407,38 @@ statement.
 
 ### Rollout
 
-The two migrations ship in separate API revisions, because the runner applies
-all pending migrations in one transaction and the second one refuses to run
-until steps 2-4 are done:
+Production went through this on 2026-11-18 in five steps: the nullable columns
+(`20261118151009_loot_record_list_facts`), a windowed backfill of 16.0M
+records, the validated constraint, the index built concurrently with a vacuum,
+and `20261118151017_loot_record_page_index`. In the first minutes afterwards
+the page selection averaged 0.8 ms and 388 buffers per call with no statement
+over 24 ms, against 14.5 ms and 10k buffers, with 20 statements over 1 s, for
+the form it replaced since that morning. The index took 1.3 GB.
 
-1. Apply `20261118151009_loot_record_list_facts` and deploy the API revision
-   that introduced it. It writes the three columns and reads none. Wait until
-   no older API replica is running.
-2. Fill existing records, newest first, in 50,000-`lootId` windows, each its
-   own transaction. The run can be interrupted and resumes; repeat it until it
-   reports 0, which also covers records an older API replica wrote during the
-   deploy. Do not build the index first: updating an indexed column rewrites
-   every index of the table. On the local copy 1.13M records took 58 s, which
-   puts the 15.8M of production near 14 minutes.
+A database that is restored from an older backup and holds loots needs the same
+order, because the runner applies all pending migrations in one transaction
+and the second one refuses to run until steps 2-4 are done:
+
+1. Apply only the first migration, then deploy an API revision that writes the
+   three columns. Wait until no older API replica is running.
+2. Fill the facts in windows of about 50,000 `lootId`, newest first, each its
+   own transaction, until no record misses them. The backfill script was
+   removed after the rollout; the statement is the one the test fixtures
+   render, limited to a window and to the records still missing a fact:
 
    ```sh
    cd apps/api
-   bun --conditions=development src/loots/backfill-organization-loot-record-facts.ts
+   bun --conditions=development -e 'import { refreshOrganizationLootRecordFactsSql } from "./test/loot-fixtures.ts"; console.log(refreshOrganizationLootRecordFactsSql)'
    ```
+
+   ```sql
+   <rendered statement>
+   WHERE "lootId" BETWEEN <lower> AND <upper>
+     AND ("lootRarityMask" IS NULL OR "npcTypeMask" IS NULL OR "npcVisibility" IS NULL);
+   ```
+
+   Do not build the index first: updating an indexed column rewrites every
+   index of the table. On a local production copy 1.13M records took 58 s.
 
 3. Prove that no record misses its facts. Run the two statements separately,
    not in one transaction: the first takes `ACCESS EXCLUSIVE` only for an
@@ -1439,8 +1453,8 @@ until steps 2-4 are done:
    ```
 
    From the first statement on, a record without its facts is rejected, so an
-   API older than step 1 fails every loot submission. If the validation finds
-   a record, repeat step 2 and validate again.
+   API that does not write them fails every loot submission. If the validation
+   finds a record, repeat step 2 and validate again.
 
 4. Build the index outside a transaction, then vacuum and analyze. The vacuum
    matters here: the backfill rewrote every row, and until the visibility map
@@ -1451,13 +1465,10 @@ until steps 2-4 are done:
    VACUUM (ANALYZE) "OrganizationLootRecord";
    ```
 
-5. Apply `20261118151017_loot_record_page_index`, then deploy the API revision
-   that introduced it. With the constraint validated, the migration sets the
-   columns `NOT NULL` without scanning the table, drops the constraint and the
-   old index, and took 8 ms on the local copy. The API then reads the columns;
-   a record without them would be hidden from everyone but the owner, which is
-   why the migration refuses to run before step 3.
+5. Apply the second migration. With the constraint validated, it sets the
+   columns `NOT NULL` without scanning the table and drops the constraint and
+   the old index.
 
-The API from step 1 keeps working after step 5. Do not roll back past step 1
-after step 3. The bulk rewrite leaves the same free space as the loot facts
-backfill; see "After a bulk rewrite" above.
+The backfill left the unique `(guildId, lootId)` index and the `lootId` index
+at twice their size. `REINDEX INDEX CONCURRENTLY` on each brought them from
+1212 MB to 620 MB and from 638 MB to 320 MB; see "After a bulk rewrite" above.
