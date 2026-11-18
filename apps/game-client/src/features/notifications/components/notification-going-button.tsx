@@ -7,7 +7,8 @@ import { useSession } from "@/hooks/auth/use-session";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import {
-  selectNotificationGoing,
+  getNotificationGoingScope,
+  selectUserGoingNotificationIds,
   useNotificationGoingStore,
 } from "@/store/notification-going.store";
 import type {
@@ -34,10 +35,12 @@ export function NotificationGoingButton({
     (state) => state.setGuildGoing,
   );
 
-  const going = useNotificationGoingStore((state) =>
-    selectNotificationGoing(state, notification.recentReportIds).some(
-      (player) => player.userId === userId,
-    ),
+  const scope = getNotificationGoingScope(notification);
+
+  const going = useNotificationGoingStore(
+    (state) =>
+      userId !== undefined &&
+      selectUserGoingNotificationIds(state, scope, userId).length > 0,
   );
 
   const { mutate, isPending, variables } = useMutation({
@@ -46,16 +49,36 @@ export function NotificationGoingButton({
 
       if (!character) throw new Error("No current character");
 
-      return messagingControllerGoing(
-        { notificationId: notification.notificationId },
-        { world: notification.world, character, going: next },
+      // The player may have answered another report of this NPC than the one
+      // this row opened with, so taking it back reaches every report that
+      // lists them.
+      const answered =
+        next || userId === undefined
+          ? []
+          : selectUserGoingNotificationIds(
+              useNotificationGoingStore.getState(),
+              scope,
+              userId,
+            );
+
+      const notificationIds =
+        answered.length > 0 ? answered : [notification.notificationId];
+
+      return Promise.all(
+        notificationIds.map((notificationId) =>
+          messagingControllerGoing(
+            { notificationId },
+            { world: notification.world, character, going: next },
+          ),
+        ),
       );
     },
     // The answer holds the same lists the Lootlogs push live, so the button
     // settles without waiting for the socket.
-    onSuccess: ({ notificationId, guilds }) => {
-      for (const { guildId, going: players } of guilds)
-        setGuildGoing(notificationId, guildId, players);
+    onSuccess: (answers) => {
+      for (const { notificationId, guilds } of answers)
+        for (const { guildId, going: players } of guilds)
+          setGuildGoing(notificationId, guildId, players, scope.npcKey);
     },
     onError: () => showRuntimeMessage(t("going.failed")),
   });

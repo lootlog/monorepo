@@ -70,6 +70,8 @@ const NotificationMetadataSchema = Schema.Struct({
   createdAt: Schema.String,
   world: Schema.optionalKey(Schema.String),
   npcName: Schema.optionalKey(Schema.String),
+  // The NPC's game id, which joins going answers across reports of one NPC.
+  npcId: Schema.optionalKey(Schema.Number),
   // The routing fields of an NPC notification, which decide who may see it.
   npc: Schema.optionalKey(
     Schema.Struct({ ...NpcRoutingDataSchema.fields, lvl: Schema.Number }),
@@ -330,6 +332,7 @@ export const makeMessagingDataLayer = (
                 world: data.world,
                 ...(data.npc && {
                   npcName: data.npc.name,
+                  npcId: data.npc.id,
                   npc: {
                     prof: data.npc.prof,
                     type: getNpcType(NpcType, data.npc),
@@ -569,6 +572,9 @@ export const makeMessagingDataLayer = (
                               notificationId,
                               reporterUserId,
                               npcName: stored.npcName ?? "",
+                              ...(stored.npcId !== undefined && {
+                                npcId: stored.npcId,
+                              }),
                               npc,
                               going,
                             },

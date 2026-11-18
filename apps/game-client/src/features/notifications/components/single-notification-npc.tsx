@@ -9,6 +9,7 @@ import {
 } from "@/store/notifications.store";
 import { useTranslation } from "react-i18next";
 import { NotificationGoingList } from "@/features/notifications/components/notification-going-list";
+import { getNotificationGoingScope } from "@/store/notification-going.store";
 
 type SingleNotificationNpcProps = {
   notification: StoredNotification & NotificationWithServers;
@@ -51,7 +52,7 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
           </span>
         )}
       </div>
-      <NotificationGoingList notificationIds={notification.recentReportIds} />
+      <NotificationGoingList scope={getNotificationGoingScope(notification)} />
     </>
   );
 };

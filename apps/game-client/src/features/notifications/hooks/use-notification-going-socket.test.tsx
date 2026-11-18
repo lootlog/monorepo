@@ -1,7 +1,11 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { useSession } from "@/hooks/auth/use-session";
-import { useNotificationGoingStore } from "@/store/notification-going.store";
+import {
+  selectNotificationGoing,
+  useNotificationGoingStore,
+} from "@/store/notification-going.store";
+import { getNpcWorldKey } from "@/store/notifications.store";
 import { createRealtimeTest } from "@/test/realtime-test";
 import {
   renderRuntimeMessage,
@@ -41,6 +45,7 @@ const going = (
       notificationId: "notification-1",
       reporterUserId,
       npcName: "Orla",
+      npcId: 7,
       npc: { type: "TITAN", lvl: 151 },
       going: players,
     },
@@ -107,4 +112,21 @@ it("keeps other members' answers silent for everyone but the reporter", async ()
     ).toHaveLength(1),
   );
   expect(shown).toEqual([]);
+});
+
+it("lists answers to another report of the same NPC under the row", async () => {
+  const { test } = await render("reporter");
+
+  // The reporter's row opened with a later report of their NPC, while the
+  // others answer the first one.
+  const row = (npcId: number) =>
+    selectNotificationGoing(useNotificationGoingStore.getState(), {
+      notificationIds: ["notification-2"],
+      npcKey: getNpcWorldKey(npcId, "luvia"),
+    }).map((player) => player.nick);
+
+  await test.receive(going(REPORTER, [player("a", "Szybka Strzała")]));
+
+  await waitFor(() => expect(row(7)).toEqual(["Szybka Strzała"]));
+  expect(row(8)).toEqual([]);
 });
