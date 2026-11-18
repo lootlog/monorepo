@@ -93,12 +93,13 @@ describe("MemberLeaderboardCard", () => {
     restoreApiClients();
   });
 
-  it("follows the leaders with the viewer's own place when it falls outside them", () => {
+  it("puts the viewer's own place in the last row when it falls outside the leaders", () => {
     const rows = renderLeaderboard(12);
 
-    const ownRow = rows[10];
+    const ownRow = rows[9];
 
-    expect(rows).toHaveLength(11);
+    expect(rows).toHaveLength(10);
+    expect(rows[8]?.textContent).toContain("Member 9");
     expect(ownRow?.textContent).toMatch(/^12/);
     expect(ownRow?.textContent).toContain("Member 12");
     expect(ownRow?.getAttribute("aria-current")).toBe("true");
