@@ -14,9 +14,10 @@ import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcDrops } from "@/components/npcs/npc-drops";
 import { ArticleSection } from "@/components/article/article-section";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
-import { NpcInfobox } from "@/components/npcs/npc-infobox";
+import { NpcPortrait } from "@/components/common/npc-portrait";
+import { NpcFacts } from "@/components/npcs/npc-facts";
+import { NpcFormerLevels } from "@/components/npcs/npc-former-levels";
 import { NpcLocations } from "@/components/npcs/npc-locations";
-import { useStickyTop } from "@/hooks/use-sticky-top";
 import { t } from "@/i18n/messages";
 import { npcSummary } from "@/lib/npc-summary";
 import { npcPageParams } from "@/lib/catalog-links";
@@ -76,7 +77,6 @@ export const Route = createFileRoute("/npcs_/$npcSlug")({
 });
 
 function NpcRoute() {
-  const infoboxSticky = useStickyTop();
   const { npcSlug } = Route.useParams();
 
   const query = npcPageQuery(npcSlug);
@@ -135,59 +135,61 @@ function NpcRoute() {
         ]}
       />
 
-      <header className="flex min-w-0 flex-col gap-1">
+      <header className="flex flex-col gap-4">
+        <div className="flex items-center gap-4">
+          {npc ? (
+            <>
+              <NpcPortrait key={npc.icon} icon={npc.icon} size="md" />
+              <div className="flex min-w-0 flex-col gap-1">
+                <p className="text-sm text-muted-foreground">
+                  {npcSummary(npc)}
+                </p>
+                <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
+                  {npc.name}
+                </h1>
+              </div>
+            </>
+          ) : (
+            <>
+              <Skeleton className="size-24 shrink-0 rounded-lg" />
+              <div className="flex min-w-0 flex-col gap-2">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-10 w-72 max-w-full" />
+              </div>
+            </>
+          )}
+        </div>
         {npc ? (
           <>
-            <p className="text-sm text-muted-foreground">{npcSummary(npc)}</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
-              {npc.name}
-            </h1>
+            <NpcFacts npc={npc} />
+            <NpcFormerLevels formerLevels={npc.formerLevels} />
           </>
         ) : (
-          <>
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-10 w-72" />
-          </>
+          <Skeleton className="h-16 w-full" />
         )}
       </header>
 
-      <div className="grid items-start gap-x-8 gap-y-10 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <div
-          {...infoboxSticky}
-          className="xl:sticky xl:col-start-2 xl:row-start-1"
-        >
+      <div className="flex min-w-0 flex-col gap-12">
+        <ArticleSection id="npc-drops" title={t("catalog.dropsTitle")}>
           {npc ? (
-            <NpcInfobox npc={npc} />
+            <NpcDrops npc={npc} />
           ) : (
-            <Skeleton className="h-[26rem] rounded-xl" />
+            <CatalogItemGrid
+              items={undefined}
+              isError={false}
+              placeholders={8}
+              emptyLabel=""
+            />
           )}
-        </div>
+        </ArticleSection>
 
-        <div className="flex min-w-0 flex-col gap-12 xl:col-start-1 xl:row-start-1">
-          <ArticleSection id="npc-drops" title={t("catalog.dropsTitle")}>
-            {npc ? (
-              <NpcDrops npc={npc} />
-            ) : (
-              <CatalogItemGrid
-                items={undefined}
-                isError={false}
-                placeholders={8}
-                emptyLabel=""
-              />
-            )}
-          </ArticleSection>
-
-          <ArticleSection
-            id="npc-locations"
-            title={t("catalog.locationsTitle")}
-          >
-            {npc ? (
-              <NpcLocations locations={npc.locations} />
-            ) : (
-              <Skeleton className="h-11 w-full max-w-sm rounded-lg" />
-            )}
-          </ArticleSection>
-        </div>
+        <ArticleSection id="npc-locations" title={t("catalog.locationsTitle")}>
+          {npc ? (
+            <NpcLocations locations={npc.locations} />
+          ) : (
+            <Skeleton className="h-11 w-full max-w-sm rounded-lg" />
+          )}
+        </ArticleSection>
       </div>
     </article>
   );

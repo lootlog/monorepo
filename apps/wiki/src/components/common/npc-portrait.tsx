@@ -9,21 +9,23 @@ type NpcPortraitProps = {
   className?: string;
 };
 
-// The box and how many times a sprite that fits is enlarged in it.
+// The box, how many times a sprite that fits is enlarged in it, and how far
+// it stands from the box's bottom edge.
 const SIZES = {
-  sm: { box: "size-16", scale: 1, limit: 56 },
-  md: { box: "size-24", scale: 1, limit: 88 },
-  lg: { box: "h-44 w-full", scale: 2, limit: 160 },
+  sm: { box: "size-16", scale: 1, limit: 56, lift: "mb-1" },
+  md: { box: "size-24", scale: 1, limit: 88, lift: "mb-2" },
+  lg: { box: "h-44 w-full", scale: 2, limit: 160, lift: "mb-3" },
 } as const;
 
 /**
  * A monster's sprite on a lit stage. Margonem draws sprites from 32 to
  * about 100 pixels; each shows at a whole multiple of its own size that fits
- * the box, so its pixels stay crisp.
+ * the box, so its pixels stay crisp. The shadow follows the sprite, not the
+ * box, so it stays under the feet whatever shape the box takes.
  */
 export function NpcPortrait({ icon, size, className }: NpcPortraitProps) {
   const [natural, setNatural] = useState<{ width: number; height: number }>();
-  const { box, scale, limit } = SIZES[size];
+  const { box, scale, limit, lift } = SIZES[size];
 
   const measure = (image: HTMLImageElement) => {
     if (natural?.width === image.naturalWidth) return;
@@ -54,27 +56,29 @@ export function NpcPortrait({ icon, size, className }: NpcPortraitProps) {
         className,
       )}
     >
-      <span
-        aria-hidden="true"
-        className="absolute inset-x-[18%] bottom-[10%] -z-10 h-[8%] rounded-[50%] bg-black/45 blur-[3px]"
-      />
       {icon ? (
-        <img
-          src={npcIconUrl(icon)}
-          alt=""
-          loading="lazy"
-          // A sprite cached before hydration has loaded without an event.
-          ref={(image) => {
-            if (image?.complete && image.naturalWidth > 0) measure(image);
-          }}
-          onLoad={({ currentTarget }) => measure(currentTarget)}
-          width={natural ? natural.width * fit * shrink : undefined}
-          height={natural ? natural.height * fit * shrink : undefined}
-          className={cn(
-            "mb-[8%] max-h-full max-w-full [image-rendering:pixelated] transition-opacity duration-200 motion-reduce:transition-none",
-            natural ? "opacity-100" : "opacity-0",
-          )}
-        />
+        <div className={cn("relative", lift)}>
+          <span
+            aria-hidden="true"
+            className="absolute bottom-0 left-1/2 -z-10 aspect-[10/1] w-[90%] -translate-x-1/2 translate-y-1/3 rounded-[50%] bg-black/45 blur-[3px]"
+          />
+          <img
+            src={npcIconUrl(icon)}
+            alt=""
+            loading="lazy"
+            // A sprite cached before hydration has loaded without an event.
+            ref={(image) => {
+              if (image?.complete && image.naturalWidth > 0) measure(image);
+            }}
+            onLoad={({ currentTarget }) => measure(currentTarget)}
+            width={natural ? natural.width * fit * shrink : undefined}
+            height={natural ? natural.height * fit * shrink : undefined}
+            className={cn(
+              "block [image-rendering:pixelated] transition-opacity duration-200 motion-reduce:transition-none",
+              natural ? "opacity-100" : "opacity-0",
+            )}
+          />
+        </div>
       ) : null}
     </div>
   );
