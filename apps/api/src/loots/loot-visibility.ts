@@ -45,6 +45,42 @@ const visibilityLootNpc = alias(lootNpcTable, "visibility_loot_npc");
 
 const visibilityNpc = alias(npcSnapshotTable, "visibility_npc");
 
+/**
+ * `OrganizationLootRecord.npcVisibility` holds one integer per NPC of the
+ * loot: the NPC's level, shifted by the span of its visibility class. A member
+ * sees the loot when every one of those integers falls in a range their roles
+ * grant, which is one containment test on the record instead of a subquery per
+ * NPC. The encoding is persisted on every record, so it never changes.
+ */
+const NPC_LEVEL_SPAN = 1_000_000;
+
+const HERO_OFFSET = NPC_LEVEL_SPAN;
+
+const TITAN_OFFSET = 2 * NPC_LEVEL_SPAN;
+
+/** No grant contains it: an NPC without a level or type, or a loot without NPCs. */
+const HIDDEN_NPC_KEY = -1;
+
+const encodedLootNpc = alias(lootNpcTable, "encoded_loot_npc");
+
+const encodedNpc = alias(npcSnapshotTable, "encoded_npc");
+
+const npcKey = sql`case when ${encodedNpc.lvl} is null or ${encodedNpc.type} is null or ${encodedNpc.lvl} not between 0 and ${sql.raw(String(NPC_LEVEL_SPAN - 1))} then ${sql.raw(String(HIDDEN_NPC_KEY))} else ${encodedNpc.lvl} + case when ${encodedNpc.type} = 'TITAN' then ${sql.raw(String(TITAN_OFFSET))} when ${encodedNpc.type} in ('HERO', 'EVENT_HERO') then ${sql.raw(String(HERO_OFFSET))} else 0 end end`;
+
+/**
+ * The visibility keys of a loot's NPCs, read from the NPCs themselves. Every
+ * writer of `npcVisibility` uses this expression, so a record cannot disagree
+ * with the NPCs its loot was accepted with.
+ */
+export const lootNpcVisibilityOf = (lootId: number | SQLWrapper) =>
+  sql<string>`(${query
+    .select({
+      keys: sql`coalesce(range_agg(int4range(${npcKey}, ${npcKey}, '[]')), '{[${sql.raw(String(HIDDEN_NPC_KEY))},${sql.raw(String(HIDDEN_NPC_KEY))}]}'::int4multirange)`,
+    })
+    .from(encodedLootNpc)
+    .innerJoin(encodedNpc, eq(encodedNpc.id, encodedLootNpc.npcSnapshotId))
+    .where(eq(encodedLootNpc.lootId, lootId))})`;
+
 export function buildLootNpcVisibilityCondition(
   lootId: SQLWrapper,
   permissions: readonly string[],
