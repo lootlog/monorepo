@@ -5,7 +5,10 @@ import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey }
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { queryClient } from "@/lib/query-client";
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  setTestRuntimeGame,
+  testRuntimeWindow,
+} from "@/test/test-runtime-window";
 import { HeroTrackerTimerProcessor } from "./hero-tracker-timer-processor";
 
 const configKey =
@@ -107,6 +110,25 @@ it("reports a claimed Hero Tracker's entrance once, measuring its respawn from t
   });
   expect(body.entranceSecondsLeft).toBe(1200);
   expect(body).not.toHaveProperty("entranceClosesAt");
+});
+
+it("shortens the respawn by the world's own respawn multiplier", async () => {
+  const fixture = createFixture();
+
+  // A private world whose server parameters make NPCs return 3x faster.
+  testRuntimeWindow.Engine = { worldConfig: { getNpcResp: () => 3 } };
+  onTestFinished(() => {
+    delete testRuntimeWindow.Engine;
+  });
+
+  fixture.handle(claimedTracker(1200));
+
+  await waitFor(() => expect(fixture.requests).toHaveLength(1));
+
+  expect(await fixture.requests[0]?.json()).toMatchObject({
+    respBaseSeconds: 1800,
+    respawnRandomness: 50,
+  });
 });
 
 it("does not start a timer for a tracker nobody has claimed", async () => {

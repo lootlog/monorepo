@@ -57,7 +57,7 @@ export function createNiEngine(world: SandboxWorld) {
       size: { x: 64, y: 64 },
       getOffset: () => [0, 0],
     },
-    worldConfig: { getWorldName: () => world.world },
+    worldConfig: { getWorldName: () => world.world, getNpcResp: () => 1 },
     npcs: {
       check: () => mapValues(world.npcs, npcHandle),
       getById: (id: number) => {

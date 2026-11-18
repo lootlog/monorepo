@@ -41,6 +41,7 @@ import {
   findSameEntranceTimer,
   getReportedEntranceClosesAt,
   makeNpc,
+  getEntranceRespBaseSeconds,
 } from "./timer-auto-report.js";
 
 export const DEDUP_TTL_SECONDS = 30;
@@ -246,20 +247,14 @@ export const persistAutoTimer = (
 
         let previousTimer = existingRows[0] ?? null;
 
-        // An entrance report carries the default tracker respawn; a base
-        // observed when a tracker left this world (private worlds respawn
-        // faster) stays authoritative for the following entrances.
         const entranceClosesAt = getReportedEntranceClosesAt(
           payload,
           startedAt,
         );
 
-        const respBaseSeconds =
-          entranceClosesAt &&
-          previousTimer &&
-          previousTimer.latestRespBaseSeconds > 0
-            ? previousTimer.latestRespBaseSeconds
-            : payload.respBaseSeconds;
+        const respBaseSeconds = entranceClosesAt
+          ? getEntranceRespBaseSeconds(payload, previousTimer)
+          : payload.respBaseSeconds;
 
         const window = yield* Effect.try({
           try: () => calculateSpawnWindow(payload, startedAt, respBaseSeconds),
