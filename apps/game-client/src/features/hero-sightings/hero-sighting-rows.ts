@@ -142,7 +142,10 @@ const toRow = (
   };
 };
 
-/** Current heroes first, the latest confirmed on top; ended sightings last. */
+/**
+ * Heroes that will spawn first, then roaming ones, the latest confirmed on
+ * top of each; ended sightings last.
+ */
 export const projectHeroSightingRows = (
   sightings: readonly HeroSightingResponseDto[],
   { guildId, isGrouping }: HeroSightingRowContext,
@@ -160,6 +163,8 @@ export const projectHeroSightingRows = (
     .toSorted(
       (a, b) =>
         Number(b.isCurrent) - Number(a.isCurrent) ||
+        Number(b.isCurrent && b.state === "SPAWNING") -
+          Number(a.isCurrent && a.state === "SPAWNING") ||
         compareInstants(b.lastSeenAt, a.lastSeenAt),
     );
 };

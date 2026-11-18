@@ -6,20 +6,9 @@ import { partition } from "es-toolkit";
 // without a year, such as `Dzień Młodego Smoka`.
 const HERO_TRACKERS_EVENT = /^Dzień (?!.*\b\d{4}\b)/;
 
-const HERO_SPRITES = "her/";
-
 /** Whether an item's event is an edition of Tropiciele Herosów. */
 export const isHeroTrackersEvent = (label: string) =>
   HERO_TRACKERS_EVENT.test(label);
-
-/**
- * Whether the monster is a hero fought in its hideout during Tropiciele
- * Herosów, a colossus apart from the hero itself.
- */
-export const isHeroTrackersMonster = (npc: {
-  type: string | null;
-  icon: string | null;
-}) => npc.type === "COLOSSUS" && npc.icon?.startsWith(HERO_SPRITES) === true;
 
 /**
  * Events with the game's own events ahead of Tropiciele Herosów editions,

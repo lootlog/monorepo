@@ -28,7 +28,6 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { DialogActionFooter } from "@/components/common/dialog-action-footer";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
-import { OptionCardGroup } from "@/components/common/option-card-group";
 import { useGuildWorldScope } from "@/hooks/context/use-guild-world-scope";
 import { HeroSightingNameField } from "./hero-sighting-name-field";
 import type { KnownHero } from "./known-heroes";
@@ -45,18 +44,18 @@ const MIN_LEVEL = 1;
 
 const MAX_LEVEL = 500;
 
-const STATES = [
-  AddHeroSightingDtoState.ROAMING,
-  AddHeroSightingDtoState.SPAWNING,
-] as const;
-
 const FormSchema = Schema.Struct({
   world: Schema.String,
   name: Schema.String,
   lvl: Schema.String,
   /** Profession shortname of a picked or pasted hero; typing a name clears it. */
   prof: Schema.String,
-  state: Schema.Literals(STATES),
+  /**
+   * Not a field: a hero added by hand is one that will spawn, because nobody
+   * stops to write down a roaming hero. Only a pasted detector answer says
+   * otherwise, and only while the name is still that answer's hero.
+   */
+  state: Schema.Enum(AddHeroSightingDtoState),
   mapName: Schema.String,
 });
 
@@ -120,7 +119,6 @@ export const HeroSightingAddDialog = ({
 }: HeroSightingAddDialogProps) => {
   const { t } = useTranslation();
   const formId = useId();
-  const stateLabelId = useId();
   const { guildId, world, worlds } = useGuildWorldScope({ enabled: open });
 
   // The page's world is the target; the form asks only on an all-worlds board.
@@ -129,7 +127,7 @@ export const HeroSightingAddDialog = ({
     name: "",
     lvl: "",
     prof: "",
-    state: AddHeroSightingDtoState.ROAMING,
+    state: AddHeroSightingDtoState.SPAWNING,
     mapName: "",
   };
 
@@ -248,6 +246,7 @@ export const HeroSightingAddDialog = ({
                             onChange={(name) => {
                               field.onChange(name);
                               form.setValue("prof", "");
+                              form.setValue("state", defaultValues.state);
                             }}
                             onPickHero={(hero) => {
                               field.onChange(hero.name);
@@ -255,6 +254,7 @@ export const HeroSightingAddDialog = ({
                                 shouldValidate: form.formState.isSubmitted,
                               });
                               form.setValue("prof", hero.prof ?? "");
+                              form.setValue("state", defaultValues.state);
                             }}
                             onPasteDetection={(detection) => {
                               form.reset(
@@ -306,30 +306,6 @@ export const HeroSightingAddDialog = ({
                   {t("heroSightings.add.heroHint")}
                 </p>
               </div>
-
-              <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel id={stateLabelId}>
-                      {t("heroSightings.add.state")}
-                    </FormLabel>
-                    <OptionCardGroup
-                      aria-labelledby={stateLabelId}
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={STATES.map((state) => ({
-                        value: state,
-                        title: t(`heroSightings.add.states.${state}.title`),
-                        description: t(
-                          `heroSightings.add.states.${state}.description`,
-                        ),
-                      }))}
-                    />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}

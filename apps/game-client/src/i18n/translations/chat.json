@@ -120,8 +120,8 @@
       "noResults": "Brak pasujących osób i ról"
     },
     "commandHints": {
-      "notification": "treść powiadomienia",
-      "party": "opis zbiórki (opcjonalnie)"
+      "notification": "Treść powiadomienia",
+      "party": "Opis zbiórki (opcjonalnie)"
     },
     "modes": {
       "label": "Tryb wysyłania",

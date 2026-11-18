@@ -1,12 +1,15 @@
 import { infiniteQueryOptions } from "@tanstack/react-query";
 import {
   catalogControllerGetItems,
+  catalogControllerGetNpcs,
+  getCatalogControllerGetNpcsQueryKey,
   type CatalogControllerGetItemsParams,
   type CatalogControllerGetNpcsParams,
   type CatalogItemDtoOutput,
   type CatalogNpcDtoOutput,
   getCatalogControllerGetItemsQueryKey,
 } from "@lootlog/client/catalog";
+import type { NpcSearchParams } from "@/lib/npcs-search";
 import { catalogSlug } from "@lootlog/domain/catalog-slug";
 import {
   isNpcCatalogKey,
@@ -26,7 +29,21 @@ const RELATED_LIMIT = 13;
 
 // The catalog serves at most 96 per request; a full page fills a large screen
 // before "show more" is needed.
-const ITEM_RESULTS_PAGE_SIZE = 96;
+/** How many hits a search loads at a time. */
+export const RESULTS_PAGE_SIZE = 96;
+
+/** Where a search's next page starts, or none once every hit is loaded. */
+const nextResultsOffset = (
+  lastPage: { hits: readonly unknown[]; estimatedTotalHits: number },
+  pages: ReadonlyArray<{ hits: readonly unknown[] }>,
+) => {
+  const loaded = pages.reduce((sum, page) => sum + page.hits.length, 0);
+
+  return lastPage.hits.length === RESULTS_PAGE_SIZE &&
+    loaded < lastPage.estimatedTotalHits
+    ? loaded
+    : undefined;
+};
 
 /** The item an item page shows, by the id in its URL. */
 export const itemPageQuery = (id: number) =>
@@ -96,24 +113,30 @@ export type ItemSearchParams = Omit<
   "limit" | "offset"
 >;
 
+/** The NPC search's hits, loaded a page at a time. */
+export const npcResultsQueryOptions = (params: NpcSearchParams) =>
+  infiniteQueryOptions({
+    queryKey: [...getCatalogControllerGetNpcsQueryKey(params), "pages"],
+    queryFn: ({ pageParam, signal }) =>
+      catalogControllerGetNpcs(
+        { ...params, limit: RESULTS_PAGE_SIZE, offset: pageParam },
+        { signal },
+      ),
+    initialPageParam: 0,
+    getNextPageParam: nextResultsOffset,
+  });
+
 /** The item search's hits, loaded a page at a time. */
 export const itemResultsQueryOptions = (params: ItemSearchParams) =>
   infiniteQueryOptions({
     queryKey: [...getCatalogControllerGetItemsQueryKey(params), "pages"],
     queryFn: ({ pageParam, signal }) =>
       catalogControllerGetItems(
-        { ...params, limit: ITEM_RESULTS_PAGE_SIZE, offset: pageParam },
+        { ...params, limit: RESULTS_PAGE_SIZE, offset: pageParam },
         { signal },
       ),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, pages) => {
-      const loaded = pages.reduce((sum, page) => sum + page.hits.length, 0);
-
-      return lastPage.hits.length === ITEM_RESULTS_PAGE_SIZE &&
-        loaded < lastPage.estimatedTotalHits
-        ? loaded
-        : undefined;
-    },
+    getNextPageParam: nextResultsOffset,
   });
 
 /**

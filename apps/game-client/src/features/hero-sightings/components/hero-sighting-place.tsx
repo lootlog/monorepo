@@ -38,7 +38,10 @@ export function HeroSightingPlace({
       </span>
       <TruncatedText
         className={
-          isCurrent && !isStale ? "ll:text-green-300" : "ll:text-white"
+          // Only a spawn to camp stands out; a roaming hero is a record.
+          isCurrent && sighting.state === "SPAWNING"
+            ? "ll:text-green-300"
+            : "ll:text-white"
         }
       >
         {sighting.mapName}

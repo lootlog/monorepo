@@ -457,8 +457,13 @@ test("a rebalanced monster is current only at its newest level, and an older loo
     }),
     expect.objectContaining({ uid: npcCatalogKey(reuzen), current: true }),
   ]);
+  // The index holds each stored entry with the directory of its graphic.
   expect([...(projected.get(NPCS_INDEX)?.values() ?? [])]).toEqual(
-    expect.arrayContaining(await storedNpcs()),
+    expect.arrayContaining(
+      (await storedNpcs()).map((npc) =>
+        expect.objectContaining({ ...npc, iconDirectory: "" }),
+      ),
+    ),
   );
 });
 

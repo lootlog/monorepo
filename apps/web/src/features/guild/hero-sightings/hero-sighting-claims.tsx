@@ -22,6 +22,9 @@ export const HeroSightingClaims = ({
 }: HeroSightingClaimsProps) => {
   const { t } = useTranslation();
 
+  // Nobody is expected to camp a roaming hero, so no claims is not news.
+  if (sighting.claims.length === 0 && sighting.state === "ROAMING") return null;
+
   if (sighting.claims.length === 0) {
     return (
       <span

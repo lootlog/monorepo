@@ -29,7 +29,6 @@ const heroSighting = (
       mapName: reported.mapName,
       detectedBy: "@here",
     },
-    transition: "SPAWNED",
   });
 
 const manualTimer = (contentTemplate: string | null, npcName: string) => {
