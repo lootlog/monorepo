@@ -38,7 +38,7 @@ export const canonicalLink = (path: string) => ({
   href: `${PUBLIC_SITE_ORIGINS.wiki}${path}`,
 });
 
-// Common and upgraded items keep the chat's own edge.
+// Common items keep the chat's own edge.
 const RARITY_COLORS: Partial<Record<DisplayItemRarity, string>> =
   LOOT_RARITY_COLORS;
 

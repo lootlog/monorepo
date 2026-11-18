@@ -21,7 +21,10 @@ type ItemRarityTokens = {
   label: string;
 };
 
-/** The rarity palette: legendary orange-600, heroic blue-500, unique amber-300. */
+/**
+ * The rarity palette: legendary orange-600, heroic blue-500, unique amber-300,
+ * and upgraded in the game's own pink (`t-upgraded`, #ff59af).
+ */
 const ITEM_RARITY_TOKENS = {
   LEGENDARY: {
     hex: "#ea580c",
@@ -51,13 +54,13 @@ const ITEM_RARITY_TOKENS = {
     label: "text-amber-300",
   },
   UPGRADED: {
-    hex: undefined,
-    frame: "border-primary/40 bg-muted/50",
-    text: "text-primary",
-    surface: "bg-primary/10",
-    pill: "",
-    accent: "[--item-rarity:var(--primary)]",
-    label: "text-primary",
+    hex: "#ff59af",
+    frame: "border-[#ff59af] bg-card/80 shadow-[0_0_10px_rgba(255,89,175,0.4)]",
+    text: "text-[#ff59af]",
+    surface: "bg-[#ff59af]/10",
+    pill: "text-[#ff59af] hover:text-[#ff8cc8] aria-pressed:border-[#ff59af]/80 aria-pressed:bg-[#ff59af]/15 aria-pressed:text-[#ff8cc8] aria-pressed:shadow-[0_0_12px_rgba(255,89,175,0.28)]",
+    accent: "[--item-rarity:#ff59af]",
+    label: "text-[#ff59af]",
   },
   COMMON: {
     hex: undefined,
@@ -74,6 +77,7 @@ export const LOOT_RARITY_COLORS = {
   LEGENDARY: ITEM_RARITY_TOKENS.LEGENDARY.hex,
   HEROIC: ITEM_RARITY_TOKENS.HEROIC.hex,
   UNIQUE: ITEM_RARITY_TOKENS.UNIQUE.hex,
+  UPGRADED: ITEM_RARITY_TOKENS.UPGRADED.hex,
 } as const satisfies Partial<Record<DisplayItemRarity, string>>;
 
 export const ITEM_RARITY_FRAME_CLASS = mapValues(
