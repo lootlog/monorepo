@@ -41,8 +41,16 @@ const ENEMY_NAMES = [
   "Zgniatacz",
 ];
 
+/** Cycles through the names, numbering the repeats, for crowded maps. */
+const previewNames = (names: readonly string[], count: number) =>
+  Array.from({ length: count }, (_, index) => {
+    const round = Math.floor(index / names.length);
+
+    return `${names[index % names.length]}${round > 0 ? ` ${round + 1}` : ""}`;
+  });
+
 const allies = (count: number, afk: number | "all" = 0): MapOccupancy => {
-  const players = ALLY_NAMES.slice(0, count).map((name, index) => ({
+  const players = previewNames(ALLY_NAMES, count).map((name, index) => ({
     key: `ally-${index}`,
     name,
     isAfk: afk === "all" || index < afk,
@@ -60,7 +68,7 @@ const enemies = (
 ): MapThreat => {
   const now = Date.now();
 
-  const list: MapThreatEnemy[] = ENEMY_NAMES.slice(0, count).map(
+  const list: MapThreatEnemy[] = previewNames(ENEMY_NAMES, count).map(
     (nickname, index) => ({
       targetId: `enemy-${index}`,
       nickname,
@@ -97,6 +105,12 @@ const createStates = (): readonly PreviewState[] => [
     standing: true,
   },
   { title: "Stoi + 1 wróg", color: "red", threat: enemies(1), standing: true },
+  {
+    title: "Zatłoczona mapa: 50 naszych + 50 wrogów",
+    color: "orange",
+    occupancy: allies(50, 6),
+    threat: enemies(50),
+  },
   { title: "1 nasz", color: "green", occupancy: allies(1) },
   { title: "4 naszych", color: "violet", occupancy: allies(4, 1) },
   { title: "3 naszych AFK", color: "yellow", occupancy: allies(3, "all") },
