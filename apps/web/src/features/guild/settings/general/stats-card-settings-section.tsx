@@ -1,4 +1,5 @@
 import { BandSection } from "@/components/common/band-section";
+import { CooldownAnnouncement } from "@/components/common/cooldown-announcement";
 import { RefreshCooldown } from "@/components/common/refresh-cooldown";
 import { useCountdown } from "@/hooks/utils/use-countdown";
 import { useState } from "react";
@@ -182,6 +183,7 @@ export const StatsCardSettingsSection = ({
           >
             {t("settings.general.statsCard.copyLink")}
           </Button>
+          <CooldownAnnouncement countdown={refreshCooldown} />
           {refreshCooldown.isExpired ? (
             <Button
               type="button"

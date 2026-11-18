@@ -1,3 +1,4 @@
+import { CooldownAnnouncement } from "@/components/common/cooldown-announcement";
 import { RefreshCooldown } from "@/components/common/refresh-cooldown";
 import type { useGuildDiscordSync } from "@/hooks/api/use-guild-discord-sync";
 import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
@@ -107,6 +108,7 @@ export const GuildDiscordSyncNotice = ({
           </div>
         ) : null}
         <div className="flex flex-wrap gap-2">
+          <CooldownAnnouncement countdown={refreshCooldown} />
           {isMissing && guildId ? (
             <Button
               size="sm"
