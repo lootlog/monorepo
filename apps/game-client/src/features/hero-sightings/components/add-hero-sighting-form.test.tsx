@@ -128,6 +128,8 @@ it("keeps the form open, keeps the accepted Lootlog's sighting and names the hid
   );
   expect(fixture.onClose).not.toHaveBeenCalled();
   expect(screen.getByLabelText("Mapa")).toHaveValue("Oztotl Tzacua p.2");
+  // The form has no state field, so the pasted answer is the only source.
+  expect(await fixture.requests[0]?.json()).toMatchObject({ state: "ROAMING" });
   expect(
     useHeroSightingsStore
       .getState()

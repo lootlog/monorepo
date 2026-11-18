@@ -1,5 +1,6 @@
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
+import { isHeroSightingClaimable } from "@lootlog/domain/hero-sightings";
 import { useTranslation } from "react-i18next";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { canClaimHeroSightings } from "./hero-sightings-permissions";
@@ -9,7 +10,10 @@ type HeroSightingClaimButtonProps = {
   sighting: HeroSightingResponseDto;
 };
 
-/** "Obstawiam" or, once the member camps the hero, "Wycofaj". */
+/**
+ * "Obstawiam" on a hero that will spawn or, once the member camps the hero,
+ * "Wycofaj", which stays after the hero spawned.
+ */
 export const HeroSightingClaimButton = ({
   sighting,
 }: HeroSightingClaimButtonProps) => {
@@ -22,6 +26,7 @@ export const HeroSightingClaimButton = ({
   if (
     !canToggle ||
     sighting.closedAt !== null ||
+    (!isClaimed && !isHeroSightingClaimable(sighting)) ||
     !canClaimHeroSightings(accessPolicy)
   )
     return null;

@@ -671,7 +671,7 @@
         "world": "Berufs",
         "heroName": "Tepeyollotl",
         "heroLevel": "258b",
-        "state": "Grasuje w",
+        "state": "Pojawi się w",
         "mapName": "Oztotl Tzacua p.2 - sala 2",
         "detectedBy": "Kamil"
       },
@@ -685,7 +685,7 @@
         "scheduledFor": "Czas wysyłki",
         "heroName": "Nazwa herosa",
         "heroLevel": "Poziom herosa",
-        "state": "Stan (grasuje / pojawi się / pojawił się)",
+        "state": "Stan (pojawi się w)",
         "mapName": "Mapa",
         "detectedBy": "Kto wykrył"
       },
@@ -713,10 +713,10 @@
       "triggerOptions": {
         "timerBeforeSpawn": "Gdy zbliża się respawn potwora z ustawionym timerem.",
         "scheduledMessage": "O wybranej porze, jednorazowo lub cyklicznie.",
-        "heroSighted": "Gdy ktoś z Lootloga wykryje herosa albo heros pojawi się w wykrytym miejscu."
+        "heroSighted": "Gdy ktoś z Lootloga wykryje, gdzie pojawi się heros."
       },
       "whenTimer": "Lootlog wyśle przypomnienie, gdy ktoś z Lootloga ustawi timer wybranego potwora.",
-      "whenHeroSighting": "Lootlog wyśle wiadomość, gdy wykrywacz pokaże nowe miejsce herosa na wybranym świecie, a potem gdy heros pojawi się w wykrytym miejscu.",
+      "whenHeroSighting": "Lootlog wyśle wiadomość, gdy wykrywacz pokaże, gdzie na wybranym świecie pojawi się heros. O grasującym herosie nie wysyła nic.",
       "whenScheduledMessage": "Lootlog wyśle wiadomość w wybranym terminie, a przy harmonogramie w każdym kolejnym.",
       "unsavedNewRule": "Nowa reguła nie jest jeszcze zapisana",
       "targetsDescription": "Wybierz jeden lub więcej kanałów docelowych. Możesz też dodać nowy bez opuszczania formularza."

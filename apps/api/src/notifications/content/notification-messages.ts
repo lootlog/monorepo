@@ -26,13 +26,8 @@ export const heroSightingAddedByHand = (memberName: string) =>
 
 export const HERO_SIGHTED_TITLE = "Wykryto herosa";
 
-export const HERO_SPAWNED_TITLE = "Heros się pojawił";
-
-export const HERO_SIGHTING_STATE_LABEL = {
-  ROAMING: "Grasuje w",
-  SPAWNING: "Pojawi się w",
-  SPAWNED: "Pojawił się w",
-} as const;
+/** Only a hero that will spawn is announced, so the state has one wording. */
+export const HERO_SIGHTING_STATE_LABEL = "Pojawi się w";
 
 export const heroSightingMessage = (
   heroName: string,
