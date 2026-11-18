@@ -100,8 +100,12 @@ export const StatsCardSettingsSection = ({
           toast.success(t("settings.general.statsCard.refreshSuccess"));
         },
         onError: (error) => {
-          if (error.status === 429 && error.retryAt !== undefined) {
-            setNextRefresh({ guildId: guild.id, at: error.retryAt });
+          if (error.status === 429) {
+            if (error.retryAt === undefined) {
+              toast.error(t("common.cooldown.rateLimited"));
+            } else {
+              setNextRefresh({ guildId: guild.id, at: error.retryAt });
+            }
 
             return;
           }

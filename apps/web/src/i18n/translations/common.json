@@ -41,7 +41,9 @@
     "retryIn": "Spróbuj ponownie za {{time}}"
   },
   "cooldown": {
-    "nextRefreshIn": "Kolejne odświeżenie za {{time}}"
+    "nextRefreshIn": "Kolejne odświeżenie za {{time}}",
+    "started": "Odświeżanie jest chwilowo wstrzymane. Kolejne odświeżenie za {{time}}.",
+    "rateLimited": "Odświeżano niedawno. Spróbuj ponownie za chwilę."
   },
   "boolean": {
     "yes": "Tak",

@@ -455,6 +455,8 @@ describe("API client transport", () => {
       Date.parse("2026-11-18T12:05:00Z"),
     ],
     ["an unreadable value", "soon", undefined],
+    ["a timestamp that is not an HTTP-date", "2026-11-18T12:05:00Z", undefined],
+    ["a delay no date can represent", "9000000000000", undefined],
   ])(
     "reads the retry time of a refused request from %s",
     async (_, retryAfter, retryAt) => {
@@ -477,6 +479,7 @@ describe("API client transport", () => {
         (cause: unknown) => cause,
       );
 
+      expect(isApiError(error) && error.status).toBe(429);
       expect(isApiError(error) && error.retryAt).toBe(retryAt);
     },
   );
