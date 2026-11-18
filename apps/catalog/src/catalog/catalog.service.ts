@@ -1,3 +1,4 @@
+import { BOSS_ORIGIN_ICON_DIRECTORIES } from "@lootlog/domain/npc-type";
 import { Effect } from "effect";
 import { maxBy, orderBy, pick, uniqBy } from "es-toolkit";
 import type { Meilisearch, MultiSearchParams, SearchParams } from "meilisearch";
@@ -7,7 +8,11 @@ import type { DropSource } from "#src/items/item-drops";
 import type { ItemDropRate } from "#src/items/items.service";
 import { isElasticLevel } from "#src/items/item-levels";
 import { collapseByNameAndType } from "#src/npcs/npcs.service";
-import { ITEMS_INDEX, NPCS_INDEX } from "#src/projection/catalog-indexes";
+import {
+  earliestSeenByMonster,
+  ITEMS_INDEX,
+  NPCS_INDEX,
+} from "#src/projection/catalog-indexes";
 import {
   ELASTIC_LEVELS,
   elasticItemLevel,
@@ -77,6 +82,10 @@ type CatalogNpcDocument = {
   formerLevels?: CatalogNpcsResponseDto_Output["hits"][number]["formerLevels"];
   current?: boolean;
   monsterKey: string;
+  /** When this identity was first seen, in epoch milliseconds; stored. */
+  firstSeenAt?: number | null;
+  /** When the monster was first seen under any identity; the index derives it. */
+  monsterFirstSeenAt?: number | null;
 };
 
 const page = (query: { limit?: number; offset?: number }) => ({
@@ -200,6 +209,7 @@ const NPC_FIELDS = [
   "formerLevels",
   "current",
   "monsterKey",
+  "monsterFirstSeenAt",
 ] as const satisfies ReadonlyArray<keyof CatalogNpcDocument>;
 
 /** An NPC entry as the catalog lists it, under its catalog key. */
@@ -208,12 +218,17 @@ const toCatalogNpc = ({
   identityNamespace: _namespace,
   current: _current,
   monsterKey: _monsterKey,
+  monsterFirstSeenAt,
   locations,
   formerLevels,
   ...npc
 }: CatalogNpcDocument) => ({
   ...npc,
   key: uid,
+  firstSeenOn:
+    monsterFirstSeenAt === undefined || monsterFirstSeenAt === null
+      ? null
+      : new Date(monsterFirstSeenAt).toISOString().slice(0, 10),
   locations: locations ?? [],
   formerLevels: formerLevels ?? [],
 });
@@ -419,8 +434,85 @@ export const makeCatalogModule = (
     } satisfies CatalogItemsResponseDto_Output;
   });
 
-  /** Strongest first keeps level-less objects at the end. */
-  const NPC_ORDER = ["lvl:desc", "name:asc"];
+  /**
+   * The order of a listing: strongest first unless the query asks otherwise,
+   * which keeps level-less objects at the end, and by name within a level.
+   */
+  const npcOrder = (sort: CatalogControllerGetNpcsQuery["sort"]) => {
+    if (sort?.startsWith("name:")) return [sort];
+
+    return [
+      sort === "firstSeenOn:desc"
+        ? "monsterFirstSeenAt:desc"
+        : (sort ?? "lvl:desc"),
+      "name:asc",
+    ];
+  };
+
+  /** NPCs first seen in a month, from its first instant to the next month's. */
+  const firstSeenMonthFilter = ({
+    firstSeenMonth,
+  }: CatalogControllerGetNpcsQuery) => {
+    if (firstSeenMonth === undefined) return undefined;
+
+    const [year = 0, month = 1] = firstSeenMonth.split("-").map(Number);
+
+    return `monsterFirstSeenAt >= ${Date.UTC(year, month - 1)} AND monsterFirstSeenAt < ${Date.UTC(year, month)}`;
+  };
+
+  /**
+   * Titans and colossi of the asked origins; NPCs of other types pass. An
+   * origin is the directory of the boss's graphic, and an event's is any
+   * directory the boss type does not own.
+   */
+  const bossOriginFilter = ({ bossOrigins }: CatalogControllerGetNpcsQuery) => {
+    if (!bossOrigins?.length) return undefined;
+
+    const asked = new Set<string>(bossOrigins);
+
+    const bosses = Object.entries(BOSS_ORIGIN_ICON_DIRECTORIES).flatMap(
+      ([type, directories]) => {
+        const owned = Object.entries(directories);
+
+        const origins = [
+          ...owned
+            .filter(([origin]) => asked.has(origin))
+            .map(
+              ([, directory]) => `iconDirectory = ${JSON.stringify(directory)}`,
+            ),
+          ...(asked.has("EVENT")
+            ? [
+                `iconDirectory NOT IN ${JSON.stringify(owned.map(([, directory]) => directory))}`,
+              ]
+            : []),
+        ];
+
+        return origins.length > 0
+          ? [`(type = ${JSON.stringify(type)} AND (${origins.join(" OR ")}))`]
+          : [];
+      },
+    );
+
+    const bossTypes = JSON.stringify(Object.keys(BOSS_ORIGIN_ICON_DIRECTORIES));
+
+    return `(${[`type NOT IN ${bossTypes}`, ...bosses].join(" OR ")})`;
+  };
+
+  /**
+   * NPCs of a level range. An NPC whose level follows the player's is stored
+   * without one, at 0, and a range leaves it out.
+   */
+  const npcLevelFilter = ({
+    minLevel,
+    maxLevel,
+  }: CatalogControllerGetNpcsQuery) => {
+    if (minLevel === undefined && maxLevel === undefined) return undefined;
+
+    return [
+      `lvl >= ${Math.max(Math.floor(minLevel ?? 1), 1)}`,
+      ...(maxLevel === undefined ? [] : [`lvl <= ${Math.floor(maxLevel)}`]),
+    ].join(" AND ");
+  };
 
   /**
    * Monsters by catalog key, read from the database. An old link may name a
@@ -447,29 +539,40 @@ export const makeCatalogModule = (
     const { limit, offset } = page(query);
     const listed = found.slice(offset, offset + limit);
 
-    const superseded = [
-      ...new Set(
-        listed.flatMap(({ current, monsterKey }) =>
-          current === false ? [monsterKey] : [],
-        ),
-      ),
-    ];
-
-    const currentIdentities =
-      superseded.length === 0
+    // Every identity of the listed monsters: the current one shows a
+    // monster as it is now, and the earliest sighting of any dates it.
+    const identities =
+      listed.length === 0
         ? []
-        : orderBy(
-            (yield* reads.npcsByMonsterKeys(superseded)).filter(
-              ({ current }) => current !== false,
-            ),
-            [({ lvl }) => lvl, ({ name }) => name],
-            ["desc", "asc"],
-          );
+        : yield* reads.npcsByMonsterKeys([
+            ...new Set(listed.map(({ monsterKey }) => monsterKey)),
+          ]);
+
+    const superseded = new Set(
+      listed.flatMap(({ current, monsterKey }) =>
+        current === false ? [monsterKey] : [],
+      ),
+    );
+
+    const currentIdentities = orderBy(
+      identities.filter(
+        ({ current, monsterKey }) =>
+          current !== false && superseded.has(monsterKey),
+      ),
+      [({ lvl }) => lvl, ({ name }) => name],
+      ["desc", "asc"],
+    );
+
+    const monsterFirstSeen = earliestSeenByMonster(identities);
 
     return {
       estimatedTotalHits: found.length,
       hits: collapseByNameAndType([...listed, ...currentIdentities]).map(
-        (npc) => toCatalogNpc(pick(npc, NPC_FIELDS)),
+        (npc) =>
+          toCatalogNpc({
+            ...pick(npc, NPC_FIELDS),
+            monsterFirstSeenAt: monsterFirstSeen.get(npc.monsterKey) ?? null,
+          }),
       ),
     } satisfies CatalogNpcsResponseDto_Output;
   });
@@ -498,6 +601,9 @@ export const makeCatalogModule = (
       query.types?.length
         ? buildMeilisearchInFilter("type", query.types)
         : undefined,
+      bossOriginFilter(query),
+      npcLevelFilter(query),
+      firstSeenMonthFilter(query),
     ].filter((filter) => filter !== undefined);
 
     const params: SearchParams = {
@@ -510,7 +616,7 @@ export const makeCatalogModule = (
       distinct: lookup ? undefined : "monsterKey",
       // Without a query Meilisearch returns documents in storage order; a
       // query still ranks by relevance before this.
-      sort: NPC_ORDER,
+      sort: npcOrder(query.sort),
     };
 
     const search = (searchParams: SearchParams) =>

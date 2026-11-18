@@ -179,3 +179,45 @@ export const getNpcType = <TNpcType extends string>(
 
   return npcTypes.COMMON;
 };
+
+/**
+ * The directory Margonem files an NPC graphic under, such as `kol` for the
+ * colossi of the regular game; empty for a graphic outside any directory.
+ */
+export const npcIconDirectory = (icon: string): string => {
+  const [directory, ...rest] = normalizeNpcIcon(icon).split("/");
+
+  return rest.length > 0 && directory ? directory : "";
+};
+
+/**
+ * Where a titan or a colossus comes from. Margonem gives each kind of boss
+ * one weight, so the graphic's directory tells them apart: the bosses of the
+ * regular game, the heroes fought as colossi in their hideouts during
+ * Tropiciele Herosów, which keep the hero's graphic, and the bosses of every
+ * other event.
+ */
+export const BOSS_ORIGINS = ["REGULAR", "HERO_TRACKERS", "EVENT"] as const;
+
+export type BossOrigin = (typeof BOSS_ORIGINS)[number];
+
+/**
+ * The graphic directory of each origin that has one of its own, by boss
+ * type. A boss drawn from any other directory is an event's.
+ */
+export const BOSS_ORIGIN_ICON_DIRECTORIES = {
+  TITAN: { REGULAR: "tyt" },
+  COLOSSUS: { REGULAR: "kol", HERO_TRACKERS: "her" },
+} as const satisfies Record<string, Partial<Record<BossOrigin, string>>>;
+
+export type OriginBossType = keyof typeof BOSS_ORIGIN_ICON_DIRECTORIES;
+
+export const bossOrigin = (type: OriginBossType, icon: string): BossOrigin => {
+  const directory = npcIconDirectory(icon);
+
+  const own = Object.entries(BOSS_ORIGIN_ICON_DIRECTORIES[type]).find(
+    ([, ownDirectory]) => ownDirectory === directory,
+  );
+
+  return BOSS_ORIGINS.find((origin) => origin === own?.[0]) ?? "EVENT";
+};

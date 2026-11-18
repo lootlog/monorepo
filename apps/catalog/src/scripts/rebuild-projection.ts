@@ -25,12 +25,16 @@ import {
   type SearchOperationFailure,
 } from "@lootlog/meilisearch/operation-failure";
 import { getMeilisearchErrorCode } from "@lootlog/meilisearch/query-builder";
-import { asc, gt } from "drizzle-orm";
+import { asc, gt, sql } from "drizzle-orm";
 import { Effect, Layer, Redacted } from "effect";
 import { type EnqueuedTaskPromise, Meilisearch } from "meilisearch";
 import { CatalogConfig } from "#src/config/catalog-config";
 import { CatalogDatabase, PgClientLive } from "#src/database/database";
-import { catalogIndexes } from "#src/projection/catalog-indexes";
+import { catalogNpcTable } from "#src/database/schema";
+import {
+  catalogIndexes,
+  type MonsterFirstSeen,
+} from "#src/projection/catalog-indexes";
 
 const ROWS_PER_PAGE = 5_000;
 
@@ -103,9 +107,35 @@ const rebuildProjection = Effect.gen(function* () {
   /** Reads a table page by page in primary key order into a shadow index. */
   const fill = Effect.fnUntraced(function* (
     indexName: string,
-    table: (typeof catalogIndexes)[keyof typeof catalogIndexes]["table"],
+    {
+      table,
+      toDocuments,
+    }: (typeof catalogIndexes)[keyof typeof catalogIndexes],
   ) {
     const filledAt = performance.now();
+
+    // Pages cut a monster's identities apart, so its first sighting is read
+    // over the whole table first. `min` over the JSON field has no builder.
+    const monsterFirstSeen: MonsterFirstSeen =
+      table === catalogNpcTable
+        ? new Map(
+            (yield* database
+              .select({
+                monsterKey: catalogNpcTable.monsterKey,
+                firstSeenAt: sql<
+                  string | null
+                >`min((${catalogNpcTable.document}->>'firstSeenAt')::bigint)`,
+              })
+              .from(catalogNpcTable)
+              .groupBy(catalogNpcTable.monsterKey)).flatMap(
+              ({ monsterKey, firstSeenAt }) =>
+                firstSeenAt === null
+                  ? []
+                  : [[monsterKey, Number(firstSeenAt)] as const],
+            ),
+          )
+        : new Map();
+
     const index = meilisearch.index(rebuildIndexName(indexName));
     const enqueued: EnqueuedTaskPromise[] = [];
     let after = "";
@@ -119,7 +149,12 @@ const rebuildProjection = Effect.gen(function* () {
         .orderBy(asc(table.uid))
         .limit(ROWS_PER_PAGE);
 
-      for (const batch of toBatches(rows.map(({ document }) => document))) {
+      for (const batch of toBatches(
+        toDocuments(
+          rows.map(({ document }) => document),
+          monsterFirstSeen,
+        ),
+      )) {
         const task = index.addDocuments(batch, {
           primaryKey: SEARCH_INDEX_PRIMARY_KEY,
         });
@@ -169,7 +204,7 @@ const rebuildProjection = Effect.gen(function* () {
   );
   yield* Effect.forEach(
     indexes,
-    ([indexName, { table }]) => fill(indexName, table),
+    ([indexName, index]) => fill(indexName, index),
     { concurrency: "unbounded", discard: true },
   );
   yield* completeTask("catalog.rebuild.swap", () =>
