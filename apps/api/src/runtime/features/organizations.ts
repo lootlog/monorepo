@@ -17,7 +17,9 @@ import {
   makeAccessibleGuilds,
 } from "#src/guilds/accessible-guilds.data-layer";
 import { makeCurrentUserGuilds } from "#src/guilds/current-user-guilds.data-layer";
+import { makeGuildChannelDeletedDispatcher } from "#src/guilds/guild-channel-deleted-outbox";
 import { makeGuildDiscordSyncData } from "#src/guilds/guild-discord-sync.data-layer";
+import { makeOutboxWorker } from "#src/shared/outbox-worker";
 import { makeManageableGuilds } from "#src/guilds/manageable-guilds.data-layer";
 import { makeUserAccountDeletion } from "#src/users/user-account-deletion.data-layer";
 import { makeUserPreferencesData } from "#src/users/user-preferences.data-layer";
@@ -53,13 +55,27 @@ export const guildDiscordSyncLive = Layer.effect(
       config.discordBotServiceUrl,
     );
 
+    const channelDeletions = yield* makeOutboxWorker(
+      "Discord channel deletion",
+      makeGuildChannelDeletedDispatcher(database, (payload, messageId) =>
+        rabbit.publish(
+          eventMessage(
+            RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
+            payload,
+            {
+              messageId,
+            },
+          ),
+        ),
+      )(),
+    );
+
+    yield* channelDeletions.run.pipe(Effect.forkScoped);
+
     return makeGuildDiscordSyncData(database, {
       staleAfterMs: DISCORD_GUILD_SYNC_STALE_AFTER_SECONDS * 1000,
       refresh: (guildId) => discordBot.refreshGuildChannels(guildId),
-      publishChannelDeleted: (payload) =>
-        rabbit.publish(
-          eventMessage(RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED, payload),
-        ),
+      signalChannelDeletions: channelDeletions.signal,
     });
   }),
 );
