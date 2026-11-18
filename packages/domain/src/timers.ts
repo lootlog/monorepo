@@ -21,6 +21,17 @@ export type SpawnWindowOffsets = {
   readonly maxOffsetMs: number;
 };
 
+/** A Hero Tracker returns about 90 minutes after its entrance closes. */
+export const HERO_TRACKER_RESP_BASE_SECONDS = 90 * 60;
+
+/**
+ * A Hero Tracker's respawn on a world whose NPCs return
+ * `npcRespawnMultiplier` times faster than the base time.
+ */
+export const getHeroTrackerRespBaseSeconds = (
+  npcRespawnMultiplier: number,
+): number => Math.round(HERO_TRACKER_RESP_BASE_SECONDS / npcRespawnMultiplier);
+
 export const spawnWindowFromRespawn = ({
   respBaseSeconds,
   respawnRandomness,
