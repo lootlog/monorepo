@@ -53,8 +53,6 @@ export function SetUpgradeCost() {
     };
   });
 
-  if (rows.length === 0) return null;
-
   const byRarity = groupBy(rows, ({ item }) => resolveItemRarity(item.rarity));
 
   const currencyTiles = ITEM_RARITIES_BY_VALUE.flatMap((rarity) => {
@@ -95,7 +93,11 @@ export function SetUpgradeCost() {
         </ToggleGroupItem>
       </ToggleGroup>
 
-      {points === 0 ? (
+      {rows.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+          {t("setPage.noItems")}
+        </p>
+      ) : points === 0 ? (
         <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
           {t("setPage.upgradeCostNone")}
         </p>

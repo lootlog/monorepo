@@ -6,22 +6,33 @@ import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { itemForCharacter } from "@lootlog/domain/elastic-level";
 import type { EquipmentSet } from "@/lib/equipment-set";
-import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-slots";
+import {
+  EQUIPMENT_SLOTS,
+  type EquipmentSlotId,
+  handsFit,
+} from "@/lib/equipment-slots";
+import {
+  findRequirementIssues,
+  type ItemRequirementIssue,
+} from "@/lib/item-stat-totals";
 import {
   type ItemUpgrade,
   NO_UPGRADE,
   upgradeItemStat,
 } from "@lootlog/domain/item-upgrade";
 
+export type WornItemIssue = ItemRequirementIssue | "hands";
+
 export type WornItem = {
   /** The item at the set's level, with the stats its upgrade gives it. */
   item: CatalogItemDtoOutput;
   upgrade: ItemUpgrade;
+  /** What keeps the set's character from wearing the item as the set has it. */
+  issues: readonly WornItemIssue[];
 };
 
-/** The set and its items by id; every reader shares one catalog request. */
-const useSetItems = () => {
-  const { set } = useEquipmentSet();
+/** A set's items by id; every reader shares one catalog request. */
+export const useSetCatalogItems = (set: EquipmentSet) => {
   const ids = Object.values(set.items);
 
   const { data, isPlaceholderData } = useCatalogControllerGetItems(
@@ -35,12 +46,18 @@ const useSetItems = () => {
   );
 
   return {
-    set,
     itemsById: new Map((data?.hits ?? []).map((item) => [item.id, item])),
     // While a changed set loads, the previous response stands in and lacks
     // the new items, so the set is not yet as worn.
     isLoaded: ids.length === 0 || (data !== undefined && !isPlaceholderData),
   };
+};
+
+/** The set from the page's context with its items. */
+const useSetItems = () => {
+  const { set } = useEquipmentSet();
+
+  return { set, ...useSetCatalogItems(set) };
 };
 
 const wornIn = (
@@ -54,10 +71,21 @@ const wornIn = (
   if (!item) return undefined;
 
   const looted = itemForCharacter(item, set.level);
+  const stat = upgradeItemStat(looted, upgrade);
+
+  // A shared link can carry a pair no character holds at once.
+  const weaponId = slotId === "secondary" ? set.items.weapon : undefined;
+  const weapon = weaponId === undefined ? undefined : itemsById.get(weaponId);
 
   return {
-    item: { ...looted, stat: upgradeItemStat(looted, upgrade) },
+    item: { ...looted, stat },
     upgrade,
+    issues: [
+      ...findRequirementIssues(stat, set),
+      ...(weapon && !handsFit(weapon.type, item.type)
+        ? (["hands"] as const)
+        : []),
+    ],
   };
 };
 

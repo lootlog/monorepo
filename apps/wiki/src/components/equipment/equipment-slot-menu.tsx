@@ -15,6 +15,7 @@ import {
   ContextMenuTrigger,
 } from "@lootlog/ui/components/context-menu";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
+import { useSetItemPicker } from "@/contexts/set-item-picker-context";
 import type { WornItem } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 import { itemPageParams, itemPageSearch } from "@/lib/catalog-links";
@@ -51,6 +52,7 @@ export function EquipmentSlotMenu({
   children,
 }: EquipmentSlotMenuProps) {
   const { upgrade, unequip } = useEquipmentSet();
+  const { pickItem } = useSetItemPicker();
   const { item } = worn;
   const canUpgrade = isUpgradable(item);
   const bonuses = upgradeBonusOptions(item);
@@ -164,6 +166,9 @@ export function EquipmentSlotMenu({
             <ContextMenuSeparator />
           </>
         ) : null}
+        <ContextMenuItem onClick={() => pickItem(slotId)}>
+          {t("equipment.change")}
+        </ContextMenuItem>
         <ContextMenuItem
           render={
             <Link

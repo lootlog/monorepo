@@ -1,3 +1,5 @@
+import { groupBy } from "es-toolkit";
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import {
   upgradedItemLevel,
   type UpgradeLevel,
@@ -114,6 +116,92 @@ export const legendaryBonusValue = (
         total + Math.round(startValue * 0.5 ** index * strength),
       0,
     );
+
+/** What a bonus's value means: most are chances, the rest change damage. */
+export const LEGENDARY_BONUS_PARAMETERS: Record<
+  CalculableLegendaryBonus,
+  "chance" | "reduction" | "ignore"
+> = {
+  verycrit: "chance",
+  holytouch: "chance",
+  curse: "chance",
+  glare: "chance",
+  cleanse: "chance",
+  anguish: "chance",
+  critred: "reduction",
+  facade: "reduction",
+  puncture: "ignore",
+};
+
+export const isCalculableLegendaryBonus = (
+  name: string,
+): name is CalculableLegendaryBonus =>
+  CALCULABLE_LEGENDARY_BONUSES.some((bonus) => bonus === name);
+
+// Characters above this level count by their operational level.
+const OPERATIONAL_LEVEL_CAP = 300;
+
+// An item's own bonus and the ones set in its socket.
+const LEGENDARY_BONUS_STATS = new Set([
+  "legbon",
+  "socket_fleeting_legbon",
+  "socket_injection_legbon",
+]);
+
+export type WornLegendaryBonus = {
+  name: string;
+  /** How many worn items carry the bonus. */
+  items: number;
+  /** The percent the items add up to; none for a bonus without one. */
+  value: number | undefined;
+  /** Whether the character has outgrown one of the items. */
+  isWeakened: boolean;
+};
+
+/**
+ * The legendary bonuses of worn items on a character of `characterLevel`,
+ * in the order the items carry them, socketed bonuses included. The stat
+ * holds the bonus and the level it is as strong as, which an upgraded item
+ * has already raised.
+ */
+export const wornLegendaryBonuses = (
+  stats: ReadonlyArray<string>,
+  characterLevel: number,
+): WornLegendaryBonus[] => {
+  const level = Math.min(characterLevel, OPERATIONAL_LEVEL_CAP);
+
+  const worn = stats.flatMap((stat) =>
+    parseItemStatEntries(stat).flatMap(({ key, value }) => {
+      if (!LEGENDARY_BONUS_STATS.has(key) || value === true) {
+        return [];
+      }
+
+      const [name, itemLevel] = value.split(",");
+
+      return name
+        ? [{ name, strength: legendaryBonusStrength(level, Number(itemLevel)) }]
+        : [];
+    }),
+  );
+
+  return Object.entries(groupBy(worn, ({ name }) => name)).map(
+    ([name, items]) => {
+      // An item whose level the stat does not give counts at full strength.
+      const strengths = items.map(({ strength }) =>
+        Number.isNaN(strength) ? 1 : strength,
+      );
+
+      return {
+        name,
+        items: items.length,
+        value: isCalculableLegendaryBonus(name)
+          ? legendaryBonusValue(LEGENDARY_BONUS_START_VALUES[name], strengths)
+          : undefined,
+        isWeakened: strengths.some((strength) => strength < 1),
+      };
+    },
+  );
+};
 
 /** Krwawa udręka bleeds its target for this many turns. */
 export const ANGUISH_TURNS = 5;

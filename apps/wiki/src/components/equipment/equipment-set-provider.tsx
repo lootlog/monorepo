@@ -6,9 +6,11 @@ import {
   EMPTY_EQUIPMENT_SET,
   encodeEquipmentSet,
   EQUIPMENT_SET_PARAM,
+  equipItem,
   LEGACY_EQUIPMENT_SET_PARAM,
+  unequipSlot,
 } from "@/lib/equipment-set";
-import { findEquipmentSlot } from "@/lib/equipment-slots";
+import { useSetCatalogItems } from "@/hooks/use-worn-items";
 
 const STORED_SET = {
   storageKey: "lootlog-wiki-equipment-set",
@@ -20,35 +22,22 @@ const STORED_SET = {
 
 export function EquipmentSetProvider({ children }: { children: ReactNode }) {
   const [set, update] = useSharedStoredState(STORED_SET);
+  // The worn items' types, which decide what a newly worn item pushes out.
+  const { itemsById } = useSetCatalogItems(set);
 
   return (
     <EquipmentSetContext
       value={{
         set,
-        equip: (item, upgrade) => {
-          const slot = findEquipmentSlot(item.type);
-
-          if (!slot) return;
-
-          update((current) => {
-            const {
-              items: { [slot.id]: wornId },
-              upgrades: { [slot.id]: wornUpgrade, ...upgrades },
-            } = current;
-
-            const nextUpgrade =
-              upgrade ?? (wornId === item.id ? wornUpgrade : undefined);
-
-            return {
-              ...current,
-              items: { ...current.items, [slot.id]: item.id },
-              upgrades:
-                nextUpgrade && nextUpgrade.level > 0
-                  ? { ...upgrades, [slot.id]: nextUpgrade }
-                  : upgrades,
-            };
-          });
-        },
+        equip: (item, upgrade) =>
+          update((current) =>
+            equipItem(
+              current,
+              item,
+              upgrade,
+              (itemId) => itemsById.get(itemId)?.type,
+            ),
+          ),
         upgrade: (slotId, upgrade) =>
           update((current) => {
             if (current.items[slotId] === undefined) return current;
@@ -63,14 +52,7 @@ export function EquipmentSetProvider({ children }: { children: ReactNode }) {
                   : upgrades,
             };
           }),
-        unequip: (slotId) =>
-          update(
-            ({
-              items: { [slotId]: _removed, ...items },
-              upgrades: { [slotId]: _upgrade, ...upgrades },
-              ...current
-            }) => ({ ...current, items, upgrades }),
-          ),
+        unequip: (slotId) => update((current) => unequipSlot(current, slotId)),
         clear: () => update(() => EMPTY_EQUIPMENT_SET),
         setCharacter: (character) =>
           update((current) => ({

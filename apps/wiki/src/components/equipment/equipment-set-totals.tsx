@@ -1,4 +1,3 @@
-import { cn } from "cn";
 import { t } from "@/i18n/messages";
 import {
   SET_STAT_SECTIONS,
@@ -12,6 +11,7 @@ import {
   skillStatValue,
   setStatValueWithSkills,
 } from "@/lib/skills/skill-stats";
+import { EquipmentStatGrid } from "./equipment-stat-grid";
 import { EquipmentStatRow } from "./equipment-stat-row";
 import { EquipmentStatSection } from "./equipment-stat-section";
 
@@ -24,8 +24,6 @@ type EquipmentSetTotalsProps = {
   skills?: { bonuses: SkillBonuses; level: number | null };
   /** Whether the set has loaded, so a change of its totals is the User's. */
   isLoaded: boolean;
-  /** `columns` sets the sections side by side, for a wide window. */
-  layout?: "stack" | "columns";
 };
 
 /**
@@ -37,7 +35,6 @@ export function EquipmentSetTotals({
   totals,
   skills,
   isLoaded,
-  layout = "stack",
 }: EquipmentSetTotalsProps) {
   const valueOf = (stat: SetStatDefinition) =>
     skills
@@ -60,21 +57,7 @@ export function EquipmentSetTotals({
   const caption = hasTotals ? t("equipment.totalsHint") : t("equipment.empty");
 
   return (
-    <div
-      className={cn(
-        layout === "columns"
-          ? "grid items-start gap-x-8 gap-y-5 @lg:grid-cols-2 @[54rem]:grid-cols-4"
-          : "flex flex-col gap-3",
-      )}
-    >
-      <p
-        className={cn(
-          layout === "columns" && "col-span-full",
-          "text-xs text-pretty text-muted-foreground",
-        )}
-      >
-        {caption}
-      </p>
+    <EquipmentStatGrid caption={caption}>
       {SET_STAT_SECTIONS.map((section) => {
         const isShown = section.stats.some(hasValue);
 
@@ -112,6 +95,6 @@ export function EquipmentSetTotals({
           />
         ))}
       </EquipmentStatSection>
-    </div>
+    </EquipmentStatGrid>
   );
 }
