@@ -113,11 +113,7 @@ describe("SingleTimer", () => {
       const view = render(
         <QueryClientProvider client={fixture.queryClient}>
           <TimerClockProvider>
-            <TimerGridPopups
-              gridRef={null}
-              guildNamesById={{}}
-              timersByKey={new Map()}
-            >
+            <TimerGridPopups guildNamesById={{}} timersByKey={new Map()}>
               <SingleTimer
                 popupKey="tile"
                 guildIds={[displayedTimer.guildId]}
@@ -200,7 +196,6 @@ describe("SingleTimer", () => {
         <QueryClientProvider client={fixture.queryClient}>
           <TimerClockProvider>
             <TimerGridPopups
-              gridRef={null}
               guildNamesById={{ "guild-1": "Alpha" }}
               timersByKey={new Map([["tile", timer]])}
             >
@@ -258,11 +253,7 @@ describe("SingleTimer", () => {
     const view = render(
       <QueryClientProvider client={fixture.queryClient}>
         <TimerClockProvider>
-          <TimerGridPopups
-            gridRef={null}
-            guildNamesById={{}}
-            timersByKey={new Map()}
-          >
+          <TimerGridPopups guildNamesById={{}} timersByKey={new Map()}>
             <SingleTimer
               popupKey="tile"
               guildIds={["guild-1"]}
@@ -315,11 +306,7 @@ describe("SingleTimer", () => {
     const view = render(
       <QueryClientProvider client={fixture.queryClient}>
         <TimerClockProvider>
-          <TimerGridPopups
-            gridRef={null}
-            guildNamesById={{}}
-            timersByKey={new Map()}
-          >
+          <TimerGridPopups guildNamesById={{}} timersByKey={new Map()}>
             <SingleTimer
               popupKey="tile"
               guildIds={["guild-1"]}

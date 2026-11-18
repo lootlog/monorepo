@@ -36,7 +36,6 @@ type SingleTimerProps = {
   timer: TimerWithTimeLeft;
   settingsKey: string;
   isHidden?: boolean;
-  showColorStripe?: boolean;
 };
 
 export const SingleTimer: FC<SingleTimerProps> = ({
@@ -47,7 +46,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   timer,
   settingsKey,
   isHidden = false,
-  showColorStripe = true,
 }) => {
   const {
     customColors,
@@ -167,7 +165,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             id={timer.npc.id.toString()}
             paint={paint}
             legacyAppearance={displayConfig.legacyAppearance}
-            showColorStripe={showColorStripe}
             displayMode={displayConfig.singleTimerDisplayMode}
             fontSize={displayConfig.fontSize}
             isPending={isPending}
