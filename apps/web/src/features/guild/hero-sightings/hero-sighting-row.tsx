@@ -11,7 +11,6 @@ import { MemberIdentity } from "@/components/common/member-identity";
 import { RelativeTime } from "@/components/common/relative-time";
 import { HeroSightingClaimButton } from "./hero-sighting-claim-button";
 import { HeroSightingClaims } from "./hero-sighting-claims";
-import { DETECTOR_NAME_CLASS } from "./hero-sighting-detector-highlight";
 import { HeroSightingHero } from "./hero-sighting-hero";
 import { HeroSightingHistoryButton } from "./hero-sighting-history-button";
 import { getHeroSightingStatus } from "./hero-sighting-status";
@@ -104,13 +103,6 @@ export const HeroSightingRow = ({
           <span className="min-w-0 break-words">{sighting.mapName}</span>
         </p>
         <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-          <MemberIdentity
-            member={detector}
-            fallback={detectorFallback}
-            display="avatar"
-            className="shrink-0"
-            avatarClassName="size-4"
-          />
           {/* A row of pieces, so a long name shortens without hiding the rest. */}
           <span className="flex min-w-0 items-center whitespace-pre">
             <span className="shrink-0">
@@ -124,11 +116,12 @@ export const HeroSightingRow = ({
               member={detector}
               fallback={detectorFallback}
               display="name"
-              nameClassName={cn("text-xs", DETECTOR_NAME_CLASS)}
+              nameClassName="text-xs"
             />
             {sighting.detectorCharacter && (
-              <span className="min-w-0 truncate">
-                {` (${sighting.detectorCharacter.name})`}
+              // Truncation collapses a leading space, so the gap is padding.
+              <span className="min-w-0 truncate pl-1">
+                {`(${sighting.detectorCharacter.name})`}
               </span>
             )}
             {lastSeenByOther && (

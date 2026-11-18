@@ -79,7 +79,12 @@ export const MemberIdentity = ({
         ))}
       {display !== "avatar" && (
         <span
-          className={cn("min-w-0 truncate text-sm font-medium", nameClassName)}
+          className={cn(
+            "min-w-0 truncate text-sm font-medium",
+            // The underline takes the colour of the name, not of the button.
+            interactive && "group-hover/member:underline",
+            nameClassName,
+          )}
           style={color ? { color } : undefined}
         >
           {name}
@@ -111,7 +116,7 @@ export const MemberIdentity = ({
               "pointer-events-auto cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-ring",
               display === "avatar"
                 ? "rounded-full hover:brightness-110"
-                : "rounded-sm hover:underline",
+                : "group/member rounded-sm",
             )}
             // A member inside a clickable row opens only their own profile.
             onClick={(event) => event.stopPropagation()}
