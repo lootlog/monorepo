@@ -16,6 +16,8 @@ import { t } from "@/i18n/messages";
 import {
   CALCULABLE_LEGENDARY_BONUSES,
   type CalculableLegendaryBonus,
+  isCalculableLegendaryBonus,
+  LEGENDARY_BONUS_PARAMETERS,
   LEGENDARY_BONUS_START_VALUES,
   legendaryBonusStrength,
   legendaryBonusValue,
@@ -37,29 +39,10 @@ import { CalculatorResults } from "./calculator-results";
 // A set holds at most this many items, so no more can share a bonus.
 const MAX_ITEMS = 10;
 
-// What a bonus's value means: most are chances, the rest change damage.
-const BONUS_PARAMETER: Record<
-  CalculableLegendaryBonus,
-  "chance" | "reduction" | "ignore"
-> = {
-  verycrit: "chance",
-  holytouch: "chance",
-  curse: "chance",
-  glare: "chance",
-  cleanse: "chance",
-  anguish: "chance",
-  critred: "reduction",
-  facade: "reduction",
-  puncture: "ignore",
-};
-
 const BONUS_OPTIONS = CALCULABLE_LEGENDARY_BONUSES.map((bonus) => ({
   value: bonus,
   label: t(`legendaryBonus.${bonus}`),
 }));
-
-const isCalculableBonus = (value: string): value is CalculableLegendaryBonus =>
-  CALCULABLE_LEGENDARY_BONUSES.some((bonus) => bonus === value);
 
 type BonusItem = { id: string; level: string; upgrade: UpgradeLevel };
 
@@ -142,7 +125,7 @@ export function LegendaryBonusCalculator() {
           results={[
             {
               label: t(
-                `calculators.legendary.parameter.${BONUS_PARAMETER[bonus]}`,
+                `calculators.legendary.parameter.${LEGENDARY_BONUS_PARAMETERS[bonus]}`,
               ),
               value:
                 knownStrengths.length === 0
@@ -166,7 +149,7 @@ export function LegendaryBonusCalculator() {
           <Select
             value={bonus}
             onValueChange={(value) => {
-              if (value && isCalculableBonus(value)) setBonus(value);
+              if (value && isCalculableLegendaryBonus(value)) setBonus(value);
             }}
             items={BONUS_OPTIONS}
           >

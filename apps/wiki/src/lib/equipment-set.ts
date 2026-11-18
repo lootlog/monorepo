@@ -1,6 +1,11 @@
 import { PROFESSION_OPTIONS } from "@/lib/item-options";
 import type { SkillRanks } from "@/lib/skills/skill-tree";
-import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-slots";
+import {
+  EQUIPMENT_SLOTS,
+  type EquipmentSlotId,
+  findEquipmentSlot,
+  handsFit,
+} from "@/lib/equipment-slots";
 import {
   decodeItemUpgrade,
   encodeItemUpgrade,
@@ -30,6 +35,75 @@ export const EMPTY_EQUIPMENT_SET: EquipmentSet = {
   items: {},
   upgrades: {},
   skills: {},
+};
+
+const without = <Value>(
+  record: Partial<Record<EquipmentSlotId, Value>>,
+  slotId: EquipmentSlotId,
+) => {
+  const { [slotId]: _removed, ...rest } = record;
+
+  return rest;
+};
+
+/** The set with the slot emptied. */
+export const unequipSlot = (
+  set: EquipmentSet,
+  slotId: EquipmentSlotId,
+): EquipmentSet => ({
+  ...set,
+  items: without(set.items, slotId),
+  upgrades: without(set.upgrades, slotId),
+});
+
+/**
+ * The set with the item worn in the slot its type belongs to. Without an
+ * `upgrade`, an item already worn keeps its own and another is worn as
+ * dropped. A weapon and the other hand's item that cannot be held together
+ * do not stay together: the one already worn comes off. `typeOf` names the
+ * type of a worn item by its id, as far as the catalog has loaded it.
+ */
+export const equipItem = (
+  set: EquipmentSet,
+  item: { id: number; type: string | null },
+  upgrade: ItemUpgrade | undefined,
+  typeOf: (itemId: number) => string | null | undefined,
+): EquipmentSet => {
+  const slot = findEquipmentSlot(item.type);
+
+  if (!slot) return set;
+
+  const otherHand =
+    slot.id === "weapon"
+      ? "secondary"
+      : slot.id === "secondary"
+        ? "weapon"
+        : undefined;
+
+  const otherId = otherHand ? set.items[otherHand] : undefined;
+  const otherType = otherId === undefined ? undefined : typeOf(otherId);
+
+  const fits =
+    slot.id === "weapon"
+      ? handsFit(item.type, otherType)
+      : handsFit(otherType, item.type);
+
+  const kept = otherHand && !fits ? unequipSlot(set, otherHand) : set;
+
+  const nextUpgrade =
+    upgrade ??
+    (set.items[slot.id] === item.id ? set.upgrades[slot.id] : undefined);
+
+  const upgrades = without(kept.upgrades, slot.id);
+
+  return {
+    ...kept,
+    items: { ...kept.items, [slot.id]: item.id },
+    upgrades:
+      nextUpgrade && nextUpgrade.level > 0
+        ? { ...upgrades, [slot.id]: nextUpgrade }
+        : upgrades,
+  };
 };
 
 /** The query parameter a shared set travels in. */

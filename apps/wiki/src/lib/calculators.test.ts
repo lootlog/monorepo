@@ -7,6 +7,7 @@ import {
   legendaryBonusValue,
   pointsForMaxDefence,
   questExperience,
+  wornLegendaryBonuses,
 } from "./calculators";
 
 // The examples and tables below are the game's, from its combat mechanics
@@ -83,5 +84,28 @@ describe("calculators", () => {
         clanPercent: 10,
       }),
     ).toBe(1235);
+  });
+
+  it("adds up a worn bonus by the level each item's stat gives it", () => {
+    // Two full items of Fasada opieki: 13 + 7. The third bonus has no percent.
+    expect(
+      wornLegendaryBonuses(
+        [
+          "hp=100;legbon=facade,300",
+          "legbon=facade,280",
+          "ac=5;socket_fleeting_legbon=lastheal,300",
+          "hp=5",
+        ],
+        300,
+      ),
+    ).toEqual([
+      { name: "facade", items: 2, value: 20, isWeakened: false },
+      { name: "lastheal", items: 1, value: undefined, isWeakened: false },
+    ]);
+
+    // A level 200 item weakens from 250 and is half gone at 275.
+    expect(wornLegendaryBonuses(["legbon=verycrit,200"], 275)).toEqual([
+      { name: "verycrit", items: 1, value: 9, isWeakened: true },
+    ]);
   });
 });

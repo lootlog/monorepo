@@ -1,11 +1,11 @@
 import { Lock } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";
 import {
   type SkillDefinition,
   skillPlanLevel,
   type SkillRanks,
-  skillRankRange,
   skillState,
   type SkillWeapon,
   spentSkillPoints,
@@ -19,7 +19,13 @@ type SkillTierProps = {
   ranks: SkillRanks;
   level: number | null;
   weapons: ReadonlySet<SkillWeapon>;
-  onRankChange: (skillId: number, rank: number) => void;
+  selectedId: number | undefined;
+  onSelect: (skillId: number) => void;
+  /**
+   * The chosen skill's panel, shown under its tier where the tree has no
+   * room for it at its side.
+   */
+  panel: ReactNode;
 };
 
 /**
@@ -32,7 +38,9 @@ export function SkillTier({
   ranks,
   level,
   weapons,
-  onRankChange,
+  selectedId,
+  onSelect,
+  panel,
 }: SkillTierProps) {
   const skills = tree.filter((skill) => skill.level === tierLevel);
   const requiredPoints = tierPointsRequired(tierLevel);
@@ -44,11 +52,8 @@ export function SkillTier({
   const headingId = `skill-tier-${tierLevel}`;
 
   return (
-    <section
-      aria-labelledby={headingId}
-      className="grid gap-2 md:grid-cols-[8rem_minmax(0,1fr)] md:gap-4"
-    >
-      <div className="flex items-baseline gap-2 md:flex-col md:gap-0.5 md:pt-2">
+    <section aria-labelledby={headingId} className="flex flex-col gap-2">
+      <div className="flex items-baseline gap-2">
         <h3
           id={headingId}
           className={cn(
@@ -65,18 +70,22 @@ export function SkillTier({
           {t("skills.tierRequirement", { points: requiredPoints })}
         </p>
       </div>
-      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <ul className="grid grid-cols-1 gap-2 @md:grid-cols-2 @2xl:grid-cols-3">
         {skills.map((skill) => (
           <SkillNode
             key={skill.id}
             skill={skill}
             state={skillState(skill, ranks, level, weapons)}
-            range={skillRankRange(tree, skill, ranks, level)}
-            level={level}
-            onRankChange={(rank) => onRankChange(skill.id, rank)}
+            isSelected={skill.id === selectedId}
+            onSelect={() => onSelect(skill.id)}
           />
         ))}
       </ul>
+      {skills.some((skill) => skill.id === selectedId) ? (
+        <div className="rounded-lg border border-border bg-card p-4 @4xl/skills:hidden">
+          {panel}
+        </div>
+      ) : null}
     </section>
   );
 }
