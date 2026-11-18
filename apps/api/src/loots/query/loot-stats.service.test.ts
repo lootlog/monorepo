@@ -6,6 +6,9 @@ import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { LootStatsService } from "./loot-stats.service.js";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
+import { organizationLootRecordFactsOf } from "#src/loots/loot-record-facts";
+
+const facts = organizationLootRecordFactsOf(sql`"Loot".id`);
 
 const unexpectedQuery = () => {
   throw new Error("Unexpected SQL");
@@ -127,9 +130,6 @@ describe("LootStatsService aggregates", () => {
             sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt", "gameVersion") values (1, 'several-npcs', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl'), (2, 'one-npc', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl'), (3, 'common-only', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl'), (4, 'archived', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl'), (5, 'other-organization', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl')`,
           );
           yield* db.execute(
-            sql`insert into "OrganizationLootRecord" ("lootId", "guildId", "archivedAt", "updatedAt", "lootWorld", "lootCreatedAt") select v."lootId", v."guildId", v."archivedAt", now(), "Loot".world, "Loot"."createdAt" from (values (1, 'guild-1', null::timestamp), (2, 'guild-1', null), (3, 'guild-1', null), (4, 'guild-1', now()::timestamp), (5, 'guild-2', null)) as v("lootId", "guildId", "archivedAt") join "Loot" on "Loot".id = v."lootId"`,
-          );
-          yield* db.execute(
             sql`insert into "NpcSnapshot" (id, "npcId", name, type, lvl, "gameVersion") values (1, 100, 'Hero', 'HERO', 100, 'pl'), (2, 200, 'Elite', 'ELITE2', 100, 'pl'), (3, 300, 'Elite III', 'ELITE3', 100, 'pl'), (4, 400, 'Common', 'COMMON', 100, 'pl')`,
           );
           yield* db.execute(
@@ -140,6 +140,9 @@ describe("LootStatsService aggregates", () => {
           );
           yield* db.execute(
             sql`insert into "LootItem" ("lootId", "itemSnapshotId", hid) values (1,1,'l-1'), (1,2,'h-1'), (1,3,'u-1'), (1,4,'p-1'), (2,1,'l-2'), (2,2,'h-2'), (2,4,'p-2'), (3,1,'l-3'), (4,1,'l-4'), (5,1,'l-5')`,
+          );
+          yield* db.execute(
+            sql`insert into "OrganizationLootRecord" ("lootId", "guildId", "archivedAt", "updatedAt", "lootWorld", "lootCreatedAt", "lootRarityMask", "npcTypeMask", "npcVisibility") select v."lootId", v."guildId", v."archivedAt", now(), "Loot".world, "Loot"."createdAt", ${facts.lootRarityMask}, ${facts.npcTypeMask}, ${facts.npcVisibility} from (values (1, 'guild-1', null::timestamp), (2, 'guild-1', null), (3, 'guild-1', null), (4, 'guild-1', now()::timestamp), (5, 'guild-2', null)) as v("lootId", "guildId", "archivedAt") join "Loot" on "Loot".id = v."lootId"`,
           );
         }),
       );

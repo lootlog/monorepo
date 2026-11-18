@@ -67,7 +67,11 @@ export const notificationLootSourceCondition = Effect.fnUntraced(function* (
               eq(lootTable.id, sourceLootId),
               eq(organizationLootRecordTable.guildId, guild.id),
               isNull(organizationLootRecordTable.archivedAt),
-              buildLootNpcVisibilityCondition(lootTable.id, permissions, roles),
+              buildLootNpcVisibilityCondition(
+                organizationLootRecordTable.npcVisibility,
+                permissions,
+                roles,
+              ),
             ),
           ),
       ),

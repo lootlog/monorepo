@@ -1,0 +1,195 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "cb7a9af1-99b3-4a21-89ab-03e1a64322b6",
+  "prevIds": ["7112ff88-06e0-45f1-a8f3-d62e59541a4f"],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OrganizationLootRecord",
+        "OrganizationLootRecord_guildId_world_lootId_active_idx"
+      ],
+      "writes": [
+        "s|idx|public.OrganizationLootRecord_guildId_world_lootId_active_idx",
+        "n|idx|public.OrganizationLootRecord_guildId_world_lootId_active_idx",
+        "e|idx|public.OrganizationLootRecord_guildId_world_lootId_active_idx",
+        "n|rel|public.OrganizationLootRecord_guildId_world_lootId_active_idx"
+      ],
+      "reads": [
+        "e|tbl|public.OrganizationLootRecord",
+        "n|sch|public",
+        "e|col|public.OrganizationLootRecord.guildId",
+        "e|col|public.OrganizationLootRecord.lootWorld",
+        "e|col|public.OrganizationLootRecord.lootId"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OrganizationLootRecord",
+        "lootRarityMask"
+      ],
+      "writes": [
+        "s|colprop|public.OrganizationLootRecord.lootRarityMask.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.OrganizationLootRecord",
+        "n|sch|public",
+        "n|col|public.OrganizationLootRecord.lootRarityMask"
+      ],
+      "sqlHash": "ca1a8c9a189797ad"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OrganizationLootRecord",
+        "npcTypeMask"
+      ],
+      "writes": ["s|colprop|public.OrganizationLootRecord.npcTypeMask.notNull"],
+      "reads": [
+        "n|tbl|public.OrganizationLootRecord",
+        "n|sch|public",
+        "n|col|public.OrganizationLootRecord.npcTypeMask"
+      ],
+      "sqlHash": "a7f407e012725f0f"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OrganizationLootRecord",
+        "npcVisibility"
+      ],
+      "writes": [
+        "s|colprop|public.OrganizationLootRecord.npcVisibility.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.OrganizationLootRecord",
+        "n|sch|public",
+        "n|col|public.OrganizationLootRecord.npcVisibility"
+      ],
+      "sqlHash": "9671f37a48a8cd30"
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OrganizationLootRecord",
+        "OrganizationLootRecord_guildId_world_lootId_page_active_idx"
+      ],
+      "writes": [
+        "s|idx|public.OrganizationLootRecord_guildId_world_lootId_page_active_idx",
+        "n|idx|public.OrganizationLootRecord_guildId_world_lootId_page_active_idx",
+        "e|idx|public.OrganizationLootRecord_guildId_world_lootId_page_active_idx",
+        "n|rel|public.OrganizationLootRecord_guildId_world_lootId_page_active_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OrganizationLootRecord",
+        "n|sch|public",
+        "n|col|public.OrganizationLootRecord.guildId",
+        "n|col|public.OrganizationLootRecord.lootWorld",
+        "n|col|public.OrganizationLootRecord.lootId",
+        "n|col|public.OrganizationLootRecord.lootRarityMask",
+        "n|col|public.OrganizationLootRecord.npcTypeMask",
+        "n|col|public.OrganizationLootRecord.npcVisibility"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationLootRecord",
+        "name": "OrganizationLootRecord_guildId_world_lootId_page_active_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "guildId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "lootWorld",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "lootId",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": true,
+            "opclass": null
+          },
+          {
+            "value": "lootRarityMask",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "npcTypeMask",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "npcVisibility",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"archivedAt\" IS NULL",
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"OrganizationLootRecord_guildId_world_lootId_active_idx\"]"
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"OrganizationLootRecord\",\"lootRarityMask\"]",
+      "set": {
+        "notNull": true
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"OrganizationLootRecord\",\"npcTypeMask\"]",
+      "set": {
+        "notNull": true
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"OrganizationLootRecord\",\"npcVisibility\"]",
+      "set": {
+        "notNull": true
+      }
+    }
+  ]
+}
