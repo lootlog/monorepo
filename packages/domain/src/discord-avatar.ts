@@ -36,7 +36,8 @@ export const getDiscordAvatarUrl = (
   size = 128,
 ): string => {
   if (avatar?.startsWith("http"))
-    return avatar.startsWith(DISCORD_CDN_URL) && !avatar.includes("?")
+    // The slash ends the host, so `cdn.discordapp.com.example` does not match.
+    return avatar.startsWith(`${DISCORD_CDN_URL}/`) && !avatar.includes("?")
       ? `${avatar}?size=${size}`
       : avatar;
 
