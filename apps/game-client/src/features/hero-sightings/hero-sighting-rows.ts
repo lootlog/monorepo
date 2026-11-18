@@ -20,6 +20,19 @@ export const isHeroSightingDetectorClaim = (
 ): boolean => claim.member.memberId === sighting.detectedBy.memberId;
 
 /**
+ * A sighting its author may still remove: entered by hand by this User, open,
+ * and not confirmed by a detector answer since.
+ */
+export const isWithdrawableHeroSighting = (
+  sighting: HeroSightingResponseDto,
+  userId: string | undefined,
+): boolean =>
+  sighting.manual &&
+  sighting.closedAt === null &&
+  userId !== undefined &&
+  sighting.detectedBy.userId === userId;
+
+/**
  * One hero in the list. With timer grouping on, the same hero detected on the
  * same map by several Organizations is one row, like a grouped timer; each
  * Organization's sighting keeps its own claims.
@@ -35,6 +48,8 @@ export type HeroSightingRow = {
   readonly isCurrent: boolean;
   /** Who detected the hero first among the merged sightings. */
   readonly detectedBy: HeroSightingMember;
+  /** That first sighting was entered by hand and no detector confirmed it. */
+  readonly manual: boolean;
   /** Who confirmed the hero last, when that is not its detector. */
   readonly refreshedBy: HeroSightingMember | null;
   /** Each claimer once, even when they claimed in several Organizations. */
@@ -118,6 +133,7 @@ const toRow = (
     closeReason: first.closeReason,
     isCurrent: first.closedAt === null,
     detectedBy: first.detectedBy,
+    manual: first.manual,
     refreshedBy: isRefreshedByDetector ? null : latest.lastSeenBy,
     claims: [...claims.values()].toSorted((a, b) =>
       compareInstants(a.createdAt, b.createdAt),

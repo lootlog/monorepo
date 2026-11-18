@@ -1,10 +1,6 @@
-import { useId, type FC, type KeyboardEvent } from "react";
+import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "cn";
-import {
-  toolbarStripClassName,
-  toolbarStripRowClassName,
-} from "@/components/ui/toolbar-strip";
+import { WindowOverlayPanel } from "@/components/draggable-window/window-overlay-panel";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { AddTimerForm } from "./add-timer-form";
 
@@ -28,46 +24,17 @@ export const AddTimerPanel: FC<AddTimerPanelProps> = ({
   className,
 }) => {
   const { t } = useTranslation("timers");
-  const titleId = useId();
   const { visibleGuilds } = useLootlogGuilds();
   const guildName = visibleGuilds.find((guild) => guild.id === guildId)?.name;
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== "Escape") return;
-    event.stopPropagation();
-    onClose();
-  };
-
   return (
-    <div
-      role="dialog"
-      aria-labelledby={titleId}
-      onKeyDown={handleKeyDown}
-      className={cn(
-        "ll:absolute ll:inset-0 ll:z-20 ll:flex ll:flex-col ll:overflow-hidden ll:bg-black/90",
-        className,
-      )}
+    <WindowOverlayPanel
+      title={t("window.addTitle")}
+      subtitle={guildName}
+      onClose={onClose}
+      className={className}
     >
-      <div
-        className={cn(
-          toolbarStripClassName,
-          toolbarStripRowClassName,
-          "ll:-mt-px ll:shrink-0 ll:items-center ll:px-3",
-        )}
-      >
-        <span
-          id={titleId}
-          className="ll:flex ll:min-w-0 ll:items-baseline ll:gap-1.5 ll:text-xs ll:font-semibold ll:text-gray-100"
-        >
-          {t("window.addTitle")}
-          {guildName ? (
-            <span className="ll:truncate ll:text-[11px] ll:font-normal ll:text-gray-400">
-              {guildName}
-            </span>
-          ) : null}
-        </span>
-      </div>
       <AddTimerForm guildId={guildId} world={world} onClose={onClose} />
-    </div>
+    </WindowOverlayPanel>
   );
 };

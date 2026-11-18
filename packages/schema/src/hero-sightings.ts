@@ -22,11 +22,13 @@ export const HeroSightingStateSchema = Schema.Literals([
 /**
  * Why a sighting stopped being current. `PROBABLY_KILLED` is inferred from a
  * later detection that contradicts it; `KILLED` comes from a kill Lootlog
- * recorded itself.
+ * recorded itself; `WITHDRAWN` means a Member took back a sighting entered by
+ * hand.
  */
 export const HeroSightingCloseReason = {
   KILLED: "KILLED",
   PROBABLY_KILLED: "PROBABLY_KILLED",
+  WITHDRAWN: "WITHDRAWN",
 } as const;
 
 export type HeroSightingCloseReason =
@@ -35,4 +37,5 @@ export type HeroSightingCloseReason =
 export const HeroSightingCloseReasonSchema = Schema.Literals([
   HeroSightingCloseReason.KILLED,
   HeroSightingCloseReason.PROBABLY_KILLED,
+  HeroSightingCloseReason.WITHDRAWN,
 ]);

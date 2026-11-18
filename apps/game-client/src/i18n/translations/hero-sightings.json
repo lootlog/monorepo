@@ -9,9 +9,11 @@
   "status": {
     "unconfirmed": "niepotwierdzony",
     "PROBABLY_KILLED": "prawdopodobnie zbity",
-    "KILLED": "zbity"
+    "KILLED": "zbity",
+    "WITHDRAWN": "usunięty"
   },
   "detectedBy": "Wykrycie: {{name}}",
+  "addedBy": "Dodane ręcznie: {{name}}",
   "refreshedBy": "Odświeżenie: {{name}}",
   "claims": {
     "label": "Obstawiają:",
@@ -19,9 +21,11 @@
     "detector": "(autor wykrycia)"
   },
   "actions": {
+    "add": "Dodaj herosa",
     "claim": "Obstawiam",
     "unclaim": "Wycofaj",
-    "dismiss": "Zamknij"
+    "dismiss": "Zamknij",
+    "withdraw": "Usuń wpis"
   },
   "quickAccess": {
     "count_one": "{{count}} heros",
@@ -30,7 +34,8 @@
     "count_other": "{{count}} herosa"
   },
   "notice": {
-    "title": "Wykryłeś"
+    "title": "Wykryłeś",
+    "manualTitle": "Dodane ręcznie"
   },
   "emptyState": {
     "title": "Brak wykrytych herosów",
@@ -42,7 +47,10 @@
   },
   "messages": {
     "claimFailed": "Nie udało się obstawić herosa",
-    "unclaimFailed": "Nie udało się wycofać obstawienia"
+    "unclaimFailed": "Nie udało się wycofać obstawienia",
+    "withdrawFailed": "Nie udało się usunąć wpisu",
+    "addFailed": "Nie udało się dodać herosa {{name}}.",
+    "addLevelNotVisible": "Twoje role nie widzą herosów na tym poziomie, więc nie możesz dodać herosa {{name}}."
   },
   "history": {
     "open": "Historia wykryć: {{name}}",
@@ -50,5 +58,34 @@
     "loading": "Ładowanie historii wykryć",
     "loadError": "Nie udało się pobrać historii wykryć",
     "empty": "Brak wykryć tego herosa"
+  },
+  "addForm": {
+    "title": "Dodaj herosa",
+    "nameLabel": "Heros",
+    "namePlaceholder": "np. Tepeyollotl",
+    "pasteHint": "Możesz wkleić całą wiadomość wykrywacza z czatu.",
+    "lvlLabel": "Poziom",
+    "lvlPlaceholder": "np. 258",
+    "stateLabel": "Stan",
+    "state": {
+      "ROAMING": "Grasuje",
+      "SPAWNING": "Pojawi się"
+    },
+    "mapLabel": "Mapa",
+    "mapPlaceholder": "np. Oztotl Tzacua p.2 - sala 2",
+    "targets": "Trafi do: {{names}}",
+    "noTargets": {
+      "loading": "Ładowanie Lootlogów tej postaci…",
+      "noCatchingScope": "Ta postać nie gra dla żadnego Lootloga. Wybór zmienisz w Ustawieniach, w zakładce Zakres zbierania.",
+      "noWriteAccess": "W Lootlogach tej postaci nie masz uprawnień do dodawania herosów."
+    },
+    "submit": "Dodaj",
+    "validation": {
+      "nameRequired": "Nazwa herosa jest wymagana",
+      "nameMax": "Nazwa herosa może mieć maksymalnie {{max}} znaków",
+      "lvlRange": "Poziom musi być liczbą całkowitą od {{min}} do {{max}}",
+      "mapRequired": "Nazwa mapy jest wymagana",
+      "mapMax": "Nazwa mapy może mieć maksymalnie {{max}} znaków"
+    }
   }
 }

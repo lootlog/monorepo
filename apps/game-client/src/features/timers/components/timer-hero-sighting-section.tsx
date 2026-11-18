@@ -40,7 +40,9 @@ export function TimerHeroSightingSection({
         {formatSeenAgo(now - Date.parse(sighting.lastSeenAt), "minute")}
         {unconfirmed ? ` · ${tHero("status.unconfirmed")}` : null}
         {" · "}
-        {tHero("detectedBy", { name: sighting.detectedBy.displayName })}
+        {tHero(sighting.manual ? "addedBy" : "detectedBy", {
+          name: sighting.detectedBy.displayName,
+        })}
         {refreshedBy
           ? ` · ${tHero("refreshedBy", { name: refreshedBy.displayName })}`
           : null}

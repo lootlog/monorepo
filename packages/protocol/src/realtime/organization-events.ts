@@ -217,6 +217,7 @@ export const HeroSightingUpdated = Schema.Struct({
   }),
   state: HeroSightingStateSchema,
   mapName: Schema.String,
+  manual: Schema.Boolean,
   firstSeenAt: DateTimeString,
   lastSeenAt: DateTimeString,
   spawnedAt: Schema.NullOr(DateTimeString),

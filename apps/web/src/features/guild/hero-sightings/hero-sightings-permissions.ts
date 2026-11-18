@@ -1,4 +1,8 @@
-import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  AccessRequirement,
+  Capability,
+  type AccessPolicy,
+} from "@lootlog/domain/access-policy";
 import { HERO_SIGHTING_WRITE_PERMISSION } from "@lootlog/domain/npc-permissions";
 
 /**
@@ -10,5 +14,11 @@ export const canViewHeroSightings = (accessPolicy: AccessPolicy | undefined) =>
     accessPolicy.allows(Capability.LOOTLOG_TIMERS_HEROES_READ)) ??
   false;
 
+/** Claiming a sighted hero, and adding a sighting by hand. */
 export const canClaimHeroSightings = (accessPolicy: AccessPolicy | undefined) =>
   accessPolicy?.allows(HERO_SIGHTING_WRITE_PERMISSION) ?? false;
+
+/** Someone else's manual sighting is an administrator's to remove. */
+export const canWithdrawAnyHeroSighting = (
+  accessPolicy: AccessPolicy | undefined,
+) => accessPolicy?.allowsAny(AccessRequirement.ADMINISTER) ?? false;

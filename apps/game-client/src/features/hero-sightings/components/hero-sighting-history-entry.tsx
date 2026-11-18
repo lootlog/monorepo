@@ -40,7 +40,10 @@ export function HeroSightingHistoryEntry({
     >
       <HeroSightingPlace sighting={sighting} isCurrent={isCurrent} now={now} />
       <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-1">
-        <HeroSightingDetector member={sighting.detectedBy} />
+        <HeroSightingDetector
+          member={sighting.detectedBy}
+          manual={sighting.manual}
+        />
         <span className="ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-1 ll:font-normal">
           <HeroSightingClaimers claims={claims} />
         </span>
