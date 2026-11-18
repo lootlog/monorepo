@@ -7,8 +7,6 @@ import type { TimerColorPaint } from "@lootlog/domain/timer-colors";
 export type TimerTileViewProps = {
   paint: TimerColorPaint;
   legacyAppearance?: boolean;
-  /** Paints the timer colour as a stripe on the tile's left edge. */
-  showColorStripe?: boolean;
   displayMode: "column" | "row";
   fontSize: number;
   /** Colours the text by the spawn window; previews show a waiting timer. */
@@ -53,7 +51,6 @@ const TEXT_OUTLINE = "ll:[text-shadow:0_1px_2px_rgb(0_0_0/0.7)]";
 export const TimerTileView: FC<TimerTileViewProps> = ({
   paint,
   legacyAppearance = false,
-  showColorStripe = true,
   displayMode,
   fontSize,
   phase = "waiting",
@@ -131,9 +128,9 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
         "ll:@container/timer-tile ll:h-full ll:py-[4px]",
         textColorClassName,
         TEXT_OUTLINE,
+        // The list row line below, and one on the left between columns.
+        "ll:shadow-[inset_1px_0_0_rgb(255_255_255/0.08),inset_0_-1px_0_rgb(255_255_255/0.08)]",
         {
-          "ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:px-[5px]":
-            showColorStripe,
           "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":
             displayMode === "column",
           "ll:justify-between": displayMode === "row",
@@ -142,7 +139,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
         },
       )}
       // SAFETY: CSSProperties has no index signature for custom properties;
-      // "--ll-timer-accent" is consumed by the stripe and standing classes.
+      // "--ll-timer-accent" is consumed by the standing class.
       style={
         {
           "--ll-timer-accent": isExpired

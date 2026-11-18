@@ -82,10 +82,10 @@ describe("TimerTooltip", () => {
     expect(screen.queryByText("Dodano:")).not.toBeInTheDocument();
   });
 
-  it("summarises players past the first rows until the tooltip expands", () => {
+  it("summarises players past the first rows, and past a longer limit once expanded", () => {
     const occupancy = {
       allAfk: false,
-      players: Array.from({ length: 10 }, (_, index) => ({
+      players: Array.from({ length: 20 }, (_, index) => ({
         key: `player-${index}`,
         name: `Player ${index}`,
         isAfk: false,
@@ -102,7 +102,7 @@ describe("TimerTooltip", () => {
 
     expect(screen.getByText("Player 7")).toBeVisible();
     expect(screen.queryByText("Player 8")).not.toBeInTheDocument();
-    expect(screen.getByText("i jeszcze 2")).toBeVisible();
+    expect(screen.getByText("i jeszcze 12")).toBeVisible();
 
     view.rerender(
       <TimerTooltip
@@ -113,7 +113,9 @@ describe("TimerTooltip", () => {
       />,
     );
 
+    // A busy map must not stretch the tooltip past the game window.
     expect(screen.getByText("Player 9")).toBeVisible();
-    expect(screen.queryByText("i jeszcze 2")).not.toBeInTheDocument();
+    expect(screen.queryByText("Player 10")).not.toBeInTheDocument();
+    expect(screen.getByText("i jeszcze 10")).toBeVisible();
   });
 });

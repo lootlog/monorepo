@@ -9,7 +9,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type TimerColorPreviewChipProps = {
-  /** Stripe colour on the tile's left edge. */
+  /** Accent colour: the swatch, standing pulse and legacy tile border. */
   borderColor: string;
   defaultColorId?: string;
   /** Background colour including its alpha channel. */

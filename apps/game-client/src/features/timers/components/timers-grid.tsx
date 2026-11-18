@@ -1,7 +1,7 @@
 import { cn } from "cn";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { type FC, useLayoutEffect, useRef, useState } from "react";
+import type { FC } from "react";
 import { SingleTimer } from "./single-timer";
 import { getGuildIds, getGuildNamesById } from "@/lib/api/generated-helpers";
 import { getGuildPermissionsQueryOptions } from "@/hooks/api/guild-permissions-query";
@@ -24,42 +24,6 @@ type TimersGridProps = {
   hiddenTimers: string[];
   minColumnWidth: number;
   legacyAppearance?: boolean;
-};
-
-/**
- * Mirrors `repeat(auto-fit, minmax(minColumnWidth, 1fr))` without a gap.
- * `auto-fit` collapses tracks no tile fills, so a short list lays out fewer
- * columns than fit the width.
- */
-const countGridColumns = (
-  gridWidth: number,
-  minColumnWidth: number,
-  tileCount: number,
-) => Math.max(1, Math.min(tileCount, Math.floor(gridWidth / minColumnWidth)));
-
-const useGridWidth = () => {
-  const gridRef = useRef<HTMLSpanElement>(null);
-  const [gridWidth, setGridWidth] = useState(0);
-
-  // Measured before the first paint: until the observer reports, the grid
-  // would render as one column, without stripes.
-  useLayoutEffect(() => {
-    const grid = gridRef.current;
-
-    if (!grid) return;
-
-    setGridWidth(grid.clientWidth);
-
-    const resizeObserver = new ResizeObserver(([entry]) => {
-      if (entry) setGridWidth(entry.contentRect.width);
-    });
-
-    resizeObserver.observe(grid);
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  return { gridRef, gridWidth };
 };
 
 export const TimersGrid: FC<TimersGridProps> = ({
@@ -98,26 +62,17 @@ export const TimersGrid: FC<TimersGridProps> = ({
     timers.map((timer) => [getTimerTileKey(timer), timer]),
   );
 
-  const { gridRef, gridWidth } = useGridWidth();
-
-  const columnCount = countGridColumns(
-    gridWidth,
-    minColumnWidth,
-    timers.length,
-  );
-
-  // A stripe marks where each tile starts among its row neighbours; a single
-  // column has none, and a run of one colour would read as one long bar.
-  const showColorStripe = columnCount > 1;
-
   return (
     <TimerMapPresenceProvider timers={timers}>
       <TimerClockProvider>
         <TimerGridPopups
-          gridRef={gridRef}
           className={cn(
-            "ll:grid ll:w-full ll:pb-1",
-            legacyAppearance && "ll:gap-0.5",
+            "ll:grid ll:pb-1",
+            // Every tile draws a line on its left edge; the grid reaches 1px
+            // past the window and clips it, so the first column draws none.
+            legacyAppearance
+              ? "ll:w-full ll:gap-0.5"
+              : "ll:-ml-px ll:w-[calc(100%+1px)] ll:[clip-path:inset(0_0_0_1px)]",
           )}
           style={{
             gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minColumnWidth}px), 1fr))`,
@@ -139,7 +94,6 @@ export const TimersGrid: FC<TimersGridProps> = ({
                 timer={timer}
                 settingsKey={settingsKey}
                 isHidden={isHidden}
-                showColorStripe={showColorStripe}
               />
             );
           })}

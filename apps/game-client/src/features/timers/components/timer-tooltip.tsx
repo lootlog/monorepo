@@ -1,5 +1,6 @@
 import type { Timer } from "@/api/timers.api";
 import type { MapThreat } from "@/lib/map-threat-source";
+import type { NpcStanding } from "@/lib/npc-presence-source";
 import type { MapOccupancy } from "@/lib/presence-map-index";
 import { format } from "@/utils/local-date";
 import {
@@ -30,7 +31,8 @@ type TimerTooltipProps = {
   occupancy?: MapOccupancy;
   threat?: MapThreat;
   heroSighting?: TimerHeroSighting;
-  isStanding?: boolean;
+  /** Where an Organization member sees the NPC standing now. */
+  standing?: NpcStanding;
   expanded?: boolean;
 };
 
@@ -42,7 +44,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   occupancy,
   threat,
   heroSighting,
-  isStanding = false,
+  standing,
   expanded = false,
 }) => {
   const { t } = useTranslation("timers");
@@ -62,7 +64,8 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   const hiddenMembersCount = Math.max(membersWithGuilds.length - 1, 0);
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-1.5 ll:py-0.5">
+    // Balanced wrapping suits a short tip; here it halves long lines early.
+    <div className="ll:flex ll:flex-col ll:gap-1.5 ll:py-0.5 ll:text-wrap">
       <div className="ll:flex ll:flex-col ll:gap-0.5">
         <div className="ll:text-sm ll:font-semibold ll:leading-4">
           {timer.npc.name}
@@ -76,10 +79,19 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
             {t("tooltip.reset")}
           </div>
         )}
-        {isStanding && (
-          <div className="ll:flex ll:items-center ll:gap-1 ll:font-semibold ll:text-green-400">
-            <Swords size={12} aria-hidden="true" />
-            {t("tooltip.standing")}
+        {standing && (
+          // A long map name wraps, so the icon sits on the first line.
+          <div className="ll:flex ll:items-start ll:gap-1 ll:font-semibold ll:text-green-400">
+            <Swords
+              size={12}
+              aria-hidden="true"
+              className="ll:mt-0.5 ll:shrink-0"
+            />
+            <span className="ll:min-w-0 ll:wrap-break-word">
+              {standing.map
+                ? t("tooltip.standingOnMap", { map: standing.map })
+                : t("tooltip.standing")}
+            </span>
           </div>
         )}
       </div>

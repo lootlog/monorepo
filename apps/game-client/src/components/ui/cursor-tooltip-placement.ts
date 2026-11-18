@@ -9,6 +9,12 @@ export type CursorTooltipOffsets = {
   alignOffset: number;
   /** Minimum distance kept from every viewport edge. */
   padding: number;
+  /**
+   * The content grows while open, so the tooltip takes the taller side of the
+   * cursor instead of the one its current height fits, and growing never
+   * flips it to the other side.
+   */
+  growsWhileOpen?: boolean;
 };
 
 export type CursorTooltipPlacement = {
@@ -35,7 +41,7 @@ export const placeTooltipAtCursor = (
   cursor: CursorPoint,
   size: BoxSize,
   viewport: BoxSize,
-  { sideOffset, alignOffset, padding }: CursorTooltipOffsets,
+  { sideOffset, alignOffset, padding, growsWhileOpen }: CursorTooltipOffsets,
 ): CursorTooltipPlacement => {
   let align: CursorTooltipPlacement["align"] = "end";
   let left = cursor.x - alignOffset - size.width;
@@ -48,7 +54,11 @@ export const placeTooltipAtCursor = (
   let side: CursorTooltipPlacement["side"] = "bottom";
   let top = cursor.y + sideOffset;
 
-  if (top + size.height > viewport.height - padding) {
+  const flipsUp = growsWhileOpen
+    ? cursor.y > viewport.height / 2
+    : top + size.height > viewport.height - padding;
+
+  if (flipsUp) {
     side = "top";
     top = cursor.y - sideOffset - size.height;
   }
