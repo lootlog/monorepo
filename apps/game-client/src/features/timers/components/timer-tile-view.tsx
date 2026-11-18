@@ -128,6 +128,8 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
         "ll:@container/timer-tile ll:h-full ll:py-[4px]",
         textColorClassName,
         TEXT_OUTLINE,
+        // The list row line below, and one on the left between columns.
+        "ll:shadow-[inset_1px_0_0_rgb(255_255_255/0.08),inset_0_-1px_0_rgb(255_255_255/0.08)]",
         {
           "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":
             displayMode === "column",
