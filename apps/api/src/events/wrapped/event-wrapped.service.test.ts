@@ -292,18 +292,6 @@ describe("event wrapped summary", () => {
         ),
       );
       await run(
-        database.insert(organizationLootRecordTable).values(
-          loots.map((loot, index) =>
-            createOrganizationLootRecordFixture({
-              lootId: index + 1,
-              guildId: loot.guildId ?? guild.id,
-              archivedAt: loot.archived ? now : null,
-              updatedAt: now,
-            }),
-          ),
-        ),
-      );
-      await run(
         database.insert(lootNpcTable).values(
           loots.flatMap((loot, index) =>
             loot.npcs.map((npcSnapshotId) => ({
@@ -321,6 +309,18 @@ describe("event wrapped summary", () => {
               itemSnapshotId,
               hid: `hid-${index + 1}-${item}`,
             })),
+          ),
+        ),
+      );
+      await run(
+        database.insert(organizationLootRecordTable).values(
+          loots.map((loot, index) =>
+            createOrganizationLootRecordFixture({
+              lootId: index + 1,
+              guildId: loot.guildId ?? guild.id,
+              archivedAt: loot.archived ? now : null,
+              updatedAt: now,
+            }),
           ),
         ),
       );

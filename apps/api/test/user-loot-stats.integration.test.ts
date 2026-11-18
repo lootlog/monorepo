@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { Client } from "pg";
 import { ManagedRuntime, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
+import { refreshOrganizationLootRecordFactsSql } from "./loot-fixtures.js";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import { makeUserLootStats } from "#src/loots/query/user-loot-stats";
 import { getKillNpcId } from "@lootlog/domain/npc-identity";
@@ -88,8 +89,8 @@ const loot = async (options: {
 
   for (const guildId of options.guildIds)
     await client.query(
-      `INSERT INTO "OrganizationLootRecord" ("lootId","guildId","archivedAt","updatedAt","lootWorld","lootCreatedAt")
-       SELECT $1,$2,$3,now(),world,"createdAt" FROM "Loot" WHERE id = $1`,
+      `INSERT INTO "OrganizationLootRecord" ("lootId","guildId","archivedAt","updatedAt","lootWorld","lootCreatedAt","lootRarityMask","npcTypeMask","npcVisibility")
+       SELECT $1,$2,$3,now(),world,"createdAt",0,0,'{[-1,0)}' FROM "Loot" WHERE id = $1`,
       [lootId, guildId, options.archived ? new Date() : null],
     );
 
@@ -109,6 +110,13 @@ const loot = async (options: {
     `WITH item AS (INSERT INTO "ItemSnapshot" ("itemId","statsHash",name,icon,"statRaw","statsSnapshot","itemType",lvl,rarity,"gameVersion") VALUES (9,$2,'Legend','legend.png','','{}'::jsonb,'Sword',100,'LEGENDARY','pl') RETURNING id)
     INSERT INTO "LootItem" ("lootId","itemSnapshotId",hid) SELECT $1,id,$2 FROM item`,
     [lootId, hid],
+  );
+  // Only this loot's records: the database is shared with suites that leave
+  // tens of thousands of records behind, and rewriting them all for every
+  // seeded loot took the suite past its timeout in CI.
+  await client.query(
+    `${refreshOrganizationLootRecordFactsSql} WHERE "lootId" = $1`,
+    [lootId],
   );
   await client.query(
     `WITH player AS (INSERT INTO "PlayerSnapshot" (world,"accountId","characterId","snapshotHash",name) VALUES ($2,1,$3,$4,$5) RETURNING id)

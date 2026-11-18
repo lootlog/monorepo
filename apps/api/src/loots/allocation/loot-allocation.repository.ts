@@ -139,7 +139,7 @@ export const makeLootAllocationPersistence = (
             guildId: member.guildId,
             visibility:
               buildLootNpcVisibilityCondition(
-                lootTable.id,
+                allocationRecord.npcVisibility,
                 permissions,
                 member.roles,
               ) ?? sql`true`,
@@ -316,11 +316,7 @@ export const makeLootAllocationPersistence = (
             and(
               eq(organizationLootRecordTable.lootId, options.lootId),
               isNull(organizationLootRecordTable.archivedAt),
-              buildUserLootRecordCondition(
-                scopes,
-                options.actorDiscordId,
-                organizationLootRecordTable.lootId,
-              ),
+              buildUserLootRecordCondition(scopes, options.actorDiscordId),
             ),
           )
           .limit(1);

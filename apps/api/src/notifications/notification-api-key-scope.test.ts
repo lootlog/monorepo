@@ -343,15 +343,6 @@ test.each([true, false])(
         }),
       );
       await boundary.run(
-        database.insert(organizationLootRecordTable).values(
-          createOrganizationLootRecordFixture({
-            lootId: 1,
-            guildId: "1",
-            updatedAt: new Date(0),
-          }),
-        ),
-      );
-      await boundary.run(
         database.insert(npcSnapshotTable).values([
           {
             gameVersion: "pl",
@@ -377,6 +368,15 @@ test.each([true, false])(
         database.insert(lootNpcTable).values({ lootId: 1, npcSnapshotId: 1 }),
       );
       await boundary.run(
+        database.insert(organizationLootRecordTable).values(
+          createOrganizationLootRecordFixture({
+            lootId: 1,
+            guildId: "1",
+            updatedAt: new Date(0),
+          }),
+        ),
+      );
+      await boundary.run(
         database.insert(lootTable).values({
           gameVersion: "pl",
           id: 2,
@@ -388,6 +388,9 @@ test.each([true, false])(
         }),
       );
       await boundary.run(
+        database.insert(lootNpcTable).values({ lootId: 2, npcSnapshotId: 2 }),
+      );
+      await boundary.run(
         database.insert(organizationLootRecordTable).values(
           createOrganizationLootRecordFixture({
             lootId: 2,
@@ -395,9 +398,6 @@ test.each([true, false])(
             updatedAt: new Date(0),
           }),
         ),
-      );
-      await boundary.run(
-        database.insert(lootNpcTable).values({ lootId: 2, npcSnapshotId: 2 }),
       );
       await boundary.run(
         database.insert(notificationRuleTable).values(

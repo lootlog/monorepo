@@ -134,6 +134,16 @@ describe("filtered loot reads", () => {
           }),
         );
         await run(
+          database
+            .insert(lootNpcTable)
+            .values({ lootId: id, npcSnapshotId: id }),
+        );
+        await run(
+          database
+            .insert(lootItemTable)
+            .values({ lootId: id, itemSnapshotId: 1, hid: `reward-${id}` }),
+        );
+        await run(
           database.insert(organizationLootRecordTable).values(
             createOrganizationLootRecordFixture({
               id,
@@ -149,16 +159,6 @@ describe("filtered loot reads", () => {
             memberId: 1,
             updatedAt: now,
           }),
-        );
-        await run(
-          database
-            .insert(lootNpcTable)
-            .values({ lootId: id, npcSnapshotId: id }),
-        );
-        await run(
-          database
-            .insert(lootItemTable)
-            .values({ lootId: id, itemSnapshotId: 1, hid: `reward-${id}` }),
         );
       }
 
@@ -218,7 +218,7 @@ describe("filtered loot reads", () => {
             dateFrom: null,
             truncUnit: "day",
             visibility: buildLootNpcVisibilityCondition(
-              lootTable.id,
+              organizationLootRecordTable.npcVisibility,
               permissions,
               roles,
             ),
@@ -451,6 +451,47 @@ describe("filtered loot reads", () => {
         ),
       );
       await run(
+        database.insert(memberTable).values([
+          {
+            id: 1,
+            userId: "reader",
+            guildId: guild.id,
+            name: "Reader",
+            updatedAt: now,
+          },
+          {
+            id: 2,
+            userId: "reader",
+            guildId: foreignGuild.id,
+            name: "Reader",
+            updatedAt: now,
+          },
+        ]),
+      );
+      await run(
+        database.insert(lootNpcTable).values([
+          ...[1, 2, 3, 4, 5, 7, 8].flatMap((lootId) => [
+            { lootId, npcSnapshotId: lootId === 2 ? 6 : 1 },
+            { lootId, npcSnapshotId: 2 },
+          ]),
+          { lootId: 2, npcSnapshotId: 2 },
+          { lootId: 3, npcSnapshotId: 3 },
+          { lootId: 4, npcSnapshotId: 4 },
+          { lootId: 5, npcSnapshotId: 5 },
+        ]),
+      );
+      await run(
+        database.insert(lootItemTable).values(
+          Array.from({ length: 8 }, (_, index) => index + 1).flatMap(
+            (lootId) => [
+              { lootId, itemSnapshotId: 1, hid: "named-hid" },
+              { lootId, itemSnapshotId: 1, hid: "duplicate-match" },
+              { lootId, itemSnapshotId: 2, hid: "high-hid" },
+            ],
+          ),
+        ),
+      );
+      await run(
         database.insert(organizationLootRecordTable).values(
           Array.from({ length: 8 }, (_, index) =>
             createOrganizationLootRecordFixture({
@@ -474,24 +515,6 @@ describe("filtered loot reads", () => {
         ),
       );
       await run(
-        database.insert(memberTable).values([
-          {
-            id: 1,
-            userId: "reader",
-            guildId: guild.id,
-            name: "Reader",
-            updatedAt: now,
-          },
-          {
-            id: 2,
-            userId: "reader",
-            guildId: foreignGuild.id,
-            name: "Reader",
-            updatedAt: now,
-          },
-        ]),
-      );
-      await run(
         database.insert(lootCommentTable).values(
           [101, 101, 200, 200, 200, 108].map((organizationLootRecordId) => ({
             organizationLootRecordId,
@@ -499,29 +522,6 @@ describe("filtered loot reads", () => {
             content: "Organization comment",
             updatedAt: now,
           })),
-        ),
-      );
-      await run(
-        database.insert(lootNpcTable).values([
-          ...[1, 2, 3, 4, 5, 7, 8].flatMap((lootId) => [
-            { lootId, npcSnapshotId: lootId === 2 ? 6 : 1 },
-            { lootId, npcSnapshotId: 2 },
-          ]),
-          { lootId: 2, npcSnapshotId: 2 },
-          { lootId: 3, npcSnapshotId: 3 },
-          { lootId: 4, npcSnapshotId: 4 },
-          { lootId: 5, npcSnapshotId: 5 },
-        ]),
-      );
-      await run(
-        database.insert(lootItemTable).values(
-          Array.from({ length: 8 }, (_, index) => index + 1).flatMap(
-            (lootId) => [
-              { lootId, itemSnapshotId: 1, hid: "named-hid" },
-              { lootId, itemSnapshotId: 1, hid: "duplicate-match" },
-              { lootId, itemSnapshotId: 2, hid: "high-hid" },
-            ],
-          ),
         ),
       );
       const query = makeLootQueryOperations(makeLootQueryPersistence(database));
@@ -574,6 +574,26 @@ describe("filtered loot reads", () => {
             await run(
               query.fetchLootsByGuildId(guild, [Permission.OWNER], [], {
                 npcs,
+              }),
+            )
+          ).map(({ id }) => id),
+        ).toEqual(expectedIds);
+      }
+
+      // Every loot holds a legendary and a unique item: a rarity none of them
+      // has matches nothing, and one listed rarity is enough to match.
+      for (const { rarities, expectedIds } of [
+        { rarities: ["HEROIC" as const], expectedIds: [] },
+        {
+          rarities: ["HEROIC" as const, "UNIQUE" as const],
+          expectedIds: [6, 5, 4, 3, 2, 1],
+        },
+      ]) {
+        expect(
+          (
+            await run(
+              query.fetchLootsByGuildId(guild, [Permission.OWNER], [], {
+                rarities,
               }),
             )
           ).map(({ id }) => id),
