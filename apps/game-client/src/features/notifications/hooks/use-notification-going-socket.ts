@@ -12,13 +12,14 @@ import {
   selectNotificationGoing,
   useNotificationGoingStore,
 } from "@/store/notification-going.store";
+import { getNpcWorldKey } from "@/store/notifications.store";
 
 const isGoingUpdate = Schema.is(NotificationGoingUpdateSchema);
 
 /**
  * Keeps the "going" answers of the current Lootlogs' NPC notifications. The
- * reporter never sees their own notification, so they hear about each answer
- * to it as a game message instead.
+ * reporter never sees their own notification, so they also hear about each
+ * answer to it as a game message.
  */
 export const useNotificationGoingSocket = () => {
   const { socket, connected, joined } = useSocket();
@@ -29,24 +30,32 @@ export const useNotificationGoingSocket = () => {
     // The gateway forwards the API's answer list as is; skip a malformed one.
     if (!isGoingUpdate(update)) return;
 
-    const ids = [update.notificationId];
+    // The reporter hears about the answers to their own report only.
+    const scope = { notificationIds: [update.notificationId] };
 
     // The reporter hears about a player once, even when several of their
     // Lootlogs list the answer.
     const previous = selectNotificationGoing(
       useNotificationGoingStore.getState(),
-      ids,
+      scope,
     );
 
     useNotificationGoingStore
       .getState()
-      .setGuildGoing(update.notificationId, update.guildId, update.going);
+      .setGuildGoing(
+        update.notificationId,
+        update.guildId,
+        update.going,
+        update.npcId === undefined
+          ? undefined
+          : getNpcWorldKey(update.npcId, update.world),
+      );
 
     if (!userId || update.reporterUserId !== userId) return;
 
     const current = selectNotificationGoing(
       useNotificationGoingStore.getState(),
-      ids,
+      scope,
     );
 
     const t = getFixedT("notifications");

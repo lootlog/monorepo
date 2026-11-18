@@ -33,6 +33,10 @@ export const NotificationGoingUpdateSchema = Schema.Struct({
   // client tells them who answered.
   reporterUserId: Schema.String,
   npcName: Schema.String,
+  // The NPC's game id: reports of one NPC share its answers, so each client
+  // lists them under whichever report it shows. An update of a notification
+  // stored before this field existed leaves it out.
+  npcId: Schema.optionalKey(FiniteNumber),
   npc: Schema.Struct({ ...NpcRoutingDataSchema.fields, lvl: Schema.Number }),
   going: Schema.Array(NotificationGoingPlayerSchema),
 });
