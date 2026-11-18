@@ -1,4 +1,5 @@
 import { RotateCcw } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@lootlog/ui/components/button";
 import { ArticleSection } from "@/components/article/article-section";
 import { StatTiles } from "@/components/common/stat-tiles";
@@ -9,9 +10,12 @@ import { t } from "@/i18n/messages";
 import {
   SKILL_TIER_LEVELS,
   skillPointsAt,
+  skillRankRange,
+  skillState,
   spentSkillPoints,
   wornSkillWeapons,
 } from "@/lib/skills/skill-tree";
+import { SkillPanel } from "./skill-panel";
 import { SkillTier } from "./skill-tier";
 
 const Notice = ({ children }: { children: string }) => (
@@ -30,8 +34,26 @@ export function SetSkillTree() {
   const { data: tree, isPending } = useSkillTree(set.profession);
   const weapons = wornSkillWeapons(useWornItems());
 
+  // The skill whose panel is open, and a rank its slider only previews.
+  const [chosen, setChosen] = useState<{ id: number; preview?: number }>();
+
   const spent = tree ? spentSkillPoints(tree, set.skills) : 0;
   const total = skillPointsAt(set.level);
+
+  const selected = tree?.find((skill) => skill.id === chosen?.id) ?? tree?.[0];
+
+  const panel =
+    tree && selected ? (
+      <SkillPanel
+        skill={selected}
+        state={skillState(selected, set.skills, set.level, weapons)}
+        range={skillRankRange(tree, selected, set.skills, set.level)}
+        level={set.level}
+        preview={chosen?.id === selected.id ? chosen.preview : undefined}
+        onPreviewChange={(preview) => setChosen({ id: selected.id, preview })}
+        onRankChange={(rank) => setSkillRank(selected.id, rank)}
+      />
+    ) : null;
 
   return (
     <ArticleSection
@@ -80,22 +102,34 @@ export function SetSkillTree() {
                 {t("skills.assumedLevel")}
               </p>
             ) : null}
-            <p className="text-xs text-muted-foreground">
-              {t("skills.raiseHint")}
+            <p className="text-xs text-pretty text-muted-foreground">
+              {t("skills.kindsHint")}
             </p>
           </div>
-          <div className="flex flex-col gap-4">
-            {SKILL_TIER_LEVELS.map((tierLevel) => (
-              <SkillTier
-                key={tierLevel}
-                tree={tree}
-                tierLevel={tierLevel}
-                ranks={set.skills}
-                level={set.level}
-                weapons={weapons}
-                onRankChange={setSkillRank}
-              />
-            ))}
+          <div className="@container/skills">
+            <div className="grid items-start gap-6 @4xl/skills:grid-cols-[minmax(0,1fr)_21rem]">
+              <div className="@container flex flex-col gap-5">
+                {SKILL_TIER_LEVELS.map((tierLevel) => (
+                  <SkillTier
+                    key={tierLevel}
+                    tree={tree}
+                    tierLevel={tierLevel}
+                    ranks={set.skills}
+                    level={set.level}
+                    weapons={weapons}
+                    selectedId={selected?.id}
+                    onSelect={(id) => setChosen({ id })}
+                    panel={panel}
+                  />
+                ))}
+              </div>
+              <aside
+                aria-label={t("skills.panel")}
+                className="sticky top-[4.5rem] rounded-lg border border-border bg-card p-4 max-@4xl/skills:hidden"
+              >
+                {panel}
+              </aside>
+            </div>
           </div>
         </>
       )}

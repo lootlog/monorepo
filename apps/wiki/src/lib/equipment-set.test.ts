@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { decodeEquipmentSet, encodeEquipmentSet } from "./equipment-set";
+import {
+  decodeEquipmentSet,
+  EMPTY_EQUIPMENT_SET,
+  encodeEquipmentSet,
+  equipItem,
+} from "./equipment-set";
 import {
   findRequirementIssues,
   SET_STAT_SECTIONS,
@@ -34,6 +39,32 @@ describe("equipment set link", () => {
       upgrades: { boots: { level: 3 }, gloves: { level: 5 } },
       skills: { 168: 4 },
     });
+  });
+});
+
+describe("equipping the hands", () => {
+  const types = new Map([
+    [1, "ONE_HAND_WEAPON"],
+    [2, "TWO_HAND_WEAPON"],
+    [3, "SHIELD"],
+  ]);
+
+  const typeOf = (id: number) => types.get(id);
+
+  const wear = (ids: readonly number[]) =>
+    ids.reduce(
+      (set, id) =>
+        equipItem(set, { id, type: types.get(id) ?? null }, undefined, typeOf),
+      EMPTY_EQUIPMENT_SET,
+    ).items;
+
+  it("keeps a shield beside a one-handed weapon", () => {
+    expect(wear([3, 1])).toEqual({ weapon: 1, secondary: 3 });
+  });
+
+  it("takes the shield off for a two-handed weapon, and the weapon off for a shield", () => {
+    expect(wear([3, 2])).toEqual({ weapon: 2 });
+    expect(wear([2, 3])).toEqual({ secondary: 3 });
   });
 });
 

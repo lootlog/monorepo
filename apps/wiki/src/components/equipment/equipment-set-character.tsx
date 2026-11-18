@@ -5,6 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
+import { cn } from "cn";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import type { Profession } from "@/lib/equipment-set";
@@ -25,11 +26,11 @@ const isProfession = (value: string): value is Profession =>
   PROFESSION_OPTIONS.some((profession) => profession === value);
 
 /** Who wears the set: the character's profession and level. */
-export function EquipmentSetCharacter() {
+export function EquipmentSetCharacter({ className }: { className?: string }) {
   const { set, setCharacter } = useEquipmentSet();
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_4rem] gap-2">
+    <div className={cn("grid grid-cols-[minmax(0,1fr)_4rem] gap-2", className)}>
       <Select
         value={set.profession ?? ANY_PROFESSION}
         onValueChange={(value) =>

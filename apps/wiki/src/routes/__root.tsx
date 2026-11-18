@@ -10,6 +10,7 @@ import { UiLabelsProvider } from "@lootlog/ui/components/ui-labels";
 import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
 import { ItemComparisonProvider } from "@/components/comparison/item-comparison-provider";
 import { EquipmentSetProvider } from "@/components/equipment/equipment-set-provider";
+import { SetItemPickerProvider } from "@/components/equipment/set-item-picker-provider";
 import { WikiLayout } from "@/components/layout/wiki-layout";
 import { QueryDevtools } from "@/components/query-devtools";
 import { UserTheme } from "@/components/user-theme";
@@ -125,7 +126,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               />
               <EquipmentSetProvider>
                 <ItemComparisonProvider>
-                  <WikiLayout>{children}</WikiLayout>
+                  <SetItemPickerProvider>
+                    <WikiLayout>{children}</WikiLayout>
+                  </SetItemPickerProvider>
                 </ItemComparisonProvider>
               </EquipmentSetProvider>
             </SharedTooltipProvider>

@@ -3,6 +3,7 @@ import { type CharacterStats, characterStats } from "@/lib/character-stats";
 import type { Profession } from "@/lib/equipment-set";
 import type { SkillBonuses } from "@/lib/skills/skill-stats";
 import { skillPlanLevel } from "@/lib/skills/skill-tree";
+import { EquipmentStatGrid } from "./equipment-stat-grid";
 import { EquipmentStatRow } from "./equipment-stat-row";
 import { EquipmentStatSection } from "./equipment-stat-section";
 
@@ -145,12 +146,13 @@ export function CharacterStatsWindow({
   );
 
   return (
-    <div className="grid items-start gap-x-8 gap-y-5 @lg:grid-cols-2 @[54rem]:grid-cols-4">
-      <p className="col-span-full text-xs text-pretty text-muted-foreground">
-        {level === null
+    <EquipmentStatGrid
+      caption={
+        level === null
           ? `${t("character.hint")} ${t("character.assumedLevel")}`
-          : t("character.hint")}
-      </p>
+          : t("character.hint")
+      }
+    >
       {CHARACTER_SECTIONS.map((section) => (
         <EquipmentStatSection
           key={section.id}
@@ -176,6 +178,6 @@ export function CharacterStatsWindow({
           })}
         </EquipmentStatSection>
       ))}
-    </div>
+    </EquipmentStatGrid>
   );
 }
