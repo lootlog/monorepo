@@ -73,6 +73,35 @@
 }
 
 /*
+ * A page section marked `data-page-fill`, such as a table of results, grows
+ * to the bottom of its page scroller, so a footer docked at its end sits at
+ * the bottom edge even when only a few rows fill the page.
+ */
+[data-under-top-bar]
+  > [data-slot="scroll-area-viewport"]:has(> [data-page-fill]) {
+  display: flex;
+  flex-direction: column;
+}
+
+[data-under-top-bar] > [data-slot="scroll-area-viewport"] > [data-page-fill] {
+  flex-grow: 1;
+}
+
+/*
+ * An empty state in it, directly or under one wrapper such as its padding,
+ * takes the room left above the footer and centres its message there.
+ */
+[data-page-fill] > :has(> [data-slot="empty"], > * > [data-slot="empty"]),
+[data-page-fill] > * > :has(> [data-slot="empty"]) {
+  display: flex;
+  flex-direction: column;
+}
+
+[data-page-fill] > * > :has(> [data-slot="empty"]) {
+  flex-grow: 1;
+}
+
+/*
  * Sticky page tabs pin right under the app bar, and the page content after
  * them pins below the tabs. From `md` up, a scroller of its own inside that
  * content, such as a table that scrolls itself, pins its content at its own
