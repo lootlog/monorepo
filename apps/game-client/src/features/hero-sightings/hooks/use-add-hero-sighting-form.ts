@@ -30,19 +30,9 @@ export const MAX_HERO_LEVEL = 500;
 
 export const MAX_HERO_MAP_NAME_LENGTH = 200;
 
-export const HERO_SIGHTING_STATES = [
-  AddHeroSightingDtoState.ROAMING,
-  AddHeroSightingDtoState.SPAWNING,
-] as const;
-
-export const resolveHeroSightingState = (value: string) =>
-  HERO_SIGHTING_STATES.find((state) => state === value) ??
-  AddHeroSightingDtoState.ROAMING;
-
 const FormSchema = Schema.Struct({
   name: Schema.String,
   lvl: Schema.String,
-  state: Schema.Literals(HERO_SIGHTING_STATES),
   mapName: Schema.String,
 });
 
@@ -131,9 +121,15 @@ export function useAddHeroSightingForm({
   const { mutate: addHeroSighting, isPending } = useAddHeroSighting();
   const { targets, status: targetsStatus } = useAddHeroSightingTargets();
 
-  // The profession is not a field: it comes with a suggestion or a pasted
-  // detector answer and is sent only while the name is still that hero's.
-  const knownProfRef = useRef<Pick<KnownHero, "key" | "prof"> | null>(null);
+  // The profession and the state are not fields. The profession comes with a
+  // suggestion or a pasted detector answer, the state only with a pasted
+  // answer, and both are sent only while the name is still that hero's. A hero
+  // added by hand is otherwise one that will spawn: nobody stops to write down
+  // a roaming hero.
+  const knownHeroRef = useRef<
+    | (Pick<KnownHero, "key" | "prof"> & { state?: AddHeroSightingDtoState })
+    | null
+  >(null);
 
   const {
     register,
@@ -146,15 +142,11 @@ export function useAddHeroSightingForm({
     defaultValues: {
       name: "",
       lvl: "",
-      state: AddHeroSightingDtoState.ROAMING,
       mapName: "",
     },
   });
 
-  const [typedName, selectedState] = useWatch({
-    control,
-    name: ["name", "state"],
-  });
+  const typedName = useWatch({ control, name: "name" });
 
   const knownHeroes = collectKnownHeroes(
     useLoadedHeroSightings([world]),
@@ -168,7 +160,7 @@ export function useAddHeroSightingForm({
     const options = { shouldValidate: true };
     setValue("name", hero.name, options);
     setValue("lvl", String(hero.lvl), options);
-    knownProfRef.current = {
+    knownHeroRef.current = {
       key: getHeroSightingKey(hero.name),
       prof: hero.prof,
     };
@@ -190,7 +182,9 @@ export function useAddHeroSightingForm({
         ? getShortnameByProf(detection.heroProf)
         : undefined,
     });
-    setValue("state", detection.state);
+
+    if (knownHeroRef.current) knownHeroRef.current.state = detection.state;
+
     setValue("mapName", detection.mapName, { shouldValidate: true });
   };
 
@@ -201,10 +195,12 @@ export function useAddHeroSightingForm({
     if (targets.length === 0) return;
     const name = data.name.trim();
 
-    const prof =
-      knownProfRef.current?.key === getHeroSightingKey(name)
-        ? knownProfRef.current.prof
-        : undefined;
+    const knownHero =
+      knownHeroRef.current?.key === getHeroSightingKey(name)
+        ? knownHeroRef.current
+        : null;
+
+    const prof = knownHero?.prof;
 
     addHeroSighting(
       {
@@ -212,7 +208,7 @@ export function useAddHeroSightingForm({
         sighting: {
           world,
           hero: { name, lvl: Number(data.lvl), ...(prof && { prof }) },
-          state: data.state,
+          state: knownHero?.state ?? AddHeroSightingDtoState.SPAWNING,
           mapName: data.mapName.trim(),
         },
       },
@@ -251,8 +247,6 @@ export function useAddHeroSightingForm({
     targetsStatus,
     register,
     errors,
-    setValue,
-    selectedState,
     suggestedHeroes,
     suggestions,
     fillHero,

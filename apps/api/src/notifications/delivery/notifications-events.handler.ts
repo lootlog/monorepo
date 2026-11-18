@@ -47,30 +47,20 @@ class NotificationTimerRebuildError extends TaggedErrorClass<NotificationTimerRe
 const HERO_SIGHTING_NOTIFICATION_MAX_AGE_MS = 15 * 60 * 1000;
 
 /**
- * The news a sighting update carries, or null when it carries none: a new
- * sighting announces where the hero is or will spawn, and a detected spawn
- * that is later seen roaming announces that the hero appeared. Repeated
- * confirmations map to the same transition, so they notify once.
+ * Whether a sighting update is news to announce: only where a hero will
+ * spawn. A roaming hero is never announced, whether found roaming or seen
+ * where its spawn was detected, so the Member who found it is not outrun by
+ * everyone the message would send there. Repeated confirmations are the same
+ * news, so they notify once.
  */
-const heroSightingNotificationTransition = (
-  sighting: Pick<
-    HeroSightingResponse,
-    "closedAt" | "lastSeenAt" | "spawnedAt" | "state"
-  >,
+const isHeroSightingNews = (
+  sighting: Pick<HeroSightingResponse, "closedAt" | "lastSeenAt" | "state">,
   now: number,
-): "ROAMING" | "SPAWNING" | "SPAWNED" | null => {
-  if (sighting.closedAt !== null) return null;
-
-  if (
-    now - Date.parse(sighting.lastSeenAt) >
-    HERO_SIGHTING_NOTIFICATION_MAX_AGE_MS
-  )
-    return null;
-
-  return sighting.state === "ROAMING" && sighting.spawnedAt !== null
-    ? "SPAWNED"
-    : sighting.state;
-};
+): boolean =>
+  sighting.closedAt === null &&
+  sighting.state === "SPAWNING" &&
+  now - Date.parse(sighting.lastSeenAt) <=
+    HERO_SIGHTING_NOTIFICATION_MAX_AGE_MS;
 
 /** A hero sighting rule's level range; a missing bound is open. */
 const matchesHeroLevel = (
@@ -296,9 +286,8 @@ export const makeNotificationsEvents = (options: {
     "notifications.events.heroSightingUpdated",
   )(function* (sighting: HeroSightingResponse) {
     const now = yield* Clock.currentTimeMillis;
-    const transition = heroSightingNotificationTransition(sighting, now);
 
-    if (!transition) return;
+    if (!isHeroSightingNews(sighting, now)) return;
 
     const rules = yield* options.store.heroSightingRules(
       sighting.guildId,
@@ -322,7 +311,7 @@ export const makeNotificationsEvents = (options: {
             scheduledFor: new Date(now),
             sourceEntityType: "hero-sighting",
             sourceEntityId: String(sighting.id),
-            sourceEventId: `hero-sighting:${sighting.id}:${transition}`,
+            sourceEventId: `hero-sighting:${sighting.id}:${sighting.state}`,
             payloadSnapshot: options.content.buildHeroSightingPayload({
               notificationRule: rule,
               target,
@@ -336,7 +325,6 @@ export const makeNotificationsEvents = (options: {
                   ? heroSightingAddedByHand(sighting.detectedBy.displayName)
                   : sighting.detectedBy.displayName,
               },
-              transition,
             }),
           })
           .pipe(

@@ -98,6 +98,40 @@ it("names who confirmed the hero last unless the detector did, across Organizati
   expect(project(detector)?.refreshedBy).toBeNull();
 });
 
+it("lists a hero that will spawn above a roaming one confirmed later, ended sightings last", () => {
+  const hero = (name: string) => ({
+    key: name,
+    name,
+    lvl: 258,
+    prof: null,
+  });
+
+  const rows = projectHeroSightingRows(
+    [
+      createHeroSighting({
+        id: 1,
+        hero: hero("ended"),
+        state: "SPAWNING",
+        lastSeenAt: "2026-11-03T12:50:00.000Z",
+        closedAt: "2026-11-03T12:55:00.000Z",
+      }),
+      createHeroSighting({
+        id: 2,
+        hero: hero("roaming"),
+        lastSeenAt: "2026-11-03T12:30:00.000Z",
+      }),
+      createHeroSighting({ id: 3, hero: hero("spawning"), state: "SPAWNING" }),
+    ],
+    { guildId: "guild-1", isGrouping: false },
+  );
+
+  expect(rows.map((row) => row.hero.key)).toEqual([
+    "spawning",
+    "roaming",
+    "ended",
+  ]);
+});
+
 it("lets only the author remove a sighting, and only while it is open and still entered by hand", () => {
   const own = createHeroSighting({ manual: true });
 

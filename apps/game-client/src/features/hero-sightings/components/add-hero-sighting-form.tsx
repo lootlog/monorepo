@@ -4,25 +4,13 @@ import { WindowFooter } from "@/components/draggable-window/window-footer";
 import { FormFieldError } from "@/components/form-field-error";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { Button } from "@/components/ui/button";
-import {
-  formFieldLabelClassName,
-  formFieldSelectClassName,
-} from "@/components/ui/form-field";
+import { formFieldLabelClassName } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  HERO_SIGHTING_STATES,
   MAX_HERO_LEVEL,
   MIN_HERO_LEVEL,
-  resolveHeroSightingState,
   useAddHeroSightingForm,
   type AddHeroSightingFormProps,
 } from "@/features/hero-sightings/hooks/use-add-hero-sighting-form";
@@ -43,8 +31,6 @@ export function AddHeroSightingForm(props: AddHeroSightingFormProps) {
     targetsStatus,
     register,
     errors,
-    setValue,
-    selectedState,
     suggestedHeroes,
     suggestions,
     fillHero,
@@ -114,52 +100,22 @@ export function AddHeroSightingForm(props: AddHeroSightingFormProps) {
             </p>
           </div>
 
-          <div className="ll:grid ll:w-full ll:grid-cols-2 ll:gap-2">
-            <div className="ll:min-w-0">
-              <Label htmlFor="heroLvl" className={formFieldLabelClassName}>
-                {t("addForm.lvlLabel")}
-              </Label>
-              <Input
-                id="heroLvl"
-                type="number"
-                min={MIN_HERO_LEVEL}
-                max={MAX_HERO_LEVEL}
-                step={1}
-                autoComplete="off"
-                inputMode="numeric"
-                placeholder={t("addForm.lvlPlaceholder")}
-                {...register("lvl")}
-              />
-              <FormFieldError message={errors.lvl?.message} />
-            </div>
-            <div className="ll:min-w-0">
-              <Label htmlFor="heroState" className={formFieldLabelClassName}>
-                {t("addForm.stateLabel")}
-              </Label>
-              <Select
-                value={selectedState}
-                onValueChange={(value) => {
-                  setValue("state", resolveHeroSightingState(value));
-                }}
-                disabled={isPending}
-              >
-                <SelectTrigger
-                  id="heroState"
-                  size="sm"
-                  aria-label={t("addForm.stateLabel")}
-                  className={formFieldSelectClassName}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {HERO_SIGHTING_STATES.map((state) => (
-                    <SelectItem key={state} value={state}>
-                      {t(`addForm.state.${state}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="ll:w-full">
+            <Label htmlFor="heroLvl" className={formFieldLabelClassName}>
+              {t("addForm.lvlLabel")}
+            </Label>
+            <Input
+              id="heroLvl"
+              type="number"
+              min={MIN_HERO_LEVEL}
+              max={MAX_HERO_LEVEL}
+              step={1}
+              autoComplete="off"
+              inputMode="numeric"
+              placeholder={t("addForm.lvlPlaceholder")}
+              {...register("lvl")}
+            />
+            <FormFieldError message={errors.lvl?.message} />
           </div>
 
           <div className="ll:w-full">

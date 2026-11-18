@@ -2,7 +2,10 @@ import { cn } from "cn";
 import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatLevel } from "@lootlog/domain/profession";
-import { isHeroSightingClaimedBy } from "@lootlog/domain/hero-sightings";
+import {
+  isHeroSightingClaimable,
+  isHeroSightingClaimedBy,
+} from "@lootlog/domain/hero-sightings";
 import { ListRow } from "@/components/list-row";
 import { TruncatedText } from "@/components/truncated-text";
 import { Button } from "@/components/ui/button";
@@ -29,8 +32,9 @@ type HeroSightingItemProps = {
 
 /**
  * One sighted hero: where it roams or will spawn, how long ago, who found it
- * and who claims it. Claiming is an explicit choice; finding a hero does not
- * claim it. The author of a sighting entered by hand may remove it.
+ * and who claims it. Claiming is an explicit choice for a hero that will
+ * spawn; finding a hero does not claim it, and a roaming one only lets its
+ * earlier claimers withdraw. The author of a sighting entered by hand may remove it.
  */
 export function HeroSightingItem({
   row,
@@ -47,6 +51,7 @@ export function HeroSightingItem({
 
   const claimableSightings = row.sightings.filter(
     (sighting) =>
+      isHeroSightingClaimable(sighting) &&
       !isHeroSightingClaimedBy(sighting, userId) &&
       writableGuildIds.has(sighting.guildId),
   );
@@ -84,7 +89,9 @@ export function HeroSightingItem({
       <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-1">
         <HeroSightingDetector member={row.detectedBy} manual={row.manual} />
         <span className="ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-1 ll:font-normal">
-          <HeroSightingClaimers claims={row.claims} />
+          {row.state === "SPAWNING" || row.claims.length > 0 ? (
+            <HeroSightingClaimers claims={row.claims} />
+          ) : null}
         </span>
         <HeroSightingHistoryPopover row={row} now={now} />
         {withdrawableSightings.length > 0 ? (
