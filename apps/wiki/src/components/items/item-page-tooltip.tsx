@@ -9,9 +9,8 @@ import { ITEM_TILE_LABELS } from "@/lib/item-options";
 type ItemPageTooltipProps = {
   /** The item as the page shows it, at its level for the set's character. */
   item: CatalogItemDtoOutput;
-  /** Its stats at the upgrade the page shows. */
+  /** Its stats at the upgrade the page shows; the tooltip marks the level. */
   stat: string;
-  upgradeLevel: number;
   renderStat: (displayValue: ItemDisplayValue) => ReactNode;
 };
 
@@ -22,13 +21,12 @@ type ItemPageTooltipProps = {
 export function ItemPageTooltip({
   item,
   stat,
-  upgradeLevel,
   renderStat,
 }: ItemPageTooltipProps) {
   return (
     <aside
       aria-label={t("item.inGame")}
-      className="relative overflow-hidden rounded-xl border border-[color-mix(in_oklab,var(--item-rarity)_40%,var(--border))] bg-popover"
+      className="overflow-hidden rounded-xl border border-[color-mix(in_oklab,var(--item-rarity)_40%,var(--border))] bg-popover"
     >
       <ItemTileDetails
         color=""
@@ -40,11 +38,6 @@ export function ItemPageTooltip({
         stat={stat}
         type={item.type ?? ""}
       />
-      {upgradeLevel > 0 ? (
-        <span className="absolute top-2 right-2 rounded-md border border-[color-mix(in_oklab,var(--item-rarity)_60%,var(--border))] bg-popover px-2 py-0.5 text-sm font-semibold text-emerald-400 tabular-nums">
-          {t("upgrade.level", { level: upgradeLevel })}
-        </span>
-      ) : null}
     </aside>
   );
 }
