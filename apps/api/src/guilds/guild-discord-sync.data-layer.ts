@@ -30,7 +30,14 @@ export interface GuildDiscordSyncPorts {
   }) => Effect.Effect<unknown, unknown>;
 }
 
+// A fresh, error-free snapshot stays current through gateway events, so a
+// manual refresh of it is spaced out. Any other state (a failed sync, a bot
+// removed from the server, or a role change that marked the snapshot stale)
+// must be retryable soon after the cause is fixed, while repeated failing calls
+// still stay away from Discord's invalid-request budget.
 const REFRESH_COOLDOWN_MS = 5 * 60 * 1000;
+
+const UNCONFIRMED_REFRESH_COOLDOWN_MS = 30 * 1000;
 
 const loadState = (database: typeof ApiDatabase.Service, guildId: string) =>
   database
@@ -295,18 +302,32 @@ export const makeGuildDiscordSyncData = (
   ) {
     const current = yield* loadState(database, guildId);
 
-    const elapsedMs = current
-      ? (yield* Clock.currentTimeMillis) - current.updatedAt.getTime()
-      : REFRESH_COOLDOWN_MS;
+    if (current) {
+      const isConfirmed =
+        current.status === "SYNCED" && current.lastError === null;
 
-    if (elapsedMs < REFRESH_COOLDOWN_MS) {
-      return yield* Effect.fail(
-        new RateLimitedError({
-          code: "DISCORD_SYNC_REFRESH_COOLDOWN",
-          message: "Discord sync can only be refreshed once every 5 minutes",
-          retryAfterMs: REFRESH_COOLDOWN_MS - elapsedMs,
-        }),
-      );
+      const cooldownMs = isConfirmed
+        ? REFRESH_COOLDOWN_MS
+        : UNCONFIRMED_REFRESH_COOLDOWN_MS;
+
+      // The retry window follows the last attempt, so a later state-only write
+      // (a gateway event) does not extend it.
+      const cooldownFrom = isConfirmed
+        ? current.updatedAt
+        : (current.lastAttemptAt ?? current.updatedAt);
+
+      const elapsedMs =
+        (yield* Clock.currentTimeMillis) - cooldownFrom.getTime();
+
+      if (elapsedMs < cooldownMs) {
+        return yield* Effect.fail(
+          new RateLimitedError({
+            code: "DISCORD_SYNC_REFRESH_COOLDOWN",
+            message: "Discord sync was refreshed too recently",
+            retryAfterMs: cooldownMs - elapsedMs,
+          }),
+        );
+      }
     }
 
     return yield* synchronize(guildId);
