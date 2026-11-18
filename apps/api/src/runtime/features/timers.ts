@@ -1,14 +1,11 @@
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeJsonCodec } from "#src/redis/redis.service";
-import { EVENT_HERO_KILL_QUEUE } from "#src/events/kills/event-hero-kill-queue.constant";
-import { EVENT_HERO_KILL_JOB_NAME } from "#src/events/kills/event-hero-kill-job";
 import { makeEventHeroCheckDispatcher } from "#src/events/kills/event-hero-check-outbox";
 import { makeOutboxWorker } from "#src/shared/outbox-worker";
 import { RedlockService } from "#src/redis/redlock";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/error-key";
-import { RabbitMessaging } from "@lootlog/messaging";
-import { Queue } from "bullmq";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { Effect, Layer, Schema } from "effect";
 import { makeAutoTimer } from "#src/timers/timer-auto.data-layer";
 import { makeDeleteTimer } from "#src/timers/timer-delete.data-layer";
@@ -24,8 +21,9 @@ import { makeRestoreTimer } from "#src/timers/timer-restore.data-layer";
 import { makeTimerSearch } from "#src/timers/timer-search.data-layer";
 import { CachedTimerProjectionSchema } from "#src/timers/timer-projection";
 import { TimersData } from "#src/timers/timers-data";
-import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
-import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
+import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
+import { EventHeroKillQueue } from "#src/runtime/queues/event-hero-kill";
+import { getTimerListCacheScope } from "#src/shared/cache";
 import { makeHeroSightingPublisher } from "#src/runtime/features/hero-sightings";
 import { ReadyRoomData } from "#src/messaging/ready-room/ready-room-data";
 
@@ -34,54 +32,26 @@ export const timersData = Layer.unwrap(
     const database = yield* ApiDatabase;
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
-    const config = yield* ApiRuntimeConfig;
     const readyRooms = yield* ReadyRoomData;
-
-    const eventHeroKillQueue = yield* Effect.acquireRelease(
-      Effect.sync(
-        () =>
-          new Queue(EVENT_HERO_KILL_QUEUE, {
-            connection: { url: redisUrl(config.redis) },
-            prefix: "{bull}",
-          }),
-      ),
-      (queue) => Effect.tryPromise(() => queue.close()).pipe(Effect.orDie),
-    );
-
-    const redlock = new RedlockService(redis).createInstance({
-      automaticExtensionThreshold: 5000,
-    });
-
-    const attempt = <A>(operation: () => PromiseLike<A>) =>
-      Effect.tryPromise({ try: operation, catch: (error) => error });
+    const eventHeroKillQueue = yield* EventHeroKillQueue;
+    const locks = new RedlockService(redis).createInstance();
 
     const withLock = <A, E>(key: string, effect: Effect.Effect<A, E>) =>
-      Effect.acquireUseRelease(
-        Effect.tryPromise({
-          try: () => redlock.acquire([key], 30_000),
-          catch: () =>
-            new ResourceConflictError({ code: ErrorKey.TIMER_RACE_CONDITION }),
-        }),
-        () => effect,
-        (lock: Awaited<ReturnType<typeof redlock.acquire>>) =>
-          Effect.tryPromise(() => lock.release()).pipe(Effect.ignore),
+      locks.withLock(
+        key,
+        30_000,
+        effect,
+        () =>
+          new ResourceConflictError({ code: ErrorKey.TIMER_RACE_CONDITION }),
       );
 
     const invalidateList = (guildId: string) =>
-      attempt(() => redis.invalidateScopes(`timer:list:${guildId}`));
+      redis.effect.invalidateScopes(getTimerListCacheScope(guildId));
 
     const eventHeroChecks = yield* makeOutboxWorker(
       "Event hero check",
       makeEventHeroCheckDispatcher(database, ({ jobId, data }) =>
-        attempt(() =>
-          eventHeroKillQueue.add(EVENT_HERO_KILL_JOB_NAME, data, {
-            jobId,
-            attempts: 5,
-            backoff: { type: "exponential", delay: 1000 },
-            removeOnComplete: true,
-            removeOnFail: false,
-          }),
-        ),
+        eventHeroKillQueue.add(jobId, data),
       )(),
     );
 
@@ -92,66 +62,42 @@ export const timersData = Layer.unwrap(
       createAuto: makeAutoTimer(database, {
         closeKilledNpcGatherings: readyRooms.npcKilled,
         signalEventHeroChecks: eventHeroChecks.signal,
-        get: (key) => attempt(() => redis.get(key)),
+        get: redis.effect.get,
         invalidateList,
         publishHeroSighting: makeHeroSightingPublisher(rabbit),
         publish: (routingKey, payload) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
-        releaseDedup: (key, token) =>
-          attempt(() => redis.deleteIfValue(key, token)).pipe(Effect.ignore),
-        set: (key, value, ttlSeconds) =>
-          attempt(() => redis.set(key, value, ttlSeconds)),
-        setNx: (key, value, ttlSeconds) =>
-          attempt(() => redis.setNX(key, value, ttlSeconds)),
+          rabbit.publish(eventMessage(routingKey, payload)),
+        set: redis.effect.set,
+        locks,
         withLock,
       }),
       createManual: makeManualTimer(database, {
         invalidateList,
         publish: (routingKey, payload) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
+          rabbit.publish(eventMessage(routingKey, payload)),
       }),
       delete: makeDeleteTimer(database, {
         invalidateList,
         publish: (routingKey, payload) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
+          rabbit.publish(eventMessage(routingKey, payload)),
       }),
       restore: makeRestoreTimer(database, {
         invalidateList,
         publish: (routingKey, payload) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
+          rabbit.publish(eventMessage(routingKey, payload)),
       }),
       reset: makeResetTimer(database, {
         invalidateList,
         publish: (routingKey, payload) =>
-          rabbit.publish({
-            exchange: "default",
-            routingKey,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
+          rabbit.publish(eventMessage(routingKey, payload)),
         withLock,
       }),
       getAll: makeAllTimerList(database),
       getGuildTimers: makeGuildTimerList(database, {
         getOrSet: (key, guildId, factory) =>
-          redis.getOrSetJsonEffect({
+          redis.effect.getOrSetJson({
             key,
-            scopes: [`timer:list:${guildId}`],
+            scopes: [getTimerListCacheScope(guildId)],
             factory,
             ttlSeconds: 2,
             codec: makeJsonCodec(Schema.Array(CachedTimerProjectionSchema)),

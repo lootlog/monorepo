@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { getNotificationFieldVisibility } from "../utils/notification-field-visibility";
 import { Schema } from "effect";
 import { useEffect, useRef, useState } from "react";
@@ -39,7 +40,6 @@ import {
 } from "../utils/notification-settings.utils";
 import {
   formatDateTimeLocalInputValue,
-  GUILD_NOTIFICATION_TIMEZONE,
   parseDateTimeLocalInputToIsoString,
 } from "../utils/notification-schedule-time.utils";
 import {
@@ -104,7 +104,7 @@ const getScheduledUntilPayload = (
 
   const scheduledUntil = parseDateTimeLocalInputToIsoString(
     values.scheduledUntil,
-    GUILD_NOTIFICATION_TIMEZONE,
+    MARGONEM_TIME_ZONE,
   );
 
   if (scheduledUntil) return scheduledUntil;
@@ -125,7 +125,7 @@ const getScheduledMessagePayload = (
     scheduledAt: visibleFields.showScheduledAtField
       ? parseDateTimeLocalInputToIsoString(
           values.scheduledAt,
-          GUILD_NOTIFICATION_TIMEZONE,
+          MARGONEM_TIME_ZONE,
         )
       : undefined,
     scheduleIntervalType:
@@ -146,7 +146,7 @@ const getScheduledMessagePayload = (
       visibleFields.isRecurring,
       savedScheduledUntil,
     ),
-    scheduleTimezone: GUILD_NOTIFICATION_TIMEZONE,
+    scheduleTimezone: MARGONEM_TIME_ZONE,
   };
 };
 
@@ -155,10 +155,7 @@ const stringifyNullable = (value: number | null | undefined, fallback = "") =>
 
 const formatRuleDate = (value: string | null, timezone: string | null) =>
   value
-    ? formatDateTimeLocalInputValue(
-        value,
-        timezone ?? GUILD_NOTIFICATION_TIMEZONE,
-      )
+    ? formatDateTimeLocalInputValue(value, timezone ?? MARGONEM_TIME_ZONE)
     : "";
 
 const getRuleFormDefaultValues = (

@@ -1,13 +1,14 @@
 import { itemStatUpgradeLevel } from "@lootlog/domain/item-upgrade";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import type { ItemRarity } from "@lootlog/ui/lib/item-rarity";
-import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-styles";
+import type { DisplayItemRarity } from "@lootlog/domain/item-rarity";
+import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-colors";
 import {
   ITEM_STAT_FOOTER_SECTIONS,
   mapStatsToDisplaySections,
-  parseItemStats,
   type ItemDisplayValue,
 } from "@lootlog/ui/components/item-stat-utils";
+import { ItemStatLine } from "@lootlog/ui/components/item-stat-line";
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import { cn } from "cn";
 import { Star } from "lucide-react";
 import type { FC, ReactNode } from "react";
@@ -23,20 +24,9 @@ const formatFallbackValue = (
   return String(rawValue ?? "");
 };
 
-const fallbackRenderStat = (displayValue: ItemDisplayValue) => {
-  if (!displayValue.key) {
-    return null;
-  }
-
-  return (
-    <span>
-      <span className="text-muted-foreground">{displayValue.key}: </span>
-      <span className="font-semibold text-primary">
-        {formatFallbackValue(displayValue.value)}
-      </span>
-    </span>
-  );
-};
+const renderItemStatLine = (displayValue: ItemDisplayValue) => (
+  <ItemStatLine displayValue={displayValue} />
+);
 
 const renderStatRows = (
   values: ItemDisplayValue[],
@@ -57,7 +47,7 @@ type ItemTileDetailsProps = {
   renderStat?: (displayValue: ItemDisplayValue) => ReactNode;
   icon: string;
   name: string;
-  rarity: ItemRarity;
+  rarity: DisplayItemRarity;
   shareNickname?: string;
   stat: string;
   type: string;
@@ -70,12 +60,12 @@ export const ItemTileDetails: FC<ItemTileDetailsProps> = ({
   labels,
   name,
   rarity,
-  renderStat = fallbackRenderStat,
+  renderStat = renderItemStatLine,
   shareNickname,
   stat,
   type,
 }) => {
-  const statSections = mapStatsToDisplaySections(parseItemStats(stat));
+  const statSections = mapStatsToDisplaySections(parseItemStatEntries(stat));
 
   const bodySections = statSections.filter(
     ({ index }) => !ITEM_STAT_FOOTER_SECTIONS.has(index),

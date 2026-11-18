@@ -53,13 +53,7 @@ try {
   } of workloads) {
     const store = new RedisGatewayStore(
       redis,
-      {
-        host: container.getHost(),
-        port: container.getMappedPort(6379),
-        username: "",
-        password: "",
-        keyPrefix: crypto.randomUUID(),
-      },
+      { keyPrefix: crypto.randomUUID() },
       (effect) => runtime.runPromise(effect),
       () => {},
     );

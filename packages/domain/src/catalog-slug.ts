@@ -1,17 +1,7 @@
-// Letters NFD does not split into a base letter and a mark.
-const UNDECOMPOSED_LETTERS = new Map(
-  Object.entries({ ł: "l", ß: "ss", æ: "ae", ø: "o", œ: "oe" }),
-);
+import { foldText, slug } from "./text-fold.js";
 
 /** A name as a URL slug: `Łowczyni Wspomnień` → `lowczyni-wspomnien`. */
-export const catalogSlug = (name: string) =>
-  name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Mark}/gu, "")
-    .replace(/[łßæøœ]/g, (letter) => UNDECOMPOSED_LETTERS.get(letter) ?? letter)
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+export const catalogSlug = (name: string) => slug(foldText(name));
 
 /** A catalog page's URL segment: the id, then the name, `257037-barbatos`. */
 export const catalogPageSegment = (entry: { id: number; name: string }) =>

@@ -1,3 +1,7 @@
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
 import { notificationRulesInApiKeyScope } from "../notification-api-key-scope.js";
 import {
@@ -10,9 +14,8 @@ import {
   getNotificationTestUsageResponse,
   readNotificationTestUsage,
 } from "../jobs/notification-test-usage.js";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   notificationRuleTable,
@@ -41,7 +44,7 @@ import {
   NotificationOwnerType,
   NotificationProvider,
   NotificationTargetType,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 
 const TEST_LIMIT = 5;
 
@@ -75,17 +78,12 @@ export interface NotificationUserTargetJobs {
   ) => Effect.Effect<void, unknown>;
 }
 
-class NotificationUserTargetFailure extends TaggedErrorClass<NotificationUserTargetFailure>()(
-  "NotificationUserTargetFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeNotificationUserTargets = (
   database: ApiDatabaseValue,
   jobs: NotificationUserTargetJobs,
 ) => {
   const databaseFailure = (operation: string) => (cause: unknown) =>
-    new NotificationUserTargetFailure({ operation, cause });
+    new OperationError({ operation, cause });
 
   const find = (discordId: string, targetId: number) =>
     database
@@ -293,9 +291,10 @@ export const makeNotificationUserTargets = (
       )
       .pipe(
         Effect.mapError(databaseFailure("notifications.userTargets.create")),
-        Effect.withSpan("notifications.userTargets.create.transaction", {
-          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-        }),
+        withAdapterSpan(
+          "notifications.userTargets.create.transaction",
+          "notifications.drizzle",
+        ),
       );
 
     return target;
@@ -349,9 +348,10 @@ export const makeNotificationUserTargets = (
       ruleIds,
     ).pipe(
       Effect.mapError(databaseFailure("notifications.userTargets.delete")),
-      Effect.withSpan("notifications.userTargets.delete.transaction", {
-        attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-      }),
+      withAdapterSpan(
+        "notifications.userTargets.delete.transaction",
+        "notifications.drizzle",
+      ),
     );
 
     return { success: true as const };
@@ -410,9 +410,10 @@ export const makeNotificationUserTargets = (
       )
       .pipe(
         Effect.mapError(databaseFailure("notifications.userTargets.testRule")),
-        Effect.withSpan("notifications.userTargets.testRule.transaction", {
-          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-        }),
+        withAdapterSpan(
+          "notifications.userTargets.testRule.transaction",
+          "notifications.drizzle",
+        ),
       );
 
   const triggerTest = Effect.fn("notifications.userTargets.triggerTest")(

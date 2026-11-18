@@ -6,7 +6,7 @@ import { ManagedRuntime, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import { makeUserLootStats } from "#src/loots/query/user-loot-stats";
-import { getKillNpcId } from "#src/shared/margonem/npc-identity";
+import { getKillNpcId } from "@lootlog/domain/npc-identity";
 
 const client = new Client({ connectionString: requireIsolatedTestDatabase() });
 

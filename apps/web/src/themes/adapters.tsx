@@ -1,5 +1,12 @@
 import { SpinnerOverrideProvider } from "@lootlog/ui/components/spinner";
-import { lazy, Suspense, type FC, type ReactNode } from "react";
+import type { ResolvedThemeId, ThemeFamily } from "@lootlog/ui/themes/catalog";
+import {
+  lazy,
+  Suspense,
+  type ComponentType,
+  type FC,
+  type ReactNode,
+} from "react";
 import { LazyCatPawSpinner } from "./cat/lazy-cat-paw-spinner";
 import { LazyRukiaIceSpinner } from "./rukia/lazy-rukia-ice-spinner";
 import { LazyRiasMagicSpinner } from "./rias/lazy-rias-magic-spinner";
@@ -95,101 +102,7 @@ const RiasDestructionOverlay = lazy(() =>
   })),
 );
 
-const getSpinnerOverride = (
-  isCatTheme: boolean,
-  isRukiaTheme: boolean,
-  isRiasTheme: boolean,
-) => {
-  if (isCatTheme) return LazyCatPawSpinner;
-
-  if (isRukiaTheme) return LazyRukiaIceSpinner;
-
-  if (isRiasTheme) return LazyRiasMagicSpinner;
-
-  return null;
-};
-
-export const ThemeSpinnerProvider: FC<{ children: ReactNode }> = ({
-  children,
-}) => {
-  const { isCatTheme, isRukiaTheme, isRiasTheme } = useThemeMeta();
-
-  return (
-    <SpinnerOverrideProvider
-      spinner={getSpinnerOverride(isCatTheme, isRukiaTheme, isRiasTheme)}
-    >
-      {children}
-    </SpinnerOverrideProvider>
-  );
-};
-
-export const ThemeRootEffects = () => {
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
-
-  if (isRukiaTheme) {
-    return (
-      <Suspense fallback={null}>
-        <RukiaFrostOverlay />
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={null}>
-        <RiasDestructionOverlay />
-      </Suspense>
-    );
-  }
-
-  return null;
-};
-
-export const ThemeSidebarBackground = () => {
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
-
-  if (isRukiaTheme) {
-    return (
-      <Suspense fallback={null}>
-        <FrozenSidebarBackground />
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={null}>
-        <RiasSidebarBackground />
-      </Suspense>
-    );
-  }
-
-  return null;
-};
-
-export const ThemeSidebarFooterDecoration = () => {
-  const { isCatTheme, isRiasTheme, resolvedTheme } = useThemeMeta();
-
-  if (isCatTheme) {
-    return (
-      <Suspense fallback={null}>
-        <SidebarCatAnimation theme={resolvedTheme} />
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={null}>
-        <SidebarMagicCircle />
-      </Suspense>
-    );
-  }
-
-  return null;
-};
-
-type ThemeInteractiveFrameProps = {
+type FrameProps = {
   children: ReactNode;
   isHovered: boolean;
   isActive: boolean;
@@ -198,49 +111,111 @@ type ThemeInteractiveFrameProps = {
   rounded?: string;
 };
 
-export const ThemeInteractiveFrame = ({
+type OverlayProps = { subtle: boolean; rounded: string };
+
+/**
+ * What a theme family adds to the shell. A family without an entry keeps the
+ * standard look there.
+ */
+type ThemeFamilyDecorations = {
+  /** Suffix of the family's variant of a translation key, e.g. `titleCat`. */
+  keySuffix: string;
+  greetingSuffix: string;
+  Spinner?: FC<{ className?: string }>;
+  RootEffects?: ComponentType;
+  SidebarBackground?: ComponentType;
+  SidebarFooterDecoration?: ComponentType<{ theme: ResolvedThemeId }>;
+  InteractiveFrame?: ComponentType<FrameProps>;
+  CircularFrame?: ComponentType<{ children: ReactNode; isActive: boolean }>;
+  SurfaceOverlay?: ComponentType<OverlayProps>;
+  EmptyStateIcon?: ComponentType<{ className?: string }>;
+};
+
+const THEME_FAMILIES: Record<ThemeFamily, ThemeFamilyDecorations> = {
+  standard: { keySuffix: "", greetingSuffix: "👋" },
+  cat: {
+    keySuffix: "Cat",
+    greetingSuffix: "🐱",
+    Spinner: LazyCatPawSpinner,
+    SidebarFooterDecoration: SidebarCatAnimation,
+    EmptyStateIcon: CatEmptyStateIcon,
+  },
+  rukia: {
+    keySuffix: "Rukia",
+    greetingSuffix: "❄️",
+    Spinner: LazyRukiaIceSpinner,
+    RootEffects: RukiaFrostOverlay,
+    SidebarBackground: FrozenSidebarBackground,
+    InteractiveFrame: FrozenButton,
+    CircularFrame: FrozenCircle,
+    SurfaceOverlay: FrostOverlay,
+    EmptyStateIcon: RukiaEmptyStateIcon,
+  },
+  rias: {
+    keySuffix: "Rias",
+    greetingSuffix: "♔",
+    Spinner: LazyRiasMagicSpinner,
+    RootEffects: RiasDestructionOverlay,
+    SidebarBackground: RiasSidebarBackground,
+    SidebarFooterDecoration: SidebarMagicCircle,
+    InteractiveFrame: GremoryButton,
+    CircularFrame: GremoryCircle,
+    SurfaceOverlay: DestructionOverlay,
+    EmptyStateIcon: RiasEmptyStateIcon,
+  },
+};
+
+const useThemeFamily = () => THEME_FAMILIES[useThemeMeta().family];
+
+export const ThemeSpinnerProvider: FC<{ children: ReactNode }> = ({
   children,
-  isHovered,
-  isActive,
-  className,
-  subtle,
-  rounded,
-}: ThemeInteractiveFrameProps) => {
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
+}) => (
+  <SpinnerOverrideProvider spinner={useThemeFamily().Spinner ?? null}>
+    {children}
+  </SpinnerOverrideProvider>
+);
 
-  if (isRukiaTheme) {
-    return (
-      <Suspense fallback={<>{children}</>}>
-        <FrozenButton
-          isHovered={isHovered}
-          isActive={isActive}
-          className={className}
-          subtle={subtle}
-          rounded={rounded}
-        >
-          {children}
-        </FrozenButton>
-      </Suspense>
-    );
-  }
+export const ThemeRootEffects = () => {
+  const { RootEffects } = useThemeFamily();
 
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={<>{children}</>}>
-        <GremoryButton
-          isHovered={isHovered}
-          isActive={isActive}
-          className={className}
-          subtle={subtle}
-          rounded={rounded}
-        >
-          {children}
-        </GremoryButton>
-      </Suspense>
-    );
-  }
+  return RootEffects ? (
+    <Suspense fallback={null}>
+      <RootEffects />
+    </Suspense>
+  ) : null;
+};
 
-  return <>{children}</>;
+export const ThemeSidebarBackground = () => {
+  const { SidebarBackground } = useThemeFamily();
+
+  return SidebarBackground ? (
+    <Suspense fallback={null}>
+      <SidebarBackground />
+    </Suspense>
+  ) : null;
+};
+
+export const ThemeSidebarFooterDecoration = () => {
+  const { resolvedTheme } = useThemeMeta();
+  const { SidebarFooterDecoration } = useThemeFamily();
+
+  return SidebarFooterDecoration ? (
+    <Suspense fallback={null}>
+      <SidebarFooterDecoration theme={resolvedTheme} />
+    </Suspense>
+  ) : null;
+};
+
+export const ThemeInteractiveFrame = (props: FrameProps) => {
+  const { InteractiveFrame } = useThemeFamily();
+
+  return InteractiveFrame ? (
+    <Suspense fallback={<>{props.children}</>}>
+      <InteractiveFrame {...props} />
+    </Suspense>
+  ) : (
+    <>{props.children}</>
+  );
 };
 
 export const ThemeCircularFrame = ({
@@ -250,68 +225,38 @@ export const ThemeCircularFrame = ({
   children: ReactNode;
   isActive: boolean;
 }) => {
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
+  const { CircularFrame } = useThemeFamily();
 
-  if (isRukiaTheme) {
-    return (
-      <Suspense fallback={<>{children}</>}>
-        <FrozenCircle isActive={isActive}>{children}</FrozenCircle>
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={<>{children}</>}>
-        <GremoryCircle isActive={isActive}>{children}</GremoryCircle>
-      </Suspense>
-    );
-  }
-
-  return <>{children}</>;
+  return CircularFrame ? (
+    <Suspense fallback={<>{children}</>}>
+      <CircularFrame isActive={isActive}>{children}</CircularFrame>
+    </Suspense>
+  ) : (
+    <>{children}</>
+  );
 };
 
 export const ThemeSurfaceOverlay = ({
   subtle = false,
   rounded = "rounded-xl",
-}: {
-  subtle?: boolean;
-  rounded?: string;
-}) => {
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
+}: Partial<OverlayProps>) => {
+  const { SurfaceOverlay } = useThemeFamily();
 
-  if (isRukiaTheme) {
-    return (
-      <Suspense fallback={null}>
-        <FrostOverlay subtle={subtle} rounded={rounded} />
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={null}>
-        <DestructionOverlay subtle={subtle} rounded={rounded} />
-      </Suspense>
-    );
-  }
-
-  return null;
+  return SurfaceOverlay ? (
+    <Suspense fallback={null}>
+      <SurfaceOverlay subtle={subtle} rounded={rounded} />
+    </Suspense>
+  ) : null;
 };
 
+/** The current family's variant of a translation key. */
 export const useThemedKey = () => {
-  const { isCatTheme, isRukiaTheme, isRiasTheme } = useThemeMeta();
+  const { keySuffix } = useThemeFamily();
 
-  return (base: string) => {
-    if (isCatTheme) return `${base}Cat`;
-
-    if (isRukiaTheme) return `${base}Rukia`;
-
-    if (isRiasTheme) return `${base}Rias`;
-
-    return base;
-  };
+  return (base: string) => `${base}${keySuffix}`;
 };
+
+export const useThemeGreetingSuffix = () => useThemeFamily().greetingSuffix;
 
 export const ThemeEmptyStateIcon = ({
   className,
@@ -320,31 +265,13 @@ export const ThemeEmptyStateIcon = ({
   className?: string;
   fallback?: ReactNode;
 }) => {
-  const { isCatTheme, isRukiaTheme, isRiasTheme } = useThemeMeta();
+  const { EmptyStateIcon } = useThemeFamily();
 
-  if (isCatTheme) {
-    return (
-      <Suspense fallback={<>{fallback}</>}>
-        <CatEmptyStateIcon className={className} />
-      </Suspense>
-    );
-  }
-
-  if (isRukiaTheme) {
-    return (
-      <Suspense fallback={<>{fallback}</>}>
-        <RukiaEmptyStateIcon className={className} />
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={<>{fallback}</>}>
-        <RiasEmptyStateIcon className={className} />
-      </Suspense>
-    );
-  }
-
-  return <>{fallback}</>;
+  return EmptyStateIcon ? (
+    <Suspense fallback={<>{fallback}</>}>
+      <EmptyStateIcon className={className} />
+    </Suspense>
+  ) : (
+    <>{fallback}</>
+  );
 };

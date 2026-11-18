@@ -19,6 +19,8 @@
     "./themes/*": "./src/themes/*.ts",
     "./themes/*.css": "./src/themes/*.css",
     "./i18n/translations/item-stats.json": "./src/i18n/translations/item-stats.json",
+    "./i18n/translations/npc-type.json": "./src/i18n/translations/npc-type.json",
+    "./i18n/translations/professions.json": "./src/i18n/translations/professions.json",
     "./postcss.config.mjs": "./postcss.config.mjs",
     "./i18n/translation-lookup": "./src/i18n/translation-lookup.ts"
   },

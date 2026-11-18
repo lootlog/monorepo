@@ -1,7 +1,10 @@
 import { verifyGeneratedAssetReferences } from "../../../scripts/static-assets.mjs";
+import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
+import { assertRoutedTo } from "../../traffic-splitter/scripts/assert-routed.mjs";
 import assert from "node:assert/strict";
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import { docsPages } from "../lib/docs-paths";
 
 const clientDirectory = path.resolve("dist/client");
 
@@ -24,9 +27,9 @@ assert.doesNotMatch(
   "root redirect uses the shared asset namespace",
 );
 
-const contentFiles = (await readdir(contentDirectory))
-  .filter((fileName) => fileName.endsWith(".mdx"))
-  .sort();
+// Paths that pages under `/docs` request on the shared `dev.lootlog.pl` host;
+// the rest of the artifact is served only on `docs.lootlog.pl`.
+const splitterPaths = ["/api/search"];
 
 const sitemap = await readFile(
   path.join(clientDirectory, "sitemap.xml"),
@@ -43,12 +46,10 @@ const sitemapLocations = Array.from(
   (match) => match[1],
 ).sort();
 
-const canonicalLocations = contentFiles
-  .map((fileName) => {
-    const slug = fileName.slice(0, -".mdx".length);
+const canonicalUrl = (path) => `${PUBLIC_SITE_ORIGINS.docs}${path}`;
 
-    return `https://docs.lootlog.pl/${slug === "index" ? "docs" : `docs/${slug}`}`;
-  })
+const canonicalLocations = docsPages
+  .map((page) => canonicalUrl(page.path))
   .sort();
 
 assert.deepEqual(
@@ -59,12 +60,17 @@ assert.deepEqual(
 
 const robots = await readFile(path.join(clientDirectory, "robots.txt"), "utf8");
 
-assert.match(robots, /^Sitemap: https:\/\/docs\.lootlog\.pl\/sitemap\.xml$/mu);
+assert.ok(
+  robots
+    .split("\n")
+    .includes(`Sitemap: ${PUBLIC_SITE_ORIGINS.docs}/sitemap.xml`),
+  "robots.txt lacks the production sitemap",
+);
 
 await Promise.all(
-  contentFiles.map(async (fileName) => {
-    const slug = fileName.slice(0, -".mdx".length);
-    const routePath = slug === "index" ? "docs" : `docs/${slug}`;
+  docsPages.map(async ({ slug, path: pagePath }) => {
+    const fileName = `${slug}.mdx`;
+    const routePath = pagePath.slice(1);
 
     const [source, document] = await Promise.all([
       readFile(path.join(contentDirectory, fileName), "utf8"),
@@ -93,11 +99,14 @@ await Promise.all(
     assert.match(document, /class="[^"]*prose/u);
     assert.ok(
       document.includes(
-        `<link rel="canonical" href="https://docs.lootlog.pl/${routePath}"`,
+        `<link rel="canonical" href="${canonicalUrl(pagePath)}"`,
       ),
       `${routePath} lacks its production canonical URL`,
     );
-    verifyGeneratedAssetReferences(document, "docs", routePath);
+    splitterPaths.push(
+      `/${routePath}`,
+      ...verifyGeneratedAssetReferences(document, "docs", routePath),
+    );
   }),
 );
 
@@ -110,10 +119,7 @@ const parsedSearchResponse = JSON.parse(searchResponse);
 
 assert.equal(parsedSearchResponse.type, "advanced");
 
-for (const fileName of contentFiles) {
-  const slug = fileName.slice(0, -".mdx".length);
-  const publicPath = slug === "index" ? "/docs" : `/docs/${slug}`;
-
+for (const { path: publicPath } of docsPages) {
   assert.ok(
     searchResponse.includes(publicPath),
     `search index lacks ${publicPath}`,
@@ -127,9 +133,10 @@ const [llmsIndex, llmsFull] = await Promise.all(
 );
 
 await Promise.all(
-  contentFiles.map(async (fileName) => {
-    const slug = fileName.slice(0, -".mdx".length);
-    const markdownPath = slug === "index" ? "docs/index.md" : `docs/${slug}.md`;
+  docsPages.map(async ({ slug, markdownPath: markdownRoute }) => {
+    const fileName = `${slug}.mdx`;
+    const markdownPath = markdownRoute.slice(1);
+    splitterPaths.push(`/${markdownPath}`);
 
     const [source, markdown] = await Promise.all([
       readFile(path.join(contentDirectory, fileName), "utf8"),
@@ -143,7 +150,7 @@ await Promise.all(
       `${markdownPath} lacks its page title`,
     );
     assert.ok(
-      llmsIndex.includes(`(https://docs.lootlog.pl/${markdownPath})`),
+      llmsIndex.includes(`(${PUBLIC_SITE_ORIGINS.docs}/${markdownPath})`),
       `llms.txt lacks ${markdownPath}`,
     );
     assert.ok(
@@ -159,24 +166,14 @@ const staticFunctionFiles = await readdir(
 
 assert.equal(
   staticFunctionFiles.length,
-  contentFiles.length,
+  docsPages.length,
   "static server function responses are incomplete",
 );
 
-await Promise.all(
-  staticFunctionFiles.map(async (fileName) => {
-    const response = await readFile(
-      path.join(clientDirectory, "__tsr/staticServerFnCache", fileName),
-      "utf8",
-    );
-
-    JSON.parse(response);
-    assert.match(
-      response,
-      /"k":\["description","path","slugs","title","pageTree"\]/u,
-      `${fileName} omits route metadata from client navigation data`,
-    );
-  }),
+splitterPaths.push(
+  ...staticFunctionFiles.map(
+    (fileName) => `/__tsr/staticServerFnCache/${fileName}`,
+  ),
 );
 
 await Promise.all(
@@ -184,5 +181,7 @@ await Promise.all(
     access(path.join(clientDirectory, assetPath)),
   ),
 );
+
+await assertRoutedTo(splitterPaths, "docs");
 
 process.stdout.write("Docs static artifact verified.\n");

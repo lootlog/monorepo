@@ -1,10 +1,11 @@
 import { RealtimeEventListeners } from "@lootlog/client/realtime/event-listeners";
+import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
-import type { AppSocketEvent } from "@/lib/socket";
+import type { AppSocketEvents } from "@/lib/socket";
 
-const listeners = new RealtimeEventListeners<AppSocketEvent>();
+const listeners = new RealtimeEventListeners<AppSocketEvents>();
 
 const socket = {
   on: listeners.add.bind(listeners),
@@ -12,6 +13,45 @@ const socket = {
 };
 
 const emit = listeners.emit.bind(listeners);
+
+const accessUpdate = {
+  accessPolicy: createAccessPolicySnapshot([], "new"),
+  changes: [],
+};
+
+const notification = (
+  notificationId: string,
+  guildId = "guild-1",
+): AppSocketEvents["notification.sent"] => ({
+  notificationId,
+  guildId,
+  discordId: "discord-1",
+  world: "tempest",
+  createdAt: "2026-01-01T00:00:00.000Z",
+});
+
+const gathering = (
+  notificationId: string,
+): AppSocketEvents["party-gathering.updated"] => ({
+  notificationId,
+  guildId: "guild-1",
+  discordId: "discord-1",
+  character: {
+    accountId: "1",
+    characterId: "2",
+    icon: "icon.gif",
+    lvl: 100,
+    nick: "Organizer",
+    prof: "w",
+  },
+  world: "tempest",
+  createdAt: "2026-01-01T00:00:00.000Z",
+});
+
+const cancellation = (notificationId: string) => ({
+  notificationId,
+  guildId: "guild-1",
+});
 
 const processPayloadBatch =
   vi.fn<(payloads: readonly { notificationId: string }[]) => void>();
@@ -39,19 +79,17 @@ describe("useBufferedSocketIngress", () => {
         onProcessBatch,
       }),
     );
-    emit("notification.sent", { notificationId: "hidden-titan" });
-    emit("access.updated", {});
+    emit("notification.sent", notification("hidden-titan"));
+    emit("access.updated", accessUpdate);
     await act(async () => {
       await Promise.resolve();
     });
     expect(onProcessBatch).not.toHaveBeenCalled();
-    emit("notification.sent", { notificationId: "allowed" });
+    emit("notification.sent", notification("allowed"));
     await act(async () => {
       await Promise.resolve();
     });
-    expect(onProcessBatch).toHaveBeenCalledWith([
-      { notificationId: "allowed" },
-    ]);
+    expect(onProcessBatch).toHaveBeenCalledWith([notification("allowed")]);
   });
 
   it("queues payloads until readiness and flushes them afterwards", () => {
@@ -72,14 +110,14 @@ describe("useBufferedSocketIngress", () => {
       },
     );
 
-    emit("notification.sent", { notificationId: "notification-1" });
+    emit("notification.sent", notification("notification-1"));
 
     expect(processPayloadBatch).not.toHaveBeenCalled();
 
     rerender({ isReady: true });
 
     expect(processPayloadBatch).toHaveBeenCalledWith([
-      { notificationId: "notification-1" },
+      notification("notification-1"),
     ]);
   });
 
@@ -111,7 +149,7 @@ describe("useBufferedSocketIngress", () => {
       },
     );
 
-    emit("notification.sent", { notificationId: "notification-1" });
+    emit("notification.sent", notification("notification-1"));
 
     rerender({
       accountId: "account-1",
@@ -153,12 +191,8 @@ describe("useBufferedSocketIngress", () => {
       },
     );
 
-    emit("party-gathering.updated", {
-      notificationId: "notification-1",
-    });
-    emit("party-gathering.cancelled", {
-      notificationId: "notification-1",
-    });
+    emit("party-gathering.updated", gathering("notification-1"));
+    emit("party-gathering.cancelled", cancellation("notification-1"));
 
     rerender({ isReady: true });
 
@@ -184,13 +218,9 @@ describe("useBufferedSocketIngress", () => {
       }),
     );
 
-    emit("party-gathering.cancelled", {
-      notificationId: "notification-1",
-    });
+    emit("party-gathering.cancelled", cancellation("notification-1"));
 
-    expect(cancelPayload).toHaveBeenCalledWith({
-      notificationId: "notification-1",
-    });
+    expect(cancelPayload).toHaveBeenCalledWith(cancellation("notification-1"));
   });
 
   it("batches ready payloads received during the same task", async () => {
@@ -205,17 +235,17 @@ describe("useBufferedSocketIngress", () => {
       }),
     );
 
-    emit("notification.sent", { notificationId: "notification-1" });
-    emit("notification.sent", { notificationId: "notification-2" });
-    emit("notification.sent", { notificationId: "notification-3" });
+    emit("notification.sent", notification("notification-1"));
+    emit("notification.sent", notification("notification-2"));
+    emit("notification.sent", notification("notification-3"));
 
     expect(processPayloadBatch).not.toHaveBeenCalled();
     await act(() => Promise.resolve());
     expect(processPayloadBatch).toHaveBeenCalledTimes(1);
     expect(processPayloadBatch).toHaveBeenCalledWith([
-      { notificationId: "notification-1" },
-      { notificationId: "notification-2" },
-      { notificationId: "notification-3" },
+      notification("notification-1"),
+      notification("notification-2"),
+      notification("notification-3"),
     ]);
   });
 
@@ -231,7 +261,7 @@ describe("useBufferedSocketIngress", () => {
       }),
     );
 
-    emit("notification.sent", { notificationId: "notification-1" });
+    emit("notification.sent", notification("notification-1"));
     unmount();
     await act(() => Promise.resolve());
 
@@ -256,15 +286,11 @@ describe("useBufferedSocketIngress", () => {
       }),
     );
 
-    emit("party-gathering.updated", {
-      notificationId: "notification-1",
-    });
-    emit("party-gathering.cancelled", {
-      notificationId: "notification-1",
-    });
+    emit("party-gathering.updated", gathering("notification-1"));
+    emit("party-gathering.cancelled", cancellation("notification-1"));
 
     expect(processPayloadBatch).toHaveBeenCalledWith([
-      { notificationId: "notification-1" },
+      gathering("notification-1"),
     ]);
     expect(processPayloadBatch.mock.invocationCallOrder[0]).toBeLessThan(
       cancelPayload.mock.invocationCallOrder[0],
@@ -290,21 +316,19 @@ describe("useBufferedSocketIngress", () => {
     );
 
     for (let index = 0; index < 100; index += 1) {
-      emit("notification.sent", {
-        notificationId: `notification-${index}`,
-      });
+      emit("notification.sent", notification(`notification-${index}`));
     }
 
     rerender({ isReady: true });
 
     expect(processPayloadBatch).toHaveBeenCalledTimes(1);
     expect(processPayloadBatch.mock.calls[0]?.[0]).toHaveLength(100);
-    expect(processPayloadBatch.mock.calls[0]?.[0]?.[0]).toEqual({
-      notificationId: "notification-0",
-    });
-    expect(processPayloadBatch.mock.calls[0]?.[0]?.at(-1)).toEqual({
-      notificationId: "notification-99",
-    });
+    expect(processPayloadBatch.mock.calls[0]?.[0]?.[0]).toEqual(
+      notification("notification-0"),
+    );
+    expect(processPayloadBatch.mock.calls[0]?.[0]?.at(-1)).toEqual(
+      notification("notification-99"),
+    );
   });
 });
 
@@ -326,14 +350,12 @@ it("keeps unaffected queued notifications and rejects revoked data at flush", as
       onProcessBatch,
     }),
   );
-  emit("notification.sent", { guildId: "a" });
-  emit("notification.sent", { guildId: "b" });
+  emit("notification.sent", notification("a", "a"));
+  emit("notification.sent", notification("b", "b"));
   allowedGuilds = new Set(["b"]);
-  emit("access.updated", {
-    accessPolicy: { version: "new", organizations: [] },
-  });
+  emit("access.updated", accessUpdate);
   await act(async () => {
     await Promise.resolve();
   });
-  expect(onProcessBatch).toHaveBeenCalledWith([{ guildId: "b" }]);
+  expect(onProcessBatch).toHaveBeenCalledWith([notification("b", "b")]);
 });

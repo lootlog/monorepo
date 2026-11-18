@@ -1,13 +1,8 @@
 import {
-  discordGuildChannelFields,
-  discordPermissionFields,
+  DiscordGuildChannel,
+  DiscordGuildSyncState,
 } from "@lootlog/schema/discord";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import {
-  DiscordGuildSyncStatusSchema,
-  type DiscordGuildChannelSnapshot,
-  type DiscordGuildSyncState,
-} from "@lootlog/schema/notifications";
 import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import {
@@ -15,47 +10,12 @@ import {
   type OutboundHttpFailure,
 } from "#src/shared/http/outbound-http";
 
-const mutableDiscordPermissionFields = {
-  ...discordPermissionFields,
-  requiredPermissions: Schema.mutable(
-    discordPermissionFields.requiredPermissions,
-  ),
-  grantedPermissions: Schema.mutable(
-    discordPermissionFields.grantedPermissions,
-  ),
-  missingPermissions: Schema.mutable(
-    discordPermissionFields.missingPermissions,
-  ),
-};
-
-const DiscordGuildChannelSnapshotSchema = Schema.Struct({
-  ...discordGuildChannelFields,
-  position: Schema.Number,
-  ...mutableDiscordPermissionFields,
-  lastSyncedAt: Schema.String,
-});
-
-const DiscordGuildSyncStateSchema = Schema.Struct({
-  guildId: Schema.String,
-  status: DiscordGuildSyncStatusSchema,
-  ...mutableDiscordPermissionFields,
-  channelCount: Schema.Number,
-  selectableChannelCount: Schema.Number,
-  lastAttemptAt: Schema.NullOr(Schema.String),
-  lastSuccessAt: Schema.NullOr(Schema.String),
-  lastError: Schema.NullOr(Schema.String),
-  updatedAt: Schema.String,
-});
-
 const DiscordGuildChannelsResponse = Schema.Struct({
-  channels: Schema.mutable(Schema.Array(DiscordGuildChannelSnapshotSchema)),
-  syncState: DiscordGuildSyncStateSchema,
+  channels: Schema.Array(DiscordGuildChannel),
+  syncState: DiscordGuildSyncState,
 });
 
-type GuildChannels = {
-  readonly channels: DiscordGuildChannelSnapshot[];
-  readonly syncState: DiscordGuildSyncState;
-};
+type GuildChannels = typeof DiscordGuildChannelsResponse.Type;
 
 class DiscordBotClientFailure extends TaggedErrorClass<DiscordBotClientFailure>()(
   "DiscordBotClientFailure",

@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
+import { ApiKeyStatusRequest } from "@lootlog/schema/api-key-access";
 import {
   ApiKeyService,
-  ApiKeyStatusRequest,
   CreateApiKey,
   RenameApiKey,
 } from "#src/auth/api-key-service";

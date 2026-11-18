@@ -1,6 +1,4 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
-import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
-import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   NpcTypeEnum as NpcType,
   NpcTypeSchema,
@@ -201,14 +199,11 @@ export const mapTimerResponse = (timer: CachedTimerProjection) => {
   };
 };
 
-export type TimerPublishedEvent<
-  Key extends
-    | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
-    | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED
-    | typeof RabbitRoutingKey.GUILDS_TIMERS_DELETE
-    | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
-> = Key extends
-  | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
-  | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED
-  ? ReturnType<typeof mapTimerResponse>
-  : CanonicalRabbitEvent<Key>;
+/** The timer as published: JSON carries its spawn window as ISO strings. */
+export const toTimerEvent = (
+  response: ReturnType<typeof mapTimerResponse>,
+) => ({
+  ...response,
+  minSpawnTime: response.minSpawnTime.toISOString(),
+  maxSpawnTime: response.maxSpawnTime.toISOString(),
+});

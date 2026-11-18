@@ -1,6 +1,6 @@
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import { activeEventCondition } from "#src/events/event-scope-query";
 import { makeEventMapRead } from "./event-map-read.js";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
@@ -32,25 +32,12 @@ const CACHE_TTL_SECONDS = 10;
 
 type Role = typeof roleTable.$inferSelect;
 
-class EventCatalogReadError extends TaggedErrorClass<EventCatalogReadError>()(
-  "EventCatalogReadError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeEventsCatalogRead = (
   database: typeof ApiDatabase.Service,
   redis: Pick<RedisService, "getOrSetJsonEffect">,
   logger: Pick<Logger, "warn">,
 ) => {
-  const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new EventCatalogReadError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.catalog.drizzle", retryCount: 0 },
-      }),
-    );
+  const query = adapterOperation("events.catalog.drizzle");
 
   const cached = <S extends Schema.ConstraintDecoder<unknown>>(
     entry: ReturnType<typeof eventReadCacheEntry>,

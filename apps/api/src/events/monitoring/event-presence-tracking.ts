@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { activeEventCondition } from "#src/events/event-scope-query";
 import { and, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
@@ -17,7 +18,7 @@ import type { EventEmitter } from "#src/events/event-emitter";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import { isEventActiveAt } from "#src/events/monitoring/event-activity";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
-import { getEventHeroNpcId } from "#src/shared/margonem/npc-identity";
+import { getEventHeroNpcId } from "@lootlog/domain/npc-identity";
 import { findActiveGuildMember } from "#src/members/member-access-query";
 
 type GapType = typeof eventMapCoverageGapTable.$inferSelect.gapType;
@@ -45,11 +46,7 @@ export const makeEventPresenceTracking = (
   const redlock = redlockService.createInstance();
 
   const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.withSpan(operation, {
-        attributes: { adapter: "events.presence.drizzle", retryCount: 0 },
-      }),
-    );
+    effect.pipe(withAdapterSpan(operation, "events.presence.drizzle"));
 
   const findOpenGap = (mapId: string, gapType: GapType) =>
     query(
@@ -391,11 +388,7 @@ export const makeEventPresenceTracking = (
             5_000,
             handleInternal(guildId, mapName, discordId, hasPlayer, isAfk),
           )
-          .pipe(
-            Effect.withSpan("events.presence.lock", {
-              attributes: { adapter: "events.redlock", retryCount: 0 },
-            }),
-          );
+          .pipe(withAdapterSpan("events.presence.lock", "events.redlock"));
       });
     },
   };

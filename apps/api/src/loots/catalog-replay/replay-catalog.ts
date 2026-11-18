@@ -15,7 +15,12 @@
  * must have declared their replay queues first.
  */
 import { BunRuntime } from "@effect/platform-bun";
-import { RabbitMessaging } from "@lootlog/messaging";
+import {
+  RabbitMessaging,
+  eventMessage,
+  type PublishOptions,
+} from "@lootlog/messaging";
+import { playerSearchId } from "@lootlog/protocol/rabbit/events";
 import {
   RabbitRoutingKey,
   type RabbitRoutingKeyName,
@@ -24,8 +29,9 @@ import type {
   CatalogItemObservation,
   CatalogNpcObservation,
 } from "@lootlog/protocol/rabbit/catalog";
-import { Config, Effect, Layer, Redacted } from "effect";
+import { Effect, Layer, Redacted } from "effect";
 import { chunk, groupBy } from "es-toolkit";
+import { rabbitmqUriConfig } from "#src/config/api.config";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import { makeItemRevisionsPublisher } from "#src/loots/item-revisions-publisher";
 import { makeMonsterStatisticsPublisher } from "#src/loots/monster-statistics";
@@ -42,18 +48,15 @@ const toObservedAt = (epochMilliseconds: number) =>
   new Date(epochMilliseconds).toISOString();
 
 /** Publishes in order, one message at a time, so the consumer sees that order. */
-const publishInOrder = Effect.fn("CatalogReplay.publish")(function* (
+const publishInOrder = Effect.fn("CatalogReplay.publish")(function* <Item>(
   routingKey: RabbitRoutingKeyName,
-  observations: ReadonlyArray<object>,
+  observations: ReadonlyArray<Item>,
+  message: (batch: ReadonlyArray<Item>) => PublishOptions,
 ) {
   const rabbit = yield* RabbitMessaging;
 
   for (const batch of chunk([...observations], OBSERVATIONS_PER_MESSAGE)) {
-    yield* rabbit.publish({
-      exchange: "default",
-      routingKey,
-      content: new TextEncoder().encode(JSON.stringify(batch)),
-    });
+    yield* rabbit.publish(message(batch));
   }
 
   yield* Effect.logInfo("Replay published").pipe(
@@ -94,7 +97,11 @@ const replayItems = Effect.gen(function* () {
     ];
   });
 
-  yield* publishInOrder(RabbitRoutingKey.CATALOG_ITEMS_REPLAY, observations);
+  yield* publishInOrder(
+    RabbitRoutingKey.CATALOG_ITEMS_REPLAY,
+    observations,
+    (batch) => eventMessage(RabbitRoutingKey.CATALOG_ITEMS_REPLAY, batch),
+  );
 });
 
 /** Each NPC revision once per world, with the latest loot that saw it there. */
@@ -118,6 +125,7 @@ const replayNpcs = Effect.gen(function* () {
       lootId: npc.latestLootId,
       observedAt: toObservedAt(npc.firstSeenAt),
     })),
+    (batch) => eventMessage(RabbitRoutingKey.CATALOG_NPCS_REPLAY, batch),
   );
 });
 
@@ -127,7 +135,7 @@ const replayPlayers = Effect.gen(function* () {
   yield* publishInOrder(
     RabbitRoutingKey.SEARCH_PLAYERS_REPLAY,
     rows.map((player) => ({
-      id: `${player.characterId}${player.accountId}`,
+      id: playerSearchId(player.characterId, player.accountId),
       name: player.name,
       lvl: player.lvl ?? 0,
       prof: player.prof ?? "",
@@ -136,6 +144,7 @@ const replayPlayers = Effect.gen(function* () {
       accountId: player.accountId,
       world: player.world,
     })),
+    (batch) => eventMessage(RabbitRoutingKey.SEARCH_PLAYERS_REPLAY, batch),
   );
 });
 
@@ -157,7 +166,7 @@ export const replayCatalog = Effect.gen(function* () {
 
 if (import.meta.main) {
   const RabbitLive = Layer.unwrap(
-    Effect.map(Config.Redacted("RABBITMQ_URI"), (uri) =>
+    Effect.map(rabbitmqUriConfig, (uri) =>
       RabbitMessaging.layer({
         uri: Redacted.value(uri),
         connectionName: "api-catalog-replay",

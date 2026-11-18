@@ -1,35 +1,18 @@
-import { BunHttpServer } from "@effect/platform-bun";
 import {
-  httpServerMetrics,
-  httpServerRouteMetrics,
-} from "@lootlog/instrumentation";
+  serviceApiRoutes,
+  serviceHttpServer,
+} from "@lootlog/instrumentation/service";
 import { Effect, Layer } from "effect";
-import { HttpRouter, HttpServerResponse } from "effect/http";
-import { HttpApiBuilder } from "effect/http-api";
 import { SearchConfig } from "#src/config/search-config";
 import { SearchApi } from "./search-api.js";
 import { SearchHandlers } from "./search-handlers.js";
 
-const DocumentationRoute = HttpRouter.add(
-  "GET",
-  "/doc",
-  HttpServerResponse.raw(
-    Bun.file(new URL("../../openapi.yaml", import.meta.url)),
-    { contentType: "application/yaml" },
-  ),
-);
-
-export const SearchRoutes = Layer.merge(
-  HttpApiBuilder.layer(SearchApi, { openapiPath: "/openapi.json" }).pipe(
-    Layer.provide(SearchHandlers),
-  ),
-  DocumentationRoute,
-);
+export const SearchRoutes = serviceApiRoutes(SearchApi, {
+  documentation: new URL("../../openapi.yaml", import.meta.url),
+}).pipe(Layer.provide(SearchHandlers));
 
 export const SearchHttpServer = Layer.unwrap(
   Effect.map(SearchConfig, ({ port }) =>
-    HttpRouter.serve(SearchRoutes.pipe(Layer.provide(httpServerRouteMetrics)), {
-      middleware: httpServerMetrics,
-    }).pipe(Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port }))),
+    serviceHttpServer({ routes: SearchRoutes, port }),
   ),
 ).pipe(Layer.provide(SearchConfig.layer));

@@ -2,6 +2,7 @@ import { makeBattleAnalyticsRead } from "./battle-analytics-read.service.js";
 import { makeBattleCombatProfileRead } from "./battle-combat-profile-read.service.js";
 import { unusedRedisStore } from "../../../test/battle-fixtures.js";
 import { Effect } from "effect";
+import { Redis } from "effect/persistence";
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { ResourceNotFoundError } from "#src/infrastructure/http-error";
 import {
@@ -13,7 +14,7 @@ import {
   makeBattleAnalyticsQuery,
   type BattleAnalyticsQuery,
 } from "./battle-analytics-query.service.js";
-import type { RedisGetOrSetJsonBestEffortOptions } from "#src/infrastructure/redis-store";
+import type { RedisGetOrSetJsonOptions } from "#src/infrastructure/redis-store";
 import type {
   BattleStatisticsQuery,
   PlayerVsPlayerQuery,
@@ -62,28 +63,43 @@ const createDatabaseFixture = () => {
 };
 
 const createRedisFixture = () => {
-  const mockRedisService = {
+  const cachedValue = mock(
+    async (_key: string): Promise<string | null> => null,
+  );
+
+  const storeValue = mock(
+    async (_key: string, _value: string, _ttlSeconds?: number) => {},
+  );
+
+  return {
     ...unusedRedisStore,
-    eval: mock().mockResolvedValue("test-generation"),
-    get: mock().mockResolvedValue(null),
-    set: mock().mockResolvedValue(undefined),
-    getClient: mock(),
-    getOrSetJsonBestEffort: async <T>({
+    cachedValue,
+    storeValue,
+    evalScript: <TResult>() =>
+      // SAFETY: the analytics cache reads its generation script as a string.
+      Effect.succeed("test-generation" as TResult),
+    set: (key: string, value: string, ttlSeconds?: number) =>
+      Effect.tryPromise({
+        try: () => storeValue(key, value, ttlSeconds),
+        catch: (cause) => new Redis.RedisError({ cause }),
+      }),
+    getOrSetJsonBestEffort: <T, E, R>({
       key,
       factory,
       codec,
-    }: RedisGetOrSetJsonBestEffortOptions<T>): Promise<T> => {
-      const cached = await mockRedisService.get(key);
+    }: RedisGetOrSetJsonOptions<T, E, R>) =>
+      Effect.gen(function* () {
+        const cached = yield* Effect.promise(() => cachedValue(key));
 
-      if (cached !== null) return codec.parse(cached);
-      const result = await factory();
-      await mockRedisService.set(key, JSON.stringify(result), 300);
+        if (cached !== null) return codec.parse(cached);
+        const result = yield* factory;
+        yield* Effect.promise(() =>
+          storeValue(key, JSON.stringify(result), 300),
+        );
 
-      return result;
-    },
+        return result;
+      }),
   };
-
-  return mockRedisService;
 };
 
 describe("battle analytics", () => {
@@ -124,7 +140,7 @@ describe("battle analytics", () => {
         totalPH: 0,
       });
 
-      redisService.get.mockResolvedValue(cachedData);
+      redisService.cachedValue.mockResolvedValue(cachedData);
 
       await Effect.runPromise(
         service.getBattleAnalytics(
@@ -133,7 +149,7 @@ describe("battle analytics", () => {
         ),
       );
 
-      expect(redisService.get).toHaveBeenCalledWith(
+      expect(redisService.cachedValue).toHaveBeenCalledWith(
         expect.stringContaining(
           `analytics:${mockUserId}:${mockCharacterId}:all:all:all:all:0-0:all:all`,
         ),
@@ -149,7 +165,7 @@ describe("battle analytics", () => {
         totalPH: 0,
       });
 
-      redisService.get.mockResolvedValue(cachedData);
+      redisService.cachedValue.mockResolvedValue(cachedData);
 
       await Effect.runPromise(
         service.getBattleAnalytics(
@@ -158,7 +174,7 @@ describe("battle analytics", () => {
         ),
       );
 
-      expect(redisService.get).toHaveBeenCalledWith(
+      expect(redisService.cachedValue).toHaveBeenCalledWith(
         expect.stringContaining(
           `analytics:${mockUserId}:${mockCharacterId}:all:all:all:all:any-any:all:not-matchmaking`,
         ),
@@ -166,7 +182,7 @@ describe("battle analytics", () => {
     });
 
     it("should throw ResourceNotFoundError when character not found", async () => {
-      redisService.get.mockResolvedValue(null);
+      redisService.cachedValue.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
         Effect.succeed(null),
       );
@@ -182,7 +198,7 @@ describe("battle analytics", () => {
     });
 
     it("should return zeros when no characters found", async () => {
-      redisService.get.mockResolvedValue(null);
+      redisService.cachedValue.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findMany.mockReturnValue(
         Effect.succeed([]),
       );
@@ -203,7 +219,7 @@ describe("battle analytics", () => {
 
   describe("calculateProfessionWinRate", () => {
     it("should return empty array when no characters", async () => {
-      redisService.get.mockResolvedValue(null);
+      redisService.cachedValue.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findMany.mockReturnValue(
         Effect.succeed([]),
       );
@@ -218,7 +234,7 @@ describe("battle analytics", () => {
 
   describe("getPhGrowthTimeSeries", () => {
     it("should return empty array when no characters", async () => {
-      redisService.get.mockResolvedValue(null);
+      redisService.cachedValue.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findMany.mockReturnValue(
         Effect.succeed([]),
       );
@@ -249,7 +265,7 @@ describe("battle analytics", () => {
 
   describe("getRatingGrowthTimeSeries", () => {
     it("should return empty array when no characters", async () => {
-      redisService.get.mockResolvedValue(null);
+      redisService.cachedValue.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findMany.mockReturnValue(
         Effect.succeed([]),
       );
@@ -264,7 +280,7 @@ describe("battle analytics", () => {
 
   describe("getRatingDeltaByOpponent", () => {
     it("should return empty array when no characters", async () => {
-      redisService.get.mockResolvedValue(null);
+      redisService.cachedValue.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findMany.mockReturnValue(
         Effect.succeed([]),
       );
@@ -298,7 +314,7 @@ describe("battle analytics", () => {
 
   describe("invalidateAnalyticsCache", () => {
     it("does not fail a persisted write when invalidation is unavailable", async () => {
-      redisService.set.mockRejectedValue(new Error("Redis unavailable"));
+      redisService.storeValue.mockRejectedValue(new Error("Redis unavailable"));
       await expect(
         Effect.runPromise(service.invalidateAnalyticsCache(mockUserId)),
       ).resolves.toBeUndefined();

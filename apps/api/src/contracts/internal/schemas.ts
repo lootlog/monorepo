@@ -1,6 +1,5 @@
 /** Shared input and output schemas for the internal feature. */
 import * as Schema from "effect/Schema";
-import { FiniteNumber } from "@lootlog/schema/http-scalars";
 import { OrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
 
 type InternalOrganizationPermissionsResponse =
@@ -9,15 +8,6 @@ type InternalOrganizationPermissionsResponse =
 const InternalOrganizationPermissionsResponse = Schema.Struct(
   OrganizationPermissionsResponse.fields,
 ).annotate({ identifier: "UserGuildPermissionsDto" });
-
-export type InternalUserPermissionsQuery =
-  typeof InternalUserPermissionsQuery.Type;
-
-export const InternalUserPermissionsQuery = Schema.Struct({
-  discordId: Schema.String,
-  userId: Schema.String,
-  freshness: Schema.optionalKey(Schema.Literal("required")),
-});
 
 export type InternalUserPermissionsResponse =
   typeof InternalUserPermissionsResponse.Type;
@@ -31,18 +21,3 @@ export type OrganizationLookupPath = typeof OrganizationLookupPath.Type;
 export const OrganizationLookupPath = Schema.Struct({
   idOrVanityUrl: Schema.String,
 });
-
-export type InternalMemberIdentityPath = typeof InternalMemberIdentityPath.Type;
-
-export const InternalMemberIdentityPath = Schema.Struct({
-  guildId: Schema.String,
-  discordId: Schema.String,
-});
-
-export type InternalMemberIdentityResponse =
-  typeof InternalMemberIdentityResponse.Type;
-
-export const InternalMemberIdentityResponse = Schema.Struct({
-  userId: Schema.String,
-  memberId: FiniteNumber,
-}).annotate({ identifier: "InternalMemberIdentityDto" });

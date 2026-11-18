@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { firstBattleIdAt, lastBattleIdAt } from "#src/battles/battle-id";
 import { warriorExists } from "#src/battles/battle-warrior-query";
 import {
@@ -255,11 +256,7 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
 
         return conditions.length ? and(...conditions) : undefined;
       };
-    }).pipe(
-      Effect.withSpan("BattleListFilter_build", {
-        attributes: { adapter: "drizzle", retryCount: 0 },
-      }),
-    );
+    }).pipe(withAdapterSpan("BattleListFilter_build", "drizzle"));
 
   return { buildFilterConditions };
 };

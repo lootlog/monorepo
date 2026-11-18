@@ -1,7 +1,7 @@
 import { PgliteClient } from "@effect/sql-pglite";
 import { makeWithDefaults } from "drizzle-orm/effect-pglite";
 import { migrate } from "drizzle-orm/effect-pglite/migrator";
-import { afterAll, beforeAll, expect, it, mock } from "bun:test";
+import { afterAll, beforeAll, expect, it } from "bun:test";
 import { Effect, ManagedRuntime } from "effect";
 import { relations } from "#src/database/relations";
 import { battles, battleWarriors, userCharacters } from "#src/database/schema";
@@ -63,16 +63,19 @@ beforeAll(async () => {
 
   const cache = makeBattleAnalyticsCache({
     ...unusedRedisStore,
-    eval: mock().mockResolvedValue("generation"),
-    getOrSetJsonBestEffort: async ({ key, factory, codec }) => {
-      const cached = cachedValues.get(key);
+    evalScript: <TResult>() =>
+      // SAFETY: the analytics cache reads its generation script as a string.
+      Effect.succeed("generation" as TResult),
+    getOrSetJsonBestEffort: ({ key, factory, codec }) =>
+      Effect.gen(function* () {
+        const cached = cachedValues.get(key);
 
-      if (cached !== undefined) return codec.parse(cached);
-      const value = await factory();
-      cachedValues.set(key, codec.stringify(value));
+        if (cached !== undefined) return codec.parse(cached);
+        const value = yield* factory;
+        cachedValues.set(key, codec.stringify(value));
 
-      return value;
-    },
+        return value;
+      }),
   });
 
   const queryModule = makeBattleAnalyticsQuery(db);

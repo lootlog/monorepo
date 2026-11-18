@@ -1,7 +1,7 @@
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import {
   type ItemDisplayValue,
   mapStatsToDisplaySections,
-  parseItemStats,
 } from "@lootlog/ui/components/item-stat-utils";
 
 export type StatChange = {
@@ -22,11 +22,11 @@ const firstNumber = (value: string | boolean | undefined) =>
  */
 export const findStatChanges = (baseStat: string, stat: string) => {
   const base = new Map(
-    parseItemStats(baseStat).map(({ key, value }) => [key, value]),
+    parseItemStatEntries(baseStat).map(({ key, value }) => [key, value]),
   );
 
   const changed = new Map(
-    parseItemStats(stat).flatMap(({ key, value }) => {
+    parseItemStatEntries(stat).flatMap(({ key, value }) => {
       const before = firstNumber(base.get(key));
       const after = firstNumber(value);
 
@@ -39,11 +39,12 @@ export const findStatChanges = (baseStat: string, stat: string) => {
     }),
   );
 
-  return mapStatsToDisplaySections(parseItemStats(stat)).flatMap(({ values }) =>
-    values.flatMap((displayValue): StatChange[] => {
-      const change = changed.get(displayValue.key?.split(".")[0] ?? "");
+  return mapStatsToDisplaySections(parseItemStatEntries(stat)).flatMap(
+    ({ values }) =>
+      values.flatMap((displayValue): StatChange[] => {
+        const change = changed.get(displayValue.key?.split(".")[0] ?? "");
 
-      return change ? [{ displayValue, ...change }] : [];
-    }),
+        return change ? [{ displayValue, ...change }] : [];
+      }),
   );
 };

@@ -1,18 +1,19 @@
 import { isString } from "effect/Predicate";
 import {
+  type JsonObject,
+  type JsonValue,
+  isJsonObject as isObject,
+} from "@lootlog/client/scripts/generation";
+import {
+  apiServiceOrigin,
+  type PublicApiService,
+} from "@lootlog/schema/api-services";
+import {
   PUBLIC_API_OPERATIONS,
   type PublicApiOperation,
-  type PublicApiService,
 } from "@lootlog/schema/public-api-policy";
 
 const OPERATIONS: ReadonlyArray<PublicApiOperation> = PUBLIC_API_OPERATIONS;
-
-import {
-  type JsonValue,
-  isJsonObject as isObject,
-} from "../../client/scripts/openapi-document";
-
-type JsonObject = { [key: string]: JsonValue };
 
 /** Project only explicitly supported operations and transitively referenced components. */
 export function projectOpenApi(input: JsonObject, service: PublicApiService) {
@@ -107,9 +108,7 @@ export function projectOpenApi(input: JsonObject, service: PublicApiService) {
   return {
     openapi: input.openapi,
     info: input.info,
-    servers: [
-      { url: `https://${service === "main" ? "api" : service}.lootlog.pl` },
-    ],
+    servers: [{ url: apiServiceOrigin(service, "production") }],
     paths,
     components,
   };

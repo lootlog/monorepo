@@ -1,3 +1,4 @@
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import type { ClientCommand } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Redacted } from "effect";
@@ -15,7 +16,7 @@ import type { GatewaySocket, SessionData } from "../src/realtime/session.js";
 
 /** Configuration for benchmarks that never open a connection. */
 export const benchmarkConfig = {
-  environment: "benchmark",
+  environment: RuntimeEnvironment.DEV,
   port: 0,
   serviceName: "gateway",
   serviceNamespace: "benchmark",
@@ -23,13 +24,7 @@ export const benchmarkConfig = {
   margonemSigningKeyUrl: "http://localhost",
   rabbitmqUri: Redacted.make("unused"),
   activityEventSignatureSecret: Redacted.make("unused"),
-  redis: {
-    host: "localhost",
-    port: 6379,
-    username: "",
-    password: Redacted.make("unused"),
-    keyPrefix: "benchmark",
-  },
+  redis: { url: Redacted.make("unused"), keyPrefix: "benchmark" },
   websocketPath: "/ws",
   allowedWebOrigins: new Set<string>(),
   allowedExtensionOrigins: new Set<string>(),

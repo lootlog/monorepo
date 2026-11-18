@@ -53,7 +53,7 @@ export const SidebarNav = ({
   ariaLabel,
 }: SidebarNavProps) => {
   const { t } = useTranslation();
-  const { isCatTheme } = useThemeMeta();
+  const { family } = useThemeMeta();
   const { isMobile, setOpenMobile } = useSidebar();
   const groupIdPrefix = useId();
   const enabledItems = items.filter((item) => item.enabled);
@@ -171,7 +171,7 @@ export const SidebarNav = ({
                             icon={icon}
                             label={label}
                             badge={badge}
-                            isCatTheme={isCatTheme}
+                            isCatTheme={family === "cat"}
                             size={isMobile ? "touch" : "default"}
                             onItemClick={() => {
                               if (isMobile) setOpenMobile(false);

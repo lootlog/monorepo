@@ -7,23 +7,15 @@ import type { ParsedMove } from "@lootlog/battle-processor/battle-log";
 import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
 import { Config, Effect, Option, Redacted, Schema } from "effect";
 import { Client } from "pg";
+import {
+  decodeRawBattleDataJson,
+  type RawBattleData,
+} from "#src/battles/battle-service";
 import { gunzipSync } from "node:zlib";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-
-type R2BattlePayload = {
-  battleId: string;
-  timestamp: string;
-  rawData: {
-    accountId: string;
-    characterId: string;
-    world: string;
-    events: ParsedMove[];
-    sourceEvents?: unknown[];
-  };
-};
 
 type SampleSource =
   | {
@@ -164,7 +156,7 @@ const downloadBattle = async (
   client: S3Client,
   bucketName: string,
   battleId: string,
-): Promise<R2BattlePayload | null> => {
+): Promise<RawBattleData | null> => {
   try {
     const response = await client.send(
       new GetObjectCommand({
@@ -187,10 +179,7 @@ const downloadBattle = async (
       ? gunzipSync(bytes).toString("utf-8")
       : Buffer.from(bytes).toString("utf-8");
 
-    // SAFETY: These first-party R2 objects are written by BattlesService with
-    // processor-parsed events matching ParsedMove. This maintenance audit trusts
-    // that persisted contract; it does not validate arbitrary uploaded JSON.
-    return JSON.parse(json) as R2BattlePayload;
+    return decodeRawBattleDataJson(json);
   } catch {
     return null;
   }
@@ -330,7 +319,7 @@ const main = async () => {
   const bucketName = auditConfig.r2BucketName;
   const client = createR2Client();
   const source = await resolveSampleSource(client, bucketName);
-  const payloads: R2BattlePayload[] = [];
+  const payloads: RawBattleData[] = [];
 
   for (const battleId of source.battleIds.slice(0, SAMPLE_SIZE)) {
     const payload = await downloadBattle(client, bucketName, battleId);

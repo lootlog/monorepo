@@ -1,4 +1,4 @@
-import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import type { Profession } from "@/lib/equipment-set";
 
 type SetStat = {
@@ -66,18 +66,18 @@ export const SET_STAT_SECTIONS = [
   },
 ] as const satisfies ReadonlyArray<{ id: string; stats: readonly SetStat[] }>;
 
-export type SetStatSection = (typeof SET_STAT_SECTIONS)[number];
+type SetStatSection = (typeof SET_STAT_SECTIONS)[number];
 
 export type SetStatDefinition = SetStatSection["stats"][number];
 
 /** Every item stat a set adds up. */
-export const SUMMED_STAT_KEYS = [
+const SUMMED_STAT_KEYS = [
   ...new Set(
     SET_STAT_SECTIONS.flatMap(({ stats }) => stats.flatMap(({ keys }) => keys)),
   ),
 ];
 
-export type SummedStatKey = (typeof SUMMED_STAT_KEYS)[number];
+type SummedStatKey = (typeof SUMMED_STAT_KEYS)[number];
 
 export type StatTotals = Partial<Record<SummedStatKey, number>>;
 
@@ -92,7 +92,7 @@ export const sumItemStats = (stats: ReadonlyArray<string>): StatTotals => {
   const totals: StatTotals = {};
 
   for (const stat of stats) {
-    for (const { key, value } of parseItemStats(stat)) {
+    for (const { key, value } of parseItemStatEntries(stat)) {
       const text = textValue(value);
       const summedKey = SUMMED_STAT_KEYS.find((summed) => summed === key);
 
@@ -115,7 +115,7 @@ export const findRequirementIssues = (
   stat: string,
   character: { profession: Profession | null; level: number | null },
 ): ItemRequirementIssue[] => {
-  const stats = parseItemStats(stat);
+  const stats = parseItemStatEntries(stat);
   const professions = textValue(stats.find(({ key }) => key === "reqp")?.value);
   const level = Number(stats.find(({ key }) => key === "lvl")?.value);
 

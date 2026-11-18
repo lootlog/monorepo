@@ -1,4 +1,9 @@
-import { clamp, intersection } from "es-toolkit";
+import { intersection } from "es-toolkit";
+import {
+  DETECTOR_LEVEL_MAX,
+  DETECTOR_LEVEL_MIN,
+  normalizeRoutingRules,
+} from "@lootlog/domain/account-preferences";
 import { toggleAvailableGuild } from "@/lib/selected-lootlog-guild";
 import { readCurrentSettingsDocuments } from "@/features/settings/persistence/settings-patch-client";
 import {
@@ -10,10 +15,6 @@ import { getEffectiveDetectorSettings } from "@/lib/game-account-preferences";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
 
-export const LEVEL_MIN = 0;
-
-export const LEVEL_MAX = 500;
-
 const createRoutingRuleId = () => {
   if (window.crypto?.randomUUID) {
     return window.crypto.randomUUID();
@@ -24,8 +25,8 @@ const createRoutingRuleId = () => {
 
 const createEmptyRoutingRule = (): DetectorRoutingRule => ({
   id: createRoutingRuleId(),
-  minLevel: LEVEL_MIN,
-  maxLevel: LEVEL_MAX,
+  minLevel: DETECTOR_LEVEL_MIN,
+  maxLevel: DETECTOR_LEVEL_MAX,
   guildIds: [],
 });
 
@@ -39,43 +40,15 @@ export const normalizeRoutingRuleText = (name?: string) => {
   return trimmedName.length > 0 ? trimmedName : undefined;
 };
 
-const normalizeRoutingRules = (
+/** Keeps only the accessible guilds a rule routes to, in the player's guild order. */
+const restrictToAvailableGuilds = (
   routingRules: DetectorRoutingRule[],
   availableGuildIds: string[],
-) => {
-  return routingRules.map((rule) => {
-    const name = normalizeRoutingRuleText(rule.name);
-
-    const normalizedMinLevel = clamp(
-      Math.trunc(rule.minLevel),
-      LEVEL_MIN,
-      LEVEL_MAX,
-    );
-
-    const normalizedMaxLevel = clamp(
-      Math.trunc(rule.maxLevel),
-      LEVEL_MIN,
-      LEVEL_MAX,
-    );
-
-    const minLevel = Math.min(normalizedMinLevel, normalizedMaxLevel);
-    const maxLevel = Math.max(normalizedMinLevel, normalizedMaxLevel);
-    const world = normalizeRoutingRuleText(rule.world);
-
-    const normalizedGuildIds = [
-      ...new Set(intersection(availableGuildIds, rule.guildIds)),
-    ];
-
-    return {
-      ...rule,
-      name,
-      minLevel,
-      maxLevel,
-      world,
-      guildIds: normalizedGuildIds,
-    };
-  });
-};
+) =>
+  routingRules.map((rule) => ({
+    ...rule,
+    guildIds: intersection(availableGuildIds, rule.guildIds),
+  }));
 
 const areRoutingRulesEqual = (
   left: DetectorRoutingRule[],
@@ -137,8 +110,8 @@ export function useDetectorRoutingForm() {
 
     const currentRoutingRules = readRoutingRules();
 
-    const nextRoutingRules = normalizeRoutingRules(
-      produce(currentRoutingRules),
+    const nextRoutingRules = restrictToAvailableGuilds(
+      normalizeRoutingRules(produce(currentRoutingRules)),
       guilds.map((guild) => guild.id),
     );
 

@@ -6,7 +6,7 @@ import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
 import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-section";
-import { NpcTile } from "@/components/tiles/npc-tile";
+import { StatsLeaderboardNpcMedia } from "@/components/common/stats-leaderboard-npc-media";
 import type { StatisticsSearch } from "./statistics-search";
 
 /** Rows of each ranking preview on the overview. */
@@ -43,18 +43,13 @@ export function StatisticsTopNpcs({ npcs, search }: StatisticsTopNpcsProps) {
           rank={index + 1}
           media={
             npc.npcIcon && (
-              // Capped below the row's 48px so a tall sprite never grows it.
-              <span className="w-8 shrink-0">
-                <NpcTile
-                  className="h-9"
-                  imageClassName="max-h-9"
-                  npc={{
-                    name: npc.npcName,
-                    lvl: npc.npcLvl,
-                    icon: npc.npcIcon,
-                  }}
-                />
-              </span>
+              <StatsLeaderboardNpcMedia
+                npc={{
+                  name: npc.npcName,
+                  lvl: npc.npcLvl,
+                  icon: npc.npcIcon,
+                }}
+              />
             )
           }
           title={npc.npcName}

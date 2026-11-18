@@ -2,6 +2,7 @@ import {
   getTimerTimeLeft as getSharedTimerTimeLeft,
   type TimerTimeLeft,
 } from "@lootlog/domain/timers";
+import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import type { Timer } from "@/api/timers.api";
 import type { GuildMember } from "@/types/guild-member";
 
@@ -14,8 +15,6 @@ export type TimerWithTimeLeft = Timer & {
     timerKey?: string;
   }>;
 };
-
-const MANUAL_TIMER_MARGONEM_TYPE = 999;
 
 const TIMER_EPOCH_CACHE_LIMIT = 20_000;
 
@@ -48,7 +47,7 @@ export const getTimerEpoch = (timestamp: string): number => {
 };
 
 export const isManualTimer = (timer: Timer) =>
-  Number(timer.npc.margonemType) === MANUAL_TIMER_MARGONEM_TYPE;
+  Number(timer.npc.margonemType) === TIMER_TYPES.CUSTOM_MANUAL;
 
 export const getTimerTimeLeft = (
   timer: Timer,

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useState } from "react";
 import {
   getUserThemesControllerGetThemesQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
@@ -6,21 +6,14 @@ import {
   useUsersControllerGetUserPreferences,
 } from "@lootlog/client/main";
 import {
-  findSelectedCustomTheme,
-  type AppliedCustomTheme,
+  readCachedCustomTheme,
   readCustomThemeId,
-  writeCachedCustomTheme,
+  type AppliedCustomTheme,
 } from "@lootlog/ui/themes/custom-theme";
-import {
-  applyThemeToDocument,
-  resolveSelectionTheme,
-  resolveStoredSelection,
-} from "@lootlog/ui/themes/resolver";
+import { resolveStoredSelection } from "@lootlog/ui/themes/resolver";
+import { resolveThemeLook, useThemeSync } from "@lootlog/ui/themes/theme-sync";
+import { wikiThemePersistence } from "@/config/theme-cookie";
 import { useSession } from "@/hooks/use-session";
-import {
-  writeCustomThemeCookie,
-  writeThemeCookie,
-} from "@/lib/write-theme-cookie";
 
 type UserThemeProps = {
   /** The theme the server rendered the page in. */
@@ -73,31 +66,18 @@ export function UserTheme({
 
   // Until the User's themes load, which they never do signed out, the last
   // applied copy keeps the page as the server rendered it.
-  const customTheme = userThemes
-    ? findSelectedCustomTheme(customThemeId, userThemes)
-    : (findSelectedCustomTheme(customThemeId, undefined) ??
-      findSelectedCustomTheme(
-        customThemeId,
-        storedCustomTheme ? [storedCustomTheme] : [],
-      ));
+  const look = resolveThemeLook({
+    selection,
+    userThemes,
+    cachedCustomThemes: [readCachedCustomTheme(), storedCustomTheme],
+  });
 
-  const definition = customTheme?.definition ?? null;
-  const theme = resolveSelectionTheme(selection, definition);
-
-  useLayoutEffect(() => {
-    applyThemeToDocument({ root: document.documentElement, theme, definition });
-  }, [theme, definition]);
-
-  useEffect(() => {
-    writeThemeCookie(selection);
-
-    // Without the list and a copy, keep the stored copy; otherwise it follows
-    // what the page shows.
-    if (customThemeId === null || userThemes || customTheme) {
-      writeCachedCustomTheme(customTheme);
-      writeCustomThemeCookie(customTheme);
-    }
-  }, [selection, customThemeId, customTheme, userThemes]);
+  useThemeSync({
+    selection,
+    look,
+    userThemes,
+    persistence: wikiThemePersistence,
+  });
 
   return null;
 }

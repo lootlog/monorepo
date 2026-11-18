@@ -1,13 +1,9 @@
-import { RabbitMessaging } from "@lootlog/messaging";
-import {
-  RabbitRoutingKey,
-  type RabbitRoutingKeyName,
-} from "@lootlog/protocol/rabbit/topology";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   GLOBAL_CHAT_MESSAGE_LIMIT,
   GLOBAL_CHAT_SEND_COOLDOWN_SECONDS,
-  type GlobalChatChannelUpdate,
-  type GlobalChatMessage,
 } from "@lootlog/schema/chat";
 import { Effect, Layer } from "effect";
 import {
@@ -15,6 +11,7 @@ import {
   type GlobalChatEvents,
   type GlobalChatStore,
 } from "#src/global-chat/global-chat.data-layer";
+import type { RedisEffects } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
@@ -65,32 +62,26 @@ end
 return 0
 `;
 
-export const makeGlobalChatStore = (
-  redis: ApiRedis["Service"],
-): GlobalChatStore => {
-  const attempt = <A>(operation: () => PromiseLike<A>) =>
-    Effect.tryPromise({ try: operation, catch: (error) => error });
+export const makeGlobalChatStore = (redis: RedisEffects): GlobalChatStore => ({
+  append: (world, value) => {
+    const keys = channelKeys(world);
 
-  return {
-    append: (world, value) => {
-      const keys = channelKeys(world);
-
-      return attempt(() =>
-        redis.eval(
-          APPEND_SCRIPT,
-          [keys.position, keys.messages],
-          [value, GLOBAL_CHAT_MESSAGE_LIMIT],
-        ),
-      ).pipe(Effect.asVoid);
-    },
-    page: (world, before, count) =>
-      attempt(() =>
-        redis.eval<string[]>(
-          PAGE_SCRIPT,
-          [channelKeys(world).messages],
-          [before === undefined ? "+inf" : `(${before}`, count],
-        ),
-      ).pipe(
+    return redis
+      .eval(
+        APPEND_SCRIPT,
+        [keys.position, keys.messages],
+        [value, GLOBAL_CHAT_MESSAGE_LIMIT],
+      )
+      .pipe(Effect.asVoid);
+  },
+  page: (world, before, count) =>
+    redis
+      .eval<string[]>(
+        PAGE_SCRIPT,
+        [channelKeys(world).messages],
+        [before === undefined ? "+inf" : `(${before}`, count],
+      )
+      .pipe(
         Effect.map((reply) =>
           Array.from({ length: reply.length / 2 }, (_, index) => ({
             value: reply[index * 2] ?? "",
@@ -98,53 +89,41 @@ export const makeGlobalChatStore = (
           })),
         ),
       ),
-    find: (world, id) =>
-      attempt(() =>
-        redis.eval<string | null>(
-          FIND_SCRIPT,
-          [channelKeys(world).messages],
-          [id],
-        ),
-      ).pipe(Effect.map((value) => value ?? undefined)),
-    remove: (world, id) =>
-      attempt(() =>
-        redis.eval<number>(REMOVE_SCRIPT, [channelKeys(world).messages], [id]),
-      ).pipe(Effect.map((removed) => removed > 0)),
-    getPinned: (world) =>
-      attempt(() => redis.get(channelKeys(world).pinned)).pipe(
-        Effect.map((value) => value ?? undefined),
-      ),
-    setPinned: (world, value) =>
-      attempt<unknown>(() =>
-        value === undefined
-          ? redis.del(channelKeys(world).pinned)
-          : redis.set(channelKeys(world).pinned, value),
-      ).pipe(Effect.asVoid),
-    acquireSendSlot: (userId) =>
-      attempt(() =>
-        redis.setNX(
-          `global-chat:cooldown:${userId}`,
-          "1",
-          GLOBAL_CHAT_SEND_COOLDOWN_SECONDS,
-        ),
-      ),
-  };
-};
+  find: (world, id) =>
+    redis
+      .eval<string | null>(FIND_SCRIPT, [channelKeys(world).messages], [id])
+      .pipe(Effect.map((value) => value ?? undefined)),
+  remove: (world, id) =>
+    redis
+      .eval<number>(REMOVE_SCRIPT, [channelKeys(world).messages], [id])
+      .pipe(Effect.map((removed) => removed > 0)),
+  getPinned: (world) =>
+    redis
+      .get(channelKeys(world).pinned)
+      .pipe(Effect.map((value) => value ?? undefined)),
+  setPinned: (world, value) =>
+    value === undefined
+      ? redis.del(channelKeys(world).pinned).pipe(Effect.asVoid)
+      : redis.set(channelKeys(world).pinned, value),
+  acquireSendSlot: (userId) =>
+    redis.setNX(
+      `global-chat:cooldown:${userId}`,
+      "1",
+      GLOBAL_CHAT_SEND_COOLDOWN_SECONDS,
+    ),
+});
 
-const publishJson = (
+const publishJson = <
+  Key extends
+    | typeof RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE
+    | typeof RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE,
+>(
   rabbit: RabbitMessaging["Service"],
-  routingKey: RabbitRoutingKeyName,
-  content: GlobalChatMessage | GlobalChatChannelUpdate,
-) =>
-  rabbit
-    .publish({
-      exchange: "default",
-      routingKey,
-      content: new TextEncoder().encode(JSON.stringify(content)),
-    })
-    .pipe(Effect.asVoid);
+  routingKey: Key,
+  content: CanonicalRabbitEvent<Key>,
+) => rabbit.publish(eventMessage(routingKey, content)).pipe(Effect.asVoid);
 
-export const makeGlobalChatEvents = (
+const makeGlobalChatEvents = (
   rabbit: RabbitMessaging["Service"],
 ): GlobalChatEvents => ({
   publish: (message) =>
@@ -160,7 +139,7 @@ export const globalChatData = Layer.unwrap(
     const { globalChatAdminUserIds } = yield* ApiRuntimeConfig;
 
     return makeGlobalChatDataLayer(
-      makeGlobalChatStore(redis),
+      makeGlobalChatStore(redis.effect),
       makeGlobalChatEvents(rabbit),
       globalChatAdminUserIds,
     );

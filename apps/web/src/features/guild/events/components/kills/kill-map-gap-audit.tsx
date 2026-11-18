@@ -5,9 +5,9 @@ import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import { formatTimeShort } from "../../utils/format-date";
-import { formatDurationHuman } from "../../utils/format-duration";
 import type { NormalizedMapGap } from "../../utils/kill-map-timeline-data";
 import { COVERAGE_SEGMENT_BG_CLASS_NAMES } from "../../utils/get-map-coverage-color-class-name";
+import { formatDuration } from "@/utils/date/format-duration";
 
 interface KillMapGapAuditProps {
   gaps: NormalizedMapGap[];
@@ -64,7 +64,7 @@ export const KillMapGapAudit = ({ gaps, t }: KillMapGapAuditProps) => {
               <span className="truncate text-xs font-medium">{typeLabel}</span>
             </div>
             <span className="text-xs font-semibold tabular-nums">
-              {formatDurationHuman(gap.durationSeconds)}
+              {formatDuration(gap.durationSeconds, "human")}
             </span>
             <span className="col-span-2 ml-4 text-2xs tabular-nums text-muted-foreground">
               {formatTimeShort(new Date(gap.startedAt))} –{" "}

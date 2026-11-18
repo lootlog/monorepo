@@ -85,20 +85,20 @@ describe("useEventSocket", () => {
         queryClient.setQueryData(queryKey, { items: [] });
       }
 
+      // One payload with the fields of every event type under test.
+      const payload = {
+        guildId: "guild-1",
+        eventId: "event-1",
+        mapId: "map-1",
+        heroId: "hero-1",
+        reason,
+      };
+
       act(() =>
         gateway.deliver({
           v: 1,
           type,
-          data: {
-            organizationId: "guild-1",
-            payload: {
-              guildId: "guild-1",
-              eventId: "event-1",
-              mapId: "map-1",
-              heroId: "hero-1",
-              reason,
-            },
-          },
+          data: { organizationId: "guild-1", payload },
         }),
       );
 

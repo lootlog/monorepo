@@ -5,7 +5,7 @@ import {
   LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
-import { getColorFromRoleColor } from "@/utils/get-color-from-role";
+import { discordRoleColorHex } from "@lootlog/domain/member-display-role";
 import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { Link } from "@tanstack/react-router";
@@ -23,7 +23,7 @@ type RoleTileProps = {
 /** One role in the role list: its level range and permissions; the tile opens it. */
 export const RoleTile = ({ guildId, role }: RoleTileProps) => {
   const { t } = useTranslation();
-  const color = getColorFromRoleColor(role.color);
+  const color = discordRoleColorHex(role.color) ?? "FFFFFF";
   const activeCategories = getActivePermissionCategories(role.permissions);
 
   return (

@@ -1,5 +1,5 @@
 import type { TOptions } from "i18next";
-import type { Period } from "@/features/user/battle-panel/battle-panel-search";
+import type { Period } from "@lootlog/schema/http-scalars";
 import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import {
   BATTLE_PANEL_DEFAULT_MAX_LEVEL,

@@ -1,8 +1,5 @@
 import { lootEventVisibilityNpcs } from "#src/realtime/source-event-visibility";
-import {
-  decodeRabbitEventJson,
-  type CanonicalRabbitEvent,
-} from "@lootlog/protocol/rabbit/events";
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type {
   ServerEvent,
@@ -42,17 +39,13 @@ export type BridgeRoutes = {
   readonly [Key in ConsumedRoutingKey]: BridgeRoute<Key>;
 };
 
-/** Decodes and runs the route of `routingKey`, generic so the two stay correlated. */
+/** Runs the route of `routingKey`, generic so the two stay correlated. */
 export const runBridgeRoute = <Key extends ConsumedRoutingKey>(
   routes: BridgeRoutes,
   routingKey: Key,
-  serializedPayload: string,
+  payload: CanonicalRabbitEvent<Key>,
   messageId: string | undefined,
-) =>
-  routes[routingKey](
-    decodeRabbitEventJson(routingKey, serializedPayload),
-    messageId,
-  );
+) => routes[routingKey](payload, messageId);
 
 const decodeString = Schema.decodeUnknownOption(Schema.String);
 
@@ -259,13 +252,8 @@ export const gatewayBridgeRoutes = ({
         ),
       ),
     [RabbitRoutingKey.GUILDS_MEMBERS_UPDATE]: (payload) => rebalance(payload),
-    [RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE]: (payload) => rebalance(payload),
-    [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE]: (payload) =>
-      rebalance(payload),
     [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE]: (payload) =>
       rebalance(payload, payload.guildId),
-    // Access comes with a role, which its own event rebalances.
-    [RabbitRoutingKey.GUILDS_MEMBERS_ADD]: () => Effect.void,
     [RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER]: (data) =>
       publishTo(data.targetDiscordId, {
         v: 1,

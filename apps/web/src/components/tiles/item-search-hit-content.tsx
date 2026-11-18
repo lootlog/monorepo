@@ -1,6 +1,6 @@
 import { LOOT_RARITY_TEXT_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 

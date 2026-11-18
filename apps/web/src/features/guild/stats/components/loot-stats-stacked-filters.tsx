@@ -1,3 +1,4 @@
+import { Period } from "@lootlog/schema/http-scalars";
 import { FilterPanelField } from "@/components/filters/filter-panel-field";
 import { PeriodSelector } from "@/components/filters/period-selector";
 import type { LootsControllerGetLootStatsPeriod } from "@lootlog/client/main";
@@ -24,6 +25,7 @@ export const LootStatsStackedFilters = ({
     <>
       <FilterPanelField label={t("kills.filters.period")}>
         <PeriodSelector
+          options={Period.literals}
           value={period}
           onValueChange={onPeriodChange}
           width="w-full"

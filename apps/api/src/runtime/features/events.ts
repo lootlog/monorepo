@@ -7,13 +7,14 @@ import {
 } from "#src/events/respawn/event-timers.port";
 import { RedlockService } from "#src/redis/redlock";
 import { applicationLogger } from "#src/shared/application-logger";
-import { RabbitMessaging } from "@lootlog/messaging";
-import { Queue } from "bullmq";
+import {
+  RabbitMessaging,
+  eventMessage,
+  makeEventPublisher,
+} from "@lootlog/messaging";
 import { Context, Effect, Layer } from "effect";
-import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
-import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
-import { makeAmqpAdapter } from "#src/runtime/infrastructure/amqp-adapter";
-import { RESPAWN_WINDOW_QUEUE } from "#src/events/respawn/respawn-queue.constant";
+import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
+import { RespawnWindowQueue } from "#src/runtime/queues/respawn-window";
 import { makeEventAccess } from "#src/events/event-access";
 import { makeEventCatalogMutations } from "#src/events/catalog/event-catalog-mutations";
 import { makeEventCreation } from "#src/events/catalog/event-creation";
@@ -73,7 +74,7 @@ export const eventTimersLive = Layer.effect(
     return makeEventTimersPort({
       logger: applicationLogger,
       store: makeEventTimerStore(database),
-      amqp: makeAmqpAdapter(rabbit),
+      amqp: makeEventPublisher(rabbit),
       redis,
       redlock: new RedlockService(redis),
     });
@@ -97,24 +98,11 @@ export const eventsServicesLive = Layer.effect(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const database = yield* ApiDatabase;
-    const config = yield* ApiRuntimeConfig;
     const timers = yield* EventTimers;
     const { loots } = yield* RecordsServices;
+    const respawnQueue = yield* RespawnWindowQueue;
 
-    const queueOptions = {
-      connection: { url: redisUrl(config.redis) },
-      prefix: "{bull}",
-    } as const;
-
-    const queues = yield* Effect.acquireRelease(
-      Effect.sync(() => ({
-        respawn: new Queue(RESPAWN_WINDOW_QUEUE, queueOptions),
-      })),
-      ({ respawn }) =>
-        Effect.tryPromise(() => respawn.close()).pipe(Effect.orDie),
-    );
-
-    const amqp = makeAmqpAdapter(rabbit);
+    const amqp = makeEventPublisher(rabbit);
     const readCache = makeEventReadCache(redis);
     const emitter = makeEventEmitter(amqp);
     const summary = makeEventSummary(makeEventSummaryStore(database));
@@ -142,7 +130,7 @@ export const eventsServicesLive = Layer.effect(
       points,
       tracking,
       summary,
-      queues.respawn,
+      respawnQueue,
     );
 
     const respawn = makeEventRespawn(
@@ -185,11 +173,7 @@ export const eventsServicesLive = Layer.effect(
           {
             publish: (routingKey, payload) =>
               rabbit
-                .publish({
-                  exchange: "default",
-                  routingKey,
-                  content: new TextEncoder().encode(JSON.stringify(payload)),
-                })
+                .publish(eventMessage(routingKey, payload))
                 .pipe(Effect.asVoid),
           },
           applicationLogger,
@@ -204,14 +188,14 @@ export const eventsServicesLive = Layer.effect(
           redis,
           {
             pending: () =>
-              queues.respawn.getJobs(["waiting"]).then((jobs) =>
+              respawnQueue.getJobs(["waiting"]).then((jobs) =>
                 jobs.map((job) => ({
                   eventId: job.data.eventId,
                   remove: () => job.remove(),
                 })),
               ),
             delayed: () =>
-              queues.respawn.getJobs(["delayed"]).then((jobs) =>
+              respawnQueue.getJobs(["delayed"]).then((jobs) =>
                 jobs.map((job) => ({
                   eventId: job.data.eventId,
                   remove: () => job.remove(),
@@ -248,7 +232,7 @@ export const eventsServicesLive = Layer.effect(
           {
             delayed: () =>
               Effect.tryPromise({
-                try: () => queues.respawn.getJobs(["delayed"]),
+                try: () => respawnQueue.getJobs(["delayed"]),
                 catch: (error) => error,
               }).pipe(
                 Effect.map((jobs) =>
@@ -265,11 +249,7 @@ export const eventsServicesLive = Layer.effect(
           {
             publish: (routingKey, payload) =>
               rabbit
-                .publish({
-                  exchange: "default",
-                  routingKey,
-                  content: new TextEncoder().encode(JSON.stringify(payload)),
-                })
+                .publish(eventMessage(routingKey, payload))
                 .pipe(Effect.asVoid),
           },
           {
@@ -305,11 +285,7 @@ export const eventsServicesLive = Layer.effect(
           {
             publish: (routingKey, payload) =>
               rabbit
-                .publish({
-                  exchange: "default",
-                  routingKey,
-                  content: new TextEncoder().encode(JSON.stringify(payload)),
-                })
+                .publish(eventMessage(routingKey, payload))
                 .pipe(Effect.asVoid),
           },
           applicationLogger,
@@ -320,11 +296,7 @@ export const eventsServicesLive = Layer.effect(
           {
             publish: (routingKey, payload) =>
               rabbit
-                .publish({
-                  exchange: "default",
-                  routingKey,
-                  content: new TextEncoder().encode(JSON.stringify(payload)),
-                })
+                .publish(eventMessage(routingKey, payload))
                 .pipe(Effect.asVoid),
           },
           applicationLogger,

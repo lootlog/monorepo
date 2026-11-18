@@ -1,3 +1,4 @@
+import type { Period } from "@lootlog/schema/http-scalars";
 import {
   battlePanelHeadToHeadSearchParsers,
   getBattlePanelPageIndex,
@@ -5,7 +6,6 @@ import {
   HEAD_TO_HEAD_SORT_BY_VALUES,
   normalizeBattlePanelCharacterId,
   resetBattlePanelCursorPagination,
-  type Period,
 } from "@/features/user/battle-panel/battle-panel-search";
 import {
   buildHeadToHeadFilterLabels,

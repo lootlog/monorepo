@@ -9,7 +9,7 @@ export function getMarkdownPath(pageUrl: string, slugs: readonly string[]) {
   return slugs.length === 0 ? `${pageUrl}/index.md` : `${pageUrl}.md`;
 }
 
-export function formatPageMarkdown(page: {
+function formatPageMarkdown(page: {
   title: string;
   description?: string;
   url: string;
@@ -20,18 +20,18 @@ export function formatPageMarkdown(page: {
   return `# ${page.title}\n\n${description}Source: ${page.url}\n\n${page.content.trim()}\n`;
 }
 
-export function markdownResponse(body: string, type = "text/markdown") {
+function markdownResponse(body: string, type = "text/markdown") {
   return new Response(body, {
     headers: { "Content-Type": `${type}; charset=utf-8` },
   });
 }
 
-export type LlmsLink = { title: string; url: string; description?: string };
+type LlmsLink = { title: string; url: string; description?: string };
 
-export type LlmsSection = { title: string; links: LlmsLink[] };
+type LlmsSection = { title: string; links: LlmsLink[] };
 
 /** The `/llms.txt` index: a title, a one-line summary, notes and link lists. */
-export function formatLlmsIndex(index: {
+function formatLlmsIndex(index: {
   title: string;
   summary: string;
   notes: string;
@@ -63,10 +63,7 @@ type PageTreeNode =
  * Groups the pages of a Fumadocs page tree under its separators, in sidebar
  * order. Pages before the first separator go under `firstSection`.
  */
-export function groupPageUrls(
-  nodes: readonly PageTreeNode[],
-  firstSection: string,
-) {
+function groupPageUrls(nodes: readonly PageTreeNode[], firstSection: string) {
   type Section = { title: string; urls: string[] };
 
   const sections: Section[] = [];
@@ -107,3 +104,115 @@ export const llmsMarkdownOptions = {
       ? ("children-only" as const)
       : true,
 };
+
+type DocsSitePage = {
+  url: string;
+  slugs: string[];
+  data: {
+    title: string;
+    description?: string;
+    getText(type: "processed"): Promise<string>;
+  };
+};
+
+type DocsSiteSource<Page extends DocsSitePage> = {
+  getPages(): Page[];
+  getPage(slugs: string[]): Page | undefined;
+  getPageTree(): { children: readonly PageTreeNode[] };
+};
+
+/**
+ * The llms.txt surface of a Fumadocs site: the `.md` twin of every page, the
+ * `/llms.txt` index and `/llms-full.txt`. Pages hidden from the sidebar are
+ * listed last under `otherPagesSection`, so every page reaches AI assistants.
+ */
+export function createDocsSite<Page extends DocsSitePage>({
+  source,
+  origin,
+  llms,
+}: {
+  source: DocsSiteSource<Page>;
+  /** The production origin pages are published under. */
+  origin: string;
+  llms: {
+    title: string;
+    summary: string;
+    notes: string;
+    firstSection: string;
+    otherPagesSection: string;
+    /** Sections listed after the pages. */
+    extraSections?: readonly LlmsSection[];
+  };
+}) {
+  const getPageMarkdownPath = (page: Page) =>
+    getMarkdownPath(page.url, page.slugs);
+
+  const renderPageMarkdown = async (page: Page) =>
+    formatPageMarkdown({
+      title: page.data.title,
+      description: page.data.description,
+      url: `${origin}${page.url}`,
+      content: await page.data.getText("processed"),
+    });
+
+  const getSections = () => {
+    const pages = source.getPages();
+    const pagesByUrl = new Map(pages.map((page) => [page.url, page]));
+
+    const sections = groupPageUrls(
+      source.getPageTree().children,
+      llms.firstSection,
+    ).map((section) => ({
+      title: section.title,
+      pages: section.urls.flatMap((url) => pagesByUrl.get(url) ?? []),
+    }));
+
+    const listed = new Set(sections.flatMap((section) => section.pages));
+    const hidden = pages.filter((page) => !listed.has(page));
+
+    return hidden.length > 0
+      ? [...sections, { title: llms.otherPagesSection, pages: hidden }]
+      : sections;
+  };
+
+  return {
+    getPageMarkdownPath,
+
+    /** The `.md` twin of the page at a slug; `index` is the start page. */
+    async pageMarkdownResponse(slug: string) {
+      const page = source.getPage(slug === "index" ? [] : [slug]);
+
+      if (!page) return new Response("Not found", { status: 404 });
+
+      return markdownResponse(await renderPageMarkdown(page));
+    },
+
+    llmsIndexResponse() {
+      const index = formatLlmsIndex({
+        title: llms.title,
+        summary: llms.summary,
+        notes: llms.notes,
+        sections: [
+          ...getSections().map((section) => ({
+            title: section.title,
+            links: section.pages.map((page) => ({
+              title: page.data.title,
+              url: `${origin}${getPageMarkdownPath(page)}`,
+              description: page.data.description,
+            })),
+          })),
+          ...(llms.extraSections ?? []),
+        ],
+      });
+
+      return markdownResponse(index, "text/plain");
+    },
+
+    async llmsFullResponse() {
+      const pages = getSections().flatMap((section) => section.pages);
+      const rendered = await Promise.all(pages.map(renderPageMarkdown));
+
+      return markdownResponse(rendered.join("\n---\n\n"), "text/plain");
+    },
+  };
+}

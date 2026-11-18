@@ -37,7 +37,7 @@ import {
   type NotificationDispatchJob,
   type NotificationDispatchStore,
 } from "#src/notifications/jobs/notification-job-dispatch";
-import { NotificationJobStatus } from "#src/notifications/notification-enums";
+import { NotificationJobStatus } from "@lootlog/schema/notifications";
 import { createOrganizationLootRecordFixture } from "../../../test/loot-fixtures.js";
 
 const job = (active: boolean): NotificationDispatchJob => ({
@@ -184,8 +184,8 @@ describe("notification job dispatch", () => {
         block: store.blockJob,
       };
 
-      const firstAttempt = { retrying: false, finalAttempt: false };
-      const retry = { retrying: true, finalAttempt: false };
+      const firstAttempt = { retrying: false };
+      const retry = { retrying: true };
 
       const dispatch = makeNotificationJobDispatch(
         dispatchStore,
@@ -372,9 +372,7 @@ describe("notification job dispatch", () => {
       () => undefined,
     );
 
-    await Effect.runPromise(
-      dispatch("job-1", { retrying: false, finalAttempt: false }),
-    );
+    await Effect.runPromise(dispatch("job-1", { retrying: false }));
 
     expect(updates).toEqual([
       {
@@ -407,8 +405,6 @@ describe("notification job dispatch", () => {
       () => undefined,
     );
 
-    await Effect.runPromise(
-      dispatch("job-1", { retrying: true, finalAttempt: false }),
-    );
+    await Effect.runPromise(dispatch("job-1", { retrying: true }));
   });
 });

@@ -4,7 +4,7 @@ import type { TimerPhase } from "@lootlog/domain/timers";
 import { BookOpen } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { wikiNpcUrl } from "@/config/wiki";
+import { wikiNpcUrl } from "@lootlog/domain/wiki-links";
 import {
   DATE_TIME_WITH_SECONDS_FORMAT,
   timestampToDate,

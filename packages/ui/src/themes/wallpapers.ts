@@ -1,6 +1,6 @@
 import type { BuiltInThemeId } from "@lootlog/schema/custom-theme";
 
-export type WallpaperCategory =
+type WallpaperCategory =
   | "themes"
   | "fantasy"
   | "abstract"

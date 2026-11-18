@@ -11,7 +11,7 @@ export type RuntimeMapGeometry = {
   tileSize: number;
 };
 
-export type RuntimeHandheldMiniMap = {
+type RuntimeHandheldMiniMap = {
   canvas?: HTMLCanvasElement;
   context?: CanvasRenderingContext2D;
   margin?: { left: number; top: number };
@@ -29,7 +29,7 @@ export type RuntimeCharacterBounds = {
 /** A monster a player can attack, or another player. */
 export type RuntimeCharacterRef = { kind: "npc" | "player"; id: number };
 
-export type RuntimeCharacterHit = RuntimeCharacterRef & {
+type RuntimeCharacterHit = RuntimeCharacterRef & {
   bounds: RuntimeCharacterBounds;
   tile: { x: number; y: number };
 };

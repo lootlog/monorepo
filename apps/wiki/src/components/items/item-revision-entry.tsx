@@ -1,8 +1,8 @@
 import type { CatalogItemRevisionDtoOutput } from "@lootlog/client/catalog";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { ArrowRight } from "lucide-react";
-import { renderItemStat } from "@/components/render-item-stat";
+import { ItemStatLine } from "@lootlog/ui/components/item-stat-line";
 import { t } from "@/i18n/messages";
 import {
   findStatRevisions,
@@ -78,7 +78,11 @@ export function ItemRevisionEntry({
             className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 py-2.5 text-sm"
           >
             <span className="min-w-0 text-pretty text-muted-foreground">
-              {before ? renderItemStat(before) : t("revisions.none")}
+              {before ? (
+                <ItemStatLine displayValue={before} />
+              ) : (
+                t("revisions.none")
+              )}
             </span>
             <ArrowRight
               aria-label={t("revisions.became")}
@@ -86,7 +90,11 @@ export function ItemRevisionEntry({
               className="size-3.5 text-muted-foreground"
             />
             <span className="min-w-0 text-pretty text-foreground">
-              {after ? renderItemStat(after) : t("revisions.removed")}
+              {after ? (
+                <ItemStatLine displayValue={after} />
+              ) : (
+                t("revisions.removed")
+              )}
             </span>
           </li>
         ))}

@@ -26,10 +26,8 @@ import {
   JOIN_READY_ROOM_SCRIPT,
   TERMINATE_READY_ROOM_SCRIPT,
 } from "#src/messaging/ready-room/ready-room-redis-scripts";
-import {
-  ForwardAuthIdentity,
-  type ForwardAuthIdentityValue,
-} from "#src/runtime/auth/forward-auth-identity";
+import type { ForwardAuthIdentityValue } from "@lootlog/schema/api-key-policy";
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
 import {

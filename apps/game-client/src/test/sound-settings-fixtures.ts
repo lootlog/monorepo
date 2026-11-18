@@ -1,10 +1,9 @@
-import type { StoredSoundSettings } from "@/lib/api/generated-helpers";
-import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
+import type { SoundSettings } from "@/features/settings/persistence/use-sound-settings";
 
-type SoundCategoryConfig = UserSoundSettings["notificationsConfig"] | null;
+type SoundCategoryConfig = SoundSettings["notificationsConfig"] | null;
 
 export type SoundSettingsFixture = Omit<
-  StoredSoundSettings,
+  SoundSettings,
   "notificationsConfig" | "detectorConfig" | "timersConfig"
 > & {
   notificationsConfig: SoundCategoryConfig;
@@ -15,8 +14,6 @@ export type SoundSettingsFixture = Omit<
 export const createSoundSettings = (
   overrides: Partial<SoundSettingsFixture> = {},
 ): SoundSettingsFixture => ({
-  userId: "user",
-  masterVolume: 0,
   notificationsVolume: 0,
   detectorVolume: 0,
   timersVolume: 0,
@@ -24,7 +21,5 @@ export const createSoundSettings = (
   notificationsConfig: null,
   detectorConfig: null,
   timersConfig: null,
-  createdAt: "2026-01-01T00:00:00.000Z",
-  updatedAt: "2026-01-01T00:00:00.000Z",
   ...overrides,
 });

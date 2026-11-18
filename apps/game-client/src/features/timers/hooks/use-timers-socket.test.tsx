@@ -6,9 +6,12 @@ import { getSocket } from "@/lib/socket";
 import { SocketProvider } from "@/contexts/socket-context";
 import { queryKeys } from "@/features/public-api/query-keys";
 import {
+  createTimerDeletedEventFixture,
+  createTimerEventFixture,
   createTimerFixture,
   createTimerHistoryFixture,
 } from "../timer-fixtures";
+import { normalizeTimerResponse } from "@/api/timers.api";
 import {
   getTimersControllerGetRecentTimerHistoryQueryOptions,
   getTimersControllerGetTimerHistoryQueryOptions,
@@ -153,12 +156,13 @@ it("updates world cache only while joined and subscribed, including listener cle
   );
 
   const view = render(content(true));
-  const timer = createTimerFixture();
+  const event = createTimerEventFixture();
+  const timer = normalizeTimerResponse(event);
 
   const created = {
     v: 1,
     type: "timer.created",
-    data: { organizationId: "guild-1", payload: timer },
+    data: { organizationId: "guild-1", payload: event },
   } as const;
 
   try {
@@ -176,11 +180,7 @@ it("updates world cache only while joined and subscribed, including listener cle
       type: "timer.deleted",
       data: {
         organizationId: "guild-1",
-        payload: {
-          guildId: timer.guildId,
-          timerKey: timer.timerKey,
-          world: timer.world,
-        },
+        payload: createTimerDeletedEventFixture(event),
       },
     });
     expect(fixture.queryClient.getQueryData(key)).toEqual([]);
@@ -201,7 +201,7 @@ it("stores a socket timer in the same shape as a loaded one, keeping who reset i
 
   const actorCharacter = {
     name: "Zorin",
-    prof: "BLADE_DANCER",
+    prof: "BLADE_DANCER" as const,
     icon: "",
     lvl: 300,
     characterId: 100,
@@ -225,15 +225,27 @@ it("stores a socket timer in the same shape as a loaded one, keeping who reset i
       data: {
         organizationId: "guild-1",
         payload: {
-          ...createTimerFixture(),
+          ...createTimerEventFixture(),
           member: {
             id: 7,
             userId: "user-7",
             guildId: "guild-1",
             type: "USER",
             name: "Salvatore",
+            avatar: null,
+            banner: null,
             active: true,
-            roles: [{ id: "role-1" }],
+            roles: [
+              {
+                id: "role-1",
+                guildId: "guild-1",
+                name: "Role",
+                color: null,
+                permissions: [],
+              },
+            ],
+            globalUserId: null,
+            lastDiscordSyncAt: null,
             updatedAt: "2026-05-03T10:00:00.000Z",
           },
           actorCharacter,
@@ -259,7 +271,8 @@ it("stores a socket timer in the same shape as a loaded one, keeping who reset i
 it("refreshes an active timer snapshot after a socket reconnect with unchanged permissions", async () => {
   setTestRuntimeGame();
   useGlobalStore.setState({ gameState: { gameInitialized: true } });
-  const timer = createTimerFixture();
+  const event = createTimerEventFixture();
+  const timer = normalizeTimerResponse(event);
   let snapshot = [timer];
   let unavailable = false;
 
@@ -306,14 +319,17 @@ it("refreshes an active timer snapshot after a socket reconnect with unchanged p
     await gateway.receive({
       v: 1,
       type: "timer.deleted",
-      data: { organizationId: "guild-1", payload: timer },
+      data: {
+        organizationId: "guild-1",
+        payload: createTimerDeletedEventFixture(event),
+      },
     });
     expect(fixture.queryClient.getQueryData(key)).toEqual([]);
     expect(fixture.requests).toHaveLength(2);
     await gateway.receive({
       v: 1,
       type: "timer.created",
-      data: { organizationId: "guild-1", payload: timer },
+      data: { organizationId: "guild-1", payload: event },
     });
     expect(fixture.queryClient.getQueryData(key)).toEqual([
       { ...timer, isPending: false },

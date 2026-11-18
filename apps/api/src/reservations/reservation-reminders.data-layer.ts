@@ -9,7 +9,7 @@ import {
   notificationRuleTargetTable,
   notificationTargetTable,
 } from "#src/database/drizzle/notification.schema";
-import { NotificationJobKind } from "#src/notifications/notification-enums";
+import { NotificationJobKind } from "@lootlog/schema/notifications";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/content/discord-timestamp";
 import { InvalidEntityError } from "#src/shared/http/http-errors";
 

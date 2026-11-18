@@ -1,4 +1,7 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import {
+  OperationError,
+  adapterOperation,
+} from "@lootlog/instrumentation/operation";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
 import type {
@@ -41,12 +44,7 @@ export type LootListParams = Omit<LootsQuery, "cursor"> & {
   readonly cursor?: number;
 };
 
-export class LootQueryError extends TaggedErrorClass<LootQueryError>()(
-  "LootQueryError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
-type QueryEffect<A> = Effect.Effect<A, LootQueryError>;
+type QueryEffect<A> = Effect.Effect<A, OperationError>;
 
 export interface LootQueryOperations {
   readonly isLootVisible: (
@@ -118,13 +116,7 @@ const mapLoot = (guildId: string, loot: LootQueryRecord): LootQueryResult => ({
 export const makeLootQueryOperations = (
   persistence: LootQueryPersistence,
 ): LootQueryOperations => {
-  const attempt = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError((cause) => new LootQueryError({ operation, cause })),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "loots.query", retryCount: 0 },
-      }),
-    );
+  const attempt = adapterOperation("loots.query");
 
   const resolveItemSnapshotIds = (itemNames?: readonly string[]) => {
     const names = Array.from(

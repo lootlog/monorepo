@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import {
   type OrganizationWorkspaceIdentity,
   OrganizationWorkspaceOperationError,
@@ -131,9 +132,7 @@ export class MyReservationsData extends Context.Service<
               ),
             };
           }).pipe(
-            Effect.withSpan("listMyReservations.persistence", {
-              attributes: { adapter: "ApiDatabase", retryCount: 0 },
-            }),
+            withAdapterSpan("listMyReservations.persistence", "ApiDatabase"),
             Effect.mapError(
               (cause) => new OrganizationWorkspaceOperationError({ cause }),
             ),

@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { getNotificationFieldVisibility } from "./utils/notification-field-visibility";
 import { useWatch } from "react-hook-form";
 import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/client/main";
@@ -18,10 +19,7 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import type { useNotificationRuleForm } from "./hooks/use-notification-rule-form";
-import {
-  formatDateTimeLocalInputValue,
-  GUILD_NOTIFICATION_TIMEZONE,
-} from "./utils/notification-schedule-time.utils";
+import { formatDateTimeLocalInputValue } from "./utils/notification-schedule-time.utils";
 
 type Props = Pick<ReturnType<typeof useNotificationRuleForm>, "form" | "t">;
 
@@ -219,7 +217,7 @@ export const NotificationScheduleFields = ({ form, t }: Props) => {
                       type="datetime-local"
                       min={formatDateTimeLocalInputValue(
                         new Date(now).toISOString(),
-                        GUILD_NOTIFICATION_TIMEZONE,
+                        MARGONEM_TIME_ZONE,
                       )}
                     />
                   />

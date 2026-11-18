@@ -17,7 +17,7 @@ import {
   makeDiscordDelivery,
   type DiscordDeliveryClient,
 } from "./discord-delivery.service.js";
-import type { RabbitPublisher } from "./rabbit-publisher.js";
+import type { EventPublisher } from "@lootlog/messaging";
 
 const command = (
   targetType: NotificationTargetType,
@@ -75,11 +75,7 @@ const deliverChannelMessage = async (
 ) => {
   const published: unknown[] = [];
 
-  const publish: RabbitPublisher["publish"] = (
-    _exchange,
-    _routingKey,
-    payload,
-  ) =>
+  const publish: EventPublisher["publish"] = (_routingKey, payload) =>
     Effect.sync(() => {
       published.push(payload);
     });
@@ -151,7 +147,6 @@ describe("Discord delivery", () => {
       enforceNonce: true,
     });
     expect(publish).toHaveBeenCalledWith(
-      "default",
       RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
       expect.objectContaining({
         success: true,
@@ -213,7 +208,6 @@ describe("Discord delivery", () => {
       ),
     );
     expect(publish).toHaveBeenCalledWith(
-      "default",
       RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
       expect.objectContaining({
         success: false,

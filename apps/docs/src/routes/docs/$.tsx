@@ -15,9 +15,13 @@ import {
 } from "fumadocs-ui/page";
 import { use } from "react";
 import { PageMarkdownActions } from "@lootlog/ui/components/page-markdown-actions";
-import { getMarkdownPath } from "@lootlog/ui/lib/docs-markdown";
+import {
+  COMMUNITY_LINKS,
+  PUBLIC_SITE_ORIGINS,
+} from "@lootlog/domain/public-sites";
 import { DocsScrollToTop } from "@/components/docs-scroll-to-top";
 import { ProductScreenshot } from "@/components/product-screenshot";
+import { docsSite } from "@/lib/llms";
 import { docsTranslations } from "@/lib/polish-translations";
 import { docs, source } from "@/lib/source";
 
@@ -29,13 +33,6 @@ const mdxComponents = {
   Tab,
   Tabs,
 };
-
-function getPageMarkdownPath(slugs: readonly string[]) {
-  return getMarkdownPath(
-    slugs.length ? `/docs/${slugs.join("/")}` : "/docs",
-    slugs,
-  );
-}
 
 const loadStaticPage = createServerFn({ method: "GET" })
   .validator((slugs: string[]) => slugs)
@@ -56,7 +53,8 @@ const loadStaticPage = createServerFn({ method: "GET" })
     return {
       description,
       path: page.path,
-      slugs,
+      url: page.url,
+      markdownPath: docsSite.getPageMarkdownPath(page),
       title,
       pageTree: await source.serializePageTree(source.getPageTree()),
     };
@@ -80,12 +78,12 @@ export const Route = createFileRoute("/docs/$")({
       links: [
         {
           rel: "canonical",
-          href: `https://docs.lootlog.pl/docs${loaderData.slugs.length ? `/${loaderData.slugs.join("/")}` : ""}`,
+          href: `${PUBLIC_SITE_ORIGINS.docs}${loaderData.url}`,
         },
         {
           rel: "alternate",
           type: "text/markdown",
-          href: getPageMarkdownPath(loaderData.slugs),
+          href: loaderData.markdownPath,
         },
       ],
       meta: [
@@ -100,7 +98,10 @@ export const Route = createFileRoute("/docs/$")({
 });
 
 function DocsRoute() {
-  const { pageTree, path, slugs } = useFumadocsLoader(Route.useLoaderData());
+  const { pageTree, path, markdownPath } = useFumadocsLoader(
+    Route.useLoaderData(),
+  );
+
   const page = docs.getPage(path);
 
   if (!page) {
@@ -123,14 +124,14 @@ function DocsRoute() {
         <DocsTitle>{page.title}</DocsTitle>
         <DocsDescription className="mb-0">{page.description}</DocsDescription>
         <PageMarkdownActions
-          markdownUrl={getPageMarkdownPath(slugs)}
+          markdownUrl={markdownPath}
           labels={docsTranslations.markdownActions}
         />
         <DocsBody>
           <MDX components={mdxComponents} />
         </DocsBody>
         <EditOnGitHub
-          href={`https://github.com/lootlog/monorepo/blob/main/apps/docs/content/docs/${path}`}
+          href={`${COMMUNITY_LINKS.github}/blob/main/apps/docs/content/docs/${path}`}
           className="self-start"
         >
           {docsTranslations.editOnGitHub}

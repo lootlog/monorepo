@@ -1,11 +1,11 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import {
   createAccessPolicy,
   AccessRequirement,
 } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { and, eq, inArray } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   discordGuildSyncStateTable,
@@ -29,14 +29,8 @@ import type {
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { selectActiveRoleHolders } from "#src/members/member-role-holders";
 import { queueMemberDeliveries } from "#src/members/member.repository";
-import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { getPermissionsCachePattern } from "#src/shared/cache";
 import { getGuildCacheKey } from "#src/guilds/guild-configuration-cache";
-
-class GuildLifecycleFailure extends TaggedErrorClass<GuildLifecycleFailure>()(
-  "GuildLifecycleFailure",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 export interface GuildLifecyclePorts {
   readonly invalidateUserGuildPermissions: (
@@ -65,15 +59,7 @@ export const makeGuildLifecycle = (
   database: ApiDatabaseValue,
   ports: GuildLifecyclePorts,
 ) => {
-  const operation = <A>(name: string, effect: Effect.Effect<A, unknown>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new GuildLifecycleFailure({ operation: name, cause }),
-      ),
-      Effect.withSpan(name, {
-        attributes: { adapter: "api.database", retryCount: 0 },
-      }),
-    );
+  const operation = adapterOperation("api.database");
 
   // Owner access comes from the Organization row rather than a member role, so
   // no member write invalidates it. Owners who are active members also queue a
@@ -219,7 +205,7 @@ export const makeGuildLifecycle = (
             .insert(discordGuildSyncStateTable)
             .values({
               guildId: data.guildId,
-              status: DiscordGuildSyncStatus.STALE,
+              status: "STALE",
               hasRequiredPermissions: false,
               requiredPermissions: [],
               grantedPermissions: [],
@@ -234,7 +220,7 @@ export const makeGuildLifecycle = (
             })
             .onConflictDoUpdate({
               target: discordGuildSyncStateTable.guildId,
-              set: { status: DiscordGuildSyncStatus.STALE, updatedAt: now },
+              set: { status: "STALE", updatedAt: now },
             });
 
           const owners = [

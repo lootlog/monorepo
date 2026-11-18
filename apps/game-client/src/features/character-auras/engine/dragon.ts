@@ -132,7 +132,7 @@ export interface DragonScales {
 }
 
 /** The Heavenly Dragon's jade hide and gold scales. */
-export const JADE_DRAGON: DragonScales = {
+const JADE_DRAGON: DragonScales = {
   hide: [44, 176, 116],
   hideDark: [16, 86, 58],
   scale: [255, 206, 84],

@@ -15,7 +15,7 @@ export const PING_WHEEL_INNER_RADIUS_PX = 26;
  * Inside this radius the centre option is selected, or nothing. It matches the
  * drawn centre circle, so what the player sees is what a release sends.
  */
-export const PING_WHEEL_DEAD_ZONE_PX = PING_WHEEL_INNER_RADIUS_PX - 3;
+const PING_WHEEL_DEAD_ZONE_PX = PING_WHEEL_INNER_RADIUS_PX - 3;
 
 /** Half the wheel's footprint, including the label below it. */
 const PING_WHEEL_EXTENT_PX = 108;
@@ -31,7 +31,7 @@ export type PingPressIdentity =
   | { kind: "keyboard"; code: string }
   | { kind: "mouse"; button: number };
 
-export type PingTarget =
+type PingTarget =
   | {
       kind: "map";
       mapId: number;
@@ -119,7 +119,7 @@ export const isSamePingPressIdentity = (
   );
 };
 
-export const clampPingWheelCenter = (
+const clampPingWheelCenter = (
   origin: ClientPoint,
   viewport: ViewportSize,
 ): ClientPoint => {
@@ -147,7 +147,7 @@ export const clampPingWheelCenter = (
  * the player sees, so a clamped wheel near a screen edge still selects what
  * it shows. Only the direction counts: the pointer may leave the ring.
  */
-export const resolvePingSelection = (
+const resolvePingSelection = (
   menu: PingMenu,
   center: ClientPoint,
   pointer: ClientPoint,

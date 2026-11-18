@@ -4,12 +4,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@lootlog/ui/components/collapsible";
+import { COMMUNITY_LINKS } from "@lootlog/domain/public-sites";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { t } from "@/i18n/messages";
 
 const MARGONEM_LOOT_RULES_URL = "https://pomoc.margonem.pl/index/view,372";
-
-const LOOTLOG_DISCORD_URL = "https://discord.gg/mPcczaeYMu";
 
 /**
  * How drop rates are counted, folded away, with the game's rules they follow
@@ -43,7 +42,7 @@ export function DropRateMethod() {
             </TextLink>
             . {t("catalog.dropRateMethod.report")}{" "}
             <TextLink
-              href={LOOTLOG_DISCORD_URL}
+              href={COMMUNITY_LINKS.discord}
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -1,3 +1,4 @@
+import { ActivityLogCreated } from "@lootlog/protocol/rabbit/events";
 import { Function, Schema } from "effect";
 import {
   ActivitySource,
@@ -6,32 +7,9 @@ import {
   type ActivityType as ActivityTypeValue,
 } from "#src/database/schema";
 
-const ActorSnapshot = Schema.Struct({
-  accountId: Schema.optional(Schema.Number),
-  characterId: Schema.optional(Schema.Number),
-  name: Schema.optional(Schema.String),
-  clanName: Schema.optional(Schema.String),
-  clanId: Schema.optional(Schema.Number),
-  icon: Schema.optional(Schema.String),
-  lvl: Schema.optional(Schema.Number),
-  prof: Schema.optional(Schema.String),
-});
+export type CreateActivity = ActivityLogCreated;
 
-const BaseActivity = Schema.Struct({
-  userId: Schema.NonEmptyString,
-  guildId: Schema.NonEmptyString,
-  discordId: Schema.NonEmptyString,
-  type: Schema.Literals(Object.values(ActivityType)),
-  source: Schema.Literals(Object.values(ActivitySource)),
-  world: Schema.optional(Schema.String),
-  details: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
-  actorSnapshot: Schema.optional(ActorSnapshot),
-  idempotencyKey: Schema.NonEmptyString,
-});
-
-export type CreateActivity = typeof BaseActivity.Type;
-
-const decodeBase = Schema.decodeUnknownSync(BaseActivity);
+const decodeBase = Schema.decodeUnknownSync(ActivityLogCreated);
 
 const requiredGameFields = [
   "accountId",
@@ -62,16 +40,6 @@ export const decodeCreateActivity = Function.compose(decodeBase, (value) => {
 
   return value;
 });
-
-const GuildMemberRemoved = Schema.Struct({
-  discordId: Schema.NonEmptyString,
-  guildId: Schema.NonEmptyString,
-  userId: Schema.optional(Schema.String),
-  id: Schema.optional(Schema.String),
-});
-
-export const decodeGuildMemberRemoved =
-  Schema.decodeUnknownSync(GuildMemberRemoved);
 
 export interface QueryActivities {
   readonly userId?: string;

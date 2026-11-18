@@ -1,6 +1,6 @@
 import type { KilledNpcType } from "@/constants/npc";
 import { formatLevel } from "@lootlog/domain/profession";
-import { NpcTile } from "@/components/tiles/npc-tile";
+import { StatsLeaderboardNpcMedia } from "@/components/common/stats-leaderboard-npc-media";
 import { useKillsControllerGetGuildTopNpcs } from "@lootlog/client/main";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Link } from "@tanstack/react-router";
@@ -89,18 +89,13 @@ export const TopNpcsCard = ({
           rank={index + 1}
           media={
             npc.npcIcon && (
-              // Capped below the row's 48px so a tall sprite never grows it.
-              <span className="w-8 shrink-0">
-                <NpcTile
-                  className="h-9"
-                  imageClassName="max-h-9"
-                  npc={{
-                    name: npc.npcName,
-                    lvl: npc.npcLvl,
-                    icon: npc.npcIcon,
-                  }}
-                />
-              </span>
+              <StatsLeaderboardNpcMedia
+                npc={{
+                  name: npc.npcName,
+                  lvl: npc.npcLvl,
+                  icon: npc.npcIcon,
+                }}
+              />
             )
           }
           title={npc.npcName}

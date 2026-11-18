@@ -1,17 +1,15 @@
 import type { CSSProperties } from "react";
 import {
   createDefinitionFromBase,
-  findSelectedCustomTheme,
-  readCustomThemeId,
   themeRootAttributes,
   type AppliedCustomTheme,
 } from "@lootlog/ui/themes/custom-theme";
 import { CUSTOM_THEME_FONT_STYLESHEETS } from "@lootlog/ui/themes/custom-theme-font-stylesheets";
 import {
-  resolveSelectionTheme,
   resolveStoredSelection,
   resolveThemeClass,
 } from "@lootlog/ui/themes/resolver";
+import { resolveThemeLook } from "@lootlog/ui/themes/theme-sync";
 
 /**
  * The root's attributes for the stored theme, as the browser applies them, so
@@ -22,15 +20,12 @@ export const getDocumentTheme = (
   storedSelection: string | null,
   storedCustomTheme: AppliedCustomTheme | null,
 ) => {
-  const selection = resolveStoredSelection(storedSelection);
+  const { theme, definition } = resolveThemeLook({
+    selection: resolveStoredSelection(storedSelection),
+    userThemes: undefined,
+    cachedCustomThemes: [storedCustomTheme],
+  });
 
-  const definition =
-    findSelectedCustomTheme(
-      readCustomThemeId(selection),
-      storedCustomTheme ? [storedCustomTheme] : [],
-    )?.definition ?? null;
-
-  const theme = resolveSelectionTheme(selection, definition);
   const look = definition ?? createDefinitionFromBase(theme);
   const { style, wallpaper, wallpaperCover } = themeRootAttributes(look);
 

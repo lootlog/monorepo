@@ -226,25 +226,16 @@ export const readCachedCustomTheme = (): AppliedCustomTheme | null => {
   }
 };
 
-/**
- * The custom theme a selection names: from the User's themes once they load,
- * and until then the last applied copy, which keeps the page as it was.
- */
+/** The custom theme a selection names among the given themes. */
 export const findSelectedCustomTheme = (
   customThemeId: string | null,
-  userThemes: readonly AppliedCustomTheme[] | undefined,
+  themes: readonly AppliedCustomTheme[],
 ): AppliedCustomTheme | null => {
   if (customThemeId === null) return null;
 
-  if (userThemes) {
-    const stored = userThemes.find(({ id }) => id === customThemeId);
+  const found = themes.find(({ id }) => id === customThemeId);
 
-    return stored ? { id: stored.id, definition: stored.definition } : null;
-  }
-
-  const cached = readCachedCustomTheme();
-
-  return cached?.id === customThemeId ? cached : null;
+  return found ? { id: found.id, definition: found.definition } : null;
 };
 
 export const writeCachedCustomTheme = (theme: AppliedCustomTheme | null) => {

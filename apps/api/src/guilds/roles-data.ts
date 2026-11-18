@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { OrganizationWorkspaceOperationError } from "#src/guilds/organization-workspace-access";
 import type { GuildMemberChanged } from "@lootlog/protocol/rabbit/events";
 import { selectActiveRoleHolders } from "#src/members/member-role-holders";
@@ -142,9 +143,7 @@ export class RolesData extends Context.Service<
 
                 return updated[0] ?? null;
               }).pipe(
-                Effect.withSpan("roles.update.persistence", {
-                  attributes: { adapter: "ApiDatabase", retryCount: 0 },
-                }),
+                withAdapterSpan("roles.update.persistence", "ApiDatabase"),
               ),
             ),
         });

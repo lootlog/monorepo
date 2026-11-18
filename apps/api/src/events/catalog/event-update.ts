@@ -1,10 +1,13 @@
 import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
+import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   normalizeEventScoringMode,
@@ -12,7 +15,7 @@ import {
   type EventScoringMode,
 } from "@lootlog/domain/scoring";
 import { and, eq, inArray } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -35,11 +38,6 @@ import {
   attachComputedEventActive,
   isEventActiveAt,
 } from "#src/events/monitoring/event-activity";
-
-class EventUpdateError extends TaggedErrorClass<EventUpdateError>()(
-  "EventUpdateError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 type ExistingHero = Pick<
   typeof eventHeroNpcTable.$inferSelect,
@@ -197,7 +195,7 @@ export const makeEventUpdate =
         .pipe(
           Effect.mapError(
             (cause) =>
-              new EventUpdateError({ operation: "events.update.find", cause }),
+              new OperationError({ operation: "events.update.find", cause }),
           ),
         );
 
@@ -410,14 +408,12 @@ export const makeEventUpdate =
             cause instanceof ResourceNotFoundError ||
             cause instanceof InvalidRequestError
               ? cause
-              : new EventUpdateError({
+              : new OperationError({
                   operation: "events.update.transaction",
                   cause,
                 }),
           ),
-          Effect.withSpan("events.update.transaction", {
-            attributes: { adapter: "events.drizzle", retryCount: 0 },
-          }),
+          withAdapterSpan("events.update.transaction", "events.drizzle"),
         );
 
       const updated = yield* catalogRead.hydrateMutation(eventId);

@@ -3,7 +3,7 @@ import { type ItemTileProps, ItemTile } from "@/components/tiles/item-tile";
 import type { Item } from "@/lib/loots/loot-types";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
-import { wikiItemUrl } from "@/config/wiki";
+import { wikiItemUrl } from "@lootlog/domain/wiki-links";
 import { WikiContextMenuItem } from "@/components/common/wiki-context-menu-item";
 
 import {

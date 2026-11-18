@@ -36,7 +36,7 @@ export function installLegacySprites(sprites: readonly LegacySprite[]): void {
  * Styles a character element the way SI's `moveOther` (elements.js) and
  * `hero.run` (player.js) do, with jQuery's px units.
  */
-export function placeLegacyCharacter(
+function placeLegacyCharacter(
   element: HTMLElement,
   { sprite, rx, ry, step = 0, dir = 0, water = 0 }: LegacyPlacement,
 ): void {

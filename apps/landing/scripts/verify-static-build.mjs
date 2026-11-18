@@ -1,6 +1,7 @@
 import { verifyGeneratedAssetReferences } from "../../../scripts/static-assets.mjs";
+import { assertRoutedTo } from "../../traffic-splitter/scripts/assert-routed.mjs";
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { blogPosts } from "../src/config/blog.ts";
 
@@ -131,5 +132,13 @@ for (const origin of [
 ]) {
   assert.ok(robots.includes(`Sitemap: ${origin}/sitemap.xml`));
 }
+
+// Pages answers unknown paths with 404.html; no link requests it directly.
+await assertRoutedTo(
+  (await readdir(clientDirectory))
+    .filter((entry) => entry !== "404.html")
+    .map((entry) => (entry === "index.html" ? "/" : `/${entry}`)),
+  "landing",
+);
 
 process.stdout.write("Landing static artifact verified.\n");

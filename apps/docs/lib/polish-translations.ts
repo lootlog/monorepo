@@ -24,11 +24,6 @@ export const docsTranslations = {
     copyFailed: "Nie udało się skopiować",
     view: "Wersja tekstowa",
   },
-  redirect: {
-    linkLabel: "dokumentacji Lootlog",
-    prefix: "Przejdź do",
-    suffix: ".",
-  },
 } as const;
 
 export const polishTranslations = {

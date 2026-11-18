@@ -167,8 +167,6 @@ const setup = async ({
   }
 
   const sound: SoundSettingsFixture = {
-    userId: "user",
-    masterVolume: 1,
     notificationsVolume: 1,
     detectorVolume: 1,
     timersVolume: 1,
@@ -176,8 +174,6 @@ const setup = async ({
     notificationsConfig: null,
     detectorConfig: null,
     timersConfig: null,
-    createdAt: "2026-01-01",
-    updatedAt: "2026-01-01",
   };
 
   seedSettingsDocumentValues(test.queryClient, soundSettingValues(sound));

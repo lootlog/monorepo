@@ -1,9 +1,9 @@
 import { itemStatUpgradeLevel } from "@lootlog/domain/item-upgrade";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { DisplayItemRarity } from "@lootlog/domain/item-rarity";
 import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
 import { ItemTileDetails } from "@lootlog/ui/components/item-tile-details";
-import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-styles";
+import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-colors";
 import { useSharedTooltip } from "@lootlog/ui/components/shared-tooltip-provider";
 import {
   Tooltip,
@@ -21,10 +21,10 @@ import type {
   ReactNode,
 } from "react";
 
-export type GameItem = {
+type GameItem = {
   icon: string;
   name: string;
-  rarity?: ItemRarity | null;
+  rarity?: DisplayItemRarity | null;
   stat: string;
   type?: string | null;
 };
@@ -38,7 +38,7 @@ export type ItemTileLabels = {
 };
 
 /** An item the tooltip shows beside this one, such as the one worn instead. */
-export type ItemTileComparison = {
+type ItemTileComparison = {
   item: GameItem;
   /** What the compared item is, shown above it. */
   label: string;
@@ -73,7 +73,7 @@ export const ItemTile: FC<ItemTileProps> = ({
   shareNickname,
 }) => {
   const sharedTooltip = useSharedTooltip();
-  const normalizedRarity = rarity ?? ItemRarity.COMMON;
+  const normalizedRarity = rarity ?? DisplayItemRarity.COMMON;
   const triggerClassName = "w-fit appearance-none border-0 bg-transparent p-0";
 
   const tooltipBorderClassName = comparison
@@ -108,7 +108,7 @@ export const ItemTile: FC<ItemTileProps> = ({
     />
   );
 
-  const comparedRarity = comparison?.item.rarity ?? ItemRarity.COMMON;
+  const comparedRarity = comparison?.item.rarity ?? DisplayItemRarity.COMMON;
 
   // Side by side where there is room, the item first and then the one it is
   // compared with, each in its own rarity's frame. The pair starts at the

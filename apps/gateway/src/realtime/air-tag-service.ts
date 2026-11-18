@@ -1,5 +1,4 @@
 import {
-  AIR_TAG_MAP_THREAT_TTL_MS,
   AIR_TAG_MAX_BATCH_SIZE,
   AIR_TAG_MAX_MAP_NAME_LENGTH,
   isAirTagDeparture,
@@ -48,8 +47,8 @@ import {
   mergeObservations,
   readDisabledFlags,
   readThreatMapIds,
+  recordThreatMap,
   registerReplicaInterest,
-  threatMapsKey,
   type BatchAdmission,
   type MergeResult,
   type ScriptStore,
@@ -588,21 +587,12 @@ export class AirTagService {
     event: AirTagMapThreatEvent,
     failedAttempts = 0,
   ): Effect.Effect<void> {
-    const threatMaps = threatMapsKey(event.guildId, event.world);
-
     // The live publish does not read the snapshot, which serves later
     // joiners, and a retry after a failed snapshot repeats the revisioned
     // event.
     return storeCall("air-tag.threat-publish", async () => {
       await Promise.all([
-        this.redis.command
-          .sadd(threatMaps, String(event.mapId))
-          .then(() =>
-            this.redis.command.expire(
-              threatMaps,
-              AIR_TAG_MAP_THREAT_TTL_MS / 1_000,
-            ),
-          ),
+        recordThreatMap(this.redis, event),
         this.hub.publishToScopes(
           [{ topic: "organization.presence", organizationId: event.guildId }],
           { v: 1, type: "air-tag.map-threat-updated", data: event },

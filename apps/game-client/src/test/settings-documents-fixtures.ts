@@ -1,4 +1,4 @@
-import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
+import type { SoundSettings } from "@/features/settings/persistence/use-sound-settings";
 import type { QueryClient } from "@tanstack/react-query";
 import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import { setPath } from "@lootlog/domain/settings-paths";
@@ -104,9 +104,9 @@ type SoundSettingValuesInput = {
   detectorVolume?: number;
   timersVolume?: number;
   pingsVolume?: number;
-  notificationsConfig?: UserSoundSettings["notificationsConfig"] | null;
-  detectorConfig?: UserSoundSettings["detectorConfig"] | null;
-  timersConfig?: UserSoundSettings["timersConfig"] | null;
+  notificationsConfig?: SoundSettings["notificationsConfig"] | null;
+  detectorConfig?: SoundSettings["detectorConfig"] | null;
+  timersConfig?: SoundSettings["timersConfig"] | null;
 };
 
 export const soundSettingValues = (settings: SoundSettingValuesInput) => ({

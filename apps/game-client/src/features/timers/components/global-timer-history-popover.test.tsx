@@ -117,6 +117,8 @@ it("reloads a recently closed history after a deletion and stops offering restor
           guildId: history.guildId,
           world: history.world,
           timerKey: history.timerKey,
+          npcId: history.npcId,
+          routing: { tier: "heroes", npcLevel: history.npc.lvl },
         },
       },
     });

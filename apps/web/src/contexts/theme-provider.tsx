@@ -1,12 +1,6 @@
 /* eslint-disable react-doctor/jsx-no-constructed-context-values -- Vite React Compiler output caches this provider value and its callbacks by their actual dependencies; verified through the running Vite module transform. */
 import { ThemeContext } from "./theme-context";
-import {
-  useEffect,
-  useLayoutEffect,
-  useState,
-  type FC,
-  type ReactNode,
-} from "react";
+import { useState, type FC, type ReactNode } from "react";
 import { useSession } from "@/hooks/auth/use-session";
 import { useUpdateUserPreferences } from "@/hooks/api/user/use-user-preferences";
 import { useUserThemes } from "@/hooks/api/user/use-user-themes";
@@ -15,23 +9,26 @@ import { toast } from "@lootlog/ui/lib/toast";
 import { useUsersControllerGetUserPreferences } from "@lootlog/client/main";
 import type { CustomThemeDefinition } from "@lootlog/schema/custom-theme";
 import {
-  applyThemeToDocument,
-  getRootResolvedTheme,
-  resolveSelectionTheme,
   resolveStoredSelection,
-  resolveThemeClass,
   type ThemeSelection,
 } from "@lootlog/ui/themes/resolver";
+import { THEME_STORAGE_KEY } from "@lootlog/ui/themes/catalog";
 import {
-  DEFAULT_THEME_ID,
-  THEME_STORAGE_KEY,
-  type ResolvedThemeId,
-} from "@lootlog/ui/themes/catalog";
-import {
-  findSelectedCustomTheme,
+  readCachedCustomTheme,
   readCustomThemeId,
   writeCachedCustomTheme,
 } from "@lootlog/ui/themes/custom-theme";
+import {
+  resolveThemeLook,
+  useThemeSync,
+  type ThemePersistence,
+} from "@lootlog/ui/themes/theme-sync";
+
+const localThemePersistence: ThemePersistence = {
+  writeSelection: (selection) =>
+    localStorage.setItem(THEME_STORAGE_KEY, selection),
+  writeCustomTheme: writeCachedCustomTheme,
+};
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -63,46 +60,25 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
       ? resolveStoredSelection(preferences.theme)
       : localSelection;
 
-  const customThemeId = readCustomThemeId(selection);
-
   const { data: userThemes } = useUserThemes({
-    enabled: !!session?.user && customThemeId !== null,
+    enabled: !!session?.user && readCustomThemeId(selection) !== null,
   });
 
-  const customTheme = findSelectedCustomTheme(customThemeId, userThemes);
+  const look = resolveThemeLook({
+    selection,
+    userThemes,
+    cachedCustomThemes: [readCachedCustomTheme()],
+    preview,
+  });
 
-  const definition = preview ?? customTheme?.definition ?? null;
+  const { theme, customTheme } = look;
 
-  const theme = resolveSelectionTheme(selection, definition);
-
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedThemeId>(() =>
-    resolveThemeClass(
-      DEFAULT_THEME_ID,
-      getRootResolvedTheme(document.documentElement),
-    ),
-  );
-
-  useEffect(() => {
-    localStorage.setItem(THEME_STORAGE_KEY, selection);
-  }, [selection]);
-
-  useEffect(() => {
-    // Keep the cache while the list loads; once it has, it follows the pick.
-    if (customThemeId === null || userThemes) {
-      writeCachedCustomTheme(customTheme);
-    }
-  }, [customThemeId, customTheme, userThemes]);
-
-  // The root keeps the applied class, so a cat roulette keeps its cat.
-  useLayoutEffect(() => {
-    setResolvedTheme(
-      applyThemeToDocument({
-        root: document.documentElement,
-        theme,
-        definition,
-      }),
-    );
-  }, [theme, definition]);
+  const resolvedTheme = useThemeSync({
+    selection,
+    look,
+    userThemes,
+    persistence: localThemePersistence,
+  });
 
   const setTheme = (nextSelection: ThemeSelection) => {
     setHasThemeOverride(true);

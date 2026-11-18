@@ -82,7 +82,7 @@ const BATTLE_MARK_MS = 3_000;
 
 const BATTLE_REQUEST_MS = 4_000;
 
-export const PING_PRESENTATION = {
+const PING_PRESENTATION = {
   attention: presentation("attention", "alert", "gold", 2_500, 1),
   enemy: presentation("enemy", "crosshair", "red", 4_000, 1.35),
   regroup: presentation("regroup", "regroup", "violet", 5_000, 0.82),

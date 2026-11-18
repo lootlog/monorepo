@@ -7,7 +7,10 @@
   "exports": {
     ".": "./src/instrumentation.ts",
     "./bounded-http-get": "./src/bounded-http-get.ts",
-    "./observability": "./src/observability.ts"
+    "./observability": "./src/observability.ts",
+    "./operation": "./src/operation.ts",
+    "./service": "./src/service.ts",
+    "./service-config": "./src/service-config.ts"
   },
   "scripts": {
     "lint": "oxlint src test",
@@ -15,6 +18,8 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@effect/platform-bun": "catalog:",
+    "@lootlog/schema": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {

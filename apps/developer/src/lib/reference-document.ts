@@ -1,9 +1,7 @@
 import { looseStruct } from "@lootlog/schema/stored-value";
 import { Option, Schema } from "effect";
-import {
-  referenceMetadata,
-  type ReferenceService,
-} from "~/lib/reference-metadata";
+import type { PublicApiService } from "@lootlog/schema/api-services";
+import { referenceMetadata } from "~/lib/reference-metadata";
 
 const UnknownRecord = Schema.Record(Schema.String, Schema.Unknown);
 
@@ -53,7 +51,7 @@ export function getOperationTags({ paths }: ReferenceDocument) {
  */
 export function presentReferenceDocument(
   document: ReferenceDocument,
-  service: ReferenceService,
+  service: PublicApiService,
   serverUrl: string,
 ) {
   const metadata = referenceMetadata[service];

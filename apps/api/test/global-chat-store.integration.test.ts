@@ -50,7 +50,7 @@ describe("Global chat store Dragonfly integration", () => {
       {},
       (effect) => redisRuntime.runPromise(effect),
     );
-    store = makeGlobalChatStore(redis);
+    store = makeGlobalChatStore(redis.effect);
   });
 
   afterAll(async () => {

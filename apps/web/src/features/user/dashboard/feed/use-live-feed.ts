@@ -1,11 +1,11 @@
 import type { GatewayAccessUpdate, GatewayJoin } from "@/lib/gateway-client";
+import type { UserFeedItem } from "@lootlog/protocol/feed";
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
   getUsersControllerGetUserFeedQueryOptions,
   getUsersControllerGetUserFeedQueryKey,
-  type UserFeedResponseDtoOutput,
   type UsersControllerGetUserFeedParams,
 } from "@lootlog/client/main";
 import { useGateway } from "@/hooks/utils/use-gateway";
@@ -17,7 +17,7 @@ import {
   type FeedFilters,
 } from "./live-feed-state";
 
-type FeedItem = UserFeedResponseDtoOutput["items"][number];
+type FeedItem = UserFeedItem;
 
 const feedParams = (
   filters: FeedFilters,
@@ -69,7 +69,7 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
     let fetching = false;
     let revalidatingAccess = false;
     let permissionsChanged = false;
-    let buffered: FeedItem[] = [];
+    let buffered: readonly FeedItem[] = [];
     let accessRefreshTimer: ReturnType<typeof setTimeout> | undefined;
     const queryKey = getUsersControllerGetUserFeedQueryKey();
 

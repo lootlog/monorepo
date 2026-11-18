@@ -1,8 +1,6 @@
-import { AUTH_SERVICE_URL } from "@/src/config/auth";
-import { createAuthClient } from "better-auth/react";
+import { createLootlogAuthClient } from "@lootlog/client/auth-session";
+import { apiServiceOrigin } from "@lootlog/schema/api-services";
 
-export const authClient: ReturnType<typeof createAuthClient> = createAuthClient(
-  {
-    baseURL: `${AUTH_SERVICE_URL}/idp`,
-  },
+export const authClient = createLootlogAuthClient(
+  import.meta.env.VITE_AUTH_SERVICE_URL || apiServiceOrigin("auth", "local"),
 );

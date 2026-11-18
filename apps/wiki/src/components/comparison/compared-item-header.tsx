@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { Button } from "@lootlog/ui/components/button";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { LOOT_RARITY_TEXT_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { cn } from "cn";
 import { CatalogItemTile } from "@/components/catalog/catalog-item-tile";

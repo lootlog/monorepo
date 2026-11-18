@@ -1,5 +1,5 @@
 /** As delivered: the API stamps an open entrance's close time on its clock. */
-export type HeroTrackerNotificationState =
+type HeroTrackerNotificationState =
   | { state: "unclaimed" }
   | { state: "open"; entranceClosesAt: string };
 

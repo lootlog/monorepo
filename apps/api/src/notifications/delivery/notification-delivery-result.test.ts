@@ -1,7 +1,7 @@
 import { createNotificationJobFixture } from "../../../test/notification-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
-import type { DiscordNotificationDeliveryResultEvent } from "@lootlog/schema/notifications";
+import type { DiscordNotificationDeliveryResult } from "@lootlog/schema/notifications";
 import { makeNotificationDeliveryResult } from "#src/notifications/delivery/notification-delivery-result";
 import { makeNotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import type { NotificationDeliveryUpdate } from "#src/notifications/jobs/notification-job.repository";
@@ -11,7 +11,7 @@ const job = (attemptCount: number) =>
 
 const keepTarget = () => Effect.die("the target must not be removed");
 
-const failedEvent: DiscordNotificationDeliveryResultEvent = {
+const failedEvent: DiscordNotificationDeliveryResult = {
   notificationJobId: "job-1",
   success: false,
   retryable: true,
@@ -44,7 +44,7 @@ describe("notification delivery result", () => {
       keepTarget,
     );
 
-    const successEvent: DiscordNotificationDeliveryResultEvent = {
+    const successEvent: DiscordNotificationDeliveryResult = {
       notificationJobId: storedJob.id,
       success: true,
       retryable: false,

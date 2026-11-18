@@ -9,14 +9,16 @@ import { ServerOrderList } from "@/features/settings/components/servers/server-o
 import { SettingsNoLootlogEmptyState } from "@/features/settings/components/shared/settings-no-lootlog-empty-state";
 import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
-import { filterGuildsByVisibility } from "@lootlog/domain/guild-preferences";
+import {
+  filterGuildsByVisibility,
+  GUILD_VISIBILITY_FILTERS,
+  showAllGuilds,
+  toggleHiddenGuild,
+  type GuildVisibilityFilter,
+} from "@lootlog/domain/guild-preferences";
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-
-type VisibilityFilter = "all" | "visible" | "hidden";
-
-const VISIBILITY_FILTERS: VisibilityFilter[] = ["all", "visible", "hidden"];
 
 export const ServerVisibilitySettingsTab = () => {
   const { t } = useTranslation();
@@ -25,7 +27,7 @@ export const ServerVisibilitySettingsTab = () => {
   const [query, setQuery] = useState("");
 
   const [visibilityFilter, setVisibilityFilter] =
-    useState<VisibilityFilter>("all");
+    useState<GuildVisibilityFilter>("all");
 
   const hiddenGuildIds = preferencesQuery.data?.hiddenGuildIds ?? [];
   const hiddenGuildIdSet = new Set(hiddenGuildIds);
@@ -50,17 +52,9 @@ export const ServerVisibilitySettingsTab = () => {
   // Derived from the cache at click time: rapid clicks each build on the
   // previous optimistic state instead of the one this render was given.
   const toggleGuildVisibility = (guildId: string) => {
-    updatePreferences.mutateFromCurrent((current) => {
-      const currentHiddenGuildIds = current?.hiddenGuildIds ?? [];
-
-      return {
-        hiddenGuildIds: currentHiddenGuildIds.includes(guildId)
-          ? currentHiddenGuildIds.filter(
-              (hiddenGuildId) => hiddenGuildId !== guildId,
-            )
-          : [...currentHiddenGuildIds, guildId],
-      };
-    });
+    updatePreferences.mutateFromCurrent((current) => ({
+      hiddenGuildIds: toggleHiddenGuild(current?.hiddenGuildIds ?? [], guildId),
+    }));
   };
 
   // The full order is sent, so servers not in the stored order (new ones)
@@ -104,9 +98,9 @@ export const ServerVisibilitySettingsTab = () => {
                   disabled={!hasHiddenGuilds || updatePreferences.isPending}
                   onClick={() => {
                     updatePreferences.mutateFromCurrent((current) => ({
-                      hiddenGuildIds: (current?.hiddenGuildIds ?? []).filter(
-                        (hiddenGuildId) =>
-                          !accessibleGuildIdSet.has(hiddenGuildId),
+                      hiddenGuildIds: showAllGuilds(
+                        current?.hiddenGuildIds ?? [],
+                        accessibleGuildIdSet,
                       ),
                     }));
                   }}
@@ -134,11 +128,11 @@ export const ServerVisibilitySettingsTab = () => {
                 size="sm"
                 spacing={0}
                 value={[visibilityFilter]}
-                onValueChange={([value]: VisibilityFilter[]) => {
+                onValueChange={([value]: GuildVisibilityFilter[]) => {
                   if (value) setVisibilityFilter(value);
                 }}
               >
-                {VISIBILITY_FILTERS.map((filter) => (
+                {GUILD_VISIBILITY_FILTERS.map((filter) => (
                   <ToggleGroupItem key={filter} value={filter}>
                     {t(`settings.servers.filters.${filter}`)}
                   </ToggleGroupItem>

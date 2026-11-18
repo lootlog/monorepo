@@ -1,5 +1,4 @@
 import { isObjectRecord } from "@lootlog/schema/records";
-import type { DiscordNotificationSendCommand } from "@lootlog/schema/notifications";
 import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Effect, Result, Schema } from "effect";
@@ -9,11 +8,13 @@ import type {
 } from "#src/notifications/jobs/notification-job.repository";
 import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import {
+  type DiscordNotificationSendCommand,
   NotificationJobStatus,
   NotificationOwnerType,
   NotificationProvider,
-} from "#src/notifications/notification-enums";
+} from "@lootlog/schema/notifications";
 import { isJsonObject, type JsonValue } from "#src/database/json";
+import { NOTIFICATION_DELIVERY_ATTEMPTS } from "#src/notifications/jobs/dispatch-queue";
 
 export type NotificationDispatchJob = NotificationJobWithRelations;
 
@@ -37,8 +38,8 @@ export interface NotificationDispatchStore {
 }
 
 export interface NotificationDispatchAttempt {
+  /** The queue already ran this entry, so a crashed claim may be retaken. */
   readonly retrying: boolean;
-  readonly finalAttempt: boolean;
 }
 
 export interface NotificationDispatchPermissions {
@@ -181,20 +182,22 @@ export const makeNotificationJobDispatch = (
 
     if (Result.isSuccess(published)) return;
     const message = errorMessage(published.failure);
+    const attemptCount = job.attemptCount + 1;
+    const finalAttempt = attemptCount >= NOTIFICATION_DELIVERY_ATTEMPTS;
 
-    const failed = yield* store.failClaim(job.id, job.attemptCount + 1, {
-      status: attempt.finalAttempt
+    const failed = yield* store.failClaim(job.id, attemptCount, {
+      status: finalAttempt
         ? NotificationJobStatus.FAILED
         : NotificationJobStatus.PENDING,
       lastError: `AMQP publish failed: ${message}`,
-      processedAt: attempt.finalAttempt
+      processedAt: finalAttempt
         ? new Date(yield* Clock.currentTimeMillis)
         : null,
     });
 
     if (!failed) return;
 
-    if (attempt.finalAttempt) yield* finalize(job);
+    if (finalAttempt) yield* finalize(job);
 
     return yield* new NotificationJobDispatchFailure({
       operation: "publish",

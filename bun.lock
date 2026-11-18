@@ -26,6 +26,7 @@
         "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
         "@lootlog/database": "workspace:*",
+        "@lootlog/datetime": "workspace:*",
         "@lootlog/domain": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
@@ -87,7 +88,6 @@
       "version": "1.0.11",
       "dependencies": {
         "@better-auth/api-key": "1.7.16",
-        "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
         "@lootlog/database": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
@@ -177,13 +177,14 @@
       "name": "@lootlog/developer",
       "version": "0.0.9",
       "dependencies": {
+        "@lootlog/client": "workspace:*",
+        "@lootlog/domain": "workspace:*",
         "@lootlog/schema": "workspace:*",
         "@lootlog/ui": "workspace:*",
         "@scalar/api-reference-react": "^0.9.80",
         "@tanstack/react-query": "catalog:",
         "@tanstack/react-router": "catalog:",
         "@tanstack/react-start": "^1.169.1",
-        "better-auth": "1.7.16",
         "effect": "catalog:",
         "fumadocs-core": "^16.17.2",
         "fumadocs-mdx": "^15.4.7",
@@ -209,7 +210,6 @@
       "name": "@lootlog/discord-bot",
       "version": "1.0.10",
       "dependencies": {
-        "@effect/platform-bun": "catalog:",
         "@lootlog/domain": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
@@ -230,6 +230,7 @@
       "name": "@lootlog/docs",
       "version": "1.0.6",
       "dependencies": {
+        "@lootlog/domain": "workspace:*",
         "@lootlog/ui": "workspace:*",
         "@tanstack/react-router": "catalog:",
         "@tanstack/react-start": "^1.169.1",
@@ -273,7 +274,6 @@
         "@lootlog/ui": "workspace:*",
         "@shadcn/react": "^0.3.1",
         "@tanstack/react-query": "catalog:",
-        "better-auth": "1.7.16",
         "class-variance-authority": "^0.7.1",
         "cn": "catalog:",
         "effect": "catalog:",
@@ -345,10 +345,13 @@
       "name": "@lootlog/landing",
       "version": "1.0.9",
       "dependencies": {
+        "@lootlog/client": "workspace:*",
+        "@lootlog/domain": "workspace:*",
+        "@lootlog/schema": "workspace:*",
         "@lootlog/ui": "workspace:*",
+        "@tanstack/react-query": "catalog:",
         "@tanstack/react-router": "catalog:",
         "@tanstack/react-start": "^1.169.1",
-        "better-auth": "1.7.16",
         "framer-motion": "^14.2.0",
         "i18next": "^26.4.4",
         "lucide-react": "^1.56.0",
@@ -368,14 +371,12 @@
         "tailwindcss": "catalog:",
         "typescript": "catalog:",
         "vite": "catalog:",
-        "vitest": "catalog:",
       },
     },
     "apps/search": {
       "name": "@lootlog/search",
       "version": "1.0.11",
       "dependencies": {
-        "@effect/platform-bun": "catalog:",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/meilisearch": "workspace:*",
         "@lootlog/messaging": "workspace:*",
@@ -434,7 +435,6 @@
         "@tanstack/react-router": "catalog:",
         "@tanstack/react-table": "^9.3.1",
         "@tanstack/react-virtual": "^3.14.18",
-        "better-auth": "1.7.16",
         "class-variance-authority": "^0.7.1",
         "cn": "catalog:",
         "date-fns": "^4.4.0",
@@ -487,7 +487,6 @@
         "@tanstack/react-router": "catalog:",
         "@tanstack/react-router-ssr-query": "^1.167.3",
         "@tanstack/react-start": "^1.169.1",
-        "better-auth": "1.7.16",
         "cn": "catalog:",
         "es-toolkit": "catalog:",
         "lucide-react": "^1.56.0",
@@ -512,8 +511,12 @@
     "packages/battle-processor": {
       "name": "@lootlog/battle-processor",
       "version": "1.0.3",
+      "dependencies": {
+        "@lootlog/domain": "workspace:*",
+      },
       "devDependencies": {
         "@lootlog/typescript-config": "workspace:*",
+        "@types/bun": "catalog:",
         "typescript": "catalog:",
       },
     },
@@ -522,6 +525,7 @@
       "version": "1.0.10",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
+        "@lootlog/protocol": "workspace:*",
         "amqplib": "^2.2.0",
         "effect": "catalog:",
       },
@@ -538,12 +542,14 @@
       "dependencies": {
         "@lootlog/protocol": "workspace:*",
         "@lootlog/schema": "workspace:*",
+        "better-auth": "1.7.16",
       },
       "devDependencies": {
         "@lootlog/typescript-config": "workspace:*",
         "@tanstack/react-query": "catalog:",
         "@types/bun": "catalog:",
         "@types/node": "catalog:",
+        "@types/react": "catalog:",
         "effect": "catalog:",
         "orval": "^8.42.0",
         "react": "catalog:",
@@ -564,7 +570,10 @@
       "dependencies": {
         "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
+        "@lootlog/domain": "workspace:*",
         "@lootlog/schema": "workspace:*",
+        "bullmq": "^6.3.14",
+        "drizzle-orm": "catalog:",
         "effect": "catalog:",
         "pg": "^8.23.1",
       },
@@ -574,7 +583,6 @@
         "@types/bun": "catalog:",
         "@types/node": "catalog:",
         "@types/pg": "^8.23.1",
-        "drizzle-orm": "catalog:",
         "testcontainers": "^12.2.1",
         "typescript": "catalog:",
       },
@@ -619,6 +627,8 @@
       "name": "@lootlog/instrumentation",
       "version": "0.0.0",
       "dependencies": {
+        "@effect/platform-bun": "catalog:",
+        "@lootlog/schema": "workspace:*",
         "effect": "catalog:",
       },
       "devDependencies": {
@@ -639,6 +649,7 @@
       "name": "@lootlog/meilisearch",
       "version": "0.0.0",
       "dependencies": {
+        "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
         "effect": "catalog:",
         "es-toolkit": "catalog:",

@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
@@ -200,9 +201,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
     body: (transaction: WriteDatabase) => Effect.Effect<A, E>,
   ) =>
     protect(database.transaction(body)).pipe(
-      Effect.withSpan(operationId, {
-        attributes: { adapter: "docs.drizzle", retryCount: 0 },
-      }),
+      withAdapterSpan(operationId, "docs.drizzle"),
     );
 
   const findEditorNames: DocsRepositoryService["findEditorNames"] = (
@@ -542,11 +541,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             .delete(guildDocumentTable)
             .where(eq(guildDocumentTable.id, documentId)),
         );
-      }).pipe(
-        Effect.withSpan("docs.purge", {
-          attributes: { adapter: "docs.drizzle", retryCount: 0 },
-        }),
-      ),
+      }).pipe(withAdapterSpan("docs.purge", "docs.drizzle")),
     findEditorNames,
   });
 }

@@ -1,18 +1,34 @@
-import type { SubscriptionScope } from "@lootlog/protocol/realtime";
+import { SubscriptionScope } from "@lootlog/protocol/realtime";
+import { Schema } from "effect";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
 type Scope = typeof SubscriptionScope.Type;
 
+/** The optional scope fields in key order, after `topic`. */
+const SCOPE_FIELDS = ["organizationId", "eventId", "world", "mapId"] as const;
+
+const scopeValues = (scope: Scope) => SCOPE_FIELDS.map((field) => scope[field]);
+
 /** Identifies a scope; JSON keeps field values that contain delimiters apart. */
 export const getScopeKey = (scope: Scope): string =>
-  JSON.stringify([
-    scope.topic,
-    scope.organizationId,
-    scope.eventId,
-    scope.world,
-    scope.mapId,
-  ]);
+  JSON.stringify([scope.topic, ...scopeValues(scope)]);
+
+const decodeScope = Schema.decodeUnknownSync(SubscriptionScope);
+
+/** The scope `getScopeKey` encoded as `key`. */
+const decodeScopeKey = (key: string): Scope => {
+  const [topic, ...values]: unknown[] = JSON.parse(key);
+
+  return decodeScope({
+    topic,
+    ...Object.fromEntries(
+      SCOPE_FIELDS.flatMap((field, index) =>
+        values[index] === null ? [] : [[field, values[index]]],
+      ),
+    ),
+  });
+};
 
 const getIdentityAudienceKey = (kind: "user" | "discord", id: string): string =>
   JSON.stringify([kind, id]);
@@ -33,12 +49,7 @@ const matchingScopeAudienceKeys = (scope: Scope): string[] => {
   if (cached) return cached;
   let keys: Array<Array<string | number | undefined>> = [[scope.topic]];
 
-  for (const value of [
-    scope.organizationId,
-    scope.eventId,
-    scope.world,
-    scope.mapId,
-  ]) {
+  for (const value of scopeValues(scope)) {
     keys = keys.flatMap((key) =>
       value === undefined
         ? [[...key, undefined]]
@@ -122,30 +133,10 @@ export class RealtimeAudiences {
   /** Distinct scopes of `topic` that a local socket subscribes to. */
   localScopes(topic: Scope["topic"]): Scope[] {
     const prefix = JSON.stringify([topic]).slice(0, -1);
-    const scopes: Scope[] = [];
 
-    for (const key of this.audiences.keys()) {
-      if (!key.startsWith(`${prefix},`)) continue;
-
-      // SAFETY: keys with this topic prefix come only from getScopeKey.
-      const [, organizationId, eventId, world, mapId] = JSON.parse(key) as [
-        string,
-        string | null,
-        string | null,
-        string | null,
-        number | null,
-      ];
-
-      scopes.push({
-        topic,
-        ...(organizationId !== null && { organizationId }),
-        ...(eventId !== null && { eventId }),
-        ...(world !== null && { world }),
-        ...(mapId !== null && { mapId }),
-      });
-    }
-
-    return scopes;
+    return Array.from(this.audiences.keys())
+      .filter((key) => key.startsWith(`${prefix},`))
+      .map(decodeScopeKey);
   }
 
   /** The sockets that may receive `message`, before visibility checks. */

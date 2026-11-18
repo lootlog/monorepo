@@ -1,8 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getPortalEnvironment } from "~/lib/environment";
+import {
+  apiServiceOrigin,
+  isPublicApiService,
+  type PublicApiService,
+} from "@lootlog/schema/api-services";
+import { getPortalEnvironment, requestHostname } from "~/lib/environment";
 import {
   decodeReferenceDocument,
   presentReferenceDocument,
+  type ReferenceDocument,
 } from "~/lib/reference-document";
 import main from "@lootlog/sdk/openapi/main.json";
 import activity from "@lootlog/sdk/openapi/activity.json";
@@ -10,7 +16,7 @@ import battlelog from "@lootlog/sdk/openapi/battlelog.json";
 import catalog from "@lootlog/sdk/openapi/catalog.json";
 import search from "@lootlog/sdk/openapi/search.json";
 
-const specs = {
+const specs: Record<PublicApiService, ReferenceDocument> = {
   main: decodeReferenceDocument(main),
   activity: decodeReferenceDocument(activity),
   battlelog: decodeReferenceDocument(battlelog),
@@ -24,26 +30,17 @@ export const Route = createFileRoute("/openapi/$service")({
       GET: ({ request, params }) => {
         const service = params.service.replace(/\.json$/, "");
 
-        if (
-          service !== "main" &&
-          service !== "activity" &&
-          service !== "battlelog" &&
-          service !== "catalog" &&
-          service !== "search"
-        )
+        if (!isPublicApiService(service))
           return new Response(null, { status: 404 });
-
-        const host =
-          request.headers.get("host")?.split(":")[0] ??
-          new URL(request.url).hostname;
-
-        const environment = getPortalEnvironment(host);
 
         return Response.json(
           presentReferenceDocument(
             specs[service],
             service,
-            environment[service],
+            apiServiceOrigin(
+              service,
+              getPortalEnvironment(requestHostname(request)),
+            ),
           ),
           { headers: { "Cache-Control": "no-store" } },
         );

@@ -10,6 +10,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
+import type { MemberRefreshJobUpdated } from "@lootlog/protocol/realtime/organization-events";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
   getMembersControllerGetGuildMembersQueryKey,
@@ -44,7 +45,11 @@ const job = (id: number, status: string, processedMembers: number) => ({
   nextAvailableAt: new Date(Date.now() + 60 * 60_000).toISOString(),
 });
 
-const progress = (jobId: number, status: string, processedMembers: number) =>
+const progress = (
+  jobId: number,
+  status: MemberRefreshJobUpdated["status"],
+  processedMembers: number,
+) =>
   ({
     v: 1,
     type: "member-refresh.updated",
@@ -57,6 +62,7 @@ const progress = (jobId: number, status: string, processedMembers: number) =>
         totalMembers: 10,
         processedMembers,
         failedMembers: 0,
+        completedAt: null,
       },
     },
   }) as const;

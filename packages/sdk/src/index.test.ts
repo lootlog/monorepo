@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { configureLootlogApi } from "./index";
-import { mainFetch } from "./mutators";
+import { executeApiRequest } from "@lootlog/client/transport";
 
 test("configured SDK sends key to explicit environment, omits cookies and never retries writes", async () => {
   const calls: { url: string; init?: RequestInit }[] = [];
@@ -20,7 +20,7 @@ test("configured SDK sends key to explicit environment, omits cookies and never 
 
   try {
     await expect(
-      mainFetch("/loots", { method: "POST", body: "{}" }),
+      executeApiRequest("main", "/loots", { method: "POST", body: "{}" }),
     ).rejects.toMatchObject({ status: 403, data: { code: "DENIED" } });
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe("https://dev-api.lootlog.pl/loots");

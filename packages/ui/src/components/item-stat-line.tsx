@@ -1,0 +1,69 @@
+import {
+  formatItemDisplayValue,
+  ITEM_STAT_TAG_CLASS_NAMES,
+  type ItemDisplayValue,
+} from "@lootlog/ui/components/item-stat-utils";
+import {
+  itemStatTagPattern,
+  itemStatTemplate,
+} from "@lootlog/ui/lib/item-stat-text";
+import type { FC, ReactNode } from "react";
+
+const tagClassNames = new Map<string, string>(
+  Object.entries(ITEM_STAT_TAG_CLASS_NAMES),
+);
+
+const renderTaggedTemplate = (template: string): ReactNode[] => {
+  const tagPattern = itemStatTagPattern();
+  const nodes: ReactNode[] = [];
+  let currentIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = tagPattern.exec(template))) {
+    const [rawMatch = "", tagName = "", tagContent = ""] = match;
+
+    if (match.index > currentIndex) {
+      nodes.push(template.slice(currentIndex, match.index));
+    }
+
+    nodes.push(
+      <span
+        className={tagClassNames.get(tagName)}
+        key={`${tagName}-${match.index}`}
+      >
+        {renderTaggedTemplate(tagContent)}
+      </span>,
+    );
+    currentIndex = match.index + rawMatch.length;
+  }
+
+  if (currentIndex < template.length) {
+    nodes.push(template.slice(currentIndex));
+  }
+
+  return nodes;
+};
+
+type ItemStatLineProps = {
+  displayValue: ItemDisplayValue;
+};
+
+/** One item stat as the game's tooltip words it, or `key: value` without a wording. */
+export const ItemStatLine: FC<ItemStatLineProps> = ({ displayValue }) => {
+  if (!displayValue.key) return null;
+
+  const template = itemStatTemplate(displayValue);
+
+  if (!template) {
+    return (
+      <span>
+        <span className="text-muted-foreground">{displayValue.key}: </span>
+        <span className="font-semibold text-primary">
+          {formatItemDisplayValue(displayValue.value)}
+        </span>
+      </span>
+    );
+  }
+
+  return <>{renderTaggedTemplate(template)}</>;
+};

@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from "react";
-import { normalizeTimerResponse, type Timer } from "@/api/timers.api";
+import { normalizeTimerResponse } from "@/api/timers.api";
 import type { TimerResponseDto } from "@lootlog/client/main";
+import type { TimerIdentity } from "@lootlog/domain/timers";
 import { useSocket } from "@/contexts/socket-context";
 import { useTimersCache } from "@/hooks/api/use-timers-cache";
 import { useQueryClient, type Query } from "@tanstack/react-query";
@@ -18,7 +19,7 @@ export const useTimersSocket = () => {
     upsertTimer(normalizeTimerResponse(data));
   });
 
-  const handleTimerDelete = useEffectEvent((data: Timer) => {
+  const handleTimerDelete = useEffectEvent((data: TimerIdentity) => {
     removeTimer(data);
   });
 
@@ -53,7 +54,7 @@ export const useTimersSocket = () => {
       handleTimerCreate(data);
     };
 
-    const onTimerDelete = (data: Timer) => {
+    const onTimerDelete = (data: TimerIdentity) => {
       handleTimerDelete(data);
     };
 

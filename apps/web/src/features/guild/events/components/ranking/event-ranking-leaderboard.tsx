@@ -7,10 +7,10 @@ import {
 } from "@/components/common/list-tile";
 import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import type { EventRanking } from "../../types/api";
-import { formatDurationHuman } from "../../utils/format-duration";
 import { formatPoints } from "../../utils/format-points";
 import { getRankingLeaders } from "./event-ranking-selection";
 import { RankingMemberName } from "./ranking-member-name";
+import { formatDuration } from "@/utils/date/format-duration";
 
 type EventRankingLeaderboardProps = {
   rankings: EventRanking[];
@@ -61,7 +61,7 @@ export const EventRankingLeaderboard = ({
       }
       subtitle={[
         t("statistics.count", { count: ranking.totalKills }),
-        formatDurationHuman(ranking.totalTimeSeconds),
+        formatDuration(ranking.totalTimeSeconds, "human"),
         ranking.pointsModified && t("events.ranking.pointsAdjusted"),
       ]
         .filter(Boolean)

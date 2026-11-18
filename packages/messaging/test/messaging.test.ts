@@ -1,5 +1,9 @@
 import { describe, expect, mock, test } from "bun:test";
-import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import {
+  deadLetterRoutingKey,
+  RabbitRoutingKey,
+  retryRoutingKey,
+} from "@lootlog/protocol/rabbit/topology";
 import type { ConsumeMessage, Options } from "amqplib";
 import { Cause, Deferred, Effect, Fiber, Logger, References } from "effect";
 import {
@@ -298,8 +302,12 @@ describe("RabbitMessaging", () => {
             failurePolicy: {
               strategy: "retry",
               maxRetries: 1,
-              retryRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_RETRY,
-              deadLetterRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+              retryRoutingKey: retryRoutingKey(
+                RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+              ),
+              deadLetterRoutingKey: deadLetterRoutingKey(
+                RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+              ),
             },
           },
           () => Effect.fail(new Error("update does not match its source")),
@@ -354,8 +362,12 @@ describe("RabbitMessaging", () => {
             failurePolicy: {
               strategy: "retry",
               maxRetries: 3,
-              retryRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_RETRY,
-              deadLetterRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+              retryRoutingKey: retryRoutingKey(
+                RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+              ),
+              deadLetterRoutingKey: deadLetterRoutingKey(
+                RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+              ),
             },
           },
           () => new UnprocessableDelivery({ cause: "invalid payload" }),
@@ -583,8 +595,12 @@ test("a rejected retry publication requeues the original delivery without acknow
           failurePolicy: {
             strategy: "retry",
             maxRetries: 1,
-            retryRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_RETRY,
-            deadLetterRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+            retryRoutingKey: retryRoutingKey(
+              RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+            ),
+            deadLetterRoutingKey: deadLetterRoutingKey(
+              RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+            ),
           },
         },
         () => Effect.fail("handler failed"),

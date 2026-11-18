@@ -1,7 +1,6 @@
+import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
 import ogImage from "~/assets/og-image.png?no-inline";
 import { portalText } from "~/lib/translations";
-
-export const PORTAL_ORIGIN = "https://developer.lootlog.pl";
 
 /**
  * Head tags shared by every page: one title and description for search
@@ -21,12 +20,12 @@ export function pageHead({
   noindex?: boolean;
   type?: "website" | "article";
 }) {
-  const url = `${PORTAL_ORIGIN}${path}`;
+  const url = `${PUBLIC_SITE_ORIGINS.developer}${path}`;
 
   const fullTitle =
     title === portalText.title ? title : `${title} | ${portalText.title}`;
 
-  const image = `${PORTAL_ORIGIN}${ogImage}`;
+  const image = `${PUBLIC_SITE_ORIGINS.developer}${ogImage}`;
 
   return {
     meta: [

@@ -1,3 +1,4 @@
+import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { slidingWindowRateLimitScript } from "@lootlog/database/sliding-window-rate-limit";
 import type { PartyGatheringNpc } from "@lootlog/schema/party-ready-room";
@@ -396,9 +397,10 @@ export const makeMessagingDataLayer = (
 
               return { notificationId, guildIds };
             }).pipe(
-              Effect.withSpan("MessagingControllerSendNotification", {
-                attributes: { adapter: "Redis/RabbitMessaging", retryCount: 0 },
-              }),
+              withAdapterSpan(
+                "MessagingControllerSendNotification",
+                "Redis/RabbitMessaging",
+              ),
             ),
           ),
         volunteer: (
@@ -442,9 +444,10 @@ export const makeMessagingDataLayer = (
                 })
                 .pipe(ignorePublicationFailure);
             }).pipe(
-              Effect.withSpan("MessagingControllerVolunteer", {
-                attributes: { adapter: "Redis/RabbitMessaging", retryCount: 0 },
-              }),
+              withAdapterSpan(
+                "MessagingControllerVolunteer",
+                "Redis/RabbitMessaging",
+              ),
             ),
           ),
         going: (
@@ -579,9 +582,10 @@ export const makeMessagingDataLayer = (
 
               return { notificationId, guilds };
             }).pipe(
-              Effect.withSpan("MessagingControllerGoing", {
-                attributes: { adapter: "Redis/RabbitMessaging", retryCount: 0 },
-              }),
+              withAdapterSpan(
+                "MessagingControllerGoing",
+                "Redis/RabbitMessaging",
+              ),
             ),
           ),
       });

@@ -29,12 +29,11 @@ describe("auth Redis storage", () => {
     const runtime = ManagedRuntime.make(
       AuthRedisStorage.layer.pipe(
         Layer.provide(
-          createAuthRedisConnection({
-            host: redis.getHost(),
-            port: redis.getMappedPort(6379),
-            username: "",
-            password: Redacted.make(""),
-          }),
+          createAuthRedisConnection(
+            Redacted.make(
+              `redis://${redis.getHost()}:${redis.getMappedPort(6379)}`,
+            ),
+          ),
         ),
       ),
     );
@@ -56,12 +55,11 @@ describe("auth Redis storage", () => {
       ManagedRuntime.make(
         AuthRedisStorage.layer.pipe(
           Layer.provideMerge(
-            createAuthRedisConnection({
-              host: redis.getHost(),
-              port: redis.getMappedPort(6379),
-              username: "",
-              password: Redacted.make(""),
-            }),
+            createAuthRedisConnection(
+              Redacted.make(
+                `redis://${redis.getHost()}:${redis.getMappedPort(6379)}`,
+              ),
+            ),
           ),
         ),
       );

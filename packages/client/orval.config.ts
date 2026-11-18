@@ -1,5 +1,11 @@
 import { defineConfig } from "orval";
-import { clientServices } from "./scripts/client-services";
+import { API_SERVICE_NAMES } from "@lootlog/schema/api-services";
+import {
+  mutatorsPath,
+  openApiTransformerPath,
+  serviceMutatorName,
+  serviceSpecPath,
+} from "./scripts/generation";
 
 const sharedQueryOverride = {
   shouldExportQueryKey: true,
@@ -9,19 +15,15 @@ const sharedQueryOverride = {
   useSetQueryData: true,
 } as const;
 
-const projects = Object.entries(clientServices).map(
-  ([service, { mutatorName, specPath }]) => {
-    const input = {
-      override: {
-        transformer: "./scripts/openapi-transformer.ts",
-      },
-      target: specPath,
-    };
-
-    return [
+const projects = API_SERVICE_NAMES.map(
+  (service) =>
+    [
       service,
       {
-        input,
+        input: {
+          override: { transformer: openApiTransformerPath },
+          target: serviceSpecPath(service),
+        },
         output: {
           clean: false,
           client: "react-query" as const,
@@ -32,8 +34,8 @@ const projects = Object.entries(clientServices).map(
               includeHttpResponseReturnType: false,
             },
             mutator: {
-              name: mutatorName,
-              path: "./src/mutators.ts",
+              name: serviceMutatorName(service),
+              path: mutatorsPath,
             },
             query: sharedQueryOverride,
             useNamedParameters: true,
@@ -41,8 +43,7 @@ const projects = Object.entries(clientServices).map(
           target: `./src/generated/${service}.ts`,
         },
       },
-    ] as const;
-  },
+    ] as const,
 );
 
 export default defineConfig(Object.fromEntries(projects));

@@ -1,3 +1,4 @@
+import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { clamp, upperFirst } from "es-toolkit";
 import { useEffect, useRef, useState } from "react";
@@ -19,12 +20,12 @@ import { ActivityLegend } from "./activity-legend";
 
 const fullDateFormatter = new Intl.DateTimeFormat("pl-PL", {
   dateStyle: "full",
-  timeZone: "Europe/Warsaw",
+  timeZone: MARGONEM_TIME_ZONE,
 });
 
 const monthFormatter = new Intl.DateTimeFormat("pl-PL", {
   month: "short",
-  timeZone: "Europe/Warsaw",
+  timeZone: MARGONEM_TIME_ZONE,
 });
 
 type ActivityHeatmapProps = {

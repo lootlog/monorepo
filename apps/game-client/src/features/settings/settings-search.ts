@@ -1,3 +1,4 @@
+import { foldText } from "@lootlog/domain/text-fold";
 import type {
   SettingsDomainValue,
   SettingsSubsectionValue,
@@ -24,14 +25,8 @@ export interface SettingsSearchMatchRange {
   end: number;
 }
 
-export const normalizeSearchText = (value: string): string =>
-  value
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/ł/g, "l")
-    .replace(/Ł/g, "L")
-    .toLocaleLowerCase("pl")
-    .trim();
+const normalizeSearchText = (value: string): string =>
+  foldText(value).toLowerCase().trim();
 
 const tokenize = (value: string): string[] =>
   value.split(/[\s,.;:()/\\-]+/u).filter(Boolean);

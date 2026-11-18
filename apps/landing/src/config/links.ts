@@ -1,3 +1,9 @@
+import {
+  COMMUNITY_LINKS,
+  PUBLIC_SITE_ORIGINS,
+  WEB_SIGN_IN_PATH,
+  docsPageUrl,
+} from "@lootlog/domain/public-sites";
 import { blogPosts } from "./blog.ts";
 
 export const landingDocumentPaths = [
@@ -9,15 +15,15 @@ export const landingDocumentPaths = [
 ];
 
 export const links = {
-  wiki: "https://wiki.lootlog.pl",
-  developer: "https://developer.lootlog.pl",
-  docs: "https://docs.lootlog.pl/docs",
-  installationGuide: "https://docs.lootlog.pl/docs/installation",
-  battleGuide: "https://docs.lootlog.pl/docs/battle-panel",
-  organizationGuide: "https://docs.lootlog.pl/docs/clan-features",
-  addonGuide: "https://docs.lootlog.pl/docs/features",
-  github: "https://github.com/lootlog/monorepo",
-  discord: "https://discord.gg/mPcczaeYMu",
+  wiki: PUBLIC_SITE_ORIGINS.wiki,
+  developer: PUBLIC_SITE_ORIGINS.developer,
+  docs: docsPageUrl("index"),
+  installationGuide: docsPageUrl("installation"),
+  battleGuide: docsPageUrl("battle-panel"),
+  organizationGuide: docsPageUrl("clan-features"),
+  addonGuide: docsPageUrl("features"),
+  github: COMMUNITY_LINKS.github,
+  discord: COMMUNITY_LINKS.discord,
   support: "https://buycoffee.to/lootlog",
-  dashboard: "/signin",
+  dashboard: WEB_SIGN_IN_PATH,
 } as const;

@@ -1,11 +1,11 @@
+import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import type { CatalogItemRevisionDtoOutput } from "@lootlog/client/catalog";
 import {
   type ItemDisplayValue,
   mapStatsToDisplaySections,
-  parseItemStats,
 } from "@lootlog/ui/components/item-stat-utils";
 
-export type StatRevision = {
+type StatRevision = {
   key: string;
   /** The stat as the item showed it before the change; none when added. */
   before?: ItemDisplayValue;
@@ -15,10 +15,11 @@ export type StatRevision = {
 
 const displayValues = (stat: string) =>
   new Map(
-    mapStatsToDisplaySections(parseItemStats(stat)).flatMap(({ values }) =>
-      values.flatMap((value) =>
-        value.key === undefined ? [] : [[value.key, value] as const],
-      ),
+    mapStatsToDisplaySections(parseItemStatEntries(stat)).flatMap(
+      ({ values }) =>
+        values.flatMap((value) =>
+          value.key === undefined ? [] : [[value.key, value] as const],
+        ),
     ),
   );
 

@@ -1,8 +1,9 @@
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import type {
   CatalogItemObservation,
   CatalogNpcObservation,
 } from "@lootlog/protocol/rabbit/catalog";
-import { splitItemStat } from "@lootlog/database/item-stat";
+import { splitItemStat } from "@lootlog/domain/item-stat";
 import { Schema } from "effect";
 import {
   compareNpcsStrongestFirst,
@@ -98,12 +99,14 @@ export function newLootPublications(options: {
     mapNpcEvents(options.npcs),
   );
 
-  const rabbit = (
-    routingKey: Extract<
+  const rabbit = <
+    Key extends Extract<
       LootPublication["payload"],
       { kind: "rabbit" }
     >["routingKey"],
-    data: unknown,
+  >(
+    routingKey: Key,
+    data: CanonicalRabbitEvent<Key>,
   ) => {
     intents.push({
       organizationIds,

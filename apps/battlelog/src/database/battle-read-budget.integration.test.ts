@@ -18,11 +18,12 @@ import {
 import {
   unusedBattles,
   unusedBattleAnalytics,
+  unusedBattleMetadata,
   unusedDeleteQueue,
   unusedWeaponKills,
 } from "../../test/battle-fixtures.js";
 import { makeBattlelogOperations } from "../battles/battlelog-operations.js";
-import { makeBattlelogTestBoundary } from "../http/battlelog-http.js";
+import { makeBattlelogTestBoundary } from "../../test/battlelog-test-boundary.js";
 import { makeBattleReadBudget } from "./battle-read-budget.js";
 import { drizzleDatabaseEffect } from "./database.js";
 
@@ -136,8 +137,10 @@ for (const connection of ["postgres", "pgbouncer"] as const) {
 
       const boundary = makeBattlelogTestBoundary(
         makeBattlelogOperations(
+          unusedBattles,
+          unusedBattleAnalytics,
           {
-            ...unusedBattles,
+            ...unusedBattleMetadata,
             getUserCharacters: () =>
               longBudget(
                 database.execute(
@@ -145,7 +148,6 @@ for (const connection of ["postgres", "pgbouncer"] as const) {
                 ),
               ).pipe(Effect.as({ characters: [] })),
           },
-          unusedBattleAnalytics,
           unusedDeleteQueue,
           unusedWeaponKills,
         ),

@@ -1,7 +1,6 @@
 import {
   CAT_THEME_VARIANTS,
   DEFAULT_THEME_ID,
-  THEME_IDS,
   DEFAULT_CAT_THEME_VARIANT,
   THEME_CLASS_IDS,
   type CatThemeVariant,
@@ -9,7 +8,10 @@ import {
   type ThemeFamily,
   type ThemeId,
 } from "./catalog";
-import type { CustomThemeDefinition } from "@lootlog/schema/custom-theme";
+import {
+  BUILT_IN_THEME_IDS,
+  type CustomThemeDefinition,
+} from "@lootlog/schema/custom-theme";
 import {
   applyThemeToRoot,
   createDefinitionFromBase,
@@ -33,9 +35,8 @@ export const isRukiaTheme = (
   theme: ThemeId | ResolvedThemeId | null | undefined,
 ) => theme === "rukia";
 
-export const isRiasTheme = (
-  theme: ThemeId | ResolvedThemeId | null | undefined,
-) => theme === "rias";
+const isRiasTheme = (theme: ThemeId | ResolvedThemeId | null | undefined) =>
+  theme === "rias";
 
 export const getThemeFamily = (
   theme: ThemeId | ResolvedThemeId | null | undefined,
@@ -98,24 +99,11 @@ export const applyThemeClassToRoot = ({
   root.style.colorScheme = "dark";
 };
 
-export const getThemeGreetingSuffix = (
-  theme: ThemeId | ResolvedThemeId,
-): string => {
-  if (isCatTheme(theme)) return "🐱";
-
-  if (isRukiaTheme(theme)) return "❄️";
-
-  if (isRiasTheme(theme)) return "♔";
-
-  return "👋";
-};
-
 export const isThemeId = (value: string): value is ThemeId =>
-  THEME_IDS.some((theme) => theme === value);
+  BUILT_IN_THEME_IDS.some((theme) => theme === value);
 
-export const resolveStoredTheme = (
-  value: string | null | undefined,
-): ThemeId => (value && isThemeId(value) ? value : DEFAULT_THEME_ID);
+const resolveStoredTheme = (value: string | null | undefined): ThemeId =>
+  value && isThemeId(value) ? value : DEFAULT_THEME_ID;
 
 /** What the User picked: a built-in theme or one of their own. */
 export type ThemeSelection = ThemeId | CustomThemeSelection;

@@ -5,7 +5,7 @@ import type {
   LootSplitChoice,
   LootSplitEvent,
 } from "@lootlog/schema/loot-split";
-import { getItemStat } from "@/utils/game/get-item-stat";
+import { itemStatValue } from "@lootlog/domain/item-stat";
 
 /**
  * Group loot splits the hero takes part in, and every participant's choices
@@ -143,7 +143,7 @@ const RARITY_BY_STAT = new Map<string, ItemRarityEnum>([
 ]);
 
 const parseRarity = (stat: string) =>
-  RARITY_BY_STAT.get(getItemStat(stat, "rarity") ?? "") ?? null;
+  RARITY_BY_STAT.get(itemStatValue(stat, "rarity") ?? "") ?? null;
 
 /**
  * Whether a split drops an item of one of `rarities`; an empty list matches

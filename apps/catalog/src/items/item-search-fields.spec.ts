@@ -27,6 +27,16 @@ describe("createItemSearchFields", () => {
     });
   });
 
+  it("indexes a value up to a second `=`, keeps the last repeat and skips flags", () => {
+    const fields = createItemSearchFields(
+      "opis=a=b;lvl=5;lvl=6;bound;empty=;=x",
+    );
+
+    expect(fields.stats).toEqual({ opis: "a", lvl: 6, empty: "" });
+    expect(fields.statsKeys).toEqual(["opis", "lvl", "lvl", "empty"]);
+    expect(fields.numericStats).toEqual({ lvl: 6 });
+  });
+
   it("uses reqp as the required profession list", () => {
     expect(createItemSearchFields("reqp=wm;lvl=20")).toEqual({
       stats: {

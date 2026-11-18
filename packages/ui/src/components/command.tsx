@@ -222,5 +222,4 @@ export {
   CommandItem,
   CommandShortcut,
   CommandSeparator,
-  CommandInputRaw,
 };

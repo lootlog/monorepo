@@ -8,7 +8,7 @@ import { timerTable } from "#src/database/drizzle/timer.schema";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { respawnFromSpawnWindow } from "@lootlog/domain/timers";
 import { newManualTimerNpcId } from "#src/shared/margonem/npc-identity";
-import { TIMER_TYPES } from "./timer-limits.js";
+import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import { buildTimerKey } from "./timer-key.js";
 import type { CreateManualTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersGuildAccess } from "./timers-data.js";

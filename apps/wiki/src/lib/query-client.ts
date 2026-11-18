@@ -1,4 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
+import { shouldRetryQuery } from "@lootlog/client/transport";
 
 const isDev = import.meta.env.MODE === "development";
 
@@ -19,7 +20,7 @@ export function createQueryClient() {
         // The browser keeps what the server sent at least until it hydrates;
         // development refetches it through `staleTime` instead.
         gcTime: isServer ? Number.POSITIVE_INFINITY : 1000 * 60 * 60 * 24,
-        retry: isServer ? 0 : 2,
+        retry: isServer ? 0 : shouldRetryQuery,
         refetchOnWindowFocus: false,
         refetchOnReconnect: true,
         refetchOnMount: true,

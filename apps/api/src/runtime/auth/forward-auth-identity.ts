@@ -1,11 +1,5 @@
 import { Context, Effect, Option } from "effect";
-import type { ApiKeyAccess } from "@lootlog/schema/api-key-access";
-
-export interface ForwardAuthIdentityValue {
-  readonly userId: string;
-  readonly discordId: string;
-  readonly apiKey?: ApiKeyAccess;
-}
+import type { ForwardAuthIdentityValue } from "@lootlog/schema/api-key-policy";
 
 /** Request-scoped identity asserted by the first-party auth proxy. */
 export class ForwardAuthIdentity extends Context.Service<

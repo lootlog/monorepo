@@ -21,6 +21,8 @@
       "project": [
         "src/**/*.{ts,tsx}",
         "test/**/*.{ts,tsx}",
+        "lib/**/*.{ts,tsx}",
+        "components/**/*.{ts,tsx}",
         "scripts/**/*.{ts,mjs}",
         "*.{ts,mts,js,mjs}",
         "*.config.{ts,mts,js,mjs}",
@@ -56,7 +58,17 @@
       ],
       "includeEntryExports": true
     },
-    "packages/ui": {},
+    "packages/ui": {
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "*.{ts,mts,js,mjs}",
+        "**/*.{spec,test}.{ts,tsx,js}"
+      ],
+      "includeEntryExports": true,
+      "ignore": [
+        "src/components/{accordion,alert-dialog,alert,avatar,badge,breadcrumb,button,calendar,card,chart,checkbox,collapsible,combobox,command,context-menu,dialog,drawer,dropdown-menu,empty,field,form,input-group,input,kbd,label,popover,progress,radio-group,scroll-area,select,separator,sheet,sidebar,skeleton,slider,sonner,spinner,switch,table,tabs,textarea,toggle-group,tooltip}.tsx"
+      ]
+    },
     "packages/game-client-api": {},
     "packages/client": {
       "entry": ["src/generated/**/*.{ts,tsx}", "scripts/**/*.{ts,mjs}"],

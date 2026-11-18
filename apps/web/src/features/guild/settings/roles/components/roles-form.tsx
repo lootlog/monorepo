@@ -1,9 +1,5 @@
 import { BandSection } from "@/components/common/band-section";
-import {
-  LIST_TILE_INSET_CLASS,
-  LIST_TILE_RULE_CLASS,
-  LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+import { CheckboxListTile } from "@/components/common/checkbox-list-tile";
 import { useForm, useWatch } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 
@@ -16,13 +12,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@lootlog/ui/components/form";
-import { Checkbox } from "@lootlog/ui/components/checkbox";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 
 import { toast } from "@lootlog/ui/lib/toast";
-import { cn } from "cn";
 
 import { PERMISSION_CATEGORIES } from "../constants/permission-categories";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
@@ -195,22 +189,10 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                   control={form.control}
                   name={`permissions.${permission}`}
                   render={({ field }) => (
-                    <FormItem
-                      data-list-tile
-                      className={cn(
-                        "relative flex flex-row items-center gap-3 py-3",
-                        LIST_TILE_HOVER_CLASS,
-                        LIST_TILE_RULE_CLASS,
-                        LIST_TILE_INSET_CLASS,
-                        field.value && "bg-primary/5",
-                      )}
+                    <CheckboxListTile
+                      checked={!!field.value}
+                      onCheckedChange={field.onChange}
                     >
-                      <FormControl
-                        render=<Checkbox
-                          checked={!!field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      />
                       <div className="flex min-w-0 flex-1 flex-col gap-1">
                         {/* The label covers the tile, so the whole tile toggles. */}
                         <FormLabel className="cursor-pointer text-sm font-medium after:absolute after:inset-0">
@@ -221,7 +203,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                         </FormDescription>
                         <FormMessage />
                       </div>
-                    </FormItem>
+                    </CheckboxListTile>
                   )}
                 />
               ))}

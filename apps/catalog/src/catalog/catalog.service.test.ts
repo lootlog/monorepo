@@ -3,8 +3,6 @@ import { Effect } from "effect";
 import { Meilisearch } from "meilisearch";
 import { makeCatalogModule } from "./catalog.service.js";
 
-const logger = { info() {}, warn() {}, error() {} };
-
 type CatalogReads = Parameters<typeof makeCatalogModule>[1];
 
 /** Database reads for tests that make none. */
@@ -58,7 +56,7 @@ const catalogWith = (
   });
 
   return {
-    catalog: makeCatalogModule(client, reads, logger),
+    catalog: makeCatalogModule(client, reads),
     searches,
     npcSearches,
   };
@@ -404,7 +402,7 @@ test("a world's search keeps items of no event and of the editions it saw, inclu
   });
 
   await Effect.runPromise(
-    makeCatalogModule(client, noReads, logger).getItems({
+    makeCatalogModule(client, noReads).getItems({
       gameVersion: "pl",
       availableSince: "2026-06-29",
     }),
@@ -515,7 +513,7 @@ test("events take their name from the year the slug names, the latest first", as
   });
 
   const { events } = await Effect.runPromise(
-    makeCatalogModule(client, noReads, logger).getEvents({ gameVersion: "pl" }),
+    makeCatalogModule(client, noReads).getEvents({ gameVersion: "pl" }),
   );
 
   expect(events).toEqual([

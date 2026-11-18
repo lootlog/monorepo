@@ -7,7 +7,7 @@ import {
   selectAccessibleGuilds,
 } from "#src/members/member-access-query";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { TIMER_TYPES } from "./timer-limits.js";
+import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {

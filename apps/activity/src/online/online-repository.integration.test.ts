@@ -609,9 +609,9 @@ describe("durable private online history", () => {
       }).pipe(Effect.scoped),
     );
     expect(published).toEqual([
-      RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
-      RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
-      RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
+      "users.online.checkpoint.v1.dlq",
+      "users.online.checkpoint.v1.dlq",
+      "users.online.checkpoint.v1.dlq",
     ]);
     expect(rejectedEvents).toEqual([
       payload,
@@ -1011,6 +1011,7 @@ describe("durable private online history", () => {
       const headers = {
         authorization: "Bearer forwarded",
         "x-auth-user-id": "union",
+        "x-auth-discord-id": "union-discord",
       };
 
       const response = await boundary.handler(

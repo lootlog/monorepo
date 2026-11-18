@@ -1,22 +1,15 @@
 import { BandSection } from "@/components/common/band-section";
-import {
-  LIST_TILE_INSET_CLASS,
-  LIST_TILE_RULE_CLASS,
-  LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+import { CheckboxListTile } from "@/components/common/checkbox-list-tile";
 import { useForm, useWatch } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Schema } from "effect";
 
 import {
   Form,
-  FormControl,
   FormField,
-  FormItem,
   FormLabel,
   FormMessage,
 } from "@lootlog/ui/components/form";
-import { Checkbox } from "@lootlog/ui/components/checkbox";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { NPC_RARITY_CONFIG } from "@/features/guild/settings/npcs/npc-rarity-config";
@@ -118,22 +111,10 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
               control={form.control}
               name={rarity.key}
               render={({ field }) => (
-                <FormItem
-                  data-list-tile
-                  className={cn(
-                    "relative flex flex-row items-center gap-3 py-3",
-                    LIST_TILE_HOVER_CLASS,
-                    LIST_TILE_RULE_CLASS,
-                    LIST_TILE_INSET_CLASS,
-                    field.value && "bg-primary/5",
-                  )}
+                <CheckboxListTile
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
                 >
-                  <FormControl
-                    render=<Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  />
                   <span
                     className={cn(
                       "inline-flex size-7 shrink-0 items-center justify-center rounded-md",
@@ -155,7 +136,7 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
                     {t(`itemRarity.${rarity.key}`)}
                   </FormLabel>
                   <FormMessage />
-                </FormItem>
+                </CheckboxListTile>
               )}
             />
           ))}

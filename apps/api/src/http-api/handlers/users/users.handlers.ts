@@ -70,17 +70,17 @@ export const updateCurrentUserPreferences = Effect.fn(
   return yield* decode(UserPreferencesResponse, value);
 });
 
-export const getCurrentUserGuilds = Effect.fn("getCurrentUserGuilds")(
-  function* (refresh: boolean) {
-    const current = yield* identity;
+const getCurrentUserGuilds = Effect.fn("getCurrentUserGuilds")(function* (
+  refresh: boolean,
+) {
+  const current = yield* identity;
 
-    const value = yield* data((service) =>
-      service.getCurrentUserGuilds(current, refresh),
-    );
+  const value = yield* data((service) =>
+    service.getCurrentUserGuilds(current, refresh),
+  );
 
-    return yield* decode(CurrentOrganizationsResponse, value);
-  },
-);
+  return yield* decode(CurrentOrganizationsResponse, value);
+});
 
 export const getCurrentUserAccessibleGuilds = Effect.fn(
   "getCurrentUserAccessibleGuilds",
@@ -94,7 +94,7 @@ export const getCurrentUserAccessibleGuilds = Effect.fn(
   return yield* decode(CurrentOrganizationsResponse, value);
 });
 
-export const deleteCurrentAccountHttpResponse = () =>
+const deleteCurrentAccountHttpResponse = () =>
   toAccountOrganizationHttpResponse(deleteCurrentAccount());
 
 export const getUserFeed = Effect.fn("users.feed")(function* (

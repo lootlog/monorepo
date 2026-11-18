@@ -5,7 +5,7 @@ import {
   type NotificationJobScheduler,
 } from "./notification-job-scheduler.js";
 import type { NotificationRecurrenceContent } from "./notification-job-recurrence.js";
-import { NotificationJobKind } from "#src/notifications/notification-enums";
+import { NotificationJobKind } from "@lootlog/schema/notifications";
 
 export const scheduleNotificationOccurrence = (
   rule: NotificationRuleWithTargets,

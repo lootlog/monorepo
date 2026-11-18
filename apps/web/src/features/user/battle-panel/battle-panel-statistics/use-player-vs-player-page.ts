@@ -1,9 +1,9 @@
+import type { Period } from "@lootlog/schema/http-scalars";
 import {
   battlePanelPlayerVsPlayerSearchParsers,
   getBattlePanelPageIndex,
   normalizeBattlePanelCharacterId,
   resetBattlePanelCursorPagination,
-  type Period,
 } from "@/features/user/battle-panel/battle-panel-search";
 import {
   buildPlayerVsPlayerFilterLabels,

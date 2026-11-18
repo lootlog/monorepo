@@ -11,7 +11,7 @@ import type { KillQueryCache } from "#src/kills/kill-query-support";
 import { makeKillStatsPersistence } from "#src/kills/kill-stats.repository";
 import { makeMemberKillQuery } from "#src/kills/member-kill-query";
 import { makeUserKillQueries } from "#src/kills/user-kill-queries";
-import { ExecutionError, RedlockService } from "#src/redis/redlock";
+import { RedlockService } from "#src/redis/redlock";
 import { makeLootAllocationPersistence } from "#src/loots/allocation/loot-allocation.repository";
 import { makeLootAllocationOperations } from "#src/loots/allocation/loot-allocation.operations";
 import { makeLootPersistence } from "#src/loots/loot.repository";
@@ -31,7 +31,7 @@ import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository
 import { LootStatsService } from "#src/loots/query/loot-stats.service";
 import { applicationLogger } from "#src/shared/application-logger";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer } from "effect";
 import { recordsDataLayer } from "#src/http-api/access/records.data-layer";
@@ -55,7 +55,7 @@ export const recordsServicesLive = Layer.effect(
     const rabbit = yield* RabbitMessaging;
     const database = yield* ApiDatabase;
     const lootStats = new LootStatsService(database, redis);
-    const redlock = new RedlockService(redis).createInstance();
+    const locks = new RedlockService(redis).createInstance();
 
     const lootQuery = makeLootQueryOperations(
       makeLootQueryPersistence(database),
@@ -68,10 +68,7 @@ export const recordsServicesLive = Layer.effect(
         Effect.forEach(
           organizationIds,
           (guildId) =>
-            Effect.tryPromise({
-              try: () => redis.invalidateScopes(getLootListCacheScope(guildId)),
-              catch: (error) => error,
-            }),
+            redis.effect.invalidateScopes(getLootListCacheScope(guildId)),
           { concurrency: "unbounded", discard: true },
         ),
       makeLootSnapshotReader(lootQuery),
@@ -86,28 +83,22 @@ export const recordsServicesLive = Layer.effect(
       makeLootSubmissionAcceptancePersistence(database),
       {
         withLock: (resource, ttlMilliseconds, options, effect) =>
-          Effect.acquireUseRelease(
-            Effect.tryPromise({
-              try: () => redlock.acquire([resource], ttlMilliseconds, options),
-              catch: (cause) => {
-                if (cause instanceof ExecutionError) {
-                  applicationLogger.log({
-                    level: "error",
-                    message: "Lock acquisition failed for createLoot",
-                    resource,
-                  });
+          locks.withLock(
+            resource,
+            ttlMilliseconds,
+            effect,
+            () => {
+              applicationLogger.log({
+                level: "error",
+                message: "Lock acquisition failed for createLoot",
+                resource,
+              });
 
-                  return new DependencyUnavailableError(
-                    "Failed to acquire loot lock",
-                  );
-                }
-
-                return cause;
-              },
-            }),
-            () => effect,
-            (heldLock) =>
-              Effect.tryPromise(() => heldLock.release()).pipe(Effect.ignore),
+              return new DependencyUnavailableError(
+                "Failed to acquire loot lock",
+              );
+            },
+            options,
           ),
       },
       lootPublications.signal,
@@ -124,7 +115,7 @@ export const recordsServicesLive = Layer.effect(
 
     const killQueryCache: KillQueryCache = {
       getOrSet: (key, schema, factory, ttlSeconds, scopes) =>
-        redis.getOrSetJsonEffect({
+        redis.effect.getOrSetJson({
           key,
           scopes,
           codec: makeJsonCodec(schema),
@@ -144,38 +135,20 @@ export const recordsServicesLive = Layer.effect(
         createKill: makeKillCreation(
           database,
           {
-            invalidateScopes: (...scopes) =>
-              Effect.tryPromise({
-                try: () => redis.invalidateScopes(...scopes),
-                catch: (error) => error,
-              }),
-            deleteIfValue: (key, value) =>
-              Effect.tryPromise({
-                try: () => redis.deleteIfValue(key, value),
-                catch: (error) => error,
-              }),
-            setNx: (key, value, ttlSeconds) =>
-              Effect.tryPromise({
-                try: () => redis.setNX(key, value, ttlSeconds),
-                catch: (error) => error,
-              }),
-            setNxGet: (key, value, ttlSeconds) =>
-              Effect.tryPromise({
-                try: () => redis.setNxGet(key, value, ttlSeconds),
-                catch: (error) => error,
-              }),
+            invalidateScopes: redis.effect.invalidateScopes,
+            deleteIfValue: redis.effect.deleteIfValue,
+            setNx: redis.effect.setNX,
+            setNxGet: redis.effect.setNxGet,
           },
           applicationLogger,
           makeGuildKillActivityPublisher(database, rabbit),
           (recipientUserId) =>
             rabbit
-              .publish({
-                exchange: "default",
-                routingKey: RabbitRoutingKey.USERS_KILL_STATS_CHANGED,
-                content: new TextEncoder().encode(
-                  JSON.stringify({ recipientUserId }),
-                ),
-              })
+              .publish(
+                eventMessage(RabbitRoutingKey.USERS_KILL_STATS_CHANGED, {
+                  recipientUserId,
+                }),
+              )
               .pipe(
                 Effect.asVoid,
                 Effect.catch(() =>
@@ -215,22 +188,12 @@ export const recordsServicesLive = Layer.effect(
         lootSubmissionAcceptance: acceptance,
         lootAllocation: makeLootAllocationOperations({
           persistence: makeLootAllocationPersistence(database),
-          cache: {
-            invalidateScopes: (...scopes) =>
-              Effect.tryPromise({
-                try: () => redis.invalidateScopes(...scopes),
-                catch: (error) => error,
-              }),
-          },
+          cache: redis.effect,
           publisher: {
-            publish: (exchange, routingKey, event) =>
-              rabbit
-                .publish({
-                  exchange: exchange,
-                  routingKey: routingKey,
-                  content: new TextEncoder().encode(JSON.stringify(event)),
-                })
-                .pipe(Effect.asVoid),
+            publish: (event) =>
+              rabbit.publish(
+                eventMessage(RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE, event),
+              ),
           },
           logger: applicationLogger,
         }),

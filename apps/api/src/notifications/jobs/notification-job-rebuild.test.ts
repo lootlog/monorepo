@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { asc, eq } from "drizzle-orm";
-import { Effect } from "effect";
+import { Effect, Option } from "effect";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   createNotificationJobFixture,
@@ -596,8 +596,13 @@ describe("notification job rebuild", () => {
         closeKilledNpcGatherings: () => Effect.void,
         get: () => Effect.succeed(null),
         set: () => Effect.void,
-        setNx: () => Effect.succeed(true),
-        releaseDedup: () => Effect.void,
+        locks: {
+          singleFlight: (_options, read, fill) =>
+            Effect.flatMap(
+              read,
+              Option.match({ onSome: Effect.succeed, onNone: () => fill }),
+            ),
+        },
         invalidateList: () => Effect.void,
         publishHeroSighting: () => Effect.void,
         signalEventHeroChecks: Effect.void,

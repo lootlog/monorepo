@@ -5,10 +5,14 @@ import {
   eventTimersLive,
 } from "#src/runtime/features/events";
 import {
-  reservationReadData,
+  reservationData,
   reservationSharingData,
-  reservationMutationsData,
 } from "#src/runtime/features/reservations";
+import { EventHeroKillQueue } from "#src/runtime/queues/event-hero-kill";
+import { MemberBulkRefreshQueue } from "#src/runtime/queues/member-bulk-refresh";
+import { MemberRefreshQueue } from "#src/runtime/queues/member-refresh";
+import { NotificationDispatchQueue } from "#src/runtime/queues/notification-dispatch";
+import { RespawnWindowQueue } from "#src/runtime/queues/respawn-window";
 import {
   guildConfigurationData,
   internalGuildsData,
@@ -74,19 +78,27 @@ const coreDataLayers = Layer.mergeAll(
   rolesData,
   guildConfigurationData,
   reservationSharingData,
-  reservationReadData,
+  reservationData,
   memberReadData,
   MemberRefreshJobDataLive,
   membersData,
   organizationContextLookup,
   MyReservationsData.layerDatabase,
-  reservationMutationsData,
   accountOrganizationData,
   timersData.pipe(Layer.provide(readyRoomData)),
   heroSightingsData,
   recordsData,
   eventsData,
   notificationsData,
+);
+
+/** Each BullMQ queue's producer, opened once per process. */
+const apiQueues = Layer.mergeAll(
+  EventHeroKillQueue.layer,
+  MemberBulkRefreshQueue.layer,
+  MemberRefreshQueue.layer,
+  NotificationDispatchQueue.layer,
+  RespawnWindowQueue.layer,
 );
 
 export const apiRequestDataLayers = coreDataLayers.pipe(
@@ -97,7 +109,7 @@ export const apiRequestDataLayers = coreDataLayers.pipe(
   Layer.provide(recordsServicesLive),
   Layer.provide(eventTimersLive),
   Layer.provide(memberServicesLive),
-  Layer.provide(ApiDatabaseLive),
+  Layer.provide(Layer.merge(ApiDatabaseLive, apiQueues)),
 );
 
 export const apiDataLayers = Layer.mergeAll(
@@ -114,5 +126,5 @@ export const apiDataLayers = Layer.mergeAll(
   Layer.provide(recordsServicesLive),
   Layer.provide(eventTimersLive),
   Layer.provide(memberServicesLive),
-  Layer.provide(ApiDatabaseLive),
+  Layer.provide(Layer.merge(ApiDatabaseLive, apiQueues)),
 );

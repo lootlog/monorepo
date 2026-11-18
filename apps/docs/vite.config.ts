@@ -32,7 +32,6 @@ export default defineConfig({
         },
       },
       pages: [
-        { path: "/" },
         { path: "/api/search" },
         { path: "/llms.txt" },
         { path: "/llms-full.txt" },

@@ -1,6 +1,9 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import {
+  OperationError,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   MemberKillsResponse,
@@ -24,11 +27,6 @@ import {
 } from "./kill-stats-period.js";
 import { decodeNpcKillPageCursor, toNpcKillPage } from "./npc-kill-page.js";
 import { DEFAULT_PAGE_SIZE } from "#src/shared/keyset-page";
-
-class MemberKillQueryError extends TaggedErrorClass<MemberKillQueryError>()(
-  "MemberKillQueryError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
 
 export const makeMemberKillQuery =
   (
@@ -108,16 +106,14 @@ export const makeMemberKillQuery =
           }).pipe(
             Effect.mapError(
               (cause) =>
-                new MemberKillQueryError({
+                new OperationError({
                   operation: "kills.member-query",
                   cause,
                 }),
             ),
           ),
         ),
-        Effect.withSpan("kills.member-query", {
-          attributes: { adapter: "kills", retryCount: 0 },
-        }),
+        withAdapterSpan("kills.member-query", "kills"),
       );
     });
 

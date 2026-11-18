@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { filterGuildsByVisibility, orderGuilds } from "./guild-preferences.js";
+import {
+  filterGuildsByVisibility,
+  orderGuilds,
+  showAllGuilds,
+} from "./guild-preferences.js";
 
 const alpha = { id: "guild-1", name: "Alpha" };
 
@@ -25,5 +29,14 @@ describe("server visibility", () => {
       filterGuildsByVisibility(orderedGuilds, ["guild-2"], "hidden", " BETA "),
     ).toEqual([beta]);
     expect(orderedGuilds).toHaveLength(3);
+  });
+
+  it("shows every accessible guild but keeps hiding guilds the user lost", () => {
+    expect(
+      showAllGuilds(
+        ["guild-1", "former-guild", "guild-3"],
+        new Set(guilds.map((guild) => guild.id)),
+      ),
+    ).toEqual(["former-guild"]);
   });
 });

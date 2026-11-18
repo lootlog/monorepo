@@ -1,7 +1,7 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { adapterOperation } from "@lootlog/instrumentation/operation";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { DateTime, Effect, Schema } from "effect";
+import { DateTime, Effect } from "effect";
 import { sum } from "es-toolkit";
 import type { Period } from "@lootlog/schema/http-scalars";
 import {
@@ -36,24 +36,11 @@ import {
   resolveKillStatsPeriod,
 } from "./kill-stats-period.js";
 
-class GuildKillQueriesError extends TaggedErrorClass<GuildKillQueriesError>()(
-  "GuildKillQueriesError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
-
 export const makeGuildKillQueries = (
   persistence: KillStatsPersistence,
   cache: StaleKillQueryCache,
 ) => {
-  const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
-    effect.pipe(
-      Effect.mapError(
-        (cause) => new GuildKillQueriesError({ operation, cause }),
-      ),
-      Effect.withSpan(operation, {
-        attributes: { adapter: "kills", retryCount: 0 },
-      }),
-    );
+  const protect = adapterOperation("kills");
 
   const context = (
     accessPolicy: AccessPolicy,

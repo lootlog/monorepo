@@ -24,13 +24,6 @@ import {
 } from "./settings-documents.repository.js";
 import { resolveSettingsDomain } from "./settings-resolver.js";
 
-/**
- * The timestamp the compatibility routes report for settings that were never
- * stored. A fixed value keeps repeated reads of defaults identical instead of
- * reporting a fresh write on every request.
- */
-export const NEVER_STORED_AT = new Date(0);
-
 interface SettingsContext {
   domains: SettingsDomain[];
   gameAccountId?: string;
@@ -52,9 +45,7 @@ export interface GuildSettingsDocumentsResponse {
   guilds: Record<string, SettingsDocumentsResponse>;
 }
 
-export type SettingsDocumentsFailure =
-  | SettingsRequestError
-  | SettingsPersistenceError;
+type SettingsDocumentsFailure = SettingsRequestError | SettingsPersistenceError;
 
 export interface SettingsDocuments {
   readonly getPreferences: (

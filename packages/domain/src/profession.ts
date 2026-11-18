@@ -1,5 +1,10 @@
 import type { ProfessionEnum } from "@lootlog/schema/loot";
 
+/** Margonem's profession letters, in the order Lootlog lists professions. */
+export const PROFESSION_SHORTNAMES = ["w", "p", "h", "m", "b", "t"] as const;
+
+export type ProfessionShortname = (typeof PROFESSION_SHORTNAMES)[number];
+
 const PROFESSION_BY_SHORTNAME = new Map<string, ProfessionEnum>([
   ["b", "BLADE_DANCER"],
   ["h", "HUNTER"],
@@ -7,7 +12,7 @@ const PROFESSION_BY_SHORTNAME = new Map<string, ProfessionEnum>([
   ["p", "PALADIN"],
   ["t", "TRACKER"],
   ["w", "WARRIOR"],
-]);
+] satisfies [ProfessionShortname, ProfessionEnum][]);
 
 const SHORTNAME_BY_PROFESSION = new Map<string, string>(
   Array.from(PROFESSION_BY_SHORTNAME, ([shortname, profession]) => [
