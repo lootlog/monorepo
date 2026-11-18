@@ -1,6 +1,7 @@
 /**
- * How a timer tile is painted: `accent` is the opaque stripe on its left edge
- * and the swatch colour in pickers, `fill` is the translucent row background.
+ * How a timer tile is painted: `accent` is the swatch colour in pickers, the
+ * standing pulse and the legacy tile border, `fill` is the translucent row
+ * background.
  * Custom and overridden colours use the same pair under the names
  * `borderColor` and `backgroundColor`.
  */
@@ -35,7 +36,7 @@ export const TIMERS_COLORS = {
   violet: paint("#a98efe"),
   purple: paint("#9452d9"),
   pink: paint("#f057a1"),
-  // "Bez koloru": a faint stripe keeps columns readable, no fill.
+  // "Bez koloru": no fill, a faint accent for the swatch and standing pulse.
   white: { accent: "#9ca3af66", fill: "#9ca3af00" },
 } satisfies Record<string, TimerColorPaint>;
 

@@ -1,7 +1,7 @@
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import { SharedContextMenu } from "@/components/common/shared-context-menu";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
-import { useState, type CSSProperties, type ReactNode, type Ref } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { TimerTooltipContext } from "./timer-tooltip-context";
 import { TimerSharedTooltip } from "./timer-shared-tooltip";
@@ -9,7 +9,6 @@ import { TimerSharedTooltip } from "./timer-shared-tooltip";
 type TimerGridPopupsProps = {
   children: ReactNode;
   className?: string;
-  gridRef: Ref<HTMLSpanElement>;
   guildNamesById: Record<string, string>;
   style?: CSSProperties;
   timersByKey: ReadonlyMap<string, TimerWithTimeLeft>;
@@ -23,7 +22,6 @@ type TimerGridPopupsProps = {
 export const TimerGridPopups = ({
   children,
   className,
-  gridRef,
   guildNamesById,
   style,
   timersByKey,
@@ -33,7 +31,7 @@ export const TimerGridPopups = ({
   return (
     <TimerTooltipContext.Provider value={tooltipHandle}>
       <SharedContextMenu>
-        <span ref={gridRef} className={className} style={style}>
+        <span className={className} style={style}>
           {children}
         </span>
       </SharedContextMenu>
