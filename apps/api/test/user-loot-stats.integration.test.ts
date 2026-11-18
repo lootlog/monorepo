@@ -111,7 +111,13 @@ const loot = async (options: {
     INSERT INTO "LootItem" ("lootId","itemSnapshotId",hid) SELECT $1,id,$2 FROM item`,
     [lootId, hid],
   );
-  await client.query(refreshOrganizationLootRecordFactsSql);
+  // Only this loot's records: the database is shared with suites that leave
+  // tens of thousands of records behind, and rewriting them all for every
+  // seeded loot took the suite past its timeout in CI.
+  await client.query(
+    `${refreshOrganizationLootRecordFactsSql} WHERE "lootId" = $1`,
+    [lootId],
+  );
   await client.query(
     `WITH player AS (INSERT INTO "PlayerSnapshot" (world,"accountId","characterId","snapshotHash",name) VALUES ($2,1,$3,$4,$5) RETURNING id)
     INSERT INTO "LootPlayer" ("lootId","playerSnapshotId") SELECT $1,id FROM player`,
