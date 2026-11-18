@@ -71,6 +71,7 @@ type DeadNpc = {
 
 const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
   let hasNpcInBattle = false;
+  let hasLivingNpc = false;
   let topNpc: DeadNpc | null = null;
 
   for (const [key, warrior] of Object.entries(warriors)) {
@@ -81,6 +82,7 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
     hasNpcInBattle = true;
 
     if (!isWarriorDead(warrior)) {
+      hasLivingNpc = true;
       continue;
     }
 
@@ -102,6 +104,7 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
   }
 
   return {
+    hasLivingNpc,
     hasNpcInBattle,
     topNpc,
   };
@@ -157,6 +160,33 @@ const getBattleEnding = (
   return battleData.close !== undefined && !startsBattle ? "left" : null;
 };
 
+/**
+ * How the player's part in a battle stopped: Margonem ended it, the player
+ * left it, or the next battle began before either was seen.
+ */
+type BattleConclusion = "ended" | "left" | "interrupted";
+
+/**
+ * Margonem sends a battle from its start again, for one after a tab was
+ * inactive. That packet repeats the rows captured so far, or the NPCs of a
+ * battle whose rows are not captured; the start of another battle does not.
+ */
+const restartsCapturedBattle = (
+  battleData: BattleData,
+  capturedTurns: readonly string[],
+  warriors: BattleWarriorsWithAccountId,
+): boolean => {
+  if (capturedTurns.length > 0) {
+    const turns = battleData.m ?? [];
+
+    return capturedTurns.every((turn, index) => turns[index] === turn);
+  }
+
+  return Object.keys(warriors).every(
+    (key) => !key.startsWith("-") || battleData.w?.[key] !== undefined,
+  );
+};
+
 type KillSkipReason =
   | "battle-start-not-seen"
   | "left-battle"
@@ -164,7 +194,7 @@ type KillSkipReason =
   | "npc-alive";
 
 const getKillSkipReason = (
-  ending: "ended" | "left",
+  ending: BattleConclusion,
   game: RuntimeGameSnapshot | null,
 ): KillSkipReason => {
   if (!game) return "missing-game";
@@ -190,6 +220,16 @@ export class BattleEventProcessor {
     // The state before this packet; its actions still write the live store.
     const battleStore = useBattleStore.getState();
     const startsBattle = event.f.init === "1";
+    const game = ingress?.game ?? useGameStore.getState().game;
+
+    // Every store write happens before the first await: the next packet is
+    // handled while a submission is still being hashed.
+    const interrupted = startsBattle
+      ? this.concludeInterruptedBattle(event.f, battleStore, {
+          collectsBattles: battlePanelStore.isBattleCollectionEnabled,
+          game,
+        })
+      : null;
 
     this.beginBattleIfNeeded(startsBattle, battleStore);
 
@@ -223,6 +263,8 @@ export class BattleEventProcessor {
         battleWarriors: startsBattle || event.f.w ? battleWarriors : undefined,
       });
 
+      await interrupted;
+
       return;
     }
 
@@ -232,40 +274,102 @@ export class BattleEventProcessor {
       Object.keys(battleWarriors).filter((key) => key.startsWith("-")),
     );
 
-    const game = ingress?.game ?? useGameStore.getState().game;
     const hasMultipleTeams = this.hasMultipleTeams;
 
     battleStore.clearEvents();
     battleStore.applyBatch({ battleState: "idle", battleWarriors });
 
-    const { hasNpcInBattle, topNpc } = getNpcBattleSummary(battleWarriors);
+    await Promise.all([
+      interrupted,
+      this.concludeBattle({
+        battleWarriors,
+        capture,
+        collectsBattles: battlePanelStore.isBattleCollectionEnabled,
+        conclusion: ending,
+        game,
+        hasMultipleTeams,
+      }),
+    ]);
+  }
+
+  /**
+   * A battle starts while the previous one is still open when its final
+   * packet never arrived, as when the player is attacked right after it.
+   * Starting the next capture would discard that battle, so it is concluded
+   * with what was captured.
+   */
+  private concludeInterruptedBattle(
+    battleData: BattleData,
+    battleStore: BattleStoreState,
+    context: { collectsBattles: boolean; game: RuntimeGameSnapshot | null },
+  ): Promise<void> | null {
+    if (battleStore.battleState !== "in-battle") return null;
+
+    const capture = battleStore.getCaptureSnapshot();
+
+    if (
+      restartsCapturedBattle(
+        battleData,
+        capture.turns,
+        battleStore.battleWarriors,
+      )
+    ) {
+      return null;
+    }
+
+    return this.concludeBattle({
+      ...context,
+      battleWarriors: battleStore.battleWarriors,
+      capture,
+      conclusion: "interrupted",
+      hasMultipleTeams: this.hasMultipleTeams,
+    });
+  }
+
+  /** Reports the kill, the battle and the weapon kills of a concluded battle. */
+  private async concludeBattle(params: {
+    battleWarriors: BattleWarriorsWithAccountId;
+    capture: BattleCapture;
+    collectsBattles: boolean;
+    conclusion: BattleConclusion;
+    game: RuntimeGameSnapshot | null;
+    hasMultipleTeams: boolean;
+  }): Promise<void> {
+    const { battleWarriors, capture, conclusion, game } = params;
+
+    const { hasLivingNpc, hasNpcInBattle, topNpc } =
+      getNpcBattleSummary(battleWarriors);
 
     const pvpEvents = this.getPvpBattleEvents({
       capture,
       hasNpcInBattle,
-      hasMultipleTeams,
+      hasMultipleTeams: params.hasMultipleTeams,
     });
 
     const weaponKillsIntent = this.resolveWeaponKillsIntent(pvpEvents, game);
 
+    // A battle the player left goes on, so its NPCs may still survive. One
+    // that was interrupted is known to be won only once every NPC is dead.
+    const isKill =
+      conclusion === "ended" || (conclusion === "interrupted" && !hasLivingNpc);
+
     // The API deduplicates kills reported by every player of the battle.
     const killIntent = this.resolveKillIntent(
-      // A battle the player left goes on, so its NPCs may still survive.
-      ending === "ended" ? topNpc : null,
+      isKill ? topNpc : null,
       game,
       battleWarriors,
     );
 
     if (!killIntent) {
       this.logSkippedKill(
-        getKillSkipReason(ending, game),
+        getKillSkipReason(conclusion, game),
         getTrackableNpcs(battleWarriors),
         game,
       );
     }
 
     const battleIntent = await this.resolveBattleIntent({
-      events: battlePanelStore.isBattleCollectionEnabled ? pvpEvents : null,
+      events: params.collectsBattles ? pvpEvents : null,
       turns: capture.turns,
       game,
     });
