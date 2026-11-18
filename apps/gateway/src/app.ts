@@ -3,6 +3,10 @@ import {
   GatewayRuntimeMetrics,
 } from "#src/realtime/gateway-metrics";
 import { GatewayConnectionMetrics } from "#src/realtime/connection-metrics";
+import {
+  InboundLiveness,
+  type LivenessSocket,
+} from "#src/realtime/inbound-liveness";
 import { OnlineHistories } from "#src/realtime/online-history";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import { recordHttpServerMetrics } from "@lootlog/instrumentation";
@@ -343,8 +347,12 @@ export const createGatewayFetch =
     }
   };
 
+/** The socket Bun hands to the WebSocket callbacks. */
+export type TransportSocket = GatewaySocket & LivenessSocket;
+
 export const createGatewayWebSocket = (
   application: Pick<GatewayApplicationService, "hub" | "ingress">,
+  liveness = new InboundLiveness(),
 ) => {
   const metrics = new GatewayConnectionMetrics();
 
@@ -352,7 +360,7 @@ export const createGatewayWebSocket = (
     perMessageDeflate: false,
     maxPayloadLength: 256 * 1_024,
     idleTimeout: 70,
-    open(socket: GatewaySocket) {
+    open(socket: TransportSocket) {
       // Federation can drop between the upgrade check and this callback.
       if (application.hub.unavailableReason() !== undefined) {
         socket.close(
@@ -373,6 +381,7 @@ export const createGatewayWebSocket = (
       }
 
       metrics.open(socket);
+      liveness.inbound(socket);
       application.hub.register(socket);
 
       application.hub.sendEvent(socket, {
@@ -381,11 +390,19 @@ export const createGatewayWebSocket = (
         data: { connectionId: socket.data.connectionId },
       });
     },
-    message(socket: GatewaySocket, message: string | Buffer) {
+    message(socket: TransportSocket, message: string | Buffer) {
+      liveness.inbound(socket);
       application.ingress.message(socket, message);
     },
-    close(socket: GatewaySocket, code = 1005, reason = "") {
+    ping(socket: TransportSocket) {
+      liveness.inbound(socket);
+    },
+    pong(socket: TransportSocket) {
+      liveness.inbound(socket);
+    },
+    close(socket: TransportSocket, code = 1005, reason = "") {
       metrics.close(socket, code, reason);
+      liveness.close(socket);
       application.hub.detach(socket);
       application.ingress.close(socket);
     },
@@ -462,6 +479,7 @@ export const GatewayServer = Layer.effectDiscard(
     );
 
     const fetch = createGatewayFetch(application, httpBoundary.handler);
+    const liveness = new InboundLiveness();
 
     const server = yield* Effect.acquireRelease(
       Effect.sync(() =>
@@ -469,7 +487,7 @@ export const GatewayServer = Layer.effectDiscard(
           hostname: "0.0.0.0",
           port: application.config.port,
           fetch,
-          websocket: createGatewayWebSocket(application),
+          websocket: createGatewayWebSocket(application, liveness),
         }),
       ),
       (activeServer) =>
@@ -483,6 +501,8 @@ export const GatewayServer = Layer.effectDiscard(
           Effect.orDie,
         ),
     );
+
+    yield* liveness.run().pipe(Effect.forkScoped);
 
     yield* Effect.logInfo("Gateway WebSocket server listening").pipe(
       Effect.annotateLogs({

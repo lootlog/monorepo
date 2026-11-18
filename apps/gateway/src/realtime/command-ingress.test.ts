@@ -2,7 +2,11 @@ import { expect, test } from "bun:test";
 import { Effect, Metric } from "effect";
 import type { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
-import { createGatewayWebSocket, drainGateway } from "#src/app";
+import {
+  createGatewayWebSocket,
+  drainGateway,
+  type TransportSocket,
+} from "#src/app";
 import { RealtimeHub } from "./realtime-hub.js";
 import {
   makeSession,
@@ -10,10 +14,11 @@ import {
   subscribedFederationStore,
 } from "../../test/realtime-fixtures.js";
 import { CommandIngress } from "./command-ingress.js";
-import type { GatewaySocket } from "./session.js";
 
-const socket = (connectionId: string): GatewaySocket =>
-  makeTestSocket(makeSession({ connectionId, joined: false })).socket;
+const socket = (connectionId: string): TransportSocket => ({
+  ...makeTestSocket(makeSession({ connectionId, joined: false })).socket,
+  ping: () => 0,
+});
 
 test("default admission permits restoring 4096 large valid subscriptions", async () => {
   const tasks: Array<Effect.Effect<void, unknown>> = [];
@@ -372,7 +377,7 @@ test("WebSocket close removes delivery targets immediately and rejects excess li
   const first = socket("first");
   const closes: number[] = [];
 
-  const excess: GatewaySocket = {
+  const excess: TransportSocket = {
     ...socket("excess"),
     close: (code) => {
       closes.push(code ?? 1000);
@@ -426,8 +431,8 @@ test("drain refuses new sessions, closes local sockets and waits for their disco
   const transport = createGatewayWebSocket({ hub, ingress });
   const closes: Array<{ readonly id: string; readonly code?: number }> = [];
 
-  const connect = (connectionId: string): GatewaySocket => {
-    const connection: GatewaySocket = {
+  const connect = (connectionId: string): TransportSocket => {
+    const connection: TransportSocket = {
       ...socket(connectionId),
       close: (code) => {
         closes.push({ id: connectionId, code });
@@ -474,7 +479,7 @@ test("announces the connection before join", async () => {
   const transport = createGatewayWebSocket({ hub, ingress: target.ingress });
   const frames: ReturnType<typeof decodeRealtimeFrame>[] = [];
 
-  const client: GatewaySocket = {
+  const client: TransportSocket = {
     ...socket("client"),
     send: (text: string) => {
       frames.push(decodeRealtimeFrame(text));
