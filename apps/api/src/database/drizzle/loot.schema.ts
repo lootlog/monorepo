@@ -371,17 +371,17 @@ export const organizationLootRecordTable = pgTable(
       mode: "date",
       precision: 3,
     }).notNull(),
-    // What the loot list will filter on beyond the world, copied from the
-    // loot's items and NPCs when the record is written (loot-record-facts.ts):
-    // the rarities its items have, the types its NPCs have, and the level and
-    // visibility class of each NPC (loot-visibility.ts). Nullable until the
-    // backfill has filled the records that existed before the columns did;
-    // nothing reads them yet. A loot's items and NPCs do not change after
-    // acceptance; a data migration that changes them, or the rarity, type or
-    // level of a snapshot, must rewrite these columns too.
-    lootRarityMask: smallint("lootRarityMask"),
-    npcTypeMask: smallint("npcTypeMask"),
-    npcVisibility: int4multirange("npcVisibility"),
+    // What the loot list filters on beyond the world, copied from the loot's
+    // items and NPCs when the record is written (loot-record-facts.ts): the
+    // rarities its items have, the types its NPCs have, and the level and
+    // visibility class of each NPC (loot-visibility.ts). Testing them through
+    // LootItem and LootNpc ran a subquery each for every record a page
+    // scanned. A loot's items and NPCs do not change after acceptance; a data
+    // migration that changes them, or the rarity, type or level of a snapshot,
+    // must rewrite these columns too.
+    lootRarityMask: smallint("lootRarityMask").notNull(),
+    npcTypeMask: smallint("npcTypeMask").notNull(),
+    npcVisibility: int4multirange("npcVisibility").notNull(),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
       .defaultNow()
       .notNull(),
@@ -395,6 +395,11 @@ export const organizationLootRecordTable = pgTable(
     index("OrganizationLootRecord_lootId_idx").on(table["lootId"]),
     // Serves the loot page: an Organization's active records on one world in
     // the page's `ORDER BY "lootId" DESC`, so a page reads about `limit` rows.
+    // The two masks and the NPC visibility are trailing keys only to be read
+    // from the index: a page that rejects most records, such as a rare rarity
+    // or NPC type or a member limited to a few levels, is then an index-only
+    // scan and does not fetch a heap row per rejected record. (Drizzle has no
+    // INCLUDE.)
     // Both details are what makes the index ordered. The archive filter is the
     // predicate, not a key column, because PostgreSQL does not treat
     // `IS NULL` as an equality for ordering; and the key must be NULLS FIRST,
@@ -402,11 +407,14 @@ export const organizationLootRecordTable = pgTable(
     // does not match. Without either, the planner, which also estimates
     // guildId and lootWorld as independent, sorted the Organization's whole
     // world history for every page (1.36M buffers for 6 legendary loots).
-    index("OrganizationLootRecord_guildId_world_lootId_active_idx")
+    index("OrganizationLootRecord_guildId_world_lootId_page_active_idx")
       .on(
         table["guildId"],
         table["lootWorld"],
         table["lootId"].desc().nullsFirst(),
+        table["lootRarityMask"],
+        table["npcTypeMask"],
+        table["npcVisibility"],
       )
       .where(sql`${table["archivedAt"]} IS NULL`),
     // Serves the user feed's last-24-hours window. Records are appended in

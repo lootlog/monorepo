@@ -69,7 +69,7 @@ const predicates = (
 
   return {
     kills: or(...kills) ?? sql`false`,
-    loots: buildUserLootRecordCondition(scopes, discordId, lootTable.id),
+    loots: buildUserLootRecordCondition(scopes, discordId),
   };
 };
 

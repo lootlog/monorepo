@@ -199,8 +199,9 @@ export const makeLootQueryPersistence = (
               // creation time, the cursor and the ordering all read columns of
               // the row the scan is already on, so one index range of `limit`
               // rows replaces a walk through every record the Organization
-              // owns. The relation filters and the visibility rules correlate
-              // on the record's lootId and are unchanged.
+              // owns. The rarity filter and the visibility rule read the
+              // record too; the other relation filters correlate on its
+              // lootId.
               database
                 .select({ id: organizationLootRecordTable.lootId })
                 .from(organizationLootRecordTable)

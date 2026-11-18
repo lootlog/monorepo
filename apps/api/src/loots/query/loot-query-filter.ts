@@ -1,4 +1,6 @@
 import { getShortnameByProf } from "@lootlog/domain/profession";
+import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
+import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import {
   and,
   eq,
@@ -26,14 +28,18 @@ import {
   organizationLootRecordTable,
   playerSnapshotTable,
 } from "#src/database/drizzle/loot.schema";
+import {
+  lootNpcTypeCondition,
+  lootRarityCondition,
+} from "#src/loots/loot-record-facts";
 import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { containsPattern } from "#src/shared/sql-like";
 
 export type LootQueryFilters = {
-  readonly npcTypes?: ReadonlyArray<string>;
+  readonly npcTypes?: ReadonlyArray<NpcType>;
   readonly npcs?: ReadonlyArray<string>;
   readonly players?: ReadonlyArray<string>;
-  readonly rarities?: ReadonlyArray<string>;
+  readonly rarities?: ReadonlyArray<ItemRarity>;
   readonly professions?: ReadonlyArray<string>;
   readonly npcLevelMin?: number;
   readonly npcLevelMax?: number;
@@ -244,6 +250,17 @@ const existsPlayerSnapshotIds = (
       ),
   );
 
+// Start from the chosen snapshots instead of testing each scanned loot: the
+// correlated EXISTS made a rare NPC or item on a busy Organization walk its
+// whole history (383k buffers for an item found once, 1M for an NPC, on a
+// local production copy), while the array reads the snapshots' rows from
+// "LootNpc_npcSnapshotId_lootId_idx" or "LootItem_itemSnapshotId_lootId_idx"
+// and probes the records by key (3k buffers at most). The query builder has no
+// `= ANY(ARRAY(subquery))`; the `IN` semi-join `inArray` renders read 4x the
+// buffers.
+const lootIdIn = (lootId: PgColumn, lootIds: SQLWrapper) =>
+  sql`${lootId} = any(array(${lootIds}))`;
+
 const npcNameCondition = (
   lootId: PgColumn,
   snapshotIds: ReadonlyArray<number> | undefined,
@@ -252,20 +269,28 @@ const npcNameCondition = (
 
   if (snapshotIds.length === 0) return sql`false`;
 
-  // Start from the chosen NPCs instead of testing each scanned loot: the
-  // correlated EXISTS made a rare NPC on a busy world walk the Organization's
-  // whole world history (2.7 s, 1M buffers on a local production copy), while
-  // the array reads the NPCs' rows from "LootNpc_npcSnapshotId_lootId_idx"
-  // and probes the records by key (12 ms). The query builder has no
-  // `= ANY(ARRAY(subquery))`; the `IN` semi-join `inArray` renders read 4x
-  // the buffers.
-  const npcLootIds = query
-    .select({ lootId: queryNpc.lootId })
-    .from(queryNpc)
-    .where(inArray(queryNpc.npcSnapshotId, [...snapshotIds]));
-
-  return sql`${lootId} = any(array(${npcLootIds}))`;
+  return lootIdIn(
+    lootId,
+    query
+      .select({ lootId: queryNpc.lootId })
+      .from(queryNpc)
+      .where(inArray(queryNpc.npcSnapshotId, [...snapshotIds])),
+  );
 };
+
+const itemSnapshotCondition = (
+  lootId: PgColumn,
+  snapshotIds: ReadonlyArray<number> | undefined,
+) =>
+  snapshotIds === undefined
+    ? undefined
+    : lootIdIn(
+        lootId,
+        query
+          .select({ lootId: queryItem.lootId })
+          .from(queryItem)
+          .where(inArray(queryItem.itemSnapshotId, [...snapshotIds])),
+      );
 
 const relationConditions = (
   source: LootQuerySource,
@@ -278,24 +303,26 @@ const relationConditions = (
       )
     : undefined,
   npcNameCondition(source.lootId, filters.npcNameSnapshotIds),
+  // The record carries the types of its loot's NPCs and the rarities of its
+  // items as masks, so both tests read the row the scan is already on. As
+  // subqueries on LootNpc and LootItem they ran for every record a page
+  // examined.
   filters.npcTypes?.length
-    ? existsNpc(
-        source.lootId,
-        inArray(sql`${queryNpcSnapshot.type}`, [...filters.npcTypes]),
+    ? lootNpcTypeCondition(
+        organizationLootRecordTable.npcTypeMask,
+        filters.npcTypes,
       )
     : undefined,
   filters.rarities?.length
-    ? existsItem(
-        source.lootId,
-        inArray(sql`${queryItemSnapshot.rarity}`, [...filters.rarities]),
+    ? lootRarityCondition(
+        organizationLootRecordTable.lootRarityMask,
+        filters.rarities,
       )
     : undefined,
   filters.hid
     ? existsItem(source.lootId, eq(queryItem.hid, filters.hid))
     : undefined,
-  filters.itemSnapshotIds
-    ? existsItemSnapshotIds(source.lootId, filters.itemSnapshotIds)
-    : undefined,
+  itemSnapshotCondition(source.lootId, filters.itemSnapshotIds),
 ];
 
 const professionCondition = (
@@ -382,6 +409,11 @@ export const organizationLootRecordQuerySource: LootQuerySource = {
   createdAt: organizationLootRecordTable.lootCreatedAt,
 };
 
+/**
+ * The rarity and NPC type filters and the visibility rule read the
+ * Organization's record, whichever source drives the query, so the record must
+ * be in scope.
+ */
 export const buildLootQueryConditions = (
   source: LootQuerySource,
   filters: ResolvedLootQueryFilters,
@@ -401,5 +433,9 @@ export const buildLootQueryConditions = (
   ...relationConditions(source, filters),
   professionCondition(source.lootId, filters.professions),
   searchCondition(source.lootId, filters.search),
-  buildLootNpcVisibilityCondition(source.lootId, permissions, roles),
+  buildLootNpcVisibilityCondition(
+    organizationLootRecordTable.npcVisibility,
+    permissions,
+    roles,
+  ),
 ];

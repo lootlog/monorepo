@@ -176,11 +176,7 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
         start: range.start,
         world: query.world,
         characterId,
-        visibleRecord: buildUserLootRecordCondition(
-          scopes,
-          discordId,
-          lootPlayerTable.lootId,
-        ),
+        visibleRecord: buildUserLootRecordCondition(scopes, discordId),
       }),
     );
 

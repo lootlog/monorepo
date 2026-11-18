@@ -3,7 +3,7 @@ import {
   Capability,
   memberCapabilities,
 } from "@lootlog/domain/access-policy";
-import { and, eq, or, sql, type SQLWrapper } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { organizationLootRecordTable } from "#src/database/drizzle/loot.schema";
@@ -64,11 +64,10 @@ export const userLootScopeAccess = (
     : undefined;
 };
 
-/** Matches an Organization record of `lootId` the user can see in one of their scopes. */
+/** Matches an Organization loot record the user can see in one of their scopes. */
 export const buildUserLootRecordCondition = (
   scopes: ReadonlyArray<UserLootScope>,
   discordId: string,
-  lootId: SQLWrapper,
 ) =>
   or(
     ...scopes.flatMap((scope) => {
@@ -79,7 +78,7 @@ export const buildUserLootRecordCondition = (
             and(
               eq(organizationLootRecordTable.guildId, scope.guild.id),
               buildLootNpcVisibilityCondition(
-                lootId,
+                organizationLootRecordTable.npcVisibility,
                 access.permissions,
                 scope.roles,
               ),
