@@ -309,13 +309,7 @@ const messages = {
   },
   item: {
     level: "Poziom",
-    professions: "Profesje",
     inGame: "Tak wygląda w grze",
-    factsTitle: "Informacje",
-    rarity: "Rzadkość",
-    type: "Typ",
-    noLevel: "Bez wymagań",
-    anyProfession: "Każda",
     events: "Event",
     actions: "Akcje przedmiotu",
     relatedTitle: "Inne dropy: {{name}}",
@@ -907,13 +901,11 @@ const messages = {
     COINAGE: "Waluta",
   },
   npc: {
-    factsTitle: "Informacje",
     heroTrackers: "Tropiciele Herosów",
     type: "Rodzaj",
     elasticLevel: "Jak postać",
-    mapsTitle: "Mapy",
+    topMap: "Najczęstsza mapa",
     allMaps: "Wszystkie mapy ({{count}})",
-    historyTitle: "Historia",
   },
   npcTypes: npcType satisfies Record<CatalogNpcDtoOutputType, string>,
   linkPreview: {
