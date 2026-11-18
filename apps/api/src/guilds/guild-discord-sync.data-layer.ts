@@ -3,7 +3,7 @@ import type {
   DiscordGuildSyncState,
 } from "@lootlog/schema/discord";
 import { notificationChannelMetadata } from "#src/notifications/targets/notification-channel-metadata";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, notInArray } from "drizzle-orm";
 import { Clock, Effect, Predicate } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -11,6 +11,7 @@ import {
   discordGuildSyncStateTable,
   guildTable,
 } from "#src/database/drizzle/organization.schema";
+import { discordGuildChannelDeletedOutboxTable } from "#src/database/drizzle/discord-guild-channel-deleted-outbox.schema";
 import { notificationTargetTable } from "#src/database/drizzle/notification.schema";
 import { RateLimitedError } from "#src/shared/http/http-errors";
 import { AccountOrganizationOperationError } from "./account-organization-data.js";
@@ -23,11 +24,8 @@ type SyncPayload = {
 export interface GuildDiscordSyncPorts {
   readonly staleAfterMs: number;
   readonly refresh: (guildId: string) => Effect.Effect<SyncPayload, unknown>;
-  readonly publishChannelDeleted: (event: {
-    readonly guildId: string;
-    readonly channelId: string;
-    readonly syncState: DiscordGuildSyncState;
-  }) => Effect.Effect<unknown, unknown>;
+  /** Wakes the worker that publishes committed channel deletions. */
+  readonly signalChannelDeletions: Effect.Effect<void>;
 }
 
 // A fresh, error-free snapshot stays current through gateway events, so a
@@ -119,26 +117,18 @@ const notificationTargetValues = (channel: DiscordGuildChannel) => ({
   metadata: notificationChannelMetadata(channel),
 });
 
+/**
+ * Applies a full channel list. Removed channels are deleted and their
+ * `discord.guild.channel.deleted` facts stored in one transaction, so a
+ * failed publish cannot lose a deletion that a later refresh would no longer see.
+ */
 const reconcile = (
   database: typeof ApiDatabase.Service,
   guildId: string,
   payload: SyncPayload,
 ) =>
-  Effect.gen(function* () {
-    const existing = yield* database
-      .select({ channelId: discordGuildChannelSnapshotTable.channelId })
-      .from(discordGuildChannelSnapshotTable)
-      .where(eq(discordGuildChannelSnapshotTable.guildId, guildId));
-
-    const nextIds = new Set(payload.channels.map(({ channelId }) => channelId));
-
-    const removedIds = existing
-      .map(({ channelId }) => channelId)
-      .filter((channelId) => !nextIds.has(channelId));
-
-    yield* database.transaction((transaction) => {
-      const operations: Array<Effect.Effect<unknown, unknown>> = [];
-
+  database.transaction((transaction) =>
+    Effect.gen(function* () {
       for (const channel of payload.channels) {
         const now = new Date();
 
@@ -149,69 +139,75 @@ const reconcile = (
           updatedAt: now,
         };
 
-        operations.push(
-          transaction
-            .insert(discordGuildChannelSnapshotTable)
-            .values({ ...values, createdAt: now })
-            .onConflictDoUpdate({
-              target: [
-                discordGuildChannelSnapshotTable.guildId,
-                discordGuildChannelSnapshotTable.channelId,
-              ],
-              set: values,
-            }),
-          transaction
-            .update(notificationTargetTable)
-            .set({
-              ...notificationTargetValues(channel),
-              updatedAt: now,
-            })
-            .where(
-              and(
-                eq(notificationTargetTable.ownerType, "GUILD"),
-                eq(notificationTargetTable.ownerId, guildId),
-                eq(notificationTargetTable.provider, "DISCORD"),
-                eq(notificationTargetTable.targetType, "CHANNEL"),
-                eq(notificationTargetTable.externalId, channel.channelId),
-              ),
+        yield* transaction
+          .insert(discordGuildChannelSnapshotTable)
+          .values({ ...values, createdAt: now })
+          .onConflictDoUpdate({
+            target: [
+              discordGuildChannelSnapshotTable.guildId,
+              discordGuildChannelSnapshotTable.channelId,
+            ],
+            set: values,
+          });
+        yield* transaction
+          .update(notificationTargetTable)
+          .set({
+            ...notificationTargetValues(channel),
+            updatedAt: now,
+          })
+          .where(
+            and(
+              eq(notificationTargetTable.ownerType, "GUILD"),
+              eq(notificationTargetTable.ownerId, guildId),
+              eq(notificationTargetTable.provider, "DISCORD"),
+              eq(notificationTargetTable.targetType, "CHANNEL"),
+              eq(notificationTargetTable.externalId, channel.channelId),
             ),
-        );
+          );
       }
 
-      if (removedIds.length > 0) {
-        operations.push(
-          transaction
-            .delete(discordGuildChannelSnapshotTable)
-            .where(
-              and(
-                eq(discordGuildChannelSnapshotTable.guildId, guildId),
-                inArray(discordGuildChannelSnapshotTable.channelId, removedIds),
-              ),
-            ),
+      const removed = yield* transaction
+        .delete(discordGuildChannelSnapshotTable)
+        .where(
+          and(
+            eq(discordGuildChannelSnapshotTable.guildId, guildId),
+            payload.channels.length > 0
+              ? notInArray(
+                  discordGuildChannelSnapshotTable.channelId,
+                  payload.channels.map(({ channelId }) => channelId),
+                )
+              : undefined,
+          ),
+        )
+        .returning({ channelId: discordGuildChannelSnapshotTable.channelId });
+
+      if (removed.length > 0) {
+        yield* transaction.insert(discordGuildChannelDeletedOutboxTable).values(
+          removed.map(({ channelId }) => ({
+            guildId,
+            channelId,
+            syncState: payload.syncState,
+          })),
         );
       }
 
       const state = syncStateWrite(guildId, payload.syncState);
-      operations.push(
-        transaction
-          .insert(discordGuildSyncStateTable)
-          .values({
-            guildId,
-            ...state.values,
-            lastSuccessAt: state.lastSuccessAt,
-            createdAt: state.now,
-          })
-          .onConflictDoUpdate({
-            target: discordGuildSyncStateTable.guildId,
-            set: state.values,
-          }),
-      );
+      yield* transaction
+        .insert(discordGuildSyncStateTable)
+        .values({
+          guildId,
+          ...state.values,
+          lastSuccessAt: state.lastSuccessAt,
+          createdAt: state.now,
+        })
+        .onConflictDoUpdate({
+          target: discordGuildSyncStateTable.guildId,
+          set: state.values,
+        });
 
-      return Effect.all(operations, { concurrency: 1, discard: true });
-    });
-
-    return removedIds;
-  });
+      return removed.length > 0;
+    }),
+  );
 
 const discordSyncErrorMessage = (error: unknown) =>
   typeof error === "string"
@@ -282,17 +278,9 @@ export const makeGuildDiscordSyncData = (
         Effect.tapError((error) => recordFailure(database, guildId, error)),
       );
 
-    const removedIds = yield* reconcile(database, guildId, payload);
-    yield* Effect.forEach(
-      removedIds,
-      (channelId) =>
-        ports.publishChannelDeleted({
-          guildId,
-          channelId,
-          syncState: payload.syncState,
-        }),
-      { concurrency: "unbounded", discard: true },
-    );
+    if (yield* reconcile(database, guildId, payload)) {
+      yield* ports.signalChannelDeletions;
+    }
 
     return (yield* loadState(database, guildId)) ?? payload.syncState;
   });
@@ -376,17 +364,10 @@ export const makeGuildDiscordSyncData = (
     event: { readonly guildId: string } & SyncPayload,
   ) {
     if (!(yield* guildExists(database, event.guildId))) return;
-    const removedIds = yield* reconcile(database, event.guildId, event);
-    yield* Effect.forEach(
-      removedIds,
-      (channelId) =>
-        ports.publishChannelDeleted({
-          guildId: event.guildId,
-          channelId,
-          syncState: event.syncState,
-        }),
-      { concurrency: "unbounded", discard: true },
-    );
+
+    if (yield* reconcile(database, event.guildId, event)) {
+      yield* ports.signalChannelDeletions;
+    }
   });
 
   const handleUpserted = Effect.fn("handleGuildChannelUpserted")(
