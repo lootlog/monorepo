@@ -1,0 +1,104 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "7112ff88-06e0-45f1-a8f3-d62e59541a4f",
+  "prevIds": ["3b82f7a8-8eb6-4b1b-b90e-767a83641074"],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OrganizationLootRecord",
+        "lootRarityMask"
+      ],
+      "writes": [
+        "s|col|public.OrganizationLootRecord.lootRarityMask",
+        "n|col|public.OrganizationLootRecord.lootRarityMask",
+        "e|col|public.OrganizationLootRecord.lootRarityMask"
+      ],
+      "reads": ["n|tbl|public.OrganizationLootRecord", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OrganizationLootRecord",
+        "npcTypeMask"
+      ],
+      "writes": [
+        "s|col|public.OrganizationLootRecord.npcTypeMask",
+        "n|col|public.OrganizationLootRecord.npcTypeMask",
+        "e|col|public.OrganizationLootRecord.npcTypeMask"
+      ],
+      "reads": ["n|tbl|public.OrganizationLootRecord", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OrganizationLootRecord",
+        "npcVisibility"
+      ],
+      "writes": [
+        "s|col|public.OrganizationLootRecord.npcVisibility",
+        "n|col|public.OrganizationLootRecord.npcVisibility",
+        "e|col|public.OrganizationLootRecord.npcVisibility"
+      ],
+      "reads": ["n|tbl|public.OrganizationLootRecord", "n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationLootRecord",
+        "name": "lootRarityMask",
+        "type": "smallint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationLootRecord",
+        "name": "npcTypeMask",
+        "type": "smallint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationLootRecord",
+        "name": "npcVisibility",
+        "type": "int4multirange",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}
