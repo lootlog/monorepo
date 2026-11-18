@@ -9,10 +9,11 @@ import {
 import {
   selectNotificationGoing,
   useNotificationGoingStore,
+  type NotificationGoingScope,
 } from "@/store/notification-going.store";
 
 type NotificationGoingListProps = {
-  notificationIds: readonly string[];
+  scope: NotificationGoingScope;
 };
 
 /**
@@ -20,13 +21,11 @@ type NotificationGoingListProps = {
  * row shows the count and as many nicks as fit; the tooltip lists everyone
  * with level, profession and clan.
  */
-export function NotificationGoingList({
-  notificationIds,
-}: NotificationGoingListProps) {
+export function NotificationGoingList({ scope }: NotificationGoingListProps) {
   const { t } = useTranslation("notifications");
 
   const going = useNotificationGoingStore(
-    useShallow((state) => selectNotificationGoing(state, notificationIds)),
+    useShallow((state) => selectNotificationGoing(state, scope)),
   );
 
   if (going.length === 0) return null;
