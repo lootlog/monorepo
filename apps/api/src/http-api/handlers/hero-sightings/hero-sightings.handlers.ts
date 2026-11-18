@@ -128,6 +128,25 @@ export const HeroSightingsHandlers = HttpApiBuilder.group(
             ),
           ),
       )
+      .handle("HeroSightingsControllerAddHeroSighting", ({ params, payload }) =>
+        toHttpResponse(
+          Effect.flatMap(
+            requireGuild(params.guildId, HERO_SIGHTING_WRITE_PERMISSION),
+            (access) => data((service) => service.addManual(access, payload)),
+          ),
+        ),
+      )
+      .handle("HeroSightingsControllerWithdrawHeroSighting", ({ params }) =>
+        toHttpResponse(
+          Effect.flatMap(
+            requireGuild(params.guildId, HERO_SIGHTING_WRITE_PERMISSION),
+            (access) =>
+              data((service) =>
+                service.withdraw(access, sightingId(params.sightingId)),
+              ),
+          ),
+        ),
+      )
       .handle(
         "HeroSightingsControllerClaimHeroSighting",
         ({ params, payload }) =>

@@ -3,7 +3,7 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { HERO_SIGHTING_WRITE_PERMISSION } from "@lootlog/domain/npc-permissions";
 import { getGuildPermissionsQueryOptions } from "@/hooks/api/guild-permissions-query";
 
-/** The Organizations among `guildIds` where the player may claim a sighted hero. */
+/** The Organizations among `guildIds` where the player may add or claim a sighted hero. */
 export const useHeroSightingWriteAccess = (
   guildIds: readonly string[],
 ): ReadonlySet<string> => {

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   foreignKey,
   index,
@@ -23,12 +24,14 @@ export const heroSightingStateEnum = pgEnum("HeroSightingState", [
 export const heroSightingCloseReasonEnum = pgEnum("HeroSightingCloseReason", [
   "KILLED",
   "PROBABLY_KILLED",
+  "WITHDRAWN",
 ]);
 
 /**
  * Where a hero detector placed a hero, per Organization. One open row per hero
  * is the current sighting; closed rows are its history, pruned to the newest
- * HERO_SIGHTING_HISTORY_LIMIT per hero. Times are Margonem's answer times.
+ * HERO_SIGHTING_HISTORY_LIMIT per hero. Times are Margonem's answer times, or
+ * the API's clock for a sighting entered by hand.
  */
 export const heroSightingTable = pgTable(
   "HeroSighting",
@@ -42,6 +45,8 @@ export const heroSightingTable = pgTable(
     heroProf: professionEnum("heroProf"),
     state: heroSightingStateEnum("state").notNull(),
     mapName: text("mapName").notNull(),
+    /** Entered by hand, and not confirmed by a detector answer since. */
+    manual: boolean("manual").notNull().default(false),
     firstSeenAt: timestamp("firstSeenAt", {
       mode: "date",
       precision: 3,

@@ -8,6 +8,7 @@ import { ProfessionSchema } from "@lootlog/schema/loot";
 import {
   DateTimeString,
   FiniteNumber,
+  LevelFilter,
   NonEmptyString,
   PositiveSafeInteger,
   WorldParam,
@@ -48,6 +49,10 @@ export const HeroSightingResponse = Schema.Struct({
     description:
       "Map name from the detector answer. Margonem sends no map id, and several maps can share a name.",
   }),
+  manual: Schema.Boolean.annotate({
+    description:
+      "True for a sighting a Member entered by hand that no detector answer has confirmed since.",
+  }),
   firstSeenAt: DateTimeString,
   lastSeenAt: DateTimeString,
   spawnedAt: Schema.NullOr(DateTimeString).annotate({
@@ -56,7 +61,7 @@ export const HeroSightingResponse = Schema.Struct({
   closedAt: Schema.NullOr(DateTimeString),
   closeReason: Schema.NullOr(HeroSightingCloseReasonSchema).annotate({
     description:
-      "PROBABLY_KILLED when a later detection contradicted the sighting; KILLED when Lootlog recorded the kill.",
+      "PROBABLY_KILLED when a later detection contradicted the sighting; KILLED when Lootlog recorded the kill; WITHDRAWN when a Member took back a sighting entered by hand.",
   }),
   detectedBy: HeroSightingMember,
   detectorCharacter: Schema.NullOr(HeroSightingCharacter),
@@ -104,6 +109,39 @@ export const CreateHeroSightingRequest = Schema.Struct({
       "When Margonem answered the detector, from the system chat message time.",
   }),
 }).annotate({ identifier: "CreateHeroSightingDto" });
+
+export type AddHeroSightingRequest = typeof AddHeroSightingRequest.Type;
+
+/** A name a person typed: bounded, and more than whitespace. */
+const TypedText = (maxLength: number) =>
+  BoundedText(maxLength).check(
+    Schema.isPattern(/\S/).annotate({
+      expected: "a value that is not only whitespace",
+    }),
+  );
+
+export const AddHeroSightingRequest = Schema.Struct({
+  world: WorldParam,
+  hero: Schema.Struct({
+    name: TypedText(100),
+    lvl: LevelFilter.check(
+      Schema.isGreaterThanOrEqualTo(1).annotate({
+        expected: "a value greater than or equal to 1",
+      }),
+    ).annotate({
+      description:
+        "Used for a hero the Organization has not sighted in this world yet; a known hero keeps its recorded level.",
+    }),
+    prof: Schema.optionalKey(
+      Schema.String.annotate({
+        description: "Margonem profession shortname of the hero.",
+      }),
+    ),
+  }),
+  state: HeroSightingStateSchema,
+  mapName: TypedText(200),
+  actorCharacter: Schema.optionalKey(TimerActorCharacterInput),
+}).annotate({ identifier: "AddHeroSightingDto" });
 
 export type CreateHeroSightingResponse = typeof CreateHeroSightingResponse.Type;
 

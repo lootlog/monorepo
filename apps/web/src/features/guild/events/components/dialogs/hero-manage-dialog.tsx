@@ -1,4 +1,4 @@
-import { DialogActionFooter } from "./dialog-action-footer";
+import { DialogActionFooter } from "@/components/common/dialog-action-footer";
 import { useId } from "react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";

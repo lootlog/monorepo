@@ -26,6 +26,7 @@ import {
 import { timerNpcIdentity } from "#src/timers/timer-projection";
 import type { NotificationEventStore } from "#src/notifications/delivery/notification-event.repository";
 import {
+  heroSightingAddedByHand,
   WATCHED_ITEM_DROPPED_TITLE,
   watchedItemDroppedMessage,
 } from "#src/notifications/content/notification-messages";
@@ -331,7 +332,9 @@ export const makeNotificationsEvents = (options: {
                 hero: sighting.hero,
                 heroLevel: formatLevel(sighting.hero.lvl, sighting.hero.prof),
                 mapName: sighting.mapName,
-                detectedBy: sighting.detectedBy.displayName,
+                detectedBy: sighting.manual
+                  ? heroSightingAddedByHand(sighting.detectedBy.displayName)
+                  : sighting.detectedBy.displayName,
               },
               transition,
             }),

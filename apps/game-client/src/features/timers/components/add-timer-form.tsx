@@ -17,7 +17,10 @@ import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestion
 import { getNpcTypeNames } from "@/constants/margonem";
 import { cn } from "cn";
 import { FormFieldError } from "@/components/form-field-error";
-import { formFieldLabelClassName } from "@/components/ui/form-field";
+import {
+  formFieldLabelClassName,
+  formFieldSelectClassName,
+} from "@/components/ui/form-field";
 import {
   useAddTimerForm,
   MAX_NPC_NAME_LENGTH,
@@ -30,10 +33,6 @@ import {
 } from "./use-add-timer-form";
 
 const getFieldErrorMessage = (error?: { message?: string }) => error?.message;
-
-/** Makes the type select sit in line with the text inputs around it. */
-const selectFieldClassName =
-  "ll:border-border ll:bg-transparent ll:px-1.5 ll:text-[13px] ll:text-white ll:hover:bg-transparent ll:hover:text-white";
 
 const getSpawnWindowLabel = (
   startDate: string,
@@ -59,12 +58,9 @@ export function AddTimerForm(props: AddTimerFormProps) {
     searchQuery,
     setSearchQuery,
     showSuggestions,
-    setShowSuggestions,
+    suggestions,
     customDatesEnabled,
-    selectedIndex,
-    setSelectedIndex,
     selectedNpcRef,
-    blurTimeoutRef,
     selectedGuildId,
     npcResults,
     npcSearchFailed,
@@ -110,20 +106,10 @@ export function AddTimerForm(props: AddTimerFormProps) {
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 selectedNpcRef.current = null;
-                setShowSuggestions(true);
-                setSelectedIndex(-1);
+                suggestions.open();
               }}
               onKeyDown={handleSearchKeyDown}
-              onBlur={() => {
-                if (blurTimeoutRef.current) {
-                  clearTimeout(blurTimeoutRef.current);
-                }
-
-                blurTimeoutRef.current = setTimeout(() => {
-                  setShowSuggestions(false);
-                  blurTimeoutRef.current = null;
-                }, 200);
-              }}
+              onBlur={suggestions.closeAfterBlur}
             />
             <AutocompleteSuggestions<SearchTimersNpcResponseDtoOutput>
               items={npcResults ?? []}
@@ -139,7 +125,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
                 void retryNpcSearch();
               }}
               onSelect={handleNpcSelect}
-              selectedIndex={selectedIndex}
+              selectedIndex={suggestions.selectedIndex}
               keyExtractor={(npc) => npc.npcId}
               renderItem={(npc, _index, isSelected) => {
                 const longname = getNpcTypeNames(npc.type)
@@ -221,7 +207,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
                   id="npcType"
                   size="sm"
                   aria-label={t("addForm.typeLabel")}
-                  className={selectFieldClassName}
+                  className={formFieldSelectClassName}
                 >
                   <SelectValue placeholder={t("addForm.typePlaceholder")} />
                 </SelectTrigger>

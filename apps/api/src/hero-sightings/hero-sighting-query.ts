@@ -115,6 +115,7 @@ export const loadHeroSightings = Effect.fnUntraced(function* (
         },
         state: sighting.state,
         mapName: sighting.mapName,
+        manual: sighting.manual,
         firstSeenAt: sighting.firstSeenAt.toISOString(),
         lastSeenAt: sighting.lastSeenAt.toISOString(),
         spawnedAt: sighting.spawnedAt?.toISOString() ?? null,

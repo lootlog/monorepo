@@ -1,8 +1,11 @@
 import {
+  heroSightingsControllerAddHeroSighting,
   heroSightingsControllerClaimHeroSighting,
   heroSightingsControllerCreateHeroSighting,
   heroSightingsControllerGetAllHeroSightings,
   heroSightingsControllerUnclaimHeroSighting,
+  heroSightingsControllerWithdrawHeroSighting,
+  type AddHeroSightingDto,
   type CreateHeroSightingDto,
   type CreateHeroSightingResponseDto,
   type HeroSightingResponseDto,
@@ -77,5 +80,45 @@ export function unclaimHeroSighting({
     },
     execute: () =>
       heroSightingsControllerUnclaimHeroSighting({ guildId, sightingId }),
+  });
+}
+
+/** Adds a hero the player enters by hand to one Organization. */
+export function addHeroSighting(
+  guildId: string,
+  sighting: Omit<AddHeroSightingDto, "actorCharacter">,
+): Promise<HeroSightingResponseDto> {
+  const payload = {
+    ...sighting,
+    actorCharacter: buildCurrentTimerActorCharacterPayload(sighting.world),
+  } satisfies AddHeroSightingDto;
+
+  return runSingleLoggedAction({
+    actionType: "add_hero_sighting",
+    actionPayload: { guildId, ...payload },
+    request: {
+      method: "POST",
+      endpoint: `/guilds/${guildId}/hero-sightings`,
+      payload,
+    },
+    execute: () => heroSightingsControllerAddHeroSighting({ guildId }, payload),
+  });
+}
+
+/** Closes a sighting its author entered by hand, e.g. one added by mistake. */
+export function withdrawHeroSighting({
+  guildId,
+  sightingId,
+}: HeroSightingRef): Promise<HeroSightingResponseDto> {
+  return runSingleLoggedAction({
+    actionType: "withdraw_hero_sighting",
+    actionPayload: { guildId, sightingId },
+    request: {
+      method: "POST",
+      endpoint: `/guilds/${guildId}/hero-sightings/${sightingId}/withdraw`,
+      payload: undefined,
+    },
+    execute: () =>
+      heroSightingsControllerWithdrawHeroSighting({ guildId, sightingId }),
   });
 }

@@ -1,6 +1,7 @@
 import { Context, Effect } from "effect";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import type {
+  AddHeroSightingRequest,
   ClaimHeroSightingRequest,
   CreateHeroSightingRequest,
   CreateHeroSightingResponse,
@@ -45,6 +46,14 @@ export class HeroSightingsData extends Context.Service<
       world: string,
       hero: string,
     ) => DataEffect<HeroSightingsResponse>;
+    readonly addManual: (
+      access: HeroSightingsGuildAccess,
+      payload: AddHeroSightingRequest,
+    ) => DataEffect<HeroSightingResponse>;
+    readonly withdraw: (
+      access: HeroSightingsGuildAccess,
+      sightingId: number,
+    ) => DataEffect<HeroSightingResponse>;
     readonly claim: (
       access: HeroSightingsGuildAccess,
       sightingId: number,

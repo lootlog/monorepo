@@ -1,4 +1,5 @@
 import { expect, it } from "bun:test";
+import { eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
@@ -24,6 +25,7 @@ import {
   makeCreateHeroSighting,
   makeHeroSightingClaims,
   makeHeroSightingReads,
+  makeManualHeroSightings,
 } from "./hero-sightings.data-layer.js";
 import type { HeroSightingsGuildAccess } from "./hero-sightings-data.js";
 
@@ -92,6 +94,7 @@ const setup = async (
     create: makeCreateHeroSighting(database, ports),
     reads: makeHeroSightingReads(database),
     claims: makeHeroSightingClaims(database, ports),
+    manual: makeManualHeroSightings(database, ports),
   };
 };
 
@@ -404,6 +407,147 @@ it("shows sightings only to roles that see the hero, and only in their Organizat
     );
 
     expect(otherOrganization).toMatchObject({ status: 404 });
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+const manualEntry = {
+  world: "jaruna",
+  hero: { name: "Tepeyollotl", lvl: 258, prof: "b" },
+  state: "ROAMING",
+  mapName: "Oztotl Tzacua p.2 - sala 2",
+} as const;
+
+it("keeps the recorded hero and map when a Member types them differently", async () => {
+  const { boundary, create, manual } = await setup();
+
+  try {
+    const detected = await boundary.run(
+      create(identity, detection({ state: "ROAMING", secondsAgo: 60 })),
+    );
+
+    const typed = await boundary.run(
+      manual.addManual(ownerAccess("a", 1), {
+        ...manualEntry,
+        hero: { name: " tepeyollotl ", lvl: 20 },
+        mapName: "oztotl  tzacua p.2 - sala 2",
+      }),
+    );
+
+    // A typo must not read as the hero having moved, nor change who sees it.
+    expect(typed).toMatchObject({
+      id: detected.submittedGuilds[0]?.sighting.id,
+      hero: { name: "Tepeyollotl", lvl: 258 },
+      mapName: "Oztotl Tzacua p.2 - sala 2",
+      manual: false,
+      closedAt: null,
+    });
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+it("lets its author withdraw a manual sighting until a detector confirms it", async () => {
+  const { boundary, create, manual, published } = await setup();
+
+  try {
+    const mistaken = await boundary.run(
+      manual.addManual(ownerAccess("a", 1), {
+        ...manualEntry,
+        mapName: "Skały Umarłych",
+      }),
+    );
+
+    expect(mistaken.manual).toBe(true);
+
+    published.length = 0;
+
+    const withdrawn = await boundary.run(
+      manual.withdraw(ownerAccess("a", 1), mistaken.id),
+    );
+
+    expect(withdrawn.closeReason).toBe("WITHDRAWN");
+    expect(published.map(({ id, closeReason }) => [id, closeReason])).toEqual([
+      [mistaken.id, "WITHDRAWN"],
+    ]);
+
+    const added = await boundary.run(
+      manual.addManual(ownerAccess("a", 1), manualEntry),
+    );
+
+    await boundary.run(create(identity, detection({ state: "ROAMING" })));
+
+    const error = await boundary.run(
+      manual.withdraw(ownerAccess("a", 1), added.id).pipe(Effect.flip),
+    );
+
+    expect(error).toMatchObject({
+      body: { code: "HERO_SIGHTING_NOT_WITHDRAWABLE" },
+    });
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+it("refuses a manual sighting of a hero outside the Member's level range, and another Member's withdrawal", async () => {
+  const { boundary, database, manual } = await setup();
+
+  try {
+    await boundary.run(
+      database.insert(roleTable).values({
+        id: "low-writers",
+        guildId: "a",
+        name: "Low writers",
+        permissions: [
+          Permission.LOOTLOG_TIMERS_READ,
+          Permission.LOOTLOG_TIMERS_WRITE,
+          Permission.LOOTLOG_TIMERS_HEROES_READ,
+        ],
+        lvlRangeFrom: 0,
+        lvlRangeTo: 200,
+        updatedAt: new Date(),
+      }),
+    );
+
+    const [role] = await boundary.run(
+      database.select().from(roleTable).where(eq(roleTable.id, "low-writers")),
+    );
+
+    if (!role) throw new Error("Missing role");
+
+    const lowWriter: HeroSightingsGuildAccess = {
+      userId: "reader-user",
+      discordId: "reader",
+      guild: createGuildFixture({ id: "a", ownerId: "discord" }),
+      member: {
+        ...createMemberFixture({ id: 3, guildId: "a", userId: "reader" }),
+        roles: [role],
+      },
+      accessPolicy: createAccessPolicy({ capabilities: role.permissions }),
+      roles: [role],
+    };
+
+    const hidden = await boundary.run(
+      manual.addManual(lowWriter, manualEntry).pipe(Effect.flip),
+    );
+
+    expect(hidden).toMatchObject({
+      body: { code: "HERO_SIGHTING_LEVEL_NOT_VISIBLE" },
+    });
+
+    const visible = await boundary.run(
+      manual.addManual(ownerAccess("a", 1), {
+        ...manualEntry,
+        hero: { name: "Mietek Żul", lvl: 25 },
+      }),
+    );
+
+    const foreign = await boundary.run(
+      manual.withdraw(lowWriter, visible.id).pipe(Effect.flip),
+    );
+
+    expect(foreign).toMatchObject({ body: { code: "FORBIDDEN" } });
   } finally {
     await boundary.dispose();
   }
