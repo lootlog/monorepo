@@ -3,6 +3,7 @@ import type { ProfessionEnum } from "@lootlog/schema/loot";
 import { sql } from "drizzle-orm";
 import {
   check,
+  customType,
   foreignKey,
   index,
   integer,
@@ -11,11 +12,19 @@ import {
   pgTable,
   primaryKey,
   serial,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { guildTable, memberTable } from "./organization.schema.js";
+
+// The codec makes a select read the column as text. Without it the driver
+// asks for binary results and hands back the wire bytes of a multirange.
+const int4multirange = customType<{ data: string }>({
+  dataType: () => "int4multirange",
+  codec: "int4multirange",
+});
 
 export const npcTypeEnum = pgEnum("NpcType", [
   "COMMON",
@@ -362,6 +371,17 @@ export const organizationLootRecordTable = pgTable(
       mode: "date",
       precision: 3,
     }).notNull(),
+    // What the loot list will filter on beyond the world, copied from the
+    // loot's items and NPCs when the record is written (loot-record-facts.ts):
+    // the rarities its items have, the types its NPCs have, and the level and
+    // visibility class of each NPC (loot-visibility.ts). Nullable until the
+    // backfill has filled the records that existed before the columns did;
+    // nothing reads them yet. A loot's items and NPCs do not change after
+    // acceptance; a data migration that changes them, or the rarity, type or
+    // level of a snapshot, must rewrite these columns too.
+    lootRarityMask: smallint("lootRarityMask"),
+    npcTypeMask: smallint("npcTypeMask"),
+    npcVisibility: int4multirange("npcVisibility"),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
       .defaultNow()
       .notNull(),

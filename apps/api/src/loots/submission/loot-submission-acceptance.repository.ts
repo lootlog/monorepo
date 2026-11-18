@@ -32,6 +32,7 @@ import {
   organizationLootRecordTable,
 } from "#src/database/drizzle/loot.schema";
 import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
+import { organizationLootRecordFactsOf } from "#src/loots/loot-record-facts";
 import type { Permission } from "@lootlog/schema/permissions";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import {
@@ -382,6 +383,7 @@ export const makeLootSubmissionAcceptancePersistence = (
                 lootId,
                 lootWorld: facts.world,
                 lootCreatedAt: facts.createdAt,
+                ...organizationLootRecordFactsOf(lootId),
                 updatedAt: now,
               })),
             )
@@ -558,6 +560,8 @@ export const makeLootSubmissionAcceptancePersistence = (
           );
         }
 
+        // The items and NPCs above are already written, so the record reads
+        // its facts from the rows it stands for.
         const records = yield* transaction
           .insert(organizationLootRecordTable)
           .values(
@@ -566,6 +570,7 @@ export const makeLootSubmissionAcceptancePersistence = (
               lootId: loot.id,
               lootWorld: loot.world,
               lootCreatedAt: loot.createdAt,
+              ...organizationLootRecordFactsOf(loot.id),
               updatedAt: now,
             })),
           )
