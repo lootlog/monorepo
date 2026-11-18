@@ -42,6 +42,7 @@ it("shares a going answer only with the Lootlogs where the caller reads the noti
                 createdAt,
                 world: "experimental",
                 npcName: "Heros",
+                npcId: 7,
                 npc: { type: "HERO", lvl: 100, wt: 100, prof: "w", icon: "h" },
               })
             : null,
@@ -171,6 +172,7 @@ it("shares a going answer only with the Lootlogs where the caller reads the noti
       guildId: "mine",
       reporterUserId: "sender-user",
       npcName: "Heros",
+      npcId: 7,
     });
     expect(hashes.get("notification:hero:going:restricted")).toBeUndefined();
     expect(hashes.get("notification:hero:going:foreign")?.size).toBe(1);

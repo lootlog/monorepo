@@ -122,7 +122,7 @@ const getMergedServers = (
 ];
 
 /** One NPC on one world, the unit notification rows group by. */
-const getNpcWorldKey = (npcId: number | string, world: string) =>
+export const getNpcWorldKey = (npcId: number | string, world: string) =>
   `${npcId}:${world}`;
 
 /**
