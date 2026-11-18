@@ -1,144 +1,193 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
+import { Search } from "lucide-react";
+import { startTransition } from "react";
 import {
-  type CatalogControllerGetNpcsParams,
-  getCatalogControllerGetNpcsQueryOptions,
-  useCatalogControllerGetNpcs,
-} from "@lootlog/client/catalog";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { BasicSearchForm } from "@/components/basic-search-form";
-import { NpcPortrait } from "@/components/common/npc-portrait";
-import { PageHeader } from "@/components/common/page-header";
-import { FilterTile } from "@/components/filter-tile";
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@lootlog/ui/components/input-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@lootlog/ui/components/select";
+import { ActiveFilterChips } from "@/components/common/active-filter-chips";
+import { FiltersAside } from "@/components/common/filters-aside";
+import { FiltersSheet } from "@/components/common/filters-sheet";
+import { NpcResults } from "@/components/npcs/npc-results";
+import { NpcsFilterPanel } from "@/components/npcs/npcs-filter-panel";
+import { useDebouncedQuery } from "@/hooks/use-debounced-query";
 import { t } from "@/i18n/messages";
-import { npcSummary } from "@/lib/npc-summary";
-import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
-import { joinList, splitList } from "@/lib/items-search";
-import { NPC_TYPE_OPTIONS } from "@/lib/npc-types";
-import { useBasicSearchForm } from "./-use-basic-search-form";
-import { prefetchPageQueries } from "@/lib/catalog-page-queries";
+import {
+  npcResultsQueryOptions,
+  prefetchPageQueries,
+} from "@/lib/catalog-page-queries";
+import { formatCatalogMonth } from "@/lib/catalog-days";
 import { canonicalLink } from "@/lib/link-preview";
 import {
-  getNpcsRouteSearchParams,
-  type NpcsRouteSearch,
-  validateNpcsRouteSearch,
-} from "./-search-route.utils";
+  hasEventMonsters,
+  isNpcFilterType,
+  npcKindLabel,
+} from "@/lib/npc-types";
+import {
+  effectiveNpcSort,
+  NPC_SORT_OPTIONS,
+  type NpcsSearch,
+  toNpcCatalogParams,
+  validateNpcsSearch,
+} from "@/lib/npcs-search";
+import { EMPTY_NPCS_SEARCH } from "@/navigation/wiki-navigation";
 
-const SEARCH_LIMIT = 72;
+type ActiveFilter = {
+  key: string;
+  label: string;
+  clear: Partial<NpcsSearch>;
+};
 
-/** The NPC search's query for the address bar's search. */
-const npcSearchQuery = (search: NpcsRouteSearch) =>
-  ({
-    ...getNpcsRouteSearchParams(search, SEARCH_LIMIT),
-    gameVersion: WIKI_GAME_VERSION,
-  }) satisfies CatalogControllerGetNpcsParams;
+/** One removable chip per active filter, in the panel's order. */
+const activeFilters = (search: NpcsSearch): ActiveFilter[] => {
+  const type = isNpcFilterType(search.types) ? search.types : undefined;
+
+  return [
+    ...(type
+      ? [{ key: "types", label: npcKindLabel(type), clear: { types: "" } }]
+      : []),
+    ...(search.events && hasEventMonsters(type)
+      ? [
+          {
+            key: "events",
+            label: t(`filters.eventOptions.${search.events}`),
+            clear: { events: "" as const },
+          },
+        ]
+      : []),
+    ...(search.minLevel !== undefined || search.maxLevel !== undefined
+      ? [
+          {
+            key: "level",
+            label: t("filters.levelChip", {
+              min: search.minLevel ?? 1,
+              max: search.maxLevel ?? "∞",
+            }),
+            clear: { minLevel: undefined, maxLevel: undefined },
+          },
+        ]
+      : []),
+    ...(search.firstSeen
+      ? [
+          {
+            key: "firstSeen",
+            label: t("npcs.firstSeenChip", {
+              month: formatCatalogMonth(search.firstSeen),
+            }),
+            clear: { firstSeen: "" },
+          },
+        ]
+      : []),
+  ];
+};
 
 export const Route = createFileRoute("/npcs")({
   component: NpcsRoute,
-  loaderDeps: ({ search }) => ({ query: npcSearchQuery(search) }),
+  loaderDeps: ({ search }) => ({ params: toNpcCatalogParams(search) }),
   loader: ({ deps, context: { queryClient } }) =>
     prefetchPageQueries(
-      queryClient.prefetchQuery(
-        getCatalogControllerGetNpcsQueryOptions(deps.query),
-      ),
+      queryClient.prefetchInfiniteQuery(npcResultsQueryOptions(deps.params)),
     ),
   head: () => ({
-    meta: [
-      {
-        title: `${t("meta.npcsTitle")} | ${t("meta.title")}`,
-      },
-    ],
+    meta: [{ title: `${t("meta.npcsTitle")} | ${t("meta.title")}` }],
     links: [canonicalLink("/npcs")],
   }),
-  validateSearch: validateNpcsRouteSearch,
+  validateSearch: validateNpcsSearch,
+  // A link holds only the filters it sets.
+  search: { middlewares: [stripSearchParams(EMPTY_NPCS_SEARCH)] },
 });
 
 function NpcsRoute() {
   const navigate = Route.useNavigate();
   const search = Route.useSearch();
-  const searchForm = useBasicSearchForm(search, navigate);
 
-  const selectedTypes = splitList(search.types);
-
-  const toggleType = (type: string) => (pressed: boolean) =>
-    void navigate({
-      replace: true,
-      search: (current) => ({
-        ...current,
-        types: joinList(
-          pressed
-            ? [...selectedTypes, type]
-            : selectedTypes.filter((selected) => selected !== type),
-        ),
-      }),
+  const change = (update: Partial<NpcsSearch>) =>
+    startTransition(() => {
+      void navigate({
+        replace: true,
+        search: (current) => ({ ...current, ...update }),
+      });
     });
 
-  const { data, isError } = useCatalogControllerGetNpcs(
-    npcSearchQuery(search),
-    { query: { placeholderData: (previousData) => previousData } },
+  const [query, setQuery] = useDebouncedQuery(search.query, (next) =>
+    change({ query: next }),
   );
 
-  return (
-    <div className="flex flex-col gap-6 py-6">
-      <PageHeader title={t("npcs.title")} description={t("npcs.description")} />
-      <div className="flex flex-col gap-4">
-        <BasicSearchForm {...searchForm} />
-        <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1.5 text-xs font-medium text-muted-foreground">
-            {t("npcs.types")}
-          </legend>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-1.5">
-            {NPC_TYPE_OPTIONS.map((type) => (
-              <FilterTile
-                key={type}
-                label={t(`npcTypes.${type}`)}
-                pressed={selectedTypes.includes(type)}
-                onPressedChange={toggleType(type)}
-              />
-            ))}
-          </div>
-        </fieldset>
-      </div>
+  const filters = activeFilters(search);
+  const panel = <NpcsFilterPanel search={search} onChange={change} />;
 
-      {isError ? (
-        <p role="alert" className="text-sm text-destructive">
-          {t("catalog.loadError")}
-        </p>
-      ) : data?.hits.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("search.noResults")}</p>
-      ) : (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
-          {data
-            ? data.hits.map((npc) => (
-                <li key={npc.key}>
-                  <Link
-                    to="/npcs/$npcSlug"
-                    params={npcPageParams(npc)}
-                    className="group/npc flex h-full flex-col gap-2 rounded-xl border border-border/50 bg-card p-2 outline-none transition-[border-color,background-color] duration-150 hover:border-border hover:bg-accent/30 focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
-                  >
-                    <NpcPortrait
-                      key={npc.icon}
-                      icon={npc.icon}
-                      size="md"
-                      className="w-full"
-                    />
-                    <span className="flex min-w-0 flex-col gap-0.5 px-1 pb-1">
-                      <span className="truncate text-sm font-semibold text-foreground">
-                        {npc.name}
-                      </span>
-                      <span className="truncate text-xs text-muted-foreground">
-                        {npcSummary(npc)}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))
-            : Array.from({ length: 12 }, (_, index) => (
-                <li key={index}>
-                  <Skeleton className="h-[9.5rem] rounded-xl" />
-                </li>
+  return (
+    <div className="grid items-start md:grid-cols-[17rem_minmax(0,1fr)]">
+      <FiltersAside count={filters.length}>{panel}</FiltersAside>
+
+      <div className="flex min-w-0 flex-col gap-4 py-6 md:pl-6">
+        <h1 className="sr-only">{t("npcs.title")}</h1>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <InputGroup size="lg" className="min-w-48 flex-1">
+            <InputGroupAddon>
+              <Search aria-hidden="true" />
+            </InputGroupAddon>
+            <InputGroupInput
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              aria-label={t("search.queryLabel")}
+              placeholder={t("npcs.queryPlaceholder")}
+            />
+          </InputGroup>
+          <Select
+            value={effectiveNpcSort(search)}
+            onValueChange={(sort) => {
+              if (sort !== null) change({ sort });
+            }}
+            items={NPC_SORT_OPTIONS.map((value) => ({
+              value,
+              label: t(`npcs.sortOptions.${value}`),
+            }))}
+          >
+            <SelectTrigger
+              size="lg"
+              className="w-44"
+              aria-label={t("filters.sort")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {NPC_SORT_OPTIONS.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {t(`npcs.sortOptions.${value}`)}
+                </SelectItem>
               ))}
-        </ul>
-      )}
+            </SelectContent>
+          </Select>
+          <FiltersSheet count={filters.length}>{panel}</FiltersSheet>
+        </div>
+        <NpcResults
+          params={toNpcCatalogParams(search)}
+          query={search.query}
+          filters={
+            <ActiveFilterChips
+              filters={filters.map((filter) => ({
+                key: filter.key,
+                label: filter.label,
+                onRemove: () => change(filter.clear),
+              }))}
+              onClearAll={() =>
+                change({ ...EMPTY_NPCS_SEARCH, query: search.query })
+              }
+            />
+          }
+        />
+      </div>
     </div>
   );
 }

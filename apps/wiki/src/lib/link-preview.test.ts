@@ -45,6 +45,7 @@ const npc: CatalogNpcDtoOutput = {
   gameVersion: "pl",
   locations: [],
   formerLevels: [],
+  firstSeenOn: null,
 };
 
 describe("itemLinkPreview", () => {

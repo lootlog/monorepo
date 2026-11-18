@@ -14,7 +14,7 @@ import { t } from "@/i18n/messages";
 type NewItemsCardProps = {
   title: string;
   /** What the card is about, above its title, such as a boss's kind. */
-  eyebrow?: string;
+  eyebrow?: ReactNode;
   /** The picture of what the items belong to, before the title. */
   media: ReactNode;
   /** The page of what the items belong to, which the header opens. */

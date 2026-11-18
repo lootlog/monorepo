@@ -1,6 +1,6 @@
 import { NpcPortrait } from "@/components/common/npc-portrait";
 import { t } from "@/i18n/messages";
-import { npcSummary } from "@/lib/npc-summary";
+import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
 import { useNewBosses } from "@/hooks/use-new-bosses";
 import { npcPageParams } from "@/lib/catalog-links";
 import { NewItemsCard } from "./new-items-card";
@@ -38,7 +38,7 @@ export function NewMonsters() {
         <li key={monster.key}>
           <NewItemsCard
             title={monster.name}
-            eyebrow={npcSummary(monster)}
+            eyebrow={<NpcKindLevel npc={monster} />}
             media={<NpcPortrait icon={monster.icon} size="md" />}
             link={{ to: "/npcs/$npcSlug", params: npcPageParams(monster) }}
             items={items}
