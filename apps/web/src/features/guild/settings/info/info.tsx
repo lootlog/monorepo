@@ -1,5 +1,7 @@
 import { BandSection } from "@/components/common/band-section";
 import { DetailField } from "@/components/common/detail-field";
+import { CooldownAnnouncement } from "@/components/common/cooldown-announcement";
+import { RefreshCooldown } from "@/components/common/refresh-cooldown";
 import { GuildDiscordSyncNotice } from "@/components/common/guild-discord-sync-notice";
 import { useGuildDiscordSync } from "@/hooks/api/use-guild-discord-sync";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -41,6 +43,7 @@ export const InfoSettings = () => {
     query,
     isRefreshing,
     isRefreshError,
+    refreshCooldown,
     permissionStatus,
     refresh,
   } = sync;
@@ -83,18 +86,24 @@ export const InfoSettings = () => {
             title={t("settings.guildInfo.syncStatus")}
             description={t("settings.guildInfo.syncStatusDescription")}
             trailing={
-              hasRequiredPermissions ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={refresh}
-                  disabled={!guildId || query.isFetching}
-                  loading={isRefreshing}
-                  icon={<RefreshCw />}
-                >
-                  {t("settings.guildInfo.refresh")}
-                </Button>
-              ) : undefined
+              <>
+                <CooldownAnnouncement countdown={refreshCooldown} />
+                {hasRequiredPermissions && !refreshCooldown.isExpired ? (
+                  <RefreshCooldown time={refreshCooldown.label} />
+                ) : null}
+                {hasRequiredPermissions && refreshCooldown.isExpired ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={refresh}
+                    disabled={!guildId || query.isFetching}
+                    loading={isRefreshing}
+                    icon={<RefreshCw />}
+                  >
+                    {t("settings.guildInfo.refresh")}
+                  </Button>
+                ) : null}
+              </>
             }
           >
             <dl className="divide-y divide-border/60">
