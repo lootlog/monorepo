@@ -284,7 +284,6 @@ function ItemRoute() {
           <ItemPageTooltip
             item={looted}
             stat={stat}
-            upgradeLevel={upgrade.level}
             renderStat={renderStatChanges(looted.stat, stat)}
           />
         </div>
