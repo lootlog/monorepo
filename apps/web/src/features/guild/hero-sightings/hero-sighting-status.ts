@@ -27,10 +27,14 @@ export const getHeroSightingStatus = (
   return sighting.state;
 };
 
-/** The board's sections, in the order to act on them; closed ones share one. */
+/**
+ * The board's sections, in the order to act on them: a spawn to camp comes
+ * before a roaming hero, which the players near it already fight. Closed ones
+ * share one.
+ */
 export const HERO_SIGHTING_GROUPS = [
-  "ROAMING",
   "SPAWNING",
+  "ROAMING",
   "STALE",
   "CLOSED",
 ] as const;

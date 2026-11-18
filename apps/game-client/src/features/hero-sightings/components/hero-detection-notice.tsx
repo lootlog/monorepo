@@ -1,6 +1,9 @@
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { isHeroSightingClaimedBy } from "@lootlog/domain/hero-sightings";
+import {
+  isHeroSightingClaimable,
+  isHeroSightingClaimedBy,
+} from "@lootlog/domain/hero-sightings";
 import { formatLevel } from "@lootlog/domain/profession";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { TruncatedText } from "@/components/truncated-text";
@@ -22,8 +25,8 @@ type HeroDetectionNoticeProps = {
 
 /**
  * Names the hero the player's own detector just found, or the player just
- * entered by hand, and offers to claim it in every Organization that accepted
- * it.
+ * entered by hand, and offers to claim a hero that will spawn in every
+ * Organization that accepted it.
  */
 export function HeroDetectionNotice({
   detection,
@@ -46,7 +49,7 @@ export function HeroDetectionNotice({
 
   const claimable = latest.filter(
     (sighting) =>
-      sighting.closedAt === null &&
+      isHeroSightingClaimable(sighting) &&
       !isHeroSightingClaimedBy(sighting, userId) &&
       writableGuildIds.has(sighting.guildId),
   );

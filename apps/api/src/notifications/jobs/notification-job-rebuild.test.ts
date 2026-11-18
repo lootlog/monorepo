@@ -806,7 +806,7 @@ describe("notification job rebuild", () => {
     }
   });
 
-  it("announces a hero sighting once per change, including when the detected spawn appears", async () => {
+  it("announces where a hero will spawn once, and never a roaming hero, not even when the detected spawn appears", async () => {
     const now = Date.now();
 
     const fixture = await seedTimerNotifications({
@@ -911,7 +911,6 @@ describe("notification job rebuild", () => {
 
       // Target 3 is inactive, and rule 8 watches heroes from level 300.
       expect(jobs).toEqual([
-        { targetId: 1, sourceEventId: "hero-sighting:41:SPAWNED" },
         { targetId: 1, sourceEventId: "hero-sighting:41:SPAWNING" },
       ]);
     } finally {
