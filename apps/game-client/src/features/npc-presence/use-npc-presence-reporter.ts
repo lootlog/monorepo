@@ -9,6 +9,7 @@ export const useNpcPresenceReporter = (): void => {
   const connected = useGlobalStore((state) => state.socketState.connected);
   const joined = useGlobalStore((state) => state.socketState.joined);
   const world = useGameStore((state) => state.game?.world ?? null);
+  const map = useGameStore((state) => state.game?.map.name ?? null);
 
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? null,
@@ -22,11 +23,12 @@ export const useNpcPresenceReporter = (): void => {
     npcPresenceReporter.configure({
       ready: connected && joined,
       world,
+      map,
       characterId,
       organizationIds,
       send: (report) => socket.reportNpcPresence(report),
     });
-  }, [characterId, connected, joined, organizationIds, world]);
+  }, [characterId, connected, joined, map, organizationIds, world]);
 
   useEffect(() => () => npcPresenceReporter.shutdown(), []);
 };

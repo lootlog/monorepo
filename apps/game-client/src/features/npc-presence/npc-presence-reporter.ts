@@ -1,4 +1,5 @@
 import {
+  NPC_PRESENCE_MAP_MAX_LENGTH,
   NPC_PRESENCE_MAX_NPCS,
   NPC_PRESENCE_MIN_WT,
   type NpcPresenceNpc,
@@ -20,6 +21,8 @@ type ReporterContext = {
   /** The joined gateway accepts NPC presence reports. */
   ready: boolean;
   world: string | null;
+  /** The name of the map the hero stands on. */
+  map?: string | null;
   characterId: string | null;
   /** Organizations this character catches timers for. */
   organizationIds: readonly string[] | undefined;
@@ -111,11 +114,17 @@ export class NpcPresenceReporter {
       return;
     }
 
-    const report: NpcPresenceReport = {
+    const reported = {
       world: context.world,
       organizationIds: [...context.organizationIds].sort(),
       npcs: toReportedNpcs(),
     };
+
+    // A name the gateway would reject must not cost the NPCs their presence.
+    const report: NpcPresenceReport =
+      context.map && context.map.length <= NPC_PRESENCE_MAP_MAX_LENGTH
+        ? { ...reported, map: context.map }
+        : reported;
 
     const key = JSON.stringify(report);
 

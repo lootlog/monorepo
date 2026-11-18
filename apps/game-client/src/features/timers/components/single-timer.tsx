@@ -106,7 +106,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const occupancy = useTimerMapPresence(timer);
   const threat = useTimerMapThreat(timer);
   const heroSighting = useTimerHeroSighting(timer);
-  const isStanding = useTimerNpcPresence(timer);
+  const isStanding = useTimerNpcPresence(timer) !== undefined;
 
   const menuProps: TimerContextMenuContentProps = {
     timer,

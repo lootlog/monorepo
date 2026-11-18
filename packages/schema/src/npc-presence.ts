@@ -25,6 +25,13 @@ export const NpcPresenceNpcSchema = Schema.Struct({
 
 export type NpcPresenceNpc = typeof NpcPresenceNpcSchema.Type;
 
+export const NPC_PRESENCE_MAP_MAX_LENGTH = 128;
+
+/** The name of the map the reporting character stands on. */
+const NpcPresenceMapSchema = Schema.NonEmptyString.check(
+  Schema.isMaxLength(NPC_PRESENCE_MAP_MAX_LENGTH),
+);
+
 /** Every NPC a character currently sees on its map; each report replaces the previous one. */
 export const NpcPresenceReportSchema = Schema.Struct({
   world: Schema.NonEmptyString.check(Schema.isMaxLength(64)),
@@ -34,6 +41,8 @@ export const NpcPresenceReportSchema = Schema.Struct({
   npcs: Schema.Array(NpcPresenceNpcSchema).check(
     Schema.isMaxLength(NPC_PRESENCE_MAX_NPCS),
   ),
+  /** Optional, so reports from clients that predate it stay valid. */
+  map: Schema.optionalKey(NpcPresenceMapSchema),
 });
 
 export type NpcPresenceReport = typeof NpcPresenceReportSchema.Type;
@@ -48,6 +57,8 @@ export const NpcPresenceEventSchema = Schema.Struct({
   standing: Schema.Boolean,
   /** Gateway time the NPC was first reported. */
   since: NonNegativeInt,
+  /** The map it stands on, when its reporter named one. */
+  map: Schema.optionalKey(NpcPresenceMapSchema),
 });
 
 export type NpcPresenceEvent = typeof NpcPresenceEventSchema.Type;
@@ -55,7 +66,11 @@ export type NpcPresenceEvent = typeof NpcPresenceEventSchema.Type;
 export const NpcPresenceSnapshotSchema = Schema.Struct({
   revision: NonNegativeInt,
   npcs: Schema.Array(
-    Schema.Struct({ npc: NpcPresenceNpcSchema, since: NonNegativeInt }),
+    Schema.Struct({
+      npc: NpcPresenceNpcSchema,
+      since: NonNegativeInt,
+      map: Schema.optionalKey(NpcPresenceMapSchema),
+    }),
   ),
 });
 

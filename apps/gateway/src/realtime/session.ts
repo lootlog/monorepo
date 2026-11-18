@@ -29,6 +29,8 @@ export interface NpcPresenceState {
   readonly characterId: string;
   readonly organizationIds: readonly string[];
   readonly npcs: ReadonlyMap<number, NpcPresenceNpc>;
+  /** The map the reporting character stands on, when its client named it. */
+  readonly map: string | undefined;
 }
 
 export interface SessionData extends AuthenticatedIdentity {

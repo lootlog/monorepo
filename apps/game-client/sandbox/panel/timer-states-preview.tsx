@@ -74,6 +74,8 @@ const enemies = (
   return { enemies: list, freshCount: stale ? 0 : list.length };
 };
 
+const PREVIEW_STANDING = { since: 0, map: "Mroczny Przesmyk" };
+
 type PreviewState = {
   title: string;
   color: keyof typeof TIMERS_COLORS;
@@ -212,7 +214,7 @@ function PreviewTile({
           guildNamesById={{ "guild-1": "Lootlog" }}
           occupancy={occupancy}
           threat={threat}
-          isStanding={state.standing}
+          standing={state.standing ? PREVIEW_STANDING : undefined}
         />
       </TooltipContent>
     </Tooltip>
@@ -273,7 +275,7 @@ export function TimerStatesPreview({ onClose }: { onClose: () => void }) {
                 guildNamesById={{ "guild-1": "Lootlog" }}
                 occupancy={pinnedState.occupancy}
                 threat={pinnedState.threat}
-                isStanding={pinnedState.standing}
+                standing={pinnedState.standing ? PREVIEW_STANDING : undefined}
               />
             </div>
           </section>

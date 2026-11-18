@@ -34,6 +34,7 @@ describe("NPC presence reporter", () => {
     reporter.configure({
       ready,
       world: "alpha",
+      map: "Ithan",
       characterId: "hero",
       organizationIds: ["guild-1"],
       send,
@@ -65,6 +66,8 @@ describe("NPC presence reporter", () => {
     expect(reports.map((report) => report.npcs.map(({ id }) => id))).toEqual([
       [1],
     ]);
+    // Timers show the map their NPC stands on.
+    expect(reports[0]?.map).toBe("Ithan");
 
     // A moved NPC or a light one appearing changes nothing the gateway stores.
     useNpcsStore.getState().applyNpcBatch({
