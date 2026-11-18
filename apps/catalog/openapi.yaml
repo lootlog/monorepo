@@ -310,6 +310,44 @@ paths:
           required: false
           style: form
           explode: true
+        - name: bossOrigins
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          required: false
+          style: form
+          explode: true
+        - name: minLevel
+          in: query
+          schema:
+            type: number
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: number
+          required: false
+        - name: firstSeenMonth
+          in: query
+          schema:
+            type: string
+            pattern: ^\d{4}-(?:0[1-9]|1[0-2])$
+            description: NPCs Lootlog saw for the first time in this month (`YYYY-MM`, UTC), as `CatalogNpcDto_Output.firstSeenOn`.
+          required: false
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - lvl:desc
+              - lvl:asc
+              - name:asc
+              - name:desc
+              - firstSeenOn:desc
+            description: The order of the NPCs, `lvl:desc` by default; NPCs of one level follow by name. `firstSeenOn:desc` lists first the NPCs Lootlog saw for the first time most recently; NPCs without a first sighting follow. A `search` still ranks by how well a name matches before it.
+          required: false
         - name: limit
           in: query
           schema:
@@ -684,6 +722,10 @@ components:
               - lvl
               - until
           description: Levels the NPC had before the game changed it, oldest first. Lootlog recomputes them daily from recorded fights and leaves out NPCs whose level follows the player's.
+        firstSeenOn:
+          description: The day (`YYYY-MM-DD`, UTC) a loot of the NPC first reached Lootlog, under any of its catalog identities. Margonem adds an NPC to every world at once, so it dates the NPC's arrival in the game for NPCs added since Lootlog records them; `null` for an NPC without a recorded first sighting.
+          nullable: true
+          type: string
       required:
         - key
         - id
@@ -695,6 +737,7 @@ components:
         - gameVersion
         - locations
         - formerLevels
+        - firstSeenOn
       description: A Margonem NPC in the public catalog
     CatalogItemsResponseDto_Output:
       type: object
