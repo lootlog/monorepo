@@ -44,7 +44,7 @@ export const TimerGridPopups = ({
             payload === undefined ? undefined : timersByKey.get(payload);
 
           return timer ? (
-            <TooltipContent className="ll:w-64 ll:max-w-64">
+            <TooltipContent className="ll:w-64 ll:max-w-64" growsWhileOpen>
               <TimerSharedTooltip
                 key={payload}
                 timer={timer}
