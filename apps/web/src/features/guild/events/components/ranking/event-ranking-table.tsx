@@ -29,7 +29,6 @@ import { TableCellLink } from "@/components/ui/table-cell-link";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
-import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { formatDuration } from "@/utils/date/format-duration";
 
 type EventRankingTableProps = {
@@ -89,13 +88,6 @@ export const EventRankingTable = ({
   const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const queryClient = useQueryClient();
   const [editingRankingId, setEditingRankingId] = useState<string | null>(null);
-  const membersMap = useGuildMemberMap(guildId);
-
-  const inactiveMemberIds = new Set(
-    [...membersMap.values()].flatMap((member) =>
-      member.active ? [] : [member.id],
-    ),
-  );
 
   const editingRanking = rankings.find(
     (ranking) => ranking.id === editingRankingId,
@@ -164,8 +156,9 @@ export const EventRankingTable = ({
       cell: ({ row }) => (
         <RankingMemberName
           ranking={row.original}
-          inactive={inactiveMemberIds.has(row.original.memberId)}
-          className="text-xs @md/ranking:text-sm"
+          guildId={guildId}
+          eventId={eventId}
+          nameClassName="text-xs font-semibold @md/ranking:text-sm"
         />
       ),
       enableSorting: false,
@@ -266,18 +259,39 @@ export const EventRankingTable = ({
 
     const memberLabel = getRankingMemberName(ranking, t);
 
-    const isPrimaryLink = cell.column.id === PRIMARY_LINK_COLUMN_ID;
+    const link = {
+      to: "/$guildId/events/$eventId/members/$memberId",
+      params: { guildId, eventId, memberId: String(ranking.memberId) },
+    } as const;
+
+    // The row's one keyboard stop fills the cell behind the name, so the cell
+    // opens the member's kills and the name their profile.
+    if (cell.column.id === PRIMARY_LINK_COLUMN_ID) {
+      return (
+        <div className="relative flex min-h-14 w-full min-w-0 items-center px-2">
+          <TableCellLink
+            {...link}
+            primary
+            label={t("events.ranking.openMemberStats", {
+              memberName: memberLabel,
+            })}
+            className="absolute inset-0 min-h-0 px-0"
+          >
+            {null}
+          </TableCellLink>
+          <span className="pointer-events-none relative flex min-w-0">
+            <span className="pointer-events-auto inline-flex max-w-full min-w-0">
+              {content}
+            </span>
+          </span>
+        </div>
+      );
+    }
 
     return (
       <TableCellLink
-        to="/$guildId/events/$eventId/members/$memberId"
-        params={{
-          guildId,
-          eventId,
-          memberId: String(ranking.memberId),
-        }}
-        primary={isPrimaryLink}
-        label={t("events.ranking.openMemberStats", { memberName: memberLabel })}
+        {...link}
+        primary={false}
         className={cn(
           cell.column.id === "position" && "pl-4",
           RIGHT_ALIGNED_COLUMN_IDS.has(cell.column.id) && "justify-end",
@@ -309,7 +323,6 @@ export const EventRankingTable = ({
           eventId={eventId}
           canEdit={canEdit}
           currentMemberId={currentMemberId}
-          inactiveMemberIds={inactiveMemberIds}
           onEditPoints={setEditingRankingId}
           isEditPending={updateRankingPoints.isPending}
         />

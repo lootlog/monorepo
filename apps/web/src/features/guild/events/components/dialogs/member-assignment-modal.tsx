@@ -16,7 +16,8 @@ import { EmptyState } from "@/components/common/empty-state";
 import { cn } from "cn";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import { RetryButton } from "@/components/common/retry-button";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMembersControllerGetGuildMembers } from "@lootlog/client/main";
@@ -131,16 +132,19 @@ export const MemberAssignmentModal = ({
                       key={member.id}
                       className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full border border-signal-ready/20 bg-signal-ready/10 py-0.5 pr-0.5 pl-1"
                     >
-                      <MemberAvatar
-                        userId={member.userId}
-                        avatar={member.avatar}
-                        name={member.name}
-                        imageSize={32}
-                        className="size-6"
+                      <MemberIdentity
+                        member={{ memberId: member.id }}
+                        fallback={{
+                          name: member.name,
+                          avatarUrl: getDiscordAvatarUrl(
+                            member.userId,
+                            member.avatar,
+                            32,
+                          ),
+                        }}
+                        avatarClassName="size-6"
+                        nameClassName="text-xs font-medium"
                       />
-                      <span className="min-w-0 truncate text-xs font-medium">
-                        {member.name}
-                      </span>
                       <Button
                         variant="ghost"
                         size="icon-xs"
@@ -248,15 +252,22 @@ export const MemberAssignmentModal = ({
                           aria-busy={isPending || undefined}
                           className="flex w-full items-center gap-3 px-3 py-2.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:cursor-pointer enabled:hover:bg-muted/40 disabled:cursor-default motion-reduce:transition-none"
                         >
-                          <MemberAvatar
-                            userId={member.userId}
-                            avatar={member.avatar}
-                            name={member.name}
-                            imageSize={64}
+                          {/* The option itself is the button, so the member opens no profile here. */}
+                          <MemberIdentity
+                            member={{ memberId: member.id }}
+                            fallback={{
+                              name: member.name,
+                              avatarUrl: getDiscordAvatarUrl(
+                                member.userId,
+                                member.avatar,
+                                64,
+                              ),
+                            }}
+                            interactive={false}
+                            className="flex-1 gap-3"
+                            avatarClassName="size-8"
+                            nameClassName="text-sm font-medium"
                           />
-                          <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                            {member.name}
-                          </span>
                           {isAssigned ? (
                             <span className="shrink-0 rounded-full bg-signal-ready/10 px-2 py-0.5 text-xs font-medium text-signal-ready">
                               {t("events.maps.alreadyAssigned")}

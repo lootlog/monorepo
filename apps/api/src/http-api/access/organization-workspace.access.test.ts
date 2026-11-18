@@ -98,7 +98,7 @@ const reservation = {
   endsAt: new Date("2026-09-03T10:30:00.000Z"),
   comment: null,
   createdAt: new Date("2026-09-02T10:00:00.000Z"),
-  author: { displayName: "Owner", avatarUrl: null },
+  author: { userId: "user-1", displayName: "Owner", avatarUrl: null },
   sourceOrganization: {
     name: "Guild A",
     iconUrl: null,

@@ -27,6 +27,7 @@ import {
   getGuildMembersSummaryCacheKey,
   getMemberLootlogConfigSummaryCacheKey,
 } from "#src/shared/cache";
+import { getDiscordServerBannerUrl } from "@lootlog/domain/discord-avatar";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import {
   MemberReadData,
@@ -113,16 +114,31 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
               MemberReferencesResponse,
               membersWithRoles(guildId, includeInactive).pipe(
                 Effect.map((members) =>
-                  members.map(
-                    ({ id, userId, name, avatar, active, roles }) => ({
+                  members.map((member) => ({
+                    id: member.id,
+                    userId: member.userId,
+                    globalUserId: member.globalUserId,
+                    name: member.name,
+                    displayName: member.discordDisplayName,
+                    username: member.username,
+                    avatar: member.avatar,
+                    globalAvatar: member.globalAvatar,
+                    bannerUrl: member.banner
+                      ? getDiscordServerBannerUrl(
+                          guildId,
+                          member.userId,
+                          member.banner,
+                        )
+                      : null,
+                    active: member.active,
+                    color: getMemberDisplayRole(member.roles)?.color ?? null,
+                    roles: member.roles.map(({ id, name, color }) => ({
                       id,
-                      userId,
                       name,
-                      avatar,
-                      active,
-                      color: getMemberDisplayRole(roles)?.color ?? null,
-                    }),
-                  ),
+                      color,
+                    })),
+                    joinedAt: member.joinedAt?.toISOString() ?? null,
+                  })),
                 ),
               ),
             ),

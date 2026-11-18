@@ -12,7 +12,8 @@ import { MemberSyncButton } from "@/features/guild/settings/members/components/m
 import { MemberStatusBadge } from "@/features/guild/settings/members/member-status-badge";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import { Button } from "@lootlog/ui/components/button";
 import {
   DropdownMenu,
@@ -73,7 +74,6 @@ export const MemberTile = ({
   const { t } = useTranslation();
 
   const {
-    color,
     gameActivityStats,
     isGamePresenceVerified,
     isOnlineOnWeb,
@@ -95,6 +95,14 @@ export const MemberTile = ({
     });
   }
 
+  // The tile is the member: it opens their page, not their profile card.
+  const memberKey = { memberId: member.id };
+
+  const fallback = {
+    name: member.name,
+    avatarUrl: getDiscordAvatarUrl(member.userId, member.avatar, 64),
+  };
+
   return (
     <div
       ref={ref}
@@ -109,20 +117,24 @@ export const MemberTile = ({
           params={{ guildId, memberId: String(member.id) }}
           className={getListTileLinkClassName(true)}
         >
-          <MemberAvatar
-            userId={member.userId}
-            avatar={member.avatar}
-            name={member.name}
-            className="size-9"
+          <MemberIdentity
+            member={memberKey}
+            fallback={fallback}
+            display="avatar"
+            interactive={false}
+            className="shrink-0"
+            avatarClassName="size-9"
           />
           <span className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="flex h-5 min-w-0 items-center gap-1">
-              <span
-                className="mr-1 truncate text-sm font-semibold"
-                style={{ color }}
-              >
-                {member.name}
-              </span>
+              <MemberIdentity
+                member={memberKey}
+                fallback={fallback}
+                display="name"
+                interactive={false}
+                className="mr-1"
+                nameClassName="font-semibold"
+              />
               <TooltipProvider delay={100}>
                 {isOwner && (
                   <Tooltip>

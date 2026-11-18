@@ -270,7 +270,8 @@ describe("EventRankingTable", () => {
     );
 
     const { rerender } = render(createRankingTable());
-    await act(() => Promise.resolve());
+    // The member list each name reads settles before the commits are counted.
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
     const commitsAfterMount = commitCount;
 
     rerender(createRankingTable());
@@ -341,6 +342,13 @@ describe("EventRankingTable", () => {
         id: 1,
         userId: "discord-1",
         name: "Member 1",
+        globalUserId: null,
+        displayName: null,
+        username: null,
+        globalAvatar: null,
+        bannerUrl: null,
+        roles: [],
+        joinedAt: null,
         color: null,
         active: true,
       },
@@ -348,6 +356,13 @@ describe("EventRankingTable", () => {
         id: 2,
         userId: "discord-2",
         name: "Member 2",
+        globalUserId: null,
+        displayName: null,
+        username: null,
+        globalAvatar: null,
+        bannerUrl: null,
+        roles: [],
+        joinedAt: null,
         color: null,
         active: false,
       },

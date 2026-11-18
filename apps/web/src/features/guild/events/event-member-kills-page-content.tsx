@@ -2,7 +2,8 @@ import { EventLoadError } from "./components/event-load-error";
 import { EventMemberSkeleton } from "./event-member-skeleton";
 import { useState } from "react";
 import { DetailPage } from "@/components/common/detail-page";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import {
   useEventsRankingControllerGetEventHeroStats,
   useListEventRanking,
@@ -19,7 +20,7 @@ import { MemberEventMeta } from "./components/member-kills/member-event-meta";
 import { MemberSummaryStrip } from "./components/member-kills/member-summary-strip";
 import { EVENT_HISTORY_PAGE_SIZE } from "./components/shared/event-history-page-size";
 import type {
-  MemberIdentity,
+  MemberIdentity as KillHistoryMember,
   MemberStatsSummary,
 } from "./components/member-kills/member-kills-view-model";
 import { useEventMemberKillHistory } from "./hooks/queries/use-event-member-kill-history";
@@ -137,8 +138,10 @@ const getMemberEventContext = ({
 };
 
 /** The member's details arrive with their kills, so their id stands in until then. */
-const getMemberName = (member: MemberIdentity | undefined, memberId: string) =>
-  member?.name ?? `#${memberId}`;
+const getMemberName = (
+  member: KillHistoryMember | undefined,
+  memberId: string,
+) => member?.name ?? `#${memberId}`;
 
 type EventMemberKillsPageContentProps = {
   guildId?: string;
@@ -274,11 +277,15 @@ export const EventMemberKillsPageContent = ({
       nameStyle={{ color: roleColor }}
       media={
         member && (
-          <MemberAvatar
-            userId={member.userId}
-            avatar={member.avatar ?? null}
-            name={member.name}
-            className="size-5"
+          <MemberIdentity
+            member={{ memberId: memberIdNumber }}
+            fallback={{
+              name: member.name,
+              avatarUrl: getDiscordAvatarUrl(member.userId, member.avatar, 64),
+            }}
+            display="avatar"
+            className="shrink-0"
+            avatarClassName="size-5"
           />
         )
       }

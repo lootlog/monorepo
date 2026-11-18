@@ -89,7 +89,7 @@
     "loadError": "Nie udało się załadować historii.",
     "preview": "Podgląd wersji {{version}}",
     "version": "Wersja {{version}}",
-    "editedBy": "{{action}}: {{name}}",
+    "editedBy": "{{action}}: <member/>",
     "actions": {
       "SAVE": "Zapis",
       "DELETE": "Kosz",
@@ -112,7 +112,7 @@
     "moved": "Dokument przeniesiony do kosza",
     "undo": "Cofnij",
     "moveError": "Nie udało się przenieść dokumentu do kosza.",
-    "deletedBy": "Usunięto: {{name}} · {{date}}",
+    "deletedBy": "Usunięto: <member/> · {{date}}",
     "restore": "Przywróć",
     "restored": "Dokument przywrócony",
     "restoreError": "Nie udało się przywrócić dokumentu.",

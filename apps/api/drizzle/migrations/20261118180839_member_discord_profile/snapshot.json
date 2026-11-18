@@ -1,0 +1,89 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "34990782-303a-42dd-a683-1c61b624e41b",
+  "prevIds": ["cb7a9af1-99b3-4a21-89ab-03e1a64322b6"],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "public", "Member", "username"],
+      "writes": [
+        "s|col|public.Member.username",
+        "n|col|public.Member.username",
+        "e|col|public.Member.username"
+      ],
+      "reads": ["n|tbl|public.Member", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "public", "Member", "globalAvatar"],
+      "writes": [
+        "s|col|public.Member.globalAvatar",
+        "n|col|public.Member.globalAvatar",
+        "e|col|public.Member.globalAvatar"
+      ],
+      "reads": ["n|tbl|public.Member", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "public", "Member", "joinedAt"],
+      "writes": [
+        "s|col|public.Member.joinedAt",
+        "n|col|public.Member.joinedAt",
+        "e|col|public.Member.joinedAt"
+      ],
+      "reads": ["n|tbl|public.Member", "n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Member",
+        "name": "username",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Member",
+        "name": "globalAvatar",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Member",
+        "name": "joinedAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

@@ -3,9 +3,8 @@ import type { GuildKillStatsResponseDtoOutputMemberRankingItem } from "@lootlog/
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
-import { MemberNameWithColor } from "@/components/common/member-name-with-color";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import {
   LEADERBOARD_SIZE,
   StatsLeaderboardSection,
@@ -34,7 +33,6 @@ export const MemberLeaderboardCard = ({
   hasActiveFilters = false,
 }: MemberLeaderboardCardProps) => {
   const { t } = useTranslation();
-  const membersMap = useGuildMemberMap(guildId);
   const isViewer = useIsViewer();
 
   const ranked = (data ?? [])
@@ -53,21 +51,34 @@ export const MemberLeaderboardCard = ({
       index >= LEADERBOARD_SIZE && isViewer(member.member.userId),
   );
 
+  // The whole row is a link to the member's stats, so the member inside it
+  // cannot be a button of its own.
   const renderRow = (member: (typeof ranked)[number], rank: number) => (
     <StatsLeaderboardRow
       key={member.member.id}
       rank={rank}
       media={
-        <MemberAvatar
-          userId={member.member.userId}
-          avatar={member.member.avatar}
-          name={member.member.name}
+        <MemberIdentity
+          member={{ memberId: member.member.id }}
+          fallback={{
+            name: member.member.name,
+            avatarUrl: getDiscordAvatarUrl(
+              member.member.userId,
+              member.member.avatar,
+              64,
+            ),
+          }}
+          display="avatar"
+          interactive={false}
+          avatarClassName="size-8"
         />
       }
       title={
-        <MemberNameWithColor
-          name={member.member.name}
-          member={membersMap.get(member.member.userId)}
+        <MemberIdentity
+          member={{ memberId: member.member.id }}
+          fallback={{ name: member.member.name }}
+          display="name"
+          nameClassName="leading-tight"
         />
       }
       value={member.participations}

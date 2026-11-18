@@ -3,8 +3,6 @@ import { formatLevel } from "@lootlog/domain/profession";
 import { EmptyState } from "@/components/common/empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
-import { TextLink } from "@lootlog/ui/components/text-link";
-import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { Ghost } from "lucide-react";
 import {
@@ -13,10 +11,10 @@ import {
 } from "@/features/kills/components/kill-stats-filters";
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
 import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
-import { MemberNameWithColor } from "@/components/common/member-name-with-color";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { StatsCountCell } from "@/components/common/stats-count-cell";
 import { StatsDetailMeta } from "./components/stats-detail-meta";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
   STATS_TABLE_COUNT_COLUMN_ID,
@@ -43,8 +41,6 @@ export const NpcKillersPage = () => {
     hasActiveFilters,
     paginatedKillers,
     cursor,
-    guildId,
-    membersMap,
     total,
     isCapped,
     hasPrev,
@@ -69,28 +65,20 @@ export const NpcKillersPage = () => {
       id: "member",
       header: () => t("kills.npcKillers.member"),
       cell: ({ row: { original: killer } }) => (
-        <div className="flex min-w-0 items-center gap-2.5">
-          <MemberAvatar
-            userId={killer.member.userId}
-            avatar={killer.member.avatar}
-            name={killer.member.name}
-            className="size-7"
+        <div className="flex min-w-0 items-center">
+          <MemberIdentity
+            member={{ memberId: killer.member.id }}
+            fallback={{
+              name: killer.member.name,
+              avatarUrl: getDiscordAvatarUrl(
+                killer.member.userId,
+                killer.member.avatar,
+                64,
+              ),
+            }}
+            className="gap-2.5"
+            avatarClassName="size-7"
           />
-          <TextLink
-            className="min-w-0 truncate text-sm"
-            render=<Link
-              to="/$guildId/stats/members/$memberId"
-              params={{
-                guildId,
-                memberId: String(killer.member.id),
-              }}
-            />
-          >
-            <MemberNameWithColor
-              name={killer.member.name}
-              member={membersMap.get(killer.member.userId)}
-            />
-          </TextLink>
         </div>
       ),
     },

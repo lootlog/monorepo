@@ -1,4 +1,4 @@
-import { createOrganizationTestWrapper } from "@/lib/testing/router";
+import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
 // @vitest-environment happy-dom
 
 import { initializeTestTranslations } from "@/lib/testing/i18n";
@@ -15,7 +15,7 @@ import { KillParticipantRow } from "./kill-participant-row";
 
 await initializeTestTranslations();
 
-const wrapper = await createOrganizationTestWrapper();
+const wrapper = await createMemberDirectoryTestWrapper();
 
 const render = (element: ReactElement) => renderElement(element, { wrapper });
 

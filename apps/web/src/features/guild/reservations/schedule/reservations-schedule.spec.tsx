@@ -54,7 +54,7 @@ const interval = (startsAt: Date, endsAt: Date, isCurrent = true, id = 1) => ({
     iconUrl: null,
     calendarPath: "/guild-1/reservations/driady",
   },
-  author: { displayName: "Cached author", avatarUrl: null },
+  author: { userId: null, displayName: "Cached author", avatarUrl: null },
   isMine: true,
   canEdit: true,
   canCancel: true,

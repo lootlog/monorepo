@@ -6,7 +6,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@lootlog/ui/components/collapsible";
-import { MemberAvatar } from "@/components/common/member-avatar";
+import { MemberIdentity } from "@/components/common/member-identity";
+import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import { cn } from "cn";
 import { formatTimeShort } from "../../utils/format-date";
 import type { GroupedMapAssignment } from "../../utils/kill-map-timeline-data";
@@ -14,13 +15,11 @@ import { formatDuration } from "@/utils/date/format-duration";
 
 interface KillMapAssignmentGroupProps {
   assignment: GroupedMapAssignment;
-  roleColor?: string;
   t: TFunction;
 }
 
 export const KillMapAssignmentGroup = ({
   assignment,
-  roleColor,
   t,
 }: KillMapAssignmentGroupProps) => {
   const [open, setOpen] = useState(false);
@@ -28,18 +27,23 @@ export const KillMapAssignmentGroup = ({
 
   const rowContent = (
     <>
-      <MemberAvatar
-        userId={assignment.memberUserId}
-        avatar={assignment.memberAvatar}
-        name={assignment.memberName}
-        imageSize={32}
-        className="size-6"
-      />
-      <span
-        className="min-w-0 flex-1 truncate text-xs font-medium"
-        style={roleColor ? { color: roleColor } : undefined}
-      >
-        {assignment.memberName}
+      <span className="flex min-w-0 flex-1">
+        <span className="pointer-events-auto inline-flex max-w-full min-w-0">
+          <MemberIdentity
+            member={{ memberId: assignment.memberId }}
+            fallback={{
+              name: assignment.memberName,
+              avatarUrl: getDiscordAvatarUrl(
+                assignment.memberUserId,
+                assignment.memberAvatar,
+                32,
+              ),
+            }}
+            className="gap-2"
+            avatarClassName="size-6"
+            nameClassName="text-xs font-medium"
+          />
+        </span>
       </span>
       <span className="w-16 shrink-0 text-right text-xs font-medium tabular-nums">
         {formatDuration(assignment.totalDurationSeconds, "human")}
@@ -63,23 +67,27 @@ export const KillMapAssignmentGroup = ({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger
-        render={
-          <button
-            type="button"
-            className="flex min-h-11 w-full items-center gap-2 rounded-lg px-1 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label={t(
-              "events.killDetail.mapCoverage.assignmentPeriodsAccessible",
-              {
-                member: assignment.memberName,
-                count: assignment.periods.length,
-              },
-            )}
-          >
-            {rowContent}
-          </button>
-        }
-      />
+      {/* The row toggles the periods; the member on it opens their profile. */}
+      <div className="relative rounded-lg transition-colors hover:bg-muted/30">
+        <CollapsibleTrigger
+          render={
+            <button
+              type="button"
+              className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={t(
+                "events.killDetail.mapCoverage.assignmentPeriodsAccessible",
+                {
+                  member: assignment.memberName,
+                  count: assignment.periods.length,
+                },
+              )}
+            />
+          }
+        />
+        <div className="pointer-events-none relative flex min-h-11 w-full items-center gap-2 px-1">
+          {rowContent}
+        </div>
+      </div>
       <CollapsibleContent>
         <div className="ml-8 border-l border-border/60 pl-3">
           {assignment.periods.map((period) => (

@@ -11,14 +11,19 @@ import {
 } from "@testing-library/react";
 
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
 import { LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import { MobileDaySchedule } from "./mobile-day-schedule";
 import type { ReservationSegment } from "./types";
 
+const ReservationWrapper = await createMemberDirectoryTestWrapper([]);
+
 const render = (ui: React.ReactNode, options?: RenderOptions) =>
   renderTestingLibrary(ui, {
     wrapper: ({ children }) => (
-      <LazyMotion features={domMax}>{children}</LazyMotion>
+      <ReservationWrapper>
+        <LazyMotion features={domMax}>{children}</LazyMotion>
+      </ReservationWrapper>
     ),
     ...options,
   });
@@ -79,7 +84,7 @@ const createSegment = (): ReservationSegment => {
       endsAt,
       createdAt: startsAt,
       comment: null,
-      author: { displayName: "Alderaan", avatarUrl: null },
+      author: { userId: null, displayName: "Alderaan", avatarUrl: null },
       sourceOrganization: {
         name: "Zgarbieni",
         iconUrl: null,

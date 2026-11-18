@@ -28,7 +28,7 @@
   "lastDetected": "ostatnio wykryty",
   "detectedByShort": "wykrył",
   "addedByHandShort": "dodał ręcznie",
-  "lastSeenByShort": "ostatnio {{name}}",
+  "lastSeenByShort": "ostatnio",
   "respawn": "Respawn herosa",
   "noTimer": "Brak timera",
   "spawnWindow": "okno {{window}}",

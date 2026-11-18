@@ -340,17 +340,26 @@ test("role deltas retain common rows and only visible profile changes invalidate
     boundary.events.length = 0;
     boundary.state.member = {
       ...boundary.state.member,
-      user: { ...boundary.state.member.user, global_name: "Global name" },
+      user: {
+        ...boundary.state.member.user,
+        global_name: "Global name",
+        avatar: "own-avatar",
+      },
       nick: "New name",
       avatar: "new-avatar",
       banner: "new-banner",
     };
     const renamed = await boundary.refresh();
     // The global chat names a User by the server-independent display name.
+    // A per-server avatar is served from the guild, so its address is stored:
+    // the user id and hash alone would build the address of a missing image.
     expect(renamed.member).toMatchObject({
       name: "New name",
       discordDisplayName: "Global name",
-      avatar: "new-avatar",
+      username: "Member",
+      avatar:
+        "https://cdn.discordapp.com/guilds/guild-1/users/discord-1/avatars/new-avatar.webp",
+      globalAvatar: "own-avatar",
       banner: "new-banner",
     });
     expect(boundary.events).toEqual(["cache", "freshness"]);

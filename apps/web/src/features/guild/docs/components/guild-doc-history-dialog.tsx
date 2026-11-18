@@ -13,11 +13,12 @@ import {
 } from "@lootlog/client/main";
 
 import { EmptyState } from "@/components/common/empty-state";
+import { MemberIdentity } from "@/components/common/member-identity";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { GuildDocEditor } from "../editor/guild-doc-editor";
 import { normalizeGuildDocEditorContent } from "../editor/guild-doc-editor-content";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { RetryButton } from "@/components/common/retry-button";
 
 type GuildDocHistoryDialogProps = {
@@ -79,35 +80,56 @@ export const GuildDocHistoryDialog = ({
     const isSelected = history.id === selectedHistoryId;
     const editedAt = timestampToDate(history.editedAt);
 
+    const versionLabel = t("docs.history.version", {
+      version: history.version,
+    });
+
     return (
-      <button
+      <div
         key={history.id}
-        type="button"
         className={cn(
-          "group relative w-full rounded-md border px-2.5 py-1.5 text-left transition-colors",
+          "relative rounded-md border transition-colors",
           isSelected
             ? "border-primary/80 bg-primary/10"
             : "border-border/80 bg-card/35 hover:border-primary/40 hover:bg-card",
         )}
-        aria-label={t("docs.history.version", { version: history.version })}
         title={history.title}
-        onClick={() => setSelectedHistoryId(history.id)}
       >
-        <div className="flex items-center justify-between gap-2 pl-1">
-          <span className="truncate text-sm font-medium leading-tight">
-            {t("docs.history.version", { version: history.version })}
-          </span>
-          <span className="shrink-0 text-2xs tabular-nums text-muted-foreground">
-            {editedAt}
-          </span>
+        {/* The row picks the version; the editor's name opens their profile. */}
+        <button
+          type="button"
+          className="absolute inset-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={versionLabel}
+          onClick={() => setSelectedHistoryId(history.id)}
+        />
+        <div className="pointer-events-none relative px-2.5 py-1.5 text-left">
+          <div className="flex items-center justify-between gap-2 pl-1">
+            <span className="truncate text-sm font-medium leading-tight">
+              {versionLabel}
+            </span>
+            <span className="shrink-0 text-2xs tabular-nums text-muted-foreground">
+              {editedAt}
+            </span>
+          </div>
+          <p className="mt-1 truncate pl-1 text-2xs text-muted-foreground">
+            <Trans
+              i18nKey="docs.history.editedBy"
+              values={{ action: actionLabel }}
+              components={{
+                member: (
+                  <MemberIdentity
+                    member={{ discordId: history.actor.memberId }}
+                    fallback={{ name: actorName }}
+                    display="name"
+                    className="pointer-events-auto"
+                    nameClassName="text-2xs font-normal"
+                  />
+                ),
+              }}
+            />
+          </p>
         </div>
-        <p className="mt-1 truncate pl-1 text-2xs text-muted-foreground">
-          {t("docs.history.editedBy", {
-            action: actionLabel,
-            name: actorName,
-          })}
-        </p>
-      </button>
+      </div>
     );
   };
 
