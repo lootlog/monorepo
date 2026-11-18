@@ -1,5 +1,6 @@
 import type {
   CatalogControllerGetItemsSort,
+  CatalogControllerGetNpcsSort,
   CatalogNpcDtoOutputType,
 } from "@lootlog/client/catalog";
 import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
@@ -618,7 +619,7 @@ const messages = {
     noResults: "Brak wyników dla podanych parametrów.",
     results: "Wyniki: {{count}}",
     resultsCapped: "Wyniki: ponad {{count}}",
-    showMore: "Pokaż więcej",
+    showNext: "Pokaż kolejne {{count}}",
     shown: "Pokazano {{shown}} z {{total}}",
   },
   common: {
@@ -902,7 +903,11 @@ const messages = {
   },
   npc: {
     heroTrackers: "Tropiciele Herosów",
+    eventTitan: "Tytan eventowy",
+    eventColossus: "Kolos eventowy",
     type: "Rodzaj",
+    profession: "Profesja",
+    firstSeenOn: "W Lootlogu od",
     elasticLevel: "Jak postać",
     topMap: "Najczęstsza mapa",
     allMaps: "Wszystkie mapy ({{count}})",
@@ -920,8 +925,21 @@ const messages = {
   },
   npcs: {
     title: "Wyszukiwarka NPC",
-    description: "Znajdź NPC-a lub potwora po nazwie i typie.",
-    types: "Typ potwora",
+    types: "Rodzaj",
+    firstSeen: "Pierwszy raz w Lootlogu",
+    firstSeenMonth: "Miesiąc pierwszego loota",
+    anyMonth: "Dowolny miesiąc",
+    firstSeenChip: "Pierwszy loot: {{month}}",
+    sortOptions: {
+      "lvl:desc": "Poziom malejąco",
+      "lvl:asc": "Poziom rosnąco",
+      "name:asc": "Nazwa A-Z",
+      "name:desc": "Nazwa Z-A",
+      "firstSeenOn:desc": "Najnowsze",
+    } satisfies Record<CatalogControllerGetNpcsSort, string>,
+    events: "Potwory eventowe",
+    noEventMonsters: "ten rodzaj nie ma eventowych",
+    queryPlaceholder: "np. tanroth, smok, kapłan",
   },
 } as const;
 

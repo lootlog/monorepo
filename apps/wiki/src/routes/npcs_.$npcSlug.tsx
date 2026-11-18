@@ -18,8 +18,10 @@ import { NpcPortrait } from "@/components/common/npc-portrait";
 import { NpcFacts } from "@/components/npcs/npc-facts";
 import { NpcFormerLevels } from "@/components/npcs/npc-former-levels";
 import { NpcLocations } from "@/components/npcs/npc-locations";
+import { EMPTY_NPCS_SEARCH } from "@/navigation/wiki-navigation";
 import { t } from "@/i18n/messages";
-import { npcSummary } from "@/lib/npc-summary";
+import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
+import { npcKindLabel, npcKindOf, npcKindSearch } from "@/lib/npc-types";
 import { npcPageParams } from "@/lib/catalog-links";
 import {
   findPageNpc,
@@ -89,6 +91,8 @@ function NpcRoute() {
 
   const npc = npcQuery.data && findPageNpc(npcQuery.data.hits, npcSlug);
 
+  const kind = npc && npcKindOf(npc);
+
   if (npc && npcPageParams(npc).npcSlug !== npcSlug) {
     return <Navigate to="/npcs/$npcSlug" params={npcPageParams(npc)} replace />;
   }
@@ -117,21 +121,21 @@ function NpcRoute() {
             label: t("navigation.npcs"),
             link: linkOptions({
               to: "/npcs",
-              search: { query: "", types: "" },
+              search: EMPTY_NPCS_SEARCH,
             }),
           },
-          ...(npc
+          ...(kind
             ? [
                 {
-                  label: t(`npcTypes.${npc.type}`),
+                  label: npcKindLabel(kind),
                   link: linkOptions({
                     to: "/npcs",
-                    search: { query: "", types: npc.type },
+                    search: { ...EMPTY_NPCS_SEARCH, ...npcKindSearch(kind) },
                   }),
                 },
-                { label: npc.name },
               ]
             : []),
+          ...(npc ? [{ label: npc.name }] : []),
         ]}
       />
 
@@ -142,7 +146,7 @@ function NpcRoute() {
               <NpcPortrait key={npc.icon} icon={npc.icon} size="md" />
               <div className="flex min-w-0 flex-col gap-1">
                 <p className="text-sm text-muted-foreground">
-                  {npcSummary(npc)}
+                  <NpcKindLevel npc={npc} />
                 </p>
                 <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
                   {npc.name}

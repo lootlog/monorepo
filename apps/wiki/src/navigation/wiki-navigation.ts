@@ -1,3 +1,4 @@
+import type { NpcsSearch } from "@/lib/npcs-search";
 import { linkOptions } from "@tanstack/react-router";
 import {
   Backpack,
@@ -9,6 +10,17 @@ import {
   Skull,
 } from "lucide-react";
 import type { ItemsSearch } from "@/lib/items-search";
+
+/** The NPC search with no filters, which links extend with their own. */
+export const EMPTY_NPCS_SEARCH: NpcsSearch = {
+  query: "",
+  types: "",
+  events: "",
+  minLevel: undefined,
+  maxLevel: undefined,
+  firstSeen: "",
+  sort: "",
+};
 
 /** The item search with no filters, which links extend with their own. */
 export const EMPTY_ITEMS_SEARCH: ItemsSearch = {
@@ -44,7 +56,7 @@ export const WIKI_NAVIGATION = [
     icon: Package,
   },
   {
-    link: linkOptions({ to: "/npcs", search: { query: "", types: "" } }),
+    link: linkOptions({ to: "/npcs", search: EMPTY_NPCS_SEARCH }),
     labelKey: "navigation.npcs",
     descriptionKey: "home.npcsDescription",
     icon: Skull,

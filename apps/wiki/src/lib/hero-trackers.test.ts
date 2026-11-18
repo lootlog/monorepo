@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  eventsByPriority,
-  isHeroTrackersEvent,
-  isHeroTrackersMonster,
-} from "./hero-trackers";
+import { eventsByPriority, isHeroTrackersEvent } from "./hero-trackers";
 
 describe("Tropiciele Herosów", () => {
   it("tells its editions from other events, which carry a year", () => {
@@ -27,20 +23,5 @@ describe("Tropiciele Herosów", () => {
       "Dzień Lichwiarza Grauhaza",
       "Dzień Negthotepa Czarnego Kapłana",
     ]);
-  });
-
-  it("marks heroes fought as colossi in their hideouts, not the heroes or real colossi", () => {
-    expect(
-      isHeroTrackersMonster({ type: "COLOSSUS", icon: "her/smokbarb.gif" }),
-    ).toBe(true);
-    expect(
-      isHeroTrackersMonster({ type: "HERO", icon: "her/smokbarb.gif" }),
-    ).toBe(false);
-    expect(
-      isHeroTrackersMonster({
-        type: "COLOSSUS",
-        icon: "kol/mamlambo_final2.gif",
-      }),
-    ).toBe(false);
   });
 });

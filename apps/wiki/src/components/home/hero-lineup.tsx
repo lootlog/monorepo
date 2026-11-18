@@ -5,7 +5,7 @@ import { NpcPortrait } from "@/components/common/npc-portrait";
 import { useNewBosses } from "@/hooks/use-new-bosses";
 import { t } from "@/i18n/messages";
 import { npcPageParams } from "@/lib/catalog-links";
-import { npcSummary } from "@/lib/npc-summary";
+import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
 
 const BOSSES_SHOWN = 3;
 
@@ -46,7 +46,7 @@ export function HeroLineup() {
                         {monster.name}
                       </span>
                       <span className="truncate text-xs text-muted-foreground">
-                        {npcSummary(monster)}
+                        <NpcKindLevel npc={monster} />
                       </span>
                     </span>
                   </Link>
