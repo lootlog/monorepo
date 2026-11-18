@@ -8,9 +8,9 @@ import { WikiHeader } from "./wiki-header";
 // so neither docks it.
 const PAGES_WITHOUT_DOCK = new Set(["/", "/set"]);
 
-// The item search pins its filters to the screen's left edge and gives the
-// results every column the screen has.
-const FULL_WIDTH_PAGES = new Set(["/items"]);
+// The item and NPC searches pin their filters to the screen's left edge and
+// give the results every column the screen has.
+const FULL_WIDTH_PAGES = new Set(["/items", "/npcs"]);
 
 /**
  * A public site rather than an app: a bar on top, the page under it and the

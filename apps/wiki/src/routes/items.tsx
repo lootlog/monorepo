@@ -1,8 +1,7 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
-import { Search, SlidersHorizontal, UserRound } from "lucide-react";
-import { startTransition, useEffect, useState } from "react";
+import { Search, UserRound } from "lucide-react";
+import { startTransition } from "react";
 import { Button } from "@lootlog/ui/components/button";
-import { FilterChipButton } from "@lootlog/ui/components/filter-chip-button";
 import {
   InputGroup,
   InputGroupAddon,
@@ -15,16 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetTitle,
-  SheetTrigger,
-} from "@lootlog/ui/components/sheet";
+import { ActiveFilterChips } from "@/components/common/active-filter-chips";
+import { FiltersAside } from "@/components/common/filters-aside";
+import { FiltersSheet } from "@/components/common/filters-sheet";
 import { ItemResults } from "@/components/items/item-results";
 import { ItemsFilterPanel } from "@/components/items/items-filter-panel";
-import { ItemsFiltersHeader } from "@/components/items/items-filters-header";
+import { useDebouncedQuery } from "@/hooks/use-debounced-query";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import {
@@ -43,8 +38,6 @@ import {
 import { canonicalLink } from "@/lib/link-preview";
 import { findMargonemWorld } from "@lootlog/domain/margonem-worlds";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
-
-const SEARCH_DEBOUNCE_MS = 300;
 
 const LIST_FILTERS = [
   {
@@ -134,8 +127,6 @@ export const Route = createFileRoute("/items")({
 function ItemsRoute() {
   const navigate = Route.useNavigate();
   const search = Route.useSearch();
-  const [query, setQuery] = useState(search.query);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { set } = useEquipmentSet();
 
   const change = (update: Partial<ItemsSearch>) =>
@@ -146,26 +137,9 @@ function ItemsRoute() {
       });
     });
 
-  useEffect(() => {
-    setQuery(search.query);
-  }, [search.query]);
-
-  useEffect(() => {
-    const nextQuery = query.trim();
-
-    if (nextQuery === search.query) return;
-
-    const timeoutId = setTimeout(() => {
-      startTransition(() => {
-        void navigate({
-          replace: true,
-          search: (current) => ({ ...current, query: nextQuery }),
-        });
-      });
-    }, SEARCH_DEBOUNCE_MS);
-
-    return () => clearTimeout(timeoutId);
-  }, [navigate, query, search.query]);
+  const [query, setQuery] = useDebouncedQuery(search.query, (next) =>
+    change({ query: next }),
+  );
 
   const filters = activeFilters(search);
 
@@ -186,16 +160,7 @@ function ItemsRoute() {
 
   return (
     <div className="grid items-start md:grid-cols-[17rem_minmax(0,1fr)]">
-      {/* Docked under the top bar like the set dock: a rule, not a card. */}
-      <aside
-        aria-label={t("filters.title")}
-        className="sticky top-14 hidden h-[calc(100dvh-3.5rem-var(--wiki-dock-height,0rem))] flex-col border-r border-sidebar-border md:-ml-6 md:flex"
-      >
-        <ItemsFiltersHeader count={filters.length} />
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 [scrollbar-width:thin]">
-          {panel}
-        </div>
-      </aside>
+      <FiltersAside count={filters.length}>{panel}</FiltersAside>
 
       <div className="flex min-w-0 flex-col gap-4 py-6 md:pl-6">
         <h1 className="sr-only">{t("items.title")}</h1>
@@ -259,67 +224,24 @@ function ItemsRoute() {
               </span>
             </Button>
           ) : null}
-          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-            <SheetTrigger
-              render={
-                <Button variant="outline" size="lg" className="md:hidden" />
-              }
-            >
-              <SlidersHorizontal aria-hidden="true" />
-              {t("filters.title")}
-              {filters.length > 0 ? (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tabular-nums">
-                  {filters.length}
-                </span>
-              ) : null}
-            </SheetTrigger>
-            <SheetContent side="left" className="gap-0 bg-card p-0">
-              <ItemsFiltersHeader
-                count={filters.length}
-                className="pr-12"
-                renderTitle={(title) => (
-                  <SheetTitle className="text-sm">{title}</SheetTitle>
-                )}
-              />
-              <div className="min-h-0 flex-1 overflow-y-auto px-3">{panel}</div>
-              <SheetFooter className="mt-0 border-t border-border/50 p-3">
-                <Button
-                  type="button"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => setIsSheetOpen(false)}
-                >
-                  {t("filters.showResults")}
-                </Button>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
+          <FiltersSheet count={filters.length}>{panel}</FiltersSheet>
         </div>
-
-        {filters.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {filters.map((filter) => (
-              <FilterChipButton
-                key={filter.key}
-                removeLabel={t("filters.remove", { filter: filter.label })}
-                onRemove={() => change(filter.clear)}
-              >
-                {filter.label}
-              </FilterChipButton>
-            ))}
-            <Button
-              variant="ghost"
-              size="xs"
-              onClick={() =>
+        <ItemResults
+          params={toCatalogParams(search)}
+          query={search.query}
+          filters={
+            <ActiveFilterChips
+              filters={filters.map((filter) => ({
+                key: filter.key,
+                label: filter.label,
+                onRemove: () => change(filter.clear),
+              }))}
+              onClearAll={() =>
                 change({ ...EMPTY_ITEMS_SEARCH, query: search.query })
               }
-            >
-              {t("filters.clearAll")}
-            </Button>
-          </div>
-        ) : null}
-
-        <ItemResults params={toCatalogParams(search)} query={search.query} />
+            />
+          }
+        />
       </div>
     </div>
   );

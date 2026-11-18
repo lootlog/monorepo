@@ -32,6 +32,7 @@ const catalogWith = (
     filter?: string;
     attributesToRetrieve?: string[];
     distinct?: string;
+    sort?: string[];
   }> = [];
 
   const client = new Meilisearch({
@@ -308,6 +309,86 @@ test("an old link to a rebalanced monster's former identity shows the monster as
   );
 });
 
+test("a level range leaves out NPCs without a level of their own, and a listing orders by level unless asked for names", async () => {
+  const { catalog, npcSearches } = catalogWith([]);
+
+  await Effect.runPromise(catalog.getNpcs({ gameVersion: "pl", maxLevel: 50 }));
+  await Effect.runPromise(
+    catalog.getNpcs({ gameVersion: "pl", minLevel: 100.9, sort: "name:desc" }),
+  );
+  await Effect.runPromise(
+    catalog.getNpcs({ gameVersion: "pl", sort: "lvl:asc" }),
+  );
+
+  // An NPC whose level follows the player's is stored at 0; "up to 50" must
+  // not list it.
+  expect(npcSearches[0]).toMatchObject({
+    filter:
+      'gameVersion = "pl" AND current != false AND lvl >= 1 AND lvl <= 50',
+    sort: ["lvl:desc", "name:asc"],
+  });
+  expect(npcSearches[1]).toMatchObject({
+    filter: 'gameVersion = "pl" AND current != false AND lvl >= 100',
+    sort: ["name:desc"],
+  });
+  expect(npcSearches[2]?.sort).toEqual(["lvl:asc", "name:asc"]);
+});
+
+test("narrows titans and colossi to the asked origins by their graphic's directory and leaves other types alone", async () => {
+  const { catalog, npcSearches } = catalogWith([]);
+
+  await Effect.runPromise(
+    catalog.getNpcs({ types: ["COLOSSUS"], bossOrigins: ["EVENT"] }),
+  );
+  await Effect.runPromise(catalog.getNpcs({ bossOrigins: ["HERO_TRACKERS"] }));
+  await Effect.runPromise(
+    catalog.getNpcs({ bossOrigins: ["REGULAR", "HERO_TRACKERS"] }),
+  );
+
+  // An event boss has none of the graphics its type owns.
+  expect(npcSearches[0]?.filter).toBe(
+    'current != false AND type IN ["COLOSSUS"] AND (type NOT IN ["TITAN","COLOSSUS"] OR (type = "TITAN" AND (iconDirectory NOT IN ["tyt"])) OR (type = "COLOSSUS" AND (iconDirectory NOT IN ["kol","her"])))',
+  );
+  // Only colossi are fought in a hero's hideout, so no titan matches.
+  expect(npcSearches[1]?.filter).toBe(
+    'current != false AND (type NOT IN ["TITAN","COLOSSUS"] OR (type = "COLOSSUS" AND (iconDirectory = "her")))',
+  );
+  expect(npcSearches[2]?.filter).toBe(
+    'current != false AND (type NOT IN ["TITAN","COLOSSUS"] OR (type = "TITAN" AND (iconDirectory = "tyt")) OR (type = "COLOSSUS" AND (iconDirectory = "kol" OR iconDirectory = "her")))',
+  );
+});
+
+test("dates a monster by the first sighting the index derives for it, and lists a month's or the newest monsters by it", async () => {
+  const { catalog, npcSearches } = catalogWith([], () => [
+    {
+      uid: "pl_template_1_2",
+      id: 1,
+      identityNamespace: "template",
+      gameVersion: "pl",
+      monsterKey: "pl_Tanroth_TITAN",
+      name: "Tanroth",
+      icon: "tyt/ice_king.gif",
+      type: "TITAN",
+      lvl: 300,
+      prof: "p",
+      monsterFirstSeenAt: Date.parse("2026-11-07T23:30:00.000Z"),
+    },
+  ]);
+
+  const found = await Effect.runPromise(
+    catalog.getNpcs({ firstSeenMonth: "2026-12", sort: "firstSeenOn:desc" }),
+  );
+
+  expect(found.hits).toEqual([
+    expect.objectContaining({ name: "Tanroth", firstSeenOn: "2026-11-07" }),
+  ]);
+  // December runs to the first instant of January of the next year.
+  expect(npcSearches[0]).toMatchObject({
+    filter: `current != false AND monsterFirstSeenAt >= ${Date.UTC(2026, 11)} AND monsterFirstSeenAt < ${Date.UTC(2027, 0)}`,
+    sort: ["monsterFirstSeenAt:desc", "name:asc"],
+  });
+});
+
 test("an old link by catalog key to a rebalanced monster's former identity shows the monster as it is now, read from the database", async () => {
   const reuzen = {
     gameVersion: "pl" as const,
@@ -327,6 +408,7 @@ test("an old link by catalog key to a rebalanced monster's former identity shows
     identityNamespace: "legacy" as const,
     lvl: 252,
     current: false,
+    firstSeenAt: Date.parse("2026-01-05T10:00:00.000Z"),
   };
 
   const current = {
@@ -336,6 +418,7 @@ test("an old link by catalog key to a rebalanced monster's former identity shows
     identityNamespace: "template" as const,
     lvl: 244,
     current: true,
+    firstSeenAt: Date.parse("2026-10-20T10:00:00.000Z"),
   };
 
   const { catalog, npcSearches } = catalogWith([], undefined, [], {
@@ -351,7 +434,14 @@ test("an old link by catalog key to a rebalanced monster's former identity shows
 
   expect(found).toEqual({
     estimatedTotalHits: 1,
-    hits: [expect.objectContaining({ key: current.uid, lvl: 244 })],
+    // The monster is as old as its earliest identity, not its current one.
+    hits: [
+      expect.objectContaining({
+        key: current.uid,
+        lvl: 244,
+        firstSeenOn: "2026-01-05",
+      }),
+    ],
   });
   expect(npcSearches).toEqual([]);
 });

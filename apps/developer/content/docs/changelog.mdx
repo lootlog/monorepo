@@ -3,6 +3,23 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-18 — NPC catalog levels, order, boss origins and first sightings
+
+- `GET /catalog/npcs` accepts `minLevel` and `maxLevel`. An NPC whose level
+  follows the player's has no level of its own and is left out of a range.
+- `GET /catalog/npcs` accepts `sort`: `lvl:desc` (the default), `lvl:asc`,
+  `name:asc` or `name:desc`. NPCs of one level follow by name, and a `search`
+  still ranks by how well a name matches first.
+- `GET /catalog/npcs` accepts `bossOrigins`, which narrows titans and colossi
+  to `REGULAR` (the bosses of the regular game), `HERO_TRACKERS` (the heroes
+  fought as colossi in their hideouts during Tropiciele Herosów) or `EVENT`
+  (the bosses of every other event). NPCs of other types are not narrowed.
+- `CatalogNpcDto_Output` adds `firstSeenOn`: the day (`YYYY-MM-DD`, UTC) a
+  loot of the NPC first reached Lootlog under any of its catalog identities,
+  or `null` without a recorded first sighting. `GET /catalog/npcs` accepts
+  `firstSeenMonth` (`YYYY-MM`) to list the NPCs first seen in a month, and
+  `sort=firstSeenOn:desc` to list the most recently seen first.
+
 ## 2026-11-16 — Duplicate and legacy operations removed (breaking)
 
 Fifteen operations that duplicated another one are removed and return `404`.

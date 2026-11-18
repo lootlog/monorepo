@@ -1,10 +1,6 @@
 import type { CatalogNpcDtoOutput } from "@lootlog/client/catalog";
 import { t } from "@/i18n/messages";
-
-const dayFormat = new Intl.DateTimeFormat("pl-PL", {
-  dateStyle: "long",
-  timeZone: "UTC",
-});
+import { formatCatalogDay } from "@/lib/catalog-days";
 
 /**
  * The levels a monster had before the game changed it, oldest first. A
@@ -24,7 +20,7 @@ export function NpcFormerLevels({
           .map(({ lvl, until }) =>
             t("catalog.formerLevel", {
               level: lvl,
-              date: dayFormat.format(new Date(`${until}T00:00:00Z`)),
+              date: formatCatalogDay(until),
             }),
           )
           .join(", "),

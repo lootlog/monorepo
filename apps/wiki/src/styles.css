@@ -4,3 +4,13 @@
 @import "@lootlog/ui/themes/backgrounds.css";
 @import "@lootlog/ui/scrollbars.css";
 @import "@lootlog/ui/portal.css";
+
+/*
+ * The wiki is a public site whose pages scroll the document, so links to a
+ * section and the browser's own scroll restoration work. Its scrollbar takes
+ * the look of the panels' `ScrollArea` ones.
+ */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}

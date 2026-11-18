@@ -51,6 +51,11 @@ const NPC_PARAMETERS = {
   ids: true,
   keys: true,
   types: true,
+  bossOrigins: true,
+  minLevel: true,
+  maxLevel: true,
+  firstSeenMonth: true,
+  sort: true,
   limit: true,
   offset: true,
 } satisfies Record<keyof CatalogControllerGetNpcsParams, true>;

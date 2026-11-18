@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import {
+  bossOrigin,
   compareNpcsStrongestFirst,
   getNpcType,
   type NpcClassification,
@@ -111,5 +112,24 @@ describe("strongest NPC of a fight", () => {
         { ...twin, npcId: 9 },
       ]),
     ).toBe(3);
+  });
+});
+
+describe("boss origin", () => {
+  it("tells the game's bosses, the heroes of Tropiciele Herosów and event bosses apart by their graphic", () => {
+    expect(bossOrigin("COLOSSUS", "kol/kolos-drakolisz.gif")).toBe("REGULAR");
+    expect(
+      bossOrigin(
+        "COLOSSUS",
+        "https://micc.garmory-cdn.cloud/obrazki/npc/her/negthotep.gif",
+      ),
+    ).toBe("HERO_TRACKERS");
+    expect(bossOrigin("COLOSSUS", "kev/w26-k7-haakon.gif")).toBe("EVENT");
+    // An event colossus drawn with a hero event's graphic is still an event's.
+    expect(bossOrigin("COLOSSUS", "hev/wiel-orzel2.gif")).toBe("EVENT");
+    expect(bossOrigin("TITAN", "tyt/ice_king.gif")).toBe("REGULAR");
+    expect(bossOrigin("TITAN", "kev/w26-k7-haakon.gif")).toBe("EVENT");
+    // Only a colossus is fought in a hero's hideout.
+    expect(bossOrigin("TITAN", "her/negthotep.gif")).toBe("EVENT");
   });
 });

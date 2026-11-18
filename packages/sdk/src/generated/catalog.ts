@@ -182,6 +182,11 @@ export interface CatalogNpcDtoOutput {
   locations: CatalogNpcDtoOutputLocationsItem[];
   /** Levels the NPC had before the game changed it, oldest first. Lootlog recomputes them daily from recorded fights and leaves out NPCs whose level follows the player's. */
   formerLevels: CatalogNpcDtoOutputFormerLevelsItem[];
+  /**
+     * The day (`YYYY-MM-DD`, UTC) a loot of the NPC first reached Lootlog, under any of its catalog identities. Margonem adds an NPC to every world at once, so it dates the NPC's arrival in the game for NPCs added since Lootlog records them; `null` for an NPC without a recorded first sighting.
+     * @nullable
+     */
+  firstSeenOn: string | null;
 }
 
 /**
@@ -343,6 +348,18 @@ gameVersion?: CatalogControllerGetNpcsGameVersion;
 ids?: number[];
 keys?: string[];
 types?: string[];
+bossOrigins?: string[];
+minLevel?: number;
+maxLevel?: number;
+/**
+ * NPCs Lootlog saw for the first time in this month (`YYYY-MM`, UTC), as `CatalogNpcDto_Output.firstSeenOn`.
+ * @pattern ^\d{4}-(?:0[1-9]|1[0-2])$
+ */
+firstSeenMonth?: string;
+/**
+ * The order of the NPCs, `lvl:desc` by default; NPCs of one level follow by name. `firstSeenOn:desc` lists first the NPCs Lootlog saw for the first time most recently; NPCs without a first sighting follow. A `search` still ranks by how well a name matches before it.
+ */
+sort?: CatalogControllerGetNpcsSort;
 limit?: number;
 offset?: number;
 };
@@ -353,6 +370,17 @@ export type CatalogControllerGetNpcsGameVersion = typeof CatalogControllerGetNpc
 export const CatalogControllerGetNpcsGameVersion = {
   en: 'en',
   pl: 'pl',
+} as const;
+
+export type CatalogControllerGetNpcsSort = typeof CatalogControllerGetNpcsSort[keyof typeof CatalogControllerGetNpcsSort];
+
+
+export const CatalogControllerGetNpcsSort = {
+  'lvl:desc': 'lvl:desc',
+  'lvl:asc': 'lvl:asc',
+  'name:asc': 'name:asc',
+  'name:desc': 'name:desc',
+  'firstSeenOn:desc': 'firstSeenOn:desc',
 } as const;
 
 export type CatalogControllerGetNpcs401 = {
@@ -464,7 +492,7 @@ export const getCatalogControllerGetNpcsUrl = (params?: CatalogControllerGetNpcs
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["ids","keys","types"];
+    const explodeParameters = ["ids","keys","types","bossOrigins"];
 
     if (Array.isArray(value) && explodeParameters.includes(key)) {
       value.forEach((v) => {

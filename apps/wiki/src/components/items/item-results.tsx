@@ -1,11 +1,12 @@
+import type { ReactNode } from "react";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
+import { ShowMoreResults } from "@/components/common/show-more-results";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import type { AttackSpeedRanking } from "@/components/catalog/item-attack-speed";
 import { t } from "@/i18n/messages";
 import {
   itemResultsQueryOptions,
+  RESULTS_PAGE_SIZE,
   type ItemSearchParams,
 } from "@/lib/catalog-page-queries";
 import { CATALOG_MAX_HITS } from "@/lib/catalog-pages";
@@ -20,10 +21,12 @@ type ItemResultsProps = {
   params: ItemSearchParams;
   /** The typed phrase, highlighted in item names. */
   query: string;
+  /** The active filters, shown beside the count. */
+  filters?: ReactNode;
 };
 
 /** The item search's hits, a page at a time, with how many there are. */
-export function ItemResults({ params, query }: ItemResultsProps) {
+export function ItemResults({ params, query, filters }: ItemResultsProps) {
   const { data, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
       ...itemResultsQueryOptions(params),
@@ -32,25 +35,29 @@ export function ItemResults({ params, query }: ItemResultsProps) {
 
   const items = data?.pages.flatMap((page) => page.hits);
   const total = data?.pages[0]?.estimatedTotalHits ?? 0;
+  const reachable = Math.min(total, CATALOG_MAX_HITS);
 
   return (
     <section aria-labelledby="items-results" className="flex flex-col gap-3">
-      <h2
-        id="items-results"
-        aria-live="polite"
-        className="text-sm font-semibold text-foreground tabular-nums"
-      >
-        {data
-          ? t(
-              total >= CATALOG_MAX_HITS
-                ? "search.resultsCapped"
-                : "search.results",
-              {
-                count: total.toLocaleString("pl-PL"),
-              },
-            )
-          : t("search.loading")}
-      </h2>
+      <div className="flex min-h-7 flex-wrap items-center gap-x-3 gap-y-1.5">
+        <h2
+          id="items-results"
+          aria-live="polite"
+          className="text-sm font-semibold text-foreground tabular-nums"
+        >
+          {data
+            ? t(
+                total >= CATALOG_MAX_HITS
+                  ? "search.resultsCapped"
+                  : "search.results",
+                {
+                  count: total.toLocaleString("pl-PL"),
+                },
+              )
+            : t("search.loading")}
+        </h2>
+        {filters}
+      </div>
       <CatalogItemGrid
         items={items}
         isError={isError}
@@ -61,23 +68,13 @@ export function ItemResults({ params, query }: ItemResultsProps) {
         attackSpeed={ATTACK_SPEED_RANKINGS.get(params.sort)}
       />
       {items && hasNextPage ? (
-        <div className="flex flex-col items-center gap-2 pt-2">
-          <p className="text-xs text-muted-foreground tabular-nums">
-            {t("search.shown", {
-              shown: items.length.toLocaleString("pl-PL"),
-              total: total.toLocaleString("pl-PL"),
-            })}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            loading={isFetchingNextPage}
-            icon={<ChevronDown />}
-            onClick={() => void fetchNextPage()}
-          >
-            {t("search.showMore")}
-          </Button>
-        </div>
+        <ShowMoreResults
+          shown={items.length}
+          total={reachable}
+          next={Math.min(RESULTS_PAGE_SIZE, reachable - items.length)}
+          isLoading={isFetchingNextPage}
+          onShowMore={() => void fetchNextPage()}
+        />
       ) : null}
     </section>
   );

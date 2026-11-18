@@ -1,6 +1,5 @@
 import { Gem } from "lucide-react";
 import { useId } from "react";
-import { LevelRangeInputs } from "@lootlog/ui/components/level-range-inputs";
 import {
   Select,
   SelectContent,
@@ -35,7 +34,8 @@ import {
   findMargonemWorld,
   MARGONEM_WORLDS,
 } from "@lootlog/domain/margonem-worlds";
-import { FilterSection } from "./filter-section";
+import { FilterSection } from "@/components/common/filter-section";
+import { LevelFilterSection } from "@/components/common/level-filter-section";
 import { FilterTile } from "@/components/filter-tile";
 
 type ItemsFilterPanelProps = {
@@ -47,16 +47,6 @@ type ItemsFilterPanelProps = {
 const OTHER_TYPE_OPTIONS = ITEM_TYPE_OPTIONS.filter(
   (type) => !EQUIPMENT_SLOTS.some((slot) => slot.types.includes(type)),
 );
-
-/** Level brackets players think in; the last one has no upper bound. */
-const LEVEL_BRACKETS = [
-  { min: 1, max: 49 },
-  { min: 50, max: 99 },
-  { min: 100, max: 149 },
-  { min: 150, max: 199 },
-  { min: 200, max: 249 },
-  { min: 250, max: undefined },
-] as const;
 
 const TILE_GRID = "grid grid-cols-2 gap-1.5";
 
@@ -94,7 +84,6 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
   const stats = listFilter("stats");
   const types = listFilter("types");
 
-  const { minLevel, maxLevel } = search;
   const world = findMargonemWorld(search.world);
   const worldLabelId = useId();
 
@@ -104,9 +93,6 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
   ];
 
   const selectedSlot = findEquipmentSlotById(search.slot);
-
-  const setLevel = (min: number | undefined, max: number | undefined) =>
-    onChange({ minLevel: min, maxLevel: max });
 
   return (
     <div className="flex flex-col">
@@ -178,52 +164,11 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
         </div>
       </FilterSection>
 
-      <FilterSection
-        title={t("filters.level")}
-        count={minLevel !== undefined || maxLevel !== undefined ? 1 : 0}
-        onClear={() => setLevel(undefined, undefined)}
-        defaultOpen
-      >
-        <div className="flex flex-col gap-2">
-          <div className="grid grid-cols-3 gap-1.5">
-            {LEVEL_BRACKETS.map(({ min, max }) => {
-              const isPressed = minLevel === min && maxLevel === max;
-
-              return (
-                <FilterTile
-                  key={min}
-                  label={
-                    max === undefined
-                      ? t("filters.levelFrom", { min })
-                      : t("filters.levelBracket", { min, max })
-                  }
-                  pressed={isPressed}
-                  onPressedChange={(pressed) =>
-                    pressed
-                      ? setLevel(min, max)
-                      : setLevel(undefined, undefined)
-                  }
-                  centered
-                />
-              );
-            })}
-          </div>
-          <LevelRangeInputs
-            size="default"
-            labels={{
-              group: t("filters.level"),
-              min: t("filters.minLevel"),
-              max: t("filters.maxLevel"),
-              minPlaceholder: t("filters.minLevelPlaceholder"),
-              maxPlaceholder: t("filters.maxLevelPlaceholder"),
-            }}
-            minLevel={minLevel}
-            maxLevel={maxLevel}
-            onMinLevelChange={(level) => onChange({ minLevel: level })}
-            onMaxLevelChange={(level) => onChange({ maxLevel: level })}
-          />
-        </div>
-      </FilterSection>
+      <LevelFilterSection
+        minLevel={search.minLevel}
+        maxLevel={search.maxLevel}
+        onChange={onChange}
+      />
 
       <FilterSection
         title={t("filters.rarity")}
