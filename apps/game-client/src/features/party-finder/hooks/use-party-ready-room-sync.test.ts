@@ -7,6 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyReadyRoomSync } from "@/features/party-finder/hooks/use-party-ready-room-sync";
 import { areReadyRoomsSynchronized } from "@/features/party-finder/hooks/use-ready-rooms";
 import { mergeReadyRoomProjectionIntoCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
+import { RealtimeClient } from "@lootlog/client/realtime";
+import { Permission } from "@lootlog/schema/permissions";
+import { SocketProvider } from "@/contexts/socket-context";
+import { configureGameClientPlatform } from "@/lib/game-client-platform";
+import { disposeSocket } from "@/lib/socket";
+import { RealtimeWire } from "@/test/realtime-wire";
 import { useGlobalStore } from "@/store/global.store";
 import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
 import { queryKeys } from "@/features/public-api/query-keys";
@@ -102,6 +108,70 @@ describe("usePartyReadyRoomSync", () => {
     await waitFor(() =>
       expect(areReadyRoomsSynchronized(queryClient)).toBe(true),
     );
+  });
+
+  it("keeps the collection through the presence grant that follows every join", async () => {
+    disposeSocket();
+    const wire = new RealtimeWire();
+
+    const restorePlatform = configureGameClientPlatform({
+      fetch: globalThis.fetch,
+      createRealtime: () =>
+        new RealtimeClient({
+          url: "https://gateway.example.test",
+          webSocketFactory: () => wire,
+        }),
+    });
+
+    const receiveAccess = (permissions: Permission[]) =>
+      act(() =>
+        wire.receive({
+          v: 1,
+          type: "permissions.updated",
+          data: {
+            accessPolicy: {
+              version: permissions.join(),
+              organizations: [
+                {
+                  organizationId: "guild-1",
+                  owner: false,
+                  permissions,
+                  grants: [],
+                },
+              ],
+            },
+            changes: [],
+            organizationIds: ["guild-1"],
+            subscriptionScopes: [],
+          },
+        }),
+      );
+
+    const view = renderHook(() => usePartyReadyRoomSync(), {
+      wrapper: ({ children }: { children: ReactNode }) =>
+        wrapper({ children: createElement(SocketProvider, null, children) }),
+    });
+
+    act(() => wire.open());
+    await receiveAccess([Permission.LOOTLOG_ACCESS]);
+    mergeReadyRoomProjectionIntoCache(createProjection(3), queryClient);
+
+    await receiveAccess([
+      Permission.LOOTLOG_ACCESS,
+      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+    ]);
+    expect(readCache().projections).toHaveProperty("room-1");
+
+    await receiveAccess([
+      Permission.LOOTLOG_ACCESS,
+      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+      Permission.LOOTLOG_CHAT_READ,
+    ]);
+    await waitFor(() => expect(readCache().projections).toEqual({}));
+
+    view.unmount();
+    disposeSocket();
+    restorePlatform();
   });
 
   it("preserves a newer socket projection received during a delayed list request", async () => {
