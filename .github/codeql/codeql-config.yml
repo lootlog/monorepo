@@ -1,5 +1,0 @@
-name: Lootlog CodeQL
-
-# Vendored reference repositories for agents are never imported or shipped.
-paths-ignore:
-  - repos/**

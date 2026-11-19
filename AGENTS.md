@@ -58,8 +58,7 @@ proof that a feature already exists.
 
 ## Operating defaults
 
-These defaults define the work contract for every agent; their wording is
-tuned for GPT-6 Astra:
+These defaults define the work contract for every agent:
 
 - Infer the user's intent and authorized scope from their request and the prior
   conversation. Treat requests such as “help me,” “can you,” and “I want to” as
@@ -114,18 +113,21 @@ grep, find, or broad source reads when locating code or tracing behavior:
 
 <!-- CODEGRAPH_END -->
 
-## Vendored repositories
+## Reference repositories
 
-When work depends on a library vendored under `repos/`, inspect that repository
-before using web search or guessing from documentation. Use its implementation,
-tests, and module structure as reference material.
+`repos/` holds read-only source checkouts of external dependencies. It is not
+tracked: run `bun run repos:fetch` to download them at the versions pinned in
+the workspace catalog, and run it again after a dependency upgrade.
 
-- Treat `repos/` as read-only unless the user explicitly asks to update a
-  vendored repository.
+When work depends on a library available under `repos/`, inspect that
+repository before using web search or guessing from documentation. Use its
+implementation, tests, and module structure as reference material.
+
+- Never edit files under `repos/`; the next fetch replaces them.
 - Keep application imports pointed at installed package dependencies; never
   import or ship code from `repos/`.
-- Keep `repos/` out of linting, formatting, type checking, tests, CI, code
-  scanning, and code review; it is reference material only.
+- Keep `repos/` out of linting, formatting, type checking, and tests; it is
+  reference material only.
 - Before writing Effect code, read `repos/effect/LLMS.md`, then inspect
   `repos/effect/` for the relevant idiomatic patterns.
 
@@ -149,14 +151,14 @@ The main code areas are:
   `apps/developer` provides API key management, integration guides, and API
   reference for developers.
 - `apps/api`, `apps/auth`, `apps/gateway`, `apps/battlelog`, `apps/activity`,
-  `apps/search`, and `apps/discord-bot` own independently deployed backend
-  responsibilities.
+  `apps/search`, `apps/catalog`, and `apps/discord-bot` own independently
+  deployed backend responsibilities.
 - `apps/traffic-splitter` owns shared edge routing for `dev.lootlog.pl` and
   `lootlog.pl`.
 - `packages/` contains generated clients, browser-safe contracts and domain
   logic, protocols, UI, configuration, and tools. Defining a shared type does
   not make a package the owner of its data.
-- `repos/` contains vendored reference repositories for external dependencies.
+- `repos/` contains fetched reference repositories for external dependencies.
 
 ## Domain language and boundaries
 
