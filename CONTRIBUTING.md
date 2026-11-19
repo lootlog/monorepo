@@ -39,7 +39,7 @@ does not guarantee permanent public support.
 
 Requirements:
 
-- Node.js 26.8.1
+- Node.js 26.8.2
 - Bun 1.4.4
 - Docker with Docker Compose
 
@@ -52,6 +52,7 @@ docker compose up -d
 bun run db:api:migrate:dev
 bun run db:activity:migrate:dev
 bun run db:auth:migrate:dev
+bun run db:catalog:migrate:dev
 bun run db:battlelog:migrate:deploy
 bun run dev
 ```
@@ -108,8 +109,8 @@ required by the affected workspace before handoff.
 
 ## API architecture and checks
 
-Backend TypeScript schemas and types are maintained by hand in all seven services:
-API, Auth, Gateway, Battlelog, Activity, Search, and Discord bot. Effect schemas
+Backend TypeScript schemas and types are maintained by hand in all eight services:
+API, Auth, Gateway, Battlelog, Activity, Search, Catalog, and Discord bot. Effect schemas
 define HTTP validation; infer their TypeScript types from those schemas. Reuse
 schemas from their owning module instead of copying fields or adding endpoint
 aliases. Existing OpenAPI component identifiers remain stable for client compatibility.

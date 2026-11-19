@@ -1,3 +1,7 @@
+// Declaration build for the published packages (`sdk`, `game-client-api`).
+// It lives in `packages/` on purpose: the declaration bundler uses this file's
+// directory as `rootDir`, so it must be a common ancestor of every workspace
+// whose sources the published types include.
 {
   "extends": "./sdk/tsconfig.json",
   "compilerOptions": {
