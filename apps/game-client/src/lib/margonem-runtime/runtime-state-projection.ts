@@ -181,7 +181,16 @@ function normalizeOtherFromEvent(
   });
 }
 
-function normalizeParty(event: NonNullable<GameEvent["party"]>) {
+// Margonem keeps a member's profession when a push omits it
+// (PartyMember.updateData), so a push without one must not clear it.
+function normalizeParty(
+  event: NonNullable<GameEvent["party"]>,
+  previous: readonly RuntimePartyMember[],
+) {
+  const knownProfessions = new Map(
+    previous.map((member) => [member.characterId, member.profession]),
+  );
+
   return Object.freeze(
     Object.entries(event.members ?? {}).map<RuntimePartyMember>(
       ([characterId, member]) =>
@@ -193,7 +202,8 @@ function normalizeParty(event: NonNullable<GameEvent["party"]>) {
           isLeader: Boolean(member.commander),
           maxHp: member.hp_max ?? 0,
           name: member.nick,
-          profession: member.prof ?? null,
+          profession:
+            member.prof || (knownProfessions.get(characterId) ?? null),
         }),
     ),
   );
@@ -349,7 +359,8 @@ export class RuntimeStateProjection {
     }
 
     if (event.party) {
-      usePartyStore.getState().replaceParty(normalizeParty(event.party));
+      const party = usePartyStore.getState();
+      party.replaceParty(normalizeParty(event.party, party.members));
     }
 
     applySocialLists(event);
