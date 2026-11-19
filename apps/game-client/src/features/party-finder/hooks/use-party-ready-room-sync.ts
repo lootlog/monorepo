@@ -4,6 +4,8 @@ import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useSocket } from "@/contexts/socket-context";
 import { queryKeys } from "@/features/public-api/query-keys";
+import { GATHERING_ACCESS_AREAS } from "@/features/chat/hooks/use-active-party-gatherings";
+import type { AccessUpdate } from "@/lib/socket";
 import {
   clearReadyRoomCache,
   invalidateReadyRoomSync,
@@ -12,7 +14,7 @@ import {
 
 /**
  * Mounts the Ready Room query and resynchronizes it whenever the viewer's
- * character, world or guild permissions change. A permission change can hide
+ * character, world or gathering-related permissions change. Such a change can hide
  * rooms the viewer may no longer see, so it drops the collection instead of
  * merging the next response into it.
  */
@@ -54,7 +56,14 @@ export function usePartyReadyRoomSync(): void {
   useEffect(() => {
     if (!socket) return;
 
-    const permissionsChanged = () => {
+    const permissionsChanged = ({ changes }: AccessUpdate) => {
+      if (
+        !changes.some((change) =>
+          change.areas.some((area) => GATHERING_ACCESS_AREAS.has(area)),
+        )
+      )
+        return;
+
       clearReadyRoomCache(queryClient);
       void queryClient.invalidateQueries({
         queryKey: queryKeys.readyRooms(),

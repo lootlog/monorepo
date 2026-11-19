@@ -24,9 +24,10 @@ const decodeGatherings = Schema.decodeUnknownSync(
   Schema.Array(PartyGatheringSummarySchema),
 );
 
-// Discovery follows chat read access, the organizer's send permission, and
+// Gatherings follow chat read access, the organizer's send permission, and
 // administration; changes to other areas cannot alter the visible gatherings.
-const GATHERING_ACCESS_AREAS = new Set([
+// Presence in particular is granted after every gateway join.
+export const GATHERING_ACCESS_AREAS: ReadonlySet<string> = new Set([
   "chat",
   "notifications",
   "organization",

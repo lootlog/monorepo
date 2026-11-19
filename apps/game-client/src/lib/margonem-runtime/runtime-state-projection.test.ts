@@ -770,6 +770,26 @@ describe("RuntimeStateProjection", () => {
     ).toContain("party");
   });
 
+  it("keeps a party member's profession when a later push omits it", () => {
+    const projection = new RuntimeStateProjection({ adapter: createAdapter() });
+    projection.bootstrap();
+
+    const member = { account: 201, icon: "a.gif", nick: "Member" };
+
+    projection.apply(
+      createEnvelope({
+        party: { members: { "101": { ...member, prof: "m" } } },
+      }),
+    );
+    const reported = usePartyStore.getState().members;
+
+    projection.apply(
+      createEnvelope({ party: { members: { "101": { ...member } } } }),
+    );
+
+    expect(usePartyStore.getState().members).toBe(reported);
+  });
+
   describe("social relations", () => {
     const clanGame = Object.freeze({
       ...game,
