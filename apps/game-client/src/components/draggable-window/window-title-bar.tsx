@@ -44,7 +44,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   const handleOpacityChange = () => {
     const currentIndex = OPACITY_LEVELS.indexOf(opacity);
     const nextIndex = (currentIndex + 1) % OPACITY_LEVELS.length;
-    onOpacityChange(OPACITY_LEVELS[nextIndex]);
+    onOpacityChange(OPACITY_LEVELS[nextIndex] ?? 1);
   };
 
   const lockLabel = isLocked

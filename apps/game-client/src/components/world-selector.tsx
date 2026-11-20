@@ -85,7 +85,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     if (!world) {
       if (defaultWorld && worlds.includes(defaultWorld)) {
         setWorld(guildId, defaultWorld);
-      } else if (worlds.length > 0) {
+      } else if (worlds[0] !== undefined) {
         setWorld(guildId, worlds[0]);
       }
 
@@ -95,7 +95,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     if (!worlds.includes(world)) {
       if (defaultWorld && worlds.includes(defaultWorld)) {
         setWorld(guildId, defaultWorld);
-      } else if (worlds.length > 0) {
+      } else if (worlds[0] !== undefined) {
         setWorld(guildId, worlds[0]);
       }
     }

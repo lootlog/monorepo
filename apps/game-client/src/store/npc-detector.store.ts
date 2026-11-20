@@ -100,9 +100,7 @@ export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
         const incomingNpcIdSet = new Set<number>();
         const frontNpcIds: number[] = [];
 
-        for (let index = incomingNpcIds.length - 1; index >= 0; index -= 1) {
-          const incomingNpcId = incomingNpcIds[index];
-
+        for (const incomingNpcId of incomingNpcIds.toReversed()) {
           if (incomingNpcIdSet.has(incomingNpcId)) continue;
 
           incomingNpcIdSet.add(incomingNpcId);

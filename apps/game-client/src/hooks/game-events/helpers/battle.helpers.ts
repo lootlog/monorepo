@@ -93,18 +93,23 @@ export const mergeBattleWarriorPatches = (
         : undefined;
     }
 
-    mergedWarriors[key] = {
+    // SAFETY: Margonem builds a warrior it has not seen from that first
+    // packet (Warriors.update -> OneWarrior.init), which carries the whole
+    // warrior; later packets patch only the keys they supply.
+    const mergedWarrior = {
       ...currentWarrior,
       ...warrior,
       accountId,
-    };
+    } as BattleWarriorsWithAccountId[string];
+
+    mergedWarriors[key] = mergedWarrior;
 
     // Capture the map NPC once: its npcs_del can precede the battle or the
     // fight loot, and the warrior alone has no template or Margonem type.
     if (key.startsWith("-")) {
-      const runtimeId = mergedWarriors[key].originalId;
+      const runtimeId = mergedWarrior.originalId;
 
-      mergedWarriors[key].mapNpc =
+      mergedWarrior.mapNpc =
         currentWarrior?.mapNpc ??
         ingress?.npcsById[runtimeId] ??
         useNpcsStore.getState().getMapNpc(runtimeId) ??
@@ -112,7 +117,7 @@ export const mergeBattleWarriorPatches = (
     }
 
     if (modernHpPercentage !== undefined) {
-      mergedWarriors[key].hpp = modernHpPercentage;
+      mergedWarrior.hpp = modernHpPercentage;
     }
   });
 

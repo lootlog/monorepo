@@ -33,7 +33,7 @@ it("loads scoped history only when opened and restores the timer into its world 
     expect(fixture.requests).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Historia timerów" }));
     expect(await screen.findByText("Salvatore (Lootlog)")).toBeVisible();
-    const url = new URL(fixture.requests[0].url);
+    const url = new URL(fixture.requests[0]!.url);
     expect(url.pathname).toBe("/timers/history");
     expect(Object.fromEntries(url.searchParams)).toEqual({
       guildId: "guild-1",
@@ -55,10 +55,10 @@ it("loads scoped history only when opened and restores the timer into its world 
         }),
       ]),
     );
-    expect(new URL(fixture.requests[1].url).pathname).toBe(
+    expect(new URL(fixture.requests[1]!.url).pathname).toBe(
       "/guilds/guild-1/timers/history/1/restore",
     );
-    expect(fixture.requests[1].method).toBe("POST");
+    expect(fixture.requests[1]!.method).toBe("POST");
   } finally {
     view.unmount();
     fixture.cleanup();

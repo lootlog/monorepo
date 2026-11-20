@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { resolveLoginState, type LoginState } from "@/hooks/auth/login-state";
-import { authClient } from "@/lib/auth-client";
+import { authClient, readSession } from "@/lib/auth-client";
 import { isExtensionClient } from "@/lib/game-client-platform";
 
 /** Whether the player opened the website from the login window this run. */
@@ -30,6 +30,5 @@ export const readLoginState = (): LoginState =>
   resolveLoginState({
     extension: isExtensionClient(),
     websiteOpened: useLoginWebsiteStore.getState().websiteOpened,
-    // `value` reads the atom without mounting it, so this never starts a request.
-    session: authClient.$store.atoms.session.value,
+    session: readSession(),
   });

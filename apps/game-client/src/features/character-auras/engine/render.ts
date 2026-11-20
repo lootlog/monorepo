@@ -998,8 +998,8 @@ export class Aura {
         return a > 0.02 ? a : 0;
       });
 
-      const bandColors = BAND_ALPHAS.map((_, index) =>
-        prism ? this.rainbowStops(index) : [this.rgb.tones[BAND_TONES[index]]],
+      const bandColors = BAND_TONES.map((tone, index) =>
+        prism ? this.rainbowStops(index) : [this.rgb.tones[tone]],
       );
 
       const flash = this.flash > 0.05 ? this.flash * 0.7 : 0;

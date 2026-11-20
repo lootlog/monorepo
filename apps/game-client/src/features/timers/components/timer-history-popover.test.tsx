@@ -63,7 +63,7 @@ it.each([
         await screen.findByRole("button", { name: "Spróbuj ponownie" }),
       );
       expect(await screen.findByText("Salvatore (Lootlog)")).toBeVisible();
-      const url = new URL(fixture.requests[0].url);
+      const url = new URL(fixture.requests[0]!.url);
       expect(decodeURIComponent(url.pathname)).toBe(
         "/guilds/guild-1/timers/123:tanroth/history",
       );
@@ -84,7 +84,7 @@ it.each([
           }),
         ]),
       );
-      expect(new URL(fixture.requests[2].url).pathname).toBe(
+      expect(new URL(fixture.requests[2]!.url).pathname).toBe(
         "/guilds/guild-1/timers/history/1/restore",
       );
     } finally {

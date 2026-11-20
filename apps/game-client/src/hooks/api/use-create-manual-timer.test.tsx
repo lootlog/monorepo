@@ -30,7 +30,7 @@ it("creates a manual timer and invalidates the timer query family", async () => 
     }),
   );
   expect(fixture.requests).toHaveLength(1);
-  expect(await fixture.requests[0].json()).toMatchObject({
+  expect(await fixture.requests[0]!.json()).toMatchObject({
     name: "Tanroth",
     world: "luvia",
     minSeconds: 30,

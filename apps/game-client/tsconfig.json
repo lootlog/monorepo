@@ -1,20 +1,10 @@
 {
+  "extends": "@lootlog/typescript-config/vite.json",
   "compilerOptions": {
     "target": "ESNext",
-    "useDefineForClassFields": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
+    "declaration": false,
+    "declarationMap": false,
     "paths": {
       "@/*": ["./src/*"]
     },

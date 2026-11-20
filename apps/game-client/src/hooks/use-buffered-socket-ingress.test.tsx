@@ -293,7 +293,7 @@ describe("useBufferedSocketIngress", () => {
       gathering("notification-1"),
     ]);
     expect(processPayloadBatch.mock.invocationCallOrder[0]).toBeLessThan(
-      cancelPayload.mock.invocationCallOrder[0],
+      cancelPayload.mock.invocationCallOrder[0]!,
     );
   });
 

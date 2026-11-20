@@ -92,13 +92,13 @@ describe("AppErrorBoundaryFallback", () => {
       expect(mockClipboardWriteText).toHaveBeenCalledTimes(1);
     });
 
-    expect(mockClipboardWriteText.mock.calls[0][0]).toContain(
+    expect(mockClipboardWriteText.mock.calls[0]![0]!).toContain(
       "Typ błędu: CopyError",
     );
-    expect(mockClipboardWriteText.mock.calls[0][0]).toContain(
+    expect(mockClipboardWriteText.mock.calls[0]![0]!).toContain(
       "Treść błędu: Copy this failure",
     );
-    expect(mockClipboardWriteText.mock.calls[0][0]).toContain("game bridge:");
+    expect(mockClipboardWriteText.mock.calls[0]![0]!).toContain("game bridge:");
     expect(
       screen.getByRole("button", {
         name: "Skopiowano informacje diagnostyczne",

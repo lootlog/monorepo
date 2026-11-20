@@ -64,7 +64,7 @@ const EXCLUDED_SUFFIXES = new Set([
 async function isSource(file: string): Promise<boolean> {
   const parts = file.split("/");
 
-  if (!ROOT_FILES.has(file) && !SOURCE_ROOTS.has(parts[0])) return false;
+  if (!ROOT_FILES.has(file) && !SOURCE_ROOTS.has(parts[0] ?? "")) return false;
 
   if (parts.some((part) => EXCLUDED_PARTS.has(part))) return false;
   const name = path.basename(file).toLowerCase();

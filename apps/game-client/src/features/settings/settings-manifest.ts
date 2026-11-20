@@ -46,13 +46,16 @@ interface SettingsSubsectionManifestItem<TControlId extends string = string> {
   visible?: () => boolean;
 }
 
+type NonEmptyList<T> = readonly [T, ...T[]];
+
 export interface SettingsDomainManifestItem<
   TControlId extends string = string,
 > {
   id: SettingsDomainValue;
   labelKey: string;
   icon: SettingsIconName;
-  subsections: readonly SettingsSubsectionManifestItem<TControlId>[];
+  /** A domain opens on its first subsection, so only later ones may hide. */
+  subsections: NonEmptyList<SettingsSubsectionManifestItem<TControlId>>;
 }
 
 const MANIFEST = [
@@ -681,8 +684,9 @@ const MANIFEST = [
 export type SettingsControlId =
   (typeof MANIFEST)[number]["subsections"][number]["controls"][number]["id"];
 
-export const SETTINGS_MANIFEST: readonly SettingsDomainManifestItem<SettingsControlId>[] =
-  MANIFEST;
+export const SETTINGS_MANIFEST: NonEmptyList<
+  SettingsDomainManifestItem<SettingsControlId>
+> = MANIFEST;
 
 interface SettingsControlLocation {
   domain: SettingsDomainValue;
@@ -711,10 +715,21 @@ export const getControlLocation = (controlId: string) =>
 export const getControlSettingKeys = (controlId: string) =>
   controlLocations.get(controlId)?.control.settingKeys;
 
-export const getVisibleSettingsManifest = () =>
-  SETTINGS_MANIFEST.map((domain) => ({
-    ...domain,
-    subsections: domain.subsections.filter(
-      (subsection) => subsection.visible?.() ?? true,
-    ),
-  }));
+const withVisibleSubsections = ({
+  subsections: [first, ...rest],
+  ...domain
+}: SettingsDomainManifestItem<SettingsControlId>): SettingsDomainManifestItem<SettingsControlId> => ({
+  ...domain,
+  subsections: [
+    first,
+    ...rest.filter((subsection) => subsection.visible?.() ?? true),
+  ],
+});
+
+export const getVisibleSettingsManifest = (): NonEmptyList<
+  SettingsDomainManifestItem<SettingsControlId>
+> => {
+  const [first, ...rest] = SETTINGS_MANIFEST;
+
+  return [withVisibleSubsections(first), ...rest.map(withVisibleSubsections)];
+};

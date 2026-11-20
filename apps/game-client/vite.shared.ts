@@ -79,11 +79,12 @@ const stripColorMixFallbacks = (css: string): string => {
       continue;
     }
 
-    const [, selector, body] = inner;
+    // Both patterns capture their selector and body unconditionally.
+    const [, selector = "", body = ""] = inner;
     const preceding = PRECEDING_RULE.exec(head);
+    const [, precedingSelector = "", precedingBody = ""] = preceding ?? [];
 
-    if (preceding && !/["']|url\(/.test(preceding[2] + body)) {
-      const [, precedingSelector, precedingBody] = preceding;
+    if (preceding && !/["']|url\(/.test(precedingBody + body)) {
       const selectors = splitSelectorList(precedingSelector);
 
       const redeclared = new Map(

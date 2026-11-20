@@ -53,7 +53,7 @@ describe("log actions retry", () => {
       actionType: "create_loot",
       status: "success",
     });
-    expect(action.requests).toEqual([
+    expect(action!.requests).toEqual([
       expect.objectContaining({
         status: "error",
         statusCode: null,
@@ -136,7 +136,7 @@ describe("log actions retry", () => {
     });
 
     expect(execute).toHaveBeenCalledTimes(2);
-    expect(useLogsStore.getState().actions[0].requests).toHaveLength(2);
+    expect(useLogsStore.getState().actions[0]!.requests).toHaveLength(2);
   });
 
   it("does not retry validation or auth failures", async () => {

@@ -133,7 +133,7 @@ it.each([
 
     await waitFor(() => expect(posts()).toHaveLength(1));
     expect(posts()[0]?.url).toContain("/guilds/guild-1/timers/manual");
-    const payload = await posts()[0].json();
+    const payload = await posts()[0]!.json();
     expect(payload.world).toBe(selectWorld ? "gefion" : "luvia");
     expect(payload.actorCharacter?.characterId).toBe(
       selectWorld ? undefined : "101",

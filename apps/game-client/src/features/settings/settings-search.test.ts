@@ -57,7 +57,7 @@ describe("searchSettings", () => {
 
   it("ranks a label hit above a description-only hit", () => {
     const descriptionOnly: SettingsSearchItem = {
-      ...searchItems[1],
+      ...searchItems[1]!,
       controlId: "detector-types",
       label: "Typy potworów",
       description: "Wybierz, o których NPC ma powiadamiać routing.",
@@ -65,7 +65,7 @@ describe("searchSettings", () => {
     };
 
     expect(
-      searchSettings([descriptionOnly, searchItems[1]], "routing").map(
+      searchSettings([descriptionOnly, searchItems[1]!], "routing").map(
         (item) => item.controlId,
       ),
     ).toEqual(["detector-routing", "detector-types"]);

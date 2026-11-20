@@ -118,7 +118,7 @@ describe("GuildSwitcher", () => {
     useGameStore.getState().clearGame();
     render(<GuildSwitcher />);
 
-    fireEvent.click(screen.getAllByRole("button")[0]);
+    fireEvent.click(screen.getAllByRole("button")[0]!);
 
     expect(useSettingsStore.getState().guildIdByCharId).toEqual({});
   });
@@ -126,7 +126,7 @@ describe("GuildSwitcher", () => {
   it("stores an explicitly clicked guild for the current character", () => {
     render(<GuildSwitcher />);
 
-    fireEvent.click(screen.getAllByRole("button")[1]);
+    fireEvent.click(screen.getAllByRole("button")[1]!);
 
     expect(useSettingsStore.getState().guildIdByCharId).toEqual({
       "123": "guild-2",

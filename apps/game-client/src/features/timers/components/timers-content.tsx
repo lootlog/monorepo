@@ -17,7 +17,7 @@ import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 
 type TimersContentProps = {
   sortedTimers: TimerWithTimeLeft[];
-  settingsKey: string;
+  settingsKey: string | undefined;
   world: string;
   hiddenTimers: string[];
   areFiltersActive: boolean;

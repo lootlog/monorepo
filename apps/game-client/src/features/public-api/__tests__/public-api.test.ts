@@ -252,9 +252,9 @@ describe("Public API", () => {
       });
 
       expect(result).toHaveLength(1);
-      expect(result?.[0].minSpawnTime).toBe("2026-01-01T12:00:00.000Z");
-      expect(result?.[0].maxSpawnTime).toBe("2026-01-01T13:00:00.000Z");
-      expect(result?.[0].updatedAt).toBe("2026-01-01T11:00:00.000Z");
+      expect(result?.[0]!.minSpawnTime).toBe("2026-01-01T12:00:00.000Z");
+      expect(result?.[0]!.maxSpawnTime).toBe("2026-01-01T13:00:00.000Z");
+      expect(result?.[0]!.updatedAt).toBe("2026-01-01T11:00:00.000Z");
     });
 
     it("returns cloned data", () => {
@@ -263,8 +263,8 @@ describe("Public API", () => {
       const b = getPublicApi().getTimers({ world: "tempest" });
       expect(a).not.toBe(b);
       expect(a?.[0]).not.toBe(b?.[0]);
-      expect(a?.[0].npc).not.toBe(b?.[0].npc);
-      expect(a?.[0].member).not.toBe(b?.[0].member);
+      expect(a?.[0]!.npc).not.toBe(b?.[0]!.npc);
+      expect(a?.[0]!.member).not.toBe(b?.[0]!.member);
     });
   });
 
@@ -431,7 +431,7 @@ describe("Public API", () => {
       useGlobalStore.getState().setSocketState({ joinedGuilds: ["g1", "g2"] });
 
       expect(listener).toHaveBeenCalledOnce();
-      expect(listener.mock.calls[0][0].joinedGuilds).toEqual(["g1", "g2"]);
+      expect(listener.mock.calls[0]![0]!.joinedGuilds).toEqual(["g1", "g2"]);
     });
   });
 

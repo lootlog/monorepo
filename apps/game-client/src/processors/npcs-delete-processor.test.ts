@@ -218,7 +218,7 @@ it("does not submit a kill observed while the character is in stasis", () => {
 it("does not submit low-weight NPCs", () => {
   const fixture = createFixture();
   fixture.ingress.npcsById[500] = {
-    ...fixture.ingress.npcsById[500],
+    ...fixture.ingress.npcsById[500]!,
     weight: 10,
   };
   fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
@@ -246,7 +246,7 @@ it("does not submit when the loaded configuration has no entry for the character
 it("does not submit without a signed-in session", () => {
   const fixture = createFixture();
   queryClient.clear();
-  const session = authClient.$store.atoms.session;
+  const session = authClient.$store.atoms.session!;
   const previous: unknown = session.value;
   onTestFinished(() => session.set(previous));
   session.set({ ...session.value, data: null, error: null, isPending: false });
@@ -314,7 +314,7 @@ it("submits while configuration is pending and does not replay", async () => {
   await config;
 
   expect(fixture.requests).toHaveLength(1);
-  expect(await fixture.requests[0].json()).toMatchObject({
+  expect(await fixture.requests[0]!.json()).toMatchObject({
     accountId: "202",
     characterId: "101",
     respBaseSeconds: 30,
@@ -357,10 +357,10 @@ it("submits distinct respawn effects sharing one event id", async () => {
   fixture.handle({ ev: 77, npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
   fixture.handle({ ev: 77, npcs_del: [{ id: 500, respBaseSeconds: 31 }] });
   await waitFor(() => expect(fixture.requests).toHaveLength(2));
-  expect(await fixture.requests[0].json()).toMatchObject({
+  expect(await fixture.requests[0]!.json()).toMatchObject({
     respBaseSeconds: 30,
   });
-  expect(await fixture.requests[1].json()).toMatchObject({
+  expect(await fixture.requests[1]!.json()).toMatchObject({
     respBaseSeconds: 31,
   });
 });
@@ -369,8 +369,8 @@ it("sends native respawn details and actor identity to the timer endpoint", asyn
   const fixture = createFixture();
   fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
   await waitFor(() => expect(fixture.requests).toHaveLength(1));
-  expect(new URL(fixture.requests[0].url).pathname).toBe("/timers/auto");
-  expect(await fixture.requests[0].json()).toMatchObject({
+  expect(new URL(fixture.requests[0]!.url).pathname).toBe("/timers/auto");
+  expect(await fixture.requests[0]!.json()).toMatchObject({
     respawnRandomness: 15,
     respBaseSeconds: 30,
     characterId: "101",
@@ -400,7 +400,7 @@ it.each([
     const fixture = createFixture();
 
     const npc: RuntimeNpc = {
-      ...fixture.ingress.npcsById[500],
+      ...fixture.ingress.npcsById[500]!,
       weight: 20,
       name: "Bazowa nazwa",
     };
@@ -414,7 +414,7 @@ it.each([
       };
     fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
     await waitFor(() => expect(fixture.requests).toHaveLength(1));
-    expect(await fixture.requests[0].json()).toMatchObject({ npc: { name } });
+    expect(await fixture.requests[0]!.json()).toMatchObject({ npc: { name } });
   },
 );
 

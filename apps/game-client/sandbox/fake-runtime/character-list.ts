@@ -20,7 +20,10 @@ export const SANDBOX_ACCOUNT_ID = 900000;
 
 export const SANDBOX_CLAN = { id: 4242, name: "Sandbox Clan", rank: 1 };
 
-export const SANDBOX_CHARACTERS: readonly MargonemCharlistEntry[] = [
+export const SANDBOX_CHARACTERS: readonly [
+  MargonemCharlistEntry,
+  ...MargonemCharlistEntry[],
+] = [
   {
     id: 700000,
     nick: "Kapitan Rzepa",
