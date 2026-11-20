@@ -445,7 +445,7 @@ export const makeBattleAnalytics = (
 
   const getCharacterContext = (
     userId: string,
-    query: { characterId?: string; world?: string },
+    query: { characterId?: string | undefined; world?: string | undefined },
   ): Effect.Effect<
     {
       characterIds: string[];

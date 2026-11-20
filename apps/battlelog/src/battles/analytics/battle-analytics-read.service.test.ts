@@ -2,7 +2,11 @@ import { PgliteClient } from "@effect/sql-pglite";
 import { makeWithDefaults } from "drizzle-orm/effect-pglite";
 import { migrate } from "drizzle-orm/effect-pglite/migrator";
 import { afterAll, beforeAll, expect, it } from "bun:test";
-import { Effect, ManagedRuntime } from "effect";
+import { Effect, ManagedRuntime, Schema } from "effect";
+import {
+  HeadToHeadPaginatedResponseDto_Output,
+  PlayerVsPlayerPaginatedResponseDto_Output,
+} from "#src/http-api/contracts/battles/analytics.schemas";
 import { relations } from "#src/database/relations";
 import { battles, battleWarriors, userCharacters } from "#src/database/schema";
 import { createBattleId } from "#src/battles/battle-id";
@@ -228,6 +232,30 @@ it("shares cached opponent aggregates and PvP counts across forward and backward
       )
     ).battles,
   ).toEqual(pvpFirst.battles);
+
+  // The first page has no previous cursor, the last no next cursor, and a
+  // non-matchmaking query no rating fields; the response must still encode.
+  for (const page of [first, next]) {
+    // Rating fields belong to matchmaking queries only.
+    for (const record of page.records) {
+      expect(record).not.toHaveProperty("totalRatingDelta");
+      expect(record).not.toHaveProperty("avgRatingDelta");
+    }
+
+    expect(() =>
+      Schema.encodeUnknownSync(
+        Schema.toCodecJson(HeadToHeadPaginatedResponseDto_Output),
+      )(page),
+    ).not.toThrow();
+  }
+
+  for (const page of [pvpFirst, pvpNext]) {
+    expect(() =>
+      Schema.encodeUnknownSync(
+        Schema.toCodecJson(PlayerVsPlayerPaginatedResponseDto_Output),
+      )(page),
+    ).not.toThrow();
+  }
 });
 
 it("folds combat history across tied-date batches without losing team matchups or visibility", async () => {

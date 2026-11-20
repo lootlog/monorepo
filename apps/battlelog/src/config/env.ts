@@ -20,7 +20,7 @@ export const battlelogDatabaseConfig = Config.all({
 });
 
 export interface BattlelogConfiguration extends BaseServiceConfiguration {
-  readonly cleanupSecret?: Redacted.Redacted<string>;
+  readonly cleanupSecret?: Redacted.Redacted<string> | undefined;
   readonly redisUrl: Redacted.Redacted<string>;
   readonly r2: R2Config;
 }

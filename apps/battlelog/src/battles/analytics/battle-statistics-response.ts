@@ -48,8 +48,8 @@ const HeadToHeadRecordResponseSchema = Schema.Struct({
   totalBattles: Schema.Number,
   winRate: Schema.Number,
   lastBattleDate: DateTimeString,
-  totalRatingDelta: Schema.optional(Schema.Number),
-  avgRatingDelta: Schema.optional(Schema.Number),
+  totalRatingDelta: Schema.optionalKey(Schema.Number),
+  avgRatingDelta: Schema.optionalKey(Schema.Number),
 });
 
 const HeadToHeadPaginatedResponseSchema = Schema.Struct({
@@ -58,9 +58,9 @@ const HeadToHeadPaginatedResponseSchema = Schema.Struct({
   meta: Schema.Struct({
     performance: Schema.Struct({
       queryTime: Schema.Number,
-      countTime: Schema.optional(Schema.Number),
-      totalItems: Schema.optional(Schema.Number),
-      estimatedTotal: Schema.optional(Schema.Boolean),
+      countTime: Schema.optionalKey(Schema.Number),
+      totalItems: Schema.optionalKey(Schema.Number),
+      estimatedTotal: Schema.optionalKey(Schema.Boolean),
     }),
   }),
 });
@@ -155,7 +155,7 @@ const PlayerVsPlayerPaginatedResponseSchema = Schema.Struct({
   meta: Schema.Struct({
     performance: Schema.Struct({
       queryTime: Schema.Number,
-      totalItems: Schema.optional(Schema.Number),
+      totalItems: Schema.optionalKey(Schema.Number),
     }),
   }),
 });

@@ -53,7 +53,7 @@ const RawBattleDataSchema = Schema.Struct({
     world: CreateBattleSchema.fields.world,
     matchmaking: CreateBattleSchema.fields.matchmaking,
     events: Schema.mutable(Schema.Array(ParsedMoveSchema)),
-    sourceEvents: Schema.optional(
+    sourceEvents: Schema.optionalKey(
       Schema.mutable(CreateBattleSchema.fields.events),
     ),
   }),

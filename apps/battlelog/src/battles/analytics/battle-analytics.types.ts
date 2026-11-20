@@ -1,20 +1,20 @@
 import type { CursorPagination } from "./pagination.js";
 
 export type DateRangeQuery = {
-  period?: string;
-  startDate?: string;
-  endDate?: string;
+  period?: string | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
 };
 
 export type AnalyticsDateRange = {
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: Date | undefined;
+  endDate?: Date | undefined;
 };
 
 export type InMemoryPaginationOptions = {
-  cursor?: string;
-  includeTotal?: boolean;
-  size?: number;
+  cursor?: string | undefined;
+  includeTotal?: boolean | undefined;
+  size?: number | undefined;
 };
 
 export type InMemoryPaginationResult<TRecord> = {

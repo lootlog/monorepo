@@ -35,8 +35,8 @@ export const makeBattleAnalyticsCache = (
   ): string => String(value ?? fallback);
 
   const formatLevelCacheSegment = (query: {
-    minLevel?: number;
-    maxLevel?: number;
+    minLevel?: number | undefined;
+    maxLevel?: number | undefined;
   }): string =>
     `${formatCacheSegment(query.minLevel, "any")}-${formatCacheSegment(query.maxLevel, "any")}`;
 
@@ -143,7 +143,7 @@ export const makeBattleAnalyticsCache = (
       | BattleStatisticsQuery
       | AbyssSeasonsQuery
       | PlayerVsPlayerQuery
-      | { characterId?: string; world?: string },
+      | { characterId?: string | undefined; world?: string | undefined },
   ): string => [prefix, metric, userId, stableJsonCacheKey(query)].join(":");
 
   return {

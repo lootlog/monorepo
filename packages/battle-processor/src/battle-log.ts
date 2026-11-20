@@ -22,28 +22,32 @@ type MatchSummary = {
   opponent_rating: number;
   rating: number;
   status: number;
-  placement_cur?: number;
-  placement_max?: number;
-  points_gained?: number;
-  daily_stage?: {
-    id: number;
-    points_cur: number;
-    points_max: number;
-    points_step: number;
-    rewards_last: number;
-    rewards_cur: number;
-    rewards_max: number;
-  };
+  placement_cur?: number | undefined;
+  placement_max?: number | undefined;
+  points_gained?: number | undefined;
+  daily_stage?:
+    | {
+        id: number;
+        points_cur: number;
+        points_max: number;
+        points_step: number;
+        rewards_last: number;
+        rewards_cur: number;
+        rewards_max: number;
+      }
+    | undefined;
 };
 
 export type BattleEvent = {
-  ev?: number;
-  f?: {
-    m?: string[];
-    endBattle?: number;
-    w?: Record<string, BattleWarriorSnapshot>;
-  };
-  match_summary?: MatchSummary;
+  ev?: number | undefined;
+  f?:
+    | {
+        m?: string[] | undefined;
+        endBattle?: number | undefined;
+        w?: Record<string, BattleWarriorSnapshot> | undefined;
+      }
+    | undefined;
+  match_summary?: MatchSummary | undefined;
 };
 
 export type BattlePayload = {
@@ -72,16 +76,16 @@ export type MatchmakingInfo = {
   opponentRating: number;
   rating: number;
   status: number;
-  pointsGained?: number;
-  placementCur?: number;
-  placementMax?: number;
-  dailyStageId?: number;
-  dailyPointsCur?: number;
-  dailyPointsMax?: number;
-  dailyPointsStep?: number;
-  dailyRewardsLast?: number;
-  dailyRewardsCur?: number;
-  dailyRewardsMax?: number;
+  pointsGained?: number | undefined;
+  placementCur?: number | undefined;
+  placementMax?: number | undefined;
+  dailyStageId?: number | undefined;
+  dailyPointsCur?: number | undefined;
+  dailyPointsMax?: number | undefined;
+  dailyPointsStep?: number | undefined;
+  dailyRewardsLast?: number | undefined;
+  dailyRewardsCur?: number | undefined;
+  dailyRewardsMax?: number | undefined;
 };
 
 export type ParsedBattlePayload = {
@@ -90,8 +94,8 @@ export type ParsedBattlePayload = {
   world: string;
   events: ParsedMove[];
   warriors: Record<string, BattleWarriorSnapshot>;
-  duration?: number;
-  matchmaking?: MatchmakingInfo;
+  duration?: number | undefined;
+  matchmaking?: MatchmakingInfo | undefined;
 };
 
 /**

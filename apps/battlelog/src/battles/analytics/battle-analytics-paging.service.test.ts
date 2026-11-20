@@ -10,7 +10,8 @@ describe("battleAnalyticsPaging", () => {
       size: 2,
     });
 
-    expect(firstPage).toEqual({
+    // Strict: the response contract rejects a cursor key present as undefined.
+    expect(firstPage).toStrictEqual({
       records: ["a", "b"],
       totalRecords: 3,
       pagination: {
@@ -18,7 +19,6 @@ describe("battleAnalyticsPaging", () => {
         hasNext: true,
         hasPrev: false,
         nextCursor: "Mg==",
-        previousCursor: undefined,
         total: 3,
       },
     });
@@ -29,14 +29,13 @@ describe("battleAnalyticsPaging", () => {
       size: 2,
     });
 
-    expect(secondPage).toEqual({
+    expect(secondPage).toStrictEqual({
       records: ["c"],
       totalRecords: 3,
       pagination: {
         size: 2,
         hasNext: false,
         hasPrev: true,
-        nextCursor: undefined,
         previousCursor: "MA==",
         total: 3,
       },

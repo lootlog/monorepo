@@ -26,7 +26,7 @@ export type BattleAnalysis = {
   type: string;
   battleTimeline: BattleTimelineTurn[];
   actionCoverage: BattleActionCoverage;
-  matchmaking?: MatchmakingInfo;
+  matchmaking?: MatchmakingInfo | undefined;
 };
 
 type AnalysisInput = {

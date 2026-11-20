@@ -89,14 +89,14 @@ export const makeBattleAnalyticsRead = (
     query: Partial<BattleStatisticsQuery>,
     characterIds: string[],
     options: {
-      hasFlee?: boolean;
-      ph?: boolean;
-      allTypes?: boolean;
-      opponentId?: string;
-      excludeBattleId?: string;
-      ratingDelta?: boolean;
-      rating?: boolean;
-      requireOpponent?: boolean;
+      hasFlee?: boolean | undefined;
+      ph?: boolean | undefined;
+      allTypes?: boolean | undefined;
+      opponentId?: string | undefined;
+      excludeBattleId?: string | undefined;
+      ratingDelta?: boolean | undefined;
+      rating?: boolean | undefined;
+      requireOpponent?: boolean | undefined;
     } = {},
   ) => {
     // Both participants come from the owner's filter rows, so resolving them
@@ -474,7 +474,12 @@ export const makeBattleAnalyticsRead = (
     const rows = yield* opponentRecords(userId, query, characterIds);
 
     const records = rows.map(
-      ({ position: _position, battlesWithRating, ...row }) => ({
+      ({
+        position: _position,
+        battlesWithRating,
+        totalRatingDelta,
+        ...row
+      }) => ({
         ...row,
         totalBattles: row.wins + row.losses,
         winRate:
@@ -482,12 +487,15 @@ export const makeBattleAnalyticsRead = (
             ? (row.wins / (row.wins + row.losses)) * 100
             : 0,
         lastBattleDate: row.lastBattleDate.toISOString(),
-        totalRatingDelta: query.matchmaking ? row.totalRatingDelta : undefined,
-        avgRatingDelta: query.matchmaking
-          ? battlesWithRating > 0
-            ? Math.round((row.totalRatingDelta / battlesWithRating) * 100) / 100
-            : 0
-          : undefined,
+        // Omitted rather than undefined: the response contract declares
+        // optional keys and rejects an undefined value.
+        ...(query.matchmaking && {
+          totalRatingDelta,
+          avgRatingDelta:
+            battlesWithRating > 0
+              ? Math.round((totalRatingDelta / battlesWithRating) * 100) / 100
+              : 0,
+        }),
       }),
     );
 

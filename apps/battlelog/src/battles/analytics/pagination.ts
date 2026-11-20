@@ -6,9 +6,9 @@ export const CursorPaginationSchema = Schema.Struct({
   size: Schema.Number,
   hasNext: Schema.Boolean,
   hasPrev: Schema.Boolean,
-  nextCursor: Schema.optional(Schema.String),
-  previousCursor: Schema.optional(Schema.String),
-  total: Schema.optional(Schema.Number),
+  nextCursor: Schema.optionalKey(Schema.String),
+  previousCursor: Schema.optionalKey(Schema.String),
+  total: Schema.optionalKey(Schema.Number),
 });
 
 export type CursorPagination = DeepMutable<typeof CursorPaginationSchema.Type>;
@@ -27,6 +27,6 @@ export interface PaginationResult<T> {
 export interface PaginationOptions {
   sortOrder: SortOrder;
   includeTotal: boolean;
-  cursor?: string;
-  size?: number;
+  cursor?: string | undefined;
+  size?: number | undefined;
 }
