@@ -17,6 +17,7 @@ import {
 import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
+import type { makeMemberRemoval } from "#src/members/member-removal.operations";
 import {
   ApplicationError,
   ApplicationErrorKind,
@@ -26,6 +27,14 @@ import {
   AccountOrganizationOperationError,
 } from "./account-organization-data.js";
 
+type MemberRemovalError = Effect.Error<
+  ReturnType<
+    ReturnType<
+      typeof makeMemberRemoval
+    >["deactivateMembersMissingFromDiscordGuilds"]
+  >
+>;
+
 export interface CurrentUserGuildPorts {
   readonly accessibleFallback: (
     identity: AuthenticatedIdentity,
@@ -34,7 +43,7 @@ export interface CurrentUserGuildPorts {
     readonly discordId: string;
     readonly userId: string;
     readonly activeDiscordGuildIds: ReadonlyArray<string>;
-  }) => Effect.Effect<void, unknown>;
+  }) => Effect.Effect<void, MemberRemovalError>;
   /**
    * Serves the list from a cache unless `refresh` is set. `fresh` is false for
    * a cached list, which may miss a server the user has joined since. `stale`

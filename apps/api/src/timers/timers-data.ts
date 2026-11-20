@@ -28,9 +28,9 @@ type DataEffect<A> = Effect.Effect<A, TimersDataFailure>;
 
 type TimerView = ReturnType<typeof mapTimerResponse>;
 
-type TimerHistoryView = Effect.Success<
-  ReturnType<ReturnType<typeof makeTimerHistory>["getHistory"]>
->;
+type TimerHistory = ReturnType<typeof makeTimerHistory>;
+
+type TimerHistoryView = Effect.Success<ReturnType<TimerHistory["getHistory"]>>;
 
 export class TimersData extends Context.Service<
   TimersData,
@@ -38,16 +38,18 @@ export class TimersData extends Context.Service<
     readonly getAll: (
       identity: TimersIdentity,
       world?: string,
-    ) => Effect.Effect<unknown, TimersDataFailure>;
+    ) => DataEffect<ReadonlyArray<TimerView>>;
     readonly getRecentHistory: (
       access: TimersGuildAccess,
       world: string,
       limit?: number,
-    ) => Effect.Effect<unknown, TimersDataFailure>;
+    ) => DataEffect<
+      Effect.Success<ReturnType<TimerHistory["getRecentHistory"]>>
+    >;
     readonly getGuildTimers: (
       access: TimersGuildAccess,
       world?: string,
-    ) => Effect.Effect<unknown, TimersDataFailure>;
+    ) => DataEffect<ReadonlyArray<TimerView>>;
     readonly getGuildHeroTimers: (
       access: TimersGuildAccess,
       world: string,
@@ -64,7 +66,7 @@ export class TimersData extends Context.Service<
       access: TimersGuildAccess,
       timerIdentifier: string,
       payload: ResetTimerRequest,
-    ) => Effect.Effect<unknown, TimersDataFailure>;
+    ) => DataEffect<TimerView>;
     readonly delete: (
       access: TimersGuildAccess,
       timerIdentifier: string,
@@ -79,11 +81,11 @@ export class TimersData extends Context.Service<
     readonly restore: (
       access: TimersGuildAccess,
       historyEntryId: number,
-    ) => Effect.Effect<unknown, TimersDataFailure>;
+    ) => DataEffect<TimerView>;
     readonly createManual: (
       access: TimersGuildAccess,
       payload: CreateManualTimerRequest,
-    ) => Effect.Effect<unknown, TimersDataFailure>;
+    ) => DataEffect<TimerView>;
   }
 >()("@lootlog/api/http-api/timers/data") {
   static makeService(

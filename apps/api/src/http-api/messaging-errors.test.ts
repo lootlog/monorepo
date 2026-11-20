@@ -49,6 +49,31 @@ const database = new Proxy(databaseBoundary.database, {
 
 const unused = () => Effect.die("Unexpected ready-room operation");
 
+// The room a ready-room mutation checks for visibility before it runs.
+const visibleRoom = {
+  schemaVersion: 3 as const,
+  notificationId: "active",
+  organizerDiscordId: caller.discordId,
+  organizerCharacter: {
+    lvl: 300,
+    nick: "Hero",
+    accountId: "account",
+    characterId: "character",
+    prof: "w",
+    icon: "hero.gif",
+  },
+  guildIds: ["guild"],
+  world: "Fobos",
+  status: "ACTIVE" as const,
+  revision: 1,
+  createdAt: "2026-09-02T12:00:00.000Z",
+  updatedAt: "2026-09-02T12:00:00.000Z",
+  expiresAt: "2026-09-02T12:30:00.000Z",
+  viewer: "ORGANIZER" as const,
+  participants: {},
+  ownedParticipantIds: [],
+};
+
 const services = Layer.mergeAll(
   Layer.succeed(MessagingIdentity, { caller: Effect.succeed(caller) }),
   Layer.succeed(LootlogConfigAuthorization, {
@@ -80,7 +105,7 @@ const services = Layer.mergeAll(
               cause: new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
             }),
           )
-        : Effect.succeed({}),
+        : Effect.succeed(visibleRoom),
     cancel: () =>
       Effect.fail(
         new ReadyRoomOperationError({

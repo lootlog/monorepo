@@ -3,7 +3,7 @@ import {
   createMemberFixture,
 } from "../../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
-import { Effect, Schema } from "effect";
+import { Effect, Exit, Schema } from "effect";
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import { Permission } from "@lootlog/schema/permissions";
 import { OrganizationSummary } from "#src/contracts/shared";
@@ -280,20 +280,12 @@ describe("internal response validation", () => {
       },
     ];
 
-    const data = InternalGuildsData.of({
-      getGuild: () => Effect.succeed(guild),
-      getMemberIdentity: () => Effect.succeed(null),
-      getUserPermissions: () => Effect.succeed(permissions),
-    });
-
-    const error = await Effect.runPromise(
-      Effect.flip(
-        getInternalUserPermissions("discord-a", "user-a").pipe(
-          Effect.provideService(InternalGuildsData, data),
-        ),
+    // An unknown permission cannot come from the typed port; the response
+    // boundary that receives it rejects it.
+    expect(
+      Exit.isFailure(
+        Schema.decodeUnknownExit(InternalUserPermissionsResponse)(permissions),
       ),
-    );
-
-    expect(error._tag).toBe("InternalGuildsOperationError");
+    ).toBe(true);
   });
 });

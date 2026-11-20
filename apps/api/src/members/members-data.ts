@@ -4,6 +4,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import type {
+  MemberLootlogConfigSummaryResponse,
   MemberReferencesResponse,
   MemberSummariesResponse,
 } from "#src/contracts/members/schemas";
@@ -53,7 +54,7 @@ export class MembersData extends Context.Service<
     readonly refreshAllMembers: (
       guildId: string,
       discordId: string,
-    ) => Effect.Effect<unknown, MembersOperationError>;
+    ) => DataEffect<MemberRefreshJob>;
   }
 >()("@lootlog/api/http-api/members/data") {}
 
@@ -66,7 +67,7 @@ export class MemberRefreshJobData extends Context.Service<
     readonly getRefreshJobStatus: (
       guildId: string,
       jobId: number,
-    ) => Effect.Effect<unknown, MembersOperationError>;
+    ) => DataEffect<MemberRefreshJob>;
   }
 >()("@lootlog/api/http-api/member-refresh-job/data") {}
 
@@ -76,7 +77,7 @@ export class MemberReadData extends Context.Service<
     readonly getLootlogConfigSummary: (
       guildId: string,
       discordId: string,
-    ) => Effect.Effect<unknown, MembersOperationError>;
+    ) => DataEffect<MemberLootlogConfigSummaryResponse>;
     readonly getGuildMembers: (
       guildId: string,
       includeInactive: boolean,

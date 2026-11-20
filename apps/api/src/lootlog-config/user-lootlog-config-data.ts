@@ -14,6 +14,8 @@ import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.s
 import { getUserLootlogConfigCacheScope } from "#src/shared/cache";
 import {
   AccountLootlogConfigResponse,
+  type CharacterLootlogConfigResponse,
+  type PlayersCatchingOrganizationsResponse,
   type UpdateCharacterLootlogConfigRequest,
   type PlayersCatchingOrganizationsRequest,
 } from "#src/contracts/user-lootlog-config/schemas";
@@ -23,7 +25,7 @@ export class UserLootlogConfigOperationError extends TaggedErrorClass<UserLootlo
   { cause: Schema.Defect() },
 ) {}
 
-export type Operation = Effect.Effect<unknown, UserLootlogConfigOperationError>;
+type Operation<A> = Effect.Effect<A, UserLootlogConfigOperationError>;
 
 const CACHE_TTL_SECONDS = 60;
 
@@ -41,16 +43,19 @@ export interface UserLootlogConfigCache {
 export class UserLootlogConfigData extends Context.Service<
   UserLootlogConfigData,
   {
-    readonly getAccount: (discordId: string, accountId: string) => Operation;
+    readonly getAccount: (
+      discordId: string,
+      accountId: string,
+    ) => Operation<AccountLootlogConfigResponse>;
     readonly upsertCharacter: (
       discordId: string,
       accountId: string,
       payload: UpdateCharacterLootlogConfigRequest,
-    ) => Operation;
+    ) => Operation<CharacterLootlogConfigResponse>;
     readonly getPlayersCatchingGuilds: (
       discordId: string,
       payload: PlayersCatchingOrganizationsRequest,
-    ) => Operation;
+    ) => Operation<PlayersCatchingOrganizationsResponse>;
   }
 >()("@lootlog/api/http-api/user-lootlog-config/data") {
   static layerDatabase(cache: UserLootlogConfigCache) {

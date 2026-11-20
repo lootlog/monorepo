@@ -1,6 +1,7 @@
 import type { makeAccessibleGuilds } from "./accessible-guilds.data-layer.js";
 import type { makeCurrentUserGuilds } from "./current-user-guilds.data-layer.js";
 import type { makeManageableGuilds } from "./manageable-guilds.data-layer.js";
+import type { makeGuildDiscordSyncData } from "./guild-discord-sync.data-layer.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import type { UpdateUserPreferencesRequest } from "#src/contracts/users/schemas";
@@ -17,6 +18,8 @@ export class AccountOrganizationOperationError extends TaggedErrorClass<AccountO
 ) {}
 
 type DataEffect<A> = Effect.Effect<A, AccountOrganizationOperationError>;
+
+type GuildDiscordSync = ReturnType<typeof makeGuildDiscordSyncData>;
 
 export class AccountOrganizationData extends Context.Service<
   AccountOrganizationData,
@@ -40,11 +43,7 @@ export class AccountOrganizationData extends Context.Service<
       typeof makeAccessibleGuilds
     >;
     readonly getManageableUserGuilds: ReturnType<typeof makeManageableGuilds>;
-    readonly getGuildDiscordSyncStatus: (
-      guildId: string,
-    ) => Effect.Effect<unknown, AccountOrganizationOperationError>;
-    readonly refreshGuildDiscordSync: (
-      guildId: string,
-    ) => Effect.Effect<unknown, AccountOrganizationOperationError>;
+    readonly getGuildDiscordSyncStatus: GuildDiscordSync["getGuildDiscordSyncStatus"];
+    readonly refreshGuildDiscordSync: GuildDiscordSync["refreshGuildDiscordSync"];
   }
 >()("@lootlog/api/http-api/account-organization/data") {}

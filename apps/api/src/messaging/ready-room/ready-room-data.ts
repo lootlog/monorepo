@@ -58,7 +58,7 @@ export class ReadyRoomData extends Context.Service<
       identity: ReadyRoomIdentity,
       notificationId: string,
       accessibleGuildIds: ReadonlyArray<string>,
-    ) => Effect.Effect<unknown, ReadyRoomOperationError>;
+    ) => DataEffect<PartyReadyRoomProjection>;
     readonly apply: (
       identity: ReadyRoomIdentity,
       notificationId: string,

@@ -59,7 +59,7 @@ export class OrganizationWorkspaceData extends Context.Service<
       context: ReservationViewerContext,
       spotId: string,
       payload: CreateReservationRequest,
-    ) => Effect.Effect<unknown, OrganizationWorkspaceOperationError>;
+    ) => DataEffect<PresentedReservation>;
     readonly deleteVisible: (
       context: ReservationViewerContext,
       reservationId: number,

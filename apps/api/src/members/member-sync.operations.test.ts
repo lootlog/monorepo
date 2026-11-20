@@ -1,4 +1,6 @@
 import { expect, test } from "bun:test";
+import { RedisError } from "effect/persistence/Redis";
+import { MessagingError } from "@lootlog/messaging";
 import { GuildMemberFlags, type APIGuildMember } from "discord-api-types/v10";
 import { Effect, Logger, References } from "effect";
 import { sql } from "drizzle-orm";
@@ -71,7 +73,7 @@ test("member sync retries invalidation after a committed role change and clears 
       publishMemberUpdated: () => Effect.void,
       invalidateMember: ({ guildId, discordId }) =>
         failInvalidation
-          ? Effect.fail(new Error("cache unavailable"))
+          ? Effect.fail(new RedisError({ cause: "cache unavailable" }))
           : Effect.sync(() => {
               invalidated.push(`${guildId}:${discordId}`);
             }),
@@ -207,23 +209,32 @@ const createSyncBoundary = async () => {
   const store = makeMemberStore(boundary.database);
 
   const clearCaches = () =>
-    Effect.try(() => {
-      if (state.failCache) throw new Error("cache unavailable");
-      events.push("cache");
-    });
+    state.failCache
+      ? Effect.fail(new RedisError({ cause: "cache unavailable" }))
+      : Effect.sync(() => {
+          events.push("cache");
+        });
 
   const publish = (event: string) =>
     Effect.suspend(() => {
       const concurrentWork = state.duringPublish ?? Effect.void;
       state.duringPublish = undefined;
 
-      return concurrentWork;
+      // Work from a concurrent writer is not a broker failure.
+      return Effect.orDie(concurrentWork);
     }).pipe(
       Effect.andThen(() =>
-        Effect.try(() => {
-          if (state.failDelivery) throw new Error("broker unavailable");
-          events.push(event);
-        }),
+        state.failDelivery
+          ? Effect.fail(
+              new MessagingError({
+                operation: "publish",
+                message: "broker unavailable",
+                cause: undefined,
+              }),
+            )
+          : Effect.sync(() => {
+              events.push(event);
+            }),
       ),
     );
 

@@ -1,4 +1,7 @@
+import type { OperationError } from "@lootlog/instrumentation/operation";
+import type { MessagingError } from "@lootlog/messaging";
 import { Effect } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
 import type { memberTable } from "#src/database/drizzle/organization.schema";
 import type { MemberStore } from "./member.repository.js";
 import type { MemberRemovalNotificationTarget } from "./member.types.js";
@@ -6,22 +9,22 @@ import type { MemberRemovalNotificationTarget } from "./member.types.js";
 export interface MemberDeliveryPorts {
   readonly clearMemberCaches: (
     member: MemberRemovalNotificationTarget,
-  ) => Effect.Effect<void, unknown>;
+  ) => Effect.Effect<void, OperationError | RedisError>;
   readonly publishMemberRemoved: (member: {
     readonly discordId: string;
     readonly guildId: string;
     readonly globalUserId: string;
-  }) => Effect.Effect<void, unknown>;
+  }) => Effect.Effect<void, MessagingError>;
   readonly invalidateMember: (member: {
     readonly discordId: string;
     readonly guildId: string;
     readonly userId: string;
-  }) => Effect.Effect<void, unknown>;
+  }) => Effect.Effect<void, RedisError>;
   readonly publishMemberUpdated: (member: {
     readonly discordId: string;
     readonly guildId: string;
     readonly userId: string;
-  }) => Effect.Effect<void, unknown>;
+  }) => Effect.Effect<void, MessagingError>;
 }
 
 /**

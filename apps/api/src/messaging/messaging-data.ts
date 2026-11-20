@@ -4,6 +4,7 @@ import type {
   NotificationGoingRequest,
   NotificationGoingResponse,
   SendNotificationRequest,
+  SentNotificationResponse,
   VolunteerForPartyRequest,
 } from "#src/contracts/messaging/schemas";
 
@@ -23,7 +24,7 @@ export class MessagingData extends Context.Service<
     readonly sendNotification: (
       caller: MessagingCaller,
       payload: SendNotificationRequest,
-    ) => Effect.Effect<unknown, MessagingOperationError>;
+    ) => Effect.Effect<SentNotificationResponse, MessagingOperationError>;
     readonly volunteer: (
       discordId: string,
       notificationId: string,

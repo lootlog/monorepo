@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { Effect, Layer, Schema } from "effect";
+import { Effect, Exit, Layer, Schema } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { Guild, Role } from "#src/timers/timers.types";
@@ -27,6 +27,7 @@ import {
 
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import { TimersInfrastructureError } from "#src/timers/timer-errors";
+import { decodeTimerResponse } from "#src/timers/timer-response.schema";
 
 const now = new Date("2026-09-02T12:00:00.000Z");
 
@@ -100,7 +101,28 @@ const storedTimer = {
     margonemType: "4",
   },
   wasReset: false,
+  deletedAt: null,
+  entranceClosesAt: null,
   updatedAt: now,
+};
+
+type TimerView = Effect.Success<
+  ReturnType<TimersData["Service"]["createManual"]>
+>;
+
+const member: NonNullable<TimerView["member"]> = {
+  id: 1,
+  userId: "user-a",
+  guildId: guild.id,
+  type: "USER",
+  name: "Member",
+  avatar: null,
+  banner: null,
+  active: true,
+  roles: [],
+  globalUserId: null,
+  updatedAt: now,
+  lastDiscordSyncAt: now,
 };
 
 const makeData = (overrides: Partial<TimersData["Service"]> = {}) =>
@@ -173,20 +195,6 @@ describe("Timers HttpApi handlers", () => {
   });
 
   it("converts nested member and nullable history dates without changing omitted fields", async () => {
-    const member = {
-      id: 1,
-      userId: "user-a",
-      guildId: guild.id,
-      type: "USER" as const,
-      name: "Member",
-      active: true,
-      roles: [restrictedRole],
-      updatedAt: now,
-      lastDiscordSyncAt: now,
-      lastDiscordAttemptAt: null,
-      nextRefreshAt: "2026-09-02T12:10:00.000Z",
-    };
-
     const actorCharacter = {
       name: "Actor",
       prof: "WARRIOR" as const,
@@ -196,7 +204,7 @@ describe("Timers HttpApi handlers", () => {
       accountId: 456,
     };
 
-    const timer = { ...storedTimer, member, actorCharacter, deletedAt: null };
+    const timer = { ...storedTimer, member, actorCharacter };
     const deletedTimer = { ...timer, deletedAt: now };
     const sourceTimers = [timer, storedTimer, deletedTimer];
 
@@ -208,7 +216,7 @@ describe("Timers HttpApi handlers", () => {
       timerKey: storedTimer.timerKey,
       npcId: storedTimer.npcId,
       npc: storedTimer.npc,
-      action: "DELETE",
+      action: "DELETE" as const,
       member,
       actorCharacter,
       minSpawnTime: null,
@@ -240,24 +248,12 @@ describe("Timers HttpApi handlers", () => {
     expect(timers[1]).not.toHaveProperty("actorCharacter");
     expect(timers[0]?.member).toEqual({
       ...member,
-      roles: [
-        {
-          id: restrictedRole.id,
-          guildId: restrictedRole.guildId,
-          name: restrictedRole.name,
-          color: restrictedRole.color,
-          position: restrictedRole.position,
-          permissions: restrictedRole.permissions,
-          lvlRangeFrom: restrictedRole.lvlRangeFrom,
-          lvlRangeTo: restrictedRole.lvlRangeTo,
-        },
-      ],
       updatedAt: now.toISOString(),
       lastDiscordSyncAt: now.toISOString(),
     });
     expect(timers[0]?.deletedAt).toBeNull();
     expect(timers[1]).not.toHaveProperty("member");
-    expect(timers[1]).not.toHaveProperty("deletedAt");
+    expect(timers[1]?.deletedAt).toBeNull();
     expect(entries[0]?.minSpawnTime).toBeNull();
     expect(entries[0]?.maxSpawnTime).toBe(now.toISOString());
     expect(entries[0]?.createdAt).toBe(now.toISOString());
@@ -267,26 +263,11 @@ describe("Timers HttpApi handlers", () => {
   it.each([
     { ...storedTimer, minSpawnTime: new Date("invalid") },
     { ...storedTimer, minSpawnTime: new Date("+010000-01-01T00:00:00.000Z") },
-    { ...storedTimer, updatedAt: "invalid" },
-    { ...storedTimer, npc: { ...storedTimer.npc, lvl: "100" } },
-    { ...storedTimer, wasReset: null },
-    { ...storedTimer, member: null },
     { ...storedTimer, member: undefined },
-    { ...storedTimer, actorCharacter: null },
     { ...storedTimer, actorCharacter: undefined },
     {
       ...storedTimer,
-      member: {
-        id: 1,
-        userId: "user-a",
-        guildId: guild.id,
-        type: "USER",
-        name: "Member",
-        active: true,
-        roles: [],
-        updatedAt: now,
-        nextRefreshAt: new Date("invalid"),
-      },
+      member: { ...member, lastDiscordSyncAt: new Date("invalid") },
     },
   ])(
     "retains infrastructure failures for malformed timer responses %#",
@@ -304,6 +285,19 @@ describe("Timers HttpApi handlers", () => {
       expect(error).toBeInstanceOf(TimersInfrastructureError);
     },
   );
+
+  // Values the typed port cannot carry are checked at the response boundary.
+  it.each([
+    { ...storedTimer, updatedAt: "invalid" },
+    { ...storedTimer, npc: { ...storedTimer.npc, lvl: "100" } },
+    { ...storedTimer, wasReset: null },
+    { ...storedTimer, member: null },
+    { ...storedTimer, actorCharacter: null },
+  ])("rejects malformed timer fields at the response boundary %#", (timer) => {
+    expect(Exit.isFailure(Effect.runSyncExit(decodeTimerResponse(timer)))).toBe(
+      true,
+    );
+  });
 
   it("keeps hidden timer history filtered by forwarding the exact scoped policy", async () => {
     const calls: Array<{

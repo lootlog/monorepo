@@ -1,4 +1,6 @@
 import { expect, test } from "bun:test";
+import { RedisError } from "effect/persistence/Redis";
+import { MessagingError } from "@lootlog/messaging";
 import { Effect } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
@@ -66,7 +68,7 @@ test("Discord role revocation and deletion rebalance only active holders, surviv
       publishMemberRemoved: () => Effect.void,
       invalidateMember: ({ discordId }) =>
         failInvalidation
-          ? Effect.fail(new Error("cache unavailable"))
+          ? Effect.fail(new RedisError({ cause: "cache unavailable" }))
           : Effect.sync(() => {
               invalidated.add(discordId);
             }),
@@ -75,10 +77,18 @@ test("Discord role revocation and deletion rebalance only active holders, surviv
           expect(invalidated.has(discordId)).toBe(true);
 
           if (failDelivery)
-            return yield* Effect.fail(new Error("broker unavailable"));
+            return yield* Effect.fail(
+              new MessagingError({
+                operation: "publish",
+                message: "broker unavailable",
+                cause: undefined,
+              }),
+            );
 
           expect(
-            yield* selectAccessibleGuilds(boundary.database, discordId),
+            yield* selectAccessibleGuilds(boundary.database, discordId).pipe(
+              Effect.orDie,
+            ),
           ).toEqual([]);
           delivered.push(discordId);
         }),
@@ -100,9 +110,9 @@ test("Discord role revocation and deletion rebalance only active holders, surviv
       admin: false,
     };
 
-    await expect(boundary.run(lifecycle.upsertRole(role))).rejects.toThrow(
-      "cache unavailable",
-    );
+    await expect(
+      boundary.run(lifecycle.upsertRole(role)),
+    ).rejects.toBeInstanceOf(RedisError);
     failInvalidation = false;
     // The redelivered event sees no change; the committed outbox row repairs it.
     await boundary.run(lifecycle.upsertRole(role));
@@ -185,12 +195,14 @@ test("Organization removal revokes members through the outbox and the owner's ag
     const delivery = makeMemberDelivery(makeMemberStore(boundary.database), {
       clearMemberCaches: () =>
         failInvalidation
-          ? Effect.fail(new Error("cache unavailable"))
+          ? Effect.fail(new RedisError({ cause: "cache unavailable" }))
           : Effect.void,
       publishMemberRemoved: ({ discordId, globalUserId }) =>
         Effect.gen(function* () {
           expect(
-            yield* selectAccessibleGuilds(boundary.database, discordId),
+            yield* selectAccessibleGuilds(boundary.database, discordId).pipe(
+              Effect.orDie,
+            ),
           ).toEqual([]);
           delivered.push(globalUserId);
         }),
@@ -211,7 +223,7 @@ test("Organization removal revokes members through the outbox and the owner's ag
     const removeGuild = () =>
       boundary.run(lifecycle.deleteGuild({ guildId: "guild-1" }));
 
-    await expect(removeGuild()).rejects.toThrow("cache unavailable");
+    await expect(removeGuild()).rejects.toBeInstanceOf(RedisError);
     expect(delivered).toEqual([]);
     failInvalidation = false;
     await removeGuild();

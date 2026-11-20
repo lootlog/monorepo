@@ -6,6 +6,7 @@ import type {
   SendChatMessageRequest,
 } from "#src/contracts/chat/schemas";
 import type { ChatMessageViewer } from "./chat-message-viewer.js";
+import type { ChatStoredMessage } from "./chat-stored-message.js";
 
 export class ChatOperationError extends TaggedErrorClass<ChatOperationError>()(
   "ChatOperationError",
@@ -20,7 +21,9 @@ export class ChatData extends Context.Service<
     readonly getMessages: (
       viewer: ChatMessageViewer,
       guildId: string,
-    ) => Effect.Effect<unknown, ChatOperationError>;
+    ) => DataEffect<
+      ReadonlyArray<ChatStoredMessage & { readonly canDelete: boolean }>
+    >;
     readonly sendMessage: (
       discordId: string,
       guildId: string,

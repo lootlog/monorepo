@@ -129,6 +129,8 @@ const role = {
   permissions: [Permission.ADMIN],
   lvlRangeFrom: 1,
   lvlRangeTo: 300,
+  createdAt: new Date("2026-09-02T10:00:00.000Z"),
+  updatedAt: new Date("2026-09-02T10:00:00.000Z"),
 };
 
 const share = {
@@ -856,8 +858,27 @@ describe("organization workspace response boundaries", () => {
     );
   });
 
+  it("rejects a malformed reservation date at the response boundary", () => {
+    // A string date cannot come from the typed port; the boundary receives it.
+    expect(
+      Exit.isFailure(
+        Effect.runSyncExit(
+          decodeDomainJson(ReservationResponse, {
+            ...reservation,
+            startsAt: "2026-02-30T10:00:00.000Z",
+          }),
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  // An extra runtime field the response contract cannot serialize.
+  const constraintsWithFunction = {
+    ...reservation.editingConstraints,
+    bad: () => 1,
+  };
+
   it.each([
-    { ...reservation, startsAt: "2026-02-30T10:00:00.000Z" },
     { ...reservation, endsAt: new Date(Number.NaN) },
     { ...reservation, id: 1.5 },
     {
@@ -867,10 +888,7 @@ describe("organization workspace response boundaries", () => {
         reservationMaxAdvanceDays: 0,
       },
     },
-    {
-      ...reservation,
-      editingConstraints: { ...reservation.editingConstraints, bad: () => 1 },
-    },
+    { ...reservation, editingConstraints: constraintsWithFunction },
   ])(
     "keeps malformed reservation output as an operation error",
     async (value) => {
@@ -899,8 +917,7 @@ describe("organization workspace response boundaries", () => {
   );
 
   it("still rejects invalid role fields while stripping database metadata", async () => {
-    const { position: _position, ...roleWithoutPosition } = role;
-    const value = { ...roleWithoutPosition, createdAt: date, updatedAt: date };
+    const value = { ...role, position: null };
 
     const layer = provideServices(
       makeAuthorization(),

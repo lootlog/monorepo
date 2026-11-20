@@ -110,7 +110,7 @@ export class GuildConfigurationData extends Context.Service<
     readonly updateGuildConfig: (
       guildId: string,
       payload: UpdateOrganizationConfigRequest,
-    ) => Effect.Effect<unknown, AccountOrganizationOperationError>;
+    ) => DataEffect<typeof guildTable.$inferSelect>;
     readonly getWorldsByGuildId: (
       guildId: string,
     ) => DataEffect<ReadonlyArray<string>>;

@@ -14,17 +14,23 @@ export class LootlogConfigOperationError extends TaggedErrorClass<LootlogConfigO
   { cause: Schema.Defect() },
 ) {}
 
+type LootlogConfigNpc = typeof lootlogConfigNpcTable.$inferSelect;
+
+type LootlogConfig = typeof lootlogConfigTable.$inferSelect & {
+  readonly npcs: ReadonlyArray<LootlogConfigNpc>;
+};
+
 export class LootlogConfigData extends Context.Service<
   LootlogConfigData,
   {
     readonly get: (
       guildId: string,
-    ) => Effect.Effect<unknown, LootlogConfigOperationError>;
+    ) => Effect.Effect<LootlogConfig | null, LootlogConfigOperationError>;
     readonly updateNpc: (
       guildId: string,
       npcId: number,
       payload: UpdateNpcLootlogConfigRequest,
-    ) => Effect.Effect<unknown, LootlogConfigOperationError>;
+    ) => Effect.Effect<LootlogConfigNpc, LootlogConfigOperationError>;
   }
 >()("@lootlog/api/http-api/lootlog-config/data") {
   static readonly layerDatabase = Layer.effect(

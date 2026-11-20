@@ -16,6 +16,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { findActiveGuild } from "./active-guild-lookup.js";
 import type { guildTable } from "#src/database/drizzle/organization.schema";
 import { findActiveGuildMember } from "#src/members/member-access-query";
+import type { UserOrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
 
 export class InternalMemberNotFound extends TaggedErrorClass<InternalMemberNotFound>()(
   "InternalMemberNotFound",
@@ -92,7 +93,10 @@ export class InternalGuildsData extends Context.Service<
       discordId: string,
       userId: string,
       freshness?: "required",
-    ) => Effect.Effect<unknown, InternalGuildsOperationError>;
+    ) => Effect.Effect<
+      UserOrganizationPermissionsResponse,
+      InternalGuildsOperationError
+    >;
     readonly getGuild: (
       idOrVanityUrl: string,
     ) => Effect.Effect<

@@ -12,6 +12,7 @@ import {
   UserLootlogConfigData,
   UserLootlogConfigOperationError,
 } from "#src/lootlog-config/user-lootlog-config-data";
+import type { AccountLootlogConfigResponse } from "#src/contracts/user-lootlog-config/schemas";
 import { UserLootlogConfigIdentity } from "../user-lootlog-config/user-lootlog-config.handlers.js";
 import { CharacterAurasData } from "#src/character-auras/character-auras-data";
 import { CharacterAurasIdentity } from "../character-auras/character-auras.handlers.js";
@@ -54,7 +55,7 @@ const notReadAtStartup = () => Effect.die(new Error("not read at startup"));
 
 type StartupReads = {
   readonly accessibleGuilds?: Effect.Effect<(typeof accessibleGuild)[], Error>;
-  readonly lootlogConfig?: Effect.Effect<unknown, Error>;
+  readonly lootlogConfig?: Effect.Effect<AccountLootlogConfigResponse, Error>;
   readonly guildPreferenceQueries?: unknown[];
 };
 
