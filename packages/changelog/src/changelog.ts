@@ -7,15 +7,19 @@ export type ChangelogEntryType = "feature" | "improvement" | "fix";
  * One change a player can notice, written in Polish in the pull request that
  * ships it. A change nobody can notice gets no entry.
  */
-export type ChangelogEntry = {
+export type ChangelogEntry = (
+  | {
+      type: Exclude<ChangelogEntryType, "fix">;
+      /**
+       * Marks the entry unread until the player opens the list. Reserve it
+       * for something a player would not find alone.
+       */
+      highlight?: boolean;
+    }
+  | { type: "fix"; highlight?: never }
+) & {
   /** The day the change merged, as `YYYY-MM-DD`. */
   date: string;
-  type: ChangelogEntryType;
-  /**
-   * Marks the entry unread until the player opens the list. Reserve it for
-   * something a player would not find alone; fixes never carry it.
-   */
-  highlight?: boolean;
   surfaces: readonly ChangelogSurface[];
   title: string;
   /** One or two sentences on what the player can do now. */
@@ -52,8 +56,12 @@ export const getWeekEnd = (weekStart: string) =>
   toIsoDate(Date.parse(`${weekStart}T00:00:00Z`) + 6 * DAY_MS);
 
 /** Whether `weekStart` opens the week the player's own calendar is in. */
-export const isCurrentWeek = (weekStart: string, now = new Date()) =>
-  weekStart === getWeekStart(now.toLocaleDateString("en-CA"));
+export const isCurrentWeek = (weekStart: string, now = new Date()) => {
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+
+  return weekStart === getWeekStart(`${now.getFullYear()}-${month}-${day}`);
+};
 
 /** The days of a week, such as "10–16 listopada". */
 export const formatWeekRange = (weekStart: string, locale: string) => {
@@ -102,7 +110,7 @@ export const groupChangelogByWeek = (
   }));
 };
 
-export const getHighlightIds = (items: readonly ChangelogItem[]) =>
+const getHighlightIds = (items: readonly ChangelogItem[]) =>
   items.flatMap((item) => (item.highlight ? [item.id] : []));
 
 /**
@@ -116,3 +124,12 @@ export const getUnreadHighlightIds = (
   seenIds === null
     ? []
     : getHighlightIds(items).filter((id) => !seenIds.includes(id));
+
+/**
+ * The seen record after the player opens the list. It keeps ids it does not
+ * know, so a build older than the one that wrote them cannot unread them.
+ */
+export const markHighlightsSeen = (
+  items: readonly ChangelogItem[],
+  seenIds: readonly string[] | null,
+) => [...new Set([...(seenIds ?? []), ...getHighlightIds(items)])];

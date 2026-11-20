@@ -1,7 +1,7 @@
 import {
-  getHighlightIds,
   getUnreadHighlightIds,
   groupChangelogByWeek,
+  markHighlightsSeen,
 } from "@lootlog/changelog/changelog";
 import { CHANGELOG } from "@lootlog/changelog/entries";
 import { Schema } from "effect";
@@ -15,7 +15,9 @@ const SeenIds = Schema.NullOr(Schema.mutable(Schema.Array(Schema.String)));
 
 const WEEKS = groupChangelogByWeek(CHANGELOG);
 
-const HIGHLIGHT_IDS = getHighlightIds(CHANGELOG);
+// The functional update rereads storage, so ids another tab wrote survive.
+const markSeen = (stored: string[] | null) =>
+  markHighlightsSeen(CHANGELOG, stored);
 
 /**
  * The changelog this build ships with and which of its highlights the player
@@ -32,14 +34,14 @@ export const useWhatsNew = () => {
 
   // A first run starts with nothing unread; only later changes are news.
   useEffect(() => {
-    if (seenIds === null) setSeenIds(HIGHLIGHT_IDS);
+    if (seenIds === null) setSeenIds(markSeen);
   }, [seenIds, setSeenIds]);
 
   return {
     weeks: WEEKS,
     unreadIds,
     markAllSeen: () => {
-      if (unreadIds.length > 0) setSeenIds(HIGHLIGHT_IDS);
+      if (unreadIds.length > 0) setSeenIds(markSeen);
     },
   };
 };

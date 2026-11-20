@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import {
   getUnreadHighlightIds,
   groupChangelogByWeek,
+  markHighlightsSeen,
   type ChangelogItem,
 } from "./changelog.js";
 
@@ -51,4 +52,14 @@ test("a new player gets no backlog; a returning one gets what shipped since", ()
 
   expect(getUnreadHighlightIds(items, null)).toEqual([]);
   expect(getUnreadHighlightIds(items, ["old"])).toEqual(["new"]);
+});
+
+test("opening the list in an older build keeps what a newer build marked seen", () => {
+  const olderBuild = [item("old", "2026-11-01", { highlight: true })];
+
+  expect(markHighlightsSeen(olderBuild, ["old", "newer"])).toEqual([
+    "old",
+    "newer",
+  ]);
+  expect(markHighlightsSeen(olderBuild, null)).toEqual(["old"]);
 });
