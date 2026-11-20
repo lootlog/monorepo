@@ -105,7 +105,7 @@ it("expires only the disconnected character's existing gathering or application,
       );
 
       return room
-        ? Schema.decodeUnknownEffect(schema)(room)
+        ? Schema.decodeUnknownEffect(schema)(room).pipe(Effect.orDie)
         : Effect.succeed(null);
     },
     eval: (script, _keys, args) => {

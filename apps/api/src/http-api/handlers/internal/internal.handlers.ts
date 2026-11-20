@@ -1,4 +1,5 @@
 import {
+  InternalGuildNotFound,
   InternalMemberNotFound,
   InternalGuildsOperationError,
   InternalGuildsData,
@@ -42,9 +43,16 @@ export const getInternalGuild = (idOrVanityUrl: string) =>
   Effect.gen(function* () {
     const data = yield* InternalGuildsData;
 
-    return yield* Effect.flatMap(data.getGuild(idOrVanityUrl), (value) =>
-      decode(OrganizationSummary, value),
-    );
+    const guild = yield* data.getGuild(idOrVanityUrl);
+
+    if (guild === null) {
+      return yield* new InternalGuildNotFound({
+        status: 404,
+        code: "GUILD_NOT_FOUND",
+      });
+    }
+
+    return yield* decode(OrganizationSummary, guild);
   }).pipe(
     Effect.withSpan("GuildsInternalControllerGetGuildByIdOrVanityUrl", {
       attributes: {
@@ -99,7 +107,11 @@ export const InternalGuildsHandlers = HttpApiBuilder.group(
         ),
       )
       .handle("GuildsInternalControllerGetGuildByIdOrVanityUrl", ({ params }) =>
-        orDieHttpFailure(getInternalGuild(params.idOrVanityUrl)),
+        orDieHttpFailure(
+          getInternalGuild(params.idOrVanityUrl).pipe(
+            Effect.catchTag("InternalGuildNotFound", statusCodeResponse),
+          ),
+        ),
       )
       .handle("GuildsInternalControllerGetMemberIdentity", ({ params }) =>
         orDieHttpFailure(

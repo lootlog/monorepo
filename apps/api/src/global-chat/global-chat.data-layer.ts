@@ -501,10 +501,7 @@ export const makeGlobalChatOperations = (
             .returning()
             .pipe(Effect.mapError(operationError));
 
-          if (!row)
-            return yield* Effect.fail(
-              operationError(new Error("Mute upsert returned no row")),
-            );
+          if (!row) return yield* Effect.die("Mute upsert returned no row");
 
           return muteResponse(row);
         }),

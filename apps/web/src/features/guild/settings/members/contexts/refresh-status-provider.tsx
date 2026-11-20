@@ -98,7 +98,7 @@ export const RefreshStatusProvider = ({
   return (
     <RefreshStatusContext.Provider
       // React Compiler caches this object by failedIds/refreshedIds; callbacks are stable (verified in the Vite-transformed module).
-      // eslint-disable-next-line react-doctor/jsx-no-constructed-context-values
+      // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values
       value={{
         refreshedIds,
         failedIds,

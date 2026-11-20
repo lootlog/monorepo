@@ -33,7 +33,7 @@ import {
 import { cn } from "cn";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
-// eslint-disable-next-line react-doctor/prefer-dynamic-import -- This chart implementation is loaded only by its lazy wrapper; Recharts stays inside that async boundary.
+// oxlint-disable-next-line react-doctor/prefer-dynamic-import -- This chart implementation is loaded only by its lazy wrapper; Recharts stays inside that async boundary.
 import {
   CartesianGrid,
   Line,

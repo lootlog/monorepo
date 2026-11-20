@@ -8,7 +8,8 @@ import type { R2Config } from "#src/config/r2.config";
 import { ContextLogger } from "@lootlog/instrumentation";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import { chunk } from "es-toolkit";
-import { Effect, Redacted } from "effect";
+import { Effect, Redacted, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
 const CACHE_PREFIX = "battle:raw";
 
@@ -34,8 +35,17 @@ export type BattleObjectCache = Pick<
   | "zrem"
 >;
 
+/** R2 could not complete a request; the battle objects it names are unchanged or unread. */
+class BattleObjectStorageError extends TaggedErrorClass<BattleObjectStorageError>()(
+  "BattleObjectStorageError",
+  { cause: Schema.Defect() },
+) {}
+
 const r2 = <A>(send: (signal: AbortSignal) => Promise<A>) =>
-  Effect.tryPromise({ try: send, catch: (cause) => cause });
+  Effect.tryPromise({
+    try: send,
+    catch: (cause) => new BattleObjectStorageError({ cause }),
+  });
 
 export const makeBattleObjectStorage = (
   redisStore: BattleObjectCache,
@@ -150,8 +160,8 @@ export const makeBattleObjectStorage = (
       const body = response.Body;
 
       if (!body) {
-        return yield* Effect.fail(
-          new Error(`No data found for battle ${battleId}`),
+        return yield* Effect.die(
+          new Error(`R2 returned no body for battle ${battleId}`),
         );
       }
 
@@ -250,8 +260,9 @@ export const makeBattleObjectStorage = (
         );
 
         if (response.Errors?.some((error) => !error.Key)) {
+          // Without a key no object in the batch is known to be removed.
           return yield* Effect.fail(
-            new Error("R2 returned an unidentified object deletion failure"),
+            new BattleObjectStorageError({ cause: response.Errors }),
           );
         }
 

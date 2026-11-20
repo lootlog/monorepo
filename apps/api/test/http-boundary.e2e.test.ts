@@ -401,10 +401,8 @@ describe("API HTTP boundary", () => {
         { name: "Watched item", icon: "item.png" },
       ],
     ] as const) {
-      // eslint-disable-next-line no-await-in-loop -- Each mutation depends on the previous persisted state.
       await seedDiscordGuilds();
 
-      // eslint-disable-next-line no-await-in-loop -- Each mutation depends on the previous persisted state.
       const response = await request(
         `/users/@me/notifications/watched-items${path}`,
         {
@@ -420,7 +418,6 @@ describe("API HTTP boundary", () => {
       );
 
       expect(response.status).toBe(201);
-      // eslint-disable-next-line no-await-in-loop -- Validate each response before retrying the mutation.
       expect(await response.json()).toMatchObject({
         itemId,
         itemSnapshot: expectedSnapshot,

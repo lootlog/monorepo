@@ -1,11 +1,16 @@
 import { makePostgresLayer } from "@lootlog/database";
+import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import { makeWithDefaults } from "drizzle-orm/effect-postgres";
 import { Context, Effect, Layer } from "effect";
+import type { SqlError } from "effect/sql/SqlError";
 import { ActivityConfig } from "#src/config/activity-config";
 
 export type ActivityDatabaseValue = Effect.Success<
   ReturnType<typeof makeWithDefaults>
 >;
+
+/** A statement or transaction the activity database did not complete. */
+export type ActivityDatabaseFailure = EffectDrizzleQueryError | SqlError;
 
 export class ActivityDatabase extends Context.Service<
   ActivityDatabase,

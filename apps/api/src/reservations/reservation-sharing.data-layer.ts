@@ -232,8 +232,8 @@ export const makeReservationSharingDataLayer = (
               const invitation = rows[0];
 
               if (!invitation) {
-                return yield* Effect.fail(
-                  new Error("Reservation invitation insert returned no row"),
+                return yield* Effect.die(
+                  "Reservation invitation insert returned no row",
                 );
               }
 
@@ -471,8 +471,8 @@ export const makeReservationSharingDataLayer = (
               }
 
               if (result.kind === "insert-failed") {
-                return yield* Effect.fail(
-                  new Error("Reservation share insert returned no row"),
+                return yield* Effect.die(
+                  "Reservation share insert returned no row",
                 );
               }
 

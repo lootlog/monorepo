@@ -3,19 +3,11 @@ import { Effect, Schema } from "effect";
 import { HttpClient, HttpClientResponse } from "effect/http";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
-import { Permission } from "@lootlog/schema/permissions";
 import {
-  InternalGuildsData,
-  makeInternalGuildsData,
-  type InternalGuildsPersistence,
-} from "../../api/src/guilds/internal-guilds-data.js";
-import { getInternalUserPermissions } from "../../api/src/http-api/handlers/internal/internal.handlers.js";
+  Permission,
+  type UserGuildPermissionsDtoSchema,
+} from "@lootlog/schema/permissions";
 import { InternalUserPermissionsQuery } from "@lootlog/schema/internal-guilds";
-import { createPermissionCacheBoundary } from "../../api/test/permission-cache-fixtures.js";
-import {
-  createGuildFixture,
-  createMemberFixture,
-} from "../../api/test/organization-fixtures.js";
 import { makeGuildStore } from "../src/guilds/guild-store.js";
 import { ActivityPublisher } from "../src/rabbit/activity-publisher.js";
 import { makeMargonemProofVerifier } from "../src/auth/margonem-proof.js";
@@ -49,25 +41,13 @@ const grantedPermissions = [
 
 type Npc = { readonly type: string; readonly lvl: number };
 
-type Members = Effect.Success<
-  ReturnType<InternalGuildsPersistence["findMembersWithRoles"]>
->;
+type Grant = typeof UserGuildPermissionsDtoSchema.Type;
 
-const member = (guildId: string): Members[number] => ({
-  ...createMemberFixture({
-    guildId,
-    userId: identity.discordId,
-    globalUserId: identity.userId,
-  }),
+const grant = (guildId: string): Grant => ({
+  guild: { id: guildId, ownerId: "discord-owner" },
   roles: [
     {
       id: `role-${guildId}`,
-      guildId,
-      name: "Readers",
-      color: null,
-      position: 1,
-      createdAt: new Date(0),
-      updatedAt: new Date(0),
       lvlRangeFrom: 1,
       lvlRangeTo: 500,
       permissions: [...grantedPermissions],
@@ -76,43 +56,41 @@ const member = (guildId: string): Members[number] => ({
 });
 
 const setup = async () => {
-  let members: Members = [member("organization-1"), member("organization-2")];
-  const apiRedis = createPermissionCacheBoundary();
+  let grants = [grant("organization-1"), grant("organization-2")];
 
-  const api = makeInternalGuildsData(
-    {
-      findActiveGuild: () => Effect.succeed(null),
-      findActiveMemberIdentity: () => Effect.succeed(null),
-      findGuildsForPermissions: () =>
-        Effect.sync(() =>
-          members
-            .filter((entry) => entry.active)
-            .map(({ guildId }) => createGuildFixture({ id: guildId })),
-        ),
-      findMembersWithRoles: () => Effect.sync(() => structuredClone(members)),
-    },
-    apiRedis.cache,
-  );
-
+  // The API's internal permissions endpoint keeps answering from its warm
+  // projection until a read demands fresh grants; apps/api tests that side in
+  // user-guild-permissions.test.ts. Reconciliation must demand fresh data, or
+  // the gateway would commit grants the member no longer has.
+  let warm: Grant[] | undefined;
   let permissionRequests = 0;
 
   const http = HttpClient.make((request) =>
-    Effect.gen(function* () {
+    Effect.sync(() => {
       permissionRequests++;
 
       const query = Schema.decodeUnknownSync(InternalUserPermissionsQuery)(
         Object.fromEntries(new URL(request.url).searchParams),
       );
 
-      const permissions = yield* getInternalUserPermissions(
-        query.discordId,
-        query.userId,
-        query.freshness,
-      ).pipe(Effect.provideService(InternalGuildsData, api));
+      // A required read bypasses the warm projection without replacing it.
+      if (query.freshness === "required")
+        return HttpClientResponse.fromWeb(request, Response.json(grants));
 
-      return HttpClientResponse.fromWeb(request, Response.json(permissions));
-    }).pipe(Effect.orDie),
+      warm ??= structuredClone(grants);
+
+      return HttpClientResponse.fromWeb(request, Response.json(warm));
+    }),
   );
+
+  const updateOrganization1 = (update: (grant: Grant) => Grant | undefined) => {
+    grants = grants.flatMap((entry) => {
+      if (entry.guild.id !== "organization-1") return [entry];
+      const next = update(entry);
+
+      return next ? [next] : [];
+    });
+  };
 
   const redis = makeGuildStoreRedis(identity);
 
@@ -267,38 +245,31 @@ const setup = async () => {
   return {
     targets,
     replicas,
-    api,
-    apiRedis,
     join,
     first,
     publish,
     deliverChange,
     permissionRequests: () => permissionRequests,
     narrowLevels: () => {
-      members = members.map((entry) =>
-        entry.guildId !== "organization-1"
-          ? entry
-          : {
-              ...entry,
-              roles: entry.roles.map((role) => ({
-                ...role,
-                lvlRangeFrom: 100,
-                lvlRangeTo: 200,
-                permissions: role.permissions.filter(
-                  (permission) =>
-                    permission !== Permission.LOOTLOG_TIMERS_TITANS_READ,
-                ),
-              })),
-            },
-      );
+      updateOrganization1((entry) => ({
+        ...entry,
+        roles: entry.roles.map((role) => ({
+          ...role,
+          lvlRangeFrom: 100,
+          lvlRangeTo: 200,
+          permissions: role.permissions.filter(
+            (permission) =>
+              permission !== Permission.LOOTLOG_TIMERS_TITANS_READ,
+          ),
+        })),
+      }));
     },
     revoke: (removed: boolean) => {
-      members = members.map((entry) =>
-        entry.guildId !== "organization-1"
-          ? entry
+      updateOrganization1((entry) =>
+        removed
+          ? undefined
           : {
               ...entry,
-              active: !removed,
               roles: entry.roles.map((role) => ({
                 ...role,
                 permissions: [
@@ -326,27 +297,6 @@ for (const change of ["role", "membership"] as const) {
     }
 
     system.revoke(change === "membership");
-
-    // A warm, successful response remains stale until API invalidation arrives.
-    // Reconciliation must demand fresh data instead of committing those grants.
-    const stale = await Effect.runPromise(
-      system.api.getUserPermissions(identity.discordId, identity.userId),
-    );
-
-    expect(stale).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          guild: expect.objectContaining({ id: "organization-1" }),
-          roles: expect.arrayContaining([
-            expect.objectContaining({
-              permissions: expect.arrayContaining([
-                Permission.LOOTLOG_CHAT_READ,
-              ]),
-            }),
-          ]),
-        }),
-      ]),
-    );
 
     const requestsBefore = system.permissionRequests();
 
@@ -421,20 +371,6 @@ test("narrowing NPC levels and revoking a tier grant revokes those deliveries on
 
   system.narrowLevels();
 
-  const stale = await Effect.runPromise(
-    system.api.getUserPermissions(identity.discordId, identity.userId),
-  );
-
-  expect(stale).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({
-        guild: expect.objectContaining({ id: "organization-1" }),
-        roles: expect.arrayContaining([
-          expect.objectContaining({ lvlRangeTo: 500 }),
-        ]),
-      }),
-    ]),
-  );
   await system.deliverChange(RabbitRoutingKey.GUILDS_MEMBERS_UPDATE);
 
   for (const target of system.targets) target.frames.length = 0;

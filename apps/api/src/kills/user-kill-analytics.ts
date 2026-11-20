@@ -402,10 +402,7 @@ export const makeUserKillAnalytics = (
 
       const row = decoded.rows[0];
 
-      if (!row)
-        return yield* Effect.fail(
-          new Error("Missing kill analytics aggregate"),
-        );
+      if (!row) return yield* Effect.die("Missing kill analytics aggregate");
 
       return buildKillAnalytics(row.payload, range, scopeOf(query));
     });
@@ -445,8 +442,7 @@ export const makeUserKillAnalytics = (
 
       const row = decoded.rows[0];
 
-      if (!row)
-        return yield* Effect.fail(new Error("Missing kill activity aggregate"));
+      if (!row) return yield* Effect.die("Missing kill activity aggregate");
 
       return buildKillActivity(row.payload, range, scopeOf(query));
     });

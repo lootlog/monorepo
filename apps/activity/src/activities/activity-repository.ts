@@ -1,3 +1,7 @@
+import {
+  encodeActivityCursor,
+  parseActivityCursor,
+} from "./activity-cursor.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   and,
@@ -29,7 +33,10 @@ import {
 } from "effect";
 import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
-import { ActivityDatabase } from "#src/database/database";
+import {
+  ActivityDatabase,
+  type ActivityDatabaseFailure,
+} from "#src/database/database";
 import {
   activities,
   activityActorSnapshots,
@@ -50,43 +57,52 @@ export type ActivityRecord = ReturnType<typeof mapActivityRow>;
 export type MemberActivityStatsRecord = typeof memberActivityStats.$inferSelect;
 
 export interface ActivityRepositoryValue {
-  readonly create: (dto: CreateActivity) => Effect.Effect<unknown, unknown>;
+  /** Stores the activity once per idempotency key and answers with that row. */
+  readonly create: (
+    dto: CreateActivity,
+  ) => Effect.Effect<
+    ActivityRecord | typeof activities.$inferSelect,
+    ActivityDatabaseFailure
+  >;
   readonly clearActiveSessionsForMember: (member: {
     guildId: string;
     discordId: string;
-  }) => Effect.Effect<void, unknown>;
+  }) => Effect.Effect<void, ActivityDatabaseFailure>;
   readonly findMany: (
     query: QueryActivities,
   ) => Effect.Effect<
     { data: ActivityRecord[]; nextCursor?: string; hasMore: boolean },
-    unknown
+    ActivityDatabaseFailure
   >;
   readonly findOne: (
     id: string,
     guildId: string,
-  ) => Effect.Effect<ActivityRecord, unknown | ActivityNotFound>;
+  ) => Effect.Effect<
+    ActivityRecord,
+    ActivityDatabaseFailure | ActivityNotFound
+  >;
   readonly deleteOne: (
     id: string,
     guildId: string,
-  ) => Effect.Effect<number, unknown | ActivityNotFound>;
+  ) => Effect.Effect<number, ActivityDatabaseFailure | ActivityNotFound>;
   readonly memberStats: (
     guildId: string,
-  ) => Effect.Effect<MemberActivityStatsRecord[], unknown>;
+  ) => Effect.Effect<MemberActivityStatsRecord[], ActivityDatabaseFailure>;
   readonly suggestActorNames: (
     guildId: string,
     search?: string,
     limit?: number,
-  ) => Effect.Effect<string[], unknown>;
+  ) => Effect.Effect<string[], ActivityDatabaseFailure>;
   readonly suggestWorlds: (
     guildId: string,
     search?: string,
     limit?: number,
-  ) => Effect.Effect<string[], unknown>;
+  ) => Effect.Effect<string[], ActivityDatabaseFailure>;
   readonly suggestClanNames: (
     guildId: string,
     search?: string,
     limit?: number,
-  ) => Effect.Effect<string[], unknown>;
+  ) => Effect.Effect<string[], ActivityDatabaseFailure>;
 }
 
 const detailsString = (dto: CreateActivity, key: string) => {
@@ -115,40 +131,10 @@ const mapActivityRow = ({
 });
 
 // A JavaScript Date keeps milliseconds and "createdAt" keeps microseconds, so
-// the cursor carries the timestamp as PostgreSQL text. A cursor rounded to the
-// millisecond would skip the rows that share it with the last row of a page.
+// the cursor reads the timestamp as PostgreSQL text.
 const CURSOR_TIMESTAMP_FORMAT = 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"';
 
-const CURSOR_TIMESTAMP_PATTERN =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{1,6}Z$/;
-
 const cursorCreatedAt = drizzleSql<string>`to_char(${activities.createdAt} AT TIME ZONE 'UTC', ${CURSOR_TIMESTAMP_FORMAT})`;
-
-const encodeCursor = (row: {
-  readonly cursorCreatedAt: string;
-  readonly activity: { readonly id: string };
-}) =>
-  Buffer.from(JSON.stringify([row.cursorCreatedAt, row.activity.id])).toString(
-    "base64url",
-  );
-
-const decodeCursor = (cursor: string) => {
-  const value = Schema.decodeUnknownOption(
-    Schema.fromJsonString(Schema.Tuple([Schema.String, Schema.String])),
-  )(Buffer.from(cursor, "base64url").toString("utf8"));
-
-  if (
-    Option.isNone(value) ||
-    !CURSOR_TIMESTAMP_PATTERN.test(value.value[0]) ||
-    !Number.isFinite(Date.parse(value.value[0]))
-  ) {
-    throw new Error("Invalid activity cursor");
-  }
-
-  const [createdAt, id] = value.value;
-
-  return { createdAt: drizzleSql`${createdAt}::timestamptz`, id };
-};
 
 // How far a Gateway clock may run ahead of the database before a redelivery
 // can be stored twice. A day costs nothing: chunks that recent are never
@@ -194,7 +180,8 @@ export class ActivityRepository extends Context.Service<
           snapshot.lvl === undefined ||
           snapshot.prof === undefined
         )
-          return yield* Effect.fail(
+          // decodeCreateActivity rejects such a snapshot before it gets here.
+          return yield* Effect.die(
             new Error("Actor snapshot is missing a database-required field"),
           );
 
@@ -242,7 +229,7 @@ export class ActivityRepository extends Context.Service<
         const row = rows[0] ?? (yield* findExisting())[0];
 
         if (!row)
-          return yield* Effect.fail(
+          return yield* Effect.die(
             new Error("Actor snapshot resolution did not return an identifier"),
           );
 
@@ -308,14 +295,15 @@ export class ActivityRepository extends Context.Service<
             const created = createdRows[0];
 
             if (!created)
-              return yield* Effect.fail(
+              return yield* Effect.die(
                 new Error("Activity insert did not return a row"),
               );
 
             const sessionId = detailsString(dto, "sessionId");
 
+            // decodeCreateActivity requires it for every activity type.
             if (!sessionId)
-              return yield* Effect.fail(
+              return yield* Effect.die(
                 new Error("Activity session identifier is missing"),
               );
 
@@ -443,7 +431,19 @@ export class ActivityRepository extends Context.Service<
       const findMany = Effect.fn("ActivityRepository.findMany")(function* (
         query: QueryActivities,
       ) {
-        const cursor = query.cursor ? decodeCursor(query.cursor) : undefined;
+        const position =
+          query.cursor === undefined
+            ? undefined
+            : Option.getOrUndefined(parseActivityCursor(query.cursor));
+
+        // The query schema admits only cursors that parse.
+        if (query.cursor !== undefined && position === undefined)
+          return yield* Effect.die("Activity cursor did not parse");
+
+        const cursor = position && {
+          createdAt: drizzleSql`${position.createdAt}::timestamptz`,
+          id: position.id,
+        };
 
         const conditions = [
           query.userId ? eq(activities.userId, query.userId) : undefined,
@@ -498,7 +498,13 @@ export class ActivityRepository extends Context.Service<
 
         return {
           data: page.map(mapActivityRow),
-          nextCursor: hasMore && lastRow ? encodeCursor(lastRow) : undefined,
+          nextCursor:
+            hasMore && lastRow
+              ? encodeActivityCursor({
+                  createdAt: lastRow.cursorCreatedAt,
+                  id: lastRow.activity.id,
+                })
+              : undefined,
           hasMore,
         };
       });

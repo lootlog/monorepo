@@ -23,6 +23,11 @@ export class InternalMemberNotFound extends TaggedErrorClass<InternalMemberNotFo
   { status: Schema.Literal(404), code: Schema.Literal("MEMBER_NOT_FOUND") },
 ) {}
 
+export class InternalGuildNotFound extends TaggedErrorClass<InternalGuildNotFound>()(
+  "InternalGuildNotFound",
+  { status: Schema.Literal(404), code: Schema.Literal("GUILD_NOT_FOUND") },
+) {}
+
 export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuildsOperationError>()(
   "InternalGuildsOperationError",
   { cause: Schema.Defect() },
@@ -65,7 +70,7 @@ export const makeInternalGuildsData = (
 
       const guild = yield* persistence.findActiveGuild(idOrVanityUrl);
 
-      if (!guild) return yield* Effect.fail(new Error("Guild not found"));
+      if (!guild) return null;
 
       yield* writeGuildConfigurationCache(cache, idOrVanityUrl, guild);
 
@@ -103,7 +108,8 @@ export class InternalGuildsData extends Context.Service<
       | NonNullable<
           Effect.Success<ReturnType<typeof readGuildConfigurationCache>>
         >
-      | (GuildRecord & ReturnType<typeof resolveReservationSettings>),
+      | (GuildRecord & ReturnType<typeof resolveReservationSettings>)
+      | null,
       InternalGuildsOperationError
     >;
     readonly getMemberIdentity: (

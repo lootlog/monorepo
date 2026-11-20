@@ -236,7 +236,7 @@ export const createSettingsPatchQueue = <TResponse>(
 
         // Batches must reach the server in order: each one carries a merged
         // state for its scopes and later batches may depend on earlier ones.
-        // eslint-disable-next-line no-await-in-loop
+        // oxlint-disable-next-line no-await-in-loop
         const response = await config.send(operations, options);
 
         if (config.applyServerDocuments?.(response, operations)) {
@@ -278,7 +278,7 @@ export const createSettingsPatchQueue = <TResponse>(
     inFlight = (async () => {
       while (pending.size > 0) {
         // Only one request is in flight at a time by design.
-        // eslint-disable-next-line no-await-in-loop
+        // oxlint-disable-next-line no-await-in-loop
         await sendPatches(takePending(), options);
       }
     })().finally(() => {

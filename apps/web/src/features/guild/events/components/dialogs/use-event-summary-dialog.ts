@@ -63,7 +63,7 @@ export function useEventSummaryDialog({
     resolveSlideState();
 
   // This state drives the render-time slide reset when reopening; changing it to a ref would lose the committed reopen transition.
-  // eslint-disable-next-line react-doctor/rerender-state-only-in-handlers
+  // oxlint-disable-next-line react-doctor/rerender-state-only-in-handlers
   const [wasOpen, setWasOpen] = useState(open);
 
   const synchronizeSlide = () => {

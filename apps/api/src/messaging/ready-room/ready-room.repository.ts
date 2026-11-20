@@ -1,4 +1,5 @@
 import { Effect, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { PartyReadyRoomAggregateSchema } from "@lootlog/schema/party-ready-room";
 import {
   FIND_ACTIVE_READY_ROOM_IDS_SCRIPT,
@@ -40,11 +41,19 @@ const CHARACTER_PREFIX = "party-ready-room:v3:character:";
 
 const TERMINAL_TOMBSTONE_SECONDS = 60;
 
+/** Concurrent requests kept replacing the room's indexes; the caller may retry. */
+class ReadyRoomContended extends TaggedErrorClass<ReadyRoomContended>()(
+  "ReadyRoomContended",
+  {},
+) {}
+
+type ReadyRoomFailure = RedisError | ReadyRoomContended;
+
 export interface ReadyRoomRedis {
   readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
     key: string,
     schema: S,
-  ) => Effect.Effect<S["Type"] | null, unknown>;
+  ) => Effect.Effect<S["Type"] | null, RedisError>;
   /** Resolves with the script's untyped reply; the caller decodes it. */
   readonly eval: (
     script: string,
@@ -57,38 +66,38 @@ export interface ReadyRoomEffectRepository {
   readonly findActive: (
     guildIds: ReadonlyArray<string>,
     world: string,
-  ) => Effect.Effect<ReadonlyArray<ReadyRoomAggregate>, unknown>;
+  ) => Effect.Effect<ReadonlyArray<ReadyRoomAggregate>, ReadyRoomFailure>;
   readonly create: (
     aggregate: ReadyRoomAggregate,
-  ) => Effect.Effect<CreateReadyRoomResult, unknown>;
+  ) => Effect.Effect<CreateReadyRoomResult, ReadyRoomFailure>;
   readonly get: (
     notificationId: string,
-  ) => Effect.Effect<ReadyRoomAggregate | null, unknown>;
+  ) => Effect.Effect<ReadyRoomAggregate | null, ReadyRoomFailure>;
   readonly findForUser: (
     discordId: string,
-  ) => Effect.Effect<ReadonlyArray<ReadyRoomAggregate>, unknown>;
+  ) => Effect.Effect<ReadonlyArray<ReadyRoomAggregate>, ReadyRoomFailure>;
   readonly commit: (
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
-  ) => Effect.Effect<CommitReadyRoomResult, unknown>;
+  ) => Effect.Effect<CommitReadyRoomResult, ReadyRoomFailure>;
   readonly join: (
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
     participantId: string,
-  ) => Effect.Effect<JoinReadyRoomResult, unknown>;
+  ) => Effect.Effect<JoinReadyRoomResult, ReadyRoomFailure>;
   readonly exitParticipant: (
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
     participantId: string,
-  ) => Effect.Effect<CommitReadyRoomResult, unknown>;
+  ) => Effect.Effect<CommitReadyRoomResult, ReadyRoomFailure>;
   readonly terminate: (
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
-  ) => Effect.Effect<CommitReadyRoomResult, unknown>;
+  ) => Effect.Effect<CommitReadyRoomResult, ReadyRoomFailure>;
   readonly extend: (
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
-  ) => Effect.Effect<CommitReadyRoomResult, unknown>;
+  ) => Effect.Effect<CommitReadyRoomResult, ReadyRoomFailure>;
 }
 
 const roomKey = (id: string) => `${ROOM_PREFIX}${id}`;
@@ -106,49 +115,61 @@ const discoveryKey = (guildId: string, world: string) =>
 const remainingTtl = (aggregate: ReadyRoomAggregate, clock: () => number) =>
   Math.ceil((Date.parse(aggregate.expiresAt) - clock()) / 1000);
 
+// The scripts' replies are this module's own contract: a reply outside it is a
+// defect, not a failure a caller could handle.
 const parseCommit = (
   result: unknown,
   aggregate: ReadyRoomAggregate,
-): Effect.Effect<CommitReadyRoomResult, unknown> =>
-  Effect.try({
-    try: (): CommitReadyRoomResult => {
-      if (!Array.isArray(result) || !Schema.is(Schema.String)(result[0])) {
-        throw new Error("Invalid Ready Room commit result from Redis");
-      }
+): Effect.Effect<CommitReadyRoomResult> => {
+  if (!Array.isArray(result) || !Schema.is(Schema.String)(result[0])) {
+    return Effect.die("Invalid Ready Room commit result from Redis");
+  }
 
-      if (result[0] === "COMMITTED") return { status: "committed", aggregate };
+  if (result[0] === "COMMITTED") {
+    return Effect.succeed({ status: "committed", aggregate });
+  }
 
-      if (result[0] === "CONFLICT") return { status: "conflict" };
+  if (result[0] === "CONFLICT") return Effect.succeed({ status: "conflict" });
 
-      if (result[0] === "MISSING") return { status: "missing" };
-      throw new Error(`Unknown Ready Room commit result: ${String(result[0])}`);
-    },
-    catch: (error) => error,
-  });
+  if (result[0] === "MISSING") return Effect.succeed({ status: "missing" });
+
+  return Effect.die(`Unknown Ready Room commit result: ${result[0]}`);
+};
 
 const parseCreate = (
   result: unknown,
   aggregate: ReadyRoomAggregate,
-): CreateReadyRoomResult => {
-  if (!Array.isArray(result) || typeof result[0] !== "string") {
-    throw new Error("Invalid Ready Room create result from Redis");
+): Effect.Effect<CreateReadyRoomResult> => {
+  if (!Array.isArray(result) || !Schema.is(Schema.String)(result[0])) {
+    return Effect.die("Invalid Ready Room create result from Redis");
   }
 
-  if (result[0] === "CREATED") return { status: "created", aggregate };
+  if (result[0] === "CREATED") {
+    return Effect.succeed({ status: "created", aggregate });
+  }
 
   if (
     result[0] === "ACTIVE_ROOM_EXISTS" &&
     Schema.is(Schema.String)(result[1])
   ) {
-    return { status: "active-room-exists", notificationId: result[1] };
+    return Effect.succeed({
+      status: "active-room-exists",
+      notificationId: result[1],
+    });
   }
 
   if (result[0] === "JOINED_ELSEWHERE" && Schema.is(Schema.String)(result[1])) {
-    return { status: "joined-elsewhere", notificationId: result[1] };
+    return Effect.succeed({
+      status: "joined-elsewhere",
+      notificationId: result[1],
+    });
   }
 
-  if (result[0] === "ROOM_EXISTS") return { status: "room-exists" };
-  throw new Error(`Unknown Ready Room create result: ${String(result[0])}`);
+  if (result[0] === "ROOM_EXISTS") {
+    return Effect.succeed({ status: "room-exists" });
+  }
+
+  return Effect.die(`Unknown Ready Room create result: ${result[0]}`);
 };
 
 export const makeReadyRoomRepository = (
@@ -176,9 +197,7 @@ export const makeReadyRoomRepository = (
       for (const key of result.slice(1)) declaredKeys.add(key);
     }
 
-    return yield* Effect.fail(
-      new Error("Ready Room indexes changed too often"),
-    );
+    return yield* new ReadyRoomContended();
   });
 
   const get = (notificationId: string) =>
@@ -195,8 +214,8 @@ export const makeReadyRoomRepository = (
         )
         .pipe(
           Effect.flatMap((value) =>
-            Effect.try(() =>
-              Schema.decodeUnknownSync(Schema.Array(Schema.String))(value),
+            Schema.decodeUnknownEffect(Schema.Array(Schema.String))(value).pipe(
+              Effect.orDie,
             ),
           ),
           Effect.flatMap((ids) =>
@@ -225,9 +244,7 @@ export const makeReadyRoomRepository = (
               !Array.isArray(result) ||
               !result.every((id): id is string => typeof id === "string")
             ) {
-              return Effect.fail(
-                new Error("Invalid Ready Room index result from Redis"),
-              );
+              return Effect.die("Invalid Ready Room index result from Redis");
             }
 
             const ids = [...new Set(result)];
@@ -258,7 +275,7 @@ export const makeReadyRoomRepository = (
       const ttl = remainingTtl(aggregate, clock);
 
       if (ttl <= 0) {
-        return Effect.fail(new Error("Ready Room must expire in the future"));
+        return Effect.die("Ready Room must expire in the future");
       }
 
       return evalWithIndexedRoomKeys(
@@ -281,14 +298,7 @@ export const makeReadyRoomRepository = (
           Date.parse(aggregate.expiresAt),
           3 + aggregate.guildIds.length,
         ],
-      ).pipe(
-        Effect.flatMap((result) =>
-          Effect.try({
-            try: () => parseCreate(result, aggregate),
-            catch: (error) => error,
-          }),
-        ),
-      );
+      ).pipe(Effect.flatMap((result) => parseCreate(result, aggregate)));
     },
     commit: (expected, next) => {
       const ttl = remainingTtl(next, clock);
@@ -342,22 +352,20 @@ export const makeReadyRoomRepository = (
           switchedCharacterId === undefined ? "0" : "1",
         ],
       ).pipe(
-        Effect.flatMap(
-          (result): Effect.Effect<JoinReadyRoomResult, unknown> => {
-            if (
-              Array.isArray(result) &&
-              result[0] === "JOINED_ELSEWHERE" &&
-              Schema.is(Schema.String)(result[1])
-            ) {
-              return Effect.succeed<JoinReadyRoomResult>({
-                status: "joined-elsewhere" as const,
-                notificationId: result[1],
-              });
-            }
+        Effect.flatMap((result): Effect.Effect<JoinReadyRoomResult> => {
+          if (
+            Array.isArray(result) &&
+            result[0] === "JOINED_ELSEWHERE" &&
+            Schema.is(Schema.String)(result[1])
+          ) {
+            return Effect.succeed<JoinReadyRoomResult>({
+              status: "joined-elsewhere" as const,
+              notificationId: result[1],
+            });
+          }
 
-            return parseCommit(result, next);
-          },
-        ),
+          return parseCommit(result, next);
+        }),
       );
     },
     exitParticipant: (expected, next, participantId) => {

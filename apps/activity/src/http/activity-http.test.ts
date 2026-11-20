@@ -43,7 +43,7 @@ const activityRecord = (
 });
 
 const repository: ActivityRepositoryValue = {
-  create: () => Effect.succeed({}),
+  create: () => Effect.die("unused"),
   clearActiveSessionsForMember: () => Effect.void,
   findMany: (query) =>
     Effect.succeed({
@@ -145,6 +145,31 @@ describe("Activity HttpApi contract", () => {
     });
     await boundary.dispose();
   });
+
+  it.each([
+    ["not-a-cursor"],
+    // Year 0000 parses in JavaScript but fails PostgreSQL's timestamp cast.
+    [
+      Buffer.from(
+        JSON.stringify(["0000-01-01T00:00:00.000Z", "activity"]),
+      ).toString("base64url"),
+    ],
+  ])(
+    "rejects a cursor no page issued as a request error: %s",
+    async (cursor) => {
+      const boundary = makeBoundary([Permission.ADMIN]);
+
+      const response = await boundary.handler(
+        new Request(
+          `https://activity/guilds/g/activity-logs?cursor=${cursor}`,
+          { headers },
+        ),
+      );
+
+      expect(response.status).toBe(400);
+      await boundary.dispose();
+    },
+  );
 
   it("resolves vanity organizations before querying", async () => {
     const boundary = makeBoundary([Permission.ADMIN]);

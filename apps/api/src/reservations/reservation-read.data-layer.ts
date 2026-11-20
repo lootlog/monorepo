@@ -173,7 +173,7 @@ export const makeReservationReadDataLayer = (
 
               if (!windowCondition) {
                 return yield* Effect.die(
-                  new Error("Reservation window condition is empty"),
+                  "Reservation window condition is empty",
                 );
               }
 

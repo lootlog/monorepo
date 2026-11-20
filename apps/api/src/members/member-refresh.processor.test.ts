@@ -2,7 +2,10 @@ import { describe, expect, it, mock } from "bun:test";
 import { DelayedError } from "bullmq";
 import { Effect, Fiber, Result } from "effect";
 import { TestClock } from "effect/testing";
-import { makeMemberRefreshProcessor } from "./member-refresh.processor.js";
+import {
+  MemberRefreshRetryable,
+  makeMemberRefreshProcessor,
+} from "./member-refresh.processor.js";
 import type { MemberSyncResult } from "./member.types.js";
 
 const job = {
@@ -102,7 +105,7 @@ describe("member refresh processor", () => {
 
     expect(Result.isFailure(result)).toBe(true);
     expect(result).toMatchObject({
-      failure: new Error("MEMBER_REFRESH_RATE_LIMITED"),
+      failure: new MemberRefreshRetryable({ status: "RATE_LIMITED" }),
     });
     expect(dependencies.scheduler.releaseUserRefreshLock).toHaveBeenCalledWith(
       "user-1",
@@ -114,6 +117,12 @@ describe("member refresh processor", () => {
       outcome: "rate_limited",
       reason: "MANUAL",
     });
+    // Counted once: a second "failed" sample would double the failure rate.
+    expect(
+      dependencies.diagnostics.recordMemberRefreshMetric.mock.calls.filter(
+        ([metric]) => metric.outcome === "failed",
+      ),
+    ).toEqual([[{ outcome: "failed", reason: "RATE_LIMITED" }]]);
     expect(
       dependencies.diagnostics.recordMemberRefreshLatency,
     ).toHaveBeenCalled();

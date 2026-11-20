@@ -4,6 +4,7 @@ import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import {
   makeReservationCatalogAdapter,
   type ReservationCatalogCache,
+  ReservationCatalogUnavailable,
 } from "./reservation-catalog.adapter.js";
 
 const makeHttpClient = (status: number, payload: typeof Schema.Json.Type) =>
@@ -95,8 +96,8 @@ describe("reservation catalog Effect adapter", () => {
       url: "http://catalog.test/cards",
     });
 
-    await expect(Effect.runPromise(adapter.getSpots)).rejects.toThrow(
-      "Reservation catalog request failed: 503",
+    expect(await Effect.runPromise(Effect.flip(adapter.getSpots))).toEqual(
+      new ReservationCatalogUnavailable({ status: 503 }),
     );
   });
 });

@@ -1,5 +1,4 @@
 import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
-import { isObjectRecord } from "@lootlog/schema/records";
 import {
   DISCORD_GUILD_SYNC_STALE_AFTER_SECONDS,
   getUserGuildPermissionsCacheScope,
@@ -10,7 +9,7 @@ import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { Context, Effect, Layer, Redacted } from "effect";
+import { Context, Effect, Layer, Option, Redacted, Schema } from "effect";
 import { HttpClient } from "effect/http";
 import {
   GuildSummaryCacheSchema,
@@ -21,7 +20,10 @@ import { makeGuildChannelDeletedDispatcher } from "#src/guilds/guild-channel-del
 import { makeGuildDiscordSyncData } from "#src/guilds/guild-discord-sync.data-layer";
 import { makeOutboxWorker } from "#src/shared/outbox-worker";
 import { makeManageableGuilds } from "#src/guilds/manageable-guilds.data-layer";
-import { makeUserAccountDeletion } from "#src/users/user-account-deletion.data-layer";
+import {
+  BattlelogCleanupFailed,
+  makeUserAccountDeletion,
+} from "#src/users/user-account-deletion.data-layer";
 import { makeUserPreferencesData } from "#src/users/user-preferences.data-layer";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
@@ -99,6 +101,10 @@ export class AccountOrganizationOperations extends Context.Service<
   AccountOrganizationOperationsValue
 >()("@lootlog/api/http-api/AccountOrganizationOperations") {}
 
+const decodeCleanupAccepted = Schema.decodeUnknownOption(
+  Schema.fromJsonString(Schema.Struct({ status: Schema.Literal("ACCEPTED") })),
+);
+
 export const accountOrganizationOperationsLive = Layer.effect(
   AccountOrganizationOperations,
   Effect.gen(function* () {
@@ -131,23 +137,16 @@ export const accountOrganizationOperationsLive = Layer.effect(
             config.battlelogServiceUrl,
           ).toString(),
         }).pipe(
-          Effect.flatMap((response) => {
-            if (response.status < 200 || response.status >= 300) {
-              return Effect.fail(
-                new Error(`Request failed with status ${response.status}`),
-              );
-            }
-
-            return Effect.try(() =>
-              JSON.parse(new TextDecoder().decode(response.body)),
-            );
-          }),
-          Effect.flatMap((body) =>
-            isObjectRecord(body) &&
-            "status" in body &&
-            body.status === "ACCEPTED"
+          Effect.flatMap((response) =>
+            response.status >= 200 &&
+            response.status < 300 &&
+            Option.isSome(
+              decodeCleanupAccepted(new TextDecoder().decode(response.body)),
+            )
               ? Effect.void
-              : Effect.fail(new Error("Unexpected Battlelog cleanup response")),
+              : Effect.fail(
+                  new BattlelogCleanupFailed({ status: response.status }),
+                ),
           ),
         ),
       invalidateCacheScopes: redis.invalidateScopes,

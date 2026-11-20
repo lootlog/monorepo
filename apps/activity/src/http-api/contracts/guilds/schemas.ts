@@ -7,6 +7,7 @@ import {
   FiniteNumber,
   PageSize,
 } from "@lootlog/schema/http-scalars";
+import { ActivityCursor } from "#src/activities/activity-cursor";
 
 const ActivityType = Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"]);
 
@@ -21,7 +22,7 @@ const ActivityListQuery = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
   startDate: Schema.optionalKey(DateTimeWithOffsetString),
   endDate: Schema.optionalKey(DateTimeWithOffsetString),
-  cursor: Schema.optionalKey(Schema.String),
+  cursor: Schema.optionalKey(ActivityCursor),
   limit: Schema.optionalKey(PageSize.annotate({ default: 50 })),
 });
 

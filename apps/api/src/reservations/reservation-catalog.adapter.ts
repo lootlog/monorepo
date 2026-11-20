@@ -1,11 +1,15 @@
 import { Effect, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { RedisError } from "effect/persistence/Redis";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import {
   parseReservationCatalogPayload,
   type ReservationSpot,
 } from "./reservation-catalog.js";
-import { outboundHttpRequest } from "#src/shared/http/outbound-http";
+import {
+  type OutboundHttpFailure,
+  outboundHttpRequest,
+} from "#src/shared/http/outbound-http";
 import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 
@@ -25,9 +29,25 @@ export interface ReservationCatalogCache {
   ) => Effect.Effect<void, RedisError>;
 }
 
+/** The catalog service answered with an error status or an unusable payload. */
+export class ReservationCatalogUnavailable extends TaggedErrorClass<ReservationCatalogUnavailable>()(
+  "ReservationCatalogUnavailable",
+  {
+    status: Schema.optional(Schema.Number),
+    cause: Schema.optional(Schema.Defect()),
+  },
+) {}
+
+type CatalogFailure = ReservationCatalogUnavailable | OutboundHttpFailure;
+
 export interface ReservationCatalogAdapter {
-  readonly getSpots: Effect.Effect<ReadonlyArray<ReservationSpot>, unknown>;
-  readonly getSpot: (spotId: string) => Effect.Effect<ReservationSpot, unknown>;
+  readonly getSpots: Effect.Effect<
+    ReadonlyArray<ReservationSpot>,
+    CatalogFailure
+  >;
+  readonly getSpot: (
+    spotId: string,
+  ) => Effect.Effect<ReservationSpot, CatalogFailure | ResourceNotFoundError>;
 }
 
 export const makeReservationCatalogAdapter = (options: {
@@ -42,7 +62,7 @@ export const makeReservationCatalogAdapter = (options: {
         if (cached !== null) {
           return Effect.try({
             try: () => parseReservationCatalogPayload(cached),
-            catch: (error) => error,
+            catch: (cause) => new ReservationCatalogUnavailable({ cause }),
           });
         }
 
@@ -63,12 +83,16 @@ export const makeReservationCatalogAdapter = (options: {
                         new TextDecoder().decode(response.body),
                       ),
                     ),
-                  catch: (error) => error,
+                  catch: (cause) =>
+                    new ReservationCatalogUnavailable({
+                      status: response.status,
+                      cause,
+                    }),
                 })
               : Effect.fail(
-                  new Error(
-                    `Reservation catalog request failed: ${response.status}`,
-                  ),
+                  new ReservationCatalogUnavailable({
+                    status: response.status,
+                  }),
                 ),
           ),
           Effect.tap((spots) =>

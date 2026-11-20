@@ -1,4 +1,4 @@
-/* eslint-disable react-doctor/no-array-index-as-key -- Items belong to immutable loot events and never reorder within their row. Identical drops may share catalog IDs and HIDs, so the occurrence index disambiguates them. */
+/* oxlint-disable react-doctor/no-array-index-as-key -- Items belong to immutable loot events and never reorder within their row. Identical drops may share catalog IDs and HIDs, so the occurrence index disambiguates them. */
 import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { useTranslation } from "react-i18next";
 import { ItemTile } from "@/components/tiles/item-tile";

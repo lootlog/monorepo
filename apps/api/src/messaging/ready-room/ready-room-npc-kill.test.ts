@@ -67,7 +67,7 @@ it("ends only gatherings whose every Lootlog recorded the kill", async () => {
       );
 
       return found
-        ? Schema.decodeUnknownEffect(schema)(found)
+        ? Schema.decodeUnknownEffect(schema)(found).pipe(Effect.orDie)
         : Effect.succeed(null);
     },
     eval: (script, keys, args) => {

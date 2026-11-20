@@ -71,7 +71,7 @@ export const BattleTableInfoBadges = ({
   };
 
   return (
-    // eslint-disable-next-line react-doctor/no-static-element-interactions -- This container only stops bubbling from its native child controls so the surrounding table row does not navigate; it is not a separate action.
+    // oxlint-disable-next-line react-doctor/no-static-element-interactions -- This container only stops bubbling from its native child controls so the surrounding table row does not navigate; it is not a separate action.
     <div
       data-battle-table-action
       onClick={stopBattleTableAction}

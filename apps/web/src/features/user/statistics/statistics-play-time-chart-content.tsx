@@ -5,7 +5,7 @@ import {
   ChartTooltipContent,
 } from "@lootlog/ui/components/chart";
 // Loaded only by its lazy wrapper; Recharts stays inside that async boundary.
-// eslint-disable-next-line react-doctor/prefer-dynamic-import
+// oxlint-disable-next-line react-doctor/prefer-dynamic-import
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useTranslation } from "react-i18next";
 import {

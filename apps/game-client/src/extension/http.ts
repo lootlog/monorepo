@@ -87,14 +87,14 @@ async function readBody(response: Response): Promise<string> {
   try {
     while (true) {
       // Stream consumption must be sequential to bound retained bytes.
-      // eslint-disable-next-line no-await-in-loop
+      // oxlint-disable-next-line no-await-in-loop
       const { done, value } = await reader.read();
 
       if (done) break;
       bytes += value.byteLength;
 
       if (bytes > MAX_EXTENSION_HTTP_BYTES) {
-        // eslint-disable-next-line no-await-in-loop
+        // oxlint-disable-next-line no-await-in-loop
         await reader.cancel();
         throw new Error("Extension HTTP response is too large");
       }

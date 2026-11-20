@@ -131,7 +131,7 @@ export const BattleLog: FC<BattleLogProps> = ({
       return;
     }
 
-    // eslint-disable-next-line react-doctor/no-pass-live-state-to-parent, react-doctor/no-prop-callback-in-effect -- The log owns deferred search; a completed match publishes a focus request to the separate timeline, including deferred results that are unavailable in the input event.
+    // oxlint-disable-next-line react-doctor/no-pass-live-state-to-parent, react-doctor/no-prop-callback-in-effect -- The log owns deferred search; a completed match publishes a focus request to the separate timeline, including deferred results that are unavailable in the input event.
     turnFocusHandlerRef.current?.(activeSearchTurn);
   }, [activeSearchTurn]);
 

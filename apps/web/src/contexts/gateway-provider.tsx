@@ -1,4 +1,4 @@
-/* eslint-disable react-doctor/context-provider-value-from-unmemoized-local-literal -- Vite React Compiler output caches this provider value and its callbacks by their actual dependencies; verified through the running Vite module transform. */
+/* oxlint-disable react-doctor/context-provider-value-from-unmemoized-local-literal -- Vite React Compiler output caches this provider value and its callbacks by their actual dependencies; verified through the running Vite module transform. */
 import { GatewayContext, type GatewayProviderValue } from "./gateway-context";
 import React, {
   useEffect,

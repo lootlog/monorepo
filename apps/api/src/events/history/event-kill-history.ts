@@ -198,7 +198,7 @@ export const makeEventKillHistory = ({
           if (result.kind === "member") {
             if (!authorized.member)
               return yield* Effect.die(
-                new Error("Member history requires an authorized member"),
+                "Member history requires an authorized member",
               );
 
             return {

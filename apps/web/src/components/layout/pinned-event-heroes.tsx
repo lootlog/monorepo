@@ -47,7 +47,7 @@ export const PinnedEventHeroes: FC<PinnedEventHeroesProps> = ({
   return (
     <span aria-hidden="true" className="flex shrink-0 items-end">
       {visibleHeroes.map((heroNpc, index) => (
-        // eslint-disable-next-line eslint-plugin-next/no-img-element
+        // oxlint-disable-next-line eslint-plugin-next/no-img-element
         <img
           key={heroNpc.id}
           src={npcIconUrl(heroNpc.npcIcon)}

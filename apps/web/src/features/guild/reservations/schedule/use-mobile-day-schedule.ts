@@ -219,7 +219,7 @@ export function useMobileDaySchedule({
     [],
   );
 
-  // eslint-disable-next-line react-doctor/effect-needs-cleanup -- clearLongPress cancels the callback-owned timer; cleanup removes all four touch listeners.
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup -- clearLongPress cancels the callback-owned timer; cleanup removes all four touch listeners.
   useEffect(() => {
     const grid = gridRef.current;
 

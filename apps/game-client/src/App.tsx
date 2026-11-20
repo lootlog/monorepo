@@ -54,7 +54,7 @@ function App() {
     }
 
     // The new tree must wait until the old tree unmounts and its external socket/cache are cleared.
-    // eslint-disable-next-line react/set-state-in-effect
+    // oxlint-disable-next-line react/set-state-in-effect
     setActiveUserId(userId);
   }, [
     extension,
