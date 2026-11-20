@@ -20,6 +20,18 @@ afterAll(async () => {
   if (session) cleanStores(session);
 });
 
+// No test reaches the network. A request no test mocked, such as the auth
+// client's session fetch, fails at once as against an unreachable server,
+// instead of opening a socket that outlives the test and logs after it.
+const rejectUnmockedRequest: typeof fetch = (input) =>
+  Promise.reject(
+    new TypeError(
+      `Unmocked request in a test: ${input instanceof Request ? input.url : String(input)}`,
+    ),
+  );
+
+globalThis.fetch = rejectUnmockedRequest;
+
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn<Window["matchMedia"]>().mockImplementation((query) => ({
