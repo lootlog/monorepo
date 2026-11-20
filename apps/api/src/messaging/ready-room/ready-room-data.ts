@@ -10,7 +10,14 @@ import type {
   PartyParticipantActionRequest,
   PartyParticipantIdentity,
   ResolvePartyInvitationsRequest,
+  PartyInvitationTargetsResponse,
+  PartyReadyRoomsResponse,
 } from "#src/contracts/party-ready-room/schemas";
+import type {
+  PartyGatheringSummary,
+  PartyReadyRoomClientUpdate,
+  PartyReadyRoomProjection,
+} from "@lootlog/schema/party-ready-room";
 
 export type ReadyRoomIdentity = {
   readonly userId: string;
@@ -22,70 +29,72 @@ export class ReadyRoomOperationError extends TaggedErrorClass<ReadyRoomOperation
   { cause: Schema.Defect() },
 ) {}
 
-type DataEffect = Effect.Effect<unknown, ReadyRoomOperationError>;
+type DataEffect<A> = Effect.Effect<A, ReadyRoomOperationError>;
 
 export class ReadyRoomData extends Context.Service<
   ReadyRoomData,
   {
     readonly characterOffline: (
       event: typeof GameCharacterOffline.Type,
-    ) => DataEffect;
+    ) => DataEffect<void>;
     readonly accessibleGuildIds: (
       discordId: string,
       includeReadable?: boolean,
-    ) => DataEffect;
+    ) => DataEffect<ReadonlyArray<string>>;
     readonly create: (
       identity: ReadyRoomIdentity,
       guildId: string,
       payload: CreatePartyGatheringRequest,
-    ) => DataEffect;
+    ) => DataEffect<PartyReadyRoomProjection | null>;
     readonly active: (
       identity: ReadyRoomIdentity,
       accessibleGuildIds: ReadonlyArray<string>,
       world: string,
-    ) => DataEffect;
-    readonly list: (identity: ReadyRoomIdentity) => DataEffect;
+    ) => DataEffect<ReadonlyArray<PartyGatheringSummary>>;
+    readonly list: (
+      identity: ReadyRoomIdentity,
+    ) => DataEffect<PartyReadyRoomsResponse>;
     readonly get: (
       identity: ReadyRoomIdentity,
       notificationId: string,
       accessibleGuildIds: ReadonlyArray<string>,
-    ) => DataEffect;
+    ) => Effect.Effect<unknown, ReadyRoomOperationError>;
     readonly apply: (
       identity: ReadyRoomIdentity,
       notificationId: string,
       accessibleGuildIds: ReadonlyArray<string>,
       payload: ApplyToPartyReadyRoomRequest,
-    ) => DataEffect;
+    ) => DataEffect<PartyReadyRoomProjection | null>;
     readonly withdraw: (
       identity: ReadyRoomIdentity,
       notificationId: string,
       payload: PartyParticipantIdentity,
-    ) => DataEffect;
+    ) => DataEffect<PartyReadyRoomClientUpdate>;
     readonly remove: (
       identity: ReadyRoomIdentity,
       notificationId: string,
       payload: PartyParticipantActionRequest,
-    ) => DataEffect;
+    ) => DataEffect<PartyReadyRoomClientUpdate>;
     readonly resolveInvitationTargets: (
       identity: ReadyRoomIdentity,
       notificationId: string,
       payload: ResolvePartyInvitationsRequest,
-    ) => DataEffect;
+    ) => DataEffect<PartyInvitationTargetsResponse>;
     readonly observeParty: (
       identity: ReadyRoomIdentity,
       notificationId: string,
       payload: ObservePartyRequest,
-    ) => DataEffect;
+    ) => DataEffect<PartyReadyRoomProjection | null>;
     readonly cancel: (
       identity: ReadyRoomIdentity,
       notificationId: string,
       payload: PartyRevisionRequest,
-    ) => DataEffect;
+    ) => DataEffect<PartyReadyRoomClientUpdate>;
     readonly extend: (
       identity: ReadyRoomIdentity,
       notificationId: string,
       payload: PartyRevisionRequest,
-    ) => DataEffect;
-    readonly npcKilled: (kill: ReadyRoomNpcKill) => DataEffect;
+    ) => DataEffect<PartyReadyRoomProjection | null>;
+    readonly npcKilled: (kill: ReadyRoomNpcKill) => DataEffect<void>;
   }
 >()("@lootlog/api/http-api/party-ready-room/data") {}

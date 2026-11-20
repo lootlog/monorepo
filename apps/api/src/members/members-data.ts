@@ -3,6 +3,11 @@ import type { MemberWithRoles, StoredMemberWithRoles } from "./member.types.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import type { ReauthenticationRequired } from "#src/contracts/api-shared";
+import type {
+  MemberReferencesResponse,
+  MemberSummariesResponse,
+} from "#src/contracts/members/schemas";
+import type { memberRefreshJobTable } from "#src/database/drizzle/organization.schema";
 
 export type MembersIdentity = {
   readonly userId: string;
@@ -15,7 +20,11 @@ export class MembersOperationError extends TaggedErrorClass<MembersOperationErro
   { cause: Schema.Defect() },
 ) {}
 
-type DataEffect = Effect.Effect<unknown, MembersOperationError>;
+type DataEffect<A> = Effect.Effect<A, MembersOperationError>;
+
+type MemberRefreshJob = typeof memberRefreshJobTable.$inferSelect & {
+  readonly nextAvailableAt: Date;
+};
 
 export class MembersData extends Context.Service<
   MembersData,
@@ -33,26 +42,31 @@ export class MembersData extends Context.Service<
       discordId: string,
       guildId: string,
     ) => Effect.Effect<StoredMemberWithRoles | null, MembersOperationError>;
-    readonly refreshMember: (guildId: string, discordId: string) => DataEffect;
+    readonly refreshMember: (
+      guildId: string,
+      discordId: string,
+    ) => DataEffect<MemberWithRoles | null>;
     readonly deactivateMember: (
       guildId: string,
       discordId: string,
-    ) => DataEffect;
+    ) => DataEffect<StoredMemberWithRoles>;
     readonly refreshAllMembers: (
       guildId: string,
       discordId: string,
-    ) => DataEffect;
+    ) => Effect.Effect<unknown, MembersOperationError>;
   }
 >()("@lootlog/api/http-api/members/data") {}
 
 export class MemberRefreshJobData extends Context.Service<
   MemberRefreshJobData,
   {
-    readonly getLatestRefreshJob: (guildId: string) => DataEffect;
+    readonly getLatestRefreshJob: (
+      guildId: string,
+    ) => DataEffect<MemberRefreshJob | null>;
     readonly getRefreshJobStatus: (
       guildId: string,
       jobId: number,
-    ) => DataEffect;
+    ) => Effect.Effect<unknown, MembersOperationError>;
   }
 >()("@lootlog/api/http-api/member-refresh-job/data") {}
 
@@ -62,15 +76,17 @@ export class MemberReadData extends Context.Service<
     readonly getLootlogConfigSummary: (
       guildId: string,
       discordId: string,
-    ) => DataEffect;
+    ) => Effect.Effect<unknown, MembersOperationError>;
     readonly getGuildMembers: (
       guildId: string,
       includeInactive: boolean,
-    ) => DataEffect;
+    ) => DataEffect<ReadonlyArray<StoredMemberWithRoles>>;
     readonly getGuildMemberReferences: (
       guildId: string,
       includeInactive: boolean,
-    ) => DataEffect;
-    readonly getGuildMembersSummary: (guildId: string) => DataEffect;
+    ) => DataEffect<MemberReferencesResponse>;
+    readonly getGuildMembersSummary: (
+      guildId: string,
+    ) => DataEffect<MemberSummariesResponse>;
   }
 >()("@lootlog/api/http-api/member-read/data") {}

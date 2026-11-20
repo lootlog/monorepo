@@ -95,7 +95,13 @@ export class InternalGuildsData extends Context.Service<
     ) => Effect.Effect<unknown, InternalGuildsOperationError>;
     readonly getGuild: (
       idOrVanityUrl: string,
-    ) => Effect.Effect<unknown, InternalGuildsOperationError>;
+    ) => Effect.Effect<
+      | NonNullable<
+          Effect.Success<ReturnType<typeof readGuildConfigurationCache>>
+        >
+      | (GuildRecord & ReturnType<typeof resolveReservationSettings>),
+      InternalGuildsOperationError
+    >;
     readonly getMemberIdentity: (
       guildId: string,
       discordId: string,

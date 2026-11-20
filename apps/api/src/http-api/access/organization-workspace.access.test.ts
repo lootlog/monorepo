@@ -155,7 +155,11 @@ const makeReadData = (
 ) =>
   ReservationReadData.of({
     listSpots: () => Effect.succeed([]),
-    listWindow: () => Effect.succeed({ items: [], window: {} }),
+    listWindow: () =>
+      Effect.succeed({
+        items: [],
+        window: { from: reservation.startsAt, to: reservation.endsAt },
+      }),
     pinSpot: () => Effect.succeed(undefined),
     unpinSpot: () => Effect.succeed(undefined),
     ...overrides,
@@ -166,11 +170,22 @@ const makeSharingData = (
 ) =>
   ReservationSharingData.of({
     listShares: () => Effect.succeed({ shares: [], pendingInvitations: [] }),
-    createInvitation: () => Effect.succeed({}),
+    createInvitation: () =>
+      Effect.succeed({
+        id: "invitation-a",
+        invitePath: "/reservation-sharing/invitations/token-a",
+        expiresAt: share.createdAt,
+        createdAt: share.createdAt,
+      }),
     revokeInvitation: () => Effect.succeed(undefined),
     revokeShare: () => Effect.succeed(undefined),
-    previewInvitation: () => Effect.succeed({}),
-    acceptInvitation: () => Effect.succeed({}),
+    previewInvitation: () =>
+      Effect.succeed({
+        sourceOrganization: share.partner,
+        expiresAt: share.createdAt,
+        eligibleTargetOrganizations: [],
+      }),
+    acceptInvitation: () => Effect.succeed(share),
     ...overrides,
   });
 

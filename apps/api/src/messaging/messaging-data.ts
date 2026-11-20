@@ -2,6 +2,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import type {
   NotificationGoingRequest,
+  NotificationGoingResponse,
   SendNotificationRequest,
   VolunteerForPartyRequest,
 } from "#src/contracts/messaging/schemas";
@@ -32,6 +33,6 @@ export class MessagingData extends Context.Service<
       caller: MessagingCaller,
       notificationId: string,
       payload: NotificationGoingRequest,
-    ) => Effect.Effect<unknown, MessagingOperationError>;
+    ) => Effect.Effect<NotificationGoingResponse, MessagingOperationError>;
   }
 >()("@lootlog/api/http-api/messaging/data") {}

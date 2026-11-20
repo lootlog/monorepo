@@ -8,6 +8,8 @@ import type { Permission as PermissionValue } from "@lootlog/schema/permissions"
 import type { PublicGuildStatsCard } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 
 import type { ReauthenticationRequired } from "#src/contracts/api-shared";
+import type { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
+import type { GameMapsResponse } from "#src/contracts/maps/schemas";
 
 const PUBLIC_CACHE_CONTROL = "public, max-age=300, must-revalidate";
 
@@ -43,10 +45,13 @@ export class PublicSystemData extends Context.Service<
   PublicSystemData,
   {
     readonly healthCheck: Effect.Effect<void, PublicSystemOperationError>;
-    readonly getMaps: Effect.Effect<unknown, PublicSystemOperationError>;
+    readonly getMaps: Effect.Effect<
+      GameMapsResponse,
+      PublicSystemOperationError
+    >;
     readonly refreshStatsCard: (
       guildId: string,
-    ) => Effect.Effect<unknown, PublicSystemOperationError>;
+    ) => Effect.Effect<RefreshStatsCardResponse, PublicSystemOperationError>;
     readonly getStatsCard: (
       guildId: string,
     ) => Effect.Effect<Uint8Array, PublicSystemOperationError>;
@@ -54,7 +59,10 @@ export class PublicSystemData extends Context.Service<
   }
 >()("@lootlog/api/http-api/public-system/data") {
   static layerServices(options: {
-    readonly getMaps: Effect.Effect<unknown, PublicSystemOperationError>;
+    readonly getMaps: Effect.Effect<
+      GameMapsResponse,
+      PublicSystemOperationError
+    >;
     readonly statsCard: PublicGuildStatsCard;
     readonly local: boolean;
   }) {
@@ -65,7 +73,10 @@ export class PublicSystemData extends Context.Service<
   }
 
   static makeServices(options: {
-    readonly getMaps: Effect.Effect<unknown, PublicSystemOperationError>;
+    readonly getMaps: Effect.Effect<
+      GameMapsResponse,
+      PublicSystemOperationError
+    >;
     readonly statsCard: PublicGuildStatsCard;
     readonly local: boolean;
   }): PublicSystemData["Service"] {
