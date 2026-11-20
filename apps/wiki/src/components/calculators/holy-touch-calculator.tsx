@@ -10,6 +10,7 @@ import { CalculatorCard } from "./calculator-card";
 import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
+import { formatNumber } from "@lootlog/domain/locale";
 
 /** Dotyk anioła's healing for a character's health. */
 export function HolyTouchCalculator() {
@@ -30,14 +31,14 @@ export function HolyTouchCalculator() {
           results={[
             {
               label: t("calculators.holyTouch.perTurn"),
-              value: heal?.toLocaleString("pl-PL"),
+              value: heal === undefined ? undefined : formatNumber(heal),
             },
             {
               label: t("calculators.holyTouch.total"),
               value:
                 heal === undefined
                   ? undefined
-                  : (heal * HOLY_TOUCH_TURNS).toLocaleString("pl-PL"),
+                  : formatNumber(heal * HOLY_TOUCH_TURNS),
             },
           ]}
         />

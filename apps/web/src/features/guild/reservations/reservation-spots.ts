@@ -1,5 +1,7 @@
 import type { ReservationSpotsResponseDto } from "@lootlog/client/main";
 import type { ReservationFilter } from "./reservation-filters";
+import { comparePolish } from "@lootlog/domain/locale";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
 type ReservationSpot = ReservationSpotsResponseDto[number];
 
@@ -21,20 +23,18 @@ export function getVisibleReservationSpots(
   searchValue: string,
   filter: ReservationFilter,
 ): ReservationSpotsResponseDto {
-  const normalizedSearch = searchValue.trim().toLocaleLowerCase("pl");
+  const normalizedSearch = normalizeSearchText(searchValue);
 
   return spots
     .filter(
       (spot) =>
-        spot.name.toLocaleLowerCase("pl").includes(normalizedSearch) &&
+        normalizeSearchText(spot.name).includes(normalizedSearch) &&
         matchesFilter(spot, filter),
     )
     .sort((left, right) => {
       if (left.isPinned !== right.isPinned) return left.isPinned ? -1 : 1;
 
-      return (
-        right.level - left.level || left.name.localeCompare(right.name, "pl")
-      );
+      return right.level - left.level || comparePolish(left.name, right.name);
     });
 }
 

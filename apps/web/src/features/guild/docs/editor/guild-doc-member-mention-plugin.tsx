@@ -1,7 +1,7 @@
 import { MemberIdentity } from "@/components/common/member-identity";
 import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   LexicalTypeaheadMenuPlugin,
@@ -15,6 +15,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { $createTextNode, $isTextNode } from "lexical";
 import { $createGuildDocMemberNode } from "./guild-doc-member-node";
+import { comparePolish } from "@lootlog/domain/locale";
 
 const MAX_SUGGESTIONS = 8;
 
@@ -50,7 +51,7 @@ export const GuildDocMemberMentionPlugin = () => {
               member.active &&
               normalizeSearchText(member.name).includes(normalizedQuery),
           )
-          .sort((first, second) => first.name.localeCompare(second.name, "pl"))
+          .sort((first, second) => comparePolish(first.name, second.name))
           .slice(0, MAX_SUGGESTIONS)
           .map((member) => new MemberMenuOption(member));
 

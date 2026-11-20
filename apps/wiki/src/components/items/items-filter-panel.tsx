@@ -37,6 +37,7 @@ import {
 import { FilterSection } from "@/components/common/filter-section";
 import { LevelFilterSection } from "@/components/common/level-filter-section";
 import { FilterTile } from "@/components/filter-tile";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 type ItemsFilterPanelProps = {
   search: ItemsSearch;
@@ -250,7 +251,9 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
                     ? t("filters.worldOpenedAbout", {
                         year: world.openedOn.slice(0, 4),
                       })
-                    : new Date(world.openedOn).toLocaleDateString("pl-PL"),
+                    : new Date(world.openedOn).toLocaleDateString(
+                        PRODUCT_LOCALE,
+                      ),
                 })}
               </p>
             ) : null}

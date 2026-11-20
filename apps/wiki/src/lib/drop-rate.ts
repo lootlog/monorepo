@@ -3,13 +3,14 @@ import {
   getSharedDropChance,
   isMultiRollType,
 } from "@lootlog/domain/loot-rolls";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 type DropRate = NonNullable<CatalogDropSourceDtoOutput["dropRate"]>;
 
 /** The party a full-party chance is shown for. */
 export const FULL_PARTY_SIZE = 10;
 
-const rateFormat = new Intl.NumberFormat("pl-PL", {
+const rateFormat = new Intl.NumberFormat(PRODUCT_LOCALE, {
   style: "percent",
   maximumSignificantDigits: 2,
 });

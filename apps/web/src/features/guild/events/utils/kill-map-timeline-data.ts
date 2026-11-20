@@ -1,4 +1,5 @@
 import type { MapAssignment, MapGap, MapTimelineData } from "../types/api";
+import { comparePolish } from "@lootlog/domain/locale";
 
 export type NormalizedMapGap = Omit<
   MapGap,
@@ -244,7 +245,7 @@ const normalizeAssignmentPeriods = (
   }
 
   return groups.sort((first, second) =>
-    first.memberName.localeCompare(second.memberName, "pl"),
+    comparePolish(first.memberName, second.memberName),
   );
 };
 

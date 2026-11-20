@@ -19,7 +19,7 @@ import {
 import { ROUTES } from "@/config/routes";
 import type { AppNavigationItemId } from "@/navigation/app-navigation";
 import { parseItemHid } from "@/lib/utils/hid-detection";
-import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 import { useTranslation } from "react-i18next";
 
 export type GuildSearchPage = {

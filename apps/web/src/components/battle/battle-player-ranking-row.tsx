@@ -3,7 +3,7 @@ import { cn } from "cn";
 import type { FC } from "react";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 import type { BattlePlayerRankingEntry } from "./utils/battle-player-ranking";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 export type BattlePlayerRankingRowProps = {
   entry: BattlePlayerRankingEntry;

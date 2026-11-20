@@ -8,7 +8,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import type { UserNpcKillsResponseDtoOutputItemsItem } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 type KillsMobileListProps = {
   npcs: UserNpcKillsResponseDtoOutputItemsItem[];

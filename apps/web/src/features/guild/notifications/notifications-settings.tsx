@@ -14,6 +14,7 @@ import { NotificationsInfoButton } from "./components/notifications-info-button"
 import { NotificationRuleGroupsSkeleton } from "./notification-rule-groups-skeleton";
 import { useNotificationsOverview } from "./use-notifications-overview";
 import { getNotificationTriggerTranslationKey } from "./utils/notification-settings.utils";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
 /** The rules tab: each rule with what it sends, where, and its deliveries. */
 export const NotificationsSettings = () => {
@@ -21,12 +22,12 @@ export const NotificationsSettings = () => {
   const overview = useNotificationsOverview();
   const [search, setSearch] = useState("");
   const { guildId, hasRequiredPermissions, limits } = overview;
-  const normalizedSearch = search.trim().toLocaleLowerCase("pl");
+  const normalizedSearch = normalizeSearchText(search);
 
   const rules = overview.rules.filter((rule) =>
-    (rule.name ?? t(getNotificationTriggerTranslationKey(rule.triggerType)))
-      .toLocaleLowerCase("pl")
-      .includes(normalizedSearch),
+    normalizeSearchText(
+      rule.name ?? t(getNotificationTriggerTranslationKey(rule.triggerType)),
+    ).includes(normalizedSearch),
   );
 
   const addRuleLabel = t("settings.notifications.actions.addRule");

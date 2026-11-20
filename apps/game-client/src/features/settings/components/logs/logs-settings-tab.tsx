@@ -38,6 +38,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { comparePolish } from "@lootlog/domain/locale";
 
 const getLogsExportFileName = (): string => {
   return `lootlog-logs-${new Date().toISOString().replaceAll(":", "-")}.json`;
@@ -71,7 +72,7 @@ export const LogsSettingsTab: FC = () => {
     { value: "all", label: t("settings.logs.allActions") },
     ...Array.from(new Set(actions.map((action) => action.actionType)))
       .sort((left, right) =>
-        getActionLabel(left).localeCompare(getActionLabel(right), "pl"),
+        comparePolish(getActionLabel(left), getActionLabel(right)),
       )
       .map((actionType) => ({
         value: actionType,

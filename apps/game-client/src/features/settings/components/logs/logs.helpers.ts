@@ -6,6 +6,8 @@ import {
 } from "@/features/settings/components/logs/logs.constants";
 import i18n from "@/i18n/config";
 import type { LoggedAction, SerializableValue } from "@/store/logs.store";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
 export const stringifyLogValue = (value: SerializableValue): string => {
   return JSON.stringify(value, null, 2) ?? "";
@@ -15,7 +17,7 @@ export const stringifyLogValue = (value: SerializableValue): string => {
 // otherwise run while the bundle evaluates during the game's startup.
 const getLogTimeFormatter = once(
   () =>
-    new Intl.DateTimeFormat("pl-PL", {
+    new Intl.DateTimeFormat(PRODUCT_LOCALE, {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
@@ -24,7 +26,7 @@ const getLogTimeFormatter = once(
 
 const getLogDateTimeFormatter = once(
   () =>
-    new Intl.DateTimeFormat("pl-PL", {
+    new Intl.DateTimeFormat(PRODUCT_LOCALE, {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -72,28 +74,28 @@ export const matchesActionFilters = (
     return false;
   }
 
-  const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase("pl");
+  const normalizedSearchTerm = normalizeSearchText(searchTerm);
 
   if (!normalizedSearchTerm) {
     return true;
   }
 
-  const searchableText = [
-    action.actionType,
-    getActionLabel(action.actionType),
-    stringifyLogValue(action.payload),
-    action.details ? stringifyLogValue(action.details) : "",
-    ...action.requests.flatMap((request) => [
-      request.method,
-      request.endpoint,
-      request.status,
-      String(request.statusCode ?? ""),
-      stringifyLogValue(request.payload),
-      stringifyLogValue(request.response),
-    ]),
-  ]
-    .join(" ")
-    .toLocaleLowerCase("pl");
+  const searchableText = normalizeSearchText(
+    [
+      action.actionType,
+      getActionLabel(action.actionType),
+      stringifyLogValue(action.payload),
+      action.details ? stringifyLogValue(action.details) : "",
+      ...action.requests.flatMap((request) => [
+        request.method,
+        request.endpoint,
+        request.status,
+        String(request.statusCode ?? ""),
+        stringifyLogValue(request.payload),
+        stringifyLogValue(request.response),
+      ]),
+    ].join(" "),
+  );
 
   return searchableText.includes(normalizedSearchTerm);
 };

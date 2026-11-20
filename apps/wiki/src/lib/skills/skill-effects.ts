@@ -1,6 +1,7 @@
 import { t } from "@/i18n/messages";
 import { SKILL_EFFECT_TEMPLATES } from "@/lib/skills/skill-effect-templates";
 import { parseSkillRank, skillValueAt } from "@/lib/skills/skill-tree";
+import { formatDecimal } from "@lootlog/domain/locale";
 
 /**
  * How the game's skill window words one stat: its dictionary line and how
@@ -31,11 +32,8 @@ const TEMPLATES = new Map<string, SkillEffectTemplate>(
   Object.entries(SKILL_EFFECT_TEMPLATES),
 );
 
-const formatNumber = (value: number) =>
-  value.toLocaleString("pl-PL", { maximumFractionDigits: 2 });
-
 const signed = (value: number) =>
-  `${value >= 0 ? "+" : ""}${formatNumber(value)}`;
+  `${value >= 0 ? "+" : ""}${formatDecimal(value)}`;
 
 /** Polish takes one form for 1, another for 2–4 and a third from 5. */
 const pluralForm = (count: number) =>
@@ -49,7 +47,7 @@ const percentPointsText = (value: number) =>
 const shown = (raw: string, level: number | null) => {
   const value = skillValueAt(raw, level);
 
-  return value === undefined ? raw : formatNumber(value);
+  return value === undefined ? raw : formatDecimal(value);
 };
 
 /**
@@ -77,7 +75,7 @@ export const skillEffectLine = (
         ? signed(Math.floor(value * 100))
         : template.value === "signed"
           ? signed(value)
-          : formatNumber(value);
+          : formatDecimal(value);
 
   const values = new Map([
     ["%val%", formatted],

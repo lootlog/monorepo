@@ -1,21 +1,22 @@
 import { createCachedFormatter, MARGONEM_TIME_ZONE } from "@lootlog/datetime";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 // The analytics response carries calendar dates ("2026-09-14") already
 // resolved in the player's time zone, so they are formatted as UTC midnight to
 // keep the day from shifting.
-const getFullDateFormatter = createCachedFormatter("pl-PL", {});
+const getFullDateFormatter = createCachedFormatter(PRODUCT_LOCALE, {});
 
-const getDayMonthFormatter = createCachedFormatter("pl-PL", {
+const getDayMonthFormatter = createCachedFormatter(PRODUCT_LOCALE, {
   day: "numeric",
   month: "2-digit",
 });
 
-const getHourFormatter = createCachedFormatter("pl-PL", {
+const getHourFormatter = createCachedFormatter(PRODUCT_LOCALE, {
   hour: "2-digit",
   minute: "2-digit",
 });
 
-const getDateHourFormatter = createCachedFormatter("pl-PL", {
+const getDateHourFormatter = createCachedFormatter(PRODUCT_LOCALE, {
   day: "numeric",
   month: "2-digit",
   year: "numeric",
@@ -23,11 +24,11 @@ const getDateHourFormatter = createCachedFormatter("pl-PL", {
   minute: "2-digit",
 });
 
-const getWeekdayFormatter = createCachedFormatter("pl-PL", {
+const getWeekdayFormatter = createCachedFormatter(PRODUCT_LOCALE, {
   weekday: "long",
 });
 
-const getShortWeekdayFormatter = createCachedFormatter("pl-PL", {
+const getShortWeekdayFormatter = createCachedFormatter(PRODUCT_LOCALE, {
   weekday: "short",
 });
 

@@ -6,6 +6,7 @@ import { CalculatorCard } from "./calculator-card";
 import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 const BONUS_LIMIT = { min: 0, max: 1000 };
 
@@ -40,7 +41,7 @@ export function QuestExperienceCalculator() {
                       experience: base,
                       blessingPercent,
                       clanPercent,
-                    }).toLocaleString("pl-PL"),
+                    }).toLocaleString(PRODUCT_LOCALE),
             },
           ]}
         />

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ChartSection } from "@/components/common/chart-section";
 import { KillAnalyticsTrend } from "@/components/common/kill-analytics/kill-analytics-trend";
 import { formatStatisticsDate } from "@/components/common/kill-analytics/format-statistics-date";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 type KillStatsTimelineProps = {
   data?: GuildKillStatsResponseDtoOutputTimeline;

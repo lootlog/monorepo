@@ -2,6 +2,7 @@ import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
 import { $getSelection, $isRangeSelection, $isTextNode } from "lexical";
 
 import { serializeTemplateEditorValue } from "./notification-template-editor.utils";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
 export type MentionSuggestion = {
   key: string;
@@ -29,18 +30,18 @@ export const getFilteredSuggestions = (
   if (activeSuggestion?.type === "mention") {
     return mentionSuggestions
       .filter((suggestion) =>
-        suggestion.label
-          .toLocaleLowerCase("pl")
-          .includes(activeSuggestion.query.toLocaleLowerCase("pl")),
+        normalizeSearchText(suggestion.label).includes(
+          normalizeSearchText(activeSuggestion.query),
+        ),
       )
       .slice(0, 8);
   }
 
   if (activeSuggestion?.type === "variable") {
     return variableSuggestions.filter((suggestion) =>
-      suggestion.key
-        .toLocaleLowerCase("pl")
-        .includes(activeSuggestion.query.toLocaleLowerCase("pl")),
+      normalizeSearchText(suggestion.key).includes(
+        normalizeSearchText(activeSuggestion.query),
+      ),
     );
   }
 

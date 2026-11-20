@@ -19,11 +19,11 @@ import { StatTiles } from "@/components/common/stat-tiles";
 import { useWornItems } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 import {
-  formatAmount,
   formatGold,
   formatUpgradePoints,
   upgradeCurrencyName,
 } from "@/lib/upgrade-cost-format";
+import { formatNumber } from "@lootlog/domain/locale";
 
 const TARGETS = ["set", "max"] as const;
 
@@ -59,7 +59,7 @@ export function SetUpgradeCost() {
     const essence = sumBy(byRarity[rarity] ?? [], ({ cost }) => cost.essence);
 
     return essence > 0
-      ? [{ label: upgradeCurrencyName(rarity), value: formatAmount(essence) }]
+      ? [{ label: upgradeCurrencyName(rarity), value: formatNumber(essence) }]
       : [];
   });
 
@@ -108,9 +108,9 @@ export function SetUpgradeCost() {
             tiles={[
               {
                 label: t("upgrade.cost.points"),
-                value: formatAmount(points),
+                value: formatNumber(points),
               },
-              { label: t("upgrade.cost.gold"), value: formatAmount(gold) },
+              { label: t("upgrade.cost.gold"), value: formatNumber(gold) },
               ...currencyTiles,
             ]}
           />
@@ -136,7 +136,7 @@ export function SetUpgradeCost() {
                     </span>
                     {level === MAX_LEVEL
                       ? ` ${t("upgrade.cost.maxStepExtras", {
-                          essence: formatAmount(cost.essence),
+                          essence: formatNumber(cost.essence),
                           currency: upgradeCurrencyName(item.rarity),
                           gold: formatGold(cost.gold),
                         })}`

@@ -3,9 +3,9 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import type { LootStatsResponseDtoOutputOverview } from "@lootlog/client/main";
 import { Crown, Layers, Package, Sword } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { formatNumber } from "@/lib/format-number";
+import { PRODUCT_LOCALE, formatNumber } from "@lootlog/domain/locale";
 
-const percentFormatter = new Intl.NumberFormat("pl-PL", {
+const percentFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
   style: "percent",
   maximumFractionDigits: 1,
 });

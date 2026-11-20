@@ -1,5 +1,6 @@
 import { getLocalDate } from "@lootlog/datetime";
 import type { ItemStatEntry as ItemStat } from "@lootlog/domain/item-stat";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 export type ItemDisplayValue = {
   key: string | undefined;
@@ -172,7 +173,7 @@ function isPresentItemClassKey<T extends string>(
   return Boolean(value);
 }
 
-const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
+const dateTimeFormatter = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
   day: "2-digit",
   hour: "2-digit",
   minute: "2-digit",
@@ -181,7 +182,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
   year: "numeric",
 });
 
-const yearFormatter = new Intl.DateTimeFormat("pl-PL", {
+const yearFormatter = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
   timeZone: "Europe/Warsaw",
   year: "numeric",
 });

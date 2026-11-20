@@ -10,7 +10,7 @@ import { sum } from "es-toolkit";
 import { Swords } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { formatNumber } from "@/lib/format-number";
+import { PRODUCT_LOCALE, formatNumber } from "@lootlog/domain/locale";
 
 // One hue, as on the activity heatmaps: the most common type is the brightest.
 const NPC_TYPE_FILLS: Partial<Record<KilledNpcType, string>> = {
@@ -22,7 +22,7 @@ const NPC_TYPE_FILLS: Partial<Record<KilledNpcType, string>> = {
   TITAN: "bg-primary/25",
 };
 
-const shareFormatter = new Intl.NumberFormat("pl-PL", {
+const shareFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
   style: "percent",
   maximumFractionDigits: 1,
 });

@@ -2,6 +2,7 @@ import { Schema, SchemaTransformation } from "effect";
 import { requiredWithFallback } from "@lootlog/schema/stored-value";
 import { CoercedFinite, readableEntries } from "@/lib/lenient-schema";
 import type { BattleTimelineResponseDtoOutputTimelineItem } from "@lootlog/client/battlelog";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 export type BattleHpTimelineTooltipDeltaKey =
   | "damage"
@@ -74,7 +75,7 @@ const getRoundedTooltipNumber = (value: number) =>
 
 export const formatBattleHpTimelineTooltipNumber = (
   value: number,
-  locale = "pl-PL",
+  locale = PRODUCT_LOCALE,
 ) =>
   new Intl.NumberFormat(locale, {
     maximumFractionDigits: 1,

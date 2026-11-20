@@ -38,3 +38,10 @@ export const slug = (value: string): string =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+
+/**
+ * Text as search compares it: folded, lowercase, with whitespace runs
+ * collapsed, so `  Łódź ` matches a query typed as `lodz`.
+ */
+export const normalizeSearchText = (value: string): string =>
+  foldText(value).toLowerCase().replace(/\s+/g, " ").trim();

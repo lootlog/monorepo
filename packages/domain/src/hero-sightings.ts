@@ -5,6 +5,8 @@ import {
   type HeroSightingState as HeroSightingStateValue,
 } from "@lootlog/schema/hero-sightings";
 import type { ProfessionEnum } from "@lootlog/schema/loot";
+import { comparePolish } from "./locale.js";
+import { normalizeSearchText } from "./text-fold.js";
 
 /** Sightings kept per hero in one Organization world, the current one included. */
 export const HERO_SIGHTING_HISTORY_LIMIT = 20;
@@ -259,9 +261,7 @@ export const collectKnownHeroes = (
 
   for (const { npc } of timers) if (npc.type === "HERO" && npc.name) add(npc);
 
-  return [...heroes.values()].sort((a, b) =>
-    a.name.localeCompare(b.name, "pl"),
-  );
+  return [...heroes.values()].sort((a, b) => comparePolish(a.name, b.name));
 };
 
 const MAX_SUGGESTED_HEROES = 8;
@@ -271,11 +271,11 @@ export const suggestKnownHeroes = (
   heroes: readonly KnownHero[],
   typedName: string,
 ): KnownHero[] => {
-  const query = typedName.trim().toLocaleLowerCase("pl");
+  const query = normalizeSearchText(typedName);
 
   if (!query) return [];
 
   return heroes
-    .filter((hero) => hero.name.toLocaleLowerCase("pl").includes(query))
+    .filter((hero) => normalizeSearchText(hero.name).includes(query))
     .slice(0, MAX_SUGGESTED_HEROES);
 };

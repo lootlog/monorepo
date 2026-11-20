@@ -31,7 +31,7 @@ import {
 import { useStatsRankingModel } from "./use-stats-ranking-model";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { useIsViewer } from "@/hooks/auth/use-is-viewer";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 export const StatsRanking = () => {
   const {

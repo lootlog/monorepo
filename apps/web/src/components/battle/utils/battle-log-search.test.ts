@@ -1,4 +1,4 @@
-import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 import { createBattleWarrior as buildBattleWarrior } from "@/lib/testing/battle";
 import type { RawBattleParsedEvent } from "@/lib/api/battlelog-types";
 import { describe, expect, it } from "vitest";

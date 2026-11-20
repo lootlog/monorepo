@@ -15,6 +15,7 @@ import { isHeroTrackersEvent } from "@/lib/hero-trackers";
 import { prefetchPageQueries } from "@/lib/catalog-page-queries";
 import { eventSubtitle } from "@/lib/item-events";
 import { canonicalLink } from "@/lib/link-preview";
+import { formatNumber } from "@lootlog/domain/locale";
 
 const EVENTS_QUERY = { gameVersion: WIKI_GAME_VERSION } as const;
 
@@ -114,7 +115,7 @@ function EventsRoute() {
                       </span>
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {t("catalog.eventItemCount", {
-                          count: event.itemCount.toLocaleString("pl-PL"),
+                          count: formatNumber(event.itemCount),
                         })}
                       </span>
                     </span>

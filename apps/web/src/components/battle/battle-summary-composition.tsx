@@ -1,7 +1,7 @@
 import { cn } from "cn";
 import type { FC } from "react";
 import type { BattleSegmentValue } from "./utils/battle-team-summary";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 export type BattleSummaryCompositionProps = {
   /** Background class per segment key; shared by the bar and its legend. */

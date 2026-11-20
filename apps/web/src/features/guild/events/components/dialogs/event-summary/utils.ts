@@ -1,8 +1,9 @@
 import type { WrappedFactSlide } from "./build-wrapped-slides";
 import { formatDuration } from "@/utils/date/format-duration";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 const formatMetric = (value: number): string => {
-  return new Intl.NumberFormat("pl-PL", {
+  return new Intl.NumberFormat(PRODUCT_LOCALE, {
     maximumFractionDigits: Number.isInteger(value) ? 0 : 2,
   }).format(value);
 };

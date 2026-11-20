@@ -9,6 +9,8 @@ import type { SettingsControlId } from "@/features/settings/settings-manifest";
 import { Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { comparePolish } from "@lootlog/domain/locale";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
 type MutedListTabProps<TItem> = {
   controlId: SettingsControlId;
@@ -31,13 +33,11 @@ type MutedListTabProps<TItem> = {
 
 /** Case-insensitive substring match of a mutes list query against an entry. */
 const matchesMuteSearch = (query: string, values: readonly string[]) => {
-  const normalizedQuery = query.trim().toLocaleLowerCase("pl");
+  const normalizedQuery = normalizeSearchText(query);
 
   return (
     !normalizedQuery ||
-    values.some((value) =>
-      value.toLocaleLowerCase("pl").includes(normalizedQuery),
-    )
+    values.some((value) => normalizeSearchText(value).includes(normalizedQuery))
   );
 };
 
@@ -62,9 +62,7 @@ export const MutedListTab = <TItem,>({
 
   const visibleItems = items
     .filter((item) => matchesMuteSearch(search, getSearchValues(item)))
-    .toSorted((left, right) =>
-      getName(left).localeCompare(getName(right), "pl"),
-    );
+    .toSorted((left, right) => comparePolish(getName(left), getName(right)));
 
   return (
     <SettingsTabLayout>

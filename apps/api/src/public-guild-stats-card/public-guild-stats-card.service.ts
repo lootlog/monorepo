@@ -15,6 +15,7 @@ import type {
   PublicGuildStatsCardPersistenceError,
   PublicGuildStatsCardRepositoryService,
 } from "./public-guild-stats-card.repository.js";
+import { formatNumber } from "@lootlog/domain/locale";
 
 type GuildStatsCardData = {
   guild: {
@@ -408,7 +409,7 @@ export class PublicGuildStatsCardImageAdapter {
   }
 
   private formatNumber(value: number) {
-    return new Intl.NumberFormat("pl-PL").format(value);
+    return formatNumber(value);
   }
 
   private escapeSvg(value: string) {

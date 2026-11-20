@@ -19,13 +19,14 @@ import { EditMyReservationDialog } from "./edit-my-reservation-dialog";
 import { MyReservationListItem } from "./my-reservation-list-item";
 import { MY_RESERVATION_STATUSES } from "./my-reservations-search";
 import { useCancelMyReservation } from "./use-cancel-my-reservation";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
 const matchesSearch = (
   reservation: MyReservationsResponseDtoItemsItem,
   search: string,
 ) =>
   [reservation.spotName, reservation.sourceOrganization.name].some((name) =>
-    name.toLocaleLowerCase("pl").includes(search),
+    normalizeSearchText(name).includes(search),
   );
 
 /** The player's reservations across Lootlogs: upcoming ones and history. */
@@ -44,7 +45,7 @@ export function MyReservations() {
     useState<MyReservationsResponseDtoItemsItem | null>(null);
 
   const isUpcoming = status === "upcoming";
-  const normalizedSearch = search.trim().toLocaleLowerCase("pl");
+  const normalizedSearch = normalizeSearchText(search);
 
   const reservations = (query.data?.items ?? []).filter((reservation) =>
     matchesSearch(reservation, normalizedSearch),

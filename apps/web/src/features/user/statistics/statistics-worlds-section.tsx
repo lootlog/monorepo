@@ -5,8 +5,9 @@ import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
 import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-section";
 import type { StatisticsSearch } from "./statistics-search";
 import { StatisticsDelta } from "./statistics-delta";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
-const shareFormatter = new Intl.NumberFormat("pl-PL", {
+const shareFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
   style: "percent",
   maximumFractionDigits: 1,
 });

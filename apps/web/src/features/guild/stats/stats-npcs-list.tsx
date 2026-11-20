@@ -31,7 +31,7 @@ import {
   LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { useStatsNpcsListModel } from "./use-stats-npcs-list-model";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 export const StatsNpcsList = () => {
   const {

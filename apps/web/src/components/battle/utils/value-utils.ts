@@ -1,3 +1,5 @@
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
+
 export const roundValue = (value: string | number): string => {
   let strValue = String(value);
 
@@ -56,14 +58,14 @@ export const processDamageValue = (
   return ` ${prefix}${rounded}`;
 };
 
-const battleMetricFormatter = new Intl.NumberFormat("pl-PL", {
+const battleMetricFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
   maximumFractionDigits: 1,
 });
 
 export const formatBattleMetric = (value: number): string =>
   battleMetricFormatter.format(value);
 
-const signedBattleMetricFormatter = new Intl.NumberFormat("pl-PL", {
+const signedBattleMetricFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
   maximumFractionDigits: 1,
   signDisplay: "exceptZero",
 });
