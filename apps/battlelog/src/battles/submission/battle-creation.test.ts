@@ -1,3 +1,4 @@
+import { type JsonCodec } from "@lootlog/database/redis-cache-fill";
 import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
 import { PgliteClient } from "@effect/sql-pglite";
 import { makeWithDefaults } from "drizzle-orm/effect-pglite";
@@ -37,7 +38,6 @@ import {
 } from "#src/database/schema";
 import { decodeBattleEvents } from "#src/battles/battle-timeline";
 import { ContextLogger } from "@lootlog/instrumentation";
-import type { JsonCodec } from "#src/infrastructure/redis-store";
 import { makeBattlelogOperations } from "#src/battles/battlelog-operations";
 import { makeBattles, type Battles } from "#src/battles/battles.service";
 import { makeBattlelogTestBoundary } from "../../../test/battlelog-test-boundary.js";

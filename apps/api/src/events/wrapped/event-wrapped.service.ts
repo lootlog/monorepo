@@ -1,3 +1,4 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { buildLootVisibilityCacheScope } from "#src/loots/loot-visibility-cache";
 import { roundEventDisplayValue } from "#src/events/round-event-display-value";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
@@ -11,7 +12,7 @@ import type {
 import type { LootNpcNameSummary } from "#src/loots/query/loot-query.operations";
 import type { LootsOperations } from "#src/loots/loots.operations";
 import { Clock, Effect } from "effect";
-import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { type RedisService } from "#src/redis/redis.service";
 import { EventWrappedResponse } from "#src/contracts/events/schemas";
 import { clipToWindowSeconds } from "#src/events/monitoring/tracking-window";
 import {

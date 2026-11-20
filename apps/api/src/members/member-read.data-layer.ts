@@ -1,3 +1,4 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { hydrateMemberRoles } from "./member-role-hydration.js";
 import { and, arrayContains, asc, desc, eq, isNotNull, or } from "drizzle-orm";
 import {
@@ -5,7 +6,7 @@ import {
   selectGuildIdsGrantingPermissions,
 } from "./member-access-query.js";
 import { Effect, Layer, Schema } from "effect";
-import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { type RedisService } from "#src/redis/redis.service";
 import { capabilitiesGrantingAny } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";

@@ -1,10 +1,10 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { getOrSetStaleJson } from "#src/redis/stale-json-cache";
 import { getLootListCacheScope } from "#src/shared/cache";
 import { makeUserFeed } from "#src/users/user-feed";
 import { makeUserLootStats } from "#src/loots/query/user-loot-stats";
 import { makeGuildKillActivityPublisher } from "#src/kills/guild-kill-activity";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { makeJsonCodec } from "#src/redis/redis.service";
 import { makeGuildKillQueries } from "#src/kills/guild-kill-queries";
 import { makeKillCreation } from "#src/kills/kill-creation";
 import type { KillQueryCache } from "#src/kills/kill-query-support";

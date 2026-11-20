@@ -1,3 +1,4 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { and, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import {
@@ -14,7 +15,7 @@ import {
 } from "#src/database/drizzle/organization.schema";
 import { UserOrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
 import { apiKeyCacheSuffix } from "#src/runtime/auth/organization-scope";
-import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { type RedisService } from "#src/redis/redis.service";
 import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
 import {
   isActiveMember,

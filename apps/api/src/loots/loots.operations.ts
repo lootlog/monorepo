@@ -1,3 +1,4 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import {
   OperationError,
   withAdapterSpan,
@@ -15,7 +16,7 @@ import type {
   guildTable,
   roleTable,
 } from "#src/database/drizzle/organization.schema";
-import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { type RedisService } from "#src/redis/redis.service";
 import { randomInt } from "node:crypto";
 import {
   InvalidRequestError,

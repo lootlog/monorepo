@@ -72,7 +72,7 @@ beforeAll(async () => {
     evalScript: <TResult>() =>
       // SAFETY: the analytics cache reads its generation script as a string.
       Effect.succeed("generation" as TResult),
-    getOrSetJsonBestEffort: ({ key, factory, codec }) =>
+    getOrSetJson: ({ key, factory, codec }) =>
       Effect.gen(function* () {
         const cached = cachedValues.get(key);
 

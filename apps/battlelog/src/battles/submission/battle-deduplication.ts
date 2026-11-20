@@ -1,10 +1,8 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { randomUUID } from "node:crypto";
 import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
-import {
-  makeJsonCodec,
-  type RedisStore,
-} from "#src/infrastructure/redis-store";
+import { type RedisStore } from "#src/infrastructure/redis-store";
 import { Clock, Effect, Schema } from "effect";
 import type { CreateBattleResult } from "#src/battles/battle-service";
 

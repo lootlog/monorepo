@@ -1,5 +1,6 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { describe, expect, it, vi } from "bun:test";
-import { makeJsonCodec, makeRedisService } from "./redis.service.js";
+import { makeRedisService } from "./redis.service.js";
 import { Effect, Queue, Schema } from "effect";
 import { Redis } from "effect/persistence";
 
@@ -20,33 +21,39 @@ type RedisClientMock = {
 
 const createRedisService = (client: RedisClientMock) => {
   const redis = Redis.Redis.of({
+    // The driver reports a failed command as RedisError, never as a defect.
     send: <A>(command: string, ...args: ReadonlyArray<string>) =>
-      Effect.promise(async () => {
-        const key = Schema.decodeUnknownSync(
-          Schema.Literals(["scan", "del", "get", "set", "eval", "keys"]),
-        )(command.toLowerCase());
+      Effect.tryPromise({
+        catch: (cause) => new Redis.RedisError({ cause }),
+        try: async () => {
+          const key = Schema.decodeUnknownSync(
+            Schema.Literals(["scan", "del", "get", "set", "eval", "keys"]),
+          )(command.toLowerCase());
 
-        const reply = await client[key](...args);
+          const reply = await client[key](...args);
 
-        // SAFETY: This is the Redis driver's generic transport seam. Each scenario
-        // supplies the protocol reply for the checked command used by RedisService;
-        // the transport cannot validate an arbitrary caller-selected A.
-        return reply as A;
+          // SAFETY: This is the Redis driver's generic transport seam. Each scenario
+          // supplies the protocol reply for the checked command used by RedisService;
+          // the transport cannot validate an arbitrary caller-selected A.
+          return reply as A;
+        },
       }),
     subscribe: () => Queue.unbounded(),
     reserve: Effect.die("unused"),
     eval:
       (script) =>
       (...parameters) =>
-        Effect.promise(() =>
-          client.eval(
-            script.lua,
-            String(script.numberOfKeys(...parameters)),
-            ...Schema.decodeUnknownSync(Schema.Array(Schema.String))(
-              parameters,
+        Effect.tryPromise({
+          catch: (cause) => new Redis.RedisError({ cause }),
+          try: () =>
+            client.eval(
+              script.lua,
+              String(script.numberOfKeys(...parameters)),
+              ...Schema.decodeUnknownSync(Schema.Array(Schema.String))(
+                parameters,
+              ),
             ),
-          ),
-        ),
+        }),
   });
 
   return makeRedisService(redis, { prefix: "lootlog" });
@@ -174,7 +181,7 @@ describe("RedisService", () => {
 
     await expect(
       Effect.runPromise(service.deleteByPattern("timer:*")),
-    ).rejects.toThrow("Redis disconnected");
+    ).rejects.toHaveProperty("cause.message", "Redis disconnected");
     expect(client.scan).toHaveBeenCalledTimes(1);
   });
 
@@ -291,7 +298,9 @@ describe("RedisService", () => {
 
     expect(result).toEqual({ fresh: true });
     expect(factory).toHaveBeenCalledTimes(1);
-    expect(onError).toHaveBeenCalledWith(cacheError);
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({ cause: cacheError }),
+    );
   });
 
   it("does not start another expensive fill when the owner's wait budget expires", async () => {

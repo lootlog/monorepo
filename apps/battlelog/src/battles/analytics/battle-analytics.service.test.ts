@@ -1,3 +1,4 @@
+import type { CacheFillOptions } from "@lootlog/database/redis-cache-fill";
 import { makeBattleAnalyticsRead } from "./battle-analytics-read.service.js";
 import { makeBattleCombatProfileRead } from "./battle-combat-profile-read.service.js";
 import { unusedRedisStore } from "../../../test/battle-fixtures.js";
@@ -14,7 +15,6 @@ import {
   makeBattleAnalyticsQuery,
   type BattleAnalyticsQuery,
 } from "./battle-analytics-query.service.js";
-import type { RedisGetOrSetJsonOptions } from "#src/infrastructure/redis-store";
 import type {
   BattleStatisticsQuery,
   PlayerVsPlayerQuery,
@@ -83,11 +83,11 @@ const createRedisFixture = () => {
         try: () => storeValue(key, value, ttlSeconds),
         catch: (cause) => new Redis.RedisError({ cause }),
       }),
-    getOrSetJsonBestEffort: <T, E, R>({
+    getOrSetJson: <T, E, R>({
       key,
       factory,
       codec,
-    }: RedisGetOrSetJsonOptions<T, E, R>) =>
+    }: CacheFillOptions<T, E, R>) =>
       Effect.gen(function* () {
         const cached = yield* Effect.promise(() => cachedValue(key));
 
