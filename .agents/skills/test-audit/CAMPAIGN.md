@@ -64,8 +64,9 @@ assertions to carry into keepers, and the test-only production seams unlocked.
 
 Edit lane by lane. Serialize changes to shared harnesses and fixtures through
 one owner. With each lane, remove the test-only production seams it unlocks:
-injection parameters, getters, reset exports, and indirection layers. Register
-moved integration suites in the workspace `test:integration` script. Record
+injection parameters, getters, reset exports, and indirection layers. Keep the
+`.integration.test.ts` suffix on moved integration suites: `test:integration`
+selects suites by it. Record
 durable test-ownership rules in the Verification section of the root
 `AGENTS.md`, the repository's only one, and only rules drawn from mistakes this
 campaign actually found.
