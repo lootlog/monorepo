@@ -3,8 +3,12 @@ import { PgliteClient } from "@effect/sql-pglite";
 import { eq, sql } from "drizzle-orm";
 import { makeWithDefaults } from "drizzle-orm/effect-pglite";
 import { migrate } from "drizzle-orm/effect-pglite/migrator";
-import { Effect, ManagedRuntime } from "effect";
+import { Effect, ManagedRuntime, Schema } from "effect";
 import { createBattleId } from "#src/battles/battle-id";
+import {
+  BattleListMeta,
+  BattlePagination,
+} from "#src/http-api/contracts/shared";
 import { relations } from "#src/database/relations";
 import { battles } from "#src/database/schema";
 import { InvalidRequestError } from "@lootlog/protocol/http/errors";
@@ -120,6 +124,21 @@ describe("battle list pagination against PostgreSQL", () => {
         hasPrev: false,
         hasNext: true,
       });
+
+      // End pages lack a cursor and an uncounted page lacks count metadata;
+      // the response contract must still encode them.
+      for (const result of [...forward, ...backward]) {
+        expect(() =>
+          Schema.encodeUnknownSync(Schema.toCodecJson(BattlePagination))(
+            result.pagination,
+          ),
+        ).not.toThrow();
+        expect(() =>
+          Schema.encodeUnknownSync(Schema.toCodecJson(BattleListMeta))({
+            performance: result.performance,
+          }),
+        ).not.toThrow();
+      }
     });
   }
 

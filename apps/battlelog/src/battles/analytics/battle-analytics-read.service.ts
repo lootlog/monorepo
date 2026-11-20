@@ -482,12 +482,16 @@ export const makeBattleAnalyticsRead = (
             ? (row.wins / (row.wins + row.losses)) * 100
             : 0,
         lastBattleDate: row.lastBattleDate.toISOString(),
-        totalRatingDelta: query.matchmaking ? row.totalRatingDelta : undefined,
-        avgRatingDelta: query.matchmaking
-          ? battlesWithRating > 0
-            ? Math.round((row.totalRatingDelta / battlesWithRating) * 100) / 100
-            : 0
-          : undefined,
+        // Omitted rather than undefined: the response contract declares
+        // optional keys and rejects an undefined value.
+        ...(query.matchmaking && {
+          totalRatingDelta: row.totalRatingDelta,
+          avgRatingDelta:
+            battlesWithRating > 0
+              ? Math.round((row.totalRatingDelta / battlesWithRating) * 100) /
+                100
+              : 0,
+        }),
       }),
     );
 

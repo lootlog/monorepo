@@ -107,14 +107,16 @@ export const makeBattlePagination = (
       const countFinishedAt = yield* Clock.currentTimeMillis;
       const countTime = countFinishedAt - countStartTime;
 
+      // Absent values are omitted, not undefined: the response contract
+      // declares optional keys and rejects an undefined value.
       const pagination: CursorPagination = {
         size,
         hasNext,
         hasPrev,
-        nextCursor: hasNext && last ? encodeCursor("next", last.id) : undefined,
-        previousCursor:
-          hasPrev && first ? encodeCursor("previous", first.id) : undefined,
-        total,
+        ...(hasNext && last && { nextCursor: encodeCursor("next", last.id) }),
+        ...(hasPrev &&
+          first && { previousCursor: encodeCursor("previous", first.id) }),
+        ...(total !== undefined && { total }),
       };
 
       const queryFinishedAt = yield* Clock.currentTimeMillis;
@@ -125,8 +127,8 @@ export const makeBattlePagination = (
         pagination,
         performance: {
           queryTime,
-          countTime: includeTotal ? countTime : undefined,
-          totalItems: total,
+          ...(includeTotal && { countTime }),
+          ...(total !== undefined && { totalItems: total }),
           estimatedTotal: !!total,
         },
       };
