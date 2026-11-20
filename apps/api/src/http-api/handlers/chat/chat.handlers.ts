@@ -2,13 +2,16 @@ import { ChatOperationError, ChatData } from "#src/chat/chat-data";
 import {
   pathString,
   statusCodeResponse,
-  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import { applicationErrorResponse } from "#src/http-api/application-error-response";
-import { applicationErrorStatusOrUndefined } from "@lootlog/protocol/http/errors";
+import {
+  applicationErrorStatusOrUndefined,
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
 import {
   Permission,
   type Permission as PermissionValue,
@@ -22,7 +25,6 @@ import {
 import { DomainDateTime } from "#src/shared/schema/response-codecs";
 
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 
 type ChatIdentity = {

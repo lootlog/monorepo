@@ -1,13 +1,14 @@
 import {
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
+import {
   type StoredMapTemplate,
   MapTemplateNotFound,
   MapTemplatesPersistenceError,
   MapTemplatesData,
 } from "#src/map-templates/map-templates-data";
-import {
-  statusCodeResponse,
-  reauthenticationRequiredResponse,
-} from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 
@@ -23,7 +24,6 @@ import {
   type CreateMapTemplate,
 } from "#src/map-templates/map-template.schema";
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export class MapTemplatesAccessDenied extends TaggedErrorClass<MapTemplatesAccessDenied>()(
   "MapTemplatesAccessDenied",

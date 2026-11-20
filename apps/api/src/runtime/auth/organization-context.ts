@@ -1,3 +1,4 @@
+import type { ReauthenticationRequired } from "@lootlog/protocol/http/errors";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import { createSelectSchema } from "drizzle-orm/effect-schema";
@@ -34,7 +35,6 @@ import {
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "#src/shared/cache";
 import { MembersData } from "#src/members/members-data";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
 const CachedGuild = createSelectSchema(guildTable, {

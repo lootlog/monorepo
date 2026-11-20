@@ -1,11 +1,9 @@
-import { httpErrorResponse } from "@lootlog/protocol/http/errors";
-import { Effect, Schema } from "effect";
-import { HttpServerResponse } from "effect/http";
-import { ReauthenticationRequired } from "#src/contracts/api-shared";
-
-const encodeReauthenticationRequired = Schema.encodeSync(
+import {
+  httpErrorResponse,
   ReauthenticationRequired,
-);
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
+import { Effect } from "effect";
 
 const DEFAULT_STATUS_CODES = new Map<number, string>([
   [400, "INVALID_REQUEST"],
@@ -40,20 +38,6 @@ export const statusCodeResponse = (error: {
     httpErrorResponse(error.status, { code }, error.retryAfterMs),
   );
 };
-
-/**
- * HttpApi encodes a failure with the endpoint's own error schemas before the
- * bearer middleware's, so an empty or open endpoint error would claim this one.
- * Handlers answer it explicitly to keep the declared 401 body on every route.
- */
-export const reauthenticationRequiredResponse = (
-  error: ReauthenticationRequired,
-) =>
-  Effect.succeed(
-    HttpServerResponse.jsonUnsafe(encodeReauthenticationRequired(error), {
-      status: 401,
-    }),
-  );
 
 export const pathString = (value: unknown, name: string) =>
   typeof value === "string"

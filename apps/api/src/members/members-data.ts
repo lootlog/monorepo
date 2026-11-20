@@ -1,8 +1,8 @@
+import type { ReauthenticationRequired } from "@lootlog/protocol/http/errors";
 import type { ApiKeyAccess } from "@lootlog/schema/api-key-access";
 import type { MemberWithRoles, StoredMemberWithRoles } from "./member.types.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import type {
   MemberLootlogConfigSummaryResponse,
   MemberReferencesResponse,

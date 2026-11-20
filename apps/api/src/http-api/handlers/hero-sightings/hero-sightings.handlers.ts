@@ -1,13 +1,14 @@
 import {
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
+import {
   type HeroSightingsIdentity,
   type HeroSightingsGuildAccess,
   type DataEffect,
   HeroSightingsData,
 } from "#src/hero-sightings/hero-sightings-data";
-import {
-  reauthenticationRequiredResponse,
-  statusCodeResponse,
-} from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
@@ -20,7 +21,6 @@ import {
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 import type {
   HeroSightingsDataFailure,

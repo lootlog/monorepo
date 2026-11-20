@@ -1,3 +1,4 @@
+import { ReauthenticationRequired } from "@lootlog/protocol/http/errors";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Layer } from "effect";
 import { apiKeyAllowsOrganization } from "@lootlog/schema/api-key-policy";
@@ -66,7 +67,6 @@ import {
   AccountOrganizationNotFound,
 } from "#src/http-api/access/account-organization.access";
 import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { ReauthenticationRequired } from "#src/contracts/api-shared";
 import {
   OrganizationContextLookup,
   OrganizationNotFound,

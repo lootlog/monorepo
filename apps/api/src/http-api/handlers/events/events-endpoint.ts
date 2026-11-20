@@ -1,11 +1,11 @@
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import { EventTimersError } from "#src/events/respawn/event-timers.port";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import {
-  statusCodeResponse,
+  ApplicationError,
+  type ReauthenticationRequired,
   reauthenticationRequiredResponse,
-} from "#src/shared/http/handler-response";
-import { ApplicationError } from "@lootlog/protocol/http/errors";
+} from "@lootlog/protocol/http/errors";
 import { Effect, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { HttpApiEndpoint } from "effect/http-api";

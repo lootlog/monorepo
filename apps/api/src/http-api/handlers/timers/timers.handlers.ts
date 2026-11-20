@@ -1,4 +1,8 @@
 import {
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
+import {
   type TimersIdentity,
   type TimersGuildAccess,
   TimersData,
@@ -6,7 +10,6 @@ import {
 import {
   pathString,
   statusCodeResponse,
-  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
@@ -39,7 +42,6 @@ import {
   TimersInfrastructureError,
   type TimersNotFound,
 } from "#src/timers/timer-errors";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export class TimersAccessDenied extends TaggedErrorClass<TimersAccessDenied>()(
   "TimersAccessDenied",

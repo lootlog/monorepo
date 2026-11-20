@@ -1,4 +1,4 @@
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
+import type { ReauthenticationRequired } from "@lootlog/protocol/http/errors";
 import type {
   guildTable,
   memberTable,

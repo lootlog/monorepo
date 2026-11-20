@@ -1,13 +1,13 @@
 import {
-  statusCodeResponse,
+  type ReauthenticationRequired,
   reauthenticationRequiredResponse,
-} from "#src/shared/http/handler-response";
+} from "@lootlog/protocol/http/errors";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import type { PublicGuildStatsCard } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import type { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
 import type { GameMapsResponse } from "#src/contracts/maps/schemas";
 

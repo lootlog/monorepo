@@ -403,6 +403,9 @@ for (const { name, failingTable, failedTotalTable } of [
       expect(await boundary.run(database.select().from(failingTable))).toEqual(
         [],
       );
+      expect(
+        await boundary.run(database.select().from(failedTotalTable)),
+      ).toEqual([]);
       await boundary.run(
         database.execute(
           sql`ALTER TABLE ${failingTable} DROP CONSTRAINT fail_write`,

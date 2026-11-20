@@ -19,7 +19,7 @@ import { FetchHttpClient, HttpRouter } from "effect/http";
 import { Redis } from "effect/persistence";
 import { fingerprintAccessToken } from "#src/auth/auth.service";
 import { getCompleteUserGuildsCacheKey } from "#src/discord/discord-cache.util";
-import { ReauthenticationRequired } from "../src/contracts/api-shared.js";
+import { ReauthenticationRequired } from "@lootlog/protocol/http/errors";
 import { makeRedisService, type RedisService } from "#src/redis/redis.service";
 import {
   getPermissionsCacheKey,
@@ -1058,7 +1058,7 @@ describe("API HTTP boundary", () => {
       reason: "their Discord token expired",
       arrange: () => {
         authServiceAnswer = () =>
-          Response.json({ error: "TOKEN_EXPIRED" }, { status: 401 });
+          Response.json({ code: "TOKEN_EXPIRED" }, { status: 401 });
       },
     },
   ])(

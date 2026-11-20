@@ -3,7 +3,6 @@ import { operationIdentifiers } from "../../operation-identifiers.js";
 import {
   optionalPathString,
   statusCodeResponse,
-  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import {
   AccessRequirement,
@@ -27,12 +26,15 @@ import {
   NotificationTargetWithTestTriggerResponse,
   WatchedItemResponse,
 } from "#src/notifications/notification-response.schema";
-import { ApplicationError } from "@lootlog/protocol/http/errors";
+import {
+  ApplicationError,
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { LootlogApi } from "../../lootlog-api.js";
 import { NotificationOperations } from "#src/notifications/notifications.data-layer";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 type Guild = typeof guildTable.$inferSelect;
 

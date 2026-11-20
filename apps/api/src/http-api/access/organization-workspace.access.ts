@@ -3,10 +3,7 @@ import {
   OrganizationWorkspaceOperationError,
 } from "#src/guilds/organization-workspace-access";
 
-import {
-  statusCodeResponse,
-  reauthenticationRequiredResponse,
-} from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { applicationErrorResponse } from "#src/http-api/application-error-response";
@@ -16,9 +13,9 @@ import type { Permission as PermissionValue } from "@lootlog/schema/permissions"
 import {
   ApplicationError,
   applicationErrorStatus,
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
 } from "@lootlog/protocol/http/errors";
-
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export type OrganizationWorkspaceGuildAccess = OrganizationWorkspaceIdentity & {
   readonly guildId: string;
