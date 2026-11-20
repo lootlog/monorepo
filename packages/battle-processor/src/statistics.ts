@@ -70,7 +70,8 @@ export function calculateBattleStatistics(
           warriorId: top.originalId,
           name: top.name,
           value,
-          formattedValue: format ? format(value) : undefined,
+          // Omitted rather than undefined: the battlelog contract declares an optional key.
+          ...(format && { formattedValue: format(value) }),
         }
       : null;
   };
