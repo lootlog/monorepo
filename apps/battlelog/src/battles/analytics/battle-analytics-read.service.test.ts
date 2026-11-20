@@ -236,6 +236,12 @@ it("shares cached opponent aggregates and PvP counts across forward and backward
   // The first page has no previous cursor, the last no next cursor, and a
   // non-matchmaking query no rating fields; the response must still encode.
   for (const page of [first, next]) {
+    // Rating fields belong to matchmaking queries only.
+    for (const record of page.records) {
+      expect(record).not.toHaveProperty("totalRatingDelta");
+      expect(record).not.toHaveProperty("avgRatingDelta");
+    }
+
     expect(() =>
       Schema.encodeUnknownSync(
         Schema.toCodecJson(HeadToHeadPaginatedResponseDto_Output),

@@ -474,7 +474,12 @@ export const makeBattleAnalyticsRead = (
     const rows = yield* opponentRecords(userId, query, characterIds);
 
     const records = rows.map(
-      ({ position: _position, battlesWithRating, ...row }) => ({
+      ({
+        position: _position,
+        battlesWithRating,
+        totalRatingDelta,
+        ...row
+      }) => ({
         ...row,
         totalBattles: row.wins + row.losses,
         winRate:
@@ -485,11 +490,10 @@ export const makeBattleAnalyticsRead = (
         // Omitted rather than undefined: the response contract declares
         // optional keys and rejects an undefined value.
         ...(query.matchmaking && {
-          totalRatingDelta: row.totalRatingDelta,
+          totalRatingDelta,
           avgRatingDelta:
             battlesWithRating > 0
-              ? Math.round((row.totalRatingDelta / battlesWithRating) * 100) /
-                100
+              ? Math.round((totalRatingDelta / battlesWithRating) * 100) / 100
               : 0,
         }),
       }),
