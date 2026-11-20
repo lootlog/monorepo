@@ -4,7 +4,7 @@ import { unusedRedisStore } from "../../../test/battle-fixtures.js";
 import { Effect } from "effect";
 import { Redis } from "effect/persistence";
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { ResourceNotFoundError } from "#src/infrastructure/http-error";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import {
   makeBattleAnalytics,
   type BattleAnalytics,

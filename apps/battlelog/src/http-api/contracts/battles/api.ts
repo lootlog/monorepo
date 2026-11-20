@@ -1,5 +1,11 @@
 /** Endpoints owned by the battles HTTP module. */
-import { BadRequestResponse } from "../request-error.js";
+import {
+  BadRequest,
+  Forbidden,
+  NotFound,
+  ServiceUnavailable,
+  Unauthorized,
+} from "../errors.js";
 import {
   HttpApiEndpoint,
   HttpApiGroup,
@@ -53,16 +59,16 @@ import { BearerSecurityMiddleware } from "@lootlog/protocol/http/bearer-security
 export class BattlesGroup extends HttpApiGroup.make("battles").add(
   HttpApiEndpoint.post("BattlesControllerCreateBattle", "/battles", {
     payload: BattlesControllerCreateBattleRequestJson,
-    error: BadRequestResponse,
     success: BattlesControllerCreateBattle201.pipe(HttpApiSchema.status(201)),
+    error: [BadRequest, Unauthorized, ServiceUnavailable],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "BattlesController_createBattle")
     .annotate(OpenApi.Summary, "Create a battle"),
   HttpApiEndpoint.get("BattlesControllerGetDashboardBattles", "/battles/@me", {
     query: BattlesControllerGetDashboardBattlesQuery,
-    error: BadRequestResponse,
     success: BattlesControllerGetDashboardBattles200,
+    error: [BadRequest, Unauthorized],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "BattlesController_getDashboardBattles")
@@ -70,7 +76,10 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
   HttpApiEndpoint.get(
     "BattlesControllerGetUserCharacters",
     "/battles/@me/characters",
-    { success: BattlesControllerGetUserCharacters200 },
+    {
+      success: BattlesControllerGetUserCharacters200,
+      error: Unauthorized,
+    },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "BattlesController_getUserCharacters")
@@ -81,6 +90,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerGetBattleAnalyticsQuery,
       success: BattlesControllerGetBattleAnalytics200,
+      error: [Unauthorized, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -92,6 +102,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerGetAbyssSeasonsQuery,
       success: BattlesControllerGetAbyssSeasons200,
+      error: [Unauthorized, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -103,6 +114,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerGetCombatProfileQuery,
       success: BattlesControllerGetCombatProfile200,
+      error: [Unauthorized, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -114,6 +126,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerGetProfessionWinRateQuery,
       success: BattlesControllerGetProfessionWinRate200,
+      error: [Unauthorized, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -125,6 +138,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerGetHeadToHeadQuery,
       success: BattlesControllerGetHeadToHead200,
+      error: [Unauthorized, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -136,6 +150,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerGetCurrentStreakQuery,
       success: BattlesControllerGetCurrentStreak200,
+      error: [Unauthorized, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -147,6 +162,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerGetBattleDurationQuery,
       success: BattlesControllerGetBattleDuration200,
+      error: [Unauthorized, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -158,6 +174,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerGetPhGrowthQuery,
       success: BattlesControllerGetPhGrowth200,
+      error: [Unauthorized, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -169,6 +186,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerGetRatingGrowthQuery,
       success: BattlesControllerGetRatingGrowth200,
+      error: [Unauthorized, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -180,6 +198,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerGetRatingDeltaByOpponentQuery,
       success: BattlesControllerGetRatingDeltaByOpponent200,
+      error: [Unauthorized, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -191,6 +210,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerGetPlayerVsPlayerBattlesQuery,
       success: BattlesControllerGetPlayerVsPlayerBattles200,
+      error: [Unauthorized, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -202,6 +222,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       query: BattlesControllerSearchWarriorsQuery,
       success: BattlesControllerSearchWarriors200,
+      error: Unauthorized,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -213,7 +234,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       params: BattlesControllerGetBattleTimelinePathParams,
       success: BattlesControllerGetBattleTimeline200,
-      error: HttpApiSchema.Empty(404),
+      error: [Unauthorized, Forbidden, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -222,7 +243,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
   HttpApiEndpoint.get("BattlesControllerGetBattle", "/battles/:battleId", {
     params: BattlesControllerGetBattlePathParams,
     success: BattlesControllerGetBattle200,
-    error: HttpApiSchema.Empty(404),
+    error: [Unauthorized, Forbidden, NotFound],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "BattlesController_getBattle")
@@ -233,7 +254,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       params: BattlesControllerDeleteBattlePathParams,
       success: BattlesControllerDeleteBattle200,
-      error: HttpApiSchema.Empty(404),
+      error: [Unauthorized, Forbidden, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -243,7 +264,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     params: BattlesControllerUpdateBattlePathParams,
     payload: BattlesControllerUpdateBattleRequestJson,
     success: BattlesControllerUpdateBattle200,
-    error: [BadRequestResponse, HttpApiSchema.Empty(404)],
+    error: [Unauthorized, Forbidden, NotFound],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "BattlesController_updateBattle")
@@ -254,7 +275,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     {
       params: BattlesControllerGetBattleRawDataPathParams,
       success: BattlesControllerGetBattleRawData200,
-      error: HttpApiSchema.Empty(404),
+      error: [Unauthorized, Forbidden, NotFound],
     },
   )
     .middleware(BearerSecurityMiddleware)

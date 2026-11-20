@@ -36,7 +36,7 @@ import { makeBattleAnalytics } from "#src/battles/analytics/battle-analytics.ser
 import { makeBattlePagination } from "#src/battles/analytics/pagination.service";
 import { makeBattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
 import { createBattleId } from "#src/battles/battle-id";
-import { InvalidRequestError } from "#src/infrastructure/http-error";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import { makeBattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import {
   createBattleSemanticFingerprint,

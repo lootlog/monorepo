@@ -69,7 +69,14 @@ const requestJson = async <S extends Schema.ConstraintDecoder<unknown>>(
 
   expect(response.status).toBe(expectedStatus);
 
-  return { body: Schema.decodeUnknownSync(schema)(await response.json()) };
+  const text = await response.text();
+
+  // A 500 has no body.
+  return {
+    body: Schema.decodeUnknownSync(schema)(
+      text === "" ? undefined : JSON.parse(text),
+    ),
+  };
 };
 
 const postBattle = (

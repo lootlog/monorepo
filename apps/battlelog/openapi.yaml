@@ -14,6 +14,12 @@ paths:
       responses:
         "200":
           description: API is healthy
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
@@ -69,52 +75,22 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  message:
-                    anyOf:
-                      - type: string
-                      - type: array
-                        items:
-                          type: object
-                          properties:
-                            path:
-                              type: array
-                              items:
-                                anyOf:
-                                  - type: string
-                                  - type: number
-                                  - type: string
-                                    enum:
-                                      - Infinity
-                                      - -Infinity
-                                      - NaN
-                            message:
-                              type: string
-                          required:
-                            - path
-                            - message
-                  statusCode:
-                    type: number
-                    enum:
-                      - 400
-                required:
-                  - error
-                  - message
-                  - statusCode
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -137,6 +113,12 @@ paths:
                     type: string
                 required:
                   - message
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Create a battle
       requestBody:
         content:
@@ -274,52 +256,22 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  message:
-                    anyOf:
-                      - type: string
-                      - type: array
-                        items:
-                          type: object
-                          properties:
-                            path:
-                              type: array
-                              items:
-                                anyOf:
-                                  - type: string
-                                  - type: number
-                                  - type: string
-                                    enum:
-                                      - Infinity
-                                      - -Infinity
-                                      - NaN
-                            message:
-                              type: string
-                          required:
-                            - path
-                            - message
-                  statusCode:
-                    type: number
-                    enum:
-                      - 400
-                required:
-                  - error
-                  - message
-                  - statusCode
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -358,17 +310,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleCharactersResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -466,17 +426,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleAnalyticsResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -488,6 +456,12 @@ paths:
                     type: string
                 required:
                   - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -527,17 +501,25 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AbyssSeasonResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -549,6 +531,12 @@ paths:
                     type: string
                 required:
                   - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -687,17 +675,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CombatProfileResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -709,6 +705,12 @@ paths:
                     type: string
                 required:
                   - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -849,17 +851,25 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ProfessionWinRateResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -871,6 +881,12 @@ paths:
                     type: string
                 required:
                   - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -1009,17 +1025,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HeadToHeadPaginatedResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -1031,6 +1055,12 @@ paths:
                     type: string
                 required:
                   - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -1169,17 +1199,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StreakResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -1191,6 +1229,12 @@ paths:
                     type: string
                 required:
                   - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -1329,17 +1373,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleDurationStatsResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -1351,6 +1403,12 @@ paths:
                     type: string
                 required:
                   - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -1491,17 +1549,25 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PhGrowthDataPointResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -1513,6 +1579,12 @@ paths:
                     type: string
                 required:
                   - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -1653,17 +1725,25 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RatingGrowthDataPointResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -1675,6 +1755,12 @@ paths:
                     type: string
                 required:
                   - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -1815,17 +1901,25 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RatingDeltaByOpponentResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -1837,6 +1931,12 @@ paths:
                     type: string
                 required:
                   - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -1985,17 +2085,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PlayerVsPlayerPaginatedResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -2007,6 +2115,12 @@ paths:
                     type: string
                 required:
                   - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -2039,17 +2153,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleWarriorsSearchResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -2093,30 +2215,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleTimelineResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "404":
           description: Battle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -2149,30 +2285,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "404":
           description: Battle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -2209,65 +2359,39 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  message:
-                    anyOf:
-                      - type: string
-                      - type: array
-                        items:
-                          type: object
-                          properties:
-                            path:
-                              type: array
-                              items:
-                                anyOf:
-                                  - type: string
-                                  - type: number
-                                  - type: string
-                                    enum:
-                                      - Infinity
-                                      - -Infinity
-                                      - NaN
-                            message:
-                              type: string
-                          required:
-                            - path
-                            - message
-                  statusCode:
-                    type: number
-                    enum:
-                      - 400
-                required:
-                  - error
-                  - message
-                  - statusCode
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "404":
           description: Battle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -2305,30 +2429,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleDeletedResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "404":
           description: Battle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -2361,30 +2499,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleRawResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "404":
           description: Battle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -2417,52 +2569,20 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  message:
-                    anyOf:
-                      - type: string
-                      - type: array
-                        items:
-                          type: object
-                          properties:
-                            path:
-                              type: array
-                              items:
-                                anyOf:
-                                  - type: string
-                                  - type: number
-                                  - type: string
-                                    enum:
-                                      - Infinity
-                                      - -Infinity
-                                      - NaN
-                            message:
-                              type: string
-                          required:
-                            - path
-                            - message
-                  statusCode:
-                    type: number
-                    enum:
-                      - 400
-                required:
-                  - error
-                  - message
-                  - statusCode
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -2523,52 +2643,20 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  message:
-                    anyOf:
-                      - type: string
-                      - type: array
-                        items:
-                          type: object
-                          properties:
-                            path:
-                              type: array
-                              items:
-                                anyOf:
-                                  - type: string
-                                  - type: number
-                                  - type: string
-                                    enum:
-                                      - Infinity
-                                      - -Infinity
-                                      - NaN
-                            message:
-                              type: string
-                          required:
-                            - path
-                            - message
-                  statusCode:
-                    type: number
-                    enum:
-                      - 400
-                required:
-                  - error
-                  - message
-                  - statusCode
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -2610,6 +2698,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PublicBattleResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
@@ -2634,6 +2728,10 @@ paths:
                   - message
         "404":
           description: Public battle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -2664,6 +2762,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleRawResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
@@ -2688,6 +2792,10 @@ paths:
                   - message
         "404":
           description: Public battle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -2718,6 +2826,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleTimelineResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
@@ -2742,6 +2856,10 @@ paths:
                   - message
         "404":
           description: Public battle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -2777,61 +2895,14 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  message:
-                    anyOf:
-                      - type: string
-                      - type: array
-                        items:
-                          type: object
-                          properties:
-                            path:
-                              type: array
-                              items:
-                                anyOf:
-                                  - type: string
-                                  - type: number
-                                  - type: string
-                                    enum:
-                                      - Infinity
-                                      - -Infinity
-                                      - NaN
-                            message:
-                              type: string
-                          required:
-                            - path
-                            - message
-                  statusCode:
-                    type: number
-                    enum:
-                      - 400
-                required:
-                  - error
-                  - message
-                  - statusCode
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
                 anyOf:
-                  - type: object
-                    properties:
-                      error:
-                        type: string
-                      message:
-                        type: string
-                      statusCode:
-                        type: number
-                        enum:
-                          - 401
-                    required:
-                      - error
-                      - message
-                      - statusCode
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -2870,6 +2941,55 @@ paths:
         required: true
 components:
   schemas:
+    RequestValidationError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - VALIDATION_ERROR
+        message:
+          type: string
+        details:
+          type: object
+          properties:
+            issues:
+              type: array
+              items:
+                type: object
+                properties:
+                  path:
+                    type: array
+                    items:
+                      anyOf:
+                        - type: string
+                        - type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                  message:
+                    type: string
+                required:
+                  - path
+                  - message
+          required:
+            - issues
+      required:
+        - code
+        - message
+        - details
+    HttpErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          nullable: true
+          type: string
+        details:
+          nullable: true
+          type: object
+      required:
+        - code
     BattleAcceptedResponseDto_Output:
       type: object
       properties:

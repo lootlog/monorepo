@@ -1,5 +1,5 @@
 /** Endpoints owned by the internal HTTP module. */
-import { BadRequestResponse } from "../request-error.js";
+import { Unauthorized } from "../errors.js";
 import { Schema } from "effect";
 import {
   HttpApiEndpoint,
@@ -19,14 +19,7 @@ export class InternalGroup extends HttpApiGroup.make("internal").add(
     {
       payload: InternalControllerDeleteUserDataRequestJson,
       headers: Schema.Struct({ authorization: Schema.optional(Schema.String) }),
-      error: [
-        BadRequestResponse,
-        Schema.Struct({
-          error: Schema.String,
-          message: Schema.String,
-          statusCode: Schema.Literal(401),
-        }).pipe(HttpApiSchema.status(401)),
-      ],
+      error: Unauthorized,
       success: InternalControllerDeleteUserData201.pipe(
         HttpApiSchema.status(201),
       ),

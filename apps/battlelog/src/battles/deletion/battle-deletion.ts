@@ -16,7 +16,7 @@ import {
 } from "#src/database/schema";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import type { BattleObjectStorage } from "#src/infrastructure/battle-object-storage";
-import { ResourceNotFoundError } from "#src/infrastructure/http-error";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 
 type DeletionTransaction = Parameters<
   Parameters<DrizzleDatabase["transaction"]>[0]

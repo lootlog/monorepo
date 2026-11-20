@@ -7,7 +7,7 @@ import { Effect, ManagedRuntime } from "effect";
 import { createBattleId } from "#src/battles/battle-id";
 import { relations } from "#src/database/relations";
 import { battles } from "#src/database/schema";
-import { InvalidRequestError } from "#src/infrastructure/http-error";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import type { SortOrder } from "#src/battles/catalog/query-battles";
 import { makeBattlePagination } from "./pagination.service.js";
 

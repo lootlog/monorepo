@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { DependencyUnavailableError } from "#src/infrastructure/http-error";
+import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import {
   makeJsonCodec,
@@ -57,11 +57,14 @@ export const makeBattleDeduplication = (
   ) => {
     return operation.pipe(
       withAdapterSpan("Battles_deduplicationRedis", "battlelog-infrastructure"),
+      // The 503 body hides the Redis failure, so it is logged here.
+      Effect.tapError((error) =>
+        Effect.logWarning("Battle deduplication Redis call failed", error),
+      ),
       Effect.mapError(
-        (error) =>
+        () =>
           new DependencyUnavailableError(
             "Battle deduplication is temporarily unavailable",
-            { cause: error },
           ),
       ),
     );

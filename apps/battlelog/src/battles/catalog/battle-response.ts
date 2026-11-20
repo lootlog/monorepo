@@ -217,7 +217,7 @@ const BattleRawPayloadResponseSchema = Schema.Struct({
   characterId: Schema.String,
   world: Schema.String,
   events: Schema.Array(ParsedBattleMoveResponseSchema),
-  sourceEvents: Schema.optional(Schema.Array(Schema.Unknown)),
+  sourceEvents: Schema.optional(Schema.Array(Schema.Json)),
 });
 
 const BattleRawResponseSchema = Schema.Struct({

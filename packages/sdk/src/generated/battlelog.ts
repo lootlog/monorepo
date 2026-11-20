@@ -10,6 +10,41 @@ export interface BattleCreatedResponseDtoOutput {
   battleId: string;
 }
 
+/**
+ * @nullable
+ */
+export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
+
+export interface HttpErrorResponse {
+  code: string;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  details?: HttpErrorResponseDetails;
+}
+
+export type RequestValidationErrorCode = typeof RequestValidationErrorCode[keyof typeof RequestValidationErrorCode];
+
+
+export const RequestValidationErrorCode = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+} as const;
+
+export type RequestValidationErrorDetailsIssuesItem = {
+  path: (string | number)[];
+  message: string;
+};
+
+export type RequestValidationErrorDetails = {
+  issues: RequestValidationErrorDetailsIssuesItem[];
+};
+
+export interface RequestValidationError {
+  code: RequestValidationErrorCode;
+  message: string;
+  details: RequestValidationErrorDetails;
+}
+
 export type CreateBattleDtoEventsItemPartyMembers = {[key: string]: {
   id: number;
   account: number;
@@ -1517,25 +1552,7 @@ export interface PublicBattleResponseDtoOutput {
   warriors: PublicBattleResponseDtoOutputWarriorsItem[];
 }
 
-export type BattlesControllerCreateBattle400Message = string | ({
-  path: (string | number | 'Infinity' | '-Infinity' | 'NaN')[];
-  message: string;
-})[];
-
-export type BattlesControllerCreateBattle400StatusCode = typeof BattlesControllerCreateBattle400StatusCode[keyof typeof BattlesControllerCreateBattle400StatusCode];
-
-
-export const BattlesControllerCreateBattle400StatusCode = {
-  NUMBER_400: 400,
-} as const;
-
-export type BattlesControllerCreateBattle400 = {
-  error: string;
-  message: BattlesControllerCreateBattle400Message;
-  statusCode: BattlesControllerCreateBattle400StatusCode;
-};
-
-export type BattlesControllerCreateBattle401 = {
+export type BattlesControllerCreateBattle401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -1610,25 +1627,7 @@ export const BattlesControllerGetDashboardBattlesResultItem = {
   flee: 'flee',
 } as const;
 
-export type BattlesControllerGetDashboardBattles400Message = string | ({
-  path: (string | number | 'Infinity' | '-Infinity' | 'NaN')[];
-  message: string;
-})[];
-
-export type BattlesControllerGetDashboardBattles400StatusCode = typeof BattlesControllerGetDashboardBattles400StatusCode[keyof typeof BattlesControllerGetDashboardBattles400StatusCode];
-
-
-export const BattlesControllerGetDashboardBattles400StatusCode = {
-  NUMBER_400: 400,
-} as const;
-
-export type BattlesControllerGetDashboardBattles400 = {
-  error: string;
-  message: BattlesControllerGetDashboardBattles400Message;
-  statusCode: BattlesControllerGetDashboardBattles400StatusCode;
-};
-
-export type BattlesControllerGetDashboardBattles401 = {
+export type BattlesControllerGetDashboardBattles401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -1640,7 +1639,7 @@ export type BattlesControllerGetDashboardBattles429 = {
   message: string;
 };
 
-export type BattlesControllerGetUserCharacters401 = {
+export type BattlesControllerGetUserCharacters401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -1691,7 +1690,7 @@ export const BattlesControllerGetBattleAnalyticsPeriod = {
   '180d': '180d',
 } as const;
 
-export type BattlesControllerGetBattleAnalytics401 = {
+export type BattlesControllerGetBattleAnalytics401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -1708,7 +1707,7 @@ characterId: string;
 world?: string;
 };
 
-export type BattlesControllerGetAbyssSeasons401 = {
+export type BattlesControllerGetAbyssSeasons401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -1796,7 +1795,7 @@ export const BattlesControllerGetCombatProfileSortOrder = {
   desc: 'desc',
 } as const;
 
-export type BattlesControllerGetCombatProfile401 = {
+export type BattlesControllerGetCombatProfile401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -1884,7 +1883,7 @@ export const BattlesControllerGetProfessionWinRateSortOrder = {
   desc: 'desc',
 } as const;
 
-export type BattlesControllerGetProfessionWinRate401 = {
+export type BattlesControllerGetProfessionWinRate401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -1972,7 +1971,7 @@ export const BattlesControllerGetHeadToHeadSortOrder = {
   desc: 'desc',
 } as const;
 
-export type BattlesControllerGetHeadToHead401 = {
+export type BattlesControllerGetHeadToHead401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2060,7 +2059,7 @@ export const BattlesControllerGetCurrentStreakSortOrder = {
   desc: 'desc',
 } as const;
 
-export type BattlesControllerGetCurrentStreak401 = {
+export type BattlesControllerGetCurrentStreak401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2148,7 +2147,7 @@ export const BattlesControllerGetBattleDurationSortOrder = {
   desc: 'desc',
 } as const;
 
-export type BattlesControllerGetBattleDuration401 = {
+export type BattlesControllerGetBattleDuration401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2236,7 +2235,7 @@ export const BattlesControllerGetPhGrowthSortOrder = {
   desc: 'desc',
 } as const;
 
-export type BattlesControllerGetPhGrowth401 = {
+export type BattlesControllerGetPhGrowth401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2324,7 +2323,7 @@ export const BattlesControllerGetRatingGrowthSortOrder = {
   desc: 'desc',
 } as const;
 
-export type BattlesControllerGetRatingGrowth401 = {
+export type BattlesControllerGetRatingGrowth401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2412,7 +2411,7 @@ export const BattlesControllerGetRatingDeltaByOpponentSortOrder = {
   desc: 'desc',
 } as const;
 
-export type BattlesControllerGetRatingDeltaByOpponent401 = {
+export type BattlesControllerGetRatingDeltaByOpponent401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2502,7 +2501,7 @@ export const BattlesControllerGetPlayerVsPlayerBattlesSortOrder = {
   desc: 'desc',
 } as const;
 
-export type BattlesControllerGetPlayerVsPlayerBattles401 = {
+export type BattlesControllerGetPlayerVsPlayerBattles401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2518,7 +2517,7 @@ export type BattlesControllerSearchWarriorsParams = {
 q: string;
 };
 
-export type BattlesControllerSearchWarriors401 = {
+export type BattlesControllerSearchWarriors401 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2533,11 +2532,11 @@ export type BattlesControllerSearchWarriors429 = {
 export type BattlesControllerGetBattleTimelinePathParameters = {
  battleId: string,
  }
-export type BattlesControllerGetBattleTimeline401 = {
+export type BattlesControllerGetBattleTimeline401 = HttpErrorResponse | {
   message: string;
 };
 
-export type BattlesControllerGetBattleTimeline403 = {
+export type BattlesControllerGetBattleTimeline403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2548,11 +2547,11 @@ export type BattlesControllerGetBattleTimeline429 = {
 export type BattlesControllerGetBattlePathParameters = {
  battleId: string,
  }
-export type BattlesControllerGetBattle401 = {
+export type BattlesControllerGetBattle401 = HttpErrorResponse | {
   message: string;
 };
 
-export type BattlesControllerGetBattle403 = {
+export type BattlesControllerGetBattle403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2563,29 +2562,11 @@ export type BattlesControllerGetBattle429 = {
 export type BattlesControllerUpdateBattlePathParameters = {
  battleId: string,
  }
-export type BattlesControllerUpdateBattle400Message = string | ({
-  path: (string | number | 'Infinity' | '-Infinity' | 'NaN')[];
-  message: string;
-})[];
-
-export type BattlesControllerUpdateBattle400StatusCode = typeof BattlesControllerUpdateBattle400StatusCode[keyof typeof BattlesControllerUpdateBattle400StatusCode];
-
-
-export const BattlesControllerUpdateBattle400StatusCode = {
-  NUMBER_400: 400,
-} as const;
-
-export type BattlesControllerUpdateBattle400 = {
-  error: string;
-  message: BattlesControllerUpdateBattle400Message;
-  statusCode: BattlesControllerUpdateBattle400StatusCode;
-};
-
-export type BattlesControllerUpdateBattle401 = {
+export type BattlesControllerUpdateBattle401 = HttpErrorResponse | {
   message: string;
 };
 
-export type BattlesControllerUpdateBattle403 = {
+export type BattlesControllerUpdateBattle403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2596,11 +2577,11 @@ export type BattlesControllerUpdateBattle429 = {
 export type BattlesControllerDeleteBattlePathParameters = {
  battleId: string,
  }
-export type BattlesControllerDeleteBattle401 = {
+export type BattlesControllerDeleteBattle401 = HttpErrorResponse | {
   message: string;
 };
 
-export type BattlesControllerDeleteBattle403 = {
+export type BattlesControllerDeleteBattle403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -2611,11 +2592,11 @@ export type BattlesControllerDeleteBattle429 = {
 export type BattlesControllerGetBattleRawDataPathParameters = {
  battleId: string,
  }
-export type BattlesControllerGetBattleRawData401 = {
+export type BattlesControllerGetBattleRawData401 = HttpErrorResponse | {
   message: string;
 };
 
-export type BattlesControllerGetBattleRawData403 = {
+export type BattlesControllerGetBattleRawData403 = HttpErrorResponse | {
   message: string;
 };
 

@@ -1,7 +1,7 @@
 import {
   ApplicationError,
   ResourceNotFoundError,
-} from "#src/infrastructure/http-error";
+} from "@lootlog/protocol/http/errors";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ContextLogger } from "@lootlog/instrumentation";
 import {

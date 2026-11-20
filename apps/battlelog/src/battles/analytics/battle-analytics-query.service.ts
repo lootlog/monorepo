@@ -4,7 +4,7 @@ import {
   warriorExists,
 } from "#src/battles/battle-warrior-query";
 import { firstBattleIdAt, lastBattleIdAt } from "#src/battles/battle-id";
-import { ResourceNotFoundError } from "#src/infrastructure/http-error";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import {
   and,
   asc,

@@ -1,5 +1,5 @@
 /** Endpoints owned by the weapon-kills HTTP module. */
-import { BadRequestResponse } from "../request-error.js";
+import { Unauthorized } from "../errors.js";
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import { BearerSecurityMiddleware } from "@lootlog/protocol/http/bearer-security";
 import {
@@ -15,7 +15,7 @@ export class WeaponKillsGroup extends HttpApiGroup.make("weapon-kills").add(
     "/weapon-kills",
     {
       payload: RecordWeaponKillsDto,
-      error: BadRequestResponse,
+      error: Unauthorized,
       success: WeaponKillsDto_Output,
     },
   )
@@ -31,7 +31,7 @@ export class WeaponKillsGroup extends HttpApiGroup.make("weapon-kills").add(
     "/weapon-kills/:world/:characterId",
     {
       params: WeaponKillsControllerGetCharacterWeaponKillsPathParams,
-      error: BadRequestResponse,
+      error: Unauthorized,
       success: CharacterWeaponKillsResponseDto_Output,
     },
   )

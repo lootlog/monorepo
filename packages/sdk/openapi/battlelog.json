@@ -38,53 +38,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
-                    "message": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "path": {
-                                "type": "array",
-                                "items": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "number"
-                                    },
-                                    {
-                                      "type": "string",
-                                      "enum": ["Infinity", "-Infinity", "NaN"]
-                                    }
-                                  ]
-                                }
-                              },
-                              "message": {
-                                "type": "string"
-                              }
-                            },
-                            "required": ["path", "message"]
-                          }
-                        }
-                      ]
-                    },
-                    "statusCode": {
-                      "type": "number",
-                      "enum": [400]
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
                     }
-                  },
-                  "required": ["error", "message", "statusCode"]
+                  ]
                 }
               }
             }
@@ -94,13 +55,20 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -133,6 +101,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -340,53 +318,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
-                    "message": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "path": {
-                                "type": "array",
-                                "items": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "number"
-                                    },
-                                    {
-                                      "type": "string",
-                                      "enum": ["Infinity", "-Infinity", "NaN"]
-                                    }
-                                  ]
-                                }
-                              },
-                              "message": {
-                                "type": "string"
-                              }
-                            },
-                            "required": ["path", "message"]
-                          }
-                        }
-                      ]
-                    },
-                    "statusCode": {
-                      "type": "number",
-                      "enum": [400]
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
                     }
-                  },
-                  "required": ["error", "message", "statusCode"]
+                  ]
                 }
               }
             }
@@ -396,13 +335,20 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -466,18 +412,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -623,18 +586,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -651,6 +631,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -718,18 +708,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -746,6 +753,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -947,18 +964,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -975,6 +1009,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -1179,18 +1223,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -1207,6 +1268,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -1408,18 +1479,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -1436,6 +1524,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -1637,18 +1735,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -1665,6 +1780,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -1866,18 +1991,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -1894,6 +2036,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2098,18 +2250,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -2126,6 +2295,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2330,18 +2509,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -2358,6 +2554,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2562,18 +2768,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -2590,6 +2813,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2807,18 +3040,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -2835,6 +3085,16 @@
                     }
                   },
                   "required": ["message"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2891,18 +3151,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -2975,18 +3252,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -2996,19 +3290,33 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "Battle not found"
+            "description": "Battle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "",
@@ -3062,18 +3370,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -3083,19 +3408,33 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "Battle not found"
+            "description": "Battle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "",
@@ -3152,53 +3491,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "path": {
-                                "type": "array",
-                                "items": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "number"
-                                    },
-                                    {
-                                      "type": "string",
-                                      "enum": ["Infinity", "-Infinity", "NaN"]
-                                    }
-                                  ]
-                                }
-                              },
-                              "message": {
-                                "type": "string"
-                              }
-                            },
-                            "required": ["path", "message"]
-                          }
-                        }
-                      ]
-                    },
-                    "statusCode": {
-                      "type": "number",
-                      "enum": [400]
-                    }
-                  },
-                  "required": ["error", "message", "statusCode"]
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -3208,13 +3501,20 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -3224,19 +3524,33 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "Battle not found"
+            "description": "Battle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "",
@@ -3298,18 +3612,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -3319,19 +3650,33 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "Battle not found"
+            "description": "Battle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "",
@@ -3385,18 +3730,35 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
@@ -3406,19 +3768,33 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
                     }
-                  },
-                  "required": ["message"]
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "Battle not found"
+            "description": "Battle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "",
@@ -3467,6 +3843,16 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
@@ -3500,7 +3886,14 @@
             }
           },
           "404": {
-            "description": "Public battle not found"
+            "description": "Public battle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "",
@@ -3550,6 +3943,16 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
@@ -3583,7 +3986,14 @@
             }
           },
           "404": {
-            "description": "Public battle not found"
+            "description": "Public battle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "",
@@ -3633,6 +4043,16 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
@@ -3666,7 +4086,14 @@
             }
           },
           "404": {
-            "description": "Public battle not found"
+            "description": "Public battle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "",
@@ -3709,6 +4136,69 @@
           }
         },
         "required": ["battleId"]
+      },
+      "HttpErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "nullable": true,
+            "type": "string"
+          },
+          "details": {
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": ["code"]
+      },
+      "RequestValidationError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": ["VALIDATION_ERROR"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "properties": {
+              "issues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        ]
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path", "message"]
+                }
+              }
+            },
+            "required": ["issues"]
+          }
+        },
+        "required": ["code", "message", "details"]
       },
       "CreateBattleDto": {
         "type": "object",
