@@ -1,6 +1,34 @@
-import { Predicate, Schema } from "effect";
+import { Effect, Predicate, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { HttpErrorResponse, type JsonValue } from "#src/contracts/api-shared";
+import { HttpServerResponse } from "effect/http";
+import { JsonValue } from "@lootlog/schema/http-scalars";
+
+/**
+ * Body of every Lootlog service's 4xx/5xx response, except the 401 that asks
+ * for sign-in again (`ReauthenticationRequired`). `code` is the stable, machine-readable reason
+ * (`NOT_FOUND`, `VALIDATION_ERROR`, `RESERVATION_OVERLAP`); `message` is for
+ * people and may change; `details` holds the values a client needs to explain
+ * the reason. A 429 also sends `Retry-After` in seconds when the wait is known.
+ */
+export const HttpErrorResponse = Schema.Struct({
+  code: Schema.String,
+  message: Schema.optional(Schema.String),
+  details: Schema.optional(Schema.Record(Schema.String, JsonValue)),
+}).annotate({ identifier: "HttpErrorResponse" });
+
+export type HttpErrorResponse = typeof HttpErrorResponse.Type;
+
+/**
+ * The caller's Discord authorization no longer works, so Lootlog cannot resolve
+ * their identity or Organization membership. `requiresReauth` starts the Web
+ * app's sign-in flow; `code` names the failed step, such as
+ * `DISCORD_UNAUTHORIZED` or `IDP_REAUTH_REQUIRED`.
+ */
+export class ReauthenticationRequired extends TaggedErrorClass<ReauthenticationRequired>()(
+  "ReauthenticationRequired",
+  { code: Schema.String, requiresReauth: Schema.Literal(true) },
+  { httpApiStatus: 401 },
+) {}
 
 export const HttpStatus = {
   BAD_REQUEST: 400,
@@ -42,7 +70,7 @@ export type ApplicationErrorInput =
   | {
       readonly code?: string;
       readonly message?: string;
-      readonly details?: Readonly<Record<string, JsonValue>>;
+      readonly details?: Readonly<Record<string, typeof JsonValue.Type>>;
       /** Sent as the `Retry-After` header, rounded up to whole seconds. */
       readonly retryAfterMs?: number;
     };
@@ -84,7 +112,7 @@ const makeApplicationError = (
   kind: ApplicationErrorKind,
   defaultCode: string,
   fallbackMessage: string,
-) =>
+): new (input?: ApplicationErrorInput) => ApplicationError =>
   class extends ApplicationError {
     constructor(input: ApplicationErrorInput = {}) {
       super(kind, input, defaultCode, fallbackMessage);
@@ -190,3 +218,65 @@ export const applicationErrorStatusOrUndefined = (
   Schema.is(ApplicationError)(error)
     ? applicationErrorStatus(error)
     : undefined;
+
+/** The only way a handler writes an error body; see `HttpErrorResponse`. */
+export const httpErrorResponse = (
+  status: number,
+  body: HttpErrorResponse,
+  retryAfterMs?: number,
+) =>
+  HttpServerResponse.jsonUnsafe(body, {
+    status,
+    headers:
+      retryAfterMs === undefined
+        ? undefined
+        : { "retry-after": String(Math.ceil(retryAfterMs / 1000)) },
+  });
+
+/**
+ * Answers an `ApplicationError` with its status and body. Anything else, and
+ * an internal error, is a defect the server logs and answers with a 500; a
+ * dependency failure hides its message behind "Service unavailable".
+ *
+ * Handlers answer explicitly because every declared error status shares the
+ * `HttpErrorResponse` schema, so a failure value cannot select its status.
+ */
+export const applicationErrorHttpResponse = (cause: unknown) => {
+  if (!Schema.is(ApplicationError)(cause)) return Effect.die(cause);
+  const status = applicationErrorStatus(cause);
+
+  if (status === HttpStatus.INTERNAL_SERVER_ERROR) return Effect.die(cause);
+
+  if (status >= 500) {
+    return Effect.succeed(
+      httpErrorResponse(
+        status,
+        { code: cause.body.code, message: "Service unavailable" },
+        cause.retryAfterMs,
+      ),
+    );
+  }
+
+  return Effect.succeed(
+    httpErrorResponse(status, cause.body, cause.retryAfterMs),
+  );
+};
+
+const encodeReauthenticationRequired = Schema.encodeSync(
+  ReauthenticationRequired,
+);
+
+/**
+ * Answers `ReauthenticationRequired` with its declared 401 body. HttpApi
+ * encodes a failure with the first error schema that accepts it, and an open
+ * `HttpErrorResponse` 401 would claim this one and drop `requiresReauth`, so
+ * handlers answer it explicitly.
+ */
+export const reauthenticationRequiredResponse = (
+  error: ReauthenticationRequired,
+) =>
+  Effect.succeed(
+    HttpServerResponse.jsonUnsafe(encodeReauthenticationRequired(error), {
+      status: HttpStatus.UNAUTHORIZED,
+    }),
+  );

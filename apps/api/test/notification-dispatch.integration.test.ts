@@ -25,7 +25,6 @@ import { makeNotificationJobDispatch } from "#src/notifications/jobs/notificatio
 import { makeNotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import { makeNotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
 import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job.repository";
-import { applicationLogger } from "#src/shared/application-logger";
 import { canDispatchLootNotification } from "#src/notifications/notification-loot-source-visibility";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 
@@ -256,10 +255,7 @@ describe("notification dispatch with BullMQ and PostgreSQL", () => {
       () => undefined,
     );
 
-    const processor = makeNotificationDispatchProcessor(
-      { dispatch },
-      applicationLogger,
-    );
+    const processor = makeNotificationDispatchProcessor({ dispatch });
 
     const worker = await Effect.runPromise(
       Scope.provide(

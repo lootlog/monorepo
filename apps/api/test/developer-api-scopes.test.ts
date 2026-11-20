@@ -1,8 +1,8 @@
-import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
 import {
   ApiKeyEndpointPolicy,
   apiKeyEndpointPolicyLayer,
-} from "@lootlog/schema/api-key-http";
+} from "@lootlog/protocol/http/api-key-http";
 import { expect, it } from "bun:test";
 import { and, eq } from "drizzle-orm";
 import { Effect, Layer, Schema } from "effect";

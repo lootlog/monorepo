@@ -1,6 +1,6 @@
 import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
 import type { Job } from "bullmq";
-import { Context, Effect, Layer, type Redacted } from "effect";
+import { Context, Effect, FiberSet, Layer, type Redacted } from "effect";
 import type { EventHeroKillJobData } from "#src/events/kills/check-event-hero-kill-params";
 import { EVENT_HERO_KILL_JOB_NAME } from "#src/events/kills/event-hero-kill-job";
 import { EVENT_HERO_KILL_QUEUE } from "#src/events/kills/event-hero-kill-queue.constant";
@@ -48,7 +48,10 @@ export const acquireEventHeroKillWorker = (
   redisUrl: Redacted.Redacted<string>,
   processor: {
     readonly process: (job: Job<EventHeroKillJobData>) => Promise<void>;
-    readonly onFailed: (job: Job<EventHeroKillJobData>, error: Error) => void;
+    readonly onFailed: (
+      job: Job<EventHeroKillJobData>,
+      error: Error,
+    ) => Effect.Effect<void>;
   },
 ) =>
   acquireBullWorker<EventHeroKillJobData, void>(
@@ -57,10 +60,12 @@ export const acquireEventHeroKillWorker = (
     (job) => processor.process(job),
   ).pipe(
     Effect.tap((worker) =>
-      Effect.sync(() =>
+      Effect.gen(function* () {
+        const run = yield* FiberSet.makeRuntime<never, void, never>();
+
         worker.on("failed", (job, error) => {
-          if (job) processor.onFailed(job, error);
-        }),
-      ),
+          if (job) run(processor.onFailed(job, error));
+        });
+      }),
     ),
   );

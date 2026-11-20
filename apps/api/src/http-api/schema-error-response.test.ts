@@ -1,7 +1,7 @@
 import {
   SchemaErrorResponse,
   SchemaErrorResponseLive,
-} from "./schema-error-response.js";
+} from "@lootlog/protocol/http/schema-error-response";
 import { afterAll, expect, it } from "bun:test";
 import { BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer } from "effect";

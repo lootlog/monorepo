@@ -21,7 +21,7 @@ import {
   InvalidRequestError,
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { ErrorKey } from "./error-key.js";
 import { TimerHistoryAction, type TimerHistoryEntry } from "./timers.types.js";
 import type { TimersGuildAccess } from "./timers-data.js";

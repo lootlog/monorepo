@@ -1,8 +1,7 @@
 import { buildLootVisibilityCacheScope } from "#src/loots/loot-visibility-cache";
 import { roundEventDisplayValue } from "#src/events/round-event-display-value";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import { Logger } from "#src/shared/application-logger";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import type { Permission } from "@lootlog/schema/permissions";
 import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 import type {
@@ -12,7 +11,7 @@ import type {
 import type { LootNpcNameSummary } from "#src/loots/query/loot-query.operations";
 import type { LootsOperations } from "#src/loots/loots.operations";
 import { Clock, Effect } from "effect";
-import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
+import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { EventWrappedResponse } from "#src/contracts/events/schemas";
 import { clipToWindowSeconds } from "#src/events/monitoring/tracking-window";
 import {
@@ -289,7 +288,7 @@ export const makeEventWrapped = (
   redis: Pick<RedisService, "getJson" | "setJson">,
   lootsService: Pick<LootsOperations, "summarizeLootsByNpcName">,
 ) => {
-  const logger = new Logger("EventWrapped");
+  const logContext = Effect.annotateLogs({ context: "EventWrapped" });
 
   function getWrapped(
     guild: Guild,
@@ -306,32 +305,28 @@ export const makeEventWrapped = (
     const load = getWrappedUncached(guild, eventId, permissions, roles);
 
     return Effect.gen(function* () {
-      const cached = yield* Effect.tryPromise({
-        try: () => redis.getJson(cacheKey, makeJsonCodec(EventWrappedResponse)),
-        catch: (error) => error,
-      }).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() => {
-            logger.warn("Event wrapped cache unavailable", error);
-
-            return null;
-          }),
-        ),
-      );
+      const cached = yield* redis
+        .getJson(cacheKey, makeJsonCodec(EventWrappedResponse))
+        .pipe(
+          Effect.catch((error) =>
+            Effect.logWarning("Event wrapped cache unavailable", error).pipe(
+              logContext,
+              Effect.as(null),
+            ),
+          ),
+        );
 
       if (cached !== null) return cached;
       const response = yield* load;
-      yield* Effect.tryPromise({
-        try: () =>
-          redis.setJson(cacheKey, response, EVENT_WRAPPED_CACHE_TTL_SECONDS),
-        catch: (error) => error,
-      }).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() =>
-            logger.warn("Event wrapped cache unavailable", error),
+      yield* redis
+        .setJson(cacheKey, response, EVENT_WRAPPED_CACHE_TTL_SECONDS)
+        .pipe(
+          Effect.catch((error) =>
+            Effect.logWarning("Event wrapped cache unavailable", error).pipe(
+              logContext,
+            ),
           ),
-        ),
-      );
+        );
 
       return response;
     }).pipe(Effect.withSpan("EventsCatalogController_showEventWrapped"));
@@ -686,9 +681,9 @@ export const makeEventWrapped = (
       };
 
       existing.totalLoots += npc.encounters;
-      existing.rarityTotals.unique += npc.unique;
-      existing.rarityTotals.heroic += npc.heroic;
-      existing.rarityTotals.legendary += npc.legendary;
+      existing.rarityTotals.unique += npc.unique ?? 0;
+      existing.rarityTotals.heroic += npc.heroic ?? 0;
+      existing.rarityTotals.legendary += npc.legendary ?? 0;
       heroLoots.set(hero.id, existing);
     }
 

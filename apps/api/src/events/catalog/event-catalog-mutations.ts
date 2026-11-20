@@ -6,7 +6,7 @@ import {
 } from "#src/events/event-scope-query";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { makeEventMapRead } from "./event-map-read.js";
-import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import {
   ApiDatabase,
@@ -26,8 +26,7 @@ import {
   InvalidRequestError,
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+} from "@lootlog/protocol/http/errors";
 import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import type {
   AssignEventMapLocationRequest,
@@ -93,14 +92,12 @@ const heroNameTakenError = () =>
 export const makeEventCatalogMutations = (
   database: typeof ApiDatabase.Service,
   redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
-  logger: Pick<Logger, "warn">,
 ) => {
   const query = adapterOperation("events.catalog.drizzle");
 
   const invalidate = (guildId: string, eventId: string) =>
     invalidateEventCache(
       redis,
-      logger,
       guildId,
       eventId,
       "Failed to invalidate event read cache",
@@ -460,7 +457,11 @@ export const makeEventCatalogMutations = (
 
         yield* invalidate(guild.id, eventId);
 
-        return rows[0] ? { ...rows[0], assignedMembers: [] } : null;
+        const [map] = rows;
+
+        if (!map) return yield* Effect.die("Event map was not returned");
+
+        return { ...map, assignedMembers: [] };
       }).pipe(Effect.withSpan("EventsAssignmentController_addMap")),
 
     deleteMap: (

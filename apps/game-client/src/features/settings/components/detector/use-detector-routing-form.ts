@@ -60,6 +60,7 @@ const areRoutingRulesEqual = (
       const comparedRule = right[index];
 
       return (
+        comparedRule !== undefined &&
         rule.id === comparedRule.id &&
         normalizeRoutingRuleText(rule.name) ===
           normalizeRoutingRuleText(comparedRule.name) &&

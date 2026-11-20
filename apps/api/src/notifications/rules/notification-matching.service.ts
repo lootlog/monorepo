@@ -123,10 +123,10 @@ export const notificationMatchingPolicy = {
     filtersValue: JsonValue,
     guildIds: ReadonlyArray<string>,
   ) => {
-    const filters = parseNotificationFilters(filtersValue);
+    const { guildIds: ruleGuildIds } = parseNotificationFilters(filtersValue);
 
-    return filters.guildIds?.length
-      ? guildIds.filter((guildId) => filters.guildIds.includes(guildId))
+    return ruleGuildIds?.length
+      ? guildIds.filter((guildId) => ruleGuildIds.includes(guildId))
       : [];
   },
   canMemberViewLoot: (

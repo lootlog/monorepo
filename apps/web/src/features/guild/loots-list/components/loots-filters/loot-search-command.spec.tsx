@@ -150,7 +150,7 @@ describe("LootSearchCommand search failures", () => {
 
       const fetch = vi.fn(async () =>
         Response.json(
-          { _tag: "SearchUnavailable", message: "Search unavailable" },
+          { code: "SERVICE_UNAVAILABLE", message: "Service unavailable" },
           { status: 503 },
         ),
       );

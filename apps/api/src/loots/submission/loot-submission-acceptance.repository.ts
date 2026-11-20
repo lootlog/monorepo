@@ -12,7 +12,7 @@ import {
   selectAccessibleGuilds,
   selectActiveGuildMembers,
 } from "#src/members/member-access-query";
-import { DependencyUnavailableError } from "#src/shared/http/http-errors";
+import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 import { and, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { zip } from "es-toolkit";
@@ -71,8 +71,8 @@ export type NewLootPersistence = {
     name: string;
     icon: string;
     lvl: number;
-    rarity: ItemRarity;
-    itemType: string;
+    rarity: ItemRarity | undefined;
+    itemType: string | undefined;
     statRaw: string;
     statsSnapshot: Record<string, string>;
     hid: string;

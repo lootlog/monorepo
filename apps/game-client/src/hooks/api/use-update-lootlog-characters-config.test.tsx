@@ -46,8 +46,8 @@ it("waits for canonical identity before submitting character config", async () =
     }),
   );
   expect(fixture.requests).toHaveLength(1);
-  expect(new URL(fixture.requests[0].url).pathname).toContain("202");
-  expect(await fixture.requests[0].json()).toEqual({
+  expect(new URL(fixture.requests[0]!.url).pathname).toContain("202");
+  expect(await fixture.requests[0]!.json()).toEqual({
     catchingGuildIds: ["12"],
     characterId: "101",
   });

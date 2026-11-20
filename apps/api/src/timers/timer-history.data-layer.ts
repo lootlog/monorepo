@@ -33,7 +33,7 @@ import {
 } from "#src/database/drizzle/timer.schema";
 import { ErrorKey } from "./error-key.js";
 import { isLegacyNpcIdIdentifier } from "./timer-key.js";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import type { TimersGuildAccess } from "./timers-data.js";
 import { toTimersDataFailure } from "./timer-errors.js";
 import {

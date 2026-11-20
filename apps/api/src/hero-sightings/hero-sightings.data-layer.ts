@@ -1,5 +1,6 @@
 import { selectCharacterCatchingGuildIds } from "#src/members/character-catching-guilds";
 import { and, desc, eq, inArray, isNull, lte, or } from "drizzle-orm";
+import type { MessagingError } from "@lootlog/messaging";
 import { Clock, Effect, Result } from "effect";
 import { partition } from "es-toolkit";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
@@ -43,7 +44,7 @@ import {
   InvalidRequestError,
   PermissionDeniedError,
   ResourceConflictError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type {
   AddHeroSightingRequest,
   ClaimHeroSightingRequest,
@@ -73,7 +74,7 @@ const BOARD_CLOSED_RETENTION_MS = 24 * 60 * 60 * 1000;
 export interface HeroSightingPorts {
   readonly publish: (
     sighting: HeroSightingResponse,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, MessagingError>;
   readonly withLock: <A, E>(
     key: string,
     effect: Effect.Effect<A, E>,

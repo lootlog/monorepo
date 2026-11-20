@@ -55,11 +55,14 @@ const getStableMembersLookup = (
   guildIds.forEach((guildId, index) => {
     const memberData = memberDataByGuildId[index];
     nextMemberDataByGuildId.set(guildId, memberData);
+
+    const cachedMembers =
+      cachedLookup?.memberDataByGuildId.get(guildId) === memberData
+        ? cachedLookup?.membersByGuildId[guildId]
+        : undefined;
+
     nextMembersByGuildId[guildId] =
-      cachedLookup &&
-      cachedLookup.memberDataByGuildId.get(guildId) === memberData
-        ? cachedLookup.membersByGuildId[guildId]
-        : mapGuildMembersByUserId(memberData);
+      cachedMembers ?? mapGuildMembersByUserId(memberData);
   });
 
   const nextCache = {

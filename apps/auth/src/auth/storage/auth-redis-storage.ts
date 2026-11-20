@@ -16,12 +16,18 @@ export const createAuthRedisConnection = (url: Redacted.Redacted<string>) =>
     maxRetries: 1,
   });
 
+export interface ApiKeyRateLimitDecision {
+  readonly allowed: boolean;
+  readonly retryAfterMs: number;
+}
+
 export class AuthRedisStorage extends Context.Service<
   AuthRedisStorage,
   {
+    /** Counts a request in the key's window; a rejected one knows how long the window still runs. */
     readonly consumeApiKeyRateLimit: (
       keyId: string,
-    ) => Effect.Effect<boolean, Redis.RedisError>;
+    ) => Effect.Effect<ApiKeyRateLimitDecision, Redis.RedisError>;
     readonly secondaryStorage: ReturnType<
       typeof createFailOpenSecondaryStorage
     >;
@@ -86,8 +92,13 @@ export class AuthRedisStorage extends Context.Service<
         secondaryStorage,
         consumeApiKeyRateLimit: (keyId) =>
           redis
-            .eval(incrementScript)(`auth:api-key-rate-limit:${keyId}`, "60")
-            .pipe(Effect.map((count) => count <= 120)),
+            .eval(rateLimitScript)(`auth:api-key-rate-limit:${keyId}`, "60")
+            .pipe(
+              Effect.map(([count, ttlMs]) => ({
+                allowed: count <= 120,
+                retryAfterMs: Math.max(ttlMs, 0),
+              })),
+            ),
       });
     }),
   );
@@ -103,3 +114,14 @@ const incrementScript = Redis.script((key: string, ttl: string) => [key, ttl], {
   lua: INCREMENT_SCRIPT,
   numberOfKeys: 1,
 }).withReturnType<number>();
+
+const RATE_LIMIT_SCRIPT = `
+local value = redis.call("INCR", KEYS[1])
+if value == 1 then redis.call("EXPIRE", KEYS[1], ARGV[1]) end
+return { value, redis.call("PTTL", KEYS[1]) }
+`;
+
+const rateLimitScript = Redis.script((key: string, ttl: string) => [key, ttl], {
+  lua: RATE_LIMIT_SCRIPT,
+  numberOfKeys: 1,
+}).withReturnType<readonly [number, number]>();

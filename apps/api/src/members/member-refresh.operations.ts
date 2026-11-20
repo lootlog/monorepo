@@ -17,7 +17,7 @@ export interface MemberRefreshPorts {
   readonly recordMetric: (options: {
     readonly outcome: "rate_limited";
     readonly reason: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
   readonly syncMember: (options: {
     readonly discordId: string;
     readonly guildId: string;

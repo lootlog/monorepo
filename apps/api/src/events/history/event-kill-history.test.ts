@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { and, eq } from "drizzle-orm";
 import { Effect } from "effect";
+import { zip } from "es-toolkit";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -31,8 +32,7 @@ import { makeEventEmitter } from "#src/events/event-emitter";
 import { makeEventPointsStore } from "#src/events/kills/event-points.repository";
 import { makeEventPoints } from "#src/events/kills/event-points.service";
 import { makeEventPointEdits } from "#src/events/kills/event-point-edits";
-import type { RedisGetOrSetJsonBestEffortOptions } from "#src/redis/redis.service";
-import { applicationLogger } from "#src/shared/application-logger";
+import type { RedisGetOrSetJsonOptions } from "#src/redis/redis.service";
 import { makeEventKillHistory } from "./event-kill-history.js";
 
 const time = (value: string) => new Date(`2026-09-27T${value}:00.000Z`);
@@ -44,9 +44,13 @@ const uuid = (value: string) =>
 // boundaries at limit 2 fall on those.
 const legacyId = (value: string) => `cm${value.padStart(23, "0")}`;
 
-const orderedIds = ["f", "a", "d", "b", "c"].map((value, index) =>
-  index === 0 || index === 4 ? uuid(value) : legacyId(value),
-);
+const orderedIds = [
+  uuid("f"),
+  legacyId("a"),
+  legacyId("d"),
+  legacyId("b"),
+  uuid("c"),
+] as const;
 
 const hiddenId = uuid("ee");
 
@@ -87,19 +91,16 @@ const fixture = async () => {
   >();
 
   const redis = {
-    invalidateScopes: async (...scopes: string[]) => {
-      for (const [key, entry] of entries) {
-        if (entry.scopes.some((scope) => scopes.includes(scope))) {
-          entries.delete(key);
+    invalidateScopes: (...scopes: string[]) =>
+      Effect.sync(() => {
+        for (const [key, entry] of entries) {
+          if (entry.scopes.some((scope) => scopes.includes(scope))) {
+            entries.delete(key);
+          }
         }
-      }
-    },
-    deleteByPattern: () => Promise.resolve(0),
-    getOrSetJsonEffect<T, E>(
-      options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
-        factory: Effect.Effect<T, E>;
-      },
-    ) {
+      }),
+    deleteByPattern: () => Effect.succeed(0),
+    getOrSetJson<T, E>(options: RedisGetOrSetJsonOptions<T, E>) {
       return Effect.gen(function* () {
         const cached = entries.get(options.key);
 
@@ -180,15 +181,15 @@ const fixture = async () => {
           { id: "foreign", eventId: "event-3", npcName: "Foreign", npcLvl: 50 },
         ]);
         yield* database.insert(eventHeroKillTable).values([
-          ...orderedIds.map((id, index) => ({
-            id,
-            heroNpcId: "low",
-            killedAt: time(
-              ["12:00", "11:00", "10:00", "10:00", "09:00"][index],
-            ),
-            minSpawnTimeAtKill: time("08:00"),
-            maxSpawnTimeAtKill: time("13:00"),
-          })),
+          ...zip(orderedIds, ["12:00", "11:00", "10:00", "10:00", "09:00"]).map(
+            ([id, killedAt]) => ({
+              id,
+              heroNpcId: "low",
+              killedAt: time(killedAt),
+              minSpawnTimeAtKill: time("08:00"),
+              maxSpawnTimeAtKill: time("13:00"),
+            }),
+          ),
           ...[
             { id: hiddenId, heroNpcId: "high" },
             { id: otherEventId, heroNpcId: "other" },
@@ -367,17 +368,12 @@ describe("kill history database reads", () => {
         payload: { guildId: string; eventId: string };
       }[] = [];
 
-      const edits = makeEventPointEdits(
-        f.database,
-        f.redis,
-        {
-          publish: (routingKey, payload) =>
-            Effect.sync(() => {
-              published.push({ routingKey, payload });
-            }),
-        },
-        applicationLogger,
-      );
+      const edits = makeEventPointEdits(f.database, f.redis, {
+        publish: (routingKey, payload) =>
+          Effect.sync(() => {
+            published.push({ routingKey, payload });
+          }),
+      });
 
       const updated = await f.run(
         edits.updateKillPoint(
@@ -496,7 +492,9 @@ describe("kill history database reads", () => {
         }),
       );
 
-      expect(continuation.items.map((kill) => kill.id)).toEqual(orderedIds);
+      expect(continuation.items.map((kill) => kill.id)).toEqual([
+        ...orderedIds,
+      ]);
       const none = await f.run(f.history.list(context(20), {}));
       expect(none).toMatchObject({ items: [], nextCursor: null });
 
@@ -533,7 +531,9 @@ describe("kill history database reads", () => {
           maxSpawnTimeAtKill: time("15:00"),
         }),
       );
-      await f.readCache.invalidateEvent("guild-1", "event-1");
+      await Effect.runPromise(
+        f.readCache.invalidateEvent("guild-1", "event-1"),
+      );
 
       const next = await f.run(
         f.history.list(context(), {

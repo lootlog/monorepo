@@ -3,7 +3,7 @@ import type { GameCharacterOffline } from "@lootlog/protocol/rabbit/events";
 import { Effect } from "effect";
 
 import { getReadyRoomActiveRecipientDiscordIds } from "./ready-room-projection.js";
-import { ResourceConflictError } from "#src/shared/http/http-errors";
+import { ResourceConflictError } from "@lootlog/protocol/http/errors";
 import { MAX_CAS_ATTEMPTS } from "./ready-room-cas.js";
 import type { ReadyRoomContext } from "./ready-room.data-layer.js";
 import { cancelAggregate } from "./ready-room-lifecycle.js";

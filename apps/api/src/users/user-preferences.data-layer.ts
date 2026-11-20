@@ -5,6 +5,7 @@ import {
   normalizeMutedPlayers,
 } from "@lootlog/domain/account-preferences";
 import { and, eq } from "drizzle-orm";
+import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core/errors";
 import { Clock, Effect, type Schema, Predicate } from "effect";
 import {
   mergeChatAppearanceSettings,
@@ -17,7 +18,7 @@ import type {
 } from "@lootlog/schema/user-preferences";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
-import { PermissionDeniedError } from "#src/shared/http/http-errors";
+import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   userSettingsTable,
@@ -177,7 +178,13 @@ export const makeUserPreferencesData = (
 
     if (payload.theme !== undefined) settingsUpdate.theme = payload.theme;
 
-    const writes: Array<Effect.Effect<unknown, unknown>> = [];
+    const writes: Array<
+      Effect.Effect<
+        void,
+        | EffectDrizzleQueryError
+        | Effect.Error<ReturnType<SettingsDocuments["patchPreferences"]>>
+      >
+    > = [];
 
     if (Object.keys(settingsUpdate).length > 0) {
       writes.push(

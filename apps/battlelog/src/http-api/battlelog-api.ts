@@ -1,4 +1,5 @@
-import { ApiKeyEndpointPolicy } from "@lootlog/schema/api-key-http";
+import { ApiKeyEndpointPolicy } from "@lootlog/protocol/http/api-key-http";
+import { SchemaErrorResponse } from "@lootlog/protocol/http/schema-error-response";
 /** Authoritative composition root for the battlelog HTTP contract. */
 import { healthGroup } from "@lootlog/instrumentation/service";
 import { HttpApi, OpenApi } from "effect/http-api";
@@ -19,4 +20,5 @@ export class BattlelogApi extends HttpApi.make("BattlelogApi")
     PublicBattlesGroup,
     InternalGroup,
   )
-  .middleware(ApiKeyEndpointPolicy) {}
+  .middleware(ApiKeyEndpointPolicy)
+  .middleware(SchemaErrorResponse) {}

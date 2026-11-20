@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { ApplicationError } from "#src/shared/http/http-errors";
+import { ApplicationError } from "@lootlog/protocol/http/errors";
 
 export class HeroSightingsNotFound extends TaggedErrorClass<HeroSightingsNotFound>()(
   "HeroSightingsNotFound",

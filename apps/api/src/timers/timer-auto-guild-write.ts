@@ -1,7 +1,8 @@
-import type { EventPublisher } from "@lootlog/messaging";
+import type { EventPublisher, MessagingError } from "@lootlog/messaging";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { publishTimerEvents } from "./timer-update-publication.js";
 import { Effect, Predicate, Schema } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { loadHeroSightings } from "#src/hero-sightings/hero-sighting-query";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
@@ -11,7 +12,7 @@ import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   InvalidRequestError,
   ResourceConflictError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { ErrorKey } from "#src/timers/error-key";
 import { buildTimerKey } from "#src/timers/timer-key";
 import { getTimerNpcId } from "@lootlog/domain/npc-identity";
@@ -33,16 +34,16 @@ import {
 
 export interface AutoTimerGuildWritePorts extends AutoTimerPersistencePorts {
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
-  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
+  readonly invalidateList: (guildId: string) => Effect.Effect<void, RedisError>;
   readonly publishHeroSighting: (
     sighting: HeroSightingResponse,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, MessagingError>;
   readonly publish: EventPublisher["publish"];
   readonly set: (
     key: string,
     value: string,
     ttlSeconds: number,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
   /** Wakes the dispatcher for checks committed with a timer. */
   readonly signalEventHeroChecks: Effect.Effect<void>;
   readonly locks: Pick<RedisLockManager, "singleFlight">;
@@ -121,13 +122,14 @@ export const writeGuildTimer = (
 
         if (
           Predicate.isTagged(result, "Created") &&
-          result.migratedSyntheticNpcId !== null
+          result.migratedSyntheticNpcId !== null &&
+          result.migratedSyntheticTimerKey !== null
         ) {
           const deletion = {
             guildId,
             world: payload.world,
             npcId: result.migratedSyntheticNpcId,
-            timerKey: result.migratedSyntheticTimerKey ?? undefined,
+            timerKey: result.migratedSyntheticTimerKey,
             routing: {
               tier: getNpcRoutingTier(makeNpc(payload)),
               npcLevel: payload.npc.lvl,

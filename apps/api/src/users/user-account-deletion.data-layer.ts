@@ -1,5 +1,8 @@
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
+import type { MessagingError } from "@lootlog/messaging";
 import { Clock, Effect } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
+import type { RedisService } from "#src/redis/redis.service";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberKillTotalTable,
@@ -48,7 +51,7 @@ import {
   getUserLootlogConfigCacheScope,
   getUserGuildPermissionsCacheScope,
 } from "#src/shared/cache";
-import { DependencyUnavailableError } from "#src/shared/http/http-errors";
+import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 import {
   type AuthenticatedIdentity,
   AccountOrganizationOperationError,
@@ -62,19 +65,17 @@ type RemovedMember = {
 
 export interface UserAccountDeletionPorts {
   readonly cleanupBattlelog: (userId: string) => Effect.Effect<void, unknown>;
-  readonly deleteCacheKey: (key: string) => Effect.Effect<unknown, unknown>;
-  readonly invalidateCacheScopes: (
-    ...scopes: string[]
-  ) => Effect.Effect<void, unknown>;
+  readonly deleteCacheKey: (key: string) => Effect.Effect<void, RedisError>;
+  readonly invalidateCacheScopes: RedisService["invalidateScopes"];
   readonly deleteCachePattern: (
     pattern: string,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
   readonly publishMemberRemoved: (payload: {
     readonly id: string;
     readonly discordId: string;
     readonly userId: string;
     readonly guildId: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, MessagingError>;
 }
 
 const deletePersistedAccount = (
@@ -246,7 +247,7 @@ const invalidateRemovedMember = (
   ports: UserAccountDeletionPorts,
   member: RemovedMember,
 ) => {
-  const effects: Array<Effect.Effect<unknown, unknown>> = [
+  const effects: Array<Effect.Effect<void, RedisError>> = [
     ports.invalidateCacheScopes(
       getUserLootlogConfigCacheScope(member.discordId),
       getUserGuildPermissionsCacheScope(member.discordId),

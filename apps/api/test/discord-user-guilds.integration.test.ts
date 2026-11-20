@@ -6,13 +6,12 @@ import { Redis } from "effect/persistence";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { getCompleteUserGuildsCacheKey } from "#src/discord/discord-cache.util";
-import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
-import { DiscordRestClientFactory } from "#src/discord/discord-rest-client.factory";
-import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
-import { DiscordUserGuildsClient } from "#src/discord/discord-user-guilds.client";
-import { RedisService } from "#src/redis/redis.service";
-import { RedlockService } from "#src/redis/redlock";
-import { applicationLogger } from "#src/shared/application-logger";
+import { makeDiscordRateLimiter } from "#src/discord/discord-rate-limiter.service";
+import { makeDiscordRestClients } from "#src/discord/discord-rest-client.factory";
+import { makeDiscordSyncDiagnostics } from "#src/discord/discord-sync-diagnostics.service";
+import { makeDiscordUserGuildsClient } from "#src/discord/discord-user-guilds.client";
+import { makeRedisService, type RedisService } from "#src/redis/redis.service";
+import { makeRedisLockManager } from "#src/redis/redlock";
 
 const decodeCachedList = Schema.decodeUnknownSync(
   Schema.fromJsonString(
@@ -53,11 +52,7 @@ describe("Discord user guild list cache against Dragonfly", () => {
         url: `redis://${username}:${password}@${process.env.REDIS_HOST ?? "127.0.0.1"}:${Number(process.env.REDIS_PORT ?? 6379)}`,
       }),
     );
-    redis = new RedisService(
-      await redisRuntime.runPromise(Redis.Redis),
-      {},
-      (effect) => redisRuntime.runPromise(effect),
-    );
+    redis = makeRedisService(await redisRuntime.runPromise(Redis.Redis));
   });
 
   afterAll(() => redisRuntime.dispose());
@@ -67,7 +62,7 @@ describe("Discord user guild list cache against Dragonfly", () => {
     const identity = { userId: crypto.randomUUID(), discordId: "discord-1" };
     const cacheKey = getCompleteUserGuildsCacheKey(identity);
 
-    const factory = new DiscordRestClientFactory({
+    const factory = makeDiscordRestClients({
       getIdpToken: () =>
         Effect.succeed({
           accessToken: "token",
@@ -77,37 +72,36 @@ describe("Discord user guild list cache against Dragonfly", () => {
       rejectIdpToken: () => Effect.void,
     });
 
-    const rest = await factory.withRestClient(
-      identity.userId,
-      identity.discordId,
-      async (client) => client,
+    const rest = await Effect.runPromise(
+      factory.withRestClient(identity.userId, identity.discordId, (client) =>
+        Effect.succeed(client),
+      ),
     );
 
     spyOn(rest, "queueRequest").mockImplementation(discord);
 
-    const client = new DiscordUserGuildsClient(
-      applicationLogger,
+    const client = makeDiscordUserGuildsClient({
       redis,
-      new DiscordRateLimiterService(applicationLogger, redis),
-      new RedlockService(redis),
-      new DiscordSyncDiagnosticsService(applicationLogger, redis),
-      factory,
-      RuntimeEnvironment.PROD,
-    );
+      rateLimiter: makeDiscordRateLimiter(redis),
+      locks: makeRedisLockManager(redis),
+      diagnostics: makeDiscordSyncDiagnostics(redis),
+      restClients: factory,
+      environment: RuntimeEnvironment.PROD,
+    });
 
-    client.initialize();
-
-    await redis.set(
-      cacheKey,
-      JSON.stringify({
-        guilds: [{ id: "left-guild" }],
-        fetchedAt: Date.now() - 20 * 60_000,
-      }),
-      24 * 60 * 60,
+    await Effect.runPromise(
+      redis.set(
+        cacheKey,
+        JSON.stringify({
+          guilds: [{ id: "left-guild" }],
+          fetchedAt: Date.now() - 20 * 60_000,
+        }),
+        24 * 60 * 60,
+      ),
     );
 
     const cachedIds = async () => {
-      const cached = await redis.get(cacheKey);
+      const cached = await Effect.runPromise(redis.get(cacheKey));
 
       return cached === null
         ? null
@@ -130,9 +124,8 @@ describe("Discord user guild list cache against Dragonfly", () => {
     const discord = Promise.withResolvers<ResponseLike>();
     const { client, identity, waitFor } = await setUp(() => discord.promise);
 
-    const result = await client.getCachedCompleteUserGuilds(
-      identity.userId,
-      identity.discordId,
+    const result = await Effect.runPromise(
+      client.getCachedCompleteUserGuilds(identity.userId, identity.discordId),
     );
 
     // Discord has not answered yet. A fresh flag here would let the caller
@@ -159,9 +152,8 @@ describe("Discord user guild list cache against Dragonfly", () => {
       ),
     );
 
-    await client.getCachedCompleteUserGuilds(
-      identity.userId,
-      identity.discordId,
+    await Effect.runPromise(
+      client.getCachedCompleteUserGuilds(identity.userId, identity.discordId),
     );
 
     await waitFor(null);

@@ -5,6 +5,7 @@ import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { apiKeyCacheSuffix } from "#src/runtime/auth/organization-scope";
 import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
@@ -44,20 +45,20 @@ export interface AccessibleGuildPorts {
     key: string,
     value: GuildSummary[],
     ttlSeconds: number,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
   readonly setIfAbsent: (
     key: string,
     value: string,
     ttlSeconds: number,
   ) => Effect.Effect<boolean, unknown>;
-  readonly deleteCached: (key: string) => Effect.Effect<unknown, unknown>;
+  readonly deleteCached: (key: string) => Effect.Effect<void, RedisError>;
   readonly queueRefresh: (options: {
     readonly discordId: string;
     readonly guildId: string;
     readonly userId: string;
     readonly priority: number;
     readonly reason: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
 }
 
 export const makeAccessibleGuilds = (
@@ -181,8 +182,6 @@ export const makeAccessibleGuilds = (
             }).allows(Permission.LOOTLOG_ACCESS)),
         );
 
-        const lastSync = member?.lastDiscordSyncAt ?? member?.updatedAt;
-
         return {
           id: guild.id,
           name: guild.name,
@@ -192,7 +191,10 @@ export const makeAccessibleGuilds = (
           publicStatsCardEnabled: guild.publicStatsCardEnabled,
           hasLootlogAccess: hasAccess,
           isAccessDataStale:
-            !owner && (!member || lastSync.getTime() < staleThreshold),
+            !owner &&
+            (!member ||
+              (member.lastDiscordSyncAt ?? member.updatedAt).getTime() <
+                staleThreshold),
         };
       })
       .filter(({ hasLootlogAccess }) => hasLootlogAccess);

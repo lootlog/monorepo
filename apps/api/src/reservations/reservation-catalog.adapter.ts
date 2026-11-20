@@ -1,11 +1,12 @@
 import { Effect, Schema } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import {
   parseReservationCatalogPayload,
   type ReservationSpot,
 } from "./reservation-catalog.js";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 
 const CACHE_KEY = "reservations:catalog:v2";
@@ -16,12 +17,12 @@ export interface ReservationCatalogCache {
   readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
     key: string,
     schema: S,
-  ) => Effect.Effect<S["Type"] | null, unknown>;
+  ) => Effect.Effect<S["Type"] | null, RedisError>;
   readonly setJson: <Value>(
     key: string,
     value: Value,
     ttl: number,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
 }
 
 export interface ReservationCatalogAdapter {

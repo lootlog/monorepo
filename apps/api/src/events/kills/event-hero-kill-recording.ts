@@ -1,11 +1,13 @@
-import type { Logger } from "#src/shared/application-logger";
 import { Clock, Effect } from "effect";
 import type { Queue } from "bullmq";
 import type {
   eventHeroNpcTable,
   eventTable,
 } from "#src/database/drizzle/event.schema";
-import { runPromiseAdapter } from "#src/events/event-adapter";
+import {
+  runPromiseAdapter,
+  withEventAdapterSpan,
+} from "#src/events/event-adapter";
 import type { EventEmitter } from "#src/events/event-emitter";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { EventPoints } from "#src/events/kills/event-points.service";
@@ -36,13 +38,17 @@ export const makeEventHeroKillRecording = (
   trackingService: EventPresenceTracking,
   summaryService: EventSummary,
   respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
-  logger: Logger,
 ) => {
+  const logContext = Effect.annotateLogs({ context: "EventKills" });
+
   function recordHeroKill(
     guildId: string,
     eventHero: EventHeroNpc,
     event: Event,
-    timerData: KillTimerData,
+    // A manual close records the kill of a timer that may have no creator.
+    timerData: Omit<KillTimerData, "memberId"> & {
+      readonly memberId: number | null;
+    },
     isManualClose = false,
   ) {
     return Effect.gen(function* () {
@@ -99,13 +105,13 @@ export const makeEventHeroKillRecording = (
       );
 
       if (kill === null) {
-        logger.debug({
+        yield* Effect.logDebug({
           message:
             "Skipping duplicate event hero kill - window already recorded",
           guildId,
           heroId: eventHero.id,
           eventId: event.id,
-        });
+        }).pipe(logContext);
 
         return;
       }
@@ -128,11 +134,11 @@ export const makeEventHeroKillRecording = (
             trackingService.openUnassignedGap(map.id, eventHero.id, killedAt),
           { concurrency: "unbounded", discard: true },
         );
-        logger.debug({
+        yield* Effect.logDebug({
           message: "Opened UNASSIGNED gaps for new respawn window",
           heroId: eventHero.id,
           mapsCount: heroMaps.length,
-        });
+        }).pipe(logContext);
       }
 
       yield* summaryService.createWindowSummary(
@@ -147,9 +153,9 @@ export const makeEventHeroKillRecording = (
 
       yield* cancelScheduledAutoClose(eventHero.id);
 
-      yield* runPromiseAdapter("redis.eventReadCache.invalidate", () =>
-        eventReadCache.invalidateEvent(guildId, event.id),
-      );
+      yield* eventReadCache
+        .invalidateEvent(guildId, event.id)
+        .pipe(withEventAdapterSpan("redis.eventReadCache.invalidate"));
 
       const scope = {
         guildId,
@@ -210,13 +216,11 @@ export const makeEventHeroKillRecording = (
         (job) =>
           runPromiseAdapter("bull.respawn.remove", () => job.remove()).pipe(
             Effect.tap(() =>
-              Effect.sync(() =>
-                logger.log({
-                  message: "Cancelled scheduled auto-close job (kill recorded)",
-                  heroId,
-                  jobId: job.id,
-                }),
-              ),
+              Effect.logInfo({
+                message: "Cancelled scheduled auto-close job (kill recorded)",
+                heroId,
+                jobId: job.id,
+              }).pipe(logContext),
             ),
           ),
         { concurrency: "unbounded", discard: true },

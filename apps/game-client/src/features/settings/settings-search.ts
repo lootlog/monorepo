@@ -35,6 +35,10 @@ const tokenize = (value: string): string[] =>
 const editDistance = (left: string, right: string, limit: number): number => {
   if (Math.abs(left.length - right.length) > limit) return limit + 1;
 
+  // An index outside a row reads as unreachable, so the minimums ignore it.
+  const cell = (row: readonly number[], index: number) =>
+    row[index] ?? Number.POSITIVE_INFINITY;
+
   let previousRow = Array.from({ length: right.length + 1 }, (_, i) => i);
   let previousPreviousRow: number[] | undefined;
 
@@ -46,9 +50,9 @@ const editDistance = (left: string, right: string, limit: number): number => {
       const substitution = left[i - 1] === right[j - 1] ? 0 : 1;
 
       let value = Math.min(
-        previousRow[j] + 1,
-        row[j - 1] + 1,
-        previousRow[j - 1] + substitution,
+        cell(previousRow, j) + 1,
+        cell(row, j - 1) + 1,
+        cell(previousRow, j - 1) + substitution,
       );
 
       if (
@@ -58,7 +62,7 @@ const editDistance = (left: string, right: string, limit: number): number => {
         left[i - 1] === right[j - 2] &&
         left[i - 2] === right[j - 1]
       ) {
-        value = Math.min(value, previousPreviousRow[j - 2] + 1);
+        value = Math.min(value, cell(previousPreviousRow, j - 2) + 1);
       }
 
       row.push(value);
@@ -70,7 +74,7 @@ const editDistance = (left: string, right: string, limit: number): number => {
     previousRow = row;
   }
 
-  return previousRow[right.length];
+  return cell(previousRow, right.length);
 };
 
 /** Typo budget grows with the token so short words stay exact. */
@@ -115,8 +119,11 @@ interface SearchableField {
   weight: number;
 }
 
-const getSearchableFields = (item: SettingsSearchItem): SearchableField[] => {
-  const fields: SearchableField[] = [
+/** The label always comes first; scoring reads it for the phrase bonus. */
+type SearchableFields = [SearchableField, ...SearchableField[]];
+
+const getSearchableFields = (item: SettingsSearchItem): SearchableFields => {
+  const fields: SearchableFields = [
     { text: normalizeSearchText(item.label), weight: 1 },
     ...(item.keywords ?? []).map((keyword) => ({
       text: normalizeSearchText(keyword),

@@ -30,8 +30,7 @@ import { getEventWrappedCachePattern } from "#src/shared/cache";
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+} from "@lootlog/protocol/http/errors";
 import type { UpdateEventRequest } from "#src/contracts/events/schemas";
 import type { EventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import {
@@ -175,7 +174,6 @@ export const makeEventUpdate =
     database: typeof ApiDatabase.Service,
     redis: Pick<RedisService, "deleteByPattern" | "invalidateScopes">,
     catalogRead: Pick<EventsCatalogRead, "hydrateMutation">,
-    logger: Pick<Logger, "warn">,
   ) =>
   (
     guild: { id: string },
@@ -419,7 +417,6 @@ export const makeEventUpdate =
       const updated = yield* catalogRead.hydrateMutation(eventId);
       yield* invalidateEventCache(
         redis,
-        logger,
         guild.id,
         eventId,
         "Failed to invalidate event cache",

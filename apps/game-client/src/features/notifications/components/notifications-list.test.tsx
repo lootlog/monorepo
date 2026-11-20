@@ -205,12 +205,17 @@ describe("NotificationsList", () => {
 
     const [first, second, third] = createNotifications(3);
 
-    const view = render(<NotificationsList notifications={[first, second]} />, {
-      wrapper: test.wrapper,
-    });
+    const view = render(
+      <NotificationsList notifications={[first!, second!]} />,
+      {
+        wrapper: test.wrapper,
+      },
+    );
 
     animate.mockClear();
-    view.rerender(<NotificationsList notifications={[third, first, second]} />);
+    view.rerender(
+      <NotificationsList notifications={[third!, first!, second!]} />,
+    );
 
     // The first row moved into the second slot and slides down into it; the
     // second row left the viewport, so it moves without an animation.
@@ -281,7 +286,7 @@ describe("NotificationsList", () => {
     });
 
     fireEvent.click(
-      screen.getAllByRole("button", { name: "Zamknij powiadomienie" })[0],
+      screen.getAllByRole("button", { name: "Zamknij powiadomienie" })[0]!,
     );
 
     expect(

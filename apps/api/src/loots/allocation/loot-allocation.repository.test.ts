@@ -29,7 +29,6 @@ import {
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { makeLootAllocationPersistence } from "./loot-allocation.repository.js";
 import { makeLootAllocationOperations } from "./loot-allocation.operations.js";
-import { applicationLogger } from "#src/shared/application-logger";
 import { createOrganizationLootRecordFixture } from "../../../test/loot-fixtures.js";
 
 test("the submitting Organization's NPC visibility decides the allocation, not other Organizations recording the loot", async () => {
@@ -379,7 +378,6 @@ test("allocation requires a recent actor submission at the atomic update", async
             published.push(event);
           }),
       },
-      logger: applicationLogger,
     });
 
     const update = () =>

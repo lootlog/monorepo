@@ -1,8 +1,13 @@
 import { CATALOG_SERVICE_TOKEN_HEADER } from "@lootlog/protocol/http/catalog-access";
 import { matchesServiceSecret } from "@lootlog/protocol/http/service-auth";
+import {
+  HttpErrorResponse,
+  HttpStatus,
+  httpErrorResponse,
+} from "@lootlog/protocol/http/errors";
 import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
-import { Context, Effect, Layer, Schema } from "effect";
-import { HttpServerRequest, HttpServerResponse } from "effect/http";
+import { Context, Effect, Layer } from "effect";
+import { HttpServerRequest } from "effect/http";
 import { HttpApiMiddleware, HttpApiSchema, OpenApi } from "effect/http-api";
 import { CatalogConfig } from "#src/config/catalog-config";
 
@@ -17,8 +22,8 @@ const PUBLIC_OPERATIONS = new Set(["HealthzController_healthCheck"]);
 export class CatalogAccess extends HttpApiMiddleware.Service<CatalogAccess>()(
   "@lootlog/catalog/CatalogAccess",
   {
-    error: Schema.Struct({ message: Schema.String }).pipe(
-      HttpApiSchema.status(401),
+    error: HttpErrorResponse.pipe(
+      HttpApiSchema.status(HttpStatus.UNAUTHORIZED),
     ),
   },
 ) {
@@ -45,10 +50,10 @@ export class CatalogAccess extends HttpApiMiddleware.Service<CatalogAccess>()(
           }
 
           return Effect.succeed(
-            HttpServerResponse.jsonUnsafe(
-              { message: "Unauthorized" },
-              { status: 401 },
-            ),
+            httpErrorResponse(HttpStatus.UNAUTHORIZED, {
+              code: "AUTHENTICATION_REQUIRED",
+              message: "Unauthorized",
+            }),
           );
         }),
       ),

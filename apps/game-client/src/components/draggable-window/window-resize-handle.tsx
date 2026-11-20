@@ -193,13 +193,14 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     e.preventDefault();
     e.stopPropagation();
 
-    if (e.touches.length > 1) return;
+    const touch = e.touches[0];
+
+    if (!touch || e.touches.length > 1) return;
     cancelWindowResizeSession();
 
     onResizeStart();
     const sessionId = createWindowResizeSession();
 
-    const touch = e.touches[0];
     activeTouchIdRef.current = touch.identifier;
     const startX = touch.pageX - window.scrollX;
     const startY = touch.pageY - window.scrollY;

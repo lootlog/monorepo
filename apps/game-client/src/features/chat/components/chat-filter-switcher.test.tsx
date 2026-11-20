@@ -24,7 +24,7 @@ it("orders the filters, preserves selection on a repeated click, and supports ke
     "Rozmowy",
     "Zdarzenia",
   ]);
-  await user.click(buttons[0]);
+  await user.click(buttons[0]!);
   expect(onValueChange).not.toHaveBeenCalled();
   await user.keyboard("{ArrowRight}{Enter}");
   expect(onValueChange).toHaveBeenLastCalledWith("normal");

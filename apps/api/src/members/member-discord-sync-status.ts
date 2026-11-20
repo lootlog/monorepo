@@ -3,7 +3,7 @@ import {
   ApplicationError,
   applicationErrorStatus,
   DependencyUnavailableError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 
 export const MEMBER_DISCORD_SYNC_STATUS = {
   SUCCESS: "SUCCESS",

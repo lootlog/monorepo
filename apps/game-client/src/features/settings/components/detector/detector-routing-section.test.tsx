@@ -97,7 +97,7 @@ describe("DetectorRoutingSection", () => {
 
     render();
 
-    const maxLevel = screen.getAllByLabelText("Poziom do")[0];
+    const maxLevel = screen.getAllByLabelText("Poziom do")[0]!;
     await user.clear(maxLevel);
     await user.type(maxLevel, "9999");
     expect(harness.request).not.toHaveBeenCalled();
@@ -119,7 +119,7 @@ describe("DetectorRoutingSection", () => {
 
     render();
 
-    const minLevel = screen.getAllByLabelText("Poziom od")[0];
+    const minLevel = screen.getAllByLabelText("Poziom od")[0]!;
     await user.clear(minLevel);
     await user.type(minLevel, "100");
     await user.tab();
@@ -228,7 +228,7 @@ describe("DetectorRoutingSection", () => {
 
     render();
 
-    const nameInput = screen.getAllByLabelText("Nazwa reguły")[0];
+    const nameInput = screen.getAllByLabelText("Nazwa reguły")[0]!;
     await user.clear(nameInput);
     await user.type(nameInput, "  Gordion hero  ");
     await user.tab();
@@ -251,7 +251,7 @@ describe("DetectorRoutingSection", () => {
 
     render();
 
-    const worldInput = screen.getAllByLabelText("Świat")[0];
+    const worldInput = screen.getAllByLabelText("Świat")[0]!;
     await user.clear(worldInput);
     await user.type(worldInput, "  fobos  ");
     await user.tab();
@@ -273,7 +273,7 @@ describe("DetectorRoutingSection", () => {
     render();
 
     await user.click(
-      screen.getAllByRole("button", { name: "Wstaw aktualny świat" })[0],
+      screen.getAllByRole("button", { name: "Wstaw aktualny świat" })[0]!,
     );
 
     await waitFor(() => {

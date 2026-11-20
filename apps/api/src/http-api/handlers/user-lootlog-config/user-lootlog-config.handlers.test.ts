@@ -16,16 +16,17 @@ import {
   upsertUserLootlogCharacterConfig,
 } from "./user-lootlog-config.handlers.js";
 
+const characterConfig = {
+  userId: "user-a",
+  accountId: "account-a",
+  characterId: "character-a",
+  catchingGuildIds: [],
+};
+
 const makeData = (overrides: Partial<UserLootlogConfigData["Service"]> = {}) =>
   UserLootlogConfigData.of({
     getAccount: () => Effect.succeed({}),
-    upsertCharacter: () =>
-      Effect.succeed({
-        userId: "user-a",
-        accountId: "account-a",
-        characterId: "character-a",
-        catchingGuildIds: [],
-      }),
+    upsertCharacter: () => Effect.succeed(characterConfig),
     getPlayersCatchingGuilds: () => Effect.succeed({ players: [] }),
     ...overrides,
   });
@@ -74,7 +75,7 @@ describe("user lootlog config HttpApi handlers", () => {
         upsertCharacter: () => {
           dataCalled = true;
 
-          return Effect.succeed({});
+          return Effect.succeed(characterConfig);
         },
       }),
       UserLootlogConfigIdentity.of({ discordId: Effect.fail(denied) }),
@@ -174,46 +175,15 @@ describe("user configuration response validation", () => {
     }
   });
 
-  it("rejects malformed configuration and catching Organization values", async () => {
+  it("rejects cached account configuration with malformed catching Organizations", () => {
+    const codec = makeJsonCodec(AccountLootlogConfigResponse);
+
     for (const catchingGuildIds of [null, undefined, [123]]) {
-      const source = { ...character, catchingGuildIds };
+      const cached = JSON.stringify({
+        "character-a": { ...character, catchingGuildIds },
+      });
 
-      const layer = provideServices(
-        makeData({
-          getAccount: () => Effect.succeed({ "character-a": source }),
-          upsertCharacter: () => Effect.succeed(source),
-        }),
-      );
-
-      for (const effect of [
-        getUserLootlogAccountConfig("account-a").pipe(Effect.asVoid),
-        upsertUserLootlogCharacterConfig("account-a", {
-          characterId: "character-a",
-          catchingGuildIds: [],
-        }).pipe(Effect.asVoid),
-      ]) {
-        const error = await Effect.runPromise(
-          Effect.flip(effect.pipe(Effect.provide(layer))),
-        );
-
-        expect(error._tag).toBe("UserLootlogConfigOperationError");
-      }
+      expect(() => codec.parse(cached)).toThrow();
     }
-
-    const malformed = {
-      players: [{ ...character, guilds: [{ id: "guild-a", name: null }] }],
-    };
-
-    const layer = provideServices(
-      makeData({ getPlayersCatchingGuilds: () => Effect.succeed(malformed) }),
-    );
-
-    const error = await Effect.runPromise(
-      Effect.flip(
-        getPlayersCatchingGuilds({ players: [] }).pipe(Effect.provide(layer)),
-      ),
-    );
-
-    expect(error._tag).toBe("UserLootlogConfigOperationError");
   });
 });

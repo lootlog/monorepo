@@ -13,7 +13,7 @@ import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import type { timerTable } from "#src/database/drizzle/timer.schema";
 import { getProfByShortname } from "@lootlog/domain/profession";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import { TIMER_LIMITS } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";

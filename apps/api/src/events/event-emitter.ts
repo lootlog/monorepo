@@ -1,5 +1,4 @@
 import type { EventPublisher } from "@lootlog/messaging";
-import { Logger } from "#src/shared/application-logger";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import type { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect } from "effect";
@@ -16,8 +15,6 @@ export type EventEmitRoutingKey =
  * refetch on the next. A failed publication is logged, never the caller's failure.
  */
 export const makeEventEmitter = (publisher: EventPublisher) => {
-  const logger = new Logger("EventEmitter");
-
   const emit = <K extends EventEmitRoutingKey>(
     routingKey: K,
     payload: CanonicalRabbitEvent<K>,
@@ -26,8 +23,8 @@ export const makeEventEmitter = (publisher: EventPublisher) => {
       .publish(routingKey, payload)
       .pipe(
         Effect.catch((error) =>
-          Effect.sync(() =>
-            logger.error(`Failed to emit ${routingKey}`, error),
+          Effect.logError(`Failed to emit ${routingKey}`, error).pipe(
+            Effect.annotateLogs({ context: "EventEmitter" }),
           ),
         ),
       );

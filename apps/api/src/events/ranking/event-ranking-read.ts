@@ -14,7 +14,7 @@ import {
   eventTable,
 } from "#src/database/drizzle/event.schema";
 import { memberTable } from "#src/database/drizzle/organization.schema";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { findMemberNames } from "#src/members/member-names";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import { MemberSummary } from "#src/contracts/shared";

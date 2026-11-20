@@ -3,7 +3,6 @@ import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
-import { Logger } from "#src/shared/application-logger";
 import type { RedisService } from "#src/redis/redis.service";
 import { getOrSetStaleJson } from "#src/redis/stale-json-cache";
 import {
@@ -17,7 +16,7 @@ import type { Permission } from "@lootlog/schema/permissions";
 import { organizationLootRecordTable } from "#src/database/drizzle/loot.schema";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { createHash } from "node:crypto";
-import { mapValues } from "es-toolkit";
+import { sum } from "es-toolkit";
 import { Effect, Schema } from "effect";
 import { createLootAccessFingerprint } from "@lootlog/domain/loot-visibility";
 import {
@@ -50,13 +49,11 @@ const FRESH_SECONDS = 3 * 3_600;
 const RETAIN_SECONDS = 24 * 3_600;
 
 export class LootStatsService {
-  private readonly logger = new Logger(LootStatsService.name);
-
   constructor(
     private readonly database: Parameters<typeof buildLootStatsQueries>[0],
     private readonly redis: Pick<
       RedisService,
-      "getOrSetJsonEffect" | "setNX" | "setJson"
+      "getOrSetJson" | "setNX" | "setJson"
     >,
   ) {}
 
@@ -134,7 +131,9 @@ export class LootStatsService {
       retainSeconds: RETAIN_SECONDS,
       factory: load,
       onError: (error) =>
-        this.logger.warn("Loot statistics cache unavailable", error),
+        Effect.logWarning("Loot statistics cache unavailable", error).pipe(
+          Effect.annotateLogs({ context: "LootStatsService" }),
+        ),
     }).pipe(
       Effect.map(({ value, computedAt }) => ({ ...value, computedAt })),
       withAdapterSpan("LootsController_getLootStats", "loot-stats"),
@@ -256,7 +255,7 @@ export const readLootStatsRarityTimeline = <E>(
       >();
 
       // Rarity totals cover the same loot items as the timeline, excluding items without a rarity.
-      const rarityCounts: Partial<Record<ItemRarity, number>> = {};
+      const rarityCounts = new Map<ItemRarity, number>();
 
       for (const row of result) {
         const date = row.date.toISOString();
@@ -267,21 +266,27 @@ export const readLootStatsRarityTimeline = <E>(
         if (row.rarity) {
           entry.byRarity[row.rarity] =
             (entry.byRarity[row.rarity] ?? 0) + count;
-          rarityCounts[row.rarity] = (rarityCounts[row.rarity] ?? 0) + count;
+          rarityCounts.set(
+            row.rarity,
+            (rarityCounts.get(row.rarity) ?? 0) + count,
+          );
         }
 
         timelineMap.set(date, entry);
       }
 
-      const rarityTotal = Object.values(rarityCounts).reduce(
-        (total, count) => total + count,
-        0,
-      );
+      const rarityTotal = sum([...rarityCounts.values()]);
 
-      const byRarity = mapValues(rarityCounts, (count): RarityStats => ({
-        count,
-        percentage: Math.round((count / rarityTotal) * 100 * 10) / 10,
-      }));
+      const byRarity: Partial<Record<ItemRarity, RarityStats>> =
+        Object.fromEntries(
+          Array.from(rarityCounts, ([rarity, count]) => [
+            rarity,
+            {
+              count,
+              percentage: Math.round((count / rarityTotal) * 100 * 10) / 10,
+            },
+          ]),
+        );
 
       const timeline = Array.from(timelineMap.entries()).map(
         ([date, data]): TimelinePoint => ({

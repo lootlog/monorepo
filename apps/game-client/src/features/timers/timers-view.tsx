@@ -89,7 +89,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     : guildId;
 
   const { filters, setFilters } = useTimerFilters(settingsKey, desiredWorld);
-  const hiddenTimersForSettings = hiddenTimers[settingsKey] ?? [];
+
+  const hiddenTimersForSettings =
+    settingsKey === undefined ? [] : (hiddenTimers[settingsKey] ?? []);
 
   // Typing updates the search box at once; the grid re-filters in an
   // interruptible render that the next keystroke can abandon.
@@ -115,7 +117,8 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       colorFiltersEnabled,
       customLists,
       hiddenTimers: hiddenTimersForSettings,
-      pinnedTimers: pinnedTimers[settingsKey] ?? [],
+      pinnedTimers:
+        settingsKey === undefined ? [] : (pinnedTimers[settingsKey] ?? []),
       removeTimerAfterMs: generalConfig.removeTimerAfterMs,
       sortOrder: timersSortOrder,
       timersColors,

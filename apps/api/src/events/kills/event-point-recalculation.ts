@@ -30,8 +30,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { eventTable } from "#src/database/drizzle/event.schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/cache";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 
 export interface EventPointRecalculator {
   readonly recalculate: (
@@ -43,9 +42,8 @@ export interface EventPointRecalculator {
 export const makeEventPointRecalculation =
   (
     database: typeof ApiDatabase.Service,
-    redis: RedisService,
+    redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
     points: EventPointRecalculator,
-    logger: Logger,
   ) =>
   (guild: { id: string }, eventId: string) =>
     Effect.gen(function* () {
@@ -78,7 +76,6 @@ export const makeEventPointRecalculation =
       yield* points.recalculate(event.id, event.basePointsPerKill);
       yield* invalidateEventCache(
         redis,
-        logger,
         guild.id,
         eventId,
         "Failed to invalidate event cache",
@@ -180,7 +177,13 @@ function calculateTrackingDurationPercentage(params: {
   killedAt: Date;
   minSpawnTimeAtKill: Date;
 }): number | undefined {
-  if (!Number.isFinite(params.trackingDurationSeconds)) {
+  const { trackingDurationSeconds } = params;
+
+  if (
+    trackingDurationSeconds === null ||
+    trackingDurationSeconds === undefined ||
+    !Number.isFinite(trackingDurationSeconds)
+  ) {
     return undefined;
   }
 
@@ -193,9 +196,7 @@ function calculateTrackingDurationPercentage(params: {
 
   return Math.min(
     100,
-    Math.round(
-      (params.trackingDurationSeconds / trackingWindowDurationSeconds) * 100,
-    ),
+    Math.round((trackingDurationSeconds / trackingWindowDurationSeconds) * 100),
   );
 }
 

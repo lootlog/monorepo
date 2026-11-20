@@ -1,6 +1,7 @@
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it, vi } from "bun:test";
 import { Effect } from "effect";
+import type { PatchSettingsDocuments } from "@lootlog/schema/settings-documents";
 import type { SettingsDocumentsRepositoryService } from "./settings-documents.repository.js";
 import { makeSettingsDocuments } from "./settings-documents.service.js";
 import type { JsonRecord } from "./settings-resolver.js";
@@ -341,7 +342,7 @@ describe("settings documents Effect module", () => {
     const repository = createRepository();
     const service = makeSettingsDocuments(repository);
 
-    const operations = [
+    const operations: PatchSettingsDocuments["operations"] = [
       {
         domain: "gameData" as const,
         scope: { type: "GAME_ACCOUNT" as const, id: "account-1" },

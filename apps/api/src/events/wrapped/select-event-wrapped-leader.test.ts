@@ -32,13 +32,15 @@ describe("selectEventWrappedLeader", () => {
   });
 
   it("does not choose a winner from an empty candidate set", () => {
-    expect(selectEventWrappedLeader([], (entry) => entry.primaryValue)).toEqual(
-      {
-        winner: null,
-        candidateCount: 0,
-        tiedWinnerCount: 0,
-      },
-    );
+    const entries: ReturnType<typeof candidate>[] = [];
+
+    expect(
+      selectEventWrappedLeader(entries, (entry) => entry.primaryValue),
+    ).toEqual({
+      winner: null,
+      candidateCount: 0,
+      tiedWinnerCount: 0,
+    });
   });
 
   it("does not choose a non-positive winner", () => {

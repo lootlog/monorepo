@@ -1,13 +1,14 @@
 import { expect, mock, test } from "bun:test";
 import { Effect, Option } from "effect";
-import { RedlockService } from "./redlock.js";
+import { makeRedisLockManager } from "./redlock.js";
 
 test("losing lock ownership interrupts protected work and releases once", async () => {
-  const evalRedis = mock().mockResolvedValueOnce(1).mockResolvedValue(0);
+  const evalRedis = mock().mockReturnValueOnce(1).mockReturnValue(0);
 
-  const lock = new RedlockService({ eval: evalRedis }).createInstance({
-    automaticExtensionThreshold: 19,
-  });
+  const lock = makeRedisLockManager(
+    { eval: () => Effect.sync(evalRedis) },
+    { automaticExtensionThreshold: 19 },
+  );
 
   let interrupted = false;
 
@@ -35,20 +36,20 @@ test("losing lock ownership interrupts protected work and releases once", async 
 const contendedWait = { retryCount: 3, retryDelay: 1, retryJitter: 0 };
 
 const contendedSingleFlight = (read: Effect.Effect<Option.Option<string>>) => {
-  const lockHeldElsewhere = mock().mockResolvedValue(0);
+  const lockHeldElsewhere = mock().mockReturnValue(0);
 
-  const flight = new RedlockService({ eval: lockHeldElsewhere })
-    .createInstance()
-    .singleFlight(
-      {
-        resource: "cache:lock",
-        duration: 1_000,
-        wait: contendedWait,
-        unavailable: () => "unavailable",
-      },
-      read,
-      Effect.die("a waiting caller must not fill"),
-    );
+  const flight = makeRedisLockManager({
+    eval: () => Effect.sync(lockHeldElsewhere),
+  }).singleFlight(
+    {
+      resource: "cache:lock",
+      duration: 1_000,
+      wait: contendedWait,
+      unavailable: () => "unavailable",
+    },
+    read,
+    Effect.die("a waiting caller must not fill"),
+  );
 
   return { flight, lockHeldElsewhere };
 };

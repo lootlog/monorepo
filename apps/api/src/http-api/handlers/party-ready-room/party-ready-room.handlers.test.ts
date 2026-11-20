@@ -4,7 +4,7 @@ import { decodeDomainJson } from "../../domain-json.schema.js";
 import {
   PermissionDeniedError,
   ResourceConflictError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { PartyReadyRoomResponse } from "#src/contracts/party-ready-room/schemas";
 import {
   ReadyRoomData,
@@ -308,7 +308,7 @@ it("returns active discovery summaries for the requested world without participa
   ]);
 });
 
-it("serializes room and participant dates without weakening response validation", async () => {
+it("keeps room and participant dates without weakening response validation", async () => {
   const participant = {
     participantId: "participant-a",
     discordId: identity.discordId,
@@ -323,7 +323,7 @@ it("serializes room and participant dates without weakening response validation"
     participants: { "participant-a": participant },
   };
 
-  const layer = <A>(value: A) =>
+  const layer = (value: typeof room) =>
     provideServices(
       makeAuthorization(),
       makeData({
@@ -332,30 +332,12 @@ it("serializes room and participant dates without weakening response validation"
     );
 
   const result = await Effect.runPromise(
-    getReadyRoom("room-a").pipe(
-      Effect.provide(
-        layer({
-          ...room,
-          createdAt: new Date(room.createdAt),
-          updatedAt: new Date(room.updatedAt),
-          expiresAt: new Date(room.expiresAt),
-          participants: {
-            "participant-a": {
-              ...participant,
-              createdAt: new Date(participant.createdAt),
-              updatedAt: new Date(participant.updatedAt),
-            },
-          },
-        }),
-      ),
-    ),
+    getReadyRoom("room-a").pipe(Effect.provide(layer(room))),
   );
 
   expect(result).toEqual(room);
 
   for (const value of [
-    { ...room, expiresAt: new Date(Number.NaN) },
-    { ...room, description: null },
     { ...room, description: undefined },
     { ...room, revision: 0 },
     {
@@ -369,12 +351,18 @@ it("serializes room and participant dates without weakening response validation"
       Effect.flip(getReadyRoom("room-a").pipe(Effect.provide(layer(value)))),
     );
 
-    const legacyFailure = await Effect.runPromise(
-      Effect.flip(decodeDomainJson(PartyReadyRoomResponse, value)),
+    expect(failure).toBeInstanceOf(ReadyRoomOperationError);
+  }
+
+  // Values the typed port cannot carry are checked at the response boundary.
+  for (const value of [
+    { ...room, expiresAt: new Date(Number.NaN) },
+    { ...room, description: null },
+  ]) {
+    const exit = await Effect.runPromiseExit(
+      decodeDomainJson(PartyReadyRoomResponse, value),
     );
 
-    expect(legacyFailure).toBeDefined();
-
-    expect(failure).toBeInstanceOf(ReadyRoomOperationError);
+    expect(exit._tag).toBe("Failure");
   }
 });

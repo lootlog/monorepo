@@ -7,3 +7,6 @@ export const runPromiseAdapter = <A>(
   Effect.tryPromise({ try: operation, catch: (cause) => cause }).pipe(
     Effect.withSpan(`events.adapter.${adapter}`),
   );
+
+export const withEventAdapterSpan = (adapter: string) =>
+  Effect.withSpan(`events.adapter.${adapter}`);

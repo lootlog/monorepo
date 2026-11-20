@@ -10,13 +10,16 @@ import { AccessRequirement } from "@lootlog/domain/access-policy";
 import {
   pathString,
   statusCodeResponse,
-  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import { applicationErrorResponse } from "#src/http-api/application-error-response";
-import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
+import {
+  applicationErrorStatusOrUndefined,
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
 import {
   MemberBoundary,
   MemberRefreshJobBoundary,
@@ -27,7 +30,6 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import {
   MemberReferencesResponse,
   MemberSummariesResponse,

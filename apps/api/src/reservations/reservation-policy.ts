@@ -1,7 +1,7 @@
 import {
   InvalidRequestError,
   InvalidEntityError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   validateReservationTime as getReservationTimeValidationIssue,
   type ReservationSettings,

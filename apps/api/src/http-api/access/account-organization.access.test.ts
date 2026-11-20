@@ -1,6 +1,6 @@
 import { AccessRequirement } from "@lootlog/domain/access-policy";
-import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { describe, expect, it } from "bun:test";
 import { Effect, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
@@ -29,6 +29,8 @@ import {
 } from "./account-organization.access.js";
 
 import { makeManageableGuilds } from "#src/guilds/manageable-guilds.data-layer";
+import type { DiscordGuildSyncState } from "@lootlog/schema/discord";
+import { createGuildFixture } from "../../../test/organization-fixtures.js";
 
 const identity = { userId: "user-a", discordId: "discord-a" };
 
@@ -70,6 +72,27 @@ const guild = {
   reservationActiveLimitPerSpot: 1,
 };
 
+const guildRow = createGuildFixture({
+  id: guild.id,
+  name: guild.name,
+  ownerId: guild.ownerId,
+});
+
+const syncState: DiscordGuildSyncState = {
+  guildId: guild.id,
+  status: "SYNCED",
+  hasRequiredPermissions: true,
+  requiredPermissions: [],
+  grantedPermissions: [],
+  missingPermissions: [],
+  channelCount: 0,
+  selectableChannelCount: 0,
+  lastAttemptAt: null,
+  lastSuccessAt: null,
+  lastError: null,
+  updatedAt: new Date(0).toISOString(),
+};
+
 const makeData = (
   overrides: Partial<AccountOrganizationData["Service"]> = {},
 ) =>
@@ -81,8 +104,8 @@ const makeData = (
     getCurrentUserGuilds: () => Effect.succeed([]),
     getCurrentUserAccessibleGuilds: () => Effect.succeed([]),
     getManageableUserGuilds: () => Effect.succeed([]),
-    getGuildDiscordSyncStatus: () => Effect.succeed({}),
-    refreshGuildDiscordSync: () => Effect.succeed({}),
+    getGuildDiscordSyncStatus: () => Effect.succeed(syncState),
+    refreshGuildDiscordSync: () => Effect.succeed(syncState),
     ...overrides,
   });
 
@@ -91,7 +114,7 @@ const makeGuildConfigurationData = (
 ) =>
   GuildConfigurationData.of({
     getGuildById: () => Effect.succeed(guild),
-    updateGuildConfig: () => Effect.succeed(guild),
+    updateGuildConfig: () => Effect.succeed(guildRow),
     getWorldsByGuildId: () => Effect.succeed([]),
     ...overrides,
   });
@@ -341,7 +364,7 @@ describe("Users and Guilds HttpApi handlers", () => {
         updateGuildConfig: (guildId) => {
           updateCalls.push(guildId);
 
-          return Effect.succeed(guild);
+          return Effect.succeed(guildRow);
         },
       }),
     );
@@ -377,7 +400,7 @@ describe("Users and Guilds HttpApi handlers", () => {
         updateGuildConfig: () => {
           updateCalled = true;
 
-          return Effect.succeed(guild);
+          return Effect.succeed(guildRow);
         },
       }),
     );
@@ -407,7 +430,7 @@ describe("Users and Guilds HttpApi handlers", () => {
         updateGuildConfig: () => {
           updateCalled = true;
 
-          return Effect.succeed(guild);
+          return Effect.succeed(guildRow);
         },
       }),
     );

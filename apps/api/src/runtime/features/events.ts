@@ -5,8 +5,7 @@ import {
   makeEventTimersPort,
   type EventTimersPort,
 } from "#src/events/respawn/event-timers.port";
-import { RedlockService } from "#src/redis/redlock";
-import { applicationLogger } from "#src/shared/application-logger";
+import { makeRedisLockManager } from "#src/redis/redlock";
 import {
   RabbitMessaging,
   eventMessage,
@@ -72,11 +71,10 @@ export const eventTimersLive = Layer.effect(
     const database = yield* ApiDatabase;
 
     return makeEventTimersPort({
-      logger: applicationLogger,
       store: makeEventTimerStore(database),
       amqp: makeEventPublisher(rabbit),
       redis,
-      redlock: new RedlockService(redis),
+      locks: makeRedisLockManager(redis),
     });
   }),
 );
@@ -110,7 +108,7 @@ export const eventsServicesLive = Layer.effect(
     const tracking = makeEventPresenceTracking(
       database,
       timers,
-      new RedlockService(redis),
+      makeRedisLockManager(redis),
       emitter,
       readCache,
     );
@@ -148,11 +146,7 @@ export const eventsServicesLive = Layer.effect(
     const presenceStats = makeEventPresenceStats(database, readCache);
     const rankingRead = makeEventRankingRead(database, readCache);
 
-    const catalogRead = makeEventsCatalogRead(
-      database,
-      redis,
-      applicationLogger,
-    );
+    const catalogRead = makeEventsCatalogRead(database, redis);
 
     const eventAccess = makeEventAccess(database);
 
@@ -165,66 +159,45 @@ export const eventsServicesLive = Layer.effect(
       }),
       assignment: makeEventsAssignment(
         eventAccess,
-        makeEventCatalogMutations(database, redis, applicationLogger),
-        makeEventMapAssignments(
-          database,
-          redis,
-          timers,
-          {
-            publish: (routingKey, payload) =>
-              rabbit
-                .publish(eventMessage(routingKey, payload))
-                .pipe(Effect.asVoid),
-          },
-          applicationLogger,
-        ),
+        makeEventCatalogMutations(database, redis),
+        makeEventMapAssignments(database, redis, timers, {
+          publish: (routingKey, payload) =>
+            rabbit
+              .publish(eventMessage(routingKey, payload))
+              .pipe(Effect.asVoid),
+        }),
       ),
       catalog: {
         ...makeEventsCatalog(wrapped),
         ...catalogRead,
-        createEvent: makeEventCreation(database, redis, applicationLogger),
-        deleteEvent: makeEventDeletion(
-          database,
-          redis,
-          {
-            pending: () =>
-              respawnQueue.getJobs(["waiting"]).then((jobs) =>
-                jobs.map((job) => ({
-                  eventId: job.data.eventId,
-                  remove: () => job.remove(),
-                })),
-              ),
-            delayed: () =>
-              respawnQueue.getJobs(["delayed"]).then((jobs) =>
-                jobs.map((job) => ({
-                  eventId: job.data.eventId,
-                  remove: () => job.remove(),
-                })),
-              ),
-          },
-          applicationLogger,
-        ),
-        recalculatePoints: makeEventPointRecalculation(
-          database,
-          redis,
-          {
-            recalculate: (eventId, basePointsPerKill) =>
-              points.recalculateEventPoints(eventId, basePointsPerKill),
-          },
-          applicationLogger,
-        ),
-        updateEvent: makeEventUpdate(
-          database,
-          redis,
-          catalogRead,
-          applicationLogger,
-        ),
+        createEvent: makeEventCreation(database, redis),
+        deleteEvent: makeEventDeletion(database, redis, {
+          pending: () =>
+            respawnQueue.getJobs(["waiting"]).then((jobs) =>
+              jobs.map((job) => ({
+                eventId: job.data.eventId,
+                remove: () => job.remove(),
+              })),
+            ),
+          delayed: () =>
+            respawnQueue.getJobs(["delayed"]).then((jobs) =>
+              jobs.map((job) => ({
+                eventId: job.data.eventId,
+                remove: () => job.remove(),
+              })),
+            ),
+        }),
+        recalculatePoints: makeEventPointRecalculation(database, redis, {
+          recalculate: (eventId, basePointsPerKill) =>
+            points.recalculateEventPoints(eventId, basePointsPerKill),
+        }),
+        updateEvent: makeEventUpdate(database, redis, catalogRead),
       },
       monitoring: makeEventsMonitoring(
         presenceStats,
         respawn,
         eventAccess,
-        makeEventGapReads(database, redis, applicationLogger),
+        makeEventGapReads(database, redis),
         makeEventRespawnCommands(
           database,
           redis,
@@ -262,16 +235,15 @@ export const eventsServicesLive = Layer.effect(
                   {
                     minSpawnTime: timer.minSpawnTime,
                     maxSpawnTime: timer.maxSpawnTime,
-                    memberId: timer.createdById ?? undefined,
+                    memberId: timer.createdById,
                     previousMinSpawnTime: timer.minSpawnTime,
                     previousMaxSpawnTime: timer.maxSpawnTime,
-                    windowOpenedAt: timer.windowOpenedAt ?? undefined,
+                    windowOpenedAt: timer.windowOpenedAt,
                   },
                   true,
                 )
                 .pipe(Effect.asVoid),
           },
-          applicationLogger,
         ),
       ),
       pins: makeEventsPins(makePinnedEventsPersistence(database)),
@@ -279,29 +251,19 @@ export const eventsServicesLive = Layer.effect(
         rankingRead,
         catalogRead,
         eventAccess,
-        makeEventParticipation(
-          database,
-          redis,
-          {
-            publish: (routingKey, payload) =>
-              rabbit
-                .publish(eventMessage(routingKey, payload))
-                .pipe(Effect.asVoid),
-          },
-          applicationLogger,
-        ),
-        makeEventPointEdits(
-          database,
-          redis,
-          {
-            publish: (routingKey, payload) =>
-              rabbit
-                .publish(eventMessage(routingKey, payload))
-                .pipe(Effect.asVoid),
-          },
-          applicationLogger,
-        ),
-        makeEventHeroSummary(database, redis, timers, applicationLogger),
+        makeEventParticipation(database, redis, {
+          publish: (routingKey, payload) =>
+            rabbit
+              .publish(eventMessage(routingKey, payload))
+              .pipe(Effect.asVoid),
+        }),
+        makeEventPointEdits(database, redis, {
+          publish: (routingKey, payload) =>
+            rabbit
+              .publish(eventMessage(routingKey, payload))
+              .pipe(Effect.asVoid),
+        }),
+        makeEventHeroSummary(database, redis, timers),
       ),
     });
 

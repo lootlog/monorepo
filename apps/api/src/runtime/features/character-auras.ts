@@ -8,7 +8,7 @@ import {
   type CharacterAurasCache,
   type CharacterAurasEvents,
 } from "#src/character-auras/character-auras.data-layer";
-import { makeJsonCodec, type RedisEffects } from "#src/redis/redis.service";
+import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { CHARACTER_AURAS_CACHE_SCOPE } from "#src/shared/cache";
@@ -17,7 +17,7 @@ const listCodec = makeJsonCodec(CharacterAurasResponse);
 
 const holdersCodec = makeJsonCodec(CharacterAuraHolders);
 
-const makeCharacterAurasCache = (redis: RedisEffects): CharacterAurasCache => ({
+const makeCharacterAurasCache = (redis: RedisService): CharacterAurasCache => ({
   // Aura writes invalidate the list. The TTL bounds what they cannot see: a
   // newly proved account of a User who shows an aura.
   list: (load) =>
@@ -71,7 +71,7 @@ export const characterAurasData = Layer.unwrap(
     return characterAurasDataLayer(
       globalChatAdminUserIds,
       makeCharacterAurasEvents(rabbit),
-      makeCharacterAurasCache(redis.effect),
+      makeCharacterAurasCache(redis),
     );
   }),
 );

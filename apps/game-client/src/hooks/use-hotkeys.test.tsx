@@ -422,10 +422,10 @@ describe("useHotkeys", () => {
     });
 
     await waitFor(() => expect(requests).toHaveLength(2));
-    expect(await requests[0].json()).toEqual({
+    expect(await requests[0]!.json()).toEqual({
       participantIds: ["participant-1"],
     });
-    expect(await requests[1].json()).toEqual({
+    expect(await requests[1]!.json()).toEqual({
       participantIds: ["participant-1"],
     });
   });

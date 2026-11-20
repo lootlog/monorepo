@@ -180,6 +180,19 @@ export interface ReauthenticationRequiredEncoded {
   requiresReauth: true;
 }
 
+/**
+ * @nullable
+ */
+export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
+
+export interface HttpErrorResponse {
+  code: string;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  details?: HttpErrorResponseDetails;
+}
+
 export type UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout[keyof typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout];
 
 
@@ -260,19 +273,6 @@ export interface UserPreferencesResponseDtoOutput {
   theme: string;
   chatAppearance: UserPreferencesResponseDtoOutputChatAppearance;
   mutes: UserPreferencesResponseDtoOutputMutes;
-}
-
-/**
- * @nullable
- */
-export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
-
-export interface HttpErrorResponse {
-  code: string;
-  /** @nullable */
-  message?: string | null;
-  /** @nullable */
-  details?: HttpErrorResponseDetails;
 }
 
 export type UpdateUserPreferencesDtoChatAppearanceNpcLayout = typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout[keyof typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout];
@@ -1875,7 +1875,10 @@ export const NullableLootItemResponseDtoOutputProfItem = {
   TRACKER: 'TRACKER',
 } as const;
 
-export interface NullableLootItemResponseDtoOutput {
+/**
+ * @nullable
+ */
+export type NullableLootItemResponseDtoOutput = {
   id: number;
   hid: string;
   name: string;
@@ -1887,7 +1890,7 @@ export interface NullableLootItemResponseDtoOutput {
   rarity: NullableLootItemResponseDtoOutputRarity;
   lvl: number;
   prof: NullableLootItemResponseDtoOutputProfItem[];
-}
+} | null;
 
 export type NullableLootResponseDtoSource = typeof NullableLootResponseDtoSource[keyof typeof NullableLootResponseDtoSource];
 
@@ -8734,114 +8737,18 @@ export interface DocsMutationResponseDto {
   success: boolean;
 }
 
-export type UsersControllerGetUserFeed401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UsersControllerGetUserFeed403 = {
-  message: string;
-};
-
-export type UsersControllerGetUserFeed429 = {
-  message: string;
-};
-
-export type UsersControllerGetUserPreferences401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UsersControllerGetUserPreferences403 = {
-  message: string;
-};
-
-export type UsersControllerGetUserPreferences429 = {
-  message: string;
-};
-
-export type UsersControllerUpdateUserPreferences401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UsersControllerUpdateUserPreferences403 = {
-  message: string;
-};
-
-export type UsersControllerUpdateUserPreferences429 = {
-  message: string;
-};
-
-export type UsersControllerGetCurrentUserGuilds401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UsersControllerGetCurrentUserGuilds403 = {
-  message: string;
-};
-
-export type UsersControllerGetCurrentUserGuilds429 = {
-  message: string;
-};
-
-export type UsersControllerGetCurrentUserAccessibleGuilds401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UsersControllerGetCurrentUserAccessibleGuilds403 = {
-  message: string;
-};
-
-export type UsersControllerGetCurrentUserAccessibleGuilds429 = {
-  message: string;
-};
-
 export type MembersControllerGetMePathParameters = {
  guildId: string,
  }
-export type MembersControllerGetMe401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MembersControllerGetMe403 = {
-  message: string;
-};
-
-export type MembersControllerGetMe429 = {
-  message: string;
-};
-
 export type MembersControllerGetMemberLootlogConfigSummaryPathParameters = {
  guildId: string,
     discordId: string,
  }
-export type MembersControllerGetMemberLootlogConfigSummary401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MembersControllerGetMemberLootlogConfigSummary403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type MembersControllerGetMemberLootlogConfigSummary429 = {
-  message: string;
-};
-
 export type MembersControllerGetGuildMembersPathParameters = {
  guildId: string,
  }
 export type MembersControllerGetGuildMembersParams = {
 includeInactive?: boolean;
-};
-
-export type MembersControllerGetGuildMembers401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MembersControllerGetGuildMembers403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type MembersControllerGetGuildMembers429 = {
-  message: string;
 };
 
 export type MembersControllerGetGuildMemberReferencesPathParameters = {
@@ -8851,121 +8758,25 @@ export type MembersControllerGetGuildMemberReferencesParams = {
 includeInactive?: boolean;
 };
 
-export type MembersControllerGetGuildMemberReferences401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MembersControllerGetGuildMemberReferences403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type MembersControllerGetGuildMemberReferences429 = {
-  message: string;
-};
-
 export type MembersControllerGetGuildMembersSummaryPathParameters = {
  guildId: string,
  }
-export type MembersControllerGetGuildMembersSummary401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MembersControllerGetGuildMembersSummary403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type MembersControllerGetGuildMembersSummary429 = {
-  message: string;
-};
-
 export type MembersControllerGetLatestRefreshJobPathParameters = {
  guildId: string,
  }
-export type MembersControllerGetLatestRefreshJob401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MembersControllerGetLatestRefreshJob403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type MembersControllerGetLatestRefreshJob429 = {
-  message: string;
-};
-
 export type MembersControllerGetRefreshJobStatusPathParameters = {
  guildId: string,
     jobId: number,
  }
-export type MembersControllerGetRefreshJobStatus401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MembersControllerGetRefreshJobStatus403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type MembersControllerGetRefreshJobStatus429 = {
-  message: string;
-};
-
-export type GuildsControllerGetManageableUserGuilds401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type GuildsControllerGetManageableUserGuilds403 = {
-  message: string;
-};
-
-export type GuildsControllerGetManageableUserGuilds429 = {
-  message: string;
-};
-
 export type GuildsControllerGetGuildByIdPathParameters = {
  guildId: string,
  }
-export type GuildsControllerGetGuildById401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type GuildsControllerGetGuildById403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type GuildsControllerGetGuildById429 = {
-  message: string;
-};
-
 export type GuildsControllerUpdateGuildConfigPathParameters = {
  guildId: string,
  }
-export type GuildsControllerUpdateGuildConfig401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type GuildsControllerUpdateGuildConfig403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type GuildsControllerUpdateGuildConfig429 = {
-  message: string;
-};
-
 export type GuildsControllerGetWorldsByGuildIdPathParameters = {
  guildId: string,
  }
-export type GuildsControllerGetWorldsByGuildId401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type GuildsControllerGetWorldsByGuildId403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type GuildsControllerGetWorldsByGuildId429 = {
-  message: string;
-};
-
 export type GuildsControllerGetGuildPermissionsPathParameters = {
  guildId: string,
  }
@@ -9008,67 +8819,19 @@ export const GuildsControllerGetGuildPermissions200Item = {
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
 } as const;
 
-export type GuildsControllerGetGuildPermissions401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type GuildsControllerGetGuildPermissions403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type GuildsControllerGetGuildPermissions429 = {
-  message: string;
-};
-
 export type RolesControllerGetGuildRolesPathParameters = {
  guildId: string,
  }
-export type RolesControllerGetGuildRoles401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type RolesControllerGetGuildRoles403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type RolesControllerGetGuildRoles429 = {
-  message: string;
-};
-
 export type RolesControllerUpdateGuildRolePathParameters = {
  guildId: string,
     roleId: string,
  }
-export type RolesControllerUpdateGuildRole401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type RolesControllerUpdateGuildRole403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type RolesControllerUpdateGuildRole429 = {
-  message: string;
-};
-
 export type TimersControllerGetAllTimersParams = {
 /**
  * @minLength 1
  * @maxLength 64
  */
 world?: string;
-};
-
-export type TimersControllerGetAllTimers401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type TimersControllerGetAllTimers403 = {
-  message: string;
-};
-
-export type TimersControllerGetAllTimers429 = {
-  message: string;
 };
 
 export type TimersControllerGetRecentTimerHistoryParams = {
@@ -9085,18 +8848,6 @@ world: string;
 limit?: number;
 };
 
-export type TimersControllerGetRecentTimerHistory401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type TimersControllerGetRecentTimerHistory403 = {
-  message: string;
-};
-
-export type TimersControllerGetRecentTimerHistory429 = {
-  message: string;
-};
-
 export type TimersControllerGetTimersPathParameters = {
  guildId: string,
  }
@@ -9106,18 +8857,6 @@ export type TimersControllerGetTimersParams = {
  * @maxLength 64
  */
 world?: string;
-};
-
-export type TimersControllerGetTimers401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type TimersControllerGetTimers403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type TimersControllerGetTimers429 = {
-  message: string;
 };
 
 export type TimersControllerSearchNpcsWithTimerDataPathParameters = {
@@ -9152,46 +8891,10 @@ templateIds?: number[];
 limit?: number;
 };
 
-export type TimersControllerSearchNpcsWithTimerData401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type TimersControllerSearchNpcsWithTimerData403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type TimersControllerSearchNpcsWithTimerData429 = {
-  message: string;
-};
-
-export type TimersControllerCreateAutoTimer401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type TimersControllerCreateAutoTimer403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type TimersControllerCreateAutoTimer429 = {
-  message: string;
-};
-
 export type TimersControllerResetTimerPathParameters = {
  guildId: string,
     timerIdentifier: string,
  }
-export type TimersControllerResetTimer401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type TimersControllerResetTimer403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type TimersControllerResetTimer429 = {
-  message: string;
-};
-
 export type TimersControllerDeleteTimerPathParameters = {
  guildId: string,
     timerIdentifier: string,
@@ -9202,18 +8905,6 @@ export type TimersControllerDeleteTimerParams = {
  * @maxLength 64
  */
 world?: string;
-};
-
-export type TimersControllerDeleteTimer401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type TimersControllerDeleteTimer403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type TimersControllerDeleteTimer429 = {
-  message: string;
 };
 
 export type TimersControllerGetTimerHistoryPathParameters = {
@@ -9233,91 +8924,19 @@ world: string;
 limit?: number;
 };
 
-export type TimersControllerGetTimerHistory401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type TimersControllerGetTimerHistory403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type TimersControllerGetTimerHistory429 = {
-  message: string;
-};
-
 export type TimersControllerRestoreTimerFromHistoryPathParameters = {
  guildId: string,
     historyEntryId: string,
  }
-export type TimersControllerRestoreTimerFromHistory401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type TimersControllerRestoreTimerFromHistory403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type TimersControllerRestoreTimerFromHistory429 = {
-  message: string;
-};
-
 export type TimersControllerCreateManualTimerPathParameters = {
  guildId: string,
  }
-export type TimersControllerCreateManualTimer401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type TimersControllerCreateManualTimer403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type TimersControllerCreateManualTimer429 = {
-  message: string;
-};
-
 export type UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParameters = {
  accountId: string,
  }
-export type UserLootlogConfigControllerGetUserLootlogConfigByAccountId401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UserLootlogConfigControllerGetUserLootlogConfigByAccountId403 = {
-  message: string;
-};
-
-export type UserLootlogConfigControllerGetUserLootlogConfigByAccountId429 = {
-  message: string;
-};
-
 export type UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigPathParameters = {
  accountId: string,
  }
-export type UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig403 = {
-  message: string;
-};
-
-export type UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig429 = {
-  message: string;
-};
-
-export type UserLootlogConfigControllerGetPlayersCatchingGuilds401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UserLootlogConfigControllerGetPlayersCatchingGuilds403 = {
-  message: string;
-};
-
-export type UserLootlogConfigControllerGetPlayersCatchingGuilds429 = {
-  message: string;
-};
-
 export type LootsControllerFetchLootsByGuildIdPathParameters = {
  guildId: string,
  }
@@ -9414,18 +9033,6 @@ export const LootsControllerFetchLootsByGuildIdNpcTypesItem = {
   NPC: 'NPC',
 } as const;
 
-export type LootsControllerFetchLootsByGuildId401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type LootsControllerFetchLootsByGuildId403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootsControllerFetchLootsByGuildId429 = {
-  message: string;
-};
-
 export type LootsControllerGetLootStatsPathParameters = {
  guildId: string,
  }
@@ -9470,18 +9077,6 @@ export const LootsControllerGetLootStatsNpcTypesItem = {
   NPC: 'NPC',
 } as const;
 
-export type LootsControllerGetLootStats401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type LootsControllerGetLootStats403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootsControllerGetLootStats429 = {
-  message: string;
-};
-
 export type LootsControllerResolveLootItemByHidPathParameters = {
  guildId: string,
  }
@@ -9497,216 +9092,48 @@ hid: string;
 world?: string;
 };
 
-export type LootsControllerResolveLootItemByHid401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type LootsControllerResolveLootItemByHid403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootsControllerResolveLootItemByHid429 = {
-  message: string;
-};
-
 export type LootsControllerFetchLootByIdPathParameters = {
  guildId: string,
     lootId: number,
  }
-export type LootsControllerFetchLootById401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type LootsControllerFetchLootById403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootsControllerFetchLootById429 = {
-  message: string;
-};
-
 export type LootsControllerDeleteLootPathParameters = {
  guildId: string,
     lootId: number,
  }
-export type LootsControllerDeleteLoot401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type LootsControllerDeleteLoot403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootsControllerDeleteLoot429 = {
-  message: string;
-};
-
-export type LootsControllerCreateLoot401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type LootsControllerCreateLoot403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootsControllerCreateLoot429 = {
-  message: string;
-};
-
 export type LootsControllerGetCommentsPathParameters = {
  guildId: string,
     lootId: number,
  }
-export type LootsControllerGetComments401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type LootsControllerGetComments403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootsControllerGetComments429 = {
-  message: string;
-};
-
 export type LootsControllerCreateCommentPathParameters = {
  guildId: string,
     lootId: number,
  }
-export type LootsControllerCreateComment401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type LootsControllerCreateComment403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootsControllerCreateComment429 = {
-  message: string;
-};
-
 export type LootsControllerUpdateLootPathParameters = {
  id: number,
  }
-export type LootsControllerUpdateLoot401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type LootsControllerUpdateLoot403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootsControllerUpdateLoot429 = {
-  message: string;
-};
-
 export type LootlogConfigControllerGetLootlogConfigPathParameters = {
  guildId: string,
  }
-export type LootlogConfigControllerGetLootlogConfig401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type LootlogConfigControllerGetLootlogConfig403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootlogConfigControllerGetLootlogConfig429 = {
-  message: string;
-};
-
 export type LootlogConfigControllerUpdateNpcPathParameters = {
  guildId: string,
     npcId: number,
  }
-export type LootlogConfigControllerUpdateNpc401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type LootlogConfigControllerUpdateNpc403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootlogConfigControllerUpdateNpc429 = {
-  message: string;
-};
-
 export type ChatControllerGetChatMessagesPathParameters = {
  guildId: string,
  }
-export type ChatControllerGetChatMessages401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ChatControllerGetChatMessages403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ChatControllerGetChatMessages429 = {
-  message: string;
-};
-
 export type ChatControllerSendChatMessagePathParameters = {
  guildId: string,
  }
-export type ChatControllerSendChatMessage401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ChatControllerSendChatMessage403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ChatControllerSendChatMessage429 = {
-  message: string;
-};
-
 export type ChatControllerClearChatMessagesPathParameters = {
  guildId: string,
  }
-export type ChatControllerClearChatMessages401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ChatControllerClearChatMessages403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ChatControllerClearChatMessages429 = {
-  message: string;
-};
-
 export type ChatControllerDeleteChatMessagePathParameters = {
  guildId: string,
     messageId: string,
  }
-export type ChatControllerDeleteChatMessage401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ChatControllerDeleteChatMessage403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ChatControllerDeleteChatMessage429 = {
-  message: string;
-};
-
 export type ListReservationSpotsPathParameters = {
  guildId: string,
  }
-export type ListReservationSpots401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ListReservationSpots403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ListReservationSpots429 = {
-  message: string;
-};
-
 export type ListSpotReservationsPathParameters = {
  guildId: string,
     spotId: string,
@@ -9722,82 +9149,22 @@ from: string;
 to: string;
 };
 
-export type ListSpotReservations401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ListSpotReservations403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ListSpotReservations429 = {
-  message: string;
-};
-
 export type CreateReservationPathParameters = {
  guildId: string,
     spotId: string,
  }
-export type CreateReservation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type CreateReservation403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type CreateReservation429 = {
-  message: string;
-};
-
 export type DeleteReservationPathParameters = {
  guildId: string,
     reservationId: number,
  }
-export type DeleteReservation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DeleteReservation403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type DeleteReservation429 = {
-  message: string;
-};
-
 export type PinReservationSpotPathParameters = {
  guildId: string,
     spotId: string,
  }
-export type PinReservationSpot401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PinReservationSpot403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type PinReservationSpot429 = {
-  message: string;
-};
-
 export type UnpinReservationSpotPathParameters = {
  guildId: string,
     spotId: string,
  }
-export type UnpinReservationSpot401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UnpinReservationSpot403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type UnpinReservationSpot429 = {
-  message: string;
-};
-
 export type ListMyReservationsParams = {
 status?: ListMyReservationsStatus;
 };
@@ -9810,684 +9177,120 @@ export const ListMyReservationsStatus = {
   past: 'past',
 } as const;
 
-export type ListMyReservations401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ListMyReservations403 = {
-  message: string;
-};
-
-export type ListMyReservations429 = {
-  message: string;
-};
-
 export type DeleteMyReservationPathParameters = {
  reservationId: number,
  }
-export type DeleteMyReservation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DeleteMyReservation403 = {
-  message: string;
-};
-
-export type DeleteMyReservation429 = {
-  message: string;
-};
-
 export type UpdateMyReservationPathParameters = {
  reservationId: number,
  }
-export type UpdateMyReservation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UpdateMyReservation403 = {
-  message: string;
-};
-
-export type UpdateMyReservation429 = {
-  message: string;
-};
-
 export type ListReservationSharesPathParameters = {
  guildId: string,
  }
-export type ListReservationShares401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ListReservationShares403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ListReservationShares429 = {
-  message: string;
-};
-
 export type CreateReservationShareInvitationPathParameters = {
  guildId: string,
  }
-export type CreateReservationShareInvitation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type CreateReservationShareInvitation403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type CreateReservationShareInvitation429 = {
-  message: string;
-};
-
 export type RevokeReservationShareInvitationPathParameters = {
  guildId: string,
     invitationId: string,
  }
-export type RevokeReservationShareInvitation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type RevokeReservationShareInvitation403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type RevokeReservationShareInvitation429 = {
-  message: string;
-};
-
 export type RevokeReservationSharePathParameters = {
  guildId: string,
     shareId: string,
  }
-export type RevokeReservationShare401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type RevokeReservationShare403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type RevokeReservationShare429 = {
-  message: string;
-};
-
 export type PreviewReservationShareInvitationPathParameters = {
  token: string,
  }
-export type PreviewReservationShareInvitation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PreviewReservationShareInvitation403 = {
-  message: string;
-};
-
-export type PreviewReservationShareInvitation429 = {
-  message: string;
-};
-
 export type AcceptReservationShareInvitationPathParameters = {
  token: string,
  }
-export type AcceptReservationShareInvitation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type AcceptReservationShareInvitation403 = {
-  message: string;
-};
-
-export type AcceptReservationShareInvitation429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerGetGuildTargetsPathParameters = {
  guildId: string,
  }
-export type NotificationsGuildControllerGetGuildTargets401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerGetGuildTargets403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerGetGuildTargets429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerCreateGuildTargetPathParameters = {
  guildId: string,
  }
-export type NotificationsGuildControllerCreateGuildTarget401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerCreateGuildTarget403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerCreateGuildTarget429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerGetAvailableGuildTargetsPathParameters = {
  guildId: string,
  }
-export type NotificationsGuildControllerGetAvailableGuildTargets401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerGetAvailableGuildTargets403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerGetAvailableGuildTargets429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerDeleteGuildTargetPathParameters = {
  guildId: string,
     targetId: number,
  }
-export type NotificationsGuildControllerDeleteGuildTarget401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerDeleteGuildTarget403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerDeleteGuildTarget429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerUpdateGuildTargetPathParameters = {
  guildId: string,
     targetId: number,
  }
-export type NotificationsGuildControllerUpdateGuildTarget401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerUpdateGuildTarget403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerUpdateGuildTarget429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerGetGuildRulesPathParameters = {
  guildId: string,
  }
-export type NotificationsGuildControllerGetGuildRules401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerGetGuildRules403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerGetGuildRules429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerCreateGuildRulePathParameters = {
  guildId: string,
  }
-export type NotificationsGuildControllerCreateGuildRule401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerCreateGuildRule403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerCreateGuildRule429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerDeleteGuildRulePathParameters = {
  guildId: string,
     ruleId: number,
  }
-export type NotificationsGuildControllerDeleteGuildRule401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerDeleteGuildRule403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerDeleteGuildRule429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerUpdateGuildRulePathParameters = {
  guildId: string,
     ruleId: number,
  }
-export type NotificationsGuildControllerUpdateGuildRule401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerUpdateGuildRule403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerUpdateGuildRule429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerRebuildGuildRuleJobsPathParameters = {
  guildId: string,
     ruleId: number,
  }
-export type NotificationsGuildControllerRebuildGuildRuleJobs401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerRebuildGuildRuleJobs403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerRebuildGuildRuleJobs429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerTriggerGuildRuleTestPathParameters = {
  guildId: string,
     ruleId: number,
  }
-export type NotificationsGuildControllerTriggerGuildRuleTest401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerTriggerGuildRuleTest403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerTriggerGuildRuleTest429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerGetGuildJobsPathParameters = {
  guildId: string,
  }
-export type NotificationsGuildControllerGetGuildJobs401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerGetGuildJobs403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerGetGuildJobs429 = {
-  message: string;
-};
-
 export type NotificationsGuildControllerCancelGuildJobPathParameters = {
  guildId: string,
     jobId: string,
  }
-export type NotificationsGuildControllerCancelGuildJob401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsGuildControllerCancelGuildJob403 = {
-  message: string;
-};
-
-export type NotificationsGuildControllerCancelGuildJob429 = {
-  message: string;
-};
-
-export type NotificationsUserControllerGetUserTargets401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerGetUserTargets403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerGetUserTargets429 = {
-  message: string;
-};
-
-export type NotificationsUserControllerCreateUserTarget401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerCreateUserTarget403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerCreateUserTarget429 = {
-  message: string;
-};
-
 export type NotificationsUserControllerDeleteUserTargetPathParameters = {
  targetId: number,
  }
-export type NotificationsUserControllerDeleteUserTarget401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerDeleteUserTarget403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerDeleteUserTarget429 = {
-  message: string;
-};
-
 export type NotificationsUserControllerUpdateUserTargetPathParameters = {
  targetId: number,
  }
-export type NotificationsUserControllerUpdateUserTarget401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerUpdateUserTarget403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerUpdateUserTarget429 = {
-  message: string;
-};
-
 export type NotificationsUserControllerTriggerUserTargetTestPathParameters = {
  targetId: number,
  }
-export type NotificationsUserControllerTriggerUserTargetTest401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerTriggerUserTargetTest403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerTriggerUserTargetTest429 = {
-  message: string;
-};
-
-export type NotificationsUserControllerGetUserRules401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerGetUserRules403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerGetUserRules429 = {
-  message: string;
-};
-
-export type NotificationsUserControllerCreateUserRule401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerCreateUserRule403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerCreateUserRule429 = {
-  message: string;
-};
-
 export type NotificationsUserControllerDeleteUserRulePathParameters = {
  ruleId: number,
  }
-export type NotificationsUserControllerDeleteUserRule401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerDeleteUserRule403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerDeleteUserRule429 = {
-  message: string;
-};
-
 export type NotificationsUserControllerUpdateUserRulePathParameters = {
  ruleId: number,
  }
-export type NotificationsUserControllerUpdateUserRule401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerUpdateUserRule403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerUpdateUserRule429 = {
-  message: string;
-};
-
-export type NotificationsUserControllerGetUserJobs401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerGetUserJobs403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerGetUserJobs429 = {
-  message: string;
-};
-
-export type NotificationsUserControllerGetWatchedItems401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerGetWatchedItems403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerGetWatchedItems429 = {
-  message: string;
-};
-
-export type NotificationsUserControllerCreateWatchedItem401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerCreateWatchedItem403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerCreateWatchedItem429 = {
-  message: string;
-};
-
-export type NotificationsUserControllerQuickAddWatchedItem401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerQuickAddWatchedItem403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerQuickAddWatchedItem429 = {
-  message: string;
-};
-
 export type NotificationsUserControllerDeleteWatchedItemPathParameters = {
  watchedItemId: number,
  }
-export type NotificationsUserControllerDeleteWatchedItem401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type NotificationsUserControllerDeleteWatchedItem403 = {
-  message: string;
-};
-
-export type NotificationsUserControllerDeleteWatchedItem429 = {
-  message: string;
-};
-
-export type MessagingControllerSendNotification401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MessagingControllerSendNotification403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type MessagingControllerSendNotification429 = HttpErrorResponse | {
-  message: string;
-};
-
 export type MessagingControllerVolunteerPathParameters = {
  notificationId: string,
  }
-export type MessagingControllerVolunteer401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MessagingControllerVolunteer403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type MessagingControllerVolunteer429 = {
-  message: string;
-};
-
-export type PartyReadyRoomControllerList401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerList403 = {
-  message: string;
-};
-
-export type PartyReadyRoomControllerList429 = {
-  message: string;
-};
-
-export type PartyReadyRoomControllerCreate401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerCreate403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerCreate429 = {
-  message: string;
-};
-
 export type PartyReadyRoomControllerGetPathParameters = {
  notificationId: string,
  }
-export type PartyReadyRoomControllerGet401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerGet403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerGet429 = {
-  message: string;
-};
-
 export type PartyReadyRoomControllerApplyPathParameters = {
  notificationId: string,
  }
-export type PartyReadyRoomControllerApply401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerApply403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerApply429 = {
-  message: string;
-};
-
 export type PartyReadyRoomControllerWithdrawPathParameters = {
  notificationId: string,
  }
-export type PartyReadyRoomControllerWithdraw401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerWithdraw403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerWithdraw429 = {
-  message: string;
-};
-
 export type PartyReadyRoomControllerRemovePathParameters = {
  notificationId: string,
  }
-export type PartyReadyRoomControllerRemove401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerRemove403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerRemove429 = {
-  message: string;
-};
-
 export type PartyReadyRoomControllerResolveInvitationTargetsPathParameters = {
  notificationId: string,
  }
-export type PartyReadyRoomControllerResolveInvitationTargets401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerResolveInvitationTargets403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerResolveInvitationTargets429 = {
-  message: string;
-};
-
 export type PartyReadyRoomControllerObservePartyPathParameters = {
  notificationId: string,
  }
-export type PartyReadyRoomControllerObserveParty401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerObserveParty403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerObserveParty429 = {
-  message: string;
-};
-
 export type PartyReadyRoomControllerCancelPathParameters = {
  notificationId: string,
  }
-export type PartyReadyRoomControllerCancel401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerCancel403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type PartyReadyRoomControllerCancel429 = {
-  message: string;
-};
-
 export type ListEventsPathParameters = {
  guildId: string,
  }
@@ -10500,146 +9303,38 @@ world?: string;
 activeOnly?: boolean;
 };
 
-export type ListEvents401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ListEvents403 = {
-  message: string;
-};
-
-export type ListEvents429 = {
-  message: string;
-};
-
 export type CreateEventPathParameters = {
  guildId: string,
  }
-export type CreateEvent401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type CreateEvent403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type CreateEvent429 = {
-  message: string;
-};
-
 export type ShowEventPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type ShowEvent401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ShowEvent403 = {
-  message: string;
-};
-
-export type ShowEvent429 = {
-  message: string;
-};
-
 export type DeleteEventPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type DeleteEvent401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DeleteEvent403 = {
-  message: string;
-};
-
-export type DeleteEvent429 = {
-  message: string;
-};
-
 export type UpdateEventPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type UpdateEvent401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UpdateEvent403 = {
-  message: string;
-};
-
-export type UpdateEvent429 = {
-  message: string;
-};
-
 export type ShowEventWrappedPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type ShowEventWrapped401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ShowEventWrapped403 = {
-  message: string;
-};
-
-export type ShowEventWrapped429 = {
-  message: string;
-};
-
 export type ListEventMapsPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type ListEventMaps401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ListEventMaps403 = {
-  message: string;
-};
-
-export type ListEventMaps429 = {
-  message: string;
-};
-
 export type RecalculateEventPointsPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type RecalculateEventPoints401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type RecalculateEventPoints403 = {
-  message: string;
-};
-
-export type RecalculateEventPoints429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerAssignMemberPathParameters = {
  guildId: string,
     eventId: string,
     mapId: string,
  }
-export type EventsAssignmentControllerAssignMember401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerAssignMember403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerAssignMember429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerUnassignMemberPathParameters = {
  guildId: string,
     eventId: string,
@@ -10653,324 +9348,96 @@ export type EventsAssignmentControllerUnassignMemberParams = {
 memberId?: number;
 };
 
-export type EventsAssignmentControllerUnassignMember401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerUnassignMember403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerUnassignMember429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerSelfAssignMemberPathParameters = {
  guildId: string,
     eventId: string,
     mapId: string,
  }
-export type EventsAssignmentControllerSelfAssignMember401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerSelfAssignMember403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerSelfAssignMember429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerSelfUnassignMemberPathParameters = {
  guildId: string,
     eventId: string,
     mapId: string,
  }
-export type EventsAssignmentControllerSelfUnassignMember401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerSelfUnassignMember403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerSelfUnassignMember429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerAddHeroPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type EventsAssignmentControllerAddHero401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerAddHero403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerAddHero429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerDeleteHeroPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsAssignmentControllerDeleteHero401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerDeleteHero403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerDeleteHero429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerUpdateHeroPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsAssignmentControllerUpdateHero401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerUpdateHero403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerUpdateHero429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerAddMapPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsAssignmentControllerAddMap401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerAddMap403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerAddMap429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerDeleteMapPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
     mapId: string,
  }
-export type EventsAssignmentControllerDeleteMap401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerDeleteMap403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerDeleteMap429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerGetLocationsPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsAssignmentControllerGetLocations401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerGetLocations403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerGetLocations429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerCreateLocationPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsAssignmentControllerCreateLocation401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerCreateLocation403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerCreateLocation429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerDeleteLocationPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
     locationId: string,
  }
-export type EventsAssignmentControllerDeleteLocation401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerDeleteLocation403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerDeleteLocation429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerUpdateLocationPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
     locationId: string,
  }
-export type EventsAssignmentControllerUpdateLocation401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerUpdateLocation403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerUpdateLocation429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerReorderLocationsPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsAssignmentControllerReorderLocations401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerReorderLocations403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerReorderLocations429 = {
-  message: string;
-};
-
 export type EventsAssignmentControllerAssignMapToLocationPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
     mapId: string,
  }
-export type EventsAssignmentControllerAssignMapToLocation401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsAssignmentControllerAssignMapToLocation403 = {
-  message: string;
-};
-
-export type EventsAssignmentControllerAssignMapToLocation429 = {
-  message: string;
-};
-
 export type ListPendingParticipationConfirmationsPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type ListPendingParticipationConfirmations401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ListPendingParticipationConfirmations403 = {
-  message: string;
-};
-
-export type ListPendingParticipationConfirmations429 = {
-  message: string;
-};
-
 export type AcknowledgeExpiredParticipationConfirmationsPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type AcknowledgeExpiredParticipationConfirmations401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type AcknowledgeExpiredParticipationConfirmations403 = {
-  message: string;
-};
-
-export type AcknowledgeExpiredParticipationConfirmations429 = {
-  message: string;
-};
-
 export type ConfirmParticipationForKillPathParameters = {
  guildId: string,
     eventId: string,
     killId: string,
  }
-export type ConfirmParticipationForKill401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ConfirmParticipationForKill403 = {
-  message: string;
-};
-
-export type ConfirmParticipationForKill429 = {
-  message: string;
-};
-
 export type ListEventRankingPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type ListEventRanking401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ListEventRanking403 = {
-  message: string;
-};
-
-export type ListEventRanking429 = {
-  message: string;
-};
-
 export type UpdateRankingPointsPathParameters = {
  guildId: string,
     eventId: string,
     rankingId: string,
  }
-export type UpdateRankingPoints401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UpdateRankingPoints403 = {
-  message: string;
-};
-
-export type UpdateRankingPoints429 = {
-  message: string;
-};
-
 export type ListEventHeroTimersPathParameters = {
  guildId: string,
     eventId: string,
@@ -10983,34 +9450,10 @@ export type ListEventHeroTimersParams = {
 world: string;
 };
 
-export type ListEventHeroTimers401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ListEventHeroTimers403 = {
-  message: string;
-};
-
-export type ListEventHeroTimers429 = {
-  message: string;
-};
-
 export type EventsRankingControllerGetEventHeroStatsPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type EventsRankingControllerGetEventHeroStats401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsRankingControllerGetEventHeroStats403 = {
-  message: string;
-};
-
-export type EventsRankingControllerGetEventHeroStats429 = {
-  message: string;
-};
-
 export type ListEventKillHistoryPathParameters = {
  guildId: string,
     eventId: string,
@@ -11038,341 +9481,89 @@ heroId?: string;
 memberId?: number;
 };
 
-export type ListEventKillHistory401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ListEventKillHistory403 = {
-  message: string;
-};
-
-export type ListEventKillHistory429 = {
-  message: string;
-};
-
 export type EventsRankingControllerGetKillDetailPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
     killId: string,
  }
-export type EventsRankingControllerGetKillDetail401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsRankingControllerGetKillDetail403 = {
-  message: string;
-};
-
-export type EventsRankingControllerGetKillDetail429 = {
-  message: string;
-};
-
 export type EventsRankingControllerUpdateKillPointPathParameters = {
  guildId: string,
     eventId: string,
     killId: string,
     killPointId: string,
  }
-export type EventsRankingControllerUpdateKillPoint401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsRankingControllerUpdateKillPoint403 = {
-  message: string;
-};
-
-export type EventsRankingControllerUpdateKillPoint429 = {
-  message: string;
-};
-
 export type EventsMonitoringControllerGetKillTimelineDataPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
     killId: string,
  }
-export type EventsMonitoringControllerGetKillTimelineData401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetKillTimelineData403 = {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetKillTimelineData429 = {
-  message: string;
-};
-
 export type EventsMonitoringControllerGetHeroCoverageGapsPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsMonitoringControllerGetHeroCoverageGaps401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetHeroCoverageGaps403 = {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetHeroCoverageGaps429 = {
-  message: string;
-};
-
 export type EventsMonitoringControllerGetMapCoverageGapsPathParameters = {
  guildId: string,
     eventId: string,
     mapId: string,
  }
-export type EventsMonitoringControllerGetMapCoverageGaps401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetMapCoverageGaps403 = {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetMapCoverageGaps429 = {
-  message: string;
-};
-
 export type EventsMonitoringControllerGetActiveGapForMapPathParameters = {
  guildId: string,
     eventId: string,
     mapId: string,
  }
-export type EventsMonitoringControllerGetActiveGapForMap401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetActiveGapForMap403 = {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetActiveGapForMap429 = {
-  message: string;
-};
-
 export type EventsMonitoringControllerGetActiveGapsForHeroPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsMonitoringControllerGetActiveGapsForHero401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetActiveGapsForHero403 = {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetActiveGapsForHero429 = {
-  message: string;
-};
-
 export type EventsMonitoringControllerGetHeroPresenceStatsPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsMonitoringControllerGetHeroPresenceStats401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetHeroPresenceStats403 = {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetHeroPresenceStats429 = {
-  message: string;
-};
-
 export type EventsMonitoringControllerGetHeroRespawnConfigPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsMonitoringControllerGetHeroRespawnConfig401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetHeroRespawnConfig403 = {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetHeroRespawnConfig429 = {
-  message: string;
-};
-
 export type EventsMonitoringControllerCloseRespawnWindowPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsMonitoringControllerCloseRespawnWindow401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsMonitoringControllerCloseRespawnWindow403 = {
-  message: string;
-};
-
-export type EventsMonitoringControllerCloseRespawnWindow429 = {
-  message: string;
-};
-
 export type EventsMonitoringControllerOpenRespawnWindowPathParameters = {
  guildId: string,
     eventId: string,
     heroId: string,
  }
-export type EventsMonitoringControllerOpenRespawnWindow401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsMonitoringControllerOpenRespawnWindow403 = {
-  message: string;
-};
-
-export type EventsMonitoringControllerOpenRespawnWindow429 = {
-  message: string;
-};
-
 export type ListPinnedEventsPathParameters = {
  guildId: string,
  }
-export type ListPinnedEvents401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type ListPinnedEvents403 = {
-  message: string;
-};
-
-export type ListPinnedEvents429 = {
-  message: string;
-};
-
 export type PinEventPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type PinEvent401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type PinEvent403 = {
-  message: string;
-};
-
-export type PinEvent429 = {
-  message: string;
-};
-
 export type UnpinEventPathParameters = {
  guildId: string,
     eventId: string,
  }
-export type UnpinEvent401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type UnpinEvent403 = {
-  message: string;
-};
-
-export type UnpinEvent429 = {
-  message: string;
-};
-
-export type MapsControllerGetMaps401 = {
-  message: string;
-};
-
-export type MapsControllerGetMaps403 = {
-  message: string;
-};
-
-export type MapsControllerGetMaps429 = {
-  message: string;
-};
-
 export type MapTemplatesControllerGetTemplatesPathParameters = {
  guildId: string,
  }
-export type MapTemplatesControllerGetTemplates401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MapTemplatesControllerGetTemplates403 = {
-  message: string;
-};
-
-export type MapTemplatesControllerGetTemplates429 = {
-  message: string;
-};
-
 export type MapTemplatesControllerCreateTemplatePathParameters = {
  guildId: string,
  }
-export type MapTemplatesControllerCreateTemplate401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MapTemplatesControllerCreateTemplate403 = {
-  message: string;
-};
-
-export type MapTemplatesControllerCreateTemplate429 = {
-  message: string;
-};
-
 export type MapTemplatesControllerUpdateTemplatePathParameters = {
  guildId: string,
     templateId: string,
  }
-export type MapTemplatesControllerUpdateTemplate401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MapTemplatesControllerUpdateTemplate403 = {
-  message: string;
-};
-
-export type MapTemplatesControllerUpdateTemplate429 = {
-  message: string;
-};
-
 export type MapTemplatesControllerDeleteTemplatePathParameters = {
  guildId: string,
     templateId: string,
  }
-export type MapTemplatesControllerDeleteTemplate401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type MapTemplatesControllerDeleteTemplate403 = {
-  message: string;
-};
-
-export type MapTemplatesControllerDeleteTemplate429 = {
-  message: string;
-};
-
-export type KillsControllerCreateKill401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type KillsControllerCreateKill403 = {
-  message: string;
-};
-
-export type KillsControllerCreateKill429 = {
-  message: string;
-};
-
 export type KillsControllerGetGuildKillStatsPathParameters = {
  guildId: string,
  }
@@ -11426,18 +9617,6 @@ export const KillsControllerGetGuildKillStatsPeriod = {
   all: 'all',
 } as const;
 
-export type KillsControllerGetGuildKillStats401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type KillsControllerGetGuildKillStats403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type KillsControllerGetGuildKillStats429 = {
-  message: string;
-};
-
 export type KillsControllerGetUserKillStatsParams = {
 npcTypes?: KillsControllerGetUserKillStatsNpcTypesItem[];
 npcType?: NpcType;
@@ -11484,18 +9663,6 @@ export const KillsControllerGetUserKillStatsPeriod = {
   all: 'all',
 } as const;
 
-export type KillsControllerGetUserKillStats401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type KillsControllerGetUserKillStats403 = {
-  message: string;
-};
-
-export type KillsControllerGetUserKillStats429 = {
-  message: string;
-};
-
 export type KillsControllerGetUserKillAnalyticsParams = {
 days?: KillsControllerGetUserKillAnalyticsDays;
 /**
@@ -11521,18 +9688,6 @@ export const KillsControllerGetUserKillAnalyticsDays = {
   NUMBER_365: '365',
 } as const;
 
-export type KillsControllerGetUserKillAnalytics401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type KillsControllerGetUserKillAnalytics403 = {
-  message: string;
-};
-
-export type KillsControllerGetUserKillAnalytics429 = {
-  message: string;
-};
-
 export type KillsControllerGetUserKillActivityParams = {
 /**
  * @minLength 1
@@ -11544,18 +9699,6 @@ world?: string;
  * @maxLength 100
  */
 characterId?: string;
-};
-
-export type KillsControllerGetUserKillActivity401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type KillsControllerGetUserKillActivity403 = {
-  message: string;
-};
-
-export type KillsControllerGetUserKillActivity429 = {
-  message: string;
 };
 
 export type KillsControllerGetUserNpcKillsParams = {
@@ -11640,18 +9783,6 @@ export const KillsControllerGetUserNpcKillsPeriod = {
   all: 'all',
 } as const;
 
-export type KillsControllerGetUserNpcKills401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type KillsControllerGetUserNpcKills403 = {
-  message: string;
-};
-
-export type KillsControllerGetUserNpcKills429 = {
-  message: string;
-};
-
 export type KillsControllerGetGuildTopNpcsPathParameters = {
  guildId: string,
  }
@@ -11698,18 +9829,6 @@ export const KillsControllerGetGuildTopNpcsPeriod = {
   all: 'all',
 } as const;
 
-export type KillsControllerGetGuildTopNpcs401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type KillsControllerGetGuildTopNpcs403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type KillsControllerGetGuildTopNpcs429 = {
-  message: string;
-};
-
 export type KillsControllerGetGuildTopKillersByTypePathParameters = {
  guildId: string,
  }
@@ -11735,18 +9854,6 @@ export const KillsControllerGetGuildTopKillersByTypePeriod = {
   '180d': '180d',
   all: 'all',
 } as const;
-
-export type KillsControllerGetGuildTopKillersByType401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type KillsControllerGetGuildTopKillersByType403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type KillsControllerGetGuildTopKillersByType429 = {
-  message: string;
-};
 
 export type KillsControllerGetNpcKillersPathParameters = {
  guildId: string,
@@ -11779,18 +9886,6 @@ export const KillsControllerGetNpcKillersPeriod = {
   '180d': '180d',
   all: 'all',
 } as const;
-
-export type KillsControllerGetNpcKillers401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type KillsControllerGetNpcKillers403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type KillsControllerGetNpcKillers429 = {
-  message: string;
-};
 
 export type KillsControllerGetMemberKillsPathParameters = {
  guildId: string,
@@ -11860,191 +9955,47 @@ export const KillsControllerGetMemberKillsPeriod = {
   all: 'all',
 } as const;
 
-export type KillsControllerGetMemberKills401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type KillsControllerGetMemberKills403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type KillsControllerGetMemberKills429 = {
-  message: string;
-};
-
 export type PublicGuildStatsCardControllerGetStatsCardPathParameters = {
  guildId: string,
  }
-export type PublicGuildStatsCardControllerGetStatsCard401 = {
-  message: string;
-};
-
-export type PublicGuildStatsCardControllerGetStatsCard403 = {
-  message: string;
-};
-
-export type PublicGuildStatsCardControllerGetStatsCard429 = {
-  message: string;
-};
-
 export type DocsControllerGetDocumentsPathParameters = {
  guildId: string,
  }
-export type DocsControllerGetDocuments401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DocsControllerGetDocuments403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type DocsControllerGetDocuments429 = {
-  message: string;
-};
-
 export type DocsControllerCreateDocumentPathParameters = {
  guildId: string,
  }
-export type DocsControllerCreateDocument401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DocsControllerCreateDocument403 = {
-  message: string;
-};
-
-export type DocsControllerCreateDocument429 = {
-  message: string;
-};
-
 export type DocsControllerGetTrashPathParameters = {
  guildId: string,
  }
-export type DocsControllerGetTrash401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DocsControllerGetTrash403 = {
-  message: string;
-};
-
-export type DocsControllerGetTrash429 = {
-  message: string;
-};
-
 export type DocsControllerGetHistoryPathParameters = {
  guildId: string,
     docId: string,
  }
-export type DocsControllerGetHistory401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DocsControllerGetHistory403 = {
-  message: string;
-};
-
-export type DocsControllerGetHistory429 = {
-  message: string;
-};
-
 export type DocsControllerGetHistorySnapshotPathParameters = {
  guildId: string,
     docId: string,
     historyId: string,
  }
-export type DocsControllerGetHistorySnapshot401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DocsControllerGetHistorySnapshot403 = {
-  message: string;
-};
-
-export type DocsControllerGetHistorySnapshot429 = {
-  message: string;
-};
-
 export type DocsControllerGetDocumentPathParameters = {
  guildId: string,
     docId: string,
  }
-export type DocsControllerGetDocument401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DocsControllerGetDocument403 = {
-  message: string;
-};
-
-export type DocsControllerGetDocument429 = {
-  message: string;
-};
-
 export type DocsControllerUpdateDocumentPathParameters = {
  guildId: string,
     docId: string,
  }
-export type DocsControllerUpdateDocument401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DocsControllerUpdateDocument403 = {
-  message: string;
-};
-
-export type DocsControllerUpdateDocument429 = {
-  message: string;
-};
-
 export type DocsControllerDeleteDocumentPathParameters = {
  guildId: string,
     docId: string,
  }
-export type DocsControllerDeleteDocument401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DocsControllerDeleteDocument403 = {
-  message: string;
-};
-
-export type DocsControllerDeleteDocument429 = {
-  message: string;
-};
-
 export type DocsControllerRestoreDocumentPathParameters = {
  guildId: string,
     docId: string,
  }
-export type DocsControllerRestoreDocument401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DocsControllerRestoreDocument403 = {
-  message: string;
-};
-
-export type DocsControllerRestoreDocument429 = {
-  message: string;
-};
-
 export type DocsControllerPurgeDocumentPathParameters = {
  guildId: string,
     docId: string,
  }
-export type DocsControllerPurgeDocument401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type DocsControllerPurgeDocument403 = {
-  message: string;
-};
-
-export type DocsControllerPurgeDocument429 = {
-  message: string;
-};
-
 export const getUsersControllerGetUserFeedUrl = () => {
 
 
@@ -13138,9 +11089,9 @@ export const getLootsControllerResolveLootItemByHidUrl = ({ guildId }: LootsCont
  * @summary Resolve loot item by HID
  */
 export const lootsControllerResolveLootItemByHid = async ({ guildId }: LootsControllerResolveLootItemByHidPathParameters,
-    params: LootsControllerResolveLootItemByHidParams, options?: Parameters<typeof mainFetch>[1]): Promise<NullableLootItemResponseDtoOutput> => {
+    params: LootsControllerResolveLootItemByHidParams, options?: Parameters<typeof mainFetch>[1]): Promise<NullableLootItemResponseDtoOutput | null> => {
 
-  return mainFetch<NullableLootItemResponseDtoOutput>(getLootsControllerResolveLootItemByHidUrl({ guildId },params),
+  return mainFetch<NullableLootItemResponseDtoOutput | null>(getLootsControllerResolveLootItemByHidUrl({ guildId },params),
   {
     ...options,
     method: 'GET'

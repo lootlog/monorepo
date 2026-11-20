@@ -14,15 +14,29 @@ import {
   updateLootlogConfigNpc,
 } from "./lootlog-config.handlers.js";
 
-const npc = {
+type LootlogConfigNpc = Effect.Success<
+  ReturnType<LootlogConfigData["Service"]["updateNpc"]>
+>;
+
+const npc: LootlogConfigNpc = {
   id: 1,
-  npcType: "HERO" as const,
-  allowedRarities: ["LEGENDARY" as const],
+  lootlogConfigId: "guild-a",
+  npcType: "HERO",
+  allowedRarities: ["LEGENDARY"],
+  createdAt: new Date(0),
+  updatedAt: new Date(1),
+};
+
+const config = {
+  id: "guild-a",
+  createdAt: new Date(0),
+  updatedAt: new Date(1),
+  npcs: [npc],
 };
 
 const makeData = (overrides: Partial<LootlogConfigData["Service"]> = {}) =>
   LootlogConfigData.of({
-    get: () => Effect.succeed({ id: "guild-a", npcs: [npc] }),
+    get: () => Effect.succeed(config),
     updateNpc: () => Effect.succeed(npc),
     ...overrides,
   });
@@ -107,15 +121,8 @@ describe("lootlog configuration response conversion", () => {
   });
 
   it("projects NPC database rows without exposing timestamps", async () => {
-    const source = {
-      ...npc,
-      lootlogConfigId: "guild-a",
-      createdAt: new Date(0),
-      updatedAt: new Date(1),
-    };
-
     const layer = provideServices(
-      makeData({ updateNpc: () => Effect.succeed(source) }),
+      makeData({ updateNpc: () => Effect.succeed(npc) }),
       authorization,
     );
 
@@ -126,9 +133,7 @@ describe("lootlog configuration response conversion", () => {
     );
 
     expect(response).toEqual(
-      await Effect.runPromise(
-        decodeDomainJson(NpcLootlogConfigResponse, source),
-      ),
+      await Effect.runPromise(decodeDomainJson(NpcLootlogConfigResponse, npc)),
     );
   });
 
@@ -137,8 +142,8 @@ describe("lootlog configuration response conversion", () => {
       makeData({
         get: () =>
           Effect.succeed({
-            id: "guild-a",
-            npcs: [{ ...npc, npcType: "HERO_TRACKER" as const }],
+            ...config,
+            npcs: [{ ...npc, npcType: "HERO_TRACKER" }],
           }),
       }),
       authorization,
@@ -152,15 +157,13 @@ describe("lootlog configuration response conversion", () => {
   });
 
   it("retains conversion of dates and nulls in open configuration fields", async () => {
-    for (const source of [
-      null,
-      {
-        id: "guild-a",
-        npcs: [npc],
-        createdAt: new Date(0),
-        extra: { dates: [new Date(1), null] },
-      },
-    ]) {
+    // A column added to the configuration row reaches the open response fields.
+    const withExtraColumn = {
+      ...config,
+      extra: { dates: [new Date(1), null] },
+    };
+
+    for (const source of [null, withExtraColumn]) {
       const layer = provideServices(
         makeData({ get: () => Effect.succeed(source) }),
         authorization,
@@ -179,32 +182,40 @@ describe("lootlog configuration response conversion", () => {
   });
 
   it("rejects malformed NPC fields and non-JSON open fields", async () => {
+    const layer = provideServices(
+      makeData({ updateNpc: () => Effect.succeed({ ...npc, id: Number.NaN }) }),
+      authorization,
+    );
+
+    const error = await Effect.runPromise(
+      Effect.flip(
+        updateLootlogConfigNpc("guild-a", 1, { allowedRarities: [] }).pipe(
+          Effect.provide(layer),
+        ),
+      ),
+    );
+
+    expect(error._tag).toBe("LootlogConfigOperationError");
+
+    // Values outside the database enums cannot come from the typed port, so
+    // the response boundary that receives them is checked directly.
     for (const source of [
-      { ...npc, id: Number.NaN },
       { ...npc, npcType: "INVALID" },
       { ...npc, allowedRarities: [null] },
     ]) {
-      const layer = provideServices(
-        makeData({ updateNpc: () => Effect.succeed(source) }),
-        authorization,
+      const exit = await Effect.runPromiseExit(
+        decodeDomainJson(NpcLootlogConfigResponse, source),
       );
 
-      const error = await Effect.runPromise(
-        Effect.flip(
-          updateLootlogConfigNpc("guild-a", 1, { allowedRarities: [] }).pipe(
-            Effect.provide(layer),
-          ),
-        ),
-      );
-
-      expect(error._tag).toBe("LootlogConfigOperationError");
+      expect(exit._tag).toBe("Failure");
     }
 
     for (const extra of [undefined, 1n]) {
+      // A column with a non-JSON value reaches the open response fields.
+      const withExtraColumn = { ...config, extra };
+
       const layer = provideServices(
-        makeData({
-          get: () => Effect.succeed({ id: "guild-a", npcs: [npc], extra }),
-        }),
+        makeData({ get: () => Effect.succeed(withExtraColumn) }),
         authorization,
       );
 

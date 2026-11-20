@@ -1,10 +1,6 @@
 /** Endpoints owned by the public-battles HTTP module. */
-import {
-  HttpApiEndpoint,
-  HttpApiGroup,
-  HttpApiSchema,
-  OpenApi,
-} from "effect/http-api";
+import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
+import { NotFound } from "../errors.js";
 import {
   PublicBattlesControllerGetPublicBattle200,
   PublicBattlesControllerGetPublicBattlePathParams,
@@ -21,7 +17,7 @@ export class PublicBattlesGroup extends HttpApiGroup.make("public-battles").add(
     {
       params: PublicBattlesControllerGetPublicBattlePathParams,
       success: PublicBattlesControllerGetPublicBattle200,
-      error: HttpApiSchema.Empty(404),
+      error: NotFound,
     },
   )
     .annotate(OpenApi.Identifier, "PublicBattlesController_getPublicBattle")
@@ -32,7 +28,7 @@ export class PublicBattlesGroup extends HttpApiGroup.make("public-battles").add(
     {
       params: PublicBattlesControllerGetPublicBattleRawPathParams,
       success: PublicBattlesControllerGetPublicBattleRaw200,
-      error: HttpApiSchema.Empty(404),
+      error: NotFound,
     },
   )
     .annotate(OpenApi.Identifier, "PublicBattlesController_getPublicBattleRaw")
@@ -43,7 +39,7 @@ export class PublicBattlesGroup extends HttpApiGroup.make("public-battles").add(
     {
       params: PublicBattlesControllerGetPublicBattleTimelinePathParams,
       success: PublicBattlesControllerGetPublicBattleTimeline200,
-      error: HttpApiSchema.Empty(404),
+      error: NotFound,
     },
   )
     .annotate(

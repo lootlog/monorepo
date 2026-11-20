@@ -22,7 +22,7 @@ import {
   isRecurringScheduleInterval,
   isValidTimeZone,
 } from "#src/notifications/rules/notification-schedule-time";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 
 const MAX_NPCS_PER_RULE = 5;
 

@@ -18,8 +18,7 @@ import {
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/cache";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 
 interface EventDeletionJob {
   readonly eventId: string;
@@ -36,7 +35,6 @@ export const makeEventDeletion =
     database: typeof ApiDatabase.Service,
     redis: Pick<RedisService, "deleteByPattern" | "invalidateScopes">,
     queue: EventDeletionQueue,
-    logger: Pick<Logger, "warn">,
   ) =>
   (
     guild: { id: string },
@@ -141,7 +139,6 @@ export const makeEventDeletion =
 
       yield* invalidateEventCache(
         redis,
-        logger,
         guild.id,
         eventId,
         "Failed to invalidate event cache",

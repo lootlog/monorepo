@@ -37,7 +37,13 @@ const namedBattle = (name: string, createdAt: Date) => {
   return battle;
 };
 
-const idOf = (name: string) => namedBattleIds.get(name);
+const idOf = (name: string) => {
+  const id = namedBattleIds.get(name);
+
+  if (!id) throw new Error(`Battle ${name} was not created`);
+
+  return id;
+};
 
 const characters = ["hero-1", "hero-2"];
 
@@ -104,7 +110,7 @@ beforeAll(async () => {
       new Date(Date.UTC(2024, index < 8 ? 0 : 2, index + 1)),
     );
 
-    const characterId = characters[index % 2];
+    const characterId = characters[index % 2]!;
     const owner = index === 13 ? "foreign" : "owner";
     const isLoss = index % 3 === 0;
     await runtime.runPromise(
@@ -262,7 +268,9 @@ it("folds combat history across tied-date batches without losing team matchups o
           blockedDamage: 20,
           damageTaken: 200,
           blocks: 2,
-          spellsUsedMap: index % 2 === 0 ? { "102": 2 } : { "101": 3 },
+          spellsUsedMap: {
+            [index % 2 === 0 ? "102" : "101"]: index % 2 === 0 ? 2 : 3,
+          },
         },
         {
           battleId: battle.id,

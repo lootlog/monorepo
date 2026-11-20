@@ -4,7 +4,7 @@ import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { and, eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer, Option, Schema } from "effect";
 import {
-  API_KEY_ERROR_MESSAGES,
+  API_KEY_ERRORS,
   API_KEY_HEADER,
   AUTH_DISCORD_ID_HEADER,
   AUTH_USER_ID_HEADER,
@@ -17,7 +17,16 @@ import { authApiKeys, authUsers } from "#src/database/drizzle.schema";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { AppConfig } from "#src/config/env";
 import { AuthRedisStorage } from "./storage/auth-redis-storage.js";
-import { HttpResponseError } from "#src/auth/auth-service";
+import {
+  type ApplicationError,
+  AuthenticationRequiredError,
+  DependencyUnavailableError,
+  InvalidRequestError,
+  PermissionDeniedError,
+  RateLimitedError,
+  ResourceConflictError,
+  ResourceNotFoundError,
+} from "@lootlog/protocol/http/errors";
 
 const Name = Schema.Trim.check(Schema.isMinLength(1), Schema.isMaxLength(80));
 
@@ -37,9 +46,6 @@ export const ApiKeySummary = Schema.Struct({
   createdAt: Schema.String,
   expiresAt: Schema.NullOr(Schema.String),
 });
-
-const failure = (status: number, message: string) =>
-  new HttpResponseError({ status, body: { message } });
 
 const decodeGrant = Schema.decodeUnknownOption(
   Schema.fromJsonString(ApiKeyGrant),
@@ -110,42 +116,39 @@ export class ApiKeyService extends Context.Service<
     readonly session: (
       headers: Headers,
       requireOrigin?: boolean,
-    ) => Effect.Effect<string, HttpResponseError>;
+    ) => Effect.Effect<string, ApplicationError>;
     readonly list: (
       userId: string,
     ) => Effect.Effect<
       { keys: ReadonlyArray<typeof ApiKeySummary.Type> },
-      HttpResponseError
+      ApplicationError
     >;
     readonly create: (
       userId: string,
       input: typeof CreateApiKey.Type,
     ) => Effect.Effect<
       typeof ApiKeySummary.Type & { key: string },
-      HttpResponseError
+      ApplicationError
     >;
     readonly rename: (
       userId: string,
       keyId: string,
       name: string,
-    ) => Effect.Effect<typeof ApiKeySummary.Type, HttpResponseError>;
+    ) => Effect.Effect<typeof ApiKeySummary.Type, ApplicationError>;
     readonly remove: (
       userId: string,
       keyId: string,
-    ) => Effect.Effect<{ success: true }, HttpResponseError>;
+    ) => Effect.Effect<{ success: true }, ApplicationError>;
     readonly verify: (
       key: string,
     ) => Effect.Effect<
       { userId: string; discordId: string; apiKeyAccess: ApiKeyAccess },
-      HttpResponseError
+      ApplicationError
     >;
     readonly statuses: (
       headers: Headers,
       keyIds: ReadonlyArray<string>,
-    ) => Effect.Effect<
-      { keys: ReadonlyArray<ApiKeyStatus> },
-      HttpResponseError
-    >;
+    ) => Effect.Effect<{ keys: ReadonlyArray<ApiKeyStatus> }, ApplicationError>;
   }
 >()("@lootlog/auth/ApiKeyService") {
   static readonly layer = Layer.effect(
@@ -159,7 +162,9 @@ export class ApiKeyService extends Context.Service<
 
       const query = <A, E>(effect: Effect.Effect<A, E>) =>
         effect.pipe(
-          Effect.mapError(() => failure(503, "API key service unavailable")),
+          Effect.mapError(
+            () => new DependencyUnavailableError("API key service unavailable"),
+          ),
         );
 
       const readStatuses = Effect.fn("ApiKeyService.readStatuses")(function* (
@@ -200,7 +205,7 @@ export class ApiKeyService extends Context.Service<
 
         const key = rows[0];
 
-        if (!key) return yield* failure(404, "API key not found");
+        if (!key) return yield* new ResourceNotFoundError("API key not found");
 
         return key;
       });
@@ -211,22 +216,26 @@ export class ApiKeyService extends Context.Service<
           requireOrigin = true,
         ) {
           if (headers.has(API_KEY_HEADER) || headers.has("authorization"))
-            return yield* failure(401, API_KEY_ERROR_MESSAGES.sessionRequired);
+            return yield* new AuthenticationRequiredError(
+              API_KEY_ERRORS.sessionRequired,
+            );
           const origin = headers.get("origin");
 
           if (
             (requireOrigin && !origin) ||
             (origin !== null && !config.trustedOrigins.includes(origin))
           )
-            return yield* failure(403, "Origin not allowed");
+            return yield* new PermissionDeniedError("Origin not allowed");
 
           const session = yield* Effect.tryPromise({
             try: () => auth.api.getSession({ headers }),
-            catch: () => failure(503, "Session unavailable"),
+            catch: () => new DependencyUnavailableError("Session unavailable"),
           });
 
           if (!session)
-            return yield* failure(401, API_KEY_ERROR_MESSAGES.sessionRequired);
+            return yield* new AuthenticationRequiredError(
+              API_KEY_ERRORS.sessionRequired,
+            );
 
           const users = yield* query(
             database
@@ -239,7 +248,9 @@ export class ApiKeyService extends Context.Service<
           const user = users[0];
 
           if (!user || isUserBanned(user, Date.now()))
-            return yield* failure(401, API_KEY_ERROR_MESSAGES.sessionRequired);
+            return yield* new AuthenticationRequiredError(
+              API_KEY_ERRORS.sessionRequired,
+            );
 
           return user.id;
         }),
@@ -262,19 +273,17 @@ export class ApiKeyService extends Context.Service<
         }),
         create: Effect.fn("ApiKeyService.create")(function* (userId, input) {
           if (config.apiKeysEnabled !== true)
-            return yield* failure(403, API_KEY_ERROR_MESSAGES.disabled);
+            return yield* new PermissionDeniedError(API_KEY_ERRORS.disabled);
 
           if (input.organizationIds.length === 0 && !input.personalData)
-            return yield* failure(
-              400,
+            return yield* new InvalidRequestError(
               "Select an organization or personal data",
             );
 
           if (input.organizationIds.length > 0) {
             if (!config.apiUrl)
-              return yield* failure(
-                503,
-                API_KEY_ERROR_MESSAGES.organizationServiceUnavailable,
+              return yield* new DependencyUnavailableError(
+                API_KEY_ERRORS.organizationServiceUnavailable,
               );
 
             const users = yield* query(
@@ -288,9 +297,8 @@ export class ApiKeyService extends Context.Service<
             const user = users[0];
 
             if (!user)
-              return yield* failure(
-                401,
-                API_KEY_ERROR_MESSAGES.sessionRequired,
+              return yield* new AuthenticationRequiredError(
+                API_KEY_ERRORS.sessionRequired,
               );
 
             const organizations = yield* client
@@ -313,11 +321,11 @@ export class ApiKeyService extends Context.Service<
                   ),
                 ),
                 Effect.timeout("5 seconds"),
-                Effect.mapError(() =>
-                  failure(
-                    503,
-                    API_KEY_ERROR_MESSAGES.organizationServiceUnavailable,
-                  ),
+                Effect.mapError(
+                  () =>
+                    new DependencyUnavailableError(
+                      API_KEY_ERRORS.organizationServiceUnavailable,
+                    ),
                 ),
               );
 
@@ -332,9 +340,8 @@ export class ApiKeyService extends Context.Service<
             );
 
             if (input.organizationIds.some((id) => !allowed.has(id)))
-              return yield* failure(
-                403,
-                API_KEY_ERROR_MESSAGES.organizationAccessRequired,
+              return yield* new PermissionDeniedError(
+                API_KEY_ERRORS.organizationAccessRequired,
               );
           }
 
@@ -346,10 +353,15 @@ export class ApiKeyService extends Context.Service<
           );
 
           if (rows.filter((row) => active(row, Date.now())).length >= 10)
-            return yield* failure(409, API_KEY_ERROR_MESSAGES.limitReached);
+            return yield* new ResourceConflictError(
+              API_KEY_ERRORS.limitReached,
+            );
           const api = auth.apiKeys;
 
-          if (!api) return yield* failure(503, "API keys unavailable");
+          if (!api)
+            return yield* new DependencyUnavailableError(
+              "API keys unavailable",
+            );
 
           const body: NonNullable<
             Parameters<typeof api.createApiKey>[0]
@@ -367,14 +379,17 @@ export class ApiKeyService extends Context.Service<
 
           const created = yield* Effect.tryPromise({
             try: () => api.createApiKey({ body }),
-            catch: () => failure(503, API_KEY_ERROR_MESSAGES.creationFailed),
+            catch: () =>
+              new DependencyUnavailableError(API_KEY_ERRORS.creationFailed),
           });
 
           const row = yield* owned(userId, created.id);
           const value = summary(row);
 
           if (!value)
-            return yield* failure(503, "API key metadata unavailable");
+            return yield* new DependencyUnavailableError(
+              "API key metadata unavailable",
+            );
 
           return { ...value, key: created.key };
         }),
@@ -391,7 +406,8 @@ export class ApiKeyService extends Context.Service<
 
           const value = rows[0] ? summary(rows[0]) : null;
 
-          if (!value) return yield* failure(404, "API key not found");
+          if (!value)
+            return yield* new ResourceNotFoundError("API key not found");
 
           return value;
         }),
@@ -407,7 +423,9 @@ export class ApiKeyService extends Context.Service<
         }),
         verify: Effect.fn("ApiKeyService.verify")(function* (key) {
           if (config.apiKeysEnabled !== true)
-            return yield* failure(401, API_KEY_ERROR_MESSAGES.disabled);
+            return yield* new AuthenticationRequiredError(
+              API_KEY_ERRORS.disabled,
+            );
 
           // Read-only on purpose: Better Auth's verifyApiKey writes the key
           // row twice per call (lastRequest, updatedAt) and cannot be told
@@ -425,22 +443,27 @@ export class ApiKeyService extends Context.Service<
 
           const row = rows[0];
 
-          if (!row) return yield* failure(401, "API key rejected");
+          if (!row)
+            return yield* new AuthenticationRequiredError("API key rejected");
 
           const keyId = row.key.id;
           const status = statusFor(keyId, row, Date.now());
 
-          if (!status.valid) return yield* failure(401, "API key rejected");
+          if (!status.valid)
+            return yield* new AuthenticationRequiredError("API key rejected");
 
-          const allowed = yield* rateLimits
+          const rateLimit = yield* rateLimits
             .consumeApiKeyRateLimit(keyId)
             .pipe(
-              Effect.mapError(() =>
-                failure(503, "API key verification unavailable"),
+              Effect.mapError(
+                () =>
+                  new DependencyUnavailableError(
+                    "API key verification unavailable",
+                  ),
               ),
             );
 
-          if (!allowed) {
+          if (!rateLimit.allowed) {
             yield* Effect.logWarning("API key rate limit exceeded", {
               context: "ApiKeyService",
               code: "RATE_LIMITED",
@@ -449,7 +472,10 @@ export class ApiKeyService extends Context.Service<
               discordId: status.discordId,
             });
 
-            return yield* failure(429, "API key rejected");
+            return yield* new RateLimitedError({
+              message: "API key rejected",
+              retryAfterMs: rateLimit.retryAfterMs,
+            });
           }
 
           return {
@@ -465,7 +491,7 @@ export class ApiKeyService extends Context.Service<
               config.apiKeyStatusSecret,
             )
           )
-            return yield* failure(401, "Unauthorized");
+            return yield* new AuthenticationRequiredError("Unauthorized");
 
           if (config.apiKeysEnabled !== true)
             return {

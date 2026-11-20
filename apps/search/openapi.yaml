@@ -14,39 +14,30 @@ paths:
       responses:
         "200":
           description: Search service is healthy
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Check the health status of the search service
       summary: Health check
   /players:
@@ -84,60 +75,88 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PlayerHitDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SearchUnavailableEncoded"
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Search players by name
 components:
   schemas:
-    SearchUnavailableEncoded:
+    RequestValidationError:
       type: object
       properties:
-        _tag:
+        code:
           type: string
           enum:
-            - SearchUnavailable
+            - VALIDATION_ERROR
         message:
           type: string
+        details:
+          type: object
+          properties:
+            issues:
+              type: array
+              items:
+                type: object
+                properties:
+                  path:
+                    type: array
+                    items:
+                      anyOf:
+                        - type: string
+                        - type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                  message:
+                    type: string
+                required:
+                  - path
+                  - message
+          required:
+            - issues
       required:
-        - _tag
+        - code
         - message
+        - details
+    HttpErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          nullable: true
+          type: string
+        details:
+          nullable: true
+          type: object
+      required:
+        - code
     PlayerHitDto_Output:
       type: object
       properties:

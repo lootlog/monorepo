@@ -1,6 +1,7 @@
 import { Effect, Predicate } from "effect";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
+import type { RedisError } from "effect/persistence/Redis";
 import { isOrganizationIdLike } from "@lootlog/domain/organization-vanity-url";
 
 const GUILD_CACHE_TTL_SECONDS = 3600;
@@ -21,15 +22,15 @@ export const getGuildCacheKey = (idOrVanityUrl: string) =>
     isOrganizationIdLike(idOrVanityUrl) ? "id" : "vanity"
   }:${idOrVanityUrl}`;
 
-/** The `RedisEffects` commands an Organization lookup cache needs. */
+/** The `RedisService` commands an Organization lookup cache needs. */
 export interface GuildConfigurationCache {
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
-  readonly del: (key: string) => Effect.Effect<unknown, unknown>;
+  readonly del: (key: string) => Effect.Effect<void, RedisError>;
   readonly set: (
     key: string,
     value: string,
     ttl: number,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
 }
 
 const decodeGuildObject = (cached: string) => {

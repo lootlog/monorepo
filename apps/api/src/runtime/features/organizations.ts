@@ -82,7 +82,7 @@ export const guildDiscordSyncLive = Layer.effect(
 
 export const organizationContextLookup = Layer.unwrap(
   Effect.gen(function* () {
-    const { effect: redis } = yield* ApiRedis;
+    const redis = yield* ApiRedis;
     const { refresh } = yield* MemberServices;
 
     return OrganizationContextLookup.layerDatabase(
@@ -150,9 +150,9 @@ export const accountOrganizationOperationsLive = Layer.effect(
               : Effect.fail(new Error("Unexpected Battlelog cleanup response")),
           ),
         ),
-      invalidateCacheScopes: redis.effect.invalidateScopes,
-      deleteCacheKey: redis.effect.del,
-      deleteCachePattern: (pattern) => redis.effect.deleteByPattern(pattern),
+      invalidateCacheScopes: redis.invalidateScopes,
+      deleteCacheKey: redis.del,
+      deleteCachePattern: (pattern) => redis.deleteByPattern(pattern),
       publishMemberRemoved: (payload) =>
         rabbit.publish(
           eventMessage(RabbitRoutingKey.GUILDS_MEMBERS_REMOVE, payload),
@@ -172,10 +172,10 @@ export const accountOrganizationOperationsLive = Layer.effect(
       database,
       {
         getCached: (key) =>
-          redis.effect.getJson(key, makeJsonCodec(GuildSummaryCacheSchema)),
-        setCached: (key, value, ttl) => redis.effect.setJson(key, value, ttl),
-        setIfAbsent: redis.effect.setNX,
-        deleteCached: redis.effect.del,
+          redis.getJson(key, makeJsonCodec(GuildSummaryCacheSchema)),
+        setCached: (key, value, ttl) => redis.setJson(key, value, ttl),
+        setIfAbsent: redis.setNX,
+        deleteCached: redis.del,
         queueRefresh: refresh.queueMemberRefresh,
       },
       config.environment,
@@ -222,8 +222,8 @@ export const accountOrganizationData = Layer.effect(
 export const internalGuildsData = Layer.unwrap(
   Effect.map(ApiRedis, (redis) =>
     InternalGuildsData.layerDatabase({
-      ...redis.effect,
-      getOrSetJsonEffect: redis.effect.getOrSetJson,
+      ...redis,
+      getOrSetJsonEffect: redis.getOrSetJson,
     }),
   ),
 );
@@ -236,7 +236,7 @@ export const rolesData = Layer.unwrap(
     return RolesData.layerDatabase(
       {
         invalidateUserGuildPermissions: (discordId) =>
-          redis.effect
+          redis
             .invalidateScopes(getUserGuildPermissionsCacheScope(discordId))
             .pipe(
               Effect.mapError(
@@ -244,7 +244,7 @@ export const rolesData = Layer.unwrap(
               ),
             ),
         deleteByPattern: (pattern) =>
-          redis.effect.deleteByPattern(pattern).pipe(
+          redis.deleteByPattern(pattern).pipe(
             Effect.asVoid,
             Effect.mapError(
               (cause) => new OrganizationWorkspaceOperationError({ cause }),
@@ -264,7 +264,5 @@ export const rolesData = Layer.unwrap(
 );
 
 export const guildConfigurationData = Layer.unwrap(
-  Effect.map(ApiRedis, (redis) =>
-    GuildConfigurationData.layerDatabase(redis.effect),
-  ),
+  Effect.map(ApiRedis, (redis) => GuildConfigurationData.layerDatabase(redis)),
 );

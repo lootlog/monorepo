@@ -13,9 +13,14 @@ export const isSessionSignedOut = (
   session: Pick<SessionState, "data" | "error" | "isPending">,
 ): boolean => !session.isPending && !session.error && !session.data;
 
-export const isSignedOut = (): boolean => {
-  // `value` reads the atom without mounting it, so this never starts a request.
-  const session: SessionState = authClient.$store.atoms.session.value;
-
-  return isSessionSignedOut(session);
+// SAFETY: Better Auth's client config always registers the `session` atom
+// (getSessionAtom in better-auth/client/config); `atoms` is typed only as a
+// string record.
+const sessionAtom = authClient.$store.atoms.session as {
+  readonly value: SessionState;
 };
+
+/** Reads the session atom without mounting it, so this never starts a request. */
+export const readSession = (): SessionState => sessionAtom.value;
+
+export const isSignedOut = (): boolean => isSessionSignedOut(readSession());

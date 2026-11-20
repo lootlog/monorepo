@@ -50,13 +50,27 @@ const member = {
   updatedAt: new Date("2026-09-02T12:00:00.000Z"),
 };
 
+const refreshJob = {
+  id: 7,
+  guildId: "guild-a",
+  requestedBy: identity.discordId,
+  status: "PENDING" as const,
+  totalMembers: 1,
+  processedMembers: 0,
+  failedMembers: 0,
+  completedAt: null,
+  createdAt: new Date("2026-09-02T12:00:00.000Z"),
+  updatedAt: new Date("2026-09-02T12:00:00.000Z"),
+  nextAvailableAt: new Date("2026-09-02T12:05:00.000Z"),
+};
+
 const makeData = (overrides: Partial<MembersData["Service"]> = {}) =>
   MembersData.of({
     getMe: () => Effect.succeed(member),
     findStoredMember: () => Effect.succeed(member),
     refreshMember: () => Effect.succeed(member),
     deactivateMember: () => Effect.succeed({ ...member, active: false }),
-    refreshAllMembers: () => Effect.succeed({}),
+    refreshAllMembers: () => Effect.succeed(refreshJob),
     ...overrides,
   });
 
@@ -65,13 +79,21 @@ const makeRefreshJobData = (
 ) =>
   MemberRefreshJobData.of({
     getLatestRefreshJob: () => Effect.succeed(null),
-    getRefreshJobStatus: () => Effect.succeed({}),
+    getRefreshJobStatus: () => Effect.succeed(refreshJob),
     ...overrides,
   });
 
 const makeReadData = (overrides: Partial<MemberReadData["Service"]> = {}) =>
   MemberReadData.of({
-    getLootlogConfigSummary: () => Effect.succeed({}),
+    getLootlogConfigSummary: () =>
+      Effect.succeed({
+        memberUserId: member.userId,
+        guildId: "guild-a",
+        isActive: true,
+        configuredCharacterCount: 0,
+        enabledCharacterCount: 0,
+        characters: [],
+      }),
     getGuildMembers: () => Effect.succeed([]),
     getGuildMemberReferences: () => Effect.succeed([]),
     getGuildMembersSummary: () => Effect.succeed([]),

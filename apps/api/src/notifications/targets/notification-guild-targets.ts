@@ -27,7 +27,7 @@ import {
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 
 export interface NotificationGuildChannels {
   readonly selectable: (guildId: string) => Effect.Effect<
@@ -54,7 +54,7 @@ export interface NotificationPendingJobs {
   readonly cancel: (filters: {
     readonly targetId?: number;
     readonly ruleId?: number;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
 }
 
 export const makeNotificationGuildTargets = (

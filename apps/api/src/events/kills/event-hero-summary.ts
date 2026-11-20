@@ -15,8 +15,7 @@ import {
 } from "#src/database/drizzle/event.schema";
 import { guildKillSource } from "#src/kills/kill-source";
 import { makeTypeJsonCodec, type RedisService } from "#src/redis/redis.service";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { EventHeroStatsResponse } from "#src/events/kills/event-kill-response.schema";
 
@@ -24,9 +23,8 @@ const organizationKills = guildKillSource();
 
 export const makeEventHeroSummary = (
   database: typeof ApiDatabase.Service,
-  redis: RedisService,
+  redis: Pick<RedisService, "getOrSetJson">,
   timers: EventTimersPort,
-  logger: Logger,
 ) => {
   const query = adapterOperation("events.hero-summary.drizzle");
 
@@ -68,13 +66,13 @@ export const makeEventHeroSummary = (
     const codec = makeTypeJsonCodec(schema);
 
     return redis
-      .getOrSetJsonEffect({
+      .getOrSetJson({
         ...eventReadCacheEntry(guildId, eventId, "hero-stats-v2"),
         codec,
         ttlSeconds: 10,
         factory: load,
         onError: (error) =>
-          logger.warn("Event hero stats cache unavailable", error),
+          Effect.logWarning("Event hero stats cache unavailable", error),
       })
       .pipe(withAdapterSpan("events.heroSummary.cache", "events.redis"));
   };

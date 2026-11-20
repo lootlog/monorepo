@@ -37,7 +37,6 @@ import { makeNotificationJobScheduler } from "#src/notifications/jobs/notificati
 import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job.repository";
 import { makeNotificationMatching } from "#src/notifications/rules/notification-matching.service";
 import { makeNotificationGuildTargets } from "#src/notifications/targets/notification-guild-targets";
-import { applicationLogger } from "#src/shared/application-logger";
 import { makeAutoTimer } from "#src/timers/timer-auto.data-layer";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
@@ -458,7 +457,6 @@ describe("notification job rebuild", () => {
         delivery: () => Effect.void,
         rebuild: fixture.makeRebuild(false),
         content: makeNotificationContent(),
-        logger: applicationLogger,
       });
 
       await fixture.boundary.run(
@@ -587,7 +585,6 @@ describe("notification job rebuild", () => {
         delivery: () => Effect.void,
         rebuild: fixture.makeRebuild(true),
         content: makeNotificationContent(),
-        logger: applicationLogger,
       });
 
       const published: string[] = [];
@@ -740,7 +737,6 @@ describe("notification job rebuild", () => {
               : rebuild.rebuildTimer(ruleIds, event),
         },
         content: makeNotificationContent(),
-        logger: applicationLogger,
       });
 
       const event = {
@@ -852,7 +848,6 @@ describe("notification job rebuild", () => {
         delivery: () => Effect.void,
         rebuild: fixture.makeRebuild(false),
         content: makeNotificationContent(),
-        logger: applicationLogger,
       });
 
       const member = {

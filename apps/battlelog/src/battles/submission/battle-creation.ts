@@ -1,7 +1,7 @@
 import {
   ApplicationError,
   InvalidRequestError,
-} from "#src/infrastructure/http-error";
+} from "@lootlog/protocol/http/errors";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ContextLogger } from "@lootlog/instrumentation";
 import { and, eq, gte, lt } from "drizzle-orm";
@@ -218,51 +218,48 @@ export const makeBattleCreation = (
                   if (!claimed) return null;
                 }
 
-                const [insertedBattle] = yield* tx
-                  .insert(battles)
-                  .values({
-                    ...battleId,
-                    userId,
-                    updatedAt: new Date(now),
-                    accountId: data.accountId,
-                    characterId: data.characterId,
-                    semanticFingerprint,
-                    world: data.world,
-                    duration: analysis.duration,
-                    type: analysis.type,
-                    winner: analysis.outcome.winner,
-                    loser: analysis.outcome.loser,
-                    winningTeam: analysis.outcome.winningTeam,
-                    losingTeam: analysis.outcome.losingTeam,
-                    hasFlee: analysis.outcome.hasFlee,
-                    unfinished: analysis.outcome.unfinished,
-                    matchmaking: !!analysis.matchmaking,
-                    ...(analysis.matchmaking && {
-                      difficultyRank: analysis.matchmaking.difficultyRank,
-                      result: analysis.matchmaking.result,
-                      ratingDelta: analysis.matchmaking.ratingDelta,
-                      opponentLvl: analysis.matchmaking.opponentLvl,
-                      opponentOplvl: analysis.matchmaking.opponentOplvl,
-                      opponentRating: analysis.matchmaking.opponentRating,
-                      rating: analysis.matchmaking.rating,
-                      status: analysis.matchmaking.status,
-                      pointsGained: analysis.matchmaking.pointsGained,
-                      placementCur: analysis.matchmaking.placementCur,
-                      placementMax: analysis.matchmaking.placementMax,
-                      dailyStageId: analysis.matchmaking.dailyStageId,
-                      dailyPointsCur: analysis.matchmaking.dailyPointsCur,
-                      dailyPointsMax: analysis.matchmaking.dailyPointsMax,
-                      dailyPointsStep: analysis.matchmaking.dailyPointsStep,
-                      dailyRewardsLast: analysis.matchmaking.dailyRewardsLast,
-                      dailyRewardsCur: analysis.matchmaking.dailyRewardsCur,
-                      dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
-                    }),
-                  })
-                  .returning({ id: battles.id });
+                yield* tx.insert(battles).values({
+                  ...battleId,
+                  userId,
+                  updatedAt: new Date(now),
+                  accountId: data.accountId,
+                  characterId: data.characterId,
+                  semanticFingerprint,
+                  world: data.world,
+                  duration: analysis.duration,
+                  type: analysis.type,
+                  winner: analysis.outcome.winner,
+                  loser: analysis.outcome.loser,
+                  winningTeam: analysis.outcome.winningTeam,
+                  losingTeam: analysis.outcome.losingTeam,
+                  hasFlee: analysis.outcome.hasFlee,
+                  unfinished: analysis.outcome.unfinished,
+                  matchmaking: !!analysis.matchmaking,
+                  ...(analysis.matchmaking && {
+                    difficultyRank: analysis.matchmaking.difficultyRank,
+                    result: analysis.matchmaking.result,
+                    ratingDelta: analysis.matchmaking.ratingDelta,
+                    opponentLvl: analysis.matchmaking.opponentLvl,
+                    opponentOplvl: analysis.matchmaking.opponentOplvl,
+                    opponentRating: analysis.matchmaking.opponentRating,
+                    rating: analysis.matchmaking.rating,
+                    status: analysis.matchmaking.status,
+                    pointsGained: analysis.matchmaking.pointsGained,
+                    placementCur: analysis.matchmaking.placementCur,
+                    placementMax: analysis.matchmaking.placementMax,
+                    dailyStageId: analysis.matchmaking.dailyStageId,
+                    dailyPointsCur: analysis.matchmaking.dailyPointsCur,
+                    dailyPointsMax: analysis.matchmaking.dailyPointsMax,
+                    dailyPointsStep: analysis.matchmaking.dailyPointsStep,
+                    dailyRewardsLast: analysis.matchmaking.dailyRewardsLast,
+                    dailyRewardsCur: analysis.matchmaking.dailyRewardsCur,
+                    dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
+                  }),
+                });
 
                 const warriorValues = analysis.warriors.map(
                   (warrior: Warrior) => ({
-                    battleId: insertedBattle.id,
+                    battleId: battleId.id,
                     originalId: warrior.originalId,
                     name: warrior.name,
                     lvl: warrior.lvl,
@@ -364,12 +361,12 @@ export const makeBattleCreation = (
                   })),
                 );
                 yield* tx.insert(battleTimelines).values({
-                  battleId: insertedBattle.id,
+                  battleId: battleId.id,
                   userId,
                   events: encodeBattleEvents(data.events),
                 });
 
-                return insertedBattle;
+                return { id: battleId.id };
               }),
             )
             .pipe(

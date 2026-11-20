@@ -153,7 +153,7 @@ describe("notification job recovery", () => {
         ]),
       );
       expect(queued.map(({ id }) => id).toSorted()).toEqual(
-        ["lost", "timer", next?.id].toSorted(),
+        ["lost", "timer", next!.id].toSorted(),
       );
     } finally {
       await boundary.dispose();

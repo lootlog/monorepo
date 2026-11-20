@@ -3,7 +3,7 @@ import { describe, expect, it, mock } from "bun:test";
 import { NotificationTargetType } from "@lootlog/schema/notifications";
 import { Effect } from "effect";
 
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import { makeNotificationUserTargets } from "#src/notifications/targets/notification-user-targets";
 
 describe("notification user targets Effect module", () => {

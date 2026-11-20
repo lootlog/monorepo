@@ -110,7 +110,7 @@ for (const permitted of [true, false]) {
 
       expect(jobs).toHaveLength(1);
       expect(jobs[0]?.status).toBe(permitted ? "PENDING" : "BLOCKED");
-      expect(queued).toEqual(permitted ? [{ id: jobs[0]?.id, delay: 0 }] : []);
+      expect(queued).toEqual(permitted ? [{ id: jobs[0]!.id, delay: 0 }] : []);
     } finally {
       await boundary.dispose();
     }

@@ -21,7 +21,7 @@ import {
   InvalidRequestError,
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { UpdateEventRequest } from "#src/contracts/events/schemas";
 import { makeEventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import { makeEventUpdate } from "#src/events/catalog/event-update";
@@ -82,25 +82,19 @@ describe("event update Effect module", () => {
           npcLvl: 300,
         }),
       );
-      const logger = { warn: () => undefined };
 
-      const catalog = makeEventsCatalogRead(
-        database,
-        {
-          getOrSetJsonEffect: () =>
-            Effect.die("Mutation hydration must read durable state"),
-        },
-        logger,
-      );
+      const catalog = makeEventsCatalogRead(database, {
+        getOrSetJson: () =>
+          Effect.die("Mutation hydration must read durable state"),
+      });
 
       const updateEvent = makeEventUpdate(
         database,
         {
-          invalidateScopes: () => Promise.resolve(),
-          deleteByPattern: () => Promise.resolve(0),
+          invalidateScopes: () => Effect.void,
+          deleteByPattern: () => Effect.succeed(0),
         },
         catalog,
-        logger,
       );
 
       const request = Schema.decodeUnknownSync(UpdateEventRequest)(data);
@@ -148,11 +142,9 @@ type DatabaseBoundary = Awaited<ReturnType<typeof createDatabaseBoundary>>;
 
 describe("event hero list history", () => {
   const redis = {
-    invalidateScopes: () => Promise.resolve(),
-    deleteByPattern: () => Promise.resolve(0),
+    invalidateScopes: () => Effect.void,
+    deleteByPattern: () => Effect.succeed(0),
   };
-
-  const logger = { warn: () => undefined };
 
   const managePolicy = createAccessPolicy({
     capabilities: [Capability.LOOTLOG_EVENTS_MANAGE],
@@ -165,7 +157,7 @@ describe("event hero list history", () => {
       npcName: "Mietek",
       maps: [{ mapId: 200, mapName: "Jaskinia" }],
     },
-  ];
+  ] as const;
 
   const withSeededEvent = async (
     test: (boundary: DatabaseBoundary) => Promise<void>,
@@ -348,15 +340,10 @@ describe("event hero list history", () => {
       makeEventUpdate(
         boundary.database,
         redis,
-        makeEventsCatalogRead(
-          boundary.database,
-          {
-            getOrSetJsonEffect: () =>
-              Effect.die("Mutation hydration must read durable state"),
-          },
-          logger,
-        ),
-        logger,
+        makeEventsCatalogRead(boundary.database, {
+          getOrSetJson: () =>
+            Effect.die("Mutation hydration must read durable state"),
+        }),
       )({ id: "guild-1" }, "event-1", { heroNpcs }, [], managePolicy),
     );
 
@@ -393,6 +380,8 @@ describe("event hero list history", () => {
       const { heroes, maps } = await readCatalog(boundary);
       const added = heroes.find((hero) => hero.npcName === "Nowy");
 
+      if (!added) throw new Error("Missing added hero");
+
       expect(heroes).toEqual([
         { id: "hero-a", npcId: 10, npcName: "Kotołak", npcIcon: "a.gif" },
         { id: "hero-b", npcId: 20, npcName: "Mietek", npcIcon: "b.gif" },
@@ -419,7 +408,7 @@ describe("event hero list history", () => {
         { id: "map-b", heroNpcId: "hero-b", mapId: 200, mapName: "Jaskinia" },
         {
           id: expect.any(String),
-          heroNpcId: added?.id,
+          heroNpcId: added.id,
           mapId: 300,
           mapName: "Wieża",
         },
@@ -468,7 +457,7 @@ describe("event hero list history", () => {
   it("deletes a hero with its history and ranking while keeping other heroes", () =>
     withSeededEvent(async (boundary) => {
       await boundary.run(
-        makeEventCatalogMutations(boundary.database, redis, logger).deleteHero(
+        makeEventCatalogMutations(boundary.database, redis).deleteHero(
           { id: "guild-1" },
           "event-1",
           "hero-a",
@@ -489,7 +478,7 @@ describe("event hero list history", () => {
   it("adds kill points to rankings only while the kill still exists", () =>
     withSeededEvent(async (boundary) => {
       await boundary.run(
-        makeEventCatalogMutations(boundary.database, redis, logger).deleteHero(
+        makeEventCatalogMutations(boundary.database, redis).deleteHero(
           { id: "guild-1" },
           "event-1",
           "hero-a",
@@ -520,7 +509,7 @@ describe("event hero list history", () => {
 
   const renameHero = (boundary: DatabaseBoundary, npcName: string) =>
     boundary.run(
-      makeEventCatalogMutations(boundary.database, redis, logger).updateHero(
+      makeEventCatalogMutations(boundary.database, redis).updateHero(
         { id: "guild-1" },
         "event-1",
         "hero-a",
@@ -605,7 +594,7 @@ describe("event hero list history", () => {
 
       await expect(
         boundary.run(
-          makeEventCatalogMutations(boundary.database, redis, logger).addHero(
+          makeEventCatalogMutations(boundary.database, redis).addHero(
             { id: "guild-1" },
             "event-1",
             { npcId: 30, npcName: "Usunięty" },

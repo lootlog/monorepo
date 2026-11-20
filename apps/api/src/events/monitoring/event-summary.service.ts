@@ -1,5 +1,4 @@
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
-import { Logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import type { eventMapCoverageGapTable } from "#src/database/drizzle/event.schema";
 import {
@@ -37,7 +36,7 @@ interface GapTimelineEntry {
 }
 
 export const makeEventSummary = (repository: EventSummaryStore) => {
-  const logger = new Logger("EventSummary");
+  const logContext = Effect.annotateLogs({ context: "EventSummary" });
 
   return {
     createWindowSummary(
@@ -53,10 +52,10 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
         const maps = yield* repository.findMaps(heroNpcId);
 
         if (maps.length === 0) {
-          logger.debug({
+          yield* Effect.logDebug({
             message: "No maps for hero, skipping summary creation",
             heroNpcId,
-          });
+          }).pipe(logContext);
 
           return;
         }
@@ -239,7 +238,7 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
             withAdapterSpan("events.summary.save", "events.summary.drizzle"),
           );
 
-        logger.log({
+        yield* Effect.logInfo({
           message: "Created respawn window summary",
           heroNpcId,
           killId,
@@ -248,7 +247,7 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
           memberCount: memberStats.length,
           deletedLogs: deleted.deletedLogs,
           deletedGaps: deleted.deletedGaps,
-        });
+        }).pipe(logContext);
       }).pipe(Effect.withSpan("events.summary.createWindow"));
     },
   };

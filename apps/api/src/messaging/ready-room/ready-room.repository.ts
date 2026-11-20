@@ -12,6 +12,7 @@ import {
   TERMINATE_READY_ROOM_SCRIPT,
 } from "./ready-room-redis-scripts.js";
 import type { ReadyRoomAggregate } from "./ready-room.types.js";
+import type { RedisError } from "effect/persistence/Redis";
 import { READY_ROOM_PUBLICATION_KEYS } from "./ready-room-publication-outbox.js";
 
 type CreateReadyRoomResult =
@@ -44,11 +45,12 @@ export interface ReadyRoomRedis {
     key: string,
     schema: S,
   ) => Effect.Effect<S["Type"] | null, unknown>;
+  /** Resolves with the script's untyped reply; the caller decodes it. */
   readonly eval: (
     script: string,
     keys: ReadonlyArray<string>,
     arguments_: ReadonlyArray<string | number>,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<unknown, RedisError>;
 }
 
 export interface ReadyRoomEffectRepository {

@@ -10,8 +10,8 @@ import {
   AcceptedReservationShareBoundary,
 } from "../handlers/reservations/reservation-response.schema.js";
 import { decodeDomainJson } from "../domain-json.schema.js";
-import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { describe, expect, it } from "bun:test";
 import {
   Cause,
@@ -29,7 +29,7 @@ import {
   ResourceConflictError,
   PermissionDeniedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   MyReservationsResponse,
   ReservationSpotsResponse,
@@ -62,7 +62,10 @@ import {
   listReservationShares,
   previewReservationShareInvitation,
 } from "../handlers/reservation-sharing/reservation-sharing.handlers.js";
-import { updateGuildRole } from "../handlers/roles/roles.handlers.js";
+import {
+  RolesHandlers,
+  updateGuildRole,
+} from "../handlers/roles/roles.handlers.js";
 import {
   OrganizationWorkspaceAccessDenied,
   OrganizationWorkspaceAuthorization,
@@ -126,18 +129,17 @@ const role = {
   permissions: [Permission.ADMIN],
   lvlRangeFrom: 1,
   lvlRangeTo: 300,
+  createdAt: new Date("2026-09-02T10:00:00.000Z"),
+  updatedAt: new Date("2026-09-02T10:00:00.000Z"),
 };
 
-const sharingList = {
-  shares: [
-    {
-      id: "share-a",
-      partner: { name: "Partner Guild", iconUrl: null },
-      createdAt: new Date("2026-09-02T12:00:00.000Z"),
-    },
-  ],
-  pendingInvitations: [],
+const share = {
+  id: "share-a",
+  partner: { name: "Partner Guild", iconUrl: null },
+  createdAt: new Date("2026-09-02T12:00:00.000Z"),
 };
+
+const sharingList = { shares: [share], pendingInvitations: [] };
 
 const makeData = (
   overrides: Partial<OrganizationWorkspaceData["Service"]> = {},
@@ -155,7 +157,11 @@ const makeReadData = (
 ) =>
   ReservationReadData.of({
     listSpots: () => Effect.succeed([]),
-    listWindow: () => Effect.succeed({ items: [], window: {} }),
+    listWindow: () =>
+      Effect.succeed({
+        items: [],
+        window: { from: reservation.startsAt, to: reservation.endsAt },
+      }),
     pinSpot: () => Effect.succeed(undefined),
     unpinSpot: () => Effect.succeed(undefined),
     ...overrides,
@@ -166,11 +172,22 @@ const makeSharingData = (
 ) =>
   ReservationSharingData.of({
     listShares: () => Effect.succeed({ shares: [], pendingInvitations: [] }),
-    createInvitation: () => Effect.succeed({}),
+    createInvitation: () =>
+      Effect.succeed({
+        id: "invitation-a",
+        invitePath: "/reservation-sharing/invitations/token-a",
+        expiresAt: share.createdAt,
+        createdAt: share.createdAt,
+      }),
     revokeInvitation: () => Effect.succeed(undefined),
     revokeShare: () => Effect.succeed(undefined),
-    previewInvitation: () => Effect.succeed({}),
-    acceptInvitation: () => Effect.succeed({}),
+    previewInvitation: () =>
+      Effect.succeed({
+        sourceOrganization: share.partner,
+        expiresAt: share.createdAt,
+        eligibleTargetOrganizations: [],
+      }),
+    acceptInvitation: () => Effect.succeed(share),
     ...overrides,
   });
 
@@ -328,7 +345,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
   });
 
   it("passes OWNER identity and canonical Organization to role recovery", async () => {
-    const authorizationCalls: Array<ReadonlyArray<string>> = [];
+    const authorizationCalls: Array<ReadonlyArray<string> | undefined> = [];
 
     const updateCalls: Array<{
       discordId: string;
@@ -545,7 +562,44 @@ describe("Reservations and Roles HttpApi handlers", () => {
   });
 });
 
-describe("reservation HTTP error responses", () => {
+const respondThroughApi = <A, E>(
+  services: ReturnType<typeof provideServices>,
+  call: (
+    client: Effect.Success<ReturnType<typeof workspaceApiClient>>,
+  ) => Effect.Effect<A, E>,
+) => {
+  const bearer = BearerSecurityMiddleware.of({
+    bearer: (effect) =>
+      Effect.provideService(effect, ForwardAuthIdentity, identity),
+  });
+
+  const platform = Layer.mergeAll(
+    Path.layer,
+    Etag.layerWeak,
+    HttpPlatform.layer,
+  ).pipe(Layer.provideMerge(FileSystem.layerNoop({})));
+
+  return Effect.runPromise(
+    Effect.scoped(
+      workspaceApiClient().pipe(
+        Effect.provide(
+          Layer.mergeAll(ReservationsHandlers, RolesHandlers).pipe(
+            HttpRouter.provideRequest(services),
+          ),
+        ),
+        Effect.provideService(BearerSecurityMiddleware, bearer),
+        Effect.provide(apiKeyEndpointPolicyLayer("main")),
+        Effect.provide(SchemaErrorResponseLive),
+        Effect.flatMap(call),
+      ),
+    ).pipe(Effect.provide(services), Effect.provide(platform)),
+  );
+};
+
+const workspaceApiClient = () =>
+  HttpApiTest.groups(LootlogApi, ["reservations", "roles"]);
+
+describe("organization workspace HTTP error responses", () => {
   it.each([
     {
       cause: new InvalidEntityError({
@@ -565,55 +619,74 @@ describe("reservation HTTP error responses", () => {
       status: 403,
       body: { code: "RESERVATION_MEMBER_REQUIRED" },
     },
-  ])("returns $status with a safe reason", async ({ cause, status, body }) => {
+  ])(
+    "returns reservation $status with a safe reason",
+    async ({ cause, status, body }) => {
+      const services = provideServices(
+        makeAuthorization(),
+        makeData({
+          create: () =>
+            Effect.fail(new OrganizationWorkspaceOperationError({ cause })),
+        }),
+      );
+
+      const response = await respondThroughApi(services, (client) =>
+        client.reservations
+          .createReservation({
+            params: { guildId: "guild-a", spotId: "driady" },
+            payload: {
+              startsAt: "2026-09-06T10:00:00.000Z",
+              endsAt: "2026-09-06T10:30:00.000Z",
+            },
+            responseMode: "response-only",
+          })
+          .pipe(
+            Effect.flatMap((response) =>
+              Effect.map(response.text, (text) => ({
+                status: response.status,
+                text,
+              })),
+            ),
+          ),
+      );
+
+      expect(response.status).toBe(status);
+      expect(JSON.parse(response.text)).toEqual(body);
+    },
+  );
+
+  it("returns a declared 403, not a server error, when role access is denied", async () => {
     const services = provideServices(
-      makeAuthorization(),
-      makeData({
-        create: () =>
-          Effect.fail(new OrganizationWorkspaceOperationError({ cause })),
+      makeAuthorization({
+        requireGuild: () =>
+          Effect.fail(
+            new OrganizationWorkspaceAccessDenied({
+              status: 403,
+              code: "ADMIN_REQUIRED",
+            }),
+          ),
       }),
+      makeData(),
     );
 
-    const bearer = BearerSecurityMiddleware.of({
-      bearer: (effect) =>
-        Effect.provideService(effect, ForwardAuthIdentity, identity),
-    });
-
-    const platform = Layer.mergeAll(
-      Path.layer,
-      Etag.layerWeak,
-      HttpPlatform.layer,
-    ).pipe(Layer.provideMerge(FileSystem.layerNoop({})));
-
-    const request = Effect.scoped(
-      Effect.gen(function* () {
-        const client = yield* HttpApiTest.groups(LootlogApi, [
-          "reservations",
-        ]).pipe(
-          Effect.provide(
-            ReservationsHandlers.pipe(HttpRouter.provideRequest(services)),
-          ),
-          Effect.provideService(BearerSecurityMiddleware, bearer),
-          Effect.provide(apiKeyEndpointPolicyLayer("main")),
-          Effect.provide(SchemaErrorResponseLive),
-        );
-
-        const response = yield* client.reservations.createReservation({
-          params: { guildId: "guild-a", spotId: "driady" },
-          payload: {
-            startsAt: "2026-09-06T10:00:00.000Z",
-            endsAt: "2026-09-06T10:30:00.000Z",
-          },
+    const response = await respondThroughApi(services, (client) =>
+      client.roles
+        .RolesControllerGetGuildRoles({
+          params: { guildId: "guild-a" },
           responseMode: "response-only",
-        });
+        })
+        .pipe(
+          Effect.flatMap((response) =>
+            Effect.map(response.text, (text) => ({
+              status: response.status,
+              text,
+            })),
+          ),
+        ),
+    );
 
-        return { status: response.status, text: yield* response.text };
-      }),
-    ).pipe(Effect.provide(services), Effect.provide(platform));
-
-    const response = await Effect.runPromise(request);
-    expect(response.status).toBe(status);
-    expect(JSON.parse(response.text)).toEqual(body);
+    expect(response.status).toBe(403);
+    expect(JSON.parse(response.text)).toEqual({ code: "ADMIN_REQUIRED" });
   });
 });
 
@@ -760,7 +833,7 @@ describe("organization workspace response boundaries", () => {
     );
 
     const preview = {
-      sourceOrganization: sharingList.shares[0].partner,
+      sourceOrganization: share.partner,
       expiresAt: date,
       eligibleTargetOrganizations: [],
     };
@@ -778,22 +851,34 @@ describe("organization workspace response boundaries", () => {
     );
     expect(
       Effect.runSync(
-        Schema.decodeUnknownEffect(AcceptedReservationShareBoundary)(
-          sharingList.shares[0],
-        ),
+        Schema.decodeUnknownEffect(AcceptedReservationShareBoundary)(share),
       ),
     ).toEqual(
-      Effect.runSync(
-        decodeDomainJson(
-          AcceptedReservationShareResponse,
-          sharingList.shares[0],
-        ),
-      ),
+      Effect.runSync(decodeDomainJson(AcceptedReservationShareResponse, share)),
     );
   });
 
+  it("rejects a malformed reservation date at the response boundary", () => {
+    // A string date cannot come from the typed port; the boundary receives it.
+    expect(
+      Exit.isFailure(
+        Effect.runSyncExit(
+          decodeDomainJson(ReservationResponse, {
+            ...reservation,
+            startsAt: "2026-02-30T10:00:00.000Z",
+          }),
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  // An extra runtime field the response contract cannot serialize.
+  const constraintsWithFunction = {
+    ...reservation.editingConstraints,
+    bad: () => 1,
+  };
+
   it.each([
-    { ...reservation, startsAt: "2026-02-30T10:00:00.000Z" },
     { ...reservation, endsAt: new Date(Number.NaN) },
     { ...reservation, id: 1.5 },
     {
@@ -803,10 +888,7 @@ describe("organization workspace response boundaries", () => {
         reservationMaxAdvanceDays: 0,
       },
     },
-    {
-      ...reservation,
-      editingConstraints: { ...reservation.editingConstraints, bad: () => 1 },
-    },
+    { ...reservation, editingConstraints: constraintsWithFunction },
   ])(
     "keeps malformed reservation output as an operation error",
     async (value) => {
@@ -835,8 +917,7 @@ describe("organization workspace response boundaries", () => {
   );
 
   it("still rejects invalid role fields while stripping database metadata", async () => {
-    const { position: _position, ...roleWithoutPosition } = role;
-    const value = { ...roleWithoutPosition, createdAt: date, updatedAt: date };
+    const value = { ...role, position: null };
 
     const layer = provideServices(
       makeAuthorization(),

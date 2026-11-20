@@ -59,7 +59,6 @@ import { GuildLootCreatedMessageV2 } from "@lootlog/protocol/loot-events";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { makeLootsOperations } from "#src/loots/loots.operations";
 import { makeLootPersistence } from "#src/loots/loot.repository";
-import { applicationLogger } from "#src/shared/application-logger";
 import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
 
 describe("durable loot publications", () => {
@@ -1075,7 +1074,7 @@ describe("durable loot publications", () => {
 
     const secondSnapshot = [
       {
-        ...mapPlayersSnapshot[0],
+        ...mapPlayersSnapshot[0]!,
         accountId: 222,
         characterId: 333,
         name: "Other Organization observer",
@@ -1256,12 +1255,12 @@ describe("durable loot publications", () => {
         expect(lootItems).toEqual(
           request.submission.loots.map((item) => ({
             hid: item.hid,
-            itemSnapshotId: itemSnapshotId.get(item.id),
+            itemSnapshotId: itemSnapshotId.get(item.id)!,
           })),
         );
         expect(lootNpcs).toEqual(
           request.submission.npcs.map((npc) => ({
-            npcSnapshotId: npcSnapshotId.get(npc.id),
+            npcSnapshotId: npcSnapshotId.get(npc.id)!,
           })),
         );
       }
@@ -1373,7 +1372,7 @@ describe("durable loot publications", () => {
       if (!participant) throw new Error("Expected fight participant");
 
       if (legacySnapshot)
-        expect(participant.playerSnapshotId).toBe(legacySnapshotId);
+        expect(participant.playerSnapshotId).toBe(legacySnapshotId!);
       const firstLinks = await mapPlayerLinks(first.id, result.id);
       const secondLinks = await mapPlayerLinks(second.id, result.id);
       expect(firstLinks).toHaveLength(1);
@@ -1559,13 +1558,13 @@ describe("durable loot publications", () => {
 
     const firstSnapshot = [
       ...mapPlayersSnapshot,
-      { ...mapPlayersSnapshot[0], characterId: 1001, name: "First witness" },
+      { ...mapPlayersSnapshot[0]!, characterId: 1001, name: "First witness" },
     ] satisfies MapPlayersSnapshot;
 
     const otherSnapshot = [
-      { ...mapPlayersSnapshot[0], name: "Later observer" },
-      { ...mapPlayersSnapshot[0], characterId: 1002, name: "Second witness" },
-      { ...mapPlayersSnapshot[0], characterId: 1003, name: "Third witness" },
+      { ...mapPlayersSnapshot[0]!, name: "Later observer" },
+      { ...mapPlayersSnapshot[0]!, characterId: 1002, name: "Second witness" },
+      { ...mapPlayersSnapshot[0]!, characterId: 1003, name: "Third witness" },
     ] satisfies MapPlayersSnapshot;
 
     await Promise.all(
@@ -2049,12 +2048,10 @@ describe("durable loot publications", () => {
             }),
         },
         redis: {
-          invalidateScopes: async () => {
-            throw new Error("Unexpected cache invalidation");
-          },
-          getOrSetJsonEffect: () => Effect.die("Unexpected list cache access"),
+          invalidateScopes: () =>
+            Effect.die(new Error("Unexpected cache invalidation")),
+          getOrSetJson: () => Effect.die("Unexpected list cache access"),
         },
-        logger: applicationLogger,
       });
 
       const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
@@ -2188,10 +2185,9 @@ describe("durable loot publications", () => {
       },
       persistence: makeLootPersistence(database),
       redis: {
-        invalidateScopes: async () => undefined,
-        getOrSetJsonEffect: () => Effect.die("Unexpected list read"),
+        invalidateScopes: () => Effect.void,
+        getOrSetJson: () => Effect.die("Unexpected list read"),
       },
-      logger: applicationLogger,
     });
 
     const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });

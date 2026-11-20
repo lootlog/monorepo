@@ -1,14 +1,12 @@
 /** Endpoints owned by the user-lootlog-config HTTP module. */
+import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   HttpApiEndpoint,
   HttpApiGroup,
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import {
-  BearerSecurityMiddleware,
-  HttpErrorResponse,
-} from "#src/contracts/api-shared";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import {
   CharacterLootlogConfigResponse,
   LootlogAccountPath,

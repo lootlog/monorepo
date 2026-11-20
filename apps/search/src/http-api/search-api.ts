@@ -1,6 +1,7 @@
 import { healthGroup } from "@lootlog/instrumentation/service";
-import { ApiKeyEndpointPolicy } from "@lootlog/schema/api-key-http";
+import { ApiKeyEndpointPolicy } from "@lootlog/protocol/http/api-key-http";
 /** Authoritative composition root for the search HTTP contract. */
+import { SchemaErrorResponse } from "@lootlog/protocol/http/schema-error-response";
 import { HttpApi, OpenApi } from "effect/http-api";
 import { PlayersGroup } from "./contracts/players/api.js";
 
@@ -13,4 +14,5 @@ export class SearchApi extends HttpApi.make("SearchApi")
     healthGroup("Check the health status of the search service"),
     PlayersGroup,
   )
-  .middleware(ApiKeyEndpointPolicy) {}
+  .middleware(ApiKeyEndpointPolicy)
+  .middleware(SchemaErrorResponse) {}

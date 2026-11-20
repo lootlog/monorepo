@@ -36,11 +36,10 @@ import {
   toStatsDate,
   toStatsHour,
 } from "../src/kills/kill-stats-period.js";
-import { applicationLogger } from "../src/shared/application-logger.js";
 import {
   ResourceConflictError,
   ResourceNotFoundError,
-} from "../src/shared/http/http-errors.js";
+} from "@lootlog/protocol/http/errors";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 
@@ -255,7 +254,7 @@ for (const period of ["all", "24h"] as const) {
           { limit: 1, period },
         );
 
-        expect(members[NpcType.ELITE2]).toEqual([
+        expect(new Map(Object.entries(members)).get(NpcType.ELITE2)).toEqual([
           {
             member: expect.objectContaining({ name: "first" }),
             totalParticipations: 12,
@@ -401,7 +400,7 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
       );
 
       expect(members[NpcType.HERO]).toEqual([]);
-      expect(members[NpcType.ELITE2]).toEqual([
+      expect(new Map(Object.entries(members)).get(NpcType.ELITE2)).toEqual([
         {
           member: expect.objectContaining({ name: "first" }),
           totalParticipations: 12,
@@ -791,14 +790,10 @@ test("concurrent hero renames onto one name give it to exactly one hero", async 
       const eventId = randomUUID();
       const now = new Date();
 
-      const mutations = makeEventCatalogMutations(
-        db,
-        {
-          invalidateScopes: () => Promise.resolve(),
-          deleteByPattern: () => Promise.resolve(0),
-        },
-        applicationLogger,
-      );
+      const mutations = makeEventCatalogMutations(db, {
+        invalidateScopes: () => Effect.void,
+        deleteByPattern: () => Effect.succeed(0),
+      });
 
       yield* db.insert(eventTable).values({
         id: eventId,
@@ -869,14 +864,10 @@ test("renaming a hero deleted while the rename waits for its row is a 404", asyn
       const eventId = randomUUID();
       const heroId = `${eventId}-a`;
 
-      const mutations = makeEventCatalogMutations(
-        db,
-        {
-          invalidateScopes: () => Promise.resolve(),
-          deleteByPattern: () => Promise.resolve(0),
-        },
-        applicationLogger,
-      );
+      const mutations = makeEventCatalogMutations(db, {
+        invalidateScopes: () => Effect.void,
+        deleteByPattern: () => Effect.succeed(0),
+      });
 
       yield* db.insert(eventTable).values({
         id: eventId,

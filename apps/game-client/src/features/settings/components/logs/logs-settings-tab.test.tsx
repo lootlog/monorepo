@@ -136,8 +136,10 @@ describe("LogsSettingsTab", () => {
     const rows = screen.getAllByRole("row");
 
     expect(rows).toHaveLength(2);
-    expect(within(rows[1]).getByText("Dodanie timera")).toBeInTheDocument();
-    expect(within(rows[1]).queryByText("Dodanie łupu")).not.toBeInTheDocument();
+    expect(within(rows[1]!).getByText("Dodanie timera")).toBeInTheDocument();
+    expect(
+      within(rows[1]!).queryByText("Dodanie łupu"),
+    ).not.toBeInTheDocument();
 
     await user.click(screen.getByLabelText("Status akcji"));
     await user.click(screen.getByText("Błąd"));
@@ -172,7 +174,7 @@ describe("LogsSettingsTab", () => {
       name: "Przełącz szczegóły akcji",
     });
 
-    toggle.focus();
+    toggle!.focus();
     await user.keyboard("{Enter}");
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText("/loots")).toBeInTheDocument();
@@ -182,7 +184,7 @@ describe("LogsSettingsTab", () => {
     expect(screen.queryByText("/loots")).not.toBeInTheDocument();
 
     await user.click(
-      screen.getAllByRole("button", { name: "Kopiuj akcję" })[0],
+      screen.getAllByRole("button", { name: "Kopiuj akcję" })[0]!,
     );
 
     await waitFor(() => {
@@ -200,7 +202,7 @@ describe("LogsSettingsTab", () => {
 
     expect(copyButtons).toHaveLength(2);
 
-    fireEvent.click(copyButtons[0]);
+    fireEvent.click(copyButtons[0]!);
 
     expect(screen.queryByText("/loots")).not.toBeInTheDocument();
 
@@ -208,10 +210,10 @@ describe("LogsSettingsTab", () => {
       expect(mockClipboardWriteText).toHaveBeenCalledTimes(1);
     });
 
-    expect(mockClipboardWriteText.mock.calls[0][0]).toContain(
+    expect(mockClipboardWriteText.mock.calls[0]![0]!).toContain(
       '"actionType": "create_loot"',
     );
-    expect(mockClipboardWriteText.mock.calls[0][0]).toContain(
+    expect(mockClipboardWriteText.mock.calls[0]![0]!).toContain(
       '"endpoint": "/loots"',
     );
     expect(messages).toEqual(["Akcja skopiowana do schowka"]);
@@ -229,7 +231,7 @@ describe("LogsSettingsTab", () => {
     expect(mockAnchorClick).toHaveBeenCalledTimes(1);
     expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:logs");
 
-    const exportedBlob = mockCreateObjectURL.mock.calls[0][0];
+    const exportedBlob = mockCreateObjectURL.mock.calls[0]![0];
 
     if (!(exportedBlob instanceof Blob))
       throw new Error("Expected exported JSON blob");

@@ -65,7 +65,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
         Effect.gen(function* () {
           const killId = Bun.randomUUIDv7();
 
-          const killRows = yield* transaction
+          const [kill] = yield* transaction
             .insert(eventHeroKillTable)
             .values({
               id: killId,
@@ -88,7 +88,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
 
           // Another report already recorded this window, even if the Redis
           // dedup entries were lost or expired.
-          if (killRows.length === 0) return null;
+          if (kill === undefined) return null;
 
           const assignments =
             params.mapIds.length === 0
@@ -147,7 +147,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
             .where(eq(eventKillPointTable.killId, killId));
 
           return {
-            kill: killRows[0],
+            kill,
             points: createdPoints,
             clearedMapIds: params.mapIds,
           };

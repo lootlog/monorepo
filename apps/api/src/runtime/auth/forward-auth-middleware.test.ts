@@ -54,7 +54,7 @@ const runProtected = async (
   }
 };
 
-test.each([
+test.each<Record<string, string>>([
   {},
   { "x-auth-user-id": "user-1" },
   { "x-auth-discord-id": "discord-1" },

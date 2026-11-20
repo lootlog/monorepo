@@ -29,20 +29,5 @@ export type ApiData = {
   AFTER_INTERFACE_START: "afterInterfaceStart";
 };
 
-type ApiEventName = ApiData[keyof ApiData];
-
 // Api.js forwards eventData unchanged to registered callbacks, including addon payloads.
 export type ApiEventCallback = (eventData: unknown) => void;
-
-type Api = {
-  callEvent: (eventName: ApiEventName, eventData?: unknown) => void;
-  addCallbackToEvent: (
-    eventName: ApiEventName,
-    callback: ApiEventCallback,
-  ) => void;
-  removeCallbackFromEvent: (
-    eventName: ApiEventName,
-    callback: ApiEventCallback,
-  ) => void;
-  getData: (eventName: ApiEventName) => unknown;
-};

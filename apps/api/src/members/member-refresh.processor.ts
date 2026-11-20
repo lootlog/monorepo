@@ -1,6 +1,6 @@
 import { DelayedError } from "bullmq";
 import { Clock, Effect, Random } from "effect";
-import type { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
+import type { DiscordSyncDiagnostics } from "#src/discord/discord-sync-diagnostics.service";
 import type { MemberRefreshScheduler } from "./member-refresh-scheduler.js";
 import type { MemberRefreshPorts } from "./member-refresh.operations.js";
 import { isRetryableMemberRefreshStatus } from "./member-discord-sync-status.js";
@@ -22,16 +22,13 @@ export const makeMemberRefreshProcessor = ({
     | "releaseUserRefreshLock"
   >;
   readonly diagnostics: Pick<
-    DiscordSyncDiagnosticsService,
+    DiscordSyncDiagnostics,
     "recordMemberRefreshMetric" | "recordMemberRefreshLatency"
   >;
   readonly sync: {
     readonly syncMemberFromDiscord: MemberRefreshPorts["syncMember"];
   };
 }) => {
-  const diagnostic = <A>(operation: () => Promise<A>) =>
-    Effect.tryPromise({ try: operation, catch: (cause) => cause });
-
   return (
     job: {
       readonly id?: string | number;
@@ -78,12 +75,10 @@ export const makeMemberRefreshProcessor = ({
             token,
           ),
         );
-        yield* diagnostic(() =>
-          diagnostics.recordMemberRefreshMetric({
-            outcome: "delayed",
-            reason: "MEMBER_REFRESH_LOCKED",
-          }),
-        ).pipe(Effect.ignore);
+        yield* diagnostics.recordMemberRefreshMetric({
+          outcome: "delayed",
+          reason: "MEMBER_REFRESH_LOCKED",
+        });
 
         return yield* Effect.fail(new DelayedError());
       }
@@ -112,49 +107,39 @@ export const makeMemberRefreshProcessor = ({
 
         if (isRetryableMemberRefreshStatus(result.status)) {
           if (result.status === "RATE_LIMITED") {
-            yield* diagnostic(() =>
-              diagnostics.recordMemberRefreshMetric({
-                outcome: "rate_limited",
-                reason: job.data.reason,
-              }),
-            );
+            yield* diagnostics.recordMemberRefreshMetric({
+              outcome: "rate_limited",
+              reason: job.data.reason,
+            });
           }
 
-          yield* diagnostic(() =>
-            diagnostics.recordMemberRefreshMetric({
-              outcome: "failed",
-              reason: result.status,
-            }),
-          );
+          yield* diagnostics.recordMemberRefreshMetric({
+            outcome: "failed",
+            reason: result.status,
+          });
 
           return yield* Effect.fail(
             new Error(`MEMBER_REFRESH_${result.status}`),
           );
         }
 
-        yield* diagnostic(() =>
-          diagnostics.recordMemberRefreshMetric({
-            outcome: "processed",
-            reason: result.status,
-          }),
-        );
+        yield* diagnostics.recordMemberRefreshMetric({
+          outcome: "processed",
+          reason: result.status,
+        });
       });
 
       return yield* process.pipe(
         Effect.tapError((error) =>
-          diagnostic(() =>
-            diagnostics.recordMemberRefreshMetric({
-              outcome: "failed",
-              reason: error instanceof Error ? error.message : "UNKNOWN",
-            }),
-          ).pipe(Effect.ignore),
+          diagnostics.recordMemberRefreshMetric({
+            outcome: "failed",
+            reason: error instanceof Error ? error.message : "UNKNOWN",
+          }),
         ),
         Effect.ensuring(
           Effect.all(
             [
-              diagnostic(() =>
-                diagnostics.recordMemberRefreshLatency(Date.now() - startedAt),
-              ).pipe(Effect.ignore),
+              diagnostics.recordMemberRefreshLatency(Date.now() - startedAt),
               scheduler
                 .releaseUserRefreshLock(job.data.userId, lockOwner)
                 .pipe(Effect.ignore),

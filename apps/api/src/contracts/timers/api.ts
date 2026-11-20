@@ -1,14 +1,12 @@
 /** Endpoints owned by the timers HTTP module. */
+import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   HttpApiEndpoint,
   HttpApiGroup,
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import {
-  BearerSecurityMiddleware,
-  HttpErrorResponse,
-} from "#src/contracts/api-shared";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import {
   CreateAutoTimerResponse,
   CreateAutoTimerRequest,

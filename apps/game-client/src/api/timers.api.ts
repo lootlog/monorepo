@@ -1,3 +1,4 @@
+import { zip } from "es-toolkit";
 import {
   timersControllerCreateManualTimer,
   timersControllerCreateAutoTimer,
@@ -178,18 +179,14 @@ export async function createManualTimer({
   const successful: Array<{ guildId: string }> = [];
   const failed: Array<{ guildId: string; error: string }> = [];
 
-  results.forEach((result, index) => {
+  for (const [guildId, result] of zip(guildIds, results)) {
     if (result.status === "fulfilled") {
       successful.push(result.value);
-
-      return;
+      continue;
     }
 
-    failed.push({
-      guildId: guildIds[index],
-      error: getErrorMessage(result.reason),
-    });
-  });
+    failed.push({ guildId, error: getErrorMessage(result.reason) });
+  }
 
   action.complete({
     status: getAggregateActionStatus(successful.length, failed.length),

@@ -93,7 +93,7 @@ describe("debug legendary loot event", () => {
     dispatcher.handleEvent(createDebugLegendaryLootEvent(game));
 
     await vi.waitFor(() => expect(lootRequests()).toHaveLength(1));
-    expect(await lootRequests()[0].json()).toMatchObject({
+    expect(await lootRequests()[0]!.json()).toMatchObject({
       world: "luvia",
       location: "Ithan",
       source: "FIGHT",
@@ -158,7 +158,7 @@ describe("debug legendary loot event", () => {
     new EventDispatcher().handleEvent(createDebugLegendaryLootEvent(game));
 
     await vi.waitFor(() => expect(lootRequests()).toHaveLength(1));
-    expect(await lootRequests()[0].json()).not.toHaveProperty(
+    expect(await lootRequests()[0]!.json()).not.toHaveProperty(
       "mapPlayersSnapshot",
     );
   });

@@ -1,5 +1,5 @@
 import { Effect, Option } from "effect";
-import type { RedisService } from "#src/redis/redis.service";
+import type * as Redis from "effect/persistence/Redis";
 
 /** How often, and how far apart, a contended lock is tried again. */
 export interface LockRetry {
@@ -8,9 +8,18 @@ export interface LockRetry {
   readonly retryJitter: number;
 }
 
-interface RedlockOptions extends Partial<LockRetry> {
+export interface RedlockOptions extends Partial<LockRetry> {
   /** How long before expiry `using` extends a held lock. */
-  automaticExtensionThreshold?: number;
+  readonly automaticExtensionThreshold?: number;
+}
+
+/** The Redis command the lock scripts run; each script replies with a key count. */
+export interface RedlockRedis {
+  readonly eval: (
+    script: string,
+    keys: ReadonlyArray<string>,
+    args?: ReadonlyArray<string | number>,
+  ) => Effect.Effect<number, Redis.RedisError>;
 }
 
 const DEFAULT_OPTIONS = {
@@ -53,112 +62,35 @@ export class ExecutionError extends Error {}
 const retryWait = (retry: LockRetry) =>
   retry.retryDelay + Math.floor(Math.random() * (retry.retryJitter + 1));
 
-const releaseQuietly = (lock: RedisLock) =>
-  Effect.tryPromise(() => lock.release()).pipe(
-    Effect.catch((error) =>
-      Effect.logDebug("Failed to release Redis lock", error),
-    ),
-  );
-
-class RedisLock {
-  constructor(
-    private readonly redis: Pick<RedisService, "eval">,
-    readonly resources: string[],
-    readonly value: string,
-  ) {}
-
-  async release(): Promise<void> {
-    await this.redis.eval(RELEASE_SCRIPT, this.resources, [this.value]);
-  }
-
-  async extend(duration: number): Promise<void> {
-    const extended = await this.redis.eval<number>(
-      EXTEND_SCRIPT,
-      this.resources,
-      [this.value, duration],
-    );
-
-    if (extended !== this.resources.length) {
-      throw new ExecutionError("Redis lock ownership was lost");
-    }
-  }
+interface RedisLock {
+  readonly release: Effect.Effect<void, Redis.RedisError>;
+  readonly extend: (duration: number) => Effect.Effect<void, ExecutionError>;
 }
 
-export class RedisLockManager {
-  private readonly options: Required<RedlockOptions>;
-
-  constructor(
-    private readonly redis: Pick<RedisService, "eval">,
-    options: RedlockOptions,
-  ) {
-    this.options = {
-      ...DEFAULT_OPTIONS,
-      ...options,
-    };
-  }
-
-  async acquire(
-    resources: string[],
+export interface RedisLockManager {
+  readonly acquire: (
+    resources: ReadonlyArray<string>,
     duration: number,
-    options: RedlockOptions = {},
-  ): Promise<RedisLock> {
-    const settings = { ...this.options, ...options };
-    const value = crypto.randomUUID();
-    let lastCause: unknown;
-
-    for (let attempt = 0; attempt <= settings.retryCount; attempt += 1) {
-      try {
-        const acquired = await this.redis.eval<number>(
-          ACQUIRE_SCRIPT,
-          resources,
-          [value, duration],
-        );
-
-        if (acquired === resources.length) {
-          return new RedisLock(this.redis, resources, value);
-        }
-      } catch (error) {
-        lastCause = error;
-      }
-
-      if (attempt < settings.retryCount) {
-        await Bun.sleep(retryWait(settings));
-      }
-    }
-
-    throw new ExecutionError("Unable to acquire Redis lock", {
-      cause: lastCause,
-    });
-  }
-
+    options?: RedlockOptions,
+  ) => Effect.Effect<RedisLock, ExecutionError>;
   /**
    * Runs `effect` while holding `resource`. When another owner still holds it
    * after the retry budget, fails with `unavailable()` instead.
    */
-  withLock<A, E, R, U>(
+  readonly withLock: <A, E, R, U>(
     resource: string,
     duration: number,
     effect: Effect.Effect<A, E, R>,
     unavailable: () => U,
-    retry: Partial<LockRetry> = {},
-  ): Effect.Effect<A, E | U, R> {
-    return Effect.acquireUseRelease(
-      Effect.tryPromise({
-        try: () => this.acquire([resource], duration, retry),
-        catch: unavailable,
-      }),
-      () => effect,
-      releaseQuietly,
-    );
-  }
-
+    retry?: Partial<LockRetry>,
+  ) => Effect.Effect<A, E | U, R>;
   /**
    * Returns what `read` finds, or computes it with `fill` under the lock on
    * `resource` so concurrent callers share one fill. A caller that finds the
    * lock held reads again and retries it every `wait.retryDelay`, and fails
    * with `unavailable()` once `wait.retryCount` retries pass.
    */
-  singleFlight<A, ReadError, FillError, R, U>(
+  readonly singleFlight: <A, ReadError, FillError, R, U>(
     options: {
       readonly resource: string;
       readonly duration: number;
@@ -167,104 +99,163 @@ export class RedisLockManager {
     },
     read: Effect.Effect<Option.Option<A>, ReadError, R>,
     fill: Effect.Effect<A, FillError, R>,
-  ): Effect.Effect<A, ReadError | FillError | U, R> {
-    const { resource, duration, wait, unavailable } = options;
-
-    const tryAcquire = Effect.promise(() =>
-      this.acquire([resource], duration, { retryCount: 0 }).catch(
-        () => undefined,
-      ),
-    );
-
-    const readOrFillUnderLock = Effect.flatMap(
-      read,
-      Option.match({
-        onSome: (value) => Effect.succeedSome(value),
-        onNone: () =>
-          Effect.acquireUseRelease(
-            tryAcquire,
-            (lock) =>
-              lock === undefined
-                ? Effect.succeedNone
-                : read.pipe(
-                    Effect.flatMap(
-                      Option.match({
-                        onSome: Effect.succeed,
-                        onNone: () => fill,
-                      }),
-                    ),
-                    Effect.asSome,
-                  ),
-            (lock) => (lock === undefined ? Effect.void : releaseQuietly(lock)),
-          ),
-      }),
-    );
-
-    return Effect.gen(function* () {
-      for (let retries = 0; ; retries += 1) {
-        const result = yield* readOrFillUnderLock;
-
-        if (Option.isSome(result)) return result.value;
-
-        if (retries >= wait.retryCount)
-          return yield* Effect.fail(unavailable());
-
-        yield* Effect.sleep(retryWait(wait));
-      }
-    });
-  }
-
-  using<A, E, R>(
-    resources: string[],
+  ) => Effect.Effect<A, ReadError | FillError | U, R>;
+  /** Runs `routine` while holding `resources`, extending the lock until it ends. */
+  readonly using: <A, E, R>(
+    resources: ReadonlyArray<string>,
     duration: number,
     routine: Effect.Effect<A, E, R>,
-  ) {
-    return Effect.scoped(
-      Effect.gen({ self: this }, function* () {
-        const lock = yield* Effect.acquireRelease(
-          Effect.tryPromise({
-            try: () => this.acquire(resources, duration),
-            catch: (cause) =>
-              cause instanceof ExecutionError
-                ? cause
-                : new ExecutionError("Unable to acquire Redis lock", { cause }),
-          }),
-          (activeLock) =>
-            Effect.tryPromise(() => activeLock.release()).pipe(
-              Effect.catch((error) =>
-                Effect.logWarning("Failed to release Redis lock", error),
-              ),
+  ) => Effect.Effect<A, E | ExecutionError, R>;
+}
+
+const releaseQuietly = (lock: RedisLock) =>
+  lock.release.pipe(
+    Effect.catch((error) =>
+      Effect.logDebug("Failed to release Redis lock", error),
+    ),
+  );
+
+export const makeRedisLockManager = (
+  redis: RedlockRedis,
+  options: RedlockOptions = {},
+): RedisLockManager => {
+  const defaults = { ...DEFAULT_OPTIONS, ...options };
+
+  const makeLock = (
+    resources: ReadonlyArray<string>,
+    value: string,
+  ): RedisLock => ({
+    release: redis.eval(RELEASE_SCRIPT, resources, [value]).pipe(Effect.asVoid),
+    extend: (duration) =>
+      redis.eval(EXTEND_SCRIPT, resources, [value, duration]).pipe(
+        Effect.mapError(
+          (cause) => new ExecutionError("Redis lock renewal failed", { cause }),
+        ),
+        Effect.flatMap((extended) =>
+          extended === resources.length
+            ? Effect.void
+            : Effect.fail(new ExecutionError("Redis lock ownership was lost")),
+        ),
+      ),
+  });
+
+  const acquire: RedisLockManager["acquire"] = (
+    resources,
+    duration,
+    overrides = {},
+  ) =>
+    Effect.gen(function* () {
+      const settings = { ...defaults, ...overrides };
+      const value = crypto.randomUUID();
+      let lastCause: unknown;
+
+      for (let attempt = 0; attempt <= settings.retryCount; attempt += 1) {
+        const acquired = yield* redis
+          .eval(ACQUIRE_SCRIPT, resources, [value, duration])
+          .pipe(
+            Effect.catch((error) =>
+              Effect.sync(() => {
+                lastCause = error;
+              }),
             ),
-        );
+          );
 
-        const refreshAfter = Math.max(
-          1,
-          duration - this.options.automaticExtensionThreshold,
-        );
+        if (acquired === resources.length) {
+          return makeLock(resources, value);
+        }
 
-        const renew = Effect.sleep(refreshAfter).pipe(
-          Effect.andThen(
-            Effect.tryPromise({
-              try: () => lock.extend(duration),
-              catch: (cause) =>
-                cause instanceof ExecutionError
-                  ? cause
-                  : new ExecutionError("Redis lock renewal failed", { cause }),
-            }),
-          ),
-          Effect.forever,
-        );
+        if (attempt < settings.retryCount) {
+          yield* Effect.sleep(retryWait(settings));
+        }
+      }
 
-        return yield* Effect.raceFirst(routine, renew);
-      }),
-    );
-  }
-}
+      return yield* Effect.fail(
+        new ExecutionError("Unable to acquire Redis lock", {
+          cause: lastCause,
+        }),
+      );
+    });
 
-export class RedlockService {
-  constructor(private readonly redis: Pick<RedisService, "eval">) {}
+  return {
+    acquire,
+    withLock: (resource, duration, effect, unavailable, retry = {}) =>
+      Effect.acquireUseRelease(
+        acquire([resource], duration, retry).pipe(
+          Effect.mapError(() => unavailable()),
+        ),
+        () => effect,
+        releaseQuietly,
+      ),
+    singleFlight: (options, read, fill) => {
+      const { resource, duration, wait, unavailable } = options;
 
-  createInstance(options: RedlockOptions = {}): RedisLockManager {
-    return new RedisLockManager(this.redis, options);
-  }
-}
+      const tryAcquire = acquire([resource], duration, { retryCount: 0 }).pipe(
+        Effect.orElseSucceed(() => undefined),
+      );
+
+      const readOrFillUnderLock = Effect.flatMap(
+        read,
+        Option.match({
+          onSome: (value) => Effect.succeedSome(value),
+          onNone: () =>
+            Effect.acquireUseRelease(
+              tryAcquire,
+              (lock) =>
+                lock === undefined
+                  ? Effect.succeedNone
+                  : read.pipe(
+                      Effect.flatMap(
+                        Option.match({
+                          onSome: Effect.succeed,
+                          onNone: () => fill,
+                        }),
+                      ),
+                      Effect.asSome,
+                    ),
+              (lock) =>
+                lock === undefined ? Effect.void : releaseQuietly(lock),
+            ),
+        }),
+      );
+
+      return Effect.gen(function* () {
+        for (let retries = 0; ; retries += 1) {
+          const result = yield* readOrFillUnderLock;
+
+          if (Option.isSome(result)) return result.value;
+
+          if (retries >= wait.retryCount)
+            return yield* Effect.fail(unavailable());
+
+          yield* Effect.sleep(retryWait(wait));
+        }
+      });
+    },
+    using: (resources, duration, routine) =>
+      Effect.scoped(
+        Effect.gen(function* () {
+          const lock = yield* Effect.acquireRelease(
+            acquire(resources, duration),
+            (activeLock) =>
+              activeLock.release.pipe(
+                Effect.catch((error) =>
+                  Effect.logWarning("Failed to release Redis lock", error),
+                ),
+              ),
+          );
+
+          const refreshAfter = Math.max(
+            1,
+            duration - defaults.automaticExtensionThreshold,
+          );
+
+          const renew = Effect.sleep(refreshAfter).pipe(
+            Effect.andThen(lock.extend(duration)),
+            Effect.forever,
+          );
+
+          return yield* Effect.raceFirst(routine, renew);
+        }),
+      ),
+  };
+};

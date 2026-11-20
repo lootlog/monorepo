@@ -20,7 +20,7 @@ const getTimerTileKey = (timer: TimerWithTimeLeft) =>
 
 type TimersGridProps = {
   timers: TimerWithTimeLeft[];
-  settingsKey: string;
+  settingsKey: string | undefined;
   hiddenTimers: string[];
   minColumnWidth: number;
   legacyAppearance?: boolean;

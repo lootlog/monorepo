@@ -31,7 +31,8 @@ const getLastDefined = <Value>(
   getValue: (event: BattleEvent) => Value | undefined,
 ): Value | undefined => {
   for (let index = events.length - 1; index >= 0; index -= 1) {
-    const value = getValue(events[index]);
+    const event = events[index];
+    const value = event && getValue(event);
 
     if (value !== undefined) return value;
   }

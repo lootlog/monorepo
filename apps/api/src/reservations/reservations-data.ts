@@ -13,6 +13,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { guildTable } from "#src/database/drizzle/organization.schema";
 import { reservationTable } from "#src/database/drizzle/reservation.schema";
 import { presentReservation } from "./reservation-presentation.js";
+import type { ReservationSpot } from "./reservation-catalog.js";
 import type { AcceptReservationShareInvitationRequest } from "#src/contracts/reservation-sharing/schemas";
 import type {
   CreateReservationRequest,
@@ -20,7 +21,36 @@ import type {
   UpdateReservationRequest,
 } from "#src/contracts/reservations/schemas";
 
-type DataEffect = Effect.Effect<unknown, OrganizationWorkspaceOperationError>;
+type DataEffect<A> = Effect.Effect<A, OrganizationWorkspaceOperationError>;
+
+type PresentedReservation = ReturnType<typeof presentReservation>;
+
+type ReservationSpotSummary = ReservationSpot & {
+  readonly isPinned: boolean;
+  readonly isAvailableNow: boolean;
+  readonly availableUntil: Date | null;
+  readonly activeReservationCount: number;
+  readonly hasPartnerReservations: boolean;
+  readonly currentReservation: PresentedReservation | null;
+  readonly nextReservation: PresentedReservation | null;
+};
+
+type PartnerOrganization = {
+  readonly name: string;
+  readonly iconUrl: string | null;
+};
+
+type ReservationShareSummary = {
+  readonly id: string;
+  readonly partner: PartnerOrganization;
+  readonly createdAt: Date;
+};
+
+type ReservationShareInvitationSummary = {
+  readonly id: string;
+  readonly expiresAt: Date;
+  readonly createdAt: Date;
+};
 
 export class OrganizationWorkspaceData extends Context.Service<
   OrganizationWorkspaceData,
@@ -29,20 +59,20 @@ export class OrganizationWorkspaceData extends Context.Service<
       context: ReservationViewerContext,
       spotId: string,
       payload: CreateReservationRequest,
-    ) => DataEffect;
+    ) => DataEffect<PresentedReservation>;
     readonly deleteVisible: (
       context: ReservationViewerContext,
       reservationId: number,
-    ) => DataEffect;
+    ) => DataEffect<void>;
     readonly deleteOwned: (
       identity: OrganizationWorkspaceIdentity,
       reservationId: number,
-    ) => DataEffect;
+    ) => DataEffect<void>;
     readonly updateOwned: (
       identity: OrganizationWorkspaceIdentity,
       reservationId: number,
       payload: UpdateReservationRequest,
-    ) => DataEffect;
+    ) => DataEffect<PresentedReservation>;
   }
 >()("@lootlog/api/http-api/organization-workspace/data") {}
 
@@ -52,7 +82,9 @@ export class MyReservationsData extends Context.Service<
     readonly listMine: (
       identity: OrganizationWorkspaceIdentity,
       query: MyReservationsQuery,
-    ) => DataEffect;
+    ) => DataEffect<{
+      readonly items: ReadonlyArray<PresentedReservation>;
+    }>;
   }
 >()("@lootlog/api/http-api/my-reservations/data") {
   static readonly layerDatabase = Layer.effect(
@@ -145,44 +177,66 @@ export class MyReservationsData extends Context.Service<
 export class ReservationReadData extends Context.Service<
   ReservationReadData,
   {
-    readonly listSpots: (context: ReservationViewerContext) => DataEffect;
+    readonly listSpots: (
+      context: ReservationViewerContext,
+    ) => DataEffect<ReadonlyArray<ReservationSpotSummary>>;
     readonly listWindow: (
       context: ReservationViewerContext,
       spotId: string,
       from: string,
       to: string,
-    ) => DataEffect;
+    ) => DataEffect<{
+      readonly items: ReadonlyArray<PresentedReservation>;
+      readonly window: { readonly from: Date; readonly to: Date };
+    }>;
     readonly pinSpot: (
       userId: string,
       guildId: string,
       spotId: string,
-    ) => DataEffect;
+    ) => DataEffect<void>;
     readonly unpinSpot: (
       userId: string,
       guildId: string,
       spotId: string,
-    ) => DataEffect;
+    ) => DataEffect<void>;
   }
 >()("@lootlog/api/http-api/reservation-read/data") {}
 
 export class ReservationSharingData extends Context.Service<
   ReservationSharingData,
   {
-    readonly listShares: (guildId: string) => DataEffect;
-    readonly createInvitation: (guildId: string, userId: string) => DataEffect;
+    readonly listShares: (guildId: string) => DataEffect<{
+      readonly shares: ReadonlyArray<ReservationShareSummary>;
+      readonly pendingInvitations: ReadonlyArray<ReservationShareInvitationSummary>;
+    }>;
+    readonly createInvitation: (
+      guildId: string,
+      userId: string,
+    ) => DataEffect<
+      ReservationShareInvitationSummary & { readonly invitePath: string }
+    >;
     readonly revokeInvitation: (
       guildId: string,
       invitationId: string,
-    ) => DataEffect;
-    readonly revokeShare: (guildId: string, shareId: string) => DataEffect;
+    ) => DataEffect<void>;
+    readonly revokeShare: (
+      guildId: string,
+      shareId: string,
+    ) => DataEffect<void>;
     readonly previewInvitation: (
       token: string,
       discordId: string,
-    ) => DataEffect;
+    ) => DataEffect<{
+      readonly sourceOrganization: PartnerOrganization;
+      readonly expiresAt: Date;
+      readonly eligibleTargetOrganizations: ReadonlyArray<
+        PartnerOrganization & { readonly id: string }
+      >;
+    }>;
     readonly acceptInvitation: (
       token: string,
       payload: AcceptReservationShareInvitationRequest,
       identity: OrganizationWorkspaceIdentity,
-    ) => DataEffect;
+    ) => DataEffect<ReservationShareSummary>;
   }
 >()("@lootlog/api/http-api/reservation-sharing/data") {}

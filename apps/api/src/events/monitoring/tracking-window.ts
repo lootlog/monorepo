@@ -60,22 +60,22 @@ export function clipIntervalToWindow(params: {
 export function calculateTrackingDurationSeconds(
   intervals: TrackingWindowInterval[],
 ): number {
-  if (intervals.length === 0) {
-    return 0;
-  }
-
-  const sortedIntervals = [...intervals].sort(
+  const [firstInterval, ...laterIntervals] = intervals.toSorted(
     (leftInterval, rightInterval) =>
       leftInterval.start.getTime() - rightInterval.start.getTime(),
   );
 
-  let totalMs = 0;
-  let currentStartMs = sortedIntervals[0].start.getTime();
-  let currentEndMs = sortedIntervals[0].end.getTime();
+  if (!firstInterval) {
+    return 0;
+  }
 
-  for (let index = 1; index < sortedIntervals.length; index++) {
-    const nextStartMs = sortedIntervals[index].start.getTime();
-    const nextEndMs = sortedIntervals[index].end.getTime();
+  let totalMs = 0;
+  let currentStartMs = firstInterval.start.getTime();
+  let currentEndMs = firstInterval.end.getTime();
+
+  for (const interval of laterIntervals) {
+    const nextStartMs = interval.start.getTime();
+    const nextEndMs = interval.end.getTime();
 
     if (nextStartMs <= currentEndMs) {
       currentEndMs = Math.max(currentEndMs, nextEndMs);

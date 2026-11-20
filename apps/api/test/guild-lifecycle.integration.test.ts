@@ -1,4 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from "bun:test";
+import { RedisError } from "effect/persistence/Redis";
 import {
   decodeRabbitEventJson,
   GuildCreated,
@@ -203,7 +204,7 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
           clearMemberCaches: () =>
             cacheAvailable
               ? Effect.void
-              : Effect.fail(new Error("cache unavailable")),
+              : Effect.fail(new RedisError({ cause: "cache unavailable" })),
           publishMemberRemoved: ({ globalUserId }) =>
             Effect.sync(() => removed.push(globalUserId)),
           invalidateMember: () => Effect.void,

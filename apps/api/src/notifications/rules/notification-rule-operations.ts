@@ -15,6 +15,7 @@ import { randomUUID } from "node:crypto";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
+import type { AccountOrganizationOperationError } from "#src/guilds/account-organization-data";
 import { guildTable } from "#src/database/drizzle/organization.schema";
 import {
   notificationRuleTable,
@@ -42,7 +43,7 @@ import {
   ResourceConflictError,
   PermissionDeniedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 
 const TEST_LIMIT = 10;
 
@@ -53,13 +54,14 @@ const USER_RULE_LIMIT = 50;
 export interface NotificationRuleDependencies {
   readonly ensureGuildPermissions: (
     guildId: string,
-  ) => Effect.Effect<unknown, unknown, never>;
-  readonly rebuildJobs: (
-    ruleId: number,
-  ) => Effect.Effect<unknown, unknown, never>;
+  ) => Effect.Effect<
+    void,
+    AccountOrganizationOperationError | ResourceConflictError
+  >;
+  readonly rebuildJobs: (ruleId: number) => Effect.Effect<void, unknown>;
   readonly cancelJobs: (filters: {
     readonly ruleId: number;
-  }) => Effect.Effect<unknown, unknown, never>;
+  }) => Effect.Effect<void, unknown>;
   readonly buildTestPayload: (options: {
     readonly notificationRule: typeof notificationRuleTable.$inferSelect;
     readonly scheduledFor: Date;
@@ -78,7 +80,7 @@ export interface NotificationRuleDependencies {
   readonly enqueueJob: (
     jobId: string,
     delay: number,
-  ) => Effect.Effect<unknown, unknown, never>;
+  ) => Effect.Effect<void, unknown>;
 }
 
 export const makeNotificationRuleOperations = (

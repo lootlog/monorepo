@@ -5,7 +5,7 @@ import type { BattleReadBudget } from "#src/database/battle-read-budget";
 import type { DrizzleDatabase } from "#src/database/database";
 import { battles } from "#src/database/schema";
 import { isBattleId } from "#src/battles/battle-id";
-import { InvalidRequestError } from "#src/infrastructure/http-error";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import type {
   CursorPagination,
   PaginationOptions,
@@ -80,7 +80,7 @@ export const makeBattlePagination = (
               decodedCursor
                 ? (descending ? lt : gt)(table.id, decodedCursor.id)
                 : undefined,
-            ),
+            ) ?? sql`true`,
         },
         limit: size + 1,
         with: { warriors: true },

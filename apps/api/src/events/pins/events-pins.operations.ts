@@ -2,7 +2,7 @@ import { Clock, Effect } from "effect";
 import {
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { PinnedEventsPersistence } from "#src/events/pins/pinned-events.repository";
 import { attachComputedEventActive } from "#src/events/monitoring/event-activity";
 

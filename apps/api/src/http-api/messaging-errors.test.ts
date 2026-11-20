@@ -1,5 +1,5 @@
-import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { afterAll, expect, it } from "bun:test";
@@ -11,7 +11,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { MessagingGroup } from "#src/contracts/messaging/api";
 import { LootlogConfigGroup } from "#src/contracts/lootlog-config/api";
 import { PartyReadyRoomGroup } from "#src/contracts/party-ready-room/api";
@@ -49,6 +49,31 @@ const database = new Proxy(databaseBoundary.database, {
 
 const unused = () => Effect.die("Unexpected ready-room operation");
 
+// The room a ready-room mutation checks for visibility before it runs.
+const visibleRoom = {
+  schemaVersion: 3 as const,
+  notificationId: "active",
+  organizerDiscordId: caller.discordId,
+  organizerCharacter: {
+    lvl: 300,
+    nick: "Hero",
+    accountId: "account",
+    characterId: "character",
+    prof: "w",
+    icon: "hero.gif",
+  },
+  guildIds: ["guild"],
+  world: "Fobos",
+  status: "ACTIVE" as const,
+  revision: 1,
+  createdAt: "2026-09-02T12:00:00.000Z",
+  updatedAt: "2026-09-02T12:00:00.000Z",
+  expiresAt: "2026-09-02T12:30:00.000Z",
+  viewer: "ORGANIZER" as const,
+  participants: {},
+  ownedParticipantIds: [],
+};
+
 const services = Layer.mergeAll(
   Layer.succeed(MessagingIdentity, { caller: Effect.succeed(caller) }),
   Layer.succeed(LootlogConfigAuthorization, {
@@ -80,7 +105,7 @@ const services = Layer.mergeAll(
               cause: new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
             }),
           )
-        : Effect.succeed({}),
+        : Effect.succeed(visibleRoom),
     cancel: () =>
       Effect.fail(
         new ReadyRoomOperationError({

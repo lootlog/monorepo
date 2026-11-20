@@ -10,8 +10,8 @@ import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 
 type Role = {
   permissions: Permission[];
-  lvlRangeFrom: number;
-  lvlRangeTo: number;
+  lvlRangeFrom: number | null;
+  lvlRangeTo: number | null;
 };
 
 const isNpcScopedMessage = (data: ChatStoredMessage) => {

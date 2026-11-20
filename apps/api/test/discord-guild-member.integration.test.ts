@@ -13,13 +13,12 @@ import { Effect, ManagedRuntime, Redacted } from "effect";
 import { Redis } from "effect/persistence";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
-import { AuthService } from "#src/auth/auth.service";
-import { DiscordGuildMemberClient } from "#src/discord/discord-guild-member.client";
-import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
-import { DiscordRestClientFactory } from "#src/discord/discord-rest-client.factory";
-import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
-import { RedisService } from "#src/redis/redis.service";
-import { applicationLogger } from "#src/shared/application-logger";
+import { makeAuthService } from "#src/auth/auth.service";
+import { makeDiscordGuildMemberClient } from "#src/discord/discord-guild-member.client";
+import { makeDiscordRateLimiter } from "#src/discord/discord-rate-limiter.service";
+import { makeDiscordRestClients } from "#src/discord/discord-rest-client.factory";
+import { makeDiscordSyncDiagnostics } from "#src/discord/discord-sync-diagnostics.service";
+import { makeRedisService, type RedisService } from "#src/redis/redis.service";
 import { httpClientFromResponses } from "./http-fixtures.js";
 
 // Bun's Response body stream is typed apart from the one REST declares.
@@ -65,11 +64,7 @@ describe("Discord guild member reads against Dragonfly", () => {
         url: `redis://${username}:${password}@${process.env.REDIS_HOST ?? "127.0.0.1"}:${Number(process.env.REDIS_PORT ?? 6379)}`,
       }),
     );
-    redis = new RedisService(
-      await redisRuntime.runPromise(Redis.Redis),
-      {},
-      (effect) => redisRuntime.runPromise(effect),
-    );
+    redis = makeRedisService(await redisRuntime.runPromise(Redis.Redis));
   });
 
   afterEach(() => queueRequest.mockReset());
@@ -90,10 +85,9 @@ describe("Discord guild member reads against Dragonfly", () => {
 
     const auth = { accessToken: "first-token" };
 
-    const authService = new AuthService(
-      applicationLogger,
+    const authService = makeAuthService({
       redis,
-      httpClientFromResponses(() =>
+      httpClient: httpClientFromResponses(() =>
         Effect.sync(() =>
           Response.json({
             accessToken: auth.accessToken,
@@ -102,18 +96,22 @@ describe("Discord guild member reads against Dragonfly", () => {
           }),
         ),
       ),
-      new URL("http://auth.test"),
-      Redacted.make("idp-test-secret"),
-    );
+      authServiceUrl: new URL("http://auth.test"),
+      idpTokenSecret: Redacted.make("idp-test-secret"),
+    });
 
-    const client = new DiscordGuildMemberClient(
-      applicationLogger,
+    const members = makeDiscordGuildMemberClient({
       redis,
-      new DiscordRateLimiterService(applicationLogger, redis),
-      new DiscordSyncDiagnosticsService(applicationLogger, redis),
-      new DiscordRestClientFactory(authService),
-      RuntimeEnvironment.PROD,
-    );
+      rateLimiter: makeDiscordRateLimiter(redis),
+      diagnostics: makeDiscordSyncDiagnostics(redis),
+      restClients: makeDiscordRestClients(authService),
+      environment: RuntimeEnvironment.PROD,
+    });
+
+    const client = {
+      getGuildMember: (options: typeof identity) =>
+        Effect.runPromise(members.getGuildMember(options)),
+    };
 
     return { auth, client, identity };
   };

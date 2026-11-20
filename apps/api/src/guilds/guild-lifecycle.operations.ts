@@ -6,6 +6,7 @@ import {
 import { Permission } from "@lootlog/schema/permissions";
 import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   discordGuildSyncStateTable,
@@ -29,21 +30,20 @@ import type {
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { selectActiveRoleHolders } from "#src/members/member-role-holders";
 import { queueMemberDeliveries } from "#src/members/member.repository";
+import type { MemberDelivery } from "#src/members/member-delivery.operations";
 import { getPermissionsCachePattern } from "#src/shared/cache";
 import { getGuildCacheKey } from "#src/guilds/guild-configuration-cache";
 
 export interface GuildLifecyclePorts {
   readonly invalidateUserGuildPermissions: (
     discordId: string,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
   readonly clearCachePattern: (
     pattern: string,
-  ) => Effect.Effect<unknown, unknown>;
-  readonly clearCacheKey: (key: string) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
+  readonly clearCacheKey: (key: string) => Effect.Effect<void, RedisError>;
   /** Delivers member changes queued in the `MemberSyncDelivery` outbox. */
-  readonly deliverMemberChanges: (
-    memberIds: ReadonlyArray<number>,
-  ) => Effect.Effect<unknown, unknown>;
+  readonly deliverMemberChanges: MemberDelivery["deliverAll"];
 }
 
 type Transaction = Parameters<typeof queueMemberDeliveries>[0];

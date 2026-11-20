@@ -4,7 +4,8 @@ import {
 } from "@lootlog/instrumentation/operation";
 import type { Job, Queue as BullQueue } from "bullmq";
 import { Clock, Effect } from "effect";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import type { RedisError } from "effect/persistence/Redis";
+import type { RedisService } from "#src/redis/redis.service";
 
 export interface MemberRefreshJobData {
   readonly discordId: string;
@@ -42,7 +43,7 @@ export interface MemberRefreshSchedulerPorts {
   readonly recordMetric: (options: {
     readonly outcome: "delayed" | "queued" | "refused";
     readonly reason: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
   readonly getLock: (key: string) => Effect.Effect<string | null, unknown>;
   readonly setLock: (
     key: string,
@@ -53,11 +54,8 @@ export interface MemberRefreshSchedulerPorts {
     script: string,
     keys: string[],
     args: Array<string | number>,
-  ) => Effect.Effect<unknown, unknown>;
-  readonly releaseLock: (
-    key: string,
-    owner: string,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<number, RedisError>;
+  readonly releaseLock: RedisService["deleteIfValue"];
 }
 
 const USER_LOCK_TTL_SECONDS = 30;
@@ -85,7 +83,6 @@ const errorCode = (error: unknown) =>
     : null;
 
 export const makeMemberRefreshScheduler = (
-  logger: Logger,
   queue: {
     readonly getJob: BullQueue<MemberRefreshJobData>["getJob"];
     readonly add: (
@@ -94,57 +91,60 @@ export const makeMemberRefreshScheduler = (
   },
   ports: MemberRefreshSchedulerPorts,
 ) => {
-  const bull = <A>(operation: string, run: () => Promise<A>) =>
-    Effect.tryPromise({
-      try: run,
-      catch: (cause) => new OperationError({ operation, cause }),
-    }).pipe(withAdapterSpan(operation, "bullmq"));
+  const bull = <A>(run: () => Promise<A>) =>
+    Effect.tryPromise({ try: run, catch: (cause) => cause });
 
-  const updateExisting = async (
+  const updateExisting = Effect.fnUntraced(function* (
     job: Job<MemberRefreshJobData>,
     data: MemberRefreshJobData,
     delay: number,
     state: MemberRefreshJobState,
-  ) => {
+  ) {
     const nextData = {
       ...job.data,
       ...data,
       priority: Math.min(job.data.priority, data.priority),
     };
 
-    await job.updateData(nextData);
+    yield* bull(() => job.updateData(nextData));
 
     if ((job.opts.priority ?? nextData.priority) > nextData.priority) {
-      try {
-        await job.changePriority({ priority: nextData.priority });
-      } catch (error) {
-        logger.log({
-          level: "debug",
-          message: "Failed to reprioritize member refresh job",
-          jobId: job.id,
-          error: error,
-        });
-      }
+      yield* bull(() =>
+        job.changePriority({ priority: nextData.priority }),
+      ).pipe(
+        Effect.catch((error) =>
+          Effect.logDebug({
+            message: "Failed to reprioritize member refresh job",
+            jobId: job.id,
+            error: error,
+          }),
+        ),
+      );
     }
 
     if (state !== "delayed") return;
 
-    try {
-      if (delay === 0) await job.promote();
-      else await job.changeDelay(delay);
-    } catch (error) {
-      if (errorCode(error) === -3 && (await job.getState()) !== "delayed") {
-        return;
-      }
+    yield* bull(() =>
+      delay === 0 ? job.promote() : job.changeDelay(delay),
+    ).pipe(
+      Effect.catch((error) =>
+        Effect.gen(function* () {
+          if (
+            errorCode(error) === -3 &&
+            (yield* bull(() => job.getState())) !== "delayed"
+          ) {
+            return;
+          }
 
-      logger.log({
-        level: "debug",
-        message: "Failed to reschedule delayed member refresh job",
-        jobId: job.id,
-        error: error,
-      });
-    }
-  };
+          yield* Effect.logDebug({
+            message: "Failed to reschedule delayed member refresh job",
+            jobId: job.id,
+            error: error,
+          });
+        }),
+      ),
+    );
+  });
 
   const add = (id: string, data: MemberRefreshJobData, delay: number) =>
     queue.add("member-refresh", data, {
@@ -174,32 +174,39 @@ export const makeMemberRefreshScheduler = (
       ? Math.max(nextRefreshAt.getTime() - (yield* Clock.currentTimeMillis), 0)
       : 0;
 
-    yield* bull("members.refresh.queue", async () => {
+    yield* Effect.gen(function* () {
       const id = jobId(data.userId, data.guildId);
-      const existing = await queue.getJob(id);
+      const existing = yield* bull(() => queue.getJob(id));
 
       if (!existing) {
-        await add(id, data, delay);
+        yield* bull(() => add(id, data, delay));
 
         return;
       }
 
-      const state = await existing.getState();
+      const state = yield* bull(() => existing.getState());
 
       if (["completed", "failed", "unknown"].includes(state)) {
-        try {
-          await existing.remove();
-        } catch (error) {
-          if (errorCode(error) !== -1) throw error;
-        }
+        yield* bull(() => existing.remove()).pipe(
+          Effect.catchIf(
+            (error) => errorCode(error) === -1,
+            () => Effect.void,
+          ),
+        );
 
-        await add(id, data, delay);
+        yield* bull(() => add(id, data, delay));
 
         return;
       }
 
-      await updateExisting(existing, data, delay, state);
-    });
+      yield* updateExisting(existing, data, delay, state);
+    }).pipe(
+      Effect.mapError(
+        (cause) =>
+          new OperationError({ operation: "members.refresh.queue", cause }),
+      ),
+      withAdapterSpan("members.refresh.queue", "bullmq"),
+    );
     yield* ports.recordMetric({ outcome: "queued", reason: data.reason });
 
     if (delay > 0) {

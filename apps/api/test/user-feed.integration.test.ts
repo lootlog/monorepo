@@ -27,7 +27,6 @@ import {
   makeGuildKillActivityPublisher,
 } from "#src/kills/guild-kill-activity";
 import { makeKillCreation } from "#src/kills/kill-creation";
-import { applicationLogger } from "#src/shared/application-logger";
 import type { UserFeedQuery } from "#src/contracts/users/feed-schemas";
 
 const client = new Client({ connectionString: requireIsolatedTestDatabase() });
@@ -489,7 +488,7 @@ describe("personal Organization activity feed", () => {
     )(JSON.parse(new TextDecoder().decode(message.content)));
 
     expect(payload.feedEntry).toEqual(
-      (await run(makeUserFeed(database)(owner))).items[0],
+      (await run(makeUserFeed(database)(owner))).items[0]!,
     );
     expect(payload.feedEntry.version).toBe(2);
     expect(payload.sourceNpcs.map((npc) => npc.level).sort()).toEqual([
@@ -605,7 +604,7 @@ describe("personal Organization activity feed", () => {
         invalidateScopes: () => Effect.void,
         deleteIfValue: (key, value) =>
           Effect.sync(() => {
-            if (seen.get(key) === value) seen.delete(key);
+            return Number(seen.get(key) === value && seen.delete(key));
           }),
         setNx: (key, value) =>
           Effect.sync(() => {
@@ -616,7 +615,6 @@ describe("personal Organization activity feed", () => {
           }),
         setNxGet: () => Effect.succeed(null),
       },
-      applicationLogger,
       makeGuildKillActivityPublisher(database, {
         publish: () => {
           publicationCount++;

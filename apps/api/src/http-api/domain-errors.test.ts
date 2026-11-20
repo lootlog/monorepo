@@ -1,5 +1,5 @@
-import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import {
   createGuildFixture,
   createMemberFixture,
@@ -10,7 +10,7 @@ import { Etag, HttpPlatform, HttpRouter } from "effect/http";
 import { HttpApiTest } from "effect/http-api";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { ResourceConflictError } from "#src/shared/http/http-errors";
+import { ResourceConflictError } from "@lootlog/protocol/http/errors";
 import { EventTimersError } from "#src/events/respawn/event-timers.port";
 import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import { LootlogApi } from "./lootlog-api.js";

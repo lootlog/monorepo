@@ -42,7 +42,7 @@ describe("resolvePlayerSnapshots", () => {
 
       expect(rows).toHaveLength(1);
       expect(new Set(resolved.map(({ id }) => id))).toEqual(
-        new Set([rows[0]?.id]),
+        new Set([rows[0]!.id]),
       );
     } finally {
       await boundary.dispose();

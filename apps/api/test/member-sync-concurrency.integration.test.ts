@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, expect, it } from "bun:test";
+import { MessagingError } from "@lootlog/messaging";
 import { GuildMemberFlags, type APIGuildMember } from "discord-api-types/v10";
 import { eq } from "drizzle-orm";
 import { Effect, ManagedRuntime, Schema } from "effect";
@@ -13,7 +14,6 @@ import {
 import { makeMemberDelivery } from "#src/members/member-delivery.operations";
 import { makeMemberStore } from "#src/members/member.repository";
 import { makeMemberSync } from "#src/members/member-sync.operations";
-import { applicationLogger } from "#src/shared/application-logger";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 import { createGuildFixture } from "./organization-fixtures.js";
 
@@ -77,7 +77,7 @@ const createSyncFixture = async () => {
   const guildId = crypto.randomUUID();
   const discordId = crypto.randomUUID();
   const userId = crypto.randomUUID();
-  const roles = Array.from({ length: 4 }, () => crypto.randomUUID());
+  const roles = Array.from({ length: 4 }, (): string => crypto.randomUUID());
 
   await runtime.runPromise(
     database.insert(guildTable).values(createGuildFixture({ id: guildId })),
@@ -97,7 +97,7 @@ const createSyncFixture = async () => {
   const store = makeMemberStore(database);
   const notifications: string[] = [];
   let permissionRefreshes = 0;
-  let publicationFailure: Error | undefined;
+  let publicationFailure: MessagingError | undefined;
   let publication: Promise<void> | undefined;
 
   const delivery = makeMemberDelivery(store, {
@@ -133,7 +133,7 @@ const createSyncFixture = async () => {
       flags: GuildMemberFlags.CompletedOnboarding,
     };
 
-    const service = makeMemberSync(applicationLogger, store, delivery, {
+    const service = makeMemberSync(store, delivery, {
       getGuildMember: () => Effect.succeed(discordMember),
       nextRefreshAt: () => Effect.succeed(null),
       refreshPermissionCache: () =>
@@ -155,7 +155,7 @@ const createSyncFixture = async () => {
     stored: () =>
       runtime.runPromise(store.findMemberWithRoles(discordId, guildId)),
     permissionRefreshes: () => permissionRefreshes,
-    failPublication: (failure: Error | undefined) => {
+    failPublication: (failure: MessagingError | undefined) => {
       publicationFailure = failure;
     },
     /** Holds every publication until the returned release is called. */
@@ -228,7 +228,7 @@ it("overlapping role changes commit complete role snapshots without mixing assig
 
   const stored = await fixture.stored();
   expect([firstRoles.toSorted(), secondRoles.toSorted()]).toContainEqual(
-    stored?.roles.map(({ id }) => id).toSorted(),
+    stored!.roles.map(({ id }) => id).toSorted(),
   );
 }, 15_000);
 
@@ -238,7 +238,13 @@ it("concurrent retries deliver a committed role change once after publication re
   const changedRoles = fixture.roles.slice(2);
   await fixture.sync(originalRoles);
   fixture.notifications.length = 0;
-  fixture.failPublication(new Error("publication unavailable"));
+  fixture.failPublication(
+    new MessagingError({
+      operation: "publish",
+      message: "publication unavailable",
+      cause: undefined,
+    }),
+  );
 
   await expect(fixture.sync(changedRoles)).rejects.toThrow();
   expect(

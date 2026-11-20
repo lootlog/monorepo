@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import { UserFeedQuery, UserFeedResponse } from "./feed-schemas.js";
 /** Endpoints owned by the users HTTP module. */
 import {
@@ -6,10 +7,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import {
-  BearerSecurityMiddleware,
-  HttpErrorResponse,
-} from "#src/contracts/api-shared";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import {
   AccountDeletionAccepted,
   CurrentOrganizationsResponse,

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   UserKillAnalyticsQuery,
   UserKillAnalyticsResponse,
@@ -12,10 +13,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import {
-  BearerSecurityMiddleware,
-  HttpErrorResponse,
-} from "#src/contracts/api-shared";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import {
   CreateKillResponse,
   CreateKillRequest,

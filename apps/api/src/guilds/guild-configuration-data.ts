@@ -15,13 +15,13 @@ import { timerTable } from "#src/database/drizzle/timer.schema";
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { findActiveGuild } from "./active-guild-lookup.js";
 import { parseVanityUrl } from "./vanity-url.js";
 import { ErrorKey } from "./error-key.js";
 import type { UpdateOrganizationConfigRequest } from "#src/contracts/guilds/schemas";
 
-type DataEffect = Effect.Effect<unknown, AccountOrganizationOperationError>;
+type DataEffect<A> = Effect.Effect<A, AccountOrganizationOperationError>;
 
 const invalidReservationRange = () =>
   new InvalidRequestError({
@@ -99,12 +99,21 @@ const buildGuildConfigurationUpdate = (
 export class GuildConfigurationData extends Context.Service<
   GuildConfigurationData,
   {
-    readonly getGuildById: (guildId: string) => DataEffect;
+    readonly getGuildById: (
+      guildId: string,
+    ) => DataEffect<
+      | NonNullable<
+          Effect.Success<ReturnType<typeof readGuildConfigurationCache>>
+        >
+      | typeof guildTable.$inferSelect
+    >;
     readonly updateGuildConfig: (
       guildId: string,
       payload: UpdateOrganizationConfigRequest,
-    ) => DataEffect;
-    readonly getWorldsByGuildId: (guildId: string) => DataEffect;
+    ) => DataEffect<typeof guildTable.$inferSelect>;
+    readonly getWorldsByGuildId: (
+      guildId: string,
+    ) => DataEffect<ReadonlyArray<string>>;
   }
 >()("@lootlog/api/http-api/guild-configuration/data") {
   static layerDatabase(cache: GuildConfigurationCache) {

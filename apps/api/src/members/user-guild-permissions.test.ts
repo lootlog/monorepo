@@ -140,8 +140,10 @@ const createFixture = async () => {
           .where(eq(memberTable.id, 1)),
       ),
     invalidate: () =>
-      cacheBoundary.redis.invalidateScopes(
-        getUserGuildPermissionsCacheScope(identity.discordId),
+      Effect.runPromise(
+        cacheBoundary.redis.invalidateScopes(
+          getUserGuildPermissionsCacheScope(identity.discordId),
+        ),
       ),
   };
 };
@@ -227,10 +229,8 @@ describe("aggregate permission revocation", () => {
 
     const lifecycle = makeGuildLifecycle(fixture.database, {
       invalidateUserGuildPermissions: (discordId) =>
-        Effect.promise(() =>
-          fixture.redis.invalidateScopes(
-            getUserGuildPermissionsCacheScope(discordId),
-          ),
+        fixture.redis.invalidateScopes(
+          getUserGuildPermissionsCacheScope(discordId),
         ),
       clearCacheKey: () => Effect.void,
       clearCachePattern: () => Effect.void,

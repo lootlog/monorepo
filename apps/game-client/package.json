@@ -65,6 +65,7 @@
   },
   "devDependencies": {
     "@aklinker1/zero-zip": "1.0.1",
+    "@lootlog/typescript-config": "workspace:*",
     "@napi-rs/canvas": "^1.0.11",
     "@tailwindcss/postcss": "catalog:",
     "@tailwindcss/vite": "catalog:",

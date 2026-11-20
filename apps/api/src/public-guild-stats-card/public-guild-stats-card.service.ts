@@ -3,7 +3,7 @@ import {
   ApplicationError,
   RateLimitedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { Clock, Effect, Schema } from "effect";
 import { getStatsPeriodStart } from "#src/kills/kill-stats-period";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
@@ -110,7 +110,8 @@ export const makePublicGuildStatsCard = (options: {
   const getCardGuild = (guildId: string) =>
     options.repository.findActiveGuild(guildId).pipe(
       Effect.filterOrFail(
-        (guild) => guild?.publicStatsCardEnabled === true,
+        (guild): guild is GuildStatsCardGuild =>
+          guild?.publicStatsCardEnabled === true,
         () => new ResourceNotFoundError("Guild not found"),
       ),
     );

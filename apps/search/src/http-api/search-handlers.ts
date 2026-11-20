@@ -1,4 +1,4 @@
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { Layer } from "effect";
 import { HealthHandlers } from "./handlers/health.handlers.js";
 import { PlayersHandlers } from "./handlers/players.handlers.js";

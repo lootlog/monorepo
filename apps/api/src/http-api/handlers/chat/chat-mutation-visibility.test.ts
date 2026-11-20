@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import { ChatOperationError } from "#src/chat/chat-data";
 import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
-import { PermissionDeniedError } from "#src/shared/http/http-errors";
+import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import { makeChatOperations, type ChatRedis } from "#src/chat/chat.data-layer";
 
 const message = {

@@ -35,7 +35,7 @@ import { makeNotificationRuleOperations } from "#src/notifications/rules/notific
 import { makeNotificationTestContent } from "#src/notifications/notification-test-content";
 import { makeNotificationUserTargets } from "#src/notifications/targets/notification-user-targets";
 import { makeNotificationWatchedItems } from "#src/notifications/rules/notification-watched-items";
-import { ResourceConflictError } from "#src/shared/http/http-errors";
+import { ResourceConflictError } from "@lootlog/protocol/http/errors";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer } from "effect";

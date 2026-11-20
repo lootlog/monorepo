@@ -21,8 +21,7 @@ import type { RedisService } from "#src/redis/redis.service";
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+} from "@lootlog/protocol/http/errors";
 import type {
   CloseRespawnWindowRequest,
   OpenRespawnWindowRequest,
@@ -73,7 +72,6 @@ export const makeEventRespawnCommands = (
   queue: EventRespawnQueue,
   publisher: EventRespawnPublisher,
   manualKill: EventManualKillRecorder,
-  logger: Logger,
 ) => {
   const query = adapterOperation("events.respawn.drizzle");
 
@@ -83,9 +81,10 @@ export const makeEventRespawnCommands = (
   ) =>
     effect.pipe(
       Effect.catch((error) =>
-        Effect.sync(() =>
-          logger.warn("Event respawn side effect failed", { error, operation }),
-        ),
+        Effect.logWarning("Event respawn side effect failed", {
+          error,
+          operation,
+        }),
       ),
       withAdapterSpan(operation, "events.respawn"),
     );
@@ -97,13 +96,7 @@ export const makeEventRespawnCommands = (
         eventReadCacheScope(guildId, eventId),
       ],
       (scope) =>
-        bestEffort(
-          "events.respawn.cache",
-          Effect.tryPromise({
-            try: () => redis.invalidateScopes(scope),
-            catch: (error) => error,
-          }),
-        ),
+        bestEffort("events.respawn.cache", redis.invalidateScopes(scope)),
       { concurrency: "unbounded", discard: true },
     );
 
@@ -342,7 +335,6 @@ export const makeEventRespawnCommands = (
             queue,
             publisher,
             manualKill,
-            logger,
           ).open(
             guild,
             eventId,

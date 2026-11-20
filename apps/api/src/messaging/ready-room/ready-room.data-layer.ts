@@ -28,7 +28,7 @@ import {
   PermissionDeniedError,
   ResourceNotFoundError,
   InvalidEntityError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { ReadyRoomData, ReadyRoomOperationError } from "./ready-room-data.js";
 import {
   cancelRoom,

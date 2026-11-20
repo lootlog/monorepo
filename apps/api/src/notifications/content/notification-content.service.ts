@@ -112,10 +112,7 @@ class NotificationContent {
       title: TIMER_NOTIFICATION_TITLE,
       message,
       content,
-      allowedMentions: this.buildAllowedMentionsForTarget(
-        template,
-        params.target.targetType,
-      ),
+      ...this.allowedMentionsField(template, params.target.targetType),
       ruleId: params.notificationRule.id,
       ruleName: params.notificationRule.name,
       triggerType: params.notificationRule.triggerType,
@@ -167,10 +164,7 @@ class NotificationContent {
       title: SCHEDULED_MESSAGE_TITLE,
       message,
       content,
-      allowedMentions: this.buildAllowedMentionsForTarget(
-        template,
-        params.target.targetType,
-      ),
+      ...this.allowedMentionsField(template, params.target.targetType),
       ruleId: params.notificationRule.id,
       ruleName: params.notificationRule.name,
       triggerType: params.notificationRule.triggerType,
@@ -231,10 +225,7 @@ class NotificationContent {
         sighting.world,
       ),
       content,
-      allowedMentions: this.buildAllowedMentionsForTarget(
-        template,
-        params.target.targetType,
-      ),
+      ...this.allowedMentionsField(template, params.target.targetType),
       ruleId: params.notificationRule.id,
       ruleName: params.notificationRule.name,
       triggerType: params.notificationRule.triggerType,
@@ -281,6 +272,19 @@ class NotificationContent {
       triggerType: params.notificationRule.triggerType,
       world: params.notificationRule.world,
     } satisfies JsonObject;
+  }
+
+  /** The payload's `allowedMentions`, omitted when the template pings no one. */
+  private allowedMentionsField(
+    template: string,
+    targetType: NotificationTargetType,
+  ): { allowedMentions?: DiscordNotificationAllowedMentions } {
+    const allowedMentions = this.buildAllowedMentionsForTarget(
+      template,
+      targetType,
+    );
+
+    return allowedMentions ? { allowedMentions } : {};
   }
 
   /**
@@ -436,7 +440,8 @@ class NotificationContent {
 
     return params.template.replaceAll(
       /\{\{(ruleName|npcName|npcId|world|minSpawnTime|maxSpawnTime|scheduledFor)\}\}/g,
-      (_match, placeholder) => placeholderValues[placeholder] ?? "",
+      (_match, placeholder: keyof typeof placeholderValues) =>
+        placeholderValues[placeholder],
     );
   }
 
@@ -454,7 +459,8 @@ class NotificationContent {
 
     return params.template.replaceAll(
       /\{\{(ruleName|scheduledFor)\}\}/g,
-      (_match, placeholder) => placeholderValues[placeholder] ?? "",
+      (_match, placeholder: keyof typeof placeholderValues) =>
+        placeholderValues[placeholder],
     );
   }
 }

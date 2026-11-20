@@ -52,7 +52,9 @@ export const reconcileNotificationAccess = (policy: AccessPolicySnapshot) => {
         canReadNotification(policy, { ...notification, guildId }),
       );
 
-      if (servers.length === 0) return [];
+      const [firstServer] = servers;
+
+      if (firstServer === undefined) return [];
 
       if (servers.length === notification.servers.length) return [notification];
 
@@ -64,7 +66,7 @@ export const reconcileNotificationAccess = (policy: AccessPolicySnapshot) => {
           servers,
           guildId: servers.includes(notification.guildId)
             ? notification.guildId
-            : servers[0],
+            : firstServer,
           reportCountByGuildId: pick(
             notification.reportCountByGuildId,
             servers,

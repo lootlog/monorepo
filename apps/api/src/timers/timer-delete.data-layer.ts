@@ -1,8 +1,11 @@
 import type { EventPublisher } from "@lootlog/messaging";
-import { publishTimerEvents } from "./timer-update-publication.js";
+import {
+  publishTimerEvents,
+  type TimerUpdatePorts,
+} from "./timer-update-publication.js";
 import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
-import { timerNpcField } from "./timer-projection.js";
+import { timerNpcField, parseTimerNpcRouting } from "./timer-projection.js";
 import {
   canViewTimer,
   findTimerMatches,
@@ -21,7 +24,7 @@ import {
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { ErrorKey } from "./error-key.js";
 import { TimerHistoryAction } from "./timers.types.js";
 
@@ -33,7 +36,7 @@ import {
 } from "./timer-errors.js";
 
 export interface DeleteTimerPorts {
-  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
+  readonly invalidateList: TimerUpdatePorts["invalidateList"];
   readonly publish: EventPublisher["publish"];
 }
 
@@ -161,7 +164,7 @@ export const makeDeleteTimer = (
       world,
       guildId: access.guild.id,
       routing: {
-        tier: getNpcRoutingTier(resolved.npc),
+        tier: getNpcRoutingTier(parseTimerNpcRouting(resolved.npc)),
         npcLevel: Schema.is(Schema.Number)(npcLevel) ? npcLevel : undefined,
       },
     };

@@ -7,6 +7,7 @@ import { getLootListCacheScope } from "#src/shared/cache";
 import { createHash } from "node:crypto";
 import { joinItemStat } from "@lootlog/domain/item-stat";
 import { Clock, Effect, Schema } from "effect";
+import type { RedisService } from "#src/redis/redis.service";
 import type { GuildLootEventNpc } from "@lootlog/schema/loot-events";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -24,18 +25,13 @@ import {
   PermissionDeniedError,
   DependencyUnavailableError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { LootShare } from "#src/loots/loot-response.schema";
-import type { ApplicationLogger } from "#src/shared/application-logger";
 import type { LootAllocationPersistence } from "#src/loots/allocation/loot-allocation.repository";
 
 const SUBMISSION_WINDOW_MS = 10 * 60 * 1000;
 
-export interface LootAllocationCache {
-  readonly invalidateScopes: (
-    ...scopes: string[]
-  ) => Effect.Effect<unknown, unknown>;
-}
+export type LootAllocationCache = Pick<RedisService, "invalidateScopes">;
 
 export interface LootAllocationPublisher {
   readonly publish: (
@@ -47,20 +43,20 @@ export interface LootAllocationPublisher {
 
 const parseChatAllocation = (message: string) => {
   const allocation: Record<string, string[]> = {};
-  let match: RegExpExecArray | null;
 
-  while ((match = LOOT_SHARE_MSG_REGEX.exec(message)) !== null) {
-    const nickname = match[1].trim();
-    let itemMatch: RegExpExecArray | null;
+  // Both patterns capture their groups unconditionally; the defaults only
+  // satisfy the type of an optional capture.
+  for (const [, player = "", itemList = ""] of message.matchAll(
+    LOOT_SHARE_MSG_REGEX,
+  )) {
+    const nickname = player.trim();
 
-    while ((itemMatch = LOOT_SHARE_ITEM_REGEX.exec(match[2])) !== null) {
+    for (const [, hid = ""] of itemList.matchAll(LOOT_SHARE_ITEM_REGEX)) {
       const items = allocation[nickname];
 
-      if (items) items.push(itemMatch[1]);
-      else allocation[nickname] = [itemMatch[1]];
+      if (items) items.push(hid);
+      else allocation[nickname] = [hid];
     }
-
-    LOOT_SHARE_ITEM_REGEX.lastIndex = 0;
   }
 
   return allocation;
@@ -109,7 +105,6 @@ export const makeLootAllocationOperations = (options: {
   readonly persistence: LootAllocationPersistence;
   readonly cache: LootAllocationCache;
   readonly publisher: LootAllocationPublisher;
-  readonly logger: ApplicationLogger;
 }) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -133,17 +128,11 @@ export const makeLootAllocationOperations = (options: {
 
     if (persistedValue === submittedValue) return Effect.void;
 
-    return Effect.sync(() =>
-      options.logger.warn("Conflicting chat loot share rejected", {
-        lootId,
-        persistedHash: createHash("sha256")
-          .update(persistedValue)
-          .digest("hex"),
-        submittedHash: createHash("sha256")
-          .update(submittedValue)
-          .digest("hex"),
-      }),
-    ).pipe(
+    return Effect.logWarning("Conflicting chat loot share rejected", {
+      lootId,
+      persistedHash: createHash("sha256").update(persistedValue).digest("hex"),
+      submittedHash: createHash("sha256").update(submittedValue).digest("hex"),
+    }).pipe(
       Effect.andThen(
         Effect.fail(new ResourceConflictError("Conflicting loot share")),
       ),
@@ -231,8 +220,7 @@ export const makeLootAllocationOperations = (options: {
         // the game client this message did not confirm the loot; it may belong
         // to an older one.
         if (sharedItemsCount === 0) {
-          options.logger.log({
-            level: "info",
+          yield* Effect.logInfo({
             message: "Chat loot share matched no loot items; allocation kept",
             lootId: input.lootId,
             totalItemsCount: items.length,
@@ -248,8 +236,7 @@ export const makeLootAllocationOperations = (options: {
         }
 
         if (sharedItemsCount < items.length) {
-          options.logger.log({
-            level: "info",
+          yield* Effect.logInfo({
             message: "Chat loot share covers part of the loot items",
             lootId: input.lootId,
             sharedItemsCount,
@@ -296,12 +283,10 @@ export const makeLootAllocationOperations = (options: {
           (guildId) =>
             options.cache.invalidateScopes(getLootListCacheScope(guildId)).pipe(
               Effect.catch((error) =>
-                Effect.sync(() =>
-                  options.logger.warn("Failed to invalidate loots list cache", {
-                    error,
-                    guildId,
-                  }),
-                ),
+                Effect.logWarning("Failed to invalidate loots list cache", {
+                  error,
+                  guildId,
+                }),
               ),
             ),
           { concurrency: "unbounded", discard: true },

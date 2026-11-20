@@ -14,8 +14,7 @@ import {
   eventTable,
 } from "#src/database/drizzle/event.schema";
 import { makeTypeJsonCodec, type RedisService } from "#src/redis/redis.service";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import {
   CoverageGapResponse,
   HeroCoverageGapResponse,
@@ -24,8 +23,7 @@ import {
 
 export const makeEventGapReads = (
   database: typeof ApiDatabase.Service,
-  redis: RedisService,
-  logger: Logger,
+  redis: Pick<RedisService, "getOrSetJson">,
 ) => {
   const query = adapterOperation("events.gaps.drizzle");
 
@@ -43,12 +41,13 @@ export const makeEventGapReads = (
     const codec = makeTypeJsonCodec(schema);
 
     return redis
-      .getOrSetJsonEffect({
+      .getOrSetJson({
         ...eventReadCacheEntry(guildId, eventId, scope, params),
         codec,
         ttlSeconds: 10,
         factory: load,
-        onError: (error) => logger.warn("Event gap cache unavailable", error),
+        onError: (error) =>
+          Effect.logWarning("Event gap cache unavailable", error),
       })
       .pipe(withAdapterSpan("events.gaps.cache", "events.redis"));
   };

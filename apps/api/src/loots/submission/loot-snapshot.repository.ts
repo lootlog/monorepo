@@ -7,7 +7,7 @@ import {
   itemSnapshotTable,
   npcSnapshotTable,
 } from "#src/database/drizzle/loot.schema";
-import { DependencyUnavailableError } from "#src/shared/http/http-errors";
+import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import type { GameVersion } from "@lootlog/schema/game-version";
 

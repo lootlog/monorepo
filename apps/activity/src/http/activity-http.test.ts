@@ -6,7 +6,9 @@ import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer, Redacted, Queue } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import {
+  ActivityNotFound,
   ActivityRepository,
+  type ActivityRecord,
   type ActivityRepositoryValue,
 } from "#src/activities/activity-repository";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
@@ -21,15 +23,37 @@ import {
   type ActivityReadinessValue,
 } from "./activity-http.js";
 
+const activityRecord = (
+  guildId: string,
+  userId = "user",
+  id = "activity",
+): ActivityRecord => ({
+  id,
+  userId,
+  guildId,
+  discordId: "discord",
+  type: "CONNECT_EVENT",
+  source: "GAME",
+  createdAt: new Date("2026-01-02T03:04:05.678Z"),
+  details: undefined,
+  actorSnapshot: undefined,
+  actorSnapshotId: null,
+  world: null,
+  idempotencyKey: "idempotency",
+});
+
 const repository: ActivityRepositoryValue = {
   create: () => Effect.succeed({}),
   clearActiveSessionsForMember: () => Effect.void,
   findMany: (query) =>
     Effect.succeed({
-      data: [{ guildId: query.guildId, userId: query.userId }],
+      data: [activityRecord(query.guildId ?? "", query.userId)],
       hasMore: false,
     }),
-  findOne: (id, guildId) => Effect.succeed({ id, guildId }),
+  findOne: (id, guildId) =>
+    id === "missing"
+      ? Effect.fail(new ActivityNotFound({ id }))
+      : Effect.succeed(activityRecord(guildId, "user", id)),
   deleteOne: () => Effect.succeed(1),
   memberStats: () => Effect.succeed([]),
   suggestActorNames: () => Effect.succeed(["Hero"]),
@@ -101,6 +125,24 @@ describe("Activity HttpApi contract", () => {
     );
 
     expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ code: "AUTHENTICATION_REQUIRED" });
+    await boundary.dispose();
+  });
+
+  it("answers a missing activity with the declared 404 body", async () => {
+    const boundary = makeBoundary([Permission.ADMIN]);
+
+    const response = await boundary.handler(
+      new Request("https://activity/guilds/g/activity-logs/missing", {
+        headers,
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({
+      code: "NOT_FOUND",
+      message: "Activity not found",
+    });
     await boundary.dispose();
   });
 
@@ -113,7 +155,18 @@ describe("Activity HttpApi contract", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      data: [{ guildId: "123" }],
+      data: [
+        {
+          id: "activity",
+          userId: "user",
+          guildId: "123",
+          discordId: "discord",
+          type: "CONNECT_EVENT",
+          source: "GAME",
+          createdAt: "2026-01-02T03:04:05.678Z",
+          world: null,
+        },
+      ],
       hasMore: false,
     });
     await boundary.dispose();
@@ -127,7 +180,7 @@ describe("Activity HttpApi contract", () => {
     const filtered = await admin.handler(new Request(url, { headers }));
     const denied = await member.handler(new Request(url, { headers }));
 
-    expect(await filtered.json()).toEqual({
+    expect(await filtered.json()).toMatchObject({
       data: [{ guildId: "123", userId: "other" }],
       hasMore: false,
     });
@@ -155,6 +208,10 @@ describe("Activity HttpApi contract", () => {
     );
 
     expect(forbidden.status).toBe(403);
+    expect(await forbidden.json()).toEqual({
+      code: "FORBIDDEN",
+      message: "Insufficient permissions",
+    });
     expect(allowed.status).toBe(200);
     expect(await allowed.json()).toEqual({ count: 1 });
     await Promise.all([admin.dispose(), owner.dispose()]);
@@ -282,8 +339,8 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
 
       expect(response.status).toBe(503);
       expect(await response.json()).toEqual({
-        message: "Authorization service unavailable",
-        statusCode: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Service unavailable",
       });
       expect(cache.has("permissions:user:discord")).toBe(false);
       unavailable = false;
@@ -293,7 +350,7 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
       );
 
       expect(recovered.status).toBe(200);
-      expect(await recovered.json()).toEqual({
+      expect(await recovered.json()).toMatchObject({
         data: [{ guildId: "g" }],
         hasMore: false,
       });

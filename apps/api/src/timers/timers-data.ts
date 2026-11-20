@@ -5,9 +5,13 @@ import type {
   CreateManualTimerRequest,
   CreateAutoTimerRequest,
   ResetTimerRequest,
+  CreateAutoTimerResponse,
   TimerNpcSearchQuery,
+  TimerNpcSearchResponse,
 } from "#src/contracts/timers/schemas";
 import type { TimersDataFailure } from "./timer-errors.js";
+import type { mapTimerResponse } from "./timer-projection.js";
+import type { makeTimerHistory } from "./timer-history.data-layer.js";
 
 export type TimersIdentity = {
   readonly userId: string;
@@ -20,57 +24,68 @@ export type TimersGuildAccess = TimersIdentity & {
   readonly roles: Role[];
 };
 
-type DataEffect = Effect.Effect<unknown, TimersDataFailure>;
+type DataEffect<A> = Effect.Effect<A, TimersDataFailure>;
+
+type TimerView = ReturnType<typeof mapTimerResponse>;
+
+type TimerHistory = ReturnType<typeof makeTimerHistory>;
+
+type TimerHistoryView = Effect.Success<ReturnType<TimerHistory["getHistory"]>>;
 
 export class TimersData extends Context.Service<
   TimersData,
   {
-    readonly getAll: (identity: TimersIdentity, world?: string) => DataEffect;
+    readonly getAll: (
+      identity: TimersIdentity,
+      world?: string,
+    ) => DataEffect<ReadonlyArray<TimerView>>;
     readonly getRecentHistory: (
       access: TimersGuildAccess,
       world: string,
       limit?: number,
-    ) => DataEffect;
+    ) => DataEffect<
+      Effect.Success<ReturnType<TimerHistory["getRecentHistory"]>>
+    >;
     readonly getGuildTimers: (
       access: TimersGuildAccess,
       world?: string,
-    ) => DataEffect;
+    ) => DataEffect<ReadonlyArray<TimerView>>;
     readonly getGuildHeroTimers: (
       access: TimersGuildAccess,
       world: string,
-    ) => DataEffect;
+    ) => DataEffect<ReadonlyArray<TimerView>>;
     readonly searchNpcs: (
       access: TimersGuildAccess,
       query: TimerNpcSearchQuery,
-    ) => DataEffect;
+    ) => DataEffect<TimerNpcSearchResponse>;
     readonly createAuto: (
       identity: TimersIdentity,
       payload: CreateAutoTimerRequest,
-    ) => DataEffect;
+    ) => DataEffect<CreateAutoTimerResponse>;
     readonly reset: (
       access: TimersGuildAccess,
       timerIdentifier: string,
       payload: ResetTimerRequest,
-    ) => DataEffect;
+    ) => DataEffect<TimerView>;
     readonly delete: (
       access: TimersGuildAccess,
       timerIdentifier: string,
       world?: string,
-    ) => DataEffect;
+    ) => DataEffect<void>;
     readonly getHistory: (
       access: TimersGuildAccess,
       world: string,
       timerIdentifier: string,
       limit?: number,
-    ) => DataEffect;
+    ) => DataEffect<TimerHistoryView>;
     readonly restore: (
       access: TimersGuildAccess,
       historyEntryId: number,
-    ) => DataEffect;
+    ) => DataEffect<TimerView>;
     readonly createManual: (
       access: TimersGuildAccess,
       payload: CreateManualTimerRequest,
-    ) => DataEffect;
+    ) => DataEffect<TimerView>;
   }
 >()("@lootlog/api/http-api/timers/data") {
   static makeService(

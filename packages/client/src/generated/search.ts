@@ -24,16 +24,39 @@ import type {
 
 import { searchFetch } from '../mutators';
 import type { ErrorType } from '../mutators';
-export type _SearchUnavailableEncodedTag = typeof _SearchUnavailableEncodedTag[keyof typeof _SearchUnavailableEncodedTag];
+export type RequestValidationErrorCode = typeof RequestValidationErrorCode[keyof typeof RequestValidationErrorCode];
 
 
-export const _SearchUnavailableEncodedTag = {
-  SearchUnavailable: 'SearchUnavailable',
+export const RequestValidationErrorCode = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
 } as const;
 
-export interface SearchUnavailableEncoded {
-  _tag: _SearchUnavailableEncodedTag;
+export type RequestValidationErrorDetailsIssuesItem = {
+  path: (string | number)[];
   message: string;
+};
+
+export type RequestValidationErrorDetails = {
+  issues: RequestValidationErrorDetailsIssuesItem[];
+};
+
+export interface RequestValidationError {
+  code: RequestValidationErrorCode;
+  message: string;
+  details: RequestValidationErrorDetails;
+}
+
+/**
+ * @nullable
+ */
+export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
+
+export interface HttpErrorResponse {
+  code: string;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  details?: HttpErrorResponseDetails;
 }
 
 /**
@@ -50,34 +73,10 @@ export interface PlayerHitDtoOutput {
   world: string;
 }
 
-export type HealthzControllerHealthCheck401 = {
-  message: string;
-};
-
-export type HealthzControllerHealthCheck403 = {
-  message: string;
-};
-
-export type HealthzControllerHealthCheck429 = {
-  message: string;
-};
-
 export type PlayersControllerGetPlayersParams = {
 limit?: number;
 search?: string | string[];
 world?: string;
-};
-
-export type PlayersControllerGetPlayers401 = {
-  message: string;
-};
-
-export type PlayersControllerGetPlayers403 = {
-  message: string;
-};
-
-export type PlayersControllerGetPlayers429 = {
-  message: string;
 };
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -133,7 +132,7 @@ export const getHealthzControllerHealthCheckQueryKey = () => {
     }
 
 
-export const getHealthzControllerHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+export const getHealthzControllerHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -152,10 +151,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type HealthzControllerHealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthzControllerHealthCheck>>>
-export type HealthzControllerHealthCheckQueryError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>
+export type HealthzControllerHealthCheckQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
 
 
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthzControllerHealthCheck>>,
@@ -165,7 +164,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthzControllerHealthCheck>>,
@@ -175,7 +174,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -183,7 +182,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
  * @summary Health check
  */
 
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -198,7 +197,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
 /**
  * @summary Health check
  */
-export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>(
+export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 
   ): Promise<QueryClient> => {
@@ -291,7 +290,7 @@ export const getPlayersControllerGetPlayersQueryKey = (params?: PlayersControlle
     }
 
 
-export const getPlayersControllerGetPlayersQueryOptions = <TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<PlayersControllerGetPlayers401 | PlayersControllerGetPlayers403 | PlayersControllerGetPlayers429 | SearchUnavailableEncoded>>(params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+export const getPlayersControllerGetPlayersQueryOptions = <TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -310,10 +309,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type PlayersControllerGetPlayersQueryResult = NonNullable<Awaited<ReturnType<typeof playersControllerGetPlayers>>>
-export type PlayersControllerGetPlayersQueryError = ErrorType<PlayersControllerGetPlayers401 | PlayersControllerGetPlayers403 | PlayersControllerGetPlayers429 | SearchUnavailableEncoded>
+export type PlayersControllerGetPlayersQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
 
 
-export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<PlayersControllerGetPlayers401 | PlayersControllerGetPlayers403 | PlayersControllerGetPlayers429 | SearchUnavailableEncoded>>(
+export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params: undefined |  PlayersControllerGetPlayersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof playersControllerGetPlayers>>,
@@ -323,7 +322,7 @@ export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<PlayersControllerGetPlayers401 | PlayersControllerGetPlayers403 | PlayersControllerGetPlayers429 | SearchUnavailableEncoded>>(
+export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof playersControllerGetPlayers>>,
@@ -333,7 +332,7 @@ export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<PlayersControllerGetPlayers401 | PlayersControllerGetPlayers403 | PlayersControllerGetPlayers429 | SearchUnavailableEncoded>>(
+export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -341,7 +340,7 @@ export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof
  * @summary Search players by name
  */
 
-export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<PlayersControllerGetPlayers401 | PlayersControllerGetPlayers403 | PlayersControllerGetPlayers429 | SearchUnavailableEncoded>>(
+export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -356,7 +355,7 @@ export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof
 /**
  * @summary Search players by name
  */
-export const prefetchPlayersControllerGetPlayersQuery = async <TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<PlayersControllerGetPlayers401 | PlayersControllerGetPlayers403 | PlayersControllerGetPlayers429 | SearchUnavailableEncoded>>(
+export const prefetchPlayersControllerGetPlayersQuery = async <TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  queryClient: QueryClient, params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 
   ): Promise<QueryClient> => {

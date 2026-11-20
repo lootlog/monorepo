@@ -11,7 +11,7 @@ import {
   notificationRuleTable,
   notificationTargetTable,
 } from "#src/database/drizzle/notification.schema";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import { makeNotificationJobOperations } from "#src/notifications/jobs/notification-job-operations";
 
 describe("notification job operations Effect module", () => {

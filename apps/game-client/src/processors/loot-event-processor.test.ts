@@ -108,7 +108,7 @@ const createFixture = () => {
     payload: async (index = 0) => {
       await waitFor(() => expect(requests.length).toBeGreaterThan(index));
 
-      return requests[index].json();
+      return requests[index]!.json();
     },
     fail: () => {
       status = 400;

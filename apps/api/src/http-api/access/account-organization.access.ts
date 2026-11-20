@@ -4,10 +4,7 @@ import {
   AccountOrganizationData,
 } from "#src/guilds/account-organization-data";
 
-import {
-  statusCodeResponse,
-  reauthenticationRequiredResponse,
-} from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Cause, Context, Effect, Predicate, Schema } from "effect";
@@ -17,11 +14,13 @@ import { SqlError } from "effect/sql/SqlError";
 
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 
-import { ResourceConflictError } from "#src/shared/http/http-errors";
+import {
+  ResourceConflictError,
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
 
 import { ErrorKey } from "#src/guilds/error-key";
-
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export type AuthorizedGuild = {
   readonly guildId: string;

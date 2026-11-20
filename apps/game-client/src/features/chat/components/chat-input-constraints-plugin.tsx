@@ -32,11 +32,13 @@ const getAvailableLength = () => {
   const root = $getRoot();
   const selection = $getSelection();
 
-  const selectionOffsets = $isRangeSelection(selection)
+  const [anchorOffset, focusOffset]: [number, number] = $isRangeSelection(
+    selection,
+  )
     ? $getChatInputSelectionOffsets(selection)
     : [root.getTextContentSize(), root.getTextContentSize()];
 
-  const selectedLength = Math.abs(selectionOffsets[0] - selectionOffsets[1]);
+  const selectedLength = Math.abs(anchorOffset - focusOffset);
 
   return Math.max(
     0,

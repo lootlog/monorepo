@@ -83,8 +83,8 @@ describe("Activity permissions", () => {
       Effect.all([read, read]).pipe(
         Effect.provide(Permissions.layer),
         Effect.provide(Layer.succeed(ApiHttpClient, ApiHttpClient.of({ get }))),
-        Effect.provide(Layer.succeed(ActivityConfig, config)),
-        Effect.provide(Layer.succeed(Redis.Redis, redis)),
+        Effect.provideService(ActivityConfig, config),
+        Effect.provideService(Redis.Redis, redis),
       ),
     );
 

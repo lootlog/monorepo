@@ -15,7 +15,7 @@ import {
 import {
   requireGuild,
   decode,
-  toDeclaredOrganizationWorkspaceError,
+  toOrganizationWorkspaceHttpResponse,
 } from "../../access/organization-workspace.access.js";
 import { HttpApiBuilder } from "effect/http-api";
 import { LootlogApi } from "../../lootlog-api.js";
@@ -55,9 +55,8 @@ const getGuildRoles = Effect.fn("RolesControllerGetGuildRoles")(function* (
 });
 
 const getGuildRolesFromPath = (guildId: string | undefined) =>
-  toDeclaredOrganizationWorkspaceError(
+  toOrganizationWorkspaceHttpResponse(
     Effect.flatMap(pathString(guildId, "guildId"), getGuildRoles),
-    [403],
   );
 
 const updateGuildRoleFromPath = (
@@ -65,11 +64,10 @@ const updateGuildRoleFromPath = (
   roleId: string,
   payload: UpdateRolePermissionsRequest,
 ) =>
-  toDeclaredOrganizationWorkspaceError(
+  toOrganizationWorkspaceHttpResponse(
     Effect.flatMap(pathString(guildId, "guildId"), (decodedGuildId) =>
       updateGuildRole(decodedGuildId, roleId, payload),
     ),
-    [403, 404],
   );
 
 export const RolesHandlers = HttpApiBuilder.group(

@@ -1,14 +1,19 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
-import type { SendChatMessageRequest } from "#src/contracts/chat/schemas";
+import type {
+  ChatMessageActionResponse,
+  ChatMessageResponse,
+  SendChatMessageRequest,
+} from "#src/contracts/chat/schemas";
 import type { ChatMessageViewer } from "./chat-message-viewer.js";
+import type { ChatStoredMessage } from "./chat-stored-message.js";
 
 export class ChatOperationError extends TaggedErrorClass<ChatOperationError>()(
   "ChatOperationError",
   { cause: Schema.Defect() },
 ) {}
 
-type DataEffect = Effect.Effect<unknown, ChatOperationError>;
+type DataEffect<A> = Effect.Effect<A, ChatOperationError>;
 
 export class ChatData extends Context.Service<
   ChatData,
@@ -16,20 +21,22 @@ export class ChatData extends Context.Service<
     readonly getMessages: (
       viewer: ChatMessageViewer,
       guildId: string,
-    ) => DataEffect;
+    ) => DataEffect<
+      ReadonlyArray<ChatStoredMessage & { readonly canDelete: boolean }>
+    >;
     readonly sendMessage: (
       discordId: string,
       guildId: string,
       payload: SendChatMessageRequest,
-    ) => DataEffect;
+    ) => DataEffect<ChatMessageResponse>;
     readonly clearMessages: (
       viewer: ChatMessageViewer,
       guildId: string,
-    ) => DataEffect;
+    ) => DataEffect<ChatMessageActionResponse>;
     readonly deleteMessage: (
       viewer: ChatMessageViewer,
       guildId: string,
       messageId: string,
-    ) => DataEffect;
+    ) => DataEffect<ChatMessageActionResponse>;
   }
 >()("@lootlog/api/http-api/chat/data") {}

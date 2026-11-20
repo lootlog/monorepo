@@ -204,8 +204,8 @@ describe("extension session lifecycle", () => {
     );
     // A fresh page load starts with the session read still pending.
     act(() =>
-      authClient.$store.atoms.session.set({
-        ...authClient.$store.atoms.session.get(),
+      authClient.$store.atoms.session!.set({
+        ...authClient.$store.atoms.session!.get(),
         data: null,
         isPending: true,
       }),
@@ -219,7 +219,7 @@ describe("extension session lifecycle", () => {
       initial.resolve(Response.json(sessionFor(userId)));
     });
     await waitFor(() =>
-      expect(authClient.$store.atoms.session.get().data?.user.id).toBe(
+      expect(authClient.$store.atoms.session!.get().data?.user.id).toBe(
         "userscript-first",
       ),
     );

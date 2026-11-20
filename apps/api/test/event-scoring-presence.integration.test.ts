@@ -78,8 +78,8 @@ const points = Effect.map(ApiDatabase, (db) =>
     makeEventPointsStore(db),
     makeEventEmitter({ publish: () => Effect.void }),
     makeEventReadCache({
-      invalidateScopes: async () => {},
-      getOrSetJsonEffect: (options) => options.factory,
+      invalidateScopes: () => Effect.void,
+      getOrSetJson: (options) => options.factory,
     }),
   ),
 );

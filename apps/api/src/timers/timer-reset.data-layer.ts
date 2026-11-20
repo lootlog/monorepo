@@ -19,7 +19,7 @@ import {
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { ErrorKey } from "./error-key.js";
 import { TimerHistoryAction } from "./timers.types.js";
 import { buildTimerLockKey } from "./timer-key.js";

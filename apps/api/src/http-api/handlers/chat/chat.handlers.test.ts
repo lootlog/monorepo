@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import { Permission } from "@lootlog/schema/permissions";
-import { PermissionDeniedError } from "#src/shared/http/http-errors";
+import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import { ChatMessageResponse } from "#src/contracts/chat/schemas";
 import { ChatData, ChatOperationError } from "#src/chat/chat-data";
 import {
@@ -211,8 +211,8 @@ describe("Chat HttpApi handlers", () => {
   });
 });
 
-it("serializes chat dates and rejects invalid dates and nullable optional data", async () => {
-  const layer = <A>(value: A) =>
+it("rejects invalid dates and nullable optional data", async () => {
+  const layer = (value: typeof message) =>
     provideServices(
       makeAuthorization(),
       makeData({
@@ -221,21 +221,14 @@ it("serializes chat dates and rejects invalid dates and nullable optional data",
     );
 
   const result = await Effect.runPromise(
-    getChatMessages("guild-visible").pipe(
-      Effect.provide(
-        layer({ ...message, timestamp: new Date(message.timestamp) }),
-      ),
-    ),
+    getChatMessages("guild-visible").pipe(Effect.provide(layer(message))),
   );
 
   expect(result).toEqual([message]);
 
   for (const value of [
-    { ...message, timestamp: new Date(Number.NaN) },
     { ...message, timestamp: "invalid" },
-    { ...message, npc: null },
     { ...message, npc: undefined },
-    { ...message, canDelete: "yes" },
   ]) {
     const failure = await Effect.runPromise(
       Effect.flip(
@@ -243,12 +236,19 @@ it("serializes chat dates and rejects invalid dates and nullable optional data",
       ),
     );
 
-    const legacyFailure = await Effect.runPromise(
-      Effect.flip(decodeDomainJson(ChatMessageResponse, value)),
+    expect(failure).toBeInstanceOf(ChatOperationError);
+  }
+
+  // Values the typed port cannot carry are checked at the response boundary.
+  for (const value of [
+    { ...message, timestamp: new Date(Number.NaN) },
+    { ...message, npc: null },
+    { ...message, canDelete: "yes" },
+  ]) {
+    const exit = await Effect.runPromiseExit(
+      decodeDomainJson(ChatMessageResponse, value),
     );
 
-    expect(legacyFailure).toBeDefined();
-
-    expect(failure).toBeInstanceOf(ChatOperationError);
+    expect(exit._tag).toBe("Failure");
   }
 });

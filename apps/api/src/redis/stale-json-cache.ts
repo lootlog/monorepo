@@ -2,7 +2,7 @@ import { Clock, Effect, Schema } from "effect";
 import {
   makeJsonCodec,
   type JsonCodec,
-  type RedisGetOrSetJsonBestEffortOptions,
+  type RedisGetOrSetJsonOptions,
   type RedisService,
 } from "#src/redis/redis.service";
 
@@ -16,12 +16,12 @@ export interface StaleJson<T> {
 const REFRESH_LEASE_SECONDS = 300;
 
 type CacheErrorHandler = NonNullable<
-  RedisGetOrSetJsonBestEffortOptions<never>["onError"]
+  RedisGetOrSetJsonOptions<never, never>["onError"]
 >;
 
 export type StaleJsonRedis = Pick<
   RedisService,
-  "getOrSetJsonEffect" | "setNX" | "setJson"
+  "getOrSetJson" | "setNX" | "setJson"
 >;
 
 /**
@@ -60,27 +60,21 @@ export const getOrSetStaleJson = <
   );
 
   const refresh = Effect.gen(function* () {
-    const leased = yield* Effect.tryPromise({
-      try: () =>
-        redis.setNX(`${options.key}:refresh`, "1", REFRESH_LEASE_SECONDS),
-      catch: (error) => error,
-    });
+    const leased = yield* redis.setNX(
+      `${options.key}:refresh`,
+      "1",
+      REFRESH_LEASE_SECONDS,
+    );
 
     if (!leased) return;
 
     const fresh = yield* compute;
 
-    yield* Effect.tryPromise({
-      try: () =>
-        redis.setJson(options.key, fresh, options.retainSeconds, codec),
-      catch: (error) => error,
-    });
-  }).pipe(
-    Effect.catchCause((cause) => Effect.sync(() => options.onError(cause))),
-  );
+    yield* redis.setJson(options.key, fresh, options.retainSeconds, codec);
+  }).pipe(Effect.catchCause(options.onError));
 
   return Effect.gen(function* () {
-    const entry = yield* redis.getOrSetJsonEffect({
+    const entry = yield* redis.getOrSetJson({
       key: options.key,
       ttlSeconds: options.retainSeconds,
       codec,

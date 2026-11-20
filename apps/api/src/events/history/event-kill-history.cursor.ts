@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import { decodePageCursor, encodePageCursor } from "#src/shared/keyset-page";
 
 const CursorScope = Schema.Struct({

@@ -946,7 +946,7 @@ describe("realtime Dragonfly integration", () => {
       "invalid Redis type",
     );
     now += 10_000;
-    const result = await Effect.runPromise(Effect.exit(replicaB.sample()));
+    const result = await Effect.runPromiseExit(replicaB.sample());
     expect(result._tag).toBe("Failure");
     expect(Effect.runSync(Metric.value(observed)).value).toBe(lastSuccess);
     expect(

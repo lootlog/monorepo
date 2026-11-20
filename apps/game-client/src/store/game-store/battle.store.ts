@@ -142,11 +142,8 @@ export const useBattleStore = create<BattleState & BattleActions>(
           }
 
           const updatedWarriors = { ...state.battleWarriors };
-          Object.keys(warriors).forEach((key) => {
-            updatedWarriors[key] = {
-              ...updatedWarriors[key],
-              ...warriors[key],
-            };
+          Object.entries(warriors).forEach(([key, warrior]) => {
+            updatedWarriors[key] = { ...updatedWarriors[key], ...warrior };
           });
 
           return { battleWarriors: updatedWarriors };

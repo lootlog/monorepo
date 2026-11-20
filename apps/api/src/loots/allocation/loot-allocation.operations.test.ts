@@ -1,6 +1,5 @@
 import type { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
-import { applicationLogger as logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import { describe, expect, it } from "bun:test";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
@@ -9,7 +8,7 @@ import type { LootShare } from "#src/loots/loot-response.schema";
 import {
   PermissionDeniedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { makeLootAllocationOperations } from "#src/loots/allocation/loot-allocation.operations";
 
 type AuthorizedLoot = NonNullable<
@@ -112,7 +111,6 @@ const setup = (loot: AuthorizedLoot | null, visible = true) => {
         return Effect.void;
       },
     },
-    logger,
   });
 
   const confirm = (message: string) =>

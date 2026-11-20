@@ -43,13 +43,13 @@ describe("LootStatsService access-scoped caching", () => {
     const keys: string[] = [];
 
     const service = new LootStatsService(database, {
-      getOrSetJsonEffect: (options) => {
+      getOrSetJson: (options) => {
         keys.push(options.key);
 
         return Effect.die("Stop after the cache lookup");
       },
-      setNX: () => Promise.resolve(true),
-      setJson: () => Promise.resolve(),
+      setNX: () => Effect.succeed(true),
+      setJson: () => Effect.void,
     });
 
     const read = (permissions: Permission[]) =>
@@ -90,7 +90,7 @@ describe("LootStatsService access-scoped caching", () => {
     };
 
     const service = new LootStatsService(database, {
-      getOrSetJsonEffect: (options) =>
+      getOrSetJson: (options) =>
         Effect.succeed(
           options.codec.parse(
             JSON.stringify({
@@ -99,8 +99,8 @@ describe("LootStatsService access-scoped caching", () => {
             }),
           ),
         ),
-      setNX: () => Promise.resolve(true),
-      setJson: () => Promise.resolve(),
+      setNX: () => Effect.succeed(true),
+      setJson: () => Effect.void,
     });
 
     await expect(
@@ -153,9 +153,9 @@ describe("LootStatsService aggregates", () => {
       ];
 
       const service = new LootStatsService(boundary.database, {
-        getOrSetJsonEffect: (options) => options.factory,
-        setNX: () => Promise.resolve(true),
-        setJson: () => Promise.resolve(),
+        getOrSetJson: (options) => options.factory,
+        setNX: () => Effect.succeed(true),
+        setJson: () => Effect.void,
       });
 
       const stats = await boundary.run(

@@ -1,4 +1,8 @@
 import {
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
+import {
   type AuthorizedDocsCaller,
   DocsNotFound,
   DocsDataError,
@@ -7,10 +11,7 @@ import {
   DocsData,
 } from "#src/docs/docs-data";
 import type { BoundaryDecoder } from "#src/shared/schema/json";
-import {
-  statusCodeResponse,
-  reauthenticationRequiredResponse,
-} from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import {
@@ -33,7 +34,6 @@ import {
 } from "#src/contracts/docs/schemas";
 
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 const docsEndpointIdentifiers = [
   "DocsControllerGetDocuments",

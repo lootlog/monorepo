@@ -14,7 +14,7 @@
     "build": "bun build src/main.ts --target=bun --packages=external --outdir=dist/src --sourcemap=linked",
     "start": "bun dist/src/main.js",
     "start:debug": "bun --env-file=.env --inspect --watch src/main.ts",
-    "lint": "oxlint src test",
+    "lint": "oxlint src test && effect-tsgo diagnostics --project tsconfig.json --severity error",
     "typecheck": "bun check -p tsconfig.json",
     "format": "oxfmt src test",
     "test": "bun test --path-ignore-patterns='**/*.integration.*' src test",
@@ -45,6 +45,7 @@
   },
   "devDependencies": {
     "@effect/sql-pglite": "4.1.2",
+    "@effect/tsgo": "0.67.3",
     "@electric-sql/pglite": "^0.5.9",
     "@lootlog/typescript-config": "workspace:*",
     "@testcontainers/postgresql": "^12.2.1",

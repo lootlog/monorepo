@@ -1,3 +1,7 @@
+import {
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
 import type {
   UserFeedQuery,
   UserFeedResponse,
@@ -9,10 +13,7 @@ import type {
   UserKillActivityResponse,
   UserKillCharactersResponse,
 } from "#src/contracts/kills/analytics-schemas";
-import {
-  statusCodeResponse,
-  reauthenticationRequiredResponse,
-} from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
@@ -64,7 +65,6 @@ import type {
   LootDrawsResponse,
   VoidLootDrawRequest,
 } from "#src/contracts/loots/schemas";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 type Guild = typeof guildTable.$inferSelect;
 

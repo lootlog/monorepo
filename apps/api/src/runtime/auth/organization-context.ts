@@ -1,3 +1,4 @@
+import type { ReauthenticationRequired } from "@lootlog/protocol/http/errors";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import { createSelectSchema } from "drizzle-orm/effect-schema";
@@ -34,7 +35,6 @@ import {
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "#src/shared/cache";
 import { MembersData } from "#src/members/members-data";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
 const CachedGuild = createSelectSchema(guildTable, {
@@ -55,7 +55,7 @@ export type OrganizationContext = {
   readonly roles: ReadonlyArray<Role>;
 };
 
-/** The `RedisEffects` commands the Organization context cache needs. */
+/** The `RedisService` commands the Organization context cache needs. */
 export interface OrganizationContextCache extends GuildConfigurationCache {
   readonly setNX: (
     key: string,
@@ -70,7 +70,7 @@ export type OrganizationContextRefresh = (options: {
   readonly userId: string;
   readonly priority: number;
   readonly reason: string;
-}) => Effect.Effect<unknown, unknown>;
+}) => Effect.Effect<void, unknown>;
 
 // A context stays cached until its member reaches the soft TTL. Past two
 // thirds of the soft TTL a request queues a background refresh so active

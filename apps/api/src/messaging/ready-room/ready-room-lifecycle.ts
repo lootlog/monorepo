@@ -12,7 +12,7 @@ import type { ReadyRoomAggregate } from "./ready-room.types.js";
 import {
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { PartyGatheringEndReason } from "#src/chat/chat.data-layer";
 import type {
   CreatePartyGatheringRequest,

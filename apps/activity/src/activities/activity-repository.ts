@@ -39,10 +39,15 @@ import {
 } from "#src/database/schema";
 import type { CreateActivity, QueryActivities } from "./activity-model.js";
 
-class ActivityNotFound extends TaggedErrorClass<ActivityNotFound>()(
+export class ActivityNotFound extends TaggedErrorClass<ActivityNotFound>()(
   "ActivityNotFound",
   { id: Schema.String },
 ) {}
+
+/** A stored activity with its actor as it was when the activity happened. */
+export type ActivityRecord = ReturnType<typeof mapActivityRow>;
+
+export type MemberActivityStatsRecord = typeof memberActivityStats.$inferSelect;
 
 export interface ActivityRepositoryValue {
   readonly create: (dto: CreateActivity) => Effect.Effect<unknown, unknown>;
@@ -53,18 +58,20 @@ export interface ActivityRepositoryValue {
   readonly findMany: (
     query: QueryActivities,
   ) => Effect.Effect<
-    { data: unknown[]; nextCursor?: string; hasMore: boolean },
+    { data: ActivityRecord[]; nextCursor?: string; hasMore: boolean },
     unknown
   >;
   readonly findOne: (
     id: string,
     guildId: string,
-  ) => Effect.Effect<unknown, unknown | ActivityNotFound>;
+  ) => Effect.Effect<ActivityRecord, unknown | ActivityNotFound>;
   readonly deleteOne: (
     id: string,
     guildId: string,
   ) => Effect.Effect<number, unknown | ActivityNotFound>;
-  readonly memberStats: (guildId: string) => Effect.Effect<unknown[], unknown>;
+  readonly memberStats: (
+    guildId: string,
+  ) => Effect.Effect<MemberActivityStatsRecord[], unknown>;
   readonly suggestActorNames: (
     guildId: string,
     search?: string,
@@ -91,7 +98,7 @@ const detailsString = (dto: CreateActivity, key: string) => {
 };
 
 const mapDetails = Function.compose(
-  Schema.decodeUnknownOption(Schema.Record(Schema.String, Schema.Unknown)),
+  Schema.decodeUnknownOption(Schema.Record(Schema.String, Schema.Json)),
   Option.getOrUndefined,
 );
 

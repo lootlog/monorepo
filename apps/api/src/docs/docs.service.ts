@@ -6,7 +6,7 @@ const EMPTY_DOCUMENT_CONTENT =
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { Effect, Predicate, Schema } from "effect";
 import {
   GUILD_DOCUMENT_CONTENT_MAX_LENGTH,

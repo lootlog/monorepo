@@ -158,7 +158,7 @@ describe("useTimerActions", () => {
             ]
           : ["/guilds/guild-1/timers/timer-1/reset"],
       );
-      expect(await requests[0].json()).toEqual({
+      expect(await requests[0]!.json()).toEqual({
         world: "luvia",
         actorCharacter: {
           accountId: "200",
@@ -262,15 +262,15 @@ describe("useTimerActions", () => {
       });
       await waitFor(() =>
         expect(
-          queryClient.getQueryState(histories[0].queryKey)?.isInvalidated,
+          queryClient.getQueryState(histories[0]!.queryKey)?.isInvalidated,
         ).toBe(true),
       );
       expect(result.current.isRestartingTimer).toBe(true);
       expect(messages).toEqual([]);
-      expect(await queryClient.fetchQuery(histories[0])).toMatchObject([
+      expect(await queryClient.fetchQuery(histories[0]!)).toMatchObject([
         { action: "RESET" },
       ]);
-      expect(await queryClient.fetchQuery(histories[1])).toMatchObject([
+      expect(await queryClient.fetchQuery(histories[1]!)).toMatchObject([
         { action: "CREATE" },
       ]);
       expect(requests).toHaveLength(5);
@@ -309,7 +309,7 @@ describe("useTimerActions", () => {
           : []),
         "/guilds/guild-2/timers/timer-2/reset",
       ]);
-      expect(await queryClient.fetchQuery(histories[1])).toMatchObject([
+      expect(await queryClient.fetchQuery(histories[1]!)).toMatchObject([
         { action: "RESET" },
       ]);
       expect(messages).toHaveLength(2);
@@ -384,11 +384,11 @@ describe("useTimerActions", () => {
         getFixedT("timers")("messages.deleteSuccess", { name: "Tanroth" }),
       ),
     );
-    expect(requests[0].method).toBe("DELETE");
-    expect(new URL(requests[0].url).pathname).toBe(
+    expect(requests[0]!.method).toBe("DELETE");
+    expect(new URL(requests[0]!.url).pathname).toBe(
       "/guilds/guild-1/timers/timer-1",
     );
-    expect(new URL(requests[0].url).searchParams.get("world")).toBe("luvia");
+    expect(new URL(requests[0]!.url).searchParams.get("world")).toBe("luvia");
     reject = true;
     await act(async () => {
       await result.current.handleDeleteTimer("guild-1", "timer-1");

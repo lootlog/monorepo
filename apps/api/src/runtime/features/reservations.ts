@@ -32,7 +32,7 @@ export const reservationSharingData = Layer.unwrap(
 /** Reservation reads and mutations over one cached spot catalog. */
 export const reservationData = Layer.unwrap(
   Effect.gen(function* () {
-    const { effect: redis } = yield* ApiRedis;
+    const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const config = yield* ApiRuntimeConfig;
     const httpClient = yield* HttpClient.HttpClient;

@@ -1,11 +1,11 @@
-import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
 import { expect, it, spyOn } from "bun:test";
 import { eq } from "drizzle-orm";
 import { BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer, Schema } from "effect";
 import { HttpRouter } from "effect/http";
 import { HttpApi, HttpApiBuilder } from "effect/http-api";
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,

@@ -51,7 +51,7 @@ describe("messaging HttpApi handlers", () => {
         sendNotification: () => {
           dataCalled = true;
 
-          return Effect.succeed({});
+          return Effect.succeed({ notificationId: "room-a", guildIds: [] });
         },
       }),
       MessagingIdentity.of({ caller: Effect.fail(denied) }),

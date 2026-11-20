@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   DependencyUnavailableError,
   RequestTimeoutError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   getTransientMemberSyncStatus,
   isDiscordRefusalSyncStatus,

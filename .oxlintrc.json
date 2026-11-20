@@ -82,6 +82,20 @@
       }
     },
     {
+      "files": ["packages/protocol/src/http/errors.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "applicationErrorStatusOrUndefined",
+              "applicationErrorHttpResponse"
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["packages/protocol/src/realtime/codec.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
@@ -404,6 +418,7 @@
             "boundaryFunctions": [
               "mapTimerNpc",
               "parseTimerNpc",
+              "parseTimerNpcRouting",
               "timerNpcField",
               "timerNpcTemplateId"
             ]

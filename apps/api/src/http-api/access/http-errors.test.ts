@@ -8,7 +8,7 @@ import {
   PermissionDeniedError,
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { SettingsRequestError } from "#src/settings-documents/settings-documents.service";
 import { RecordsDataError, toRecordsHttpResponse } from "./records.access.js";
 import { SettingsOperationError } from "#src/settings-documents/settings-data";

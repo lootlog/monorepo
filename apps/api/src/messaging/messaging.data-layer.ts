@@ -24,6 +24,7 @@ import { NpcRoutingDataSchema } from "@lootlog/schema/npc-routing";
 import { randomUUID } from "node:crypto";
 
 import { Clock, Effect, Layer, Option, Schema } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
 import { getNpcType } from "@lootlog/domain/npc-type";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -35,7 +36,7 @@ import {
   DependencyUnavailableError,
   RateLimitedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { MessagingData, MessagingOperationError } from "./messaging-data.js";
 import type {
   NotificationGoingRequest,
@@ -124,12 +125,13 @@ export interface MessagingRedis {
     key: string,
     value: string,
     ttl: number,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
+  /** Resolves with the script's untyped reply; the caller decodes it. */
   readonly eval: (
     script: string,
     keys: ReadonlyArray<string>,
     arguments_: ReadonlyArray<string | number>,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<unknown, RedisError>;
 }
 
 export interface MessagingEvents {
@@ -154,7 +156,7 @@ export interface MessagingReadyRoom {
     >;
     readonly guildId: string;
     readonly world: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
 }
 
 export type NotificationRateLimitOutcome =

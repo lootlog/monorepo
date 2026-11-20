@@ -81,7 +81,7 @@ describe("timers controls", () => {
     await user.click(screen.getByRole("button", { name: "Typy potworów" }));
     await user.click(await screen.findByRole("button", { name: "Heros" }));
     expect(
-      useTimersStore.getState().timersFilters[filtersKey].selectedNpcTypes,
+      useTimersStore.getState().timersFilters[filtersKey]!.selectedNpcTypes,
     ).toEqual([]);
     await user.keyboard("{Escape}");
     const custom = screen.getAllByRole("button").at(-1);
@@ -91,14 +91,14 @@ describe("timers controls", () => {
     expect(await screen.findByText("Custom One")).toBeVisible();
     await user.click(custom);
     expect(
-      useTimersStore.getState().timersFilters[filtersKey].selectedColors,
+      useTimersStore.getState().timersFilters[filtersKey]!.selectedColors,
     ).toEqual(["red", "custom-1"]);
   });
 
   it("selects only one npc type by right-click or its visible button and preserves the other filters", async () => {
     const user = userEvent.setup();
     useTimersStore.getState().setTimersFilters(scopeKey, "guild-1", {
-      ...useTimersStore.getState().timersFilters[filtersKey],
+      ...useTimersStore.getState().timersFilters[filtersKey]!,
       selectedNpcTypes: [
         NpcType.ELITE2,
         NpcType.ELITE3,
@@ -123,7 +123,7 @@ describe("timers controls", () => {
       screen.getByRole("button", { name: "Pokaż tylko: Tytan" }),
     );
     expect(
-      useTimersStore.getState().timersFilters[filtersKey].selectedNpcTypes,
+      useTimersStore.getState().timersFilters[filtersKey]!.selectedNpcTypes,
     ).toEqual([NpcType.TITAN]);
   });
 
@@ -150,11 +150,11 @@ describe("timers controls", () => {
     });
     await user.click(screen.getByRole("button", { name: "E2" }));
     expect(
-      useTimersStore.getState().timersFilters[filtersKey].selectedLists,
+      useTimersStore.getState().timersFilters[filtersKey]!.selectedLists,
     ).toEqual(["heroes", "e2"]);
     await user.click(screen.getByRole("button", { name: "Wszystkie" }));
     expect(
-      useTimersStore.getState().timersFilters[filtersKey].selectedLists,
+      useTimersStore.getState().timersFilters[filtersKey]!.selectedLists,
     ).toEqual([]);
   });
 

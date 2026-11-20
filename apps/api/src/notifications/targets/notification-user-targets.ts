@@ -28,7 +28,7 @@ import {
   PermissionDeniedError,
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   USER_DM_TEST_MESSAGE,
   USER_DM_TEST_RULE_NAME,
@@ -56,7 +56,7 @@ export interface NotificationUserTargetJobs {
   readonly cancel: (filters: {
     readonly targetId?: number;
     readonly ruleId?: number;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
   readonly create: (options: {
     readonly notificationRule: Pick<
       Rule,

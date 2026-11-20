@@ -1,7 +1,7 @@
 import { adapterOperation } from "@lootlog/instrumentation/operation";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { DateTime, Effect } from "effect";
+import { DateTime, Effect, Schema } from "effect";
 import { sum } from "es-toolkit";
 import type { Period } from "@lootlog/schema/http-scalars";
 import {
@@ -86,7 +86,7 @@ export const makeGuildKillQueries = (
           load: Effect.gen(function* () {
             const timelineUnit = getKillTimelineUnit(period);
 
-            const [memberStats, guildSummary, timeline, hourlyWeekday] =
+            const [memberStats, guildSummary, timelineRows, hourlyRows] =
               yield* Effect.all(
                 [
                   persistence.groupMemberStats(filter),
@@ -96,6 +96,17 @@ export const makeGuildKillQueries = (
                 ],
                 { concurrency: "unbounded" },
               );
+
+            // A group's SUM is never NULL, but Drizzle types it as nullable.
+            const timeline = timelineRows.map(({ date, kills }) => ({
+              date,
+              kills: kills ?? 0,
+            }));
+
+            const hourlyWeekday = hourlyRows.map((row) => ({
+              ...row,
+              kills: row.kills ?? 0,
+            }));
 
             const now = yield* DateTime.nowAsDate;
 
@@ -326,7 +337,7 @@ export const makeGuildKillQueries = (
             visibility: visibility.cacheScope,
             world,
           }),
-          schema: NpcKillersResponse,
+          schema: Schema.NullOr(NpcKillersResponse),
           load: Effect.gen(function* () {
             const [killers, summaries, memberNpc] = yield* Effect.all(
               [
@@ -369,9 +380,10 @@ export const makeGuildKillQueries = (
                 totalMemberParticipations:
                   killers[0]?.totalMemberParticipations ?? 0,
               },
-              killers: killers.map(
-                ({ totalMemberParticipations: _total, ...member }) => member,
-              ),
+              killers: killers.map(({ member, participationCount }) => ({
+                member,
+                participationCount: participationCount ?? 0,
+              })),
             };
           }),
         }).pipe(Effect.map(({ value }) => value)),

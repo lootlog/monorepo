@@ -36,7 +36,7 @@ import { makeBattleAnalytics } from "#src/battles/analytics/battle-analytics.ser
 import { makeBattlePagination } from "#src/battles/analytics/pagination.service";
 import { makeBattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
 import { createBattleId } from "#src/battles/battle-id";
-import { InvalidRequestError } from "#src/infrastructure/http-error";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import { makeBattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import {
   createBattleSemanticFingerprint,
@@ -241,14 +241,14 @@ it("renews the real Lua lock beyond its TTL while concurrent callers create one 
     await Bun.sleep(100);
     expect(await runtime.runPromise(services.redis.get(lockKey))).toBe(token);
     await blocker.query("COMMIT");
-    const results = await Promise.all(creations);
-    expect(results[1]).toEqual(results[0]);
+    const [first, second] = await Promise.all(creations);
+    expect(second).toEqual(first);
     expect((await pool.query("SELECT id FROM battles")).rows).toEqual([
-      { id: results[0].battleId },
+      { id: first!.battleId },
     ]);
     expect(
       (await pool.query('SELECT "battleId" FROM battle_timelines')).rows,
-    ).toEqual([{ battleId: results[0].battleId }]);
+    ).toEqual([{ battleId: first!.battleId }]);
     expect(await runtime.runPromise(services.redis.get(lockKey))).toBeNull();
   } finally {
     await blocker.query("ROLLBACK");
@@ -913,7 +913,7 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
   );
 
   expect(result.battles.map((battle) => battle.id)).toEqual([
-    ids.get("match-a"),
+    ids.get("match-a")!,
   ]);
   expect(result.pagination.total).toBe(2);
   expect(result.pagination.hasNext).toBe(true);
@@ -1120,16 +1120,18 @@ it("does not cache an older snapshot's character list under a newly invalidated 
 }, 10_000);
 
 it("toggles visibility, serves public links and deletes battles stored in compressed chunks", async () => {
-  const [kept, removed] = await Promise.all(
-    ["kept-world", "removed-world"].map((world) =>
-      runtime.runPromise(
-        services.battles.createBattle({
-          data: { ...data, world, submissionId: world },
-          userId,
-        }),
-      ),
-    ),
-  );
+  const createInWorld = (world: string) =>
+    runtime.runPromise(
+      services.battles.createBattle({
+        data: { ...data, world, submissionId: world },
+        userId,
+      }),
+    );
+
+  const [kept, removed] = await Promise.all([
+    createInWorld("kept-world"),
+    createInWorld("removed-world"),
+  ]);
 
   for (const table of ["battles"])
     await pool.query(
@@ -1152,7 +1154,7 @@ it("toggles visibility, serves public links and deletes battles stored in compre
   );
 
   expect(visible.warriors.map((warrior) => warrior.name).sort()).toEqual(
-    data.events[0].f.w
+    data.events[0]?.f.w
       ? Object.values(data.events[0].f.w)
           .map((warrior) => warrior.name)
           .sort()

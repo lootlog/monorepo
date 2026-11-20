@@ -3,7 +3,11 @@ import {
   NpcTypeEnum as NpcType,
   NpcTypeSchema,
 } from "@lootlog/schema/npc-type";
-import { Schema, Predicate } from "effect";
+import { Option, Schema, Predicate } from "effect";
+import {
+  NpcRoutingDataSchema,
+  type NpcRoutingData,
+} from "@lootlog/schema/npc-routing";
 import { nullableIsoDatetimeCodec } from "#src/shared/schema/response-codecs";
 
 const isNpcType = Schema.is(NpcTypeSchema);
@@ -52,6 +56,12 @@ export type CachedTimerProjection = typeof CachedTimerProjectionSchema.Type;
 
 export const timerNpcField = (npc: unknown, key: string) =>
   Predicate.isObject(npc) ? npc[key] : undefined;
+
+const decodeTimerNpcRouting = Schema.decodeUnknownOption(NpcRoutingDataSchema);
+
+/** The stored timer NPC's routing fields, or `null` when they do not decode. */
+export const parseTimerNpcRouting = (npc: unknown): NpcRoutingData | null =>
+  Option.getOrNull(decodeTimerNpcRouting(npc));
 
 const isPositiveSafeInteger = (value: unknown): value is number =>
   typeof value === "number" && Number.isSafeInteger(value) && value > 0;

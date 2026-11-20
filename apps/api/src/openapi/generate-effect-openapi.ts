@@ -219,8 +219,10 @@ for (const path of Object.values(document.paths)) {
 
       if (
         parameter.in === "query" &&
-        schema["type"] === "string" &&
-        JSON.stringify(schema["enum"]) === JSON.stringify(["true", "false"])
+        "type" in schema &&
+        schema.type === "string" &&
+        "enum" in schema &&
+        JSON.stringify(schema.enum) === JSON.stringify(["true", "false"])
       ) {
         parameter.schema = { type: "boolean" };
         continue;
@@ -228,8 +230,10 @@ for (const path of Object.values(document.paths)) {
 
       if (
         parameter.in === "path" &&
-        schema["type"] === "string" &&
-        schema["pattern"] === ENCODED_NUMBER_PATTERN
+        "type" in schema &&
+        schema.type === "string" &&
+        "pattern" in schema &&
+        schema.pattern === ENCODED_NUMBER_PATTERN
       ) {
         parameter.schema = { type: "number" };
         continue;

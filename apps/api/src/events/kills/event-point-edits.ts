@@ -22,8 +22,7 @@ import {
 } from "#src/database/drizzle/event.schema";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { RedisService } from "#src/redis/redis.service";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import type {
   UpdateKillPointRequest,
   UpdateRankingPointsRequest,
@@ -46,7 +45,6 @@ export const makeEventPointEdits = (
   database: typeof ApiDatabase.Service,
   redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
   publisher: EventRankingPublisher,
-  logger: Logger,
 ) => {
   const query = adapterOperation("events.points.drizzle");
 
@@ -55,7 +53,6 @@ export const makeEventPointEdits = (
       [
         invalidateEventCache(
           redis,
-          logger,
           guildId,
           eventId,
           "Failed to invalidate event ranking cache",
@@ -64,11 +61,9 @@ export const makeEventPointEdits = (
           .publish(RabbitRoutingKey.EVENT_RANKING_UPDATE, { guildId, eventId })
           .pipe(
             Effect.catch((error) =>
-              Effect.sync(() =>
-                logger.warn("Failed to publish event ranking update", {
-                  error,
-                }),
-              ),
+              Effect.logWarning("Failed to publish event ranking update", {
+                error,
+              }),
             ),
             withAdapterSpan("events.points.publish", "events.rabbitmq"),
           ),

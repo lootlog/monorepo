@@ -161,7 +161,7 @@ describe("SingleNotification auto-hide countdown", () => {
     const row = container.firstElementChild;
 
     if (!(row instanceof HTMLElement)) throw new Error("Expected a row");
-    const muteButton = screen.getAllByRole("button")[0];
+    const muteButton = screen.getAllByRole("button")[0]!;
 
     fireEvent.pointerEnter(row);
     fireEvent.focus(muteButton);

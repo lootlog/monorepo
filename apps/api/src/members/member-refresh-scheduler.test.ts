@@ -1,7 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import type { Job } from "bullmq";
 import { Effect } from "effect";
-import { applicationLogger } from "#src/shared/application-logger";
 import {
   makeMemberRefreshScheduler,
   type MemberRefreshJobData,
@@ -30,14 +29,14 @@ const makeScheduler = (refused: boolean) => {
     (_options: { outcome: string; reason: string }) => Effect.void,
   );
 
-  const scheduler = makeMemberRefreshScheduler(applicationLogger, queue, {
+  const scheduler = makeMemberRefreshScheduler(queue, {
     nextRefreshAt: () => Effect.succeed(null),
     isRefused: () => Effect.succeed(refused),
     recordMetric,
     getLock: () => Effect.succeed(null),
     setLock: () => Effect.succeed(true),
-    evalLock: () => Effect.void,
-    releaseLock: () => Effect.void,
+    evalLock: () => Effect.succeed(1),
+    releaseLock: () => Effect.succeed(1),
   });
 
   return { scheduler, queue, recordMetric };

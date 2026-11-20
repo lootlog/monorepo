@@ -1,4 +1,6 @@
 import { expect, test } from "bun:test";
+import { RedisError } from "effect/persistence/Redis";
+import { MessagingError } from "@lootlog/messaging";
 import { Effect, Result } from "effect";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
@@ -16,7 +18,7 @@ import { makeMemberStore } from "./member.repository.js";
 import {
   applicationErrorStatusOrUndefined,
   InvalidRequestError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { makeMembersDataLayer } from "./member-commands.data-layer.js";
 import { MembersData } from "./members-data.js";
 
@@ -41,11 +43,17 @@ test("manual deactivation delivers its revocation after cache and broker failure
     const delivery = makeMemberDelivery(makeMemberStore(boundary.database), {
       clearMemberCaches: () =>
         failInvalidation
-          ? Effect.fail(new Error("cache unavailable"))
+          ? Effect.fail(new RedisError({ cause: "cache unavailable" }))
           : Effect.void,
       publishMemberRemoved: ({ globalUserId }) =>
         failDelivery
-          ? Effect.fail(new Error("broker unavailable"))
+          ? Effect.fail(
+              new MessagingError({
+                operation: "publish",
+                message: "broker unavailable",
+                cause: undefined,
+              }),
+            )
           : Effect.sync(() => {
               delivered.push(globalUserId);
             }),
@@ -71,7 +79,7 @@ test("manual deactivation delivers its revocation after cache and broker failure
     }).pipe(Effect.provide(membersLayer));
 
     expect(await boundary.run(Effect.result(deactivate))).toMatchObject({
-      failure: { cause: { message: "cache unavailable" } },
+      failure: { cause: expect.any(RedisError) },
     });
     expect(delivered).toEqual([]);
     expect(

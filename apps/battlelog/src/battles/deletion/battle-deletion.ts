@@ -16,7 +16,7 @@ import {
 } from "#src/database/schema";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import type { BattleObjectStorage } from "#src/infrastructure/battle-object-storage";
-import { ResourceNotFoundError } from "#src/infrastructure/http-error";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 
 type DeletionTransaction = Parameters<
   Parameters<DrizzleDatabase["transaction"]>[0]
@@ -174,13 +174,15 @@ export const makeBattleDeletion = (
             })
           : [];
 
-        if (removed.length === 0) {
+        const [removedBattle] = removed;
+
+        if (!removedBattle) {
           return yield* Effect.fail(
             new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
           );
         }
 
-        return removed[0].userId;
+        return removedBattle.userId;
       }),
     );
 

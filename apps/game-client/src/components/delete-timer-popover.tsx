@@ -90,9 +90,9 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
     return null;
   }
 
-  if (guildsWithPermissions.length === 1) {
-    const guild = guildsWithPermissions[0];
+  const [guild, ...otherGuilds] = guildsWithPermissions;
 
+  if (guild && otherGuilds.length === 0) {
     return (
       <TimerActionConfirmation
         action="delete"

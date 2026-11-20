@@ -67,6 +67,7 @@ export const makeNotificationJobRecurrence = (
       return;
     }
 
+    const intervalType = rule.scheduleIntervalType;
     const statuses = yield* store.cycleStatuses(ruleId, rule.scheduledAt);
 
     if (statuses.some(({ status }) => !finalStatuses.includes(status))) return;
@@ -74,7 +75,7 @@ export const makeNotificationJobRecurrence = (
     const following = (currentScheduledAt: Date) =>
       calculateNextOccurrenceInTimeZone({
         currentScheduledAt,
-        intervalType: rule.scheduleIntervalType,
+        intervalType,
         intervalValue: rule.scheduleIntervalValue,
         weekday: rule.scheduleWeekday,
         timeOfDay: rule.scheduleTimeOfDay,

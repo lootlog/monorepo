@@ -1,7 +1,7 @@
 import {
   ApplicationError,
   ResourceNotFoundError,
-} from "#src/infrastructure/http-error";
+} from "@lootlog/protocol/http/errors";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ContextLogger } from "@lootlog/instrumentation";
 import {
@@ -242,7 +242,7 @@ export const makeBattleTimelineRead = (
             "Battles_getCachedTimeline",
             "battlelog-infrastructure",
           ),
-          Effect.catch(() => Effect.succeed(null)),
+          Effect.orElseSucceed(() => null),
         );
 
       if (cached) return cached;
@@ -260,7 +260,7 @@ export const makeBattleTimelineRead = (
               "Battles_cacheTimeline",
               "battlelog-infrastructure",
             ),
-            Effect.catch(() => Effect.void),
+            Effect.ignore,
           );
       }
 

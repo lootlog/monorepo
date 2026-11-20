@@ -3,19 +3,19 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { respawnFromSpawnWindow } from "@lootlog/domain/timers";
 import { Clock, Effect, Predicate, Schema } from "effect";
-import { ExecutionError, type RedlockService } from "#src/redis/redlock";
+import { ExecutionError, type RedisLockManager } from "#src/redis/redlock";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   mapTimerResponse,
   toTimerEvent,
   timerNpcField,
+  parseTimerNpcRouting,
   timerNpcTemplateId,
 } from "#src/timers/timer-projection";
 import type { EventPublisher } from "@lootlog/messaging";
 import type { RedisService } from "#src/redis/redis.service";
-import { ResourceConflictError } from "#src/shared/http/http-errors";
+import { ResourceConflictError } from "@lootlog/protocol/http/errors";
 import { getTimerListCacheScope } from "#src/shared/cache";
-import type { ApplicationLogger } from "#src/shared/application-logger";
 import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import { ErrorKey } from "#src/timers/error-key";
 import type { Timer } from "#src/timers/timers.types";
@@ -54,8 +54,13 @@ export interface EventTimersPort {
     guildId: string,
     world: string,
     heroes: ReadonlyArray<{ npcId: number | null; npcName: string }>,
-  ) => Effect.Effect<Timer[], EventTimersError>;
+  ) => Effect.Effect<EventHeroTimer[], EventTimersError>;
 }
+
+type EventHeroTimer = Pick<
+  Timer,
+  "npcId" | "timerKey" | "world" | "minSpawnTime" | "maxSpawnTime" | "npc"
+>;
 
 export class EventTimersError extends TaggedErrorClass<EventTimersError>()(
   "EventTimersError",
@@ -63,30 +68,20 @@ export class EventTimersError extends TaggedErrorClass<EventTimersError>()(
 ) {}
 
 interface EventTimersDependencies {
-  readonly logger: ApplicationLogger;
   readonly store: EventTimerStore;
   readonly amqp: EventPublisher;
-  readonly redis: RedisService;
-  readonly redlock: RedlockService;
+  readonly redis: Pick<RedisService, "invalidateScopes">;
+  readonly locks: RedisLockManager;
 }
 
 const LOCK_TTL_MS = 30_000;
 
 export const makeEventTimersPort = ({
-  logger,
   store,
   amqp,
   redis,
-  redlock,
+  locks,
 }: EventTimersDependencies): EventTimersPort => {
-  const lockManager = redlock.createInstance();
-
-  const external = <A>(operation: string, run: () => Promise<A>) =>
-    Effect.tryPromise({
-      try: run,
-      catch: (cause) => new EventTimersError({ operation, cause }),
-    }).pipe(withAdapterSpan(operation, "event-timers"));
-
   const mapped = <A>(operation: string, effect: Effect.Effect<A, unknown>) =>
     effect.pipe(
       Effect.mapError((cause) => new EventTimersError({ operation, cause })),
@@ -94,16 +89,14 @@ export const makeEventTimersPort = ({
     );
 
   const invalidateCache = (guildId: string) =>
-    external("eventTimers.cache.invalidate", () =>
+    mapped(
+      "eventTimers.cache.invalidate",
       redis.invalidateScopes(getTimerListCacheScope(guildId)),
     ).pipe(
       Effect.tap(() =>
-        Effect.sync(() =>
-          logger.log({
-            level: "debug",
-            message: `Invalidated timer list cache for guild ${guildId}`,
-          }),
-        ),
+        Effect.logDebug({
+          message: `Invalidated timer list cache for guild ${guildId}`,
+        }),
       ),
     );
 
@@ -134,7 +127,7 @@ export const makeEventTimersPort = ({
       npcId: timer.npcId,
       timerKey: timer.timerKey,
       routing: {
-        tier: getNpcRoutingTier(npc),
+        tier: getNpcRoutingTier(parseTimerNpcRouting(npc)),
         npcLevel: timerNpcField(npc, "lvl"),
       },
     };
@@ -176,7 +169,7 @@ export const makeEventTimersPort = ({
     lockKey: string,
     use: () => Effect.Effect<A, unknown>,
   ) =>
-    lockManager.withLock(
+    locks.withLock(
       lockKey,
       LOCK_TTL_MS,
       Effect.suspend(use),

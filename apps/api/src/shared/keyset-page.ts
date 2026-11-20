@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 
 /**
  * Lists page by keyset: fetch `limit + 1` rows ordered by a unique key

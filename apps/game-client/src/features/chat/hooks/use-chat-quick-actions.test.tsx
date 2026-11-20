@@ -169,7 +169,7 @@ it("opens quick actions with current shortcuts and sends position without changi
   await user.click(trigger);
   expect(
     screen.getByText(
-      (content, element) =>
+      (_content, element) =>
         element?.getAttribute("data-slot") === "kbd-group" &&
         element.textContent === "Ctrl + Alt + P",
     ),

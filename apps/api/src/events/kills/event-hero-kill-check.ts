@@ -1,8 +1,7 @@
-import type { Logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import { randomUUID } from "node:crypto";
 import type { RedisService } from "#src/redis/redis.service";
-import { runPromiseAdapter } from "#src/events/event-adapter";
+import { withEventAdapterSpan } from "#src/events/event-adapter";
 import type { KillTimerData } from "#src/events/respawn/kill-timer-data";
 import {
   buildEventHeroKillDedupKey,
@@ -27,8 +26,9 @@ export const makeEventHeroKillCheck = (
   activeEventHeroRepository: ActiveEventHeroStore,
   redis: RedisService,
   recordHeroKill: RecordHeroKill,
-  logger: Logger,
 ) => {
+  const logContext = Effect.annotateLogs({ context: "EventKills" });
+
   function checkAndRecordEventHeroKill(
     guildId: string,
     world: string,
@@ -58,9 +58,11 @@ export const makeEventHeroKillCheck = (
       const readDedupHits = () =>
         Effect.all(
           [
-            runPromiseAdapter("redis.get", () => redis.get(dedupKey)),
+            redis.get(dedupKey).pipe(withEventAdapterSpan("redis.get")),
             recentDedupKey
-              ? runPromiseAdapter("redis.get", () => redis.get(recentDedupKey))
+              ? redis
+                  .get(recentDedupKey)
+                  .pipe(withEventAdapterSpan("redis.get"))
               : Effect.succeed(null),
           ],
           { concurrency: "unbounded" },
@@ -69,25 +71,25 @@ export const makeEventHeroKillCheck = (
       const [dedupHit, recentDedupHit] = yield* readDedupHits();
 
       if (dedupHit) {
-        logger.debug({
+        yield* Effect.logDebug({
           message: "Skipping duplicate event hero kill - dedup window active",
           guildId,
           world,
           npcId,
           npcName,
-        });
+        }).pipe(logContext);
 
         return;
       }
 
       if (recentDedupHit) {
-        logger.debug({
+        yield* Effect.logDebug({
           message: "Skipping duplicate event hero kill - recent kill active",
           guildId,
           world,
           npcId,
           npcName,
-        });
+        }).pipe(logContext);
 
         return;
       }
@@ -95,18 +97,18 @@ export const makeEventHeroKillCheck = (
       // Try to acquire lock - if another request already has it, silently return
       const lockToken = randomUUID();
 
-      const lockAcquired = yield* runPromiseAdapter("redis.setNX", () =>
-        redis.setNX(lockKey, lockToken, EVENT_KILL_LOCK_TTL_SECONDS),
-      );
+      const lockAcquired = yield* redis
+        .setNX(lockKey, lockToken, EVENT_KILL_LOCK_TTL_SECONDS)
+        .pipe(withEventAdapterSpan("redis.setNX"));
 
       if (!lockAcquired) {
-        logger.debug({
+        yield* Effect.logDebug({
           message: "Skipping duplicate event hero kill - lock already held",
           guildId,
           world,
           npcId,
           npcName,
-        });
+        }).pipe(logContext);
 
         return;
       }
@@ -116,27 +118,27 @@ export const makeEventHeroKillCheck = (
           yield* readDedupHits();
 
         if (dedupHitAfterLock) {
-          logger.debug({
+          yield* Effect.logDebug({
             message:
               "Skipping duplicate event hero kill - dedup window active after lock",
             guildId,
             world,
             npcId,
             npcName,
-          });
+          }).pipe(logContext);
 
           return;
         }
 
         if (recentDedupHitAfterLock) {
-          logger.debug({
+          yield* Effect.logDebug({
             message:
               "Skipping duplicate event hero kill - recent kill active after lock",
             guildId,
             world,
             npcId,
             npcName,
-          });
+          }).pipe(logContext);
 
           return;
         }
@@ -168,30 +170,30 @@ export const makeEventHeroKillCheck = (
                 isManualClose,
               );
 
-              const heroDedupHit = yield* runPromiseAdapter("redis.get", () =>
-                redis.get(heroDedupKey),
-              );
+              const heroDedupHit = yield* redis
+                .get(heroDedupKey)
+                .pipe(withEventAdapterSpan("redis.get"));
 
               if (heroDedupHit) {
-                logger.debug({
+                yield* Effect.logDebug({
                   message: "Skipping duplicate event hero kill for hero",
                   guildId,
                   world,
                   npcId,
                   heroId: eventHero.id,
                   eventId: event.id,
-                });
+                }).pipe(logContext);
 
                 return;
               }
 
-              logger.warn({
+              yield* Effect.logWarning({
                 message: "Updating hero NPC ID based on timer data",
                 guildId,
                 world,
                 newNpcId: npcId,
                 oldHeroNpcId: eventHero.npcId,
-              });
+              }).pipe(logContext);
 
               const updateData = {
                 ...((eventHero.npcId === null || eventHero.npcId !== npcId) && {
@@ -203,17 +205,22 @@ export const makeEventHeroKillCheck = (
               };
 
               if (Object.keys(updateData).length > 0) {
-                eventHero = yield* repository.updateHero(
+                const updatedHero = yield* repository.updateHero(
                   eventHero.id,
                   updateData,
                 );
-                logger.log({
+
+                // The hero was removed from the event since it was matched.
+                if (!updatedHero) return;
+
+                eventHero = updatedHero;
+                yield* Effect.logInfo({
                   message: "Hero NPC data updated",
                   heroId: eventHero.id,
                   npcId: eventHero.npcId,
                   npcIcon: eventHero.npcIcon,
                   npcLvl: eventHero.npcLvl,
-                });
+                }).pipe(logContext);
               }
 
               yield* recordHeroKill(
@@ -224,15 +231,15 @@ export const makeEventHeroKillCheck = (
                 isManualClose,
               );
 
-              yield* runPromiseAdapter("redis.set", () =>
-                redis.set(
+              yield* redis
+                .set(
                   heroDedupKey,
                   Date.now().toString(),
                   EVENT_KILL_DEDUP_TTL_SECONDS,
-                ),
-              );
+                )
+                .pipe(withEventAdapterSpan("redis.set"));
 
-              logger.log({
+              yield* Effect.logInfo({
                 message: isManualClose
                   ? "Manual close recorded"
                   : "Hero kill recorded",
@@ -241,28 +248,28 @@ export const makeEventHeroKillCheck = (
                 heroId: eventHero.id,
                 npcName: eventHero.npcName,
                 isManualClose,
-              });
+              }).pipe(logContext);
             }),
           { concurrency: "unbounded", discard: true },
         );
 
         yield* Effect.all(
           [
-            runPromiseAdapter("redis.set", () =>
-              redis.set(
+            redis
+              .set(
                 dedupKey,
                 Date.now().toString(),
                 EVENT_KILL_DEDUP_TTL_SECONDS,
-              ),
-            ),
+              )
+              .pipe(withEventAdapterSpan("redis.set")),
             recentDedupKey
-              ? runPromiseAdapter("redis.set", () =>
-                  redis.set(
+              ? redis
+                  .set(
                     recentDedupKey,
                     Date.now().toString(),
                     EVENT_KILL_RECENT_DEDUP_TTL_SECONDS,
-                  ),
-                )
+                  )
+                  .pipe(withEventAdapterSpan("redis.set"))
               : Effect.void,
           ],
           { concurrency: "unbounded", discard: true },
@@ -272,17 +279,14 @@ export const makeEventHeroKillCheck = (
       yield* recordWhileLocked.pipe(
         Effect.ensuring(
           // A lock that expired mid-write may belong to another request now.
-          runPromiseAdapter("redis.deleteIfValue", () =>
-            redis.deleteIfValue(lockKey, lockToken),
-          ).pipe(
+          redis.deleteIfValue(lockKey, lockToken).pipe(
+            withEventAdapterSpan("redis.deleteIfValue"),
             Effect.tapError((error) =>
-              Effect.sync(() =>
-                logger.error({
-                  message: "Failed to release event kill lock",
-                  lockKey,
-                  error: error instanceof Error ? error.message : error,
-                }),
-              ),
+              Effect.logError({
+                message: "Failed to release event kill lock",
+                lockKey,
+                error: error instanceof Error ? error.message : error,
+              }).pipe(logContext),
             ),
             Effect.ignore,
           ),

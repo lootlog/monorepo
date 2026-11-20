@@ -73,6 +73,9 @@ export function useOtherCatchingGuildGlow(): void {
 
     for (const characterId in othersById) {
       const other = othersById[characterId];
+
+      if (!other) continue;
+
       const runtimeHandle = runtimeOtherHandles.get(characterId);
       visibleCharacterIds.add(other.characterId);
 

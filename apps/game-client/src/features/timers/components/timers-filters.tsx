@@ -21,7 +21,7 @@ const MAX_LVL = 500;
 const MIN_LVL = 0;
 
 type TimersFiltersProps = {
-  filtersKey: string;
+  filtersKey: string | undefined;
   world: string;
 };
 

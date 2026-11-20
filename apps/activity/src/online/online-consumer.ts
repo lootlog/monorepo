@@ -104,12 +104,10 @@ export const OnlineConsumer = Layer.effectDiscard(
               schedule: Schedule.spaced("5 seconds"),
               while: (error) => !(error instanceof OnlineIngestRejected),
             }),
-            Effect.catch((error) => {
-              if (!(error instanceof OnlineIngestRejected))
-                return Effect.fail(error);
-
-              return rejectEvent(delivery, error.message);
-            }),
+            Effect.catchIf(
+              (error) => error instanceof OnlineIngestRejected,
+              (error) => rejectEvent(delivery, error.message),
+            ),
           );
         }),
     );

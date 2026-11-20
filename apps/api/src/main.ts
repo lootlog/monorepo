@@ -12,11 +12,13 @@ const NodeWarningDiagnosticsLive = Layer.effectDiscard(
   ),
 );
 
+const application = ApiApplicationLive.pipe(
+  Layer.provide(FetchHttpClient.layer),
+  Layer.provide(NodeWarningDiagnosticsLive),
+);
+
 runService({
   config: apiConfiguration,
-  application: ApiApplicationLive.pipe(
-    Layer.provide(FetchHttpClient.layer),
-    Layer.provide(NodeWarningDiagnosticsLive),
-  ),
+  application,
   supervise: RabbitMessaging.supervised,
 });

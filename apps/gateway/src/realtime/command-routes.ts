@@ -47,8 +47,8 @@ export const runCommandRoute = <Type extends CommandType>(
 export const orAccessDenied = <A, E>(
   effect: Effect.Effect<A | null, E>,
 ): Effect.Effect<A, E | OrganizationAccessDenied> =>
-  Effect.flatMap(effect, (result) =>
-    result === null
-      ? Effect.fail(new OrganizationAccessDenied())
-      : Effect.succeed(result),
+  Effect.filterOrFail(
+    effect,
+    (result): result is A => result !== null,
+    () => new OrganizationAccessDenied(),
   );

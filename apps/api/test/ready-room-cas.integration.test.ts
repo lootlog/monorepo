@@ -3,7 +3,11 @@ import { BunRedis } from "@effect/platform-bun";
 import { MessagingError } from "@lootlog/messaging";
 import { Effect, ManagedRuntime, Schema } from "effect";
 import { Redis } from "effect/persistence";
-import { RedisService, makeJsonCodec } from "#src/redis/redis.service";
+import {
+  makeJsonCodec,
+  makeRedisService,
+  type RedisService,
+} from "#src/redis/redis.service";
 import {
   makeReadyRoomRepository,
   type ReadyRoomRedis,
@@ -35,16 +39,13 @@ describe("Ready Room revision CAS integration", () => {
     );
 
     const readyRedis: ReadyRoomRedis = {
-      getJson: (key, schema) =>
-        Effect.tryPromise(() => redis.getJson(key, makeJsonCodec(schema))),
+      getJson: (key, schema) => redis.getJson(key, makeJsonCodec(schema)),
       eval: (script, keys, args) => {
         const isolatedKeys = keys.map((key) => publicationKeys.get(key) ?? key);
 
         for (const key of isolatedKeys) keysForCleanup.add(key);
 
-        return Effect.tryPromise(() =>
-          redis.eval(script, isolatedKeys, [...args]),
-        );
+        return redis.eval(script, isolatedKeys, args);
       },
     };
 
@@ -92,14 +93,15 @@ describe("Ready Room revision CAS integration", () => {
         url: `redis://${encodeURIComponent(process.env.REDIS_USERNAME ?? "")}:${encodeURIComponent(process.env.REDIS_PASSWORD ?? "")}@${process.env.REDIS_HOST ?? "127.0.0.1"}:${process.env.REDIS_PORT ?? "6379"}`,
       }),
     );
-    redis = new RedisService(
-      await runtime.runPromise(Redis.Redis),
-      {},
-      (effect) => runtime.runPromise(effect),
-    );
+    redis = makeRedisService(await runtime.runPromise(Redis.Redis));
   });
   afterAll(async () => {
-    await Promise.all([...keysForCleanup].map((key) => redis.del(key)));
+    await Effect.runPromise(
+      Effect.forEach([...keysForCleanup], (key) => redis.del(key), {
+        concurrency: "unbounded",
+        discard: true,
+      }),
+    );
     await runtime.dispose();
   });
 
@@ -151,7 +153,7 @@ describe("Ready Room revision CAS integration", () => {
     );
     await Effect.runPromise(initial.dispatch);
     expect(delivered.map(({ guildId }) => guildId)).toEqual([
-      aggregate.guildIds[0],
+      aggregate.guildIds[0]!,
     ]);
 
     const replacement = outbox((envelope) =>
@@ -166,9 +168,9 @@ describe("Ready Room revision CAS integration", () => {
     now += 30_001;
     await Effect.runPromise(replacement.dispatch);
     expect(delivered.map(({ guildId }) => guildId)).toEqual([
-      aggregate.guildIds[0],
-      aggregate.guildIds[0],
-      aggregate.guildIds[1],
+      aggregate.guildIds[0]!,
+      aggregate.guildIds[0]!,
+      aggregate.guildIds[1]!,
     ]);
 
     for (const envelope of delivered) {
@@ -244,7 +246,9 @@ describe("Ready Room revision CAS integration", () => {
       (await Effect.runPromise(repository.terminate(aggregate, terminal)))
         .status,
     ).toBe("committed");
-    await redis.del(`party-ready-room:v3:room:${aggregate.notificationId}`);
+    await Effect.runPromise(
+      redis.del(`party-ready-room:v3:room:${aggregate.notificationId}`),
+    );
     expect(
       await Effect.runPromise(repository.get(aggregate.notificationId)),
     ).toBeNull();
@@ -530,11 +534,11 @@ return 1`,
           notificationId: id,
         });
         // A stale index must be recovered without accessing undeclared keys.
-        await redis.del(`party-ready-room:v3:room:${id}`);
+        await Effect.runPromise(redis.del(`party-ready-room:v3:room:${id}`));
         expect((await Effect.runPromise(joinOther())).status).toBe("committed");
       }
 
-      await redis.del(`party-ready-room:v3:room:${id}`);
+      await Effect.runPromise(redis.del(`party-ready-room:v3:room:${id}`));
       expect(
         (await Effect.runPromise(repository.create(original))).status,
       ).toBe("created");
@@ -621,8 +625,13 @@ return 1`,
       await Effect.runPromise(repository.findForUser(room.organizerDiscordId)),
     ).toEqual([extended]);
     expect(
-      await redis.pttl(
-        `party-ready-room:v3:character:${room.world}:${applicant.characterId}`,
+      await runtime.runPromise(
+        Effect.flatMap(Redis.Redis, (client) =>
+          client.send<number>(
+            "PTTL",
+            `party-ready-room:v3:character:${room.world}:${applicant.characterId}`,
+          ),
+        ),
       ),
     ).toBeGreaterThan(5 * 60_000);
 

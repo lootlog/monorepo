@@ -3,7 +3,9 @@ import { readyRoomSourceVisibility } from "./ready-room-visibility.js";
 import { Effect } from "effect";
 import type {
   PartyReadyRoomCharacter,
+  PartyReadyRoomClientUpdate,
   PartyReadyRoomParticipant,
+  PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
 
 import {
@@ -17,7 +19,7 @@ import {
   PermissionDeniedError,
   ResourceNotFoundError,
   InvalidEntityError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { PartyParticipantActionRequest } from "#src/contracts/party-ready-room/schemas";
 import type { ReadyRoomIdentity } from "./ready-room-data.js";
 import {
@@ -112,7 +114,7 @@ export const joinWithRetry = (
   world: string,
   guildIds: ReadonlyArray<string>,
   attempt: number,
-): Effect.Effect<unknown, unknown> =>
+): Effect.Effect<PartyReadyRoomProjection | null, unknown> =>
   Effect.gen(function* () {
     const aggregate = yield* context.getLive(notificationId);
 
@@ -230,7 +232,7 @@ export const withdrawWithRetry = (
   notificationId: string,
   participantId: string,
   attempt: number,
-): Effect.Effect<unknown, unknown> =>
+): Effect.Effect<PartyReadyRoomClientUpdate, unknown> =>
   Effect.gen(function* () {
     const aggregate = yield* context.getLive(notificationId);
     const participant = aggregate.participants[participantId];

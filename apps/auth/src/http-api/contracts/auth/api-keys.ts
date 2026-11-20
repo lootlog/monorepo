@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "effect/http-api";
+import { HttpApi, HttpApiEndpoint, HttpApiGroup } from "effect/http-api";
 import {
   API_KEY_STATUS_PATH,
   ApiKeyStatusRequest,
@@ -10,35 +10,45 @@ import {
   CreateApiKey,
   RenameApiKey,
 } from "#src/auth/api-key-service";
+import {
+  BadRequest,
+  Conflict,
+  Forbidden,
+  NotFound,
+  ServiceUnavailable,
+  Unauthorized,
+} from "./errors.js";
 
-const error = [400, 401, 403, 404, 409, 429, 503].map((status) =>
-  Schema.Struct({ message: Schema.String }).pipe(HttpApiSchema.status(status)),
-);
+/** A browser session from a trusted origin. */
+const sessionError = [Unauthorized, Forbidden, ServiceUnavailable];
 
-export class ApiKeysGroup extends HttpApiGroup.make("apiKeys").add(
-  HttpApiEndpoint.get("ListApiKeys", "/auth/api-keys", {
-    error,
-    success: Schema.Struct({ keys: Schema.Array(ApiKeySummary) }),
-  }),
-  HttpApiEndpoint.post("CreateApiKey", "/auth/api-keys", {
-    error,
-    payload: CreateApiKey,
-    success: Schema.Struct({ ...ApiKeySummary.fields, key: Schema.String }),
-  }),
-  HttpApiEndpoint.patch("RenameApiKey", "/auth/api-keys/:id", {
-    error,
-    params: Schema.Struct({ id: Schema.NonEmptyString }),
-    payload: RenameApiKey,
-    success: ApiKeySummary,
-  }),
-  HttpApiEndpoint.delete("DeleteApiKey", "/auth/api-keys/:id", {
-    error,
-    params: Schema.Struct({ id: Schema.NonEmptyString }),
-    success: Schema.Struct({ success: Schema.Literal(true) }),
-  }),
-  HttpApiEndpoint.post("ApiKeyStatuses", API_KEY_STATUS_PATH, {
-    error,
-    payload: ApiKeyStatusRequest,
-    success: ApiKeyStatusResponse,
-  }),
-) {}
+export class ApiKeysGroup extends HttpApiGroup.make("apiKeys")
+  .add(
+    HttpApiEndpoint.get("ListApiKeys", "/auth/api-keys", {
+      error: sessionError,
+      success: Schema.Struct({ keys: Schema.Array(ApiKeySummary) }),
+    }),
+    HttpApiEndpoint.post("CreateApiKey", "/auth/api-keys", {
+      error: [...sessionError, BadRequest, NotFound, Conflict],
+      payload: CreateApiKey,
+      success: Schema.Struct({ ...ApiKeySummary.fields, key: Schema.String }),
+    }),
+    HttpApiEndpoint.patch("RenameApiKey", "/auth/api-keys/:id", {
+      error: [...sessionError, NotFound],
+      params: Schema.Struct({ id: Schema.NonEmptyString }),
+      payload: RenameApiKey,
+      success: ApiKeySummary,
+    }),
+    HttpApiEndpoint.delete("DeleteApiKey", "/auth/api-keys/:id", {
+      error: [...sessionError, NotFound],
+      params: Schema.Struct({ id: Schema.NonEmptyString }),
+      success: Schema.Struct({ success: Schema.Literal(true) }),
+    }),
+    HttpApiEndpoint.post("ApiKeyStatuses", API_KEY_STATUS_PATH, {
+      error: [Unauthorized, ServiceUnavailable],
+      payload: ApiKeyStatusRequest,
+      success: ApiKeyStatusResponse,
+    }),
+  )
+  // Excess fields are rejected rather than silently dropped.
+  .annotate(HttpApi.PayloadParseOptions, { onExcessProperty: "error" }) {}

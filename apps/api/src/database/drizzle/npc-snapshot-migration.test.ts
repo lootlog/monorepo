@@ -305,7 +305,7 @@ describe("NPC observation revision migration", () => {
 
       const stored = await database.query<{
         id: number;
-        icon: string;
+        icon: string | null;
         snapshotHash: string | null;
       }>(`SELECT id, icon, "snapshotHash" FROM "NpcSnapshot" ORDER BY id`);
 

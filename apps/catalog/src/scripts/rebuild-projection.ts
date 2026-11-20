@@ -224,11 +224,9 @@ const rebuildProjection = Effect.gen(function* () {
 
 BunRuntime.runMain(
   rebuildProjection.pipe(
-    Effect.provide(
-      Layer.mergeAll(
-        CatalogDatabase.layer.pipe(Layer.provide(PgClientLive)),
-        CatalogConfig.layer,
-      ),
-    ),
+    Effect.provide([
+      CatalogDatabase.layer.pipe(Layer.provide(PgClientLive)),
+      CatalogConfig.layer,
+    ]),
   ),
 );

@@ -42,9 +42,9 @@ const run = (
   redis: Pick<RedisService, "get" | "set">,
 ) => Effect.runPromise(operationWith(fetchImplementation, redis));
 
-const redisWith = (cached?: string) => ({
-  get: mock(() => Promise.resolve(cached)),
-  set: mock(() => Promise.resolve()),
+const redisWith = (cached: string | null = null) => ({
+  get: mock(() => Effect.succeed(cached)),
+  set: mock(() => Effect.void),
 });
 
 describe("maps operation", () => {

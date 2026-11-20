@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Schema } from "effect";
 import { TestClock } from "effect/testing";
-import type { RedisGetOrSetJsonBestEffortOptions } from "#src/redis/redis.service";
+import type { RedisGetOrSetJsonOptions } from "#src/redis/redis.service";
 import {
   getOrSetStaleJson,
   type StaleJsonRedis,
@@ -15,11 +15,7 @@ const fakeRedis = () => {
   let writes = 0;
 
   const redis: StaleJsonRedis = {
-    getOrSetJsonEffect: <T, E>(
-      options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
-        factory: Effect.Effect<T, E>;
-      },
-    ) =>
+    getOrSetJson: <T, E>(options: RedisGetOrSetJsonOptions<T, E>) =>
       Effect.gen(function* () {
         const cached = store.get(options.key);
 
@@ -30,16 +26,18 @@ const fakeRedis = () => {
 
         return value;
       }),
-    setNX: async (key: string) => {
-      if (leases.has(key)) return false;
-      leases.add(key);
+    setNX: (key: string) =>
+      Effect.sync(() => {
+        if (leases.has(key)) return false;
+        leases.add(key);
 
-      return true;
-    },
-    setJson: async <T>(key: string, value: T) => {
-      writes += 1;
-      store.set(key, JSON.stringify(value));
-    },
+        return true;
+      }),
+    setJson: <T>(key: string, value: T) =>
+      Effect.sync(() => {
+        writes += 1;
+        store.set(key, JSON.stringify(value));
+      }),
   };
 
   return { redis, writes: () => writes };
@@ -57,7 +55,7 @@ describe("getOrSetStaleJson", () => {
         freshSeconds: 60,
         retainSeconds: 600,
         factory: Effect.sync(() => ({ n: ++computed })),
-        onError: () => {},
+        onError: () => Effect.void,
       });
 
     await Effect.runPromise(

@@ -3,10 +3,7 @@ import {
   OrganizationWorkspaceOperationError,
 } from "#src/guilds/organization-workspace-access";
 
-import {
-  statusCodeResponse,
-  reauthenticationRequiredResponse,
-} from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { applicationErrorResponse } from "#src/http-api/application-error-response";
@@ -16,10 +13,9 @@ import type { Permission as PermissionValue } from "@lootlog/schema/permissions"
 import {
   ApplicationError,
   applicationErrorStatus,
-  applicationErrorStatusOrUndefined,
-} from "#src/shared/http/http-errors";
-
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
 
 export type OrganizationWorkspaceGuildAccess = OrganizationWorkspaceIdentity & {
   readonly guildId: string;
@@ -110,24 +106,4 @@ export const toOrganizationWorkspaceHttpResponse = <A, R>(
 
       return Effect.die(cause);
     },
-  });
-
-export const toDeclaredOrganizationWorkspaceError = <A, R>(
-  effect: Effect.Effect<A, OrganizationWorkspaceFailure, R>,
-  statuses: ReadonlyArray<number>,
-) =>
-  Effect.catchTags(effect, {
-    OrganizationWorkspaceAccessDenied: (error) =>
-      statuses.includes(error.status)
-        ? Effect.fail(undefined)
-        : Effect.die(error),
-    ReauthenticationRequired: reauthenticationRequiredResponse,
-    OrganizationWorkspaceNotFound: (error) =>
-      statuses.includes(error.status)
-        ? Effect.fail(undefined)
-        : Effect.die(error),
-    OrganizationWorkspaceOperationError: (error) =>
-      statuses.includes(applicationErrorStatusOrUndefined(error.cause) ?? 0)
-        ? Effect.fail(undefined)
-        : Effect.die(error.cause),
   });

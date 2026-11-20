@@ -7,7 +7,9 @@ import {
 } from "../../test/battle-fixtures.js";
 import { makeBattlelogOperations } from "../battles/battlelog-operations.js";
 import { afterAll, describe, expect, it } from "bun:test";
-import { Redacted } from "effect";
+import { Effect, Redacted } from "effect";
+import { OperationError } from "@lootlog/instrumentation/operation";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { makeBattlelogTestBoundary } from "../../test/battlelog-test-boundary.js";
 
 const boundary = makeBattlelogTestBoundary(
@@ -41,7 +43,47 @@ describe("Battlelog HTTP boundary", () => {
     );
 
     expect(response.status).toBe(401);
-    expect(await response.json()).toMatchObject({ statusCode: 401 });
+    expect(await response.json()).toEqual({ code: "AUTHENTICATION_REQUIRED" });
+  });
+
+  it("answers a missing battle with the declared 404 body", async () => {
+    const operations = makeBattlelogOperations(
+      unusedBattles,
+      unusedBattleAnalytics,
+      unusedBattleMetadata,
+      unusedDeleteQueue,
+      unusedWeaponKills,
+    );
+
+    const missing = makeBattlelogTestBoundary({
+      ...operations,
+      publicBattles: {
+        ...operations.publicBattles,
+        getPublicBattle: (battleId) =>
+          Effect.fail(
+            new OperationError({
+              operation: "PublicBattlesController_getPublicBattle",
+              cause: new ResourceNotFoundError(
+                `Public battle with ID ${battleId} not found`,
+              ),
+            }),
+          ),
+      },
+    });
+
+    try {
+      const response = await missing.handler(
+        new Request("http://battlelog.test/battles/public/missing"),
+      );
+
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({
+        code: "NOT_FOUND",
+        message: "Public battle with ID missing not found",
+      });
+    } finally {
+      await missing.dispose();
+    }
   });
 });
 
@@ -65,10 +107,11 @@ for (const [method, path] of [
     );
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({
-      error: "Bad Request",
-      message: "Invalid JSON body",
-      statusCode: 400,
+    expect(await response.json()).toMatchObject({
+      code: "VALIDATION_ERROR",
+      details: {
+        issues: [{ path: [], message: "Expected a valid JSON body" }],
+      },
     });
   });
 }

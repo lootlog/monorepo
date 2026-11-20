@@ -5,7 +5,7 @@ import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/timer.schema";
 
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import { respawnFromSpawnWindow } from "@lootlog/domain/timers";
 import { newManualTimerNpcId } from "#src/shared/margonem/npc-identity";
 import { TIMER_TYPES } from "@lootlog/domain/npc-identity";

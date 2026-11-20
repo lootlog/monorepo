@@ -16,7 +16,7 @@ import {
   roleTable,
 } from "#src/database/drizzle/organization.schema";
 
-import type { RedisGetOrSetJsonBestEffortOptions } from "#src/redis/redis.service";
+import type { RedisGetOrSetJsonOptions } from "#src/redis/redis.service";
 
 import { makeEventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 
@@ -45,11 +45,7 @@ describe("event catalog read Effect module", () => {
     const cacheRead = mock(() => undefined);
 
     const redis = {
-      getOrSetJsonEffect<T, E>(
-        options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
-          factory: Effect.Effect<T, E>;
-        },
-      ) {
+      getOrSetJson<T, E>(options: RedisGetOrSetJsonOptions<T, E>) {
         cacheRead();
 
         return Effect.succeed(
@@ -61,9 +57,7 @@ describe("event catalog read Effect module", () => {
     const boundary = await createDatabaseBoundary();
 
     try {
-      const logger = { warn: mock(() => undefined) };
-
-      const catalog = makeEventsCatalogRead(boundary.database, redis, logger);
+      const catalog = makeEventsCatalogRead(boundary.database, redis);
 
       const result = await boundary.run(
         catalog.getEvent(
@@ -219,11 +213,7 @@ describe("event catalog read Effect module", () => {
 
       // Serve the loaded value through the cache codec, as a cache hit would.
       const redis = {
-        getOrSetJsonEffect<T, E>(
-          options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
-            factory: Effect.Effect<T, E>;
-          },
-        ) {
+        getOrSetJson<T, E>(options: RedisGetOrSetJsonOptions<T, E>) {
           return options.factory.pipe(
             Effect.map((value) =>
               options.codec.parse(options.codec.stringify(value)),
@@ -232,9 +222,7 @@ describe("event catalog read Effect module", () => {
         },
       };
 
-      const catalog = makeEventsCatalogRead(database, redis, {
-        warn: () => undefined,
-      });
+      const catalog = makeEventsCatalogRead(database, redis);
 
       const result = await boundary.run(
         catalog.getEventMaps(

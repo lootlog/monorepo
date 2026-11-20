@@ -8,10 +8,11 @@ export type NpcPermissionData = {
   type: string;
 };
 
+/** A role without a stored level bound covers the full 0–500 range. */
 export type RolePermissionData = {
   permissions: readonly string[];
-  lvlRangeFrom: number;
-  lvlRangeTo: number;
+  lvlRangeFrom: number | null;
+  lvlRangeTo: number | null;
 };
 
 export const NOTIFICATION_SEND_PERMISSIONS = [
@@ -68,7 +69,8 @@ const isNpcType = Schema.is(NpcTypeSchema);
 const isNpcLevelWithinRoleRange = (
   role: RolePermissionData,
   npcLevel: number,
-): boolean => role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel;
+): boolean =>
+  (role.lvlRangeFrom ?? 0) <= npcLevel && (role.lvlRangeTo ?? 500) >= npcLevel;
 
 const hasRolePermissionInLevelRange = (
   roles: readonly RolePermissionData[],

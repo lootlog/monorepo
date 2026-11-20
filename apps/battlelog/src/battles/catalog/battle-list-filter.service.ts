@@ -199,10 +199,12 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
         if (query.public !== undefined)
           conditions.push(eq(battlesRef.public, query.public));
 
-        if (characterIds.length) {
+        const [firstCharacterId, ...otherCharacterIds] = characterIds;
+
+        if (firstCharacterId !== undefined) {
           conditions.push(
-            characterIds.length === 1
-              ? eq(battlesRef.characterId, characterIds[0])
+            otherCharacterIds.length === 0
+              ? eq(battlesRef.characterId, firstCharacterId)
               : inArray(battlesRef.characterId, characterIds),
           );
         }

@@ -1,21 +1,21 @@
 import {
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
+import {
   type StoredUserTheme,
   UserThemeNotFound,
   UserThemeLimitReached,
   UserThemesPersistenceError,
   UserThemesData,
 } from "#src/users/user-themes-data";
-import {
-  reauthenticationRequiredResponse,
-  statusCodeResponse,
-} from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 
 import { randomBytes } from "node:crypto";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 
 import { LootlogApi } from "../../lootlog-api.js";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 import {
   SharedUserThemeResponse,
   UserThemeResponse,

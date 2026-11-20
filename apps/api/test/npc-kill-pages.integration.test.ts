@@ -22,8 +22,7 @@ import { makeKillStatsPersistence } from "../src/kills/kill-stats.repository.js"
 import { makeMemberKillQuery } from "../src/kills/member-kill-query.js";
 import { makeUserKillQueries } from "../src/kills/user-kill-queries.js";
 import type { KillQueryCache } from "../src/kills/kill-query-support.js";
-import { applicationLogger } from "../src/shared/application-logger.js";
-import { InvalidRequestError } from "../src/shared/http/http-errors.js";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 
 const periodBoundary = new Date();
 
@@ -60,8 +59,8 @@ const services = Effect.gen(function* () {
 
   return {
     memberId: owner.id,
-    member: makeMemberKillQuery(persistence, cache, applicationLogger),
-    personal: makeUserKillQueries(db, cache, applicationLogger),
+    member: makeMemberKillQuery(persistence, cache),
+    personal: makeUserKillQueries(db, cache),
   };
 });
 
@@ -410,7 +409,7 @@ for (const period of ["all", "24h"] as const) {
               totalKills: 3,
             }),
           ]);
-          expect(personal.items).toEqual(member?.npcs);
+          expect(personal.items).toEqual(member!.npcs);
           expect(member?.overview).toEqual({
             totalParticipations: 3,
             participationsByType: { HERO: 3 },

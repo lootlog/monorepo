@@ -105,7 +105,7 @@ describe("api.service logging", () => {
       actionType: "create_loot",
       status: "success",
     });
-    expect(action.requests).toEqual([
+    expect(action!.requests).toEqual([
       expect.objectContaining({
         endpoint: "/loots",
         method: "POST",
@@ -190,7 +190,7 @@ describe("api.service logging", () => {
       actionType: "create_loot",
       status: "error",
     });
-    expect(action.requests).toEqual([
+    expect(action!.requests).toEqual([
       expect.objectContaining({
         endpoint: "/loots",
         status: "error",
@@ -411,7 +411,7 @@ describe("api.service logging", () => {
         guildIds: ["guild-1", "guild-2"],
       },
     });
-    expect(action.requests).toEqual(
+    expect(action!.requests).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           endpoint: "/guilds/guild-1/chat-messages",

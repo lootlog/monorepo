@@ -7,7 +7,7 @@ import {
   createPartyGatheringSummary,
   createReadyRoomProjection,
 } from "./ready-room-projection.js";
-import { PermissionDeniedError } from "#src/shared/http/http-errors";
+import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import type { ReadyRoomIdentity } from "./ready-room-data.js";
 import type { ReadyRoomContext } from "./ready-room.data-layer.js";
 

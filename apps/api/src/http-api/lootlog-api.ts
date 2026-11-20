@@ -1,7 +1,7 @@
 /** Authoritative composition root for the Lootlog HTTP contract. */
-import { SchemaErrorResponse } from "./schema-error-response.js";
+import { SchemaErrorResponse } from "@lootlog/protocol/http/schema-error-response";
 import { HttpApi, OpenApi } from "effect/http-api";
-import { ApiKeyEndpointPolicy } from "@lootlog/schema/api-key-http";
+import { ApiKeyEndpointPolicy } from "@lootlog/protocol/http/api-key-http";
 import { UsersGroup } from "#src/contracts/users/api";
 import { MembersGroup } from "#src/contracts/members/api";
 import { GuildsGroup } from "#src/contracts/guilds/api";

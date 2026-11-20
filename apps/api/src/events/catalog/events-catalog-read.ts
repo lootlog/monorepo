@@ -15,8 +15,7 @@ import {
 } from "#src/database/drizzle/event.schema";
 import { roleTable } from "#src/database/drizzle/organization.schema";
 import { makeTypeJsonCodec, type RedisService } from "#src/redis/redis.service";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 import {
   attachComputedEventActive,
@@ -34,8 +33,7 @@ type Role = typeof roleTable.$inferSelect;
 
 export const makeEventsCatalogRead = (
   database: typeof ApiDatabase.Service,
-  redis: Pick<RedisService, "getOrSetJsonEffect">,
-  logger: Pick<Logger, "warn">,
+  redis: Pick<RedisService, "getOrSetJson">,
 ) => {
   const query = adapterOperation("events.catalog.drizzle");
 
@@ -46,12 +44,13 @@ export const makeEventsCatalogRead = (
   ) => {
     const codec = makeTypeJsonCodec(schema);
 
-    return redis.getOrSetJsonEffect({
+    return redis.getOrSetJson({
       ...entry,
       codec,
       ttlSeconds: CACHE_TTL_SECONDS,
       factory: load,
-      onError: (error) => logger.warn("Event read cache unavailable", error),
+      onError: (error) =>
+        Effect.logWarning("Event read cache unavailable", error),
     });
   };
 

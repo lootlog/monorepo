@@ -1,4 +1,8 @@
 import {
+  type ReauthenticationRequired,
+  reauthenticationRequiredResponse,
+} from "@lootlog/protocol/http/errors";
+import {
   LootlogConfigOperationError,
   LootlogConfigData,
 } from "#src/lootlog-config/lootlog-config-data";
@@ -7,7 +11,6 @@ import type { Permission as PermissionValue } from "@lootlog/schema/permissions"
 import {
   optionalPathString,
   statusCodeResponse,
-  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -22,7 +25,6 @@ import {
   NpcLootlogConfigResponse,
   type UpdateNpcLootlogConfigRequest,
 } from "#src/contracts/lootlog-config/schemas";
-import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 export class LootlogConfigAccessDenied extends TaggedErrorClass<LootlogConfigAccessDenied>()(
   "LootlogConfigAccessDenied",

@@ -1,19 +1,24 @@
-import { Context, Effect, Layer, Schema } from "effect";
-import { HttpServerRequest, HttpServerResponse } from "effect/http";
-import { HttpApiMiddleware, HttpApiSchema, OpenApi } from "effect/http-api";
-import { API_KEY_ACCESS_HEADER } from "./api-key-access.js";
+import { API_KEY_ACCESS_HEADER } from "@lootlog/schema/api-key-access";
 import {
   apiKeyAllowsOperation,
   readForwardAuthIdentity,
-} from "./api-key-policy.js";
+} from "@lootlog/schema/api-key-policy";
+import { Context, Effect, Layer } from "effect";
+import { HttpServerRequest } from "effect/http";
+import { HttpApiMiddleware, HttpApiSchema, OpenApi } from "effect/http-api";
+import { HttpErrorResponse, HttpStatus, httpErrorResponse } from "./errors.js";
 
-const ApiKeyHttpErrors = [401, 403, 429].map((status) =>
-  Schema.Struct({ message: Schema.String }).pipe(HttpApiSchema.status(status)),
-);
+// 429 documents the key's rate limit, which forward authentication enforces
+// before the request reaches the service.
+const ApiKeyHttpErrors = [
+  HttpStatus.UNAUTHORIZED,
+  HttpStatus.FORBIDDEN,
+  HttpStatus.TOO_MANY_REQUESTS,
+].map((status) => HttpErrorResponse.pipe(HttpApiSchema.status(status)));
 
 /** Additional credential restrictions; ordinary session authorization remains with each service. */
 export class ApiKeyEndpointPolicy extends HttpApiMiddleware.Service<ApiKeyEndpointPolicy>()(
-  "@lootlog/schema/ApiKeyEndpointPolicy",
+  "@lootlog/protocol/ApiKeyEndpointPolicy",
   { error: ApiKeyHttpErrors },
 ) {}
 
@@ -28,10 +33,10 @@ export const apiKeyEndpointPolicyLayer = (service: string) =>
 
         if (access === undefined) {
           return Effect.succeed(
-            HttpServerResponse.jsonUnsafe(
-              { message: "Unauthorized" },
-              { status: 401 },
-            ),
+            httpErrorResponse(HttpStatus.UNAUTHORIZED, {
+              code: "AUTHENTICATION_REQUIRED",
+              message: "Unauthorized",
+            }),
           );
         }
 
@@ -43,10 +48,10 @@ export const apiKeyEndpointPolicyLayer = (service: string) =>
 
         if (!apiKeyAllowsOperation(access, service, operation)) {
           return Effect.succeed(
-            HttpServerResponse.jsonUnsafe(
-              { message: "API key access denied" },
-              { status: 403 },
-            ),
+            httpErrorResponse(HttpStatus.FORBIDDEN, {
+              code: "API_KEY_ACCESS_DENIED",
+              message: "API key access denied",
+            }),
           );
         }
 

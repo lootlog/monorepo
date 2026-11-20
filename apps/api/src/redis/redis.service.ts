@@ -46,30 +46,18 @@ export const makeTypeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
   };
 };
 
-export interface RedisGetOrSetJsonOptions<T> {
-  key: string;
-  scopes?: readonly string[];
-  ttlSeconds: number;
-  factory: () => Promise<T>;
-  lockTtlSeconds?: number;
-  waitTimeoutMs?: number;
-  waitIntervalMs?: number;
-  signal?: AbortSignal;
-  codec: JsonCodec<T>;
+export interface RedisGetOrSetJsonOptions<T, E> {
+  readonly key: string;
+  readonly scopes?: readonly string[];
+  readonly ttlSeconds: number;
+  readonly factory: Effect.Effect<T, E>;
+  readonly lockTtlSeconds?: number;
+  readonly waitTimeoutMs?: number;
+  readonly waitIntervalMs?: number;
+  readonly codec: JsonCodec<T>;
+  /** Reports a Redis failure the read recovered from by running `factory`. */
+  readonly onError?: (error: unknown) => Effect.Effect<void>;
 }
-
-export interface RedisGetOrSetJsonBestEffortOptions<
-  T,
-> extends RedisGetOrSetJsonOptions<T> {
-  onError?: (error: unknown) => void;
-}
-
-export type RedisGetOrSetJsonEffectOptions<T, E> = Omit<
-  RedisGetOrSetJsonBestEffortOptions<T>,
-  "factory"
-> & {
-  factory: Effect.Effect<T, E>;
-};
 
 const DEFAULT_SCAN_COUNT = 500;
 
@@ -104,7 +92,7 @@ return versions
  * The Redis commands Lootlog uses, as Effects that fail with `RedisError`.
  * Domain ports take a `Pick<>` of it.
  */
-export interface RedisEffects {
+export interface RedisService {
   readonly get: (key: string) => Effect.Effect<string | null, Redis.RedisError>;
   readonly set: (
     key: string,
@@ -131,6 +119,11 @@ export interface RedisEffects {
     key: string,
     value: string,
   ) => Effect.Effect<number, Redis.RedisError>;
+  readonly incr: (key: string) => Effect.Effect<number, Redis.RedisError>;
+  readonly expire: (
+    key: string,
+    ttlSeconds: number,
+  ) => Effect.Effect<number, Redis.RedisError>;
   /** Reads a JSON value; an entry the codec rejects is deleted and reads as null. */
   readonly getJson: <T>(
     key: string,
@@ -146,6 +139,8 @@ export interface RedisEffects {
   readonly invalidateScopes: (
     ...scopes: string[]
   ) => Effect.Effect<void, Redis.RedisError>;
+  /** Lists the keys matching `pattern` with SCAN, without the key prefix. */
+  readonly scan: (pattern: string) => Effect.Effect<string[], Redis.RedisError>;
   readonly deleteByPattern: (
     pattern: string,
     batchSize?: number,
@@ -176,53 +171,41 @@ export interface RedisEffects {
   ) => Effect.Effect<number, Redis.RedisError>;
   /**
    * Reads a cached JSON value or fills it once across all API processes. Cache
-   * failures fall back to the factory; only the factory's errors surface.
+   * failures fall back to the factory; only the factory's errors surface. A
+   * caller that waits past `waitTimeoutMs` for another owner's fill dies with
+   * `CacheFillTimeoutError` instead of starting a second fill.
    */
   readonly getOrSetJson: <T, E>(
-    options: RedisGetOrSetJsonEffectOptions<T, E>,
+    options: RedisGetOrSetJsonOptions<T, E>,
   ) => Effect.Effect<T, E>;
 }
 
-export class RedisService {
-  private readonly prefix: string;
-  private readonly scripts = new RedisScriptCache();
-  readonly effect: RedisEffects;
+export const makeRedisService = (
+  redis: Redis.Redis["Service"],
+  options: { readonly prefix?: string } = {},
+): RedisService => {
+  const prefix = options.prefix ?? "";
+  const scripts = new RedisScriptCache();
 
-  constructor(
-    private readonly redis: Redis.Redis["Service"],
-    options: { prefix?: string },
-    private readonly run: <A>(
-      effect: Effect.Effect<A, Redis.RedisError>,
-    ) => Promise<A>,
-  ) {
-    this.prefix = options.prefix ?? "";
-    this.effect = this.makeEffects();
-  }
+  const send: Redis.Redis["Service"]["send"] = (command, ...args) =>
+    redis.send(command, ...args);
 
-  private prefixKey(key: string): string {
-    return this.prefix ? `${this.prefix}:${key}` : key;
-  }
+  const prefixKey = (key: string): string =>
+    prefix ? `${prefix}:${key}` : key;
 
-  private unprefixKey(key: string): string {
-    const prefix = `${this.prefix}:`;
+  const unprefixKey = (key: string): string =>
+    prefix && key.startsWith(`${prefix}:`) ? key.slice(prefix.length + 1) : key;
 
-    return this.prefix && key.startsWith(prefix)
-      ? key.slice(prefix.length)
-      : key;
-  }
-
-  private forEachScanBatch(
+  const forEachScanBatch = (
     pattern: string,
     onBatch: (keys: string[]) => Effect.Effect<void, Redis.RedisError>,
-  ): Effect.Effect<void, Redis.RedisError> {
-    return Effect.gen({ self: this }, function* () {
-      const prefixedPattern = this.prefixKey(pattern);
+  ): Effect.Effect<void, Redis.RedisError> =>
+    Effect.gen(function* () {
+      const prefixedPattern = prefixKey(pattern);
       let cursor = "0";
 
       do {
-        const [nextCursor, matchedKeys] = yield* this.redis.send<
-          [string, string[]]
-        >(
+        const [nextCursor, matchedKeys] = yield* send<[string, string[]]>(
           "SCAN",
           cursor,
           "MATCH",
@@ -235,93 +218,187 @@ export class RedisService {
         yield* onBatch(matchedKeys);
       } while (cursor !== "0");
     });
-  }
 
-  private makeEffects(): RedisEffects {
-    const send: Redis.Redis["Service"]["send"] = (command, ...args) =>
-      this.redis.send(command, ...args);
+  const get: RedisService["get"] = (key) => send("GET", prefixKey(key));
 
-    const get: RedisEffects["get"] = (key) => send("GET", this.prefixKey(key));
+  const set: RedisService["set"] = (key, value, ttlSeconds) =>
+    (ttlSeconds
+      ? send("SET", prefixKey(key), value, "EX", String(ttlSeconds))
+      : send("SET", prefixKey(key), value)
+    ).pipe(Effect.asVoid);
 
-    const set: RedisEffects["set"] = (key, value, ttlSeconds) =>
-      (ttlSeconds
-        ? send("SET", this.prefixKey(key), value, "EX", String(ttlSeconds))
-        : send("SET", this.prefixKey(key), value)
-      ).pipe(Effect.asVoid);
+  const del: RedisService["del"] = (key) => send("DEL", prefixKey(key));
 
-    const del: RedisEffects["del"] = (key) => send("DEL", this.prefixKey(key));
+  const evalScript = <T = unknown>(
+    script: string,
+    keys: ReadonlyArray<string>,
+    args: ReadonlyArray<string | number> = [],
+  ) => {
+    const prefixedKeys = keys.map(prefixKey);
 
-    const evalScript = <T = unknown>(
-      script: string,
-      keys: ReadonlyArray<string>,
-      args: ReadonlyArray<string | number> = [],
-    ) => {
-      const prefixedKeys = keys.map((key) => this.prefixKey(key));
+    return redis.eval(scripts.get<T>(script, prefixedKeys.length))(
+      ...prefixedKeys,
+      ...args.map(String),
+    );
+  };
 
-      return this.redis.eval(this.scripts.get<T>(script, prefixedKeys.length))(
-        ...prefixedKeys,
-        ...args.map(String),
+  const setNX: RedisService["setNX"] = (key, value, ttlSeconds) =>
+    ttlSeconds
+      ? send("SET", prefixKey(key), value, "EX", String(ttlSeconds), "NX").pipe(
+          Effect.map((result) => result === "OK"),
+        )
+      : send<number>("SETNX", prefixKey(key), value).pipe(
+          Effect.map((result) => result === 1),
+        );
+
+  const getJson: RedisService["getJson"] = (key, codec) =>
+    get(key).pipe(
+      Effect.flatMap((cached) =>
+        cached === null
+          ? Effect.succeed(null)
+          : Effect.try({
+              try: () => codec.parse(cached),
+              catch: () => null,
+            }).pipe(Effect.catch(() => del(key).pipe(Effect.as(null)))),
+      ),
+    );
+
+  const getOrSetJson = <T, E>({
+    key,
+    scopes = [],
+    factory,
+    onError,
+    ...fillOptions
+  }: RedisGetOrSetJsonOptions<T, E>): Effect.Effect<T, E> =>
+    Effect.gen(function* () {
+      const context = yield* Effect.context<never>();
+      const run = Effect.runPromiseWith(context);
+      let filled: { readonly value: T } | undefined;
+      let factoryFailure: Cause.Cause<E> | undefined;
+
+      // fillJsonCache is shared with battlelog and drives its own Promise loop.
+      const store = {
+        getJson: <A>(cacheKey: string, codec: { parse(text: string): A }) =>
+          run(getJson(cacheKey, codec)),
+        setNX: (cacheKey: string, token: string, ttlSeconds: number) =>
+          run(setNX(cacheKey, token, ttlSeconds)),
+        eval: <A>(
+          script: string,
+          keys: string[],
+          args: Array<string | number>,
+        ) => run(evalScript<A>(script, keys, args)),
+      };
+
+      return yield* Effect.tryPromise({
+        try: async (signal) => {
+          let cacheKey = key;
+
+          if (scopes.length > 0) {
+            const generations = await run(
+              evalScript<string[]>(
+                READ_CACHE_GENERATIONS_SCRIPT,
+                scopes.map((scope) => `cache-generation:v1:${scope}`),
+                [
+                  ...scopes.map(() => randomUUID()),
+                  READ_CACHE_GENERATION_TTL_SECONDS,
+                ],
+              ),
+            );
+
+            // Capture before loading: an invalidated in-flight fill stays unreachable.
+            cacheKey = `read-cache:v1:${generations.join(":")}:${key}`;
+          }
+
+          return fillJsonCache<T>(store, {
+            ...fillOptions,
+            key: cacheKey,
+            signal,
+            factory: async () => {
+              const exit = await Effect.runPromiseExitWith(context)(factory, {
+                signal,
+              });
+
+              if (Exit.isFailure(exit)) {
+                factoryFailure = exit.cause;
+                throw exit.cause;
+              }
+
+              filled = { value: exit.value };
+
+              return exit.value;
+            },
+          });
+        },
+        catch: (error) => error,
+      }).pipe(
+        Effect.catch((error) => {
+          if (factoryFailure !== undefined)
+            return Effect.failCause(factoryFailure);
+
+          if (error instanceof CacheFillTimeoutError) return Effect.die(error);
+
+          const recovered =
+            filled === undefined ? factory : Effect.succeed(filled.value);
+
+          return onError === undefined
+            ? recovered
+            : onError(error).pipe(Effect.andThen(recovered));
+        }),
       );
-    };
+    });
 
-    return {
-      get,
-      set,
-      del,
-      eval: evalScript,
-      setNX: (key, value, ttlSeconds) =>
-        ttlSeconds
-          ? send(
-              "SET",
-              this.prefixKey(key),
-              value,
-              "EX",
-              String(ttlSeconds),
-              "NX",
-            ).pipe(Effect.map((result) => result === "OK"))
-          : send<number>("SETNX", this.prefixKey(key), value).pipe(
-              Effect.map((result) => result === 1),
-            ),
-      setNxGet: (key, value, ttlSeconds) =>
-        send<string | null>(
-          "SET",
-          this.prefixKey(key),
-          value,
-          "NX",
-          "GET",
-          "EX",
-          String(ttlSeconds),
-        ),
-      deleteIfValue: (key, value) =>
-        evalScript<number>(RELEASE_LOCK_SCRIPT, [key], [value]),
-      getJson: (key, codec) =>
-        get(key).pipe(
-          Effect.flatMap((cached) =>
-            cached === null
-              ? Effect.succeed(null)
-              : Effect.try({
-                  try: () => codec.parse(cached),
-                  catch: () => null,
-                }).pipe(Effect.catch(() => del(key).pipe(Effect.as(null)))),
+  return {
+    get,
+    set,
+    del,
+    eval: evalScript,
+    setNX,
+    setNxGet: (key, value, ttlSeconds) =>
+      send<string | null>(
+        "SET",
+        prefixKey(key),
+        value,
+        "NX",
+        "GET",
+        "EX",
+        String(ttlSeconds),
+      ),
+    deleteIfValue: (key, value) =>
+      evalScript<number>(RELEASE_LOCK_SCRIPT, [key], [value]),
+    incr: (key) => send<number>("INCR", prefixKey(key)),
+    expire: (key, ttlSeconds) =>
+      send<number>("EXPIRE", prefixKey(key), String(ttlSeconds)),
+    getJson,
+    setJson: (key, value, ttlSeconds, codec = DEFAULT_JSON_SERIALIZER) =>
+      set(key, codec.stringify(value), ttlSeconds),
+    invalidateScopes: (...scopes) =>
+      Effect.forEach(
+        scopes,
+        (scope) =>
+          set(
+            `cache-generation:v1:${scope}`,
+            randomUUID(),
+            READ_CACHE_GENERATION_TTL_SECONDS,
           ),
-        ),
-      setJson: (key, value, ttlSeconds, codec = DEFAULT_JSON_SERIALIZER) =>
-        set(key, codec.stringify(value), ttlSeconds),
-      invalidateScopes: (...scopes) =>
-        Effect.forEach(
-          scopes,
-          (scope) =>
-            set(
-              `cache-generation:v1:${scope}`,
-              randomUUID(),
-              READ_CACHE_GENERATION_TTL_SECONDS,
-            ),
-          { concurrency: "unbounded", discard: true },
-        ),
-      deleteByPattern: (pattern, batchSize = DEFAULT_DELETE_BATCH_SIZE) => {
+        { concurrency: "unbounded", discard: true },
+      ),
+    // Accumulators are created per run so a retried or repeated effect starts
+    // from empty.
+    scan: (pattern) =>
+      Effect.suspend(() => {
+        const keys: string[] = [];
+
+        return forEachScanBatch(pattern, (matchedKeys) =>
+          Effect.sync(() => {
+            keys.push(...matchedKeys);
+          }),
+        ).pipe(Effect.map(() => keys.map(unprefixKey)));
+      }),
+    deleteByPattern: (pattern, batchSize = DEFAULT_DELETE_BATCH_SIZE) =>
+      Effect.suspend(() => {
         let deletedCount = 0;
 
-        return this.forEachScanBatch(pattern, (matchedKeys) =>
+        return forEachScanBatch(pattern, (matchedKeys) =>
           Effect.forEach(chunk(matchedKeys, batchSize), (batch) =>
             send<number>("DEL", ...batch).pipe(
               Effect.map((deleted) => {
@@ -330,231 +407,14 @@ export class RedisService {
             ),
           ).pipe(Effect.asVoid),
         ).pipe(Effect.map(() => deletedCount));
-      },
-      rpush: (key, ...values) => send("RPUSH", this.prefixKey(key), ...values),
-      ltrim: (key, start, stop) =>
-        send("LTRIM", this.prefixKey(key), String(start), String(stop)),
-      lrange: (key, start, stop) =>
-        send("LRANGE", this.prefixKey(key), String(start), String(stop)),
-      lrem: (key, count, value) =>
-        send("LREM", this.prefixKey(key), String(count), value),
-      getOrSetJson: (options) => this.getOrSetJsonEffect(options),
-    };
-  }
-
-  set(key: string, value: string, ttlSeconds?: number): Promise<void> {
-    return this.run(this.effect.set(key, value, ttlSeconds));
-  }
-
-  get(key: string): Promise<string | null> {
-    return this.run(this.effect.get(key));
-  }
-
-  getJson<T>(key: string, codec: JsonCodec<T>): Promise<T | null> {
-    return this.run(this.effect.getJson(key, codec));
-  }
-
-  setJson<T>(
-    key: string,
-    value: T,
-    ttlSeconds?: number,
-    codec: Pick<JsonCodec<T>, "stringify"> = DEFAULT_JSON_SERIALIZER,
-  ): Promise<void> {
-    return this.run(this.effect.setJson(key, value, ttlSeconds, codec));
-  }
-
-  async getOrSetJson<T>({
-    key,
-    scopes = [],
-    ttlSeconds,
-    factory,
-    ...options
-  }: RedisGetOrSetJsonOptions<T>): Promise<T> {
-    if (scopes.length > 0) {
-      const generations = await this.eval<string[]>(
-        READ_CACHE_GENERATIONS_SCRIPT,
-        scopes.map((scope) => `cache-generation:v1:${scope}`),
-        [...scopes.map(() => randomUUID()), READ_CACHE_GENERATION_TTL_SECONDS],
-      );
-
-      // Capture before loading: an invalidated in-flight fill stays unreachable.
-      key = `read-cache:v1:${generations.join(":")}:${key}`;
-    }
-
-    return fillJsonCache<T>(this, { key, ttlSeconds, factory, ...options });
-  }
-
-  async getOrSetJsonBestEffort<T>({
-    onError,
-    ...options
-  }: RedisGetOrSetJsonBestEffortOptions<T>): Promise<T> {
-    let factoryResult: { value: T } | null = null;
-    let factoryRejected = false;
-    let factoryError: unknown;
-
-    const guardedFactory = async () => {
-      try {
-        const value = await options.factory();
-        factoryResult = { value };
-
-        return value;
-      } catch (error) {
-        factoryRejected = true;
-        factoryError = error;
-        throw error;
-      }
-    };
-
-    try {
-      return await this.getOrSetJson({
-        ...options,
-        factory: guardedFactory,
-      });
-    } catch (error) {
-      options.signal?.throwIfAborted();
-
-      if (error instanceof CacheFillTimeoutError) throw error;
-
-      if (factoryRejected) {
-        return Promise.reject(factoryError);
-      }
-
-      onError?.(error);
-
-      if (factoryResult) {
-        return factoryResult.value;
-      }
-
-      return options.factory();
-    }
-  }
-
-  getOrSetJsonEffect<T, E>(
-    options: RedisGetOrSetJsonEffectOptions<T, E>,
-  ): Effect.Effect<T, E> {
-    return Effect.gen(
-      function* (this: RedisService) {
-        const context = yield* Effect.context();
-        let failure: Cause.Cause<E> | undefined;
-
-        return yield* Effect.tryPromise({
-          try: (signal) =>
-            this.getOrSetJsonBestEffort({
-              ...options,
-              signal,
-              factory: async () => {
-                const exit = await Effect.runPromiseExitWith(context)(
-                  options.factory,
-                  { signal },
-                );
-
-                if (Exit.isFailure(exit)) {
-                  failure = exit.cause;
-                  throw exit.cause;
-                }
-
-                return exit.value;
-              },
-            }),
-          catch: (error) => error,
-        }).pipe(
-          Effect.catch((error) =>
-            failure === undefined
-              ? Effect.die(error)
-              : Effect.failCause(failure),
-          ),
-        );
-      }.bind(this),
-    );
-  }
-
-  deleteIfValue(key: string, value: string): Promise<number> {
-    return this.run(this.effect.deleteIfValue(key, value));
-  }
-
-  del(key: string): Promise<number> {
-    return this.run(this.effect.del(key));
-  }
-
-  invalidateScopes(...scopes: string[]): Promise<void> {
-    return this.run(this.effect.invalidateScopes(...scopes));
-  }
-
-  deleteByPattern(pattern: string, batchSize?: number): Promise<number> {
-    return this.run(this.effect.deleteByPattern(pattern, batchSize));
-  }
-
-  setNX(key: string, value: string, ttlSeconds?: number): Promise<boolean> {
-    return this.run(this.effect.setNX(key, value, ttlSeconds));
-  }
-
-  setNxGet(
-    key: string,
-    value: string,
-    ttlSeconds: number,
-  ): Promise<string | null> {
-    return this.run(this.effect.setNxGet(key, value, ttlSeconds));
-  }
-
-  incr(key: string): Promise<number> {
-    return this.run(this.redis.send("INCR", this.prefixKey(key)));
-  }
-
-  expire(key: string, ttlSeconds: number): Promise<number> {
-    return this.run(
-      this.redis.send("EXPIRE", this.prefixKey(key), String(ttlSeconds)),
-    );
-  }
-
-  flushall(): Promise<"OK"> {
-    return this.run(this.redis.send("FLUSHALL"));
-  }
-
-  pttl(key: string): Promise<number> {
-    return this.run(this.redis.send("PTTL", this.prefixKey(key)));
-  }
-
-  pexpire(key: string, ttlMilliseconds: number): Promise<number> {
-    return this.run(
-      this.redis.send("PEXPIRE", this.prefixKey(key), String(ttlMilliseconds)),
-    );
-  }
-
-  eval<TResult = unknown>(
-    script: string,
-    keys: string[],
-    args: Array<string | number> = [],
-  ): Promise<TResult> {
-    return this.run(this.effect.eval<TResult>(script, keys, args));
-  }
-
-  rpush(key: string, ...values: string[]): Promise<number> {
-    return this.run(this.effect.rpush(key, ...values));
-  }
-
-  ltrim(key: string, start: number, stop: number): Promise<"OK"> {
-    return this.run(this.effect.ltrim(key, start, stop));
-  }
-
-  lrange(key: string, start: number, stop: number): Promise<string[]> {
-    return this.run(this.effect.lrange(key, start, stop));
-  }
-
-  lrem(key: string, count: number, value: string): Promise<number> {
-    return this.run(this.effect.lrem(key, count, value));
-  }
-
-  async scan(pattern: string): Promise<string[]> {
-    const keys: string[] = [];
-
-    await this.run(
-      this.forEachScanBatch(pattern, (matchedKeys) =>
-        Effect.sync(() => {
-          keys.push(...matchedKeys);
-        }),
-      ),
-    );
-
-    return keys.map((key) => this.unprefixKey(key));
-  }
-}
+      }),
+    rpush: (key, ...values) => send("RPUSH", prefixKey(key), ...values),
+    ltrim: (key, start, stop) =>
+      send("LTRIM", prefixKey(key), String(start), String(stop)),
+    lrange: (key, start, stop) =>
+      send("LRANGE", prefixKey(key), String(start), String(stop)),
+    lrem: (key, count, value) =>
+      send("LREM", prefixKey(key), String(count), value),
+    getOrSetJson,
+  };
+};

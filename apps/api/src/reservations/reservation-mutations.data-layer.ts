@@ -5,7 +5,18 @@ import { visibleReservationGuildIds } from "./reservation-visibility-query.js";
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { Permission } from "@lootlog/schema/permissions";
-import { and, count, desc, eq, gt, inArray, lt, ne, or } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gt,
+  inArray,
+  lt,
+  ne,
+  or,
+  type SQL,
+} from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 
@@ -21,7 +32,7 @@ import {
   PermissionDeniedError,
   ResourceNotFoundError,
   InvalidEntityError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type {
   CreateReservationRequest,
   UpdateReservationRequest,
@@ -99,13 +110,14 @@ const writableReservationGuildIds = (
 
 const findReservationWithGuild = (
   database: typeof ApiDatabase.Service,
-  where: Exclude<ReturnType<typeof and>, undefined>,
+  // At least one condition, so the lookup can never match every reservation.
+  conditions: readonly [SQL, ...ReadonlyArray<SQL | undefined>],
 ) =>
   database
     .select({ reservation: reservationTable, guild: guildTable })
     .from(reservationTable)
     .innerJoin(guildTable, eq(guildTable.id, reservationTable.guildId))
-    .where(where)
+    .where(and(...conditions))
     .limit(1)
     .pipe(
       Effect.map((rows) => {
@@ -225,20 +237,17 @@ export const makeReservationMutationsDataLayer = (
       }) =>
         options.guildIds.length === 0
           ? Effect.succeed(null)
-          : findReservationWithGuild(
-              database,
-              and(
-                eq(reservationTable.id, options.reservationId),
-                inArray(reservationTable.guildId, options.guildIds),
-                or(
-                  eq(reservationTable.createdByUserId, options.userId),
-                  eq(
-                    reservationTable.legacyCreatedByDiscordId,
-                    options.discordId,
-                  ),
+          : findReservationWithGuild(database, [
+              eq(reservationTable.id, options.reservationId),
+              inArray(reservationTable.guildId, options.guildIds),
+              or(
+                eq(reservationTable.createdByUserId, options.userId),
+                eq(
+                  reservationTable.legacyCreatedByDiscordId,
+                  options.discordId,
                 ),
               ),
-            );
+            ]);
 
       const restoreReservation = (reservation: Reservation) =>
         database

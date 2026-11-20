@@ -117,7 +117,7 @@ export const getNextSelectedGuildId = (
     return undefined;
   }
 
-  return guilds[0].id;
+  return guilds[0]?.id;
 };
 
 export const getMessagesForSelectedGuild = (

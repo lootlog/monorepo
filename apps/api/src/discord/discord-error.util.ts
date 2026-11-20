@@ -7,9 +7,10 @@ import {
   ResourceNotFoundError,
   DependencyUnavailableError,
   AuthenticationRequiredError,
-} from "#src/shared/http/http-errors";
-import type { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
-import type { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
+} from "@lootlog/protocol/http/errors";
+import { Clock, Effect } from "effect";
+import type { DiscordRateLimiter } from "./discord-rate-limiter.service.js";
+import type { DiscordSyncDiagnostics } from "./discord-sync-diagnostics.service.js";
 import type {
   DiscordEndpoint,
   DiscordInvalidRequestStatus,
@@ -54,51 +55,56 @@ function createDiscordRateLimitError(retryAfterMs?: number): ApplicationError {
   });
 }
 
-export async function throwIfDiscordRateLimited(
-  rateLimiter: DiscordRateLimiterService,
+export const failIfDiscordRateLimited = (
+  rateLimiter: Pick<
+    DiscordRateLimiter,
+    "checkRateLimitForUser" | "getNextAvailableAtForUser"
+  >,
   userId: string,
   endpoint: DiscordEndpoint,
-): Promise<void> {
-  const isRateLimited = await rateLimiter.checkRateLimitForUser(
-    userId,
-    endpoint,
-  );
+) =>
+  Effect.gen(function* () {
+    const isRateLimited = yield* rateLimiter.checkRateLimitForUser(
+      userId,
+      endpoint,
+    );
 
-  if (!isRateLimited) {
-    return;
-  }
+    if (!isRateLimited) {
+      return;
+    }
 
-  const nextAvailableAt = await rateLimiter.getNextAvailableAtForUser(
-    userId,
-    endpoint,
-  );
+    const nextAvailableAt = yield* rateLimiter.getNextAvailableAtForUser(
+      userId,
+      endpoint,
+    );
 
-  const retryAfterMs = nextAvailableAt
-    ? Math.max(nextAvailableAt.getTime() - Date.now(), 0)
-    : undefined;
+    const retryAfterMs = nextAvailableAt
+      ? Math.max(
+          nextAvailableAt.getTime() - (yield* Clock.currentTimeMillis),
+          0,
+        )
+      : undefined;
 
-  throw createDiscordRateLimitError(retryAfterMs);
-}
+    return yield* Effect.fail(createDiscordRateLimitError(retryAfterMs));
+  });
 
-export async function recordInvalidDiscordRequest(
-  diagnostics: DiscordSyncDiagnosticsService,
+export const recordInvalidDiscordRequest = (
+  diagnostics: Pick<DiscordSyncDiagnostics, "recordInvalidDiscordRequest">,
   endpoint: DiscordEndpoint,
   error: unknown,
-): Promise<void> {
+): Effect.Effect<void> => {
   const status = getInvalidDiscordRequestStatus(error);
 
-  if (status === null) {
-    return;
-  }
+  return status === null
+    ? Effect.void
+    : diagnostics.recordInvalidDiscordRequest({
+        endpoint,
+        status,
+        source: "discord-service",
+      });
+};
 
-  await diagnostics.recordInvalidDiscordRequest({
-    endpoint,
-    status,
-    source: "discord-service",
-  });
-}
-
-export function toDiscordRequestError(error: unknown): Error {
+export function toDiscordRequestError(error: unknown): ApplicationError {
   if (error instanceof RateLimitError) {
     return createDiscordRateLimitError(error.retryAfter);
   }

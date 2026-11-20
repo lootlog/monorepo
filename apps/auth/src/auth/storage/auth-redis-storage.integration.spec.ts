@@ -82,10 +82,14 @@ describe("auth Redis storage", () => {
         ),
       );
 
-      expect(decisions.filter(Boolean)).toHaveLength(120);
+      expect(decisions.filter(({ allowed }) => allowed)).toHaveLength(120);
       const otherKeyId = crypto.randomUUID();
       expect(
-        await first.runPromise(firstStorage.consumeApiKeyRateLimit(otherKeyId)),
+        (
+          await first.runPromise(
+            firstStorage.consumeApiKeyRateLimit(otherKeyId),
+          )
+        ).allowed,
       ).toBe(true);
 
       const otherRedisKey = `auth:api-key-rate-limit:${otherKeyId}`;
@@ -93,9 +97,11 @@ describe("auth Redis storage", () => {
         connection.send("PEXPIRE", otherRedisKey, "10000"),
       );
       expect(
-        await second.runPromise(
-          secondStorage.consumeApiKeyRateLimit(otherKeyId),
-        ),
+        (
+          await second.runPromise(
+            secondStorage.consumeApiKeyRateLimit(otherKeyId),
+          )
+        ).allowed,
       ).toBe(true);
       expect(
         await first.runPromise(connection.send<number>("PTTL", otherRedisKey)),
@@ -108,9 +114,15 @@ describe("auth Redis storage", () => {
       expect(initialTtl).toBeGreaterThan(0);
       expect(initialTtl).toBeLessThanOrEqual(60_000);
       await first.runPromise(connection.send("PEXPIRE", redisKey, "10000"));
-      expect(
-        await second.runPromise(secondStorage.consumeApiKeyRateLimit(keyId)),
-      ).toBe(false);
+
+      const rejected = await second.runPromise(
+        secondStorage.consumeApiKeyRateLimit(keyId),
+      );
+
+      // The rejection reports the window's remaining time for Retry-After.
+      expect(rejected.allowed).toBe(false);
+      expect(rejected.retryAfterMs).toBeGreaterThan(0);
+      expect(rejected.retryAfterMs).toBeLessThanOrEqual(10_000);
 
       const shortenedTtl = await first.runPromise(
         connection.send<number>("PTTL", redisKey),
@@ -121,7 +133,8 @@ describe("auth Redis storage", () => {
       await first.runPromise(connection.send("PEXPIRE", redisKey, "1"));
       await Bun.sleep(10);
       expect(
-        await second.runPromise(secondStorage.consumeApiKeyRateLimit(keyId)),
+        (await second.runPromise(secondStorage.consumeApiKeyRateLimit(keyId)))
+          .allowed,
       ).toBe(true);
       expect(
         await first.runPromise(connection.send<string>("GET", redisKey)),

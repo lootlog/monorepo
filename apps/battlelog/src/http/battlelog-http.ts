@@ -1,4 +1,4 @@
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { BearerSecurityPassthrough } from "@lootlog/protocol/http/bearer-security";
 import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
@@ -14,7 +14,7 @@ import {
   HttpMiddleware,
   HttpServerRequest,
   HttpServerError,
-  HttpServerResponse,
+  type HttpServerResponse,
 } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
 import { BattlelogApplication } from "#src/battlelog-application";
@@ -52,8 +52,12 @@ import type {
 import {
   ApplicationError,
   AuthenticationRequiredError,
-  applicationErrorStatus,
-} from "#src/infrastructure/http-error";
+  applicationErrorHttpResponse,
+} from "@lootlog/protocol/http/errors";
+import {
+  SchemaErrorResponseLive,
+  requestValidationErrorResponse,
+} from "@lootlog/protocol/http/schema-error-response";
 
 export type { BattlelogOperations };
 
@@ -75,63 +79,50 @@ const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
   return identity.userId;
 });
 
-const errorResponse = (cause: unknown) => {
-  if (
-    HttpServerError.isHttpServerError(cause) &&
-    cause.reason instanceof HttpServerError.RequestParseError
-  ) {
-    return HttpServerResponse.jsonUnsafe(
-      { error: "Bad Request", message: "Invalid JSON body", statusCode: 400 },
-      { status: 400 },
-    );
-  }
+/**
+ * Answers an application failure with its declared status and the shared error
+ * body. Any other failure is a defect: the middleware logs it and the server
+ * answers 500.
+ */
+const answerFailure = (failure: OperationError) =>
+  Schema.is(ApplicationError)(failure.cause)
+    ? applicationErrorHttpResponse(failure.cause)
+    : Effect.die(failure);
 
-  if (Schema.isSchemaError(cause)) {
-    return HttpServerResponse.jsonUnsafe(
-      {
-        error: "Bad Request",
-        message: SchemaIssue.makeFormatterStandardSchemaV1()(cause.issue)
-          .issues,
-        statusCode: 400,
-      },
-      { status: 400 },
-    );
-  }
+const respond = <A, R>(effect: Effect.Effect<A, OperationError, R>) =>
+  Effect.catchTag(effect, "OperationError", answerFailure);
 
-  if (cause instanceof ApplicationError) {
-    const status = applicationErrorStatus(cause);
+const invalidJsonBody = new Schema.SchemaError(
+  new SchemaIssue.InvalidValue({ message: "Expected a valid JSON body" }),
+);
 
-    return HttpServerResponse.jsonUnsafe(
-      {
-        error: cause.name.replace(/Exception$/, ""),
-        message: cause.message,
-        statusCode: status,
-      },
-      { status },
-    );
-  }
-
-  logger.error("Unhandled request failure", cause);
-
-  return HttpServerResponse.jsonUnsafe(
-    {
-      error: "Internal Server Error",
-      message: "Internal server error",
-      statusCode: 500,
-    },
-    { status: 500 },
-  );
-};
-
-const toResponse = <A, R>(
-  effect: Effect.Effect<A, OperationError, R>,
-  status = 200,
+/**
+ * Decodes the JSON body with the domain schema after the caller is
+ * authenticated, and answers a body that does not match with the same 400
+ * `VALIDATION_ERROR` as a request the contract rejects.
+ */
+const withJsonBody = <I, A, R>(
+  schema: Schema.Codec<I, unknown>,
+  onExcessProperty: "error" | "ignore",
+  run: (body: I) => Effect.Effect<A, OperationError, R>,
 ) =>
-  effect.pipe(
-    Effect.map((value) => HttpServerResponse.jsonUnsafe(value, { status })),
-    Effect.catchTag("OperationError", (failure) =>
-      Effect.succeed(errorResponse(failure.cause)),
-    ),
+  HttpServerRequest.schemaBodyJson(schema, { onExcessProperty }).pipe(
+    Effect.matchEffect({
+      onFailure: (error) => {
+        if (Schema.isSchemaError(error)) {
+          return Effect.succeed(
+            requestValidationErrorResponse("Payload", error),
+          );
+        }
+
+        return error.reason instanceof HttpServerError.RequestParseError
+          ? Effect.succeed(
+              requestValidationErrorResponse("Payload", invalidJsonBody),
+            )
+          : Effect.die(error);
+      },
+      onSuccess: run,
+    }),
   );
 
 const operations = Effect.map(
@@ -139,27 +130,24 @@ const operations = Effect.map(
   (application) => application.operations,
 );
 
-const secured = <A>(
+const secured = <A, R>(
   run: (
     operations: BattlelogOperations,
     userId: string,
-  ) => Effect.Effect<A, OperationError>,
-  status = 200,
+  ) => Effect.Effect<A, OperationError, R>,
 ) =>
-  toResponse(
+  respond(
     Effect.gen(function* () {
       const userId = yield* currentUserId();
       const services = yield* operations;
 
       return yield* run(services, userId);
     }),
-    status,
   );
 
 const publicOperation = <A>(
   run: (operations: BattlelogOperations) => Effect.Effect<A, OperationError>,
-  status = 200,
-) => toResponse(Effect.flatMap(operations, run), status);
+) => respond(Effect.flatMap(operations, run));
 
 const dashboardQuery = (
   query: BattlesControllerGetDashboardBattlesQuery,
@@ -201,45 +189,29 @@ const BattlelogHandlers = Layer.mergeAll(
   ),
   HttpApiBuilder.group(BattlelogApi, "battles", (handlers) =>
     handlers
+      // Raw: the domain schema normalizes incomplete warrior snapshots that the
+      // published DTO cannot describe, and authentication precedes the body.
       .handleRaw("BattlesControllerCreateBattle", () =>
-        toResponse(
-          Effect.gen(function* () {
-            const userId = yield* currentUserId();
-
-            const data: CreateBattleInput =
-              yield* HttpServerRequest.schemaBodyJson(CreateBattleSchema, {
-                onExcessProperty: "error",
-              }).pipe(
-                Effect.mapError(
-                  (cause) =>
-                    new OperationError({
-                      operation: "BattlesController_createBattle",
-                      cause,
-                    }),
-                ),
-              );
-
-            const services = yield* operations;
-
-            return yield* services.battles.createBattle(data, userId);
-          }),
-          201,
+        secured(({ battles }, userId) =>
+          withJsonBody(CreateBattleSchema, "error", (data: CreateBattleInput) =>
+            battles.createBattle(data, userId),
+          ),
         ),
       )
-      .handleRaw("BattlesControllerGetDashboardBattles", ({ query }) =>
+      .handle("BattlesControllerGetDashboardBattles", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getDashboardBattles(dashboardQuery(query), userId),
         ),
       )
-      .handleRaw("BattlesControllerGetUserCharacters", () =>
+      .handle("BattlesControllerGetUserCharacters", () =>
         secured(({ battles }, userId) => battles.getUserCharacters(userId)),
       )
-      .handleRaw("BattlesControllerGetBattleAnalytics", ({ query }) =>
+      .handle("BattlesControllerGetBattleAnalytics", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getBattleAnalytics(analyticsQuery(query), userId),
         ),
       )
-      .handleRaw("BattlesControllerGetAbyssSeasons", ({ query }) =>
+      .handle("BattlesControllerGetAbyssSeasons", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getAbyssSeasons(
             {
@@ -250,102 +222,80 @@ const BattlelogHandlers = Layer.mergeAll(
           ),
         ),
       )
-      .handleRaw("BattlesControllerGetCombatProfile", ({ query }) =>
+      .handle("BattlesControllerGetCombatProfile", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getCombatProfile(statisticsQuery(query), userId),
         ),
       )
-      .handleRaw("BattlesControllerGetProfessionWinRate", ({ query }) =>
+      .handle("BattlesControllerGetProfessionWinRate", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getProfessionWinRate(statisticsQuery(query), userId),
         ),
       )
-      .handleRaw("BattlesControllerGetHeadToHead", ({ query }) =>
+      .handle("BattlesControllerGetHeadToHead", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getHeadToHead(statisticsQuery(query), userId),
         ),
       )
-      .handleRaw("BattlesControllerGetCurrentStreak", ({ query }) =>
+      .handle("BattlesControllerGetCurrentStreak", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getCurrentStreak(statisticsQuery(query), userId),
         ),
       )
-      .handleRaw("BattlesControllerGetBattleDuration", ({ query }) =>
+      .handle("BattlesControllerGetBattleDuration", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getBattleDuration(statisticsQuery(query), userId),
         ),
       )
-      .handleRaw("BattlesControllerGetPhGrowth", ({ query }) =>
+      .handle("BattlesControllerGetPhGrowth", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getPhGrowth(statisticsQuery(query), userId),
         ),
       )
-      .handleRaw("BattlesControllerGetRatingGrowth", ({ query }) =>
+      .handle("BattlesControllerGetRatingGrowth", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getRatingGrowth(statisticsQuery(query), userId),
         ),
       )
-      .handleRaw("BattlesControllerGetRatingDeltaByOpponent", ({ query }) =>
+      .handle("BattlesControllerGetRatingDeltaByOpponent", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getRatingDeltaByOpponent(statisticsQuery(query), userId),
         ),
       )
-      .handleRaw("BattlesControllerGetPlayerVsPlayerBattles", ({ query }) =>
+      .handle("BattlesControllerGetPlayerVsPlayerBattles", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.getPlayerVsPlayerBattles(playerVsPlayerQuery(query), userId),
         ),
       )
-      .handleRaw("BattlesControllerSearchWarriors", ({ query }) =>
+      .handle("BattlesControllerSearchWarriors", ({ query }) =>
         secured(({ battles }, userId) =>
           battles.searchWarriors(query.q ?? "", userId),
         ),
       )
-      .handleRaw("BattlesControllerGetBattleTimeline", ({ params }) =>
+      .handle("BattlesControllerGetBattleTimeline", ({ params }) =>
         secured(({ battles }, userId) =>
           battles.getBattleTimeline(params.battleId, userId),
         ),
       )
-      .handleRaw("BattlesControllerGetBattle", ({ params }) =>
+      .handle("BattlesControllerGetBattle", ({ params }) =>
         secured(({ battles }, userId) =>
           battles.getBattle(params.battleId, userId),
         ),
       )
-      .handleRaw("BattlesControllerDeleteBattle", ({ params }) =>
+      .handle("BattlesControllerDeleteBattle", ({ params }) =>
         secured(({ battles }, userId) =>
           battles.deleteBattle(params.battleId, userId),
         ),
       )
+      // Raw: authentication precedes decoding the body.
       .handleRaw("BattlesControllerUpdateBattle", ({ params }) =>
-        toResponse(
-          Effect.gen(function* () {
-            const userId = yield* currentUserId();
-
-            const data: BattleUpdate = yield* HttpServerRequest.schemaBodyJson(
-              UpdateBattleSchema,
-              {
-                onExcessProperty: "error",
-              },
-            ).pipe(
-              Effect.mapError(
-                (cause) =>
-                  new OperationError({
-                    operation: "BattlesController_updateBattle",
-                    cause,
-                  }),
-              ),
-            );
-
-            const services = yield* operations;
-
-            return yield* services.battles.updateBattle(
-              params.battleId,
-              data,
-              userId,
-            );
-          }),
+        secured(({ battles }, userId) =>
+          withJsonBody(UpdateBattleSchema, "error", (data: BattleUpdate) =>
+            battles.updateBattle(params.battleId, data, userId),
+          ),
         ),
       )
-      .handleRaw("BattlesControllerGetBattleRawData", ({ params }) =>
+      .handle("BattlesControllerGetBattleRawData", ({ params }) =>
         secured(({ battles }, userId) =>
           battles.getBattleRawData(params.battleId, userId),
         ),
@@ -353,33 +303,21 @@ const BattlelogHandlers = Layer.mergeAll(
   ),
   HttpApiBuilder.group(BattlelogApi, "weapon-kills", (handlers) =>
     handlers
+      // Raw: the domain schema decodes the battle events like battle creation,
+      // and authentication precedes the body.
       .handleRaw("WeaponKillsControllerRecordWeaponKills", () =>
-        toResponse(
-          Effect.gen(function* () {
-            const userId = yield* currentUserId();
-
-            // Game clients loaded before the proof was dropped still send
-            // `battleKey` and `margonemAccountProof`; their kills still count.
-            const data: RecordWeaponKillsInput =
-              yield* HttpServerRequest.schemaBodyJson(RecordWeaponKillsSchema, {
-                onExcessProperty: "ignore",
-              }).pipe(
-                Effect.mapError(
-                  (cause) =>
-                    new OperationError({
-                      operation: "WeaponKillsController_recordWeaponKills",
-                      cause,
-                    }),
-                ),
-              );
-
-            const services = yield* operations;
-
-            return yield* services.weaponKills.recordWeaponKills(data, userId);
-          }),
+        secured(({ weaponKills }, userId) =>
+          // Game clients loaded before the proof was dropped still send
+          // `battleKey` and `margonemAccountProof`; their kills still count.
+          withJsonBody(
+            RecordWeaponKillsSchema,
+            "ignore",
+            (data: RecordWeaponKillsInput) =>
+              weaponKills.recordWeaponKills(data, userId),
+          ),
         ),
       )
-      .handleRaw("WeaponKillsControllerGetCharacterWeaponKills", ({ params }) =>
+      .handle("WeaponKillsControllerGetCharacterWeaponKills", ({ params }) =>
         secured(({ weaponKills }) =>
           weaponKills.getCharacterWeaponKills(params),
         ),
@@ -387,27 +325,26 @@ const BattlelogHandlers = Layer.mergeAll(
   ),
   HttpApiBuilder.group(BattlelogApi, "public-battles", (handlers) =>
     handlers
-      .handleRaw("PublicBattlesControllerGetPublicBattle", ({ params }) =>
+      .handle("PublicBattlesControllerGetPublicBattle", ({ params }) =>
         publicOperation(({ publicBattles }) =>
           publicBattles.getPublicBattle(params.battleId),
         ),
       )
-      .handleRaw("PublicBattlesControllerGetPublicBattleRaw", ({ params }) =>
+      .handle("PublicBattlesControllerGetPublicBattleRaw", ({ params }) =>
         publicOperation(({ publicBattles }) =>
           publicBattles.getPublicBattleRaw(params.battleId),
         ),
       )
-      .handleRaw(
-        "PublicBattlesControllerGetPublicBattleTimeline",
-        ({ params }) =>
-          publicOperation(({ publicBattles }) =>
-            publicBattles.getPublicBattleTimeline(params.battleId),
-          ),
+      .handle("PublicBattlesControllerGetPublicBattleTimeline", ({ params }) =>
+        publicOperation(({ publicBattles }) =>
+          publicBattles.getPublicBattleTimeline(params.battleId),
+        ),
       ),
   ),
   HttpApiBuilder.group(BattlelogApi, "internal", (handlers) =>
+    // Raw: the cleanup credential is checked before the body is read.
     handlers.handleRaw("InternalControllerDeleteUserData", () =>
-      toResponse(
+      respond(
         Effect.gen(function* () {
           const request = yield* HttpServerRequest.HttpServerRequest;
           const application = yield* BattlelogApplication;
@@ -424,26 +361,13 @@ const BattlelogHandlers = Layer.mergeAll(
             });
           }
 
-          const body: DeleteUserData = yield* HttpServerRequest.schemaBodyJson(
+          return yield* withJsonBody(
             DeleteUserDataSchema,
-            {
-              onExcessProperty: "error",
-            },
-          ).pipe(
-            Effect.mapError(
-              (cause) =>
-                new OperationError({
-                  operation: "InternalController_deleteUserData",
-                  cause,
-                }),
-            ),
+            "error",
+            (body: DeleteUserData) =>
+              application.operations.internal.deleteUserData(body),
           );
-
-          const services = yield* operations;
-
-          return yield* services.internal.deleteUserData(body);
         }),
-        201,
       ),
     ),
   ),
@@ -458,7 +382,10 @@ const BattlelogHandlers = Layer.mergeAll(
 
 export const BattlelogRoutes = serviceApiRoutes(BattlelogApi, {
   documentation: new URL("../../openapi.yaml", import.meta.url),
-}).pipe(Layer.provide(BattlelogHandlers));
+}).pipe(
+  Layer.provide(BattlelogHandlers),
+  Layer.provide(SchemaErrorResponseLive),
+);
 
 export const battlelogHttpMiddleware = HttpMiddleware.make(
   <E, R>(

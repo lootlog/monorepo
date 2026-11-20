@@ -16,6 +16,7 @@ import { AppConfig } from "#src/config/env";
 import { AuthApi } from "#src/http-api/auth-api";
 import { normalizeBetterAuthRequest } from "./application.js";
 import { AuthHandlers } from "./auth-handlers.js";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
 
 const makeBetterAuthHandler = (auth: typeof BetterAuthRuntime.Service) =>
   Effect.fn("BetterAuth.rawHandler")(
@@ -71,6 +72,7 @@ const BetterAuthRawRoutes = HttpRouter.use((router) =>
 export const AuthRoutes = Layer.merge(
   serviceApiRoutes(AuthApi).pipe(
     Layer.provide(Layer.merge(AuthHandlers, ApiKeyHandlers)),
+    Layer.provide(SchemaErrorResponseLive),
   ),
   BetterAuthRawRoutes,
 );

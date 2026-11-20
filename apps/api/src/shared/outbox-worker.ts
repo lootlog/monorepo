@@ -47,14 +47,14 @@ type OutboxTable = PgTable & {
  * deleted only after `deliver` succeeds; a failure stamps `lastAttemptAt` so
  * the next dispatch tries older work first. Delivery is at least once.
  */
-export const makeOutboxDispatcher = <Table extends OutboxTable>(
+export const makeOutboxDispatcher = <Table extends OutboxTable, E>(
   name: string,
   database: typeof ApiDatabase.Service,
   table: Table,
   deliver: (
     row: InferSelectModel<Table>,
     transaction: OutboxTransaction,
-  ) => Effect.Effect<unknown, unknown>,
+  ) => Effect.Effect<void, E>,
 ) => {
   const dispatchOne = (attempted: number[]) => {
     let selectedId: number | undefined;

@@ -114,16 +114,39 @@ export interface CatalogItemsResponseDtoOutput {
   estimatedTotalHits: number;
 }
 
-export type _SearchUnavailableEncodedTag = typeof _SearchUnavailableEncodedTag[keyof typeof _SearchUnavailableEncodedTag];
+export type RequestValidationErrorCode = typeof RequestValidationErrorCode[keyof typeof RequestValidationErrorCode];
 
 
-export const _SearchUnavailableEncodedTag = {
-  SearchUnavailable: 'SearchUnavailable',
+export const RequestValidationErrorCode = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
 } as const;
 
-export interface SearchUnavailableEncoded {
-  _tag: _SearchUnavailableEncodedTag;
+export type RequestValidationErrorDetailsIssuesItem = {
+  path: (string | number)[];
   message: string;
+};
+
+export type RequestValidationErrorDetails = {
+  issues: RequestValidationErrorDetailsIssuesItem[];
+};
+
+export interface RequestValidationError {
+  code: RequestValidationErrorCode;
+  message: string;
+  details: RequestValidationErrorDetails;
+}
+
+/**
+ * @nullable
+ */
+export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
+
+export interface HttpErrorResponse {
+  code: string;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  details?: HttpErrorResponseDetails;
 }
 
 export type CatalogNpcDtoOutputType = typeof CatalogNpcDtoOutputType[keyof typeof CatalogNpcDtoOutputType];
@@ -323,18 +346,6 @@ export const CatalogControllerGetItemsSort = {
   'upgradedAttackSpeed:desc': 'upgradedAttackSpeed:desc',
 } as const;
 
-export type CatalogControllerGetItems401 = {
-  message: string;
-};
-
-export type CatalogControllerGetItems403 = {
-  message: string;
-};
-
-export type CatalogControllerGetItems429 = {
-  message: string;
-};
-
 export type CatalogControllerGetNpcsParams = {
 search?: string;
 /**
@@ -383,18 +394,6 @@ export const CatalogControllerGetNpcsSort = {
   'firstSeenOn:desc': 'firstSeenOn:desc',
 } as const;
 
-export type CatalogControllerGetNpcs401 = {
-  message: string;
-};
-
-export type CatalogControllerGetNpcs403 = {
-  message: string;
-};
-
-export type CatalogControllerGetNpcs429 = {
-  message: string;
-};
-
 export type CatalogControllerGetEventsParams = {
 /**
  * Only entries of this game edition.
@@ -410,18 +409,6 @@ export const CatalogControllerGetEventsGameVersion = {
   pl: 'pl',
 } as const;
 
-export type CatalogControllerGetEvents401 = {
-  message: string;
-};
-
-export type CatalogControllerGetEvents403 = {
-  message: string;
-};
-
-export type CatalogControllerGetEvents429 = {
-  message: string;
-};
-
 export type CatalogControllerGetIndexParams = {
 /**
  * Only entries of this game edition.
@@ -436,18 +423,6 @@ export const CatalogControllerGetIndexGameVersion = {
   en: 'en',
   pl: 'pl',
 } as const;
-
-export type CatalogControllerGetIndex401 = {
-  message: string;
-};
-
-export type CatalogControllerGetIndex403 = {
-  message: string;
-};
-
-export type CatalogControllerGetIndex429 = {
-  message: string;
-};
 
 export const getCatalogControllerGetItemsUrl = (params?: CatalogControllerGetItemsParams,) => {
   const normalizedParams = new URLSearchParams();

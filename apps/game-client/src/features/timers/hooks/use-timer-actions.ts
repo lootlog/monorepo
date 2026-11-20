@@ -16,7 +16,7 @@ import { invalidateTimerHistory } from "../utils/invalidate-timer-history";
 
 export const useTimerActions = (
   timer: TimerWithTimeLeft,
-  settingsKey: string,
+  settingsKey: string | undefined,
   guildIds: string[],
   timersGrouping = false,
 ) => {
@@ -48,7 +48,9 @@ export const useTimerActions = (
       setTimerColor: state.setTimerColor,
       setExpiredTimerAlwaysVisible: state.setExpiredTimerAlwaysVisible,
       isPinned:
-        state.pinnedTimers[settingsKey]?.includes(timer.npc.name) ?? false,
+        (settingsKey !== undefined &&
+          state.pinnedTimers[settingsKey]?.includes(timer.npc.name)) ??
+        false,
       isAlwaysVisibleExpiredTimer:
         state.alwaysVisibleExpiredTimers[timer.world]?.includes(
           timer.timerKey,

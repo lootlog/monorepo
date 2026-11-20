@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
+import { RedisError } from "effect/persistence/Redis";
+import { MessagingError } from "@lootlog/messaging";
 import { GuildMemberFlags, type APIGuildMember } from "discord-api-types/v10";
-import { Effect } from "effect";
+import { Effect, Logger, References } from "effect";
 import { sql } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
@@ -11,11 +13,10 @@ import {
   memberSyncDeliveryTable,
   memberToRoleTable,
 } from "#src/database/drizzle/organization.schema";
-import { applicationLogger } from "#src/shared/application-logger";
 import {
   AuthenticationRequiredError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { MEMBER_LAST_DISCORD_STATUS } from "./member-discord-status.js";
 import { makeMemberDelivery } from "./member-delivery.operations.js";
 import { makeMemberRemoval } from "./member-removal.operations.js";
@@ -72,13 +73,13 @@ test("member sync retries invalidation after a committed role change and clears 
       publishMemberUpdated: () => Effect.void,
       invalidateMember: ({ guildId, discordId }) =>
         failInvalidation
-          ? Effect.fail(new Error("cache unavailable"))
+          ? Effect.fail(new RedisError({ cause: "cache unavailable" }))
           : Effect.sync(() => {
               invalidated.push(`${guildId}:${discordId}`);
             }),
     });
 
-    const sync = makeMemberSync(applicationLogger, store, delivery, {
+    const sync = makeMemberSync(store, delivery, {
       getGuildMember: () =>
         notFound
           ? Effect.fail(new ResourceNotFoundError("Member not found"))
@@ -147,7 +148,7 @@ type DiscordBoundaryState = {
   duringPublish: Effect.Effect<unknown, unknown> | undefined;
 };
 
-type LogEntry = { readonly level: string; readonly code?: string };
+type LogEntry = { readonly level: string; readonly message: unknown };
 
 const createSyncBoundary = async () => {
   const boundary = await createDatabaseBoundary();
@@ -208,23 +209,32 @@ const createSyncBoundary = async () => {
   const store = makeMemberStore(boundary.database);
 
   const clearCaches = () =>
-    Effect.try(() => {
-      if (state.failCache) throw new Error("cache unavailable");
-      events.push("cache");
-    });
+    state.failCache
+      ? Effect.fail(new RedisError({ cause: "cache unavailable" }))
+      : Effect.sync(() => {
+          events.push("cache");
+        });
 
   const publish = (event: string) =>
     Effect.suspend(() => {
       const concurrentWork = state.duringPublish ?? Effect.void;
       state.duringPublish = undefined;
 
-      return concurrentWork;
+      // Work from a concurrent writer is not a broker failure.
+      return Effect.orDie(concurrentWork);
     }).pipe(
       Effect.andThen(() =>
-        Effect.try(() => {
-          if (state.failDelivery) throw new Error("broker unavailable");
-          events.push(event);
-        }),
+        state.failDelivery
+          ? Effect.fail(
+              new MessagingError({
+                operation: "publish",
+                message: "broker unavailable",
+                cause: undefined,
+              }),
+            )
+          : Effect.sync(() => {
+              events.push(event);
+            }),
       ),
     );
 
@@ -240,14 +250,13 @@ const createSyncBoundary = async () => {
   const delivery = makeDelivery();
   const logged: LogEntry[] = [];
 
-  const logger = {
-    ...applicationLogger,
-    log: (entry: LogEntry) => {
-      logged.push(entry);
-    },
-  };
+  const captureLogs = Logger.layer([
+    Logger.make(({ logLevel, message }) => {
+      logged.push({ level: logLevel, message });
+    }),
+  ]);
 
-  const sync = makeMemberSync(logger, store, delivery, {
+  const sync = makeMemberSync(store, delivery, {
     getGuildMember: () =>
       state.error ? Effect.fail(state.error) : Effect.succeed(state.member),
     nextRefreshAt: () => Effect.succeed(null),
@@ -272,7 +281,13 @@ const createSyncBoundary = async () => {
     makeDelivery,
     removal: makeMemberRemoval(boundary.database, delivery),
     syncMember,
-    refresh: () => boundary.run(syncMember),
+    refresh: () =>
+      boundary.run(
+        syncMember.pipe(
+          Effect.provide(captureLogs),
+          Effect.provideService(References.MinimumLogLevel, "Debug"),
+        ),
+      ),
     roleRows: () =>
       boundary.run(
         boundary.database
@@ -503,9 +518,9 @@ test("a member who must sign in again is warned about once per loss of authoriza
     await boundary.refresh();
 
     expect(boundary.logged).toMatchObject([
-      { level: "warn", code: "ACCOUNT_NOT_FOUND" },
-      { level: "debug", code: "ACCOUNT_NOT_FOUND" },
-      { level: "warn", code: "ACCOUNT_NOT_FOUND" },
+      { level: "Warn", message: [{ code: "ACCOUNT_NOT_FOUND" }] },
+      { level: "Debug", message: [{ code: "ACCOUNT_NOT_FOUND" }] },
+      { level: "Warn", message: [{ code: "ACCOUNT_NOT_FOUND" }] },
     ]);
   } finally {
     await boundary.dispose();

@@ -16,22 +16,26 @@ import {
 import {
   PermissionDeniedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { getPermissionsCachePattern } from "#src/shared/cache";
 import type { UpdateRolePermissionsRequest } from "#src/contracts/roles/schemas";
 
-type DataEffect = Effect.Effect<unknown, OrganizationWorkspaceOperationError>;
+type DataEffect<A> = Effect.Effect<A, OrganizationWorkspaceOperationError>;
+
+type RoleRecord = typeof roleTable.$inferSelect;
 
 export class RolesData extends Context.Service<
   RolesData,
   {
-    readonly getRoles: (guildId: string) => DataEffect;
+    readonly getRoles: (
+      guildId: string,
+    ) => DataEffect<ReadonlyArray<RoleRecord>>;
     readonly updateRole: (
       discordId: string,
       guildId: string,
       roleId: string,
       payload: UpdateRolePermissionsRequest,
-    ) => DataEffect;
+    ) => DataEffect<RoleRecord | null>;
   }
 >()("@lootlog/api/http-api/roles/data") {
   static layerDatabase(cache: RolesCache, events: RolePolicyEvents) {

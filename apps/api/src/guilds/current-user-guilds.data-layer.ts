@@ -17,14 +17,23 @@ import {
 import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
+import type { makeMemberRemoval } from "#src/members/member-removal.operations";
 import {
   ApplicationError,
   ApplicationErrorKind,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   type AuthenticatedIdentity,
   AccountOrganizationOperationError,
 } from "./account-organization-data.js";
+
+type MemberRemovalError = Effect.Error<
+  ReturnType<
+    ReturnType<
+      typeof makeMemberRemoval
+    >["deactivateMembersMissingFromDiscordGuilds"]
+  >
+>;
 
 export interface CurrentUserGuildPorts {
   readonly accessibleFallback: (
@@ -34,7 +43,7 @@ export interface CurrentUserGuildPorts {
     readonly discordId: string;
     readonly userId: string;
     readonly activeDiscordGuildIds: ReadonlyArray<string>;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, MemberRemovalError>;
   /**
    * Serves the list from a cache unless `refresh` is set. `fresh` is false for
    * a cached list, which may miss a server the user has joined since. `stale`
@@ -57,14 +66,14 @@ export interface CurrentUserGuildPorts {
     readonly userId: string;
     readonly priority: number;
     readonly reason: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
   readonly refreshMember: (options: {
     readonly discordId: string;
     readonly guildId: string;
     readonly userId: string;
     readonly priority: number;
     readonly reason: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
 }
 
 const fallbackEligible = (error: unknown) => {

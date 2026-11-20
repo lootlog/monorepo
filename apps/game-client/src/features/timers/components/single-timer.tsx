@@ -34,7 +34,7 @@ type SingleTimerProps = {
   guildNamesById: Record<string, string>;
   accessPolicy: AccessPolicy | undefined;
   timer: TimerWithTimeLeft;
-  settingsKey: string;
+  settingsKey: string | undefined;
   isHidden?: boolean;
 };
 

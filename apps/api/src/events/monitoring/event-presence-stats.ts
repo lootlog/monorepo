@@ -9,7 +9,7 @@ import {
   eventPresenceLogTable,
 } from "#src/database/drizzle/event.schema";
 import { memberTable } from "#src/database/drizzle/organization.schema";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { HeroPresenceStatsResponse } from "#src/events/monitoring/event-monitoring-response.schema";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import type { MemberSummary } from "#src/contracts/shared";
