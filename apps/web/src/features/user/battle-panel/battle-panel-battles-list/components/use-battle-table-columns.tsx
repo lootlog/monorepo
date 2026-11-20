@@ -2,9 +2,9 @@ import type { useBattleTableSelection } from "@/features/user/battle-panel/battl
 import {
   getBattleResult,
   getBattleTeams,
-} from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
+} from "@/components/battle/utils/battle-result-presentation";
 import { BattlePanelTeamSummary } from "@/features/user/battle-panel/components/battle-panel-team-summary";
-import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
+import { BattleResultStatus } from "@/components/battle/battle-result-status";
 import type { Battle } from "@/lib/api/battlelog-types";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { getRelativeTime } from "@/utils/date/get-relative-time";

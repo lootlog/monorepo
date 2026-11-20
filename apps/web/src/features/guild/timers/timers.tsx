@@ -36,7 +36,7 @@ import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useGuildTimers } from "./use-guild-timers";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildHeroSightings } from "@/features/guild/hero-sightings/use-guild-hero-sightings";
-import { canViewHeroSightings } from "@/features/guild/hero-sightings/hero-sightings-permissions";
+import { canViewHeroSightings } from "@/lib/hero-sightings-permissions";
 import { findTimerHeroSighting } from "@/features/guild/hero-sightings/find-timer-hero-sighting";
 import { useTimerDisplaySettings } from "./use-timer-display-settings";
 import { ThemeEmptyStateIcon } from "@/themes/adapters";

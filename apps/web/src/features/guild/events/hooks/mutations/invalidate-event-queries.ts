@@ -1,47 +1,10 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
-import { getQueryKeyPath } from "./query-key-path";
 import {
   getListEventMapsQueryKey,
   getListEventsQueryKey,
   getShowEventQueryKey,
   getShowEventWrappedQueryKey,
 } from "@lootlog/client/main";
-
-export function reconcileEventPolicyQueries(
-  queryClient: QueryClient,
-  changes?: readonly AccessPolicyChange[],
-) {
-  const filters = {
-    predicate: (query: { queryKey: readonly unknown[] }) => {
-      const path = getQueryKeyPath(query.queryKey);
-
-      return (
-        path !== undefined &&
-        /^\/guilds\/[^/]+\/(?:events(?:\/|$)|permissions$|loots(?:\/|$))/.test(
-          path,
-        )
-      );
-    },
-  };
-
-  const restricted =
-    !changes ||
-    changes.some(
-      (change) =>
-        change.restricted &&
-        change.areas.some((area) =>
-          ["events", "organization", "loots"].includes(area),
-        ),
-    );
-
-  if (!restricted) return queryClient.invalidateQueries(filters);
-
-  void queryClient.cancelQueries(filters);
-  queryClient.removeQueries({ ...filters, type: "inactive" });
-
-  return queryClient.resetQueries({ ...filters, type: "active" });
-}
 
 export function invalidateEventDetailQueries(
   queryClient: QueryClient,

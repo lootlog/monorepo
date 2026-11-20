@@ -1,5 +1,5 @@
 import { orderBy } from "es-toolkit";
-import type { EventHeroNpc, EventRanking } from "../types/api";
+import type { EventHeroNpc, EventRanking } from "@/lib/api/event-types";
 
 export type MyHeroScore = {
   hero: EventHeroNpc;

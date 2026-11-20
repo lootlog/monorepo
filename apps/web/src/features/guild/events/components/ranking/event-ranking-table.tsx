@@ -17,7 +17,7 @@ import { Table } from "@lootlog/ui/components/table";
 import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
-import type { EventRanking } from "../../types/api";
+import type { EventRanking } from "@/lib/api/event-types";
 import { invalidateRankingQueries } from "../../hooks/mutations/invalidate-ranking-queries";
 import { EventRankingActions } from "./event-ranking-actions";
 import { EventRankingPoints } from "./event-ranking-points";

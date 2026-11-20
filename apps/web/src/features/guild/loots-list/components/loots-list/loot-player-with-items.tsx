@@ -2,7 +2,7 @@ import { PlayerTile } from "@/components/tiles/player-tile";
 import { ItemStack } from "./item-stack";
 import { cn } from "cn";
 import type { Item, Loot } from "@/lib/loots/loot-types";
-import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
+import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import type { ReactNode } from "react";
 
 export const LootPlayerWithItems = ({

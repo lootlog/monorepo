@@ -14,8 +14,8 @@ import type { BattlesListResponseDtoOutputBattlesItem } from "@lootlog/client/ba
 import {
   getBattleResult,
   getBattleTeams,
-} from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
-import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
+} from "@/components/battle/utils/battle-result-presentation";
+import { BattleResultStatus } from "@/components/battle/battle-result-status";
 
 export function DashboardRecentBattle({
   battle,

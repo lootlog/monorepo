@@ -1,5 +1,5 @@
 import { uniqBy } from "es-toolkit";
-import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
+import { invalidateUserNotificationQueries } from "@/lib/user-notifications/invalidate-user-notification-queries";
 import { useEffect, useState } from "react";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm, useWatch } from "react-hook-form";
@@ -7,8 +7,8 @@ import { useTranslation } from "react-i18next";
 import { toast } from "@lootlog/ui/lib/toast";
 import { Schema } from "effect";
 
-import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
-import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
+import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
+import { getUserNotificationsErrorMessage } from "@/lib/user-notifications/get-user-notifications-error-message";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import {
   getGuildsControllerGetWorldsByGuildIdQueryOptions,

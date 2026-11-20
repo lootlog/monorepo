@@ -37,7 +37,7 @@ import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries
 import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-queries";
 
-import type { EventMapsResponse } from "./types/api";
+import type { EventMapsResponse } from "@/lib/api/event-types";
 
 const getEventHero = (
   event: EventOverview | undefined,

@@ -5,7 +5,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
-import type { EventRanking } from "../../types/api";
+import type { EventRanking } from "@/lib/api/event-types";
 import { formatPoints } from "../../utils/format-points";
 import { getRankingLeaders } from "./event-ranking-selection";
 import { RankingMemberName } from "./ranking-member-name";

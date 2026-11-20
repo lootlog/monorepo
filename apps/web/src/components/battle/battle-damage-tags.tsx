@@ -1,7 +1,7 @@
 import {
   getBattleDamageTags,
   type BattleDamageTagWarrior,
-} from "./battle-damage-tag-data";
+} from "./utils/battle-damage-tag-data";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
   Tooltip,

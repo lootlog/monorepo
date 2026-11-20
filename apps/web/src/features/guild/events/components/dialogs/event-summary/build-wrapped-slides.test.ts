@@ -1,5 +1,5 @@
 import { assert, describe, expect, it } from "vitest";
-import type { EventWrapped } from "../../../types/api";
+import type { EventWrapped } from "@/lib/api/event-types";
 import { buildWrappedDeck } from "./build-wrapped-slides";
 import { buildWrappedQualityModel } from "./wrapped-data-quality";
 

@@ -4,7 +4,7 @@ import {
   getApiErrorNumberDetail,
   getApiErrorStringField,
 } from "@lootlog/client/transport";
-import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
+import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
 
 type TranslateFunction = (key: string, options?: TOptions) => string;
 

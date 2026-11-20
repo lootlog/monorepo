@@ -1,9 +1,9 @@
 import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils";
 import i18n from "@/i18n/config";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
-import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
+import { getPlayerVsPlayerBattleResult } from "@/components/battle/utils/battle-result-presentation";
 import { BattlePanelPvpWarriorSummary } from "@/features/user/battle-panel/components/battle-panel-pvp-warrior-summary";
-import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
+import { BattleResultStatus } from "@/components/battle/battle-result-status";
 import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import {

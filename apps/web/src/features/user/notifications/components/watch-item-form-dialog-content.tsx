@@ -15,7 +15,7 @@ import {
 import { Input } from "@lootlog/ui/components/input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
+import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
 import { WatchedItemSelector } from "@/features/user/notifications/components/watched-item-selector";
 
 import type { WatchedItemResponseDto } from "@lootlog/client/main";

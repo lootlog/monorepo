@@ -3,7 +3,7 @@ import type {
   BattleWarrior,
   PlayerVsPlayerBattle,
 } from "@/lib/api/battlelog-types";
-import type { BattleResultStatusValue } from "./battle-result-status";
+import type { BattleResultStatusValue } from "../battle-result-status";
 
 export const getBattleTeams = (battle: Battle) => {
   const attackingTeam = battle.warriors.filter((warrior) => warrior.team === 1);

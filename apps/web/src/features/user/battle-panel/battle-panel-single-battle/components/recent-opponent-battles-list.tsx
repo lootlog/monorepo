@@ -1,6 +1,6 @@
 import { EmptyState } from "@/components/common/empty-state";
-import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
-import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
+import { BattleResultStatus } from "@/components/battle/battle-result-status";
+import { getPlayerVsPlayerBattleResult } from "@/components/battle/utils/battle-result-presentation";
 import { BattlePanelPvpWarriorSummary } from "@/features/user/battle-panel/components/battle-panel-pvp-warrior-summary";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";

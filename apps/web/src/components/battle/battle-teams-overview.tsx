@@ -1,5 +1,5 @@
-import { isBattleDraw } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
-import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
+import { isBattleDraw } from "@/components/battle/utils/battle-result-presentation";
+import { BattleResultStatus } from "@/components/battle/battle-result-status";
 import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";

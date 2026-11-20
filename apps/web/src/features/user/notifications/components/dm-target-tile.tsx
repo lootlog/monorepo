@@ -2,7 +2,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
-import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
+import { invalidateUserNotificationQueries } from "@/lib/user-notifications/invalidate-user-notification-queries";
 import {
   BellOff,
   BellRing,
@@ -28,7 +28,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
+import { getUserNotificationsErrorMessage } from "@/lib/user-notifications/get-user-notifications-error-message";
 import { NotificationTargetType } from "@lootlog/schema/notifications";
 import {
   DATE_TIME_WITH_SECONDS_FORMAT,

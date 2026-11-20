@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
 import { parseMsToTime } from "@lootlog/datetime";
-import type { EventTimer } from "../../types/api";
+import type { EventTimer } from "@/lib/api/event-types";
 import { getHeroTimerCountdownState } from "./hero-timer-countdown-state";
 import { formatTime } from "../../utils/format-date";
 

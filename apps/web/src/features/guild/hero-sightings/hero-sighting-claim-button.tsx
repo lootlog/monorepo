@@ -3,7 +3,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { isHeroSightingClaimable } from "@lootlog/domain/hero-sightings";
 import { useTranslation } from "react-i18next";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { canClaimHeroSightings } from "./hero-sightings-permissions";
+import { canClaimHeroSightings } from "@/lib/hero-sightings-permissions";
 import { useHeroSightingClaim } from "./use-hero-sighting-claim";
 
 type HeroSightingClaimButtonProps = {

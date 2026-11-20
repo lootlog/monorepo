@@ -1,5 +1,5 @@
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
-import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
+import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import { cn } from "cn";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";

@@ -8,7 +8,7 @@ import {
 } from "@lootlog/ui/components/select";
 import { cn } from "cn";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
-import type { EventHeroNpc, EventRanking } from "../../types/api";
+import type { EventHeroNpc, EventRanking } from "@/lib/api/event-types";
 
 type EventRankingHeroSelectProps = {
   heroes: EventHeroNpc[];

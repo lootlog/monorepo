@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { EventTimer } from "../../types/api";
+import type { EventTimer } from "@/lib/api/event-types";
 import { getHeroTimerCountdownState } from "./hero-timer-countdown-state";
 
 const timer: EventTimer = {

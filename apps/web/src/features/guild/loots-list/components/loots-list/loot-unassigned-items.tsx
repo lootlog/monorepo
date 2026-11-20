@@ -1,6 +1,6 @@
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import type { Item } from "@/lib/loots/loot-types";
-import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
+import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import { useTranslation } from "react-i18next";
 import { Fragment, type ReactNode } from "react";
 

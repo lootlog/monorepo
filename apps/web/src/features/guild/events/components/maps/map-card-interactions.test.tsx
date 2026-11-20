@@ -10,7 +10,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
-import type { EventMap } from "../../types/api";
+import type { EventMap } from "@/lib/api/event-types";
 import { MapCard } from "./map-card";
 import { STATUS_STYLES } from "./map-status";
 

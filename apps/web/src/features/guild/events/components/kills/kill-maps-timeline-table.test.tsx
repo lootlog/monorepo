@@ -10,7 +10,7 @@ import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
-import type { MapTimelineData } from "../../types/api";
+import type { MapTimelineData } from "@/lib/api/event-types";
 import { KillMapsTimelineTable } from "./kill-maps-timeline-table";
 
 const { t } = await initializeTestTranslations();

@@ -3,7 +3,7 @@ import {
   GuildWatchedItemsContext,
   type GuildWatchedItemsContextValue,
 } from "./guild-watched-items-context";
-import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
+import { invalidateUserNotificationQueries } from "@/lib/user-notifications/invalidate-user-notification-queries";
 import {
   useNotificationsUserControllerGetUserTargets,
   useNotificationsUserControllerGetWatchedItems,

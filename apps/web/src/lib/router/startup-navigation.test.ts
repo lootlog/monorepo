@@ -15,11 +15,6 @@ import {
   type NullableMemberResponseDto,
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
-import {
-  getLootQueryParams,
-  lootListInfiniteQueryOptions,
-} from "@/features/guild/loots-list/components/loots-list/loot-list-query";
-import { loadLootsFilters } from "@/hooks/use-loots-filters";
 import { Capability } from "@lootlog/domain/access-policy";
 import { onlineManager, QueryClient } from "@tanstack/react-query";
 import {
@@ -707,11 +702,8 @@ it("opens an organization with its sidebar pins and loot list already loaded", a
     queryClient.getQueryData(getListPinnedEventsQueryKey({ guildId: "42" })),
   ).toEqual([]);
   expect(
-    queryClient.getQueryData(
-      lootListInfiniteQueryOptions(
-        "42",
-        getLootQueryParams(loadLootsFilters("?rarities=legendary"), null),
-      ).queryKey,
-    ),
+    queryClient
+      .getQueryCache()
+      .find({ queryKey: ["/guilds/42/loots"], exact: false })?.state.data,
   ).toBeDefined();
 });

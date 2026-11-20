@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
-import { formatBattleTeamNames } from "./battle-panel-battle-presentation";
+import { formatBattleTeamNames } from "@/components/battle/utils/battle-result-presentation";
 
 type BattlePanelTeamSummaryProps = {
   className?: string;

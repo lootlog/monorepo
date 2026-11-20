@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { BandSection } from "@/components/common/band-section";
 import { useRecentHeroKills } from "../../hooks/queries/use-recent-hero-kills";
-import type { EventHeroNpc } from "../../types/api";
+import type { EventHeroNpc } from "@/lib/api/event-types";
 import { HeroTabs } from "../shared/hero-tabs";
 import { EventKillsTable } from "./event-kills-table";
 

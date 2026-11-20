@@ -1,4 +1,4 @@
-import { GuildWatchedItemsContext } from "@/features/user/notifications/contexts/guild-watched-items-context";
+import { GuildWatchedItemsContext } from "@/contexts/guild-watched-items-context";
 import { useContext } from "react";
 
 export const useGuildWatchedItems = () => {

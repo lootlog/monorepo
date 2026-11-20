@@ -3,7 +3,7 @@ import type {
   CreateWatchedItemQuickAddDto,
   WatchedItemResponseDto,
 } from "@lootlog/client/main";
-import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
+import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 
 export type GuildWatchedItemsContextValue = {
   state: "loading" | "error" | "ready";

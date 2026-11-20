@@ -24,7 +24,7 @@ import type {
   MemberStatsSummary,
 } from "./components/member-kills/member-kills-view-model";
 import { useEventMemberKillHistory } from "./hooks/queries/use-event-member-kill-history";
-import type { EventHeroNpc, EventRanking } from "./types/api";
+import type { EventHeroNpc, EventRanking } from "@/lib/api/event-types";
 
 type RankingSummaryInput = Pick<
   EventRanking,

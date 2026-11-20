@@ -13,7 +13,7 @@ import {
   getBattleResult,
   getBattleTeams,
   getPlayerVsPlayerBattleResult,
-} from "./battle-panel-battle-presentation";
+} from "./battle-result-presentation";
 
 const createWarrior = ({
   name,

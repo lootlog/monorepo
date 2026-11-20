@@ -18,7 +18,7 @@ import { stubResultsTableViewport } from "@/lib/testing/viewport";
 
 import type { MemberReferenceResponseDtoOutput } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
-import type { EventRanking } from "../../types/api";
+import type { EventRanking } from "@/lib/api/event-types";
 import { EventRankingTable } from "./event-ranking-table";
 
 const mocks = vi.hoisted(() => ({

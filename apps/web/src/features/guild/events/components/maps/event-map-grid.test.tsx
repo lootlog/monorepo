@@ -7,7 +7,7 @@ import { createOrganizationTestRouter } from "@/lib/testing/router";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, onTestFinished } from "vitest";
-import type { EventMap, EventMapLocation } from "../../types/api";
+import type { EventMap, EventMapLocation } from "@/lib/api/event-types";
 import { EventMapGrid } from "./event-map-grid";
 
 await initializeTestTranslations();

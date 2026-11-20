@@ -1,5 +1,5 @@
 import { upperFirst } from "es-toolkit";
-import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
+import { invalidateUserNotificationQueries } from "@/lib/user-notifications/invalidate-user-notification-queries";
 import { Globe, Hash, Trash2, TriangleAlert, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "@lootlog/ui/lib/toast";
@@ -18,7 +18,7 @@ import {
 } from "@/components/common/list-tile";
 import { MetaItem } from "@/components/common/meta-item";
 import { ItemTile } from "@/components/tiles/item-tile";
-import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
+import { getUserNotificationsErrorMessage } from "@/lib/user-notifications/get-user-notifications-error-message";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useNotificationsUserControllerDeleteWatchedItem,

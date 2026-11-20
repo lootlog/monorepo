@@ -1,4 +1,8 @@
-import type { MapAssignment, MapGap, MapTimelineData } from "../types/api";
+import type {
+  MapAssignment,
+  MapGap,
+  MapTimelineData,
+} from "@/lib/api/event-types";
 import { comparePolish } from "@lootlog/domain/locale";
 
 export type NormalizedMapGap = Omit<

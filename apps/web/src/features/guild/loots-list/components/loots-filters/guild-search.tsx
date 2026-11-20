@@ -4,7 +4,7 @@ import { Capability } from "@lootlog/domain/access-policy";
 import { GuildSearchContext } from "@/contexts/guild-search-context";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
-import { LootSearchCommand } from "@/features/guild/loots-list/components/loots-filters/loot-search-command";
+import { LootSearchCommand } from "./loot-search-command";
 
 /**
  * The Organization search palette and its shortcut. The top bar renders the

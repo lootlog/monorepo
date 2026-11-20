@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { MapTimelineData } from "../types/api";
+import type { MapTimelineData } from "@/lib/api/event-types";
 import { getKillMapTimelineDiagnostics } from "./kill-map-timeline-data";
 
 const startTime = new Date("2026-08-12T08:00:00.000Z");

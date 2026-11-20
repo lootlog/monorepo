@@ -7,16 +7,14 @@ import {
   createTestAccessPolicy,
   createTestGateway,
 } from "@/lib/testing/gateway";
-import { useMemberGamePresence } from "@/features/guild/settings/members/use-member-game-presence";
-import { useMemberWebPresence } from "@/features/guild/settings/members/use-member-web-presence";
-import { useEventPresence } from "@/features/guild/events/hooks/socket/use-event-presence";
+import { useOrganizationPresence } from "./use-organization-presence";
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
 
-it("shares presence across member and event views without refetching on rerenders or world changes", async () => {
+it("shares presence across member and event views without refetching on rerenders", async () => {
   const gateway = createTestGateway();
 
   const presence: PresenceWithLocation = {
@@ -52,12 +50,12 @@ it("shares presence across member and event views without refetching on rerender
   gateway.request.mockImplementation(() => new Promise(() => undefined));
 
   const { result, rerender } = renderHook(
-    ({ world }) => ({
-      game: useMemberGamePresence("guild-1"),
-      web: useMemberWebPresence("guild-1"),
-      event: useEventPresence({ guildId: "guild-1", world }),
+    () => ({
+      game: useOrganizationPresence("guild-1").game,
+      web: useOrganizationPresence("guild-1").web,
+      event: useOrganizationPresence("guild-1").game,
     }),
-    { initialProps: { world: "alpha" }, wrapper: gateway.wrapper },
+    { wrapper: gateway.wrapper },
   );
 
   await waitFor(() =>
@@ -66,13 +64,12 @@ it("shares presence across member and event views without refetching on rerender
   expect(gateway.request).toHaveBeenCalledTimes(1);
   await waitFor(() => {
     expect(result.current.web?.get("discord-1")).toEqual(new Set(["web-1"]));
-    expect(result.current.event.presenceData?.get("discord-1")).toEqual([
+    expect(result.current.event?.get("discord-1")).toEqual([
       expect.objectContaining({ mapId: 25, mapName: "Forest" }),
     ]);
   });
   expect(gateway.request).toHaveBeenCalledTimes(1);
-  rerender({ world: "other" });
-  expect(result.current.event.presenceData?.has("discord-1")).toBe(false);
+  rerender();
   expect(gateway.request).toHaveBeenCalledTimes(1);
   act(() =>
     gateway.deliver({
@@ -89,7 +86,7 @@ it("shares presence across member and event views without refetching on rerender
   await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(2));
   expect(result.current.game).toBeUndefined();
   expect(result.current.web).toBeUndefined();
-  expect(result.current.event.presenceData).toBeUndefined();
+  expect(result.current.event).toBeUndefined();
 });
 
 it("keeps the remaining subscriber live and isolates Organizations", async () => {
@@ -107,15 +104,15 @@ it("keeps the remaining subscriber live and isolates Organizations", async () =>
     })
     .mockImplementation(() => new Promise(() => undefined));
 
-  const first = renderHook(() => useMemberWebPresence("guild-1"), {
+  const first = renderHook(() => useOrganizationPresence("guild-1").web, {
     wrapper: gateway.wrapper,
   });
 
-  const remaining = renderHook(() => useMemberWebPresence("guild-1"), {
+  const remaining = renderHook(() => useOrganizationPresence("guild-1").web, {
     wrapper: gateway.wrapper,
   });
 
-  const other = renderHook(() => useMemberWebPresence("guild-2"), {
+  const other = renderHook(() => useOrganizationPresence("guild-2").web, {
     wrapper: gateway.wrapper,
   });
 
@@ -186,7 +183,7 @@ it("does not duplicate a fetch during React effect rehearsal", async () => {
     presences: [],
   });
 
-  const { result } = renderHook(() => useMemberWebPresence("guild-1"), {
+  const { result } = renderHook(() => useOrganizationPresence("guild-1").web, {
     wrapper: gateway.wrapper,
     reactStrictMode: true,
   });
@@ -203,7 +200,7 @@ it("reconciles a successful rejoin even when React keeps subscribers mounted", a
     presences: [],
   });
 
-  const { result } = renderHook(() => useMemberWebPresence("guild-1"), {
+  const { result } = renderHook(() => useOrganizationPresence("guild-1").web, {
     wrapper: gateway.wrapper,
   });
 
@@ -241,7 +238,7 @@ it("keeps a newer live removal when an older snapshot resolves", async () => {
 
   gateway.request.mockReturnValue(response);
 
-  const { result } = renderHook(() => useMemberWebPresence("guild-1"), {
+  const { result } = renderHook(() => useOrganizationPresence("guild-1").web, {
     wrapper: gateway.wrapper,
   });
 

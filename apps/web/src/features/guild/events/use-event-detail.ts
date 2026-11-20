@@ -17,7 +17,7 @@ import type {
   EventMap,
   EventMapLocation,
   EventMapsResponse,
-} from "./types/api";
+} from "@/lib/api/event-types";
 import { canManageEvent } from "./utils/event-access";
 
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";

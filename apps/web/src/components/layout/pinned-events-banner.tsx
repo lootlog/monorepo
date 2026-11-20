@@ -2,7 +2,7 @@ import { useState, type FC } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { Event } from "@/features/guild/events/types/api";
+import type { Event } from "@/lib/api/event-types";
 import { cn } from "cn";
 import { CollapsePresence } from "@/components/common/collapse-presence";
 import { EventTimersList } from "./event-timers-list";

@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { useListEventHeroTimers } from "@lootlog/client/main";
-import type { Event } from "@/features/guild/events/types/api";
+import type { Event } from "@/lib/api/event-types";
 import { parseMsToTime } from "@lootlog/datetime";
 import { cn } from "cn";
 import { SpawnWindowRing } from "./spawn-window-ring";

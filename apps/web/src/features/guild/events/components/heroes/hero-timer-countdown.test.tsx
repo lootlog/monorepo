@@ -10,7 +10,7 @@ import {
   screen,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { EventTimer } from "../../types/api";
+import type { EventTimer } from "@/lib/api/event-types";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import { HeroTimerCountdown } from "./hero-timer-countdown";
 

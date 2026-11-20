@@ -1,8 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { GuildRouteProviders } from "@/components/layout/guild-route-providers";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { Fragment } from "react";
 import { GuildRouteError } from "@/components/router/guild-route-error";
 import { GuildRouteNotFound } from "@/components/router/guild-route-not-found";
+import { GuildWatchedItemsProvider } from "@/contexts/guild-watched-items-provider";
+import { GuildSearch } from "@/features/guild/loots-list/components/loots-filters/guild-search";
 import type { SessionData } from "@/hooks/auth/use-session";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuildWorldFromUrl } from "@/hooks/context/use-guild-world";
 import { rememberOrganization } from "@/lib/last-organization";
 import {
   loadOrganization,
@@ -35,6 +39,22 @@ const decodeOrganizationLoaderData = Schema.decodeUnknownOption(
   }),
 );
 
+function GuildLayout() {
+  const guildId = useGuildId();
+
+  useGuildWorldFromUrl();
+
+  return (
+    <GuildWatchedItemsProvider>
+      <GuildSearch />
+      {/* Another Organization's pages start fresh instead of keeping state. */}
+      <Fragment key={guildId}>
+        <Outlet />
+      </Fragment>
+    </GuildWatchedItemsProvider>
+  );
+}
+
 export const Route = createFileRoute("/_authenticated/$guildId")({
   staticData: {
     navigation: ({ match, organizationName }) => ({
@@ -44,7 +64,7 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
           ?.guild?.name,
     }),
   },
-  component: GuildRouteProviders,
+  component: GuildLayout,
   // Opening another Organization keeps the current page painted while the
   // next one loads, and swaps them in one step; the rail marks the target at
   // once. Only a slow load falls back to a skeleton.

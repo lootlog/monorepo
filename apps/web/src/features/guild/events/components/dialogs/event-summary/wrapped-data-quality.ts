@@ -2,7 +2,7 @@ import type {
   EventWrapped,
   EventWrappedLeader,
   EventWrappedLeaderResult,
-} from "../../../types/api";
+} from "@/lib/api/event-types";
 
 type WrappedOmissionReason =
   | "invalid-value"

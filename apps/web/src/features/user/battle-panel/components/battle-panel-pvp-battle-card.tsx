@@ -10,9 +10,9 @@ import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Link, type LinkOptions } from "@tanstack/react-router";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
-import { getPlayerVsPlayerBattleResult } from "./battle-panel-battle-presentation";
+import { getPlayerVsPlayerBattleResult } from "@/components/battle/utils/battle-result-presentation";
 import { BattlePanelPvpWarriorSummary } from "./battle-panel-pvp-warrior-summary";
-import { BattleResultStatus } from "./battle-result-status";
+import { BattleResultStatus } from "@/components/battle/battle-result-status";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type BattlePanelPvpBattleCardProps = {

@@ -2,6 +2,8 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AuthenticationGuard } from "@/components/auth/authentication-guard";
 import { AppLayout } from "@/components/layout/app-layout";
 import { GatewayProvider } from "@/contexts/gateway-provider";
+import { HeroSightingsSocketSubscription } from "@/features/guild/hero-sightings/hero-sightings-socket-subscription";
+import { TimersSocketSubscription } from "@/features/guild/timers/timers-socket-subscription";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { authScopesQueryOptions } from "@/hooks/api/use-auth-scopes";
 import {
@@ -16,6 +18,8 @@ function AuthenticatedLayout() {
   return (
     <AuthenticationGuard>
       <GatewayProvider>
+        <TimersSocketSubscription />
+        <HeroSightingsSocketSubscription />
         <AppLayout />
       </GatewayProvider>
     </AuthenticationGuard>

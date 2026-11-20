@@ -9,7 +9,7 @@ import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useTranslation } from "react-i18next";
 import { guildDocsListQueryOptions } from "./docs-api";
-import { canManageGuildDocs, canWriteGuildDocs } from "./docs-permissions";
+import { canManageGuildDocs, canWriteGuildDocs } from "@/lib/docs-permissions";
 import { useGuildDocTrash } from "./use-guild-doc-trash";
 import { normalizeSearchText } from "@lootlog/domain/text-fold";
 

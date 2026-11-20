@@ -5,7 +5,7 @@ import { AlertCircle, CheckCircle2, ChevronDown } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { TableCell, TableRow } from "@lootlog/ui/components/table";
 import { cn } from "cn";
-import type { MapTimelineData } from "../../types/api";
+import type { MapTimelineData } from "@/lib/api/event-types";
 import { formatTime } from "../../utils/format-date";
 import { getKillMapTimelineDiagnostics } from "../../utils/kill-map-timeline-data";
 import { MapCoverageTimeline } from "../maps/map-coverage-timeline";

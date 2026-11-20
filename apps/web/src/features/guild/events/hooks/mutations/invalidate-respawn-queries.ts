@@ -1,4 +1,4 @@
-import { getQueryKeyPath } from "./query-key-path";
+import { getQueryKeyPath } from "@/lib/query-key-path";
 import type { Query, QueryClient } from "@tanstack/react-query";
 import {
   getEventsMonitoringControllerGetHeroRespawnConfigQueryKey,

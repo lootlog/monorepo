@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
 import { HeroAvatar } from "../shared/hero-avatar";
-import type { EventHeroNpc, EventTimer } from "../../types/api";
+import type { EventHeroNpc, EventTimer } from "@/lib/api/event-types";
 import { HeroTimerDisplay } from "./hero-timer-display";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { EMPTY_VALUE } from "@/constants/empty-value";

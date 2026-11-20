@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { EventMap } from "../../types/api";
+import type { EventMap } from "@/lib/api/event-types";
 import { getMapStatus } from "./map-status";
 
 const assignedMap: EventMap = {

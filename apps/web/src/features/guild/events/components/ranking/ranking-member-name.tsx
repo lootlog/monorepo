@@ -1,6 +1,6 @@
 import { MemberIdentity } from "@/components/common/member-identity";
 import { useTranslation } from "react-i18next";
-import type { EventRanking } from "../../types/api";
+import type { EventRanking } from "@/lib/api/event-types";
 import { EventMemberKillsProfileLink } from "../shared/event-member-kills-profile-link";
 import { getRankingMemberName } from "./get-ranking-member-name";
 

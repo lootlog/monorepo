@@ -5,7 +5,7 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { onTestFinished } from "vitest";
 import type { PropsWithChildren } from "react";
 import { ThemeContext } from "@/contexts/theme-context";
-import { GuildWatchedItemsProvider } from "@/features/user/notifications/contexts/guild-watched-items-provider";
+import { GuildWatchedItemsProvider } from "@/contexts/guild-watched-items-provider";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
   getGuildsControllerGetGuildPermissionsQueryKey,

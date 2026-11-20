@@ -6,7 +6,7 @@ import { Link } from "@tanstack/react-router";
 import { BandSection } from "@/components/common/band-section";
 import { Package } from "lucide-react";
 import { useEventLoots } from "../../hooks/queries/use-event-loots";
-import type { EventHeroNpc } from "../../types/api";
+import type { EventHeroNpc } from "@/lib/api/event-types";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { LootDetailsDialog } from "@/features/guild/loots-list/components/loots-list/loot-details-dialog";
 import { EmbeddedLootRowsSkeleton } from "../shared/embedded-loot-rows-skeleton";

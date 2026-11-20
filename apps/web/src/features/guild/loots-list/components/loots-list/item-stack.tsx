@@ -4,7 +4,7 @@ import {
   ITEM_RARITIES_BY_VALUE,
   DisplayItemRarity,
 } from "@lootlog/domain/item-rarity";
-import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
+import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import { cn } from "cn";
 import { AnimatePresence } from "framer-motion";

@@ -1,4 +1,4 @@
-import type { EventMap } from "../../types/api";
+import type { EventMap } from "@/lib/api/event-types";
 import type { PlayerPresence } from "@/lib/gateway-client";
 
 export type MapStatus =

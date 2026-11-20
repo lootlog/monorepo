@@ -1,7 +1,7 @@
 import { formatLevel } from "@lootlog/domain/profession";
 import { PlayerTile } from "@/components/battle/player-tile";
-import { BattleDamageTags } from "@/features/user/battle-panel/components/battle-damage-tags";
-import type { BattleDamageTagWarrior } from "@/features/user/battle-panel/components/battle-damage-tag-data";
+import { BattleDamageTags } from "@/components/battle/battle-damage-tags";
+import type { BattleDamageTagWarrior } from "@/components/battle/utils/battle-damage-tag-data";
 import { cn } from "cn";
 
 type BattlePanelPvpWarriorSummaryData = BattleDamageTagWarrior & {

@@ -1,6 +1,6 @@
 import type { CSSProperties, FC } from "react";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
-import type { EventHeroNpc } from "@/features/guild/events/types/api";
+import type { EventHeroNpc } from "@/lib/api/event-types";
 import { cn } from "cn";
 
 // Up to this many heroes are all shown; a larger roster keeps one slot fewer

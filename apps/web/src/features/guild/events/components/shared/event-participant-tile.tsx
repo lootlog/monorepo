@@ -2,7 +2,7 @@ import { MemberIdentity } from "@/components/common/member-identity";
 import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import type { Member } from "../../types/api";
+import type { Member } from "@/lib/api/event-types";
 import { EventMemberKillsProfileLink } from "./event-member-kills-profile-link";
 
 interface EventParticipantTileProps {

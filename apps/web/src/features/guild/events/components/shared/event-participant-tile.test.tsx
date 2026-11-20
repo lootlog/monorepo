@@ -3,7 +3,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
-import type { Member } from "../../types/api";
+import type { Member } from "@/lib/api/event-types";
 import { EventParticipantTile } from "./event-participant-tile";
 
 const member: Member = {

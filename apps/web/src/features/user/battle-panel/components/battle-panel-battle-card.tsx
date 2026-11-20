@@ -15,9 +15,9 @@ import { useTranslation } from "react-i18next";
 import {
   getBattleResult,
   getBattleTeams,
-} from "./battle-panel-battle-presentation";
+} from "@/components/battle/utils/battle-result-presentation";
 import { BattlePanelTeamSummary } from "./battle-panel-team-summary";
-import { BattleResultStatus } from "./battle-result-status";
+import { BattleResultStatus } from "@/components/battle/battle-result-status";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type BattlePanelBattleCardProps = {
