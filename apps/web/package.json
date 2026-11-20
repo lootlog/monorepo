@@ -70,7 +70,7 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "happy-dom": "^21.0.4",
-    "oxc-transform-react": "^0.154.0",
+    "oxc-transform-react": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"
