@@ -31,17 +31,19 @@ const IdpTokenSuccess = Schema.Struct({
 
 // Auth answers with the shared `code`; `error` covers auth instances that
 // still answer with it while both services roll out.
-const IdpTokenFailure = Schema.Struct({
-  code: Schema.optional(Schema.String),
-  error: Schema.optional(Schema.String),
-});
+const IdpTokenFailure = Schema.Union([
+  Schema.Struct({ code: Schema.String }),
+  Schema.Struct({ error: Schema.String }),
+]);
 
 const IdpTokenResponse = Schema.Union([IdpTokenSuccess, IdpTokenFailure]);
 
 const failureReason = (data: typeof IdpTokenResponse.Type | undefined) =>
   data === undefined || "accessToken" in data
     ? undefined
-    : (data.code ?? data.error);
+    : "code" in data
+      ? data.code
+      : data.error;
 
 const decodeIdpTokenResponse = Schema.decodeUnknownSync(
   Schema.fromJsonString(IdpTokenResponse),

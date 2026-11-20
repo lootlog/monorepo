@@ -69,34 +69,19 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Check that the Activity process and HTTP event loop respond without checking dependencies
       summary: Liveness check
   /readyz:
@@ -166,34 +151,19 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: PostgreSQL is unavailable or timed out
           content:
@@ -345,12 +315,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -358,23 +323,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
@@ -429,12 +384,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -442,23 +392,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
@@ -513,12 +453,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -526,23 +461,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
@@ -597,12 +522,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -610,23 +530,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
@@ -669,12 +579,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -682,23 +587,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
@@ -744,12 +639,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -757,12 +647,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: Activity not found
           content:
@@ -774,12 +659,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
@@ -824,12 +704,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -837,12 +712,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: Activity not found
           content:
@@ -854,12 +724,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
@@ -911,34 +776,19 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: An inclusive range of at most 365 Warsaw calendar dates. Only the latest 365 days of confirmed online intervals are retained.
       summary: Get the signed-in user's confirmed game online time by Warsaw calendar day
 components:

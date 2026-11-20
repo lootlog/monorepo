@@ -2,7 +2,7 @@ import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-res
 import {
   ApiKeyEndpointPolicy,
   apiKeyEndpointPolicyLayer,
-} from "@lootlog/schema/api-key-http";
+} from "@lootlog/protocol/http/api-key-http";
 import { expect, it } from "bun:test";
 import { and, eq } from "drizzle-orm";
 import { Effect, Layer, Schema } from "effect";

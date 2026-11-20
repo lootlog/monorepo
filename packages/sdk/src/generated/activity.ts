@@ -289,18 +289,6 @@ export const ActivitiesControllerFindByGuildSourceItem = {
   WEB_APP: 'WEB_APP',
 } as const;
 
-export type ActivitiesControllerFindByGuild401 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerFindByGuild403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerFindByGuild429 = {
-  message: string;
-};
-
 export type ActivitiesControllerSuggestActorNamesPathParameters = {
  guildId: string,
  }
@@ -314,18 +302,6 @@ search?: string;
  * @maximum 50
  */
 limit?: number;
-};
-
-export type ActivitiesControllerSuggestActorNames401 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerSuggestActorNames403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerSuggestActorNames429 = {
-  message: string;
 };
 
 export type ActivitiesControllerSuggestWorldsPathParameters = {
@@ -343,18 +319,6 @@ search?: string;
 limit?: number;
 };
 
-export type ActivitiesControllerSuggestWorlds401 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerSuggestWorlds403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerSuggestWorlds429 = {
-  message: string;
-};
-
 export type ActivitiesControllerSuggestClanNamesPathParameters = {
  guildId: string,
  }
@@ -370,65 +334,17 @@ search?: string;
 limit?: number;
 };
 
-export type ActivitiesControllerSuggestClanNames401 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerSuggestClanNames403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerSuggestClanNames429 = {
-  message: string;
-};
-
 export type ActivitiesControllerGetMemberActivityStatsPathParameters = {
  guildId: string,
  }
-export type ActivitiesControllerGetMemberActivityStats401 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerGetMemberActivityStats403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerGetMemberActivityStats429 = {
-  message: string;
-};
-
 export type ActivitiesControllerFindOnePathParameters = {
  guildId: string,
     id: string,
  }
-export type ActivitiesControllerFindOne401 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerFindOne403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerFindOne429 = {
-  message: string;
-};
-
 export type ActivitiesControllerDeleteActivityPathParameters = {
  guildId: string,
     id: string,
  }
-export type ActivitiesControllerDeleteActivity401 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerDeleteActivity403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type ActivitiesControllerDeleteActivity429 = {
-  message: string;
-};
-
 export type UsersActivityControllerGetOnlineParams = {
 from: string;
 to: string;
@@ -436,18 +352,6 @@ to: string;
  * @minLength 1
  */
 world?: string;
-};
-
-export type UsersActivityControllerGetOnline401 = HttpErrorResponse | {
-  message: string;
-};
-
-export type UsersActivityControllerGetOnline403 = {
-  message: string;
-};
-
-export type UsersActivityControllerGetOnline429 = {
-  message: string;
 };
 
 export const getActivitiesControllerFindByGuildUrl = ({ guildId }: ActivitiesControllerFindByGuildPathParameters,

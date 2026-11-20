@@ -24,16 +24,39 @@ import type {
 
 import { catalogFetch } from '../mutators';
 import type { ErrorType } from '../mutators';
-export type _SearchUnavailableEncodedTag = typeof _SearchUnavailableEncodedTag[keyof typeof _SearchUnavailableEncodedTag];
+export type RequestValidationErrorCode = typeof RequestValidationErrorCode[keyof typeof RequestValidationErrorCode];
 
 
-export const _SearchUnavailableEncodedTag = {
-  SearchUnavailable: 'SearchUnavailable',
+export const RequestValidationErrorCode = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
 } as const;
 
-export interface SearchUnavailableEncoded {
-  _tag: _SearchUnavailableEncodedTag;
+export type RequestValidationErrorDetailsIssuesItem = {
+  path: (string | number)[];
   message: string;
+};
+
+export type RequestValidationErrorDetails = {
+  issues: RequestValidationErrorDetailsIssuesItem[];
+};
+
+export interface RequestValidationError {
+  code: RequestValidationErrorCode;
+  message: string;
+  details: RequestValidationErrorDetails;
+}
+
+/**
+ * @nullable
+ */
+export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
+
+export interface HttpErrorResponse {
+  code: string;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  details?: HttpErrorResponseDetails;
 }
 
 /**
@@ -277,18 +300,6 @@ export interface CatalogItemsResponseDtoOutput {
   estimatedTotalHits: number;
 }
 
-export type HealthzControllerHealthCheck401 = {
-  message: string;
-};
-
-export type HealthzControllerHealthCheck403 = {
-  message: string;
-};
-
-export type HealthzControllerHealthCheck429 = {
-  message: string;
-};
-
 export type CatalogControllerGetItemsParams = {
 search?: string;
 /**
@@ -353,18 +364,6 @@ export const CatalogControllerGetItemsSort = {
   'upgradedAttackSpeed:desc': 'upgradedAttackSpeed:desc',
 } as const;
 
-export type CatalogControllerGetItems401 = {
-  message: string;
-};
-
-export type CatalogControllerGetItems403 = {
-  message: string;
-};
-
-export type CatalogControllerGetItems429 = {
-  message: string;
-};
-
 export type CatalogControllerGetNpcsParams = {
 search?: string;
 /**
@@ -413,18 +412,6 @@ export const CatalogControllerGetNpcsSort = {
   'firstSeenOn:desc': 'firstSeenOn:desc',
 } as const;
 
-export type CatalogControllerGetNpcs401 = {
-  message: string;
-};
-
-export type CatalogControllerGetNpcs403 = {
-  message: string;
-};
-
-export type CatalogControllerGetNpcs429 = {
-  message: string;
-};
-
 export type CatalogControllerGetEventsParams = {
 /**
  * Only entries of this game edition.
@@ -440,18 +427,6 @@ export const CatalogControllerGetEventsGameVersion = {
   pl: 'pl',
 } as const;
 
-export type CatalogControllerGetEvents401 = {
-  message: string;
-};
-
-export type CatalogControllerGetEvents403 = {
-  message: string;
-};
-
-export type CatalogControllerGetEvents429 = {
-  message: string;
-};
-
 export type CatalogControllerGetIndexParams = {
 /**
  * Only entries of this game edition.
@@ -466,18 +441,6 @@ export const CatalogControllerGetIndexGameVersion = {
   en: 'en',
   pl: 'pl',
 } as const;
-
-export type CatalogControllerGetIndex401 = {
-  message: string;
-};
-
-export type CatalogControllerGetIndex403 = {
-  message: string;
-};
-
-export type CatalogControllerGetIndex429 = {
-  message: string;
-};
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -532,7 +495,7 @@ export const getHealthzControllerHealthCheckQueryKey = () => {
     }
 
 
-export const getHealthzControllerHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+export const getHealthzControllerHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -551,10 +514,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type HealthzControllerHealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthzControllerHealthCheck>>>
-export type HealthzControllerHealthCheckQueryError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>
+export type HealthzControllerHealthCheckQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
 
 
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthzControllerHealthCheck>>,
@@ -564,7 +527,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthzControllerHealthCheck>>,
@@ -574,7 +537,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -582,7 +545,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
  * @summary Health check
  */
 
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -597,7 +560,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
 /**
  * @summary Health check
  */
-export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<HealthzControllerHealthCheck401 | HealthzControllerHealthCheck403 | HealthzControllerHealthCheck429>>(
+export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
 
   ): Promise<QueryClient> => {
@@ -690,7 +653,7 @@ export const getCatalogControllerGetItemsQueryKey = (params?: CatalogControllerG
     }
 
 
-export const getCatalogControllerGetItemsQueryOptions = <TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(params?: CatalogControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+export const getCatalogControllerGetItemsQueryOptions = <TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(params?: CatalogControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -709,10 +672,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CatalogControllerGetItemsQueryResult = NonNullable<Awaited<ReturnType<typeof catalogControllerGetItems>>>
-export type CatalogControllerGetItemsQueryError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>
+export type CatalogControllerGetItemsQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
 
 
-export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params: undefined |  CatalogControllerGetItemsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof catalogControllerGetItems>>,
@@ -722,7 +685,7 @@ export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof c
       >, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof catalogControllerGetItems>>,
@@ -732,7 +695,7 @@ export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof c
       >, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -740,7 +703,7 @@ export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof c
  * @summary List items in the public catalog
  */
 
-export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -755,7 +718,7 @@ export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof c
 /**
  * @summary List items in the public catalog
  */
-export const prefetchCatalogControllerGetItemsQuery = async <TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(
+export const prefetchCatalogControllerGetItemsQuery = async <TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  queryClient: QueryClient, params?: CatalogControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
 
   ): Promise<QueryClient> => {
@@ -848,7 +811,7 @@ export const getCatalogControllerGetNpcsQueryKey = (params?: CatalogControllerGe
     }
 
 
-export const getCatalogControllerGetNpcsQueryOptions = <TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(params?: CatalogControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+export const getCatalogControllerGetNpcsQueryOptions = <TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(params?: CatalogControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -867,10 +830,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CatalogControllerGetNpcsQueryResult = NonNullable<Awaited<ReturnType<typeof catalogControllerGetNpcs>>>
-export type CatalogControllerGetNpcsQueryError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>
+export type CatalogControllerGetNpcsQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
 
 
-export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params: undefined |  CatalogControllerGetNpcsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof catalogControllerGetNpcs>>,
@@ -880,7 +843,7 @@ export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof ca
       >, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof catalogControllerGetNpcs>>,
@@ -890,7 +853,7 @@ export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof ca
       >, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -898,7 +861,7 @@ export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof ca
  * @summary List NPCs in the public catalog
  */
 
-export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -913,7 +876,7 @@ export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof ca
 /**
  * @summary List NPCs in the public catalog
  */
-export const prefetchCatalogControllerGetNpcsQuery = async <TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(
+export const prefetchCatalogControllerGetNpcsQuery = async <TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  queryClient: QueryClient, params?: CatalogControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
 
   ): Promise<QueryClient> => {
@@ -998,7 +961,7 @@ export const getCatalogControllerGetEventsQueryKey = (params?: CatalogController
     }
 
 
-export const getCatalogControllerGetEventsQueryOptions = <TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(params?: CatalogControllerGetEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+export const getCatalogControllerGetEventsQueryOptions = <TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(params?: CatalogControllerGetEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1017,10 +980,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CatalogControllerGetEventsQueryResult = NonNullable<Awaited<ReturnType<typeof catalogControllerGetEvents>>>
-export type CatalogControllerGetEventsQueryError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>
+export type CatalogControllerGetEventsQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
 
 
-export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params: undefined |  CatalogControllerGetEventsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof catalogControllerGetEvents>>,
@@ -1030,7 +993,7 @@ export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof 
       >, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof catalogControllerGetEvents>>,
@@ -1040,7 +1003,7 @@ export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof 
       >, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1048,7 +1011,7 @@ export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof 
  * @summary List events in the public catalog
  */
 
-export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1063,7 +1026,7 @@ export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof 
 /**
  * @summary List events in the public catalog
  */
-export const prefetchCatalogControllerGetEventsQuery = async <TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(
+export const prefetchCatalogControllerGetEventsQuery = async <TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  queryClient: QueryClient, params?: CatalogControllerGetEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
 
   ): Promise<QueryClient> => {
@@ -1148,7 +1111,7 @@ export const getCatalogControllerGetIndexQueryKey = (params?: CatalogControllerG
     }
 
 
-export const getCatalogControllerGetIndexQueryOptions = <TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<CatalogControllerGetIndex401 | CatalogControllerGetIndex403 | CatalogControllerGetIndex429 | SearchUnavailableEncoded>>(params?: CatalogControllerGetIndexParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+export const getCatalogControllerGetIndexQueryOptions = <TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(params?: CatalogControllerGetIndexParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1167,10 +1130,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CatalogControllerGetIndexQueryResult = NonNullable<Awaited<ReturnType<typeof catalogControllerGetIndex>>>
-export type CatalogControllerGetIndexQueryError = ErrorType<CatalogControllerGetIndex401 | CatalogControllerGetIndex403 | CatalogControllerGetIndex429 | SearchUnavailableEncoded>
+export type CatalogControllerGetIndexQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
 
 
-export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<CatalogControllerGetIndex401 | CatalogControllerGetIndex403 | CatalogControllerGetIndex429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params: undefined |  CatalogControllerGetIndexParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof catalogControllerGetIndex>>,
@@ -1180,7 +1143,7 @@ export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof c
       >, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<CatalogControllerGetIndex401 | CatalogControllerGetIndex403 | CatalogControllerGetIndex429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetIndexParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof catalogControllerGetIndex>>,
@@ -1190,7 +1153,7 @@ export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof c
       >, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<CatalogControllerGetIndex401 | CatalogControllerGetIndex403 | CatalogControllerGetIndex429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetIndexParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1198,7 +1161,7 @@ export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof c
  * @summary List every item and NPC in the public catalog
  */
 
-export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<CatalogControllerGetIndex401 | CatalogControllerGetIndex403 | CatalogControllerGetIndex429 | SearchUnavailableEncoded>>(
+export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  params?: CatalogControllerGetIndexParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1213,7 +1176,7 @@ export function useCatalogControllerGetIndex<TData = Awaited<ReturnType<typeof c
 /**
  * @summary List every item and NPC in the public catalog
  */
-export const prefetchCatalogControllerGetIndexQuery = async <TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<CatalogControllerGetIndex401 | CatalogControllerGetIndex403 | CatalogControllerGetIndex429 | SearchUnavailableEncoded>>(
+export const prefetchCatalogControllerGetIndexQuery = async <TData = Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  queryClient: QueryClient, params?: CatalogControllerGetIndexParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetIndex>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
 
   ): Promise<QueryClient> => {

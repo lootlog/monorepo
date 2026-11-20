@@ -67,18 +67,22 @@
               }
             }
           },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -88,13 +92,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -104,13 +102,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -120,7 +112,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -186,18 +178,68 @@
         ],
         "description": "Player search hit"
       },
-      "SearchUnavailableEncoded": {
+      "RequestValidationError": {
         "type": "object",
         "properties": {
-          "_tag": {
+          "code": {
             "type": "string",
-            "enum": ["SearchUnavailable"]
+            "enum": ["VALIDATION_ERROR"]
           },
           "message": {
             "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "properties": {
+              "issues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        ]
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path", "message"]
+                }
+              }
+            },
+            "required": ["issues"]
           }
         },
-        "required": ["_tag", "message"]
+        "required": ["code", "message", "details"]
+      },
+      "HttpErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "nullable": true,
+            "type": "string"
+          },
+          "details": {
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": ["code"]
       }
     }
   }

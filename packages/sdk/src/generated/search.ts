@@ -20,34 +20,45 @@ export interface PlayerHitDtoOutput {
   world: string;
 }
 
-export type _SearchUnavailableEncodedTag = typeof _SearchUnavailableEncodedTag[keyof typeof _SearchUnavailableEncodedTag];
+export type RequestValidationErrorCode = typeof RequestValidationErrorCode[keyof typeof RequestValidationErrorCode];
 
 
-export const _SearchUnavailableEncodedTag = {
-  SearchUnavailable: 'SearchUnavailable',
+export const RequestValidationErrorCode = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
 } as const;
 
-export interface SearchUnavailableEncoded {
-  _tag: _SearchUnavailableEncodedTag;
+export type RequestValidationErrorDetailsIssuesItem = {
+  path: (string | number)[];
   message: string;
+};
+
+export type RequestValidationErrorDetails = {
+  issues: RequestValidationErrorDetailsIssuesItem[];
+};
+
+export interface RequestValidationError {
+  code: RequestValidationErrorCode;
+  message: string;
+  details: RequestValidationErrorDetails;
+}
+
+/**
+ * @nullable
+ */
+export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
+
+export interface HttpErrorResponse {
+  code: string;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  details?: HttpErrorResponseDetails;
 }
 
 export type PlayersControllerGetPlayersParams = {
 limit?: number;
 search?: string | string[];
 world?: string;
-};
-
-export type PlayersControllerGetPlayers401 = {
-  message: string;
-};
-
-export type PlayersControllerGetPlayers403 = {
-  message: string;
-};
-
-export type PlayersControllerGetPlayers429 = {
-  message: string;
 };
 
 export const getPlayersControllerGetPlayersUrl = (params?: PlayersControllerGetPlayersParams,) => {

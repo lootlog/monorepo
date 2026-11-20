@@ -1,6 +1,6 @@
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { describe, expect, it } from "bun:test";
 import { Effect, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";

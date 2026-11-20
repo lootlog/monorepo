@@ -1,4 +1,4 @@
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { BearerSecurityPassthrough } from "@lootlog/protocol/http/bearer-security";
 import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";

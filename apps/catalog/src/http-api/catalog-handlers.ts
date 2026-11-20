@@ -1,4 +1,4 @@
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { Layer } from "effect";
 import { CatalogAccess } from "./catalog-access.js";
 import { CatalogHandlers as CatalogGroupHandlers } from "./handlers/catalog.handlers.js";

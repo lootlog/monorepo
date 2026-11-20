@@ -60,13 +60,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -78,13 +72,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -94,13 +82,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -340,13 +322,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -358,13 +334,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -374,13 +344,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -432,13 +396,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -450,13 +408,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -466,13 +418,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -606,13 +552,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -624,13 +564,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -650,13 +584,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -728,13 +656,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -746,13 +668,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -772,13 +688,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -984,13 +894,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -1002,13 +906,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -1028,13 +926,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -1243,13 +1135,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -1261,13 +1147,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -1287,13 +1167,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -1499,13 +1373,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -1517,13 +1385,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -1543,13 +1405,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -1755,13 +1611,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -1773,13 +1623,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -1799,13 +1643,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2011,13 +1849,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -2029,13 +1861,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2055,13 +1881,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2270,13 +2090,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -2288,13 +2102,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2314,13 +2122,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2529,13 +2331,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -2547,13 +2343,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2573,13 +2363,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2788,13 +2572,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -2806,13 +2584,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -2832,13 +2604,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3060,13 +2826,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3078,13 +2838,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3104,13 +2858,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3171,13 +2919,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3189,13 +2931,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3205,13 +2941,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3272,13 +3002,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3295,13 +3019,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3323,13 +3041,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3390,13 +3102,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3413,13 +3119,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3441,13 +3141,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3506,13 +3200,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3529,13 +3217,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3557,13 +3239,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3632,13 +3308,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3655,13 +3325,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3683,13 +3347,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3750,13 +3408,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3773,13 +3425,7 @@
                       "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["message"]
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     }
                   ]
                 }
@@ -3801,13 +3447,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3858,13 +3498,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3874,13 +3508,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3900,13 +3528,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3958,13 +3580,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -3974,13 +3590,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -4000,13 +3610,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -4058,13 +3662,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -4074,13 +3672,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -4100,13 +3692,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }

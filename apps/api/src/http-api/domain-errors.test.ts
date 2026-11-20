@@ -1,5 +1,5 @@
 import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import {
   createGuildFixture,
   createMemberFixture,

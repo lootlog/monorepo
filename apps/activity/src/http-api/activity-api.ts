@@ -1,4 +1,4 @@
-import { ApiKeyEndpointPolicy } from "@lootlog/schema/api-key-http";
+import { ApiKeyEndpointPolicy } from "@lootlog/protocol/http/api-key-http";
 import { SchemaErrorResponse } from "@lootlog/protocol/http/schema-error-response";
 import { UsersGroup } from "./contracts/users/api.js";
 /** Authoritative composition root for the activity HTTP contract. */

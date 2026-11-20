@@ -11,7 +11,7 @@ import {
 } from "../handlers/reservations/reservation-response.schema.js";
 import { decodeDomainJson } from "../domain-json.schema.js";
 import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
-import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { describe, expect, it } from "bun:test";
 import {
   Cause,

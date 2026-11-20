@@ -452,7 +452,7 @@ export class ApiKeyService extends Context.Service<
           if (!status.valid)
             return yield* new AuthenticationRequiredError("API key rejected");
 
-          const allowed = yield* rateLimits
+          const rateLimit = yield* rateLimits
             .consumeApiKeyRateLimit(keyId)
             .pipe(
               Effect.mapError(
@@ -463,7 +463,7 @@ export class ApiKeyService extends Context.Service<
               ),
             );
 
-          if (!allowed) {
+          if (!rateLimit.allowed) {
             yield* Effect.logWarning("API key rate limit exceeded", {
               context: "ApiKeyService",
               code: "RATE_LIMITED",
@@ -472,7 +472,10 @@ export class ApiKeyService extends Context.Service<
               discordId: status.discordId,
             });
 
-            return yield* new RateLimitedError("API key rejected");
+            return yield* new RateLimitedError({
+              message: "API key rejected",
+              retryAfterMs: rateLimit.retryAfterMs,
+            });
           }
 
           return {

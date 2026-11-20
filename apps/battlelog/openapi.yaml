@@ -25,34 +25,19 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Check the health status of the API
       summary: Health check
   /battles:
@@ -85,34 +70,19 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
@@ -266,34 +236,19 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get authenticated user battles
   /battles/@me/characters:
     get:
@@ -323,34 +278,19 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get authenticated user battle characters
   /battles/@me/analytics:
     get:
@@ -439,23 +379,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
@@ -467,12 +397,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get authenticated user battle analytics
   /battles/@me/abyss/seasons:
     get:
@@ -514,23 +439,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
@@ -542,12 +457,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get authenticated user Abyss seasons
   /battles/@me/statistics/combat-profile:
     get:
@@ -688,23 +598,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
@@ -716,12 +616,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get combat profile statistics
   /battles/@me/statistics/profession-win-rate:
     get:
@@ -864,23 +759,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
@@ -892,12 +777,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get profession win rate statistics
   /battles/@me/statistics/head-to-head:
     get:
@@ -1038,23 +918,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
@@ -1066,12 +936,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get head-to-head statistics
   /battles/@me/statistics/streak:
     get:
@@ -1212,23 +1077,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
@@ -1240,12 +1095,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get current battle streak statistics
   /battles/@me/statistics/duration:
     get:
@@ -1386,23 +1236,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
@@ -1414,12 +1254,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get battle duration statistics
   /battles/@me/statistics/ph-growth:
     get:
@@ -1562,23 +1397,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
@@ -1590,12 +1415,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get PH growth statistics
   /battles/@me/statistics/rating-growth:
     get:
@@ -1738,23 +1558,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
@@ -1766,12 +1576,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get rating growth statistics
   /battles/@me/statistics/rating-delta-by-opponent:
     get:
@@ -1914,23 +1719,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
@@ -1942,12 +1737,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get rating delta by opponent statistics
   /battles/@me/statistics/player-vs-player:
     get:
@@ -2098,23 +1888,13 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
@@ -2126,12 +1906,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get player-vs-player battles
   /battles/@me/warriors/search:
     get:
@@ -2166,34 +1941,19 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Search warriors for authenticated user
   /battles/{battleId}/timeline:
     get:
@@ -2228,12 +1988,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -2241,12 +1996,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: Battle not found
           content:
@@ -2258,12 +2008,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get computed battle timeline
   /battles/{battleId}:
     get:
@@ -2298,12 +2043,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -2311,12 +2051,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: Battle not found
           content:
@@ -2328,12 +2063,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get a single battle
     patch:
       tags:
@@ -2367,12 +2097,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -2380,12 +2105,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: Battle not found
           content:
@@ -2397,12 +2117,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Update battle visibility
       requestBody:
         content:
@@ -2442,12 +2157,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -2455,12 +2165,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: Battle not found
           content:
@@ -2472,12 +2177,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Delete a battle
   /battles/{battleId}/raw:
     get:
@@ -2512,12 +2212,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
@@ -2525,12 +2220,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: Battle not found
           content:
@@ -2542,12 +2232,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get raw battle payload
   /weapon-kills:
     post:
@@ -2577,34 +2262,19 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. A resubmitted log counts once.
       summary: Record finishing blows dealt with a weapon
       requestBody:
@@ -2651,34 +2321,19 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get the weapon kill counters of a character
   /battles/public/{battleId}:
     get:
@@ -2709,23 +2364,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: Public battle not found
           content:
@@ -2737,12 +2382,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get a public battle
   /battles/public/{battleId}/raw:
     get:
@@ -2773,23 +2413,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: Public battle not found
           content:
@@ -2801,12 +2431,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get raw payload for a public battle
   /battles/public/{battleId}/timeline:
     get:
@@ -2837,23 +2462,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: Public battle not found
           content:
@@ -2865,12 +2480,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get computed timeline for a public battle
   /internal/delete-user-data:
     post:
@@ -2903,34 +2513,19 @@ paths:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                    required:
-                      - message
+                  - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Internal API caller only. Requires the BATTLELOG_CLEANUP_SECRET bearer credential; user sessions and forwarded identity headers do not authorize this operation.
       summary: Queue battle data deletion for a user
       requestBody:

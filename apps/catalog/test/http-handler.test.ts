@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { SearchOperationFailure } from "@lootlog/meilisearch/operation-failure";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
-import { Context, Effect, Layer, Predicate, Redacted } from "effect";
+import { Context, Effect, Layer, Redacted } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import { CatalogConfig } from "../src/config/catalog-config.js";
 import { CATALOG_SERVICE_TOKEN_HEADER } from "@lootlog/protocol/http/catalog-access";
@@ -104,9 +104,10 @@ test("a search outage is an explicit unavailable response, not an empty success"
     const response = await boundary.handler("/catalog/items");
 
     expect(response.status).toBe(503);
-    expect(Predicate.isTagged("SearchUnavailable")(await response.json())).toBe(
-      true,
-    );
+    expect(await response.json()).toEqual({
+      code: "SERVICE_UNAVAILABLE",
+      message: "Service unavailable",
+    });
   } finally {
     await boundary.dispose();
   }

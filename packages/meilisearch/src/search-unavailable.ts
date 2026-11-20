@@ -1,18 +1,20 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Effect, Schema } from "effect";
+import {
+  applicationErrorHttpResponse,
+  DependencyUnavailableError,
+  HttpErrorResponse,
+} from "@lootlog/protocol/http/errors";
+import { Effect } from "effect";
+import { HttpApiSchema } from "effect/http-api";
 
-export class SearchUnavailable extends TaggedErrorClass<SearchUnavailable>()(
-  "SearchUnavailable",
-  { message: Schema.String },
-) {}
+/** The `503` a search operation answers when the search engine fails. */
+export const SearchUnavailable = HttpErrorResponse.pipe(
+  HttpApiSchema.status(503),
+);
 
 /** A failed search is an explicit unavailable response, not an empty success. */
 export const runSearchOperation = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  effect.pipe(
-    Effect.mapError(
-      () =>
-        new SearchUnavailable({
-          message: "Wyszukiwarka jest chwilowo niedostępna.",
-        }),
+  Effect.catch(effect, () =>
+    applicationErrorHttpResponse(
+      new DependencyUnavailableError("Search unavailable"),
     ),
   );

@@ -3,10 +3,10 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
-## 2026-11-20 — One error body in Battlelog and Activity (breaking)
+## 2026-11-20 — One error body in every service (breaking)
 
-Battlelog and Activity operations now fail the same way as the main API, as
-described in [errors and limits](/docs/errors).
+Battlelog, Activity, Catalog and Search operations now fail the same way as
+the main API, as described in [errors and limits](/docs/errors).
 
 - Error bodies are `{ code, message?, details? }` instead of
   `{ error, message, statusCode }` in Battlelog and `{ message, statusCode }`
@@ -25,7 +25,14 @@ described in [errors and limits](/docs/errors).
   instead of `{ message }`. The `message` is unchanged, and `code` names the
   reason, such as `API_KEY_LIMIT_REACHED` (`409`) or `SESSION_REQUIRED`
   (`401`). A request rejected for its API key, including one over the key's
-  rate limit (`429`, `RATE_LIMITED`), carries this body too.
+  rate limit (`429`, `RATE_LIMITED`), carries this body too, and that `429`
+  sends `Retry-After` with the seconds left in the key's window.
+- A request whose API key does not allow the operation is a `403` with code
+  `API_KEY_ACCESS_DENIED` in every service, instead of `{ message }`.
+- Catalog and Search answer a search engine outage with `503` and code
+  `SERVICE_UNAVAILABLE` instead of `{ _tag: "SearchUnavailable", message }`,
+  and a request to Catalog without a signed-in user, API key or service token
+  with `401` and code `AUTHENTICATION_REQUIRED`.
 - Responses carry only the fields their reference declares. An Activity entry
   no longer returns `actorSnapshotId`, `idempotencyKey` or the actor's
   `fingerprint`, and `GET /battles/{battleId}/raw` no longer returns

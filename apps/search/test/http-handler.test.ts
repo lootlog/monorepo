@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { SearchOperationFailure } from "@lootlog/meilisearch/operation-failure";
-import { Context, Effect, Layer, Predicate } from "effect";
+import { Context, Effect, Layer } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import {
   SearchOperations,
@@ -55,9 +55,10 @@ test("a search outage is an explicit unavailable response, not an empty success"
     );
 
     expect(response.status).toBe(503);
-    expect(Predicate.isTagged("SearchUnavailable")(await response.json())).toBe(
-      true,
-    );
+    expect(await response.json()).toEqual({
+      code: "SERVICE_UNAVAILABLE",
+      message: "Service unavailable",
+    });
   } finally {
     await boundary.dispose();
   }

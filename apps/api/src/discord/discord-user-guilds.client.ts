@@ -420,43 +420,46 @@ export const makeDiscordUserGuildsClient = (dependencies: {
   };
 
   // Concurrent callers in this process share one lookup, which keeps running
-  // when a caller is interrupted.
+  // when a caller is interrupted. Registering the request and forking its
+  // lookup is uninterruptible, and the lookup settles the request on every
+  // exit, so an interrupted caller cannot leave an unresolved request behind.
   const fetchCompleteUserGuildsOnce = (
     identity: UserIdentity,
     maxAgeMs: number,
   ) =>
-    Effect.suspend(() => {
-      // A fresh caller must not reuse a lookup that accepts a cached list.
-      const requestKey = `${getCompleteUserGuildsRequestKey(identity)}:${maxAgeMs}`;
-      const inFlightRequest = completeUserGuildRequests.get(requestKey);
+    Effect.uninterruptibleMask((restore) =>
+      Effect.suspend(() => {
+        // A fresh caller must not reuse a lookup that accepts a cached list.
+        const requestKey = `${getCompleteUserGuildsRequestKey(identity)}:${maxAgeMs}`;
+        const inFlightRequest = completeUserGuildRequests.get(requestKey);
 
-      if (inFlightRequest) {
-        return Deferred.await(inFlightRequest);
-      }
+        if (inFlightRequest) {
+          return restore(Deferred.await(inFlightRequest));
+        }
 
-      const request = Deferred.makeUnsafe<
-        CompleteUserGuildsEntry,
-        DiscordGuildsError
-      >();
+        const request = Deferred.makeUnsafe<
+          CompleteUserGuildsEntry,
+          DiscordGuildsError
+        >();
 
-      completeUserGuildRequests.set(requestKey, request);
+        completeUserGuildRequests.set(requestKey, request);
 
-      return fetchCompleteUserGuildsWithDistributedSingleFlight(
-        identity,
-        maxAgeMs,
-      ).pipe(
-        Effect.exit,
-        Effect.flatMap((exit) =>
-          Effect.sync(() => {
-            if (completeUserGuildRequests.get(requestKey) === request) {
-              completeUserGuildRequests.delete(requestKey);
-            }
-          }).pipe(Effect.andThen(Deferred.done(request, exit))),
-        ),
-        Effect.forkDetach,
-        Effect.andThen(Deferred.await(request)),
-      );
-    });
+        return fetchCompleteUserGuildsWithDistributedSingleFlight(
+          identity,
+          maxAgeMs,
+        ).pipe(
+          Effect.onExit((exit) =>
+            Effect.sync(() => {
+              if (completeUserGuildRequests.get(requestKey) === request) {
+                completeUserGuildRequests.delete(requestKey);
+              }
+            }).pipe(Effect.andThen(Deferred.done(request, exit))),
+          ),
+          Effect.forkDetach,
+          Effect.andThen(restore(Deferred.await(request))),
+        );
+      }),
+    );
 
   const refreshStaleCompleteUserGuilds = (
     identity: UserIdentity,

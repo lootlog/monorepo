@@ -382,28 +382,32 @@ export const makeRedisService = (
           ),
         { concurrency: "unbounded", discard: true },
       ),
-    scan: (pattern) => {
-      const keys: string[] = [];
+    // Accumulators are created per run so a retried or repeated effect starts
+    // from empty.
+    scan: (pattern) =>
+      Effect.suspend(() => {
+        const keys: string[] = [];
 
-      return forEachScanBatch(pattern, (matchedKeys) =>
-        Effect.sync(() => {
-          keys.push(...matchedKeys);
-        }),
-      ).pipe(Effect.map(() => keys.map(unprefixKey)));
-    },
-    deleteByPattern: (pattern, batchSize = DEFAULT_DELETE_BATCH_SIZE) => {
-      let deletedCount = 0;
+        return forEachScanBatch(pattern, (matchedKeys) =>
+          Effect.sync(() => {
+            keys.push(...matchedKeys);
+          }),
+        ).pipe(Effect.map(() => keys.map(unprefixKey)));
+      }),
+    deleteByPattern: (pattern, batchSize = DEFAULT_DELETE_BATCH_SIZE) =>
+      Effect.suspend(() => {
+        let deletedCount = 0;
 
-      return forEachScanBatch(pattern, (matchedKeys) =>
-        Effect.forEach(chunk(matchedKeys, batchSize), (batch) =>
-          send<number>("DEL", ...batch).pipe(
-            Effect.map((deleted) => {
-              deletedCount += deleted;
-            }),
-          ),
-        ).pipe(Effect.asVoid),
-      ).pipe(Effect.map(() => deletedCount));
-    },
+        return forEachScanBatch(pattern, (matchedKeys) =>
+          Effect.forEach(chunk(matchedKeys, batchSize), (batch) =>
+            send<number>("DEL", ...batch).pipe(
+              Effect.map((deleted) => {
+                deletedCount += deleted;
+              }),
+            ),
+          ).pipe(Effect.asVoid),
+        ).pipe(Effect.map(() => deletedCount));
+      }),
     rpush: (key, ...values) => send("RPUSH", prefixKey(key), ...values),
     ltrim: (key, start, stop) =>
       send("LTRIM", prefixKey(key), String(start), String(stop)),
