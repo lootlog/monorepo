@@ -16,7 +16,8 @@ description: Handle rejected requests, read paginated lists and stay within rate
 
 ## Error body
 
-Most `4xx` and `5xx` responses of the main API have this JSON body:
+Most `4xx` and `5xx` responses of every Lootlog service, including the main
+API, Battlelog and Activity, have this JSON body:
 
 ```json
 { "code": "RESERVATION_OVERLAP", "message": "optional text", "details": {} }
@@ -33,8 +34,10 @@ Most `4xx` and `5xx` responses of the main API have this JSON body:
 
 Many `403` and `429` responses carry only `{ "message": "..." }`, and the
 reference shows which body each operation returns. Branch on the status first
-and on `code` only when it is present. A `401` that asks the user to sign in
-again carries `requiresReauth: true` next to its `code`.
+and on `code` only when it is present. A `401` from the main API that asks the
+user to sign in again carries `requiresReauth: true` next to its `code`. A
+`503` carries `"Service unavailable"` as its `message`; the reason is in
+`code`. An unexpected `500` may have no body.
 
 ## Pages
 

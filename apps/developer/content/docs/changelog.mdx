@@ -3,6 +3,30 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-20 — One error body in Battlelog and Activity (breaking)
+
+Battlelog and Activity operations now fail the same way as the main API, as
+described in [errors and limits](/docs/errors).
+
+- Error bodies are `{ code, message?, details? }` instead of
+  `{ error, message, statusCode }` in Battlelog and `{ message, statusCode }`
+  in Activity. Read the status from the response and the reason from `code`:
+  `INVALID_REQUEST` (`400`), `AUTHENTICATION_REQUIRED` (`401`), `FORBIDDEN`
+  (`403`), `NOT_FOUND` (`404`) or `SERVICE_UNAVAILABLE` (`503`).
+- A body, query or path parameter that does not match the operation's schema,
+  and a body that is not valid JSON, is a `400` with code `VALIDATION_ERROR`
+  and the rejected fields in `details.issues`. Battlelog sent these issues as
+  an array in `message`.
+- A `404` has the error body where the reference declared an empty response,
+  and the reference now lists every status each operation returns.
+- A `503` carries `"Service unavailable"` as its `message`, and an unexpected
+  `500` has no body.
+- Responses carry only the fields their reference declares. An Activity entry
+  no longer returns `actorSnapshotId`, `idempotencyKey` or the actor's
+  `fingerprint`, and `GET /battles/{battleId}/raw` no longer returns
+  `rawData.submissionId` or `rawData.matchmaking`, as
+  `GET /battles/public/{battleId}/raw` already did not.
+
 ## 2026-11-18 — Member profiles
 
 - A Member's `avatar` is the hash of the user's own avatar or, for a member
