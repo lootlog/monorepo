@@ -119,6 +119,7 @@
     "env:generate": "turbo run env:generate",
     "events": "turbo run events --filter=@lootlog/cli",
     "events:publish": "turbo run events:publish --filter=@lootlog/cli",
+    "repos:fetch": "bun scripts/fetch-reference-repositories.ts",
     "prepare": "bun -e 'if (process.env.NODE_ENV !== \"production\" && process.env.HUSKY !== \"0\") { const { default: husky } = await import(\"husky\"); const message = husky(); if (message.length > 0) console.log(message); }'"
   },
   "devDependencies": {

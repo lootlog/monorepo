@@ -39,40 +39,18 @@ npm-debug.log*
 *.pem
 
 .claude/settings.local.json
-analysis
-improvements
-improvements/**
 .playwright-mcp
 .playwright-cli
-example-data/**
-example-data
-
-# Gemini
-GEMINI.md
-
-prompts
-prompts/**
-
-apps/api/scripts/**
+.codex
+.superpowers/
 
 # Profiles & Performance
-apps/api/profiles/
 /artifacts/game-client/
 perf/
-
-.codex
 playground
-playground/**
 
-# Local planning and agent session documents
-/docs/*
-!/docs/adr/
-!/docs/adr/**
-!/docs/product-evidence.md
-!/docs/ci-cd.md
-!/docs/rewrite/
-!/docs/rewrite/**
-.superpowers/
+# Reference repositories fetched by `bun run repos:fetch`
+/repos/
 
 # Browser extension build artifacts
 /apps/game-client/.wxt/
