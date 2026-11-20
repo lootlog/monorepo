@@ -1,13 +1,8 @@
 import { ONLINE_HISTORY_RETENTION_DAYS } from "#src/online/online-retention";
-import { Schema } from "effect";
-import {
-  HttpApiEndpoint,
-  HttpApiGroup,
-  HttpApiSchema,
-  OpenApi,
-} from "effect/http-api";
+import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import { BearerSecurityMiddleware } from "@lootlog/protocol/http/bearer-security";
 import { UserOnlineQuery, UserOnlineResponse } from "./schemas.js";
+import { Unauthorized } from "../shared.js";
 
 export class UsersGroup extends HttpApiGroup.make("users").add(
   HttpApiEndpoint.get(
@@ -16,10 +11,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     {
       query: UserOnlineQuery,
       success: UserOnlineResponse,
-      error: Schema.Struct({
-        message: Schema.String,
-        statusCode: Schema.Literal(401),
-      }).pipe(HttpApiSchema.status(401)),
+      error: Unauthorized,
     },
   )
     .middleware(BearerSecurityMiddleware)

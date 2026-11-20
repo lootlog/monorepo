@@ -5,7 +5,6 @@ import {
 } from "@lootlog/schema/api-key-policy";
 import { BearerSecurityPassthrough } from "@lootlog/protocol/http/bearer-security";
 import { OnlineRepository } from "#src/online/online-repository";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   serviceApiRoutes,
   serviceHttpServer,
@@ -19,23 +18,39 @@ import {
   Context,
   Effect,
   Fiber,
-  Function,
   Layer,
   Option,
   Schema,
   Semaphore,
 } from "effect";
-import { HttpServerRequest, HttpServerResponse } from "effect/http";
+import { HttpServerRequest } from "effect/http";
+import {
+  AuthenticationRequiredError,
+  DependencyUnavailableError,
+  PermissionDeniedError,
+  ResourceNotFoundError,
+  applicationErrorHttpResponse,
+} from "@lootlog/protocol/http/errors";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
 import { HttpApiBuilder } from "effect/http-api";
 import { SqlClient } from "effect/sql";
-import { ActivityRepository } from "#src/activities/activity-repository";
+import {
+  ActivityNotFound,
+  ActivityRepository,
+  type ActivityRecord,
+  type MemberActivityStatsRecord,
+} from "#src/activities/activity-repository";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ActivityApi } from "#src/http-api/activity-api";
 import type {
   ReadyzControllerCheck200,
   ReadyzControllerCheck503,
 } from "#src/http-api/contracts/health/schemas";
-import type { ActivitiesControllerFindByGuildQuery } from "#src/http-api/contracts/guilds/schemas";
+import type {
+  ActivitiesControllerFindByGuildQuery,
+  ActivitiesControllerFindOne200,
+  ActivitiesControllerGetMemberActivityStats200,
+} from "#src/http-api/contracts/guilds/schemas";
 import { Permissions } from "#src/activities/activity-permissions";
 
 export interface ActivityReadinessValue {
@@ -97,17 +112,6 @@ export class ActivityReadiness extends Context.Service<
   );
 }
 
-class ActivityHttpFailure extends TaggedErrorClass<ActivityHttpFailure>()(
-  "ActivityHttpFailure",
-  {
-    status: Schema.Literals([401, 403, 404, 500, 503]),
-    message: Schema.String,
-  },
-) {}
-
-const fail = (status: 401 | 403 | 404 | 500, message: string) =>
-  Effect.fail(new ActivityHttpFailure({ status, message }));
-
 const authorize = Effect.fn("Activity.authorize")(function* (
   guildIdentifier: string,
   required: PermissionValue,
@@ -116,7 +120,7 @@ const authorize = Effect.fn("Activity.authorize")(function* (
   const permissions = yield* Permissions;
   const identity = readForwardAuthIdentity(request.headers);
 
-  if (!identity) return yield* fail(401, "Unauthorized");
+  if (!identity) return yield* new AuthenticationRequiredError();
 
   // The grants do not depend on the guild, so both reads start together.
   const [guildId, capabilitiesFor] = yield* Effect.all(
@@ -127,53 +131,39 @@ const authorize = Effect.fn("Activity.authorize")(function* (
     { concurrency: "unbounded" },
   ).pipe(
     Effect.mapError(
-      () =>
-        new ActivityHttpFailure({
-          status: 503,
-          message: "Authorization service unavailable",
-        }),
+      () => new DependencyUnavailableError("Authorization service unavailable"),
     ),
   );
 
-  if (!guildId) return yield* fail(403, "Insufficient permissions");
+  const insufficientPermissions = new PermissionDeniedError(
+    "Insufficient permissions",
+  );
+
+  if (!guildId) return yield* insufficientPermissions;
 
   if (!apiKeyAllowsOrganization(identity.apiKey, guildId))
-    return yield* fail(403, "Insufficient permissions");
+    return yield* insufficientPermissions;
 
   const capabilities = capabilitiesFor(guildId);
 
   if (!createAccessPolicy({ capabilities }).allows(required)) {
-    return yield* fail(403, "Insufficient permissions");
+    return yield* insufficientPermissions;
   }
 
   return guildId;
 });
 
-const repositoryFailure = Function.compose(
-  Schema.is(Schema.Struct({ _tag: Schema.Literal("ActivityNotFound") })),
-  (notFound) =>
-    notFound
-      ? new ActivityHttpFailure({ status: 404, message: "Activity not found" })
-      : new ActivityHttpFailure({
-          status: 500,
-          message: "Internal server error",
-        }),
-);
-
-const jsonOperation = <A, R>(effect: Effect.Effect<A, unknown, R>) =>
-  effect.pipe(
-    Effect.map((value) => HttpServerResponse.jsonUnsafe(value)),
-    Effect.catch((error) => {
-      const failure =
-        error instanceof ActivityHttpFailure ? error : repositoryFailure(error);
-
-      return Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { message: failure.message, statusCode: failure.status },
-          { status: failure.status },
-        ),
-      );
-    }),
+/**
+ * Answers an application failure with its declared status and the shared error
+ * body. A repository failure is a defect the server logs and answers with 500.
+ */
+const respond = <A, R>(effect: Effect.Effect<A, unknown, R>) =>
+  Effect.catch(effect, (error) =>
+    applicationErrorHttpResponse(
+      Schema.is(ActivityNotFound)(error)
+        ? new ResourceNotFoundError("Activity not found")
+        : error,
+    ),
   );
 
 const activityQuery = (
@@ -187,15 +177,59 @@ const activityQuery = (
   guildId,
 });
 
+const activityResponse = ({
+  details,
+  actorSnapshot,
+  ...activity
+}: ActivityRecord): ActivitiesControllerFindOne200 => ({
+  id: activity.id,
+  userId: activity.userId,
+  guildId: activity.guildId,
+  discordId: activity.discordId,
+  type: activity.type,
+  source: activity.source,
+  createdAt: activity.createdAt.toISOString(),
+  world: activity.world,
+  ...(details && { details }),
+  ...(actorSnapshot && {
+    actorSnapshot: {
+      id: actorSnapshot.id,
+      accountId: actorSnapshot.accountId,
+      characterId: actorSnapshot.characterId,
+      name: actorSnapshot.name,
+      clanName: actorSnapshot.clanName,
+      clanId: actorSnapshot.clanId,
+      icon: actorSnapshot.icon,
+      lvl: actorSnapshot.lvl,
+      prof: actorSnapshot.prof,
+      source: actorSnapshot.source,
+      createdAt: actorSnapshot.createdAt.toISOString(),
+    },
+  }),
+});
+
+const memberActivityStatsResponse = (
+  stats: MemberActivityStatsRecord,
+): ActivitiesControllerGetMemberActivityStats200[number] => ({
+  guildId: stats.guildId,
+  discordId: stats.discordId,
+  source: stats.source,
+  lastSeenAt: stats.lastSeenAt?.toISOString() ?? null,
+  visitCount: stats.visitCount,
+  activeSessionCount: stats.activeSessionCount,
+  createdAt: stats.createdAt.toISOString(),
+  updatedAt: stats.updatedAt.toISOString(),
+});
+
 const ActivityHandlers = Layer.mergeAll(
   HttpApiBuilder.group(ActivityApi, "users", (handlers) =>
-    handlers.handleRaw("UsersActivityControllerGetOnline", ({ query }) =>
-      jsonOperation(
+    handlers.handle("UsersActivityControllerGetOnline", ({ query }) =>
+      respond(
         Effect.gen(function* () {
           const request = yield* HttpServerRequest.HttpServerRequest;
           const identity = readForwardAuthIdentity(request.headers);
 
-          if (!identity) return yield* fail(401, "Unauthorized");
+          if (!identity) return yield* new AuthenticationRequiredError();
           const repository = yield* OnlineRepository;
 
           return yield* repository.find(identity.userId, query);
@@ -205,41 +239,45 @@ const ActivityHandlers = Layer.mergeAll(
   ),
   HttpApiBuilder.group(ActivityApi, "health", (handlers) =>
     handlers
-      .handleRaw("HealthzControllerCheck", () =>
-        Effect.succeed(
-          HttpServerResponse.jsonUnsafe({
-            status: "ok",
-            info: { process: { status: "up" } },
-            error: null,
-            details: { process: { status: "up" } },
-          }),
-        ),
+      .handle("HealthzControllerCheck", () =>
+        Effect.succeed({
+          status: "ok",
+          info: { process: { status: "up" } },
+          error: null,
+          details: { process: { status: "up" } },
+        }),
       )
-      .handleRaw("ReadyzControllerCheck", () =>
+      .handle("ReadyzControllerCheck", () =>
         Effect.gen(function* () {
           const readiness = yield* ActivityReadiness;
           const result = yield* readiness.check();
 
-          return HttpServerResponse.jsonUnsafe(result, {
-            status: result.status === "ok" ? 200 : 503,
-          });
+          return result.status === "ok" ? result : yield* Effect.fail(result);
         }),
       ),
   ),
   HttpApiBuilder.group(ActivityApi, "guilds", (handlers) =>
     handlers
-      .handleRaw("ActivitiesControllerFindByGuild", ({ params, query }) =>
-        jsonOperation(
+      .handle("ActivitiesControllerFindByGuild", ({ params, query }) =>
+        respond(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
 
-            return yield* repository.findMany(activityQuery(query, guildId));
+            const page = yield* repository.findMany(
+              activityQuery(query, guildId),
+            );
+
+            return {
+              data: page.data.map(activityResponse),
+              ...(page.nextCursor && { nextCursor: page.nextCursor }),
+              hasMore: page.hasMore,
+            };
           }),
         ),
       )
-      .handleRaw("ActivitiesControllerSuggestActorNames", ({ params, query }) =>
-        jsonOperation(
+      .handle("ActivitiesControllerSuggestActorNames", ({ params, query }) =>
+        respond(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
@@ -254,8 +292,8 @@ const ActivityHandlers = Layer.mergeAll(
           }),
         ),
       )
-      .handleRaw("ActivitiesControllerSuggestWorlds", ({ params, query }) =>
-        jsonOperation(
+      .handle("ActivitiesControllerSuggestWorlds", ({ params, query }) =>
+        respond(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
@@ -270,8 +308,8 @@ const ActivityHandlers = Layer.mergeAll(
           }),
         ),
       )
-      .handleRaw("ActivitiesControllerSuggestClanNames", ({ params, query }) =>
-        jsonOperation(
+      .handle("ActivitiesControllerSuggestClanNames", ({ params, query }) =>
+        respond(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
@@ -286,28 +324,32 @@ const ActivityHandlers = Layer.mergeAll(
           }),
         ),
       )
-      .handleRaw("ActivitiesControllerGetMemberActivityStats", ({ params }) =>
-        jsonOperation(
+      .handle("ActivitiesControllerGetMemberActivityStats", ({ params }) =>
+        respond(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
 
-            return yield* repository.memberStats(guildId);
+            const stats = yield* repository.memberStats(guildId);
+
+            return stats.map(memberActivityStatsResponse);
           }),
         ),
       )
-      .handleRaw("ActivitiesControllerFindOne", ({ params }) =>
-        jsonOperation(
+      .handle("ActivitiesControllerFindOne", ({ params }) =>
+        respond(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
 
-            return yield* repository.findOne(params.id, guildId);
+            return activityResponse(
+              yield* repository.findOne(params.id, guildId),
+            );
           }),
         ),
       )
-      .handleRaw("ActivitiesControllerDeleteActivity", ({ params }) =>
-        jsonOperation(
+      .handle("ActivitiesControllerDeleteActivity", ({ params }) =>
+        respond(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.OWNER);
             const repository = yield* ActivityRepository;
@@ -330,7 +372,10 @@ const ActivityHandlers = Layer.mergeAll(
 
 export const ActivityRoutes = serviceApiRoutes(ActivityApi, {
   documentation: new URL("../../openapi.yaml", import.meta.url),
-}).pipe(Layer.provide(ActivityHandlers));
+}).pipe(
+  Layer.provide(ActivityHandlers),
+  Layer.provide(SchemaErrorResponseLive),
+);
 
 export const ActivityHttpServer = Layer.unwrap(
   Effect.map(ActivityConfig, ({ port }) =>

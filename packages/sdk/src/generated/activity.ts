@@ -70,6 +70,41 @@ export interface PaginatedActivitiesResponseDto {
   hasMore: boolean;
 }
 
+export type RequestValidationErrorCode = typeof RequestValidationErrorCode[keyof typeof RequestValidationErrorCode];
+
+
+export const RequestValidationErrorCode = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+} as const;
+
+export type RequestValidationErrorDetailsIssuesItem = {
+  path: (string | number)[];
+  message: string;
+};
+
+export type RequestValidationErrorDetails = {
+  issues: RequestValidationErrorDetailsIssuesItem[];
+};
+
+export interface RequestValidationError {
+  code: RequestValidationErrorCode;
+  message: string;
+  details: RequestValidationErrorDetails;
+}
+
+/**
+ * @nullable
+ */
+export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
+
+export interface HttpErrorResponse {
+  code: string;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  details?: HttpErrorResponseDetails;
+}
+
 export interface ActorNameSuggestionsResponseDtoOutput {
   suggestions: string[];
 }
@@ -254,28 +289,16 @@ export const ActivitiesControllerFindByGuildSourceItem = {
   WEB_APP: 'WEB_APP',
 } as const;
 
-export type ActivitiesControllerFindByGuild401 = {
+export type ActivitiesControllerFindByGuild401 = HttpErrorResponse | {
   message: string;
 };
 
-export type ActivitiesControllerFindByGuild403 = {
+export type ActivitiesControllerFindByGuild403 = HttpErrorResponse | {
   message: string;
 };
 
 export type ActivitiesControllerFindByGuild429 = {
   message: string;
-};
-
-export type ActivitiesControllerFindByGuild503StatusCode = typeof ActivitiesControllerFindByGuild503StatusCode[keyof typeof ActivitiesControllerFindByGuild503StatusCode];
-
-
-export const ActivitiesControllerFindByGuild503StatusCode = {
-  NUMBER_503: 503,
-} as const;
-
-export type ActivitiesControllerFindByGuild503 = {
-  message: string;
-  statusCode: ActivitiesControllerFindByGuild503StatusCode;
 };
 
 export type ActivitiesControllerSuggestActorNamesPathParameters = {
@@ -293,28 +316,16 @@ search?: string;
 limit?: number;
 };
 
-export type ActivitiesControllerSuggestActorNames401 = {
+export type ActivitiesControllerSuggestActorNames401 = HttpErrorResponse | {
   message: string;
 };
 
-export type ActivitiesControllerSuggestActorNames403 = {
+export type ActivitiesControllerSuggestActorNames403 = HttpErrorResponse | {
   message: string;
 };
 
 export type ActivitiesControllerSuggestActorNames429 = {
   message: string;
-};
-
-export type ActivitiesControllerSuggestActorNames503StatusCode = typeof ActivitiesControllerSuggestActorNames503StatusCode[keyof typeof ActivitiesControllerSuggestActorNames503StatusCode];
-
-
-export const ActivitiesControllerSuggestActorNames503StatusCode = {
-  NUMBER_503: 503,
-} as const;
-
-export type ActivitiesControllerSuggestActorNames503 = {
-  message: string;
-  statusCode: ActivitiesControllerSuggestActorNames503StatusCode;
 };
 
 export type ActivitiesControllerSuggestWorldsPathParameters = {
@@ -332,28 +343,16 @@ search?: string;
 limit?: number;
 };
 
-export type ActivitiesControllerSuggestWorlds401 = {
+export type ActivitiesControllerSuggestWorlds401 = HttpErrorResponse | {
   message: string;
 };
 
-export type ActivitiesControllerSuggestWorlds403 = {
+export type ActivitiesControllerSuggestWorlds403 = HttpErrorResponse | {
   message: string;
 };
 
 export type ActivitiesControllerSuggestWorlds429 = {
   message: string;
-};
-
-export type ActivitiesControllerSuggestWorlds503StatusCode = typeof ActivitiesControllerSuggestWorlds503StatusCode[keyof typeof ActivitiesControllerSuggestWorlds503StatusCode];
-
-
-export const ActivitiesControllerSuggestWorlds503StatusCode = {
-  NUMBER_503: 503,
-} as const;
-
-export type ActivitiesControllerSuggestWorlds503 = {
-  message: string;
-  statusCode: ActivitiesControllerSuggestWorlds503StatusCode;
 };
 
 export type ActivitiesControllerSuggestClanNamesPathParameters = {
@@ -371,11 +370,11 @@ search?: string;
 limit?: number;
 };
 
-export type ActivitiesControllerSuggestClanNames401 = {
+export type ActivitiesControllerSuggestClanNames401 = HttpErrorResponse | {
   message: string;
 };
 
-export type ActivitiesControllerSuggestClanNames403 = {
+export type ActivitiesControllerSuggestClanNames403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -383,26 +382,14 @@ export type ActivitiesControllerSuggestClanNames429 = {
   message: string;
 };
 
-export type ActivitiesControllerSuggestClanNames503StatusCode = typeof ActivitiesControllerSuggestClanNames503StatusCode[keyof typeof ActivitiesControllerSuggestClanNames503StatusCode];
-
-
-export const ActivitiesControllerSuggestClanNames503StatusCode = {
-  NUMBER_503: 503,
-} as const;
-
-export type ActivitiesControllerSuggestClanNames503 = {
-  message: string;
-  statusCode: ActivitiesControllerSuggestClanNames503StatusCode;
-};
-
 export type ActivitiesControllerGetMemberActivityStatsPathParameters = {
  guildId: string,
  }
-export type ActivitiesControllerGetMemberActivityStats401 = {
+export type ActivitiesControllerGetMemberActivityStats401 = HttpErrorResponse | {
   message: string;
 };
 
-export type ActivitiesControllerGetMemberActivityStats403 = {
+export type ActivitiesControllerGetMemberActivityStats403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -410,27 +397,15 @@ export type ActivitiesControllerGetMemberActivityStats429 = {
   message: string;
 };
 
-export type ActivitiesControllerGetMemberActivityStats503StatusCode = typeof ActivitiesControllerGetMemberActivityStats503StatusCode[keyof typeof ActivitiesControllerGetMemberActivityStats503StatusCode];
-
-
-export const ActivitiesControllerGetMemberActivityStats503StatusCode = {
-  NUMBER_503: 503,
-} as const;
-
-export type ActivitiesControllerGetMemberActivityStats503 = {
-  message: string;
-  statusCode: ActivitiesControllerGetMemberActivityStats503StatusCode;
-};
-
 export type ActivitiesControllerFindOnePathParameters = {
  guildId: string,
     id: string,
  }
-export type ActivitiesControllerFindOne401 = {
+export type ActivitiesControllerFindOne401 = HttpErrorResponse | {
   message: string;
 };
 
-export type ActivitiesControllerFindOne403 = {
+export type ActivitiesControllerFindOne403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -438,44 +413,20 @@ export type ActivitiesControllerFindOne429 = {
   message: string;
 };
 
-export type ActivitiesControllerFindOne503StatusCode = typeof ActivitiesControllerFindOne503StatusCode[keyof typeof ActivitiesControllerFindOne503StatusCode];
-
-
-export const ActivitiesControllerFindOne503StatusCode = {
-  NUMBER_503: 503,
-} as const;
-
-export type ActivitiesControllerFindOne503 = {
-  message: string;
-  statusCode: ActivitiesControllerFindOne503StatusCode;
-};
-
 export type ActivitiesControllerDeleteActivityPathParameters = {
  guildId: string,
     id: string,
  }
-export type ActivitiesControllerDeleteActivity401 = {
+export type ActivitiesControllerDeleteActivity401 = HttpErrorResponse | {
   message: string;
 };
 
-export type ActivitiesControllerDeleteActivity403 = {
+export type ActivitiesControllerDeleteActivity403 = HttpErrorResponse | {
   message: string;
 };
 
 export type ActivitiesControllerDeleteActivity429 = {
   message: string;
-};
-
-export type ActivitiesControllerDeleteActivity503StatusCode = typeof ActivitiesControllerDeleteActivity503StatusCode[keyof typeof ActivitiesControllerDeleteActivity503StatusCode];
-
-
-export const ActivitiesControllerDeleteActivity503StatusCode = {
-  NUMBER_503: 503,
-} as const;
-
-export type ActivitiesControllerDeleteActivity503 = {
-  message: string;
-  statusCode: ActivitiesControllerDeleteActivity503StatusCode;
 };
 
 export type UsersActivityControllerGetOnlineParams = {
@@ -487,10 +438,7 @@ to: string;
 world?: string;
 };
 
-export type UsersActivityControllerGetOnline401 = {
-  message: string;
-  statusCode: 401;
-} | {
+export type UsersActivityControllerGetOnline401 = HttpErrorResponse | {
   message: string;
 };
 

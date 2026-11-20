@@ -1,10 +1,5 @@
 /** Endpoints owned by the guilds HTTP module. */
-import {
-  HttpApiEndpoint,
-  HttpApiGroup,
-  HttpApiSchema,
-  OpenApi,
-} from "effect/http-api";
+import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import {
   ActivitiesControllerDeleteActivity200,
   ActivitiesControllerDeleteActivityPathParams,
@@ -26,7 +21,12 @@ import {
   ActivitiesControllerSuggestWorldsQuery,
 } from "./schemas.js";
 import { BearerSecurityMiddleware } from "@lootlog/protocol/http/bearer-security";
-import { AuthorizationUnavailable } from "../shared.js";
+import {
+  AuthorizationUnavailable,
+  Forbidden,
+  NotFound,
+  Unauthorized,
+} from "../shared.js";
 
 export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   HttpApiEndpoint.get(
@@ -36,7 +36,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
       params: ActivitiesControllerFindByGuildPathParams,
       query: ActivitiesControllerFindByGuildQuery,
       success: ActivitiesControllerFindByGuild200,
-      error: AuthorizationUnavailable,
+      error: [Unauthorized, Forbidden, AuthorizationUnavailable],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -49,7 +49,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
       params: ActivitiesControllerSuggestActorNamesPathParams,
       query: ActivitiesControllerSuggestActorNamesQuery,
       success: ActivitiesControllerSuggestActorNames200,
-      error: AuthorizationUnavailable,
+      error: [Unauthorized, Forbidden, AuthorizationUnavailable],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -62,7 +62,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
       params: ActivitiesControllerSuggestWorldsPathParams,
       query: ActivitiesControllerSuggestWorldsQuery,
       success: ActivitiesControllerSuggestWorlds200,
-      error: AuthorizationUnavailable,
+      error: [Unauthorized, Forbidden, AuthorizationUnavailable],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -75,7 +75,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
       params: ActivitiesControllerSuggestClanNamesPathParams,
       query: ActivitiesControllerSuggestClanNamesQuery,
       success: ActivitiesControllerSuggestClanNames200,
-      error: AuthorizationUnavailable,
+      error: [Unauthorized, Forbidden, AuthorizationUnavailable],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -87,7 +87,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     {
       params: ActivitiesControllerGetMemberActivityStatsPathParams,
       success: ActivitiesControllerGetMemberActivityStats200,
-      error: AuthorizationUnavailable,
+      error: [Unauthorized, Forbidden, AuthorizationUnavailable],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -102,7 +102,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     {
       params: ActivitiesControllerFindOnePathParams,
       success: ActivitiesControllerFindOne200,
-      error: [HttpApiSchema.Empty(404), AuthorizationUnavailable],
+      error: [Unauthorized, Forbidden, NotFound, AuthorizationUnavailable],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -114,7 +114,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     {
       params: ActivitiesControllerDeleteActivityPathParams,
       success: ActivitiesControllerDeleteActivity200,
-      error: [HttpApiSchema.Empty(404), AuthorizationUnavailable],
+      error: [Unauthorized, Forbidden, NotFound, AuthorizationUnavailable],
     },
   )
     .middleware(BearerSecurityMiddleware)

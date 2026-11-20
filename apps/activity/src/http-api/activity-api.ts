@@ -1,4 +1,5 @@
 import { ApiKeyEndpointPolicy } from "@lootlog/schema/api-key-http";
+import { SchemaErrorResponse } from "@lootlog/protocol/http/schema-error-response";
 import { UsersGroup } from "./contracts/users/api.js";
 /** Authoritative composition root for the activity HTTP contract. */
 import { HttpApi, OpenApi } from "effect/http-api";
@@ -11,4 +12,5 @@ export class ActivityApi extends HttpApi.make("ActivityApi")
   .annotate(OpenApi.Description, "The Activity Logger API documentation")
   .annotate(OpenApi.Servers, [])
   .add(HealthGroup, GuildsGroup, UsersGroup)
-  .middleware(ApiKeyEndpointPolicy) {}
+  .middleware(ApiKeyEndpointPolicy)
+  .middleware(SchemaErrorResponse) {}

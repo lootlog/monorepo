@@ -58,6 +58,12 @@ paths:
                     example:
                       process:
                         status: up
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
@@ -149,6 +155,12 @@ paths:
                   - info
                   - error
                   - details
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
@@ -320,28 +332,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaginatedActivitiesResponseDto"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "429":
           description: ""
           content:
@@ -358,17 +380,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  statusCode:
-                    type: number
-                    enum:
-                      - 503
-                required:
-                  - message
-                  - statusCode
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get activities for a specific guild
   /guilds/{guildId}/activity-logs/actor-name-suggestions:
     get:
@@ -404,28 +416,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ActorNameSuggestionsResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "429":
           description: ""
           content:
@@ -442,17 +464,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  statusCode:
-                    type: number
-                    enum:
-                      - 503
-                required:
-                  - message
-                  - statusCode
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get actor name suggestions for a guild
   /guilds/{guildId}/activity-logs/world-suggestions:
     get:
@@ -488,28 +500,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorldSuggestionsResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "429":
           description: ""
           content:
@@ -526,17 +548,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  statusCode:
-                    type: number
-                    enum:
-                      - 503
-                required:
-                  - message
-                  - statusCode
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get world suggestions for a guild
   /guilds/{guildId}/activity-logs/clan-name-suggestions:
     get:
@@ -572,28 +584,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ClanNameSuggestionsResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "429":
           description: ""
           content:
@@ -610,17 +632,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  statusCode:
-                    type: number
-                    enum:
-                      - 503
-                required:
-                  - message
-                  - statusCode
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get clan name suggestions for a guild
   /guilds/{guildId}/member-activity-stats:
     get:
@@ -644,28 +656,38 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MemberActivityStatsResponseDto"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "429":
           description: ""
           content:
@@ -682,17 +704,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  statusCode:
-                    type: number
-                    enum:
-                      - 503
-                required:
-                  - message
-                  - statusCode
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get activity stats for guild members by source
   /guilds/{guildId}/activity-logs/{id}:
     get:
@@ -719,30 +731,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ActivityResponseDto"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "404":
           description: Activity not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -759,17 +785,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  statusCode:
-                    type: number
-                    enum:
-                      - 503
-                required:
-                  - message
-                  - statusCode
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get a single activity by ID
     delete:
       tags:
@@ -795,30 +811,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DeleteActivityResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "404":
           description: Activity not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
@@ -835,17 +865,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  statusCode:
-                    type: number
-                    enum:
-                      - 503
-                required:
-                  - message
-                  - statusCode
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Delete a specific activity by ID
   /users/@me/activity/online:
     get:
@@ -878,23 +898,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserOnlineResponseDto"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
                 anyOf:
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                      statusCode:
-                        type: number
-                        enum:
-                          - 401
-                    required:
-                      - message
-                      - statusCode
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -927,6 +943,55 @@ paths:
       summary: Get the signed-in user's confirmed game online time by Warsaw calendar day
 components:
   schemas:
+    RequestValidationError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - VALIDATION_ERROR
+        message:
+          type: string
+        details:
+          type: object
+          properties:
+            issues:
+              type: array
+              items:
+                type: object
+                properties:
+                  path:
+                    type: array
+                    items:
+                      anyOf:
+                        - type: string
+                        - type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                  message:
+                    type: string
+                required:
+                  - path
+                  - message
+          required:
+            - issues
+      required:
+        - code
+        - message
+        - details
+    HttpErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          nullable: true
+          type: string
+        details:
+          nullable: true
+          type: object
+      required:
+        - code
     UserOnlineResponseDto:
       type: object
       properties:
