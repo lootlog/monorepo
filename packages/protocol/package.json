@@ -11,6 +11,8 @@
     "./http/service-auth": "./src/http/service-auth.ts",
     "./http/bearer-security": "./src/http/bearer-security.ts",
     "./http/catalog-access": "./src/http/catalog-access.ts",
+    "./http/errors": "./src/http/errors.ts",
+    "./http/schema-error-response": "./src/http/schema-error-response.ts",
     "./openapi": "./src/openapi/sanitize.ts",
     "./rabbit/catalog": "./src/rabbit/catalog.ts",
     "./rabbit/events": "./src/rabbit/events.ts",
