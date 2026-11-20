@@ -90,6 +90,10 @@ for (const [status, body, expected] of [
   [401, { error: "TOKEN_EXPIRED" }, "TokenExpiredError"],
   [400, { error: "TOKEN_NOT_FOUND" }, "TokenExpiredError"],
   [400, { error: "ACCOUNT_NOT_FOUND" }, "AccountNotFoundError"],
+  [401, { code: "AUTHENTICATION_REQUIRED" }, "AuthServiceUnavailableError"],
+  [401, { code: "TOKEN_EXPIRED" }, "TokenExpiredError"],
+  [400, { code: "TOKEN_NOT_FOUND" }, "TokenExpiredError"],
+  [400, { code: "ACCOUNT_NOT_FOUND" }, "AccountNotFoundError"],
 ] as const) {
   test(`classifies IDP ${status} ${JSON.stringify(body)} as ${expected}`, async () => {
     const service = makeAuthService({

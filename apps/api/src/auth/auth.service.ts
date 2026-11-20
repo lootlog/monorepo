@@ -29,10 +29,19 @@ const IdpTokenSuccess = Schema.Struct({
   scopes: Schema.mutable(Schema.Array(Schema.String)),
 });
 
-const IdpTokenResponse = Schema.Union([
-  IdpTokenSuccess,
-  Schema.Struct({ error: Schema.String }),
-]);
+// Auth answers with the shared `code`; `error` covers auth instances that
+// still answer with it while both services roll out.
+const IdpTokenFailure = Schema.Struct({
+  code: Schema.optional(Schema.String),
+  error: Schema.optional(Schema.String),
+});
+
+const IdpTokenResponse = Schema.Union([IdpTokenSuccess, IdpTokenFailure]);
+
+const failureReason = (data: typeof IdpTokenResponse.Type | undefined) =>
+  data === undefined || "accessToken" in data
+    ? undefined
+    : (data.code ?? data.error);
 
 const decodeIdpTokenResponse = Schema.decodeUnknownSync(
   Schema.fromJsonString(IdpTokenResponse),
@@ -80,10 +89,8 @@ class AuthHttpResponseError extends TaggedErrorClass<AuthHttpResponseError>()(
   }
 }
 
-const isTokenErrorCode = (data: AuthHttpResponseError["data"]) =>
-  data !== undefined &&
-  "error" in data &&
-  (data.error === "TOKEN_NOT_FOUND" || data.error === "TOKEN_EXPIRED");
+const isTokenErrorCode = (reason: string | undefined) =>
+  reason === "TOKEN_NOT_FOUND" || reason === "TOKEN_EXPIRED";
 
 const connectionFailure = (userId: string, message: string) =>
   Effect.logError({
@@ -103,14 +110,10 @@ const mapResponseError = (
   error: AuthHttpResponseError,
 ): Effect.Effect<never, AuthServiceError> =>
   Effect.gen(function* () {
-    const { status, data } = error;
+    const { status } = error;
+    const reason = failureReason(error.data);
 
-    if (
-      status === 400 &&
-      data !== undefined &&
-      "error" in data &&
-      data.error === "ACCOUNT_NOT_FOUND"
-    ) {
+    if (status === 400 && reason === "ACCOUNT_NOT_FOUND") {
       yield* Effect.logDebug({
         message: `Account not found for user ${userId}`,
       });
@@ -118,7 +121,7 @@ const mapResponseError = (
       return yield* Effect.fail(new AccountNotFoundError());
     }
 
-    if (isTokenErrorCode(data)) {
+    if (isTokenErrorCode(reason)) {
       yield* Effect.logDebug({ message: `Token error for user ${userId}` });
 
       return yield* Effect.fail(new TokenExpiredError());
@@ -239,29 +242,28 @@ export const makeAuthService = (options: {
 
       const response = yield* fetchIdpToken(userId, discordId);
 
-      if ("error" in response) {
-        if (response.error === "ACCOUNT_NOT_FOUND") {
+      if (!("accessToken" in response)) {
+        const reason = failureReason(response);
+
+        if (reason === "ACCOUNT_NOT_FOUND") {
           return yield* Effect.fail(new AccountNotFoundError());
         }
 
-        if (
-          response.error === "TOKEN_NOT_FOUND" ||
-          response.error === "TOKEN_EXPIRED"
-        ) {
+        if (isTokenErrorCode(reason)) {
           yield* Effect.logDebug({
-            message: `Token error for user ${userId}: ${response.error}`,
+            message: `Token error for user ${userId}: ${reason}`,
           });
 
           return yield* Effect.fail(new TokenExpiredError());
         }
 
         yield* Effect.logError({
-          message: `Unknown error from auth service for user ${userId}: ${response.error}`,
+          message: `Unknown error from auth service for user ${userId}: ${reason}`,
         });
 
         return yield* Effect.fail(
           new AuthServiceUnavailableError({
-            message: `Auth service error: ${response.error}`,
+            message: `Auth service error: ${reason}`,
           }),
         );
       }
