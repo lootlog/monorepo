@@ -7,8 +7,8 @@ import search from "@lootlog/sdk/openapi/search.json";
 import {
   getOperationTags,
   decodeReferenceDocument,
-} from "~/lib/reference-document";
-import { referenceMetadata } from "~/lib/reference-metadata";
+} from "@/lib/reference-document";
+import { referenceMetadata } from "@/lib/reference-metadata";
 import { PUBLIC_API_SERVICES } from "@lootlog/schema/api-services";
 
 const specs = { main, activity, battlelog, catalog, search };

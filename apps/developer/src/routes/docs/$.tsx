@@ -15,10 +15,10 @@ import {
 import { use } from "react";
 import { PageMarkdownActions } from "@lootlog/ui/components/page-markdown-actions";
 import { COMMUNITY_LINKS } from "@lootlog/domain/public-sites";
-import { portalSite } from "~/lib/llms";
-import { pageHead } from "~/lib/seo";
-import { docs, source } from "~/lib/source";
-import { portalText } from "~/lib/translations";
+import { portalSite } from "@/lib/llms";
+import { pageHead } from "@/lib/seo";
+import { docs, source } from "@/lib/source";
+import { portalText } from "@/lib/translations";
 
 const mdxComponents = { ...defaultMdxComponents, Step, Steps, Tab, Tabs };
 

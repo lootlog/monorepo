@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Heart, MessageCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LootlogMark } from "@lootlog/ui/components/lootlog-mark";
-import { links } from "@/src/config/links";
+import { links } from "@/config/links";
 
 const copyrightYear = new Date().getFullYear();
 

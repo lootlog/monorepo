@@ -2,9 +2,9 @@ import { Empty, EmptyDescription } from "@lootlog/ui/components/empty";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { KeyRow } from "~/components/key-row";
-import type { ApiKey } from "~/lib/key-client";
-import { portalText as t } from "~/lib/translations";
+import { KeyRow } from "@/components/key-row";
+import type { ApiKey } from "@/lib/key-client";
+import { portalText as t } from "@/lib/translations";
 
 export function KeyList({
   keys,

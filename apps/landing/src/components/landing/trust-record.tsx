@@ -7,7 +7,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { links } from "@/src/config/links";
+import { links } from "@/config/links";
 
 const facts = [
   { key: "free", icon: Coins, tone: "lime" },

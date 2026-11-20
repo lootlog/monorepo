@@ -4,11 +4,11 @@ import {
   Scripts,
   createRootRoute,
 } from "@tanstack/react-router";
-import "@/src/i18n/config";
-import { BlogNotFound } from "@/src/components/blog/blog-not-found";
-import landingTranslations from "@/src/i18n/translations/landing.json";
+import "@/i18n/config";
+import { BlogNotFound } from "@/components/blog/blog-not-found";
+import landingTranslations from "@/i18n/translations/landing.json";
 import uiCss from "@lootlog/ui/globals.css?url";
-import landingCss from "@/src/styles/landing.css?url";
+import landingCss from "@/styles/landing.css?url";
 
 const { seo } = landingTranslations;
 

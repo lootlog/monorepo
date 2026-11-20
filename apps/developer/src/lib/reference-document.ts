@@ -1,7 +1,7 @@
 import { looseStruct } from "@lootlog/schema/stored-value";
 import { Option, Schema } from "effect";
 import type { PublicApiService } from "@lootlog/schema/api-services";
-import { referenceMetadata } from "~/lib/reference-metadata";
+import { referenceMetadata } from "@/lib/reference-metadata";
 
 const UnknownRecord = Schema.Record(Schema.String, Schema.Unknown);
 

@@ -33,7 +33,7 @@ export function createWikiViteConfig({
           : undefined,
       }),
       tanstackStart(),
-      viteReact(),
+      viteReact({ compiler: true }),
     ],
   });
 }

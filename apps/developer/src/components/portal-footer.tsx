@@ -3,7 +3,7 @@ import {
   PUBLIC_SITE_ORIGINS,
 } from "@lootlog/domain/public-sites";
 import { LootlogMark } from "@lootlog/ui/components/lootlog-mark";
-import { portalText as t } from "~/lib/translations";
+import { portalText as t } from "@/lib/translations";
 
 const links = [
   { href: PUBLIC_SITE_ORIGINS.web, label: t.footerProduct },

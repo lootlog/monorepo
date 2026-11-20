@@ -5,8 +5,8 @@ import {
 } from "fumadocs-ui/layouts/shared/slots/search-trigger";
 import { Badge } from "@lootlog/ui/components/badge";
 import { PortalHeader } from "@lootlog/ui/components/portal-header";
-import { getPortalEnvironment } from "~/lib/environment";
-import { portalText as t } from "~/lib/translations";
+import { getPortalEnvironment } from "@/lib/environment";
+import { portalText as t } from "@/lib/translations";
 
 const sections = [
   { to: "/", label: t.overview, section: "overview" },

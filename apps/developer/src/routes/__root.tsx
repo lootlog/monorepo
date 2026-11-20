@@ -7,15 +7,15 @@ import {
 import { RootProvider } from "fumadocs-ui/provider/tanstack";
 import { useEffect } from "react";
 import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
-import { portalText } from "~/lib/translations";
-import { PortalNav } from "~/components/portal-nav";
+import { portalText } from "@/lib/translations";
+import { PortalNav } from "@/components/portal-nav";
 import {
   COMMUNITY_LINKS,
   PUBLIC_SITE_ORIGINS,
 } from "@lootlog/domain/public-sites";
-import appCss from "~/styles/app.css?url";
-import favicon from "~/assets/favicon.svg?no-inline";
-import appleTouchIcon from "~/assets/lootlog-apple-touch.png?no-inline";
+import appCss from "@/styles/app.css?url";
+import favicon from "@/assets/favicon.svg?no-inline";
+import appleTouchIcon from "@/assets/lootlog-apple-touch.png?no-inline";
 
 const structuredData = JSON.stringify({
   "@context": "https://schema.org",

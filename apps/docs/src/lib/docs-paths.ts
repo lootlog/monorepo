@@ -2,7 +2,7 @@ import { readdirSync } from "node:fs";
 import { docsPagePath } from "@lootlog/domain/public-sites";
 import { getMarkdownPath } from "@lootlog/ui/lib/docs-markdown";
 
-const contentDirectory = new URL("../content/docs/", import.meta.url);
+const contentDirectory = new URL("../../content/docs/", import.meta.url);
 
 /** Every page in the content directory, so new pages are prerendered too. */
 const docsSlugs = readdirSync(contentDirectory)

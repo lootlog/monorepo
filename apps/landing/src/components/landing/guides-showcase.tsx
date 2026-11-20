@@ -2,9 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { BlogGuideCard } from "@/src/components/blog/blog-guide-card";
-import { SectionHead } from "@/src/components/landing/section-head";
-import { blogPosts } from "@/src/config/blog";
+import { BlogGuideCard } from "@/components/blog/blog-guide-card";
+import { SectionHead } from "@/components/landing/section-head";
+import { blogPosts } from "@/config/blog";
 
 export function GuidesShowcase() {
   const { t } = useTranslation();

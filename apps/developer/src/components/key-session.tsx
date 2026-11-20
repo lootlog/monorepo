@@ -7,8 +7,8 @@ import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useState } from "react";
-import { KeyManager } from "~/components/key-manager";
-import { portalText as t } from "~/lib/translations";
+import { KeyManager } from "@/components/key-manager";
+import { portalText as t } from "@/lib/translations";
 
 /** The keys page for the current session: sign-in, sign-out and the keys. */
 export function KeySession({ authClient }: { authClient: LootlogAuthClient }) {

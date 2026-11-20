@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 
 import { LootlogMark } from "@lootlog/ui/components/lootlog-mark";
-import { ADDON_URL } from "@/src/config/addon";
-import { links } from "@/src/config/links";
+import { ADDON_URL } from "@/config/addon";
+import { links } from "@/config/links";
 
 export function ClosingCta() {
   const { t } = useTranslation();

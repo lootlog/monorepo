@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { ArrowUpRight } from "lucide-react";
-import { links } from "@/src/config/links";
+import { links } from "@/config/links";
 import {
   Accordion,
   AccordionItem,

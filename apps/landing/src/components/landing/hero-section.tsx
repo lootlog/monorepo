@@ -2,9 +2,9 @@ import { ArrowUpRight, Download } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 
-import { TimerIllustration } from "@/src/components/landing/timer-illustration";
-import { ADDON_URL } from "@/src/config/addon";
-import { links } from "@/src/config/links";
+import { TimerIllustration } from "@/components/landing/timer-illustration";
+import { ADDON_URL } from "@/config/addon";
+import { links } from "@/config/links";
 
 export function HeroSection() {
   const { t } = useTranslation();

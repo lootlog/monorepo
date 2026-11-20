@@ -26,3 +26,29 @@ export const docsPagePath = (slug: string) =>
 
 export const docsPageUrl = (slug: string) =>
   `${PUBLIC_SITE_ORIGINS.docs}${docsPagePath(slug)}`;
+
+const XML_ENTITIES = new Map([
+  ["&", "&amp;"],
+  ["<", "&lt;"],
+  [">", "&gt;"],
+  ['"', "&quot;"],
+  ["'", "&apos;"],
+]);
+
+const escapeXml = (text: string) =>
+  text.replace(
+    /[&<>"']/g,
+    (character) => XML_ENTITIES.get(character) ?? character,
+  );
+
+/** A sitemap listing `urls`, each escaped for XML. */
+export const sitemapXml = (urls: readonly string[]): string => {
+  const entries = urls
+    .map((url) => `  <url><loc>${escapeXml(url)}</loc></url>\n`)
+    .join("");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${entries}</urlset>
+`;
+};

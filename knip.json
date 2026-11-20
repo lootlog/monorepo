@@ -35,7 +35,7 @@
     },
     "apps/docs": {
       "project": [
-        "{src,lib,components}/**/*.{ts,tsx,css,mdx}!",
+        "src/**/*.{ts,tsx,css,mdx}!",
         "scripts/**/*.mjs",
         "*.{ts,mts,js,mjs}"
       ]

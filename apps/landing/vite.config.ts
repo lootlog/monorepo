@@ -39,6 +39,6 @@ export default defineConfig(({ command, isPreview }) => ({
         enabled: false,
       },
     }),
-    viteReact({ include: /\.(js|jsx|mdx|ts|tsx)$/ }),
+    viteReact({ include: /\.(js|jsx|mdx|ts|tsx)$/, compiler: true }),
   ],
 }));

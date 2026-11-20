@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
-import { getPortalEnvironment, requestHostname } from "~/lib/environment";
+import { getPortalEnvironment, requestHostname } from "@/lib/environment";
 
 export const Route = createFileRoute("/robots.txt")({
   server: {

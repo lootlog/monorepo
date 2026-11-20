@@ -11,9 +11,9 @@ import {
   docsTranslations,
   polishTranslations,
 } from "@/lib/polish-translations";
-import appleTouchIcon from "@/src/assets/apple-touch-icon.png?no-inline";
-import favicon from "@/src/assets/favicon.svg?no-inline";
-import docsCss from "@/src/styles/global.css?url";
+import appleTouchIcon from "@/assets/apple-touch-icon.png?no-inline";
+import favicon from "@/assets/favicon.svg?no-inline";
+import docsCss from "@/styles/global.css?url";
 
 export const Route = createRootRoute({
   head: () => ({

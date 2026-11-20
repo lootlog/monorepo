@@ -1,8 +1,7 @@
-import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
-import { docsPaths } from "../lib/docs-paths";
-import { writeSitemap } from "../../../scripts/sitemap.mjs";
+import { PUBLIC_SITE_ORIGINS, sitemapXml } from "@lootlog/domain/public-sites";
+import { docsPaths } from "../src/lib/docs-paths";
 
-await writeSitemap(
+await Bun.write(
   "dist/client/sitemap.xml",
-  docsPaths.map((path) => `${PUBLIC_SITE_ORIGINS.docs}${path}`),
+  sitemapXml(docsPaths.map((path) => `${PUBLIC_SITE_ORIGINS.docs}${path}`)),
 );

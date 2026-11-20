@@ -1,4 +1,4 @@
-import { portalText as t } from "~/lib/translations";
+import { portalText as t } from "@/lib/translations";
 
 type Segment = readonly [text: string, className?: string];
 
