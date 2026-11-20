@@ -48,6 +48,7 @@
     "./timer-colors": "./src/timer-colors.ts",
     "./settings-documents": "./src/settings-documents.ts",
     "./settings-paths": "./src/settings-paths.ts",
+    "./settings-resolver": "./src/settings-resolver.ts",
     "./guild-preferences": "./src/guild-preferences.ts",
     "./guild-documents": "./src/guild-documents.ts",
     "./color": "./src/color.ts",

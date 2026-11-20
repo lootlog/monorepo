@@ -2,7 +2,7 @@ import {
   migrateSettingsDocument,
   SETTINGS_CATALOG,
   type SettingsFieldDefinition,
-} from "@lootlog/domain/settings-documents";
+} from "./settings-documents.js";
 import type {
   SettingsDocumentLayer,
   SettingsDomain,
@@ -18,15 +18,13 @@ import {
   setPath,
   unsetPath,
   type SettingsJsonRecord,
-} from "@lootlog/domain/settings-paths";
-
-export type JsonRecord = SettingsJsonRecord;
+} from "./settings-paths.js";
 
 interface ApplySettingsPatchInput {
   domain: SettingsDomain;
   scope: SettingsScope;
-  currentOverrides: JsonRecord;
-  set: JsonRecord;
+  currentOverrides: SettingsJsonRecord;
+  set: SettingsJsonRecord;
   unset: ReadonlyArray<string>;
 }
 
@@ -81,7 +79,7 @@ export const resolveSettingsDomain = (
   layers: SettingsDocumentLayer[],
 ): SettingsDomainResolution => {
   const definition = SETTINGS_CATALOG[domain];
-  const effective: JsonRecord = {};
+  const effective: SettingsJsonRecord = {};
   const sources: Record<string, SettingsValueSource> = {};
 
   const migratedLayers = layers.map((layer) => ({
@@ -143,7 +141,7 @@ export const applySettingsPatch = ({
   currentOverrides,
   set,
   unset,
-}: ApplySettingsPatchInput): JsonRecord => {
+}: ApplySettingsPatchInput): SettingsJsonRecord => {
   const setEntries = collectLeafPaths(set);
   const setPaths = setEntries.map(({ path }) => path);
 

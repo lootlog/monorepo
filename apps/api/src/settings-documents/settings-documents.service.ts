@@ -22,7 +22,7 @@ import {
   type SettingsDocumentsRepositoryService,
   SettingsPersistenceError,
 } from "./settings-documents.repository.js";
-import { resolveSettingsDomain } from "./settings-resolver.js";
+import { resolveSettingsDomain } from "@lootlog/domain/settings-resolver";
 
 interface SettingsContext {
   domains: SettingsDomain[];

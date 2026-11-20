@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import type { PatchSettingsDocuments } from "@lootlog/schema/settings-documents";
 import type { SettingsDocumentsRepositoryService } from "./settings-documents.repository.js";
 import { makeSettingsDocuments } from "./settings-documents.service.js";
-import type { JsonRecord } from "./settings-resolver.js";
+import type { SettingsJsonRecord } from "@lootlog/domain/settings-paths";
 
 const createRepository = () => ({
   findDocuments: vi
@@ -26,7 +26,7 @@ const createStoredDocument = (
   domain: "timers" | "appearance",
   scopeType: "USER" | "GAME_ACCOUNT" | "CHARACTER" | "GUILD",
   scopeId: string,
-  overrides: JsonRecord,
+  overrides: SettingsJsonRecord,
 ) => ({
   id,
   userId: "user-1",

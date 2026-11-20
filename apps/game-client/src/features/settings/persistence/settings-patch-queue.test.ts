@@ -7,7 +7,7 @@ import {
 import {
   applySettingsPatch,
   resolveSettingsDomain,
-} from "../../../../../api/src/settings-documents/settings-resolver";
+} from "@lootlog/domain/settings-resolver";
 import {
   createSettingsPatchQueue,
   type SettingsPatchQueueConfig,

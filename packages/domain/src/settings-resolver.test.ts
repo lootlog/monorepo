@@ -6,7 +6,7 @@ import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance
 import {
   migrateSettingsDocument,
   SETTINGS_CATALOG,
-} from "@lootlog/domain/settings-documents";
+} from "./settings-documents.js";
 import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
 import { describe, expect, it } from "bun:test";
 
