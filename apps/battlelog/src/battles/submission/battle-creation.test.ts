@@ -123,7 +123,7 @@ const battleEvent = {
   f: { endBattle: 1, init: "1", m: moves, w: warriors },
 };
 
-const incrementalBattleEvents = [
+const incrementalBattleEvents: (typeof Schema.Json.Type)[] = [
   {
     ev: 1_785_091_976.6,
     f: { init: "1", m: moves.slice(0, 6), w: warriors },
@@ -570,7 +570,7 @@ describe("battle creation deduplication", () => {
     const [stored] = await storedBattleIds();
     const retry = await postBattle(app.handler, data);
 
-    expect(retry.body).toEqual({ battleId: stored });
+    expect(retry.body).toEqual({ battleId: stored! });
     expect(await testApplication.database.getStoredBattles()).toHaveLength(1);
     expect(testApplication.database.getTransactionCount()).toBe(1);
     expect(processBattle).toHaveBeenCalledTimes(1);
@@ -604,7 +604,7 @@ describe("battle creation deduplication", () => {
     expect(newer.body.battleId).not.toBe(first.body.battleId);
 
     const retry = await postBattle(app.handler, data);
-    expect(retry.body).toEqual({ battleId: older });
+    expect(retry.body).toEqual({ battleId: older! });
     expect(await testApplication.database.getStoredBattles()).toHaveLength(2);
   });
 
@@ -682,7 +682,7 @@ describe("battle creation deduplication", () => {
     const timelines = await storedTimelines();
 
     expect(stored).toHaveLength(1);
-    expect([...timelines.keys()]).toEqual([stored[0]?.id]);
+    expect([...timelines.keys()]).toEqual([stored[0]!.id]);
   });
 
   it("retains legacy submission IDs without replacing unverifiable payloads", async () => {
@@ -932,7 +932,7 @@ describe("battle creation deduplication", () => {
       (warrior: { name: string }) => warrior.name === "cashtelan",
     );
 
-    expect(cashtelan.turns).toBe(12);
+    expect(cashtelan!.turns).toBe(12);
     expect(await testApplication.database.getStoredBattles()).toHaveLength(1);
     expect(processBattle).toHaveBeenCalledTimes(1);
   });
@@ -1283,7 +1283,7 @@ describe("battle creation deduplication", () => {
       (warrior: { name: string }) => warrior.name === "cashtelan",
     );
 
-    expect(cashtelan.turns).toBe(12);
+    expect(cashtelan!.turns).toBe(12);
   });
 
   it("preserves distinct battle events that share an event id", async () => {
@@ -1321,7 +1321,7 @@ describe("battle creation deduplication", () => {
       (warrior: { name: string }) => warrior.name === "cashtelan",
     );
 
-    expect(cashtelan.turns).toBe(12);
+    expect(cashtelan!.turns).toBe(12);
   });
 
   it("allows an identical battle after the deduplication window", async () => {

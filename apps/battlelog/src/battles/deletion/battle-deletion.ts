@@ -174,13 +174,15 @@ export const makeBattleDeletion = (
             })
           : [];
 
-        if (removed.length === 0) {
+        const [removedBattle] = removed;
+
+        if (!removedBattle) {
           return yield* Effect.fail(
             new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
           );
         }
 
-        return removed[0].userId;
+        return removedBattle.userId;
       }),
     );
 

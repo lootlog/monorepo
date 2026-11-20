@@ -80,7 +80,7 @@ export const makeBattlePagination = (
               decodedCursor
                 ? (descending ? lt : gt)(table.id, decodedCursor.id)
                 : undefined,
-            ),
+            ) ?? sql`true`,
         },
         limit: size + 1,
         with: { warriors: true },

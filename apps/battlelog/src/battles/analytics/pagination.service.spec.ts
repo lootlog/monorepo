@@ -92,12 +92,12 @@ describe("battle list pagination against PostgreSQL", () => {
           ? ownerBattleIds.slice().reverse()
           : ownerBattleIds;
 
-      const forward = [await page(sortOrder)];
+      let last = await page(sortOrder);
+      const forward = [last];
 
-      while (forward.at(-1).pagination.nextCursor) {
-        forward.push(
-          await page(sortOrder, forward.at(-1).pagination.nextCursor),
-        );
+      while (last.pagination.nextCursor) {
+        last = await page(sortOrder, last.pagination.nextCursor);
+        forward.push(last);
       }
 
       expect(forward.flatMap(ids)).toEqual(expected);
@@ -107,16 +107,16 @@ describe("battle list pagination against PostgreSQL", () => {
         true,
       ]);
 
-      const backward = [forward.at(-1)];
+      let first = last;
+      const backward = [first];
 
-      while (backward.at(-1).pagination.previousCursor) {
-        backward.push(
-          await page(sortOrder, backward.at(-1).pagination.previousCursor),
-        );
+      while (first.pagination.previousCursor) {
+        first = await page(sortOrder, first.pagination.previousCursor);
+        backward.push(first);
       }
 
       expect(backward.map(ids)).toEqual(forward.map(ids).reverse());
-      expect(backward.at(-1).pagination).toMatchObject({
+      expect(first.pagination).toMatchObject({
         hasPrev: false,
         hasNext: true,
       });

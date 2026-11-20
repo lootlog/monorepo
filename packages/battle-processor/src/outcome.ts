@@ -5,8 +5,8 @@ export type BattleOutcome = {
   winner: string;
   loser: string;
   /** `0` when the battle has no winner: unfinished or a turn-limit draw. */
-  winningTeam: number | null;
-  losingTeam: number | null;
+  winningTeam: number;
+  losingTeam: number;
   hasFlee: boolean;
   /** The submitter left before Margonem ended the battle; it has no result. */
   unfinished: boolean;

@@ -155,8 +155,9 @@ export const makeBattleCombatProfileRead = (
         });
       }
 
-      if (batch.length < BATCH_SIZE) break;
-      const last = batch[batch.length - 1];
+      const last = batch.at(-1);
+
+      if (!last || batch.length < BATCH_SIZE) break;
       cursor = last.id;
     }
 

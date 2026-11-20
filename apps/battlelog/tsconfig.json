@@ -6,8 +6,6 @@
     "declarationMap": false,
     "rootDir": ".",
     "forceConsistentCasingInFileNames": true,
-    "strict": false,
-    "noUncheckedIndexedAccess": false,
     "sourceMap": true,
     "types": ["bun"]
   },
