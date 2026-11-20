@@ -169,6 +169,13 @@ service tests replace dependencies at their public interfaces.
 Application pull requests do not carry release metadata. Production deployments
 select an immutable commit from `main` in GitHub Actions.
 
+A pull request that changes something a player can notice adds one file to
+`packages/changelog/src/entries`, named `YYYY-MM-DD-short-slug.ts`, with the
+change described in Polish. Clients bundle these entries at build time, so the
+"Co nowego" list of a deployed client always matches its commit. Changes
+players cannot notice get no entry, and `highlight` is reserved for something
+a player would not find alone.
+
 Public SDK releases are separate from application deployments. A release pull
 request updates `packages/sdk/package.json` to the intended version and records
 contract changes and migration instructions in the developer portal changelog.

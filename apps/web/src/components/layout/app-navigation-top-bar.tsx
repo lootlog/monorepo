@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from "react";
 import { AppTopBar } from "@/components/layout/app-top-bar";
 import { TopBarHeading } from "@/components/layout/top-bar-heading";
+import { WhatsNewButton } from "@/components/whats-new/whats-new-button";
 import type { AppNavigationHeading } from "@/navigation/app-navigation";
 
 type AppNavigationTopBarProps = {
@@ -39,6 +40,7 @@ export const AppNavigationTopBar = ({
           {search}
           {/* The context the page shows, such as the selected world. */}
           <div ref={contextRef} className="flex items-center empty:hidden" />
+          <WhatsNewButton />
         </div>
       </div>
     </AppTopBar>

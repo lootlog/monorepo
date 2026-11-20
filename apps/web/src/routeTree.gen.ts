@@ -32,6 +32,7 @@ import { Route as AuthenticatedAtmeNotificationsRouteImport } from './routes/_au
 import { Route as AuthenticatedAtmeReservationsRouteImport } from './routes/_authenticated/@me/reservations'
 import { Route as AuthenticatedAtmeSettingsRouteImport } from './routes/_authenticated/@me/settings'
 import { Route as AuthenticatedAtmeStatisticsRouteImport } from './routes/_authenticated/@me/statistics'
+import { Route as AuthenticatedAtmeWhatsNewRouteImport } from './routes/_authenticated/@me/whats-new'
 import { Route as AuthenticatedGuildIdDocsIndexRouteImport } from './routes/_authenticated/$guildId/docs/index'
 import { Route as AuthenticatedGuildIdDocsDocIdRouteImport } from './routes/_authenticated/$guildId/docs/$docId'
 import { Route as AuthenticatedGuildIdEventsEventIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_'
@@ -220,6 +221,12 @@ const AuthenticatedAtmeStatisticsRoute =
   AuthenticatedAtmeStatisticsRouteImport.update({
     id: '/statistics',
     path: '/statistics',
+    getParentRoute: () => AuthenticatedAtmeRoute,
+  } as any)
+const AuthenticatedAtmeWhatsNewRoute =
+  AuthenticatedAtmeWhatsNewRouteImport.update({
+    id: '/whats-new',
+    path: '/whats-new',
     getParentRoute: () => AuthenticatedAtmeRoute,
   } as any)
 const AuthenticatedGuildIdDocsIndexRoute =
@@ -607,6 +614,7 @@ export interface FileRoutesByFullPath {
   '/@me/reservations': typeof AuthenticatedAtmeReservationsRoute
   '/@me/settings': typeof AuthenticatedAtmeSettingsRouteWithChildren
   '/@me/statistics': typeof AuthenticatedAtmeStatisticsRoute
+  '/@me/whats-new': typeof AuthenticatedAtmeWhatsNewRoute
   '/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/@me/': typeof AuthenticatedAtmeIndexRoute
   '/$guildId/docs/$docId': typeof AuthenticatedGuildIdDocsDocIdRoute
@@ -683,6 +691,7 @@ export interface FileRoutesByTo {
   '/@me/notifications': typeof AuthenticatedAtmeNotificationsRoute
   '/@me/reservations': typeof AuthenticatedAtmeReservationsRoute
   '/@me/statistics': typeof AuthenticatedAtmeStatisticsRoute
+  '/@me/whats-new': typeof AuthenticatedAtmeWhatsNewRoute
   '/$guildId': typeof AuthenticatedGuildIdIndexRoute
   '/@me': typeof AuthenticatedAtmeIndexRoute
   '/$guildId/docs/$docId': typeof AuthenticatedGuildIdDocsDocIdRoute
@@ -766,6 +775,7 @@ export interface FileRoutesById {
   '/_authenticated/@me/reservations': typeof AuthenticatedAtmeReservationsRoute
   '/_authenticated/@me/settings': typeof AuthenticatedAtmeSettingsRouteWithChildren
   '/_authenticated/@me/statistics': typeof AuthenticatedAtmeStatisticsRoute
+  '/_authenticated/@me/whats-new': typeof AuthenticatedAtmeWhatsNewRoute
   '/_authenticated/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/_authenticated/@me/': typeof AuthenticatedAtmeIndexRoute
   '/_authenticated/$guildId/docs/$docId': typeof AuthenticatedGuildIdDocsDocIdRoute
@@ -853,6 +863,7 @@ export interface FileRouteTypes {
     | '/@me/reservations'
     | '/@me/settings'
     | '/@me/statistics'
+    | '/@me/whats-new'
     | '/$guildId/'
     | '/@me/'
     | '/$guildId/docs/$docId'
@@ -929,6 +940,7 @@ export interface FileRouteTypes {
     | '/@me/notifications'
     | '/@me/reservations'
     | '/@me/statistics'
+    | '/@me/whats-new'
     | '/$guildId'
     | '/@me'
     | '/$guildId/docs/$docId'
@@ -1011,6 +1023,7 @@ export interface FileRouteTypes {
     | '/_authenticated/@me/reservations'
     | '/_authenticated/@me/settings'
     | '/_authenticated/@me/statistics'
+    | '/_authenticated/@me/whats-new'
     | '/_authenticated/$guildId/'
     | '/_authenticated/@me/'
     | '/_authenticated/$guildId/docs/$docId'
@@ -1243,6 +1256,13 @@ declare module '@tanstack/react-router' {
       path: '/statistics'
       fullPath: '/@me/statistics'
       preLoaderRoute: typeof AuthenticatedAtmeStatisticsRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
+    '/_authenticated/@me/whats-new': {
+      id: '/_authenticated/@me/whats-new'
+      path: '/whats-new'
+      fullPath: '/@me/whats-new'
+      preLoaderRoute: typeof AuthenticatedAtmeWhatsNewRouteImport
       parentRoute: typeof AuthenticatedAtmeRoute
     }
     '/_authenticated/$guildId/docs/': {
@@ -1999,6 +2019,7 @@ interface AuthenticatedAtmeRouteChildren {
   AuthenticatedAtmeReservationsRoute: typeof AuthenticatedAtmeReservationsRoute
   AuthenticatedAtmeSettingsRoute: typeof AuthenticatedAtmeSettingsRouteWithChildren
   AuthenticatedAtmeStatisticsRoute: typeof AuthenticatedAtmeStatisticsRoute
+  AuthenticatedAtmeWhatsNewRoute: typeof AuthenticatedAtmeWhatsNewRoute
   AuthenticatedAtmeIndexRoute: typeof AuthenticatedAtmeIndexRoute
 }
 
@@ -2010,6 +2031,7 @@ const AuthenticatedAtmeRouteChildren: AuthenticatedAtmeRouteChildren = {
   AuthenticatedAtmeReservationsRoute: AuthenticatedAtmeReservationsRoute,
   AuthenticatedAtmeSettingsRoute: AuthenticatedAtmeSettingsRouteWithChildren,
   AuthenticatedAtmeStatisticsRoute: AuthenticatedAtmeStatisticsRoute,
+  AuthenticatedAtmeWhatsNewRoute: AuthenticatedAtmeWhatsNewRoute,
   AuthenticatedAtmeIndexRoute: AuthenticatedAtmeIndexRoute,
 }
 

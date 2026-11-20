@@ -53,6 +53,28 @@
     "installAddon": "Zainstaluj dodatek do gry",
     "wiki": "Wiki Margonem"
   },
+  "whatsNew": {
+    "title": "Co nowego",
+    "openUnread_one": "Co nowego, {{count}} nieprzeczytana nowość",
+    "openUnread_few": "Co nowego, {{count}} nieprzeczytane nowości",
+    "openUnread_many": "Co nowego, {{count}} nieprzeczytanych nowości",
+    "openUnread_other": "Co nowego, {{count}} nieprzeczytanych nowości",
+    "unread": "Nieprzeczytane",
+    "thisWeek": "Ten tydzień",
+    "allChanges": "Wszystkie zmiany",
+    "howItWorks": "Jak to działa",
+    "fixes": "Poprawki ({{count}})",
+    "types": {
+      "feature": "Nowość",
+      "improvement": "Usprawnienie"
+    },
+    "surfaces": {
+      "game-client": "Dodatek",
+      "web": "Aplikacja",
+      "discord": "Discord",
+      "wiki": "Wiki"
+    }
+  },
   "supportAnnouncement": {
     "title": "Wesprzyj Lootloga",
     "description": "Lootlog jest darmowy i\u00a0open source. Każda kawa pomaga utrzymać serwery i\u00a0rozwijać nowe funkcje.",

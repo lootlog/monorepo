@@ -12,7 +12,14 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
-import { Blocks, BookOpen, ChevronRight, LogOut, X } from "lucide-react";
+import {
+  Blocks,
+  BookOpen,
+  ChevronRight,
+  LogOut,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   SIGNAL_DOT_COLOR,
@@ -21,6 +28,9 @@ import {
 } from "@/components/layout/use-user-menu";
 import { UserSignalAvatar } from "@/components/layout/user-signal-avatar";
 import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
+import { ROUTES } from "@/config/routes";
+import { UnreadDot } from "@/components/whats-new/unread-dot";
+import { useWhatsNew } from "@/components/whats-new/use-whats-new";
 
 /** A 44px row, inset like the navigation rows above it. */
 const ROW_CLASS =
@@ -44,6 +54,8 @@ export const UserMenuSheet = () => {
     isLogoutPending,
     openInstallAddon,
   } = useUserMenu();
+
+  const { unreadIds } = useWhatsNew();
 
   const closeNavigation = () => setOpenMobile(false);
 
@@ -167,6 +179,23 @@ export const UserMenuSheet = () => {
         </ul>
         <div className="mx-4 my-2 h-px bg-sidebar-border" />
         <div className="flex flex-col gap-0.5 px-2">
+          <Button
+            variant="ghost"
+            nativeButton={false}
+            render={
+              <Link to={ROUTES.user.whatsNew} onClick={closeNavigation} />
+            }
+            className={ROW_CLASS}
+          >
+            <Sparkles aria-hidden="true" />
+            {t("layout.whatsNew.title")}
+            {unreadIds.length > 0 && (
+              <>
+                <UnreadDot className="ml-auto" />
+                <span className="sr-only">{t("layout.whatsNew.unread")}</span>
+              </>
+            )}
+          </Button>
           <Button
             variant="ghost"
             className={ROW_CLASS}

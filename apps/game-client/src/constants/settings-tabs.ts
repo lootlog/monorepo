@@ -62,6 +62,7 @@ export const SETTINGS_SUBSECTION_DOMAINS = {
   pings: "pings",
   logs: "diagnostics",
   debug: "diagnostics",
+  "whats-new": "information",
   build: "information",
 } as const satisfies Record<string, SettingsDomainValue>;
 
@@ -102,7 +103,7 @@ export const SETTINGS_DOMAIN_FIRST_SUBSECTIONS = {
   sounds: "sounds",
   controls: "hotkeys",
   diagnostics: "logs",
-  information: "build",
+  information: "whats-new",
 } as const satisfies Record<SettingsDomainValue, SettingsSubsectionValue>;
 
 /**

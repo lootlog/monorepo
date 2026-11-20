@@ -35,6 +35,7 @@ const ROUTES = {
     notifications: {
       base: `${USER_BASE}/notifications`,
     },
+    whatsNew: `${USER_BASE}/whats-new`,
   },
 
   guild: {

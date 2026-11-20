@@ -27,6 +27,7 @@
     "@lexical/rich-text": "catalog:",
     "@lexical/selection": "catalog:",
     "@lexical/table": "catalog:",
+    "@lootlog/changelog": "workspace:*",
     "@lootlog/client": "workspace:*",
     "@lootlog/datetime": "workspace:*",
     "@lootlog/domain": "workspace:*",
