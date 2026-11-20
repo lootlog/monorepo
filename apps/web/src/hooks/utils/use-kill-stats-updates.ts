@@ -18,7 +18,7 @@ const queryKeys = [
 export function useKillStatsUpdates(socket: Pick<GatewayClient, "on" | "off">) {
   const queryClient = useQueryClient();
   // Only one callback-owned timer can be pending; cleanup cancels it and both listeners.
-  // eslint-disable-next-line react-doctor/effect-needs-cleanup -- The analyzer does not track the timer assigned inside scheduleRefresh.
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup -- The analyzer does not track the timer assigned inside scheduleRefresh.
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
 

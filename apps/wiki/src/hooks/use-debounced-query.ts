@@ -25,7 +25,7 @@ export const useDebouncedQuery = (
 
     return () => clearTimeout(timeoutId);
     // `onCommit` is a new function on every render; the text decides.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [query, committed]);
 
   return [query, setQuery] as const;

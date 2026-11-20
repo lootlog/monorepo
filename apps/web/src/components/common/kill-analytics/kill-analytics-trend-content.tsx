@@ -12,7 +12,7 @@ import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { SortableColumnHeader } from "@/components/ui/sortable-column-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { orderBy } from "es-toolkit";
-// eslint-disable-next-line react-doctor/prefer-dynamic-import -- This chart implementation is loaded only by its lazy wrapper; Recharts stays inside that async boundary.
+// oxlint-disable-next-line react-doctor/prefer-dynamic-import -- This chart implementation is loaded only by its lazy wrapper; Recharts stays inside that async boundary.
 import {
   ResponsiveContainer,
   BarChart,

@@ -1,4 +1,4 @@
-/* eslint-disable react-doctor/jsx-no-constructed-context-values -- Vite React Compiler output caches this provider value and its callbacks by their actual dependencies; verified through the running Vite module transform. */
+/* oxlint-disable react-doctor/jsx-no-constructed-context-values -- Vite React Compiler output caches this provider value and its callbacks by their actual dependencies; verified through the running Vite module transform. */
 import { ThemeContext } from "./theme-context";
 import { useState, type FC, type ReactNode } from "react";
 import { useSession } from "@/hooks/auth/use-session";

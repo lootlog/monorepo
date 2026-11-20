@@ -19,7 +19,7 @@ const runLoader = () => {
 
     return node;
   });
-  // oxlint-disable-next-line no-new-func -- Executes the shipped loader template as a userscript manager would.
+  // Executes the shipped loader template as a userscript manager would.
   new Function(loaderSource)();
 
   if (!requested) throw new Error("The loader did not request the bundle");

@@ -7,7 +7,7 @@ import {
   ChartLegendContent,
 } from "@lootlog/ui/components/chart";
 // Loaded on demand by LootStats; Recharts primitives must share this chart boundary.
-// eslint-disable-next-line react-doctor/prefer-dynamic-import
+// oxlint-disable-next-line react-doctor/prefer-dynamic-import
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
 import type { LootStatsResponseDtoOutputTopNpcsItem } from "@lootlog/client/main";

@@ -211,7 +211,7 @@ describe("settings patch queue", () => {
 
           if (retry && index === 0) {
             // Finish the failed save before editing its retained patch.
-            // eslint-disable-next-line no-await-in-loop
+            // oxlint-disable-next-line no-await-in-loop
             await queue.flush();
           }
         }

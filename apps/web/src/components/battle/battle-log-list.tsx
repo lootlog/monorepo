@@ -108,7 +108,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
 
   const notifyVisibleTurns = useEffectEvent(() => onVisibleTurnsChange?.());
   useEffect(() => {
-    // eslint-disable-next-line react-doctor/no-prop-callback-in-effect -- Reports completed virtualizer layout so the owner can synchronize its DOM scroll overlay.
+    // oxlint-disable-next-line react-doctor/no-prop-callback-in-effect -- Reports completed virtualizer layout so the owner can synchronize its DOM scroll overlay.
     notifyVisibleTurns();
   }, [visibleRangeKey]);
 
@@ -130,7 +130,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
     if (requestedTurn === null || requestedTurn === undefined) return;
 
     if (requestedTurn < 1 || requestedTurn > (events?.length ?? 0)) {
-      // eslint-disable-next-line react-doctor/no-pass-live-state-to-parent, react-doctor/no-prop-callback-in-effect -- Owns an imperative scroll request: completion/cancellation notifications follow DOM measurements and user interruption, not mirrored parent state.
+      // oxlint-disable-next-line react-doctor/no-pass-live-state-to-parent, react-doctor/no-prop-callback-in-effect -- Owns an imperative scroll request: completion/cancellation notifications follow DOM measurements and user interruption, not mirrored parent state.
       notifyScrollCancel(requestedTurn);
 
       return;

@@ -60,7 +60,7 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
   >(undefined);
 
   // The callback-owned timer is replaced only after cancellation and cleared on cleanup.
-  // eslint-disable-next-line react-doctor/effect-needs-cleanup -- Cleanup also removes every socket listener and invalidates pending fetches.
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup -- Cleanup also removes every socket listener and invalidates pending fetches.
   useEffect(() => {
     if (!ready) return;
     let generation = 0;
