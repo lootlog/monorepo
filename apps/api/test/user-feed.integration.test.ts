@@ -27,7 +27,6 @@ import {
   makeGuildKillActivityPublisher,
 } from "#src/kills/guild-kill-activity";
 import { makeKillCreation } from "#src/kills/kill-creation";
-import { applicationLogger } from "#src/shared/application-logger";
 import type { UserFeedQuery } from "#src/contracts/users/feed-schemas";
 
 const client = new Client({ connectionString: requireIsolatedTestDatabase() });
@@ -616,7 +615,6 @@ describe("personal Organization activity feed", () => {
           }),
         setNxGet: () => Effect.succeed(null),
       },
-      applicationLogger,
       makeGuildKillActivityPublisher(database, {
         publish: () => {
           publicationCount++;

@@ -17,7 +17,6 @@ import { makeTimersCleanup } from "#src/timers/timers-cleanup";
 import { makeReservationsCleanup } from "#src/reservations/reservations-cleanup";
 import { makeItemRevisionsPublisher } from "#src/loots/item-revisions-publisher";
 import { makeMonsterStatisticsPublisher } from "#src/loots/monster-statistics";
-import { applicationLogger } from "#src/shared/application-logger";
 import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { acquireEventHeroKillWorker } from "#src/runtime/queues/event-hero-kill";
@@ -72,7 +71,6 @@ export const RabbitConsumers = Layer.effectDiscard(
       delivery,
       rebuild,
       content: makeNotificationContent(),
-      logger: applicationLogger,
     });
 
     const consume = yield* makeRabbitConsumer(rabbit);
@@ -222,16 +220,9 @@ export const BullWorkers = Layer.effectDiscard(
       refreshMember,
     );
 
-    const eventHeroKill = makeEventHeroKillProcessor(
-      applicationLogger,
-      kills,
-      runWorker,
-    );
+    const eventHeroKill = makeEventHeroKillProcessor(kills, runWorker);
 
-    const notifications = makeNotificationDispatchProcessor(
-      { dispatch },
-      applicationLogger,
-    );
+    const notifications = makeNotificationDispatchProcessor({ dispatch });
 
     const { redisUrl } = config;
 

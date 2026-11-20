@@ -1,4 +1,3 @@
-import { Logger } from "#src/shared/application-logger";
 import type { Queue } from "bullmq";
 import type { RedisService } from "#src/redis/redis.service";
 import type { EventEmitter } from "#src/events/event-emitter";
@@ -24,18 +23,15 @@ export const makeEventKills = (
   summaryService: EventSummary,
   respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
 ) => {
-  const logger = new Logger("EventKills");
-
   const recordHeroKill = makeEventHeroKillRecording(
     repository,
     eventEmitter,
     eventReadCache,
     pointsService,
-    makeEventKillPoints(pointsService, logger),
+    makeEventKillPoints(pointsService),
     trackingService,
     summaryService,
     respawnWindowQueue,
-    logger,
   );
 
   const checkAndRecordEventHeroKill = makeEventHeroKillCheck(
@@ -43,7 +39,6 @@ export const makeEventKills = (
     activeEventHeroRepository,
     redis,
     recordHeroKill,
-    logger,
   );
 
   return {

@@ -29,7 +29,6 @@ import {
   decodePageCursor,
   toPage,
 } from "#src/shared/keyset-page";
-import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   type CreateLootCommentRequest,
   type CreateLootDrawRequest,
@@ -167,7 +166,6 @@ interface LootsDependencies {
   readonly persistence: LootPersistence;
   readonly query: LootQueryOperations;
   readonly redis: Pick<RedisService, "invalidateScopes" | "getOrSetJson">;
-  readonly logger: ApplicationLogger;
 }
 
 const CACHE_TTL_SECONDS = 10;
@@ -239,7 +237,6 @@ export const makeLootsOperations = ({
   persistence,
   query,
   redis,
-  logger,
 }: LootsDependencies): LootsOperations => {
   const pendingDetails = new Map<string, FetchedLootRead>();
 
@@ -257,12 +254,10 @@ export const makeLootsOperations = ({
           ),
           withAdapterSpan("loots.cache.invalidateList", "loots"),
           Effect.catch((error) =>
-            Effect.sync(() =>
-              logger.warn("Failed to invalidate loots list cache", {
-                error,
-                guildId,
-              }),
-            ),
+            Effect.logWarning("Failed to invalidate loots list cache", {
+              error,
+              guildId,
+            }),
           ),
         ),
       { concurrency: "unbounded", discard: true },
@@ -496,7 +491,7 @@ export const makeLootsOperations = ({
           ttlSeconds: CACHE_TTL_SECONDS,
           factory: read,
           onError: (error) =>
-            logger.warn("Loots list cache unavailable", { error }),
+            Effect.logWarning("Loots list cache unavailable", { error }),
         });
       }),
 

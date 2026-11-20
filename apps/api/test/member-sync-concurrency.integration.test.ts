@@ -13,7 +13,6 @@ import {
 import { makeMemberDelivery } from "#src/members/member-delivery.operations";
 import { makeMemberStore } from "#src/members/member.repository";
 import { makeMemberSync } from "#src/members/member-sync.operations";
-import { applicationLogger } from "#src/shared/application-logger";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 import { createGuildFixture } from "./organization-fixtures.js";
 
@@ -133,7 +132,7 @@ const createSyncFixture = async () => {
       flags: GuildMemberFlags.CompletedOnboarding,
     };
 
-    const service = makeMemberSync(applicationLogger, store, delivery, {
+    const service = makeMemberSync(store, delivery, {
       getGuildMember: () => Effect.succeed(discordMember),
       nextRefreshAt: () => Effect.succeed(null),
       refreshPermissionCache: () =>

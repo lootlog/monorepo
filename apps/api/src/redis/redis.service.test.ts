@@ -275,7 +275,9 @@ describe("RedisService", () => {
       .fn<() => Promise<{ fresh: boolean }>>()
       .mockResolvedValue({ fresh: true });
 
-    const onError = vi.fn<(cause: unknown) => void>();
+    const onError = vi
+      .fn<(cause: unknown) => Effect.Effect<void>>()
+      .mockReturnValue(Effect.void);
 
     const result = await Effect.runPromise(
       service.getOrSetJson({
@@ -326,7 +328,9 @@ describe("RedisService", () => {
       .fn<() => Promise<{ fresh: boolean }>>()
       .mockRejectedValue(factoryError);
 
-    const onError = vi.fn<(cause: unknown) => void>();
+    const onError = vi
+      .fn<(cause: unknown) => Effect.Effect<void>>()
+      .mockReturnValue(Effect.void);
 
     await expect(
       Effect.runPromise(

@@ -4,7 +4,6 @@ import {
 } from "@lootlog/instrumentation/operation";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect, Schema } from "effect";
-import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   MemberKillsResponse,
   type MemberKillsQuery as GetMemberKillsDto,
@@ -29,11 +28,7 @@ import { decodeNpcKillPageCursor, toNpcKillPage } from "./npc-kill-page.js";
 import { DEFAULT_PAGE_SIZE } from "#src/shared/keyset-page";
 
 export const makeMemberKillQuery =
-  (
-    persistence: KillStatsPersistence,
-    cache: KillQueryCache,
-    logger: ApplicationLogger,
-  ) =>
+  (persistence: KillStatsPersistence, cache: KillQueryCache) =>
   (
     guildId: string,
     memberId: number,
@@ -70,7 +65,6 @@ export const makeMemberKillQuery =
           cachedKillQuery({
             scopes: [`kill-stats:guild:${guildId}`],
             cache,
-            logger,
             key: buildKillQueryCacheKey("member-kills", guildId, {
               memberId,
               filters,

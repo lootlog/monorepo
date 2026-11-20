@@ -16,7 +16,6 @@ import type { EventPublisher } from "@lootlog/messaging";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import { getTimerListCacheScope } from "#src/shared/cache";
-import type { ApplicationLogger } from "#src/shared/application-logger";
 import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import { ErrorKey } from "#src/timers/error-key";
 import type { Timer } from "#src/timers/timers.types";
@@ -69,7 +68,6 @@ export class EventTimersError extends TaggedErrorClass<EventTimersError>()(
 ) {}
 
 interface EventTimersDependencies {
-  readonly logger: ApplicationLogger;
   readonly store: EventTimerStore;
   readonly amqp: EventPublisher;
   readonly redis: Pick<RedisService, "invalidateScopes">;
@@ -79,7 +77,6 @@ interface EventTimersDependencies {
 const LOCK_TTL_MS = 30_000;
 
 export const makeEventTimersPort = ({
-  logger,
   store,
   amqp,
   redis,
@@ -97,12 +94,9 @@ export const makeEventTimersPort = ({
       redis.invalidateScopes(getTimerListCacheScope(guildId)),
     ).pipe(
       Effect.tap(() =>
-        Effect.sync(() =>
-          logger.log({
-            level: "debug",
-            message: `Invalidated timer list cache for guild ${guildId}`,
-          }),
-        ),
+        Effect.logDebug({
+          message: `Invalidated timer list cache for guild ${guildId}`,
+        }),
       ),
     );
 

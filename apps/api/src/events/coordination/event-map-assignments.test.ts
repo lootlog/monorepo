@@ -11,7 +11,7 @@ import {
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import { describe, expect, it, mock } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Logger } from "effect";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { makeEventMapAssignments } from "#src/events/coordination/event-map-assignments";
 
@@ -34,18 +34,26 @@ describe("event map assignments Effect module", () => {
         },
         { getEventRespawnTimer },
         { publish },
-        {
-          warn: () => {
-            throw new Error("Unexpected warning");
-          },
-        },
       );
+
+      const warnings: unknown[] = [];
 
       await expect(
         boundary.run(
-          assignments.assignMember({ id: "guild-1" }, "event-1", "map-1", 1),
+          assignments
+            .assignMember({ id: "guild-1" }, "event-1", "map-1", 1)
+            .pipe(
+              Effect.provide(
+                Logger.layer([
+                  Logger.make(({ logLevel, message }) => {
+                    if (logLevel === "Warn") warnings.push(message);
+                  }),
+                ]),
+              ),
+            ),
         ),
       ).rejects.toBeInstanceOf(ResourceNotFoundError);
+      expect(warnings).toEqual([]);
       expect(getEventRespawnTimer).not.toHaveBeenCalled();
       expect(publish).not.toHaveBeenCalled();
     } finally {
@@ -104,7 +112,6 @@ it.each([300, null])(
         },
         { getEventRespawnTimer: () => Effect.die("Unexpected timer read") },
         { publish },
-        { warn: () => {} },
       );
 
       const result = await boundary.run(
@@ -217,7 +224,6 @@ it("keeps members who left the Discord server off map assignments", async () => 
           }),
       },
       { publish: () => Effect.void },
-      { warn: () => {} },
     );
 
     await expect(

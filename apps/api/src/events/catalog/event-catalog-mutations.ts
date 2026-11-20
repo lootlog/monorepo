@@ -27,7 +27,6 @@ import {
   ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import type {
   AssignEventMapLocationRequest,
@@ -93,14 +92,12 @@ const heroNameTakenError = () =>
 export const makeEventCatalogMutations = (
   database: typeof ApiDatabase.Service,
   redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
-  logger: Pick<Logger, "warn">,
 ) => {
   const query = adapterOperation("events.catalog.drizzle");
 
   const invalidate = (guildId: string, eventId: string) =>
     invalidateEventCache(
       redis,
-      logger,
       guildId,
       eventId,
       "Failed to invalidate event read cache",

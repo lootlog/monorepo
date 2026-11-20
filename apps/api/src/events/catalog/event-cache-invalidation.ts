@@ -1,12 +1,10 @@
 import { Effect } from "effect";
 import type { RedisService } from "#src/redis/redis.service";
 import type { RedisError } from "effect/persistence/Redis";
-import type { ApplicationLogger } from "#src/shared/application-logger";
 import { eventReadCacheScope } from "#src/events/catalog/event-read-cache.service";
 
 export const invalidateEventCache = (
   redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
-  logger: Pick<ApplicationLogger, "warn">,
   guildId: string,
   eventId: string,
   message: string,
@@ -14,9 +12,7 @@ export const invalidateEventCache = (
 ) => {
   const invalidate = <A>(operation: Effect.Effect<A, RedisError>) =>
     operation.pipe(
-      Effect.catch((error) =>
-        Effect.sync(() => logger.warn(message, { error })),
-      ),
+      Effect.catch((error) => Effect.logWarning(message, { error })),
     );
 
   return Effect.all(

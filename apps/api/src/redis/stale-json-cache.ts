@@ -71,9 +71,7 @@ export const getOrSetStaleJson = <
     const fresh = yield* compute;
 
     yield* redis.setJson(options.key, fresh, options.retainSeconds, codec);
-  }).pipe(
-    Effect.catchCause((cause) => Effect.sync(() => options.onError(cause))),
-  );
+  }).pipe(Effect.catchCause(options.onError));
 
   return Effect.gen(function* () {
     const entry = yield* redis.getOrSetJson({

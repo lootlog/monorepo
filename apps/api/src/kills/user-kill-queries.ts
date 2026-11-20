@@ -17,7 +17,6 @@ import {
   userKillCharacterTable,
   type userKillBucketTable,
 } from "#src/database/drizzle/kill-statistics.schema";
-import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   USER_TOP_NPCS_DEFAULT_LIMIT,
   UserKillStatsResponse,
@@ -45,7 +44,6 @@ type NpcType = (typeof userKillBucketTable.npcType.enumValues)[number];
 export const makeUserKillQueries = (
   database: typeof ApiDatabase.Service,
   cache: KillQueryCache,
-  _logger: ApplicationLogger,
 ) => {
   const protect = adapterOperation("kills.drizzle");
 

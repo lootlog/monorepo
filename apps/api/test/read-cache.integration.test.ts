@@ -41,7 +41,6 @@ import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository
 import { makeEventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import { makeEventGapReads } from "#src/events/monitoring/event-gap-reads";
 import { makeEventReadCache } from "#src/events/catalog/event-read-cache.service";
-import { applicationLogger } from "#src/shared/application-logger";
 import { createOrganizationLootRecordFixture } from "./loot-fixtures.js";
 
 describe("Read cache Dragonfly integration", () => {
@@ -896,7 +895,6 @@ describe("Read cache Dragonfly integration", () => {
             persistence: makeLootPersistence(db),
             query: makeLootQueryOperations(makeLootQueryPersistence(db)),
             redis: cache,
-            logger: applicationLogger,
           });
 
           const policy = createAccessPolicy({
@@ -973,8 +971,8 @@ describe("Read cache Dragonfly integration", () => {
             gapType: "UNCOVERED",
             startedAt: new Date(),
           });
-          const catalog = makeEventsCatalogRead(db, cache, applicationLogger);
-          const gaps = makeEventGapReads(db, cache, applicationLogger);
+          const catalog = makeEventsCatalogRead(db, cache);
+          const gaps = makeEventGapReads(db, cache);
 
           const policy = createAccessPolicy({
             capabilities: [Permission.OWNER],

@@ -33,7 +33,6 @@ import { makeEventPointsStore } from "#src/events/kills/event-points.repository"
 import { makeEventPoints } from "#src/events/kills/event-points.service";
 import { makeEventPointEdits } from "#src/events/kills/event-point-edits";
 import type { RedisGetOrSetJsonOptions } from "#src/redis/redis.service";
-import { applicationLogger } from "#src/shared/application-logger";
 import { makeEventKillHistory } from "./event-kill-history.js";
 
 const time = (value: string) => new Date(`2026-09-27T${value}:00.000Z`);
@@ -369,17 +368,12 @@ describe("kill history database reads", () => {
         payload: { guildId: string; eventId: string };
       }[] = [];
 
-      const edits = makeEventPointEdits(
-        f.database,
-        f.redis,
-        {
-          publish: (routingKey, payload) =>
-            Effect.sync(() => {
-              published.push({ routingKey, payload });
-            }),
-        },
-        applicationLogger,
-      );
+      const edits = makeEventPointEdits(f.database, f.redis, {
+        publish: (routingKey, payload) =>
+          Effect.sync(() => {
+            published.push({ routingKey, payload });
+          }),
+      });
 
       const updated = await f.run(
         edits.updateKillPoint(

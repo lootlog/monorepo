@@ -17,7 +17,6 @@ import {
 } from "#src/database/drizzle/event.schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { CreateEventRequest } from "#src/contracts/events/schemas";
 import { attachComputedEventActive } from "#src/events/monitoring/event-activity";
 
@@ -25,7 +24,6 @@ export const makeEventCreation =
   (
     database: Pick<typeof ApiDatabase.Service, "transaction">,
     redis: Pick<RedisService, "invalidateScopes">,
-    logger: Pick<Logger, "warn">,
   ) =>
   (data: CreateEventRequest, guild: { id: string }) => {
     const normalized = Effect.try({
@@ -173,9 +171,7 @@ export const makeEventCreation =
         .invalidateScopes(eventReadCacheScope(guild.id))
         .pipe(
           Effect.catch((error) =>
-            Effect.sync(() =>
-              logger.warn("Failed to invalidate event read cache", error),
-            ),
+            Effect.logWarning("Failed to invalidate event read cache", error),
           ),
         );
 

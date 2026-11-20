@@ -59,7 +59,6 @@ import { GuildLootCreatedMessageV2 } from "@lootlog/protocol/loot-events";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { makeLootsOperations } from "#src/loots/loots.operations";
 import { makeLootPersistence } from "#src/loots/loot.repository";
-import { applicationLogger } from "#src/shared/application-logger";
 import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
 
 describe("durable loot publications", () => {
@@ -2053,7 +2052,6 @@ describe("durable loot publications", () => {
             Effect.die(new Error("Unexpected cache invalidation")),
           getOrSetJson: () => Effect.die("Unexpected list cache access"),
         },
-        logger: applicationLogger,
       });
 
       const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
@@ -2190,7 +2188,6 @@ describe("durable loot publications", () => {
         invalidateScopes: () => Effect.void,
         getOrSetJson: () => Effect.die("Unexpected list read"),
       },
-      logger: applicationLogger,
     });
 
     const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });

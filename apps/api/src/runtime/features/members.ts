@@ -44,7 +44,6 @@ import {
   getUserGuildPermissionsCacheScope,
   getUserLootlogConfigCacheScope,
 } from "#src/shared/cache";
-import { applicationLogger } from "#src/shared/application-logger";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer } from "effect";
@@ -191,31 +190,22 @@ export const memberServicesLive = Layer.effect(
       readonly reason: string;
     }) => diagnostics.recordMemberRefreshMetric(options);
 
-    const scheduler = makeMemberRefreshScheduler(
-      applicationLogger,
-      memberRefreshQueue,
-      {
-        nextRefreshAt,
-        isRefused: discord.isGuildMemberRefused,
-        recordMetric,
-        getLock: redis.get,
-        setLock: redis.setNX,
-        evalLock: redis.eval,
-        releaseLock: redis.deleteIfValue,
-      },
-    );
+    const scheduler = makeMemberRefreshScheduler(memberRefreshQueue, {
+      nextRefreshAt,
+      isRefused: discord.isGuildMemberRefused,
+      recordMetric,
+      getLock: redis.get,
+      setLock: redis.setNX,
+      evalLock: redis.eval,
+      releaseLock: redis.deleteIfValue,
+    });
 
-    const memberDiscordSync = makeMemberSync(
-      applicationLogger,
-      memberStore,
-      delivery,
-      {
-        getGuildMember: discord.getGuildMember,
-        nextRefreshAt,
-        refreshPermissionCache: ({ userId, guildId }) =>
-          redis.del(getPermissionsCacheKey(userId, guildId)),
-      },
-    );
+    const memberDiscordSync = makeMemberSync(memberStore, delivery, {
+      getGuildMember: discord.getGuildMember,
+      nextRefreshAt,
+      refreshPermissionCache: ({ userId, guildId }) =>
+        redis.del(getPermissionsCacheKey(userId, guildId)),
+    });
 
     const memberDiscordRefresh = makeMemberRefresh(scheduler, {
       nextRefreshAt,

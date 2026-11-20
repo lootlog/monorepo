@@ -1,5 +1,4 @@
 import type { JsonValue } from "#src/database/json";
-import type { Logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import type {
   eventHeroNpcTable,
@@ -48,8 +47,9 @@ export const makeEventKillPoints = (
     | "getMembersPresenceStats"
     | "getMembersPresenceStatsPerMap"
   >,
-  logger: Logger,
 ) => {
+  const logContext = Effect.annotateLogs({ context: "EventKills" });
+
   function createMapNameLookup(
     maps: Array<{ id: string; mapName: string }>,
   ): Map<string, string> {
@@ -289,11 +289,11 @@ export const makeEventKillPoints = (
         });
 
         if (assignedMemberIds.length === 0) {
-          logger.log({
+          yield* Effect.logInfo({
             message: "No assignments for hero kill in current window",
             heroId: eventHero.id,
             eventId: event.id,
-          });
+          }).pipe(logContext);
         }
 
         const { presenceByMemberId, presenceByMemberMapKey } =

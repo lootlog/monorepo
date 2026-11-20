@@ -18,7 +18,6 @@ import {
   InvalidRequestError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { AcknowledgeExpiredParticipationConfirmationsRequest } from "#src/contracts/events/schemas";
 import type { EventRankingPublisher } from "#src/events/kills/event-point-edits";
 
@@ -26,7 +25,6 @@ export const makeEventParticipation = (
   database: typeof ApiDatabase.Service,
   redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
   publisher: EventRankingPublisher,
-  logger: Logger,
 ) => {
   type ParticipationRow = {
     point: typeof eventKillPointTable.$inferSelect;
@@ -95,7 +93,6 @@ export const makeEventParticipation = (
       [
         invalidateEventCache(
           redis,
-          logger,
           guildId,
           eventId,
           "Failed to invalidate participation cache",
@@ -104,10 +101,9 @@ export const makeEventParticipation = (
           .publish(RabbitRoutingKey.EVENT_RANKING_UPDATE, { guildId, eventId })
           .pipe(
             Effect.catch((error) =>
-              Effect.sync(() =>
-                logger.warn("Failed to publish participation ranking update", {
-                  error,
-                }),
+              Effect.logWarning(
+                "Failed to publish participation ranking update",
+                { error },
               ),
             ),
           ),

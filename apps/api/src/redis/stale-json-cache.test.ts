@@ -55,7 +55,7 @@ describe("getOrSetStaleJson", () => {
         freshSeconds: 60,
         retainSeconds: 600,
         factory: Effect.sync(() => ({ n: ++computed })),
-        onError: () => {},
+        onError: () => Effect.void,
       });
 
     await Effect.runPromise(

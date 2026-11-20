@@ -12,7 +12,6 @@ import {
 } from "#src/database/drizzle/organization.schema";
 import { timerTable } from "#src/database/drizzle/timer.schema";
 import { makeRedisLockManager } from "#src/redis/redlock";
-import { applicationLogger } from "#src/shared/application-logger";
 import { buildTimerKey } from "#src/timers/timer-key";
 import { makeEventTimerStore } from "./event-timer.repository.js";
 import { makeEventTimersPort } from "./event-timers.port.js";
@@ -54,7 +53,6 @@ it("credits a reopened respawn window to the member who opened it", async () => 
       store: makeEventTimerStore(database),
       redis,
       locks: makeRedisLockManager({ eval: () => Effect.succeed(1) }),
-      logger: applicationLogger,
       amqp: { publish: () => Effect.void },
     });
 
@@ -143,7 +141,6 @@ it("follows an event hero to its NPC's timer after Margonem renames the NPC", as
       store: makeEventTimerStore(database),
       redis: { invalidateScopes: () => Effect.die("unused") },
       locks: makeRedisLockManager({ eval: () => Effect.succeed(1) }),
-      logger: applicationLogger,
       amqp: { publish: () => Effect.void },
     });
 

@@ -37,7 +37,6 @@ import {
   userKillCharacterTable,
   userKillTotalTable,
 } from "#src/database/drizzle/kill-statistics.schema";
-import type { ApplicationLogger } from "#src/shared/application-logger";
 import { getKillNpcId } from "@lootlog/domain/npc-identity";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
 import {
@@ -95,7 +94,6 @@ type CharacterInput = {
 export const makeKillCreation = (
   database: typeof ApiDatabase.Service,
   cache: KillCreationCache,
-  logger: ApplicationLogger,
   publishActivity: (
     input: KillInput & { readonly guildId: string },
   ) => Effect.Effect<void> = () => Effect.void,
@@ -107,12 +105,10 @@ export const makeKillCreation = (
   const invalidate = (scope: string) =>
     cache.invalidateScopes(scope).pipe(
       Effect.catch((error) =>
-        Effect.sync(() =>
-          logger.warn("Failed to invalidate kill stats cache", {
-            error,
-            scope,
-          }),
-        ),
+        Effect.logWarning("Failed to invalidate kill stats cache", {
+          error,
+          scope,
+        }),
       ),
     );
 
@@ -140,15 +136,14 @@ export const makeKillCreation = (
   });
 
   const release = ({ key, token }: Claim) =>
-    cache
-      .deleteIfValue(key, token)
-      .pipe(
-        Effect.catch((error) =>
-          Effect.sync(() =>
-            logger.warn("Failed to release kill dedup claim", { error, key }),
-          ),
-        ),
-      );
+    cache.deleteIfValue(key, token).pipe(
+      Effect.catch((error) =>
+        Effect.logWarning("Failed to release kill dedup claim", {
+          error,
+          key,
+        }),
+      ),
+    );
 
   const descriptive = (input: KillInput) => ({
     npcName: input.npcName,
@@ -603,14 +598,10 @@ export const makeKillCreation = (
             ).pipe(
               Effect.map(track),
               Effect.catch((error) =>
-                Effect.sync(() => {
-                  logger.error({
-                    message: `Failed to claim guild kill for guildId ${guildId}`,
-                    error,
-                  });
-
-                  return null;
-                }),
+                Effect.logError({
+                  message: `Failed to claim guild kill for guildId ${guildId}`,
+                  error,
+                }).pipe(Effect.as(null)),
               ),
             );
 
@@ -621,14 +612,10 @@ export const makeKillCreation = (
             };
           }).pipe(
             Effect.catch((error) =>
-              Effect.sync(() => {
-                logger.error({
-                  message: `Failed to claim kill stats for guildId ${guildId}`,
-                  error,
-                });
-
-                return null;
-              }),
+              Effect.logError({
+                message: `Failed to claim kill stats for guildId ${guildId}`,
+                error,
+              }).pipe(Effect.as(null)),
             ),
           );
         },
@@ -657,11 +644,9 @@ export const makeKillCreation = (
                   first === null ? killedAt : new Date(first),
                 ),
                 Effect.catch((error) =>
-                  Effect.sync(() => {
-                    logger.warn("Failed to claim boss kill", { error });
-
-                    return null;
-                  }),
+                  Effect.logWarning("Failed to claim boss kill", {
+                    error,
+                  }).pipe(Effect.as(null)),
                 ),
               )
           : null;
@@ -711,8 +696,9 @@ export const makeKillCreation = (
       ).pipe(
         Effect.as(true),
         Effect.catch((error) =>
-          Effect.sync(() => {
-            logger.error({ message: "Failed to upsert kill stats", error });
+          Effect.logError({
+            message: "Failed to upsert kill stats",
+            error,
           }).pipe(Effect.andThen(releaseAll), Effect.as(false)),
         ),
       );

@@ -1,4 +1,3 @@
-import { Logger } from "#src/shared/application-logger";
 import { makeTypeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { Effect, Schema } from "effect";
 import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
@@ -31,16 +30,17 @@ export const eventReadCacheEntry = <Params extends object>(
 export const makeEventReadCache = (
   redis: Pick<RedisService, "invalidateScopes" | "getOrSetJson">,
 ) => {
-  const logger = new Logger("EventReadCache");
+  const withContext = Effect.annotateLogs({ context: "EventReadCache" });
 
   const invalidateScopes = (scope: string) =>
     redis
       .invalidateScopes(scope)
       .pipe(
         Effect.catch((error) =>
-          Effect.sync(() =>
-            logger.warn("Failed to invalidate event read cache", error),
-          ),
+          Effect.logWarning(
+            "Failed to invalidate event read cache",
+            error,
+          ).pipe(withContext),
         ),
       );
 
@@ -74,7 +74,10 @@ export const makeEventReadCache = (
         codec,
         ttlSeconds: EVENT_READ_CACHE_TTL_SECONDS,
         factory: Effect.suspend(factory),
-        onError: (error) => logger.warn("Event read cache unavailable", error),
+        onError: (error) =>
+          Effect.logWarning("Event read cache unavailable", error).pipe(
+            withContext,
+          ),
       });
     },
 

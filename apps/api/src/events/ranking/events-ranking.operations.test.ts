@@ -22,7 +22,6 @@ import { makeEventTimersPort } from "#src/events/respawn/event-timers.port";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.repository";
 import { makeEventAccess } from "#src/events/event-access";
 import { makeRedisLockManager } from "#src/redis/redlock";
-import { applicationLogger } from "#src/shared/application-logger";
 import { makeEventsRanking } from "./events-ranking.operations.js";
 
 const unexpected = () => Effect.die("Unexpected external operation");
@@ -91,16 +90,10 @@ it("filters hero timers by NPC level before exposing their public projection", a
       store: makeEventTimerStore(database),
       redis,
       locks: makeRedisLockManager({ eval: unexpected }),
-      logger: applicationLogger,
       amqp: { publish: unexpected },
     });
 
-    const summary = makeEventHeroSummary(
-      database,
-      redis,
-      timers,
-      applicationLogger,
-    );
+    const summary = makeEventHeroSummary(database, redis, timers);
 
     const ranking = makeEventsRanking(
       { getRanking: unexpected, getEditHistories: unexpected },

@@ -23,7 +23,6 @@ import {
 } from "#src/database/drizzle/kill-statistics.schema";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
-import { applicationLogger as logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import { sql } from "drizzle-orm";
 import { describe, expect, it } from "bun:test";
@@ -51,7 +50,7 @@ describe("kill creation Effect module", () => {
         setNxGet: () => Effect.succeed(null),
       };
 
-      const createKill = makeKillCreation(boundary.database, cache, logger);
+      const createKill = makeKillCreation(boundary.database, cache);
 
       await expect(
         boundary.run(createKill("discord-1", payload)),
@@ -72,7 +71,7 @@ describe("kill creation Effect module", () => {
         setNxGet: () => Effect.succeed(null),
       };
 
-      const createKill = makeKillCreation(boundary.database, cache, logger);
+      const createKill = makeKillCreation(boundary.database, cache);
 
       await expect(
         boundary.run(createKill("discord-1", payload)),
@@ -134,12 +133,8 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
     );
     const personalHints: string[] = [];
 
-    const createKill = makeKillCreation(
-      database,
-      cache,
-      logger,
-      undefined,
-      (userId) => Effect.sync(() => personalHints.push(userId)),
+    const createKill = makeKillCreation(database, cache, undefined, (userId) =>
+      Effect.sync(() => personalHints.push(userId)),
     );
 
     const personalRequest = createKill("discord-1", payload).pipe(
@@ -240,11 +235,7 @@ it("stores the relative NPC icon when a sender reports its CDN URL", async () =>
     );
 
     await boundary.run(
-      makeKillCreation(
-        database,
-        cache,
-        logger,
-      )("discord-1", {
+      makeKillCreation(database, cache)("discord-1", {
         ...payload,
         npc: {
           ...payload.npc,
@@ -310,11 +301,7 @@ it("journals an event hero kill in the Organization activity feed", async () => 
     );
 
     await boundary.run(
-      makeKillCreation(
-        database,
-        cache,
-        logger,
-      )("discord-1", {
+      makeKillCreation(database, cache)("discord-1", {
         ...payload,
         npc: { ...payload.npc, icon: "hev/mushita.gif" },
       }),
@@ -395,11 +382,10 @@ for (const { name, failingTable, failedTotalTable } of [
       );
       const personalData = failingTable === userKillBucketTable;
 
-      const request = makeKillCreation(
-        database,
-        cache,
-        logger,
-      )("discord-1", payload).pipe(
+      const request = makeKillCreation(database, cache)(
+        "discord-1",
+        payload,
+      ).pipe(
         Effect.provideService(ForwardAuthIdentity, {
           userId: "user",
           discordId: "discord-1",
@@ -480,11 +466,7 @@ it("does not release a replacement claim when a failed write outlives its claim"
       ),
     );
 
-    const request = makeKillCreation(
-      database,
-      cache,
-      logger,
-    )("discord-1", payload);
+    const request = makeKillCreation(database, cache)("discord-1", payload);
 
     await boundary.run(request);
     expect([...claims.values()]).toEqual([replacementToken]);
@@ -573,11 +555,7 @@ it("rolls back the first member's kill with its failed guild write and lets anot
 
     const report = (id: 1 | 2) =>
       boundary.run(
-        makeKillCreation(
-          database,
-          cache,
-          logger,
-        )(`discord-${id}`, {
+        makeKillCreation(database, cache)(`discord-${id}`, {
           ...payload,
           accountId: `account-${id}`,
           characterId: `character-${id}`,
@@ -686,7 +664,7 @@ it("records a boss kill once for every Organization that reports it", async () =
       database.insert(memberToRoleTable).values({ A: 3, B: "writers" }),
     );
 
-    const createKill = makeKillCreation(database, cache, logger);
+    const createKill = makeKillCreation(database, cache);
 
     const report = (id: 1 | 2 | 3, party?: CreateKillRequest["party"]) => {
       const request: CreateKillRequest = {

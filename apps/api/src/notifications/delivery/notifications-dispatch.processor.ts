@@ -1,7 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { Job } from "bullmq";
 import { Effect, Schema } from "effect";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { NotificationDispatchAttempt } from "#src/notifications/jobs/notification-job-dispatch";
 import { NOTIFICATION_DISPATCH_JOB_OPTIONS } from "#src/notifications/jobs/dispatch-queue";
 
@@ -23,7 +22,6 @@ class NotificationDispatchFailure extends TaggedErrorClass<NotificationDispatchF
 
 export const makeNotificationDispatchProcessor = (
   notifications: NotificationDispatch,
-  logger: Logger,
 ) =>
   Effect.fn("notifications.worker.dispatch")(function* (
     job: Job<NotificationDispatchJobData>,
@@ -46,8 +44,7 @@ export const makeNotificationDispatchProcessor = (
             }),
         ),
       );
-    logger.log({
-      level: "info",
+    yield* Effect.logInfo({
       message: "Notification dispatch job processed",
       notificationJobId: job.data.notificationJobId,
       queueJobId: job.id,

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { GuildMemberFlags, type APIGuildMember } from "discord-api-types/v10";
-import { Effect } from "effect";
+import { Effect, Logger, References } from "effect";
 import { sql } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
@@ -11,7 +11,6 @@ import {
   memberSyncDeliveryTable,
   memberToRoleTable,
 } from "#src/database/drizzle/organization.schema";
-import { applicationLogger } from "#src/shared/application-logger";
 import {
   AuthenticationRequiredError,
   ResourceNotFoundError,
@@ -78,7 +77,7 @@ test("member sync retries invalidation after a committed role change and clears 
             }),
     });
 
-    const sync = makeMemberSync(applicationLogger, store, delivery, {
+    const sync = makeMemberSync(store, delivery, {
       getGuildMember: () =>
         notFound
           ? Effect.fail(new ResourceNotFoundError("Member not found"))
@@ -147,7 +146,7 @@ type DiscordBoundaryState = {
   duringPublish: Effect.Effect<unknown, unknown> | undefined;
 };
 
-type LogEntry = { readonly level: string; readonly code?: string };
+type LogEntry = { readonly level: string; readonly message: unknown };
 
 const createSyncBoundary = async () => {
   const boundary = await createDatabaseBoundary();
@@ -240,14 +239,13 @@ const createSyncBoundary = async () => {
   const delivery = makeDelivery();
   const logged: LogEntry[] = [];
 
-  const logger = {
-    ...applicationLogger,
-    log: (entry: LogEntry) => {
-      logged.push(entry);
-    },
-  };
+  const captureLogs = Logger.layer([
+    Logger.make(({ logLevel, message }) => {
+      logged.push({ level: logLevel, message });
+    }),
+  ]);
 
-  const sync = makeMemberSync(logger, store, delivery, {
+  const sync = makeMemberSync(store, delivery, {
     getGuildMember: () =>
       state.error ? Effect.fail(state.error) : Effect.succeed(state.member),
     nextRefreshAt: () => Effect.succeed(null),
@@ -272,7 +270,13 @@ const createSyncBoundary = async () => {
     makeDelivery,
     removal: makeMemberRemoval(boundary.database, delivery),
     syncMember,
-    refresh: () => boundary.run(syncMember),
+    refresh: () =>
+      boundary.run(
+        syncMember.pipe(
+          Effect.provide(captureLogs),
+          Effect.provideService(References.MinimumLogLevel, "Debug"),
+        ),
+      ),
     roleRows: () =>
       boundary.run(
         boundary.database
@@ -503,9 +507,9 @@ test("a member who must sign in again is warned about once per loss of authoriza
     await boundary.refresh();
 
     expect(boundary.logged).toMatchObject([
-      { level: "warn", code: "ACCOUNT_NOT_FOUND" },
-      { level: "debug", code: "ACCOUNT_NOT_FOUND" },
-      { level: "warn", code: "ACCOUNT_NOT_FOUND" },
+      { level: "Warn", message: [{ code: "ACCOUNT_NOT_FOUND" }] },
+      { level: "Debug", message: [{ code: "ACCOUNT_NOT_FOUND" }] },
+      { level: "Warn", message: [{ code: "ACCOUNT_NOT_FOUND" }] },
     ]);
   } finally {
     await boundary.dispose();

@@ -31,7 +31,6 @@ import { eventTable } from "#src/database/drizzle/event.schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/cache";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 
 export interface EventPointRecalculator {
   readonly recalculate: (
@@ -45,7 +44,6 @@ export const makeEventPointRecalculation =
     database: typeof ApiDatabase.Service,
     redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
     points: EventPointRecalculator,
-    logger: Logger,
   ) =>
   (guild: { id: string }, eventId: string) =>
     Effect.gen(function* () {
@@ -78,7 +76,6 @@ export const makeEventPointRecalculation =
       yield* points.recalculate(event.id, event.basePointsPerKill);
       yield* invalidateEventCache(
         redis,
-        logger,
         guild.id,
         eventId,
         "Failed to invalidate event cache",

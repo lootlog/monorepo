@@ -16,7 +16,6 @@ import { timerTable } from "#src/database/drizzle/timer.schema";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.repository";
 import { makeEventTimersPort } from "#src/events/respawn/event-timers.port";
 import { makeRedisLockManager } from "#src/redis/redlock";
-import { applicationLogger } from "#src/shared/application-logger";
 import { makeManualTimer } from "./timer-manual.data-layer.js";
 import { makeResetTimer } from "./timer-reset.data-layer.js";
 import type { TimersGuildAccess } from "./timers-data.js";
@@ -116,7 +115,6 @@ it("resets an event respawn timer to the window the event opened", async () => {
     store: makeEventTimerStore(boundary.database),
     redis: { invalidateScopes: () => Effect.void },
     locks: makeRedisLockManager({ eval: () => Effect.succeed(1) }),
-    logger: applicationLogger,
     amqp: { publish: () => Effect.void },
   });
 

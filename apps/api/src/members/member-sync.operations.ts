@@ -7,7 +7,6 @@ import {
   ApplicationErrorKind,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import {
   getTransientMemberSyncStatus,
   isDiscordRefusalSyncStatus,
@@ -34,7 +33,6 @@ export interface MemberSyncPorts {
 }
 
 export const makeMemberSync = (
-  logger: Logger,
   store: MemberStore,
   delivery: Pick<MemberDelivery, "deliver">,
   ports: MemberSyncPorts,
@@ -179,8 +177,7 @@ export const makeMemberSync = (
         // Every request of a member who must sign in again repeats this
         // attempt, because only the auth service knows about a new sign-in.
         // Only the first one is news.
-        logger.log({
-          level: statusChanged ? "warn" : "debug",
+        yield* (statusChanged ? Effect.logWarning : Effect.logDebug)({
           message: "Member must sign in again to refresh from Discord",
           guildId: options.guildId,
           userId: options.userId,
@@ -215,12 +212,12 @@ export const makeMemberSync = (
       }
 
       const status = getTransientMemberSyncStatus(error);
-      logger.log({
-        level:
-          status === MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE ||
+      yield* (
+        status === MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE ||
           isDiscordRefusalSyncStatus(status)
-            ? "warn"
-            : "error",
+          ? Effect.logWarning
+          : Effect.logError
+      )({
         message: "Failed to refresh member from Discord; cached state retained",
         guildId: options.guildId,
         userId: options.discordId,

@@ -1,6 +1,5 @@
 import type { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
-import { applicationLogger as logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import { describe, expect, it } from "bun:test";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
@@ -112,7 +111,6 @@ const setup = (loot: AuthorizedLoot | null, visible = true) => {
         return Effect.void;
       },
     },
-    logger,
   });
 
   const confirm = (message: string) =>

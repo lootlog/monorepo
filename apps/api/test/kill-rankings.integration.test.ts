@@ -36,7 +36,6 @@ import {
   toStatsDate,
   toStatsHour,
 } from "../src/kills/kill-stats-period.js";
-import { applicationLogger } from "../src/shared/application-logger.js";
 import {
   ResourceConflictError,
   ResourceNotFoundError,
@@ -791,14 +790,10 @@ test("concurrent hero renames onto one name give it to exactly one hero", async 
       const eventId = randomUUID();
       const now = new Date();
 
-      const mutations = makeEventCatalogMutations(
-        db,
-        {
-          invalidateScopes: () => Effect.void,
-          deleteByPattern: () => Effect.succeed(0),
-        },
-        applicationLogger,
-      );
+      const mutations = makeEventCatalogMutations(db, {
+        invalidateScopes: () => Effect.void,
+        deleteByPattern: () => Effect.succeed(0),
+      });
 
       yield* db.insert(eventTable).values({
         id: eventId,
@@ -869,14 +864,10 @@ test("renaming a hero deleted while the rename waits for its row is a 404", asyn
       const eventId = randomUUID();
       const heroId = `${eventId}-a`;
 
-      const mutations = makeEventCatalogMutations(
-        db,
-        {
-          invalidateScopes: () => Effect.void,
-          deleteByPattern: () => Effect.succeed(0),
-        },
-        applicationLogger,
-      );
+      const mutations = makeEventCatalogMutations(db, {
+        invalidateScopes: () => Effect.void,
+        deleteByPattern: () => Effect.succeed(0),
+      });
 
       yield* db.insert(eventTable).values({
         id: eventId,

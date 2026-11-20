@@ -1,4 +1,3 @@
-import type { Logger } from "#src/shared/application-logger";
 import { Clock, Effect } from "effect";
 import type { Queue } from "bullmq";
 import type {
@@ -39,8 +38,9 @@ export const makeEventHeroKillRecording = (
   trackingService: EventPresenceTracking,
   summaryService: EventSummary,
   respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
-  logger: Logger,
 ) => {
+  const logContext = Effect.annotateLogs({ context: "EventKills" });
+
   function recordHeroKill(
     guildId: string,
     eventHero: EventHeroNpc,
@@ -105,13 +105,13 @@ export const makeEventHeroKillRecording = (
       );
 
       if (kill === null) {
-        logger.debug({
+        yield* Effect.logDebug({
           message:
             "Skipping duplicate event hero kill - window already recorded",
           guildId,
           heroId: eventHero.id,
           eventId: event.id,
-        });
+        }).pipe(logContext);
 
         return;
       }
@@ -134,11 +134,11 @@ export const makeEventHeroKillRecording = (
             trackingService.openUnassignedGap(map.id, eventHero.id, killedAt),
           { concurrency: "unbounded", discard: true },
         );
-        logger.debug({
+        yield* Effect.logDebug({
           message: "Opened UNASSIGNED gaps for new respawn window",
           heroId: eventHero.id,
           mapsCount: heroMaps.length,
-        });
+        }).pipe(logContext);
       }
 
       yield* summaryService.createWindowSummary(
@@ -216,13 +216,11 @@ export const makeEventHeroKillRecording = (
         (job) =>
           runPromiseAdapter("bull.respawn.remove", () => job.remove()).pipe(
             Effect.tap(() =>
-              Effect.sync(() =>
-                logger.log({
-                  message: "Cancelled scheduled auto-close job (kill recorded)",
-                  heroId,
-                  jobId: job.id,
-                }),
-              ),
+              Effect.logInfo({
+                message: "Cancelled scheduled auto-close job (kill recorded)",
+                heroId,
+                jobId: job.id,
+              }).pipe(logContext),
             ),
           ),
         { concurrency: "unbounded", discard: true },

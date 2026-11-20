@@ -5,7 +5,6 @@ import { Permission } from "@lootlog/schema/permissions";
 import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 import { Effect, Schema } from "effect";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
-import type { ApplicationLogger } from "#src/shared/application-logger";
 import type { StaleJson } from "#src/redis/stale-json-cache";
 import type { KillStatsFilter } from "./kill-stats.repository.js";
 
@@ -108,7 +107,6 @@ export const cachedKillQuery = <
   S extends Schema.ConstraintDecoder<unknown>,
 >(options: {
   readonly cache: KillQueryCache;
-  readonly logger: ApplicationLogger;
   readonly key: string;
   readonly scopes: readonly string[];
   readonly label: string;

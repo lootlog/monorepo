@@ -28,7 +28,6 @@ import { makeLootPersistence } from "#src/loots/loot.repository";
 import { makeLootsOperations } from "#src/loots/loots.operations";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
-import { applicationLogger } from "#src/shared/application-logger";
 import { createOrganizationLootRecordFixture } from "../../../test/loot-fixtures.js";
 
 const eventStart = new Date("2026-06-01T00:00:00.000Z");
@@ -335,7 +334,6 @@ describe("event wrapped summary", () => {
             invalidateScopes: () => Effect.void,
             getOrSetJson: (options) => options.factory,
           },
-          logger: applicationLogger,
         }),
       );
 

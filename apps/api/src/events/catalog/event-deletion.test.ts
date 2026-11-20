@@ -6,7 +6,7 @@ import { guildTable } from "#src/database/drizzle/organization.schema";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import { describe, expect, it, mock } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Logger } from "effect";
 
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { makeEventDeletion } from "#src/events/catalog/event-deletion";
@@ -56,12 +56,9 @@ describe("event deletion Effect module", () => {
               Effect.die(new Error("Unexpected cache invalidation")),
           },
           { pending, delayed },
-          {
-            warn: () => {
-              throw new Error("Unexpected warning");
-            },
-          },
         );
+
+        const warnings: unknown[] = [];
 
         await expect(
           boundary.run(
@@ -70,9 +67,18 @@ describe("event deletion Effect module", () => {
               "event-1",
               [],
               createAccessPolicy({ capabilities: [] }),
+            ).pipe(
+              Effect.provide(
+                Logger.layer([
+                  Logger.make(({ logLevel, message }) => {
+                    if (logLevel === "Warn") warnings.push(message);
+                  }),
+                ]),
+              ),
             ),
           ),
         ).rejects.toBeInstanceOf(ResourceNotFoundError);
+        expect(warnings).toEqual([]);
         expect(pending).not.toHaveBeenCalled();
         expect(delayed).not.toHaveBeenCalled();
         expect(

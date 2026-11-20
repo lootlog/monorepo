@@ -29,7 +29,6 @@ import {
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
 import { LootStatsService } from "#src/loots/query/loot-stats.service";
-import { applicationLogger } from "#src/shared/application-logger";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -82,23 +81,30 @@ export const recordsServicesLive = Layer.effect(
       makeLootSubmissionAcceptancePersistence(database),
       {
         withLock: (resource, ttlMilliseconds, options, effect) =>
-          locks.withLock(
-            resource,
-            ttlMilliseconds,
-            effect,
-            () => {
-              applicationLogger.log({
-                level: "error",
-                message: "Lock acquisition failed for createLoot",
-                resource,
-              });
+          Effect.suspend(() => {
+            const unavailable = new DependencyUnavailableError(
+              "Failed to acquire loot lock",
+            );
 
-              return new DependencyUnavailableError(
-                "Failed to acquire loot lock",
+            return locks
+              .withLock(
+                resource,
+                ttlMilliseconds,
+                effect,
+                () => unavailable,
+                options,
+              )
+              .pipe(
+                Effect.tapError((error) =>
+                  error === unavailable
+                    ? Effect.logError({
+                        message: "Lock acquisition failed for createLoot",
+                        resource,
+                      })
+                    : Effect.void,
+                ),
               );
-            },
-            options,
-          ),
+          }),
       },
       lootPublications.signal,
     );
@@ -107,7 +113,6 @@ export const recordsServicesLive = Layer.effect(
       persistence: makeLootPersistence(database),
       query: lootQuery,
       redis,
-      logger: applicationLogger,
     });
 
     const killStatsPersistence = makeKillStatsPersistence(database);
@@ -121,7 +126,7 @@ export const recordsServicesLive = Layer.effect(
           factory,
           ttlSeconds,
           onError: (error) =>
-            applicationLogger.warn("Kill statistics cache unavailable", error),
+            Effect.logWarning("Kill statistics cache unavailable", error),
         }),
     };
 
@@ -139,7 +144,6 @@ export const recordsServicesLive = Layer.effect(
             setNx: redis.setNX,
             setNxGet: redis.setNxGet,
           },
-          applicationLogger,
           makeGuildKillActivityPublisher(database, rabbit),
           (recipientUserId) =>
             rabbit
@@ -166,22 +170,14 @@ export const recordsServicesLive = Layer.effect(
               retainSeconds: 24 * 3_600,
               factory: load,
               onError: (error) =>
-                applicationLogger.warn(
-                  "Kill statistics cache unavailable",
-                  error,
-                ),
+                Effect.logWarning("Kill statistics cache unavailable", error),
             }),
         }),
         memberKillQuery: makeMemberKillQuery(
           killStatsPersistence,
           killQueryCache,
-          applicationLogger,
         ),
-        userKillQueries: makeUserKillQueries(
-          database,
-          killQueryCache,
-          applicationLogger,
-        ),
+        userKillQueries: makeUserKillQueries(database, killQueryCache),
         loots,
         lootStats,
         lootSubmissionAcceptance: acceptance,
@@ -194,7 +190,6 @@ export const recordsServicesLive = Layer.effect(
                 eventMessage(RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE, event),
               ),
           },
-          logger: applicationLogger,
         }),
       }),
     };

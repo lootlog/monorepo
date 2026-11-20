@@ -24,7 +24,6 @@ import {
   InvalidRequestError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getEventHeroNpcId } from "@lootlog/domain/npc-identity";
 import {
@@ -57,7 +56,6 @@ export const makeEventMapAssignments = (
   redis: Pick<RedisService, "deleteByPattern" | "invalidateScopes">,
   timers: Pick<EventTimersPort, "getEventRespawnTimer">,
   publisher: EventAssignmentPublisher,
-  logger: Pick<Logger, "warn">,
 ) => {
   const query = adapterOperation("events.assignments.drizzle");
 
@@ -67,12 +65,10 @@ export const makeEventMapAssignments = (
   ) =>
     effect.pipe(
       Effect.catch((error) =>
-        Effect.sync(() =>
-          logger.warn("Failed to publish event assignment", {
-            error,
-            operation,
-          }),
-        ),
+        Effect.logWarning("Failed to publish event assignment", {
+          error,
+          operation,
+        }),
       ),
       withAdapterSpan(operation, "events.rabbitmq"),
     );
@@ -80,7 +76,6 @@ export const makeEventMapAssignments = (
   const invalidate = (guildId: string, eventId: string) =>
     invalidateEventCache(
       redis,
-      logger,
       guildId,
       eventId,
       "Failed to invalidate event read cache",

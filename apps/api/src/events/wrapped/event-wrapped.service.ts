@@ -2,7 +2,6 @@ import { buildLootVisibilityCacheScope } from "#src/loots/loot-visibility-cache"
 import { roundEventDisplayValue } from "#src/events/round-event-display-value";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import { Logger } from "#src/shared/application-logger";
 import type { Permission } from "@lootlog/schema/permissions";
 import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 import type {
@@ -289,7 +288,7 @@ export const makeEventWrapped = (
   redis: Pick<RedisService, "getJson" | "setJson">,
   lootsService: Pick<LootsOperations, "summarizeLootsByNpcName">,
 ) => {
-  const logger = new Logger("EventWrapped");
+  const logContext = Effect.annotateLogs({ context: "EventWrapped" });
 
   function getWrapped(
     guild: Guild,
@@ -310,11 +309,10 @@ export const makeEventWrapped = (
         .getJson(cacheKey, makeJsonCodec(EventWrappedResponse))
         .pipe(
           Effect.catch((error) =>
-            Effect.sync(() => {
-              logger.warn("Event wrapped cache unavailable", error);
-
-              return null;
-            }),
+            Effect.logWarning("Event wrapped cache unavailable", error).pipe(
+              logContext,
+              Effect.as(null),
+            ),
           ),
         );
 
@@ -324,8 +322,8 @@ export const makeEventWrapped = (
         .setJson(cacheKey, response, EVENT_WRAPPED_CACHE_TTL_SECONDS)
         .pipe(
           Effect.catch((error) =>
-            Effect.sync(() =>
-              logger.warn("Event wrapped cache unavailable", error),
+            Effect.logWarning("Event wrapped cache unavailable", error).pipe(
+              logContext,
             ),
           ),
         );

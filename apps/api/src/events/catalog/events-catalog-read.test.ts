@@ -57,9 +57,7 @@ describe("event catalog read Effect module", () => {
     const boundary = await createDatabaseBoundary();
 
     try {
-      const logger = { warn: mock(() => undefined) };
-
-      const catalog = makeEventsCatalogRead(boundary.database, redis, logger);
+      const catalog = makeEventsCatalogRead(boundary.database, redis);
 
       const result = await boundary.run(
         catalog.getEvent(
@@ -224,9 +222,7 @@ describe("event catalog read Effect module", () => {
         },
       };
 
-      const catalog = makeEventsCatalogRead(database, redis, {
-        warn: () => undefined,
-      });
+      const catalog = makeEventsCatalogRead(database, redis);
 
       const result = await boundary.run(
         catalog.getEventMaps(

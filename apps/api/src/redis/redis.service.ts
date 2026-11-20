@@ -56,7 +56,7 @@ export interface RedisGetOrSetJsonOptions<T, E> {
   readonly waitIntervalMs?: number;
   readonly codec: JsonCodec<T>;
   /** Reports a Redis failure the read recovered from by running `factory`. */
-  readonly onError?: (error: unknown) => void;
+  readonly onError?: (error: unknown) => Effect.Effect<void>;
 }
 
 const DEFAULT_SCAN_COUNT = 500;
@@ -337,9 +337,12 @@ export const makeRedisService = (
 
           if (error instanceof CacheFillTimeoutError) return Effect.die(error);
 
-          onError?.(error);
+          const recovered =
+            filled === undefined ? factory : Effect.succeed(filled.value);
 
-          return filled === undefined ? factory : Effect.succeed(filled.value);
+          return onError === undefined
+            ? recovered
+            : onError(error).pipe(Effect.andThen(recovered));
         }),
       );
     });

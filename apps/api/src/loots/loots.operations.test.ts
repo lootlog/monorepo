@@ -7,7 +7,6 @@ import { makeLootsOperations } from "#src/loots/loots.operations";
 import { OperationError } from "@lootlog/instrumentation/operation";
 import type { LootQueryOperations } from "#src/loots/query/loot-query.operations";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
-import { applicationLogger } from "#src/shared/application-logger";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 
 type Guild = Parameters<LootQueryOperations["fetchLootById"]>[0];
@@ -95,7 +94,6 @@ const makeOperations = (
       invalidateScopes: () => Effect.void,
       getOrSetJson: () => Effect.die("Unexpected Redis cache read"),
     },
-    logger: applicationLogger,
   });
 
 describe("loot detail concurrent reads", () => {
@@ -515,7 +513,6 @@ describe("loot list pages", () => {
       invalidateScopes: () => Effect.void,
       getOrSetJson: (options) => options.factory,
     },
-    logger: applicationLogger,
   });
 
   it("walks every loot once and ends with a null cursor", async () => {

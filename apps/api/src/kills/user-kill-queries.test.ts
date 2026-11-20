@@ -1,5 +1,4 @@
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
-import { applicationLogger as logger } from "#src/shared/application-logger";
 import type { KillQueryCache } from "./kill-query-support.js";
 import { Effect, Schema } from "effect";
 import { describe, expect, it } from "bun:test";
@@ -38,7 +37,7 @@ describe("user kill queries Effect module", () => {
         },
       };
 
-      const queries = makeUserKillQueries(boundary.database, cache, logger);
+      const queries = makeUserKillQueries(boundary.database, cache);
 
       await expect(
         boundary.run(queries.getUserKillStats("discord-1", {})),
@@ -57,7 +56,7 @@ describe("user kill queries Effect module", () => {
         getOrSet: () => Effect.fail(new Error("redis unavailable")),
       };
 
-      const queries = makeUserKillQueries(boundary.database, cache, logger);
+      const queries = makeUserKillQueries(boundary.database, cache);
 
       await expect(
         boundary.run(queries.getUserKillStats("discord-1", {})),
@@ -102,7 +101,7 @@ describe("per-character personal kills", () => {
     };
 
     try {
-      const createKill = makeKillCreation(boundary.database, cache, logger);
+      const createKill = makeKillCreation(boundary.database, cache);
 
       // A kill from before per-character tracking: account-wide only.
       const earlier = new Date(Date.now() - 2 * 86_400_000);
@@ -141,11 +140,7 @@ describe("per-character personal kills", () => {
       claims.clear();
       await boundary.run(createKill("discord-1", kill("char-a")));
 
-      const queries = makeUserKillQueries(
-        boundary.database,
-        passthrough,
-        logger,
-      );
+      const queries = makeUserKillQueries(boundary.database, passthrough);
 
       const { characters } = await boundary.run(
         queries.getUserKillCharacters("discord-1"),
@@ -242,7 +237,7 @@ describe("personal NPC kill pages", () => {
 
       await test(
         boundary.run,
-        makeUserKillQueries(boundary.database, passthrough, logger),
+        makeUserKillQueries(boundary.database, passthrough),
       );
     } finally {
       await boundary.dispose();

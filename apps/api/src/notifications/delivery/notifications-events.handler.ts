@@ -11,7 +11,6 @@ import {
   type LootCreatedNotificationEventV2,
   NotificationJobKind,
 } from "@lootlog/schema/notifications";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { NotificationGuildTargets } from "#src/notifications/targets/notification-guild-targets";
 import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
 import {
@@ -94,7 +93,6 @@ export const makeNotificationsEvents = (options: {
   ) => Effect.Effect<void, unknown, never>;
   readonly rebuild: NotificationJobRebuild;
   readonly content: NotificationContentModule;
-  readonly logger: Logger;
 }) => {
   const handleTimerUpdated = Effect.fn("notifications.events.timerUpdated")(
     function* (event: TimerUpdatedEvent) {
@@ -119,7 +117,7 @@ export const makeNotificationsEvents = (options: {
         );
 
       for (const { ruleId, cause } of failures) {
-        options.logger.error(
+        yield* Effect.logError(
           `Failed to rebuild timer jobs for rule ${ruleId}: ${causeMessage(cause)}`,
         );
       }
@@ -145,10 +143,8 @@ export const makeNotificationsEvents = (options: {
         })
         .pipe(
           Effect.tapError((cause) =>
-            Effect.sync(() =>
-              options.logger.error(
-                `Failed to cancel pending jobs for deleted timer ${event.timerKey}: ${causeMessage(cause)}`,
-              ),
+            Effect.logError(
+              `Failed to cancel pending jobs for deleted timer ${event.timerKey}: ${causeMessage(cause)}`,
             ),
           ),
         ),
@@ -269,10 +265,8 @@ export const makeNotificationsEvents = (options: {
 
           return process.pipe(
             Effect.tapError((cause) =>
-              Effect.sync(() =>
-                options.logger.error(
-                  `Failed to process watched item ${watchedItem.id} for loot ${event.lootId}: ${causeMessage(cause)}`,
-                ),
+              Effect.logError(
+                `Failed to process watched item ${watchedItem.id} for loot ${event.lootId}: ${causeMessage(cause)}`,
               ),
             ),
           );

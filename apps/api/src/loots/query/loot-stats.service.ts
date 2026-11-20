@@ -3,7 +3,6 @@ import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
-import { Logger } from "#src/shared/application-logger";
 import type { RedisService } from "#src/redis/redis.service";
 import { getOrSetStaleJson } from "#src/redis/stale-json-cache";
 import {
@@ -50,8 +49,6 @@ const FRESH_SECONDS = 3 * 3_600;
 const RETAIN_SECONDS = 24 * 3_600;
 
 export class LootStatsService {
-  private readonly logger = new Logger(LootStatsService.name);
-
   constructor(
     private readonly database: Parameters<typeof buildLootStatsQueries>[0],
     private readonly redis: Pick<
@@ -134,7 +131,9 @@ export class LootStatsService {
       retainSeconds: RETAIN_SECONDS,
       factory: load,
       onError: (error) =>
-        this.logger.warn("Loot statistics cache unavailable", error),
+        Effect.logWarning("Loot statistics cache unavailable", error).pipe(
+          Effect.annotateLogs({ context: "LootStatsService" }),
+        ),
     }).pipe(
       Effect.map(({ value, computedAt }) => ({ ...value, computedAt })),
       withAdapterSpan("LootsController_getLootStats", "loot-stats"),

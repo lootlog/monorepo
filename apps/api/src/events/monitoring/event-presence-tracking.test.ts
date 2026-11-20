@@ -24,7 +24,6 @@ import { makeEventReadCache } from "#src/events/catalog/event-read-cache.service
 import { makeEventTimersPort } from "#src/events/respawn/event-timers.port";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.repository";
 import { makeRedisLockManager } from "#src/redis/redlock";
-import { applicationLogger } from "#src/shared/application-logger";
 import { buildTimerKey } from "#src/timers/timer-key";
 import { makeEventPresenceTracking } from "./event-presence-tracking.js";
 
@@ -157,7 +156,6 @@ describe("event presence tracking", () => {
         store: makeEventTimerStore(database),
         redis,
         locks: makeRedisLockManager({ eval: unexpected }),
-        logger: applicationLogger,
         amqp: { publish: unexpected },
       }),
       makeRedisLockManager({ eval: lockCalls }),
