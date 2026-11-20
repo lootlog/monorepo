@@ -12,7 +12,8 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { Toaster, toast } from "sonner";
+import { Toaster } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { afterEach, expect, it, onTestFinished } from "vitest";
 import { MapTemplatesSettings } from "./map-templates";
 

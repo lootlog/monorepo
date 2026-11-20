@@ -24,7 +24,7 @@ import {
   act,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Toaster } from "sonner";
+import { Toaster } from "@lootlog/ui/components/sonner";
 import { createTopBarSlots } from "@/lib/testing/top-bar-slots";
 import { ReservationsSchedule } from "./reservations-schedule";
 

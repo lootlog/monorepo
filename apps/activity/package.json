@@ -17,7 +17,7 @@
     "typecheck": "bun check",
     "format": "oxfmt src",
     "test": "bun test --path-ignore-patterns='**/*.integration.*'",
-    "test:integration": "bun test src/activities/activity-repository.integration.test.ts src/online/online-repository.integration.test.ts",
+    "test:integration": "bun test .integration.",
     "test:watch": "bun test --watch",
     "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts",
     "db:generate": "bunx drizzle-kit generate",

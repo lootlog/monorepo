@@ -18,7 +18,7 @@
     "lint": "oxlint src test",
     "typecheck": "bun check",
     "test": "bun test --path-ignore-patterns='**/*.integration.*'",
-    "test:integration": "bun test test/postgres.integration.test.ts test/bun-redis.integration.test.ts"
+    "test:integration": "bun test .integration."
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",

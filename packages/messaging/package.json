@@ -11,7 +11,7 @@
     "lint": "oxlint src test",
     "typecheck": "bun check",
     "test": "bun test --path-ignore-patterns='**/*.integration.*'",
-    "test:integration": "bun test test/rabbit.integration.test.ts"
+    "test:integration": "bun test .integration."
   },
   "dependencies": {
     "@lootlog/protocol": "workspace:*",

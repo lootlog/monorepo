@@ -14,7 +14,7 @@
     "lint": "oxlint src test && effect-tsgo diagnostics --project tsconfig.json --severity error",
     "typecheck": "bun check",
     "test": "bun test --path-ignore-patterns='**/*.integration.*'",
-    "test:integration": "bun test test/catalog-writes.integration.test.ts",
+    "test:integration": "bun test .integration.",
     "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts",
     "projection:rebuild": "bun src/scripts/rebuild-projection.ts",
     "db:generate": "bunx drizzle-kit generate",

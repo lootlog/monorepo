@@ -26,7 +26,8 @@ import {
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
-import { Toaster, toast } from "sonner";
+import { Toaster } from "@lootlog/ui/components/sonner";
+import { toast } from "@lootlog/ui/lib/toast";
 import { Schema } from "effect";
 import { createUserPreferences } from "@/lib/testing/preferences";
 import { createOrganizationTestWrapper } from "@/lib/testing/router";
