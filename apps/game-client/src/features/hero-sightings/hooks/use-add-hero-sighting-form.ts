@@ -22,13 +22,13 @@ import { useLoadedTimers } from "@/hooks/api/use-timers";
 import { useSuggestionList } from "@/hooks/ui/use-suggestion-list";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
-export const MAX_HERO_NAME_LENGTH = 100;
+const MAX_HERO_NAME_LENGTH = 100;
 
 export const MIN_HERO_LEVEL = 1;
 
 export const MAX_HERO_LEVEL = 500;
 
-export const MAX_HERO_MAP_NAME_LENGTH = 200;
+const MAX_HERO_MAP_NAME_LENGTH = 200;
 
 const FormSchema = Schema.Struct({
   name: Schema.String,

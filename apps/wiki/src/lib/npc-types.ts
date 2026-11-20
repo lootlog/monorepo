@@ -15,7 +15,7 @@ import { t } from "@/i18n/messages";
  * hideouts during Tropiciele Herosów. The Hero Tracker type is the NPC that
  * opens a hideout, which the catalog lists among the NPCs.
  */
-export const NPC_KIND_OPTIONS = [
+const NPC_KIND_OPTIONS = [
   "TITAN",
   "EVENT_TITAN",
   "COLOSSUS",

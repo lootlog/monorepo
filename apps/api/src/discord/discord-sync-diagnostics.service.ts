@@ -5,7 +5,7 @@ import type {
   DiscordInvalidRequestStatus,
 } from "./discord.types.js";
 
-export type DiscordMemberRefreshMetricOutcome =
+type DiscordMemberRefreshMetricOutcome =
   | "queued"
   | "delayed"
   | "refused"
