@@ -16,7 +16,7 @@ import {
 const UserPermissions = Schema.Array(UserGuildPermissionsDtoSchema);
 
 /** The guild or the user's grants could not be read; the request cannot be authorized. */
-export class PermissionsUnavailable extends TaggedErrorClass<PermissionsUnavailable>()(
+class PermissionsUnavailable extends TaggedErrorClass<PermissionsUnavailable>()(
   "PermissionsUnavailable",
   {
     operation: Schema.Literals([

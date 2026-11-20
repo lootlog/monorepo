@@ -36,7 +36,7 @@ export type BattleObjectCache = Pick<
 >;
 
 /** R2 could not complete a request; the battle objects it names are unchanged or unread. */
-export class BattleObjectStorageError extends TaggedErrorClass<BattleObjectStorageError>()(
+class BattleObjectStorageError extends TaggedErrorClass<BattleObjectStorageError>()(
   "BattleObjectStorageError",
   { cause: Schema.Defect() },
 ) {}

@@ -42,7 +42,7 @@ const CHARACTER_PREFIX = "party-ready-room:v3:character:";
 const TERMINAL_TOMBSTONE_SECONDS = 60;
 
 /** Concurrent requests kept replacing the room's indexes; the caller may retry. */
-export class ReadyRoomContended extends TaggedErrorClass<ReadyRoomContended>()(
+class ReadyRoomContended extends TaggedErrorClass<ReadyRoomContended>()(
   "ReadyRoomContended",
   {},
 ) {}
