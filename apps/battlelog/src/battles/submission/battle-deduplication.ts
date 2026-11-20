@@ -96,8 +96,7 @@ export const makeBattleDeduplication = (
           "Battles_releaseDeduplicationLock",
           "battlelog-infrastructure",
         ),
-        Effect.asVoid,
-        Effect.catch(() => Effect.void),
+        Effect.ignore,
       );
   };
 

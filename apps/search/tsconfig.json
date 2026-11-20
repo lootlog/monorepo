@@ -1,9 +1,7 @@
 {
-  "extends": "@lootlog/typescript-config/base.json",
+  "extends": "@lootlog/typescript-config/effect-service.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "declaration": false,
-    "declarationMap": false,
     "rootDir": ".",
     "types": ["bun", "node"]
   },

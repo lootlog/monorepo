@@ -12,7 +12,7 @@
     "build": "bun build src/main.ts --target=bun --outdir=dist/src --sourcemap=linked",
     "start": "bun dist/src/main.js",
     "start:debug": "bun --inspect --watch src/main.ts",
-    "lint": "oxlint src scripts",
+    "lint": "oxlint src scripts && effect-tsgo diagnostics --project tsconfig.json --severity error",
     "typecheck": "bun check",
     "test": "bun test --path-ignore-patterns='**/*.integration.*'",
     "test:integration": "bun test src/auth/storage/auth-redis-storage.integration.spec.ts src/database/database.integration.spec.ts",
@@ -39,6 +39,7 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
+    "@effect/tsgo": "0.67.3",
     "@lootlog/typescript-config": "workspace:*",
     "@testcontainers/postgresql": "^12.2.1",
     "@types/bun": "catalog:",

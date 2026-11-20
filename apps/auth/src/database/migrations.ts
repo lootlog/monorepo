@@ -118,11 +118,9 @@ const readIntegrityViolations = Effect.fn("readIntegrityViolations")(function* (
     },
   ];
 
-  const counts = yield* Effect.all(
-    checks.map((check) =>
-      readCount(client, check.sql).pipe(
-        Effect.map((count) => ({ code: check.code, count })),
-      ),
+  const counts = yield* Effect.forEach(checks, (check) =>
+    readCount(client, check.sql).pipe(
+      Effect.map((count) => ({ code: check.code, count })),
     ),
   );
 

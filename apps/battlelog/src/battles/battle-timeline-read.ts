@@ -242,7 +242,7 @@ export const makeBattleTimelineRead = (
             "Battles_getCachedTimeline",
             "battlelog-infrastructure",
           ),
-          Effect.catch(() => Effect.succeed(null)),
+          Effect.orElseSucceed(() => null),
         );
 
       if (cached) return cached;
@@ -260,7 +260,7 @@ export const makeBattleTimelineRead = (
               "Battles_cacheTimeline",
               "battlelog-infrastructure",
             ),
-            Effect.catch(() => Effect.void),
+            Effect.ignore,
           );
       }
 

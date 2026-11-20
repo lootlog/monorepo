@@ -74,7 +74,7 @@ export class ActivityReadiness extends Context.Service<
               Effect.asVoid,
             ),
         ).pipe(
-          Effect.catch(() => Effect.succeed(false)),
+          Effect.orElseSucceed(() => false),
           Effect.map((up) =>
             up
               ? {

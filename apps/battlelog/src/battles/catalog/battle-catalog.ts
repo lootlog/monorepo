@@ -6,7 +6,7 @@ import {
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ContextLogger } from "@lootlog/instrumentation";
 import { and, eq } from "drizzle-orm";
-import { Effect } from "effect";
+import { Effect, Predicate } from "effect";
 import type { BattleListQuery } from "#src/battles/catalog/query-battles";
 import type { BattleUpdate } from "#src/battles/catalog/update-battle";
 import type { PaginationOptions } from "#src/battles/analytics/pagination";
@@ -197,17 +197,13 @@ export const makeBattleCatalog = (
       })
       .pipe(
         withAdapterSpan("Battles_getPublic", "battlelog-infrastructure"),
-        Effect.flatMap((battle) => {
-          if (!battle) {
-            return Effect.fail(
-              new ResourceNotFoundError(
-                `Public battle with ID ${battleId} not found`,
-              ),
-            );
-          }
-
-          return Effect.succeed(battle);
-        }),
+        Effect.filterOrFail(
+          Predicate.isNotNullish,
+          () =>
+            new ResourceNotFoundError(
+              `Public battle with ID ${battleId} not found`,
+            ),
+        ),
       );
   };
 

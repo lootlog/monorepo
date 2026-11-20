@@ -6,12 +6,12 @@ export const httpClientFromResponses = (
 ) =>
   HttpClient.make((request) =>
     respond().pipe(
-      Effect.map((response) => HttpClientResponse.fromWeb(request, response)),
-      Effect.mapError(
-        (cause) =>
+      Effect.mapBoth({
+        onSuccess: (response) => HttpClientResponse.fromWeb(request, response),
+        onFailure: (cause) =>
           new HttpClientError.HttpClientError({
             reason: new HttpClientError.TransportError({ request, cause }),
           }),
-      ),
+      }),
     ),
   );

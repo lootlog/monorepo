@@ -228,7 +228,7 @@ export const createAuthService = ({
       const jwks = yield* Effect.tryPromise({
         try: () => auth.api.getJwks(),
         catch: (cause) => cause,
-      }).pipe(Effect.catch(() => Effect.succeed(null)));
+      }).pipe(Effect.orElseSucceed(() => null));
 
       if (!jwks) {
         return null;
@@ -254,7 +254,7 @@ export const createAuthService = ({
           } satisfies VerifiedIdentity;
         },
         catch: (cause) => cause,
-      }).pipe(Effect.catch(() => Effect.succeed(null)));
+      }).pipe(Effect.orElseSucceed(() => null));
     },
   );
 
