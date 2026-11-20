@@ -75,7 +75,7 @@ const operation = <A>(
 ) =>
   effect.pipe(
     Effect.mapError(operationFailure),
-    withAdapterSpan(operationIds[endpoint], "events"),
+    withAdapterSpan(operationIds[endpoint] ?? endpoint, "events"),
   );
 
 export const stringParameter = (value: unknown, key: string) =>

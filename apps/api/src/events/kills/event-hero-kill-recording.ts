@@ -42,7 +42,10 @@ export const makeEventHeroKillRecording = (
     guildId: string,
     eventHero: EventHeroNpc,
     event: Event,
-    timerData: KillTimerData,
+    // A manual close records the kill of a timer that may have no creator.
+    timerData: Omit<KillTimerData, "memberId"> & {
+      readonly memberId: number | null;
+    },
     isManualClose = false,
   ) {
     return Effect.gen(function* () {

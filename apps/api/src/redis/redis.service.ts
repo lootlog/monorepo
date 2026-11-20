@@ -388,7 +388,7 @@ export class RedisService {
     onError,
     ...options
   }: RedisGetOrSetJsonBestEffortOptions<T>): Promise<T> {
-    let factoryResult: { value: T } | null = null;
+    let factoryResult: { value: T } | undefined;
     let factoryRejected = false;
     let factoryError: unknown;
 

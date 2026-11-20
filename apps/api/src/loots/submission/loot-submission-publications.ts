@@ -122,6 +122,7 @@ export function newLootPublications(options: {
     RabbitRoutingKey.SEARCH_PLAYERS_INDEX,
     mapPlayers(options.submission.players).map((player) => ({
       ...player,
+      prof: player.prof ?? "",
       world: options.submission.world,
     })),
   );
@@ -144,15 +145,37 @@ export function newLootPublications(options: {
 
   rabbit(
     RabbitRoutingKey.CATALOG_NPCS_INDEX,
-    options.npcs.map((npc): CatalogNpcObservation => ({
-      ...searchNpc(npc),
-      // The catalog keeps the latest observation of an entry; loot ids
-      // order observations even when deliveries arrive out of order.
-      lootId: options.lootId,
-      ...(npc.snapshotHash && { snapshotHash: npc.snapshotHash }),
-      world: options.submission.world,
-      observedAt,
-    })),
+    options.npcs.flatMap((npc): CatalogNpcObservation[] => {
+      const { icon, lvl, wt, type, margonemType } = npc;
+
+      // A submitted NPC always carries these; only a revision stored before
+      // they were required can lack one, and the catalog needs them all.
+      if (
+        icon === null ||
+        lvl === null ||
+        wt === null ||
+        type === null ||
+        margonemType === null
+      )
+        return [];
+
+      return [
+        {
+          ...searchNpc(npc),
+          icon,
+          lvl,
+          wt,
+          type,
+          margonemType,
+          // The catalog keeps the latest observation of an entry; loot ids
+          // order observations even when deliveries arrive out of order.
+          lootId: options.lootId,
+          ...(npc.snapshotHash && { snapshotHash: npc.snapshotHash }),
+          world: options.submission.world,
+          observedAt,
+        },
+      ];
+    }),
   );
   const items = mapItems(options.submission.loots);
 
@@ -166,8 +189,8 @@ export function newLootPublications(options: {
         // The catalog describes revisions, not looted instances.
         stat: splitItemStat(item.stat).revision,
         lvl: item.lvl,
-        rarity: item.rarity,
-        type: item.type,
+        rarity: item.rarity ?? null,
+        type: item.type ?? null,
         worlds: [options.submission.world],
         gameVersion: options.submission.gameVersion,
         observedAt,

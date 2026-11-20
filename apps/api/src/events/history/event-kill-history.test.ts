@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { and, eq } from "drizzle-orm";
 import { Effect } from "effect";
+import { zip } from "es-toolkit";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -44,9 +45,13 @@ const uuid = (value: string) =>
 // boundaries at limit 2 fall on those.
 const legacyId = (value: string) => `cm${value.padStart(23, "0")}`;
 
-const orderedIds = ["f", "a", "d", "b", "c"].map((value, index) =>
-  index === 0 || index === 4 ? uuid(value) : legacyId(value),
-);
+const orderedIds = [
+  uuid("f"),
+  legacyId("a"),
+  legacyId("d"),
+  legacyId("b"),
+  uuid("c"),
+] as const;
 
 const hiddenId = uuid("ee");
 
@@ -180,15 +185,15 @@ const fixture = async () => {
           { id: "foreign", eventId: "event-3", npcName: "Foreign", npcLvl: 50 },
         ]);
         yield* database.insert(eventHeroKillTable).values([
-          ...orderedIds.map((id, index) => ({
-            id,
-            heroNpcId: "low",
-            killedAt: time(
-              ["12:00", "11:00", "10:00", "10:00", "09:00"][index],
-            ),
-            minSpawnTimeAtKill: time("08:00"),
-            maxSpawnTimeAtKill: time("13:00"),
-          })),
+          ...zip(orderedIds, ["12:00", "11:00", "10:00", "10:00", "09:00"]).map(
+            ([id, killedAt]) => ({
+              id,
+              heroNpcId: "low",
+              killedAt: time(killedAt),
+              minSpawnTimeAtKill: time("08:00"),
+              maxSpawnTimeAtKill: time("13:00"),
+            }),
+          ),
           ...[
             { id: hiddenId, heroNpcId: "high" },
             { id: otherEventId, heroNpcId: "other" },
@@ -496,7 +501,9 @@ describe("kill history database reads", () => {
         }),
       );
 
-      expect(continuation.items.map((kill) => kill.id)).toEqual(orderedIds);
+      expect(continuation.items.map((kill) => kill.id)).toEqual([
+        ...orderedIds,
+      ]);
       const none = await f.run(f.history.list(context(20), {}));
       expect(none).toMatchObject({ items: [], nextCursor: null });
 

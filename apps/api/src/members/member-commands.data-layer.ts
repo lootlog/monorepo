@@ -130,7 +130,7 @@ const useStaleMember = (
   member: StoredMemberWithRoles | null,
   refreshAttempt: MemberRefreshAttempt,
   now: Date,
-) =>
+): member is StoredMemberWithRoles =>
   Boolean(
     member?.active &&
     member.lastDiscordSyncAt &&

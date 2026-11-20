@@ -153,7 +153,7 @@ it("limits independent Organization writes to three, settles delivery pairs, and
             }),
           publish: (routingKey, payload) =>
             Effect.gen(function* () {
-              if (!("guildId" in payload))
+              if (!("guildId" in payload) || !payload.guildId)
                 return yield* Effect.die("Unexpected timer publication");
               const ready = notificationsStarted.get(payload.guildId);
 
@@ -206,10 +206,10 @@ it("limits independent Organization writes to three, settles delivery pairs, and
 
         yield* release(third);
         const fourth = yield* Queue.take(started);
-        expect(fourth).toBe(expectedOrder[3]);
+        expect(fourth).toBe(expectedOrder[3]!);
         yield* release(fourth);
         const fifth = yield* Queue.take(started);
-        expect(fifth).toBe(expectedOrder[4]);
+        expect(fifth).toBe(expectedOrder[4]!);
         yield* release(fifth);
         yield* release(second);
         yield* release(first);

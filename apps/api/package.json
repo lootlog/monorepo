@@ -65,6 +65,7 @@
     "@testcontainers/postgresql": "^12.2.1",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
+    "@types/pg": "^8.23.1",
     "drizzle-kit": "catalog:",
     "pg": "^8.23.1",
     "testcontainers": "^12.2.1",

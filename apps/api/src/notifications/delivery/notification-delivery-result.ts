@@ -61,6 +61,7 @@ export const makeNotificationDeliveryResult = (
       !event.success &&
       job.ownerType === NotificationOwnerType.GUILD &&
       event.errorCode !== undefined &&
+      event.errorCode !== null &&
       DELETED_CHANNEL_ERROR_CODES.has(event.errorCode);
 
     if (job.status === NotificationJobStatus.FAILED && !event.success) {

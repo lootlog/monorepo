@@ -404,6 +404,7 @@
             "boundaryFunctions": [
               "mapTimerNpc",
               "parseTimerNpc",
+              "parseTimerNpcRouting",
               "timerNpcField",
               "timerNpcTemplateId"
             ]

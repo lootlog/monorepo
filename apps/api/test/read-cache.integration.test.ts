@@ -97,7 +97,7 @@ describe("Read cache Dragonfly integration", () => {
     const first = ["a", "b", "c"][claims.indexOf(null)];
 
     expect(claims.filter((held) => held === null)).toHaveLength(1);
-    expect(claims.filter((held) => held !== null)).toEqual([first, first]);
+    expect(claims.filter((held) => held !== null)).toEqual([first!, first!]);
     expect(await cache.setNxGet(key, "d", 30)).toBe(first!);
   });
 
@@ -1012,7 +1012,7 @@ describe("Read cache Dragonfly integration", () => {
       // A warm entry is served without SQL, and invalidating the Organization's
       // scopes does not drop it: statistics refresh by age, not by writes.
       await cache.invalidateScopes(`loot-stats:${organization}`);
-      expect(await request()).toEqual(responses[0]);
+      expect(await request()).toEqual(responses[0]!);
       expect(queries).toBe(5);
     } finally {
       querySpy.mockRestore();

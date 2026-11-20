@@ -686,9 +686,9 @@ export const makeEventWrapped = (
       };
 
       existing.totalLoots += npc.encounters;
-      existing.rarityTotals.unique += npc.unique;
-      existing.rarityTotals.heroic += npc.heroic;
-      existing.rarityTotals.legendary += npc.legendary;
+      existing.rarityTotals.unique += npc.unique ?? 0;
+      existing.rarityTotals.heroic += npc.heroic ?? 0;
+      existing.rarityTotals.legendary += npc.legendary ?? 0;
       heroLoots.set(hero.id, existing);
     }
 

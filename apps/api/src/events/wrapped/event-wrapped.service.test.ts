@@ -1,5 +1,4 @@
 import { describe, expect, it } from "bun:test";
-import { Effect } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {

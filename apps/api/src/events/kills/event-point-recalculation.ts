@@ -180,7 +180,13 @@ function calculateTrackingDurationPercentage(params: {
   killedAt: Date;
   minSpawnTimeAtKill: Date;
 }): number | undefined {
-  if (!Number.isFinite(params.trackingDurationSeconds)) {
+  const { trackingDurationSeconds } = params;
+
+  if (
+    trackingDurationSeconds === null ||
+    trackingDurationSeconds === undefined ||
+    !Number.isFinite(trackingDurationSeconds)
+  ) {
     return undefined;
   }
 
@@ -193,9 +199,7 @@ function calculateTrackingDurationPercentage(params: {
 
   return Math.min(
     100,
-    Math.round(
-      (params.trackingDurationSeconds / trackingWindowDurationSeconds) * 100,
-    ),
+    Math.round((trackingDurationSeconds / trackingWindowDurationSeconds) * 100),
   );
 }
 

@@ -26,7 +26,10 @@ type MemberDisplayRole = Pick<
   "position" | "color"
 > & { memberId: number };
 
-/** Returns the member's Discord display role as a zero- or one-item list. */
+/**
+ * Returns the member's Discord display role as a zero- or one-item list. A
+ * role without a stored position ranks as 0, as it does when it is chosen.
+ */
 export const topMemberDisplayRoles = (
   roles: MemberDisplayRole[],
   memberId: number,
@@ -36,6 +39,6 @@ export const topMemberDisplayRoles = (
   );
 
   return displayRole
-    ? [{ position: displayRole.position, color: displayRole.color }]
+    ? [{ position: displayRole.position ?? 0, color: displayRole.color }]
     : [];
 };

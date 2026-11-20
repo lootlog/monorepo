@@ -9,6 +9,7 @@ import {
   mapTimerResponse,
   toTimerEvent,
   timerNpcField,
+  parseTimerNpcRouting,
   timerNpcTemplateId,
 } from "#src/timers/timer-projection";
 import type { EventPublisher } from "@lootlog/messaging";
@@ -54,8 +55,13 @@ export interface EventTimersPort {
     guildId: string,
     world: string,
     heroes: ReadonlyArray<{ npcId: number | null; npcName: string }>,
-  ) => Effect.Effect<Timer[], EventTimersError>;
+  ) => Effect.Effect<EventHeroTimer[], EventTimersError>;
 }
+
+type EventHeroTimer = Pick<
+  Timer,
+  "npcId" | "timerKey" | "world" | "minSpawnTime" | "maxSpawnTime" | "npc"
+>;
 
 export class EventTimersError extends TaggedErrorClass<EventTimersError>()(
   "EventTimersError",
@@ -134,7 +140,7 @@ export const makeEventTimersPort = ({
       npcId: timer.npcId,
       timerKey: timer.timerKey,
       routing: {
-        tier: getNpcRoutingTier(npc),
+        tier: getNpcRoutingTier(parseTimerNpcRouting(npc)),
         npcLevel: timerNpcField(npc, "lvl"),
       },
     };

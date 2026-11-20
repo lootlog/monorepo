@@ -139,7 +139,7 @@ it("sends a detection only to the Organizations the character submits to", async
     expect(result.rejectedGuilds).toEqual([
       { guildId: "b", guildName: "B", reason: "NOT_ON_CATCHING_WHITELIST" },
     ]);
-    expect(result.submittedGuilds[0]?.sighting.detectedBy).toMatchObject({
+    expect(result.submittedGuilds[0]?.sighting?.detectedBy).toMatchObject({
       memberId: 1,
       userId: "user",
       displayName: "Detector",
@@ -183,7 +183,7 @@ it("follows a hero from a detected spawn to a probable kill, keeping claims whil
       create(identity, detection({ secondsAgo: 20 })),
     );
 
-    expect(repeated.submittedGuilds[0]?.sighting.id).toBe(spawning.id);
+    expect(repeated.submittedGuilds[0]?.sighting?.id).toBe(spawning.id);
 
     const roaming = await boundary.run(
       create(identity, detection({ state: "ROAMING", secondsAgo: 10 })),
@@ -200,19 +200,21 @@ it("follows a hero from a detected spawn to a probable kill, keeping claims whil
     const killed = await boundary.run(create(identity, detection()));
     const replacement = killed.submittedGuilds[0]?.sighting;
 
-    expect(replacement?.id).not.toBe(spawning.id);
-    expect(replacement?.claims).toEqual([]);
+    if (!replacement) throw new Error("Missing replacement sighting");
+
+    expect(replacement.id).not.toBe(spawning.id);
+    expect(replacement.claims).toEqual([]);
     // Clients learn about both the closed and the new sighting.
     expect(published.map(({ id, closeReason }) => [id, closeReason])).toEqual([
       [spawning.id, "PROBABLY_KILLED"],
-      [replacement?.id, null],
+      [replacement.id, null],
     ]);
 
     const history = await boundary.run(
       reads.getHistory(ownerAccess("a", 1), "jaruna", "TEPEYOLLOTL"),
     );
 
-    expect(history.map(({ id }) => id)).toEqual([replacement?.id, spawning.id]);
+    expect(history.map(({ id }) => id)).toEqual([replacement.id, spawning.id]);
   } finally {
     await boundary.dispose();
   }
@@ -437,7 +439,7 @@ it("keeps the recorded hero and map when a Member types them differently", async
 
     // A typo must not read as the hero having moved, nor change who sees it.
     expect(typed).toMatchObject({
-      id: detected.submittedGuilds[0]?.sighting.id,
+      id: detected.submittedGuilds[0]?.sighting?.id,
       hero: { name: "Tepeyollotl", lvl: 258 },
       mapName: "Oztotl Tzacua p.2 - sala 2",
       manual: false,

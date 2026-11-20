@@ -42,7 +42,7 @@ const run = (
   redis: Pick<RedisService, "get" | "set">,
 ) => Effect.runPromise(operationWith(fetchImplementation, redis));
 
-const redisWith = (cached?: string) => ({
+const redisWith = (cached: string | null = null) => ({
   get: mock(() => Promise.resolve(cached)),
   set: mock(() => Promise.resolve()),
 });

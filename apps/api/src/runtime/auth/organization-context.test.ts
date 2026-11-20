@@ -258,7 +258,13 @@ describe("organization context lookup", () => {
       refreshQueued: true,
     };
 
-    const lookupWith = (stored: typeof member | null) =>
+    const lookupWith = (
+      stored:
+        | (Omit<typeof member, "globalUserId"> & {
+            globalUserId: string | null;
+          })
+        | null,
+    ) =>
       Effect.gen(function* () {
         const lookup = yield* OrganizationContextLookup;
 

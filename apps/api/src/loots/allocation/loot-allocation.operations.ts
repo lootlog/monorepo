@@ -47,20 +47,20 @@ export interface LootAllocationPublisher {
 
 const parseChatAllocation = (message: string) => {
   const allocation: Record<string, string[]> = {};
-  let match: RegExpExecArray | null;
 
-  while ((match = LOOT_SHARE_MSG_REGEX.exec(message)) !== null) {
-    const nickname = match[1].trim();
-    let itemMatch: RegExpExecArray | null;
+  // Both patterns capture their groups unconditionally; the defaults only
+  // satisfy the type of an optional capture.
+  for (const [, player = "", itemList = ""] of message.matchAll(
+    LOOT_SHARE_MSG_REGEX,
+  )) {
+    const nickname = player.trim();
 
-    while ((itemMatch = LOOT_SHARE_ITEM_REGEX.exec(match[2])) !== null) {
+    for (const [, hid = ""] of itemList.matchAll(LOOT_SHARE_ITEM_REGEX)) {
       const items = allocation[nickname];
 
-      if (items) items.push(itemMatch[1]);
-      else allocation[nickname] = [itemMatch[1]];
+      if (items) items.push(hid);
+      else allocation[nickname] = [hid];
     }
-
-    LOOT_SHARE_ITEM_REGEX.lastIndex = 0;
   }
 
   return allocation;

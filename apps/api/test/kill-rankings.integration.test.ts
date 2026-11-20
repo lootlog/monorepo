@@ -255,7 +255,7 @@ for (const period of ["all", "24h"] as const) {
           { limit: 1, period },
         );
 
-        expect(members[NpcType.ELITE2]).toEqual([
+        expect(new Map(Object.entries(members)).get(NpcType.ELITE2)).toEqual([
           {
             member: expect.objectContaining({ name: "first" }),
             totalParticipations: 12,
@@ -401,7 +401,7 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
       );
 
       expect(members[NpcType.HERO]).toEqual([]);
-      expect(members[NpcType.ELITE2]).toEqual([
+      expect(new Map(Object.entries(members)).get(NpcType.ELITE2)).toEqual([
         {
           member: expect.objectContaining({ name: "first" }),
           totalParticipations: 12,

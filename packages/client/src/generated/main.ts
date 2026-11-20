@@ -8325,7 +8325,10 @@ export const NullableLootItemResponseDtoOutputProfItem = {
   TRACKER: 'TRACKER',
 } as const;
 
-export interface NullableLootItemResponseDtoOutput {
+/**
+ * @nullable
+ */
+export type NullableLootItemResponseDtoOutput = {
   id: number;
   hid: string;
   name: string;
@@ -8337,7 +8340,7 @@ export interface NullableLootItemResponseDtoOutput {
   rarity: NullableLootItemResponseDtoOutputRarity;
   lvl: number;
   prof: NullableLootItemResponseDtoOutputProfItem[];
-}
+} | null;
 
 export type UserLootStatsResponseDtoOutputOverview = {
   totalLoots: number;
@@ -11243,7 +11246,7 @@ export type LootSubmissionResponseDto = {
 
 export type LootSubmissionMemberResponseDto = MemberSummary;
 
-export type LootItemResponseDtoOutput = NullableLootItemResponseDtoOutput;
+export type LootItemResponseDtoOutput = NullableLootItemResponseDtoOutput | null;
 
 export interface LootShareResponseDto {[key: string]: string[]}
 
@@ -23108,9 +23111,9 @@ export const getLootsControllerResolveLootItemByHidUrl = ({ guildId }: LootsCont
  * @summary Resolve loot item by HID
  */
 export const lootsControllerResolveLootItemByHid = async ({ guildId }: LootsControllerResolveLootItemByHidPathParameters,
-    params: LootsControllerResolveLootItemByHidParams, options?: Parameters<typeof mainFetch>[1]): Promise<NullableLootItemResponseDtoOutput> => {
+    params: LootsControllerResolveLootItemByHidParams, options?: Parameters<typeof mainFetch>[1]): Promise<NullableLootItemResponseDtoOutput | null> => {
 
-  return mainFetch<NullableLootItemResponseDtoOutput>(getLootsControllerResolveLootItemByHidUrl({ guildId },params),
+  return mainFetch<NullableLootItemResponseDtoOutput | null>(getLootsControllerResolveLootItemByHidUrl({ guildId },params),
   {
     ...options,
     method: 'GET'

@@ -203,10 +203,15 @@ export const makeEventHeroKillCheck = (
               };
 
               if (Object.keys(updateData).length > 0) {
-                eventHero = yield* repository.updateHero(
+                const updatedHero = yield* repository.updateHero(
                   eventHero.id,
                   updateData,
                 );
+
+                // The hero was removed from the event since it was matched.
+                if (!updatedHero) return;
+
+                eventHero = updatedHero;
                 logger.log({
                   message: "Hero NPC data updated",
                   heroId: eventHero.id,

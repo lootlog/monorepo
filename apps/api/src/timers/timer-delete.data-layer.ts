@@ -2,7 +2,7 @@ import type { EventPublisher } from "@lootlog/messaging";
 import { publishTimerEvents } from "./timer-update-publication.js";
 import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
-import { timerNpcField } from "./timer-projection.js";
+import { timerNpcField, parseTimerNpcRouting } from "./timer-projection.js";
 import {
   canViewTimer,
   findTimerMatches,
@@ -161,7 +161,7 @@ export const makeDeleteTimer = (
       world,
       guildId: access.guild.id,
       routing: {
-        tier: getNpcRoutingTier(resolved.npc),
+        tier: getNpcRoutingTier(parseTimerNpcRouting(resolved.npc)),
         npcLevel: Schema.is(Schema.Number)(npcLevel) ? npcLevel : undefined,
       },
     };

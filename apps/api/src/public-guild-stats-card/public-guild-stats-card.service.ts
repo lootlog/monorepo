@@ -110,7 +110,8 @@ export const makePublicGuildStatsCard = (options: {
   const getCardGuild = (guildId: string) =>
     options.repository.findActiveGuild(guildId).pipe(
       Effect.filterOrFail(
-        (guild) => guild?.publicStatsCardEnabled === true,
+        (guild): guild is GuildStatsCardGuild =>
+          guild?.publicStatsCardEnabled === true,
         () => new ResourceNotFoundError("Guild not found"),
       ),
     );

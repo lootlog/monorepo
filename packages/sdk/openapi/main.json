@@ -25731,6 +25731,7 @@
         "additionalProperties": false
       },
       "NullableLootItemResponseDto_Output": {
+        "nullable": true,
         "type": "object",
         "properties": {
           "id": {

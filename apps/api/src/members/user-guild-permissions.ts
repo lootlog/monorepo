@@ -123,8 +123,8 @@ export const makeUserGuildPermissionsProjection = (
               .filter(({ permissions }) => permissions.length > 0)
               .map(({ id, lvlRangeFrom, lvlRangeTo, permissions }) => ({
                 id,
-                lvlRangeFrom,
-                lvlRangeTo,
+                lvlRangeFrom: lvlRangeFrom ?? 0,
+                lvlRangeTo: lvlRangeTo ?? 500,
                 permissions,
               }));
 

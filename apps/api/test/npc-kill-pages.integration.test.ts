@@ -410,7 +410,7 @@ for (const period of ["all", "24h"] as const) {
               totalKills: 3,
             }),
           ]);
-          expect(personal.items).toEqual(member?.npcs);
+          expect(personal.items).toEqual(member!.npcs);
           expect(member?.overview).toEqual({
             totalParticipations: 3,
             participationsByType: { HERO: 3 },

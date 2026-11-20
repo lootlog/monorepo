@@ -71,8 +71,8 @@ export type NewLootPersistence = {
     name: string;
     icon: string;
     lvl: number;
-    rarity: ItemRarity;
-    itemType: string;
+    rarity: ItemRarity | undefined;
+    itemType: string | undefined;
     statRaw: string;
     statsSnapshot: Record<string, string>;
     hid: string;

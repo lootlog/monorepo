@@ -144,7 +144,7 @@ export const NotificationJobPayloadSnapshotResponse = Schema.NullOr(
     title: optionalNullable(Schema.String),
     message: optionalNullable(Schema.String),
     content: optionalNullable(Schema.String),
-    allowedMentions: optionalNullable(NotificationAllowedMentionsResponse),
+    allowedMentions: Schema.optionalKey(NotificationAllowedMentionsResponse),
     ruleId: optionalNullable(Schema.Int),
     ruleName: optionalNullable(Schema.String),
     triggerType: optionalNullable(

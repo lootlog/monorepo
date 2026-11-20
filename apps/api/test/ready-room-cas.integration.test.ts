@@ -151,7 +151,7 @@ describe("Ready Room revision CAS integration", () => {
     );
     await Effect.runPromise(initial.dispatch);
     expect(delivered.map(({ guildId }) => guildId)).toEqual([
-      aggregate.guildIds[0],
+      aggregate.guildIds[0]!,
     ]);
 
     const replacement = outbox((envelope) =>
@@ -166,9 +166,9 @@ describe("Ready Room revision CAS integration", () => {
     now += 30_001;
     await Effect.runPromise(replacement.dispatch);
     expect(delivered.map(({ guildId }) => guildId)).toEqual([
-      aggregate.guildIds[0],
-      aggregate.guildIds[0],
-      aggregate.guildIds[1],
+      aggregate.guildIds[0]!,
+      aggregate.guildIds[0]!,
+      aggregate.guildIds[1]!,
     ]);
 
     for (const envelope of delivered) {

@@ -98,7 +98,12 @@ export function deserializeKillTimerData(
   };
 }
 
-export function getEventHeroKillWindowKey(timerData: KillTimerData): string {
+export function getEventHeroKillWindowKey(
+  timerData: Pick<
+    KillTimerData,
+    "windowOpenedAt" | "previousMinSpawnTime" | "minSpawnTime"
+  >,
+): string {
   const windowDate =
     timerData.windowOpenedAt ??
     timerData.previousMinSpawnTime ??

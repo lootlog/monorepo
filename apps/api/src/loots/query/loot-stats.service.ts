@@ -17,7 +17,7 @@ import type { Permission } from "@lootlog/schema/permissions";
 import { organizationLootRecordTable } from "#src/database/drizzle/loot.schema";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { createHash } from "node:crypto";
-import { mapValues } from "es-toolkit";
+import { sum } from "es-toolkit";
 import { Effect, Schema } from "effect";
 import { createLootAccessFingerprint } from "@lootlog/domain/loot-visibility";
 import {
@@ -256,7 +256,7 @@ export const readLootStatsRarityTimeline = <E>(
       >();
 
       // Rarity totals cover the same loot items as the timeline, excluding items without a rarity.
-      const rarityCounts: Partial<Record<ItemRarity, number>> = {};
+      const rarityCounts = new Map<ItemRarity, number>();
 
       for (const row of result) {
         const date = row.date.toISOString();
@@ -267,21 +267,27 @@ export const readLootStatsRarityTimeline = <E>(
         if (row.rarity) {
           entry.byRarity[row.rarity] =
             (entry.byRarity[row.rarity] ?? 0) + count;
-          rarityCounts[row.rarity] = (rarityCounts[row.rarity] ?? 0) + count;
+          rarityCounts.set(
+            row.rarity,
+            (rarityCounts.get(row.rarity) ?? 0) + count,
+          );
         }
 
         timelineMap.set(date, entry);
       }
 
-      const rarityTotal = Object.values(rarityCounts).reduce(
-        (total, count) => total + count,
-        0,
-      );
+      const rarityTotal = sum([...rarityCounts.values()]);
 
-      const byRarity = mapValues(rarityCounts, (count): RarityStats => ({
-        count,
-        percentage: Math.round((count / rarityTotal) * 100 * 10) / 10,
-      }));
+      const byRarity: Partial<Record<ItemRarity, RarityStats>> =
+        Object.fromEntries(
+          Array.from(rarityCounts, ([rarity, count]) => [
+            rarity,
+            {
+              count,
+              percentage: Math.round((count / rarityTotal) * 100 * 10) / 10,
+            },
+          ]),
+        );
 
       const timeline = Array.from(timelineMap.entries()).map(
         ([date, data]): TimelinePoint => ({

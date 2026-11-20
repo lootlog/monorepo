@@ -132,8 +132,6 @@ export const memberServicesLive = Layer.effect(
       config.environment,
     );
 
-    userGuildsClient.initialize();
-
     const discord = makeDiscordOperations(userGuildsClient, guildMemberClient);
 
     const delivery = makeMemberDelivery(memberStore, {

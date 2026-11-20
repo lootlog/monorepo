@@ -249,11 +249,13 @@ export const makeNotificationWatchedItems = (
       const available =
         scopedOrganizations ?? (yield* guilds.list(discordId, userId));
 
-      const resolved = uniqueIds.map(
-        (input) => pickGuildByIdOrVanityUrl(available, input)?.id ?? null,
-      );
+      const resolved = uniqueIds.flatMap((input) => {
+        const guild = pickGuildByIdOrVanityUrl(available, input);
 
-      if (resolved.some((id) => id === null)) {
+        return guild ? [guild.id] : [];
+      });
+
+      if (resolved.length !== uniqueIds.length) {
         return yield* Effect.fail(
           new InvalidRequestError({
             code: NotificationError.SELECTED_GUILDS_NOT_AVAILABLE_FOR_AUTHENTICATED_USER,
@@ -349,7 +351,7 @@ export const makeNotificationWatchedItems = (
           const now = new Date(yield* Clock.currentTimeMillis);
           let ruleId = existing?.notificationRuleId ?? null;
 
-          if (ruleId === null) {
+          if (!existing || ruleId === null) {
             const rules = yield* transaction
               .insert(notificationRuleTable)
               .values({

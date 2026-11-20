@@ -165,7 +165,7 @@ describe("event hero list history", () => {
       npcName: "Mietek",
       maps: [{ mapId: 200, mapName: "Jaskinia" }],
     },
-  ];
+  ] as const;
 
   const withSeededEvent = async (
     test: (boundary: DatabaseBoundary) => Promise<void>,
@@ -393,6 +393,8 @@ describe("event hero list history", () => {
       const { heroes, maps } = await readCatalog(boundary);
       const added = heroes.find((hero) => hero.npcName === "Nowy");
 
+      if (!added) throw new Error("Missing added hero");
+
       expect(heroes).toEqual([
         { id: "hero-a", npcId: 10, npcName: "Kotołak", npcIcon: "a.gif" },
         { id: "hero-b", npcId: 20, npcName: "Mietek", npcIcon: "b.gif" },
@@ -419,7 +421,7 @@ describe("event hero list history", () => {
         { id: "map-b", heroNpcId: "hero-b", mapId: 200, mapName: "Jaskinia" },
         {
           id: expect.any(String),
-          heroNpcId: added?.id,
+          heroNpcId: added.id,
           mapId: 300,
           mapName: "Wieża",
         },

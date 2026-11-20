@@ -222,6 +222,9 @@ export const makeEventMapAssignments = (
         if (!scoped)
           return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
         const [current] = yield* hydrateMaps([scoped.map]);
+
+        if (!current)
+          return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
         const members = current.assignedMembers;
 
         if (members.some(({ id }) => id === memberId)) return current;

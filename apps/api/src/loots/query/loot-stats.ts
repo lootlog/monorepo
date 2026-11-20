@@ -1,6 +1,5 @@
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import type { LootStatsQuery as LootStatsQueryDto } from "#src/contracts/loots/schemas";
 
 export interface LootStatsOverview {
   totalLoots: number;

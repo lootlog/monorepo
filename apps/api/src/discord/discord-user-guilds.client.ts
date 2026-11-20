@@ -64,7 +64,7 @@ interface CompleteUserGuildsEntry {
 }
 
 export class DiscordUserGuildsClient {
-  private redlock: ReturnType<RedlockService["createInstance"]>;
+  private readonly redlock: ReturnType<RedlockService["createInstance"]>;
 
   private readonly lockTtl = 6000;
   private readonly userGuildsPageLimit = 200;
@@ -99,16 +99,13 @@ export class DiscordUserGuildsClient {
     private readonly logger: Logger,
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
-    private readonly redlockService: RedlockService,
+    redlockService: RedlockService,
     private readonly diagnostics: DiscordSyncDiagnosticsService,
     private readonly restClientFactory: DiscordRestClientFactory,
     environment: RuntimeEnvironment,
   ) {
     this.isLocal = environment === RuntimeEnvironment.LOCAL;
-  }
-
-  initialize() {
-    this.redlock = this.redlockService.createInstance();
+    this.redlock = redlockService.createInstance();
   }
 
   async getUserGuilds(

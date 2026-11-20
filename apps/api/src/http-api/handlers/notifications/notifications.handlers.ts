@@ -125,7 +125,7 @@ const operation = <A>(
 ) =>
   effect.pipe(
     Effect.mapError(operationFailure),
-    withAdapterSpan(operationIds[endpoint], "notifications"),
+    withAdapterSpan(operationIds[endpoint] ?? endpoint, "notifications"),
   );
 
 const toHttpResponse = <A, R>(

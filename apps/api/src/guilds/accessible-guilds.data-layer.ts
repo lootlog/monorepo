@@ -181,8 +181,6 @@ export const makeAccessibleGuilds = (
             }).allows(Permission.LOOTLOG_ACCESS)),
         );
 
-        const lastSync = member?.lastDiscordSyncAt ?? member?.updatedAt;
-
         return {
           id: guild.id,
           name: guild.name,
@@ -192,7 +190,10 @@ export const makeAccessibleGuilds = (
           publicStatsCardEnabled: guild.publicStatsCardEnabled,
           hasLootlogAccess: hasAccess,
           isAccessDataStale:
-            !owner && (!member || lastSync.getTime() < staleThreshold),
+            !owner &&
+            (!member ||
+              (member.lastDiscordSyncAt ?? member.updatedAt).getTime() <
+                staleThreshold),
         };
       })
       .filter(({ hasLootlogAccess }) => hasLootlogAccess);

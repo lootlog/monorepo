@@ -121,13 +121,14 @@ export const writeGuildTimer = (
 
         if (
           Predicate.isTagged(result, "Created") &&
-          result.migratedSyntheticNpcId !== null
+          result.migratedSyntheticNpcId !== null &&
+          result.migratedSyntheticTimerKey !== null
         ) {
           const deletion = {
             guildId,
             world: payload.world,
             npcId: result.migratedSyntheticNpcId,
-            timerKey: result.migratedSyntheticTimerKey ?? undefined,
+            timerKey: result.migratedSyntheticTimerKey,
             routing: {
               tier: getNpcRoutingTier(makeNpc(payload)),
               npcLevel: payload.npc.lvl,

@@ -227,9 +227,10 @@ export const UserLootStatsResponse = Schema.Struct({
 
 export type ResolvedLootItemResponse = typeof ResolvedLootItemResponse.Type;
 
-export const ResolvedLootItemResponse = LootItem.annotate({
-  identifier: "NullableLootItemResponseDto_Output",
-});
+export const ResolvedLootItemResponse = Schema.Union([
+  LootItem,
+  Schema.Null,
+]).annotate({ identifier: "NullableLootItemResponseDto_Output" });
 
 export type LootDetailResponse = typeof LootDetailResponse.Type;
 

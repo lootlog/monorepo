@@ -3,7 +3,7 @@ import {
   withAdapterSpan,
 } from "@lootlog/instrumentation/operation";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   MemberKillsResponse,
@@ -79,7 +79,7 @@ export const makeMemberKillQuery =
               visibility: visibilityCacheScope(accessPolicy, visibleRoles),
             }),
             label: "member kills",
-            schema: MemberKillsResponse,
+            schema: Schema.NullOr(MemberKillsResponse),
             load: Effect.gen(function* () {
               const member = yield* persistence.findMember(guildId, memberId);
 

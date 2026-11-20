@@ -262,10 +262,10 @@ export const eventsServicesLive = Layer.effect(
                   {
                     minSpawnTime: timer.minSpawnTime,
                     maxSpawnTime: timer.maxSpawnTime,
-                    memberId: timer.createdById ?? undefined,
+                    memberId: timer.createdById,
                     previousMinSpawnTime: timer.minSpawnTime,
                     previousMaxSpawnTime: timer.maxSpawnTime,
-                    windowOpenedAt: timer.windowOpenedAt ?? undefined,
+                    windowOpenedAt: timer.windowOpenedAt,
                   },
                   true,
                 )

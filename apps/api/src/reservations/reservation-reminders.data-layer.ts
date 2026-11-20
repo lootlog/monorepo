@@ -262,13 +262,13 @@ export const scheduleReminder = (
     let job = inserted[0] ?? null;
 
     if (!job) {
-      const existing = yield* database
+      const [existing] = yield* database
         .select()
         .from(notificationJobTable)
         .where(eq(notificationJobTable.idempotencyKey, idempotencyKey))
         .limit(1);
 
-      if (existing[0]?.status === "CANCELED") {
+      if (existing?.status === "CANCELED") {
         job = yield* database.transaction((transaction) =>
           Effect.gen(function* () {
             yield* transaction
@@ -276,7 +276,7 @@ export const scheduleReminder = (
               .set({
                 idempotencyKey: `${idempotencyKey}:canceled:${randomUUID()}`,
               })
-              .where(eq(notificationJobTable.id, existing[0].id));
+              .where(eq(notificationJobTable.id, existing.id));
 
             const created = yield* transaction
               .insert(notificationJobTable)

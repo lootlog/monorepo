@@ -489,7 +489,7 @@ describe("personal Organization activity feed", () => {
     )(JSON.parse(new TextDecoder().decode(message.content)));
 
     expect(payload.feedEntry).toEqual(
-      (await run(makeUserFeed(database)(owner))).items[0],
+      (await run(makeUserFeed(database)(owner))).items[0]!,
     );
     expect(payload.feedEntry.version).toBe(2);
     expect(payload.sourceNpcs.map((npc) => npc.level).sort()).toEqual([

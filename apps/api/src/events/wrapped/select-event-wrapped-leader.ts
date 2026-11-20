@@ -56,15 +56,15 @@ export const selectEventWrappedLeader = <T extends EventWrappedLeaderCandidate>(
     (candidate) => candidate.primaryValue === maximumValue,
   );
 
-  if (maximumValue <= 0 || tiedWinners.length !== 1) {
+  const [winner] = tiedWinners;
+
+  if (maximumValue <= 0 || !winner || tiedWinners.length !== 1) {
     return {
       winner: null,
       candidateCount: candidates.length,
       tiedWinnerCount: tiedWinners.length,
     };
   }
-
-  const [winner] = tiedWinners;
 
   return {
     winner: toLeader(winner.entry, winner.primaryValue, winner.secondaryValue),

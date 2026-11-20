@@ -95,8 +95,6 @@ describe("Discord user guild list cache against Dragonfly", () => {
       RuntimeEnvironment.PROD,
     );
 
-    client.initialize();
-
     await redis.set(
       cacheKey,
       JSON.stringify({

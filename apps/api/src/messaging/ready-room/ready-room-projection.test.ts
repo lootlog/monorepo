@@ -137,12 +137,14 @@ describe("Ready Room projections", () => {
   });
 
   it("shares every volunteer without exposing another participant's action or account identity", () => {
+    const first = aggregate.participants.first!;
+
     const other = {
-      ...aggregate.participants.first,
+      ...first,
       participantId: "other",
       discordId: "other-user",
       character: {
-        ...aggregate.participants.first.character,
+        ...first.character,
         accountId: "other-account",
         characterId: "other-character",
       },

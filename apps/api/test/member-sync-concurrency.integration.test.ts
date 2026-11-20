@@ -77,7 +77,7 @@ const createSyncFixture = async () => {
   const guildId = crypto.randomUUID();
   const discordId = crypto.randomUUID();
   const userId = crypto.randomUUID();
-  const roles = Array.from({ length: 4 }, () => crypto.randomUUID());
+  const roles = Array.from({ length: 4 }, (): string => crypto.randomUUID());
 
   await runtime.runPromise(
     database.insert(guildTable).values(createGuildFixture({ id: guildId })),
@@ -228,7 +228,7 @@ it("overlapping role changes commit complete role snapshots without mixing assig
 
   const stored = await fixture.stored();
   expect([firstRoles.toSorted(), secondRoles.toSorted()]).toContainEqual(
-    stored?.roles.map(({ id }) => id).toSorted(),
+    stored!.roles.map(({ id }) => id).toSorted(),
   );
 }, 15_000);
 
