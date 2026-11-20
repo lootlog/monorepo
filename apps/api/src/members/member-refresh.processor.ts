@@ -1,9 +1,20 @@
 import { DelayedError } from "bullmq";
-import { Clock, Effect, Random } from "effect";
+import { Clock, Effect, Random, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { DiscordSyncDiagnostics } from "#src/discord/discord-sync-diagnostics.service";
 import type { MemberRefreshScheduler } from "./member-refresh-scheduler.js";
 import type { MemberRefreshPorts } from "./member-refresh.operations.js";
 import { isRetryableMemberRefreshStatus } from "./member-discord-sync-status.js";
+
+/** Fails the job so BullMQ retries a Discord refresh that may succeed later. */
+export class MemberRefreshRetryable extends TaggedErrorClass<MemberRefreshRetryable>()(
+  "MemberRefreshRetryable",
+  { status: Schema.String },
+) {
+  override get message() {
+    return `MEMBER_REFRESH_${this.status}`;
+  }
+}
 
 // The user lock covers all of a user's guild jobs, and a Discord refresh
 // usually finishes within a second, so a contended job waits about that long.
@@ -118,9 +129,9 @@ export const makeMemberRefreshProcessor = ({
             reason: result.status,
           });
 
-          return yield* Effect.fail(
-            new Error(`MEMBER_REFRESH_${result.status}`),
-          );
+          return yield* new MemberRefreshRetryable({
+            status: result.status,
+          });
         }
 
         yield* diagnostics.recordMemberRefreshMetric({
@@ -130,11 +141,14 @@ export const makeMemberRefreshProcessor = ({
       });
 
       return yield* process.pipe(
+        // A retryable status recorded its own outcome before failing.
         Effect.tapError((error) =>
-          diagnostics.recordMemberRefreshMetric({
-            outcome: "failed",
-            reason: error instanceof Error ? error.message : "UNKNOWN",
-          }),
+          Schema.is(MemberRefreshRetryable)(error)
+            ? Effect.void
+            : diagnostics.recordMemberRefreshMetric({
+                outcome: "failed",
+                reason: error instanceof Error ? error.message : "UNKNOWN",
+              }),
         ),
         Effect.ensuring(
           Effect.all(
