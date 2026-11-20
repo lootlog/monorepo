@@ -146,6 +146,22 @@ describe("Activity HttpApi contract", () => {
     await boundary.dispose();
   });
 
+  it("rejects a cursor no page issued as a request error", async () => {
+    const boundary = makeBoundary([Permission.ADMIN]);
+
+    const response = await boundary.handler(
+      new Request(
+        "https://activity/guilds/g/activity-logs?cursor=not-a-cursor",
+        {
+          headers,
+        },
+      ),
+    );
+
+    expect(response.status).toBe(400);
+    await boundary.dispose();
+  });
+
   it("resolves vanity organizations before querying", async () => {
     const boundary = makeBoundary([Permission.ADMIN]);
 
