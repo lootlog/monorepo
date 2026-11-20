@@ -1,11 +1,11 @@
-import { Effect, Predicate, Schema, SchemaGetter } from "effect";
+import { Effect, Option, Predicate, Schema, SchemaGetter } from "effect";
 
 const CreateBattlePartyMembersEventSchema = Schema.Struct({
   id: Schema.Number,
   account: Schema.Number,
   nick: Schema.String,
   icon: Schema.String,
-  commander: Schema.optional(Schema.Number),
+  commander: Schema.optionalKey(Schema.Number),
 });
 
 const CreateBattlePartyEventSchema = Schema.Struct({
@@ -59,15 +59,17 @@ export const WarriorsRecordSchema = Schema.Record(
   ),
 );
 
-const optionalWarriorsRecord = Schema.optional(WarriorsRecordSchema);
+const decodeWarriorsRecord = Schema.decodeUnknownEffect(WarriorsRecordSchema);
 
-const decodeOptionalWarriorsRecord = Schema.decodeUnknownEffect(
-  optionalWarriorsRecord,
-);
+// A record without a complete warrior decodes to a missing key, not an
+// undefined value: raw battle responses encode events as JSON values.
+const OptionalWarriorsRecordSchema = Schema.optionalKey(Schema.Unknown).pipe(
+  Schema.decodeTo(Schema.optionalKey(WarriorsRecordSchema), {
+    decode: SchemaGetter.transformOptionalEffect((input) => {
+      if (Option.isNone(input) || input.value === undefined)
+        return Effect.succeedNone;
+      const value = input.value;
 
-const OptionalWarriorsRecordSchema = Schema.Unknown.pipe(
-  Schema.decodeTo(optionalWarriorsRecord, {
-    decode: SchemaGetter.transformEffect((value) => {
       const warriors = Predicate.isObject(value)
         ? Object.fromEntries(
             Object.entries(value).filter(([, warrior]) =>
@@ -76,25 +78,26 @@ const OptionalWarriorsRecordSchema = Schema.Unknown.pipe(
           )
         : value;
 
-      const normalized =
-        Predicate.isObject(warriors) && Object.keys(warriors).length === 0
-          ? undefined
-          : warriors;
+      if (Predicate.isObject(warriors) && Object.keys(warriors).length === 0)
+        return Effect.succeedNone;
 
-      return decodeOptionalWarriorsRecord(normalized).pipe(
-        Effect.mapError((error) => error.issue),
+      return decodeWarriorsRecord(warriors).pipe(
+        Effect.mapBoth({
+          onSuccess: Option.some,
+          onFailure: (error) => error.issue,
+        }),
       );
     }),
-    encode: SchemaGetter.transform((value) => value),
+    encode: SchemaGetter.passthrough(),
   }),
 );
 
 const CreateBattleFightEventSchema = Schema.Struct({
-  m: Schema.optional(Schema.mutable(Schema.Array(Schema.String))),
-  endBattle: Schema.optional(Schema.Number),
-  init: Schema.optional(Schema.String),
-  auto: Schema.optional(Schema.String),
-  w: Schema.optional(OptionalWarriorsRecordSchema),
+  m: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.String))),
+  endBattle: Schema.optionalKey(Schema.Number),
+  init: Schema.optionalKey(Schema.String),
+  auto: Schema.optionalKey(Schema.String),
+  w: OptionalWarriorsRecordSchema,
 });
 
 const CreateBattleMatchSummarySchema = Schema.Struct({
@@ -106,10 +109,10 @@ const CreateBattleMatchSummarySchema = Schema.Struct({
   opponent_rating: Schema.Number,
   rating: Schema.Number,
   status: Schema.Number,
-  placement_cur: Schema.optional(Schema.Number),
-  placement_max: Schema.optional(Schema.Number),
-  points_gained: Schema.optional(Schema.Number),
-  daily_stage: Schema.optional(
+  placement_cur: Schema.optionalKey(Schema.Number),
+  placement_max: Schema.optionalKey(Schema.Number),
+  points_gained: Schema.optionalKey(Schema.Number),
+  daily_stage: Schema.optionalKey(
     Schema.Struct({
       id: Schema.Number,
       points_cur: Schema.Number,
@@ -123,11 +126,11 @@ const CreateBattleMatchSummarySchema = Schema.Struct({
 });
 
 const CreateBattleEventsSchema = Schema.Struct({
-  party: Schema.optional(CreateBattlePartyEventSchema),
+  party: Schema.optionalKey(CreateBattlePartyEventSchema),
   f: CreateBattleFightEventSchema,
-  ev: Schema.optional(Schema.Number),
-  match_summary: Schema.optional(CreateBattleMatchSummarySchema),
-  matchmaking_state: Schema.optional(Schema.Number),
+  ev: Schema.optionalKey(Schema.Number),
+  match_summary: Schema.optionalKey(CreateBattleMatchSummarySchema),
+  matchmaking_state: Schema.optionalKey(Schema.Number),
 });
 
 export const CreateBattleSchema = Schema.Struct({

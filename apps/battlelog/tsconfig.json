@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": ".",
+    "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true,
     "types": ["bun"]

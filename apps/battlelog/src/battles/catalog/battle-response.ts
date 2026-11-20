@@ -9,7 +9,7 @@ const BattleStatisticEntrySchema = Schema.Struct({
   warriorId: Schema.String,
   name: Schema.String,
   value: Schema.Number,
-  formattedValue: Schema.optional(Schema.String),
+  formattedValue: Schema.optionalKey(Schema.String),
 });
 
 const BattleComputedStatisticsSchema = Schema.Struct({
@@ -154,9 +154,9 @@ const BattleResponseSchema = Schema.Struct({
 
 const BattlesPerformanceSchema = Schema.Struct({
   queryTime: Schema.Number,
-  countTime: Schema.optional(Schema.Number),
-  totalItems: Schema.optional(Schema.Number),
-  estimatedTotal: Schema.optional(Schema.Boolean),
+  countTime: Schema.optionalKey(Schema.Number),
+  totalItems: Schema.optionalKey(Schema.Number),
+  estimatedTotal: Schema.optionalKey(Schema.Boolean),
 });
 
 const BattlesListResponseSchema = Schema.Struct({
@@ -217,7 +217,7 @@ const BattleRawPayloadResponseSchema = Schema.Struct({
   characterId: Schema.String,
   world: Schema.String,
   events: Schema.Array(ParsedBattleMoveResponseSchema),
-  sourceEvents: Schema.optional(Schema.Array(Schema.Json)),
+  sourceEvents: Schema.optionalKey(Schema.Array(Schema.Json)),
 });
 
 const BattleRawResponseSchema = Schema.Struct({

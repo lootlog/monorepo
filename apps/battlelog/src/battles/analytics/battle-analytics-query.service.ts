@@ -50,7 +50,7 @@ export const makeBattleAnalyticsQuery = (
   // advance while this lookup still reads an older repeatable-read snapshot.
   const getCharacterIds = (
     userId: string,
-    query: { characterId?: string; world?: string },
+    query: { characterId?: string | undefined; world?: string | undefined },
   ) =>
     Effect.gen(function* () {
       if (query.characterId) {
@@ -125,15 +125,15 @@ export const makeBattleAnalyticsQuery = (
     battlesRef: typeof battles,
     params: {
       userId: string;
-      world?: string;
-      startDate?: Date;
-      endDate?: Date;
-      matchmaking?: boolean;
+      world?: string | undefined;
+      startDate?: Date | undefined;
+      endDate?: Date | undefined;
+      matchmaking?: boolean | undefined;
       characterIds: string[];
-      phFilter?: boolean;
-      hasFlee?: boolean;
-      ratingNotNull?: boolean;
-      ratingDeltaNotNull?: boolean;
+      phFilter?: boolean | undefined;
+      hasFlee?: boolean | undefined;
+      ratingNotNull?: boolean | undefined;
+      ratingDeltaNotNull?: boolean | undefined;
     },
   ): SQL | undefined => {
     return and(
@@ -157,12 +157,12 @@ export const makeBattleAnalyticsQuery = (
     battlesRef: typeof battles,
     params: {
       userId: string;
-      world?: string;
-      startDate?: Date;
-      endDate?: Date;
-      matchmaking?: boolean;
+      world?: string | undefined;
+      startDate?: Date | undefined;
+      endDate?: Date | undefined;
+      matchmaking?: boolean | undefined;
       characterIds: string[];
-      phFilter?: boolean;
+      phFilter?: boolean | undefined;
     },
   ): SQL | undefined => {
     const conditions: (SQL | undefined)[] = [
@@ -192,11 +192,11 @@ export const makeBattleAnalyticsQuery = (
   const summarySource = (
     userId: string,
     query: DateRangeQuery & {
-      world?: string;
-      matchmaking?: boolean;
-      ph?: boolean;
-      minLevel?: number;
-      maxLevel?: number;
+      world?: string | undefined;
+      matchmaking?: boolean | undefined;
+      ph?: boolean | undefined;
+      minLevel?: number | undefined;
+      maxLevel?: number | undefined;
     },
     characterIds: string[],
     hasFlee?: boolean,

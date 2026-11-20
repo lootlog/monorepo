@@ -91,7 +91,7 @@ for (const [method, path] of [
   ["POST", "/battles"],
   ["PATCH", "/battles/battle-id"],
   ["POST", "/internal/delete-user-data"],
-]) {
+] as const) {
   it(`returns 400 for malformed JSON in ${method} ${path}`, async () => {
     const response = await handler(
       new Request(`http://battlelog.test${path}`, {

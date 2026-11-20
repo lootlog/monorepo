@@ -89,14 +89,14 @@ export const makeBattleAnalyticsRead = (
     query: Partial<BattleStatisticsQuery>,
     characterIds: string[],
     options: {
-      hasFlee?: boolean;
-      ph?: boolean;
-      allTypes?: boolean;
-      opponentId?: string;
-      excludeBattleId?: string;
-      ratingDelta?: boolean;
-      rating?: boolean;
-      requireOpponent?: boolean;
+      hasFlee?: boolean | undefined;
+      ph?: boolean | undefined;
+      allTypes?: boolean | undefined;
+      opponentId?: string | undefined;
+      excludeBattleId?: string | undefined;
+      ratingDelta?: boolean | undefined;
+      rating?: boolean | undefined;
+      requireOpponent?: boolean | undefined;
     } = {},
   ) => {
     // Both participants come from the owner's filter rows, so resolving them

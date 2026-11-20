@@ -26,7 +26,6 @@ import { sql } from "drizzle-orm";
 import { Effect, ManagedRuntime, Schema } from "effect";
 import { Redis } from "effect/persistence";
 import { ConnectionError, SqlError } from "effect/sql/SqlError";
-import type { RawBattleData } from "#src/battles/battle-service";
 import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
 import {
   battleLegacyIds,
@@ -63,7 +62,7 @@ const requestJson = async <S extends Schema.ConstraintDecoder<unknown>>(
         ...authHeaders,
         "x-auth-user-id": userId,
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      ...(body !== undefined && { body: JSON.stringify(body) }),
     }),
   );
 
@@ -216,7 +215,7 @@ const storedBattleIds = async () =>
 
 const createDatabaseBoundary = ({
   beforeTransaction,
-}: { beforeTransaction?: () => Promise<void> } = {}) => {
+}: { beforeTransaction?: (() => Promise<void>) | undefined } = {}) => {
   const database = sharedDatabase;
   let transactionCount = 0;
 
@@ -388,7 +387,8 @@ const createTestApplication = ({
     invalidateAnalyticsCache: mock(() => Effect.void),
   };
 
-  const objects = new Map<string, RawBattleData>();
+  // R2 holds whatever JSON earlier versions wrote; reads decode it.
+  const objects = new Map<string, unknown>();
 
   const readBattleData = mock(async (battleId: string) =>
     JSON.stringify(objects.get(battleId)),
@@ -827,7 +827,18 @@ describe("battle creation deduplication", () => {
       rawData: {
         ...battleContext,
         events: [],
-        sourceEvents: decodeBattleEvents(timeline.events),
+        sourceEvents: [
+          ...decodeBattleEvents(timeline.events),
+          // Legacy objects keep Margonem's HP-only warrior updates verbatim.
+          {
+            ev: 1_785_091_976.7,
+            f: {
+              w: Object.fromEntries(
+                Object.keys(warriors).map((id) => [id, { hpp: 90 }]),
+              ),
+            },
+          },
+        ],
       },
     });
 
@@ -841,6 +852,16 @@ describe("battle creation deduplication", () => {
 
     expect(result.body.battleId).toBe(body.battleId);
     expect(result.body.timeline).toHaveLength(moves.length);
+
+    const raw = await requestJson(
+      app.handler,
+      "GET",
+      "/battles/cmglj0y2u0224qd0ioniw0lxa/raw",
+      BattleResponseSchemas.raw,
+      200,
+    );
+
+    expect(raw.body.rawData.sourceEvents).toHaveLength(2);
     expect(testApplication.objectStorage.readBattleData).toHaveBeenCalledWith(
       "cmglj0y2u0224qd0ioniw0lxa",
     );

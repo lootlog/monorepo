@@ -85,7 +85,7 @@ export const httpServerRequestCount = Metric.counter(
 
 export const recordHttpServerMetrics = (input: {
   readonly method: string;
-  readonly route?: string;
+  readonly route?: string | undefined;
   readonly status: number;
   readonly durationMilliseconds: number;
 }) => {
@@ -118,7 +118,7 @@ export const recordHttpServerMetrics = (input: {
 };
 
 interface RequestMetricsState {
-  route?: string;
+  route?: string | undefined;
 }
 
 const RequestMetrics = Context.Reference<RequestMetricsState | undefined>(
