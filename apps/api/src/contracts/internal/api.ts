@@ -40,6 +40,7 @@ export class InternalGroup extends HttpApiGroup.make("internal").add(
     {
       params: OrganizationLookupPath,
       success: OrganizationSummary,
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .annotate(
