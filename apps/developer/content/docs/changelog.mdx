@@ -21,6 +21,11 @@ described in [errors and limits](/docs/errors).
   and the reference now lists every status each operation returns.
 - A `503` carries `"Service unavailable"` as its `message`, and an unexpected
   `500` has no body.
+- The API key endpoints under `/auth/api-keys` answer with the same body
+  instead of `{ message }`. The `message` is unchanged, and `code` names the
+  reason, such as `API_KEY_LIMIT_REACHED` (`409`) or `SESSION_REQUIRED`
+  (`401`). A request rejected for its API key, including one over the key's
+  rate limit (`429`, `RATE_LIMITED`), carries this body too.
 - Responses carry only the fields their reference declares. An Activity entry
   no longer returns `actorSnapshotId`, `idempotencyKey` or the actor's
   `fingerprint`, and `GET /battles/{battleId}/raw` no longer returns

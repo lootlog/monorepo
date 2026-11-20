@@ -17,7 +17,7 @@ description: Handle rejected requests, read paginated lists and stay within rate
 ## Error body
 
 Most `4xx` and `5xx` responses of every Lootlog service, including the main
-API, Battlelog and Activity, have this JSON body:
+API, Battlelog, Activity and API key management, have this JSON body:
 
 ```json
 { "code": "RESERVATION_OVERLAP", "message": "optional text", "details": {} }

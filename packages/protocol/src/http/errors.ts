@@ -4,8 +4,8 @@ import { HttpServerResponse } from "effect/http";
 import { JsonValue } from "@lootlog/schema/http-scalars";
 
 /**
- * Body of every Lootlog service's 4xx/5xx response, except the main API's 401
- * that asks for sign-in again. `code` is the stable, machine-readable reason
+ * Body of every Lootlog service's 4xx/5xx response, except the 401 that asks
+ * for sign-in again (`ReauthenticationRequired`). `code` is the stable, machine-readable reason
  * (`NOT_FOUND`, `VALIDATION_ERROR`, `RESERVATION_OVERLAP`); `message` is for
  * people and may change; `details` holds the values a client needs to explain
  * the reason. A 429 also sends `Retry-After` in seconds when the wait is known.
@@ -17,6 +17,18 @@ export const HttpErrorResponse = Schema.Struct({
 }).annotate({ identifier: "HttpErrorResponse" });
 
 export type HttpErrorResponse = typeof HttpErrorResponse.Type;
+
+/**
+ * The caller's Discord authorization no longer works, so Lootlog cannot resolve
+ * their identity or Organization membership. `requiresReauth` starts the Web
+ * app's sign-in flow; `code` names the failed step, such as
+ * `DISCORD_UNAUTHORIZED` or `IDP_REAUTH_REQUIRED`.
+ */
+export class ReauthenticationRequired extends TaggedErrorClass<ReauthenticationRequired>()(
+  "ReauthenticationRequired",
+  { code: Schema.String, requiresReauth: Schema.Literal(true) },
+  { httpApiStatus: 401 },
+) {}
 
 export const HttpStatus = {
   BAD_REQUEST: 400,
@@ -249,3 +261,22 @@ export const applicationErrorHttpResponse = (cause: unknown) => {
     httpErrorResponse(status, cause.body, cause.retryAfterMs),
   );
 };
+
+const encodeReauthenticationRequired = Schema.encodeSync(
+  ReauthenticationRequired,
+);
+
+/**
+ * Answers `ReauthenticationRequired` with its declared 401 body. HttpApi
+ * encodes a failure with the first error schema that accepts it, and an open
+ * `HttpErrorResponse` 401 would claim this one and drop `requiresReauth`, so
+ * handlers answer it explicitly.
+ */
+export const reauthenticationRequiredResponse = (
+  error: ReauthenticationRequired,
+) =>
+  Effect.succeed(
+    HttpServerResponse.jsonUnsafe(encodeReauthenticationRequired(error), {
+      status: HttpStatus.UNAUTHORIZED,
+    }),
+  );

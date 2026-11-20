@@ -14,6 +14,12 @@ paths:
       responses:
         "200":
           description: Auth service is healthy
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
       summary: Health check
   /auth/verify:
     get:
@@ -50,39 +56,30 @@ paths:
                       - OK
                 required:
                   - status
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Verify request identity
   /auth/@me/scopes:
     get:
@@ -99,6 +96,20 @@ paths:
                 type: array
                 items:
                   type: string
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
       summary: Get scopes for the current user
   /auth/idp-token:
     post:
@@ -137,49 +148,14 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                      error:
-                        type: string
-                      statusCode:
-                        type: number
-                        enum:
-                          - 400
-                    required:
-                      - message
-                      - error
-                      - statusCode
-                  - type: object
-                    properties:
-                      error:
-                        type: string
-                    required:
-                      - error
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                anyOf:
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                      statusCode:
-                        type: number
-                        enum:
-                          - 401
-                    required:
-                      - message
-                      - statusCode
-                  - type: object
-                    properties:
-                      error:
-                        type: string
-                    required:
-                      - error
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Internal API caller only. Requires the AUTH_IDP_TOKEN_SECRET bearer credential; user sessions and forwarded identity headers do not authorize this operation.
       summary: Issue an IDP token for a user account
       requestBody:
@@ -256,78 +232,25 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "404":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "409":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "429":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
     post:
       tags:
         - apiKeys
@@ -383,78 +306,39 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "409":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "429":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       requestBody:
         content:
           application/json:
@@ -549,78 +433,31 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "409":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "429":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       requestBody:
         content:
           application/json:
@@ -662,78 +499,31 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "409":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "429":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
   /auth/internal/api-keys/status:
     post:
       tags:
@@ -820,78 +610,19 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "403":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "404":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "409":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-        "429":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
         "503":
           description: ""
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                $ref: "#/components/schemas/HttpErrorResponse"
       requestBody:
         content:
           application/json:
@@ -908,6 +639,72 @@ paths:
                 - keyIds
         required: true
 components:
-  schemas: {}
+  schemas:
+    RequestValidationError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - VALIDATION_ERROR
+        message:
+          type: string
+        details:
+          type: object
+          properties:
+            issues:
+              type: array
+              items:
+                type: object
+                properties:
+                  path:
+                    type: array
+                    items:
+                      anyOf:
+                        - type: string
+                        - type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                  message:
+                    type: string
+                required:
+                  - path
+                  - message
+          required:
+            - issues
+      required:
+        - code
+        - message
+        - details
+    HttpErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          nullable: true
+          type: string
+        details:
+          nullable: true
+          type: object
+      required:
+        - code
+    ReauthenticationRequiredEncoded:
+      type: object
+      properties:
+        _tag:
+          type: string
+          enum:
+            - ReauthenticationRequired
+        code:
+          type: string
+        requiresReauth:
+          type: boolean
+          enum:
+            - true
+      required:
+        - _tag
+        - code
+        - requiresReauth
 tags: []
 servers: []

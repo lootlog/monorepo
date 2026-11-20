@@ -425,10 +425,10 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
               }),
             ),
           ),
-        ).rejects.toMatchObject({ status: 401 });
+        ).rejects.toMatchObject({ kind: "authentication-required" });
         await expect(
           keysRuntime.runPromise(keys.session(new Headers())),
-        ).rejects.toMatchObject({ status: 403 });
+        ).rejects.toMatchObject({ kind: "forbidden" });
         grantOrganizations = [];
         await expect(
           keysRuntime.runPromise(
@@ -440,7 +440,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
               expiresIn: null,
             }),
           ),
-        ).rejects.toMatchObject({ status: 403 });
+        ).rejects.toMatchObject({ kind: "forbidden" });
         grantOrganizations = [
           { id: "123", hasLootlogAccess: true, isAccessDataStale: true },
         ];
@@ -454,7 +454,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
               expiresIn: null,
             }),
           ),
-        ).rejects.toMatchObject({ status: 403 });
+        ).rejects.toMatchObject({ kind: "forbidden" });
         grantOrganizations = [
           { id: "123", hasLootlogAccess: true, isAccessDataStale: false },
         ];
@@ -505,7 +505,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
 
           for (const result of results) {
             if (result.status === "rejected")
-              expect(result.reason).toMatchObject({ status: 429 });
+              expect(result.reason).toMatchObject({ kind: "rate-limited" });
           }
         } finally {
           await otherRuntime.dispose();
@@ -524,7 +524,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
               ),
             ),
           ),
-        ).rejects.toMatchObject({ status: 429 });
+        ).rejects.toMatchObject({ kind: "rate-limited" });
         expect(rejections).toContainEqual({
           level: "Warn",
           message: [
@@ -551,7 +551,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         );
         await expect(
           keysRuntime.runPromise(keys.verify(key.key)),
-        ).rejects.toMatchObject({ status: 503 });
+        ).rejects.toMatchObject({ kind: "dependency-unavailable" });
         await keysRuntime.runPromise(
           redisClient.send("DEL", `auth:api-key-rate-limit:${key.id}`),
         );
@@ -565,10 +565,10 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         expect(stored[0]?.lastRequest).toBeNull();
         await expect(
           keysRuntime.runPromise(keys.rename("another-user", key.id, "stolen")),
-        ).rejects.toMatchObject({ status: 404 });
+        ).rejects.toMatchObject({ kind: "not-found" });
         await expect(
           keysRuntime.runPromise(keys.statuses(new Headers(), [key.id])),
-        ).rejects.toMatchObject({ status: 401 });
+        ).rejects.toMatchObject({ kind: "authentication-required" });
 
         const statusHeaders = new Headers({
           authorization: "Bearer test-status-secret",
@@ -600,11 +600,11 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         );
         await expect(
           keysRuntime.runPromise(keys.verify(key.key)),
-        ).rejects.toMatchObject({ status: 401 });
+        ).rejects.toMatchObject({ kind: "authentication-required" });
         await keysRuntime.runPromise(keys.remove(user.id, key.id));
         await expect(
           keysRuntime.runPromise(keys.verify(key.key)),
-        ).rejects.toMatchObject({ status: 401 });
+        ).rejects.toMatchObject({ kind: "authentication-required" });
 
         const attempts = await Promise.allSettled(
           Array.from({ length: 12 }, (_, index) =>
@@ -644,7 +644,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
           const disabled = await disabledRuntime.runPromise(ApiKeyService);
           await expect(
             disabledRuntime.runPromise(disabled.verify("any-key")),
-          ).rejects.toMatchObject({ status: 401 });
+          ).rejects.toMatchObject({ kind: "authentication-required" });
           await expect(
             disabledRuntime.runPromise(
               disabled.create(removedOwner.id, {
@@ -655,7 +655,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
                 expiresIn: null,
               }),
             ),
-          ).rejects.toMatchObject({ status: 403 });
+          ).rejects.toMatchObject({ kind: "forbidden" });
           expect(
             await disabledRuntime.runPromise(
               disabled.statuses(statusHeaders, ["key"]),

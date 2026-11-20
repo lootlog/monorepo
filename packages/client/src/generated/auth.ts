@@ -28,6 +28,54 @@ import type {
 
 import { authFetch } from '../mutators';
 import type { ErrorType , BodyType } from '../mutators';
+export type RequestValidationErrorCode = typeof RequestValidationErrorCode[keyof typeof RequestValidationErrorCode];
+
+
+export const RequestValidationErrorCode = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+} as const;
+
+export type RequestValidationErrorDetailsIssuesItem = {
+  path: (string | number)[];
+  message: string;
+};
+
+export type RequestValidationErrorDetails = {
+  issues: RequestValidationErrorDetailsIssuesItem[];
+};
+
+export interface RequestValidationError {
+  code: RequestValidationErrorCode;
+  message: string;
+  details: RequestValidationErrorDetails;
+}
+
+/**
+ * @nullable
+ */
+export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
+
+export interface HttpErrorResponse {
+  code: string;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  details?: HttpErrorResponseDetails;
+}
+
+export type _ReauthenticationRequiredEncodedTag = typeof _ReauthenticationRequiredEncodedTag[keyof typeof _ReauthenticationRequiredEncodedTag];
+
+
+export const _ReauthenticationRequiredEncodedTag = {
+  ReauthenticationRequired: 'ReauthenticationRequired',
+} as const;
+
+export interface ReauthenticationRequiredEncoded {
+  _tag: _ReauthenticationRequiredEncodedTag;
+  code: string;
+  requiresReauth: true;
+}
+
 export type AuthControllerVerify200Status = typeof AuthControllerVerify200Status[keyof typeof AuthControllerVerify200Status];
 
 
@@ -39,18 +87,6 @@ export type AuthControllerVerify200 = {
   status: AuthControllerVerify200Status;
 };
 
-export type AuthControllerVerify401 = {
-  message: string;
-};
-
-export type AuthControllerVerify429 = {
-  message: string;
-};
-
-export type AuthControllerVerify503 = {
-  message: string;
-};
-
 export type AuthControllerGetIdpTokenBody = {
   userId: string;
   discordId: string;
@@ -60,21 +96,6 @@ export type AuthControllerGetIdpToken200 = {
   accessToken: string;
   expiresIn: number;
   scopes: string[];
-};
-
-export type AuthControllerGetIdpToken400 = {
-  message: string;
-  error: string;
-  statusCode: 400;
-} | {
-  error: string;
-};
-
-export type AuthControllerGetIdpToken401 = {
-  message: string;
-  statusCode: 401;
-} | {
-  error: string;
 };
 
 export type ApiKeysListApiKeys200KeysItemMode = typeof ApiKeysListApiKeys200KeysItemMode[keyof typeof ApiKeysListApiKeys200KeysItemMode];
@@ -104,34 +125,6 @@ export type ApiKeysListApiKeys200KeysItem = {
 
 export type ApiKeysListApiKeys200 = {
   keys: ApiKeysListApiKeys200KeysItem[];
-};
-
-export type ApiKeysListApiKeys400 = {
-  message: string;
-};
-
-export type ApiKeysListApiKeys401 = {
-  message: string;
-};
-
-export type ApiKeysListApiKeys403 = {
-  message: string;
-};
-
-export type ApiKeysListApiKeys404 = {
-  message: string;
-};
-
-export type ApiKeysListApiKeys409 = {
-  message: string;
-};
-
-export type ApiKeysListApiKeys429 = {
-  message: string;
-};
-
-export type ApiKeysListApiKeys503 = {
-  message: string;
 };
 
 export type ApiKeysCreateApiKeyBodyMode = typeof ApiKeysCreateApiKeyBodyMode[keyof typeof ApiKeysCreateApiKeyBodyMode];
@@ -193,34 +186,6 @@ export type ApiKeysCreateApiKey200 = {
   key: string;
 };
 
-export type ApiKeysCreateApiKey400 = {
-  message: string;
-};
-
-export type ApiKeysCreateApiKey401 = {
-  message: string;
-};
-
-export type ApiKeysCreateApiKey403 = {
-  message: string;
-};
-
-export type ApiKeysCreateApiKey404 = {
-  message: string;
-};
-
-export type ApiKeysCreateApiKey409 = {
-  message: string;
-};
-
-export type ApiKeysCreateApiKey429 = {
-  message: string;
-};
-
-export type ApiKeysCreateApiKey503 = {
-  message: string;
-};
-
 export type ApiKeysRenameApiKeyPathParameters = {
  id: string,
  }
@@ -253,67 +218,11 @@ export type ApiKeysRenameApiKey200 = {
   expiresAt: string | null;
 };
 
-export type ApiKeysRenameApiKey400 = {
-  message: string;
-};
-
-export type ApiKeysRenameApiKey401 = {
-  message: string;
-};
-
-export type ApiKeysRenameApiKey403 = {
-  message: string;
-};
-
-export type ApiKeysRenameApiKey404 = {
-  message: string;
-};
-
-export type ApiKeysRenameApiKey409 = {
-  message: string;
-};
-
-export type ApiKeysRenameApiKey429 = {
-  message: string;
-};
-
-export type ApiKeysRenameApiKey503 = {
-  message: string;
-};
-
 export type ApiKeysDeleteApiKeyPathParameters = {
  id: string,
  }
 export type ApiKeysDeleteApiKey200 = {
   success: true;
-};
-
-export type ApiKeysDeleteApiKey400 = {
-  message: string;
-};
-
-export type ApiKeysDeleteApiKey401 = {
-  message: string;
-};
-
-export type ApiKeysDeleteApiKey403 = {
-  message: string;
-};
-
-export type ApiKeysDeleteApiKey404 = {
-  message: string;
-};
-
-export type ApiKeysDeleteApiKey409 = {
-  message: string;
-};
-
-export type ApiKeysDeleteApiKey429 = {
-  message: string;
-};
-
-export type ApiKeysDeleteApiKey503 = {
-  message: string;
 };
 
 export type ApiKeysApiKeyStatusesBody = {
@@ -353,34 +262,6 @@ export type ApiKeysApiKeyStatuses200KeysItem = {
 
 export type ApiKeysApiKeyStatuses200 = {
   keys: ApiKeysApiKeyStatuses200KeysItem[];
-};
-
-export type ApiKeysApiKeyStatuses400 = {
-  message: string;
-};
-
-export type ApiKeysApiKeyStatuses401 = {
-  message: string;
-};
-
-export type ApiKeysApiKeyStatuses403 = {
-  message: string;
-};
-
-export type ApiKeysApiKeyStatuses404 = {
-  message: string;
-};
-
-export type ApiKeysApiKeyStatuses409 = {
-  message: string;
-};
-
-export type ApiKeysApiKeyStatuses429 = {
-  message: string;
-};
-
-export type ApiKeysApiKeyStatuses503 = {
-  message: string;
 };
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -435,7 +316,7 @@ export const getHealthzControllerHealthCheckQueryKey = () => {
     }
 
 
-export const getHealthzControllerHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+export const getHealthzControllerHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -454,10 +335,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type HealthzControllerHealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthzControllerHealthCheck>>>
-export type HealthzControllerHealthCheckQueryError = ErrorType<unknown>
+export type HealthzControllerHealthCheckQueryError = ErrorType<RequestValidationError>
 
 
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<unknown>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthzControllerHealthCheck>>,
@@ -467,7 +348,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<unknown>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthzControllerHealthCheck>>,
@@ -477,7 +358,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<unknown>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -485,7 +366,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
  * @summary Health check
  */
 
-export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<unknown>>(
+export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -500,7 +381,7 @@ export function useHealthzControllerHealthCheck<TData = Awaited<ReturnType<typeo
 /**
  * @summary Health check
  */
-export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<unknown>>(
+export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError = ErrorType<RequestValidationError>>(
  queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
 
   ): Promise<QueryClient> => {
@@ -578,7 +459,7 @@ export const getAuthControllerVerifyQueryKey = () => {
     }
 
 
-export const getAuthControllerVerifyQueryOptions = <TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+export const getAuthControllerVerifyQueryOptions = <TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -597,10 +478,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type AuthControllerVerifyQueryResult = NonNullable<Awaited<ReturnType<typeof authControllerVerify>>>
-export type AuthControllerVerifyQueryError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>
+export type AuthControllerVerifyQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
 
 
-export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>(
+export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof authControllerVerify>>,
@@ -610,7 +491,7 @@ export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authCo
       >, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>(
+export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof authControllerVerify>>,
@@ -620,7 +501,7 @@ export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authCo
       >, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>(
+export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -628,7 +509,7 @@ export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authCo
  * @summary Verify request identity
  */
 
-export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>(
+export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -643,7 +524,7 @@ export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authCo
 /**
  * @summary Verify request identity
  */
-export const prefetchAuthControllerVerifyQuery = async <TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>(
+export const prefetchAuthControllerVerifyQuery = async <TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
 
   ): Promise<QueryClient> => {
@@ -721,7 +602,7 @@ export const getAuthControllerGetScopesQueryKey = () => {
     }
 
 
-export const getAuthControllerGetScopesQueryOptions = <TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetScopes>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+export const getAuthControllerGetScopesQueryOptions = <TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<RequestValidationError | HttpErrorResponse | ReauthenticationRequiredEncoded>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetScopes>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -740,10 +621,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type AuthControllerGetScopesQueryResult = NonNullable<Awaited<ReturnType<typeof authControllerGetScopes>>>
-export type AuthControllerGetScopesQueryError = ErrorType<unknown>
+export type AuthControllerGetScopesQueryError = ErrorType<RequestValidationError | HttpErrorResponse | ReauthenticationRequiredEncoded>
 
 
-export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<unknown>>(
+export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<RequestValidationError | HttpErrorResponse | ReauthenticationRequiredEncoded>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetScopes>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof authControllerGetScopes>>,
@@ -753,7 +634,7 @@ export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof aut
       >, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<unknown>>(
+export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<RequestValidationError | HttpErrorResponse | ReauthenticationRequiredEncoded>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetScopes>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof authControllerGetScopes>>,
@@ -763,7 +644,7 @@ export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof aut
       >, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<unknown>>(
+export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<RequestValidationError | HttpErrorResponse | ReauthenticationRequiredEncoded>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetScopes>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -771,7 +652,7 @@ export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof aut
  * @summary Get scopes for the current user
  */
 
-export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<unknown>>(
+export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<RequestValidationError | HttpErrorResponse | ReauthenticationRequiredEncoded>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetScopes>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -786,7 +667,7 @@ export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof aut
 /**
  * @summary Get scopes for the current user
  */
-export const prefetchAuthControllerGetScopesQuery = async <TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<unknown>>(
+export const prefetchAuthControllerGetScopesQuery = async <TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<RequestValidationError | HttpErrorResponse | ReauthenticationRequiredEncoded>>(
  queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetScopes>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
 
   ): Promise<QueryClient> => {
@@ -874,7 +755,7 @@ return authFetch<AuthControllerGetIdpToken200>(getAuthControllerGetIdpTokenUrl()
 
 export const getAuthControllerGetIdpTokenMutationKey = () => ['authControllerGetIdpToken'] as const;
 
-export const getAuthControllerGetIdpTokenMutationOptions = <TError = ErrorType<AuthControllerGetIdpToken400 | AuthControllerGetIdpToken401>,
+export const getAuthControllerGetIdpTokenMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext> => {
 
@@ -903,13 +784,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type AuthControllerGetIdpTokenMutationResult = NonNullable<Awaited<ReturnType<typeof authControllerGetIdpToken>>>
     export type AuthControllerGetIdpTokenMutationBody = BodyType<AuthControllerGetIdpTokenBody>
-    export type AuthControllerGetIdpTokenMutationError = ErrorType<AuthControllerGetIdpToken400 | AuthControllerGetIdpToken401>
+    export type AuthControllerGetIdpTokenMutationError = ErrorType<HttpErrorResponse | RequestValidationError>
     export type AuthControllerGetIdpTokenMutationVariables = {data: BodyType<AuthControllerGetIdpTokenBody>}
 
     /**
  * @summary Issue an IDP token for a user account
  */
-export const useAuthControllerGetIdpToken = <TError = ErrorType<AuthControllerGetIdpToken400 | AuthControllerGetIdpToken401>,
+export const useAuthControllerGetIdpToken = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof authControllerGetIdpToken>>,
@@ -950,7 +831,7 @@ export const getApiKeysListApiKeysQueryKey = () => {
     }
 
 
-export const getApiKeysListApiKeysQueryOptions = <TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+export const getApiKeysListApiKeysQueryOptions = <TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -969,10 +850,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ApiKeysListApiKeysQueryResult = NonNullable<Awaited<ReturnType<typeof apiKeysListApiKeys>>>
-export type ApiKeysListApiKeysQueryError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>
+export type ApiKeysListApiKeysQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
 
 
-export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>(
+export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof apiKeysListApiKeys>>,
@@ -982,7 +863,7 @@ export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysL
       >, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>(
+export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof apiKeysListApiKeys>>,
@@ -992,12 +873,12 @@ export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysL
       >, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>(
+export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>(
+export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1009,7 +890,7 @@ export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysL
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const prefetchApiKeysListApiKeysQuery = async <TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>(
+export const prefetchApiKeysListApiKeysQuery = async <TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
  queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
 
   ): Promise<QueryClient> => {
@@ -1087,7 +968,7 @@ return authFetch<ApiKeysCreateApiKey200>(getApiKeysCreateApiKeyUrl(),
 
 export const getApiKeysCreateApiKeyMutationKey = () => ['apiKeysCreateApiKey'] as const;
 
-export const getApiKeysCreateApiKeyMutationOptions = <TError = ErrorType<ApiKeysCreateApiKey400 | ApiKeysCreateApiKey401 | ApiKeysCreateApiKey403 | ApiKeysCreateApiKey404 | ApiKeysCreateApiKey409 | ApiKeysCreateApiKey429 | ApiKeysCreateApiKey503>,
+export const getApiKeysCreateApiKeyMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysCreateApiKey>>, TError,ApiKeysCreateApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof apiKeysCreateApiKey>>, TError,ApiKeysCreateApiKeyMutationVariables, TContext> => {
 
@@ -1116,10 +997,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ApiKeysCreateApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof apiKeysCreateApiKey>>>
     export type ApiKeysCreateApiKeyMutationBody = BodyType<ApiKeysCreateApiKeyBody>
-    export type ApiKeysCreateApiKeyMutationError = ErrorType<ApiKeysCreateApiKey400 | ApiKeysCreateApiKey401 | ApiKeysCreateApiKey403 | ApiKeysCreateApiKey404 | ApiKeysCreateApiKey409 | ApiKeysCreateApiKey429 | ApiKeysCreateApiKey503>
+    export type ApiKeysCreateApiKeyMutationError = ErrorType<HttpErrorResponse | RequestValidationError>
     export type ApiKeysCreateApiKeyMutationVariables = {data: BodyType<ApiKeysCreateApiKeyBody>}
 
-    export const useApiKeysCreateApiKey = <TError = ErrorType<ApiKeysCreateApiKey400 | ApiKeysCreateApiKey401 | ApiKeysCreateApiKey403 | ApiKeysCreateApiKey404 | ApiKeysCreateApiKey409 | ApiKeysCreateApiKey429 | ApiKeysCreateApiKey503>,
+    export const useApiKeysCreateApiKey = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysCreateApiKey>>, TError,ApiKeysCreateApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof apiKeysCreateApiKey>>,
@@ -1170,7 +1051,7 @@ return authFetch<ApiKeysRenameApiKey200>(getApiKeysRenameApiKeyUrl({ id }),
 
 export const getApiKeysRenameApiKeyMutationKey = () => ['apiKeysRenameApiKey'] as const;
 
-export const getApiKeysRenameApiKeyMutationOptions = <TError = ErrorType<ApiKeysRenameApiKey400 | ApiKeysRenameApiKey401 | ApiKeysRenameApiKey403 | ApiKeysRenameApiKey404 | ApiKeysRenameApiKey409 | ApiKeysRenameApiKey429 | ApiKeysRenameApiKey503>,
+export const getApiKeysRenameApiKeyMutationOptions = <TError = ErrorType<RequestValidationError | HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysRenameApiKey>>, TError,ApiKeysRenameApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof apiKeysRenameApiKey>>, TError,ApiKeysRenameApiKeyMutationVariables, TContext> => {
 
@@ -1199,10 +1080,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ApiKeysRenameApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof apiKeysRenameApiKey>>>
     export type ApiKeysRenameApiKeyMutationBody = BodyType<ApiKeysRenameApiKeyBody>
-    export type ApiKeysRenameApiKeyMutationError = ErrorType<ApiKeysRenameApiKey400 | ApiKeysRenameApiKey401 | ApiKeysRenameApiKey403 | ApiKeysRenameApiKey404 | ApiKeysRenameApiKey409 | ApiKeysRenameApiKey429 | ApiKeysRenameApiKey503>
+    export type ApiKeysRenameApiKeyMutationError = ErrorType<RequestValidationError | HttpErrorResponse>
     export type ApiKeysRenameApiKeyMutationVariables = {pathParams: ApiKeysRenameApiKeyPathParameters;data: BodyType<ApiKeysRenameApiKeyBody>}
 
-    export const useApiKeysRenameApiKey = <TError = ErrorType<ApiKeysRenameApiKey400 | ApiKeysRenameApiKey401 | ApiKeysRenameApiKey403 | ApiKeysRenameApiKey404 | ApiKeysRenameApiKey409 | ApiKeysRenameApiKey429 | ApiKeysRenameApiKey503>,
+    export const useApiKeysRenameApiKey = <TError = ErrorType<RequestValidationError | HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysRenameApiKey>>, TError,ApiKeysRenameApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof apiKeysRenameApiKey>>,
@@ -1238,7 +1119,7 @@ export const apiKeysDeleteApiKey = async ({ id }: ApiKeysDeleteApiKeyPathParamet
 
 export const getApiKeysDeleteApiKeyMutationKey = () => ['apiKeysDeleteApiKey'] as const;
 
-export const getApiKeysDeleteApiKeyMutationOptions = <TError = ErrorType<ApiKeysDeleteApiKey400 | ApiKeysDeleteApiKey401 | ApiKeysDeleteApiKey403 | ApiKeysDeleteApiKey404 | ApiKeysDeleteApiKey409 | ApiKeysDeleteApiKey429 | ApiKeysDeleteApiKey503>,
+export const getApiKeysDeleteApiKeyMutationOptions = <TError = ErrorType<RequestValidationError | HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysDeleteApiKey>>, TError,ApiKeysDeleteApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof apiKeysDeleteApiKey>>, TError,ApiKeysDeleteApiKeyMutationVariables, TContext> => {
 
@@ -1267,10 +1148,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ApiKeysDeleteApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof apiKeysDeleteApiKey>>>
 
-    export type ApiKeysDeleteApiKeyMutationError = ErrorType<ApiKeysDeleteApiKey400 | ApiKeysDeleteApiKey401 | ApiKeysDeleteApiKey403 | ApiKeysDeleteApiKey404 | ApiKeysDeleteApiKey409 | ApiKeysDeleteApiKey429 | ApiKeysDeleteApiKey503>
+    export type ApiKeysDeleteApiKeyMutationError = ErrorType<RequestValidationError | HttpErrorResponse>
     export type ApiKeysDeleteApiKeyMutationVariables = {pathParams: ApiKeysDeleteApiKeyPathParameters}
 
-    export const useApiKeysDeleteApiKey = <TError = ErrorType<ApiKeysDeleteApiKey400 | ApiKeysDeleteApiKey401 | ApiKeysDeleteApiKey403 | ApiKeysDeleteApiKey404 | ApiKeysDeleteApiKey409 | ApiKeysDeleteApiKey429 | ApiKeysDeleteApiKey503>,
+    export const useApiKeysDeleteApiKey = <TError = ErrorType<RequestValidationError | HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysDeleteApiKey>>, TError,ApiKeysDeleteApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof apiKeysDeleteApiKey>>,
@@ -1320,7 +1201,7 @@ return authFetch<ApiKeysApiKeyStatuses200>(getApiKeysApiKeyStatusesUrl(),
 
 export const getApiKeysApiKeyStatusesMutationKey = () => ['apiKeysApiKeyStatuses'] as const;
 
-export const getApiKeysApiKeyStatusesMutationOptions = <TError = ErrorType<ApiKeysApiKeyStatuses400 | ApiKeysApiKeyStatuses401 | ApiKeysApiKeyStatuses403 | ApiKeysApiKeyStatuses404 | ApiKeysApiKeyStatuses409 | ApiKeysApiKeyStatuses429 | ApiKeysApiKeyStatuses503>,
+export const getApiKeysApiKeyStatusesMutationOptions = <TError = ErrorType<RequestValidationError | HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>, TError,ApiKeysApiKeyStatusesMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>, TError,ApiKeysApiKeyStatusesMutationVariables, TContext> => {
 
@@ -1349,10 +1230,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ApiKeysApiKeyStatusesMutationResult = NonNullable<Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>>
     export type ApiKeysApiKeyStatusesMutationBody = BodyType<ApiKeysApiKeyStatusesBody>
-    export type ApiKeysApiKeyStatusesMutationError = ErrorType<ApiKeysApiKeyStatuses400 | ApiKeysApiKeyStatuses401 | ApiKeysApiKeyStatuses403 | ApiKeysApiKeyStatuses404 | ApiKeysApiKeyStatuses409 | ApiKeysApiKeyStatuses429 | ApiKeysApiKeyStatuses503>
+    export type ApiKeysApiKeyStatusesMutationError = ErrorType<RequestValidationError | HttpErrorResponse>
     export type ApiKeysApiKeyStatusesMutationVariables = {data: BodyType<ApiKeysApiKeyStatusesBody>}
 
-    export const useApiKeysApiKeyStatuses = <TError = ErrorType<ApiKeysApiKeyStatuses400 | ApiKeysApiKeyStatuses401 | ApiKeysApiKeyStatuses403 | ApiKeysApiKeyStatuses404 | ApiKeysApiKeyStatuses409 | ApiKeysApiKeyStatuses429 | ApiKeysApiKeyStatuses503>,
+    export const useApiKeysApiKeyStatuses = <TError = ErrorType<RequestValidationError | HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>, TError,ApiKeysApiKeyStatusesMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>,

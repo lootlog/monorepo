@@ -28,9 +28,11 @@ export const AuthControllerGetScopes200 = Schema.Array(Schema.String);
 export type AuthControllerGetIdpTokenRequestJson =
   typeof AuthControllerGetIdpTokenRequestJson.Type;
 
+const NonEmptyTrimmedString = Schema.Trim.check(Schema.isMinLength(1));
+
 export const AuthControllerGetIdpTokenRequestJson = Schema.Struct({
-  userId: Schema.String,
-  discordId: Schema.String,
+  userId: NonEmptyTrimmedString,
+  discordId: NonEmptyTrimmedString,
 });
 
 export type AuthControllerGetIdpToken200 =

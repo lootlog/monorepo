@@ -1,6 +1,7 @@
 import { ApiKeyService } from "#src/auth/api-key-service";
 import { afterAll, describe, expect, it, mock } from "bun:test";
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { Effect, Layer, Redacted } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import { AuthService, createAuthService } from "#src/auth/auth-service";
@@ -289,6 +290,9 @@ describe("Auth HttpApi contract", () => {
         );
 
         expect(response.status).toBe(401);
+        expect(await response.json()).toEqual({
+          code: "AUTHENTICATION_REQUIRED",
+        });
         expect(response.headers.get("x-auth-user-id")).toBeNull();
         expect(response.headers.get("x-auth-discord-id")).toBeNull();
       } finally {
@@ -418,6 +422,7 @@ describe("Auth HttpApi contract", () => {
     );
 
     expect(rejected.status).toBe(400);
+    expect(await rejected.json()).toMatchObject({ code: "VALIDATION_ERROR" });
 
     const responses =
       OpenApi.fromApi(AuthApi).paths["/auth/idp-token"]?.post?.responses;
@@ -428,5 +433,28 @@ describe("Auth HttpApi contract", () => {
     expect(
       responses?.[401]?.content?.["application/json"]?.schema,
     ).toBeDefined();
+  });
+
+  it("asks the Web app to sign in again when the Discord token cannot be refreshed", async () => {
+    const caller = makeRuntime();
+    caller.getAccessToken.mockRejectedValue(
+      new APIError("BAD_REQUEST", { code: "FAILED_TO_GET_ACCESS_TOKEN" }),
+    );
+
+    try {
+      const response = await caller.run(
+        new Request("http://localhost/auth/@me/scopes", {
+          headers: { cookie: `${SESSION_TOKEN_COOKIE}=test-session` },
+        }),
+      );
+
+      expect(response.status).toBe(401);
+      expect(await response.json()).toMatchObject({
+        code: "IDP_REAUTH_REQUIRED",
+        requiresReauth: true,
+      });
+    } finally {
+      await caller.dispose();
+    }
   });
 });

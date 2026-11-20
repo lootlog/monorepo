@@ -4,31 +4,35 @@ import {
   type ApiKeysListApiKeys200KeysItem,
 } from "@lootlog/client/auth";
 import { getApiErrorStringField } from "@lootlog/client/transport";
-import { API_KEY_ERROR_MESSAGES } from "@lootlog/schema/api-key-access";
+import { API_KEY_ERRORS } from "@lootlog/schema/api-key-access";
 import { Schema } from "effect";
 import { portalText as t } from "./translations";
 
 export type ApiKey = ApiKeysListApiKeys200KeysItem;
 
-const keyErrorMessages = new Map<string, string>([
-  [API_KEY_ERROR_MESSAGES.disabled, t.keysDisabled],
+const keyErrorCopy = [
+  [API_KEY_ERRORS.disabled, t.keysDisabled],
   [
-    API_KEY_ERROR_MESSAGES.organizationServiceUnavailable,
+    API_KEY_ERRORS.organizationServiceUnavailable,
     t.organizationServiceUnavailable,
   ],
-  [
-    API_KEY_ERROR_MESSAGES.organizationAccessRequired,
-    t.organizationAccessRequired,
-  ],
-  [API_KEY_ERROR_MESSAGES.limitReached, t.keyLimit],
-  [API_KEY_ERROR_MESSAGES.sessionRequired, t.keySessionRequired],
-  [API_KEY_ERROR_MESSAGES.creationFailed, t.keyCreationFailed],
-]);
+  [API_KEY_ERRORS.organizationAccessRequired, t.organizationAccessRequired],
+  [API_KEY_ERRORS.limitReached, t.keyLimit],
+  [API_KEY_ERRORS.sessionRequired, t.keySessionRequired],
+  [API_KEY_ERRORS.creationFailed, t.keyCreationFailed],
+] as const;
 
 export function getKeyErrorMessage(cause: unknown) {
+  const code = getApiErrorStringField(cause, "code");
   const message = getApiErrorStringField(cause, "message");
 
-  return (message && keyErrorMessages.get(message)) ?? t.error;
+  // A 503 hides its message behind its code, and auth instances deployed
+  // before the shared error body send only the message.
+  const copy =
+    keyErrorCopy.find(([reason]) => reason.code === code) ??
+    keyErrorCopy.find(([reason]) => reason.message === message);
+
+  return copy?.[1] ?? t.error;
 }
 
 const EXPIRY_BY_DAYS = {

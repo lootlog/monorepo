@@ -4,8 +4,11 @@ import { Effect, Redacted } from "effect";
 import { TestClock } from "effect/testing";
 import { exportJWK, generateKeyPair, SignJWT, type JSONWebKeySet } from "jose";
 import {
+  AuthenticationRequiredError,
+  ReauthenticationRequired,
+} from "@lootlog/protocol/http/errors";
+import {
   createAuthService,
-  HttpResponseError,
   SESSION_DECISION_TTL_MS,
   type AuthProvider,
 } from "./auth-service.js";
@@ -66,7 +69,10 @@ describe("AuthService", () => {
           authDiscordId: "spoofed",
         }),
       ),
-    ).rejects.toBeInstanceOf(HttpResponseError);
+    ).rejects.toMatchObject({
+      kind: "authentication-required",
+      body: { code: "AUTHENTICATION_REQUIRED" },
+    });
   });
 
   it("never falls back to a session when an explicit API key is rejected", async () => {
@@ -80,9 +86,7 @@ describe("AuthService", () => {
       appUrl: "https://auth.test",
       findDiscordAccountId,
       verifyApiKey: () =>
-        Effect.fail(
-          new HttpResponseError({ status: 401, body: { message: "Rejected" } }),
-        ),
+        Effect.fail(new AuthenticationRequiredError("Rejected")),
     });
 
     await expect(
@@ -94,7 +98,10 @@ describe("AuthService", () => {
           }),
         }),
       ),
-    ).rejects.toMatchObject({ status: 401 });
+    ).rejects.toMatchObject({
+      kind: "authentication-required",
+      body: { message: "Rejected" },
+    });
     expect(getSession).not.toHaveBeenCalled();
   });
 
@@ -200,7 +207,7 @@ describe("AuthService", () => {
             headers: new Headers({ cookie: `${SESSION_COOKIE}=revoked` }),
           }),
         ),
-      ).rejects.toBeInstanceOf(HttpResponseError);
+      ).rejects.toMatchObject({ kind: "authentication-required" });
 
       await expect(
         Effect.runPromise(
@@ -221,7 +228,7 @@ describe("AuthService", () => {
         Effect.runPromise(
           service.verifyRequestIdentity({ headers: withSessionCookie() }),
         ),
-      ).rejects.toBeInstanceOf(HttpResponseError);
+      ).rejects.toMatchObject({ kind: "authentication-required" });
 
       await expect(
         Effect.runPromise(
@@ -329,8 +336,8 @@ describe("AuthService", () => {
         ),
       ),
     ).rejects.toMatchObject({
-      status: 401,
-      body: { error: "TOKEN_EXPIRED" },
+      kind: "authentication-required",
+      body: { code: "TOKEN_EXPIRED" },
     });
 
     getAccessToken.mockResolvedValue({ accessToken: "" });
@@ -345,8 +352,8 @@ describe("AuthService", () => {
         ),
       ),
     ).rejects.toMatchObject({
-      status: 400,
-      body: { error: "TOKEN_NOT_FOUND" },
+      kind: "invalid-request",
+      body: { code: "TOKEN_NOT_FOUND" },
     });
   });
 
@@ -373,12 +380,12 @@ describe("AuthService", () => {
       );
 
     await expect(idpToken("account-row-1")).rejects.toMatchObject({
-      status: 401,
-      body: { error: "TOKEN_EXPIRED" },
+      kind: "authentication-required",
+      body: { code: "TOKEN_EXPIRED" },
     });
     await expect(idpToken(null)).rejects.toMatchObject({
-      status: 400,
-      body: { error: "ACCOUNT_NOT_FOUND" },
+      kind: "invalid-request",
+      body: { code: "ACCOUNT_NOT_FOUND" },
     });
   });
 
@@ -402,9 +409,11 @@ describe("AuthService", () => {
 
     await expect(
       Effect.runPromise(service.getCurrentUserScopes(new Headers())),
-    ).rejects.toMatchObject({
-      status: 401,
-      body: { error: "IDP_REAUTH_REQUIRED", requiresReauth: true },
-    });
+    ).rejects.toEqual(
+      new ReauthenticationRequired({
+        code: "IDP_REAUTH_REQUIRED",
+        requiresReauth: true,
+      }),
+    );
   });
 });

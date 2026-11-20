@@ -7,7 +7,13 @@ import {
   API_KEY_HEADER,
   type ApiKeyAccess,
 } from "@lootlog/schema/api-key-access";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import {
+  ApplicationError,
+  AuthenticationRequiredError,
+  InvalidRequestError,
+  ReauthenticationRequired,
+  UnexpectedApplicationError,
+} from "@lootlog/protocol/http/errors";
 import { APIError } from "better-auth/api";
 import { and, eq } from "drizzle-orm";
 import { createLocalJWKSet, jwtVerify, type JSONWebKeySet } from "jose";
@@ -48,14 +54,6 @@ interface IdpTokenResponse {
   readonly expiresIn: number;
   readonly scopes: ReadonlyArray<string>;
 }
-
-export class HttpResponseError extends TaggedErrorClass<HttpResponseError>()(
-  "HttpResponseError",
-  {
-    status: Schema.Int,
-    body: Schema.Unknown,
-  },
-) {}
 
 type SessionIdentity = {
   readonly user: Pick<AppUserSession["user"], "id" | "discordId">;
@@ -103,25 +101,20 @@ const hasDiscordAccessToken = (
   Predicate.isString(token.accessToken) &&
   token.accessToken.length > 0;
 
-type AuthFailureBody =
-  | { readonly message: string; readonly statusCode?: number }
-  | { readonly error: string; readonly requiresReauth?: boolean };
+const unauthorized = () => new AuthenticationRequiredError();
 
-const unauthorized = (
-  body: AuthFailureBody = {
-    message: "Unauthorized",
-    statusCode: 401,
-  },
-) => new HttpResponseError({ status: 401, body });
+const tokenExpired = () =>
+  new AuthenticationRequiredError({ code: "TOKEN_EXPIRED" });
 
 const reauthenticationRequired = () =>
-  unauthorized({
-    error: "IDP_REAUTH_REQUIRED",
+  new ReauthenticationRequired({
+    code: "IDP_REAUTH_REQUIRED",
     requiresReauth: true,
   });
 
-const internalServerError = (body: AuthFailureBody) =>
-  new HttpResponseError({ status: 500, body });
+/** A failure the caller cannot act on: answered with an empty 500 and logged. */
+const internalServerError = (message: string) =>
+  new UnexpectedApplicationError({ message });
 
 const parseExpiresAt = Function.compose(
   Schema.decodeUnknownOption(
@@ -174,7 +167,7 @@ export const createAuthService = ({
   readonly idpTokenSecret?: Redacted.Redacted<string>;
   readonly verifyApiKey?: (
     key: string,
-  ) => Effect.Effect<VerifiedIdentity, HttpResponseError>;
+  ) => Effect.Effect<VerifiedIdentity, ApplicationError>;
   readonly auth: AuthProvider;
   readonly appUrl: string;
   readonly findDiscordAccountId: (
@@ -184,7 +177,7 @@ export const createAuthService = ({
   const getSession = Effect.fn("AuthService.getSession")((headers: Headers) =>
     Effect.tryPromise({
       try: () => auth.api.getSession({ headers }),
-      catch: () => internalServerError({ message: "Internal server error" }),
+      catch: () => internalServerError("Session lookup failed"),
     }),
   );
 
@@ -192,7 +185,7 @@ export const createAuthService = ({
     (headers: Headers) =>
       Effect.tryPromise({
         try: () => auth.api.getSessionWithCookies({ headers }),
-        catch: () => internalServerError({ message: "Internal server error" }),
+        catch: () => internalServerError("Session lookup failed"),
       }),
   );
 
@@ -399,8 +392,8 @@ export const createAuthService = ({
   )(function* (
     request: AccessTokenRequest,
     errors: {
-      readonly missing: HttpResponseError;
-      readonly expired: HttpResponseError;
+      readonly missing: ApplicationError | ReauthenticationRequired;
+      readonly expired: ApplicationError | ReauthenticationRequired;
     },
   ) {
     const token = yield* getDiscordAccessToken(request);
@@ -442,7 +435,10 @@ export const createAuthService = ({
       if (Result.isFailure(result)) {
         const error = result.failure;
 
-        if (error instanceof HttpResponseError) {
+        if (
+          error instanceof ApplicationError ||
+          error instanceof ReauthenticationRequired
+        ) {
           return yield* error;
         }
 
@@ -450,9 +446,7 @@ export const createAuthService = ({
           return yield* reauthenticationRequired();
         }
 
-        return yield* internalServerError({
-          error: "Failed to retrieve IDP token",
-        });
+        return yield* internalServerError("Failed to retrieve IDP token");
       }
 
       return normalizeScopes(result.success.scopes);
@@ -467,18 +461,15 @@ export const createAuthService = ({
 
       const result = yield* Effect.result(
         getDiscordAccessTokenOrThrow(request, {
-          missing: new HttpResponseError({
-            status: 400,
-            body: { error: "TOKEN_NOT_FOUND" },
-          }),
-          expired: unauthorized({ error: "TOKEN_EXPIRED" }),
+          missing: new InvalidRequestError({ code: "TOKEN_NOT_FOUND" }),
+          expired: tokenExpired(),
         }),
       );
 
       if (Result.isFailure(result)) {
         const error = result.failure;
 
-        if (error instanceof HttpResponseError) {
+        if (error instanceof ApplicationError) {
           return yield* error;
         }
 
@@ -486,20 +477,19 @@ export const createAuthService = ({
           const code = error.body?.code;
 
           if (code === "ACCOUNT_NOT_FOUND") {
-            return yield* new HttpResponseError({
-              status: 400,
-              body: { error: "ACCOUNT_NOT_FOUND" },
+            return yield* new InvalidRequestError({
+              code: "ACCOUNT_NOT_FOUND",
             });
           }
 
           // Better Auth reports every failed refresh of an expired token
           // this way; the account exists and a new sign-in replaces the token.
           if (code === "FAILED_TO_GET_ACCESS_TOKEN") {
-            return yield* unauthorized({ error: "TOKEN_EXPIRED" });
+            return yield* tokenExpired();
           }
         }
 
-        return yield* internalServerError({ error: "INTERNAL_ERROR" });
+        return yield* internalServerError("Failed to retrieve IDP token");
       }
 
       const now = yield* DateTime.now;
