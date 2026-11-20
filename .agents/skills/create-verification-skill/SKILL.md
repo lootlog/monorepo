@@ -21,7 +21,7 @@ Do not start the application. This repository assumes it already runs. Ask only 
 
 ## Generate
 
-Use the client's available skill-creation mechanism. In Codex, use the system `skill-creator` initializer. When no initializer exists, create the same `SKILL.md` and optional `agents/openai.yaml` structure directly. The generated skill must contain:
+Use the client's available skill-creation mechanism. When none exists, create `SKILL.md` directly, mirroring the layout of the existing skills in `.agents/skills`. The generated skill must contain:
 
 - Doctor: a read-only check that confirms the expected instance and version are reachable.
 - Drive: exact selectors, routes, commands, or requests from this repository.

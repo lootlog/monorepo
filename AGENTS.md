@@ -370,7 +370,8 @@ find it unchanged on the next.
 - A completed change may include a local Conventional Commit. Push a branch or
   open a pull request only when the user explicitly asks.
 - Follow `commitlint.config.js`, preserve hooks, and never use `--no-verify`.
-  Do not mention Codex in commits or add `[codex]` to a pull request title.
+  Commit messages and pull request titles describe the change alone, without
+  naming the agent or tool that produced it.
 - Write code, API contracts, architecture documents, ADRs, agent instructions,
   pull request titles, and pull request descriptions in English. Write product
   and player-facing user documentation in Polish. Developer portal copy and
