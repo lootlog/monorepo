@@ -28,6 +28,8 @@ export const parseActivityCursor = (
     Option.filter(
       ([createdAt]) =>
         CURSOR_TIMESTAMP_PATTERN.test(createdAt) &&
+        // JavaScript accepts year 0000; PostgreSQL rejects it on the cast.
+        !createdAt.startsWith("0000") &&
         Number.isFinite(Date.parse(createdAt)),
     ),
     Option.map(([createdAt, id]) => ({ createdAt, id })),
