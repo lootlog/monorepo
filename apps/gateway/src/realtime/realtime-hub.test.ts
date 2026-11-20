@@ -23,7 +23,8 @@ import type {
   GlobalChatChannelUpdate,
   GlobalChatMessage,
 } from "@lootlog/schema/chat";
-import { Effect } from "effect";
+import { UnprocessableDelivery } from "@lootlog/messaging";
+import { Cause, Effect, Exit, Option, Schema } from "effect";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import { getScopeKey } from "./realtime-audiences.js";
 import { RealtimeHub } from "./realtime-hub.js";
@@ -2365,14 +2366,23 @@ test("gathering rosters reach authorized observers across gateways without expos
           ),
         );
 
-        expect(mismatched._tag).toBe("Failure");
+        // A mismatch fails on every redelivery, so it skips the retries and
+        // goes straight to the dead-letter queue.
+        const unprocessable = (exit: Exit.Exit<void, unknown>) =>
+          Exit.isFailure(exit) &&
+          Option.exists(
+            Cause.findErrorOption(exit.cause),
+            Schema.is(UnprocessableDelivery),
+          );
+
+        expect(unprocessable(mismatched)).toBe(true);
 
         for (const npc of [undefined, { ...gathering.npc, type: "COMMON" }]) {
           const invalidSource = yield* Effect.exit(
             deliver({ ...envelope, npc }, "hidden-source"),
           );
 
-          expect(invalidSource._tag).toBe("Failure");
+          expect(unprocessable(invalidSource)).toBe(true);
         }
 
         for (const target of targets.filter(

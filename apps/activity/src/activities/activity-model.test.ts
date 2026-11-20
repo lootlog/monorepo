@@ -14,6 +14,7 @@ describe("activity wire schemas", () => {
       actorSnapshot: {
         accountId: 1,
         characterId: 2,
+        name: "Hero",
         clanName: "Clan",
         clanId: 3,
         icon: "warrior.gif",
@@ -35,6 +36,23 @@ describe("activity wire schemas", () => {
         source: "GAME",
         idempotencyKey: "key",
         details: { sessionId: "session" },
+      }),
+    ).toThrow();
+  });
+
+  // The activity log cannot store such an actor, so retrying the delivery
+  // would only delay its dead letter.
+  it("rejects an actor snapshot the activity log cannot store", () => {
+    expect(() =>
+      decodeCreateActivity({
+        userId: "user",
+        guildId: "guild",
+        discordId: "discord",
+        type: "CONNECT_EVENT",
+        source: "WEB_APP",
+        idempotencyKey: "key",
+        details: { sessionId: "session" },
+        actorSnapshot: { accountId: 1, characterId: 2, name: "Hero" },
       }),
     ).toThrow();
   });

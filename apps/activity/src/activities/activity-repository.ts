@@ -29,7 +29,10 @@ import {
 } from "effect";
 import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
-import { ActivityDatabase } from "#src/database/database";
+import {
+  ActivityDatabase,
+  type ActivityDatabaseFailure,
+} from "#src/database/database";
 import {
   activities,
   activityActorSnapshots,
@@ -50,43 +53,52 @@ export type ActivityRecord = ReturnType<typeof mapActivityRow>;
 export type MemberActivityStatsRecord = typeof memberActivityStats.$inferSelect;
 
 export interface ActivityRepositoryValue {
-  readonly create: (dto: CreateActivity) => Effect.Effect<unknown, unknown>;
+  /** Stores the activity once per idempotency key and answers with that row. */
+  readonly create: (
+    dto: CreateActivity,
+  ) => Effect.Effect<
+    ActivityRecord | typeof activities.$inferSelect,
+    ActivityDatabaseFailure
+  >;
   readonly clearActiveSessionsForMember: (member: {
     guildId: string;
     discordId: string;
-  }) => Effect.Effect<void, unknown>;
+  }) => Effect.Effect<void, ActivityDatabaseFailure>;
   readonly findMany: (
     query: QueryActivities,
   ) => Effect.Effect<
     { data: ActivityRecord[]; nextCursor?: string; hasMore: boolean },
-    unknown
+    ActivityDatabaseFailure
   >;
   readonly findOne: (
     id: string,
     guildId: string,
-  ) => Effect.Effect<ActivityRecord, unknown | ActivityNotFound>;
+  ) => Effect.Effect<
+    ActivityRecord,
+    ActivityDatabaseFailure | ActivityNotFound
+  >;
   readonly deleteOne: (
     id: string,
     guildId: string,
-  ) => Effect.Effect<number, unknown | ActivityNotFound>;
+  ) => Effect.Effect<number, ActivityDatabaseFailure | ActivityNotFound>;
   readonly memberStats: (
     guildId: string,
-  ) => Effect.Effect<MemberActivityStatsRecord[], unknown>;
+  ) => Effect.Effect<MemberActivityStatsRecord[], ActivityDatabaseFailure>;
   readonly suggestActorNames: (
     guildId: string,
     search?: string,
     limit?: number,
-  ) => Effect.Effect<string[], unknown>;
+  ) => Effect.Effect<string[], ActivityDatabaseFailure>;
   readonly suggestWorlds: (
     guildId: string,
     search?: string,
     limit?: number,
-  ) => Effect.Effect<string[], unknown>;
+  ) => Effect.Effect<string[], ActivityDatabaseFailure>;
   readonly suggestClanNames: (
     guildId: string,
     search?: string,
     limit?: number,
-  ) => Effect.Effect<string[], unknown>;
+  ) => Effect.Effect<string[], ActivityDatabaseFailure>;
 }
 
 const detailsString = (dto: CreateActivity, key: string) => {
@@ -194,7 +206,8 @@ export class ActivityRepository extends Context.Service<
           snapshot.lvl === undefined ||
           snapshot.prof === undefined
         )
-          return yield* Effect.fail(
+          // decodeCreateActivity rejects such a snapshot before it gets here.
+          return yield* Effect.die(
             new Error("Actor snapshot is missing a database-required field"),
           );
 
@@ -242,7 +255,7 @@ export class ActivityRepository extends Context.Service<
         const row = rows[0] ?? (yield* findExisting())[0];
 
         if (!row)
-          return yield* Effect.fail(
+          return yield* Effect.die(
             new Error("Actor snapshot resolution did not return an identifier"),
           );
 
@@ -308,14 +321,15 @@ export class ActivityRepository extends Context.Service<
             const created = createdRows[0];
 
             if (!created)
-              return yield* Effect.fail(
+              return yield* Effect.die(
                 new Error("Activity insert did not return a row"),
               );
 
             const sessionId = detailsString(dto, "sessionId");
 
+            // decodeCreateActivity requires it for every activity type.
             if (!sessionId)
-              return yield* Effect.fail(
+              return yield* Effect.die(
                 new Error("Activity session identifier is missing"),
               );
 

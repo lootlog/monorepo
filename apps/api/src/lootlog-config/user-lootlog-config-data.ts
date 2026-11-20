@@ -202,10 +202,8 @@ export class UserLootlogConfigData extends Context.Service<
                 const config = rows[0];
 
                 if (!config) {
-                  return yield* Effect.fail(
-                    new Error(
-                      "Lootlog character configuration was not returned",
-                    ),
+                  return yield* Effect.die(
+                    "Lootlog character configuration was not returned",
                   );
                 }
 

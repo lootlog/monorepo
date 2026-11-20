@@ -1,8 +1,10 @@
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import type { MessagingError } from "@lootlog/messaging";
-import { Clock, Effect } from "effect";
+import { Clock, Effect, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { RedisError } from "effect/persistence/Redis";
 import type { RedisService } from "#src/redis/redis.service";
+import type { OutboundHttpFailure } from "#src/shared/http/outbound-http";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberKillTotalTable,
@@ -57,6 +59,12 @@ import {
   AccountOrganizationOperationError,
 } from "#src/guilds/account-organization-data";
 
+/** Battlelog did not accept the request to delete the User's battles. */
+export class BattlelogCleanupFailed extends TaggedErrorClass<BattlelogCleanupFailed>()(
+  "BattlelogCleanupFailed",
+  { status: Schema.Number },
+) {}
+
 type RemovedMember = {
   readonly discordId: string;
   readonly guildId: string;
@@ -64,7 +72,9 @@ type RemovedMember = {
 };
 
 export interface UserAccountDeletionPorts {
-  readonly cleanupBattlelog: (userId: string) => Effect.Effect<void, unknown>;
+  readonly cleanupBattlelog: (
+    userId: string,
+  ) => Effect.Effect<void, BattlelogCleanupFailed | OutboundHttpFailure>;
   readonly deleteCacheKey: (key: string) => Effect.Effect<void, RedisError>;
   readonly invalidateCacheScopes: RedisService["invalidateScopes"];
   readonly deleteCachePattern: (

@@ -154,7 +154,7 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       );
 
       return room
-        ? Schema.decodeUnknownEffect(schema)(room)
+        ? Schema.decodeUnknownEffect(schema)(room).pipe(Effect.orDie)
         : Effect.succeed(null);
     },
     eval: (script, _keys, args) => {

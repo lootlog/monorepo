@@ -5,7 +5,10 @@ import { PgClient } from "@effect/sql-pg";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, count, inArray, lt, lte, sql as drizzleSql } from "drizzle-orm";
-import { ActivityDatabase } from "#src/database/database";
+import {
+  ActivityDatabase,
+  type ActivityDatabaseFailure,
+} from "#src/database/database";
 import { userOnlineDays, userOnlineIntervals } from "#src/database/schema";
 import type { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
 import type {
@@ -19,12 +22,14 @@ export class OnlineIngestRejected extends TaggedErrorClass<OnlineIngestRejected>
 ) {}
 
 export interface OnlineRepositoryValue {
-  readonly ingest: (event: UserOnlineEventV1) => Effect.Effect<void, unknown>;
+  readonly ingest: (
+    event: UserOnlineEventV1,
+  ) => Effect.Effect<void, OnlineIngestRejected | ActivityDatabaseFailure>;
   readonly find: (
     userId: string,
     query: UserOnlineQuery,
-  ) => Effect.Effect<UserOnlineResponse, unknown>;
-  readonly prune: () => Effect.Effect<void, unknown>;
+  ) => Effect.Effect<UserOnlineResponse, ActivityDatabaseFailure>;
+  readonly prune: () => Effect.Effect<void, ActivityDatabaseFailure>;
 }
 
 export class OnlineRepository extends Context.Service<

@@ -258,7 +258,7 @@ export const readNpcKillPage = Effect.fn("kills.npc-page")(function* (
 
   const row = decoded.rows[0];
 
-  if (!row) return yield* Effect.fail(new Error("Missing NPC kill aggregate"));
+  if (!row) return yield* Effect.die("Missing NPC kill aggregate");
 
   return row.payload;
 });

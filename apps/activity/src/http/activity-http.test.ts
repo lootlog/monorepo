@@ -43,7 +43,7 @@ const activityRecord = (
 });
 
 const repository: ActivityRepositoryValue = {
-  create: () => Effect.succeed({}),
+  create: () => Effect.die("unused"),
   clearActiveSessionsForMember: () => Effect.void,
   findMany: (query) =>
     Effect.succeed({

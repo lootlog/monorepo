@@ -1,3 +1,4 @@
+import { UnprocessableDelivery } from "@lootlog/messaging";
 import { lootEventVisibilityNpcs } from "#src/realtime/source-event-visibility";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -10,6 +11,7 @@ import { Effect, Option, Schema, type Types } from "effect";
 import type { CommandHandler } from "#src/realtime/command-handler";
 import { globalChatScope, type RealtimeHub } from "#src/realtime/realtime-hub";
 import type { PresenceStore } from "#src/realtime/presence-store";
+import { RealtimeDependencyError } from "#src/realtime/realtime-errors";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 import type { ConsumedRoutingKey } from "#src/rabbit/gateway-queues";
 
@@ -48,6 +50,16 @@ export const runBridgeRoute = <Key extends ConsumedRoutingKey>(
 ) => routes[routingKey](payload, messageId);
 
 const decodeString = Schema.decodeUnknownOption(Schema.String);
+
+/** Runs one realtime hub delivery; its rejection is retried by the queue. */
+const hubCall = (
+  operation: string,
+  deliver: () => Promise<void>,
+): Effect.Effect<void, RealtimeDependencyError> =>
+  Effect.tryPromise({
+    try: deliver,
+    catch: (cause) => new RealtimeDependencyError({ operation, cause }),
+  });
 
 const record = Schema.decodeUnknownSync(
   Schema.Record(Schema.String, Schema.Unknown),
@@ -109,15 +121,18 @@ const publishGatheringUpdate = (
   hub: Pick<RealtimeHub, "publishToScope">,
   data: GatheringUpdateEnvelope,
   messageId?: string,
-): Effect.Effect<void, unknown> => {
+): Effect.Effect<void, UnprocessableDelivery | RealtimeDependencyError> => {
   const update = data.update;
   const mismatch = gatheringUpdateMismatch(data);
 
+  // The envelope never changes on redelivery, so a retry would fail again.
   if (mismatch)
     return Effect.fail(
-      new Error(
-        `Gathering update does not match its source: ${mismatch} differs`,
-      ),
+      new UnprocessableDelivery({
+        cause: new Error(
+          `Gathering update does not match its source: ${mismatch} differs`,
+        ),
+      }),
     );
 
   const clientUpdate: typeof update =
@@ -134,33 +149,31 @@ const publishGatheringUpdate = (
         }
       : update;
 
-  return Effect.tryPromise({
-    try: () =>
-      hub.publishToScope(
-        {
-          topic: "organization.chat",
-          organizationId: data.guildId,
+  return hubCall("publishToScope", () =>
+    hub.publishToScope(
+      {
+        topic: "organization.chat",
+        organizationId: data.guildId,
+        world: data.world,
+      },
+      {
+        v: 1,
+        type: "party-gathering.state-updated",
+        data: { organizationId: data.guildId, payload: clientUpdate },
+      },
+      messageId ?? `${data.notificationId}:${data.revision}`,
+      {
+        discordId: data.organizerDiscordId,
+        partyGatheringSource: {
+          guildId: data.guildId,
           world: data.world,
+          notificationId: data.notificationId,
+          organizerDiscordId: data.organizerDiscordId,
+          npc: data.npc,
         },
-        {
-          v: 1,
-          type: "party-gathering.state-updated",
-          data: { organizationId: data.guildId, payload: clientUpdate },
-        },
-        messageId ?? `${data.notificationId}:${data.revision}`,
-        {
-          discordId: data.organizerDiscordId,
-          partyGatheringSource: {
-            guildId: data.guildId,
-            world: data.world,
-            notificationId: data.notificationId,
-            organizerDiscordId: data.organizerDiscordId,
-            npc: data.npc,
-          },
-        },
-      ),
-    catch: (cause) => cause,
-  });
+      },
+    ),
+  );
 };
 
 export interface BridgeRouteDependencies {
@@ -180,22 +193,11 @@ export const gatewayBridgeRoutes = ({
   presence,
   coverage,
 }: BridgeRouteDependencies): BridgeRoutes => {
-  const publish = (
-    ...args: Parameters<RealtimeHub["publishToScope"]>
-  ): Effect.Effect<void, unknown> =>
-    Effect.tryPromise({
-      try: () => hub.publishToScope(...args),
-      catch: (cause) => cause,
-    });
+  const publish = (...args: Parameters<RealtimeHub["publishToScope"]>) =>
+    hubCall("publishToScope", () => hub.publishToScope(...args));
 
-  const publishTo = (
-    discordId: string,
-    event: Event,
-  ): Effect.Effect<void, unknown> =>
-    Effect.tryPromise({
-      try: () => hub.publishToDiscord(discordId, event),
-      catch: (cause) => cause,
-    });
+  const publishTo = (discordId: string, event: Event) =>
+    hubCall("publishToDiscord", () => hub.publishToDiscord(discordId, event));
 
   const rebalance = (
     payload: { readonly discordId: string; readonly userId: string },
@@ -371,15 +373,13 @@ export const gatewayBridgeRoutes = ({
       ),
     // Delivery skips clients that did not join with KILL_STATS_FEATURE.
     [RabbitRoutingKey.USERS_KILL_STATS_CHANGED]: (data) =>
-      Effect.tryPromise({
-        try: () =>
-          hub.publishToUser(data.recipientUserId, {
-            v: 1,
-            type: "kill-stats.changed",
-            data: {},
-          }),
-        catch: (cause) => cause,
-      }),
+      hubCall("publishToUser", () =>
+        hub.publishToUser(data.recipientUserId, {
+          v: 1,
+          type: "kill-stats.changed",
+          data: {},
+        }),
+      ),
     [RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED]: (data) =>
       Effect.forEach(
         data.eligibleGuildIds,

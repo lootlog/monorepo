@@ -267,7 +267,7 @@ const recordDetection = Effect.fnUntraced(function* (
   const currentId = inserted[0]?.id;
 
   if (currentId === undefined)
-    return yield* Effect.die(new Error("Hero sighting insert returned no row"));
+    return yield* Effect.die("Hero sighting insert returned no row");
 
   yield* pruneHeroSightings(transaction, scope);
 
@@ -299,7 +299,7 @@ const makeGuildSightingWriter =
       const current = changed.find(({ id }) => id === result.currentId);
 
       if (!current)
-        return yield* Effect.die(new Error("Current hero sighting not loaded"));
+        return yield* Effect.die("Current hero sighting not loaded");
 
       return current;
     });

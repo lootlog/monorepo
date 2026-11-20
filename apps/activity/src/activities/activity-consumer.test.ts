@@ -14,6 +14,7 @@ import { Cause, Effect, Exit, Layer, Option, Redacted, Schema } from "effect";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ActivityConsumers, activityQueues } from "./activity-consumer.js";
 import { ActivityRepository } from "./activity-repository.js";
+import type { CreateActivity } from "./activity-model.js";
 import { ActivityConfig } from "#src/config/activity-config";
 
 import {
@@ -100,7 +101,17 @@ describe("Activity RabbitMQ topology", () => {
         () => Effect.void,
       );
 
-      const create = mock(() => Effect.void);
+      const create = mock((dto: CreateActivity) =>
+        Effect.succeed({
+          ...dto,
+          id: "activity",
+          createdAt: new Date(0),
+          world: null,
+          details: undefined,
+          actorSnapshot: undefined,
+          actorSnapshotId: null,
+        }),
+      );
 
       const rabbit = RabbitMessaging.of({
         publish,

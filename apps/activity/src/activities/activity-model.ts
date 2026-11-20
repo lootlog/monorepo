@@ -11,14 +11,20 @@ export type CreateActivity = ActivityLogCreated;
 
 const decodeBase = Schema.decodeUnknownSync(ActivityLogCreated);
 
-const requiredGameFields = [
+/** The actor fields an activity log row cannot be stored without. */
+const storedActorFields = [
   "accountId",
   "characterId",
-  "clanName",
-  "clanId",
+  "name",
   "icon",
   "lvl",
   "prof",
+] as const;
+
+const requiredGameFields = [
+  ...storedActorFields,
+  "clanName",
+  "clanId",
 ] as const;
 
 export const decodeCreateActivity = Function.compose(decodeBase, (value) => {
@@ -37,6 +43,14 @@ export const decodeCreateActivity = Function.compose(decodeBase, (value) => {
       ))
   )
     throw new Error("actorSnapshot is missing required fields for GAME source");
+
+  if (
+    value.actorSnapshot &&
+    storedActorFields.some(
+      (field) => value.actorSnapshot?.[field] === undefined,
+    )
+  )
+    throw new Error("actorSnapshot is missing a field the activity log stores");
 
   return value;
 });

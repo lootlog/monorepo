@@ -166,9 +166,7 @@ export const makeBattleCreation = (
       return analysis;
     } catch (error) {
       logger.error("Failed to analyze battle data:", error);
-      throw new Error(
-        `Battle analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      throw new Error("Battle analysis failed", { cause: error });
     }
   };
 
@@ -389,20 +387,17 @@ export const makeBattleCreation = (
 
       if (existingBattle) return { id: existingBattle.id };
 
-      return yield* Effect.fail(
-        new Error("Battle insert did not return a row"),
-      );
+      return yield* Effect.die(new Error("Battle insert did not return a row"));
     });
 
     return store.pipe(
-      Effect.mapError((error) => {
-        if (error instanceof ApplicationError) return error;
-        logger.error("Failed to store battle in database:", error);
+      Effect.tapError((error) =>
+        Effect.sync(() => {
+          if (error instanceof ApplicationError) return;
 
-        return new Error(
-          `Database storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      }),
+          logger.error("Failed to store battle in database:", error);
+        }),
+      ),
     );
   };
 
@@ -496,15 +491,11 @@ export const makeBattleCreation = (
           ),
       );
     }).pipe(
-      Effect.mapError((error) => {
-        logger.error(`Failed to create battle for user ${userId}:`, error);
-
-        if (error instanceof ApplicationError) return error;
-
-        return new Error(
-          `Battle creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      }),
+      Effect.tapError((error) =>
+        Effect.sync(() =>
+          logger.error(`Failed to create battle for user ${userId}:`, error),
+        ),
+      ),
     );
   };
 

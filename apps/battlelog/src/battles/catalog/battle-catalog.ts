@@ -72,15 +72,13 @@ export const makeBattleCatalog = (
         },
       };
     }).pipe(
-      Effect.mapError((error) => {
-        if (error instanceof ApplicationError) return error;
+      Effect.tapError((error) =>
+        Effect.sync(() => {
+          if (error instanceof ApplicationError) return;
 
-        logger.error("Failed to retrieve dashboard battles:", error);
-
-        return new Error(
-          `Failed to retrieve dashboard battles: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      }),
+          logger.error("Failed to retrieve dashboard battles:", error);
+        }),
+      ),
     );
   };
 

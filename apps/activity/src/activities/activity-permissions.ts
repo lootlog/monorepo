@@ -6,18 +6,45 @@ import {
 import { INTERNAL_USER_PERMISSIONS_PATH } from "@lootlog/schema/internal-guilds";
 import { Context, Effect, Layer, Redacted, Schema } from "effect";
 import { Redis } from "effect/persistence";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { ActivityConfig } from "#src/config/activity-config";
-import { ApiHttpClient } from "#src/http/api-http-client";
+import {
+  ApiHttpClient,
+  type ApiHttpClientFailure,
+} from "#src/http/api-http-client";
 
 const UserPermissions = Schema.Array(UserGuildPermissionsDtoSchema);
 
+/** The guild or the user's grants could not be read; the request cannot be authorized. */
+export class PermissionsUnavailable extends TaggedErrorClass<PermissionsUnavailable>()(
+  "PermissionsUnavailable",
+  {
+    operation: Schema.Literals([
+      "guild-cache-read",
+      "guild-cache-write",
+      "guild-response",
+      "permissions-response",
+    ]),
+    status: Schema.optional(Schema.Number),
+    cause: Schema.optional(Schema.Defect()),
+  },
+) {}
+
 export interface PermissionsValue {
-  readonly resolveGuildId: (id: string) => Effect.Effect<string | null, Error>;
+  readonly resolveGuildId: (
+    id: string,
+  ) => Effect.Effect<
+    string | null,
+    PermissionsUnavailable | ApiHttpClientFailure
+  >;
   /** Reads the user's grants once; the result answers for any guild. */
   readonly getUserCapabilities: (
     discordId: string,
     userId: string,
-  ) => Effect.Effect<(guildId: string) => Permission[], Error>;
+  ) => Effect.Effect<
+    (guildId: string) => Permission[],
+    PermissionsUnavailable | ApiHttpClientFailure
+  >;
 }
 
 export class Permissions extends Context.Service<
@@ -47,25 +74,20 @@ export class Permissions extends Context.Service<
       const get = <A>(
         key: string,
         schema: Schema.Codec<A>,
-      ): Effect.Effect<A | undefined, Redis.RedisError | Error> => {
-        const decodeValue = Schema.decodeUnknownSync(schema);
-
-        const decodeJson = Schema.decodeUnknownSync(
-          Schema.fromJsonString(schema),
-        );
-
-        const decode = <Value>(value: Value, decoder: (value: Value) => A) =>
-          Effect.try({
-            try: () => decoder(value),
-            catch: (cause) => new Error("Cache value was invalid", { cause }),
-          });
-
+      ): Effect.Effect<
+        A | undefined,
+        Redis.RedisError | Schema.SchemaError
+      > => {
         if (config.redisUrl) {
           return redis
             .send<string | null>("GET", key)
             .pipe(
               Effect.flatMap((value) =>
-                value ? decode(value, decodeJson) : Effect.succeed(undefined),
+                value
+                  ? Schema.decodeUnknownEffect(Schema.fromJsonString(schema))(
+                      value,
+                    )
+                  : Effect.succeed(undefined),
               ),
             );
         }
@@ -73,7 +95,7 @@ export class Permissions extends Context.Service<
         const entry = memory.get(key);
 
         return entry
-          ? decode(entry.value, decodeValue)
+          ? Schema.decodeUnknownEffect(schema)(entry.value)
           : Effect.succeed(undefined);
       };
 
@@ -92,11 +114,11 @@ export class Permissions extends Context.Service<
         });
       };
 
-      const decodeGuild = Schema.decodeUnknownSync(
+      const decodeGuild = Schema.decodeUnknownEffect(
         Schema.fromJsonString(Schema.Struct({ id: Schema.NonEmptyString })),
       );
 
-      const decodePermissions = Schema.decodeUnknownSync(
+      const decodePermissions = Schema.decodeUnknownEffect(
         Schema.fromJsonString(UserPermissions),
       );
 
@@ -107,7 +129,11 @@ export class Permissions extends Context.Service<
 
         const cached = yield* get(key, Schema.String).pipe(
           Effect.mapError(
-            (cause) => new Error("Guild cache read failed", { cause }),
+            (cause) =>
+              new PermissionsUnavailable({
+                operation: "guild-cache-read",
+                cause,
+              }),
           ),
         );
 
@@ -121,18 +147,31 @@ export class Permissions extends Context.Service<
         if (response.status === 404) return null;
 
         if (response.status < 200 || response.status >= 300)
-          return yield* Effect.fail(
-            new Error(`Guild resolution failed with ${response.status}`),
-          );
+          return yield* new PermissionsUnavailable({
+            operation: "guild-response",
+            status: response.status,
+          });
 
-        const guild = yield* Effect.try({
-          try: () => decodeGuild(new TextDecoder().decode(response.body)),
-          catch: (cause) => new Error("Guild response was invalid", { cause }),
-        });
+        const guild = yield* decodeGuild(
+          new TextDecoder().decode(response.body),
+        ).pipe(
+          Effect.mapError(
+            (cause) =>
+              new PermissionsUnavailable({
+                operation: "guild-response",
+                status: response.status,
+                cause,
+              }),
+          ),
+        );
 
         yield* set(key, guild.id).pipe(
           Effect.mapError(
-            (cause) => new Error("Guild cache write failed", { cause }),
+            (cause) =>
+              new PermissionsUnavailable({
+                operation: "guild-cache-write",
+                cause,
+              }),
           ),
         );
 
@@ -157,18 +196,25 @@ export class Permissions extends Context.Service<
               Effect.flatMap((response) => {
                 if (response.status < 200 || response.status >= 300) {
                   return Effect.fail(
-                    new Error(
-                      `Permissions request failed with ${response.status}`,
-                    ),
+                    new PermissionsUnavailable({
+                      operation: "permissions-response",
+                      status: response.status,
+                    }),
                   );
                 }
 
-                return Effect.try({
-                  try: () =>
-                    decodePermissions(new TextDecoder().decode(response.body)),
-                  catch: (cause) =>
-                    new Error("Permissions response was invalid", { cause }),
-                });
+                return decodePermissions(
+                  new TextDecoder().decode(response.body),
+                ).pipe(
+                  Effect.mapError(
+                    (cause) =>
+                      new PermissionsUnavailable({
+                        operation: "permissions-response",
+                        status: response.status,
+                        cause,
+                      }),
+                  ),
+                );
               }),
             );
 

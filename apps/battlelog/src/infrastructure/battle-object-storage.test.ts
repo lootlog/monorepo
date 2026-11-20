@@ -86,9 +86,7 @@ for (const failure of ["R2", "Redis"] as const) {
       storage.deleteBattlesData(["one"]),
     ).catch((error) => error);
 
-    expect(failure === "R2" ? rejection.message : rejection.cause.message).toBe(
-      `${failure} unavailable`,
-    );
+    expect(rejection.cause.message).toBe(`${failure} unavailable`);
     await expect(
       Effect.runPromise(storage.deleteBattlesData(["one"])),
     ).resolves.toEqual([]);
