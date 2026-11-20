@@ -73,8 +73,11 @@ const setup = async () => {
         Object.fromEntries(new URL(request.url).searchParams),
       );
 
-      if (query.freshness === "required" || warm === undefined)
-        warm = structuredClone(grants);
+      // A required read bypasses the warm projection without replacing it.
+      if (query.freshness === "required")
+        return HttpClientResponse.fromWeb(request, Response.json(grants));
+
+      warm ??= structuredClone(grants);
 
       return HttpClientResponse.fromWeb(request, Response.json(warm));
     }),
