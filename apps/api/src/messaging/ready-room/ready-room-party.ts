@@ -3,6 +3,7 @@ import { isEqual } from "es-toolkit";
 import {
   PARTY_OBSERVATION_REFRESH_MS,
   type PartyGatheringPartyMember,
+  type PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
 
 import {
@@ -77,7 +78,7 @@ export const observeWithRetry = (
   organizerMapName: string | undefined,
   expectedRevision: number | undefined,
   attempt: number,
-): Effect.Effect<unknown, unknown> =>
+): Effect.Effect<PartyReadyRoomProjection | null, unknown> =>
   Effect.gen(function* () {
     const aggregate = yield* context.getLive(notificationId);
 

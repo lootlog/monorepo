@@ -36,8 +36,8 @@ const makeScheduler = (refused: boolean) => {
     recordMetric,
     getLock: () => Effect.succeed(null),
     setLock: () => Effect.succeed(true),
-    evalLock: () => Effect.void,
-    releaseLock: () => Effect.void,
+    evalLock: () => Effect.succeed(1),
+    releaseLock: () => Effect.succeed(1),
   });
 
   return { scheduler, queue, recordMetric };

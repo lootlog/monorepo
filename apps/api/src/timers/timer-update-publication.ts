@@ -1,5 +1,6 @@
-import type { EventPublisher } from "@lootlog/messaging";
+import type { EventPublisher, MessagingError } from "@lootlog/messaging";
 import { Effect } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   mapTimerResponse,
@@ -8,14 +9,14 @@ import {
 } from "./timer-projection.js";
 
 export interface TimerUpdatePorts {
-  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
+  readonly invalidateList: (guildId: string) => Effect.Effect<void, RedisError>;
   readonly publish: EventPublisher["publish"];
 }
 
 /** Publishes the realtime and notification facts together; both are attempted even when one fails. */
 export const publishTimerEvents = Effect.fnUntraced(function* (
-  realtime: Effect.Effect<unknown, unknown>,
-  notifications: Effect.Effect<unknown, unknown>,
+  realtime: Effect.Effect<void, MessagingError>,
+  notifications: Effect.Effect<void, MessagingError>,
 ) {
   const results = yield* Effect.all([realtime, notifications], {
     concurrency: 2,

@@ -31,7 +31,7 @@ export const makeRabbitConsumer = Effect.fnUntraced(function* (
     handler: (
       payload: CanonicalRabbitEvent<Key>,
       delivery: RabbitDelivery,
-    ) => Effect.Effect<unknown, unknown> | Promise<void> | void,
+    ) => Effect.Effect<void, unknown> | Promise<void> | void,
     inPlaceRetry?: Schedule.Schedule<unknown, unknown>,
   ) =>
     Effect.acquireRelease(

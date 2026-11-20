@@ -10,6 +10,7 @@ import {
 } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
+import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core/errors";
 import { mapValues } from "es-toolkit";
 import { Clock, Effect, Option } from "effect";
 import { activityFeedNpcCategory } from "@lootlog/domain/activity-feed";
@@ -22,6 +23,7 @@ import {
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import type { RedisEffects } from "#src/redis/redis.service";
 import {
   bossKillTable,
   guildKillActivityTable,
@@ -53,13 +55,8 @@ import {
 const DEDUP_TTL_SECONDS = 30;
 
 export interface KillCreationCache {
-  readonly invalidateScopes: (
-    ...scopes: string[]
-  ) => Effect.Effect<unknown, unknown>;
-  readonly deleteIfValue: (
-    key: string,
-    value: string,
-  ) => Effect.Effect<unknown, unknown>;
+  readonly invalidateScopes: RedisEffects["invalidateScopes"];
+  readonly deleteIfValue: RedisEffects["deleteIfValue"];
   readonly setNx: (
     key: string,
     value: string,
@@ -123,7 +120,7 @@ export const makeKillCreation = (
 
   type Write = (
     transaction: Transaction,
-  ) => ReadonlyArray<Effect.Effect<unknown, unknown>>;
+  ) => ReadonlyArray<Effect.Effect<void, EffectDrizzleQueryError>>;
 
   interface Claim {
     readonly key: string;

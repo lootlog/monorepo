@@ -16,7 +16,7 @@ export interface EventHeroCheckJob {
  */
 export const makeEventHeroCheckDispatcher = (
   database: typeof ApiDatabase.Service,
-  enqueue: (job: EventHeroCheckJob) => Effect.Effect<unknown, unknown>,
+  enqueue: (job: EventHeroCheckJob) => Effect.Effect<void, unknown>,
 ) =>
   makeOutboxDispatcher(
     "EventHeroCheckOutbox",

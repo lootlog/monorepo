@@ -4,6 +4,7 @@ import { Clock, Effect, Result } from "effect";
 import { partition } from "es-toolkit";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import type { ReadyRoomOperationError } from "#src/messaging/ready-room/ready-room-data";
 import type { JsonValue } from "#src/contracts/api-shared";
 import {
   ApplicationError,
@@ -26,7 +27,7 @@ export interface AutoTimerPorts extends AutoTimerGuildWritePorts {
     readonly world: string;
     readonly npcId: number;
     readonly location: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, ReadyRoomOperationError>;
 }
 
 const badRequest = (code: ErrorKey, rejectedGuilds: ReadonlyArray<JsonValue>) =>

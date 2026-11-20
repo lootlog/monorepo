@@ -42,9 +42,10 @@ describe("Ready Room revision CAS integration", () => {
 
         for (const key of isolatedKeys) keysForCleanup.add(key);
 
-        return Effect.tryPromise(() =>
-          redis.eval(script, isolatedKeys, [...args]),
-        );
+        return Effect.tryPromise({
+          try: () => redis.eval(script, isolatedKeys, [...args]),
+          catch: (cause) => new Redis.RedisError({ cause }),
+        });
       },
     };
 

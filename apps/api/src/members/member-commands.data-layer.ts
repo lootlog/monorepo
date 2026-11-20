@@ -1,5 +1,6 @@
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { and, desc, eq, gte, isNotNull } from "drizzle-orm";
+import type { MessagingError } from "@lootlog/messaging";
 import { Clock, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { apiKeyAllowsOrganization } from "@lootlog/schema/api-key-policy";
@@ -21,6 +22,7 @@ import {
 import { MEMBER_LAST_DISCORD_STATUS } from "./member-discord-status.js";
 import { MEMBER_REFRESH_PRIORITY } from "./member-refresh-queue.js";
 import { queueMemberDeliveries } from "./member.repository.js";
+import type { MemberDelivery } from "./member-delivery.operations.js";
 import { ErrorKey } from "./error-key.js";
 import { isTransientMemberSyncStatus } from "./member-discord-sync-status.js";
 import type {
@@ -55,14 +57,12 @@ export interface MemberCommandsPorts {
   }) => Effect.Effect<MemberRefreshAttempt, unknown>;
   readonly recordStaleUse: (
     reason: MemberRefreshAttempt["status"],
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, unknown>;
   /** Delivers member changes queued in the `MemberSyncDelivery` outbox. */
-  readonly deliverMemberChanges: (
-    memberIds: ReadonlyArray<number>,
-  ) => Effect.Effect<unknown, unknown>;
+  readonly deliverMemberChanges: MemberDelivery["deliverAll"];
   readonly enqueueBulkRefresh: (
     data: MemberBulkRefreshJobData,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, unknown>;
   readonly publishRefreshJobUpdate: (job: {
     readonly jobId: number;
     readonly guildId: string;
@@ -71,7 +71,7 @@ export interface MemberCommandsPorts {
     readonly processedMembers: number;
     readonly failedMembers: number;
     readonly completedAt: Date;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, MessagingError>;
 }
 
 const failure = (cause: unknown) => new MembersOperationError({ cause });

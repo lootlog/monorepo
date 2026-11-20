@@ -1,5 +1,8 @@
 import type { EventPublisher } from "@lootlog/messaging";
-import { publishTimerEvents } from "./timer-update-publication.js";
+import {
+  publishTimerEvents,
+  type TimerUpdatePorts,
+} from "./timer-update-publication.js";
 import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
 import { timerNpcField, parseTimerNpcRouting } from "./timer-projection.js";
@@ -33,7 +36,7 @@ import {
 } from "./timer-errors.js";
 
 export interface DeleteTimerPorts {
-  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
+  readonly invalidateList: TimerUpdatePorts["invalidateList"];
   readonly publish: EventPublisher["publish"];
 }
 

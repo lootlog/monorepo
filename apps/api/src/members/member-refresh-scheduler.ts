@@ -4,6 +4,8 @@ import {
 } from "@lootlog/instrumentation/operation";
 import type { Job, Queue as BullQueue } from "bullmq";
 import { Clock, Effect } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
+import type { RedisEffects } from "#src/redis/redis.service";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 
 export interface MemberRefreshJobData {
@@ -42,7 +44,7 @@ export interface MemberRefreshSchedulerPorts {
   readonly recordMetric: (options: {
     readonly outcome: "delayed" | "queued" | "refused";
     readonly reason: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
   readonly getLock: (key: string) => Effect.Effect<string | null, unknown>;
   readonly setLock: (
     key: string,
@@ -53,11 +55,8 @@ export interface MemberRefreshSchedulerPorts {
     script: string,
     keys: string[],
     args: Array<string | number>,
-  ) => Effect.Effect<unknown, unknown>;
-  readonly releaseLock: (
-    key: string,
-    owner: string,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<number, RedisError>;
+  readonly releaseLock: RedisEffects["deleteIfValue"];
 }
 
 const USER_LOCK_TTL_SECONDS = 30;

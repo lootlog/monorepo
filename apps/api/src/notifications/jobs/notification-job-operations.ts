@@ -38,7 +38,7 @@ const finalStatuses = [
 export interface NotificationJobCancellation {
   readonly cancel: (filters: {
     readonly jobId: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
 }
 
 export const makeNotificationJobOperations = (

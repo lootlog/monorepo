@@ -1,7 +1,8 @@
-import type { EventPublisher } from "@lootlog/messaging";
+import type { EventPublisher, MessagingError } from "@lootlog/messaging";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { publishTimerEvents } from "./timer-update-publication.js";
 import { Effect, Predicate, Schema } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { loadHeroSightings } from "#src/hero-sightings/hero-sighting-query";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
@@ -33,16 +34,16 @@ import {
 
 export interface AutoTimerGuildWritePorts extends AutoTimerPersistencePorts {
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
-  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
+  readonly invalidateList: (guildId: string) => Effect.Effect<void, RedisError>;
   readonly publishHeroSighting: (
     sighting: HeroSightingResponse,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, MessagingError>;
   readonly publish: EventPublisher["publish"];
   readonly set: (
     key: string,
     value: string,
     ttlSeconds: number,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
   /** Wakes the dispatcher for checks committed with a timer. */
   readonly signalEventHeroChecks: Effect.Effect<void>;
   readonly locks: Pick<RedisLockManager, "singleFlight">;

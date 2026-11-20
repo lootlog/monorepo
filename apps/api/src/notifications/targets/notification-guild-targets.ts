@@ -54,7 +54,7 @@ export interface NotificationPendingJobs {
   readonly cancel: (filters: {
     readonly targetId?: number;
     readonly ruleId?: number;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
 }
 
 export const makeNotificationGuildTargets = (

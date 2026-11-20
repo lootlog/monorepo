@@ -1,5 +1,6 @@
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { Effect, Layer, Schema } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
 import {
   AccessRequirement,
   createAccessPolicy,
@@ -22,29 +23,29 @@ export interface ChatRedis {
   readonly rpush: (
     key: string,
     value: string,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
   readonly ltrim: (
     key: string,
     start: number,
     stop: number,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
   readonly lrange: (
     key: string,
     start: number,
     stop: number,
-  ) => Effect.Effect<ReadonlyArray<string>, unknown>;
+  ) => Effect.Effect<ReadonlyArray<string>, RedisError>;
   /** Atomically replaces the element equal to `previous`; false when it is gone. */
   readonly replace: (
     key: string,
     previous: string,
     next: string,
-  ) => Effect.Effect<boolean, unknown>;
+  ) => Effect.Effect<boolean, RedisError>;
   readonly lrem: (
     key: string,
     count: number,
     value: string,
-  ) => Effect.Effect<unknown, unknown>;
-  readonly del: (key: string) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, RedisError>;
+  readonly del: (key: string) => Effect.Effect<void, RedisError>;
 }
 
 export type PartyGatheringEndReason = "ENDED" | "NPC_KILLED";

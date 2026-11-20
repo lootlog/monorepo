@@ -5,6 +5,7 @@ import {
   normalizeMutedPlayers,
 } from "@lootlog/domain/account-preferences";
 import { and, eq } from "drizzle-orm";
+import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core/errors";
 import { Clock, Effect, type Schema, Predicate } from "effect";
 import {
   mergeChatAppearanceSettings,
@@ -177,7 +178,13 @@ export const makeUserPreferencesData = (
 
     if (payload.theme !== undefined) settingsUpdate.theme = payload.theme;
 
-    const writes: Array<Effect.Effect<unknown, unknown>> = [];
+    const writes: Array<
+      Effect.Effect<
+        void,
+        | EffectDrizzleQueryError
+        | Effect.Error<ReturnType<SettingsDocuments["patchPreferences"]>>
+      >
+    > = [];
 
     if (Object.keys(settingsUpdate).length > 0) {
       writes.push(

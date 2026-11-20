@@ -37,7 +37,7 @@ describe("Notification rate limiter Dragonfly integration", () => {
       ) =>
         Effect.tryPromise({
           try: () => redis.eval<A>(script, [...keys], [...arguments_]),
-          catch: (error) => error,
+          catch: (cause) => new Redis.RedisError({ cause }),
         }),
     };
 

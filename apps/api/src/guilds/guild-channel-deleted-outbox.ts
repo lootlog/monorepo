@@ -14,12 +14,12 @@ export type GuildChannelDeletedEvent = CanonicalRabbitEvent<
  * yet deleted is replayed under the same message id, and consumers remove the
  * snapshot and notification target idempotently.
  */
-export const makeGuildChannelDeletedDispatcher = (
+export const makeGuildChannelDeletedDispatcher = <E>(
   database: typeof ApiDatabase.Service,
   publish: (
     event: GuildChannelDeletedEvent,
     messageId: string,
-  ) => Effect.Effect<unknown, unknown>,
+  ) => Effect.Effect<void, E>,
 ) =>
   makeOutboxDispatcher(
     "DiscordGuildChannelDeletedOutbox",

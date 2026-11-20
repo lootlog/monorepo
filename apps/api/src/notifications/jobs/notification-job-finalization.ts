@@ -1,11 +1,12 @@
+import type { OperationError } from "@lootlog/instrumentation/operation";
 import { Effect } from "effect";
 import type { NotificationStoredJob } from "#src/notifications/jobs/notification-job.repository";
 
 export const makeNotificationJobFinalization = (
   prune: (
     owner: Pick<NotificationStoredJob, "ownerType" | "ownerId">,
-  ) => Effect.Effect<unknown, unknown, never>,
-  scheduleNext: (ruleId: number) => Effect.Effect<unknown, unknown, never>,
+  ) => Effect.Effect<void, OperationError>,
+  scheduleNext: (ruleId: number) => Effect.Effect<void, unknown>,
 ) =>
   Effect.fn("notifications.jobs.finalize")(function* (
     job: Pick<

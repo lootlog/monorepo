@@ -358,7 +358,7 @@ for (const { name, failingTable, failedTotalTable } of [
       setNxGet: () => Effect.succeed(null),
       deleteIfValue: (key, token) =>
         Effect.sync(() => {
-          if (claims.get(key) === token) claims.delete(key);
+          return Number(claims.get(key) === token && claims.delete(key));
         }),
     };
 
@@ -468,7 +468,7 @@ it("does not release a replacement claim when a failed write outlives its claim"
         // The original claim expired and another request acquired it before cleanup.
         claims.set(key, replacementToken);
 
-        if (claims.get(key) === token) claims.delete(key);
+        return Number(claims.get(key) === token && claims.delete(key));
       }),
   };
 
@@ -521,7 +521,7 @@ it("rolls back the first member's kill with its failed guild write and lets anot
     setNxGet: () => Effect.succeed(null),
     deleteIfValue: (key, token) =>
       Effect.sync(() => {
-        if (claims.get(key) === token) claims.delete(key);
+        return Number(claims.get(key) === token && claims.delete(key));
       }),
   };
 

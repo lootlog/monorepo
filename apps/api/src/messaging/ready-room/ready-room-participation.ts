@@ -3,7 +3,9 @@ import { readyRoomSourceVisibility } from "./ready-room-visibility.js";
 import { Effect } from "effect";
 import type {
   PartyReadyRoomCharacter,
+  PartyReadyRoomClientUpdate,
   PartyReadyRoomParticipant,
+  PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
 
 import {
@@ -112,7 +114,7 @@ export const joinWithRetry = (
   world: string,
   guildIds: ReadonlyArray<string>,
   attempt: number,
-): Effect.Effect<unknown, unknown> =>
+): Effect.Effect<PartyReadyRoomProjection | null, unknown> =>
   Effect.gen(function* () {
     const aggregate = yield* context.getLive(notificationId);
 
@@ -230,7 +232,7 @@ export const withdrawWithRetry = (
   notificationId: string,
   participantId: string,
   attempt: number,
-): Effect.Effect<unknown, unknown> =>
+): Effect.Effect<PartyReadyRoomClientUpdate, unknown> =>
   Effect.gen(function* () {
     const aggregate = yield* context.getLive(notificationId);
     const participant = aggregate.participants[participantId];

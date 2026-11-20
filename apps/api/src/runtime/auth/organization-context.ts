@@ -70,7 +70,7 @@ export type OrganizationContextRefresh = (options: {
   readonly userId: string;
   readonly priority: number;
   readonly reason: string;
-}) => Effect.Effect<unknown, unknown>;
+}) => Effect.Effect<void, unknown>;
 
 // A context stays cached until its member reaches the soft TTL. Past two
 // thirds of the soft TTL a request queues a background refresh so active

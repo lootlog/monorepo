@@ -15,6 +15,7 @@ import {
 } from "./member-discord-sync-status.js";
 import type { MemberDelivery } from "./member-delivery.operations.js";
 import type { MemberStore } from "./member.repository.js";
+import type { RedisError } from "effect/persistence/Redis";
 import type { MemberSyncResult } from "./member.types.js";
 
 export interface MemberSyncPorts {
@@ -29,7 +30,7 @@ export interface MemberSyncPorts {
   readonly refreshPermissionCache: (options: {
     readonly guildId: string;
     readonly userId: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, RedisError>;
 }
 
 export const makeMemberSync = (

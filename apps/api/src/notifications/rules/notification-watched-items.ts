@@ -54,7 +54,7 @@ export interface NotificationWatchedItemGuilds {
 export interface NotificationWatchedItemJobs {
   readonly cancel: (filters: {
     readonly ruleId: number;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
 }
 
 export const makeNotificationWatchedItems = (

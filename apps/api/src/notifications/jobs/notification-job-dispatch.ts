@@ -1,3 +1,4 @@
+import type { OperationError } from "@lootlog/instrumentation/operation";
 import { isObjectRecord } from "@lootlog/schema/records";
 import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -25,7 +26,7 @@ export interface NotificationDispatchStore {
   readonly update: (
     jobId: string,
     values: Parameters<NotificationJobStore["updateJob"]>[1],
-  ) => Effect.Effect<unknown, unknown, never>;
+  ) => Effect.Effect<void, OperationError>;
   readonly claim: (
     ...args: Parameters<NotificationJobStore["claimJob"]>
   ) => Effect.Effect<boolean, unknown, never>;
@@ -34,7 +35,7 @@ export interface NotificationDispatchStore {
   ) => Effect.Effect<boolean, unknown, never>;
   readonly block: (
     ...args: Parameters<NotificationJobStore["blockJob"]>
-  ) => Effect.Effect<unknown, unknown, never>;
+  ) => Effect.Effect<void, OperationError>;
 }
 
 export interface NotificationDispatchAttempt {

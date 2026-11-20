@@ -1,5 +1,6 @@
 import { expect, it } from "bun:test";
 import { Deferred, Effect, Fiber, Option, Queue } from "effect";
+import { RedisError } from "effect/persistence/Redis";
 import { eq } from "drizzle-orm";
 import { MessagingError } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -542,7 +543,9 @@ it.each([false, true])(
         closeKilledNpcGatherings: () => Effect.void,
         get: () => Effect.succeed(null),
         set: () =>
-          failCacheWrite ? Effect.fail("Redis unavailable") : Effect.void,
+          failCacheWrite
+            ? Effect.fail(new RedisError({ cause: "Redis unavailable" }))
+            : Effect.void,
         locks: singleFlightLocks(),
         invalidateList: () => Effect.void,
         publishHeroSighting: () => Effect.void,

@@ -56,7 +56,7 @@ export interface NotificationUserTargetJobs {
   readonly cancel: (filters: {
     readonly targetId?: number;
     readonly ruleId?: number;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
   readonly create: (options: {
     readonly notificationRule: Pick<
       Rule,

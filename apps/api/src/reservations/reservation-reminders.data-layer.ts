@@ -12,16 +12,12 @@ import {
 import { NotificationJobKind } from "@lootlog/schema/notifications";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/content/discord-timestamp";
 import { InvalidEntityError } from "#src/shared/http/http-errors";
+import type { NotificationQueue } from "#src/notifications/jobs/notification-job-scheduler";
 
 /** Delivery queue operations a reservation reminder needs. */
 export interface ReservationReminderPorts {
-  readonly enqueueNotification: (
-    notificationJobId: string,
-    delayMs: number,
-  ) => Effect.Effect<unknown, unknown>;
-  readonly removeNotification: (
-    notificationJobId: string,
-  ) => Effect.Effect<unknown, unknown>;
+  readonly enqueueNotification: NotificationQueue["add"];
+  readonly removeNotification: NotificationQueue["remove"];
 }
 
 export type ReminderContext = {

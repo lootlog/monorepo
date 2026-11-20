@@ -1,3 +1,4 @@
+import type { OperationError } from "@lootlog/instrumentation/operation";
 import { Effect } from "effect";
 import type {
   NotificationDeliveryUpdate,
@@ -20,7 +21,7 @@ export interface NotificationDeliveryStore {
   ) => Effect.Effect<NotificationDeliveryJob | null, unknown, never>;
   readonly record: (
     options: NotificationDeliveryUpdate,
-  ) => Effect.Effect<unknown, unknown, never>;
+  ) => Effect.Effect<void, OperationError>;
 }
 
 /**
@@ -39,7 +40,7 @@ export const makeNotificationDeliveryResult = (
   removeGuildTarget: (
     guildId: string,
     targetId: number,
-  ) => Effect.Effect<unknown, unknown, never>,
+  ) => Effect.Effect<void, unknown>,
 ) =>
   Effect.fn("notifications.deliveryResult")(function* (
     event: DiscordNotificationDeliveryResult,

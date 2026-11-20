@@ -34,7 +34,7 @@ export interface CurrentUserGuildPorts {
     readonly discordId: string;
     readonly userId: string;
     readonly activeDiscordGuildIds: ReadonlyArray<string>;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
   /**
    * Serves the list from a cache unless `refresh` is set. `fresh` is false for
    * a cached list, which may miss a server the user has joined since. `stale`
@@ -57,14 +57,14 @@ export interface CurrentUserGuildPorts {
     readonly userId: string;
     readonly priority: number;
     readonly reason: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
   readonly refreshMember: (options: {
     readonly discordId: string;
     readonly guildId: string;
     readonly userId: string;
     readonly priority: number;
     readonly reason: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
 }
 
 const fallbackEligible = (error: unknown) => {

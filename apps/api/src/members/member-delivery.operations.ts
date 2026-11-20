@@ -6,22 +6,22 @@ import type { MemberRemovalNotificationTarget } from "./member.types.js";
 export interface MemberDeliveryPorts {
   readonly clearMemberCaches: (
     member: MemberRemovalNotificationTarget,
-  ) => Effect.Effect<unknown, unknown>;
+  ) => Effect.Effect<void, unknown>;
   readonly publishMemberRemoved: (member: {
     readonly discordId: string;
     readonly guildId: string;
     readonly globalUserId: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
   readonly invalidateMember: (member: {
     readonly discordId: string;
     readonly guildId: string;
     readonly userId: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
   readonly publishMemberUpdated: (member: {
     readonly discordId: string;
     readonly guildId: string;
     readonly userId: string;
-  }) => Effect.Effect<unknown, unknown>;
+  }) => Effect.Effect<void, unknown>;
 }
 
 /**

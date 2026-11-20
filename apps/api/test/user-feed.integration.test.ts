@@ -605,7 +605,7 @@ describe("personal Organization activity feed", () => {
         invalidateScopes: () => Effect.void,
         deleteIfValue: (key, value) =>
           Effect.sync(() => {
-            if (seen.get(key) === value) seen.delete(key);
+            return Number(seen.get(key) === value && seen.delete(key));
           }),
         setNx: (key, value) =>
           Effect.sync(() => {
