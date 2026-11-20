@@ -2,7 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { bootstrapPublicApi } from "../index";
 import { useGlobalStore } from "@/store/global.store";
-import { queryKeys } from "../query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import {
   getMembersControllerGetGuildMembersSummaryQueryKey,

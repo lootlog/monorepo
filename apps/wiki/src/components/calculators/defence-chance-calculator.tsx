@@ -15,6 +15,7 @@ import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorFromSetButton } from "./calculator-from-set-button";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
+import { formatNumber } from "@lootlog/domain/locale";
 
 /** Evade and block chances against an attacker of a given level. */
 export function DefenceChanceCalculator() {
@@ -75,7 +76,7 @@ export function DefenceChanceCalculator() {
               value:
                 enemy === undefined
                   ? undefined
-                  : pointsForMaxDefence(enemy).toLocaleString("pl-PL"),
+                  : formatNumber(pointsForMaxDefence(enemy)),
             },
           ]}
         />

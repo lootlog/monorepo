@@ -4,7 +4,7 @@ import { Package, Plus } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
-import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
+import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
 import { WatchedItemTile } from "@/features/user/notifications/components/watched-item-tile";
 import type { WatchedItemResponseDto } from "@lootlog/client/main";
 

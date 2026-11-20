@@ -6,7 +6,7 @@ import {
   unclaimHeroSighting,
   withdrawHeroSighting,
 } from "@/api/hero-sightings.api";
-import { upsertHeroSightings } from "@/features/hero-sightings/hero-sightings-cache";
+import { upsertHeroSightings } from "@/hooks/api/hero-sightings-cache";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 type HeroSightingAction = "claim" | "unclaim" | "withdraw";

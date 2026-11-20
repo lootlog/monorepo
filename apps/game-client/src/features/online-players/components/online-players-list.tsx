@@ -7,7 +7,7 @@ import { OnlinePlayersFilters } from "@/features/online-players/components/onlin
 import { OnlinePlayersListEntry } from "@/features/online-players/components/online-players-list-entry";
 import { usePlayersPresence } from "@/features/online-players/hooks/use-players-presence";
 import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
-import { useOnlinePlayersStore } from "@/store/online-players.store";
+import { useOnlinePlayersStore } from "@/features/online-players/online-players.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";

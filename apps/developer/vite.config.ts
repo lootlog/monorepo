@@ -3,15 +3,17 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { fumadocsMdx } from "fumadocs-mdx/vite";
-import path from "node:path";
 
 export default defineConfig(({ command }) => ({
   base: process.env.BASE_PATH ?? (command === "serve" ? "/developer/" : "/"),
   server: { host: "0.0.0.0", port: 3004 },
   resolve: {
-    alias: {
-      "~": path.resolve(import.meta.dirname, "./src"),
-    },
+    tsconfigPaths: true,
   },
-  plugins: [fumadocsMdx(), tanstackStart(), tailwindcss(), react()],
+  plugins: [
+    fumadocsMdx(),
+    tanstackStart(),
+    tailwindcss(),
+    react({ compiler: true }),
+  ],
 }));

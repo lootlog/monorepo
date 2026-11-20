@@ -7,6 +7,7 @@ import {
   type OrganizationAccessPolicy,
 } from "@lootlog/protocol/realtime/access-policy";
 import type { QueryClient, Query } from "@tanstack/react-query";
+import type { RealtimeAccessPolicyObserver } from "@/contexts/socket-context";
 import { getChatMessagesQueryGuildId } from "./chat-query-cache.helpers";
 
 const REFRESH_DELAY_MS = 5_000;
@@ -327,4 +328,10 @@ export const applyChatAccessPolicy = (
 
   if (changes.length === 0) return;
   scheduleRefresh(queryClient, state, initial);
+};
+
+export const chatAccessPolicyObserver: RealtimeAccessPolicyObserver = {
+  retain: retainChatAccessPolicy,
+  resync: refreshChatAfterReconnect,
+  update: applyChatAccessPolicy,
 };

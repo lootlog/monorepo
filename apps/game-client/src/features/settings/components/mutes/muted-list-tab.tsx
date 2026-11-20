@@ -1,14 +1,16 @@
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsList } from "@/components/settings/settings-list";
-import { SettingsListRow } from "@/components/settings/settings-list-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import { SettingsToolbar } from "@/components/settings/settings-toolbar";
+import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { SettingsList } from "@/features/settings/components/shared/settings-list";
+import { SettingsListRow } from "@/features/settings/components/shared/settings-list-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
+import { SettingsToolbar } from "@/features/settings/components/shared/settings-toolbar";
 import { IconButton } from "@/components/ui/icon-button";
 import type { SettingsControlId } from "@/features/settings/settings-manifest";
 import { Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { comparePolish } from "@lootlog/domain/locale";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
 type MutedListTabProps<TItem> = {
   controlId: SettingsControlId;
@@ -31,13 +33,11 @@ type MutedListTabProps<TItem> = {
 
 /** Case-insensitive substring match of a mutes list query against an entry. */
 const matchesMuteSearch = (query: string, values: readonly string[]) => {
-  const normalizedQuery = query.trim().toLocaleLowerCase("pl");
+  const normalizedQuery = normalizeSearchText(query);
 
   return (
     !normalizedQuery ||
-    values.some((value) =>
-      value.toLocaleLowerCase("pl").includes(normalizedQuery),
-    )
+    values.some((value) => normalizeSearchText(value).includes(normalizedQuery))
   );
 };
 
@@ -62,9 +62,7 @@ export const MutedListTab = <TItem,>({
 
   const visibleItems = items
     .filter((item) => matchesMuteSearch(search, getSearchValues(item)))
-    .toSorted((left, right) =>
-      getName(left).localeCompare(getName(right), "pl"),
-    );
+    .toSorted((left, right) => comparePolish(getName(left), getName(right)));
 
   return (
     <SettingsTabLayout>

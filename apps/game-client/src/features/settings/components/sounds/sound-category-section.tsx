@@ -1,6 +1,6 @@
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsVolumeControl } from "@/components/settings/settings-volume-row";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsVolumeControl } from "@/features/settings/components/shared/settings-volume-row";
 import type { SettingsControlId } from "@/features/settings/settings-manifest";
 import type { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";

@@ -26,7 +26,7 @@
     "db:migrate:deploy": "bun src/database/migrate.ts",
     "db:studio": "bunx drizzle-kit studio",
     "maintenance:audit-actions": "bun --env-file=.env scripts/audit-r2-battle-actions.ts",
-    "test:integration": "bun test src/database/battle-read-budget.integration.test.ts src/battles/deletion/battle-deletion.integration.test.ts src/battles/submission/battle-creation-redis.integration.test.ts src/battles/weapon-kills/weapon-kills.integration.test.ts"
+    "test:integration": "bun test .integration."
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1150.0",

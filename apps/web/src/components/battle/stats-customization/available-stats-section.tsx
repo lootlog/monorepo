@@ -5,6 +5,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useTranslation } from "react-i18next";
 import type { BattleStatDefinition } from "@/types/stats-customization.types";
 import { SearchInput } from "@/components/ui/search-input";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
 interface AvailableStatsSectionProps {
   availableStats: BattleStatDefinition[];
@@ -17,10 +18,10 @@ export const AvailableStatsSection = ({
 }: AvailableStatsSectionProps) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
-  const normalizedSearchQuery = searchQuery.toLocaleLowerCase("pl-PL");
+  const normalizedSearchQuery = normalizeSearchText(searchQuery);
 
   const filteredAvailableStats = availableStats.filter((stat) =>
-    t(stat.labelKey).toLocaleLowerCase("pl-PL").includes(normalizedSearchQuery),
+    normalizeSearchText(t(stat.labelKey)).includes(normalizedSearchQuery),
   );
 
   if (availableStats.length === 0) {

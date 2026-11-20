@@ -154,9 +154,9 @@ to increase deletion counts.
    `test` script uses: `bun --conditions=development test <path>` or
    `bunx vitest run <path>`, from the workspace directory.
 2. `test` excludes `*.integration.*` suites. When a change touches one, run the
-   workspace `test:integration` script (testcontainers needs Docker). Those
-   scripts list files explicitly and CI runs only what they list, so register
-   every moved or renamed integration suite there.
+   workspace `test:integration` script (testcontainers needs Docker). It
+   selects suites by the `.integration.` suffix, so a moved or renamed suite
+   must keep it.
 3. For removed source greps or contract assertions, run the command that owns
    the real contract, such as `bun run client:check`.
 4. Run `bunx oxfmt <changed-paths>`, then `git diff --check`.

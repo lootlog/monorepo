@@ -1,4 +1,4 @@
-import { SettingsSectionHeader } from "@/components/settings/settings-section-header";
+import { SettingsSectionHeader } from "@/features/settings/components/shared/settings-section-header";
 import { Button } from "@/components/ui/button";
 import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";

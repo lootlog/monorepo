@@ -1,6 +1,6 @@
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { normalizeTimerResponse } from "@/api/timers.api";
-import { useTimersCache } from "@/hooks/api/use-timers-cache";
+import { useTimersCache } from "@/features/timers/hooks/use-timers-cache";
 import {
   useTimersControllerRestoreTimerFromHistory,
   type TimerHistoryResponseDto,

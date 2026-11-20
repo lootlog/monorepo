@@ -1,3 +1,4 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
@@ -8,7 +9,7 @@ import {
   type CharacterAurasCache,
   type CharacterAurasEvents,
 } from "#src/character-auras/character-auras.data-layer";
-import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { type RedisService } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { CHARACTER_AURAS_CACHE_SCOPE } from "#src/shared/cache";

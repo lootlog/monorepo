@@ -5,7 +5,7 @@ import {
   getChatControllerGetChatMessagesQueryKey,
 } from "@lootlog/client/main";
 
-import { createChatMessage } from "./chat-test-fixtures";
+import { createChatMessage } from "@/test/chat-fixtures";
 import { upsertChatMessage } from "./chat.helpers";
 import { updateChatMessagesCache } from "./chat-query-cache.helpers";
 

@@ -1,8 +1,8 @@
+import { type JsonCodec } from "@lootlog/database/redis-cache-fill";
 import { expect, test } from "bun:test";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { Effect, Redacted } from "effect";
 import { httpClientFromResponses } from "../../test/http-fixtures.js";
-import type { JsonCodec } from "#src/redis/redis.service";
 import { getAuthTokenCacheKey } from "#src/shared/cache";
 import { makeAuthService } from "./auth.service.js";
 

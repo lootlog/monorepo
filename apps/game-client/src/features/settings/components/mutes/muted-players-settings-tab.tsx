@@ -3,7 +3,7 @@ import { MutedListTab } from "@/features/settings/components/mutes/muted-list-ta
 import {
   useCurrentUserNotificationMutes,
   useUpdateNotificationMutes,
-} from "@/features/settings/persistence/use-notification-mutes";
+} from "@/lib/settings-persistence/use-notification-mutes";
 import { useTranslation } from "react-i18next";
 
 export const MutedPlayersSettingsTab = () => {

@@ -1,4 +1,4 @@
-import { makeJsonCodec } from "#src/redis/redis.service";
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";

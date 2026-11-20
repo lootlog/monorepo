@@ -20,9 +20,9 @@ import { getFixedT } from "@/i18n/get-fixed-t";
 import {
   createTimerFixture,
   createTimerHistoryFixture,
-} from "../timer-fixtures";
+} from "@/test/timer-fixtures";
 import { getTimersControllerGetRecentTimerHistoryQueryOptions } from "@lootlog/client/main";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 import { useTimerActions } from "./use-timer-actions";
 
 let messages: string[];

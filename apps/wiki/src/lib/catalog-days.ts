@@ -1,14 +1,16 @@
-const longDay = new Intl.DateTimeFormat("pl-PL", {
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
+
+const longDay = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
   dateStyle: "long",
   timeZone: "UTC",
 });
 
-const shortDay = new Intl.DateTimeFormat("pl-PL", {
+const shortDay = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
   dateStyle: "short",
   timeZone: "UTC",
 });
 
-const monthOfYear = new Intl.DateTimeFormat("pl-PL", {
+const monthOfYear = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
   month: "long",
   year: "numeric",
   timeZone: "UTC",

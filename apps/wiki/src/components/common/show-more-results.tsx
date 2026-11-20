@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { t } from "@/i18n/messages";
+import { formatNumber } from "@lootlog/domain/locale";
 
 // How far below the screen the next page starts loading.
 const PRELOAD_MARGIN = "600px";
@@ -59,8 +60,8 @@ export function ShowMoreResults({
         </div>
         <p className="text-center text-xs text-muted-foreground tabular-nums">
           {t("search.shown", {
-            shown: shown.toLocaleString("pl-PL"),
-            total: total.toLocaleString("pl-PL"),
+            shown: formatNumber(shown),
+            total: formatNumber(total),
           })}
         </p>
       </div>

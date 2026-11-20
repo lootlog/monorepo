@@ -1,4 +1,7 @@
-import { createTimerFixture, createTimerMemberFixture } from "./timer-fixtures";
+import {
+  createTimerFixture,
+  createTimerMemberFixture,
+} from "@/test/timer-fixtures";
 import type { Timer } from "@/api/timers.api";
 import { NpcType } from "@/api/npcs.api";
 import { describe, expect, it } from "vitest";

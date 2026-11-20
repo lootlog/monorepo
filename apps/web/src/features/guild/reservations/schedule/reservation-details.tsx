@@ -24,7 +24,7 @@ import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { MemberIdentity } from "@/components/common/member-identity";
 import { ReservationOrganizationBadge } from "@/components/reservation-organization-badge";
-import { useReservationOrganizationIcon } from "@/features/user/reservations/use-reservation-organization-icon";
+import { useReservationOrganizationIcon } from "@/hooks/use-reservation-organization-icon";
 import { getReservationErrorMessage } from "../get-reservation-error-message";
 import type { NormalizedReservation } from "./normalize-reservation";
 

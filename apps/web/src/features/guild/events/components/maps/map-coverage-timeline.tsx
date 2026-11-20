@@ -8,7 +8,7 @@ import type { TFunction } from "i18next";
 import { formatTime } from "../../utils/format-date";
 import { COVERAGE_SEGMENT_BG_CLASS_NAMES } from "../../utils/get-map-coverage-color-class-name";
 import { calculateTimelineSegments } from "../../utils/timeline-segments";
-import type { MapGap } from "../../types/api";
+import type { MapGap } from "@/lib/api/event-types";
 import { formatDuration } from "@/utils/date/format-duration";
 
 interface MapCoverageTimelineProps {

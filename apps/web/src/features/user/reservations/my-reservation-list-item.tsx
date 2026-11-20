@@ -24,7 +24,7 @@ import {
   LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { MetaItem } from "@/components/common/meta-item";
-import { useReservationOrganizationIcon } from "./use-reservation-organization-icon";
+import { useReservationOrganizationIcon } from "@/hooks/use-reservation-organization-icon";
 
 type MyReservationListItemProps = {
   reservation: MyReservationsResponseDtoItemsItem;

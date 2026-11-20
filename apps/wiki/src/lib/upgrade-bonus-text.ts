@@ -1,6 +1,7 @@
 import { formatNumericText } from "@lootlog/ui/components/item-stat-utils";
 import { t } from "@/i18n/messages";
 import type { UpgradeBonusOption } from "@lootlog/domain/item-upgrade";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 // Stats the game shows as percentages, or as percentage points.
 const PERCENT_BONUSES = new Set([
@@ -18,7 +19,7 @@ const PERCENT_BONUSES = new Set([
 // Stats the game keeps in hundredths.
 const HUNDREDTHS_BONUSES = new Set(["sa", "slow"]);
 
-const number = new Intl.NumberFormat("pl-PL", {
+const number = new Intl.NumberFormat(PRODUCT_LOCALE, {
   maximumFractionDigits: 2,
   useGrouping: false,
 });
@@ -39,7 +40,7 @@ export const formatUpgradeBonusValue = ({
 export const upgradeBonusName = (key: UpgradeBonusOption["key"]) =>
   t(`upgrade.bonuses.${key}`);
 
-const percent = new Intl.NumberFormat("pl-PL", {
+const percent = new Intl.NumberFormat(PRODUCT_LOCALE, {
   style: "percent",
   maximumFractionDigits: 0,
 });

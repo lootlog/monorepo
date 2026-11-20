@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react({ compiler: true }), tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
   define: {
@@ -30,6 +30,6 @@ export default defineConfig({
     environment: "happy-dom",
     setupFiles: ["./src/test/setup.ts"],
     css: true,
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    include: ["src/**/*.test.{ts,tsx}"],
   },
 });

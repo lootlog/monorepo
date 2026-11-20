@@ -16,7 +16,7 @@ import { getSocket } from "@/lib/socket";
 import { useGameStore } from "@/store/game.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { createRealtimeTest } from "@/test/realtime-test";
-import { createChatMember, createChatMessage } from "../chat-test-fixtures";
+import { createChatMember, createChatMessage } from "@/test/chat-fixtures";
 import { useChatMessagesListener } from "./use-chat-messages";
 import { useChatGuildData } from "./use-chat-guild-data";
 

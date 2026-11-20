@@ -1,0 +1,284 @@
+// @vitest-environment happy-dom
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import type { PresenceWithLocation } from "@lootlog/client/realtime";
+import type { CommandSuccess } from "@lootlog/protocol/realtime";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
+import { useOrganizationPresence } from "./use-organization-presence";
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+
+it("shares presence across member and event views without refetching on rerenders", async () => {
+  const gateway = createTestGateway();
+
+  const presence: PresenceWithLocation = {
+    userId: "user-1",
+    discordId: "discord-1",
+    organizationIds: ["guild-1"],
+    sessionId: "game-1",
+    platform: "game",
+    status: "online",
+    confidence: "verified",
+    isAfk: false,
+    lastSeen: 1,
+    character: {
+      world: "alpha",
+      name: "Hero",
+      characterId: "10",
+      accountId: "20",
+      icon: "hero.png",
+      lvl: 100,
+      prof: "w",
+    },
+    location: { mapId: 25, map: "Forest", x: 0, y: 0 },
+  };
+
+  gateway.request.mockResolvedValueOnce({
+    organizationId: "guild-1",
+    revision: 1,
+    presences: [
+      presence,
+      { ...presence, platform: "web-app", sessionId: "web-1" },
+    ],
+  });
+  gateway.request.mockImplementation(() => new Promise(() => undefined));
+
+  const { result, rerender } = renderHook(
+    () => ({
+      game: useOrganizationPresence("guild-1").game,
+      web: useOrganizationPresence("guild-1").web,
+      event: useOrganizationPresence("guild-1").game,
+    }),
+    { wrapper: gateway.wrapper },
+  );
+
+  await waitFor(() =>
+    expect(result.current.game?.get("discord-1")).toHaveLength(1),
+  );
+  expect(gateway.request).toHaveBeenCalledTimes(1);
+  await waitFor(() => {
+    expect(result.current.web?.get("discord-1")).toEqual(new Set(["web-1"]));
+    expect(result.current.event?.get("discord-1")).toEqual([
+      expect.objectContaining({ mapId: 25, mapName: "Forest" }),
+    ]);
+  });
+  expect(gateway.request).toHaveBeenCalledTimes(1);
+  rerender();
+  expect(gateway.request).toHaveBeenCalledTimes(1);
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "permissions.updated",
+      data: {
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy([]),
+      },
+    }),
+  );
+  await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(2));
+  expect(result.current.game).toBeUndefined();
+  expect(result.current.web).toBeUndefined();
+  expect(result.current.event).toBeUndefined();
+});
+
+it("keeps the remaining subscriber live and isolates Organizations", async () => {
+  const gateway = createTestGateway();
+  gateway.request
+    .mockResolvedValueOnce({
+      organizationId: "guild-1",
+      revision: 1,
+      presences: [],
+    })
+    .mockResolvedValueOnce({
+      organizationId: "guild-2",
+      revision: 1,
+      presences: [],
+    })
+    .mockImplementation(() => new Promise(() => undefined));
+
+  const first = renderHook(() => useOrganizationPresence("guild-1").web, {
+    wrapper: gateway.wrapper,
+  });
+
+  const remaining = renderHook(() => useOrganizationPresence("guild-1").web, {
+    wrapper: gateway.wrapper,
+  });
+
+  const other = renderHook(() => useOrganizationPresence("guild-2").web, {
+    wrapper: gateway.wrapper,
+  });
+
+  await waitFor(() => {
+    expect(remaining.result.current?.size).toBe(0);
+    expect(other.result.current?.size).toBe(0);
+  });
+  expect(gateway.request).toHaveBeenCalledTimes(2);
+  first.unmount();
+  await act(async () => undefined);
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "presence.delta",
+      data: {
+        organizationId: "guild-1",
+        revision: 2,
+        changes: [
+          {
+            action: "upsert",
+            presence: {
+              userId: "user-1",
+              discordId: "discord-1",
+              organizationIds: ["guild-1"],
+              sessionId: "web-1",
+              platform: "web-app",
+              status: "online",
+              confidence: "reported",
+              isAfk: false,
+              lastSeen: 1,
+            },
+          },
+        ],
+      },
+    }),
+  );
+  expect(remaining.result.current?.get("discord-1")).toEqual(
+    new Set(["web-1"]),
+  );
+  expect(other.result.current?.size).toBe(0);
+
+  remaining.unmount();
+  await act(async () => undefined);
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "permissions.updated",
+      data: {
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy([]),
+      },
+    }),
+  );
+  expect(gateway.request).toHaveBeenCalledTimes(3);
+  expect(gateway.request).toHaveBeenLastCalledWith("presence.fetch", {
+    organizationId: "guild-2",
+    delivery: "response",
+  });
+});
+
+it("does not duplicate a fetch during React effect rehearsal", async () => {
+  const gateway = createTestGateway();
+  gateway.request.mockResolvedValue({
+    organizationId: "guild-1",
+    revision: 1,
+    presences: [],
+  });
+
+  const { result } = renderHook(() => useOrganizationPresence("guild-1").web, {
+    wrapper: gateway.wrapper,
+    reactStrictMode: true,
+  });
+
+  await waitFor(() => expect(result.current?.size).toBe(0));
+  expect(gateway.request).toHaveBeenCalledTimes(1);
+});
+
+it("reconciles a successful rejoin even when React keeps subscribers mounted", async () => {
+  const gateway = createTestGateway();
+  gateway.request.mockResolvedValue({
+    organizationId: "guild-1",
+    revision: 1,
+    presences: [],
+  });
+
+  const { result } = renderHook(() => useOrganizationPresence("guild-1").web, {
+    wrapper: gateway.wrapper,
+  });
+
+  await waitFor(() => expect(result.current?.size).toBe(0));
+  expect(gateway.request).toHaveBeenCalledTimes(1);
+  act(() => {
+    gateway.setConnectionState("disconnected");
+    gateway.setConnectionState("ready");
+    gateway.deliver({
+      v: 1,
+      type: "session.joined",
+      data: {
+        connectionId: "rejoined",
+        organizationIds: [],
+        subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy([]),
+      },
+    });
+  });
+  await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(2));
+});
+
+it("keeps a newer live removal when an older snapshot resolves", async () => {
+  const gateway = createTestGateway();
+
+  type PresenceSnapshot = CommandSuccess<"presence.fetch">;
+
+  let resolveResponse = (_value: PresenceSnapshot): void => {
+    throw new Error("Presence request has not started");
+  };
+
+  const response = new Promise<PresenceSnapshot>((resolve) => {
+    resolveResponse = resolve;
+  });
+
+  gateway.request.mockReturnValue(response);
+
+  const { result } = renderHook(() => useOrganizationPresence("guild-1").web, {
+    wrapper: gateway.wrapper,
+  });
+
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "presence.delta",
+      data: {
+        organizationId: "guild-1",
+        revision: 2,
+        changes: [
+          {
+            action: "remove",
+            userId: "user-1",
+            discordId: "discord-1",
+            sessionId: "web-1",
+          },
+        ],
+      },
+    }),
+  );
+  await act(async () =>
+    resolveResponse({
+      organizationId: "guild-1",
+      revision: 2,
+      presences: [
+        {
+          userId: "user-1",
+          discordId: "discord-1",
+          organizationIds: ["guild-1"],
+          sessionId: "web-1",
+          platform: "web-app",
+          status: "online",
+          confidence: "reported",
+          isAfk: false,
+          lastSeen: 1,
+        },
+      ],
+    }),
+  );
+
+  expect(result.current?.has("discord-1")).toBe(false);
+});

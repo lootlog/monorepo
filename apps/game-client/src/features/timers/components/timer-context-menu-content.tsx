@@ -1,5 +1,5 @@
 import { ContextMenuItem } from "@/components/ui/context-menu";
-import { DeleteTimerPopover } from "@/components/delete-timer-popover";
+import { DeleteTimerPopover } from "@/features/timers/components/delete-timer-popover";
 import {
   isManualTimer,
   type TimerWithTimeLeft,

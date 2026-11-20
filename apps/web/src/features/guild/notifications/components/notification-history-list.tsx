@@ -19,6 +19,7 @@ import {
   getJobStatusLabel,
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
 type Job = NotificationJobsResponseDto["history"][number];
 
@@ -42,14 +43,14 @@ export const NotificationHistoryList = ({
   const [search, setSearch] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const normalizedSearch = search.trim().toLocaleLowerCase("pl");
+  const normalizedSearch = normalizeSearchText(search);
 
   const getJobName = (job: Job) =>
     job.rule.name ??
     t(getNotificationTriggerTranslationKey(job.rule.triggerType));
 
   const nameMatches = historyJobs.filter((job) =>
-    getJobName(job).toLocaleLowerCase("pl").includes(normalizedSearch),
+    normalizeSearchText(getJobName(job)).includes(normalizedSearch),
   );
 
   const statusGroups = Object.entries(

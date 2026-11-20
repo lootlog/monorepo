@@ -1,5 +1,5 @@
 import { PlayerTile } from "@/components/tiles/player-tile";
-import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
+import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { cn } from "cn";
 import type { ReactNode } from "react";

@@ -1,0 +1,516 @@
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi, onTestFinished } from "vitest";
+import { useHotkeys } from "@/features/hotkeys/use-hotkeys";
+import { migrateHotkeysState, useHotkeysStore } from "@/store/hotkeys.store";
+import { useWindowsStore } from "@/store/windows.store";
+
+import { configureApiClients } from "@lootlog/client/transport";
+import {
+  readyRoomOrganizerFixture,
+  seedReadyRoomCache,
+} from "@/features/party-finder/ready-room-fixtures";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { queryClient } from "@/lib/query-client";
+import { useGlobalStore } from "@/store/global.store";
+import { disposeReadyRoomInvitationCoordinator } from "@/features/party-finder/ready-room-invitation-coordinator";
+import { selectSettingsValue } from "@/lib/settings-persistence/settings-documents";
+import {
+  readCurrentSettingsDocuments,
+  settingsPatchQueue,
+} from "@/lib/settings-persistence/settings-patch-client";
+import { seedSettingsDocumentValues } from "@/test/settings-documents-fixtures";
+import {
+  createPingPressIdentity,
+  pingInteractionController,
+} from "@/features/pings/ping-interaction-controller";
+
+/** Ping handlers wired to the interaction controller, as usePings wires them. */
+const createOnPingStart = () =>
+  vi.fn<(event: KeyboardEvent | MouseEvent) => boolean>((event) =>
+    pingInteractionController.begin({
+      identity: createPingPressIdentity(event),
+      menu: { centre: null, quick: "attention", ring: [], title: null },
+      origin: { x: 0, y: 0 },
+      target: { kind: "battle", warriorId: 1 },
+    }),
+  );
+
+const createOnPingEnd = () =>
+  vi.fn<(event: KeyboardEvent | MouseEvent) => void>((event) => {
+    pingInteractionController.complete(createPingPressIdentity(event));
+  });
+
+const createOnPingCancel = () =>
+  vi.fn<() => void>(() => pingInteractionController.cancel());
+
+describe("useHotkeys", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    pingInteractionController.cancel();
+    useHotkeysStore.getState().resetAll();
+    useWindowsStore.setState((state) => ({
+      ...state,
+      "quick-access": {
+        ...state["quick-access"],
+        open: true,
+      },
+      windowFocusHistory: [],
+    }));
+  });
+
+  it.each(["chat-help", "chat-position"] as const)(
+    "runs configured %s with a closed chat without moving focus and ignores key repeats",
+    (action) => {
+      const onChatHelp = vi.fn();
+      useHotkeysStore.getState().setBinding(action, {
+        type: "keyboard",
+        key: "H",
+        shift: true,
+        ctrl: false,
+        alt: false,
+      });
+      const active = document.activeElement;
+      renderHook(() => useHotkeys({ onChatHelp, onChatPosition: onChatHelp }));
+      act(() => {
+        window.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "H", shiftKey: true }),
+        );
+        window.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "H",
+            shiftKey: true,
+            repeat: true,
+          }),
+        );
+      });
+      expect(onChatHelp).toHaveBeenCalledTimes(1);
+      expect(document.activeElement).toBe(active);
+    },
+  );
+
+  it("toggles quick access with the configured binding", () => {
+    renderHook(() => useHotkeys());
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Q",
+          shiftKey: true,
+        }),
+      );
+    });
+
+    expect(useWindowsStore.getState()["quick-access"].open).toBe(false);
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "q",
+          shiftKey: true,
+        }),
+      );
+    });
+
+    expect(useWindowsStore.getState()["quick-access"].open).toBe(true);
+  });
+
+  it("keeps a handled hotkey from the game's key listener but passes other keys", () => {
+    const gameKeyDown = vi.fn<(event: KeyboardEvent) => void>();
+    document.addEventListener("keydown", gameKeyDown);
+    onTestFinished(() => document.removeEventListener("keydown", gameKeyDown));
+    renderHook(() => useHotkeys());
+
+    act(() => {
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "S",
+          shiftKey: true,
+          bubbles: true,
+        }),
+      );
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "S", bubbles: true }),
+      );
+    });
+
+    expect(useWindowsStore.getState().command.open).toBe(true);
+    expect(gameKeyDown).toHaveBeenCalledOnce();
+    expect(gameKeyDown.mock.calls[0]?.[0].shiftKey).toBe(false);
+  });
+
+  it("keeps persisted binding precedence when legacy bindings overlap", () => {
+    const binding = { key: "X", shift: false, ctrl: false, alt: false };
+    useHotkeysStore.setState(
+      migrateHotkeysState({
+        bindings: {
+          "toggle-quick-access": binding,
+          "toggle-command": binding,
+        },
+      }),
+    );
+    useWindowsStore.setState(useWindowsStore.getInitialState(), true);
+    renderHook(() => useHotkeys());
+
+    act(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "X" })));
+
+    expect(useWindowsStore.getState()["quick-access"].open).toBe(false);
+    expect(useWindowsStore.getState().command.open).toBe(false);
+  });
+
+  it("runs a global action from an auxiliary mouse binding", () => {
+    useHotkeysStore.getState().setBinding("toggle-quick-access", {
+      type: "mouse",
+      button: 3,
+      shift: false,
+      ctrl: false,
+      alt: false,
+    });
+    renderHook(() => useHotkeys());
+
+    act(() => {
+      window.dispatchEvent(new MouseEvent("mousedown", { button: 3 }));
+    });
+
+    expect(useWindowsStore.getState()["quick-access"].open).toBe(false);
+  });
+
+  it("triggers a map ping when a text input still has focus", () => {
+    const input = document.createElement("input");
+    const canvas = document.createElement("canvas");
+    canvas.id = "GAME_CANVAS";
+    document.body.append(input, canvas);
+    input.focus();
+    const onPingStart = createOnPingStart();
+    renderHook(() => useHotkeys({ onPingStart }));
+
+    const event = new MouseEvent("mousedown", {
+      bubbles: true,
+      button: 1,
+      cancelable: true,
+    });
+
+    act(() => {
+      canvas.dispatchEvent(event);
+    });
+
+    input.remove();
+    canvas.remove();
+
+    expect(onPingStart).toHaveBeenCalledOnce();
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("finishes a mouse map ping on the matching button release", () => {
+    const canvas = document.createElement("canvas");
+    canvas.id = "GAME_CANVAS";
+    document.body.append(canvas);
+    const onPingStart = createOnPingStart();
+    const onPingEnd = createOnPingEnd();
+    renderHook(() => useHotkeys({ onPingStart, onPingEnd }));
+
+    act(() => {
+      canvas.dispatchEvent(
+        new MouseEvent("mousedown", {
+          bubbles: true,
+          button: 1,
+          cancelable: true,
+        }),
+      );
+      window.dispatchEvent(
+        new MouseEvent("mouseup", {
+          button: 1,
+          shiftKey: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    canvas.remove();
+    expect(onPingStart).toHaveBeenCalledOnce();
+    expect(onPingEnd).toHaveBeenCalledOnce();
+  });
+
+  it("matches keyboard release by code after a modifier is released", () => {
+    useHotkeysStore.getState().setBinding("map-ping", {
+      type: "keyboard",
+      key: "!",
+      shift: true,
+      ctrl: false,
+      alt: false,
+    });
+    const onPingStart = createOnPingStart();
+    const onPingEnd = createOnPingEnd();
+    renderHook(() => useHotkeys({ onPingStart, onPingEnd }));
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "Digit1",
+          key: "!",
+          shiftKey: true,
+          cancelable: true,
+        }),
+      );
+      window.dispatchEvent(
+        new KeyboardEvent("keyup", {
+          code: "Digit1",
+          key: "1",
+          shiftKey: false,
+          cancelable: true,
+        }),
+      );
+    });
+
+    expect(onPingStart).toHaveBeenCalledOnce();
+    expect(onPingEnd).toHaveBeenCalledOnce();
+  });
+
+  it("finishes a keyboard map ping when a focused editor stops the release", () => {
+    useHotkeysStore.getState().setBinding("map-ping", {
+      type: "keyboard",
+      key: "X",
+      shift: false,
+      ctrl: false,
+      alt: false,
+    });
+    const onPingStart = createOnPingStart();
+    const onPingEnd = createOnPingEnd();
+    renderHook(() => useHotkeys({ onPingStart, onPingEnd }));
+    const editor = document.createElement("div");
+    editor.addEventListener("keyup", (event) => event.stopPropagation());
+    document.body.append(editor);
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyX", key: "x" }),
+      );
+      editor.dispatchEvent(
+        new KeyboardEvent("keyup", { code: "KeyX", key: "x", bubbles: true }),
+      );
+    });
+
+    expect(onPingEnd).toHaveBeenCalledOnce();
+    editor.remove();
+  });
+
+  it("ignores key repeat and cancels an active ping with Escape", () => {
+    useHotkeysStore.getState().setBinding("map-ping", {
+      type: "keyboard",
+      key: "P",
+      shift: false,
+      ctrl: false,
+      alt: false,
+    });
+    const onPingStart = createOnPingStart();
+    const onPingCancel = createOnPingCancel();
+    renderHook(() => useHotkeys({ onPingStart, onPingCancel }));
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "KeyP",
+          key: "P",
+          repeat: false,
+        }),
+      );
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "KeyP",
+          key: "P",
+          repeat: true,
+        }),
+      );
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+
+    expect(onPingStart).toHaveBeenCalledOnce();
+    expect(onPingCancel).toHaveBeenCalledOnce();
+  });
+
+  it("lets Escape reach the game once the held ping was cancelled elsewhere", () => {
+    useHotkeysStore.getState().setBinding("map-ping", {
+      type: "keyboard",
+      key: "P",
+      shift: false,
+      ctrl: false,
+      alt: false,
+    });
+    const onPingCancel = createOnPingCancel();
+    renderHook(() =>
+      useHotkeys({ onPingStart: createOnPingStart(), onPingCancel }),
+    );
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyP", key: "P" }),
+      );
+    });
+    // usePings drops the press when the gateway connection goes away.
+    act(() => pingInteractionController.cancel());
+
+    const escape = new KeyboardEvent("keydown", {
+      key: "Escape",
+      cancelable: true,
+    });
+
+    act(() => {
+      window.dispatchEvent(escape);
+    });
+
+    expect(escape.defaultPrevented).toBe(false);
+    expect(onPingCancel).not.toHaveBeenCalled();
+  });
+
+  it("keeps a held ping open when the caller re-renders with new callbacks", () => {
+    const onPingStart = createOnPingStart();
+    const onPingCancel = createOnPingCancel();
+    const firstEnd = createOnPingEnd();
+    const latestEnd = createOnPingEnd();
+
+    const view = renderHook(
+      ({ onPingEnd }) => useHotkeys({ onPingStart, onPingCancel, onPingEnd }),
+      { initialProps: { onPingEnd: firstEnd } },
+    );
+
+    act(() => {
+      window.dispatchEvent(new MouseEvent("mousedown", { button: 1 }));
+    });
+    view.rerender({ onPingEnd: latestEnd });
+    act(() => {
+      window.dispatchEvent(new MouseEvent("mouseup", { button: 1 }));
+    });
+
+    expect(onPingCancel).not.toHaveBeenCalled();
+    expect(firstEnd).not.toHaveBeenCalled();
+    expect(latestEnd).toHaveBeenCalledOnce();
+  });
+
+  it("enqueues every explicit rapid invite-all hotkey activation", async () => {
+    disposeReadyRoomInvitationCoordinator();
+    onTestFinished(disposeReadyRoomInvitationCoordinator);
+    setTestRuntimeGame({
+      hero: {
+        accountId: "organizer-account",
+        characterId: "organizer-character",
+      },
+    });
+    queryClient.clear();
+    seedReadyRoomCache(queryClient, [readyRoomOrganizerFixture]);
+    useGlobalStore.getState().setSocketState({ connected: true, joined: true });
+    const requests: Request[] = [];
+
+    const fetch: typeof globalThis.fetch = (input, init) => {
+      requests.push(new Request(input, init));
+
+      return Promise.resolve(Response.json({ targets: [] }));
+    };
+
+    onTestFinished(
+      configureApiClients({
+        main: { baseUrl: "https://api.example.test", fetch },
+      }),
+    );
+    renderHook(() => useHotkeys());
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "I", shiftKey: true }),
+      );
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "I", shiftKey: true }),
+      );
+    });
+
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(await requests[0]!.json()).toEqual({
+      participantIds: ["participant-1"],
+    });
+    expect(await requests[1]!.json()).toEqual({
+      participantIds: ["participant-1"],
+    });
+  });
+});
+
+it("opens party creation once and ignores typing and repeated keys", () => {
+  useHotkeysStore.getState().resetAll();
+  useHotkeysStore.getState().setBinding("create-party-gathering", {
+    type: "keyboard",
+    key: "G",
+    alt: true,
+    ctrl: false,
+    shift: false,
+  });
+  useWindowsStore.getState().setOpen("create-party-gathering", false);
+  renderHook(() => useHotkeys());
+
+  const press = (repeat = false) =>
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "G", altKey: true, repeat }),
+      );
+    });
+
+  press();
+  expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(true);
+  act(() =>
+    useWindowsStore.getState().setOpen("create-party-gathering", false),
+  );
+  press(true);
+  expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(false);
+  const input = document.createElement("input");
+  document.body.append(input);
+  onTestFinished(() => input.remove());
+  input.focus();
+  press();
+  expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(false);
+});
+
+it("switches detector auto-send for every type on the current character only", () => {
+  setTestRuntimeGame({ hero: { accountId: "202", characterId: "101" } });
+  queryClient.clear();
+  seedSettingsDocumentValues(queryClient, {});
+  // The real queue applies each write to the cache; only sending is skipped.
+  const enqueue = vi.spyOn(settingsPatchQueue, "enqueue");
+  onTestFinished(() => {
+    enqueue.mockRestore();
+    settingsPatchQueue.reset();
+  });
+  useHotkeysStore.getState().resetAll();
+  useHotkeysStore.getState().setBinding("toggle-detector-auto-send", {
+    type: "keyboard",
+    key: "A",
+    alt: true,
+    ctrl: false,
+    shift: false,
+  });
+  renderHook(() => useHotkeys());
+
+  const press = () =>
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "A", altKey: true }),
+      );
+    });
+
+  const isEnabled = () =>
+    selectSettingsValue(
+      readCurrentSettingsDocuments(),
+      "gameData.detectorAutoSendEnabled",
+    );
+
+  press();
+  expect(isEnabled()).toBe(false);
+  press();
+  expect(isEnabled()).toBe(true);
+  expect(enqueue.mock.calls.map(([patch]) => patch.operation)).toEqual([
+    expect.objectContaining({
+      domain: "gameData",
+      scope: { type: "CHARACTER", id: "202:101" },
+      set: { detectorAutoSendEnabled: false },
+    }),
+    expect.objectContaining({
+      scope: { type: "CHARACTER", id: "202:101" },
+      set: { detectorAutoSendEnabled: true },
+    }),
+  ]);
+});

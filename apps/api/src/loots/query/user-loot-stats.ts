@@ -33,6 +33,7 @@ import {
   loadUserLootScopes,
   userLootScopeAccess,
 } from "#src/loots/query/user-loot-scopes";
+import { comparePolish } from "@lootlog/domain/locale";
 
 const empty: UserLootStatsResponse = {
   overview: {
@@ -415,7 +416,7 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
               .toSorted(
                 (left, right) =>
                   right.caught - left.caught ||
-                  left.name.localeCompare(right.name, "pl"),
+                  comparePolish(left.name, right.name),
               ),
             npcKills: killsByMonster.get(key)?.kills ?? 0,
           },
@@ -425,7 +426,7 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
         (left, right) =>
           right.count - left.count ||
           right.caught - left.caught ||
-          left.name.localeCompare(right.name, "pl"),
+          comparePolish(left.name, right.name),
       );
 
     // Every boss the user killed, and every monster that dropped them a legend.
@@ -475,7 +476,7 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
         (left, right) =>
           right.kills - left.kills ||
           right.legends - left.legends ||
-          left.npc.name.localeCompare(right.npc.name, "pl"),
+          comparePolish(left.npc.name, right.npc.name),
       );
 
     return {

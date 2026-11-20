@@ -12,6 +12,7 @@ import { CATALOG_MAX_HITS } from "@/lib/catalog-pages";
 import { ITEM_LIST_CLASS } from "@/lib/item-list-layout";
 import type { NpcSearchParams } from "@/lib/npcs-search";
 import { NpcCard } from "./npc-card";
+import { formatNumber } from "@lootlog/domain/locale";
 
 type NpcResultsProps = {
   params: NpcSearchParams;
@@ -42,7 +43,7 @@ export function NpcResults({ params, query, filters }: NpcResultsProps) {
           className="text-sm font-semibold text-foreground tabular-nums"
         >
           {data
-            ? t("search.results", { count: total.toLocaleString("pl-PL") })
+            ? t("search.results", { count: formatNumber(total) })
             : t("search.loading")}
         </h2>
         {filters}

@@ -23,7 +23,7 @@ import {
   readSeededReadyRoomCache,
   readyRoomOrganizerFixture,
   seedReadyRoomCache,
-} from "@/test/ready-room-fixtures";
+} from "@/features/party-finder/ready-room-fixtures";
 import { mergeReadyRoomProjectionIntoCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { useWindowsStore } from "@/store/windows.store";
 import { useChatStore } from "@/store/chat.store";
@@ -31,7 +31,7 @@ import { useHiddenPartyGatheringsStore } from "@/store/hidden-party-gatherings.s
 import { useHotkeysStore } from "@/store/hotkeys.store";
 import { disposeReadyRoomInvitationCoordinator } from "@/features/party-finder/ready-room-invitation-coordinator";
 import { ACTIVE_GATHERINGS_QUERY_KEY } from "../hooks/use-active-party-gatherings";
-import { createChatMember, createChatReadyRoom } from "../chat-test-fixtures";
+import { createChatMember, createChatReadyRoom } from "@/test/chat-fixtures";
 import { ChatGatheringBar } from "./chat-gathering-bar";
 import { ChatInput } from "./chat-input";
 

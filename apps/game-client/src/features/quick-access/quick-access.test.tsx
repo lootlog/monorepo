@@ -4,7 +4,7 @@ import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room"
 import { beforeEach, describe, expect, it } from "vitest";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { seedReadyRoomCache } from "@/test/ready-room-fixtures";
+import { seedReadyRoomCache } from "@/features/party-finder/ready-room-fixtures";
 import { useWindowsStore } from "@/store/windows.store";
 import { QuickAccess } from "./quick-access";
 

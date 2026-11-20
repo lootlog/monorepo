@@ -7,6 +7,7 @@ import { BlogLayout } from "../components/blog/blog-layout";
 import { BlogNotFound } from "../components/blog/blog-not-found";
 import { blogNotFoundHead, blogPageHead, blogPosts } from "../config/blog";
 import type { ComponentType } from "react";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 /** Each post's article is `content/blog/<slug>.mdx`. */
 const articles = import.meta.glob<ComponentType>("../content/blog/*.mdx", {
@@ -14,7 +15,7 @@ const articles = import.meta.glob<ComponentType>("../content/blog/*.mdx", {
   import: "default",
 });
 
-const articleDateFormat = new Intl.DateTimeFormat("pl-PL", {
+const articleDateFormat = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
   dateStyle: "long",
   timeZone: "Europe/Warsaw",
 });

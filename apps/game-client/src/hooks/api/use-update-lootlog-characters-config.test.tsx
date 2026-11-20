@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { expect, it, onTestFinished } from "vitest";
 import { useGameStore } from "@/store/game.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/client/main";
 import { queryClient } from "@/lib/query-client";
 import { getFreshCharacterCatchingGuildIds } from "./use-lootlog-characters-config";

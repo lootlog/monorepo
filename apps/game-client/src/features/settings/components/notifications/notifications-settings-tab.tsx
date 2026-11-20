@@ -1,12 +1,12 @@
-import { NpcTypeChip } from "@/components/settings/npc-type-chip";
+import { NpcTypeChip } from "@/features/settings/components/shared/npc-type-chip";
 import {
   SettingsMatrix,
   type SettingsMatrixColumn,
-} from "@/components/settings/settings-matrix";
-import { SettingsMatrixRow } from "@/components/settings/settings-matrix-row";
-import { SettingsNumberField } from "@/components/settings/settings-number-field";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+} from "@/features/settings/components/shared/settings-matrix";
+import { SettingsMatrixRow } from "@/features/settings/components/shared/settings-matrix-row";
+import { SettingsNumberField } from "@/features/settings/components/shared/settings-number-field";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import {
   AUTO_HIDE_MAX_SECONDS,

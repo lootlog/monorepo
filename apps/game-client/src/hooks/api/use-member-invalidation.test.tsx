@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { expect, it } from "vitest";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
-import { createChatMember } from "@/features/chat/chat-test-fixtures";
+import { createChatMember } from "@/test/chat-fixtures";
 import { getMembersControllerGetGuildMembersSummaryQueryKey } from "@lootlog/client/main";
 import { useMemberInvalidation } from "./use-member-invalidation";
 

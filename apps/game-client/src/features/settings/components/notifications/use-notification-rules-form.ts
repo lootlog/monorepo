@@ -1,5 +1,5 @@
 import { toggleAvailableGuild } from "@/lib/selected-lootlog-guild";
-import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
+import { useUpdateGameAccountPreferences } from "@/lib/settings-persistence/use-game-account-preferences";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import {

@@ -23,9 +23,11 @@ beforeEach(() => {
   cleanup.mockClear();
 });
 
+const NO_OBSERVERS = [] as const;
+
 describe("useGameEventHandlers", () => {
   it("registers its real dispatcher once across rerenders", () => {
-    const { rerender } = renderHook(() => useGameEventHandlers(), {
+    const { rerender } = renderHook(() => useGameEventHandlers(NO_OBSERVERS), {
       wrapper: test.wrapper,
     });
 
@@ -35,7 +37,7 @@ describe("useGameEventHandlers", () => {
   });
 
   it("handles initial events once after the game becomes ready", () => {
-    const { rerender } = renderHook(() => useGameEventHandlers(), {
+    const { rerender } = renderHook(() => useGameEventHandlers(NO_OBSERVERS), {
       wrapper: test.wrapper,
     });
 
@@ -47,7 +49,7 @@ describe("useGameEventHandlers", () => {
   });
 
   it("releases the dispatcher on unmount", () => {
-    const { unmount } = renderHook(() => useGameEventHandlers(), {
+    const { unmount } = renderHook(() => useGameEventHandlers(NO_OBSERVERS), {
       wrapper: test.wrapper,
     });
 

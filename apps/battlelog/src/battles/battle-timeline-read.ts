@@ -1,13 +1,11 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import {
   ApplicationError,
   ResourceNotFoundError,
 } from "@lootlog/protocol/http/errors";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ContextLogger } from "@lootlog/instrumentation";
-import {
-  makeJsonCodec,
-  type RedisStore,
-} from "#src/infrastructure/redis-store";
+import { type RedisStore } from "#src/infrastructure/redis-store";
 import { Effect } from "effect";
 import type { BattleCatalog } from "#src/battles/catalog/battle-catalog";
 import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";

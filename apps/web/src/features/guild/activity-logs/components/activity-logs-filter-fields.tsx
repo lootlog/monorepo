@@ -12,8 +12,9 @@ import { useTranslation } from "react-i18next";
 import { ActivityLogsDateRangeFields } from "./activity-logs-date-range-fields";
 import { ActorNameSelector } from "./actor-name-selector";
 import type { useActivityLogsFilterModel } from "./use-activity-logs-filter-model";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
-const dayFormatter = new Intl.DateTimeFormat("pl-PL");
+const dayFormatter = new Intl.DateTimeFormat(PRODUCT_LOCALE);
 
 type ActivityLogsFilterFieldsProps = {
   model: ReturnType<typeof useActivityLogsFilterModel>;

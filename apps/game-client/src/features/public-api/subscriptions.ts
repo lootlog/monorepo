@@ -5,7 +5,7 @@ import type { GuildResponseDtoOutput } from "@lootlog/client/main";
 import { useGlobalStore } from "@/store/global.store";
 import type { Emitter } from "./emitter";
 import { groupTimersByGuild, mapGuilds, mapTimers } from "./mappers";
-import { queryKeys } from "./query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import type { ApiEventMap, ApiEventName } from "@lootlog/game-client-api";
 import type { PublicOnlinePlayersController } from "./online-players-controller";
 

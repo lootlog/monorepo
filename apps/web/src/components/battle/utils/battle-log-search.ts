@@ -1,4 +1,4 @@
-import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 import type {
   BattleWarrior as Warrior,
   RawBattleParsedEvent,

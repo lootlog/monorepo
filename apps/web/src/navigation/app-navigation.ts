@@ -4,8 +4,8 @@ import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
 import i18n from "@/i18n/config";
 import { ROUTES } from "@/config/routes";
 import type { Battle } from "@/lib/api/battlelog-types";
-import { canReadGuildDocs } from "@/features/guild/docs/docs-permissions";
-import { canViewHeroSightings } from "@/features/guild/hero-sightings/hero-sightings-permissions";
+import { canReadGuildDocs } from "@/lib/docs-permissions";
+import { canViewHeroSightings } from "@/lib/hero-sightings-permissions";
 
 declare module "@tanstack/react-router" {
   interface StaticDataRouteOption {

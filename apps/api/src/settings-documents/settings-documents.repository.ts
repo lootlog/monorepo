@@ -1,4 +1,7 @@
-import { decodeSettingsRecord } from "@lootlog/domain/settings-paths";
+import {
+  decodeSettingsRecord,
+  type SettingsJsonRecord,
+} from "@lootlog/domain/settings-paths";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   migrateSettingsDocument,
@@ -23,7 +26,7 @@ import {
 import { ApiDatabase } from "../database/drizzle/database.js";
 import { memberTable } from "../database/drizzle/organization.schema.js";
 import { userSettingDocumentTable } from "../database/drizzle/user.schema.js";
-import { applySettingsPatch, type JsonRecord } from "./settings-resolver.js";
+import { applySettingsPatch } from "@lootlog/domain/settings-resolver";
 
 type SettingsOperation = PatchSettingsDocuments["operations"][number];
 
@@ -184,7 +187,7 @@ export class SettingsDocumentsRepository extends Context.Service<
                   domain: SettingsDomain;
                   scope: SettingsScope;
                   stored: StoredSettingsDocument | undefined;
-                  overrides: JsonRecord;
+                  overrides: SettingsJsonRecord;
                 }
               >();
 

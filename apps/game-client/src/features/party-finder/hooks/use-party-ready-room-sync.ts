@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useSocket } from "@/contexts/socket-context";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import { GATHERING_ACCESS_AREAS } from "@/features/chat/hooks/use-active-party-gatherings";
 import type { AccessUpdate } from "@/lib/socket";
 import {

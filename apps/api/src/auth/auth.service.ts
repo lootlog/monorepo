@@ -1,3 +1,4 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { Effect, Redacted, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
@@ -11,7 +12,7 @@ import {
   type AuthServiceError,
 } from "#src/auth/auth-errors";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
-import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { type RedisService } from "#src/redis/redis.service";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import {
   getAuthTokenCacheKey,

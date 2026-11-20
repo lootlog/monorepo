@@ -21,7 +21,7 @@ import {
   upgradeItemStat,
 } from "@lootlog/domain/item-upgrade";
 
-export type WornItemIssue = ItemRequirementIssue | "hands";
+type WornItemIssue = ItemRequirementIssue | "hands";
 
 export type WornItem = {
   /** The item at the set's level, with the stats its upgrade gives it. */

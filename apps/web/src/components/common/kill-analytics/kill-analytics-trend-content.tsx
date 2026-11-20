@@ -30,7 +30,7 @@ import {
   formatStatisticsHour,
 } from "./format-statistics-date";
 import { CHART_SERIES_ANIMATION } from "@/lib/motion";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 type KillAnalyticsTrendPoint = {
   date: string;

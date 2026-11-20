@@ -1,4 +1,4 @@
-import { useSettingField } from "@/features/settings/persistence/use-setting-field";
+import { useSettingField } from "@/lib/settings-persistence/use-setting-field";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 
 /** NPC ranks that produce chat messages and can be filtered out. */

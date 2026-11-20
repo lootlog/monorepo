@@ -1,15 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Gamepad2, Globe, Package, Radio } from "lucide-react";
 import { buttonVariants } from "@lootlog/ui/lib/button-variants";
-import { PortalFooter } from "~/components/portal-footer";
-import { RequestSample } from "~/components/request-sample";
-import { ResourceCard } from "~/components/resource-card";
+import { PortalFooter } from "@/components/portal-footer";
+import { RequestSample } from "@/components/request-sample";
+import { ResourceCard } from "@/components/resource-card";
 import {
   apiServiceOrigin,
   PUBLIC_API_SERVICES,
 } from "@lootlog/schema/api-services";
-import { pageHead } from "~/lib/seo";
-import { portalText as t } from "~/lib/translations";
+import { pageHead } from "@/lib/seo";
+import { portalText as t } from "@/lib/translations";
 
 export const Route = createFileRoute("/")({
   head: () =>

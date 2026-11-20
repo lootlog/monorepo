@@ -1,7 +1,7 @@
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { useSocket } from "@/contexts/socket-context";
-import { useCurrentGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
-import { readSettingsValue } from "@/features/settings/persistence/settings-snapshot";
+import { useCurrentGameAccountPreferences } from "@/lib/settings-persistence/use-game-account-preferences";
+import { readSettingsValue } from "@/lib/settings-persistence/settings-snapshot";
 import { playSound } from "@/lib/sound-playback";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";

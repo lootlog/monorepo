@@ -10,7 +10,7 @@ import { toast } from "@lootlog/ui/lib/toast";
 import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useCountdown } from "@/hooks/utils/use-countdown";
-import { getGuildDiscordPermissionStatus } from "@/features/guild/settings/utils/get-guild-discord-permission-status";
+import { getGuildDiscordPermissionStatus } from "@/lib/get-guild-discord-permission-status";
 
 export const useGuildDiscordSync = () => {
   const guildId = useGuildId();

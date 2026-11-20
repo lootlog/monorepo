@@ -14,7 +14,7 @@ import {
 } from "@lootlog/client/main";
 import { Permission } from "@lootlog/schema/permissions";
 
-import type { Event } from "./types/api";
+import type { Event } from "@/lib/api/event-types";
 
 const listEventsParams = {
   activeOnly: false,

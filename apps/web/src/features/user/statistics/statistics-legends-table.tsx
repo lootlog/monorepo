@@ -28,7 +28,7 @@ import {
   type StatisticsSortColumn,
   type StatisticsSortValue,
 } from "./statistics-sort";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 type Legend = UserLootStatsResponseDtoOutputLegendsItem;
 

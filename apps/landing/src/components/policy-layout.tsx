@@ -2,8 +2,8 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { LandingFooter } from "@/src/components/landing/footer";
-import { LandingHeader } from "@/src/components/landing/header";
+import { LandingFooter } from "@/components/landing/footer";
+import { LandingHeader } from "@/components/landing/header";
 
 interface PolicyLayoutProps {
   children: ReactNode;

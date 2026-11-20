@@ -3,7 +3,7 @@ import {
   createChatMember,
   createChatMessage,
   createChatRole,
-} from "./chat-test-fixtures";
+} from "@/test/chat-fixtures";
 import { describe, expect, it } from "vitest";
 import {
   buildChatMentionContext,

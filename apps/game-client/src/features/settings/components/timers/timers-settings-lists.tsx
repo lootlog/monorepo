@@ -1,8 +1,8 @@
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsList } from "@/components/settings/settings-list";
-import { SettingsListRow } from "@/components/settings/settings-list-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { SettingsList } from "@/features/settings/components/shared/settings-list";
+import { SettingsListRow } from "@/features/settings/components/shared/settings-list-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { IconButton } from "@/components/ui/icon-button";
 import {
   Popover,

@@ -12,7 +12,7 @@ import { MemberIdentity } from "@/components/common/member-identity";
 import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import { PlayerTile } from "@/components/tiles/player-tile";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
-import type { EventMap } from "../../types/api";
+import type { EventMap } from "@/lib/api/event-types";
 import type { PlayerPresence } from "@/lib/gateway-client";
 import {
   isWindowActive,

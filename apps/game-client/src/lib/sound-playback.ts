@@ -1,8 +1,8 @@
-import { resolveSoundUrl } from "@/features/settings/config/default-sounds";
+import { resolveSoundUrl } from "@/lib/default-sounds";
 import {
   readSoundSettings,
   type SoundSettings,
-} from "@/features/settings/persistence/use-sound-settings";
+} from "@/lib/settings-persistence/use-sound-settings";
 import {
   disposeSoundPlayback,
   playSoundRequest,

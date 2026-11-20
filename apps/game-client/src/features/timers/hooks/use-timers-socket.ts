@@ -3,9 +3,9 @@ import { normalizeTimerResponse } from "@/api/timers.api";
 import type { TimerResponseDto } from "@lootlog/client/main";
 import type { TimerIdentity } from "@lootlog/domain/timers";
 import { useSocket } from "@/contexts/socket-context";
-import { useTimersCache } from "@/hooks/api/use-timers-cache";
+import { useTimersCache } from "@/features/timers/hooks/use-timers-cache";
 import { useQueryClient, type Query } from "@tanstack/react-query";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import { getTimerQueryGuildId } from "@/lib/game-access-cache";
 
 export const useTimersSocket = () => {

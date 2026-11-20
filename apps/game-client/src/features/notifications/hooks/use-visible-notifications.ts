@@ -15,7 +15,7 @@ import {
   isNotificationSettingsKey,
 } from "@/features/notifications/utils/get-notification-settings-key";
 import { getNotificationAutoHideDeadlineMs } from "@/features/notifications/notification-auto-hide";
-import { getHeroTrackerEntranceClosesAtMs } from "@/features/notifications/utils/hero-tracker-notification";
+import { getHeroTrackerEntranceClosesAtMs } from "@/utils/notifications-and-detector/hero-tracker-notification";
 
 interface UseVisibleNotificationsOptions {
   autoCleanup?: boolean;

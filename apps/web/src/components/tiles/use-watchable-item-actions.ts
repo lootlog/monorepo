@@ -1,10 +1,10 @@
-import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
+import { invalidateUserNotificationQueries } from "@/lib/user-notifications/invalidate-user-notification-queries";
 import type { Item } from "@/lib/loots/loot-types";
 import { ROUTES } from "@/config/routes";
-import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
-import { useGuildWatchedItems } from "@/features/user/notifications/hooks/use-guild-watched-items";
-import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
-import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
+import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
+import { useGuildWatchedItems } from "@/hooks/context/use-guild-watched-items";
+import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
+import { getUserNotificationsErrorMessage } from "@/lib/user-notifications/get-user-notifications-error-message";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotificationsUserControllerDeleteWatchedItem } from "@lootlog/client/main";

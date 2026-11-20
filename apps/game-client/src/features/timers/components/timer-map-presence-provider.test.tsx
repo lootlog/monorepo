@@ -6,18 +6,18 @@ import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-po
 import { Permission } from "@lootlog/schema/permissions";
 import { NpcType } from "@/api/npcs.api";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
-import { queryKeys } from "@/features/public-api/query-keys";
-import { upsertHeroSightings } from "@/features/hero-sightings/hero-sightings-cache";
+import { queryKeys } from "@/lib/query-keys";
+import { upsertHeroSightings } from "@/hooks/api/hero-sightings-cache";
 import { queryClient } from "@/lib/query-client";
-import { createHeroSighting } from "@/features/hero-sightings/hero-sighting-fixtures";
+import { createHeroSighting } from "@/test/hero-sighting-fixtures";
 import { HERO_SIGHTING_STALE_AFTER_MS } from "@lootlog/domain/hero-sightings";
 import {
   createOnlinePlayersTest,
   createOnlinePresence,
   createPresenceSnapshot,
-} from "@/features/online-players/online-players-test-fixtures";
+} from "@/test/online-players-fixtures";
 import { usePlayersPresence } from "@/features/online-players/hooks/use-players-presence";
-import { createTimerFixture } from "../timer-fixtures";
+import { createTimerFixture } from "@/test/timer-fixtures";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import {
   TimerMapPresenceProvider,

@@ -12,6 +12,7 @@ import { CalculatorCard } from "./calculator-card";
 import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
+import { formatNumber } from "@lootlog/domain/locale";
 
 const ATTRIBUTE_LIMIT = { min: 0, max: 100_000 };
 
@@ -55,14 +56,14 @@ export function AnguishCalculator() {
           results={[
             {
               label: t("calculators.anguish.perTurn"),
-              value: damage?.toLocaleString("pl-PL"),
+              value: damage === undefined ? undefined : formatNumber(damage),
             },
             {
               label: t("calculators.anguish.total"),
               value:
                 damage === undefined
                   ? undefined
-                  : (damage * ANGUISH_TURNS).toLocaleString("pl-PL"),
+                  : formatNumber(damage * ANGUISH_TURNS),
             },
           ]}
         />

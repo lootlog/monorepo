@@ -8,7 +8,7 @@ import {
 } from "@/components/common/list-tile";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { cn } from "cn";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 type StatsLeaderboardRowProps = {
   rank: number;

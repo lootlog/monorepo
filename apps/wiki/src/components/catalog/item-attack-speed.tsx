@@ -4,6 +4,7 @@ import {
 } from "@lootlog/domain/item-upgrade";
 import { t } from "@/i18n/messages";
 import { upgradeBonusName } from "@/lib/upgrade-bonus-text";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 /** Which attack speed a list ranked by it shows: as dropped or at +5. */
 export type AttackSpeedRanking = "dropped" | "upgraded";
@@ -25,7 +26,7 @@ export function ItemAttackSpeed({ stat, bonus }: ItemAttackSpeedProps) {
 
   if (attackSpeed === 0) return null;
 
-  const value = attackSpeed.toLocaleString("pl-PL", {
+  const value = attackSpeed.toLocaleString(PRODUCT_LOCALE, {
     signDisplay: "always",
     maximumFractionDigits: 2,
   });

@@ -4,12 +4,12 @@ import {
   isPublicApiService,
   type PublicApiService,
 } from "@lootlog/schema/api-services";
-import { getPortalEnvironment, requestHostname } from "~/lib/environment";
+import { getPortalEnvironment, requestHostname } from "@/lib/environment";
 import {
   decodeReferenceDocument,
   presentReferenceDocument,
   type ReferenceDocument,
-} from "~/lib/reference-document";
+} from "@/lib/reference-document";
 import main from "@lootlog/sdk/openapi/main.json";
 import activity from "@lootlog/sdk/openapi/activity.json";
 import battlelog from "@lootlog/sdk/openapi/battlelog.json";

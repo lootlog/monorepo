@@ -20,6 +20,7 @@ import {
   type CommandReply,
   type SlashCommand,
 } from "./slash-command.js";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 const RANKING_PER_HERO = 10;
 
@@ -117,7 +118,7 @@ const selectEvent = (
   return latestFirst.find((event) => event.active) ?? latestFirst[0];
 };
 
-const numberFormat = new Intl.NumberFormat("pl-PL", {
+const numberFormat = new Intl.NumberFormat(PRODUCT_LOCALE, {
   maximumFractionDigits: 1,
 });
 

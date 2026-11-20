@@ -8,7 +8,7 @@ import { usePartyReadyRoomExpiry } from "@/features/party-finder/hooks/use-party
 import {
   readSeededReadyRoomCache,
   seedReadyRoomCache,
-} from "@/test/ready-room-fixtures";
+} from "@/features/party-finder/ready-room-fixtures";
 
 const projection: PartyReadyRoomProjection = {
   schemaVersion: 3,

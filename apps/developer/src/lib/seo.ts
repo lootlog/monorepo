@@ -1,6 +1,6 @@
 import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
-import ogImage from "~/assets/og-image.png?no-inline";
-import { portalText } from "~/lib/translations";
+import ogImage from "@/assets/og-image.png?no-inline";
+import { portalText } from "@/lib/translations";
 
 /**
  * Head tags shared by every page: one title and description for search

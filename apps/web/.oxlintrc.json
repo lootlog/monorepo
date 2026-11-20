@@ -5,6 +5,29 @@
   },
   "overrides": [
     {
+      // Shared layers stay below features: only routes and features compose them.
+      "files": ["src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^(@/features|(\\.\\.?/)+features)(/|$)",
+                "message": "Shared code must not depend on a feature module. Move the shared part out of src/features, or compose the feature from a route."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/**", "src/routes/**"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
       "files": [
         "src/features/guild/events/components/scoring/scoring-rules-editor.tsx"
       ],
@@ -18,7 +41,7 @@
       }
     },
     {
-      "files": ["src/themes/cat/cat-paw-lottie.spec.tsx"],
+      "files": ["src/themes/cat/cat-paw-lottie.test.tsx"],
       "rules": {
         "anti-slop/no-module-mocking": [
           "error",
@@ -37,7 +60,7 @@
     },
     {
       // The fake socket asserts transport encoding when the test calls send.
-      "files": ["src/lib/gateway-connection.spec.ts"],
+      "files": ["src/lib/gateway-connection.test.ts"],
       "rules": {
         "vitest/no-standalone-expect": "off"
       }
@@ -45,9 +68,9 @@
     {
       "files": [
         // Table-driven cases intentionally assert different UI variants.
-        "src/features/guild/events/components/stats/multipliers-card.spec.tsx",
-        "src/features/guild/events/components/kills/recent-kills-preview.spec.tsx",
-        "src/features/guild/reservations/schedule/reservation-block.spec.tsx"
+        "src/features/guild/events/components/stats/multipliers-card.test.tsx",
+        "src/features/guild/events/components/kills/recent-kills-preview.test.tsx",
+        "src/features/guild/reservations/schedule/reservation-block.test.tsx"
       ],
       "rules": {
         "vitest/no-conditional-expect": "off"

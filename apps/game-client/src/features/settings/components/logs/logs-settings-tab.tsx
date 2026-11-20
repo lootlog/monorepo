@@ -1,8 +1,8 @@
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import { SettingsToolbar } from "@/components/settings/settings-toolbar";
+import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
+import { SettingsToolbar } from "@/features/settings/components/shared/settings-toolbar";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -38,6 +38,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { comparePolish } from "@lootlog/domain/locale";
 
 const getLogsExportFileName = (): string => {
   return `lootlog-logs-${new Date().toISOString().replaceAll(":", "-")}.json`;
@@ -71,7 +72,7 @@ export const LogsSettingsTab: FC = () => {
     { value: "all", label: t("settings.logs.allActions") },
     ...Array.from(new Set(actions.map((action) => action.actionType)))
       .sort((left, right) =>
-        getActionLabel(left).localeCompare(getActionLabel(right), "pl"),
+        comparePolish(getActionLabel(left), getActionLabel(right)),
       )
       .map((actionType) => ({
         value: actionType,

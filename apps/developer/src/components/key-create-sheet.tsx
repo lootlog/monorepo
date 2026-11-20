@@ -31,8 +31,8 @@ import { buttonVariants } from "@lootlog/ui/lib/button-variants";
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState, type FormEvent, type RefObject } from "react";
 import { apiKeysCreateApiKey } from "@lootlog/client/auth";
-import { getKeyErrorMessage, readKeyForm } from "~/lib/key-client";
-import { portalText as t } from "~/lib/translations";
+import { getKeyErrorMessage, readKeyForm } from "@/lib/key-client";
+import { portalText as t } from "@/lib/translations";
 
 /** The intro with the create button, and the sheet holding the new key's form. */
 export function KeyCreateSheet({

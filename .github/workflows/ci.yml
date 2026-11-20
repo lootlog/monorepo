@@ -79,9 +79,9 @@ jobs:
           fetch-depth: 0
           filter: blob:none
       - uses: ./.github/actions/setup-bun
-      - run: bun test scripts/deployment-targets.test.mjs scripts/development-deployment-plan.test.mjs scripts/static-assets.test.mjs
+      - run: bun test ./scripts
       - run: bun run format:check
-      - run: bun run deps:check
+      - run: bun run knip
       # The root is not a workspace, so Turbo never lints the CI planning scripts.
       - name: Lint repository scripts
         run: bunx oxlint scripts

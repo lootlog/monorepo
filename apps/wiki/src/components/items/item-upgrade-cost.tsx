@@ -8,11 +8,11 @@ import {
 import { StatTiles } from "@/components/common/stat-tiles";
 import { t } from "@/i18n/messages";
 import {
-  formatAmount,
   formatGold,
   formatUpgradePoints,
   upgradeCurrencyName,
 } from "@/lib/upgrade-cost-format";
+import { formatNumber } from "@lootlog/domain/locale";
 
 type ItemUpgradeCostProps = {
   item: CatalogItemDtoOutput;
@@ -71,16 +71,16 @@ export function ItemUpgradeCost({ item, level }: ItemUpgradeCostProps) {
         tiles={[
           {
             label: t("upgrade.cost.points"),
-            value: formatAmount(total.points),
+            value: formatNumber(total.points),
           },
           {
             label: currency,
-            value: formatAmount(total.essence),
+            value: formatNumber(total.essence),
             hint: atMaxOnly,
           },
           {
             label: t("upgrade.cost.gold"),
-            value: formatAmount(total.gold),
+            value: formatNumber(total.gold),
             hint: atMaxOnly,
           },
         ]}
@@ -108,13 +108,13 @@ export function ItemUpgradeCost({ item, level }: ItemUpgradeCostProps) {
             </span>
             <span className="text-muted-foreground tabular-nums">
               {t("upgrade.cost.cumulative", {
-                value: formatAmount(cost.points),
+                value: formatNumber(cost.points),
               })}
             </span>
             {step === MAX_LEVEL ? (
               <span className="basis-full pl-12 text-muted-foreground tabular-nums">
                 {t("upgrade.cost.maxStepExtras", {
-                  essence: formatAmount(cost.essence),
+                  essence: formatNumber(cost.essence),
                   currency,
                   gold: formatGold(cost.gold),
                 })}

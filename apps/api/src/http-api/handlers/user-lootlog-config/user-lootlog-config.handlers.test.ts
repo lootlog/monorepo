@@ -1,4 +1,4 @@
-import { makeJsonCodec } from "#src/redis/redis.service";
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { decodeDomainJson } from "../../domain-json.schema.js";

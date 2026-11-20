@@ -1,5 +1,5 @@
 import { configureApiClients } from "@lootlog/client/transport";
-import { createNotificationTest } from "../notification-test";
+import { createNotificationTest } from "@/test/notification-test";
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, onTestFinished, describe, expect, it, vi } from "vitest";
 import type { StoredNotification } from "@/store/notifications.store";

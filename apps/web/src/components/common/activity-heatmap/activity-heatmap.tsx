@@ -17,13 +17,14 @@ import {
 } from "./activity-calendar";
 import { formatIsoWeekday } from "@/components/common/kill-analytics/format-statistics-date";
 import { ActivityLegend } from "./activity-legend";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
-const fullDateFormatter = new Intl.DateTimeFormat("pl-PL", {
+const fullDateFormatter = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
   dateStyle: "full",
   timeZone: MARGONEM_TIME_ZONE,
 });
 
-const monthFormatter = new Intl.DateTimeFormat("pl-PL", {
+const monthFormatter = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
   month: "short",
   timeZone: MARGONEM_TIME_ZONE,
 });

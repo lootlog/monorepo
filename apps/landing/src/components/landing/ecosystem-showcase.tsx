@@ -2,8 +2,8 @@ import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { BookOpen, Code } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { SectionHead } from "@/src/components/landing/section-head";
-import { links } from "@/src/config/links";
+import { SectionHead } from "@/components/landing/section-head";
+import { links } from "@/config/links";
 
 const products = [
   {

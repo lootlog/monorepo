@@ -1,4 +1,4 @@
-import type { SoundSettings } from "@/features/settings/persistence/use-sound-settings";
+import type { SoundSettings } from "@/lib/settings-persistence/use-sound-settings";
 import type { QueryClient } from "@tanstack/react-query";
 import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import { setPath } from "@lootlog/domain/settings-paths";
@@ -8,12 +8,12 @@ import type {
 } from "@lootlog/schema/account-preferences";
 import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
 import type { UserPreferencesResponseDtoOutput } from "@lootlog/client/main";
-import { getCurrentSettingsDocumentsQueryKey } from "@/features/settings/persistence/settings-patch-client";
+import { getCurrentSettingsDocumentsQueryKey } from "@/lib/settings-persistence/settings-patch-client";
 import {
   getSettingsDocumentsQueryKey,
   type SettingsDocumentsContext,
   type SettingsDocuments,
-} from "@/features/settings/persistence/settings-documents";
+} from "@/lib/settings-persistence/settings-documents";
 
 type SettingsScope = {
   type: "USER" | "GAME_ACCOUNT" | "CHARACTER" | "GUILD";

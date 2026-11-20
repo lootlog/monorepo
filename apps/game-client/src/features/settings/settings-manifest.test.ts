@@ -5,9 +5,10 @@ import {
 } from "@lootlog/domain/settings-documents";
 import { describe, expect, it } from "vitest";
 import {
+  SETTINGS_DOMAIN_FIRST_SUBSECTIONS,
   SETTINGS_SUBSECTION_DOMAINS,
   SETTINGS_SUBSECTION_VALUES,
-} from "./constants/settings-tabs";
+} from "@/constants/settings-tabs";
 import { SETTINGS_MANIFEST } from "./settings-manifest";
 
 const catalogHasKey = (key: SettingsCatalogKey) => {
@@ -40,6 +41,14 @@ describe("settings manifest persistence references", () => {
     expect([...seen.keys()].sort()).toEqual(
       [...SETTINGS_SUBSECTION_VALUES].sort(),
     );
+  });
+
+  it("opens every domain on the subsection it lists first", () => {
+    expect(
+      Object.fromEntries(
+        SETTINGS_MANIFEST.map(({ id, subsections: [first] }) => [id, first.id]),
+      ),
+    ).toEqual(SETTINGS_DOMAIN_FIRST_SUBSECTIONS);
   });
 
   it("points every declared setting key to the shared catalog", () => {

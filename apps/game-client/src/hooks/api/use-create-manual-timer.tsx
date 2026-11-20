@@ -3,7 +3,7 @@ import {
   createManualTimer,
   type CreateManualTimerOptions,
 } from "@/api/timers.api";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 
 export const useCreateManualTimer = () => {
   const queryClient = useQueryClient();

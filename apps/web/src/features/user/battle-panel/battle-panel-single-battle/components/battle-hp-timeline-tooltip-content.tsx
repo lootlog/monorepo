@@ -13,6 +13,7 @@ import {
   getBattleHpTimelineTooltipPayload,
   type BattleHpTimelineTooltipDeltaKey,
 } from "./battle-hp-timeline-tooltip";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 type BattleHpTimelineTooltipPayloadItem = {
   payload?: unknown;
@@ -62,7 +63,7 @@ export function BattleHpTimelineTooltipContent({
     return null;
   }
 
-  const locale = i18n.language || "pl-PL";
+  const locale = i18n.language || PRODUCT_LOCALE;
 
   const formatNumber = (value: number) =>
     formatBattleHpTimelineTooltipNumber(value, locale);

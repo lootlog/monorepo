@@ -9,7 +9,7 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { useHotkeys } from "@/hooks/use-hotkeys";
+import { useHotkeys } from "@/features/hotkeys/use-hotkeys";
 import { useHotkeysStore, type HotkeyAction } from "@/store/hotkeys.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { HotkeysSettingsTab } from "./hotkeys-settings-tab";

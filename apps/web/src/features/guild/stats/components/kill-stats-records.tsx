@@ -10,7 +10,7 @@ import { getKillShift } from "@/components/common/kill-analytics/kill-shift";
 import { Crown, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { summarizeKillRecords } from "../utils/summarize-kill-records";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 type KillStatsRecordsProps = {
   data: Pick<GuildKillStatsResponseDtoOutput, "timeline" | "hourlyWeekday">;

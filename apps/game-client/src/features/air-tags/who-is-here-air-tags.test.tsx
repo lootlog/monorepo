@@ -2,7 +2,7 @@ import { Profiler } from "react";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { createOnlinePlayersTest } from "@/features/online-players/online-players-test-fixtures";
+import { createOnlinePlayersTest } from "@/test/online-players-fixtures";
 import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import userEvent from "@testing-library/user-event";

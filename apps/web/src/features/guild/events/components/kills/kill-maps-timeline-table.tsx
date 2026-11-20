@@ -17,7 +17,7 @@ import {
 } from "@lootlog/ui/components/table";
 import { useMaxWidth } from "@lootlog/ui/hooks/use-max-width";
 import { cn } from "cn";
-import type { MapTimelineData } from "../../types/api";
+import type { MapTimelineData } from "@/lib/api/event-types";
 import { getMapCoverageColorClassName } from "../../utils/get-map-coverage-color-class-name";
 import { getKillMapTimelineDiagnostics } from "../../utils/kill-map-timeline-data";
 import { KillMapTimelineTableRow } from "./kill-map-timeline-table-row";

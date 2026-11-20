@@ -4,7 +4,7 @@ import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAccountEnabledFlag } from "@/features/settings/persistence/use-account-enabled-flag";
+import { useAccountEnabledFlag } from "@/lib/settings-persistence/use-account-enabled-flag";
 import { useWindowsStore } from "@/store/windows.store";
 import { splitDropsRarity } from "./loot-split-model";
 import { LootSplitSection } from "./loot-split-section";

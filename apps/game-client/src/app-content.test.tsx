@@ -5,7 +5,7 @@ import {
   createSettingsDocuments,
   seedSettingsDocuments,
 } from "@/test/settings-documents-fixtures";
-import { useSettingsSaveStatusStore } from "@/features/settings/persistence/settings-save-status.store";
+import { useSettingsSaveStatusStore } from "@/lib/settings-persistence/settings-save-status.store";
 import {
   act,
   fireEvent,

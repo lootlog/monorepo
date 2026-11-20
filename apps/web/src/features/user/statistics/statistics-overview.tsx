@@ -20,7 +20,7 @@ import { StatisticsTopNpcs } from "./statistics-top-npcs";
 import { StatisticsTopLegends } from "./statistics-top-legends";
 import { StatisticsWorldsSection } from "./statistics-worlds-section";
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 export function StatisticsOverview({ data, search }: StatisticsTabProps) {
   const { t } = useTranslation();

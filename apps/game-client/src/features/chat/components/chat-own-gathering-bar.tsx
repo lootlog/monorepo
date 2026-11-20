@@ -12,13 +12,13 @@ import type {
   PartyGatheringSummary,
 } from "@lootlog/schema/party-ready-room";
 import { useReadyRoomWithdrawal } from "@/features/party-finder/hooks/use-ready-room-withdrawal";
-import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
+import { useCancelPartyGathering } from "@/features/party-finder/hooks/use-cancel-party-gathering";
 import { Button } from "@/components/ui/button";
 import { useGatheringPartyState } from "@/components/common/use-gathering-party-state";
 import { useReadyRoomMinutesLeft } from "@/components/common/use-ready-room-minutes-left";
 import { ReadyRoomMinutesLeft } from "@/components/common/ready-room-minutes-left";
 import { IconButton } from "@/components/ui/icon-button";
-import { useExtendPartyGathering } from "@/hooks/api/use-extend-party-gathering";
+import { useExtendPartyGathering } from "@/features/party-finder/hooks/use-extend-party-gathering";
 import { getRoomOrganizer } from "@/features/chat/party-gathering-organizer";
 
 // The organizer is offered to extend the gathering in its last minutes.

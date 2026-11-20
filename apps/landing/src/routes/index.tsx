@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HomeContent } from "@/src/components/landing/home-content";
-import landingTranslations from "@/src/i18n/translations/landing.json";
+import { HomeContent } from "@/components/landing/home-content";
+import landingTranslations from "@/i18n/translations/landing.json";
 
 const { seo } = landingTranslations;
 

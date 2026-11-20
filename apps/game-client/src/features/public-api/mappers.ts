@@ -18,6 +18,7 @@ import type {
   PublicTimer,
   PublicUser,
 } from "@lootlog/game-client-api";
+import { comparePolish } from "@lootlog/domain/locale";
 
 // Add-ons only display who is online, so presence leaves without account,
 // session or user identifiers, and in name order rather than grouped by user.
@@ -43,8 +44,6 @@ const toPublicOnlinePlayer = (
   };
 };
 
-const polishCollator = new Intl.Collator("pl");
-
 export const mapOnlinePlayers = (
   players: PlayerPresenceResponse,
 ): PublicOnlinePlayers =>
@@ -53,7 +52,7 @@ export const mapOnlinePlayers = (
     .flatMap((presence) => toPublicOnlinePlayer(presence) ?? [])
     .toSorted(
       (left, right) =>
-        polishCollator.compare(left.name, right.name) || left.lvl - right.lvl,
+        comparePolish(left.name, right.name) || left.lvl - right.lvl,
     );
 
 const mapUser = (user: User): PublicUser => ({

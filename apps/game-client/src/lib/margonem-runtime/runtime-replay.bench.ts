@@ -473,7 +473,7 @@ function createFullReplayHarness(
 
   const projection = new RuntimeStateProjection({ adapter });
   const pipeline = new RuntimeEventPipeline({ bridge, projection });
-  const dispatcher = new EventDispatcher(pipeline);
+  const dispatcher = new EventDispatcher({ pipeline });
   projection.bootstrap();
   pipeline.install();
   dispatcher.register();

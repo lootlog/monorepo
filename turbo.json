@@ -101,7 +101,7 @@
         "src/**/*.ts",
         "src/**/*.tsx",
         "test/**/*.ts",
-        "**/*.spec.ts",
+        "**/*.test.ts",
         "vitest.config.*",
         "tsconfig.json"
       ]
@@ -120,7 +120,7 @@
         "$TURBO_DEFAULT$",
         "src/**/*.ts",
         "test/**/*.ts",
-        "test/**/*.e2e-spec.ts",
+        "test/**/*.e2e.test.ts",
         "vitest.config.*",
         "tsconfig.json"
       ]

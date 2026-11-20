@@ -1,11 +1,12 @@
 import { cn } from "cn";
 import { TrendingDown, TrendingUp } from "lucide-react";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
-const deltaFormatter = new Intl.NumberFormat("pl-PL", {
+const deltaFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
   signDisplay: "exceptZero",
 });
 
-const percentFormatter = new Intl.NumberFormat("pl-PL", {
+const percentFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
   style: "percent",
   maximumFractionDigits: 0,
   signDisplay: "exceptZero",

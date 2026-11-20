@@ -1,10 +1,10 @@
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
+import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
 import { IconButton } from "@/components/ui/icon-button";
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import { SettingsVolumeControl } from "@/components/settings/settings-volume-row";
-import { getFallbackSoundUrl } from "@/features/settings/config/default-sounds";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
+import { SettingsVolumeControl } from "@/features/settings/components/shared/settings-volume-row";
+import { getFallbackSoundUrl } from "@/lib/default-sounds";
 import { omit } from "es-toolkit";
 import { Play } from "lucide-react";
 import { SoundCategorySection } from "./sound-category-section";
@@ -14,7 +14,7 @@ import { NpcType } from "@/api/npcs.api";
 import {
   useSoundSettings,
   useUpdateSoundSettings,
-} from "@/features/settings/persistence/use-sound-settings";
+} from "@/lib/settings-persistence/use-sound-settings";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";

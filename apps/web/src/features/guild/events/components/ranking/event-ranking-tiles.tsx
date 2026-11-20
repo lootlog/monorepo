@@ -9,7 +9,7 @@ import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
-import type { EventRanking } from "../../types/api";
+import type { EventRanking } from "@/lib/api/event-types";
 import { EventRankingActions } from "./event-ranking-actions";
 import { EventRankingPoints } from "./event-ranking-points";
 import { getRankingMemberName } from "./get-ranking-member-name";

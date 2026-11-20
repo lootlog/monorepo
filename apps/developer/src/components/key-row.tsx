@@ -2,14 +2,14 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { useState } from "react";
-import { KeyRenameDialog } from "~/components/key-rename-dialog";
+import { KeyRenameDialog } from "@/components/key-rename-dialog";
 import { apiKeysDeleteApiKey } from "@lootlog/client/auth";
 import {
   getKeyErrorMessage,
   isApiKeyActive,
   type ApiKey,
-} from "~/lib/key-client";
-import { portalText as t } from "~/lib/translations";
+} from "@/lib/key-client";
+import { portalText as t } from "@/lib/translations";
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",

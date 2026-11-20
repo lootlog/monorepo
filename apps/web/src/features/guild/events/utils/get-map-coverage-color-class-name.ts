@@ -1,4 +1,4 @@
-import type { MapGap } from "../types/api";
+import type { MapGap } from "@/lib/api/event-types";
 
 type CoverageSegmentType = "COVERED" | MapGap["gapType"];
 

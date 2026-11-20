@@ -1,7 +1,9 @@
-import { writeSitemap } from "../../../scripts/sitemap.mjs";
+import { PUBLIC_SITE_ORIGINS, sitemapXml } from "@lootlog/domain/public-sites";
 import { landingDocumentPaths } from "../src/config/links.ts";
 
-await writeSitemap(
+await Bun.write(
   "dist/client/sitemap.xml",
-  landingDocumentPaths.map((path) => `https://lootlog.pl${path}`),
+  sitemapXml(
+    landingDocumentPaths.map((path) => `${PUBLIC_SITE_ORIGINS.web}${path}`),
+  ),
 );

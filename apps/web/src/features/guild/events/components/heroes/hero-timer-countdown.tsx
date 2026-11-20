@@ -1,7 +1,7 @@
 import { HeroTimerCountdownContent } from "./hero-timer-countdown-content";
 import { useTranslation } from "react-i18next";
 import { Clock } from "lucide-react";
-import type { EventTimer } from "../../types/api";
+import type { EventTimer } from "@/lib/api/event-types";
 
 interface HeroTimerCountdownProps {
   timer: EventTimer | undefined;

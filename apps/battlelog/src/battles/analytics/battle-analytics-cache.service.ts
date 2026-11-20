@@ -25,10 +25,7 @@ return generation
 `;
 
 export const makeBattleAnalyticsCache = (
-  redisService: Pick<
-    RedisStore,
-    "evalScript" | "getOrSetJsonBestEffort" | "set"
-  >,
+  redisService: Pick<RedisStore, "evalScript" | "getOrSetJson" | "set">,
 ) => {
   const logger = new ContextLogger("BattleAnalyticsCache");
 
@@ -78,13 +75,15 @@ export const makeBattleAnalyticsCache = (
       if (generation === undefined) return yield* factory();
       const versionedKey = `battle-cache:v4:${encodeURIComponent(userId)}:${generation}:${cacheKey}`;
 
-      return yield* redisService.getOrSetJsonBestEffort<T, unknown, never>({
+      return yield* redisService.getOrSetJson<T, unknown, never>({
         key: versionedKey,
         ttlSeconds: ANALYTICS_CACHE_TTL_SECONDS,
         codec: { stringify: JSON.stringify, parse: decodeJson },
         factory: Effect.suspend(factory),
         onError: (error) =>
-          logger.warn("Battle analytics cache unavailable", error),
+          Effect.sync(() =>
+            logger.warn("Battle analytics cache unavailable", error),
+          ),
       });
     });
 

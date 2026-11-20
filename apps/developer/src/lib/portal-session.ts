@@ -1,7 +1,7 @@
 import { createLootlogAuthClient } from "@lootlog/client/auth-session";
 import { configureApiClients } from "@lootlog/client/transport";
 import { apiServiceOrigin } from "@lootlog/schema/api-services";
-import { getPortalEnvironment } from "~/lib/environment";
+import { getPortalEnvironment } from "@/lib/environment";
 
 /**
  * The signed-in session of the keys page: the auth client and the generated

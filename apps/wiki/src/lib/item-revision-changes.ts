@@ -4,6 +4,7 @@ import {
   type ItemDisplayValue,
   mapStatsToDisplaySections,
 } from "@lootlog/ui/components/item-stat-utils";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 type StatRevision = {
   key: string;
@@ -57,7 +58,7 @@ export const countRevisionChanges = (revision: CatalogItemRevisionDtoOutput) =>
   Number(revision.previousName !== revision.name) +
   Number(revision.previousIcon !== revision.icon);
 
-const dayFormat = new Intl.DateTimeFormat("pl-PL", {
+const dayFormat = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
   dateStyle: "long",
   timeZone: "UTC",
 });

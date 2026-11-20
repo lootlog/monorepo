@@ -7,7 +7,7 @@ import { getCharacterFilterKey } from "@/lib/character-filter-scope";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useTimersStore } from "@/store/timers.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 import { TimersActions } from "./timers-actions";
 import { TimersFilters } from "./timers-filters";
 

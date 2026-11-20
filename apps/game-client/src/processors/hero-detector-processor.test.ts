@@ -4,7 +4,7 @@ import { configureApiClients } from "@lootlog/client/transport";
 import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/client/main";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { queryClient } from "@/lib/query-client";
-import { createHeroSighting } from "@/features/hero-sightings/hero-sighting-fixtures";
+import { createHeroSighting } from "@/test/hero-sighting-fixtures";
 import { useHeroSightingsStore } from "@/store/hero-sightings.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";

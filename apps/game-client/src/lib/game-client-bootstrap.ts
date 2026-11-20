@@ -17,7 +17,7 @@ import {
   decodeSettingsDocuments,
   getGuildTimersDocumentsQueryKey,
   getSettingsDocumentsQueryKey,
-} from "@/features/settings/persistence/settings-documents";
+} from "@/lib/settings-persistence/settings-documents";
 import { getGuildIds } from "@/lib/api/generated-helpers";
 import { applyGameOrganizationAccess } from "@/lib/game-access-cache";
 import { useGameStore } from "@/store/game.store";

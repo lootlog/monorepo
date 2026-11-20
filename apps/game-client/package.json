@@ -79,7 +79,7 @@
     "@vitest/ui": "^5.0.5",
     "happy-dom": "^21.0.4",
     "nanostores": "catalog:",
-    "oxc-transform-react": "^0.154.0",
+    "oxc-transform-react": "catalog:",
     "postcss-load-config": "catalog:",
     "rollup-plugin-visualizer": "^7.1.1",
     "shadcn": "^4.22.1",

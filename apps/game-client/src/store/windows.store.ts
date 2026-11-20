@@ -8,11 +8,11 @@ import {
   type SettingsPath,
   type SettingsSubsectionValue,
   type SettingsTabValue,
-} from "@/features/settings/constants/settings-tabs";
+} from "@/constants/settings-tabs";
 import {
   APP_ERROR_WINDOW_DEFAULT_HEIGHT,
   APP_ERROR_WINDOW_WIDTH,
-} from "@/features/error-boundary/error-boundary.constants";
+} from "@/constants/app-error-window";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";

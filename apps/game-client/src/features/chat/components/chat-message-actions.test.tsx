@@ -9,7 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ChatMessage } from "./chat-message";
 import { ChatReplyPreview } from "./chat-reply-preview";
-import { createChatMessage } from "../chat-test-fixtures";
+import { createChatMessage } from "@/test/chat-fixtures";
 import { createChatTestWrapper } from "../chat-test-wrapper";
 
 describe("chat message actions", () => {

@@ -7,9 +7,9 @@ import { Button } from "@lootlog/ui/components/button";
 
 import { useDiscordSignIn } from "@lootlog/client/auth-session";
 import { WEB_SIGN_IN_PATH } from "@lootlog/domain/public-sites";
-import { links } from "@/src/config/links";
-import { authClient } from "@/src/lib/auth-client";
-import { useMatchingBackgroundMask } from "@/src/hooks/use-matching-background-mask";
+import { links } from "@/config/links";
+import { authClient } from "@/lib/auth-client";
+import { useMatchingBackgroundMask } from "@/hooks/use-matching-background-mask";
 import { MenuIcon } from "./menu-icon";
 import { LootlogMark } from "@lootlog/ui/components/lootlog-mark";
 

@@ -1,10 +1,12 @@
-import { getProfByShortname } from "./profession.js";
+import { getProfByShortname, getShortnameByProf } from "./profession.js";
 import { normalizeNpcName } from "@lootlog/schema/npc-identity";
 import {
   HeroSightingState,
   type HeroSightingState as HeroSightingStateValue,
 } from "@lootlog/schema/hero-sightings";
 import type { ProfessionEnum } from "@lootlog/schema/loot";
+import { comparePolish } from "./locale.js";
+import { normalizeSearchText } from "./text-fold.js";
 
 /** Sightings kept per hero in one Organization world, the current one included. */
 export const HERO_SIGHTING_HISTORY_LIMIT = 20;
@@ -211,3 +213,69 @@ export const isCurrentHeroSighting = (
   },
   now: number,
 ): boolean => sighting.closedAt === null && !isHeroSightingStale(sighting, now);
+
+/** A hero a surface already knows, offered while a sighting is added by hand. */
+export type KnownHero = {
+  readonly key: string;
+  readonly name: string;
+  readonly lvl: number;
+  /** Margonem profession shortname, when known. */
+  readonly prof: string | undefined;
+};
+
+type NamedHero = {
+  readonly name: string;
+  readonly lvl: number;
+  readonly prof: string | null | undefined;
+};
+
+/** Timers carry a shortname or a profession name; sightings a profession name. */
+const toProfShortname = (prof: string | null | undefined) => {
+  if (!prof) return undefined;
+  const shortname = prof.toLowerCase();
+
+  return (
+    getShortnameByProf(prof.toUpperCase()) ??
+    (getProfByShortname(shortname) ? shortname : undefined)
+  );
+};
+
+/**
+ * Every hero named by a sighting or a hero timer, once, by name. A sighting
+ * wins over a timer: it carries the spelling the server keeps.
+ */
+export const collectKnownHeroes = (
+  sightings: readonly { readonly hero: NamedHero }[],
+  timers: readonly { readonly npc: NamedHero & { readonly type: string } }[],
+): KnownHero[] => {
+  const heroes = new Map<string, KnownHero>();
+
+  const add = ({ name, lvl, prof }: NamedHero) => {
+    const key = getHeroSightingKey(name);
+
+    if (key && !heroes.has(key))
+      heroes.set(key, { key, name, lvl, prof: toProfShortname(prof) });
+  };
+
+  for (const { hero } of sightings) add(hero);
+
+  for (const { npc } of timers) if (npc.type === "HERO" && npc.name) add(npc);
+
+  return [...heroes.values()].sort((a, b) => comparePolish(a.name, b.name));
+};
+
+const MAX_SUGGESTED_HEROES = 8;
+
+/** Known heroes whose name contains what the player typed so far. */
+export const suggestKnownHeroes = (
+  heroes: readonly KnownHero[],
+  typedName: string,
+): KnownHero[] => {
+  const query = normalizeSearchText(typedName);
+
+  if (!query) return [];
+
+  return heroes
+    .filter((hero) => normalizeSearchText(hero.name).includes(query))
+    .slice(0, MAX_SUGGESTED_HEROES);
+};

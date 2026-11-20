@@ -29,7 +29,7 @@ import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import type { useWindowsStore } from "@/store/windows.store";
 import { selectOwnedReadyRoom } from "@/features/party-finder/ready-room-cache";
 import { readReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
-import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
+import type { SettingsTabValue } from "@/constants/settings-tabs";
 import { useTranslation } from "react-i18next";
 import type { PartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
 import { NpcNotificationCooldown } from "@/features/npc-detector/components/npc-notification-cooldown";

@@ -9,7 +9,7 @@ import { Table } from "@lootlog/ui/components/table";
 import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
-import type { EventHeroNpc } from "../../types/api";
+import type { EventHeroNpc } from "@/lib/api/event-types";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import {
   createEventHeroesTableColumns,

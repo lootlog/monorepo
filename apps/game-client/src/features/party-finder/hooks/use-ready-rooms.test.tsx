@@ -7,7 +7,7 @@ import { expect, it } from "vitest";
 import {
   readyRoomOrganizerFixture,
   seedReadyRoomCache,
-} from "@/test/ready-room-fixtures";
+} from "@/features/party-finder/ready-room-fixtures";
 import { mergeReadyRoomProjectionIntoCache } from "./use-ready-rooms-cache";
 import {
   useCurrentCharacterReadyRoom,

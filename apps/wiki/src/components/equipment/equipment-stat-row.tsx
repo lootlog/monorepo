@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cn } from "cn";
 import { useStatChange } from "@/hooks/use-stat-change";
+import { formatDecimal } from "@lootlog/domain/locale";
 
 type EquipmentStatRowProps = {
   label: string;
@@ -14,12 +15,8 @@ type EquipmentStatRowProps = {
   isLoaded: boolean;
 };
 
-// Attack speed keeps its hundredths; the other stats are whole points.
-const format = (value: number) =>
-  value.toLocaleString("pl-PL", { maximumFractionDigits: 2 });
-
 const signed = (value: number, unit: string) =>
-  `${value > 0 ? "+" : "−"}${format(Math.abs(value))}${unit}`;
+  `${value > 0 ? "+" : "−"}${formatDecimal(Math.abs(value))}${unit}`;
 
 /**
  * One summed stat as the game's character window draws it: its name and its
@@ -73,8 +70,8 @@ export function EquipmentStatRow({
               {shownChange === 0 ? null : signed(shownChange, unit)}
             </span>
             <span className="font-semibold text-foreground tabular-nums">
-              {format(shownValue)}
-              {rangeMax === undefined ? null : `–${format(shownMax)}`}
+              {formatDecimal(shownValue)}
+              {rangeMax === undefined ? null : `–${formatDecimal(shownMax)}`}
               {unit}
             </span>
           </dd>

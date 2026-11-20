@@ -1,13 +1,13 @@
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
-import { useAccountEnabledFlag } from "@/features/settings/persistence/use-account-enabled-flag";
+import { useAccountEnabledFlag } from "@/lib/settings-persistence/use-account-enabled-flag";
 import {
   useCurrentGameAccountPreferences,
   useUpdateGameAccountPreferences,
-} from "@/features/settings/persistence/use-game-account-preferences";
+} from "@/lib/settings-persistence/use-game-account-preferences";
 import { useGameStore } from "@/store/game.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";

@@ -1,12 +1,8 @@
-import {
-  applyChatAccessPolicy,
-  retainChatAccessPolicy,
-  refreshChatAfterReconnect,
-} from "@/features/chat/chat-access-policy";
 import { RealtimeRequestError } from "@lootlog/client/realtime";
+import type { AccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import type { QueryClient } from "@tanstack/react-query";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { getFixedT } from "@/i18n/get-fixed-t";
-import { reconcileNotificationAccess } from "@/features/notifications/notification-access-policy";
 import { createGameAccessCache } from "@/lib/game-access-cache";
 import { queryClient } from "@/lib/query-client";
 import {
@@ -32,6 +28,22 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+
+/**
+ * A feature cache that follows the Organization access policy. The
+ * composition root supplies these, so the provider does not import features.
+ */
+export interface RealtimeAccessPolicyObserver {
+  /** Holds the observer's policy state while the provider is mounted. */
+  retain?: (queryClient: QueryClient) => () => void;
+  /**
+   * The session joined after an interruption or before any access policy
+   * arrived, so cached history may have gaps.
+   */
+  resync?: (queryClient: QueryClient, guildIds: readonly string[]) => void;
+  /** The access policy changed. */
+  update?: (queryClient: QueryClient, policy: AccessPolicySnapshot) => void;
+}
 
 type SocketContextValue = {
   socket: AppSocket | null;
@@ -107,7 +119,13 @@ const subscribeConnectionState = (listener: () => void) =>
 
 const getConnectionState = () => getSocket().connectionState;
 
-export const SocketProvider = ({ children }: { children: ReactNode }) => {
+export const SocketProvider = ({
+  accessPolicyObservers,
+  children,
+}: {
+  accessPolicyObservers: readonly RealtimeAccessPolicyObserver[];
+  children?: ReactNode;
+}) => {
   const socket = getSocket();
   const connected = useSyncExternalStore(subscribeConnection, isConnected);
 
@@ -275,7 +293,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const accessCache = createGameAccessCache(queryClient);
-    const releaseChatPolicy = retainChatAccessPolicy(queryClient);
+
+    const releasePolicies = accessPolicyObservers.map((observer) =>
+      observer.retain?.(queryClient),
+    );
+
     let hasJoined = false;
     let joinedConnection = false;
 
@@ -302,7 +324,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
           hasBeenUnavailable.current ||
           !socket.getAccessPolicy()
         )
-          refreshChatAfterReconnect(queryClient, data.guildIds);
+          for (const observer of accessPolicyObservers)
+            observer.resync?.(queryClient, data.guildIds);
         hasJoined = true;
         joinedConnection = true;
       }
@@ -310,8 +333,10 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     const handlePermissionsUpdated = (data: AccessUpdate) => {
       accessCache.apply(data.accessPolicy);
-      applyChatAccessPolicy(queryClient, data.accessPolicy);
-      reconcileNotificationAccess(data.accessPolicy);
+
+      for (const observer of accessPolicyObservers)
+        observer.update?.(queryClient, data.accessPolicy);
+
       setJoinedGuilds(
         data.accessPolicy.organizations.map(
           ({ organizationId }) => organizationId,
@@ -330,13 +355,15 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       accessCache.dispose();
-      releaseChatPolicy();
+
+      for (const release of releasePolicies) release?.();
+
       socket.off("disconnect", handleDisconnect);
       socket.off("join", handleJoin);
       socket.off("access.updated", handlePermissionsUpdated);
       socket.disconnect();
     };
-  }, [socket]);
+  }, [socket, accessPolicyObservers]);
 
   const status = resolveRealtimeConnectionStatus({
     connected,

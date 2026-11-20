@@ -6,7 +6,7 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import i18n from "@/i18n/config";
 import type { UserNpcKillsResponseDtoOutputItemsItem } from "@lootlog/client/main";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 type NpcKill = UserNpcKillsResponseDtoOutputItemsItem;
 

@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import {
   createHeroSighting,
   createHeroSightingMember,
-} from "./hero-sighting-fixtures";
+} from "@/test/hero-sighting-fixtures";
 import {
   isWithdrawableHeroSighting,
   projectHeroSightingRows,

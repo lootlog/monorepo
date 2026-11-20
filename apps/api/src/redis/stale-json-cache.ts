@@ -1,10 +1,9 @@
-import { Clock, Effect, Schema } from "effect";
 import {
   makeJsonCodec,
   type JsonCodec,
-  type RedisGetOrSetJsonOptions,
-  type RedisService,
-} from "#src/redis/redis.service";
+} from "@lootlog/database/redis-cache-fill";
+import { type Cause, Clock, Effect, Schema } from "effect";
+import type { RedisService } from "#src/redis/redis.service";
 
 /** A cached value and the instant it was computed. */
 export interface StaleJson<T> {
@@ -15,9 +14,10 @@ export interface StaleJson<T> {
 /** Another reader refreshes a stale entry at most once per lease. */
 const REFRESH_LEASE_SECONDS = 300;
 
-type CacheErrorHandler = NonNullable<
-  RedisGetOrSetJsonOptions<never, never>["onError"]
->;
+/** Reports a failed cache read, or the cause of a failed background refresh. */
+type CacheErrorHandler = (
+  failure: Error | Cause.Cause<unknown>,
+) => Effect.Effect<void>;
 
 export type StaleJsonRedis = Pick<
   RedisService,

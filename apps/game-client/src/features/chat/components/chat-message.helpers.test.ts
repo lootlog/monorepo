@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MessageType } from "@/api/chat.api";
-import { createChatMessage } from "../chat-test-fixtures";
+import { createChatMessage } from "@/test/chat-fixtures";
 import {
   getChatNpcLocation,
   getChatMessageBody,

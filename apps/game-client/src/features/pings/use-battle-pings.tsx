@@ -1,6 +1,6 @@
 import { useSocket } from "@/contexts/socket-context";
-import { readSettingsValue } from "@/features/settings/persistence/settings-snapshot";
-import { useAccountEnabledFlag } from "@/features/settings/persistence/use-account-enabled-flag";
+import { readSettingsValue } from "@/lib/settings-persistence/settings-snapshot";
+import { useAccountEnabledFlag } from "@/lib/settings-persistence/use-account-enabled-flag";
 import { isWarriorDead } from "@/hooks/game-events/helpers/battle.helpers";
 import { playSound } from "@/lib/sound-playback";
 import { useBattleStore } from "@/store/game-store/battle.store";

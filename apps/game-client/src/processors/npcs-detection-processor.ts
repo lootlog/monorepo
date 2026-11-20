@@ -29,10 +29,10 @@ import {
   resolveNpcNotificationRouting,
 } from "@/utils/notifications-and-detector/npc-notification";
 import { playSound } from "@/lib/sound-playback";
-import { getGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
-import { readCurrentSettingsDocuments } from "@/features/settings/persistence/settings-patch-client";
-import { areSettingsDocumentsSettled } from "@/features/settings/persistence/settings-snapshot";
-import { selectSettingsValue } from "@/features/settings/persistence/settings-documents";
+import { getGameAccountPreferences } from "@/lib/settings-persistence/use-game-account-preferences";
+import { readCurrentSettingsDocuments } from "@/lib/settings-persistence/settings-patch-client";
+import { areSettingsDocumentsSettled } from "@/lib/settings-persistence/settings-snapshot";
+import { selectSettingsValue } from "@/lib/settings-persistence/settings-documents";
 import { getEffectiveDetectorSettings } from "@/lib/game-account-preferences";
 
 // A rescan reads every NPC the projection holds when it runs, so it covers

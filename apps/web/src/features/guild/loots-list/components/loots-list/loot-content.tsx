@@ -2,7 +2,7 @@ import { LootPlayerWithItems } from "./loot-player-with-items";
 import { LootUnassignedItems } from "./loot-unassigned-items";
 import type { ItemsByPlayer } from "./build-loot-presentation";
 import type { Loot, Item } from "@/lib/loots/loot-types";
-import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
+import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import type { ReactNode } from "react";
 import { cn } from "cn";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";

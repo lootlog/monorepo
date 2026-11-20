@@ -10,6 +10,7 @@ import { CalculatorCard } from "./calculator-card";
 import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
+import { PRODUCT_LOCALE, formatNumber } from "@lootlog/domain/locale";
 
 /** The attack speed and evade a character's agility alone gives. */
 export function AttackSpeedCalculator() {
@@ -32,16 +33,19 @@ export function AttackSpeedCalculator() {
               value:
                 value === undefined
                   ? undefined
-                  : attackSpeedFromAgility(value).toLocaleString("pl-PL", {
-                      maximumFractionDigits: 3,
-                    }),
+                  : attackSpeedFromAgility(value).toLocaleString(
+                      PRODUCT_LOCALE,
+                      {
+                        maximumFractionDigits: 3,
+                      },
+                    ),
             },
             {
               label: t("calculators.attackSpeed.evade"),
               value:
                 value === undefined
                   ? undefined
-                  : evadeFromAgility(value).toLocaleString("pl-PL"),
+                  : formatNumber(evadeFromAgility(value)),
             },
           ]}
         />

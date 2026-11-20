@@ -13,8 +13,8 @@ import { Field, FieldLabel } from "@lootlog/ui/components/field";
 import { Input } from "@lootlog/ui/components/input";
 import { useState } from "react";
 import { apiKeysRenameApiKey } from "@lootlog/client/auth";
-import { getKeyErrorMessage, type ApiKey } from "~/lib/key-client";
-import { portalText as t } from "~/lib/translations";
+import { getKeyErrorMessage, type ApiKey } from "@/lib/key-client";
+import { portalText as t } from "@/lib/translations";
 
 export function KeyRenameDialog({
   apiKey,

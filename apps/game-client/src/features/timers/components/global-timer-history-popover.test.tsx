@@ -2,16 +2,18 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { expect, it } from "vitest";
-import { queryKeys } from "@/features/public-api/query-keys";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+import { queryKeys } from "@/lib/query-keys";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 import { GlobalTimerHistoryPopover } from "./global-timer-history-popover";
 import { SocketProvider } from "@/contexts/socket-context";
 import { useTimersSocket } from "../hooks/use-timers-socket";
-import { createTimerRealtimeFixture } from "../timer-realtime-fixtures";
+import { createTimerRealtimeFixture } from "@/test/timer-realtime-fixtures";
 import {
   createTimerFixture,
   createTimerHistoryFixture,
-} from "../timer-fixtures";
+} from "@/test/timer-fixtures";
+
+const NO_ACCESS_POLICY_OBSERVERS = [] as const;
 
 function HistoryWithRealtime() {
   useTimersSocket();
@@ -90,7 +92,7 @@ it("reloads a recently closed history after a deletion and stops offering restor
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <SocketProvider>
+      <SocketProvider accessPolicyObservers={NO_ACCESS_POLICY_OBSERVERS}>
         <HistoryWithRealtime />
       </SocketProvider>
     </QueryClientProvider>,

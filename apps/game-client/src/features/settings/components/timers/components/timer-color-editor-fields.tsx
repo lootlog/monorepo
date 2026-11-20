@@ -1,8 +1,8 @@
 import { Input } from "@/components/ui/input";
-import { SettingsSliderField } from "@/components/settings/settings-slider-field";
+import { SettingsSliderField } from "@/features/settings/components/shared/settings-slider-field";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { SettingsColorHexField } from "@/components/settings/settings-color-hex-field";
+import { SettingsColorHexField } from "@/features/settings/components/shared/settings-color-hex-field";
 import { alphaToHex, type ColorEditData } from "./color-utils";
 import { TimerColorPreviewChip } from "./timer-color-preview-chip";
 

@@ -1,9 +1,9 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { isObjectRecord } from "@lootlog/schema/records";
 import {
   DISCORD_GUILD_SYNC_STALE_AFTER_SECONDS,
   getUserGuildPermissionsCacheScope,
 } from "#src/shared/cache";
-import { makeJsonCodec } from "#src/redis/redis.service";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeDiscordBotClient } from "#src/discord-bot-client/discord-bot-client";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";

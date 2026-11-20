@@ -3,7 +3,7 @@ import {
   isNotificationSettingsKey,
 } from "@/features/notifications/utils/get-notification-settings-key";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
-import { getHeroTrackerEntranceClosesAtMs } from "@/features/notifications/utils/hero-tracker-notification";
+import { getHeroTrackerEntranceClosesAtMs } from "@/utils/notifications-and-detector/hero-tracker-notification";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import {
   type NotificationPresentation,

@@ -1,11 +1,11 @@
-import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
-import { useChatAppearanceSettings } from "@/features/settings/persistence/use-appearance-settings";
+import { enqueueSettingsPatch } from "@/lib/settings-persistence/settings-patch-client";
+import { useChatAppearanceSettings } from "@/lib/settings-persistence/use-appearance-settings";
 import {
   CHAT_APPEARANCE_COMPACT_PRESET,
   CHAT_APPEARANCE_READABLE_PRESET,
   type ChatAppearanceSettings,
 } from "@lootlog/schema/chat-appearance";
-import { useSourceDraft } from "@/components/settings/use-source-draft";
+import { useSourceDraft } from "@/features/settings/components/shared/use-source-draft";
 
 /**
  * Local draft for slider-style controls: the value follows the pointer while

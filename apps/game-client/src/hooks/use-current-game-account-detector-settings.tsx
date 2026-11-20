@@ -1,4 +1,4 @@
-import { useCurrentGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
+import { useCurrentGameAccountPreferences } from "@/lib/settings-persistence/use-game-account-preferences";
 import {
   getEffectiveDetectorSettings,
   isDetectorPreferencesReady,

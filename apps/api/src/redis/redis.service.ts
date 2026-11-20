@@ -1,35 +1,17 @@
 import { RedisScriptCache } from "@lootlog/database/redis-script";
 import { randomUUID } from "node:crypto";
 import {
-  CacheFillTimeoutError,
-  fillJsonCache,
+  type CacheFillOptions,
+  type CacheFillStore,
+  getOrFillJson,
+  type JsonCodec,
 } from "@lootlog/database/redis-cache-fill";
-import { type Cause, Effect, Exit, Schema } from "effect";
+import { Effect, Schema } from "effect";
 import * as Redis from "effect/persistence/Redis";
 import { chunk } from "es-toolkit";
 
-export interface JsonCodec<T> {
-  stringify: (value: unknown) => string;
-  parse: (text: string) => T;
-}
-
 const DEFAULT_JSON_SERIALIZER: Pick<JsonCodec<unknown>, "stringify"> = {
   stringify: (value) => JSON.stringify(value),
-};
-
-const decodeJsonUnknown = Schema.decodeUnknownSync(
-  Schema.fromJsonString(Schema.Unknown),
-);
-
-export const makeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
-  schema: S,
-): JsonCodec<S["Type"]> => {
-  const decodeValue = Schema.decodeUnknownSync(schema);
-
-  return {
-    stringify: JSON.stringify,
-    parse: (text) => decodeValue(decodeJsonUnknown(text)),
-  };
 };
 
 /** Caches a schema's decoded values, such as `Date`, in their canonical JSON form. */
@@ -46,17 +28,13 @@ export const makeTypeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
   };
 };
 
-export interface RedisGetOrSetJsonOptions<T, E> {
-  readonly key: string;
+export interface RedisGetOrSetJsonOptions<T, E> extends CacheFillOptions<
+  T,
+  E,
+  never
+> {
+  /** Read-cache scopes whose invalidation makes this entry unreachable. */
   readonly scopes?: readonly string[];
-  readonly ttlSeconds: number;
-  readonly factory: Effect.Effect<T, E>;
-  readonly lockTtlSeconds?: number;
-  readonly waitTimeoutMs?: number;
-  readonly waitIntervalMs?: number;
-  readonly codec: JsonCodec<T>;
-  /** Reports a Redis failure the read recovered from by running `factory`. */
-  readonly onError?: (error: unknown) => Effect.Effect<void>;
 }
 
 const DEFAULT_SCAN_COUNT = 500;
@@ -263,89 +241,39 @@ export const makeRedisService = (
       ),
     );
 
+  const cacheFillStore: CacheFillStore<Redis.RedisError> = {
+    getJson,
+    setNX,
+    eval: evalScript,
+  };
+
   const getOrSetJson = <T, E>({
     key,
     scopes = [],
-    factory,
-    onError,
-    ...fillOptions
-  }: RedisGetOrSetJsonOptions<T, E>): Effect.Effect<T, E> =>
-    Effect.gen(function* () {
-      const context = yield* Effect.context<never>();
-      const run = Effect.runPromiseWith(context);
-      let filled: { readonly value: T } | undefined;
-      let factoryFailure: Cause.Cause<E> | undefined;
+    ...options
+  }: RedisGetOrSetJsonOptions<T, E>): Effect.Effect<T, E> => {
+    if (scopes.length === 0)
+      return getOrFillJson(cacheFillStore, { ...options, key });
 
-      // fillJsonCache is shared with battlelog and drives its own Promise loop.
-      const store = {
-        getJson: <A>(cacheKey: string, codec: { parse(text: string): A }) =>
-          run(getJson(cacheKey, codec)),
-        setNX: (cacheKey: string, token: string, ttlSeconds: number) =>
-          run(setNX(cacheKey, token, ttlSeconds)),
-        eval: <A>(
-          script: string,
-          keys: string[],
-          args: Array<string | number>,
-        ) => run(evalScript<A>(script, keys, args)),
-      };
-
-      return yield* Effect.tryPromise({
-        try: async (signal) => {
-          let cacheKey = key;
-
-          if (scopes.length > 0) {
-            const generations = await run(
-              evalScript<string[]>(
-                READ_CACHE_GENERATIONS_SCRIPT,
-                scopes.map((scope) => `cache-generation:v1:${scope}`),
-                [
-                  ...scopes.map(() => randomUUID()),
-                  READ_CACHE_GENERATION_TTL_SECONDS,
-                ],
-              ),
-            );
-
-            // Capture before loading: an invalidated in-flight fill stays unreachable.
-            cacheKey = `read-cache:v1:${generations.join(":")}:${key}`;
-          }
-
-          return fillJsonCache<T>(store, {
-            ...fillOptions,
-            key: cacheKey,
-            signal,
-            factory: async () => {
-              const exit = await Effect.runPromiseExitWith(context)(factory, {
-                signal,
-              });
-
-              if (Exit.isFailure(exit)) {
-                factoryFailure = exit.cause;
-                throw exit.cause;
-              }
-
-              filled = { value: exit.value };
-
-              return exit.value;
-            },
-          });
-        },
-        catch: (error) => error,
-      }).pipe(
-        Effect.catch((error) => {
-          if (factoryFailure !== undefined)
-            return Effect.failCause(factoryFailure);
-
-          if (error instanceof CacheFillTimeoutError) return Effect.die(error);
-
-          const recovered =
-            filled === undefined ? factory : Effect.succeed(filled.value);
-
-          return onError === undefined
-            ? recovered
-            : onError(error).pipe(Effect.andThen(recovered));
-        }),
-      );
-    });
+    return evalScript<string[]>(
+      READ_CACHE_GENERATIONS_SCRIPT,
+      scopes.map((scope) => `cache-generation:v1:${scope}`),
+      [...scopes.map(() => randomUUID()), READ_CACHE_GENERATION_TTL_SECONDS],
+    ).pipe(
+      Effect.matchEffect({
+        onFailure: (error) =>
+          (options.onError?.(error) ?? Effect.void).pipe(
+            Effect.andThen(options.factory),
+          ),
+        // Capture before loading: an invalidated in-flight fill stays unreachable.
+        onSuccess: (generations) =>
+          getOrFillJson(cacheFillStore, {
+            ...options,
+            key: `read-cache:v1:${generations.join(":")}:${key}`,
+          }),
+      }),
+    );
+  };
 
   return {
     get,

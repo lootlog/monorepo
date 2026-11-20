@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useGlobalStore } from "@/store/global.store";
-import { queryKeys } from "./query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import { mapGuilds, mapTimers } from "./mappers";
 import { Emitter } from "./emitter";
 import { setupSubscriptions } from "./subscriptions";

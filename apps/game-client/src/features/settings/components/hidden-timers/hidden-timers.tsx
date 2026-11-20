@@ -1,7 +1,7 @@
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
+import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
 import { IconButton } from "@/components/ui/icon-button";
-import { SettingsList } from "@/components/settings/settings-list";
-import { SettingsListRow } from "@/components/settings/settings-list-row";
+import { SettingsList } from "@/features/settings/components/shared/settings-list";
+import { SettingsListRow } from "@/features/settings/components/shared/settings-list-row";
 import { GLOBAL_TIMER_SETTINGS_KEY } from "@/store/timer-settings-sync";
 import { useTimersStore } from "@/store/timers.store";
 import { RotateCcw } from "lucide-react";

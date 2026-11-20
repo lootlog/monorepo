@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { createNotificationTest } from "@/features/notifications/notification-test";
+import { createNotificationTest } from "@/test/notification-test";
 import { useSettingsStore } from "@/store/settings.store";
 import {
   type StoredNotification,

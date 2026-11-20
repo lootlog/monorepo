@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
-import { createNotificationTest } from "@/features/notifications/notification-test";
+import { DEFAULT_SOUND_URLS } from "@/lib/default-sounds";
+import { createNotificationTest } from "@/test/notification-test";
 import { useSoundPlayback } from "./use-sound-playback";
 
 let test: ReturnType<typeof createNotificationTest>;

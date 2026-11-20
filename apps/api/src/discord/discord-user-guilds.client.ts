@@ -44,7 +44,7 @@ const decodeCompleteUserGuildsEntry = Schema.decodeUnknownSync(
   ),
 );
 
-export interface CompleteUserGuildsResult {
+interface CompleteUserGuildsResult {
   guilds: RESTGetAPICurrentUserGuildsResult;
   /**
    * Discord returned the list within the last two seconds. A list served from

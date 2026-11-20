@@ -5,8 +5,9 @@ import { formatStatisticsWeekdayDate } from "@/components/common/kill-analytics/
 import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 import type { summarizePlayTime } from "./summarize-play-time";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
-const rateFormatter = new Intl.NumberFormat("pl-PL", {
+const rateFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
   maximumFractionDigits: 1,
 });
 

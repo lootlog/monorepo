@@ -2,7 +2,7 @@ import { useHeroSightingWriteAccess } from "@/features/hero-sightings/hooks/use-
 import { useCurrentCharacterCatchingGuildIds } from "@/hooks/api/use-lootlog-characters-config";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 
-export type AddHeroSightingTarget = {
+type AddHeroSightingTarget = {
   readonly guildId: string;
   readonly name: string | undefined;
 };

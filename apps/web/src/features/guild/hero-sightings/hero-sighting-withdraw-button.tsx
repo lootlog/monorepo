@@ -8,7 +8,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   canClaimHeroSightings,
   canWithdrawAnyHeroSighting,
-} from "./hero-sightings-permissions";
+} from "@/lib/hero-sightings-permissions";
 import { useWithdrawHeroSighting } from "./use-withdraw-hero-sighting";
 
 type HeroSightingWithdrawButtonProps = {

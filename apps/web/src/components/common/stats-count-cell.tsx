@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 
 type StatsCountCellProps = {
   value: number;

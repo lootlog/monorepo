@@ -2,8 +2,9 @@ import { cn } from "cn";
 import { ItemStatLine } from "@lootlog/ui/components/item-stat-line";
 import { t } from "@/i18n/messages";
 import type { StatChange } from "@/lib/stat-changes";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
-const percent = new Intl.NumberFormat("pl-PL", {
+const percent = new Intl.NumberFormat(PRODUCT_LOCALE, {
   style: "percent",
   maximumFractionDigits: 1,
   signDisplay: "exceptZero",

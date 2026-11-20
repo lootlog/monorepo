@@ -5,7 +5,7 @@ import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
 import { mergeReadyRoomProjectionIntoCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
-import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
+import { readSeededReadyRoomCache } from "@/features/party-finder/ready-room-fixtures";
 import { useWindowsStore } from "@/store/windows.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { usePartyGatheringOrchestration } from "./use-party-gathering-orchestration";

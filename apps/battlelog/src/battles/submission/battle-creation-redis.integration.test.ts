@@ -601,11 +601,10 @@ it("does not retry a loader that fails without an error value", async () => {
   let calls = 0;
 
   const exit = await Effect.runPromiseExit(
-    services.redis.getOrSetJsonBestEffort({
+    services.redis.getOrSetJson({
       key: "undefined-failure",
       ttlSeconds: 30,
       codec: { stringify: JSON.stringify, parse: Number },
-      onError: () => {},
       factory: Effect.suspend(() => {
         calls++;
 
@@ -630,7 +629,6 @@ it("times out best-effort cache waiters without duplicating the active fill", as
     codec: { stringify: JSON.stringify, parse: Number },
     waitTimeoutMs: 60,
     waitIntervalMs: 10,
-    onError: () => {},
     factory: Effect.promise(() => {
       calls++;
       begin();
@@ -639,16 +637,14 @@ it("times out best-effort cache waiters without duplicating the active fill", as
     }),
   };
 
-  const owner = Effect.runPromise(
-    services.redis.getOrSetJsonBestEffort(options),
-  );
+  const owner = Effect.runPromise(services.redis.getOrSetJson(options));
 
   try {
     await started;
 
     const waiters = await Promise.all(
       Array.from({ length: 8 }, () =>
-        Effect.runPromiseExit(services.redis.getOrSetJsonBestEffort(options)),
+        Effect.runPromiseExit(services.redis.getOrSetJson(options)),
       ),
     );
 
@@ -677,11 +673,10 @@ it("prevents an expired cache owner from replacing its successor's cached result
     ttlSeconds: 30,
     lockTtlSeconds: 1,
     codec: { stringify: JSON.stringify, parse: Number },
-    onError: () => {},
   };
 
   const owner = Effect.runPromise(
-    services.redis.getOrSetJsonBestEffort({
+    services.redis.getOrSetJson({
       ...options,
       factory: Effect.promise(() => {
         begin();
@@ -697,7 +692,7 @@ it("prevents an expired cache owner from replacing its successor's cached result
     await Bun.sleep(1_100);
     expect(
       await Effect.runPromise(
-        services.redis.getOrSetJsonBestEffort({
+        services.redis.getOrSetJson({
           ...options,
           factory: Effect.succeed(99),
         }),
@@ -720,13 +715,12 @@ it("cancels a waiting best-effort reader without running its factory after lock 
   let calls = 0;
 
   const reading = Effect.runPromiseExit(
-    services.redis.getOrSetJsonBestEffort({
+    services.redis.getOrSetJson({
       key,
       ttlSeconds: 30,
       waitTimeoutMs: 500,
       waitIntervalMs: 10,
       codec: { stringify: JSON.stringify, parse: Number },
-      onError: () => {},
       factory: Effect.sync(() => {
         calls++;
 

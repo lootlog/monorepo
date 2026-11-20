@@ -57,7 +57,6 @@
     "react-markdown": "^10.1.0",
     "recharts": "^3.10.1",
     "remark-gfm": "^4.0.1",
-    "sonner": "^2.0.8",
     "usehooks-ts": "^3.1.1",
     "zustand": "^5.0.15"
   },
@@ -71,7 +70,7 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "happy-dom": "^21.0.4",
-    "oxc-transform-react": "^0.154.0",
+    "oxc-transform-react": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"

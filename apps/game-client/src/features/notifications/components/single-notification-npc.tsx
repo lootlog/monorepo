@@ -1,7 +1,7 @@
 import type { FC } from "react";
 import { CountBadge } from "@/components/count-badge";
 import { HeroTrackerStatus } from "@/components/hero-tracker-status";
-import { getHeroTrackerEntranceClosesAtMs } from "@/features/notifications/utils/hero-tracker-notification";
+import { getHeroTrackerEntranceClosesAtMs } from "@/utils/notifications-and-detector/hero-tracker-notification";
 import {
   getNotificationReportCount,
   type NotificationWithServers,

@@ -1,6 +1,6 @@
-import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
 import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
-import { useSettingsSaveStatusStore } from "@/features/settings/persistence/settings-save-status.store";
+import { useSettingsSaveStatusStore } from "@/lib/settings-persistence/settings-save-status.store";
 import type { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useCharacterCatchingSelection } from "@/hooks/use-character-catching-selection";

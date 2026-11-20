@@ -4,24 +4,26 @@ import { expect, it } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { getSocket } from "@/lib/socket";
 import { SocketProvider } from "@/contexts/socket-context";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import {
   createTimerDeletedEventFixture,
   createTimerEventFixture,
   createTimerFixture,
   createTimerHistoryFixture,
-} from "../timer-fixtures";
+} from "@/test/timer-fixtures";
 import { normalizeTimerResponse } from "@/api/timers.api";
 import {
   getTimersControllerGetRecentTimerHistoryQueryOptions,
   getTimersControllerGetTimerHistoryQueryOptions,
 } from "@lootlog/client/main";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
-import { createTimerRealtimeFixture } from "../timer-realtime-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
+import { createTimerRealtimeFixture } from "@/test/timer-realtime-fixtures";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useGlobalStore } from "@/store/global.store";
 import { useTimers } from "@/hooks/api/use-timers";
 import { useTimersSocket } from "./use-timers-socket";
+
+const NO_ACCESS_POLICY_OBSERVERS = [] as const;
 
 function TimerListener({ readSnapshot = false }: { readSnapshot?: boolean }) {
   useTimers({ world: readSnapshot ? "luvia" : undefined });
@@ -37,7 +39,7 @@ it("loads one initial timer snapshot after joining so pre-join changes cannot be
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <SocketProvider>
+      <SocketProvider accessPolicyObservers={NO_ACCESS_POLICY_OBSERVERS}>
         <TimerListener readSnapshot />
       </SocketProvider>
     </QueryClientProvider>,
@@ -65,7 +67,7 @@ it("loads timers while the gateway is unreachable and catches up when the first 
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <SocketProvider>
+      <SocketProvider accessPolicyObservers={NO_ACCESS_POLICY_OBSERVERS}>
         <TimerListener readSnapshot />
       </SocketProvider>
     </QueryClientProvider>,
@@ -115,7 +117,7 @@ it("replaces a timer list still loading from the unreachable fallback when the f
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <SocketProvider>
+      <SocketProvider accessPolicyObservers={NO_ACCESS_POLICY_OBSERVERS}>
         <TimerListener readSnapshot />
       </SocketProvider>
     </QueryClientProvider>,
@@ -151,7 +153,9 @@ it("updates world cache only while joined and subscribed, including listener cle
 
   const content = (listening: boolean) => (
     <QueryClientProvider client={fixture.queryClient}>
-      <SocketProvider>{listening && <TimerListener />}</SocketProvider>
+      <SocketProvider accessPolicyObservers={NO_ACCESS_POLICY_OBSERVERS}>
+        {listening && <TimerListener />}
+      </SocketProvider>
     </QueryClientProvider>
   );
 
@@ -210,7 +214,7 @@ it("stores a socket timer in the same shape as a loaded one, keeping who reset i
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <SocketProvider>
+      <SocketProvider accessPolicyObservers={NO_ACCESS_POLICY_OBSERVERS}>
         <TimerListener />
       </SocketProvider>
     </QueryClientProvider>,
@@ -290,7 +294,7 @@ it("refreshes an active timer snapshot after a socket reconnect with unchanged p
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <SocketProvider>
+      <SocketProvider accessPolicyObservers={NO_ACCESS_POLICY_OBSERVERS}>
         <TimerListener readSnapshot />
       </SocketProvider>
     </QueryClientProvider>,
@@ -373,7 +377,7 @@ it("recovers missed history changes on reconnect without fetching closed histori
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <SocketProvider>
+      <SocketProvider accessPolicyObservers={NO_ACCESS_POLICY_OBSERVERS}>
         <TimerListener />
       </SocketProvider>
     </QueryClientProvider>,

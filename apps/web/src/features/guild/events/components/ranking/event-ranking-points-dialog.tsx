@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { EventRanking } from "../../types/api";
+import type { EventRanking } from "@/lib/api/event-types";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
 import { getRankingMemberName } from "./get-ranking-member-name";
 

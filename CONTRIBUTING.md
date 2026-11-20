@@ -156,8 +156,10 @@ bun run lint
 bun run build
 ```
 
-Typecheck includes source and tests. Unit tests run from `src`, including runtime
-and contract tests. Integration and HTTP E2E tests start isolated PostgreSQL and
+Typecheck includes source and tests. Every workspace names tests `*.test.ts(x)`.
+`test` runs all of them except `*.integration.test.ts` and `*.e2e.test.ts`;
+`test:integration` selects integration suites by that suffix, so a new suite
+needs no registration. Integration and HTTP E2E tests start isolated PostgreSQL and
 Dragonfly containers and apply the complete migration chain; Docker must be
 available. Repository integration tests exercise real database operations, while
 service tests replace dependencies at their public interfaces.

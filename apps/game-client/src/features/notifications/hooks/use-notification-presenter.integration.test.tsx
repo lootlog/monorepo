@@ -1,4 +1,4 @@
-import { createNotificationTest } from "../notification-test";
+import { createNotificationTest } from "@/test/notification-test";
 import { act, Profiler, useEffect, type ProfilerOnRenderCallback } from "react";
 import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";

@@ -1,7 +1,7 @@
 import type {
   SettingsDomainValue,
   SettingsSubsectionValue,
-} from "./constants/settings-tabs";
+} from "@/constants/settings-tabs";
 import type { SettingsCatalogKey } from "@lootlog/domain/settings-documents";
 import {
   getCharacterAurasControllerGetOwnAuraQueryKey,

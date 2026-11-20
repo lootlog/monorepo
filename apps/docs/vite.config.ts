@@ -3,7 +3,7 @@ import viteReact from "@vitejs/plugin-react";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { fumadocsMdx } from "fumadocs-mdx/vite";
 import { defineConfig } from "vite";
-import { docsMarkdownPaths, docsPaths } from "./lib/docs-paths.ts";
+import { docsMarkdownPaths, docsPaths } from "./src/lib/docs-paths.ts";
 
 export default defineConfig({
   build: {
@@ -46,6 +46,6 @@ export default defineConfig({
         enabled: false,
       },
     }),
-    viteReact(),
+    viteReact({ compiler: true }),
   ],
 });

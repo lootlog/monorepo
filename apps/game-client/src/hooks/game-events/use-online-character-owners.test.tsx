@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRealtimeTest } from "@/test/realtime-test";
-import { createOnlinePresence } from "@/features/online-players/online-players-test-fixtures";
+import { createOnlinePresence } from "@/test/online-players-fixtures";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useSettingsStore } from "@/store/settings.store";

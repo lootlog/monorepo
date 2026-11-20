@@ -21,7 +21,7 @@ import { TopNpcsCard } from "./components/top-npcs-card";
 import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
-import { formatNumber } from "@/lib/format-number";
+import { formatNumber } from "@lootlog/domain/locale";
 import { parseKillStatsLevel } from "@/features/kills/parse-kill-stats-level";
 
 const NPC_TYPE_STORAGE_KEY = "stats-top-npcs-type";

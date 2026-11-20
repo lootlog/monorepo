@@ -13,6 +13,7 @@ import {
   getFullPartyChance,
   getRollChance,
 } from "@/lib/drop-rate";
+import { formatNumber } from "@lootlog/domain/locale";
 
 /**
  * How likely a boss is to drop the item: the chance of one loot roll, and
@@ -85,7 +86,7 @@ export function ItemDropRate({
                   {t(`catalog.dropRateCounts.${key}`)}
                 </dt>
                 <dd className="text-right font-medium text-foreground">
-                  {value.toLocaleString("pl-PL")}
+                  {formatNumber(value)}
                 </dd>
               </div>
             ))}

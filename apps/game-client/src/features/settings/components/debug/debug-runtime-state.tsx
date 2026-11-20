@@ -3,8 +3,8 @@ import { getRuntimeZoomFactor } from "@/lib/margonem-runtime/adapters/legacy-ui-
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOthersStore } from "@/store/others.store";
 import { usePartyStore } from "@/store/party.store";
-import { SettingsPanel } from "@/components/settings/settings-panel";
-import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsPanel } from "@/features/settings/components/shared/settings-panel";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
 import { useTranslation } from "react-i18next";
 
 export function DebugRuntimeState() {

@@ -45,8 +45,6 @@ generated
 **/__tests__
 **/*.test.ts
 **/*.test.tsx
-**/*.spec.ts
-**/*.spec.tsx
 **/coverage
 coverage
 **/.nyc_output

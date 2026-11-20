@@ -3,14 +3,13 @@ import {
   catalogControllerGetEvents,
   catalogControllerGetIndex,
 } from "@lootlog/client/catalog";
-import { escape } from "es-toolkit";
 import {
   WIKI_GAME_VERSION,
   itemPageParams,
   npcPageParams,
 } from "@/lib/catalog-links";
 import { configureWikiServerApiClients } from "@/lib/configure-api-clients";
-import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
+import { PUBLIC_SITE_ORIGINS, sitemapXml } from "@lootlog/domain/public-sites";
 
 // The whole catalog arrives in one response; it may take longer than a page.
 const CATALOG_TIMEOUT_MS = 10_000;
@@ -62,15 +61,8 @@ export const Route = createFileRoute("/sitemap.xml")({
           ...npcs.map((npc) => `/npcs/${npcPageParams(npc).npcSlug}`),
         ];
 
-        const urls = paths
-          .map(
-            (path) =>
-              `<url><loc>${escape(`${PUBLIC_SITE_ORIGINS.wiki}${path}`)}</loc></url>`,
-          )
-          .join("");
-
         return new Response(
-          `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`,
+          sitemapXml(paths.map((path) => `${PUBLIC_SITE_ORIGINS.wiki}${path}`)),
           {
             headers: {
               "Content-Type": "application/xml; charset=utf-8",

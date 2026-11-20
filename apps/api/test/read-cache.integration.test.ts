@@ -1,3 +1,4 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { UserLootlogConfigData } from "../src/lootlog-config/user-lootlog-config-data.js";
 import { MemberReadData } from "../src/members/members-data.js";
 import { makeMemberReadDataLayer } from "../src/members/member-read.data-layer.js";
@@ -9,11 +10,7 @@ import { Effect, ManagedRuntime, Schema } from "effect";
 import { Redis } from "effect/persistence";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import {
-  makeJsonCodec,
-  makeRedisService,
-  type RedisService,
-} from "#src/redis/redis.service";
+import { makeRedisService, type RedisService } from "#src/redis/redis.service";
 import { LootStatsService } from "#src/loots/query/loot-stats.service";
 
 import { eq } from "drizzle-orm";

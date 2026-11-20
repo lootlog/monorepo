@@ -1,4 +1,4 @@
-import type { EventTimer } from "../types/api";
+import type { EventTimer } from "@/lib/api/event-types";
 
 interface FindEventHeroTimerOptions {
   heroNpcId?: number | null;

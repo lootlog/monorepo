@@ -6,8 +6,6 @@ import React, {
   useState,
   useSyncExternalStore,
 } from "react";
-import { useTimersSocket } from "@/features/guild/timers/use-timers-socket";
-import { useHeroSightingsSocket } from "@/features/guild/hero-sightings/use-hero-sightings-socket";
 import { useKillStatsUpdates } from "@/hooks/utils/use-kill-stats-updates";
 import {
   socket,
@@ -21,7 +19,7 @@ import {
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import { LootUnreadProvider } from "./loot-unread-provider";
-import { reconcileEventPolicyQueries } from "@/features/guild/events/hooks/mutations/invalidate-event-queries";
+import { reconcileEventPolicyQueries } from "@/lib/reconcile-event-policy-queries";
 
 type Props = {
   children: React.ReactNode;
@@ -44,8 +42,6 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   const queryClient = useQueryClient();
   const { user } = useUser();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
-  useTimersSocket({ socket, guilds });
-  useHeroSightingsSocket({ socket, guilds });
   const connected = useSyncExternalStore(subscribeConnection, isConnected);
   const [joined, setJoined] = useState(false);
 

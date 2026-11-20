@@ -7,7 +7,7 @@ import {
 import { httpErrorResponse } from "./errors.js";
 
 /** The `HttpErrorResponse` shape with its validation code and issues spelled out. */
-export const RequestValidationError = Schema.Struct({
+const RequestValidationError = Schema.Struct({
   code: Schema.Literal("VALIDATION_ERROR"),
   message: Schema.String,
   details: Schema.Struct({

@@ -6,7 +6,7 @@ import {
 import { getShortnameByProf } from "@lootlog/domain/profession";
 import type { ChatEventMsg, GameEvent } from "@lootlog/margonem/game-events";
 import { createHeroSighting } from "@/api/hero-sightings.api";
-import { upsertHeroSightings } from "@/features/hero-sightings/hero-sightings-cache";
+import { upsertHeroSightings } from "@/hooks/api/hero-sightings-cache";
 import { getFreshCharacterCatchingGuildIds } from "@/hooks/api/use-lootlog-characters-config";
 import { isSignedOut } from "@/lib/auth-client";
 import { queryClient } from "@/lib/query-client";

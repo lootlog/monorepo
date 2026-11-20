@@ -1,42 +1,12 @@
 import { RedisScriptCache } from "@lootlog/database/redis-script";
 import {
-  CacheFillTimeoutError,
-  fillJsonCache,
+  type CacheFillOptions,
+  type CacheFillStore,
+  getOrFillJson,
+  type JsonCodec,
 } from "@lootlog/database/redis-cache-fill";
-import { Cause, Effect, Exit, Schema } from "effect";
+import { Effect } from "effect";
 import type * as Redis from "effect/persistence/Redis";
-
-export interface JsonCodec<T> {
-  stringify(value: T): string;
-  parse(text: string): T;
-}
-
-export interface RedisGetOrSetJsonOptions<T, E, R> {
-  readonly key: string;
-  readonly ttlSeconds: number;
-  readonly factory: Effect.Effect<T, E, R>;
-  readonly codec: JsonCodec<T>;
-  readonly lockTtlSeconds?: number;
-  readonly waitTimeoutMs?: number;
-  readonly waitIntervalMs?: number;
-  /** Reports a Redis failure the read recovered from by running `factory`. */
-  readonly onError: (cause: unknown) => void;
-}
-
-const decodeJsonUnknown = Schema.decodeUnknownSync(
-  Schema.fromJsonString(Schema.Unknown),
-);
-
-export const makeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
-  schema: S,
-): JsonCodec<S["Type"]> => {
-  const decodeValue = Schema.decodeUnknownSync(schema);
-
-  return {
-    stringify: (value) => JSON.stringify(value),
-    parse: (text) => decodeValue(decodeJsonUnknown(text)),
-  };
-};
 
 export const makeRedisStore = (redis: Redis.Redis["Service"]) => {
   const scripts = new RedisScriptCache();
@@ -77,66 +47,19 @@ export const makeRedisStore = (redis: Redis.Redis["Service"]) => {
       ...args.map(String),
     );
 
-  // fillJsonCache is shared with apps/api and drives its own Promise loop.
-  const cacheFillStore = {
-    getJson: <T>(key: string, codec: { parse(text: string): T }) =>
-      Effect.runPromise(getJson(key, codec)),
-    setNX: (key: string, token: string, ttlSeconds: number) =>
-      Effect.runPromise(setNX(key, token, ttlSeconds)),
-    eval: <TResult>(
-      script: string,
-      keys: string[],
-      args: Array<string | number>,
-    ) => Effect.runPromise(evalScript<TResult>(script, keys, args)),
+  const cacheFillStore: CacheFillStore<Redis.RedisError> = {
+    getJson,
+    setNX,
+    eval: evalScript,
   };
 
   /**
    * Reads a JSON value, or lets one caller fill it while the others wait. A
    * Redis failure runs `factory` uncached; a `factory` failure fails the read.
    */
-  const getOrSetJsonBestEffort = <T, E, R>({
-    factory,
-    onError,
-    ...options
-  }: RedisGetOrSetJsonOptions<T, E, R>): Effect.Effect<T, E, R> =>
-    Effect.gen(function* () {
-      const context = yield* Effect.context<R>();
-      let filled: { readonly value: T } | undefined;
-      let factoryFailure: Cause.Cause<E> | undefined;
-
-      return yield* Effect.tryPromise({
-        try: (signal) =>
-          fillJsonCache<T>(cacheFillStore, {
-            ...options,
-            signal,
-            factory: async () => {
-              const exit = await Effect.runPromiseExitWith(context)(factory, {
-                signal,
-              });
-
-              if (Exit.isFailure(exit)) {
-                factoryFailure = exit.cause;
-                throw Cause.squash(exit.cause);
-              }
-
-              filled = { value: exit.value };
-
-              return exit.value;
-            },
-          }),
-        catch: (error) => error,
-      }).pipe(
-        Effect.catch((error) => {
-          if (factoryFailure !== undefined)
-            return Effect.failCause(factoryFailure);
-
-          if (error instanceof CacheFillTimeoutError) return Effect.die(error);
-          onError(error);
-
-          return filled === undefined ? factory : Effect.succeed(filled.value);
-        }),
-      );
-    });
+  const getOrSetJson = <T, E, R>(
+    options: CacheFillOptions<T, E, R>,
+  ): Effect.Effect<T, E, R> => getOrFillJson(cacheFillStore, options);
 
   return {
     set,
@@ -147,7 +70,7 @@ export const makeRedisStore = (redis: Redis.Redis["Service"]) => {
       set(key, JSON.stringify(value), ttlSeconds),
     setNX,
     evalScript,
-    getOrSetJsonBestEffort,
+    getOrSetJson,
     expire: (key: string, ttlSeconds: number) =>
       redis.send<number>("EXPIRE", key, String(ttlSeconds)),
     zremrangebyscore: (key: string, min: number | "-inf", max: number) =>

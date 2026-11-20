@@ -16,7 +16,7 @@ import {
   APP_ERROR_WINDOW_MAX_HEIGHT,
   APP_ERROR_WINDOW_MIN_HEIGHT,
   APP_ERROR_WINDOW_WIDTH,
-} from "./error-boundary.constants";
+} from "@/constants/app-error-window";
 import { getErrorBoundaryDetails } from "./get-error-boundary-details";
 
 export const AppErrorBoundaryFallback = ({

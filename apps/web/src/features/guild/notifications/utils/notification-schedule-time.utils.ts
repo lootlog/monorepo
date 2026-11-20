@@ -3,6 +3,7 @@ import {
   getLocalTime,
   toUtcDateFromLocal,
 } from "@lootlog/datetime";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 export const formatDateTimeLocalInputValue = (
   value: string | null | undefined,
@@ -70,7 +71,7 @@ export const formatNotificationDateInTimeZone = (
 ) => {
   const date = value instanceof Date ? value : new Date(value);
 
-  return new Intl.DateTimeFormat("pl-PL", {
+  return new Intl.DateTimeFormat(PRODUCT_LOCALE, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

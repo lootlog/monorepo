@@ -1,6 +1,6 @@
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import {
   Select,
   SelectContent,
@@ -13,7 +13,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { AddonStatusSection } from "@/features/settings/components/general/addon-status-section";
 import { LocalDataSection } from "@/features/settings/components/general/local-data-section";
 import { WindowLayoutSection } from "@/features/settings/components/general/window-layout-section";
-import { useAccountEnabledFlag } from "@/features/settings/persistence/use-account-enabled-flag";
+import { useAccountEnabledFlag } from "@/lib/settings-persistence/use-account-enabled-flag";
 import { SettingsHelpPopover } from "@/features/settings/components/shared/settings-help-popover";
 import { useSettingsStore } from "@/store/settings.store";
 import {

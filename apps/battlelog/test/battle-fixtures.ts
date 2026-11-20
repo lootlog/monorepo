@@ -146,7 +146,7 @@ export const unusedRedisStore = {
   get: unexpectedRedisOperation,
   getJson: unexpectedRedisOperation,
   setJson: unexpectedRedisOperation,
-  getOrSetJsonBestEffort: unexpectedRedisOperation,
+  getOrSetJson: unexpectedRedisOperation,
   setNX: unexpectedRedisOperation,
   evalScript: unexpectedRedisOperation,
   del: unexpectedRedisOperation,

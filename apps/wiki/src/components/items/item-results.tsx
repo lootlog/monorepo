@@ -10,6 +10,7 @@ import {
   type ItemSearchParams,
 } from "@/lib/catalog-page-queries";
 import { CATALOG_MAX_HITS } from "@/lib/catalog-pages";
+import { formatNumber } from "@lootlog/domain/locale";
 
 // The sorts that rank by attack speed, and which one each shows.
 const ATTACK_SPEED_RANKINGS = new Map<string | undefined, AttackSpeedRanking>([
@@ -51,7 +52,7 @@ export function ItemResults({ params, query, filters }: ItemResultsProps) {
                   ? "search.resultsCapped"
                   : "search.results",
                 {
-                  count: total.toLocaleString("pl-PL"),
+                  count: formatNumber(total),
                 },
               )
             : t("search.loading")}

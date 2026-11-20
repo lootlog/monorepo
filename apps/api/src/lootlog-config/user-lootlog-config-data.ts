@@ -1,5 +1,6 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
-import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { type RedisService } from "#src/redis/redis.service";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import {
   selectAccessibleGuilds,

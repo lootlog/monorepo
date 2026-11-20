@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PolicyLayout } from "@/src/components/policy-layout";
-import TermsOfServiceContent from "@/src/content/terms-of-service.mdx";
+import { PolicyLayout } from "@/components/policy-layout";
+import TermsOfServiceContent from "@/content/terms-of-service.mdx";
 
 export const Route = createFileRoute("/terms-of-service")({
   head: () => ({

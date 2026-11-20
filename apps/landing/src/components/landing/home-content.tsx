@@ -1,17 +1,17 @@
 import { ArrowUpRight, MessageCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { ClosingCta } from "@/src/components/landing/closing-cta";
-import { EcosystemShowcase } from "@/src/components/landing/ecosystem-showcase";
-import { FaqPanel } from "@/src/components/landing/faq-panel";
-import { GuidesShowcase } from "@/src/components/landing/guides-showcase";
-import { LandingFooter } from "@/src/components/landing/footer";
-import { LandingHeader } from "@/src/components/landing/header";
-import { HeroSection } from "@/src/components/landing/hero-section";
-import { HowItWorks } from "@/src/components/landing/how-it-works";
-import { ProductProof } from "@/src/components/landing/product-proof";
-import { TrustRecord } from "@/src/components/landing/trust-record";
-import { links } from "@/src/config/links";
+import { ClosingCta } from "@/components/landing/closing-cta";
+import { EcosystemShowcase } from "@/components/landing/ecosystem-showcase";
+import { FaqPanel } from "@/components/landing/faq-panel";
+import { GuidesShowcase } from "@/components/landing/guides-showcase";
+import { LandingFooter } from "@/components/landing/footer";
+import { LandingHeader } from "@/components/landing/header";
+import { HeroSection } from "@/components/landing/hero-section";
+import { HowItWorks } from "@/components/landing/how-it-works";
+import { ProductProof } from "@/components/landing/product-proof";
+import { TrustRecord } from "@/components/landing/trust-record";
+import { links } from "@/config/links";
 
 export function HomeContent() {
   const { t } = useTranslation();

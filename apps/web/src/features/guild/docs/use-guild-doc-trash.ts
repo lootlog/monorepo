@@ -10,7 +10,7 @@ import {
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { invalidateGuildDocsQueries } from "./docs-api";
-import { canManageGuildDocs } from "./docs-permissions";
+import { canManageGuildDocs } from "@/lib/docs-permissions";
 
 /**
  * Moving a document to the trash and back. Only admins can restore, so only

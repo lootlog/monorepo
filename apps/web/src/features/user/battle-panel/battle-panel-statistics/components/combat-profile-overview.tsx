@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatDuration } from "@/utils/date/format-duration";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 type CombatProfileOverviewProps = {
   data: CombatProfileResponseDtoOutput | undefined;
@@ -24,7 +25,7 @@ type CombatProfileOverviewProps = {
   rated?: boolean;
 };
 
-const compactFormatter = new Intl.NumberFormat("pl-PL", {
+const compactFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
   notation: "compact",
   maximumFractionDigits: 1,
 });

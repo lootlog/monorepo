@@ -1,19 +1,18 @@
-import { useCharacterAuraGrantMenu } from "@/features/character-auras/hooks/use-character-aura-grant-menu";
-import { useCharacterAuras } from "@/features/character-auras/hooks/use-character-auras";
 import { useEffect, useRef } from "react";
 import { useGlobalStore } from "@/store/global.store";
 import { EventDispatcher } from "@/lib/event-dispatcher";
+import type { GameEventObserver } from "@/processors/game-event-observer";
 import { useCharacterTooltipCatchingGuilds } from "./use-character-tooltip-catching-guilds";
 import { useCharacterTooltipGameEvents } from "./use-character-tooltip-game-events";
 import { useOnlineCharacterOwners } from "./use-online-character-owners";
 import { useOtherCatchingGuildGlow } from "./use-other-catching-guild-glow";
 import { useWhoIsHereLootlogHighlight } from "./use-who-is-here-lootlog-highlight";
 
-export const useGameEventHandlers = () => {
+export const useGameEventHandlers = (
+  observers: readonly GameEventObserver[],
+) => {
   useCharacterTooltipCatchingGuilds();
   useCharacterTooltipGameEvents();
-  useCharacterAuras();
-  useCharacterAuraGrantMenu();
   useOnlineCharacterOwners();
   useOtherCatchingGuildGlow();
   useWhoIsHereLootlogHighlight();
@@ -22,7 +21,7 @@ export const useGameEventHandlers = () => {
   const dispatcher = useRef<EventDispatcher | null>(null);
 
   useEffect(() => {
-    const registered = new EventDispatcher();
+    const registered = new EventDispatcher({ observers });
     registered.register();
     dispatcher.current = registered;
 
@@ -30,7 +29,7 @@ export const useGameEventHandlers = () => {
       registered.cleanup();
       dispatcher.current = null;
     };
-  }, []);
+  }, [observers]);
 
   useEffect(() => {
     if (gameInitialized) dispatcher.current?.handleInitialEvents();

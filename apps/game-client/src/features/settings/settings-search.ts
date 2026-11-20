@@ -2,7 +2,7 @@ import { foldText } from "@lootlog/domain/text-fold";
 import type {
   SettingsDomainValue,
   SettingsSubsectionValue,
-} from "./constants/settings-tabs";
+} from "@/constants/settings-tabs";
 import type {
   SettingsControlId,
   SettingsDomainManifestItem,

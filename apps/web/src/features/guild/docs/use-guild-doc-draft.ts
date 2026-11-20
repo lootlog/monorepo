@@ -14,7 +14,7 @@ import {
   guildDocDetailQueryOptions,
   invalidateGuildDocsQueries,
 } from "./docs-api";
-import { canWriteGuildDocs } from "./docs-permissions";
+import { canWriteGuildDocs } from "@/lib/docs-permissions";
 import { useGuildDocTrash } from "./use-guild-doc-trash";
 import {
   normalizeGuildDocEditorContent,

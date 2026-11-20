@@ -1,0 +1,543 @@
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
+// @vitest-environment happy-dom
+
+import { initializeTestTranslations } from "@/lib/testing/i18n";
+import { Profiler, type ReactElement } from "react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render as renderElement,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { stubResultsTableViewport } from "@/lib/testing/viewport";
+
+import type { MemberReferenceResponseDtoOutput } from "@lootlog/client/main";
+import { configureApiClients } from "@lootlog/client/transport";
+import type { EventRanking } from "@/lib/api/event-types";
+import { EventRankingTable } from "./event-ranking-table";
+
+const mocks = vi.hoisted(() => ({
+  fetch: vi.fn(),
+  memberReferences: new Array<MemberReferenceResponseDtoOutput>(),
+}));
+
+const isMemberReferencesRequest = (input: RequestInfo | URL) =>
+  new URL(input instanceof Request ? input.url : input).pathname.endsWith(
+    "/members/references",
+  );
+
+await initializeTestTranslations();
+
+const wrapper = await createOrganizationTestWrapper();
+
+const render = (element: ReactElement) => renderElement(element, { wrapper });
+
+describe("EventRankingTable", () => {
+  let restoreApiClients: () => void;
+
+  beforeEach(() => {
+    stubResultsTableViewport();
+    vi.clearAllMocks();
+    mocks.memberReferences = [];
+    mocks.fetch.mockResolvedValue(
+      new Response(JSON.stringify([]), {
+        headers: { "content-type": "application/json" },
+        status: 200,
+      }),
+    );
+    restoreApiClients = configureApiClients({
+      main: {
+        baseUrl: "https://api.test",
+        // Rows look up who left the Lootlog; the assertions count only ranking requests.
+        fetch: (input, init) =>
+          isMemberReferencesRequest(input)
+            ? Promise.resolve(
+                new Response(JSON.stringify(mocks.memberReferences), {
+                  headers: { "content-type": "application/json" },
+                  status: 200,
+                }),
+              )
+            : mocks.fetch(input, init),
+      },
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+    restoreApiClients();
+  });
+
+  it("does not request edit history while ranking rows are closed", () => {
+    renderRankingTable([
+      createRanking({ id: "ranking-1", memberId: 1 }),
+      createRanking({ id: "ranking-2", memberId: 2 }),
+    ]);
+
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
+  it("preserves a correction while saving and after failure, then closes after a successful retry", async () => {
+    let failRequest = (_reason: Error) => {};
+
+    const pendingRequest = new Promise<Response>((_resolve, reject) => {
+      failRequest = reject;
+    });
+
+    const requests: Request[] = [];
+    mocks.fetch.mockImplementation((input, init) => {
+      requests.push(new Request(input, init));
+
+      return requests.length === 1
+        ? pendingRequest
+        : Promise.resolve(new Response(null, { status: 204 }));
+    });
+
+    renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })]);
+    fireEvent.click(screen.getByRole("button", { name: "events.points.edit" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "events.points.deltaLabel" }),
+      {
+        target: { value: "12.5" },
+      },
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "events.points.commentLabel" }),
+      {
+        target: { value: "Missing participation" },
+      },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "common.save" }));
+
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("button", { name: "common.save" })
+          .hasAttribute("disabled"),
+      ).toBe(true);
+      expect(requests).toHaveLength(1);
+    });
+    expect(
+      screen.getByRole("textbox", { name: "events.points.deltaLabel" }),
+    ).toHaveProperty("value", "12.5");
+    expect(
+      screen.getByRole("textbox", { name: "events.points.commentLabel" }),
+    ).toHaveProperty("value", "Missing participation");
+
+    await act(async () => {
+      failRequest(new Error("Network unavailable"));
+    });
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("button", { name: "common.save" })
+          .hasAttribute("disabled"),
+      ).toBe(false);
+    });
+    expect(
+      screen.getByRole("textbox", { name: "events.points.deltaLabel" }),
+    ).toHaveProperty("value", "12.5");
+    expect(
+      screen.getByRole("textbox", { name: "events.points.commentLabel" }),
+    ).toHaveProperty("value", "Missing participation");
+
+    fireEvent.click(screen.getByRole("button", { name: "common.save" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "events.points.edit" }),
+    );
+    expect(requests).toHaveLength(2);
+
+    for (const request of requests) {
+      expect(new URL(request.url).pathname).toBe(
+        "/guilds/guild-1/events/event-1/ranking/ranking-1",
+      );
+      expect(await request.json()).toEqual({
+        pointsDelta: 12.5,
+        comment: "Missing participation",
+      });
+    }
+  });
+
+  it("keeps the selected ranking and correction when refreshed points reorder the table", async () => {
+    const ranking = createRanking({
+      id: "ranking-1",
+      memberId: 1,
+      totalPoints: 100,
+    });
+
+    const otherRanking = createRanking({
+      id: "ranking-2",
+      memberId: 2,
+      totalPoints: 50,
+    });
+
+    const { rerenderRankings } = renderRankingTable([ranking, otherRanking]);
+    const selectedRow = screen.getByText("Member 1").closest("tr");
+
+    if (!selectedRow)
+      throw new Error("Expected the selected member's ranking row");
+    fireEvent.click(
+      within(selectedRow).getByRole("button", { name: "events.points.edit" }),
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "events.points.deltaLabel" }),
+      {
+        target: { value: "10" },
+      },
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "events.points.commentLabel" }),
+      {
+        target: { value: "Correct member" },
+      },
+    );
+
+    rerenderRankings([ranking, { ...otherRanking, totalPoints: 200 }]);
+
+    expect(
+      screen.getByRole("textbox", { name: "events.points.deltaLabel" }),
+    ).toHaveProperty("value", "10");
+    expect(
+      screen.getByRole("textbox", { name: "events.points.commentLabel" }),
+    ).toHaveProperty("value", "Correct member");
+    fireEvent.click(screen.getByRole("button", { name: "common.save" }));
+    await waitFor(() => expect(mocks.fetch).toHaveBeenCalledOnce());
+    const [input, init] = mocks.fetch.mock.calls[0] ?? [];
+    const request = new Request(input, init);
+    expect(new URL(request.url).pathname).toBe(
+      "/guilds/guild-1/events/event-1/ranking/ranking-1",
+    );
+    expect(await request.json()).toEqual({
+      pointsDelta: 10,
+      comment: "Correct member",
+    });
+  });
+
+  it("returns keyboard focus to the selected ranking's current edit button after a refresh", async () => {
+    const ranking = createRanking({ id: "ranking-1", memberId: 1 });
+
+    const otherRanking = createRanking({
+      id: "ranking-2",
+      memberId: 2,
+      totalPoints: 50,
+    });
+
+    const { rerenderRankings } = renderRankingTable([ranking, otherRanking]);
+
+    const selectedRow = screen.getByText("Member 1").closest("tr");
+
+    if (!selectedRow)
+      throw new Error("Expected the selected member's ranking row");
+
+    const editButton = within(selectedRow).getByRole("button", {
+      name: "events.points.edit",
+    });
+
+    editButton.focus();
+    fireEvent.click(editButton);
+    rerenderRankings([ranking, { ...otherRanking, totalPoints: 200 }]);
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    const refreshedRow = screen.getByText("Member 1").closest("tr");
+
+    if (!refreshedRow)
+      throw new Error("Expected the refreshed member's ranking row");
+
+    expect(document.activeElement).toBe(
+      within(refreshedRow).getByRole("button", { name: "events.points.edit" }),
+    );
+  });
+
+  it("does not enter an update loop after an external rerender", async () => {
+    const ranking = createRanking({ id: "ranking-1", memberId: 1 });
+    const queryClient = new QueryClient();
+    let commitCount = 0;
+
+    const createRankingTable = () => (
+      <QueryClientProvider client={queryClient}>
+        <Profiler id="ranking" onRender={() => (commitCount += 1)}>
+          <EventRankingTable rankings={[ranking]} />
+        </Profiler>
+      </QueryClientProvider>
+    );
+
+    const { rerender } = render(createRankingTable());
+    // The member list each name reads settles before the commits are counted.
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    const commitsAfterMount = commitCount;
+
+    rerender(createRankingTable());
+    await act(() => Promise.resolve());
+
+    expect(commitCount - commitsAfterMount).toBeLessThanOrEqual(2);
+  });
+
+  it("links each row to the member page with a single tab stop", () => {
+    renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })]);
+
+    const primaryLink = screen.getByRole("link", {
+      name: "events.ranking.openMemberStats",
+    });
+
+    expect(primaryLink.getAttribute("href")).toBe(
+      "/guild-1/events/event-1/members/1",
+    );
+    expect(primaryLink.tabIndex).toBe(0);
+    expect(
+      screen
+        .getAllByRole("link")
+        .filter((link) => link !== primaryLink)
+        .every((link) => link.tabIndex === -1),
+    ).toBe(true);
+  });
+
+  it("keeps point sorting and formats non-zero AFK values", () => {
+    renderRankingTable([
+      createRanking({
+        avgAfkPercentage: 2.6,
+        id: "ranking-low",
+        memberId: 1,
+        totalPoints: 50,
+      }),
+      createRanking({
+        id: "ranking-high",
+        memberId: 2,
+        totalPoints: 103.5,
+      }),
+    ]);
+
+    const rankingRows = screen.getAllByRole("row").slice(1);
+    expect(rankingRows[0]?.textContent).toContain("Member 2");
+    expect(rankingRows[0]?.textContent).toContain("103.5");
+    expect(rankingRows[1]?.textContent).toContain("Member 1");
+    expect(screen.getByText("3%")).toBeTruthy();
+  });
+
+  it("highlights the current guild member", () => {
+    const { container } = renderRankingTable(
+      [
+        createRanking({ id: "ranking-1", memberId: 1 }),
+        createRanking({ id: "ranking-2", memberId: 2 }),
+      ],
+      { currentMemberId: 2 },
+    );
+
+    const highlightedRows = container.querySelectorAll('[aria-current="true"]');
+
+    expect(highlightedRows).toHaveLength(1);
+    expect(highlightedRows[0]?.textContent).toContain("Member 2");
+  });
+
+  it("marks members who left the Lootlog as inactive", async () => {
+    mocks.memberReferences = [
+      {
+        id: 1,
+        userId: "discord-1",
+        name: "Member 1",
+        globalUserId: null,
+        displayName: null,
+        username: null,
+        globalAvatar: null,
+        bannerUrl: null,
+        roles: [],
+        joinedAt: null,
+        color: null,
+        active: true,
+      },
+      {
+        id: 2,
+        userId: "discord-2",
+        name: "Member 2",
+        globalUserId: null,
+        displayName: null,
+        username: null,
+        globalAvatar: null,
+        bannerUrl: null,
+        roles: [],
+        joinedAt: null,
+        color: null,
+        active: false,
+      },
+    ];
+
+    renderRankingTable([
+      createRanking({ id: "ranking-1", memberId: 1, totalPoints: 200 }),
+      createRanking({ id: "ranking-2", memberId: 2 }),
+    ]);
+
+    const [firstRow, secondRow] = screen.getAllByRole("row").slice(1);
+
+    await waitFor(() =>
+      expect(secondRow?.textContent).toContain("common.inactiveMember"),
+    );
+    expect(firstRow?.textContent).not.toContain("common.inactiveMember");
+  });
+
+  it("marks manually modified points next to their value", () => {
+    renderRankingTable(
+      [createRanking({ id: "ranking-1", memberId: 1, pointsModified: true })],
+      { canEdit: false },
+    );
+
+    expect(screen.getByLabelText("events.points.modified")).toBeTruthy();
+  });
+
+  it("renders the embedded history without another request", async () => {
+    renderRankingTable([
+      createRanking({
+        editHistory: [
+          {
+            id: "history-1",
+            rankingId: "ranking-1",
+            previousPoints: 80,
+            newPoints: 100,
+            deltaPoints: 20,
+            editType: "RANKING",
+            editedByUserId: "editor-1",
+            editedByName: "Editor",
+            comment: "Correction",
+            editedAt: "2026-07-28T12:00:00.000Z",
+          },
+        ],
+        id: "ranking-1",
+        memberId: 1,
+      }),
+      createRanking({ id: "ranking-2", memberId: 2 }),
+    ]);
+
+    const [historyButton] = screen.getAllByRole("button", {
+      name: "events.points.history",
+    });
+
+    if (!historyButton) {
+      throw new Error("Expected an edit history button");
+    }
+
+    fireEvent.click(historyButton);
+
+    expect(await screen.findByText("Correction")).toBeTruthy();
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
+  it("does not expose history without modified points", () => {
+    renderRankingTable([
+      createRanking({
+        id: "ranking-1",
+        memberId: 1,
+        pointsModified: false,
+      }),
+    ]);
+
+    expect(
+      screen.queryByRole("button", { name: "events.points.history" }),
+    ).toBeNull();
+  });
+
+  it("does not expose history without edit access", () => {
+    renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })], {
+      canEdit: false,
+    });
+
+    expect(
+      screen.queryByRole("button", { name: "events.points.history" }),
+    ).toBeNull();
+  });
+
+  it("does not request history without guild and event identifiers", () => {
+    renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })], {
+      eventId: "",
+      guildId: "",
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "events.points.history" }),
+    );
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+});
+
+type RankingTableOptions = {
+  canEdit?: boolean;
+  currentMemberId?: number;
+  eventId?: string;
+  guildId?: string;
+};
+
+function renderRankingTable(
+  rankings: EventRanking[],
+  options: RankingTableOptions = {},
+) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 2,
+        retryDelay: 0,
+      },
+    },
+  });
+
+  const createTable = (currentRankings: EventRanking[]) => (
+    <QueryClientProvider client={queryClient}>
+      <EventRankingTable
+        rankings={currentRankings}
+        guildId={options.guildId ?? "guild-1"}
+        eventId={options.eventId ?? "event-1"}
+        canEdit={options.canEdit ?? true}
+        currentMemberId={options.currentMemberId}
+      />
+    </QueryClientProvider>
+  );
+
+  const view = render(createTable(rankings));
+
+  return {
+    ...view,
+    rerenderRankings: (currentRankings: EventRanking[]) =>
+      view.rerender(createTable(currentRankings)),
+  };
+}
+
+function createRanking({
+  avgAfkPercentage = 0,
+  editHistory = [],
+  id,
+  memberId,
+  pointsModified = true,
+  totalPoints = 100,
+}: {
+  avgAfkPercentage?: number;
+  editHistory?: EventRanking["editHistory"];
+  id: string;
+  memberId: number;
+  pointsModified?: boolean;
+  totalPoints?: number;
+}): EventRanking {
+  return {
+    id,
+    eventId: "event-1",
+    memberId,
+    heroNpcName: "Mushita",
+    totalPoints,
+    totalKills: 2,
+    totalTimeSeconds: 60,
+    avgAfkPercentage,
+    editHistory,
+    pointsModified,
+    updatedAt: "2026-07-28T12:00:00.000Z",
+    member: {
+      id: memberId,
+      name: `Member ${memberId}`,
+      avatar: null,
+      userId: `user-${memberId}`,
+      roles: [],
+    },
+  };
+}

@@ -1,4 +1,4 @@
-import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
+import { useUpdateGameAccountPreferences } from "@/lib/settings-persistence/use-game-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import {
   DETECTOR_NPC_TYPES,

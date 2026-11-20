@@ -4,7 +4,7 @@ import { assertRoutedTo } from "../../traffic-splitter/scripts/assert-routed.mjs
 import assert from "node:assert/strict";
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-import { docsPages } from "../lib/docs-paths";
+import { docsPages } from "../src/lib/docs-paths";
 
 const clientDirectory = path.resolve("dist/client");
 

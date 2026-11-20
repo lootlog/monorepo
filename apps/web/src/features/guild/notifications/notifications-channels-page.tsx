@@ -14,6 +14,7 @@ import { NotificationsInfoButton } from "./components/notifications-info-button"
 import { NotificationChannelRowsSkeleton } from "./notification-channel-rows-skeleton";
 import { useNotificationsOverview } from "./use-notifications-overview";
 import { getGuildNotificationTargetLabel } from "./utils/notification-settings.utils";
+import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
 /** The channels tab: the Discord channels rules send to. */
 export const NotificationsChannelsPage = () => {
@@ -26,12 +27,12 @@ export const NotificationsChannelsPage = () => {
     useState<NotificationTargetResponseDto>();
 
   const { hasRequiredPermissions, targets } = overview;
-  const normalizedSearch = search.trim().toLocaleLowerCase("pl");
+  const normalizedSearch = normalizeSearchText(search);
 
   const channels = targets.filter((target) =>
-    getGuildNotificationTargetLabel(target)
-      .toLocaleLowerCase("pl")
-      .includes(normalizedSearch),
+    normalizeSearchText(getGuildNotificationTargetLabel(target)).includes(
+      normalizedSearch,
+    ),
   );
 
   const renderChannels = () => {

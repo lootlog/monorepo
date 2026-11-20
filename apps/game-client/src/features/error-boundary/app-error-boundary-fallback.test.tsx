@@ -4,7 +4,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
 import { AppErrorBoundaryFallback } from "./app-error-boundary-fallback";
-import { APP_ERROR_WINDOW_ID } from "./error-boundary.constants";
+import { APP_ERROR_WINDOW_ID } from "@/constants/app-error-window";
 
 const mockClipboardWriteText = vi.fn<Clipboard["writeText"]>();
 

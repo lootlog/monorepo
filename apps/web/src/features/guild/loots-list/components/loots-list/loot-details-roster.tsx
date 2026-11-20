@@ -1,4 +1,4 @@
-import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
+import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { cn } from "cn";

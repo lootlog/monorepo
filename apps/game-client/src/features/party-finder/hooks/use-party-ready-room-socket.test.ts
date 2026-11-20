@@ -7,8 +7,10 @@ import { SocketProvider } from "@/contexts/socket-context";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket } from "@/lib/socket";
 import { RealtimeWire } from "@/test/realtime-wire";
-import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
+import { readSeededReadyRoomCache } from "@/features/party-finder/ready-room-fixtures";
 import { usePartyReadyRoomSocket } from "./use-party-ready-room-socket";
+
+const NO_ACCESS_POLICY_OBSERVERS = [] as const;
 
 function ReadyRoomListener() {
   usePartyReadyRoomSocket();
@@ -48,7 +50,11 @@ describe("usePartyReadyRoomSocket", () => {
   it("applies personalized gateway updates and stops applying them after unmount", async () => {
     const view = render(
       withClient(
-        createElement(SocketProvider, null, createElement(ReadyRoomListener)),
+        createElement(
+          SocketProvider,
+          { accessPolicyObservers: NO_ACCESS_POLICY_OBSERVERS },
+          createElement(ReadyRoomListener),
+        ),
       ),
     );
 
@@ -77,7 +83,13 @@ describe("usePartyReadyRoomSocket", () => {
       ).toBe(4);
     });
 
-    view.rerender(withClient(createElement(SocketProvider, null)));
+    view.rerender(
+      withClient(
+        createElement(SocketProvider, {
+          accessPolicyObservers: NO_ACCESS_POLICY_OBSERVERS,
+        }),
+      ),
+    );
     const received = Promise.withResolvers<void>();
     const stopObserving = realtime.subscribe(() => received.resolve());
     await act(async () => {

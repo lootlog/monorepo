@@ -9,9 +9,9 @@ import {
   readSeededReadyRoomCache,
   readyRoomOrganizerFixture,
   seedReadyRoomCache,
-} from "@/test/ready-room-fixtures";
+} from "@/features/party-finder/ready-room-fixtures";
 import { useWindowsStore } from "@/store/windows.store";
-import { createChatReadyRoom } from "@/features/chat/chat-test-fixtures";
+import { createChatReadyRoom } from "@/test/chat-fixtures";
 import { PartyFinder } from "./party-finder";
 
 let restore = () => {};

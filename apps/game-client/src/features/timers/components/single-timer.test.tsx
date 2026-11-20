@@ -19,8 +19,8 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import {
   createTimerFixture,
   createTimerMemberFixture,
-} from "../timer-fixtures";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+} from "@/test/timer-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 import { TimerClockProvider } from "./timer-clock-provider";
 import { SingleTimer } from "./single-timer";
 import { TimerGridPopups } from "./timer-grid-popups";

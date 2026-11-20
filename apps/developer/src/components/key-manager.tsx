@@ -3,15 +3,15 @@ import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { KeyCreateSheet } from "~/components/key-create-sheet";
-import { KeyList } from "~/components/key-list";
-import { KeySecretCard } from "~/components/key-secret-card";
-import { isApiKeyActive } from "~/lib/key-client";
+import { KeyCreateSheet } from "@/components/key-create-sheet";
+import { KeyList } from "@/components/key-list";
+import { KeySecretCard } from "@/components/key-secret-card";
+import { isApiKeyActive } from "@/lib/key-client";
 import {
   apiKeysQueryOptions,
   keyOrganizationsQueryOptions,
-} from "~/lib/key-queries";
-import { portalText as t } from "~/lib/translations";
+} from "@/lib/key-queries";
+import { portalText as t } from "@/lib/translations";
 
 const ACTIVE_KEY_LIMIT = 10;
 

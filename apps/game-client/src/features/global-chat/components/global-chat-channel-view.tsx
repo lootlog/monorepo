@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { getApiErrorStatus } from "@lootlog/client/transport";
 import { AsyncContent } from "@/components/async-content";
 import { NoLootlogEmptyState } from "@/components/no-lootlog-empty-state";
-import { useChatAppearanceSettings } from "@/features/settings/persistence/use-appearance-settings";
+import { useChatAppearanceSettings } from "@/lib/settings-persistence/use-appearance-settings";
 import {
   GLOBAL_CHAT_SHARED_CHANNEL,
   type GlobalChatChannel,

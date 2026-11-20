@@ -12,6 +12,7 @@ import { isHeroTrackersEvent } from "@/lib/hero-trackers";
 import { prefetchPageQueries } from "@/lib/catalog-page-queries";
 import { eventNameOf } from "@/lib/item-events";
 import { canonicalLink } from "@/lib/link-preview";
+import { formatNumber } from "@lootlog/domain/locale";
 
 export const Route = createFileRoute("/events_/$eventSlug")({
   component: EventRoute,
@@ -112,7 +113,7 @@ function EventRoute() {
           <p className="text-sm text-muted-foreground md:text-[0.9375rem]">
             {items
               ? t("catalog.eventDescription", {
-                  count: items.length.toLocaleString("pl-PL"),
+                  count: formatNumber(items.length),
                 })
               : t("search.loading")}
           </p>

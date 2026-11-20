@@ -1,8 +1,8 @@
 import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
 import { PUBLIC_API_SERVICES } from "@lootlog/schema/api-services";
 import { createDocsSite } from "@lootlog/ui/lib/docs-markdown";
-import { source } from "~/lib/source";
-import { portalText } from "~/lib/translations";
+import { source } from "@/lib/source";
+import { portalText } from "@/lib/translations";
 
 export const portalSite = createDocsSite({
   source,

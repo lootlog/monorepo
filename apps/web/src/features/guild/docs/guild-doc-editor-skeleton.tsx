@@ -7,7 +7,7 @@ import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
-import { canWriteGuildDocs } from "./docs-permissions";
+import { canWriteGuildDocs } from "@/lib/docs-permissions";
 import { GUILD_DOC_COLUMN_CLASS } from "./guild-doc-column";
 
 /** Formatting controls per toolbar group, as the editor toolbar lays them out. */

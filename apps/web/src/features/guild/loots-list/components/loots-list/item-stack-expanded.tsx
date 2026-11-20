@@ -1,5 +1,5 @@
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
-import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
+import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import type { Item } from "@/lib/loots/loot-types";
 import * as m from "framer-motion/m";
 import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";

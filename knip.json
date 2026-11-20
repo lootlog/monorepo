@@ -1,113 +1,157 @@
 {
-  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     ".": {
       "entry": [],
       "project": [],
       "ignoreDependencies": ["wrangler"]
     },
-    "apps/*": {
-      "entry": [
-        "src/index.ts",
-        "src/main.ts",
-        "src/main.tsx",
-        "src/App.tsx",
-        "src/openapi/generate-openapi.ts",
-        "scripts/**/*.{ts,mjs}",
-        "server.js",
-        "src/**/*.test.{ts,tsx}",
-        "vite.worktree.mts"
-      ],
+    "apps/activity": {
+      "entry": ["src/main.ts!"],
+      "project": ["src/**/*.ts!"]
+    },
+    "apps/api": {
+      "entry": ["src/main.ts!"],
+      "project": ["src/**/*.ts!", "test/**/*.ts"]
+    },
+    "apps/auth": {
+      "entry": ["src/main.ts!"],
+      "project": ["src/**/*.ts!", "scripts/**/*.ts"]
+    },
+    "apps/battlelog": {
+      "entry": ["src/main.ts!"],
+      "project": ["src/**/*.ts!", "test/**/*.ts", "scripts/**/*.ts"]
+    },
+    "apps/catalog": {
+      "entry": ["src/main.ts!"],
+      "project": ["src/**/*.ts!", "test/**/*.ts"]
+    },
+    "apps/developer": {
+      "project": ["src/**/*.{ts,tsx,css,mdx}!", "*.{ts,mts,js,mjs}"]
+    },
+    "apps/discord-bot": {
+      "entry": ["src/main.ts!"],
+      "project": ["src/**/*.ts!", "test/**/*.ts"]
+    },
+    "apps/docs": {
       "project": [
-        "src/**/*.{ts,tsx}",
-        "test/**/*.{ts,tsx}",
-        "lib/**/*.{ts,tsx}",
-        "components/**/*.{ts,tsx}",
-        "scripts/**/*.{ts,mjs}",
-        "*.{ts,mts,js,mjs}",
-        "*.config.{ts,mts,js,mjs}",
-        "**/*.{spec,test,e2e-spec}.{ts,tsx,js}"
+        "src/**/*.{ts,tsx,css,mdx}!",
+        "scripts/**/*.mjs",
+        "*.{ts,mts,js,mjs}"
       ]
     },
     "apps/game-client": {
       "entry": [
-        "src/main.tsx",
+        "src/main.tsx!",
         "sandbox/main.ts",
-        "extension/entrypoints/**/*.ts",
-        "vite.config.ts",
-        "src/shims/use-sync-external-store-with-selector.ts"
+        "extension/entrypoints/**/*.ts!",
+        "src/shims/use-sync-external-store-with-selector.ts!",
+        "vite.config.ts"
       ],
       "project": [
-        "src/**/*.{ts,tsx}",
+        "src/**/*.{ts,tsx,css}!",
         "sandbox/**/*.{ts,tsx}",
-        "*.{ts,mts,js,mjs}",
-        "*.config.{ts,mts,js,mjs}",
-        "**/*.{spec,test,e2e-spec}.{ts,tsx,js}",
-        "extension/**/*.{ts,tsx}"
+        "extension/**/*.{ts,tsx}!",
+        "*.{ts,mts,js,mjs}"
       ],
-      "vite": false,
-      "ignoreDependencies": ["shadcn"]
+      "vite": false
     },
-    "packages/*": {
+    "apps/gateway": {
+      "entry": ["src/main.ts!"],
+      "project": ["src/**/*.ts!", "test/**/*.ts"]
+    },
+    "apps/landing": {
       "project": [
-        "src/**/*.{ts,tsx}",
-        "scripts/**/*.{ts,mjs}",
+        "src/**/*.{ts,tsx,css,mdx}!",
         "*.{ts,mts,js,mjs}",
-        "*.config.{ts,mts,js,mjs}",
-        "**/*.{spec,test}.{ts,tsx,js}"
-      ],
+        "scripts/**/*.mjs"
+      ]
+    },
+    "apps/search": {
+      "entry": ["src/main.ts!"],
+      "project": ["src/**/*.ts!", "test/**/*.ts"]
+    },
+    "apps/traffic-splitter": {
+      "project": ["src/**/*.ts!", "scripts/**/*.mjs"]
+    },
+    "apps/web": {
+      "project": ["src/**/*.{ts,tsx,css}!", "*.{ts,mts,js,mjs}"],
+      "entry": ["src/loot-slot.css!"]
+    },
+    "apps/wiki": {
+      "project": ["src/**/*.{ts,tsx,css}!", "*.{ts,mts,js,mjs}"],
+      "entry": ["src/**/*.test.ts", "vite.worktree.mts"]
+    },
+    "packages/battle-processor": {
+      "project": ["src/**/*.{ts,tsx}!", "test/**/*.ts"],
       "includeEntryExports": true
     },
+    "packages/cli": {
+      "project": ["src/**/*.{ts,tsx}!"],
+      "includeEntryExports": true
+    },
+    "packages/client": {
+      "entry": ["src/generated/**/*.ts!"],
+      "project": ["src/**/*.{ts,tsx}!", "{scripts,test}/**/*.ts"]
+    },
+    "packages/database": {
+      "project": ["src/**/*.{ts,tsx}!", "test/**/*.ts"],
+      "includeEntryExports": true
+    },
+    "packages/datetime": {
+      "project": ["src/**/*.{ts,tsx}!"],
+      "includeEntryExports": true
+    },
+    "packages/domain": {
+      "project": ["src/**/*.{ts,tsx}!"],
+      "includeEntryExports": true
+    },
+    "packages/game-client-api": {
+      "project": ["src/**/*.ts!"]
+    },
+    "packages/instrumentation": {
+      "project": ["src/**/*.{ts,tsx}!", "test/**/*.ts"],
+      "includeEntryExports": true
+    },
+    "packages/margonem": {
+      "project": ["src/**/*.{ts,tsx}!"],
+      "includeEntryExports": true
+    },
+    "packages/meilisearch": {
+      "project": ["src/**/*.{ts,tsx}!"],
+      "includeEntryExports": true
+    },
+    "packages/messaging": {
+      "project": ["src/**/*.{ts,tsx}!", "test/**/*.ts"],
+      "includeEntryExports": true
+    },
+    "packages/protocol": {
+      "project": ["src/**/*.{ts,tsx}!", "test/**/*.ts"],
+      "includeEntryExports": true
+    },
+    "packages/schema": {
+      "project": ["src/**/*.{ts,tsx}!"],
+      "includeEntryExports": true
+    },
+    "packages/sdk": {
+      "entry": ["src/generated/**/*.ts!"],
+      "project": ["src/**/*.ts!", "scripts/**/*.ts"],
+      "ignoreDependencies": ["@lootlog/protocol"]
+    },
     "packages/ui": {
-      "project": [
-        "src/**/*.{ts,tsx}",
-        "*.{ts,mts,js,mjs}",
-        "**/*.{spec,test}.{ts,tsx,js}"
-      ],
+      "project": ["src/**/*.{ts,tsx,css}!"],
       "includeEntryExports": true,
       "ignore": [
         "src/components/{accordion,alert-dialog,alert,avatar,badge,breadcrumb,button,calendar,card,chart,checkbox,collapsible,combobox,command,context-menu,dialog,drawer,dropdown-menu,empty,field,form,input-group,input,kbd,label,popover,progress,radio-group,scroll-area,select,separator,sheet,sidebar,skeleton,slider,sonner,spinner,switch,table,tabs,textarea,toggle-group,tooltip}.tsx"
       ]
-    },
-    "packages/game-client-api": {},
-    "packages/client": {
-      "entry": ["src/generated/**/*.{ts,tsx}", "scripts/**/*.{ts,mjs}"],
-      "project": [
-        "src/**/*.{ts,tsx}",
-        "scripts/**/*.{ts,mjs}",
-        "*.{ts,mts,js,mjs}",
-        "*.config.{ts,mts,js,mjs}",
-        "**/*.{spec,test}.{ts,tsx,js}"
-      ]
-    },
-    "packages/sdk": {
-      "entry": [
-        "src/index.ts",
-        "src/generated/**/*.{ts,tsx}",
-        "scripts/**/*.{ts,mjs}"
-      ],
-      "project": [
-        "src/**/*.{ts,tsx}",
-        "scripts/**/*.{ts,mjs}",
-        "*.{ts,mts,js,mjs}",
-        "*.config.{ts,mts,js,mjs}",
-        "**/*.{spec,test}.{ts,tsx,js}"
-      ],
-      "ignoreDependencies": ["@lootlog/protocol"]
     }
   },
-  "ignoreWorkspaces": ["repos/**"],
   "ignoreDependencies": [
     "@effect/language-service",
-    "@fontsource-variable/geist",
-    "@fontsource-variable/geist-mono",
     "@tailwindcss/postcss",
     "@types/mdx",
     "husky",
-    "tailwindcss",
-    "tw-animate-css"
+    "tailwindcss"
   ],
-  "ignoreBinaries": ["check", "jq"],
-  "vite": true,
-  "vitest": true
+  "ignoreBinaries": ["check"]
 }

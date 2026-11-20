@@ -1,5 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
+  collectKnownHeroes,
+  suggestKnownHeroes,
   parseHeroDetectorMessage,
   resolveHeroSightingTransition,
   upsertNewestHeroSighting,
@@ -151,5 +153,36 @@ describe("keeping the newest sighting of each hero", () => {
     expect(upsertNewestHeroSighting(current, sighting(1, "jaruna"))).toBe(
       current,
     );
+  });
+});
+
+describe("heroes offered while adding a sighting by hand", () => {
+  const timer = (name: string, type = "HERO") => ({
+    npc: { name, lvl: 100, prof: "w", type },
+  });
+
+  it("keeps the sighting spelling, skips other NPC timers and sorts in Polish", () => {
+    const heroes = collectKnownHeroes(
+      [{ hero: { name: "Łowczyni Wspomnień", lvl: 117, prof: "HUNTER" } }],
+      [
+        timer("łowczyni wspomnień"),
+        timer("Lisz"),
+        timer("Mroczny Patryk", "TITAN"),
+      ],
+    );
+
+    expect(heroes.map(({ name, prof }) => [name, prof])).toEqual([
+      ["Lisz", "w"],
+      ["Łowczyni Wspomnień", "h"],
+    ]);
+  });
+
+  it("suggests heroes containing the typed text, including an exact match", () => {
+    const heroes = collectKnownHeroes([], [timer("Lisz"), timer("Domina")]);
+
+    expect(
+      suggestKnownHeroes(heroes, " lisz ").map(({ name }) => name),
+    ).toEqual(["Lisz"]);
+    expect(suggestKnownHeroes(heroes, "  ")).toEqual([]);
   });
 });

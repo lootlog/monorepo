@@ -7,7 +7,7 @@ import {
   soundSettingValues,
   type SettingsDocumentValues,
 } from "@/test/settings-documents-fixtures";
-import type { SoundSettings } from "@/features/settings/persistence/use-sound-settings";
+import type { SoundSettings } from "@/lib/settings-persistence/use-sound-settings";
 import { useSettingsStore } from "@/store/settings.store";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";

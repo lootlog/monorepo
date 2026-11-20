@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { EmptyState } from "@/components/common/empty-state";
-import type { EventRanking } from "../../types/api";
+import type { EventRanking } from "@/lib/api/event-types";
 import { formatPoints, formatSignedPoints } from "../../utils/format-points";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 

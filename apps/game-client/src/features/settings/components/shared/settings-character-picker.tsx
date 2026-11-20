@@ -1,12 +1,12 @@
 import type { MargonemCharacter } from "@/api/characters.api";
 import { CharacterSprite } from "@/components/character-sprite";
-import { SettingsSaveBadge } from "@/components/settings/settings-save-badge";
+import { SettingsSaveBadge } from "@/features/settings/components/shared/settings-save-badge";
 import { ToggleGroup } from "@/components/ui/toggle-group";
 import {
   SettingsPickerCard,
   settingsPickerGridClassName,
 } from "@/features/settings/components/shared/settings-picker-card";
-import type { SettingsSaveMark } from "@/features/settings/persistence/settings-save-status.store";
+import type { SettingsSaveMark } from "@/lib/settings-persistence/settings-save-status.store";
 import { cn } from "cn";
 import type { FC } from "react";
 

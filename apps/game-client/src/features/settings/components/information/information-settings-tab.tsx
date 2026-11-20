@@ -1,8 +1,8 @@
 import { CopyDiagnosticsButton } from "@/components/copy-diagnostics-button";
 import { IconButton } from "@/components/ui/icon-button";
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import {
   APP_ENVIRONMENT,
   BUILD_TIMESTAMP,
@@ -15,12 +15,13 @@ import { once } from "es-toolkit";
 import { Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
+import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 // Built on first use so the bundle does not load locale data while it
 // evaluates during the game's startup.
 const getBuildTimestampFormatter = once(
   () =>
-    new Intl.DateTimeFormat("pl-PL", {
+    new Intl.DateTimeFormat(PRODUCT_LOCALE, {
       dateStyle: "medium",
       timeStyle: "medium",
       timeZone: "UTC",

@@ -1,5 +1,5 @@
+import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { makeJsonCodec } from "#src/redis/redis.service";
 import { makeEventHeroCheckDispatcher } from "#src/events/kills/event-hero-check-outbox";
 import { makeOutboxWorker } from "#src/shared/outbox-worker";
 import { makeRedisLockManager } from "#src/redis/redlock";

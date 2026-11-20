@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
 import i18n from "@/i18n/config";
-import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
+import { enqueueSettingsPatch } from "@/lib/settings-persistence/settings-patch-client";
 
 const STORAGE_KEY = storageKey("ll:hotkeys:state");
 
