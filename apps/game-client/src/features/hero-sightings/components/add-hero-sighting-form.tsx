@@ -14,7 +14,7 @@ import {
   useAddHeroSightingForm,
   type AddHeroSightingFormProps,
 } from "@/features/hero-sightings/hooks/use-add-hero-sighting-form";
-import type { KnownHero } from "@/features/hero-sightings/known-heroes";
+import type { KnownHero } from "@lootlog/domain/hero-sightings";
 
 const hintClassName = "ll:text-[11px] ll:text-gray-400";
 

@@ -1,6 +1,9 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { AddHeroSightingDtoState } from "@lootlog/client/main";
-import { getHeroSightingKey } from "@lootlog/domain/hero-sightings";
+import {
+  getHeroSightingKey,
+  type KnownHero,
+} from "@lootlog/domain/hero-sightings";
 import { getShortnameByProf } from "@lootlog/domain/profession";
 import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import {
@@ -30,7 +33,6 @@ import { DialogActionFooter } from "@/components/common/dialog-action-footer";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { useGuildWorldScope } from "@/hooks/context/use-guild-world-scope";
 import { HeroSightingNameField } from "./hero-sighting-name-field";
-import type { KnownHero } from "./known-heroes";
 import { useAddHeroSighting } from "./use-add-hero-sighting";
 
 type HeroSightingAddDialogProps = {

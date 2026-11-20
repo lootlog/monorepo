@@ -1,6 +1,8 @@
 import {
   parseHeroDetectorMessage,
+  suggestKnownHeroes,
   type HeroDetection,
+  type KnownHero,
 } from "@lootlog/domain/hero-sightings";
 import { formatLevel } from "@lootlog/domain/profession";
 import {
@@ -11,7 +13,6 @@ import {
   ComboboxList,
 } from "@lootlog/ui/components/combobox";
 import type { ComponentProps } from "react";
-import type { KnownHero } from "./known-heroes";
 
 type HeroSightingNameFieldProps = Pick<
   ComponentProps<typeof ComboboxInput>,
@@ -27,8 +28,6 @@ type HeroSightingNameFieldProps = Pick<
   onPasteDetection: (detection: HeroDetection) => void;
 };
 
-const MAX_SUGGESTIONS = 8;
-
 /**
  * The hero's name, typed freely. Heroes the Organization already met are
  * suggested, and the detector's chat line can be pasted whole.
@@ -42,15 +41,7 @@ export const HeroSightingNameField = ({
   onPasteDetection,
   ...inputProps
 }: HeroSightingNameFieldProps) => {
-  const typed = value.trim().toLowerCase();
-
-  const suggestions = knownHeroes
-    .filter(
-      (hero) =>
-        hero.name.toLowerCase().includes(typed) &&
-        hero.name.toLowerCase() !== typed,
-    )
-    .slice(0, MAX_SUGGESTIONS);
+  const suggestions = suggestKnownHeroes(knownHeroes, value);
 
   return (
     <Combobox

@@ -6,15 +6,13 @@ import { useTranslation } from "react-i18next";
 import { AddHeroSightingDtoState } from "@lootlog/client/main";
 import { getApiErrorStringField } from "@lootlog/client/transport";
 import {
+  collectKnownHeroes,
   getHeroSightingKey,
   parseHeroDetectorMessage,
-} from "@lootlog/domain/hero-sightings";
-import { getShortnameByProf } from "@lootlog/domain/profession";
-import {
-  collectKnownHeroes,
   suggestKnownHeroes,
   type KnownHero,
-} from "@/features/hero-sightings/known-heroes";
+} from "@lootlog/domain/hero-sightings";
+import { getShortnameByProf } from "@lootlog/domain/profession";
 import { useAddHeroSighting } from "@/features/hero-sightings/hooks/use-add-hero-sighting";
 import { useAddHeroSightingTargets } from "@/features/hero-sightings/hooks/use-add-hero-sighting-targets";
 import { useLoadedHeroSightings } from "@/hooks/api/use-hero-sightings";

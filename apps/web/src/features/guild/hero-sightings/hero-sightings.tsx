@@ -20,7 +20,7 @@ import {
 import { HeroSightingAddDialog } from "./hero-sighting-add-dialog";
 import { sortHeroSightings } from "./hero-sighting-status";
 import { canClaimHeroSightings } from "./hero-sightings-permissions";
-import { getKnownHeroes } from "./known-heroes";
+import { collectKnownHeroes } from "@lootlog/domain/hero-sightings";
 import { HeroSightingsBoard } from "./hero-sightings-board";
 import { HeroSightingsResultsSkeleton } from "./hero-sightings-results-skeleton";
 import { useGuildHeroSightings } from "./use-guild-hero-sightings";
@@ -201,7 +201,7 @@ export const HeroSightings = () => {
         <HeroSightingAddDialog
           open={isAdding}
           onOpenChange={setIsAdding}
-          knownHeroes={getKnownHeroes(sightings ?? [], heroTimers)}
+          knownHeroes={collectKnownHeroes(sightings ?? [], heroTimers)}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { getProfByShortname } from "./profession.js";
+import { getProfByShortname, getShortnameByProf } from "./profession.js";
 import { normalizeNpcName } from "@lootlog/schema/npc-identity";
 import {
   HeroSightingState,
@@ -211,3 +211,71 @@ export const isCurrentHeroSighting = (
   },
   now: number,
 ): boolean => sighting.closedAt === null && !isHeroSightingStale(sighting, now);
+
+/** A hero a surface already knows, offered while a sighting is added by hand. */
+export type KnownHero = {
+  readonly key: string;
+  readonly name: string;
+  readonly lvl: number;
+  /** Margonem profession shortname, when known. */
+  readonly prof: string | undefined;
+};
+
+type NamedHero = {
+  readonly name: string;
+  readonly lvl: number;
+  readonly prof: string | null | undefined;
+};
+
+/** Timers carry a shortname or a profession name; sightings a profession name. */
+const toProfShortname = (prof: string | null | undefined) => {
+  if (!prof) return undefined;
+  const shortname = prof.toLowerCase();
+
+  return (
+    getShortnameByProf(prof.toUpperCase()) ??
+    (getProfByShortname(shortname) ? shortname : undefined)
+  );
+};
+
+/**
+ * Every hero named by a sighting or a hero timer, once, by name. A sighting
+ * wins over a timer: it carries the spelling the server keeps.
+ */
+export const collectKnownHeroes = (
+  sightings: readonly { readonly hero: NamedHero }[],
+  timers: readonly { readonly npc: NamedHero & { readonly type: string } }[],
+): KnownHero[] => {
+  const heroes = new Map<string, KnownHero>();
+
+  const add = ({ name, lvl, prof }: NamedHero) => {
+    const key = getHeroSightingKey(name);
+
+    if (key && !heroes.has(key))
+      heroes.set(key, { key, name, lvl, prof: toProfShortname(prof) });
+  };
+
+  for (const { hero } of sightings) add(hero);
+
+  for (const { npc } of timers) if (npc.type === "HERO" && npc.name) add(npc);
+
+  return [...heroes.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, "pl"),
+  );
+};
+
+const MAX_SUGGESTED_HEROES = 8;
+
+/** Known heroes whose name contains what the player typed so far. */
+export const suggestKnownHeroes = (
+  heroes: readonly KnownHero[],
+  typedName: string,
+): KnownHero[] => {
+  const query = typedName.trim().toLocaleLowerCase("pl");
+
+  if (!query) return [];
+
+  return heroes
+    .filter((hero) => hero.name.toLocaleLowerCase("pl").includes(query))
+    .slice(0, MAX_SUGGESTED_HEROES);
+};
