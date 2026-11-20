@@ -1,4 +1,5 @@
 /** Endpoints owned by the internal HTTP module. */
+import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   HttpApiEndpoint,
   HttpApiGroup,
@@ -6,7 +7,6 @@ import {
   OpenApi,
 } from "effect/http-api";
 import { OrganizationSummary } from "#src/contracts/shared";
-import { HttpErrorResponse } from "#src/contracts/api-shared";
 import {
   INTERNAL_MEMBER_IDENTITY_PATH,
   INTERNAL_USER_PERMISSIONS_PATH,

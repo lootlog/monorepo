@@ -1,23 +1,7 @@
+import { httpErrorResponse } from "@lootlog/protocol/http/errors";
 import { Effect, Schema } from "effect";
 import { HttpServerResponse } from "effect/http";
-import {
-  type HttpErrorResponse,
-  ReauthenticationRequired,
-} from "#src/contracts/api-shared";
-
-/** The only way a handler writes an error body; see `HttpErrorResponse`. */
-export const httpErrorResponse = (
-  status: number,
-  body: HttpErrorResponse,
-  retryAfterMs?: number,
-) =>
-  HttpServerResponse.jsonUnsafe(body, {
-    status,
-    headers:
-      retryAfterMs === undefined
-        ? undefined
-        : { "retry-after": String(Math.ceil(retryAfterMs / 1000)) },
-  });
+import { ReauthenticationRequired } from "#src/contracts/api-shared";
 
 const encodeReauthenticationRequired = Schema.encodeSync(
   ReauthenticationRequired,

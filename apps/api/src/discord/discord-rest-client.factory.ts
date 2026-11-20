@@ -3,7 +3,7 @@ import {
   InvalidRequestError,
   DependencyUnavailableError,
   AuthenticationRequiredError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   fingerprintAccessToken,
   type AuthService,

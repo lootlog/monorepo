@@ -15,7 +15,7 @@ import {
 } from "#src/database/drizzle/event.schema";
 import { guildKillSource } from "#src/kills/kill-source";
 import { makeTypeJsonCodec, type RedisService } from "#src/redis/redis.service";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { EventHeroStatsResponse } from "#src/events/kills/event-kill-response.schema";
 

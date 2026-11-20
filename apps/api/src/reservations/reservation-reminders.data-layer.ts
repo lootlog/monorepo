@@ -11,7 +11,7 @@ import {
 } from "#src/database/drizzle/notification.schema";
 import { NotificationJobKind } from "@lootlog/schema/notifications";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/content/discord-timestamp";
-import { InvalidEntityError } from "#src/shared/http/http-errors";
+import { InvalidEntityError } from "@lootlog/protocol/http/errors";
 import type { NotificationQueue } from "#src/notifications/jobs/notification-job-scheduler";
 
 /** Delivery queue operations a reservation reminder needs. */

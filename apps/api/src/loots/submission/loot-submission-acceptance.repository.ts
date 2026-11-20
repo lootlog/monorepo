@@ -12,7 +12,7 @@ import {
   selectAccessibleGuilds,
   selectActiveGuildMembers,
 } from "#src/members/member-access-query";
-import { DependencyUnavailableError } from "#src/shared/http/http-errors";
+import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 import { and, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { zip } from "es-toolkit";

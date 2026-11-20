@@ -9,7 +9,7 @@ import {
   organizationLootRecordTable,
 } from "#src/database/drizzle/loot.schema";
 import { resolvePlayerSnapshots } from "#src/shared/margonem/player-snapshot.repository";
-import { DependencyUnavailableError } from "#src/shared/http/http-errors";
+import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 
 export function mapPlayersToSnapshotInputs(
   world: string,

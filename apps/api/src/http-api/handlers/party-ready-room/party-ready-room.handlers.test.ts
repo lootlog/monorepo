@@ -4,7 +4,7 @@ import { decodeDomainJson } from "../../domain-json.schema.js";
 import {
   PermissionDeniedError,
   ResourceConflictError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { PartyReadyRoomResponse } from "#src/contracts/party-ready-room/schemas";
 import {
   ReadyRoomData,

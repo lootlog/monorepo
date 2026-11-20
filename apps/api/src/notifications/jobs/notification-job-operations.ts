@@ -8,7 +8,7 @@ import { notificationJobTable } from "#src/database/drizzle/notification.schema"
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   NotificationFiltersResponse,
   NotificationJobPayloadSnapshotResponse,

@@ -7,7 +7,7 @@ import { makeLootsOperations } from "#src/loots/loots.operations";
 import { OperationError } from "@lootlog/instrumentation/operation";
 import type { LootQueryOperations } from "#src/loots/query/loot-query.operations";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 
 type Guild = Parameters<LootQueryOperations["fetchLootById"]>[0];
 

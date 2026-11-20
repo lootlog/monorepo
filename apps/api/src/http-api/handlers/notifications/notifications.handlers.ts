@@ -27,7 +27,7 @@ import {
   NotificationTargetWithTestTriggerResponse,
   WatchedItemResponse,
 } from "#src/notifications/notification-response.schema";
-import { ApplicationError } from "#src/shared/http/http-errors";
+import { ApplicationError } from "@lootlog/protocol/http/errors";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { LootlogApi } from "../../lootlog-api.js";

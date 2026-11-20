@@ -7,7 +7,7 @@ import {
   ResourceNotFoundError,
   DependencyUnavailableError,
   AuthenticationRequiredError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { Clock, Effect } from "effect";
 import type { DiscordRateLimiter } from "./discord-rate-limiter.service.js";
 import type { DiscordSyncDiagnostics } from "./discord-sync-diagnostics.service.js";

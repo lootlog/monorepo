@@ -6,7 +6,7 @@ import {
   ApplicationError,
   ApplicationErrorKind,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   getTransientMemberSyncStatus,
   isDiscordRefusalSyncStatus,

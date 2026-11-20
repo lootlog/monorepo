@@ -16,7 +16,7 @@ import { canViewerReadChatMessage } from "./chat-message-visibility.js";
 import {
   PermissionDeniedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { ChatData, ChatOperationError } from "./chat-data.js";
 
 export interface ChatRedis {

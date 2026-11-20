@@ -5,7 +5,7 @@ import {
   ResourceConflictError,
   PermissionDeniedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { CommitReadyRoomResult } from "./ready-room.repository.js";
 
 export const MAX_CAS_ATTEMPTS = 4;

@@ -14,7 +14,7 @@ import {
   eventTable,
 } from "#src/database/drizzle/event.schema";
 import { makeTypeJsonCodec, type RedisService } from "#src/redis/redis.service";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import {
   CoverageGapResponse,
   HeroCoverageGapResponse,

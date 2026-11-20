@@ -8,7 +8,7 @@ import {
 } from "#src/database/drizzle/notification.schema";
 import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
-import { PermissionDeniedError } from "#src/shared/http/http-errors";
+import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import { parseNotificationFilters } from "./rules/notification-matching.service.js";
 import { notificationLootSourceCondition } from "./notification-loot-source-visibility.js";
 

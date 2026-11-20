@@ -8,7 +8,7 @@ import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import { describe, expect, it, mock } from "bun:test";
 import { Effect, Logger } from "effect";
 
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { makeEventDeletion } from "#src/events/catalog/event-deletion";
 
 describe("event deletion Effect module", () => {

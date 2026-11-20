@@ -21,7 +21,7 @@ import {
   InvalidRequestError,
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { UpdateEventRequest } from "#src/contracts/events/schemas";
 import { makeEventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import { makeEventUpdate } from "#src/events/catalog/event-update";

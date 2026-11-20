@@ -26,7 +26,7 @@ import {
   InvalidRequestError,
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import type {
   AssignEventMapLocationRequest,

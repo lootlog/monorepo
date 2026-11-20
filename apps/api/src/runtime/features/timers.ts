@@ -3,7 +3,7 @@ import { makeJsonCodec } from "#src/redis/redis.service";
 import { makeEventHeroCheckDispatcher } from "#src/events/kills/event-hero-check-outbox";
 import { makeOutboxWorker } from "#src/shared/outbox-worker";
 import { makeRedisLockManager } from "#src/redis/redlock";
-import { ResourceConflictError } from "#src/shared/http/http-errors";
+import { ResourceConflictError } from "@lootlog/protocol/http/errors";
 import { ErrorKey } from "#src/timers/error-key";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { Effect, Layer, Schema } from "effect";

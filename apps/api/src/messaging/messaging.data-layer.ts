@@ -36,7 +36,7 @@ import {
   DependencyUnavailableError,
   RateLimitedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { MessagingData, MessagingOperationError } from "./messaging-data.js";
 import type {
   NotificationGoingRequest,

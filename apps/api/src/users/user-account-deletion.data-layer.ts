@@ -51,7 +51,7 @@ import {
   getUserLootlogConfigCacheScope,
   getUserGuildPermissionsCacheScope,
 } from "#src/shared/cache";
-import { DependencyUnavailableError } from "#src/shared/http/http-errors";
+import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 import {
   type AuthenticatedIdentity,
   AccountOrganizationOperationError,

@@ -30,7 +30,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { eventTable } from "#src/database/drizzle/event.schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/cache";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 
 export interface EventPointRecalculator {
   readonly recalculate: (

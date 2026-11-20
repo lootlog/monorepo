@@ -17,7 +17,7 @@ import { SqlError } from "effect/sql/SqlError";
 
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 
-import { ResourceConflictError } from "#src/shared/http/http-errors";
+import { ResourceConflictError } from "@lootlog/protocol/http/errors";
 
 import { ErrorKey } from "#src/guilds/error-key";
 

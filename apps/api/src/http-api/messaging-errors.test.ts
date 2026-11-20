@@ -1,4 +1,4 @@
-import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
@@ -11,7 +11,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { MessagingGroup } from "#src/contracts/messaging/api";
 import { LootlogConfigGroup } from "#src/contracts/lootlog-config/api";
 import { PartyReadyRoomGroup } from "#src/contracts/party-ready-room/api";

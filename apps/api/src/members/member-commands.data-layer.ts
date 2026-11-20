@@ -37,7 +37,7 @@ import {
   InvalidRequestError,
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { ReauthenticationRequired } from "#src/contracts/api-shared";
 import { ErrorKey as GuildErrorKey } from "#src/guilds/error-key";
 import {

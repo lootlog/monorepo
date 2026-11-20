@@ -26,7 +26,7 @@ import { makeDocsService } from "../src/docs/docs.service.js";
 import {
   ResourceConflictError,
   ResourceNotFoundError,
-} from "../src/shared/http/http-errors.js";
+} from "@lootlog/protocol/http/errors";
 
 const runtime = ManagedRuntime.make(
   DocsRepository.layerDatabase.pipe(Layer.provideMerge(ApiDatabaseLive)),

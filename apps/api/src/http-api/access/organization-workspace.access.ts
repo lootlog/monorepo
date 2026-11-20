@@ -16,7 +16,7 @@ import type { Permission as PermissionValue } from "@lootlog/schema/permissions"
 import {
   ApplicationError,
   applicationErrorStatus,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 
 import type { ReauthenticationRequired } from "#src/contracts/api-shared";
 

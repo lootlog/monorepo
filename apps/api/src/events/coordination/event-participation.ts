@@ -17,7 +17,7 @@ import type { RedisService } from "#src/redis/redis.service";
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { AcknowledgeExpiredParticipationConfirmationsRequest } from "#src/contracts/events/schemas";
 import type { EventRankingPublisher } from "#src/events/kills/event-point-edits";
 

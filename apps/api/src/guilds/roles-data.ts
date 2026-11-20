@@ -16,7 +16,7 @@ import {
 import {
   PermissionDeniedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { getPermissionsCachePattern } from "#src/shared/cache";
 import type { UpdateRolePermissionsRequest } from "#src/contracts/roles/schemas";
 

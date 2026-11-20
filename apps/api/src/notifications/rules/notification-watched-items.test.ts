@@ -2,7 +2,7 @@ import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
 
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import { makeNotificationWatchedItems } from "#src/notifications/rules/notification-watched-items";
 
 describe("notification watched items Effect module", () => {

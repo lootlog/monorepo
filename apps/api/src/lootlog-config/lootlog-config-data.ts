@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   lootlogConfigNpcTable,

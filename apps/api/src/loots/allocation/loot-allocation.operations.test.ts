@@ -8,7 +8,7 @@ import type { LootShare } from "#src/loots/loot-response.schema";
 import {
   PermissionDeniedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { makeLootAllocationOperations } from "#src/loots/allocation/loot-allocation.operations";
 
 type AuthorizedLoot = NonNullable<

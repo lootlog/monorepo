@@ -23,7 +23,7 @@ import type { RedisService } from "#src/redis/redis.service";
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getEventHeroNpcId } from "@lootlog/domain/npc-identity";
 import {

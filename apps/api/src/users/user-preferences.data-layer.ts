@@ -18,7 +18,7 @@ import type {
 } from "@lootlog/schema/user-preferences";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
-import { PermissionDeniedError } from "#src/shared/http/http-errors";
+import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   userSettingsTable,

@@ -24,7 +24,7 @@ import {
   createEventHeroKillJobData,
   getEventHeroKillWindowKey,
 } from "#src/events/kills/event-hero-kill-job";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { buildTimerKey, buildTimerLockKey } from "#src/timers/timer-key";

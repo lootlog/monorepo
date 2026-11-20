@@ -1,14 +1,12 @@
 /** Endpoints owned by the user-themes HTTP module. */
+import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   HttpApiEndpoint,
   HttpApiGroup,
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import {
-  BearerSecurityMiddleware,
-  HttpErrorResponse,
-} from "#src/contracts/api-shared";
+import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import { SuccessResponse } from "#src/contracts/shared";
 import {
   CreateUserThemeRequest,

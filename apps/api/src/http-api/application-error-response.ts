@@ -1,41 +1,19 @@
 import { Effect, Schema } from "effect";
 import {
   ApplicationError,
+  applicationErrorHttpResponse,
   applicationErrorStatus,
-} from "#src/shared/http/http-errors";
-import {
-  httpErrorResponse,
-  reauthenticationRequiredResponse,
-} from "#src/shared/http/handler-response";
+} from "@lootlog/protocol/http/errors";
+import { reauthenticationRequiredResponse } from "#src/shared/http/handler-response";
 import { ReauthenticationRequired } from "#src/contracts/api-shared";
 
-export const applicationErrorResponse = (cause: unknown) => {
-  if (!Schema.is(ApplicationError)(cause)) return Effect.die(cause);
-  const status = applicationErrorStatus(cause);
-
-  if (status === 500) return Effect.die(cause);
-
-  // Every 401 asks the caller to sign in again with the same body.
-  if (status === 401) {
-    return reauthenticationRequiredResponse(
-      new ReauthenticationRequired({
-        code: cause.body.code,
-        requiresReauth: true,
-      }),
-    );
-  }
-
-  if (status >= 500) {
-    return Effect.succeed(
-      httpErrorResponse(
-        status,
-        { code: cause.body.code, message: "Service unavailable" },
-        cause.retryAfterMs,
-      ),
-    );
-  }
-
-  return Effect.succeed(
-    httpErrorResponse(status, cause.body, cause.retryAfterMs),
-  );
-};
+/** The shared answer, except that every 401 asks the caller to sign in again. */
+export const applicationErrorResponse = (cause: unknown) =>
+  Schema.is(ApplicationError)(cause) && applicationErrorStatus(cause) === 401
+    ? reauthenticationRequiredResponse(
+        new ReauthenticationRequired({
+          code: cause.body.code,
+          requiresReauth: true,
+        }),
+      )
+    : applicationErrorHttpResponse(cause);

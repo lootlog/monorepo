@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { makeEventsPins } from "#src/events/pins/events-pins.operations";
 import type { PinnedEventsPersistence } from "#src/events/pins/pinned-events.repository";
 

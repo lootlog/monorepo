@@ -12,7 +12,7 @@ import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   InvalidRequestError,
   ResourceConflictError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { ErrorKey } from "#src/timers/error-key";
 import { buildTimerKey } from "#src/timers/timer-key";
 import { getTimerNpcId } from "@lootlog/domain/npc-identity";

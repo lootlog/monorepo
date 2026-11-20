@@ -3,7 +3,7 @@ import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeRedisLockManager } from "#src/redis/redlock";
-import { ResourceConflictError } from "#src/shared/http/http-errors";
+import { ResourceConflictError } from "@lootlog/protocol/http/errors";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import {
   makeCreateHeroSighting,

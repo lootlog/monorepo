@@ -22,7 +22,7 @@ import {
   type MemberKillsQuery,
   type UserNpcKillsQuery,
 } from "#src/contracts/kills/schemas";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import { decodePageCursor, toPage } from "#src/shared/keyset-page";
 import type { MemberKillSource, UserKillSource } from "./kill-source.js";
 

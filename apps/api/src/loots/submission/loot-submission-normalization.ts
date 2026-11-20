@@ -9,7 +9,7 @@ import {
   compareNpcsStrongestFirst,
   getNpcType,
 } from "@lootlog/domain/npc-type";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";

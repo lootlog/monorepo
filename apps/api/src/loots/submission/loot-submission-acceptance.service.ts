@@ -7,7 +7,7 @@ import { resolveLootAcceptance } from "@lootlog/domain/loot-acceptance";
 import {
   InvalidRequestError,
   PermissionDeniedError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { createHash } from "node:crypto";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";

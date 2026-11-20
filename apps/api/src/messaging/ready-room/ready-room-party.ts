@@ -16,7 +16,7 @@ import {
   ResourceConflictError,
   PermissionDeniedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { ResolvePartyInvitationsRequest } from "#src/contracts/party-ready-room/schemas";
 import type { ReadyRoomIdentity } from "./ready-room-data.js";
 import { MAX_CAS_ATTEMPTS } from "./ready-room-cas.js";

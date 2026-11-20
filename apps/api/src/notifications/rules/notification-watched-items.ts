@@ -23,7 +23,7 @@ import {
   InvalidRequestError,
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type {
   CreateWatchedItemRequest,
   QuickAddWatchedItemRequest,

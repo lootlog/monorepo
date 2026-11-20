@@ -20,7 +20,7 @@ import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
 import {
   ApplicationError,
   ApplicationErrorKind,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   type AuthenticatedIdentity,
   AccountOrganizationOperationError,

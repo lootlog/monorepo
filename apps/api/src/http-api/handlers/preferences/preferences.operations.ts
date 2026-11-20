@@ -1,11 +1,9 @@
+import { httpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   SettingsOperationError,
   SettingsData,
 } from "#src/settings-documents/settings-data";
-import {
-  httpErrorResponse,
-  statusCodeResponse,
-} from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type {
   GuildSettingsDocumentsQuery,

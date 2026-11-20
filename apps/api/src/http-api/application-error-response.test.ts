@@ -6,7 +6,7 @@ import {
   InvalidRequestError,
   RateLimitedError,
   UnexpectedApplicationError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { applicationErrorResponse } from "./application-error-response.js";
 
 it.each([

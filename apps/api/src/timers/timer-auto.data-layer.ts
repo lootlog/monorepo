@@ -10,7 +10,7 @@ import {
   ApplicationError,
   InvalidRequestError,
   PermissionDeniedError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { ErrorKey } from "#src/timers/error-key";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersIdentity } from "./timers-data.js";

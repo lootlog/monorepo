@@ -19,7 +19,7 @@ import {
   PermissionDeniedError,
   ResourceNotFoundError,
   InvalidEntityError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { PartyParticipantActionRequest } from "#src/contracts/party-ready-room/schemas";
 import type { ReadyRoomIdentity } from "./ready-room-data.js";
 import {

@@ -12,7 +12,7 @@ import {
   GuildDocumentTrashResponse,
 } from "./guild-document-response.schema.js";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
-import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
+import { applicationErrorStatusOrUndefined } from "@lootlog/protocol/http/errors";
 import type {
   guildTable,
   memberTable,

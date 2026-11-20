@@ -32,7 +32,7 @@ import {
   PermissionDeniedError,
   ResourceNotFoundError,
   InvalidEntityError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type {
   CreateReservationRequest,
   UpdateReservationRequest,

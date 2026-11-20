@@ -10,7 +10,7 @@ import {
   AcceptedReservationShareBoundary,
 } from "../handlers/reservations/reservation-response.schema.js";
 import { decodeDomainJson } from "../domain-json.schema.js";
-import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { describe, expect, it } from "bun:test";
 import {
@@ -29,7 +29,7 @@ import {
   ResourceConflictError,
   PermissionDeniedError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   MyReservationsResponse,
   ReservationSpotsResponse,

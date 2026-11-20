@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   InvalidRequestError,
   ResourceConflictError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   TimersInfrastructureError,
   toTimersDataFailure,

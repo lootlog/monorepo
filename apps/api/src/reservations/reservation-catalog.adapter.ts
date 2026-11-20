@@ -6,7 +6,7 @@ import {
   type ReservationSpot,
 } from "./reservation-catalog.js";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 
 const CACHE_KEY = "reservations:catalog:v2";

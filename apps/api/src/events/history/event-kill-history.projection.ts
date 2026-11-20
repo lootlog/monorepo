@@ -3,7 +3,7 @@ import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { resolveEventWindowStart } from "#src/events/respawn/resolve-event-window-start";
 import {
   clipIntervalToWindow,

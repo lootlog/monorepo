@@ -16,7 +16,7 @@ import { makeMemberStore } from "./member.repository.js";
 import {
   applicationErrorStatusOrUndefined,
   InvalidRequestError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { makeMembersDataLayer } from "./member-commands.data-layer.js";
 import { MembersData } from "./members-data.js";
 

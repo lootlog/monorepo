@@ -30,7 +30,7 @@ import { getEventWrappedCachePattern } from "#src/shared/cache";
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { UpdateEventRequest } from "#src/contracts/events/schemas";
 import type { EventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import {

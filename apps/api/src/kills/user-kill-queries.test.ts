@@ -11,7 +11,7 @@ import {
   userKillBucketTable,
   userKillTotalTable,
 } from "#src/database/drizzle/kill-statistics.schema";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 
 describe("user kill queries Effect module", () => {
   it("returns a cached overview without touching Drizzle", async () => {

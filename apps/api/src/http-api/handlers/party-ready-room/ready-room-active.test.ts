@@ -1,4 +1,4 @@
-import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
 import { expect, it, spyOn } from "bun:test";
 import { eq } from "drizzle-orm";
 import { BunHttpServer } from "@effect/platform-bun";

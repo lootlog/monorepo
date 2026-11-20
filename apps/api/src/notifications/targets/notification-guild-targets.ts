@@ -27,7 +27,7 @@ import {
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 
 export interface NotificationGuildChannels {
   readonly selectable: (guildId: string) => Effect.Effect<

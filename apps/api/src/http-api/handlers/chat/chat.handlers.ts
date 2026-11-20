@@ -8,7 +8,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import { applicationErrorResponse } from "#src/http-api/application-error-response";
-import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
+import { applicationErrorStatusOrUndefined } from "@lootlog/protocol/http/errors";
 import {
   Permission,
   type Permission as PermissionValue,

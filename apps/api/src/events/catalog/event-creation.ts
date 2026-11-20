@@ -16,7 +16,7 @@ import {
   eventTable,
 } from "#src/database/drizzle/event.schema";
 import type { RedisService } from "#src/redis/redis.service";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import type { CreateEventRequest } from "#src/contracts/events/schemas";
 import { attachComputedEventActive } from "#src/events/monitoring/event-activity";
 

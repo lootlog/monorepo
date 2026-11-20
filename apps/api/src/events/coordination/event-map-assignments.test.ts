@@ -12,7 +12,7 @@ import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import { describe, expect, it, mock } from "bun:test";
 import { Effect, Logger } from "effect";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { makeEventMapAssignments } from "#src/events/coordination/event-map-assignments";
 
 describe("event map assignments Effect module", () => {

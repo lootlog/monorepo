@@ -7,7 +7,7 @@ import {
   discordGuildSyncStateTable,
   guildTable,
 } from "#src/database/drizzle/organization.schema";
-import { RateLimitedError } from "#src/shared/http/http-errors";
+import { RateLimitedError } from "@lootlog/protocol/http/errors";
 import { makeGuildDiscordSyncData } from "./guild-discord-sync.data-layer.js";
 
 const guildId = "guild-1";

@@ -18,7 +18,7 @@ import {
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/cache";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 
 interface EventDeletionJob {
   readonly eventId: string;

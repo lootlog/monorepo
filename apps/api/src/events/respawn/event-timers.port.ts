@@ -14,7 +14,7 @@ import {
 } from "#src/timers/timer-projection";
 import type { EventPublisher } from "@lootlog/messaging";
 import type { RedisService } from "#src/redis/redis.service";
-import { ResourceConflictError } from "#src/shared/http/http-errors";
+import { ResourceConflictError } from "@lootlog/protocol/http/errors";
 import { getTimerListCacheScope } from "#src/shared/cache";
 import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import { ErrorKey } from "#src/timers/error-key";

@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import type { CreateLootRequest } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 import type {
   LootSubmissionAcceptancePersistence,
   NewLootPersistence,

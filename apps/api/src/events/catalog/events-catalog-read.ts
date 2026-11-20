@@ -15,7 +15,7 @@ import {
 } from "#src/database/drizzle/event.schema";
 import { roleTable } from "#src/database/drizzle/organization.schema";
 import { makeTypeJsonCodec, type RedisService } from "#src/redis/redis.service";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 import {
   attachComputedEventActive,

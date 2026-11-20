@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Effect } from "effect";
 import { HttpClient } from "effect/http";

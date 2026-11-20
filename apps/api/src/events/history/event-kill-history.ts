@@ -13,7 +13,7 @@ import {
 import type { EventAccess } from "#src/events/event-access";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import type { EventPoints } from "#src/events/kills/event-points.service";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import {
   decodeHistoryCursor,
   encodeHistoryCursor,

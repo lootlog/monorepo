@@ -16,7 +16,7 @@ import {
   ResourceConflictError,
   ResourceGoneError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   selectActiveReservationShares,
   visibleReservationGuildIds,

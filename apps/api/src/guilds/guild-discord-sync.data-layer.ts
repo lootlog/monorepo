@@ -13,7 +13,7 @@ import {
 } from "#src/database/drizzle/organization.schema";
 import { discordGuildChannelDeletedOutboxTable } from "#src/database/drizzle/discord-guild-channel-deleted-outbox.schema";
 import { notificationTargetTable } from "#src/database/drizzle/notification.schema";
-import { RateLimitedError } from "#src/shared/http/http-errors";
+import { RateLimitedError } from "@lootlog/protocol/http/errors";
 import { AccountOrganizationOperationError } from "./account-organization-data.js";
 
 type SyncPayload = {

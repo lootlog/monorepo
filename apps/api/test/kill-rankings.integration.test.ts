@@ -39,7 +39,7 @@ import {
 import {
   ResourceConflictError,
   ResourceNotFoundError,
-} from "../src/shared/http/http-errors.js";
+} from "@lootlog/protocol/http/errors";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 

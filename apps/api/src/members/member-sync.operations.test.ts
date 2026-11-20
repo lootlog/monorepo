@@ -14,7 +14,7 @@ import {
 import {
   AuthenticationRequiredError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { MEMBER_LAST_DISCORD_STATUS } from "./member-discord-status.js";
 import { makeMemberDelivery } from "./member-delivery.operations.js";
 import { makeMemberRemoval } from "./member-removal.operations.js";

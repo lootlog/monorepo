@@ -28,7 +28,7 @@ import {
   PermissionDeniedError,
   ResourceConflictError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import {
   USER_DM_TEST_MESSAGE,
   USER_DM_TEST_RULE_NAME,

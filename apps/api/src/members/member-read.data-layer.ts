@@ -28,7 +28,7 @@ import {
   getMemberLootlogConfigSummaryCacheKey,
 } from "#src/shared/cache";
 import { getDiscordServerBannerUrl } from "@lootlog/domain/discord-avatar";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import {
   MemberReadData,
   MemberRefreshJobData,

@@ -34,7 +34,7 @@ import {
   watchedItemTable,
 } from "#src/database/drizzle/notification.schema";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { PermissionDeniedError } from "#src/shared/http/http-errors";
+import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import { makeNotificationRuleOperations } from "./rules/notification-rule-operations.js";
 import { makeNotificationUserTargets } from "./targets/notification-user-targets.js";
 import { makeNotificationWatchedItems } from "./rules/notification-watched-items.js";

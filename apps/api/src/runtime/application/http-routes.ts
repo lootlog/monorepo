@@ -1,4 +1,4 @@
-import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
+import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { serviceHttpServer } from "@lootlog/instrumentation/service";
 import { Effect, Layer } from "effect";

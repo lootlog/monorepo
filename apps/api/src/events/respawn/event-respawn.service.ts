@@ -1,6 +1,6 @@
 import { Clock, Effect } from "effect";
 import { HeroRespawnConfigResponse } from "#src/events/monitoring/event-monitoring-response.schema";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { getEventHeroNpcId } from "@lootlog/domain/npc-identity";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import type { EventRespawnStore } from "#src/events/respawn/event-respawn.repository";

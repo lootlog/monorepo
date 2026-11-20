@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { DocsRepositoryService } from "./docs.repository.js";
 import { makeDocsService } from "./docs.service.js";
 

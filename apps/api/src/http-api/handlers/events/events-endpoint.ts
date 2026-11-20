@@ -5,7 +5,7 @@ import {
   statusCodeResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
-import { ApplicationError } from "#src/shared/http/http-errors";
+import { ApplicationError } from "@lootlog/protocol/http/errors";
 import { Effect, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { HttpApiEndpoint } from "effect/http-api";

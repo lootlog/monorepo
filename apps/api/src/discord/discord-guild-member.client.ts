@@ -9,7 +9,7 @@ import {
   ResourceNotFoundError,
   DependencyUnavailableError,
   HttpStatus,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import type { RedisService } from "#src/redis/redis.service";
 import { Routes, type APIGuildMember } from "discord-api-types/v10";
 import { Effect } from "effect";

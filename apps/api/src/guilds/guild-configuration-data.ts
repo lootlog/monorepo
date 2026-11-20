@@ -15,7 +15,7 @@ import { timerTable } from "#src/database/drizzle/timer.schema";
 import {
   InvalidRequestError,
   ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+} from "@lootlog/protocol/http/errors";
 import { findActiveGuild } from "./active-guild-lookup.js";
 import { parseVanityUrl } from "./vanity-url.js";
 import { ErrorKey } from "./error-key.js";
