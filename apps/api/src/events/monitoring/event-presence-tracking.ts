@@ -2,7 +2,7 @@ import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { activeEventCondition } from "#src/events/event-scope-query";
 import { and, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
-import type { RedlockService } from "#src/redis/redlock";
+import type { RedisLockManager } from "#src/redis/redlock";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -39,12 +39,10 @@ const EventMapWindows = Schema.Array(
 export const makeEventPresenceTracking = (
   database: typeof ApiDatabase.Service,
   timers: EventTimersPort,
-  redlockService: RedlockService,
+  redlock: RedisLockManager,
   publisher: EventEmitter,
   readCache: Pick<EventReadCache, "getGuildEntry" | "getOrSet">,
 ) => {
-  const redlock = redlockService.createInstance();
-
   const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(withAdapterSpan(operation, "events.presence.drizzle"));
 

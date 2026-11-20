@@ -2,7 +2,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeJsonCodec } from "#src/redis/redis.service";
 import { makeEventHeroCheckDispatcher } from "#src/events/kills/event-hero-check-outbox";
 import { makeOutboxWorker } from "#src/shared/outbox-worker";
-import { RedlockService } from "#src/redis/redlock";
+import { makeRedisLockManager } from "#src/redis/redlock";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/error-key";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
@@ -34,7 +34,7 @@ export const timersData = Layer.unwrap(
     const rabbit = yield* RabbitMessaging;
     const readyRooms = yield* ReadyRoomData;
     const eventHeroKillQueue = yield* EventHeroKillQueue;
-    const locks = new RedlockService(redis).createInstance();
+    const locks = makeRedisLockManager(redis);
 
     const withLock = <A, E>(key: string, effect: Effect.Effect<A, E>) =>
       locks.withLock(
@@ -46,7 +46,7 @@ export const timersData = Layer.unwrap(
       );
 
     const invalidateList = (guildId: string) =>
-      redis.effect.invalidateScopes(getTimerListCacheScope(guildId));
+      redis.invalidateScopes(getTimerListCacheScope(guildId));
 
     const eventHeroChecks = yield* makeOutboxWorker(
       "Event hero check",
@@ -62,12 +62,12 @@ export const timersData = Layer.unwrap(
       createAuto: makeAutoTimer(database, {
         closeKilledNpcGatherings: readyRooms.npcKilled,
         signalEventHeroChecks: eventHeroChecks.signal,
-        get: redis.effect.get,
+        get: redis.get,
         invalidateList,
         publishHeroSighting: makeHeroSightingPublisher(rabbit),
         publish: (routingKey, payload) =>
           rabbit.publish(eventMessage(routingKey, payload)),
-        set: redis.effect.set,
+        set: redis.set,
         locks,
         withLock,
       }),
@@ -95,7 +95,7 @@ export const timersData = Layer.unwrap(
       getAll: makeAllTimerList(database),
       getGuildTimers: makeGuildTimerList(database, {
         getOrSet: (key, guildId, factory) =>
-          redis.effect.getOrSetJson({
+          redis.getOrSetJson({
             key,
             scopes: [getTimerListCacheScope(guildId)],
             factory,

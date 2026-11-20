@@ -2,7 +2,7 @@ import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { RedlockService } from "#src/redis/redlock";
+import { makeRedisLockManager } from "#src/redis/redlock";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import {
@@ -37,7 +37,7 @@ export const heroSightingsData = Layer.unwrap(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
 
-    const locks = new RedlockService(redis).createInstance();
+    const locks = makeRedisLockManager(redis);
 
     const withLock = <A, E>(key: string, effect: Effect.Effect<A, E>) =>
       locks.withLock(

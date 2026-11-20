@@ -320,10 +320,11 @@ describe("background feature processors against migrated PostgreSQL", () => {
           }),
       },
       diagnostics: {
-        recordMemberRefreshMetric: async ({ outcome }) => {
-          outcomes.push(outcome);
-        },
-        recordMemberRefreshLatency: async () => {},
+        recordMemberRefreshMetric: ({ outcome }) =>
+          Effect.sync(() => {
+            outcomes.push(outcome);
+          }),
+        recordMemberRefreshLatency: () => Effect.void,
       },
       sync: {
         syncMemberFromDiscord: ({ guildId: syncedGuildId }) =>

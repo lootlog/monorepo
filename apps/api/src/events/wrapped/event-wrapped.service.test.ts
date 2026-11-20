@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { Effect } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
@@ -326,13 +327,13 @@ describe("event wrapped summary", () => {
 
       const wrapped = makeEventWrapped(
         makeEventWrappedStore(database),
-        { getJson: async () => null, setJson: async () => undefined },
+        { getJson: () => Effect.succeed(null), setJson: () => Effect.void },
         makeLootsOperations({
           persistence: makeLootPersistence(database),
           query: makeLootQueryOperations(makeLootQueryPersistence(database)),
           redis: {
-            invalidateScopes: async () => undefined,
-            getOrSetJsonEffect: (options) => options.factory,
+            invalidateScopes: () => Effect.void,
+            getOrSetJson: (options) => options.factory,
           },
           logger: applicationLogger,
         }),

@@ -1,5 +1,5 @@
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
-import { RedisService } from "#src/redis/redis.service";
+import { Clock, Effect } from "effect";
+import type { RedisService } from "#src/redis/redis.service";
 import type {
   DiscordEndpoint,
   DiscordInvalidRequestStatus,
@@ -15,115 +15,124 @@ export type DiscordMemberRefreshMetricOutcome =
   | "stale_used"
   | "verification_unavailable";
 
-export class DiscordSyncDiagnosticsService {
-  private readonly windowMs = 10 * 60 * 1000;
-  private readonly windowTtlSeconds = 20 * 60;
-  private readonly RECORD_LATENCY_SCRIPT = `
+/** Counts Discord sync outcomes per 10-minute window; a failed write is only logged. */
+export interface DiscordSyncDiagnostics {
+  readonly recordInvalidDiscordRequest: (options: {
+    readonly endpoint: DiscordEndpoint;
+    readonly status: DiscordInvalidRequestStatus;
+    readonly source?: string;
+  }) => Effect.Effect<void>;
+  readonly recordMemberRefreshMetric: (options: {
+    readonly outcome: DiscordMemberRefreshMetricOutcome;
+    readonly reason?: string;
+  }) => Effect.Effect<void>;
+  readonly recordMemberRefreshLatency: (
+    latencyMs: number,
+  ) => Effect.Effect<void>;
+}
+
+const WINDOW_MS = 10 * 60 * 1000;
+
+const WINDOW_TTL_SECONDS = 20 * 60;
+
+const RECORD_LATENCY_SCRIPT = `
 redis.call("HINCRBY", KEYS[1], "count", 1)
 redis.call("HINCRBY", KEYS[1], "sumMs", ARGV[1])
 redis.call("EXPIRE", KEYS[1], ARGV[2])
 return 1
 `;
 
-  constructor(
-    private readonly logger: Logger,
-    private readonly redisService: RedisService,
-  ) {}
+const windowStartedAt = Effect.map(
+  Clock.currentTimeMillis,
+  (now) => new Date(Math.floor(now / WINDOW_MS) * WINDOW_MS),
+);
 
-  async recordInvalidDiscordRequest(options: {
-    endpoint: DiscordEndpoint;
-    status: DiscordInvalidRequestStatus;
-    source?: string;
-  }): Promise<void> {
-    await this.runSafely("discord.invalid_request", async () => {
-      const windowStartedAt = this.getWindowStartedAt();
-      const key = `discord:invalid-requests:10m:${windowStartedAt.getTime()}:${options.endpoint}:${options.status}`;
-      const count = await this.incrementCounter(key);
+export const makeDiscordSyncDiagnostics = (
+  redis: Pick<RedisService, "incr" | "expire" | "eval">,
+): DiscordSyncDiagnostics => {
+  const incrementCounter = (key: string) =>
+    Effect.gen(function* () {
+      const count = yield* redis.incr(key);
 
-      this.logger.log({
-        level: "warn",
-        event: "discord.invalid_request",
-        message: "Discord invalid request recorded",
-        endpoint: options.endpoint,
-        status: options.status,
-        source: options.source,
-        count,
-        windowStartedAt: windowStartedAt.toISOString(),
-      });
+      if (count === 1) {
+        yield* redis.expire(key, WINDOW_TTL_SECONDS);
+      }
+
+      return count;
     });
-  }
 
-  async recordMemberRefreshMetric(options: {
-    outcome: DiscordMemberRefreshMetricOutcome;
-    reason?: string;
-  }): Promise<void> {
-    await this.runSafely("discord.member_refresh.metric", async () => {
-      const windowStartedAt = this.getWindowStartedAt();
-      const key = `discord:member-refresh:10m:${windowStartedAt.getTime()}:${options.outcome}`;
-      const count = await this.incrementCounter(key);
+  const runSafely = <E>(event: string, action: Effect.Effect<void, E>) =>
+    action.pipe(
+      Effect.catch((error) =>
+        Effect.logDebug({
+          event,
+          message: "Failed to record Discord diagnostics",
+          error,
+        }),
+      ),
+    );
 
-      this.logger.log({
-        level: "debug",
-        event: "discord.member_refresh.metric",
-        message: "Discord member refresh metric recorded",
-        outcome: options.outcome,
-        reason: options.reason,
-        count,
-        windowStartedAt: windowStartedAt.toISOString(),
-      });
-    });
-  }
+  return {
+    recordInvalidDiscordRequest: (options) =>
+      runSafely(
+        "discord.invalid_request",
+        Effect.gen(function* () {
+          const startedAt = yield* windowStartedAt;
+          const key = `discord:invalid-requests:10m:${startedAt.getTime()}:${options.endpoint}:${options.status}`;
+          const count = yield* incrementCounter(key);
 
-  async recordMemberRefreshLatency(latencyMs: number): Promise<void> {
-    const boundedLatencyMs = Math.max(Math.round(latencyMs), 0);
+          yield* Effect.logWarning({
+            event: "discord.invalid_request",
+            message: "Discord invalid request recorded",
+            endpoint: options.endpoint,
+            status: options.status,
+            source: options.source,
+            count,
+            windowStartedAt: startedAt.toISOString(),
+          });
+        }),
+      ),
+    recordMemberRefreshMetric: (options) =>
+      runSafely(
+        "discord.member_refresh.metric",
+        Effect.gen(function* () {
+          const startedAt = yield* windowStartedAt;
+          const key = `discord:member-refresh:10m:${startedAt.getTime()}:${options.outcome}`;
+          const count = yield* incrementCounter(key);
 
-    await this.runSafely("discord.member_refresh.latency", async () => {
-      const windowStartedAt = this.getWindowStartedAt();
-      const key = `discord:member-refresh:latency:10m:${windowStartedAt.getTime()}`;
+          yield* Effect.logDebug({
+            event: "discord.member_refresh.metric",
+            message: "Discord member refresh metric recorded",
+            outcome: options.outcome,
+            reason: options.reason,
+            count,
+            windowStartedAt: startedAt.toISOString(),
+          });
+        }),
+      ),
+    recordMemberRefreshLatency: (latencyMs) => {
+      const boundedLatencyMs = Math.max(Math.round(latencyMs), 0);
 
-      await this.redisService.eval<number>(
-        this.RECORD_LATENCY_SCRIPT,
-        [key],
-        [boundedLatencyMs, this.windowTtlSeconds],
+      return runSafely(
+        "discord.member_refresh.latency",
+        Effect.gen(function* () {
+          const startedAt = yield* windowStartedAt;
+          const key = `discord:member-refresh:latency:10m:${startedAt.getTime()}`;
+
+          yield* redis.eval(
+            RECORD_LATENCY_SCRIPT,
+            [key],
+            [boundedLatencyMs, WINDOW_TTL_SECONDS],
+          );
+
+          yield* Effect.logDebug({
+            event: "discord.member_refresh.latency",
+            message: "Discord member refresh latency recorded",
+            latencyMs: boundedLatencyMs,
+            windowStartedAt: startedAt.toISOString(),
+          });
+        }),
       );
-
-      this.logger.log({
-        level: "debug",
-        event: "discord.member_refresh.latency",
-        message: "Discord member refresh latency recorded",
-        latencyMs: boundedLatencyMs,
-        windowStartedAt: windowStartedAt.toISOString(),
-      });
-    });
-  }
-
-  private async incrementCounter(key: string): Promise<number> {
-    const count = await this.redisService.incr(key);
-
-    if (count === 1) {
-      await this.redisService.expire(key, this.windowTtlSeconds);
-    }
-
-    return count;
-  }
-
-  private getWindowStartedAt(): Date {
-    return new Date(Math.floor(Date.now() / this.windowMs) * this.windowMs);
-  }
-
-  private async runSafely(
-    event: string,
-    action: () => Promise<void>,
-  ): Promise<void> {
-    try {
-      await action();
-    } catch (error) {
-      this.logger.log({
-        level: "debug",
-        event,
-        message: "Failed to record Discord diagnostics",
-        error,
-      });
-    }
-  }
-}
+    },
+  };
+};

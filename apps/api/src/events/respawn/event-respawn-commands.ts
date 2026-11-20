@@ -97,13 +97,7 @@ export const makeEventRespawnCommands = (
         eventReadCacheScope(guildId, eventId),
       ],
       (scope) =>
-        bestEffort(
-          "events.respawn.cache",
-          Effect.tryPromise({
-            try: () => redis.invalidateScopes(scope),
-            catch: (error) => error,
-          }),
-        ),
+        bestEffort("events.respawn.cache", redis.invalidateScopes(scope)),
       { concurrency: "unbounded", discard: true },
     );
 

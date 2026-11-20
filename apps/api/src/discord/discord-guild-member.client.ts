@@ -10,24 +10,35 @@ import {
   DependencyUnavailableError,
   HttpStatus,
 } from "#src/shared/http/http-errors";
-import { RedisService } from "#src/redis/redis.service";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import type { RedisService } from "#src/redis/redis.service";
 import { Routes, type APIGuildMember } from "discord-api-types/v10";
+import { Effect } from "effect";
+import type { RedisError } from "effect/persistence/Redis";
 import {
   getGuildMemberForbiddenCacheKey,
   getGuildMemberNotFoundCacheKey,
   isApiGuildMember,
 } from "./discord-cache.util.js";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
-import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
+import type { DiscordRateLimiter } from "./discord-rate-limiter.service.js";
 import {
+  failIfDiscordRateLimited,
   isDiscordNotFoundError,
   recordInvalidDiscordRequest,
   toDiscordRequestError,
-  throwIfDiscordRateLimited,
 } from "./discord-error.util.js";
-import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
-import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
+import type { DiscordRestClients } from "./discord-rest-client.factory.js";
+import type { DiscordSyncDiagnostics } from "./discord-sync-diagnostics.service.js";
+
+const REFUSAL_CACHE_TTL_LOCAL_SECONDS = 30;
+
+const REFUSAL_CACHE_TTL_PROD_SECONDS = 300;
+
+interface GuildMemberIdentity {
+  readonly guildId: string;
+  readonly userId: string;
+  readonly discordId: string;
+}
 
 /**
  * Reads the caller's own guild membership from Discord. Member sync stores
@@ -36,181 +47,185 @@ import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.servic
  * Only refusals are cached: Discord counts each 404 and 403 against its
  * invalid-request limit, and neither is stored as a sync.
  */
-export class DiscordGuildMemberClient {
-  private readonly refusalCacheTtlLocal = 30;
-  private readonly refusalCacheTtlProd = 300;
-  private readonly isLocal: boolean;
-
-  constructor(
-    private readonly logger: Logger,
-    private readonly redisService: RedisService,
-    private readonly rateLimiter: DiscordRateLimiterService,
-    private readonly diagnostics: DiscordSyncDiagnosticsService,
-    private readonly restClientFactory: DiscordRestClientFactory,
-    environment: RuntimeEnvironment,
-  ) {
-    this.isLocal = environment === RuntimeEnvironment.LOCAL;
-  }
-
-  async getGuildMember(options: {
-    guildId: string;
-    userId: string;
-    discordId: string;
-  }): Promise<APIGuildMember> {
-    const { guildId, userId } = options;
-    const notFoundKey = getGuildMemberNotFoundCacheKey(options);
-    const forbiddenKey = getGuildMemberForbiddenCacheKey(options);
-
-    const refusalCacheTtl = this.isLocal
-      ? this.refusalCacheTtlLocal
-      : this.refusalCacheTtlProd;
-
-    try {
-      if (await this.redisService.get(notFoundKey)) {
-        throw new ResourceNotFoundError();
-      }
-
-      if (await this.redisService.get(forbiddenKey)) {
-        throw discordForbiddenError();
-      }
-
-      await throwIfDiscordRateLimited(this.rateLimiter, userId, "guild-member");
-
-      return await this.fetchGuildMemberFromDiscord(options);
-    } catch (error: unknown) {
-      if (error instanceof ResourceNotFoundError) {
-        throw error;
-      }
-
-      if (isDiscordNotFoundError(error)) {
-        this.logger.log({
-          level: "debug",
-          message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
-        });
-        await this.redisService.set(notFoundKey, "1", refusalCacheTtl);
-        throw new ResourceNotFoundError();
-      }
-
-      if (
-        error instanceof DiscordAPIError &&
-        error.status === HttpStatus.FORBIDDEN
-      ) {
-        this.logger.log({
-          level: "warn",
-          message: "Discord refused the guild member request",
-          guildId,
-          userId,
-          discordCode: error.code,
-        });
-        await this.redisService.set(forbiddenKey, "1", refusalCacheTtl);
-        throw discordForbiddenError();
-      }
-
-      if (error instanceof ApplicationError) {
-        throw error;
-      }
-
-      this.logger.log({
-        level: "error",
-        message: `Failed to fetch guild member for guildId: ${guildId}, userId: ${userId}`,
-        error,
-      });
-
-      throw toDiscordRequestError(error);
-    }
-  }
-
+export interface DiscordGuildMemberClient {
+  readonly getGuildMember: (
+    options: GuildMemberIdentity,
+  ) => Effect.Effect<APIGuildMember, ApplicationError | RedisError>;
   /** Discord refused this member recently, so asking again would be refused. */
-  async isGuildMemberRefused(options: {
-    guildId: string;
-    userId: string;
-    discordId: string;
-  }): Promise<boolean> {
-    return Boolean(
-      await this.redisService.get(getGuildMemberForbiddenCacheKey(options)),
-    );
-  }
-
-  async clearGuildMemberCache(options: {
-    guildId: string;
-    userId: string;
-    discordId: string;
-  }): Promise<void> {
-    await Promise.all([
-      this.redisService.del(getGuildMemberNotFoundCacheKey(options)),
-      this.redisService.del(getGuildMemberForbiddenCacheKey(options)),
-    ]);
-  }
-
-  private fetchGuildMemberFromDiscord(options: {
-    guildId: string;
-    userId: string;
-    discordId: string;
-  }): Promise<APIGuildMember> {
-    const { guildId, userId, discordId } = options;
-    const path = Routes.userGuildMember(guildId);
-
-    return this.restClientFactory.withRestClient(
-      userId,
-      discordId,
-      async (rest) => {
-        try {
-          const response = await rest.queueRequest({
-            fullRoute: path,
-            method: RequestMethod.Get,
-          });
-
-          await this.rateLimiter.updateRateLimitFromHeaders(
-            userId,
-            "guild-member",
-            response.headers,
-          );
-
-          const member = await parseResponse(response);
-
-          if (!isApiGuildMember(member))
-            throw new TypeError("Invalid Discord guild member response");
-          this.logger.log({
-            level: "debug",
-            message: "Discord API returned member data",
-            path,
-          });
-
-          return member;
-        } catch (error: unknown) {
-          await recordInvalidDiscordRequest(
-            this.diagnostics,
-            "guild-member",
-            error,
-          );
-
-          if (
-            isDiscordNotFoundError(error) ||
-            (error instanceof DiscordAPIError &&
-              error.status === HttpStatus.FORBIDDEN)
-          ) {
-            throw error;
-          }
-
-          if (error instanceof RateLimitError) {
-            await this.rateLimiter.setRateLimitForUser(
-              userId,
-              "guild-member",
-              error.retryAfter,
-            );
-          }
-
-          throw toDiscordRequestError(error);
-        }
-      },
-    );
-  }
+  readonly isGuildMemberRefused: (
+    options: GuildMemberIdentity,
+  ) => Effect.Effect<boolean, RedisError>;
+  readonly clearGuildMemberCache: (
+    options: GuildMemberIdentity,
+  ) => Effect.Effect<void, RedisError>;
 }
 
+const isDiscordForbidden = (error: unknown): error is DiscordAPIError =>
+  error instanceof DiscordAPIError && error.status === HttpStatus.FORBIDDEN;
+
 // The shape toDiscordRequestError gives any Discord 4xx without its own error.
-function discordForbiddenError(): DependencyUnavailableError {
-  return new DependencyUnavailableError({
+const discordForbiddenError = (): DependencyUnavailableError =>
+  new DependencyUnavailableError({
     code: "DISCORD_HTTP_ERROR",
     details: { status: HttpStatus.FORBIDDEN },
   });
-}
+
+export const makeDiscordGuildMemberClient = (dependencies: {
+  readonly redis: Pick<RedisService, "get" | "set" | "del">;
+  readonly rateLimiter: DiscordRateLimiter;
+  readonly diagnostics: Pick<
+    DiscordSyncDiagnostics,
+    "recordInvalidDiscordRequest"
+  >;
+  readonly restClients: DiscordRestClients;
+  readonly environment: RuntimeEnvironment;
+}): DiscordGuildMemberClient => {
+  const { redis, rateLimiter, diagnostics, restClients } = dependencies;
+
+  const refusalCacheTtl =
+    dependencies.environment === RuntimeEnvironment.LOCAL
+      ? REFUSAL_CACHE_TTL_LOCAL_SECONDS
+      : REFUSAL_CACHE_TTL_PROD_SECONDS;
+
+  const fetchGuildMemberFromDiscord = ({
+    guildId,
+    userId,
+    discordId,
+  }: GuildMemberIdentity) => {
+    const path = Routes.userGuildMember(guildId);
+
+    return restClients.withRestClient(userId, discordId, (rest) =>
+      Effect.gen(function* () {
+        const response = yield* Effect.tryPromise({
+          try: () =>
+            rest.queueRequest({
+              fullRoute: path,
+              method: RequestMethod.Get,
+            }),
+          catch: (error) => error,
+        });
+
+        yield* rateLimiter.updateRateLimitFromHeaders(
+          userId,
+          "guild-member",
+          response.headers,
+        );
+
+        const member = yield* Effect.tryPromise({
+          try: () => parseResponse(response),
+          catch: (error) => error,
+        });
+
+        if (!isApiGuildMember(member))
+          return yield* Effect.fail(
+            new TypeError("Invalid Discord guild member response"),
+          );
+
+        yield* Effect.logDebug({
+          message: "Discord API returned member data",
+          path,
+        });
+
+        return member;
+      }).pipe(
+        Effect.catch((error) =>
+          Effect.gen(function* () {
+            yield* recordInvalidDiscordRequest(
+              diagnostics,
+              "guild-member",
+              error,
+            );
+
+            if (isDiscordNotFoundError(error) || isDiscordForbidden(error)) {
+              return yield* Effect.fail(error);
+            }
+
+            if (error instanceof RateLimitError) {
+              yield* rateLimiter.setRateLimitForUser(
+                userId,
+                "guild-member",
+                error.retryAfter,
+              );
+            }
+
+            return yield* Effect.fail(toDiscordRequestError(error));
+          }),
+        ),
+      ),
+    );
+  };
+
+  return {
+    getGuildMember: (options) => {
+      const { guildId, userId } = options;
+      const notFoundKey = getGuildMemberNotFoundCacheKey(options);
+      const forbiddenKey = getGuildMemberForbiddenCacheKey(options);
+
+      return Effect.gen(function* () {
+        if (yield* redis.get(notFoundKey)) {
+          return yield* Effect.fail(new ResourceNotFoundError());
+        }
+
+        if (yield* redis.get(forbiddenKey)) {
+          return yield* Effect.fail(discordForbiddenError());
+        }
+
+        yield* failIfDiscordRateLimited(rateLimiter, userId, "guild-member");
+
+        return yield* fetchGuildMemberFromDiscord(options);
+      }).pipe(
+        Effect.catch((error) =>
+          Effect.gen(function* () {
+            if (error instanceof ResourceNotFoundError) {
+              return yield* Effect.fail(error);
+            }
+
+            if (isDiscordNotFoundError(error)) {
+              yield* Effect.logDebug({
+                message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
+              });
+              yield* redis.set(notFoundKey, "1", refusalCacheTtl);
+
+              return yield* Effect.fail(new ResourceNotFoundError());
+            }
+
+            if (isDiscordForbidden(error)) {
+              yield* Effect.logWarning({
+                message: "Discord refused the guild member request",
+                guildId,
+                userId,
+                discordCode: error.code,
+              });
+              yield* redis.set(forbiddenKey, "1", refusalCacheTtl);
+
+              return yield* Effect.fail(discordForbiddenError());
+            }
+
+            if (error instanceof ApplicationError) {
+              return yield* Effect.fail(error);
+            }
+
+            yield* Effect.logError({
+              message: `Failed to fetch guild member for guildId: ${guildId}, userId: ${userId}`,
+              error,
+            });
+
+            return yield* Effect.fail(toDiscordRequestError(error));
+          }),
+        ),
+      );
+    },
+    isGuildMemberRefused: (options) =>
+      redis
+        .get(getGuildMemberForbiddenCacheKey(options))
+        .pipe(Effect.map(Boolean)),
+    clearGuildMemberCache: (options) =>
+      Effect.all(
+        [
+          redis.del(getGuildMemberNotFoundCacheKey(options)),
+          redis.del(getGuildMemberForbiddenCacheKey(options)),
+        ],
+        { concurrency: "unbounded", discard: true },
+      ),
+  };
+};

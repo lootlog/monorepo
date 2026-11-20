@@ -34,7 +34,7 @@ type Role = typeof roleTable.$inferSelect;
 
 export const makeEventsCatalogRead = (
   database: typeof ApiDatabase.Service,
-  redis: Pick<RedisService, "getOrSetJsonEffect">,
+  redis: Pick<RedisService, "getOrSetJson">,
   logger: Pick<Logger, "warn">,
 ) => {
   const query = adapterOperation("events.catalog.drizzle");
@@ -46,7 +46,7 @@ export const makeEventsCatalogRead = (
   ) => {
     const codec = makeTypeJsonCodec(schema);
 
-    return redis.getOrSetJsonEffect({
+    return redis.getOrSetJson({
       ...entry,
       codec,
       ttlSeconds: CACHE_TTL_SECONDS,

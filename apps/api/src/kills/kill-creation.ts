@@ -23,7 +23,7 @@ import {
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import type { RedisEffects } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import {
   bossKillTable,
   guildKillActivityTable,
@@ -55,8 +55,8 @@ import {
 const DEDUP_TTL_SECONDS = 30;
 
 export interface KillCreationCache {
-  readonly invalidateScopes: RedisEffects["invalidateScopes"];
-  readonly deleteIfValue: RedisEffects["deleteIfValue"];
+  readonly invalidateScopes: RedisService["invalidateScopes"];
+  readonly deleteIfValue: RedisService["deleteIfValue"];
   readonly setNx: (
     key: string,
     value: string,

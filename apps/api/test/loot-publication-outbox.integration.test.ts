@@ -2049,10 +2049,9 @@ describe("durable loot publications", () => {
             }),
         },
         redis: {
-          invalidateScopes: async () => {
-            throw new Error("Unexpected cache invalidation");
-          },
-          getOrSetJsonEffect: () => Effect.die("Unexpected list cache access"),
+          invalidateScopes: () =>
+            Effect.die(new Error("Unexpected cache invalidation")),
+          getOrSetJson: () => Effect.die("Unexpected list cache access"),
         },
         logger: applicationLogger,
       });
@@ -2188,8 +2187,8 @@ describe("durable loot publications", () => {
       },
       persistence: makeLootPersistence(database),
       redis: {
-        invalidateScopes: async () => undefined,
-        getOrSetJsonEffect: () => Effect.die("Unexpected list read"),
+        invalidateScopes: () => Effect.void,
+        getOrSetJson: () => Effect.die("Unexpected list read"),
       },
       logger: applicationLogger,
     });

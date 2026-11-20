@@ -2,7 +2,7 @@ import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import type { MessagingError } from "@lootlog/messaging";
 import { Clock, Effect } from "effect";
 import type { RedisError } from "effect/persistence/Redis";
-import type { RedisEffects } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberKillTotalTable,
@@ -66,7 +66,7 @@ type RemovedMember = {
 export interface UserAccountDeletionPorts {
   readonly cleanupBattlelog: (userId: string) => Effect.Effect<void, unknown>;
   readonly deleteCacheKey: (key: string) => Effect.Effect<void, RedisError>;
-  readonly invalidateCacheScopes: RedisEffects["invalidateScopes"];
+  readonly invalidateCacheScopes: RedisService["invalidateScopes"];
   readonly deleteCachePattern: (
     pattern: string,
   ) => Effect.Effect<void, RedisError>;

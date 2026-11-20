@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { Effect } from "effect";
-import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
+import { makeDiscordRestClients } from "./discord-rest-client.factory.js";
 
 const authService = (accessToken: string) => ({
   getIdpToken: () =>
@@ -13,7 +13,7 @@ const authService = (accessToken: string) => ({
   rejectIdpToken: () => Effect.void,
 });
 
-describe("DiscordRestClientFactory", () => {
+describe("Discord REST clients", () => {
   const setInterval = spyOn(globalThis, "setInterval");
 
   afterEach(() => {
@@ -23,10 +23,14 @@ describe("DiscordRestClientFactory", () => {
   test("creates per-user REST clients without process-lifetime sweeper timers", async () => {
     // Each REST constructor would otherwise register two unreferenced
     // intervals that keep the instance and its bearer token reachable forever.
-    const factory = new DiscordRestClientFactory(authService("token-1"));
+    const factory = makeDiscordRestClients(authService("token-1"));
 
     const client = (userId: string, discordId: string) =>
-      factory.withRestClient(userId, discordId, async (rest) => rest);
+      Effect.runPromise(
+        factory.withRestClient(userId, discordId, (rest) =>
+          Effect.succeed(rest),
+        ),
+      );
 
     const first = await client("user-1", "discord-1");
     const second = await client("user-1", "discord-1");

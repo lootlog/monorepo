@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "bun:test";
-import { makeJsonCodec, RedisService } from "./redis.service.js";
+import { makeJsonCodec, makeRedisService } from "./redis.service.js";
 import { Effect, Queue, Schema } from "effect";
 import { Redis } from "effect/persistence";
 
@@ -49,7 +49,7 @@ const createRedisService = (client: RedisClientMock) => {
         ),
   });
 
-  return new RedisService(redis, { prefix: "lootlog" }, Effect.runPromise);
+  return makeRedisService(redis, { prefix: "lootlog" });
 };
 
 const redisCommandMock = (): RedisCommandMock =>
@@ -64,6 +64,9 @@ const createRedisClient = (): RedisClientMock => ({
   keys: redisCommandMock(),
 });
 
+const fromPromise = <A>(factory: () => Promise<A>) =>
+  Effect.tryPromise({ try: factory, catch: (error) => error });
+
 describe("RedisService", () => {
   const valueCodec = makeJsonCodec(Schema.Struct({ value: Schema.Number }));
   const cachedCodec = makeJsonCodec(Schema.Struct({ cached: Schema.Boolean }));
@@ -76,7 +79,9 @@ describe("RedisService", () => {
     client.del.mockResolvedValueOnce(2).mockResolvedValueOnce(1);
     const service = createRedisService(client);
 
-    const deletedCount = await service.deleteByPattern("timer:*");
+    const deletedCount = await Effect.runPromise(
+      service.deleteByPattern("timer:*"),
+    );
 
     expect(deletedCount).toBe(3);
     expect(client.keys).not.toHaveBeenCalled();
@@ -112,7 +117,7 @@ describe("RedisService", () => {
       .mockResolvedValueOnce(["0", ["lootlog:timer:a", "lootlog:timer:b"]]);
     const service = createRedisService(client);
 
-    await expect(service.scan("timer:*")).resolves.toEqual([
+    await expect(Effect.runPromise(service.scan("timer:*"))).resolves.toEqual([
       "timer:a",
       "timer:a",
       "timer:b",
@@ -151,7 +156,9 @@ describe("RedisService", () => {
     });
     const service = createRedisService(client);
 
-    await expect(service.deleteByPattern("timer:*", 2)).resolves.toBe(4);
+    await expect(
+      Effect.runPromise(service.deleteByPattern("timer:*", 2)),
+    ).resolves.toBe(4);
     expect(client.del.mock.calls).toEqual([
       ["lootlog:timer:a", "lootlog:timer:b"],
       ["lootlog:timer:c"],
@@ -165,9 +172,9 @@ describe("RedisService", () => {
     client.del.mockRejectedValueOnce(new Error("Redis disconnected"));
     const service = createRedisService(client);
 
-    await expect(service.deleteByPattern("timer:*")).rejects.toThrow(
-      "Redis disconnected",
-    );
+    await expect(
+      Effect.runPromise(service.deleteByPattern("timer:*")),
+    ).rejects.toThrow("Redis disconnected");
     expect(client.scan).toHaveBeenCalledTimes(1);
   });
 
@@ -177,7 +184,7 @@ describe("RedisService", () => {
       const client = createRedisClient();
       client.set.mockResolvedValue("OK");
       const service = createRedisService(client);
-      await service.invalidateScopes(scope);
+      await Effect.runPromise(service.invalidateScopes(scope));
       expect(client.set).toHaveBeenCalledTimes(1);
       expect(client.set).toHaveBeenCalledWith(
         `lootlog:cache-generation:v1:${scope}`,
@@ -199,7 +206,7 @@ describe("RedisService", () => {
     ]);
     const service = createRedisService(client);
 
-    await expect(service.scan("*abc")).resolves.toEqual([
+    await expect(Effect.runPromise(service.scan("*abc"))).resolves.toEqual([
       "abc",
       "external:lootlog:abc",
     ]);
@@ -211,7 +218,9 @@ describe("RedisService", () => {
     client.del.mockResolvedValueOnce(1);
     const service = createRedisService(client);
 
-    await expect(service.getJson("cache:key", valueCodec)).resolves.toBeNull();
+    await expect(
+      Effect.runPromise(service.getJson("cache:key", valueCodec)),
+    ).resolves.toBeNull();
 
     expect(client.del).toHaveBeenCalledWith("lootlog:cache:key");
   });
@@ -222,7 +231,9 @@ describe("RedisService", () => {
     client.del.mockResolvedValueOnce(1);
     const service = createRedisService(client);
 
-    await expect(service.getJson("cache:key", valueCodec)).resolves.toBeNull();
+    await expect(
+      Effect.runPromise(service.getJson("cache:key", valueCodec)),
+    ).resolves.toBeNull();
 
     expect(client.del).toHaveBeenCalledWith("lootlog:cache:key");
   });
@@ -239,14 +250,16 @@ describe("RedisService", () => {
       .fn<() => Promise<{ cached: boolean }>>()
       .mockResolvedValue({ cached: false });
 
-    const result = await service.getOrSetJson({
-      key: "cache:key",
-      ttlSeconds: 60,
-      factory,
-      codec: cachedCodec,
-      waitIntervalMs: 0,
-      waitTimeoutMs: 100,
-    });
+    const result = await Effect.runPromise(
+      service.getOrSetJson({
+        key: "cache:key",
+        ttlSeconds: 60,
+        factory: fromPromise(factory),
+        codec: cachedCodec,
+        waitIntervalMs: 0,
+        waitTimeoutMs: 100,
+      }),
+    );
 
     expect(result).toEqual({ cached: true });
     expect(factory).not.toHaveBeenCalled();
@@ -264,13 +277,15 @@ describe("RedisService", () => {
 
     const onError = vi.fn<(cause: unknown) => void>();
 
-    const result = await service.getOrSetJsonBestEffort({
-      key: "cache:key",
-      ttlSeconds: 60,
-      factory,
-      codec: freshCodec,
-      onError,
-    });
+    const result = await Effect.runPromise(
+      service.getOrSetJson({
+        key: "cache:key",
+        ttlSeconds: 60,
+        factory: fromPromise(factory),
+        codec: freshCodec,
+        onError,
+      }),
+    );
 
     expect(result).toEqual({ fresh: true });
     expect(factory).toHaveBeenCalledTimes(1);
@@ -285,14 +300,16 @@ describe("RedisService", () => {
     const factory = vi.fn(async () => ({ value: 2 }));
 
     await expect(
-      service.getOrSetJsonBestEffort({
-        key: "busy",
-        ttlSeconds: 60,
-        waitTimeoutMs: 5,
-        waitIntervalMs: 1,
-        codec: valueCodec,
-        factory,
-      }),
+      Effect.runPromise(
+        service.getOrSetJson({
+          key: "busy",
+          ttlSeconds: 60,
+          waitTimeoutMs: 5,
+          waitIntervalMs: 1,
+          codec: valueCodec,
+          factory: fromPromise(factory),
+        }),
+      ),
     ).rejects.toThrow("Cache fill wait timed out");
     expect(factory).not.toHaveBeenCalled();
   });
@@ -312,13 +329,15 @@ describe("RedisService", () => {
     const onError = vi.fn<(cause: unknown) => void>();
 
     await expect(
-      service.getOrSetJsonBestEffort({
-        key: "cache:key",
-        ttlSeconds: 60,
-        factory,
-        codec: freshCodec,
-        onError,
-      }),
+      Effect.runPromise(
+        service.getOrSetJson({
+          key: "cache:key",
+          ttlSeconds: 60,
+          factory: fromPromise(factory),
+          codec: freshCodec,
+          onError,
+        }),
+      ),
     ).rejects.toThrow(factoryError);
 
     expect(factory).toHaveBeenCalledTimes(1);
@@ -337,14 +356,16 @@ describe("RedisService", () => {
     const factory = vi.fn(async () => ({ value: 2 }));
 
     await expect(
-      service.getOrSetJsonBestEffort({
-        key: "late-takeover",
-        ttlSeconds: 60,
-        codec: valueCodec,
-        waitTimeoutMs: 5,
-        waitIntervalMs: 1,
-        factory,
-      }),
+      Effect.runPromise(
+        service.getOrSetJson({
+          key: "late-takeover",
+          ttlSeconds: 60,
+          codec: valueCodec,
+          waitTimeoutMs: 5,
+          waitIntervalMs: 1,
+          factory: fromPromise(factory),
+        }),
+      ),
     ).rejects.toThrow("Cache fill wait timed out");
     expect(factory).not.toHaveBeenCalled();
   });
@@ -364,14 +385,16 @@ describe("RedisService", () => {
 
     try {
       await expect(
-        service.getOrSetJsonBestEffort({
-          key: "delayed-acquisition",
-          ttlSeconds: 60,
-          codec: valueCodec,
-          waitTimeoutMs: 20,
-          waitIntervalMs: 1,
-          factory,
-        }),
+        Effect.runPromise(
+          service.getOrSetJson({
+            key: "delayed-acquisition",
+            ttlSeconds: 60,
+            codec: valueCodec,
+            waitTimeoutMs: 20,
+            waitIntervalMs: 1,
+            factory: fromPromise(factory),
+          }),
+        ),
       ).rejects.toThrow("Cache fill wait timed out");
       expect(factory).not.toHaveBeenCalled();
       expect(client.eval).toHaveBeenCalledWith(
@@ -394,12 +417,14 @@ describe("RedisService", () => {
     const factory = vi.fn(async () => ({ value: 7 }));
 
     await expect(
-      service.getOrSetJsonBestEffort({
-        key: "publication-failure",
-        ttlSeconds: 60,
-        codec: valueCodec,
-        factory,
-      }),
+      Effect.runPromise(
+        service.getOrSetJson({
+          key: "publication-failure",
+          ttlSeconds: 60,
+          codec: valueCodec,
+          factory: fromPromise(factory),
+        }),
+      ),
     ).resolves.toEqual({ value: 7 });
     expect(factory).toHaveBeenCalledTimes(1);
   });

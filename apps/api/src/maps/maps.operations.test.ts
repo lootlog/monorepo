@@ -43,8 +43,8 @@ const run = (
 ) => Effect.runPromise(operationWith(fetchImplementation, redis));
 
 const redisWith = (cached: string | null = null) => ({
-  get: mock(() => Promise.resolve(cached)),
-  set: mock(() => Promise.resolve()),
+  get: mock(() => Effect.succeed(cached)),
+  set: mock(() => Effect.void),
 });
 
 describe("maps operation", () => {

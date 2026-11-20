@@ -3,7 +3,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { respawnFromSpawnWindow } from "@lootlog/domain/timers";
 import { Clock, Effect, Predicate, Schema } from "effect";
-import { ExecutionError, type RedlockService } from "#src/redis/redlock";
+import { ExecutionError, type RedisLockManager } from "#src/redis/redlock";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   mapTimerResponse,
@@ -72,8 +72,8 @@ interface EventTimersDependencies {
   readonly logger: ApplicationLogger;
   readonly store: EventTimerStore;
   readonly amqp: EventPublisher;
-  readonly redis: RedisService;
-  readonly redlock: RedlockService;
+  readonly redis: Pick<RedisService, "invalidateScopes">;
+  readonly locks: RedisLockManager;
 }
 
 const LOCK_TTL_MS = 30_000;
@@ -83,16 +83,8 @@ export const makeEventTimersPort = ({
   store,
   amqp,
   redis,
-  redlock,
+  locks,
 }: EventTimersDependencies): EventTimersPort => {
-  const lockManager = redlock.createInstance();
-
-  const external = <A>(operation: string, run: () => Promise<A>) =>
-    Effect.tryPromise({
-      try: run,
-      catch: (cause) => new EventTimersError({ operation, cause }),
-    }).pipe(withAdapterSpan(operation, "event-timers"));
-
   const mapped = <A>(operation: string, effect: Effect.Effect<A, unknown>) =>
     effect.pipe(
       Effect.mapError((cause) => new EventTimersError({ operation, cause })),
@@ -100,7 +92,8 @@ export const makeEventTimersPort = ({
     );
 
   const invalidateCache = (guildId: string) =>
-    external("eventTimers.cache.invalidate", () =>
+    mapped(
+      "eventTimers.cache.invalidate",
       redis.invalidateScopes(getTimerListCacheScope(guildId)),
     ).pipe(
       Effect.tap(() =>
@@ -182,7 +175,7 @@ export const makeEventTimersPort = ({
     lockKey: string,
     use: () => Effect.Effect<A, unknown>,
   ) =>
-    lockManager.withLock(
+    locks.withLock(
       lockKey,
       LOCK_TTL_MS,
       Effect.suspend(use),

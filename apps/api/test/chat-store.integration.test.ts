@@ -9,7 +9,7 @@ import {
 import { BunRedis } from "@effect/platform-bun";
 import { Effect, ManagedRuntime } from "effect";
 import { Redis } from "effect/persistence";
-import { RedisService } from "#src/redis/redis.service";
+import { makeRedisService, type RedisService } from "#src/redis/redis.service";
 import { makeChatRedis } from "#src/runtime/features/chat";
 import type { ChatRedis } from "../src/chat/chat.data-layer.js";
 
@@ -26,12 +26,8 @@ describe("Organization chat store Dragonfly integration", () => {
         url: `redis://${username}:${password}@${process.env.REDIS_HOST ?? "127.0.0.1"}:${Number(process.env.REDIS_PORT ?? 6379)}`,
       }),
     );
-    redis = new RedisService(
-      await redisRuntime.runPromise(Redis.Redis),
-      {},
-      (effect) => redisRuntime.runPromise(effect),
-    );
-    chat = makeChatRedis(redis.effect);
+    redis = makeRedisService(await redisRuntime.runPromise(Redis.Redis));
+    chat = makeChatRedis(redis);
   });
 
   afterAll(async () => {
@@ -39,7 +35,9 @@ describe("Organization chat store Dragonfly integration", () => {
   });
 
   beforeEach(async () => {
-    await redis.flushall();
+    await redisRuntime.runPromise(
+      Effect.flatMap(Redis.Redis, (client) => client.send("FLUSHALL")),
+    );
   });
 
   it("replaces a message by value after a send trims the list, leaving the shifted neighbours intact", async () => {

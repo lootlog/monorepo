@@ -1,18 +1,21 @@
-import { AuthService } from "#src/auth/auth.service";
+import { makeAuthService } from "#src/auth/auth.service";
 import {
   ApiDatabase,
   type ApiDatabaseValue,
 } from "#src/database/drizzle/database";
-import { DiscordGuildMemberClient } from "#src/discord/discord-guild-member.client";
-import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
-import { DiscordRestClientFactory } from "#src/discord/discord-rest-client.factory";
-import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
-import { DiscordUserGuildsClient } from "#src/discord/discord-user-guilds.client";
+import { makeDiscordGuildMemberClient } from "#src/discord/discord-guild-member.client";
+import { makeDiscordRateLimiter } from "#src/discord/discord-rate-limiter.service";
+import { makeDiscordRestClients } from "#src/discord/discord-rest-client.factory";
+import {
+  makeDiscordSyncDiagnostics,
+  type DiscordSyncDiagnostics,
+} from "#src/discord/discord-sync-diagnostics.service";
+import { makeDiscordUserGuildsClient } from "#src/discord/discord-user-guilds.client";
 import {
   makeDiscordOperations,
   type DiscordOperations,
 } from "#src/discord/discord.operations";
-import { RedlockService } from "#src/redis/redlock";
+import { makeRedisLockManager } from "#src/redis/redlock";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
 import {
   makeMemberRefreshScheduler,
@@ -44,7 +47,7 @@ import {
 import { applicationLogger } from "#src/shared/application-logger";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { Context, Effect, FiberSet, Layer } from "effect";
+import { Context, Effect, Layer } from "effect";
 import { HttpClient } from "effect/http";
 import {
   makeMembersDataLayer,
@@ -67,7 +70,7 @@ interface MemberServicesValue {
   readonly refresh: MemberRefresh;
   readonly discord: DiscordOperations;
   readonly scheduler: MemberRefreshScheduler;
-  readonly diagnostics: DiscordSyncDiagnosticsService;
+  readonly diagnostics: DiscordSyncDiagnostics;
   readonly sync: MemberSync;
 }
 
@@ -84,53 +87,37 @@ export const memberServicesLive = Layer.effect(
     const config = yield* ApiRuntimeConfig;
     const httpClient = yield* HttpClient.HttpClient;
     const database = yield* ApiDatabase;
-    const fibers = yield* FiberSet.make<unknown, unknown>();
-    const runPromise = yield* FiberSet.runtimePromise(fibers)<never>();
     const memberRefreshQueue = yield* MemberRefreshQueue;
 
-    const adapter = <A>(operation: () => PromiseLike<A>) =>
-      Effect.tryPromise({ try: operation, catch: (cause) => cause });
-
     const memberStore = makeMemberStore(database);
+    const diagnostics = makeDiscordSyncDiagnostics(redis);
+    const rateLimiter = makeDiscordRateLimiter(redis);
 
-    const diagnostics = new DiscordSyncDiagnosticsService(
-      applicationLogger,
-      redis,
-    );
-
-    const rateLimiter = new DiscordRateLimiterService(applicationLogger, redis);
-
-    const redlock = new RedlockService(redis);
-
-    const restClientFactory = new DiscordRestClientFactory(
-      new AuthService(
-        applicationLogger,
+    const restClients = makeDiscordRestClients(
+      makeAuthService({
         redis,
         httpClient,
-        config.authServiceUrl,
-        config.authIdpTokenSecret,
-      ),
-      runPromise,
+        authServiceUrl: config.authServiceUrl,
+        idpTokenSecret: config.authIdpTokenSecret,
+      }),
     );
 
-    const userGuildsClient = new DiscordUserGuildsClient(
-      applicationLogger,
+    const userGuildsClient = makeDiscordUserGuildsClient({
       redis,
       rateLimiter,
-      redlock,
+      locks: makeRedisLockManager(redis),
       diagnostics,
-      restClientFactory,
-      config.environment,
-    );
+      restClients,
+      environment: config.environment,
+    });
 
-    const guildMemberClient = new DiscordGuildMemberClient(
-      applicationLogger,
+    const guildMemberClient = makeDiscordGuildMemberClient({
       redis,
       rateLimiter,
       diagnostics,
-      restClientFactory,
-      config.environment,
-    );
+      restClients,
+      environment: config.environment,
+    });
 
     const discord = makeDiscordOperations(userGuildsClient, guildMemberClient);
 
@@ -138,13 +125,11 @@ export const memberServicesLive = Layer.effect(
       clearMemberCaches: (member) =>
         Effect.all(
           [
-            redis.effect.invalidateScopes(
+            redis.invalidateScopes(
               getUserLootlogConfigCacheScope(member.discordId),
               getUserGuildPermissionsCacheScope(member.discordId),
             ),
-            redis.effect.invalidateScopes(
-              getMemberReadCacheScope(member.guildId),
-            ),
+            redis.invalidateScopes(getMemberReadCacheScope(member.guildId)),
             member.globalUserId
               ? Effect.all(
                   [
@@ -153,7 +138,7 @@ export const memberServicesLive = Layer.effect(
                       guildId: member.guildId,
                       userId: member.globalUserId,
                     }),
-                    redis.effect.del(
+                    redis.del(
                       getPermissionsCacheKey(
                         member.globalUserId,
                         member.guildId,
@@ -177,12 +162,12 @@ export const memberServicesLive = Layer.effect(
       invalidateMember: ({ discordId, guildId, userId }) =>
         Effect.all(
           [
-            redis.effect.del(getPermissionsCacheKey(userId, guildId)),
-            redis.effect.invalidateScopes(
+            redis.del(getPermissionsCacheKey(userId, guildId)),
+            redis.invalidateScopes(
               getUserLootlogConfigCacheScope(discordId),
               getUserGuildPermissionsCacheScope(discordId),
             ),
-            redis.effect.invalidateScopes(getMemberReadCacheScope(guildId)),
+            redis.invalidateScopes(getMemberReadCacheScope(guildId)),
           ],
           { concurrency: "unbounded", discard: true },
         ),
@@ -199,14 +184,12 @@ export const memberServicesLive = Layer.effect(
     const removal = makeMemberRemoval(database, delivery);
 
     const nextRefreshAt = (userId: string) =>
-      adapter(() =>
-        rateLimiter.getNextAvailableAtForUser(userId, "guild-member"),
-      );
+      rateLimiter.getNextAvailableAtForUser(userId, "guild-member");
 
     const recordMetric = (options: {
       readonly outcome: "delayed" | "queued" | "refused" | "rate_limited";
       readonly reason: string;
-    }) => adapter(() => diagnostics.recordMemberRefreshMetric(options));
+    }) => diagnostics.recordMemberRefreshMetric(options);
 
     const scheduler = makeMemberRefreshScheduler(
       applicationLogger,
@@ -215,10 +198,10 @@ export const memberServicesLive = Layer.effect(
         nextRefreshAt,
         isRefused: discord.isGuildMemberRefused,
         recordMetric,
-        getLock: redis.effect.get,
-        setLock: redis.effect.setNX,
-        evalLock: redis.effect.eval,
-        releaseLock: redis.effect.deleteIfValue,
+        getLock: redis.get,
+        setLock: redis.setNX,
+        evalLock: redis.eval,
+        releaseLock: redis.deleteIfValue,
       },
     );
 
@@ -230,7 +213,7 @@ export const memberServicesLive = Layer.effect(
         getGuildMember: discord.getGuildMember,
         nextRefreshAt,
         refreshPermissionCache: ({ userId, guildId }) =>
-          redis.effect.del(getPermissionsCacheKey(userId, guildId)),
+          redis.del(getPermissionsCacheKey(userId, guildId)),
       },
     );
 
@@ -294,9 +277,6 @@ export const membersData = Layer.unwrap(
     const { refresh, diagnostics, memberDelivery } = yield* MemberServices;
     const bulkRefreshQueue = yield* MemberBulkRefreshQueue;
 
-    const promise = <A>(operation: () => PromiseLike<A>) =>
-      Effect.tryPromise({ try: operation, catch: (cause) => cause });
-
     const publish = <Key extends keyof MemberPublishedEvents>(
       routingKey: Key,
       payload: MemberPublishedEvents[Key],
@@ -306,12 +286,10 @@ export const membersData = Layer.unwrap(
       {
         refreshGuildMember: refresh.refreshGuildMemberWithinBudget,
         recordStaleUse: (reason) =>
-          promise(() =>
-            diagnostics.recordMemberRefreshMetric({
-              outcome: "stale_used",
-              reason,
-            }),
-          ),
+          diagnostics.recordMemberRefreshMetric({
+            outcome: "stale_used",
+            reason,
+          }),
         deliverMemberChanges: memberDelivery.deliverAll,
         enqueueBulkRefresh: bulkRefreshQueue.enqueue,
         publishRefreshJobUpdate: (job) =>

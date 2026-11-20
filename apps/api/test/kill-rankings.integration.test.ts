@@ -794,8 +794,8 @@ test("concurrent hero renames onto one name give it to exactly one hero", async 
       const mutations = makeEventCatalogMutations(
         db,
         {
-          invalidateScopes: () => Promise.resolve(),
-          deleteByPattern: () => Promise.resolve(0),
+          invalidateScopes: () => Effect.void,
+          deleteByPattern: () => Effect.succeed(0),
         },
         applicationLogger,
       );
@@ -872,8 +872,8 @@ test("renaming a hero deleted while the rename waits for its row is a 404", asyn
       const mutations = makeEventCatalogMutations(
         db,
         {
-          invalidateScopes: () => Promise.resolve(),
-          deleteByPattern: () => Promise.resolve(0),
+          invalidateScopes: () => Effect.void,
+          deleteByPattern: () => Effect.succeed(0),
         },
         applicationLogger,
       );

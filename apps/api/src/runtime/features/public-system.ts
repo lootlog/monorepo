@@ -40,13 +40,11 @@ export const publicSystemData = Layer.unwrap(
         environment: config.environment,
         image: new PublicGuildStatsCardImageAdapter(httpClient),
         cache: {
-          get: (key) => cacheOperation(redis.effect.get(key)),
-          set: (key, value, ttl) =>
-            cacheOperation(redis.effect.set(key, value, ttl)),
+          get: (key) => cacheOperation(redis.get(key)),
+          set: (key, value, ttl) => cacheOperation(redis.set(key, value, ttl)),
           setNX: (key, value, ttl) =>
-            cacheOperation(redis.effect.setNX(key, value, ttl)),
-          del: (key) =>
-            cacheOperation(redis.effect.del(key)).pipe(Effect.asVoid),
+            cacheOperation(redis.setNX(key, value, ttl)),
+          del: (key) => cacheOperation(redis.del(key)).pipe(Effect.asVoid),
         },
       }),
       local: config.isLocal,

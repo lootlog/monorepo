@@ -28,9 +28,9 @@ describe("event map assignments Effect module", () => {
       const assignments = makeEventMapAssignments(
         boundary.database,
         {
-          invalidateScopes: () => Promise.resolve(),
+          invalidateScopes: () => Effect.void,
           deleteByPattern: () =>
-            Promise.reject(new Error("Unexpected cache invalidation")),
+            Effect.die(new Error("Unexpected cache invalidation")),
         },
         { getEventRespawnTimer },
         { publish },
@@ -99,8 +99,8 @@ it.each([300, null])(
       const assignments = makeEventMapAssignments(
         boundary.database,
         {
-          invalidateScopes: () => Promise.resolve(),
-          deleteByPattern: () => Promise.resolve(0),
+          invalidateScopes: () => Effect.void,
+          deleteByPattern: () => Effect.succeed(0),
         },
         { getEventRespawnTimer: () => Effect.die("Unexpected timer read") },
         { publish },
@@ -189,8 +189,8 @@ it("keeps members who left the Discord server off map assignments", async () => 
     const assignments = makeEventMapAssignments(
       boundary.database,
       {
-        invalidateScopes: () => Promise.resolve(),
-        deleteByPattern: () => Promise.resolve(0),
+        invalidateScopes: () => Effect.void,
+        deleteByPattern: () => Effect.succeed(0),
       },
       {
         getEventRespawnTimer: () =>

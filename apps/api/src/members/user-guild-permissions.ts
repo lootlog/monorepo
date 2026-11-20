@@ -22,10 +22,10 @@ import {
 } from "./member-access-query.js";
 import { hydrateMemberRoles } from "./member-role-hydration.js";
 
-export type UserGuildPermissionsCache = Pick<
-  RedisService,
-  "getOrSetJsonEffect"
->;
+// Handlers and their tests build this port by name.
+export interface UserGuildPermissionsCache {
+  readonly getOrSetJsonEffect: RedisService["getOrSetJson"];
+}
 
 export interface UserGuildPermissionsPersistence {
   readonly findGuildsForPermissions: (

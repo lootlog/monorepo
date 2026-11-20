@@ -87,7 +87,7 @@ describe("event update Effect module", () => {
       const catalog = makeEventsCatalogRead(
         database,
         {
-          getOrSetJsonEffect: () =>
+          getOrSetJson: () =>
             Effect.die("Mutation hydration must read durable state"),
         },
         logger,
@@ -96,8 +96,8 @@ describe("event update Effect module", () => {
       const updateEvent = makeEventUpdate(
         database,
         {
-          invalidateScopes: () => Promise.resolve(),
-          deleteByPattern: () => Promise.resolve(0),
+          invalidateScopes: () => Effect.void,
+          deleteByPattern: () => Effect.succeed(0),
         },
         catalog,
         logger,
@@ -148,8 +148,8 @@ type DatabaseBoundary = Awaited<ReturnType<typeof createDatabaseBoundary>>;
 
 describe("event hero list history", () => {
   const redis = {
-    invalidateScopes: () => Promise.resolve(),
-    deleteByPattern: () => Promise.resolve(0),
+    invalidateScopes: () => Effect.void,
+    deleteByPattern: () => Effect.succeed(0),
   };
 
   const logger = { warn: () => undefined };
@@ -351,7 +351,7 @@ describe("event hero list history", () => {
         makeEventsCatalogRead(
           boundary.database,
           {
-            getOrSetJsonEffect: () =>
+            getOrSetJson: () =>
               Effect.die("Mutation hydration must read durable state"),
           },
           logger,

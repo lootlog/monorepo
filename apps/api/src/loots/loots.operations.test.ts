@@ -92,8 +92,8 @@ const makeOperations = (
       voidDraw: () => Effect.die("Unexpected draw void"),
     },
     redis: {
-      invalidateScopes: async () => undefined,
-      getOrSetJsonEffect: () => Effect.die("Unexpected Redis cache read"),
+      invalidateScopes: () => Effect.void,
+      getOrSetJson: () => Effect.die("Unexpected Redis cache read"),
     },
     logger: applicationLogger,
   });
@@ -512,8 +512,8 @@ describe("loot list pages", () => {
       voidDraw: () => Effect.die("Unexpected draw void"),
     },
     redis: {
-      invalidateScopes: async () => undefined,
-      getOrSetJsonEffect: (options) => options.factory,
+      invalidateScopes: () => Effect.void,
+      getOrSetJson: (options) => options.factory,
     },
     logger: applicationLogger,
   });

@@ -32,7 +32,7 @@ const getPlayerConfigKey = (
 ) => `${player.userId}:${player.accountId}:${player.characterId}`;
 
 export interface UserLootlogConfigCache {
-  readonly getOrSetJsonEffect: RedisService["getOrSetJsonEffect"];
+  readonly getOrSetJsonEffect: RedisService["getOrSetJson"];
   readonly invalidateScopes: (
     ...scopes: string[]
   ) => Effect.Effect<void, unknown>;

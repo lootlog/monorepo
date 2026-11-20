@@ -11,7 +11,7 @@ import type { KillQueryCache } from "#src/kills/kill-query-support";
 import { makeKillStatsPersistence } from "#src/kills/kill-stats.repository";
 import { makeMemberKillQuery } from "#src/kills/member-kill-query";
 import { makeUserKillQueries } from "#src/kills/user-kill-queries";
-import { RedlockService } from "#src/redis/redlock";
+import { makeRedisLockManager } from "#src/redis/redlock";
 import { makeLootAllocationPersistence } from "#src/loots/allocation/loot-allocation.repository";
 import { makeLootAllocationOperations } from "#src/loots/allocation/loot-allocation.operations";
 import { makeLootPersistence } from "#src/loots/loot.repository";
@@ -55,7 +55,7 @@ export const recordsServicesLive = Layer.effect(
     const rabbit = yield* RabbitMessaging;
     const database = yield* ApiDatabase;
     const lootStats = new LootStatsService(database, redis);
-    const locks = new RedlockService(redis).createInstance();
+    const locks = makeRedisLockManager(redis);
 
     const lootQuery = makeLootQueryOperations(
       makeLootQueryPersistence(database),
@@ -67,8 +67,7 @@ export const recordsServicesLive = Layer.effect(
       (organizationIds) =>
         Effect.forEach(
           organizationIds,
-          (guildId) =>
-            redis.effect.invalidateScopes(getLootListCacheScope(guildId)),
+          (guildId) => redis.invalidateScopes(getLootListCacheScope(guildId)),
           { concurrency: "unbounded", discard: true },
         ),
       makeLootSnapshotReader(lootQuery),
@@ -115,7 +114,7 @@ export const recordsServicesLive = Layer.effect(
 
     const killQueryCache: KillQueryCache = {
       getOrSet: (key, schema, factory, ttlSeconds, scopes) =>
-        redis.effect.getOrSetJson({
+        redis.getOrSetJson({
           key,
           scopes,
           codec: makeJsonCodec(schema),
@@ -135,10 +134,10 @@ export const recordsServicesLive = Layer.effect(
         createKill: makeKillCreation(
           database,
           {
-            invalidateScopes: redis.effect.invalidateScopes,
-            deleteIfValue: redis.effect.deleteIfValue,
-            setNx: redis.effect.setNX,
-            setNxGet: redis.effect.setNxGet,
+            invalidateScopes: redis.invalidateScopes,
+            deleteIfValue: redis.deleteIfValue,
+            setNx: redis.setNX,
+            setNxGet: redis.setNxGet,
           },
           applicationLogger,
           makeGuildKillActivityPublisher(database, rabbit),
@@ -188,7 +187,7 @@ export const recordsServicesLive = Layer.effect(
         lootSubmissionAcceptance: acceptance,
         lootAllocation: makeLootAllocationOperations({
           persistence: makeLootAllocationPersistence(database),
-          cache: redis.effect,
+          cache: redis,
           publisher: {
             publish: (event) =>
               rabbit.publish(

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { eq } from "drizzle-orm";
-import { Effect, Queue } from "effect";
+import { Effect } from "effect";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
@@ -23,8 +23,7 @@ import { timerTable } from "#src/database/drizzle/timer.schema";
 import { makeEventReadCache } from "#src/events/catalog/event-read-cache.service";
 import { makeEventTimersPort } from "#src/events/respawn/event-timers.port";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.repository";
-import { RedisService } from "#src/redis/redis.service";
-import { RedlockService } from "#src/redis/redlock";
+import { makeRedisLockManager } from "#src/redis/redlock";
 import { applicationLogger } from "#src/shared/application-logger";
 import { buildTimerKey } from "#src/timers/timer-key";
 import { makeEventPresenceTracking } from "./event-presence-tracking.js";
@@ -146,31 +145,22 @@ describe("event presence tracking", () => {
 
   const makeTracking = () => {
     const database = boundary.database;
-    const lockCalls = mock().mockResolvedValue(1);
+    const lockCalls = mock(() => Effect.succeed(1));
 
     const emitted: Array<{ routingKey: string; payload: unknown }> = [];
 
-    const redis = new RedisService(
-      {
-        send: unexpected,
-        eval: () => unexpected,
-        subscribe: () => Queue.unbounded(),
-        reserve: Effect.die("unused"),
-      },
-      {},
-      Effect.runPromise,
-    );
+    const redis = { invalidateScopes: unexpected };
 
     const tracking = makeEventPresenceTracking(
       database,
       makeEventTimersPort({
         store: makeEventTimerStore(database),
         redis,
-        redlock: new RedlockService(redis),
+        locks: makeRedisLockManager({ eval: unexpected }),
         logger: applicationLogger,
         amqp: { publish: unexpected },
       }),
-      new RedlockService({ eval: lockCalls }),
+      makeRedisLockManager({ eval: lockCalls }),
       {
         emit: (routingKey, payload) =>
           Effect.sync(() => {
@@ -178,8 +168,8 @@ describe("event presence tracking", () => {
           }),
       },
       makeEventReadCache({
-        getOrSetJsonEffect: (options) => options.factory,
-        invalidateScopes: async () => {},
+        getOrSetJson: (options) => options.factory,
+        invalidateScopes: () => Effect.void,
       }),
     );
 

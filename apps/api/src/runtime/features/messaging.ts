@@ -14,7 +14,7 @@ import {
 
 export const messagingData = Layer.unwrap(
   Effect.gen(function* () {
-    const { effect: redis } = yield* ApiRedis;
+    const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const readyRedis = makeReadyRoomRedis(redis);
 

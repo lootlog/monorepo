@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
-import { Effect, Queue } from "effect";
+import { Effect } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
@@ -15,8 +15,7 @@ import {
 import { timerTable } from "#src/database/drizzle/timer.schema";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.repository";
 import { makeEventTimersPort } from "#src/events/respawn/event-timers.port";
-import { RedisService } from "#src/redis/redis.service";
-import { RedlockService } from "#src/redis/redlock";
+import { makeRedisLockManager } from "#src/redis/redlock";
 import { applicationLogger } from "#src/shared/application-logger";
 import { makeManualTimer } from "./timer-manual.data-layer.js";
 import { makeResetTimer } from "./timer-reset.data-layer.js";
@@ -115,18 +114,8 @@ it("resets a manual timer entered as dates to the window as entered", async () =
 it("resets an event respawn timer to the window the event opened", async () => {
   const timers = makeEventTimersPort({
     store: makeEventTimerStore(boundary.database),
-    redis: new RedisService(
-      {
-        // SAFETY: Cache invalidation only writes generation keys and ignores the reply; Redis's caller-selected A is erased at this fake transport boundary.
-        send: <A>() => Effect.succeed("OK" as A),
-        eval: () => () => Effect.die("unused"),
-        subscribe: () => Queue.unbounded(),
-        reserve: Effect.die("unused"),
-      },
-      {},
-      Effect.runPromise,
-    ),
-    redlock: new RedlockService({ eval: mock().mockResolvedValue(1) }),
+    redis: { invalidateScopes: () => Effect.void },
+    locks: makeRedisLockManager({ eval: () => Effect.succeed(1) }),
     logger: applicationLogger,
     amqp: { publish: () => Effect.void },
   });

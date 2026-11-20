@@ -104,7 +104,7 @@ test("config summaries hide members who left, Lootlogs they can no longer submit
       }).pipe(
         Effect.provide(
           makeMemberReadDataLayer({
-            getOrSetJsonEffect: ({ factory }) => factory,
+            getOrSetJson: ({ factory }) => factory,
           }),
         ),
       ),

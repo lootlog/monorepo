@@ -1,5 +1,5 @@
 import { Logger } from "#src/shared/application-logger";
-import { makeTypeJsonCodec, RedisService } from "#src/redis/redis.service";
+import { makeTypeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { Effect, Schema } from "effect";
 import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 
@@ -29,17 +29,20 @@ export const eventReadCacheEntry = <Params extends object>(
 });
 
 export const makeEventReadCache = (
-  redis: Pick<RedisService, "invalidateScopes" | "getOrSetJsonEffect">,
+  redis: Pick<RedisService, "invalidateScopes" | "getOrSetJson">,
 ) => {
   const logger = new Logger("EventReadCache");
 
-  const invalidateScopes = async (scope: string) => {
-    try {
-      await redis.invalidateScopes(scope);
-    } catch (error) {
-      logger.warn("Failed to invalidate event read cache", error);
-    }
-  };
+  const invalidateScopes = (scope: string) =>
+    redis
+      .invalidateScopes(scope)
+      .pipe(
+        Effect.catch((error) =>
+          Effect.sync(() =>
+            logger.warn("Failed to invalidate event read cache", error),
+          ),
+        ),
+      );
 
   return {
     getGuildEntry<Params extends object>(
@@ -66,7 +69,7 @@ export const makeEventReadCache = (
     ): Effect.Effect<S["Type"], E> {
       const codec = makeTypeJsonCodec(schema);
 
-      return redis.getOrSetJsonEffect({
+      return redis.getOrSetJson({
         ...entry,
         codec,
         ttlSeconds: EVENT_READ_CACHE_TTL_SECONDS,
@@ -75,15 +78,14 @@ export const makeEventReadCache = (
       });
     },
 
-    async invalidateGuild(guildId: string) {
-      await invalidateScopes(eventReadCacheScope(guildId));
-    },
-
-    async invalidateEvent(guildId: string, eventId: string) {
-      await Promise.all([
-        invalidateScopes(eventReadCacheScope(guildId, "guild")),
-        invalidateScopes(eventReadCacheScope(guildId, eventId)),
-      ]);
+    invalidateEvent(guildId: string, eventId: string): Effect.Effect<void> {
+      return Effect.all(
+        [
+          invalidateScopes(eventReadCacheScope(guildId, "guild")),
+          invalidateScopes(eventReadCacheScope(guildId, eventId)),
+        ],
+        { concurrency: "unbounded", discard: true },
+      );
     },
   };
 };

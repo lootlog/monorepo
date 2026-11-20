@@ -22,7 +22,7 @@ export const getGuildCacheKey = (idOrVanityUrl: string) =>
     isOrganizationIdLike(idOrVanityUrl) ? "id" : "vanity"
   }:${idOrVanityUrl}`;
 
-/** The `RedisEffects` commands an Organization lookup cache needs. */
+/** The `RedisService` commands an Organization lookup cache needs. */
 export interface GuildConfigurationCache {
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
   readonly del: (key: string) => Effect.Effect<void, RedisError>;

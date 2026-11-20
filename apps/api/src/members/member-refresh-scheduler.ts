@@ -5,7 +5,7 @@ import {
 import type { Job, Queue as BullQueue } from "bullmq";
 import { Clock, Effect } from "effect";
 import type { RedisError } from "effect/persistence/Redis";
-import type { RedisEffects } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 
 export interface MemberRefreshJobData {
@@ -56,7 +56,7 @@ export interface MemberRefreshSchedulerPorts {
     keys: string[],
     args: Array<string | number>,
   ) => Effect.Effect<number, RedisError>;
-  readonly releaseLock: RedisEffects["deleteIfValue"];
+  readonly releaseLock: RedisService["deleteIfValue"];
 }
 
 const USER_LOCK_TTL_SECONDS = 30;

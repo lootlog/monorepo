@@ -7,7 +7,7 @@ import { getLootListCacheScope } from "#src/shared/cache";
 import { createHash } from "node:crypto";
 import { joinItemStat } from "@lootlog/domain/item-stat";
 import { Clock, Effect, Schema } from "effect";
-import type { RedisEffects } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import type { GuildLootEventNpc } from "@lootlog/schema/loot-events";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -32,7 +32,7 @@ import type { LootAllocationPersistence } from "#src/loots/allocation/loot-alloc
 
 const SUBMISSION_WINDOW_MS = 10 * 60 * 1000;
 
-export type LootAllocationCache = Pick<RedisEffects, "invalidateScopes">;
+export type LootAllocationCache = Pick<RedisService, "invalidateScopes">;
 
 export interface LootAllocationPublisher {
   readonly publish: (

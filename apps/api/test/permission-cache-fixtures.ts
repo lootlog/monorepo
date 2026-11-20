@@ -1,6 +1,6 @@
 import { Effect, Queue, Schema } from "effect";
 import { Redis } from "effect/persistence";
-import { RedisService } from "../src/redis/redis.service.js";
+import { makeRedisService } from "#src/redis/redis.service";
 import type { InternalGuildsCache } from "../src/guilds/internal-guilds-data.js";
 
 // The real RedisService owns generation and single-flight behavior. Only the
@@ -99,15 +99,13 @@ export const createPermissionCacheBoundary = () => {
         }),
   });
 
-  const redis = new RedisService(driver, {}, Effect.runPromise);
+  const redis = makeRedisService(driver);
 
   const cache = {
-    get: (key: string) => Effect.promise(() => redis.get(key)),
-    set: (key: string, value: string, ttl: number) =>
-      Effect.promise(() => redis.set(key, value, ttl)),
-    del: (key: string) =>
-      Effect.promise(() => redis.del(key)).pipe(Effect.asVoid),
-    getOrSetJsonEffect: redis.getOrSetJsonEffect.bind(redis),
+    get: redis.get,
+    set: redis.set,
+    del: (key: string) => redis.del(key).pipe(Effect.asVoid),
+    getOrSetJsonEffect: redis.getOrSetJson,
   } satisfies InternalGuildsCache;
 
   return {

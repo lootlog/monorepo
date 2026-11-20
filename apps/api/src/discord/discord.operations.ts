@@ -10,44 +10,48 @@ export const makeDiscordOperations = (
   userGuilds: DiscordUserGuildsClient,
   guildMember: DiscordGuildMemberClient,
 ) => {
-  const adapter = <A>(operation: string, run: () => Promise<A>) =>
-    Effect.tryPromise({
-      try: run,
-      catch: (cause) => new OperationError({ operation, cause }),
-    }).pipe(withAdapterSpan(operation, "discord"));
+  const adapter = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
+    effect.pipe(
+      Effect.mapError((cause) => new OperationError({ operation, cause })),
+      withAdapterSpan(operation, "discord"),
+    );
 
   return {
     getUserGuilds: (userId: string, discordId: string) =>
-      adapter("discord.userGuilds", () =>
+      adapter(
+        "discord.userGuilds",
         userGuilds.getUserGuilds(userId, discordId),
       ),
     getFreshCompleteUserGuilds: (userId: string, discordId: string) =>
-      adapter("discord.userGuilds.fresh", () =>
+      adapter(
+        "discord.userGuilds.fresh",
         userGuilds.getFreshCompleteUserGuilds(userId, discordId),
       ),
     getCachedCompleteUserGuilds: (userId: string, discordId: string) =>
-      adapter("discord.userGuilds.cached", () =>
+      adapter(
+        "discord.userGuilds.cached",
         userGuilds.getCachedCompleteUserGuilds(userId, discordId),
       ),
     clearUserGuildIdsCache: (options: {
       readonly userId: string;
       readonly discordId: string;
     }) =>
-      adapter("discord.userGuilds.cache.clear", () =>
+      adapter(
+        "discord.userGuilds.cache.clear",
         userGuilds.clearUserGuildIdsCache(options),
       ),
     getGuildMember: (options: {
       readonly guildId: string;
       readonly userId: string;
       readonly discordId: string;
-    }) =>
-      adapter("discord.guildMember", () => guildMember.getGuildMember(options)),
+    }) => adapter("discord.guildMember", guildMember.getGuildMember(options)),
     isGuildMemberRefused: (options: {
       readonly guildId: string;
       readonly userId: string;
       readonly discordId: string;
     }) =>
-      adapter("discord.guildMember.refused", () =>
+      adapter(
+        "discord.guildMember.refused",
         guildMember.isGuildMemberRefused(options),
       ),
     clearGuildMemberCache: (options: {
@@ -55,7 +59,8 @@ export const makeDiscordOperations = (
       readonly userId: string;
       readonly discordId: string;
     }) =>
-      adapter("discord.guildMember.cache.clear", () =>
+      adapter(
+        "discord.guildMember.cache.clear",
         guildMember.clearGuildMemberCache(options),
       ),
   };

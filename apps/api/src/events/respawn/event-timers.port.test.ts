@@ -1,6 +1,6 @@
-import { expect, it, mock } from "bun:test";
+import { expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
-import { Effect, Queue } from "effect";
+import { Effect } from "effect";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -11,8 +11,7 @@ import {
   memberTable,
 } from "#src/database/drizzle/organization.schema";
 import { timerTable } from "#src/database/drizzle/timer.schema";
-import { RedisService } from "#src/redis/redis.service";
-import { RedlockService } from "#src/redis/redlock";
+import { makeRedisLockManager } from "#src/redis/redlock";
 import { applicationLogger } from "#src/shared/application-logger";
 import { buildTimerKey } from "#src/timers/timer-key";
 import { makeEventTimerStore } from "./event-timer.repository.js";
@@ -49,22 +48,12 @@ it("credits a reopened respawn window to the member who opened it", async () => 
       }),
     );
 
-    const redis = new RedisService(
-      {
-        // SAFETY: Cache invalidation only writes generation keys and ignores the reply; Redis's caller-selected A is erased at this fake transport boundary.
-        send: <A>() => Effect.succeed("OK" as A),
-        eval: () => () => Effect.die("unused"),
-        subscribe: () => Queue.unbounded(),
-        reserve: Effect.die("unused"),
-      },
-      {},
-      Effect.runPromise,
-    );
+    const redis = { invalidateScopes: () => Effect.void };
 
     const timers = makeEventTimersPort({
       store: makeEventTimerStore(database),
       redis,
-      redlock: new RedlockService({ eval: mock().mockResolvedValue(1) }),
+      locks: makeRedisLockManager({ eval: () => Effect.succeed(1) }),
       logger: applicationLogger,
       amqp: { publish: () => Effect.void },
     });
@@ -152,17 +141,8 @@ it("follows an event hero to its NPC's timer after Margonem renames the NPC", as
 
     const timers = makeEventTimersPort({
       store: makeEventTimerStore(database),
-      redis: new RedisService(
-        {
-          send: () => Effect.die("unused"),
-          eval: () => () => Effect.die("unused"),
-          subscribe: () => Queue.unbounded(),
-          reserve: Effect.die("unused"),
-        },
-        {},
-        Effect.runPromise,
-      ),
-      redlock: new RedlockService({ eval: mock().mockResolvedValue(1) }),
+      redis: { invalidateScopes: () => Effect.die("unused") },
+      locks: makeRedisLockManager({ eval: () => Effect.succeed(1) }),
       logger: applicationLogger,
       amqp: { publish: () => Effect.void },
     });

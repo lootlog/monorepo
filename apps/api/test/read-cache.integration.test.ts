@@ -9,7 +9,11 @@ import { Effect, ManagedRuntime, Schema } from "effect";
 import { Redis } from "effect/persistence";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
+import {
+  makeJsonCodec,
+  makeRedisService,
+  type RedisService,
+} from "#src/redis/redis.service";
 import { LootStatsService } from "#src/loots/query/loot-stats.service";
 
 import { eq } from "drizzle-orm";
@@ -49,24 +53,44 @@ describe("Read cache Dragonfly integration", () => {
   );
 
   const organization = randomUUID();
+  const prefix = `cache-test-${organization}`;
+
+  const fromPromise = <A>(factory: () => Promise<A>) =>
+    Effect.tryPromise({ try: factory, catch: (error) => error });
+
+  const send = <A>(command: string, key: string, ...args: string[]) =>
+    runtime.runPromise(
+      Effect.flatMap(Redis.Redis, (client) =>
+        client.send<A>(command, `${prefix}:${key}`, ...args),
+      ),
+    );
+
+  const pttl = (key: string) => send<number>("PTTL", key);
+
+  const pexpire = (key: string, milliseconds: number) =>
+    send<number>("PEXPIRE", key, String(milliseconds));
 
   type Entry = { key: string; scopes: readonly string[] };
 
   const write = (entry: Entry, value: number) =>
-    cache.getOrSetJson({
-      ...entry,
-      codec,
-      ttlSeconds: 30,
-      factory: () => Promise.resolve({ value }),
-    });
+    Effect.runPromise(
+      cache.getOrSetJson({
+        ...entry,
+        codec,
+        ttlSeconds: 30,
+        factory: Effect.succeed({ value }),
+      }),
+    );
 
   const read = (entry: Entry) =>
-    cache.getOrSetJson({
-      ...entry,
-      codec,
-      ttlSeconds: 30,
-      factory: () => Promise.resolve(null),
-    });
+    Effect.runPromise(
+      cache.getOrSetJson({
+        ...entry,
+        codec,
+        ttlSeconds: 30,
+        factory: Effect.succeed(null),
+      }),
+    );
 
   beforeAll(async () => {
     const username = encodeURIComponent(process.env.REDIS_USERNAME ?? "");
@@ -76,11 +100,7 @@ describe("Read cache Dragonfly integration", () => {
         url: `redis://${username}:${password}@${process.env.REDIS_HOST ?? "127.0.0.1"}:${Number(process.env.REDIS_PORT ?? 6379)}`,
       }),
     );
-    cache = new RedisService(
-      await runtime.runPromise(Redis.Redis),
-      { prefix: `cache-test-${organization}` },
-      (effect) => runtime.runPromise(effect),
-    );
+    cache = makeRedisService(await runtime.runPromise(Redis.Redis), { prefix });
   });
 
   afterAll(async () => {
@@ -91,22 +111,22 @@ describe("Read cache Dragonfly integration", () => {
     const key = `boss-kill-${randomUUID()}`;
 
     const claims = await Promise.all(
-      ["a", "b", "c"].map((value) => cache.setNxGet(key, value, 30)),
+      ["a", "b", "c"].map((value) =>
+        Effect.runPromise(cache.setNxGet(key, value, 30)),
+      ),
     );
 
     const first = ["a", "b", "c"][claims.indexOf(null)];
 
     expect(claims.filter((held) => held === null)).toHaveLength(1);
     expect(claims.filter((held) => held !== null)).toEqual([first!, first!]);
-    expect(await cache.setNxGet(key, "d", 30)).toBe(first!);
+    expect(await Effect.runPromise(cache.setNxGet(key, "d", 30))).toBe(first!);
   });
 
   it("shares a fill slower than the former two-second deadline across service instances", async () => {
-    const second = new RedisService(
-      await runtime.runPromise(Redis.Redis),
-      { prefix: `cache-test-${organization}` },
-      (effect) => runtime.runPromise(effect),
-    );
+    const second = makeRedisService(await runtime.runPromise(Redis.Redis), {
+      prefix,
+    });
 
     const started = Promise.withResolvers<void>();
     let executions = 0;
@@ -115,20 +135,20 @@ describe("Read cache Dragonfly integration", () => {
       key: "slow-fill",
       ttlSeconds: 30,
       codec,
-      factory: async () => {
+      factory: fromPromise(async () => {
         executions++;
         started.resolve();
         await Bun.sleep(2_150);
 
         return { value: 1 };
-      },
+      }),
     };
 
-    const owner = cache.getOrSetJsonBestEffort(options);
+    const owner = Effect.runPromise(cache.getOrSetJson(options));
     await started.promise;
 
     const waiters = Array.from({ length: 8 }, () =>
-      second.getOrSetJsonBestEffort(options),
+      Effect.runPromise(second.getOrSetJson(options)),
     );
 
     const values = await Promise.all([owner, ...waiters]);
@@ -141,35 +161,39 @@ describe("Read cache Dragonfly integration", () => {
     const started = Promise.withResolvers<void>();
     const finish = Promise.withResolvers<void>();
 
-    const owner = cache.getOrSetJson({
-      key: "busy-fill",
-      codec,
-      ttlSeconds: 30,
-      factory: async () => {
-        started.resolve();
-        await finish.promise;
+    const owner = Effect.runPromise(
+      cache.getOrSetJson({
+        key: "busy-fill",
+        codec,
+        ttlSeconds: 30,
+        factory: fromPromise(async () => {
+          started.resolve();
+          await finish.promise;
 
-        return { value: 1 };
-      },
-    });
+          return { value: 1 };
+        }),
+      }),
+    );
 
     await started.promise;
     let executions = 0;
 
     try {
       const waiters = Array.from({ length: 8 }, () =>
-        cache.getOrSetJsonBestEffort({
-          key: "busy-fill",
-          codec,
-          ttlSeconds: 30,
-          waitTimeoutMs: 20,
-          waitIntervalMs: 1,
-          factory: async () => {
-            executions++;
+        Effect.runPromise(
+          cache.getOrSetJson({
+            key: "busy-fill",
+            codec,
+            ttlSeconds: 30,
+            waitTimeoutMs: 20,
+            waitIntervalMs: 1,
+            factory: fromPromise(async () => {
+              executions++;
 
-            return { value: 2 };
-          },
-        }),
+              return { value: 2 };
+            }),
+          }),
+        ),
       );
 
       const results = await Promise.allSettled(waiters);
@@ -182,85 +206,105 @@ describe("Read cache Dragonfly integration", () => {
         ),
       ).toBe(true);
       expect(executions).toBe(0);
-      expect(await cache.get("busy-fill:single-flight")).not.toBeNull();
+      expect(
+        await Effect.runPromise(cache.get("busy-fill:single-flight")),
+      ).not.toBeNull();
     } finally {
       finish.resolve();
       await owner;
     }
 
-    expect(await cache.getJson("busy-fill", codec)).toEqual({ value: 1 });
+    expect(await Effect.runPromise(cache.getJson("busy-fill", codec))).toEqual({
+      value: 1,
+    });
   });
 
   it("allows a waiting reader to recover after the owner fails", async () => {
     const started = Promise.withResolvers<void>();
     const finish = Promise.withResolvers<void>();
 
-    const owner = cache.getOrSetJson({
-      key: "failed-fill",
-      codec,
-      ttlSeconds: 30,
-      factory: async () => {
-        started.resolve();
-        await finish.promise;
-        throw new Error("loader failed");
-      },
-    });
+    const owner = Effect.runPromise(
+      cache.getOrSetJson({
+        key: "failed-fill",
+        codec,
+        ttlSeconds: 30,
+        factory: fromPromise(async () => {
+          started.resolve();
+          await finish.promise;
+          throw new Error("loader failed");
+        }),
+      }),
+    );
 
     const ownerResult = Promise.allSettled([owner]);
     await started.promise;
 
-    const waiter = cache.getOrSetJsonBestEffort({
-      key: "failed-fill",
-      codec,
-      ttlSeconds: 30,
-      waitIntervalMs: 1,
-      factory: async () => ({ value: 2 }),
-    });
+    const waiter = Effect.runPromise(
+      cache.getOrSetJson({
+        key: "failed-fill",
+        codec,
+        ttlSeconds: 30,
+        waitIntervalMs: 1,
+        factory: fromPromise(async () => ({ value: 2 })),
+      }),
+    );
 
     finish.resolve();
     expect((await ownerResult)[0]?.status).toBe("rejected");
     expect(await waiter).toEqual({ value: 2 });
-    expect(await cache.getJson("failed-fill", codec)).toEqual({ value: 2 });
+    expect(
+      await Effect.runPromise(cache.getJson("failed-fill", codec)),
+    ).toEqual({ value: 2 });
   });
 
   it("does not let an expired owner overwrite or unlock its successor", async () => {
     const started = Promise.withResolvers<void>();
     const finish = Promise.withResolvers<void>();
 
-    const owner = cache.getOrSetJson({
-      key: "expired-fill",
-      codec,
-      ttlSeconds: 30,
-      factory: async () => {
-        started.resolve();
-        await finish.promise;
+    const owner = Effect.runPromise(
+      cache.getOrSetJson({
+        key: "expired-fill",
+        codec,
+        ttlSeconds: 30,
+        factory: fromPromise(async () => {
+          started.resolve();
+          await finish.promise;
 
-        return { value: 1 };
-      },
-    });
+          return { value: 1 };
+        }),
+      }),
+    );
 
     await started.promise;
 
     try {
-      await cache.pexpire("expired-fill:single-flight", 0);
-      await cache.setNX("expired-fill:single-flight", "successor", 10);
-      await cache.setJson("expired-fill", { value: 2 });
+      await pexpire("expired-fill:single-flight", 0);
+      await Effect.runPromise(
+        cache.setNX("expired-fill:single-flight", "successor", 10),
+      );
+      await Effect.runPromise(cache.setJson("expired-fill", { value: 2 }));
     } finally {
       finish.resolve();
     }
 
     expect(await owner).toEqual({ value: 1 });
-    expect(await cache.getJson("expired-fill", codec)).toEqual({ value: 2 });
-    expect(await cache.get("expired-fill:single-flight")).toBe("successor");
+    expect(
+      await Effect.runPromise(cache.getJson("expired-fill", codec)),
+    ).toEqual({ value: 2 });
+    expect(
+      await Effect.runPromise(cache.get("expired-fill:single-flight")),
+    ).toBe("successor");
   });
 
   it("cancels a waiting Effect read without invoking its factory after owner failure", async () => {
-    await cache.setNX("cancelled-fill:single-flight", "owner", 10);
+    await Effect.runPromise(
+      cache.setNX("cancelled-fill:single-flight", "owner", 10),
+    );
     const controller = new AbortController();
     let executions = 0;
 
     const result = Effect.runPromiseExit(
-      cache.getOrSetJsonEffect({
+      cache.getOrSetJson({
         key: "cancelled-fill",
         codec,
         ttlSeconds: 30,
@@ -277,10 +321,10 @@ describe("Read cache Dragonfly integration", () => {
     await Bun.sleep(10);
     controller.abort();
     await result;
-    await cache.del("cancelled-fill:single-flight");
+    await Effect.runPromise(cache.del("cancelled-fill:single-flight"));
     await Bun.sleep(20);
     expect(executions).toBe(0);
-    expect(await cache.get("cancelled-fill")).toBeNull();
+    expect(await Effect.runPromise(cache.get("cancelled-fill"))).toBeNull();
   });
 
   it("expires idle generations and renews existing generations without evicting cached data", async () => {
@@ -288,33 +332,33 @@ describe("Read cache Dragonfly integration", () => {
     const generationKey = "cache-generation:v1:ttl:scope";
 
     await write(entry, 1);
-    expect(await cache.pttl(generationKey)).toBeGreaterThan(0);
-    expect(await cache.pttl(generationKey)).toBeLessThanOrEqual(3_600_000);
-    const generation = await cache.get(generationKey);
+    expect(await pttl(generationKey)).toBeGreaterThan(0);
+    expect(await pttl(generationKey)).toBeLessThanOrEqual(3_600_000);
+    const generation = await Effect.runPromise(cache.get(generationKey));
 
     if (generation === null) throw new Error("Missing generation");
 
     // Existing deployments may already have persistent generation keys.
-    await cache.set(generationKey, generation);
-    expect(await cache.pttl(generationKey)).toBe(-1);
+    await Effect.runPromise(cache.set(generationKey, generation));
+    expect(await pttl(generationKey)).toBe(-1);
     expect(await read(entry)).toEqual({ value: 1 });
-    expect(await cache.get(generationKey)).toBe(generation);
-    expect(await cache.pttl(generationKey)).toBeGreaterThan(3_500_000);
+    expect(await Effect.runPromise(cache.get(generationKey))).toBe(generation);
+    expect(await pttl(generationKey)).toBeGreaterThan(3_500_000);
 
-    await cache.pexpire(generationKey, 10_000);
+    await pexpire(generationKey, 10_000);
     expect(await read(entry)).toEqual({ value: 1 });
-    expect(await cache.pttl(generationKey)).toBeGreaterThan(3_500_000);
+    expect(await pttl(generationKey)).toBeGreaterThan(3_500_000);
 
-    await cache.invalidateScopes(...entry.scopes);
-    expect(await cache.pttl(generationKey)).toBeGreaterThan(0);
-    expect(await cache.pttl(generationKey)).toBeLessThanOrEqual(3_600_000);
-    expect(await cache.get(generationKey)).not.toBe(generation);
+    await Effect.runPromise(cache.invalidateScopes(...entry.scopes));
+    expect(await pttl(generationKey)).toBeGreaterThan(0);
+    expect(await pttl(generationKey)).toBeLessThanOrEqual(3_600_000);
+    expect(await Effect.runPromise(cache.get(generationKey))).not.toBe(
+      generation,
+    );
     expect(await read(entry)).toBeNull();
 
-    await cache.invalidateScopes("ttl:unread");
-    expect(await cache.pttl("cache-generation:v1:ttl:unread")).toBeGreaterThan(
-      0,
-    );
+    await Effect.runPromise(cache.invalidateScopes("ttl:unread"));
+    expect(await pttl("cache-generation:v1:ttl:unread")).toBeGreaterThan(0);
   });
 
   it("does not revive an old fill when its generation expires during loading", async () => {
@@ -323,27 +367,31 @@ describe("Read cache Dragonfly integration", () => {
     const started = Promise.withResolvers<void>();
     const finish = Promise.withResolvers<void>();
 
-    const stale = cache.getOrSetJson({
-      ...entry,
-      codec,
-      ttlSeconds: 30,
-      factory: async () => {
-        started.resolve();
-        await finish.promise;
+    const stale = Effect.runPromise(
+      cache.getOrSetJson({
+        ...entry,
+        codec,
+        ttlSeconds: 30,
+        factory: fromPromise(async () => {
+          started.resolve();
+          await finish.promise;
 
-        return { value: 1 };
-      },
-    });
+          return { value: 1 };
+        }),
+      }),
+    );
 
     await started.promise;
-    const generation = await cache.get(generationKey);
+    const generation = await Effect.runPromise(cache.get(generationKey));
 
     try {
       // Expire through Redis, without a wall-clock sleep in the test.
-      await cache.pexpire(generationKey, 0);
-      expect(await cache.get(generationKey)).toBeNull();
+      await pexpire(generationKey, 0);
+      expect(await Effect.runPromise(cache.get(generationKey))).toBeNull();
       expect(await write(entry, 2)).toEqual({ value: 2 });
-      expect(await cache.get(generationKey)).not.toBe(generation);
+      expect(await Effect.runPromise(cache.get(generationKey))).not.toBe(
+        generation,
+      );
     } finally {
       finish.resolve();
     }
@@ -360,12 +408,12 @@ describe("Read cache Dragonfly integration", () => {
     ] as const;
 
     await Promise.all(keys.map((key) => write(key, 1)));
-    await cache.invalidateScopes("timer:list:one");
+    await Effect.runPromise(cache.invalidateScopes("timer:list:one"));
     expect(await read(keys[0])).toBeNull();
     expect(await read(keys[1])).toBeNull();
     expect(await read(keys[2])).toEqual({ value: 1 });
     await write(keys[0], 2);
-    await cache.invalidateScopes("timer:list:one");
+    await Effect.runPromise(cache.invalidateScopes("timer:list:one"));
     expect(await read(keys[0])).toBeNull();
   });
 
@@ -386,10 +434,10 @@ describe("Read cache Dragonfly integration", () => {
     };
 
     await Promise.all([first, second, other].map((key) => write(key, 1)));
-    await cache.invalidateScopes("event-read:v2:one:first");
+    await Effect.runPromise(cache.invalidateScopes("event-read:v2:one:first"));
     expect(await read(first)).toBeNull();
     expect(await read(second)).toEqual({ value: 1 });
-    await cache.invalidateScopes("event-read:v2:one");
+    await Effect.runPromise(cache.invalidateScopes("event-read:v2:one"));
     expect(await read(second)).toBeNull();
     expect(await read(other)).toEqual({ value: 1 });
   });
@@ -418,12 +466,12 @@ describe("Read cache Dragonfly integration", () => {
     await Promise.all(
       [overview, member, other, user].map((key) => write(key, 1)),
     );
-    await cache.invalidateScopes("kill-stats:guild:one");
+    await Effect.runPromise(cache.invalidateScopes("kill-stats:guild:one"));
     expect(await read(overview)).toBeNull();
     expect(await read(member)).toBeNull();
     expect(await read(other)).toEqual({ value: 1 });
     expect(await read(user)).toEqual({ value: 1 });
-    await cache.invalidateScopes("kill-stats:user:one");
+    await Effect.runPromise(cache.invalidateScopes("kill-stats:user:one"));
     expect(await read(user)).toBeNull();
   });
 
@@ -436,20 +484,22 @@ describe("Read cache Dragonfly integration", () => {
     const started = Promise.withResolvers<void>();
     const finish = Promise.withResolvers<void>();
 
-    const stale = cache.getOrSetJson({
-      ...key,
-      codec,
-      ttlSeconds: 30,
-      factory: async () => {
-        started.resolve();
-        await finish.promise;
+    const stale = Effect.runPromise(
+      cache.getOrSetJson({
+        ...key,
+        codec,
+        ttlSeconds: 30,
+        factory: fromPromise(async () => {
+          started.resolve();
+          await finish.promise;
 
-        return { value: 1 };
-      },
-    });
+          return { value: 1 };
+        }),
+      }),
+    );
 
     await started.promise;
-    await cache.invalidateScopes("timer:list:race");
+    await Effect.runPromise(cache.invalidateScopes("timer:list:race"));
     expect(await write(key, 2)).toEqual({ value: 2 });
     finish.resolve();
     expect(await stale).toEqual({ value: 1 });
@@ -481,7 +531,7 @@ describe("Read cache Dragonfly integration", () => {
     ];
 
     await Promise.all(keys.map((key) => write(key, 1)));
-    await cache.invalidateScopes("member-read:members-one");
+    await Effect.runPromise(cache.invalidateScopes("member-read:members-one"));
 
     for (const key of keys.slice(0, -1)) expect(await read(key)).toBeNull();
     expect(
@@ -534,7 +584,9 @@ describe("Read cache Dragonfly integration", () => {
     ];
 
     await Promise.all([...affected, ...unaffected].map((key) => write(key, 1)));
-    await cache.invalidateScopes("user-lootlog-config:settings-user");
+    await Effect.runPromise(
+      cache.invalidateScopes("user-lootlog-config:settings-user"),
+    );
 
     for (const key of affected) expect(await read(key)).toBeNull();
 
@@ -572,22 +624,24 @@ describe("Read cache Dragonfly integration", () => {
       const started = Promise.withResolvers<void>();
       const finish = Promise.withResolvers<void>();
 
-      const stale = cache.getOrSetJson({
-        ...key,
-        codec,
-        ttlSeconds: 30,
-        factory: async () => {
-          started.resolve();
-          await finish.promise;
+      const stale = Effect.runPromise(
+        cache.getOrSetJson({
+          ...key,
+          codec,
+          ttlSeconds: 30,
+          factory: fromPromise(async () => {
+            started.resolve();
+            await finish.promise;
 
-          return { value: 1 };
-        },
-      });
+            return { value: 1 };
+          }),
+        }),
+      );
 
       await started.promise;
 
       try {
-        await cache.invalidateScopes(scope);
+        await Effect.runPromise(cache.invalidateScopes(scope));
         expect(await write(key, 2)).toEqual({ value: 2 });
       } finally {
         finish.resolve();
@@ -601,7 +655,7 @@ describe("Read cache Dragonfly integration", () => {
   it("preserves typed factory errors across the Promise cache boundary", async () => {
     const failure = await Effect.runPromise(
       cache
-        .getOrSetJsonEffect({
+        .getOrSetJson({
           key: "event-read:v2:errors:event:details:e30",
           scopes: ["event-read:v2:errors", "event-read:v2:errors:event"],
           codec,
@@ -675,12 +729,8 @@ describe("Read cache Dragonfly integration", () => {
             Effect.provide(makeMemberReadDataLayer(cache)),
             Effect.provide(
               UserLootlogConfigData.layerDatabase({
-                getOrSetJsonEffect: (options) =>
-                  cache.getOrSetJsonEffect(options),
-                invalidateScopes: (...scopes) =>
-                  Effect.promise(() => cache.invalidateScopes(...scopes)).pipe(
-                    Effect.asVoid,
-                  ),
+                getOrSetJsonEffect: cache.getOrSetJson,
+                invalidateScopes: cache.invalidateScopes,
               }),
             ),
           );
@@ -738,11 +788,9 @@ describe("Read cache Dragonfly integration", () => {
             const settings = yield* UserLootlogConfigData;
             const members = yield* MemberReadData;
 
-            const invalidate = Effect.promise(() =>
-              Promise.all([
-                cache.invalidateScopes(`member-read:${guildId}`),
-                cache.invalidateScopes(`user-lootlog-config:${discordId}`),
-              ]),
+            const invalidate = cache.invalidateScopes(
+              `member-read:${guildId}`,
+              `user-lootlog-config:${discordId}`,
             );
 
             yield* settings.upsertCharacter(discordId, "1", {
@@ -784,12 +832,8 @@ describe("Read cache Dragonfly integration", () => {
             Effect.provide(makeMemberReadDataLayer(cache)),
             Effect.provide(
               UserLootlogConfigData.layerDatabase({
-                getOrSetJsonEffect: (options) =>
-                  cache.getOrSetJsonEffect(options),
-                invalidateScopes: (...scopes) =>
-                  Effect.promise(() => cache.invalidateScopes(...scopes)).pipe(
-                    Effect.asVoid,
-                  ),
+                getOrSetJsonEffect: cache.getOrSetJson,
+                invalidateScopes: cache.invalidateScopes,
               }),
             ),
           );
@@ -868,13 +912,9 @@ describe("Read cache Dragonfly integration", () => {
           const hit = yield* request();
           expect(hit.items[0]?.createdAt).toBeInstanceOf(Date);
           expect(hit.items[0]?.updatedAt).toBeInstanceOf(Date);
+          expect(yield* cache.scan(`loots:list:${guild.id}:*`)).toEqual([]);
           expect(
-            yield* Effect.promise(() => cache.scan(`loots:list:${guild.id}:*`)),
-          ).toEqual([]);
-          expect(
-            yield* Effect.promise(() =>
-              cache.scan(`read-cache:v1:*:loots:list:${guild.id}:*`),
-            ),
+            yield* cache.scan(`read-cache:v1:*:loots:list:${guild.id}:*`),
           ).toHaveLength(1);
           yield* operations.archiveLoot({
             guild,
@@ -959,9 +999,7 @@ describe("Read cache Dragonfly integration", () => {
             .update(eventMapCoverageGapTable)
             .set({ endedAt })
             .where(eq(eventMapCoverageGapTable.id, gapId));
-          yield* Effect.promise(() =>
-            makeEventReadCache(cache).invalidateEvent(guildId, eventId),
-          );
+          yield* makeEventReadCache(cache).invalidateEvent(guildId, eventId);
           expect((yield* overview()).name).toBe("After");
           expect((yield* history())[0]?.endedAt).toEqual(endedAt);
         }),
@@ -1001,7 +1039,9 @@ describe("Read cache Dragonfly integration", () => {
 
       const responses = await Promise.all(Array.from({ length: 8 }, request));
       expect(queries).toBe(5);
-      expect(await cache.scan(`loot-stats:${organization}:*`)).toHaveLength(1);
+      expect(
+        await Effect.runPromise(cache.scan(`loot-stats:${organization}:*`)),
+      ).toHaveLength(1);
       expect(
         responses.every(
           (response) =>
@@ -1011,7 +1051,9 @@ describe("Read cache Dragonfly integration", () => {
 
       // A warm entry is served without SQL, and invalidating the Organization's
       // scopes does not drop it: statistics refresh by age, not by writes.
-      await cache.invalidateScopes(`loot-stats:${organization}`);
+      await Effect.runPromise(
+        cache.invalidateScopes(`loot-stats:${organization}`),
+      );
       expect(await request()).toEqual(responses[0]!);
       expect(queries).toBe(5);
     } finally {

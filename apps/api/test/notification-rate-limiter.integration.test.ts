@@ -10,8 +10,8 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { BunRedis } from "@effect/platform-bun";
 import { Effect, ManagedRuntime } from "effect";
 import { Redis } from "effect/persistence";
-import { RedisService } from "#src/redis/redis.service";
-import { ExecutionError, RedlockService } from "#src/redis/redlock";
+import { makeRedisService, type RedisService } from "#src/redis/redis.service";
+import { ExecutionError, makeRedisLockManager } from "#src/redis/redlock";
 import {
   buildNotificationRateLimitKey,
   consumeNotificationRateLimit,
@@ -28,18 +28,13 @@ describe("Notification rate limiter Dragonfly integration", () => {
   let secondLimiter: (userId: string) => Promise<NotificationRateLimitOutcome>;
   let redisRuntime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
 
+  const send = <A>(command: string, ...args: string[]) =>
+    redisRuntime.runPromise(
+      Effect.flatMap(Redis.Redis, (client) => client.send<A>(command, ...args)),
+    );
+
   const limiter = (redis: RedisService) => {
-    const adapter: Pick<MessagingRedis, "eval"> = {
-      eval: <A>(
-        script: string,
-        keys: ReadonlyArray<string>,
-        arguments_: ReadonlyArray<string | number>,
-      ) =>
-        Effect.tryPromise({
-          try: () => redis.eval<A>(script, [...keys], [...arguments_]),
-          catch: (cause) => new Redis.RedisError({ cause }),
-        }),
-    };
+    const adapter: Pick<MessagingRedis, "eval"> = { eval: redis.eval };
 
     return (userId: string) =>
       Effect.runPromise(consumeNotificationRateLimit(adapter, userId));
@@ -54,12 +49,8 @@ describe("Notification rate limiter Dragonfly integration", () => {
       }),
     );
     const redis = await redisRuntime.runPromise(Redis.Redis);
-    firstRedis = new RedisService(redis, {}, (effect) =>
-      redisRuntime.runPromise(effect),
-    );
-    secondRedis = new RedisService(redis, {}, (effect) =>
-      redisRuntime.runPromise(effect),
-    );
+    firstRedis = makeRedisService(redis);
+    secondRedis = makeRedisService(redis);
     firstLimiter = limiter(firstRedis);
     secondLimiter = limiter(secondRedis);
   });
@@ -69,7 +60,7 @@ describe("Notification rate limiter Dragonfly integration", () => {
   });
 
   beforeEach(async () => {
-    await firstRedis.flushall();
+    await send("FLUSHALL");
   });
 
   it("accepts five attempts in 5000 ms and rejects the sixth", async () => {
@@ -89,7 +80,7 @@ describe("Notification rate limiter Dragonfly integration", () => {
       retryAfterMs: expect.any(Number),
     });
     await expect(
-      firstRedis.pttl(buildNotificationRateLimitKey("user-1")),
+      send<number>("PTTL", buildNotificationRateLimitKey("user-1")),
     ).resolves.toBeGreaterThan(0);
     expect(NOTIFICATION_RATE_LIMIT_WINDOW_MS).toBe(5_000);
   });
@@ -125,7 +116,7 @@ describe("Notification rate limiter Dragonfly integration", () => {
   it("accepts another notification after the window expires", async () => {
     await Promise.all(Array.from({ length: 5 }, () => firstLimiter("user-1")));
     const key = buildNotificationRateLimitKey("user-1");
-    await firstRedis.pexpire(key, 1);
+    await send("PEXPIRE", key, "1");
     await sleep(10);
 
     await expect(firstLimiter("user-1")).resolves.toEqual({
@@ -134,37 +125,41 @@ describe("Notification rate limiter Dragonfly integration", () => {
   });
 
   it("serializes competing lock owners and permits acquisition after release", async () => {
-    const firstLocks = new RedlockService(firstRedis).createInstance({
-      retryCount: 0,
-    });
+    const firstLocks = makeRedisLockManager(firstRedis, { retryCount: 0 });
+    const secondLocks = makeRedisLockManager(secondRedis, { retryCount: 0 });
 
-    const secondLocks = new RedlockService(secondRedis).createInstance({
-      retryCount: 0,
-    });
-
-    const held = await firstLocks.acquire(["integration:lock"], 5_000);
+    const held = await Effect.runPromise(
+      firstLocks.acquire(["integration:lock"], 5_000),
+    );
 
     await expect(
-      secondLocks.acquire(["integration:lock"], 5_000),
+      Effect.runPromise(secondLocks.acquire(["integration:lock"], 5_000)),
     ).rejects.toBeInstanceOf(ExecutionError);
 
-    await held.release();
-    const acquired = await secondLocks.acquire(["integration:lock"], 5_000);
-    await acquired.release();
+    await Effect.runPromise(held.release);
+
+    const acquired = await Effect.runPromise(
+      secondLocks.acquire(["integration:lock"], 5_000),
+    );
+
+    await Effect.runPromise(acquired.release);
   });
 
   it("does not release a lock after its ownership token changes", async () => {
-    const locks = new RedlockService(firstRedis).createInstance({
-      retryCount: 0,
-    });
+    const locks = makeRedisLockManager(firstRedis, { retryCount: 0 });
 
-    const held = await locks.acquire(["integration:lock"], 5_000);
-    await firstRedis.set("integration:lock", "replacement", 5);
-
-    await held.release();
-
-    await expect(firstRedis.get("integration:lock")).resolves.toBe(
-      "replacement",
+    const held = await Effect.runPromise(
+      locks.acquire(["integration:lock"], 5_000),
     );
+
+    await Effect.runPromise(
+      firstRedis.set("integration:lock", "replacement", 5),
+    );
+
+    await Effect.runPromise(held.release);
+
+    await expect(
+      Effect.runPromise(firstRedis.get("integration:lock")),
+    ).resolves.toBe("replacement");
   });
 });

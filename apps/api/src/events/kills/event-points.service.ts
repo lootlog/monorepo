@@ -79,10 +79,7 @@ export const makeEventPoints = (
 
       yield* Effect.all(
         [
-          Effect.tryPromise({
-            try: () => eventReadCache.invalidateEvent(event.guildId, event.id),
-            catch: (cause) => cause,
-          }),
+          eventReadCache.invalidateEvent(event.guildId, event.id),
           eventEmitter.emit(RabbitRoutingKey.EVENT_RANKING_UPDATE, {
             guildId: event.guildId,
             eventId: event.id,

@@ -5,7 +5,10 @@ import type {
   eventHeroNpcTable,
   eventTable,
 } from "#src/database/drizzle/event.schema";
-import { runPromiseAdapter } from "#src/events/event-adapter";
+import {
+  runPromiseAdapter,
+  withEventAdapterSpan,
+} from "#src/events/event-adapter";
 import type { EventEmitter } from "#src/events/event-emitter";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { EventPoints } from "#src/events/kills/event-points.service";
@@ -150,9 +153,9 @@ export const makeEventHeroKillRecording = (
 
       yield* cancelScheduledAutoClose(eventHero.id);
 
-      yield* runPromiseAdapter("redis.eventReadCache.invalidate", () =>
-        eventReadCache.invalidateEvent(guildId, event.id),
-      );
+      yield* eventReadCache
+        .invalidateEvent(guildId, event.id)
+        .pipe(withEventAdapterSpan("redis.eventReadCache.invalidate"));
 
       const scope = {
         guildId,

@@ -8,161 +8,150 @@ import {
   fingerprintAccessToken,
   type AuthService,
 } from "#src/auth/auth.service";
-import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
-import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
-import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unavailable.error";
-import { DiscordTokenRejectedError } from "#src/auth/errors/discord-token-rejected.error";
-import { InvalidScopesError } from "#src/auth/errors/invalid-scopes.error";
-import { TokenExpiredError } from "#src/auth/errors/token-expired.error";
-import { Clock, Effect } from "effect";
+import type { AuthServiceError } from "#src/auth/auth-errors";
+import { Clock, Effect, Match } from "effect";
 import { isDiscordUnauthorizedError } from "./discord-error.util.js";
+
+const REST_TIMEOUT_MS = 5000;
+
+const REST_CLIENT_CACHE_TTL_MS = 60_000;
 
 interface CachedDiscordRestClient {
   expiresAt: number;
   rest: REST;
 }
 
-export class DiscordRestClientFactory {
-  private readonly restTimeout = 5000;
-  private readonly restClientCacheTtlMs = 60_000;
-  private readonly restClients = new Map<string, CachedDiscordRestClient>();
-
-  constructor(
-    private readonly authService: Pick<
-      AuthService,
-      "getIdpToken" | "rejectIdpToken"
-    >,
-    private readonly runPromise = Effect.runPromise,
-  ) {}
-
+export interface DiscordRestClients {
   /**
    * Runs Discord requests with the user's token. When Discord answers 401 the
    * token is rejected, so later requests neither reuse it nor call Discord
    * with it again, while a token from a new sign-in is used immediately.
    */
-  async withRestClient<A>(
+  readonly withRestClient: <A, E>(
     userId: string,
     discordId: string,
-    request: (rest: REST) => Promise<A>,
-  ): Promise<A> {
-    const { accessToken, rest } = await this.getRestClient(userId, discordId);
-
-    try {
-      return await request(rest);
-    } catch (error) {
-      if (isDiscordUnauthorizedError(error)) {
-        this.restClients.delete(
-          this.getRestClientCacheKey(userId, discordId, accessToken),
-        );
-        await this.runPromise(
-          this.authService.rejectIdpToken(userId, discordId, accessToken),
-        );
-      }
-
-      throw error;
-    }
-  }
-
-  private async getRestClient(
-    userId: string,
-    discordId: string,
-  ): Promise<{ readonly accessToken: string; readonly rest: REST }> {
-    try {
-      const { now, token } = await this.runPromise(
-        Effect.all(
-          {
-            now: Clock.currentTimeMillis,
-            token: this.authService.getIdpToken(userId, discordId),
-          },
-          { concurrency: "unbounded" },
-        ),
-      );
-
-      const cacheKey = this.getRestClientCacheKey(
-        userId,
-        discordId,
-        token.accessToken,
-      );
-
-      const cachedClient = this.restClients.get(cacheKey);
-
-      if (cachedClient && cachedClient.expiresAt > now) {
-        return { accessToken: token.accessToken, rest: cachedClient.rest };
-      }
-
-      const rest = this.createRestClient(token.accessToken);
-
-      this.restClients.set(cacheKey, {
-        expiresAt: now + this.restClientCacheTtlMs,
-        rest,
-      });
-      this.pruneExpiredRestClients(now);
-
-      return { accessToken: token.accessToken, rest };
-    } catch (error) {
-      if (error instanceof TokenExpiredError) {
-        throw new AuthenticationRequiredError({ code: "TOKEN_EXPIRED" });
-      }
-
-      if (error instanceof DiscordTokenRejectedError) {
-        throw new AuthenticationRequiredError({ code: "DISCORD_UNAUTHORIZED" });
-      }
-
-      if (error instanceof AccountNotFoundError) {
-        throw new AuthenticationRequiredError({ code: "ACCOUNT_NOT_FOUND" });
-      }
-
-      if (error instanceof InvalidScopesError) {
-        throw new AuthenticationRequiredError({ code: "INVALID_SCOPES" });
-      }
-
-      if (error instanceof AuthBadRequestError) {
-        throw new InvalidRequestError({ code: "AUTH_BAD_REQUEST" });
-      }
-
-      if (error instanceof AuthServiceUnavailableError) {
-        throw new DependencyUnavailableError({
-          code: "AUTH_SERVICE_UNAVAILABLE",
-          retryAfterMs: 60_000,
-        });
-      }
-
-      throw error;
-    }
-  }
-
-  /**
-   * A REST instance registers two `setInterval` sweepers in its constructor
-   * and only `clearHashSweeper`/`clearHandlerSweeper` remove them. The timers
-   * keep every instance, its route caches and its bearer token reachable for
-   * the process lifetime, while this factory creates one instance per user per
-   * cache window. The sweepers are disabled: these clients live for
-   * {@link restClientCacheTtlMs} and are pruned, so nothing needs sweeping.
-   */
-  private createRestClient(accessToken: string): REST {
-    return new REST({
-      version: "10",
-      authPrefix: "Bearer",
-      timeout: this.restTimeout,
-      rejectOnRateLimit: ["/users"],
-      hashSweepInterval: 0,
-      handlerSweepInterval: 0,
-    }).setToken(accessToken);
-  }
-
-  private getRestClientCacheKey(
-    userId: string,
-    discordId: string,
-    accessToken: string,
-  ): string {
-    return `${userId}:${discordId}:${fingerprintAccessToken(accessToken)}`;
-  }
-
-  private pruneExpiredRestClients(now: number): void {
-    for (const [cacheKey, cachedClient] of this.restClients.entries()) {
-      if (cachedClient.expiresAt <= now) {
-        this.restClients.delete(cacheKey);
-      }
-    }
-  }
+    request: (rest: REST) => Effect.Effect<A, E>,
+  ) => Effect.Effect<
+    A,
+    | E
+    | AuthenticationRequiredError
+    | InvalidRequestError
+    | DependencyUnavailableError
+  >;
 }
+
+const toHttpError = (error: AuthServiceError) =>
+  Match.valueTags(error, {
+    TokenExpiredError: () =>
+      new AuthenticationRequiredError({ code: "TOKEN_EXPIRED" }),
+    DiscordTokenRejectedError: () =>
+      new AuthenticationRequiredError({ code: "DISCORD_UNAUTHORIZED" }),
+    AccountNotFoundError: () =>
+      new AuthenticationRequiredError({ code: "ACCOUNT_NOT_FOUND" }),
+    InvalidScopesError: () =>
+      new AuthenticationRequiredError({ code: "INVALID_SCOPES" }),
+    AuthBadRequestError: () =>
+      new InvalidRequestError({ code: "AUTH_BAD_REQUEST" }),
+    AuthServiceUnavailableError: () =>
+      new DependencyUnavailableError({
+        code: "AUTH_SERVICE_UNAVAILABLE",
+        retryAfterMs: 60_000,
+      }),
+  });
+
+/**
+ * A REST instance registers two `setInterval` sweepers in its constructor
+ * and only `clearHashSweeper`/`clearHandlerSweeper` remove them. The timers
+ * keep every instance, its route caches and its bearer token reachable for
+ * the process lifetime, while one instance is created per user per cache
+ * window. The sweepers are disabled: these clients live for
+ * {@link REST_CLIENT_CACHE_TTL_MS} and are pruned, so nothing needs sweeping.
+ */
+const createRestClient = (accessToken: string): REST =>
+  new REST({
+    version: "10",
+    authPrefix: "Bearer",
+    timeout: REST_TIMEOUT_MS,
+    rejectOnRateLimit: ["/users"],
+    hashSweepInterval: 0,
+    handlerSweepInterval: 0,
+  }).setToken(accessToken);
+
+const getRestClientCacheKey = (
+  userId: string,
+  discordId: string,
+  accessToken: string,
+): string => `${userId}:${discordId}:${fingerprintAccessToken(accessToken)}`;
+
+export const makeDiscordRestClients = (
+  authService: Pick<AuthService, "getIdpToken" | "rejectIdpToken">,
+): DiscordRestClients => {
+  const restClients = new Map<string, CachedDiscordRestClient>();
+
+  const pruneExpiredRestClients = (now: number): void => {
+    for (const [cacheKey, cachedClient] of restClients.entries()) {
+      if (cachedClient.expiresAt <= now) {
+        restClients.delete(cacheKey);
+      }
+    }
+  };
+
+  const getRestClient = (userId: string, discordId: string) =>
+    Effect.all(
+      {
+        now: Clock.currentTimeMillis,
+        token: authService.getIdpToken(userId, discordId),
+      },
+      { concurrency: "unbounded" },
+    ).pipe(
+      Effect.mapBoth({
+        onFailure: toHttpError,
+        onSuccess: ({ now, token }) => {
+          const cacheKey = getRestClientCacheKey(
+            userId,
+            discordId,
+            token.accessToken,
+          );
+
+          const cachedClient = restClients.get(cacheKey);
+
+          if (cachedClient && cachedClient.expiresAt > now) {
+            return { accessToken: token.accessToken, rest: cachedClient.rest };
+          }
+
+          const rest = createRestClient(token.accessToken);
+
+          restClients.set(cacheKey, {
+            expiresAt: now + REST_CLIENT_CACHE_TTL_MS,
+            rest,
+          });
+          pruneExpiredRestClients(now);
+
+          return { accessToken: token.accessToken, rest };
+        },
+      }),
+    );
+
+  return {
+    withRestClient: (userId, discordId, request) =>
+      Effect.gen(function* () {
+        const { accessToken, rest } = yield* getRestClient(userId, discordId);
+
+        return yield* request(rest).pipe(
+          Effect.tapError((error) =>
+            isDiscordUnauthorizedError(error)
+              ? Effect.sync(() =>
+                  restClients.delete(
+                    getRestClientCacheKey(userId, discordId, accessToken),
+                  ),
+                ).pipe(
+                  Effect.andThen(
+                    authService.rejectIdpToken(userId, discordId, accessToken),
+                  ),
+                )
+              : Effect.void,
+          ),
+        );
+      }),
+  };
+};

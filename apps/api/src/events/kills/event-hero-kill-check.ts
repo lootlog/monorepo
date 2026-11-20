@@ -2,7 +2,7 @@ import type { Logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import { randomUUID } from "node:crypto";
 import type { RedisService } from "#src/redis/redis.service";
-import { runPromiseAdapter } from "#src/events/event-adapter";
+import { withEventAdapterSpan } from "#src/events/event-adapter";
 import type { KillTimerData } from "#src/events/respawn/kill-timer-data";
 import {
   buildEventHeroKillDedupKey,
@@ -58,9 +58,11 @@ export const makeEventHeroKillCheck = (
       const readDedupHits = () =>
         Effect.all(
           [
-            runPromiseAdapter("redis.get", () => redis.get(dedupKey)),
+            redis.get(dedupKey).pipe(withEventAdapterSpan("redis.get")),
             recentDedupKey
-              ? runPromiseAdapter("redis.get", () => redis.get(recentDedupKey))
+              ? redis
+                  .get(recentDedupKey)
+                  .pipe(withEventAdapterSpan("redis.get"))
               : Effect.succeed(null),
           ],
           { concurrency: "unbounded" },
@@ -95,9 +97,9 @@ export const makeEventHeroKillCheck = (
       // Try to acquire lock - if another request already has it, silently return
       const lockToken = randomUUID();
 
-      const lockAcquired = yield* runPromiseAdapter("redis.setNX", () =>
-        redis.setNX(lockKey, lockToken, EVENT_KILL_LOCK_TTL_SECONDS),
-      );
+      const lockAcquired = yield* redis
+        .setNX(lockKey, lockToken, EVENT_KILL_LOCK_TTL_SECONDS)
+        .pipe(withEventAdapterSpan("redis.setNX"));
 
       if (!lockAcquired) {
         logger.debug({
@@ -168,9 +170,9 @@ export const makeEventHeroKillCheck = (
                 isManualClose,
               );
 
-              const heroDedupHit = yield* runPromiseAdapter("redis.get", () =>
-                redis.get(heroDedupKey),
-              );
+              const heroDedupHit = yield* redis
+                .get(heroDedupKey)
+                .pipe(withEventAdapterSpan("redis.get"));
 
               if (heroDedupHit) {
                 logger.debug({
@@ -229,13 +231,13 @@ export const makeEventHeroKillCheck = (
                 isManualClose,
               );
 
-              yield* runPromiseAdapter("redis.set", () =>
-                redis.set(
+              yield* redis
+                .set(
                   heroDedupKey,
                   Date.now().toString(),
                   EVENT_KILL_DEDUP_TTL_SECONDS,
-                ),
-              );
+                )
+                .pipe(withEventAdapterSpan("redis.set"));
 
               logger.log({
                 message: isManualClose
@@ -253,21 +255,21 @@ export const makeEventHeroKillCheck = (
 
         yield* Effect.all(
           [
-            runPromiseAdapter("redis.set", () =>
-              redis.set(
+            redis
+              .set(
                 dedupKey,
                 Date.now().toString(),
                 EVENT_KILL_DEDUP_TTL_SECONDS,
-              ),
-            ),
+              )
+              .pipe(withEventAdapterSpan("redis.set")),
             recentDedupKey
-              ? runPromiseAdapter("redis.set", () =>
-                  redis.set(
+              ? redis
+                  .set(
                     recentDedupKey,
                     Date.now().toString(),
                     EVENT_KILL_RECENT_DEDUP_TTL_SECONDS,
-                  ),
-                )
+                  )
+                  .pipe(withEventAdapterSpan("redis.set"))
               : Effect.void,
           ],
           { concurrency: "unbounded", discard: true },
@@ -277,9 +279,8 @@ export const makeEventHeroKillCheck = (
       yield* recordWhileLocked.pipe(
         Effect.ensuring(
           // A lock that expired mid-write may belong to another request now.
-          runPromiseAdapter("redis.deleteIfValue", () =>
-            redis.deleteIfValue(lockKey, lockToken),
-          ).pipe(
+          redis.deleteIfValue(lockKey, lockToken).pipe(
+            withEventAdapterSpan("redis.deleteIfValue"),
             Effect.tapError((error) =>
               Effect.sync(() =>
                 logger.error({

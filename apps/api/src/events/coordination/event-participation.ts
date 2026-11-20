@@ -24,7 +24,7 @@ import type { EventRankingPublisher } from "#src/events/kills/event-point-edits"
 
 export const makeEventParticipation = (
   database: typeof ApiDatabase.Service,
-  redis: RedisService,
+  redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
   publisher: EventRankingPublisher,
   logger: Logger,
 ) => {

@@ -20,7 +20,7 @@ import { Redis } from "effect/persistence";
 import { fingerprintAccessToken } from "#src/auth/auth.service";
 import { getCompleteUserGuildsCacheKey } from "#src/discord/discord-cache.util";
 import { ReauthenticationRequired } from "../src/contracts/api-shared.js";
-import { RedisService } from "#src/redis/redis.service";
+import { makeRedisService, type RedisService } from "#src/redis/redis.service";
 import {
   getPermissionsCacheKey,
   getRejectedAuthTokenKey,
@@ -109,14 +109,16 @@ const issueRevokedDiscordToken = async (
       expiresIn: 3_600,
       scopes: DISCORD_AUTH_SCOPES,
     });
-  await redis.set(
-    getRejectedAuthTokenKey(
-      identity.userId,
-      identity.discordId,
-      fingerprintAccessToken("revoked-token"),
+  await Effect.runPromise(
+    redis.set(
+      getRejectedAuthTokenKey(
+        identity.userId,
+        identity.discordId,
+        fingerprintAccessToken("revoked-token"),
+      ),
+      "1",
+      60,
     ),
-    "1",
-    60,
   );
 };
 
@@ -170,17 +172,15 @@ describe("API HTTP boundary", () => {
         url: `redis://${username}:${password}@${process.env.REDIS_HOST ?? "127.0.0.1"}:${Number(process.env.REDIS_PORT ?? 6379)}`,
       }),
     );
-    redis = new RedisService(
-      await redisRuntime.runPromise(Redis.Redis),
-      {},
-      (effect) => redisRuntime.runPromise(effect),
-    );
+    redis = makeRedisService(await redisRuntime.runPromise(Redis.Redis));
   });
 
   beforeEach(async () => {
     publishedMessages.length = 0;
     authServiceAnswer = null;
-    await redis.flushall();
+    await redisRuntime.runPromise(
+      Effect.flatMap(Redis.Redis, (client) => client.send("FLUSHALL")),
+    );
     await databaseRuntime.runPromise(
       Effect.gen(function* () {
         yield* database.execute(
@@ -312,13 +312,15 @@ describe("API HTTP boundary", () => {
   );
 
   it("serves the Organization list from a cached Discord guild list without deactivating members", async () => {
-    await redis.set(
-      getCompleteUserGuildsCacheKey(caller),
-      JSON.stringify({
-        guilds: [{ id: authorizedGuildId, name: "Authorized Organization" }],
-        fetchedAt: Date.now() - 10 * 60_000,
-      }),
-      60,
+    await Effect.runPromise(
+      redis.set(
+        getCompleteUserGuildsCacheKey(caller),
+        JSON.stringify({
+          guilds: [{ id: authorizedGuildId, name: "Authorized Organization" }],
+          fetchedAt: Date.now() - 10 * 60_000,
+        }),
+        60,
+      ),
     );
 
     const cached = await request("/users/@me/guilds");
@@ -350,13 +352,17 @@ describe("API HTTP boundary", () => {
   it("returns watched item snapshots after create, quick-add and retry", async () => {
     // Watched items accept only a Discord guild list fetched within seconds.
     const seedDiscordGuilds = () =>
-      redis.set(
-        getCompleteUserGuildsCacheKey(caller),
-        JSON.stringify({
-          guilds: [{ id: authorizedGuildId, name: "Authorized Organization" }],
-          fetchedAt: Date.now(),
-        }),
-        60,
+      Effect.runPromise(
+        redis.set(
+          getCompleteUserGuildsCacheKey(caller),
+          JSON.stringify({
+            guilds: [
+              { id: authorizedGuildId, name: "Authorized Organization" },
+            ],
+            fetchedAt: Date.now(),
+          }),
+          60,
+        ),
       );
 
     const itemId = 990001;
@@ -788,7 +794,9 @@ describe("API HTTP boundary", () => {
           .set({ permissions, lvlRangeFrom: 1, lvlRangeTo: maximum })
           .where(eq(roleTable.id, "timer-maintainer")),
       );
-      await redis.del(getPermissionsCacheKey(caller.userId, authorizedGuildId));
+      await Effect.runPromise(
+        redis.del(getPermissionsCacheKey(caller.userId, authorizedGuildId)),
+      );
     };
 
     await setAccess([Permission.LOOTLOG_EVENTS_READ], 100);

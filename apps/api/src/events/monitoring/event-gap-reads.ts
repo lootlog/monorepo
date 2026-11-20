@@ -24,7 +24,7 @@ import {
 
 export const makeEventGapReads = (
   database: typeof ApiDatabase.Service,
-  redis: RedisService,
+  redis: Pick<RedisService, "getOrSetJson">,
   logger: Logger,
 ) => {
   const query = adapterOperation("events.gaps.drizzle");
@@ -43,7 +43,7 @@ export const makeEventGapReads = (
     const codec = makeTypeJsonCodec(schema);
 
     return redis
-      .getOrSetJsonEffect({
+      .getOrSetJson({
         ...eventReadCacheEntry(guildId, eventId, scope, params),
         codec,
         ttlSeconds: 10,

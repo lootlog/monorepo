@@ -169,16 +169,15 @@ export const makeEventCreation =
           withAdapterSpan("events.create.transaction", "events.drizzle"),
         );
 
-      yield* Effect.tryPromise({
-        try: () => redis.invalidateScopes(eventReadCacheScope(guild.id)),
-        catch: (cause) => cause,
-      }).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() =>
-            logger.warn("Failed to invalidate event read cache", error),
+      yield* redis
+        .invalidateScopes(eventReadCacheScope(guild.id))
+        .pipe(
+          Effect.catch((error) =>
+            Effect.sync(() =>
+              logger.warn("Failed to invalidate event read cache", error),
+            ),
           ),
-        ),
-      );
+        );
 
       return attachComputedEventActive(
         created,

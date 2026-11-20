@@ -166,7 +166,7 @@ export interface LootsOperations {
 interface LootsDependencies {
   readonly persistence: LootPersistence;
   readonly query: LootQueryOperations;
-  readonly redis: Pick<RedisService, "invalidateScopes" | "getOrSetJsonEffect">;
+  readonly redis: Pick<RedisService, "invalidateScopes" | "getOrSetJson">;
   readonly logger: ApplicationLogger;
 }
 
@@ -243,22 +243,19 @@ export const makeLootsOperations = ({
 }: LootsDependencies): LootsOperations => {
   const pendingDetails = new Map<string, FetchedLootRead>();
 
-  const attempt = <A>(operation: string, run: () => Promise<A>) =>
-    Effect.tryPromise({
-      try: run,
-      catch: (cause) =>
-        cause instanceof ResourceNotFoundError
-          ? cause
-          : new OperationError({ operation, cause }),
-    }).pipe(withAdapterSpan(operation, "loots"));
-
   const invalidateList = (guildIds: ReadonlyArray<string>) =>
     Effect.forEach(
       [...new Set(guildIds)],
       (guildId) =>
-        attempt("loots.cache.invalidateList", () =>
-          redis.invalidateScopes(getLootListCacheScope(guildId)),
-        ).pipe(
+        redis.invalidateScopes(getLootListCacheScope(guildId)).pipe(
+          Effect.mapError(
+            (cause) =>
+              new OperationError({
+                operation: "loots.cache.invalidateList",
+                cause,
+              }),
+          ),
+          withAdapterSpan("loots.cache.invalidateList", "loots"),
           Effect.catch((error) =>
             Effect.sync(() =>
               logger.warn("Failed to invalidate loots list cache", {
@@ -489,7 +486,7 @@ export const makeLootsOperations = ({
 
         const wireCodec = makeJsonCodec(LootListResponse);
 
-        return yield* redis.getOrSetJsonEffect({
+        return yield* redis.getOrSetJson({
           key: cacheKey(guild, permissions, roles, filters),
           scopes: [getLootListCacheScope(guild.id)],
           codec: {

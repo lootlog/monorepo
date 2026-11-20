@@ -24,7 +24,7 @@ const organizationKills = guildKillSource();
 
 export const makeEventHeroSummary = (
   database: typeof ApiDatabase.Service,
-  redis: RedisService,
+  redis: Pick<RedisService, "getOrSetJson">,
   timers: EventTimersPort,
   logger: Logger,
 ) => {
@@ -68,7 +68,7 @@ export const makeEventHeroSummary = (
     const codec = makeTypeJsonCodec(schema);
 
     return redis
-      .getOrSetJsonEffect({
+      .getOrSetJson({
         ...eventReadCacheEntry(guildId, eventId, "hero-stats-v2"),
         codec,
         ttlSeconds: 10,

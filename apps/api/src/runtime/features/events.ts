@@ -5,7 +5,7 @@ import {
   makeEventTimersPort,
   type EventTimersPort,
 } from "#src/events/respawn/event-timers.port";
-import { RedlockService } from "#src/redis/redlock";
+import { makeRedisLockManager } from "#src/redis/redlock";
 import { applicationLogger } from "#src/shared/application-logger";
 import {
   RabbitMessaging,
@@ -76,7 +76,7 @@ export const eventTimersLive = Layer.effect(
       store: makeEventTimerStore(database),
       amqp: makeEventPublisher(rabbit),
       redis,
-      redlock: new RedlockService(redis),
+      locks: makeRedisLockManager(redis),
     });
   }),
 );
@@ -110,7 +110,7 @@ export const eventsServicesLive = Layer.effect(
     const tracking = makeEventPresenceTracking(
       database,
       timers,
-      new RedlockService(redis),
+      makeRedisLockManager(redis),
       emitter,
       readCache,
     );

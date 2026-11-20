@@ -56,7 +56,7 @@ export class LootStatsService {
     private readonly database: Parameters<typeof buildLootStatsQueries>[0],
     private readonly redis: Pick<
       RedisService,
-      "getOrSetJsonEffect" | "setNX" | "setJson"
+      "getOrSetJson" | "setNX" | "setJson"
     >,
   ) {}
 

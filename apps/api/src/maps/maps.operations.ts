@@ -64,10 +64,9 @@ export const makeMapsOperation = (options: MapsOperationOptions) => {
   });
 
   return Effect.fn("MapsController_getMaps")(function* () {
-    const cached = yield* Effect.tryPromise({
-      try: () => options.redis.get(cacheKey),
-      catch: () => failure("cache"),
-    });
+    const cached = yield* options.redis
+      .get(cacheKey)
+      .pipe(Effect.mapError(() => failure("cache")));
 
     if (cached) {
       return yield* Effect.try({
@@ -77,11 +76,9 @@ export const makeMapsOperation = (options: MapsOperationOptions) => {
     }
 
     const maps = yield* fetchMaps();
-    yield* Effect.tryPromise({
-      try: () =>
-        options.redis.set(cacheKey, JSON.stringify(maps), cacheTtlSeconds),
-      catch: () => failure("cache"),
-    });
+    yield* options.redis
+      .set(cacheKey, JSON.stringify(maps), cacheTtlSeconds)
+      .pipe(Effect.mapError(() => failure("cache")));
 
     return maps;
   })().pipe(

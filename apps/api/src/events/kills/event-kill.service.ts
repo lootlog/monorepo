@@ -1,6 +1,6 @@
 import { Logger } from "#src/shared/application-logger";
 import type { Queue } from "bullmq";
-import { RedisService } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import type { EventEmitter } from "#src/events/event-emitter";
 import type { EventPoints } from "#src/events/kills/event-points.service";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";

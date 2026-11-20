@@ -1,6 +1,6 @@
 import { buildTimerKey } from "#src/timers/timer-key";
 import { expect, it } from "bun:test";
-import { Effect, Queue } from "effect";
+import { Effect } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
@@ -21,8 +21,7 @@ import { makeEventHeroSummary } from "#src/events/kills/event-hero-summary";
 import { makeEventTimersPort } from "#src/events/respawn/event-timers.port";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.repository";
 import { makeEventAccess } from "#src/events/event-access";
-import { RedisService } from "#src/redis/redis.service";
-import { RedlockService } from "#src/redis/redlock";
+import { makeRedisLockManager } from "#src/redis/redlock";
 import { applicationLogger } from "#src/shared/application-logger";
 import { makeEventsRanking } from "./events-ranking.operations.js";
 
@@ -81,21 +80,17 @@ it("filters hero timers by NPC level before exposing their public projection", a
       ),
     );
 
-    const redis = new RedisService(
-      {
-        send: unexpected,
-        eval: () => unexpected,
-        subscribe: () => Queue.unbounded(),
-        reserve: Effect.die("unused"),
-      },
-      {},
-      Effect.runPromise,
-    );
+    const redis = {
+      invalidateScopes: unexpected,
+      getOrSetJson: <A, E>(options: {
+        readonly factory: Effect.Effect<A, E>;
+      }) => options.factory,
+    };
 
     const timers = makeEventTimersPort({
       store: makeEventTimerStore(database),
       redis,
-      redlock: new RedlockService(redis),
+      locks: makeRedisLockManager({ eval: unexpected }),
       logger: applicationLogger,
       amqp: { publish: unexpected },
     });

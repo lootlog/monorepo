@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "bun:test";
 import { Effect, Schema } from "effect";
 import type {
-  RedisGetOrSetJsonBestEffortOptions,
+  RedisGetOrSetJsonOptions,
   RedisService,
 } from "#src/redis/redis.service";
 import { KillHistoryResponse } from "#src/events/history/event-kill-history.schema";
@@ -18,11 +18,7 @@ describe("EventReadCache", () => {
   let stored: string | null = null;
 
   const redis = {
-    getOrSetJsonEffect<T, E>(
-      options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
-        factory: Effect.Effect<T, E>;
-      },
-    ) {
+    getOrSetJson<T, E>(options: RedisGetOrSetJsonOptions<T, E>) {
       return Effect.suspend(() =>
         stored !== null
           ? Effect.succeed(options.codec.parse(stored))

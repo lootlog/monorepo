@@ -40,7 +40,7 @@ import {
   MemberLootlogConfigSummaryResponse,
 } from "#src/contracts/members/schemas";
 
-export type MemberReadCache = Pick<RedisService, "getOrSetJsonEffect">;
+export type MemberReadCache = Pick<RedisService, "getOrSetJson">;
 
 const snapshotKey = (accountId: number, characterId: number) =>
   `${accountId}:${characterId}`;
@@ -87,14 +87,14 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
           return yield* hydrateMemberRoles(database, members);
         });
 
-      const cached = <S extends Schema.ConstraintDecoder<unknown>, A>(
+      const cached = <S extends Schema.ConstraintDecoder<unknown>>(
         key: string,
         scopes: readonly string[],
         ttl: number,
         schema: S,
-        load: Effect.Effect<A, unknown>,
+        load: Effect.Effect<S["Type"], unknown>,
       ) =>
-        cache.getOrSetJsonEffect({
+        cache.getOrSetJson({
           key,
           scopes,
           ttlSeconds: ttl,

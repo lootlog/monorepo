@@ -35,9 +35,9 @@ const makeDependencies = () => ({
   },
   diagnostics: {
     recordMemberRefreshMetric: mock(
-      (_options: { outcome: string; reason?: string }) => Promise.resolve(),
+      (_options: { outcome: string; reason?: string }) => Effect.void,
     ),
-    recordMemberRefreshLatency: mock((_latency: number) => Promise.resolve()),
+    recordMemberRefreshLatency: mock((_latency: number) => Effect.void),
   },
   sync: {
     syncMemberFromDiscord: mock(

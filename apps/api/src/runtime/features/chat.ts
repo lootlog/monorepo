@@ -5,7 +5,7 @@ import {
   type ChatEvents,
   type ChatRedis,
 } from "#src/chat/chat.data-layer";
-import type { RedisEffects } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
 // Moderation-rare scan over at most CHAT_MESSAGE_LIMIT elements.
@@ -19,7 +19,7 @@ end
 return 0
 `;
 
-export const makeChatRedis = (redis: RedisEffects): ChatRedis => ({
+export const makeChatRedis = (redis: RedisService): ChatRedis => ({
   rpush: redis.rpush,
   ltrim: redis.ltrim,
   lrange: redis.lrange,
@@ -43,9 +43,6 @@ export const chatData = Layer.unwrap(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
 
-    return makeChatDataLayer(
-      makeChatRedis(redis.effect),
-      makeChatEvents(rabbit),
-    );
+    return makeChatDataLayer(makeChatRedis(redis), makeChatEvents(rabbit));
   }),
 );

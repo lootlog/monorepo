@@ -9,22 +9,16 @@ import {
   DependencyUnavailableError,
   AuthenticationRequiredError,
 } from "#src/shared/http/http-errors";
-import { RedisService } from "#src/redis/redis.service";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import type { RedisService } from "#src/redis/redis.service";
 import {
   Routes,
   type RESTGetAPICurrentUserGuildsResult,
 } from "discord-api-types/v10";
-import { RedlockService, type LockRetry } from "#src/redis/redlock";
-import { Effect, Option, Schema } from "effect";
+import type { LockRetry, RedisLockManager } from "#src/redis/redlock";
+import { Clock, Deferred, Effect, Option, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import type { RedisError } from "effect/persistence/Redis";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
-
-const decodeCompleteUserGuildsEntry = Schema.decodeUnknownSync(
-  Schema.fromJsonString(
-    Schema.Struct({ guilds: Schema.Unknown, fetchedAt: Schema.Number }),
-  ),
-);
-
 import {
   getCompleteUserGuildsCacheKey,
   getCompleteUserGuildsLockKey,
@@ -35,14 +29,20 @@ import {
   isApiGuildArray,
 } from "./discord-cache.util.js";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
-import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
+import type { DiscordRateLimiter } from "./discord-rate-limiter.service.js";
 import {
+  failIfDiscordRateLimited,
   recordInvalidDiscordRequest,
   toDiscordRequestError,
-  throwIfDiscordRateLimited,
 } from "./discord-error.util.js";
-import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
-import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
+import type { DiscordRestClients } from "./discord-rest-client.factory.js";
+import type { DiscordSyncDiagnostics } from "./discord-sync-diagnostics.service.js";
+
+const decodeCompleteUserGuildsEntry = Schema.decodeUnknownSync(
+  Schema.fromJsonString(
+    Schema.Struct({ guilds: Schema.Unknown, fetchedAt: Schema.Number }),
+  ),
+);
 
 export interface CompleteUserGuildsResult {
   guilds: RESTGetAPICurrentUserGuildsResult;
@@ -63,514 +63,544 @@ interface CompleteUserGuildsEntry {
   fetchedAt: number;
 }
 
-export class DiscordUserGuildsClient {
-  private readonly redlock: ReturnType<RedlockService["createInstance"]>;
+interface UserIdentity {
+  readonly userId: string;
+  readonly discordId: string;
+}
 
-  private readonly lockTtl = 6000;
-  private readonly userGuildsPageLimit = 200;
-  private readonly guildsCacheTtlLocal = 10;
-  private readonly guildsCacheTtlProd = 300;
-  private readonly completeGuildsLockTtl = 15000;
-  private readonly completeGuildsMaxAgeMs = 15 * 60 * 1000;
-  // A list past the max age is still shown while one background request
-  // replaces it. The list only decides what is displayed; guild routes check
-  // access themselves, and only a fresh list may deactivate members.
-  private readonly completeGuildsStaleTtlSeconds = 24 * 60 * 60;
-  private readonly completeGuildsFreshMaxAgeMs = 2000;
-  // Redlock's default contention retries for the plain list.
-  private readonly lockWait: LockRetry = {
-    retryCount: 3,
-    retryDelay: 100,
-    retryJitter: 50,
-  };
-  // A caller waits about 1.9 s for another caller's complete lookup.
-  private readonly completeGuildsLockWait: LockRetry = {
-    retryCount: 18,
-    retryDelay: 100,
-    retryJitter: 0,
-  };
-  private readonly completeUserGuildRequests = new Map<
-    string,
-    Promise<CompleteUserGuildsEntry>
-  >();
-  private readonly isLocal: boolean;
+type DiscordGuildsError = ApplicationError | RedisError;
 
-  constructor(
-    private readonly logger: Logger,
-    private readonly redisService: RedisService,
-    private readonly rateLimiter: DiscordRateLimiterService,
-    redlockService: RedlockService,
-    private readonly diagnostics: DiscordSyncDiagnosticsService,
-    private readonly restClientFactory: DiscordRestClientFactory,
-    environment: RuntimeEnvironment,
-  ) {
-    this.isLocal = environment === RuntimeEnvironment.LOCAL;
-    this.redlock = redlockService.createInstance();
-  }
-
-  async getUserGuilds(
+export interface DiscordUserGuildsClient {
+  readonly getUserGuilds: (
     userId: string,
     discordId: string,
-  ): Promise<RESTGetAPICurrentUserGuildsResult> {
-    const cacheTtl = this.getCacheTtl(
-      this.guildsCacheTtlLocal,
-      this.guildsCacheTtlProd,
-    );
-
-    const identity = { userId, discordId };
-    const cacheKey = getUserGuildsCacheKey(identity);
-    const lockKey = getUserGuildsLockKey(identity);
-
-    const cached = await this.getCachedUserGuilds(cacheKey, userId);
-
-    if (cached) {
-      return cached;
-    }
-
-    try {
-      return await Effect.runPromise(
-        this.redlock.singleFlight(
-          {
-            resource: lockKey,
-            duration: this.lockTtl,
-            wait: this.lockWait,
-            unavailable: () => {
-              this.logger.log({
-                level: "error",
-                message: `Lock acquisition failed for getUserGuilds`,
-                userId,
-              });
-
-              return new DependencyUnavailableError({
-                code: "DISCORD_GUILDS_LOCK_UNAVAILABLE",
-              });
-            },
-          },
-          Effect.tryPromise({
-            try: () => this.getCachedUserGuilds(cacheKey, userId),
-            catch: (error) => error,
-          }).pipe(Effect.map(Option.fromNullishOr)),
-          Effect.tryPromise({
-            try: async () => {
-              const guilds = await this.fetchUserGuildsFromDiscord(
-                userId,
-                discordId,
-              );
-
-              await this.redisService.set(
-                cacheKey,
-                JSON.stringify(guilds),
-                cacheTtl,
-              );
-
-              return guilds;
-            },
-            catch: (error) => error,
-          }),
-        ),
-      );
-    } catch (error: unknown) {
-      if (error instanceof AuthenticationRequiredError) {
-        this.logger.log({
-          level: "warn",
-          message: `User authentication failed for userId: ${userId}`,
-          error,
-        });
-        throw error;
-      }
-
-      if (error instanceof ApplicationError) {
-        throw error;
-      }
-
-      this.logger.log({
-        level: "error",
-        message: `Failed to fetch user guilds for userId: ${userId}`,
-        error,
-      });
-      throw toDiscordRequestError(error);
-    }
-  }
-
+  ) => Effect.Effect<RESTGetAPICurrentUserGuildsResult, DiscordGuildsError>;
   /**
    * Returns the complete list as Discord reported it within the last two
    * seconds, sharing one Discord request between concurrent callers.
    */
-  getFreshCompleteUserGuilds(
+  readonly getFreshCompleteUserGuilds: (
     userId: string,
     discordId: string,
-  ): Promise<CompleteUserGuildsResult> {
-    return this.getCompleteUserGuilds(
-      { userId, discordId },
-      this.completeGuildsFreshMaxAgeMs,
-    );
-  }
-
+  ) => Effect.Effect<CompleteUserGuildsResult, DiscordGuildsError>;
   /**
    * Returns the cached complete list. A list older than 15 minutes is returned
    * at once while a background request replaces it; only a user with no list
    * cached within the last day waits for Discord.
    */
-  async getCachedCompleteUserGuilds(
+  readonly getCachedCompleteUserGuilds: (
     userId: string,
     discordId: string,
-  ): Promise<CompleteUserGuildsResult> {
-    const identity = { userId, discordId };
-    const cacheKey = getCompleteUserGuildsCacheKey(identity);
+  ) => Effect.Effect<CompleteUserGuildsResult, DiscordGuildsError>;
+  readonly clearUserGuildIdsCache: (
+    identity: UserIdentity,
+  ) => Effect.Effect<void, RedisError>;
+}
 
-    const entry = await this.getCompleteUserGuildsEntry(
-      cacheKey,
-      this.completeGuildsStaleTtlSeconds * 1000,
-    );
+const LOCK_TTL_MS = 6000;
 
-    if (!entry) {
-      return this.toCompleteUserGuildsResult(
-        await this.fetchCompleteUserGuildsOnce(
-          identity,
-          this.completeGuildsMaxAgeMs,
-        ),
-      );
-    }
+const USER_GUILDS_PAGE_LIMIT = 200;
 
-    if (Date.now() - entry.fetchedAt > this.completeGuildsMaxAgeMs) {
-      void this.refreshStaleCompleteUserGuilds(identity, cacheKey);
-    }
+const GUILDS_CACHE_TTL_LOCAL_SECONDS = 10;
 
-    return this.toCompleteUserGuildsResult(entry);
-  }
+const GUILDS_CACHE_TTL_PROD_SECONDS = 300;
 
-  async clearUserGuildIdsCache(options: {
-    userId: string;
-    discordId: string;
-  }): Promise<void> {
-    const { userId, discordId } = options;
+const COMPLETE_GUILDS_LOCK_TTL_MS = 15000;
 
-    await Promise.all([
-      this.redisService.del(getUserGuildsCacheKey({ userId, discordId })),
-      ...getLegacyUserGuildsCacheKeys(userId).map((key) =>
-        this.redisService.del(key),
-      ),
-    ]);
-  }
+const COMPLETE_GUILDS_MAX_AGE_MS = 15 * 60 * 1000;
 
-  private async getCompleteUserGuilds(
-    identity: { userId: string; discordId: string },
-    maxAgeMs: number,
-  ): Promise<CompleteUserGuildsResult> {
-    const entry =
-      (await this.getCompleteUserGuildsEntry(
-        getCompleteUserGuildsCacheKey(identity),
-        maxAgeMs,
-      )) ?? (await this.fetchCompleteUserGuildsOnce(identity, maxAgeMs));
+// A list past the max age is still shown while one background request
+// replaces it. The list only decides what is displayed; guild routes check
+// access themselves, and only a fresh list may deactivate members.
+const COMPLETE_GUILDS_STALE_TTL_SECONDS = 24 * 60 * 60;
 
-    return this.toCompleteUserGuildsResult(entry);
-  }
+const COMPLETE_GUILDS_FRESH_MAX_AGE_MS = 2000;
 
-  private toCompleteUserGuildsResult(
-    entry: CompleteUserGuildsEntry,
-  ): CompleteUserGuildsResult {
-    const age = Date.now() - entry.fetchedAt;
+// Redlock's default contention retries for the plain list.
+const LOCK_WAIT: LockRetry = {
+  retryCount: 3,
+  retryDelay: 100,
+  retryJitter: 50,
+};
+
+// A caller waits about 1.9 s for another caller's complete lookup.
+const COMPLETE_GUILDS_LOCK_WAIT: LockRetry = {
+  retryCount: 18,
+  retryDelay: 100,
+  retryJitter: 0,
+};
+
+/** Another caller holds the lookup's lock for the whole wait budget. */
+class GuildsLockUnavailable extends TaggedErrorClass<GuildsLockUnavailable>()(
+  "GuildsLockUnavailable",
+  {},
+) {}
+
+const toCompleteUserGuildsResult = (
+  entry: CompleteUserGuildsEntry,
+): Effect.Effect<CompleteUserGuildsResult> =>
+  Effect.map(Clock.currentTimeMillis, (now) => {
+    const age = now - entry.fetchedAt;
 
     return {
       guilds: entry.guilds,
-      fresh: age <= this.completeGuildsFreshMaxAgeMs,
-      stale: age > this.completeGuildsMaxAgeMs,
+      fresh: age <= COMPLETE_GUILDS_FRESH_MAX_AGE_MS,
+      stale: age > COMPLETE_GUILDS_MAX_AGE_MS,
     };
-  }
+  });
 
-  private async refreshStaleCompleteUserGuilds(
-    identity: { userId: string; discordId: string },
-    cacheKey: string,
-  ): Promise<void> {
-    try {
-      await this.fetchCompleteUserGuildsOnce(
-        identity,
-        this.completeGuildsMaxAgeMs,
-      );
-    } catch (error: unknown) {
-      // Once Discord rejects the user's authorization, the next request must
-      // surface that instead of showing the old list for another day.
-      if (error instanceof AuthenticationRequiredError) {
-        await this.redisService.del(cacheKey).catch(() => undefined);
-      }
+export const makeDiscordUserGuildsClient = (dependencies: {
+  readonly redis: Pick<RedisService, "get" | "set" | "del">;
+  readonly rateLimiter: DiscordRateLimiter;
+  readonly locks: Pick<RedisLockManager, "singleFlight">;
+  readonly diagnostics: Pick<
+    DiscordSyncDiagnostics,
+    "recordInvalidDiscordRequest"
+  >;
+  readonly restClients: DiscordRestClients;
+  readonly environment: RuntimeEnvironment;
+}): DiscordUserGuildsClient => {
+  const { redis, rateLimiter, locks, diagnostics, restClients } = dependencies;
 
-      this.logger.log({
-        level: "debug",
-        message: "Background complete guild refresh failed",
-        userId: identity.userId,
-        error,
-      });
-    }
-  }
+  const guildsCacheTtl =
+    dependencies.environment === RuntimeEnvironment.LOCAL
+      ? GUILDS_CACHE_TTL_LOCAL_SECONDS
+      : GUILDS_CACHE_TTL_PROD_SECONDS;
 
-  private async fetchCompleteUserGuildsOnce(
-    identity: { userId: string; discordId: string },
-    maxAgeMs: number,
-  ): Promise<CompleteUserGuildsEntry> {
-    // A fresh caller must not reuse a lookup that accepts a cached list.
-    const requestKey = `${getCompleteUserGuildsRequestKey(identity)}:${maxAgeMs}`;
-    const inFlightRequest = this.completeUserGuildRequests.get(requestKey);
+  const completeUserGuildRequests = new Map<
+    string,
+    Deferred.Deferred<CompleteUserGuildsEntry, DiscordGuildsError>
+  >();
 
-    if (inFlightRequest) {
-      return inFlightRequest;
-    }
-
-    const request = this.fetchCompleteUserGuildsWithDistributedSingleFlight(
-      identity,
-      maxAgeMs,
-    );
-
-    this.completeUserGuildRequests.set(requestKey, request);
-
-    try {
-      return await request;
-    } finally {
-      if (this.completeUserGuildRequests.get(requestKey) === request) {
-        this.completeUserGuildRequests.delete(requestKey);
-      }
-    }
-  }
-
-  private async fetchCompleteUserGuilds(
-    userId: string,
-    discordId: string,
-  ): Promise<RESTGetAPICurrentUserGuildsResult> {
-    try {
-      return await this.fetchUserGuildsFromDiscord(userId, discordId);
-    } catch (error: unknown) {
-      if (error instanceof AuthenticationRequiredError) {
-        this.logger.log({
-          level: "warn",
-          message: `User authentication failed for userId: ${userId}`,
-          error,
-        });
-        throw error;
-      }
-
-      if (error instanceof ApplicationError) {
-        throw error;
-      }
-
-      this.logger.log({
-        level: "error",
-        message: `Failed to fetch fresh user guilds for userId: ${userId}`,
-        error,
-      });
-      throw toDiscordRequestError(error);
-    }
-  }
-
-  private fetchCompleteUserGuildsWithDistributedSingleFlight(
-    identity: { userId: string; discordId: string },
-    maxAgeMs: number,
-  ): Promise<CompleteUserGuildsEntry> {
-    const { userId, discordId } = identity;
-    const cacheKey = getCompleteUserGuildsCacheKey(identity);
-    const lockKey = getCompleteUserGuildsLockKey(identity);
-
-    return Effect.runPromise(
-      this.redlock.singleFlight(
-        {
-          resource: lockKey,
-          duration: this.completeGuildsLockTtl,
-          wait: this.completeGuildsLockWait,
-          unavailable: () => {
-            this.logger.log({
-              level: "warn",
-              message: "Complete guild lookup is already in progress",
-              userId,
-            });
-
-            return new DependencyUnavailableError({
-              code: "DISCORD_GUILDS_SINGLE_FLIGHT_LOCK_UNAVAILABLE",
-            });
-          },
-        },
-        Effect.tryPromise({
-          try: () => this.getCompleteUserGuildsEntry(cacheKey, maxAgeMs),
-          catch: (error) => error,
-        }).pipe(Effect.map(Option.fromNullishOr)),
-        Effect.tryPromise({
-          try: async () => {
-            const guilds = await this.fetchCompleteUserGuilds(
-              userId,
-              discordId,
-            );
-
-            const entry = { guilds, fetchedAt: Date.now() };
-            await this.redisService.set(
-              cacheKey,
-              JSON.stringify(entry),
-              this.completeGuildsStaleTtlSeconds,
-            );
-
-            return entry;
-          },
-          catch: (error) => error,
-        }),
-      ),
-    );
-  }
-
-  private getCacheTtl(localTtl: number, prodTtl: number): number {
-    return this.isLocal ? localTtl : prodTtl;
-  }
-
-  private async getCompleteUserGuildsEntry(
-    key: string,
-    maxAgeMs: number,
-  ): Promise<CompleteUserGuildsEntry | null> {
-    const cached = await this.redisService.get(key);
-
-    if (!cached) {
-      return null;
-    }
-
-    try {
-      const parsed = decodeCompleteUserGuildsEntry(cached);
-
-      if (isApiGuildArray(parsed.guilds)) {
-        return Date.now() - parsed.fetchedAt <= maxAgeMs
-          ? { guilds: parsed.guilds, fetchedAt: parsed.fetchedAt }
-          : null;
-      }
-    } catch (error) {
-      this.logger.log({
-        level: "debug",
-        message: "Failed to parse complete guild cache",
-        key,
-        error,
-      });
-    }
-
-    await this.redisService.del(key);
-
-    return null;
-  }
-
-  private async getCachedUserGuilds(
-    cacheKey: string,
-    userId: string,
-  ): Promise<RESTGetAPICurrentUserGuildsResult | null> {
-    const cached = await this.redisService.get(cacheKey);
-
-    if (!cached) {
-      return null;
-    }
-
-    try {
-      const parsed = decodeJsonUnknown(cached);
-
-      if (isApiGuildArray(parsed)) {
-        return parsed;
-      }
-    } catch (error) {
-      this.logger.log({
-        level: "debug",
-        message: "Failed to parse Discord guilds cache",
-        userId,
-        cacheKey,
-        error,
-      });
-    }
-
-    await this.redisService.del(cacheKey);
-
-    return null;
-  }
-
-  private async fetchUserGuildsFromDiscord(
-    userId: string,
-    discordId: string,
-  ): Promise<RESTGetAPICurrentUserGuildsResult> {
-    await throwIfDiscordRateLimited(this.rateLimiter, userId, "guilds");
-
-    const guilds = await this.restClientFactory.withRestClient(
-      userId,
-      discordId,
-      (rest) => this.fetchUserGuildPages(userId, rest),
-    );
-
-    if (guilds.length === 0) {
-      this.logger.log({
-        level: "warn",
-        message: `No guilds found for user: ${userId}`,
-      });
-    }
-
-    return guilds;
-  }
-
-  private async fetchUserGuildPages(
-    userId: string,
-    rest: REST,
-    after?: string,
-    guilds: RESTGetAPICurrentUserGuildsResult = [],
-  ): Promise<RESTGetAPICurrentUserGuildsResult> {
-    const page = await this.fetchUserGuildsPage(userId, rest, after);
-    guilds.push(...page);
-
-    if (page.length < this.userGuildsPageLimit) {
-      return guilds;
-    }
-
-    const lastGuild = page[page.length - 1];
-
-    if (!lastGuild || lastGuild.id === after) {
-      throw new DependencyUnavailableError({
-        code: "DISCORD_GUILDS_PAGINATION_INCOMPLETE",
-      });
-    }
-
-    return this.fetchUserGuildPages(userId, rest, lastGuild.id, guilds);
-  }
-
-  private async fetchUserGuildsPage(
-    userId: string,
-    rest: REST,
-    after?: string,
-  ): Promise<RESTGetAPICurrentUserGuildsResult> {
-    const path = Routes.userGuilds();
-
+  const fetchUserGuildsPage = (userId: string, rest: REST, after?: string) => {
     const query = new URLSearchParams({
-      limit: this.userGuildsPageLimit.toString(),
+      limit: USER_GUILDS_PAGE_LIMIT.toString(),
     });
 
     if (after) {
       query.set("after", after);
     }
 
-    try {
-      const response = await rest.queueRequest({
-        fullRoute: path,
-        method: RequestMethod.Get,
-        query,
+    return Effect.gen(function* () {
+      const response = yield* Effect.tryPromise({
+        try: () =>
+          rest.queueRequest({
+            fullRoute: Routes.userGuilds(),
+            method: RequestMethod.Get,
+            query,
+          }),
+        catch: (error) => error,
       });
 
-      await this.rateLimiter.updateRateLimitFromHeaders(
+      yield* rateLimiter.updateRateLimitFromHeaders(
         userId,
         "guilds",
         response.headers,
       );
 
-      const guilds = await parseResponse(response);
+      const guilds = yield* Effect.tryPromise({
+        try: () => parseResponse(response),
+        catch: (error) => error,
+      });
 
       if (!isApiGuildArray(guilds))
-        throw new TypeError("Invalid Discord guild list response");
+        return yield* Effect.fail(
+          new TypeError("Invalid Discord guild list response"),
+        );
 
       return guilds;
-    } catch (error: unknown) {
-      await recordInvalidDiscordRequest(this.diagnostics, "guilds", error);
+    }).pipe(
+      Effect.catch((error) =>
+        Effect.gen(function* () {
+          yield* recordInvalidDiscordRequest(diagnostics, "guilds", error);
 
-      if (error instanceof RateLimitError) {
-        await this.rateLimiter.setRateLimitForUser(
-          userId,
-          "guilds",
-          error.retryAfter,
-        );
+          if (error instanceof RateLimitError) {
+            yield* rateLimiter.setRateLimitForUser(
+              userId,
+              "guilds",
+              error.retryAfter,
+            );
+          }
+
+          return yield* Effect.fail(toDiscordRequestError(error));
+        }),
+      ),
+    );
+  };
+
+  const fetchUserGuildPages = (userId: string, rest: REST) =>
+    Effect.gen(function* () {
+      const guilds: RESTGetAPICurrentUserGuildsResult = [];
+      let after: string | undefined;
+
+      while (true) {
+        const page = yield* fetchUserGuildsPage(userId, rest, after);
+        guilds.push(...page);
+
+        if (page.length < USER_GUILDS_PAGE_LIMIT) {
+          return guilds;
+        }
+
+        const lastGuild = page[page.length - 1];
+
+        if (!lastGuild || lastGuild.id === after) {
+          return yield* Effect.fail(
+            new DependencyUnavailableError({
+              code: "DISCORD_GUILDS_PAGINATION_INCOMPLETE",
+            }),
+          );
+        }
+
+        after = lastGuild.id;
+      }
+    });
+
+  const fetchUserGuildsFromDiscord = (userId: string, discordId: string) =>
+    Effect.gen(function* () {
+      yield* failIfDiscordRateLimited(rateLimiter, userId, "guilds");
+
+      const guilds = yield* restClients.withRestClient(
+        userId,
+        discordId,
+        (rest) => fetchUserGuildPages(userId, rest),
+      );
+
+      if (guilds.length === 0) {
+        yield* Effect.logWarning({
+          message: `No guilds found for user: ${userId}`,
+        });
       }
 
-      throw toDiscordRequestError(error);
-    }
-  }
-}
+      return guilds;
+    });
+
+  const getCachedUserGuilds = (cacheKey: string, userId: string) =>
+    Effect.gen(function* () {
+      const cached = yield* redis.get(cacheKey);
+
+      if (!cached) {
+        return null;
+      }
+
+      const parsed = yield* Effect.try({
+        try: () => decodeJsonUnknown(cached),
+        catch: (error) => error,
+      }).pipe(
+        Effect.catch((error) =>
+          Effect.logDebug({
+            message: "Failed to parse Discord guilds cache",
+            userId,
+            cacheKey,
+            error,
+          }),
+        ),
+      );
+
+      if (isApiGuildArray(parsed)) {
+        return parsed;
+      }
+
+      yield* redis.del(cacheKey);
+
+      return null;
+    });
+
+  const getCompleteUserGuildsEntry = (key: string, maxAgeMs: number) =>
+    Effect.gen(function* () {
+      const cached = yield* redis.get(key);
+
+      if (!cached) {
+        return null;
+      }
+
+      const parsed = yield* Effect.try({
+        try: () => decodeCompleteUserGuildsEntry(cached),
+        catch: (error) => error,
+      }).pipe(
+        Effect.catch((error) =>
+          Effect.as(
+            Effect.logDebug({
+              message: "Failed to parse complete guild cache",
+              key,
+              error,
+            }),
+            null,
+          ),
+        ),
+      );
+
+      if (parsed && isApiGuildArray(parsed.guilds)) {
+        const now = yield* Clock.currentTimeMillis;
+
+        return now - parsed.fetchedAt <= maxAgeMs
+          ? { guilds: parsed.guilds, fetchedAt: parsed.fetchedAt }
+          : null;
+      }
+
+      yield* redis.del(key);
+
+      return null;
+    });
+
+  const failUnavailable = (
+    message: string,
+    level: "error" | "warn",
+    userId: string,
+    code: string,
+  ) =>
+    (level === "error" ? Effect.logError : Effect.logWarning)({
+      message,
+      userId,
+    }).pipe(
+      Effect.andThen(Effect.fail(new DependencyUnavailableError({ code }))),
+    );
+
+  const fetchCompleteUserGuilds = (userId: string, discordId: string) =>
+    fetchUserGuildsFromDiscord(userId, discordId).pipe(
+      Effect.catch((error) => {
+        if (error instanceof AuthenticationRequiredError) {
+          return Effect.logWarning({
+            message: `User authentication failed for userId: ${userId}`,
+            error,
+          }).pipe(Effect.andThen(Effect.fail(error)));
+        }
+
+        if (error instanceof ApplicationError) {
+          return Effect.fail(error);
+        }
+
+        return Effect.logError({
+          message: `Failed to fetch fresh user guilds for userId: ${userId}`,
+          error,
+        }).pipe(Effect.andThen(Effect.fail(toDiscordRequestError(error))));
+      }),
+    );
+
+  const fetchCompleteUserGuildsWithDistributedSingleFlight = (
+    identity: UserIdentity,
+    maxAgeMs: number,
+  ): Effect.Effect<CompleteUserGuildsEntry, DiscordGuildsError> => {
+    const { userId, discordId } = identity;
+    const cacheKey = getCompleteUserGuildsCacheKey(identity);
+
+    return locks
+      .singleFlight(
+        {
+          resource: getCompleteUserGuildsLockKey(identity),
+          duration: COMPLETE_GUILDS_LOCK_TTL_MS,
+          wait: COMPLETE_GUILDS_LOCK_WAIT,
+          unavailable: () => new GuildsLockUnavailable(),
+        },
+        getCompleteUserGuildsEntry(cacheKey, maxAgeMs).pipe(
+          Effect.map(Option.fromNullishOr),
+        ),
+        Effect.gen(function* () {
+          const guilds = yield* fetchCompleteUserGuilds(userId, discordId);
+          const entry = { guilds, fetchedAt: yield* Clock.currentTimeMillis };
+
+          yield* redis.set(
+            cacheKey,
+            JSON.stringify(entry),
+            COMPLETE_GUILDS_STALE_TTL_SECONDS,
+          );
+
+          return entry;
+        }),
+      )
+      .pipe(
+        Effect.catchTag("GuildsLockUnavailable", () =>
+          failUnavailable(
+            "Complete guild lookup is already in progress",
+            "warn",
+            userId,
+            "DISCORD_GUILDS_SINGLE_FLIGHT_LOCK_UNAVAILABLE",
+          ),
+        ),
+      );
+  };
+
+  // Concurrent callers in this process share one lookup, which keeps running
+  // when a caller is interrupted.
+  const fetchCompleteUserGuildsOnce = (
+    identity: UserIdentity,
+    maxAgeMs: number,
+  ) =>
+    Effect.suspend(() => {
+      // A fresh caller must not reuse a lookup that accepts a cached list.
+      const requestKey = `${getCompleteUserGuildsRequestKey(identity)}:${maxAgeMs}`;
+      const inFlightRequest = completeUserGuildRequests.get(requestKey);
+
+      if (inFlightRequest) {
+        return Deferred.await(inFlightRequest);
+      }
+
+      const request = Deferred.makeUnsafe<
+        CompleteUserGuildsEntry,
+        DiscordGuildsError
+      >();
+
+      completeUserGuildRequests.set(requestKey, request);
+
+      return fetchCompleteUserGuildsWithDistributedSingleFlight(
+        identity,
+        maxAgeMs,
+      ).pipe(
+        Effect.exit,
+        Effect.flatMap((exit) =>
+          Effect.sync(() => {
+            if (completeUserGuildRequests.get(requestKey) === request) {
+              completeUserGuildRequests.delete(requestKey);
+            }
+          }).pipe(Effect.andThen(Deferred.done(request, exit))),
+        ),
+        Effect.forkDetach,
+        Effect.andThen(Deferred.await(request)),
+      );
+    });
+
+  const refreshStaleCompleteUserGuilds = (
+    identity: UserIdentity,
+    cacheKey: string,
+  ) =>
+    fetchCompleteUserGuildsOnce(identity, COMPLETE_GUILDS_MAX_AGE_MS).pipe(
+      Effect.catch((error) =>
+        Effect.gen(function* () {
+          // Once Discord rejects the user's authorization, the next request must
+          // surface that instead of showing the old list for another day.
+          if (error instanceof AuthenticationRequiredError) {
+            yield* redis.del(cacheKey).pipe(Effect.ignore);
+          }
+
+          yield* Effect.logDebug({
+            message: "Background complete guild refresh failed",
+            userId: identity.userId,
+            error,
+          });
+        }),
+      ),
+    );
+
+  return {
+    getUserGuilds: (userId, discordId) => {
+      const identity = { userId, discordId };
+      const cacheKey = getUserGuildsCacheKey(identity);
+
+      return Effect.gen(function* () {
+        const cached = yield* getCachedUserGuilds(cacheKey, userId);
+
+        if (cached) {
+          return cached;
+        }
+
+        return yield* locks
+          .singleFlight(
+            {
+              resource: getUserGuildsLockKey(identity),
+              duration: LOCK_TTL_MS,
+              wait: LOCK_WAIT,
+              unavailable: () => new GuildsLockUnavailable(),
+            },
+            getCachedUserGuilds(cacheKey, userId).pipe(
+              Effect.map(Option.fromNullishOr),
+            ),
+            Effect.gen(function* () {
+              const guilds = yield* fetchUserGuildsFromDiscord(
+                userId,
+                discordId,
+              );
+
+              yield* redis.set(
+                cacheKey,
+                JSON.stringify(guilds),
+                guildsCacheTtl,
+              );
+
+              return guilds;
+            }),
+          )
+          .pipe(
+            Effect.catchTag("GuildsLockUnavailable", () =>
+              failUnavailable(
+                "Lock acquisition failed for getUserGuilds",
+                "error",
+                userId,
+                "DISCORD_GUILDS_LOCK_UNAVAILABLE",
+              ),
+            ),
+            Effect.catch((error) => {
+              if (error instanceof AuthenticationRequiredError) {
+                return Effect.logWarning({
+                  message: `User authentication failed for userId: ${userId}`,
+                  error,
+                }).pipe(Effect.andThen(Effect.fail(error)));
+              }
+
+              if (error instanceof ApplicationError) {
+                return Effect.fail(error);
+              }
+
+              return Effect.logError({
+                message: `Failed to fetch user guilds for userId: ${userId}`,
+                error,
+              }).pipe(
+                Effect.andThen(Effect.fail(toDiscordRequestError(error))),
+              );
+            }),
+          );
+      });
+    },
+    getFreshCompleteUserGuilds: (userId, discordId) =>
+      Effect.gen(function* () {
+        const identity = { userId, discordId };
+
+        const entry =
+          (yield* getCompleteUserGuildsEntry(
+            getCompleteUserGuildsCacheKey(identity),
+            COMPLETE_GUILDS_FRESH_MAX_AGE_MS,
+          )) ??
+          (yield* fetchCompleteUserGuildsOnce(
+            identity,
+            COMPLETE_GUILDS_FRESH_MAX_AGE_MS,
+          ));
+
+        return yield* toCompleteUserGuildsResult(entry);
+      }),
+    getCachedCompleteUserGuilds: (userId, discordId) =>
+      Effect.gen(function* () {
+        const identity = { userId, discordId };
+        const cacheKey = getCompleteUserGuildsCacheKey(identity);
+
+        const entry = yield* getCompleteUserGuildsEntry(
+          cacheKey,
+          COMPLETE_GUILDS_STALE_TTL_SECONDS * 1000,
+        );
+
+        if (!entry) {
+          return yield* toCompleteUserGuildsResult(
+            yield* fetchCompleteUserGuildsOnce(
+              identity,
+              COMPLETE_GUILDS_MAX_AGE_MS,
+            ),
+          );
+        }
+
+        const now = yield* Clock.currentTimeMillis;
+
+        if (now - entry.fetchedAt > COMPLETE_GUILDS_MAX_AGE_MS) {
+          yield* Effect.forkDetach(
+            refreshStaleCompleteUserGuilds(identity, cacheKey),
+          );
+        }
+
+        return yield* toCompleteUserGuildsResult(entry);
+      }),
+    clearUserGuildIdsCache: ({ userId, discordId }) =>
+      Effect.all(
+        [
+          redis.del(getUserGuildsCacheKey({ userId, discordId })),
+          ...getLegacyUserGuildsCacheKeys(userId).map((key) => redis.del(key)),
+        ],
+        { concurrency: "unbounded", discard: true },
+      ),
+  };
+};

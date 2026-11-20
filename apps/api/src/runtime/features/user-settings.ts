@@ -6,7 +6,7 @@ import {
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
 export const userLootlogConfigData = Layer.unwrap(
-  Effect.map(ApiRedis, ({ effect: redis }) =>
+  Effect.map(ApiRedis, (redis) =>
     UserLootlogConfigData.layerDatabase({
       getOrSetJsonEffect: redis.getOrSetJson,
       invalidateScopes: (...scopes) =>

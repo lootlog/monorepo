@@ -43,7 +43,7 @@ export interface EventPointRecalculator {
 export const makeEventPointRecalculation =
   (
     database: typeof ApiDatabase.Service,
-    redis: RedisService,
+    redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
     points: EventPointRecalculator,
     logger: Logger,
   ) =>

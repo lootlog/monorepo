@@ -3,9 +3,8 @@ import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { Effect, Redacted } from "effect";
 import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import type { JsonCodec } from "#src/redis/redis.service";
-import { applicationLogger } from "#src/shared/application-logger";
 import { getAuthTokenCacheKey } from "#src/shared/cache";
-import { AuthService } from "./auth.service.js";
+import { makeAuthService } from "./auth.service.js";
 
 const memoryRedis = () => {
   const values = new Map<string, string>();
@@ -13,30 +12,34 @@ const memoryRedis = () => {
 
   return {
     ttls,
-    get: async (key: string) => values.get(key) ?? null,
-    set: async (key: string, value: string, ttlSeconds?: number) => {
-      values.set(key, value);
-      ttls.set(key, ttlSeconds);
-    },
-    getJson: async <T>(key: string, codec: JsonCodec<T>) => {
-      const value = values.get(key);
+    get: (key: string) => Effect.sync(() => values.get(key) ?? null),
+    set: (key: string, value: string, ttlSeconds?: number) =>
+      Effect.sync(() => {
+        values.set(key, value);
+        ttls.set(key, ttlSeconds);
+      }),
+    getJson: <T>(key: string, codec: Pick<JsonCodec<T>, "parse">) =>
+      Effect.sync(() => {
+        const value = values.get(key);
 
-      return value === undefined ? null : codec.parse(value);
-    },
-    setJson: async <T>(
+        return value === undefined ? null : codec.parse(value);
+      }),
+    setJson: <T>(
       key: string,
       value: T,
       ttlSeconds?: number,
       codec?: Pick<JsonCodec<T>, "stringify">,
-    ) => {
-      values.set(key, codec ? codec.stringify(value) : JSON.stringify(value));
-      ttls.set(key, ttlSeconds);
-    },
-    del: async (key: string) => {
-      ttls.delete(key);
+    ) =>
+      Effect.sync(() => {
+        values.set(key, codec ? codec.stringify(value) : JSON.stringify(value));
+        ttls.set(key, ttlSeconds);
+      }),
+    del: (key: string) =>
+      Effect.sync(() => {
+        ttls.delete(key);
 
-      return Number(values.delete(key));
-    },
+        return Number(values.delete(key));
+      }),
   };
 };
 
@@ -44,13 +47,12 @@ const authServiceWith = (
   redis: ReturnType<typeof memoryRedis>,
   respond: () => Response,
 ) =>
-  new AuthService(
-    applicationLogger,
+  makeAuthService({
     redis,
-    httpClientFromResponses(() => Effect.sync(respond)),
-    new URL("http://auth.test"),
-    Redacted.make("idp-test-secret"),
-  );
+    httpClient: httpClientFromResponses(() => Effect.sync(respond)),
+    authServiceUrl: new URL("http://auth.test"),
+    idpTokenSecret: Redacted.make("idp-test-secret"),
+  });
 
 const issuedToken = (
   accessToken: string,
@@ -61,18 +63,17 @@ const issuedToken = (
 test("Discord token retrieval authenticates the API service without forwarding user credentials", async () => {
   let authorization: string | undefined;
 
-  const service = new AuthService(
-    applicationLogger,
-    memoryRedis(),
-    httpClientFromResponses((request) => {
+  const service = makeAuthService({
+    redis: memoryRedis(),
+    httpClient: httpClientFromResponses((request) => {
       authorization = request.headers.authorization;
       expect(request.url).toBe("http://auth.test/auth/idp-token");
 
       return Effect.succeed(issuedToken("provider-token"));
     }),
-    new URL("http://auth.test"),
-    Redacted.make("idp-test-secret"),
-  );
+    authServiceUrl: new URL("http://auth.test"),
+    idpTokenSecret: Redacted.make("idp-test-secret"),
+  });
 
   await expect(
     Effect.runPromise(service.getIdpToken("user", "discord")),
@@ -91,20 +92,17 @@ for (const [status, body, expected] of [
   [400, { error: "ACCOUNT_NOT_FOUND" }, "AccountNotFoundError"],
 ] as const) {
   test(`classifies IDP ${status} ${JSON.stringify(body)} as ${expected}`, async () => {
-    const service = new AuthService(
-      applicationLogger,
-      {
+    const service = makeAuthService({
+      redis: {
         ...memoryRedis(),
-        setJson: async () => {
-          throw new Error("Errors must not be cached");
-        },
+        setJson: () => Effect.die(new Error("Errors must not be cached")),
       },
-      httpClientFromResponses(() =>
+      httpClient: httpClientFromResponses(() =>
         Effect.succeed(Response.json(body, { status })),
       ),
-      new URL("http://auth.test"),
-      Redacted.make("rejected-service-secret"),
-    );
+      authServiceUrl: new URL("http://auth.test"),
+      idpTokenSecret: Redacted.make("rejected-service-secret"),
+    });
 
     const error = await Effect.runPromise(
       Effect.flip(service.getIdpToken("user", "discord")),

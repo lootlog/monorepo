@@ -12,7 +12,7 @@ import type {
 import type { LootNpcNameSummary } from "#src/loots/query/loot-query.operations";
 import type { LootsOperations } from "#src/loots/loots.operations";
 import { Clock, Effect } from "effect";
-import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
+import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { EventWrappedResponse } from "#src/contracts/events/schemas";
 import { clipToWindowSeconds } from "#src/events/monitoring/tracking-window";
 import {
@@ -306,32 +306,29 @@ export const makeEventWrapped = (
     const load = getWrappedUncached(guild, eventId, permissions, roles);
 
     return Effect.gen(function* () {
-      const cached = yield* Effect.tryPromise({
-        try: () => redis.getJson(cacheKey, makeJsonCodec(EventWrappedResponse)),
-        catch: (error) => error,
-      }).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() => {
-            logger.warn("Event wrapped cache unavailable", error);
+      const cached = yield* redis
+        .getJson(cacheKey, makeJsonCodec(EventWrappedResponse))
+        .pipe(
+          Effect.catch((error) =>
+            Effect.sync(() => {
+              logger.warn("Event wrapped cache unavailable", error);
 
-            return null;
-          }),
-        ),
-      );
+              return null;
+            }),
+          ),
+        );
 
       if (cached !== null) return cached;
       const response = yield* load;
-      yield* Effect.tryPromise({
-        try: () =>
-          redis.setJson(cacheKey, response, EVENT_WRAPPED_CACHE_TTL_SECONDS),
-        catch: (error) => error,
-      }).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() =>
-            logger.warn("Event wrapped cache unavailable", error),
+      yield* redis
+        .setJson(cacheKey, response, EVENT_WRAPPED_CACHE_TTL_SECONDS)
+        .pipe(
+          Effect.catch((error) =>
+            Effect.sync(() =>
+              logger.warn("Event wrapped cache unavailable", error),
+            ),
           ),
-        ),
-      );
+        );
 
       return response;
     }).pipe(Effect.withSpan("EventsCatalogController_showEventWrapped"));

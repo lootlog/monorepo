@@ -6,6 +6,7 @@ import { guildTable } from "#src/database/drizzle/organization.schema";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import { describe, expect, it, mock } from "bun:test";
+import { Effect } from "effect";
 
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { makeEventDeletion } from "#src/events/catalog/event-deletion";
@@ -50,9 +51,9 @@ describe("event deletion Effect module", () => {
         const removeEvent = makeEventDeletion(
           boundary.database,
           {
-            invalidateScopes: () => Promise.resolve(),
+            invalidateScopes: () => Effect.void,
             deleteByPattern: () =>
-              Promise.reject(new Error("Unexpected cache invalidation")),
+              Effect.die(new Error("Unexpected cache invalidation")),
           },
           { pending, delayed },
           {

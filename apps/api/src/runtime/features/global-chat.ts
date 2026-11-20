@@ -11,7 +11,7 @@ import {
   type GlobalChatEvents,
   type GlobalChatStore,
 } from "#src/global-chat/global-chat.data-layer";
-import type { RedisEffects } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
@@ -62,7 +62,7 @@ end
 return 0
 `;
 
-export const makeGlobalChatStore = (redis: RedisEffects): GlobalChatStore => ({
+export const makeGlobalChatStore = (redis: RedisService): GlobalChatStore => ({
   append: (world, value) => {
     const keys = channelKeys(world);
 
@@ -139,7 +139,7 @@ export const globalChatData = Layer.unwrap(
     const { globalChatAdminUserIds } = yield* ApiRuntimeConfig;
 
     return makeGlobalChatDataLayer(
-      makeGlobalChatStore(redis.effect),
+      makeGlobalChatStore(redis),
       makeGlobalChatEvents(rabbit),
       globalChatAdminUserIds,
     );

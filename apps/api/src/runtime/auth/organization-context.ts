@@ -55,7 +55,7 @@ export type OrganizationContext = {
   readonly roles: ReadonlyArray<Role>;
 };
 
-/** The `RedisEffects` commands the Organization context cache needs. */
+/** The `RedisService` commands the Organization context cache needs. */
 export interface OrganizationContextCache extends GuildConfigurationCache {
   readonly setNX: (
     key: string,

@@ -32,7 +32,7 @@ import { makeEventEmitter } from "#src/events/event-emitter";
 import { makeEventPointsStore } from "#src/events/kills/event-points.repository";
 import { makeEventPoints } from "#src/events/kills/event-points.service";
 import { makeEventPointEdits } from "#src/events/kills/event-point-edits";
-import type { RedisGetOrSetJsonBestEffortOptions } from "#src/redis/redis.service";
+import type { RedisGetOrSetJsonOptions } from "#src/redis/redis.service";
 import { applicationLogger } from "#src/shared/application-logger";
 import { makeEventKillHistory } from "./event-kill-history.js";
 
@@ -92,19 +92,16 @@ const fixture = async () => {
   >();
 
   const redis = {
-    invalidateScopes: async (...scopes: string[]) => {
-      for (const [key, entry] of entries) {
-        if (entry.scopes.some((scope) => scopes.includes(scope))) {
-          entries.delete(key);
+    invalidateScopes: (...scopes: string[]) =>
+      Effect.sync(() => {
+        for (const [key, entry] of entries) {
+          if (entry.scopes.some((scope) => scopes.includes(scope))) {
+            entries.delete(key);
+          }
         }
-      }
-    },
-    deleteByPattern: () => Promise.resolve(0),
-    getOrSetJsonEffect<T, E>(
-      options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
-        factory: Effect.Effect<T, E>;
-      },
-    ) {
+      }),
+    deleteByPattern: () => Effect.succeed(0),
+    getOrSetJson<T, E>(options: RedisGetOrSetJsonOptions<T, E>) {
       return Effect.gen(function* () {
         const cached = entries.get(options.key);
 
@@ -540,7 +537,9 @@ describe("kill history database reads", () => {
           maxSpawnTimeAtKill: time("15:00"),
         }),
       );
-      await f.readCache.invalidateEvent("guild-1", "event-1");
+      await Effect.runPromise(
+        f.readCache.invalidateEvent("guild-1", "event-1"),
+      );
 
       const next = await f.run(
         f.history.list(context(), {

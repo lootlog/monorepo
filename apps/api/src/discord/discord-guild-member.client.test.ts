@@ -1,13 +1,10 @@
 import { describe, expect, mock, spyOn, test } from "bun:test";
 import { DiscordAPIError, REST } from "@discordjs/rest";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
+import { Effect } from "effect";
 import { getTransientMemberSyncStatus } from "#src/members/member-discord-sync-status";
-import { RedisService } from "#src/redis/redis.service";
-import type { ApplicationLogger } from "#src/shared/application-logger";
-import { DiscordGuildMemberClient } from "./discord-guild-member.client.js";
-import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
-import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
-import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
+import { makeDiscordGuildMemberClient } from "./discord-guild-member.client.js";
+import type { DiscordRestClients } from "./discord-rest-client.factory.js";
 
 const member = { guildId: "guild-1", userId: "user-1", discordId: "discord-1" };
 
@@ -27,61 +24,34 @@ const makeClient = () => {
     ),
   );
 
-  const recordInvalidDiscordRequest = mock(() => Promise.resolve());
+  const recordInvalidDiscordRequest = mock(() => Effect.void);
 
   const rest = new REST({ handlerSweepInterval: 0, hashSweepInterval: 0 });
   spyOn(rest, "queueRequest").mockImplementation(queueRequest);
 
-  const logger: ApplicationLogger = {
-    log: () => undefined,
-    info: () => undefined,
-    warn: () => undefined,
-    error: () => undefined,
-    debug: () => undefined,
+  const restClients: DiscordRestClients = {
+    withRestClient: (_userId, _discordId, request) => request(rest),
   };
 
-  const redis: RedisService = Object.assign(
-    Object.create(RedisService.prototype),
-    {
-      get: (key: string) => Promise.resolve(cache.get(key) ?? null),
-      set: async (key: string, value: string) => {
-        cache.set(key, value);
-      },
-      del: async (key: string) => {
-        cache.delete(key);
-      },
+  const client = makeDiscordGuildMemberClient({
+    redis: {
+      get: (key) => Effect.sync(() => cache.get(key) ?? null),
+      set: (key, value) =>
+        Effect.sync(() => {
+          cache.set(key, value);
+        }),
+      del: (key) => Effect.sync(() => Number(cache.delete(key))),
     },
-  );
-
-  const rateLimiter: DiscordRateLimiterService = Object.assign(
-    Object.create(DiscordRateLimiterService.prototype),
-    { checkRateLimitForUser: () => Promise.resolve(false) },
-  );
-
-  const diagnostics: DiscordSyncDiagnosticsService = Object.assign(
-    Object.create(DiscordSyncDiagnosticsService.prototype),
-    { recordInvalidDiscordRequest },
-  );
-
-  const restClients: DiscordRestClientFactory = Object.assign(
-    Object.create(DiscordRestClientFactory.prototype),
-    {
-      withRestClient: <A>(
-        _userId: string,
-        _discordId: string,
-        request: (client: REST) => Promise<A>,
-      ) => request(rest),
+    rateLimiter: {
+      checkRateLimitForUser: () => Effect.succeed(false),
+      getNextAvailableAtForUser: () => Effect.succeed(null),
+      updateRateLimitFromHeaders: () => Effect.void,
+      setRateLimitForUser: () => Effect.void,
     },
-  );
-
-  const client = new DiscordGuildMemberClient(
-    logger,
-    redis,
-    rateLimiter,
-    diagnostics,
+    diagnostics: { recordInvalidDiscordRequest },
     restClients,
-    RuntimeEnvironment.PROD,
-  );
+    environment: RuntimeEnvironment.PROD,
+  });
 
   return { client, queueRequest, recordInvalidDiscordRequest };
 };
@@ -93,7 +63,9 @@ describe("DiscordGuildMemberClient", () => {
     const { client, queueRequest, recordInvalidDiscordRequest } = makeClient();
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      const error = await client.getGuildMember(member).catch((cause) => cause);
+      const error = await Effect.runPromise(
+        Effect.flip(client.getGuildMember(member)),
+      );
 
       expect(getTransientMemberSyncStatus(error)).toBe("DISCORD_HTTP_403");
     }
@@ -101,8 +73,8 @@ describe("DiscordGuildMemberClient", () => {
     expect(queueRequest).toHaveBeenCalledTimes(1);
     expect(recordInvalidDiscordRequest).toHaveBeenCalledTimes(1);
 
-    await client.clearGuildMemberCache(member);
-    await client.getGuildMember(member).catch(() => undefined);
+    await Effect.runPromise(client.clearGuildMemberCache(member));
+    await Effect.runPromise(Effect.ignore(client.getGuildMember(member)));
 
     expect(queueRequest).toHaveBeenCalledTimes(2);
   });

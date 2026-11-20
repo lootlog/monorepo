@@ -43,7 +43,7 @@ const decodeHeroSighting = Schema.decodeUnknownEffect(HeroSightingResponse);
 export const RabbitConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
-    const { effect: redis } = yield* ApiRedis;
+    const redis = yield* ApiRedis;
     const database = yield* ApiDatabase;
     const { runLootPublications } = yield* RecordsServices;
     yield* runLootPublications.pipe(Effect.forkScoped);
