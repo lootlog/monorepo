@@ -1,0 +1,23 @@
+{
+  "name": "@lootlog/changelog",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./changelog": "./src/changelog.ts",
+    "./entries": "./src/entries.ts"
+  },
+  "scripts": {
+    "lint": "oxlint src",
+    "test": "bun test",
+    "typecheck": "bun check"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

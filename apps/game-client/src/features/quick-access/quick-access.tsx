@@ -11,6 +11,7 @@ import {
   QuickAccessWindowButton,
   type QuickAccessWindowButtonProps,
 } from "@/features/quick-access/components/quick-access-window-button";
+import { useWhatsNew } from "@/features/settings/components/whats-new/use-whats-new";
 import { useGlobalChatStore } from "@/store/global-chat.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
@@ -43,6 +44,7 @@ export const QuickAccess = () => {
 
   const setOpen = useWindowsStore((state) => state.setOpen);
   const globalChatUnread = useGlobalChatStore((state) => state.unread);
+  const whatsNewUnread = useWhatsNew().unreadIds.length;
 
   const heroSightingCount = useHeroSightingRows().rows.filter(
     (row) => row.isCurrent,
@@ -116,6 +118,16 @@ export const QuickAccess = () => {
       label: t("buttons.settings"),
       icon: <Settings aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-settings",
+      badge:
+        whatsNewUnread > 0
+          ? {
+              count: whatsNewUnread,
+              label: t("settings.whatsNew.badge", {
+                ns: "translation",
+                count: whatsNewUnread,
+              }),
+            }
+          : undefined,
     },
   ];
 

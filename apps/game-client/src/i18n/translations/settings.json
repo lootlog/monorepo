@@ -246,6 +246,28 @@
     "clearLocalDataConfirm": "Potwierdź",
     "clearLocalDataCancel": "Anuluj"
   },
+  "whatsNew": {
+    "title": "Co nowego",
+    "thisWeek": "Ten tydzień",
+    "unread": "Nieprzeczytane",
+    "fixes": "Poprawki",
+    "howItWorks": "Jak to działa",
+    "allChanges": "Wszystkie zmiany",
+    "badge_one": "{{count}} nowość w Lootlogu",
+    "badge_few": "{{count}} nowości w Lootlogu",
+    "badge_many": "{{count}} nowości w Lootlogu",
+    "badge_other": "{{count}} nowości w Lootlogu",
+    "types": {
+      "feature": "Nowość",
+      "improvement": "Usprawnienie"
+    },
+    "surfaces": {
+      "game-client": "Dodatek",
+      "web": "Aplikacja",
+      "discord": "Discord",
+      "wiki": "Wiki"
+    }
+  },
   "information": {
     "title": "Informacje o kliencie",
     "description": "Informacje o aktualnie uruchomionej wersji dodatku.",

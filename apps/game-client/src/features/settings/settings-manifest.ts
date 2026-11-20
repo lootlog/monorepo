@@ -662,6 +662,17 @@ const MANIFEST = [
     icon: "info",
     subsections: [
       {
+        id: "whats-new",
+        labelKey: "settings.whatsNew.title",
+        controls: [
+          {
+            id: "whats-new",
+            labelKey: "settings.whatsNew.title",
+            aliases: ["nowości", "zmiany", "aktualizacje", "changelog"],
+          },
+        ],
+      },
+      {
         id: "build",
         labelKey: "settings.information.buildDetailsTitle",
         controls: [

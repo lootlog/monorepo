@@ -272,6 +272,7 @@
         "@lexical/react": "catalog:",
         "@lexical/utils": "catalog:",
         "@lootlog/battle-processor": "workspace:*",
+        "@lootlog/changelog": "workspace:*",
         "@lootlog/client": "workspace:*",
         "@lootlog/datetime": "workspace:*",
         "@lootlog/domain": "workspace:*",
@@ -435,6 +436,7 @@
         "@lexical/rich-text": "catalog:",
         "@lexical/selection": "catalog:",
         "@lexical/table": "catalog:",
+        "@lootlog/changelog": "workspace:*",
         "@lootlog/client": "workspace:*",
         "@lootlog/datetime": "workspace:*",
         "@lootlog/domain": "workspace:*",
@@ -530,6 +532,16 @@
         "@lootlog/typescript-config": "workspace:*",
         "@types/bun": "catalog:",
         "typescript": "catalog:",
+      },
+    },
+    "packages/changelog": {
+      "name": "@lootlog/changelog",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@lootlog/typescript-config": "workspace:*",
+        "@types/bun": "catalog:",
+        "typescript": "catalog:",
+        "vite": "catalog:",
       },
     },
     "packages/cli": {
@@ -1481,6 +1493,8 @@
     "@lootlog/battlelog": ["@lootlog/battlelog@workspace:apps/battlelog"],
 
     "@lootlog/catalog": ["@lootlog/catalog@workspace:apps/catalog"],
+
+    "@lootlog/changelog": ["@lootlog/changelog@workspace:packages/changelog"],
 
     "@lootlog/cli": ["@lootlog/cli@workspace:packages/cli"],
 

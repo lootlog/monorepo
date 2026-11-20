@@ -8,6 +8,7 @@ import { GeneralSettingsTab } from "@/features/settings/components/general/gener
 import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
 import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotkeys-settings-tab";
 import { InformationSettingsTab } from "@/features/settings/components/information/information-settings-tab";
+import { WhatsNewSettingsTab } from "@/features/settings/components/whats-new/whats-new-settings-tab";
 import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settings-tab";
 import { MutedNpcsSettingsTab } from "@/features/settings/components/mutes/muted-npcs-settings-tab";
 import { MutedPlayersSettingsTab } from "@/features/settings/components/mutes/muted-players-settings-tab";
@@ -91,5 +92,6 @@ export const SETTINGS_SUBSECTION_CONTENT = {
   // The debug subsection is visible only in development; a constant `DEV`
   // lets production builds drop the tab and everything only it imports.
   debug: import.meta.env.DEV ? DebugTab : () => null,
+  "whats-new": WhatsNewSettingsTab,
   build: InformationSettingsTab,
 } satisfies Record<SettingsSubsectionValue, ComponentType>;

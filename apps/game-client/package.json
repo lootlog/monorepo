@@ -38,6 +38,7 @@
     "@lexical/react": "catalog:",
     "@lexical/utils": "catalog:",
     "@lootlog/battle-processor": "workspace:*",
+    "@lootlog/changelog": "workspace:*",
     "@lootlog/client": "workspace:*",
     "@lootlog/datetime": "workspace:*",
     "@lootlog/domain": "workspace:*",
