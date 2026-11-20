@@ -11,7 +11,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
 import { getGuildsControllerGetWorldsByGuildIdQueryKey } from "@lootlog/client/main";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import { getCharacterFilterKey } from "@/lib/character-filter-scope";
 import {
   useTimersStore,
@@ -22,7 +22,7 @@ import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { createTimerFixture } from "./timer-fixtures";
+import { createTimerFixture } from "@/test/timer-fixtures";
 import { createTimerViewFixture } from "./timer-view-fixtures";
 import { Timers } from "./timers";
 

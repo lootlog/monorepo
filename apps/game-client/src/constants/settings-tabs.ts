@@ -1,5 +1,3 @@
-import { SETTINGS_MANIFEST } from "../settings-manifest";
-
 export const SETTINGS_DOMAIN_VALUES = [
   "general",
   "catching",
@@ -86,17 +84,38 @@ const DEFAULT_SETTINGS_PATH: SettingsPath = {
 };
 
 /**
- * A domain opens on its first subsection; tab ids persisted by earlier
- * releases keep the destinations they had when they were retired.
+ * A domain opens on the subsection the settings manifest lists first, which
+ * settings-manifest.test.ts checks.
+ */
+export const SETTINGS_DOMAIN_FIRST_SUBSECTIONS = {
+  general: "behavior",
+  catching: "catching",
+  servers: "visibility",
+  appearance: "npc-colors",
+  chat: "chat-appearance",
+  timers: "timer-behavior",
+  notifications: "notification-rules",
+  detector: "detector",
+  mutes: "muted-players",
+  "battle-panel": "battle-panel",
+  pings: "pings",
+  sounds: "sounds",
+  controls: "hotkeys",
+  diagnostics: "logs",
+  information: "build",
+} as const satisfies Record<SettingsDomainValue, SettingsSubsectionValue>;
+
+/**
+ * Tab ids persisted by earlier releases keep the destinations they had when
+ * they were retired.
  */
 const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
-  // SAFETY: the manifest declares every domain exactly once, which
-  // settings-manifest.test.ts checks against SETTINGS_DOMAIN_VALUES.
+  // SAFETY: the entries map every domain of a closed literal object to a path
+  // that opens a subsection of that domain.
   ...(Object.fromEntries(
-    SETTINGS_MANIFEST.map(({ id, subsections: [first] }) => [
-      id,
-      { domain: id, subsection: first.id },
-    ]),
+    Object.entries(SETTINGS_DOMAIN_FIRST_SUBSECTIONS).map(
+      ([domain, subsection]) => [domain, { domain, subsection }],
+    ),
   ) as Record<SettingsDomainValue, SettingsPath>),
   "game-data": { domain: "catching", subsection: "catching" },
   "hidden-timers": { domain: "timers", subsection: "hidden-timers" },

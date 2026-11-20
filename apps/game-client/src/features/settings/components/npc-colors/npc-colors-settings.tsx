@@ -1,11 +1,11 @@
-import { SettingsColorRow } from "@/components/settings/settings-color-row";
+import { SettingsColorRow } from "@/features/settings/components/shared/settings-color-row";
 import { IconButton } from "@/components/ui/icon-button";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { Button } from "@/components/ui/button";
-import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
-import { useSettingsSaveStatus } from "@/features/settings/persistence/settings-save-status.store";
-import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
+import { enqueueSettingsPatch } from "@/lib/settings-persistence/settings-patch-client";
+import { useSettingsSaveStatus } from "@/lib/settings-persistence/settings-save-status.store";
+import { useNpcTypeColors } from "@/lib/settings-persistence/use-appearance-settings";
 import {
   APPEARANCE_NPC_TYPES,
   DEFAULT_NPC_TYPE_COLORS,
@@ -17,7 +17,7 @@ import {
   normalizeAppearanceColor,
 } from "@lootlog/domain/npc-appearance";
 import { RotateCcw } from "lucide-react";
-import { useSourceDraft } from "@/components/settings/use-source-draft";
+import { useSourceDraft } from "@/features/settings/components/shared/use-source-draft";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NpcColorEditorPopover } from "./npc-color-editor-popover";

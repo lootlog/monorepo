@@ -13,8 +13,7 @@ import { HeroTrackerTimerProcessor } from "@/processors/hero-tracker-timer-proce
 import { HeroDetectorProcessor } from "@/processors/hero-detector-processor";
 import { MapChangeProcessor } from "@/processors/map-change-processor";
 import { AfkProcessor } from "@/processors/afk-processor";
-import { OtherEventProcessor } from "@/processors/other-event-processor";
-import { airTagObservationController } from "@/features/air-tags/air-tag-observation-controller";
+import type { GameEventObserver } from "@/processors/game-event-observer";
 import { parseRuntimeFacts } from "@/lib/margonem-runtime/runtime-event-parser";
 import type {
   RuntimeEventEnvelope,
@@ -47,16 +46,22 @@ export class EventDispatcher {
   private npcsDelete = new NpcsDeleteProcessor();
   private heroTrackerTimers = new HeroTrackerTimerProcessor();
   private heroDetector = new HeroDetectorProcessor();
-  private mapChange = new MapChangeProcessor();
+  private readonly mapChange: MapChangeProcessor;
   private afk = new AfkProcessor();
-  private other = new OtherEventProcessor();
   private releaseProcessor: (() => boolean) | null = null;
+  private readonly observers: readonly GameEventObserver[];
   private readonly pipeline: Pick<RuntimeEventPipeline, "setProcessor">;
 
-  constructor(
-    pipeline: Pick<RuntimeEventPipeline, "setProcessor"> = runtimeEventPipeline,
-  ) {
+  constructor({
+    observers = [],
+    pipeline = runtimeEventPipeline,
+  }: {
+    observers?: readonly GameEventObserver[];
+    pipeline?: Pick<RuntimeEventPipeline, "setProcessor">;
+  } = {}) {
+    this.observers = observers;
     this.pipeline = pipeline;
+    this.mapChange = new MapChangeProcessor(observers);
   }
 
   handleEvent = (event: GameEvent): void => {
@@ -74,7 +79,9 @@ export class EventDispatcher {
     const event = fact.event;
 
     if (fact.kind === "reload") {
-      runSafe("reload", () => airTagObservationController.forgetTargets());
+      for (const observer of this.observers) {
+        if (observer.reload) runSafe("reload", observer.reload);
+      }
     }
 
     if (fact.kind === "chat") {
@@ -117,8 +124,12 @@ export class EventDispatcher {
       runSafe("npcs-delete", () => this.npcsDelete.handle(event, ingress));
     }
 
-    if (fact.kind === "other") {
-      runSafe("other", () => this.other.handle(event));
+    const other = fact.kind === "other" ? event.other : undefined;
+
+    if (other) {
+      for (const observer of this.observers) {
+        if (observer.other) runSafe("other", () => observer.other?.(other));
+      }
     }
 
     if (fact.kind === "afk") {

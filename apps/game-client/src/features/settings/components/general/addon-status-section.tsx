@@ -1,6 +1,6 @@
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,

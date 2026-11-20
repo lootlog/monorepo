@@ -5,9 +5,9 @@ import { expect, it } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { createGameAccessCache } from "@/lib/game-access-cache";
-import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
-import { createTimerGuildFixture } from "@/features/timers/timer-fixtures";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
+import { createTimerGuildFixture } from "@/test/timer-fixtures";
+import { queryKeys } from "@/lib/query-keys";
 import { useAccessibleGuilds } from "./use-accessible-guilds";
 
 const policy = (ids: string[]) =>

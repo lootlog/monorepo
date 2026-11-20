@@ -2,8 +2,8 @@ import { useEffect, useEffectEvent, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { useSocket } from "@/contexts/socket-context";
-import { queryKeys } from "@/features/public-api/query-keys";
-import { upsertHeroSightings } from "@/features/hero-sightings/hero-sightings-cache";
+import { queryKeys } from "@/lib/query-keys";
+import { upsertHeroSightings } from "@/hooks/api/hero-sightings-cache";
 
 /** Applies live sighting changes and catches up on what a disconnect missed. */
 export const useHeroSightingsSocket = () => {

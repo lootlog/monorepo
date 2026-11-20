@@ -4,7 +4,7 @@ import type {
   PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
 import type { QueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import {
   EMPTY_READY_ROOM_CACHE,
   mergeReadyRoomProjections,

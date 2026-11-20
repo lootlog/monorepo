@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { Timer } from "@/api/timers.api";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import { invalidateTimerHistory } from "@/features/timers/utils/invalidate-timer-history";
 import {
   upsertTimerInCollection,

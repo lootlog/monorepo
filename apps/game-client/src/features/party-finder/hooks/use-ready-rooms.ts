@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-query";
 import { partyReadyRoomControllerList } from "@lootlog/client/main";
 import { queryClient as gameQueryClient } from "@/lib/query-client";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import { useGlobalStore } from "@/store/global.store";
 import {
   applyAuthoritativeReadyRoomSync,

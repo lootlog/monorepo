@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
@@ -17,7 +17,7 @@ import {
 import {
   reportSettingsSave,
   useSettingsSaveStatusStore,
-} from "@/features/settings/persistence/settings-save-status.store";
+} from "@/lib/settings-persistence/settings-save-status.store";
 import { useGameStore } from "@/store/game.store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

@@ -6,7 +6,7 @@ import {
 import { partyReadyRoomControllerGet } from "@lootlog/client/main";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { queryClient as gameQueryClient } from "@/lib/query-client";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import {
   applyReadyRoomUpdate,
   EMPTY_READY_ROOM_CACHE,

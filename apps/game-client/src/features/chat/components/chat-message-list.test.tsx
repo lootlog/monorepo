@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { createChatTestWrapper } from "../chat-test-wrapper";
-import { createChatMessage } from "../chat-test-fixtures";
+import { createChatMessage } from "@/test/chat-fixtures";
 import { dispatchChatScrollToMessage } from "../chat-scroll-to-message";
 import type { ChatRenderableMessage } from "../chat.helpers";
 import { ChatMessageList } from "./chat-message-list";

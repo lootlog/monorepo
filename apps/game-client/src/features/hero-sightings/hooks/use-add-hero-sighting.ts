@@ -1,7 +1,7 @@
 import type { AddHeroSightingDto } from "@lootlog/client/main";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addHeroSighting } from "@/api/hero-sightings.api";
-import { upsertHeroSightings } from "@/features/hero-sightings/hero-sightings-cache";
+import { upsertHeroSightings } from "@/hooks/api/hero-sightings-cache";
 import { useHeroSightingsStore } from "@/store/hero-sightings.store";
 
 type AddHeroSightingInput = {

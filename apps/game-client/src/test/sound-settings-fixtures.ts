@@ -1,4 +1,4 @@
-import type { SoundSettings } from "@/features/settings/persistence/use-sound-settings";
+import type { SoundSettings } from "@/lib/settings-persistence/use-sound-settings";
 
 type SoundCategoryConfig = SoundSettings["notificationsConfig"] | null;
 

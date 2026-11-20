@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CustomTimerColor } from "@lootlog/schema/timer-settings";
 import { getUsersControllerGetUserPreferencesQueryKey } from "@lootlog/client/main";
-import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
+import { settingsPatchQueue } from "@/lib/settings-persistence/settings-patch-client";
 import { queryClient } from "@/lib/query-client";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 

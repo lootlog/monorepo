@@ -1,8 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { OtherEventProcessor } from "./other-event-processor";
-import { createAirTagTest } from "@/features/air-tags/air-tag-test";
-import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
-import { AIR_TAG_BATCH_INTERVAL_MS } from "@/features/air-tags/air-tag-observation-controller";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { EventDispatcher } from "@/lib/event-dispatcher";
+import { airTagGameEventObserver } from "./air-tag-game-event-observer";
+import { createAirTagTest } from "./air-tag-test";
+import { airTagRuntime } from "./air-tag-runtime";
+import {
+  AIR_TAG_BATCH_INTERVAL_MS,
+  airTagObservationController,
+} from "./air-tag-observation-controller";
 import type { OtherCreate } from "@lootlog/margonem/game-events";
 
 const other: OtherCreate = {
@@ -24,7 +28,10 @@ const other: OtherCreate = {
   relation: 1,
 };
 
-describe("OtherEventProcessor", () => {
+const dispatcher = () =>
+  new EventDispatcher({ observers: [airTagGameEventObserver] });
+
+describe("airTagGameEventObserver", () => {
   let test: ReturnType<typeof createAirTagTest>;
   beforeEach(() => {
     test = createAirTagTest();
@@ -35,7 +42,7 @@ describe("OtherEventProcessor", () => {
     airTagRuntime.shutdown();
   });
   it("batches a native other CREATE into the current map observation", async () => {
-    new OtherEventProcessor().handle({ other: { "42": other } });
+    dispatcher().handleEvent({ other: { "42": other } });
     await new Promise<void>((resolve) =>
       setTimeout(resolve, AIR_TAG_BATCH_INTERVAL_MS + 10),
     );
@@ -57,10 +64,20 @@ describe("OtherEventProcessor", () => {
     ]);
   });
   it("ignores events without other data", async () => {
-    new OtherEventProcessor().handle({});
+    dispatcher().handleEvent({});
     await new Promise<void>((resolve) =>
       setTimeout(resolve, AIR_TAG_BATCH_INTERVAL_MS + 10),
     );
     expect(test.wire.frames).toEqual([]);
+  });
+  it("forgets targets when Margonem reloads the map without deleting its players", () => {
+    const forgetTargets = vi.spyOn(
+      airTagObservationController,
+      "forgetTargets",
+    );
+
+    dispatcher().handleEvent({ t: "reload" });
+
+    expect(forgetTargets).toHaveBeenCalledOnce();
   });
 });

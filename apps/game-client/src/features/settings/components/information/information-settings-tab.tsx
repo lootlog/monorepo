@@ -1,8 +1,8 @@
 import { CopyDiagnosticsButton } from "@/components/copy-diagnostics-button";
 import { IconButton } from "@/components/ui/icon-button";
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import {
   APP_ENVIRONMENT,
   BUILD_TIMESTAMP,

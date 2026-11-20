@@ -6,7 +6,7 @@ import { isOwnNotification } from "@/features/notifications/utils/is-own-notific
 import { isAllowedByNotificationSettings } from "@/features/notifications/utils/get-notification-settings-key";
 import { useSession } from "@/hooks/auth/use-session";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
-import { useCurrentUserNotificationMutes } from "@/features/settings/persistence/use-notification-mutes";
+import { useCurrentUserNotificationMutes } from "@/lib/settings-persistence/use-notification-mutes";
 import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
 import { useGameStore } from "@/store/game.store";
 import {

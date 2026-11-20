@@ -6,8 +6,8 @@ import {
 } from "@lootlog/client/main";
 import { QueryClient } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
-import { queryKeys } from "@/features/public-api/query-keys";
-import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
+import { queryKeys } from "@/lib/query-keys";
+import { settingsPatchQueue } from "@/lib/settings-persistence/settings-patch-client";
 import {
   createTimerFixture,
   createTimerHistoryFixture,

@@ -5,7 +5,7 @@ import type { MapAuraMode } from "@lootlog/schema/character-aura";
 import { DEVICE_SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import { storageKey } from "@/lib/storage-key";
 import { createChangedOnlyStorage } from "./changed-only-storage";
-import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
+import { enqueueSettingsPatch } from "@/lib/settings-persistence/settings-patch-client";
 
 const STORAGE_KEY = storageKey("ll:settings:state");
 

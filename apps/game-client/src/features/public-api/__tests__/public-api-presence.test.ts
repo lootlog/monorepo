@@ -14,7 +14,7 @@ import {
   createOnlinePlayersTest,
   createOnlinePresence,
   createPresenceSnapshot,
-} from "@/features/online-players/online-players-test-fixtures";
+} from "@/test/online-players-fixtures";
 
 const scope = { guildId: "guild-1", world: "alpha" };
 

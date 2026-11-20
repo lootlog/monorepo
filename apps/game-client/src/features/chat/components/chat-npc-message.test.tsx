@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { getCurrentSettingsDocumentsQueryKey } from "@/features/settings/persistence/settings-patch-client";
+import { getCurrentSettingsDocumentsQueryKey } from "@/lib/settings-persistence/settings-patch-client";
 import { createChatTestWrapper } from "../chat-test-wrapper";
 import { ChatTranscriptPopups } from "./chat-transcript-popups";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";

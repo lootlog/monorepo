@@ -1,7 +1,7 @@
 import { useTimersStore } from "@/store/timers.store";
-import { SettingsColorRow } from "@/components/settings/settings-color-row";
+import { SettingsColorRow } from "@/features/settings/components/shared/settings-color-row";
 import { IconButton } from "@/components/ui/icon-button";
-import { SettingsList } from "@/components/settings/settings-list";
+import { SettingsList } from "@/features/settings/components/shared/settings-list";
 import {
   Collapsible,
   CollapsibleContent,

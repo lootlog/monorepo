@@ -8,7 +8,7 @@ import type {
 
 import type { ReactElement } from "react";
 import { createChatTestWrapper } from "../chat-test-wrapper";
-import { createChatMessage } from "../chat-test-fixtures";
+import { createChatMessage } from "@/test/chat-fixtures";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import {
   subscribeToChatScrollToMessage,

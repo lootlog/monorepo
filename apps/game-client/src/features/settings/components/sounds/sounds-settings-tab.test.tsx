@@ -1,7 +1,7 @@
 import { render as renderUi, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getCurrentSettingsDocumentsQueryKey } from "@/features/settings/persistence/settings-patch-client";
+import { getCurrentSettingsDocumentsQueryKey } from "@/lib/settings-persistence/settings-patch-client";
 import {
   seedSettingsDocumentValues,
   soundSettingValues,

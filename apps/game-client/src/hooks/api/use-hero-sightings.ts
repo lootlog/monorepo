@@ -8,7 +8,7 @@ import {
   type UseQueryResult,
 } from "@tanstack/react-query";
 import { fetchHeroSightings } from "@/api/hero-sightings.api";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import { useRealtimeSnapshotReady } from "@/contexts/socket-context";
 import { applyGameTimerAccess } from "@/lib/game-access-cache";
 

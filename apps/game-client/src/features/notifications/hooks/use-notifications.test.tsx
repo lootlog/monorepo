@@ -1,8 +1,8 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { useNotifications } from "./use-notifications";
-import { getHeroTrackerEntranceClosesAtMs } from "../utils/hero-tracker-notification";
-import { createNotificationTest } from "../notification-test";
+import { getHeroTrackerEntranceClosesAtMs } from "@/utils/notifications-and-detector/hero-tracker-notification";
+import { createNotificationTest } from "@/test/notification-test";
 import { useGameStore } from "@/store/game.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";

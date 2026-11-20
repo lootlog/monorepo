@@ -1,4 +1,4 @@
-import { SettingsSectionHeader } from "@/components/settings/settings-section-header";
+import { SettingsSectionHeader } from "@/features/settings/components/shared/settings-section-header";
 import { Button } from "@/components/ui/button";
 import {
   Popover,

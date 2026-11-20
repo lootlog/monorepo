@@ -4,7 +4,7 @@ import {
   getControlSettingKeys,
   type SettingsControlId,
 } from "@/features/settings/settings-manifest";
-import { useSettingsKeysSaveMark } from "@/features/settings/persistence/settings-save-status.store";
+import { useSettingsKeysSaveMark } from "@/lib/settings-persistence/settings-save-status.store";
 import { SettingsSaveBadge } from "./settings-save-badge";
 import { useSettingsControlHighlight } from "./use-settings-control-highlight";
 

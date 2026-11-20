@@ -3,7 +3,7 @@ import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-po
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import type { NpcPresenceSnapshot } from "@lootlog/schema/npc-presence";
 import { Permission } from "@lootlog/schema/permissions";
-import { createOnlinePlayersTest } from "@/features/online-players/online-players-test-fixtures";
+import { createOnlinePlayersTest } from "@/test/online-players-fixtures";
 import { NpcPresenceSource } from "./npc-presence-source";
 import { getSocket } from "./socket";
 

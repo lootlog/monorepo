@@ -9,7 +9,7 @@ import {
 } from "@/lib/game-client-platform";
 import { queryClient } from "@/lib/query-client";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { useSettingsSaveStatusStore } from "@/features/settings/persistence/settings-save-status.store";
+import { useSettingsSaveStatusStore } from "@/lib/settings-persistence/settings-save-status.store";
 import { CatchingSettings } from "./catching-settings";
 
 const GUILD = {

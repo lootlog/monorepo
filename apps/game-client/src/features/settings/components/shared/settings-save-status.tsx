@@ -1,6 +1,6 @@
-import { useSettingsSaveStatusStore } from "@/features/settings/persistence/settings-save-status.store";
+import { useSettingsSaveStatusStore } from "@/lib/settings-persistence/settings-save-status.store";
 import { Button } from "@/components/ui/button";
-import { SETTINGS_SAVE_ICON_ENTER_CLASS_NAME } from "@/components/settings/settings-save-badge";
+import { SETTINGS_SAVE_ICON_ENTER_CLASS_NAME } from "@/features/settings/components/shared/settings-save-badge";
 import { cn } from "cn";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { useEffect, useState, type FC } from "react";

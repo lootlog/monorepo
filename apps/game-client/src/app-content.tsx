@@ -23,8 +23,11 @@ import { QuickAccess } from "@/features/quick-access/quick-access";
 import { Settings } from "@/features/settings/settings";
 import { Timers } from "@/features/timers/timers";
 import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handlers";
+import { gameEventObservers } from "@/composition/feature-observers";
+import { useCharacterAuraGrantMenu } from "@/features/character-auras/hooks/use-character-aura-grant-menu";
+import { useCharacterAuras } from "@/features/character-auras/hooks/use-character-auras";
 import { useGlobalStore } from "@/store/global.store";
-import { useHotkeys } from "@/hooks/use-hotkeys";
+import { useHotkeys } from "@/features/hotkeys/use-hotkeys";
 import { useInit } from "@/hooks/use-init";
 import { useGameClientBootstrap } from "@/hooks/use-game-client-bootstrap";
 import { usePings } from "@/features/pings/use-pings";
@@ -39,12 +42,14 @@ import { useNpcPresenceReporter } from "@/features/npc-presence/use-npc-presence
 import { usePresencePublicationScope } from "@/hooks/use-presence-publication-scope";
 import { useNotificationGoingSocket } from "@/features/notifications/hooks/use-notification-going-socket";
 import { ReadyRoomCharacterSwitch } from "@/features/party-finder/components/ready-room-character-switch";
-import { useSettingsHydration } from "@/features/settings/persistence/use-settings-hydration";
+import { useSettingsHydration } from "@/lib/settings-persistence/use-settings-hydration";
 import { useSelectedLootlogGuildInitialization } from "@/hooks/use-selected-lootlog-guild";
 
 export const AppContent = () => {
   useGameClientBootstrap();
-  useGameEventHandlers();
+  useCharacterAuras();
+  useCharacterAuraGrantMenu();
+  useGameEventHandlers(gameEventObservers);
   useInit();
   useSelectedLootlogGuildInitialization();
   useSettingsHydration();

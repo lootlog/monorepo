@@ -1,4 +1,4 @@
-import { createNotificationTest } from "../notification-test";
+import { createNotificationTest } from "@/test/notification-test";
 import {
   getNotificationReportCount,
   useNotificationsStore,

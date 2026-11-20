@@ -15,7 +15,8 @@ import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
-import { MapChangeProcessor } from "./map-change-processor";
+import { MapChangeProcessor } from "@/processors/map-change-processor";
+import { gameEventObservers } from "./feature-observers";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { createAirTagTest } from "@/features/air-tags/air-tag-test";
 import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
@@ -80,7 +81,7 @@ describe("MapChangeProcessor", () => {
   let test: ReturnType<typeof createAirTagTest>;
   beforeEach(() => {
     test = createAirTagTest();
-    processor = new MapChangeProcessor();
+    processor = new MapChangeProcessor(gameEventObservers);
     useGlobalStore.setState({
       socketState: { connected: false, joined: false, joinedGuilds: [] },
     });
@@ -180,7 +181,11 @@ describe("MapChangeProcessor", () => {
       });
 
       const pipeline = new RuntimeEventPipeline({ projection });
-      const dispatcher = new EventDispatcher(pipeline);
+
+      const dispatcher = new EventDispatcher({
+        observers: gameEventObservers,
+        pipeline,
+      });
 
       const dispatch = (event: GameEvent) => {
         runtimeWindow.successData?.(event);

@@ -4,7 +4,7 @@ import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 import { useWindowsStore } from "@/store/windows.store";
 import { useChatStore } from "@/store/chat.store";
 import { createRealtimeTest } from "@/test/realtime-test";
-import { createChatMessage } from "./chat-test-fixtures";
+import { createChatMessage } from "@/test/chat-fixtures";
 import { Chat } from "./chat";
 
 describe("Chat", () => {

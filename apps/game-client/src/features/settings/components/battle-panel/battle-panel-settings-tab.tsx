@@ -1,6 +1,6 @@
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
 import type { FC } from "react";

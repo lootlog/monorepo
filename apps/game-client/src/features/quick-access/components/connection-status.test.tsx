@@ -1,6 +1,6 @@
 import { publishedPresence } from "@/test/realtime-wire";
-import { createTimerRealtimeFixture } from "@/features/timers/timer-realtime-fixtures";
-import { createTimerGuildFixture } from "@/features/timers/timer-fixtures";
+import { createTimerRealtimeFixture } from "@/test/timer-realtime-fixtures";
+import { createTimerGuildFixture } from "@/test/timer-fixtures";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -9,8 +9,10 @@ import { expect, it, vi } from "vitest";
 import { useGameStore } from "@/store/game.store";
 import { SocketProvider } from "@/contexts/socket-context";
 import { getSocket } from "@/lib/socket";
-import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 import { ConnectionStatus } from "./connection-status";
+
+const NO_ACCESS_POLICY_OBSERVERS = [] as const;
 
 it("shows connecting, then memberships and heartbeat latency, and lets a dropped connection reconnect on demand", async () => {
   const user = userEvent.setup();
@@ -49,7 +51,7 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <SocketProvider>
+      <SocketProvider accessPolicyObservers={NO_ACCESS_POLICY_OBSERVERS}>
         <ConnectionStatus />
       </SocketProvider>
     </QueryClientProvider>,
@@ -154,7 +156,7 @@ it("probes the latency only while the popover shows it", async () => {
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <SocketProvider>
+      <SocketProvider accessPolicyObservers={NO_ACCESS_POLICY_OBSERVERS}>
         <ConnectionStatus />
       </SocketProvider>
     </QueryClientProvider>,

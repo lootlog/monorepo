@@ -3,8 +3,11 @@ import {
   type SearchTimersNpcResponseDtoOutput,
 } from "@lootlog/client/main";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { createTimerGuildFixture, createTimerFixture } from "./timer-fixtures";
-import { createTimerHttpFixture } from "./timer-http-fixtures";
+import {
+  createTimerGuildFixture,
+  createTimerFixture,
+} from "@/test/timer-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 
 export const createAddTimerFixture = ({
   npcResults = [],

@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SocketProvider } from "@/contexts/socket-context";
+import { realtimeAccessPolicyObservers } from "@/composition/feature-observers";
 import { ErrorBoundary } from "react-error-boundary";
 import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-boundary-fallback";
 import { AppContent } from "@/app-content";
@@ -13,7 +14,7 @@ import { isExtensionClient } from "@/lib/game-client-platform";
 import { authClient } from "@/lib/auth-client";
 import { useEffect, useState, type ReactNode } from "react";
 import { disposeSocket } from "@/lib/socket";
-import { resetTransientRuntimeState } from "@/lib/runtime-state";
+import { resetTransientRuntimeState } from "@/composition/runtime-state";
 import { useLogsStore } from "@/store/logs.store";
 
 function App() {
@@ -85,7 +86,12 @@ function App() {
     </ErrorBoundary>
   );
 
-  if (connectGame) content = <SocketProvider>{content}</SocketProvider>;
+  if (connectGame)
+    content = (
+      <SocketProvider accessPolicyObservers={realtimeAccessPolicyObservers}>
+        {content}
+      </SocketProvider>
+    );
 
   if (!showGame) content = extension ? <LoginWindow /> : null;
 

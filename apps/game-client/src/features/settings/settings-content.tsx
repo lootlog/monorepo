@@ -21,7 +21,7 @@ import { TimersSettingsAppearance } from "@/features/settings/components/timers/
 import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";
 import { TimersSettingsLists } from "@/features/settings/components/timers/timers-settings-lists";
 import { TimersSettingsGeneral } from "@/features/settings/components/timers/timers-settings-general";
-import type { SettingsSubsectionValue } from "@/features/settings/constants/settings-tabs";
+import type { SettingsSubsectionValue } from "@/constants/settings-tabs";
 import type { SettingsIconName } from "@/features/settings/settings-manifest";
 import {
   Activity,

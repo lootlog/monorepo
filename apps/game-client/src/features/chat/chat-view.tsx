@@ -36,7 +36,7 @@ import {
 import {
   useChatAppearanceSettings,
   useNpcTypeColors,
-} from "@/features/settings/persistence/use-appearance-settings";
+} from "@/lib/settings-persistence/use-appearance-settings";
 import { useHiddenNpcTypes } from "@/features/chat/hooks/use-hidden-npc-types";
 import { AsyncContent } from "@/components/async-content";
 import { ChatConnectionStatus } from "./components/chat-connection-status";

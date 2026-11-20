@@ -1,14 +1,14 @@
-import { SettingsNav } from "@/components/settings/settings-nav";
-import { SettingsSearchField } from "@/components/settings/settings-search-field";
+import { SettingsNav } from "@/features/settings/components/shared/settings-nav";
+import { SettingsSearchField } from "@/features/settings/components/shared/settings-search-field";
 import {
   getSettingsSearchOptionId,
   SettingsSearchResults,
-} from "@/components/settings/settings-search-results";
-import { SettingsSubsectionBar } from "@/components/settings/settings-subsection-bar";
-import { SettingsWindowShell } from "@/components/settings/settings-window-shell";
+} from "@/features/settings/components/shared/settings-search-results";
+import { SettingsSubsectionBar } from "@/features/settings/components/shared/settings-subsection-bar";
+import { SettingsWindowShell } from "@/features/settings/components/shared/settings-window-shell";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { resolveSettingsPath } from "@/features/settings/constants/settings-tabs";
+import { resolveSettingsPath } from "@/constants/settings-tabs";
 import {
   SETTINGS_DOMAIN_ICONS,
   SETTINGS_SUBSECTION_CONTENT,

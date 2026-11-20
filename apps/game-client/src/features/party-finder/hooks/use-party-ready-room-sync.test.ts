@@ -14,9 +14,11 @@ import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket } from "@/lib/socket";
 import { RealtimeWire } from "@/test/realtime-wire";
 import { useGlobalStore } from "@/store/global.store";
-import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { readSeededReadyRoomCache } from "@/features/party-finder/ready-room-fixtures";
+import { queryKeys } from "@/lib/query-keys";
 import { EMPTY_READY_ROOM_CACHE } from "@/features/party-finder/ready-room-cache";
+
+const NO_ACCESS_POLICY_OBSERVERS = [] as const;
 
 const listReadyRooms = vi.fn<() => Promise<PartyReadyRoomProjection[]>>();
 
@@ -149,7 +151,13 @@ describe("usePartyReadyRoomSync", () => {
 
     const view = renderHook(() => usePartyReadyRoomSync(), {
       wrapper: ({ children }: { children: ReactNode }) =>
-        wrapper({ children: createElement(SocketProvider, null, children) }),
+        wrapper({
+          children: createElement(
+            SocketProvider,
+            { accessPolicyObservers: NO_ACCESS_POLICY_OBSERVERS },
+            children,
+          ),
+        }),
     });
 
     act(() => wire.open());

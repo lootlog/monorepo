@@ -11,7 +11,7 @@ import {
 import {
   useCurrentUserNotificationMutes,
   useUpdateNotificationMutes,
-} from "@/features/settings/persistence/use-notification-mutes";
+} from "@/lib/settings-persistence/use-notification-mutes";
 import {
   buildCurrentCharacterPayload,
   getGuildNamesById,

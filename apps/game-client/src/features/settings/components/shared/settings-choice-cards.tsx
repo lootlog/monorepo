@@ -1,7 +1,7 @@
 import {
   SettingsChoiceCard,
   type SettingsChoiceOption,
-} from "@/components/settings/settings-choice-card";
+} from "@/features/settings/components/shared/settings-choice-card";
 import { cn } from "cn";
 import type { KeyboardEvent } from "react";
 

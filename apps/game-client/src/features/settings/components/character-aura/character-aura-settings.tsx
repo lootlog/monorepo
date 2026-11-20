@@ -11,13 +11,13 @@ import {
   isPersonalCharacterAuraId,
   type CharacterAuraId,
 } from "@lootlog/schema/character-aura";
-import type { SettingsChoiceOption } from "@/components/settings/settings-choice-card";
-import { SettingsChoiceCards } from "@/components/settings/settings-choice-cards";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import type { SettingsChoiceOption } from "@/features/settings/components/shared/settings-choice-card";
+import { SettingsChoiceCards } from "@/features/settings/components/shared/settings-choice-cards";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { ownAuraOf } from "@/features/character-auras/character-aura-targets";
 import { useOwnCharacterAura } from "@/features/character-auras/hooks/use-own-character-aura";
-import { reportSettingsSave } from "@/features/settings/persistence/settings-save-status.store";
+import { reportSettingsSave } from "@/lib/settings-persistence/settings-save-status.store";
 import { useGameStore } from "@/store/game.store";
 
 const NO_AURA = "none";

@@ -1,7 +1,7 @@
-import { NpcTypeChip } from "@/components/settings/npc-type-chip";
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { NpcTypeChip } from "@/features/settings/components/shared/npc-type-chip";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import {
   CHAT_NPC_TYPES,

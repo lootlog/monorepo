@@ -1,8 +1,8 @@
 import { IconButton } from "@/components/ui/icon-button";
 import { toWorldOption } from "@/components/world-combobox";
-import { SettingsNumberField } from "@/components/settings/settings-number-field";
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsTextField } from "@/components/settings/settings-text-field";
+import { SettingsNumberField } from "@/features/settings/components/shared/settings-number-field";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsTextField } from "@/features/settings/components/shared/settings-text-field";
 import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
 import { normalizeRoutingRuleText } from "@/features/settings/components/detector/use-detector-routing-form";
 import {

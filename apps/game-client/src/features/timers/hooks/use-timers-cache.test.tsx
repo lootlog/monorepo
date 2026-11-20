@@ -7,12 +7,12 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Timer } from "@/api/timers.api";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import { useTimersCache } from "./use-timers-cache";
 import {
   createTimerFixture as createTimer,
   createTimerHistoryFixture,
-} from "@/features/timers/timer-fixtures";
+} from "@/test/timer-fixtures";
 import {
   getTimersControllerGetRecentTimerHistoryQueryKey,
   getTimersControllerGetTimerHistoryQueryKey,

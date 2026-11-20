@@ -1,5 +1,5 @@
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
 import { Button } from "@/components/ui/button";
 import { DetectorRoutingRule } from "@/features/settings/components/detector/detector-routing-rule";
 import { useDetectorRoutingForm } from "@/features/settings/components/detector/use-detector-routing-form";

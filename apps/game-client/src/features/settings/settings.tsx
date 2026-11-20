@@ -1,5 +1,5 @@
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
-import { SettingsSaveStatus } from "@/components/settings/settings-save-status";
+import { SettingsSaveStatus } from "@/features/settings/components/shared/settings-save-status";
 import { SettingsTabs } from "@/features/settings/components/settings-tabs";
 import { useSettingsUiStore } from "@/features/settings/settings-ui.store";
 import { useWindowsStore } from "@/store/windows.store";

@@ -6,7 +6,7 @@ import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
+import { useNpcTypeColors } from "@/lib/settings-persistence/use-appearance-settings";
 
 export const NpcDetector = () => {
   const { t } = useTranslation("npcDetector");

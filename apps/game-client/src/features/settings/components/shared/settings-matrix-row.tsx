@@ -1,4 +1,4 @@
-import { SettingsMatrixHoveredColumnContext } from "@/components/settings/settings-matrix";
+import { SettingsMatrixHoveredColumnContext } from "@/features/settings/components/shared/settings-matrix";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "cn";
 import {

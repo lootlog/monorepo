@@ -8,8 +8,8 @@ import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { queryClient } from "@/lib/query-client";
-import { queryKeys } from "@/features/public-api/query-keys";
-import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
+import { queryKeys } from "@/lib/query-keys";
+import { readSeededReadyRoomCache } from "@/features/party-finder/ready-room-fixtures";
 import { resetTransientRuntimeState } from "./runtime-state";
 
 describe("resetTransientRuntimeState", () => {

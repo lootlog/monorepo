@@ -23,7 +23,7 @@ import {
   createReadyRoomParticipant,
   readSeededReadyRoomCache,
   seedReadyRoomCache,
-} from "@/test/ready-room-fixtures";
+} from "@/features/party-finder/ready-room-fixtures";
 import { usePartyStore } from "@/store/party.store";
 import { useGlobalStore } from "@/store/global.store";
 import { queryClient } from "@/lib/query-client";

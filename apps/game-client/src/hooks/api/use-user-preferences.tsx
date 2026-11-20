@@ -1,4 +1,4 @@
-import { reportSettingsSave } from "@/features/settings/persistence/settings-save-status.store";
+import { reportSettingsSave } from "@/lib/settings-persistence/settings-save-status.store";
 import {
   useMutation,
   useQueryClient,

@@ -1,7 +1,7 @@
 import { cn } from "cn";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import type { CSSProperties, FC } from "react";
-import type { SettingsSaveMarkStatus } from "@/features/settings/persistence/settings-save-status.store";
+import type { SettingsSaveMarkStatus } from "@/lib/settings-persistence/settings-save-status.store";
 
 /** Contextual icon entrance: scale 0.25, blur 4px, opacity 0 -> rest. */
 export const SETTINGS_SAVE_ICON_ENTER_CLASS_NAME =

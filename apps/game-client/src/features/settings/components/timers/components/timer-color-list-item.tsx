@@ -1,4 +1,4 @@
-import { SettingsColorRow } from "@/components/settings/settings-color-row";
+import { SettingsColorRow } from "@/features/settings/components/shared/settings-color-row";
 import { IconButton } from "@/components/ui/icon-button";
 import { RotateCcw, Trash2 } from "lucide-react";
 import type { FC } from "react";

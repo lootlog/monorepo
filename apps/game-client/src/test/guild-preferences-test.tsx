@@ -11,7 +11,7 @@ import {
 } from "@lootlog/client/main";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { queryClient } from "@/lib/query-client";
-import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
+import { settingsPatchQueue } from "@/lib/settings-persistence/settings-patch-client";
 import {
   createSettingsDocuments,
   seedSettingsDocuments,

@@ -5,11 +5,11 @@ import {
   normalizeRoutingRules,
 } from "@lootlog/domain/account-preferences";
 import { toggleAvailableGuild } from "@/lib/selected-lootlog-guild";
-import { readCurrentSettingsDocuments } from "@/features/settings/persistence/settings-patch-client";
+import { readCurrentSettingsDocuments } from "@/lib/settings-persistence/settings-patch-client";
 import {
   getGameAccountPreferences,
   useUpdateGameAccountPreferences,
-} from "@/features/settings/persistence/use-game-account-preferences";
+} from "@/lib/settings-persistence/use-game-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { getEffectiveDetectorSettings } from "@/lib/game-account-preferences";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";

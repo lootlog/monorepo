@@ -1,9 +1,9 @@
 import { getFixedT } from "@/i18n/get-fixed-t";
-import { selectSettingsValue } from "@/features/settings/persistence/settings-documents";
+import { selectSettingsValue } from "@/lib/settings-persistence/settings-documents";
 import {
   enqueueSettingsPatch,
   readCurrentSettingsDocuments,
-} from "@/features/settings/persistence/settings-patch-client";
+} from "@/lib/settings-persistence/settings-patch-client";
 import { useGameStore } from "@/store/game.store";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 

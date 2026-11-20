@@ -1,15 +1,15 @@
 import { publishPlayerPresence } from "@/lib/socket";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { mapPingController } from "@/features/pings/map-ping-controller";
-import { pingInteractionController } from "@/features/pings/ping-interaction-controller";
-import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { useGameStore } from "@/store/game.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
+import type { GameEventObserver } from "./game-event-observer";
 
 export class MapChangeProcessor {
   private previousMapId: number | null = null;
+
+  constructor(private readonly observers: readonly GameEventObserver[] = []) {}
 
   // Lootlog may start on an already loaded map, so the first town packet can
   // be a real transition away from the map whose NPCs were bootstrapped.
@@ -42,11 +42,8 @@ export class MapChangeProcessor {
     }
 
     useDialogStore.getState().clearNpcContext();
-    pingInteractionController.cancel();
-    mapPingController.clear();
-
     publishPlayerPresence();
 
-    airTagRuntime.handleMapChange(mapId);
+    for (const observer of this.observers) observer.mapChange?.(mapId);
   }
 }

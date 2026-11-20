@@ -1,4 +1,4 @@
-import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
+import { useNpcTypeColors } from "@/lib/settings-persistence/use-appearance-settings";
 import { getNotificationColors } from "@/utils/notifications-and-detector/background";
 import { cn } from "cn";
 import type { FC, ReactNode } from "react";

@@ -3,9 +3,9 @@ import {
   getHeroSightingsControllerGetHeroSightingHistoryQueryKey,
   type HeroSightingResponseDto,
 } from "@lootlog/client/main";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import { queryClient } from "@/lib/query-client";
-import { createHeroSighting } from "./hero-sighting-fixtures";
+import { createHeroSighting } from "@/test/hero-sighting-fixtures";
 import { upsertHeroSightings } from "./hero-sightings-cache";
 
 const listed = () =>

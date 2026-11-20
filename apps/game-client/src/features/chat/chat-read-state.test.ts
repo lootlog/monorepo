@@ -4,7 +4,7 @@ import {
   getVisibleChatMessageAliases,
 } from "./chat.helpers";
 import { describe, expect, it } from "vitest";
-import { createChatMessage } from "./chat-test-fixtures";
+import { createChatMessage } from "@/test/chat-fixtures";
 import {
   getChatUnreadSummary,
   markChatMessagesRead,

@@ -12,8 +12,8 @@ import {
   createTimerFixture,
   createTimerGuildFixture,
   createTimerMemberFixture,
-} from "../timer-fixtures";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+} from "@/test/timer-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 import { TimersGrid } from "./timers-grid";
 import { getListedTimers } from "../timer-list-projection";
 import type { Timer } from "@/api/timers.api";

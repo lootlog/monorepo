@@ -2,7 +2,7 @@ import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-po
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
 import { describe, expect, test } from "vitest";
-import { createOnlinePlayersTest } from "@/features/online-players/online-players-test-fixtures";
+import { createOnlinePlayersTest } from "@/test/online-players-fixtures";
 import { MapThreatSource } from "./map-threat-source";
 import type { PlayerPresence } from "./online-players-presence";
 import { PresenceMapIndex } from "./presence-map-index";

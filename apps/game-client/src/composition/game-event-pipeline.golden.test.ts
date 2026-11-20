@@ -11,17 +11,21 @@ import { useDialogStore } from "@/store/game-store/dialog.store";
 import { useLootStore } from "@/store/game-store/loot.store";
 import { useGlobalStore } from "@/store/global.store";
 import { usePartyStore } from "@/store/party.store";
-import { EventDispatcher } from "./event-dispatcher";
+import { EventDispatcher } from "@/lib/event-dispatcher";
+import { gameEventObservers } from "./feature-observers";
 import {
   margonemRuntimeBridge,
   type RuntimeFunction,
-} from "./margonem-runtime/margonem-runtime-bridge";
-import { runtimeEventPipeline } from "./margonem-runtime/runtime-event-pipeline";
+} from "@/lib/margonem-runtime/margonem-runtime-bridge";
+import { runtimeEventPipeline } from "@/lib/margonem-runtime/runtime-event-pipeline";
 import { useGameStore } from "@/store/game.store";
 import { useSocialRelationsStore } from "@/store/social-relations.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
+
+const createDispatcher = () =>
+  new EventDispatcher({ observers: gameEventObservers });
 
 const effects = {
   cancelMapPingInteraction: vi.spyOn(pingInteractionController, "cancel"),
@@ -323,7 +327,7 @@ function dispatchRuntimeEvents(payloads: readonly unknown[]): unknown[] {
 
 function replayAndSnapshot(payload: unknown) {
   resetPipelineState();
-  const dispatcher = new EventDispatcher();
+  const dispatcher = createDispatcher();
   pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
   margonemRuntimeBridge.install();
   dispatcher.register();
@@ -416,7 +420,7 @@ describe("game event pipeline golden replay", () => {
   it("submits fight loot from the final packet with its warriors", async () => {
     resetPipelineState();
     useBattleStore.setState({ battleState: "in-battle" });
-    const dispatcher = new EventDispatcher();
+    const dispatcher = createDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.install();
     dispatcher.register();
@@ -445,7 +449,7 @@ describe("game event pipeline golden replay", () => {
   it("submits fight loot arriving immediately after the final packet", async () => {
     resetPipelineState();
     useBattleStore.setState({ battleState: "in-battle" });
-    const dispatcher = new EventDispatcher();
+    const dispatcher = createDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.install();
     dispatcher.register();
@@ -466,7 +470,7 @@ describe("game event pipeline golden replay", () => {
   it("keeps the loot and NPC location after a partial town update", async () => {
     resetPipelineState();
     useBattleStore.setState({ battleState: "in-battle" });
-    const dispatcher = new EventDispatcher();
+    const dispatcher = createDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.install();
     dispatcher.register();
@@ -515,8 +519,8 @@ describe("game event pipeline golden replay", () => {
           profession: "w",
         }),
       });
-      const firstDispatcher = new EventDispatcher();
-      const secondDispatcher = new EventDispatcher();
+      const firstDispatcher = createDispatcher();
+      const secondDispatcher = createDispatcher();
       pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
       margonemRuntimeBridge.install();
       firstDispatcher.register();
@@ -646,7 +650,7 @@ describe("game event pipeline golden replay", () => {
 
   it("keeps the template of a battle NPC removed in the fight loot packet", async () => {
     resetPipelineState();
-    const dispatcher = new EventDispatcher();
+    const dispatcher = createDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.install();
     dispatcher.register();
@@ -695,7 +699,7 @@ describe("game event pipeline golden replay", () => {
 
   it("submits the map observation of a battle NPC removed before the battle starts, with its kill", async () => {
     resetPipelineState();
-    const dispatcher = new EventDispatcher();
+    const dispatcher = createDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.install();
     dispatcher.register();
@@ -748,7 +752,7 @@ describe("game event pipeline golden replay", () => {
 
   it("submits dialog loot after projection removes the talked NPC", async () => {
     resetPipelineState();
-    const dispatcher = new EventDispatcher();
+    const dispatcher = createDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.install();
     dispatcher.register();
@@ -800,8 +804,8 @@ describe("game event pipeline golden replay", () => {
 
   it("submits one complete battle when dispatcher registrations overlap and a compact replay follows", async () => {
     resetPipelineState();
-    const firstDispatcher = new EventDispatcher();
-    const secondDispatcher = new EventDispatcher();
+    const firstDispatcher = createDispatcher();
+    const secondDispatcher = createDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.install();
     firstDispatcher.register();
@@ -855,7 +859,7 @@ describe("game event pipeline golden replay", () => {
       .mockReturnValue(Date.parse("2026-07-26T18:52:57.000Z"));
 
     resetPipelineState();
-    const dispatcher = new EventDispatcher();
+    const dispatcher = createDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.install();
     dispatcher.register();
@@ -882,7 +886,7 @@ describe("game event pipeline golden replay", () => {
   it("records the hero's finishing blow when the final packet patches only the victim's HP", async () => {
     resetPipelineState();
     useBattlePanelStore.setState({ isBattleCollectionEnabled: false });
-    const dispatcher = new EventDispatcher();
+    const dispatcher = createDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.install();
     dispatcher.register();

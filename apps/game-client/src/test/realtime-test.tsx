@@ -13,6 +13,7 @@ import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { configureApiClients } from "@lootlog/client/transport";
 import { authClient } from "@/lib/auth-client";
 import { SocketProvider } from "@/contexts/socket-context";
+import { realtimeAccessPolicyObservers } from "@/composition/feature-observers";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket, getSocket } from "@/lib/socket";
 import { queryClient } from "@/lib/query-client";
@@ -110,7 +111,9 @@ export const createRealtimeTest = () => {
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <SocketProvider>{children}</SocketProvider>
+      <SocketProvider accessPolicyObservers={realtimeAccessPolicyObservers}>
+        {children}
+      </SocketProvider>
     </QueryClientProvider>
   );
 

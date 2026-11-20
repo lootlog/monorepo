@@ -1,9 +1,9 @@
-import type { SoundSettings } from "@/features/settings/persistence/use-sound-settings";
+import type { SoundSettings } from "@/lib/settings-persistence/use-sound-settings";
 import {
   seedSettingsDocumentValues,
   soundSettingValues,
 } from "@/test/settings-documents-fixtures";
-import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
+import { DEFAULT_SOUND_URLS } from "@/lib/default-sounds";
 import { queryClient } from "@/lib/query-client";
 import { useSettingsStore } from "@/store/settings.store";
 import { disposeSoundPlayback, playSound } from "./sound-playback";

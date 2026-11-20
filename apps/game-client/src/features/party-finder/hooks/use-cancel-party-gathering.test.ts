@@ -9,7 +9,7 @@ import { useCancelPartyGathering } from "./use-cancel-party-gathering";
 import {
   readSeededReadyRoomCache,
   seedReadyRoomCache,
-} from "@/test/ready-room-fixtures";
+} from "@/features/party-finder/ready-room-fixtures";
 import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 
 const requests: Request[] = [];

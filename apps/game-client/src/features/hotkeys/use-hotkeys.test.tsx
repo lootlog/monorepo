@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi, onTestFinished } from "vitest";
-import { useHotkeys } from "@/hooks/use-hotkeys";
+import { useHotkeys } from "@/features/hotkeys/use-hotkeys";
 import { migrateHotkeysState, useHotkeysStore } from "@/store/hotkeys.store";
 import { useWindowsStore } from "@/store/windows.store";
 
@@ -8,16 +8,16 @@ import { configureApiClients } from "@lootlog/client/transport";
 import {
   readyRoomOrganizerFixture,
   seedReadyRoomCache,
-} from "@/test/ready-room-fixtures";
+} from "@/features/party-finder/ready-room-fixtures";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { queryClient } from "@/lib/query-client";
 import { useGlobalStore } from "@/store/global.store";
 import { disposeReadyRoomInvitationCoordinator } from "@/features/party-finder/ready-room-invitation-coordinator";
-import { selectSettingsValue } from "@/features/settings/persistence/settings-documents";
+import { selectSettingsValue } from "@/lib/settings-persistence/settings-documents";
 import {
   readCurrentSettingsDocuments,
   settingsPatchQueue,
-} from "@/features/settings/persistence/settings-patch-client";
+} from "@/lib/settings-persistence/settings-patch-client";
 import { seedSettingsDocumentValues } from "@/test/settings-documents-fixtures";
 import {
   createPingPressIdentity,

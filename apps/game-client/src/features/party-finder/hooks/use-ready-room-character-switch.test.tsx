@@ -10,7 +10,7 @@ import { useGlobalStore } from "@/store/global.store";
 import {
   createReadyRoomParticipant,
   seedReadyRoomCache,
-} from "@/test/ready-room-fixtures";
+} from "@/features/party-finder/ready-room-fixtures";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 const requests: Request[] = [];

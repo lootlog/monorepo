@@ -1,8 +1,8 @@
 import { DebugRuntimeState } from "./debug-runtime-state";
-import { SettingsPanel } from "@/components/settings/settings-panel";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import { SettingsRow } from "@/components/settings/settings-row";
+import { SettingsPanel } from "@/features/settings/components/shared/settings-panel";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
 import { Button } from "@/components/ui/button";
 import {
   Select,

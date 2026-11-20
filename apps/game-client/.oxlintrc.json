@@ -101,6 +101,41 @@
   },
   "overrides": [
     {
+      // Shared layers stay independent of features. Composition roots wire
+      // features together; a feature may import shared code and other features.
+      "files": ["src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^(@/|\\./|(\\.\\./)+)features/",
+                "message": "Shared game-client code must not import a feature. Move the module to the feature that owns it, move genuinely shared code out of src/features, or pass the feature in from a composition root (src/App.tsx, src/app-content.tsx, src/bootstrap.tsx, src/main.tsx, src/composition)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/**",
+        "src/composition/**",
+        "src/App.tsx",
+        "src/App.test.tsx",
+        "src/app-content.tsx",
+        "src/app-content.test.tsx",
+        "src/app-cold-start.test.tsx",
+        "src/bootstrap.tsx",
+        "src/main.tsx",
+        "src/main.test.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
       "files": ["src/extension/protocol.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
@@ -267,7 +302,7 @@
       }
     },
     {
-      "files": ["src/store/online-players.store.ts"],
+      "files": ["src/features/online-players/online-players.store.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -406,7 +441,7 @@
       }
     },
     {
-      "files": ["src/features/settings/persistence/use-sound-settings.ts"],
+      "files": ["src/lib/settings-persistence/use-sound-settings.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",
@@ -751,7 +786,7 @@
       }
     },
     {
-      "files": ["src/lib/game-event-pipeline.golden.test.ts"],
+      "files": ["src/composition/game-event-pipeline.golden.test.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
           "error",

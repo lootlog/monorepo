@@ -1,8 +1,8 @@
 import type { CustomTimerColor } from "@lootlog/schema/timer-settings";
 import { IconButton } from "@/components/ui/icon-button";
-import { SettingsList } from "@/components/settings/settings-list";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsList } from "@/features/settings/components/shared/settings-list";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { Button } from "@/components/ui/button";
 import {
   Popover,

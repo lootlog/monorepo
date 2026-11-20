@@ -40,7 +40,7 @@ import {
   createReadyRoomParticipant as createParticipant,
   readyRoomOrganizerFixture as projection,
   seedReadyRoomCache,
-} from "@/test/ready-room-fixtures";
+} from "@/features/party-finder/ready-room-fixtures";
 
 const participant = createParticipant("participant-1", "participant-character");
 

@@ -8,9 +8,9 @@ import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
 } from "@lootlog/client/main";
 import { HERO_SIGHTING_WRITE_PERMISSION } from "@lootlog/domain/npc-permissions";
-import { createHeroSighting } from "@/features/hero-sightings/hero-sighting-fixtures";
-import { createTimerGuildFixture } from "@/features/timers/timer-fixtures";
-import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
+import { createHeroSighting } from "@/test/hero-sighting-fixtures";
+import { createTimerGuildFixture } from "@/test/timer-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 import { useHeroSightingsStore } from "@/store/hero-sightings.store";
 import {
   captureRuntimeMessages,

@@ -1,6 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { getChatAppearanceFromDocuments } from "@/features/settings/persistence/use-appearance-settings";
-import { getCurrentSettingsDocumentsQueryKey } from "@/features/settings/persistence/settings-patch-client";
+import { getChatAppearanceFromDocuments } from "@/lib/settings-persistence/use-appearance-settings";
+import { getCurrentSettingsDocumentsQueryKey } from "@/lib/settings-persistence/settings-patch-client";
 import {
   act,
   fireEvent,

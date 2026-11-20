@@ -15,7 +15,7 @@ import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { clearReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
 import { usePartyStore } from "@/store/party.store";
-import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
+import { settingsPatchQueue } from "@/lib/settings-persistence/settings-patch-client";
 
 export function resetTransientRuntimeState(): void {
   disposeReadyRoomInvitationCoordinator();

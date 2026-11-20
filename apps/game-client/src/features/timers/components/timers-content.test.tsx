@@ -12,8 +12,11 @@ import { useTimersStore } from "@/store/timers.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { createTimerFixture, createTimerGuildFixture } from "../timer-fixtures";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+import {
+  createTimerFixture,
+  createTimerGuildFixture,
+} from "@/test/timer-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 import { TimersContent } from "./timers-content";
 
 beforeEach(() => {

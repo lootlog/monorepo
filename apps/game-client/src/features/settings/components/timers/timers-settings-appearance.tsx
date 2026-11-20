@@ -1,7 +1,7 @@
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsSliderField } from "@/components/settings/settings-slider-field";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsSliderField } from "@/features/settings/components/shared/settings-slider-field";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTimersStore } from "@/store/timers.store";

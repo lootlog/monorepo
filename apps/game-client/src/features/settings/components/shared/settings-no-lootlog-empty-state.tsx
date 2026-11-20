@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
+import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
 import { Button } from "@/components/ui/button";
 import { openLootlogApp } from "@/lib/open-lootlog-app";
 

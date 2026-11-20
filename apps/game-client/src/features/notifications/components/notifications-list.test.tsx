@@ -6,7 +6,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { createNotificationTest } from "../notification-test";
+import { createNotificationTest } from "@/test/notification-test";
 import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
 import {
   beforeEach,
@@ -18,8 +18,8 @@ import {
   vi,
 } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
-import { createChatReadyRoom } from "@/features/chat/chat-test-fixtures";
-import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
+import { createChatReadyRoom } from "@/test/chat-fixtures";
+import { readSeededReadyRoomCache } from "@/features/party-finder/ready-room-fixtures";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   captureRuntimeMessages,

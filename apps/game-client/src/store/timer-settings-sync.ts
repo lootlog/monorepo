@@ -1,6 +1,6 @@
 import { isString } from "es-toolkit";
-import type { SettingsOperation } from "@/features/settings/persistence/settings-documents";
-import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
+import type { SettingsOperation } from "@/lib/settings-persistence/settings-documents";
+import { enqueueSettingsPatch } from "@/lib/settings-persistence/settings-patch-client";
 import { queryClient } from "@/lib/query-client";
 import type {
   CustomTimerList,

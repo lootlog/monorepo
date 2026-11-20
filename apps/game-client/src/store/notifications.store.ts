@@ -1,9 +1,9 @@
-import type { Notification } from "@/features/notifications/hooks/use-notifications";
+import type { NotificationSent } from "@lootlog/protocol/realtime/organization-events";
 import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
-import { getHeroTrackerGroupKeySuffix } from "@/features/notifications/utils/hero-tracker-notification";
+import { getHeroTrackerGroupKeySuffix } from "@/utils/notifications-and-detector/hero-tracker-notification";
 import { create } from "zustand";
 
-export type NotificationWithServers = Notification & {
+export type NotificationWithServers = NotificationSent & {
   servers: string[];
 };
 

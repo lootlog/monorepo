@@ -18,9 +18,10 @@ import { disposeSocket } from "@/lib/socket";
 import { queryClient } from "@/lib/query-client";
 import { useGlobalStore } from "@/store/global.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { markSettingsImportDone } from "@/features/settings/persistence/settings-import";
+import { markSettingsImportDone } from "@/lib/settings-persistence/settings-import";
 import { MARGONEM_ACCOUNT_VALIDATE_URL } from "@/config/api";
 import { SocketProvider } from "@/contexts/socket-context";
+import { realtimeAccessPolicyObservers } from "@/composition/feature-observers";
 
 vi.stubGlobal("Engine", createNativeRuntime());
 
@@ -238,7 +239,7 @@ it("starts an initialized character with one bootstrap request, without repeatin
   try {
     render(
       <QueryClientProvider client={queryClient}>
-        <SocketProvider>
+        <SocketProvider accessPolicyObservers={realtimeAccessPolicyObservers}>
           <AppContent />
         </SocketProvider>
       </QueryClientProvider>,

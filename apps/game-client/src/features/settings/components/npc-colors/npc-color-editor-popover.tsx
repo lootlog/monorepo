@@ -1,5 +1,5 @@
-import { SettingsSectionHeader } from "@/components/settings/settings-section-header";
-import { SettingsColorHexField } from "@/components/settings/settings-color-hex-field";
+import { SettingsSectionHeader } from "@/features/settings/components/shared/settings-section-header";
+import { SettingsColorHexField } from "@/features/settings/components/shared/settings-color-hex-field";
 import { Button } from "@/components/ui/button";
 import {
   Popover,

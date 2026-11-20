@@ -23,14 +23,14 @@ import { useSettingsStore } from "@/store/settings.store";
 import {
   useOnlinePlayersStore,
   ONLINE_PLAYERS_STORAGE_KEY,
-} from "@/store/online-players.store";
+} from "@/features/online-players/online-players.store";
 import { useGameStore } from "@/store/game.store";
 import {
   createOnlinePlayersTest,
   createOnlinePresence,
   createPresenceSnapshot,
   type PresenceSnapshotData,
-} from "../online-players-test-fixtures";
+} from "@/test/online-players-fixtures";
 import { OnlinePlayersList } from "./online-players-list";
 
 const person = (

@@ -4,7 +4,7 @@ import {
   type HeroSightingResponseDto,
 } from "@lootlog/client/main";
 import { upsertNewestHeroSighting } from "@lootlog/domain/hero-sightings";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 
 /**
  * Applies sightings to their world's list, as the API or the gateway returned

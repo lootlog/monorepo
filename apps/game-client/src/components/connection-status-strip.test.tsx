@@ -4,8 +4,10 @@ import { afterEach, expect, it, vi } from "vitest";
 import { authClient } from "@/lib/auth-client";
 import { useWindowsStore } from "@/store/windows.store";
 import { SocketProvider } from "@/contexts/socket-context";
-import { createTimerRealtimeFixture } from "@/features/timers/timer-realtime-fixtures";
+import { createTimerRealtimeFixture } from "@/test/timer-realtime-fixtures";
 import { ConnectionStatusStrip } from "./connection-status-strip";
+
+const NO_ACCESS_POLICY_OBSERVERS = [] as const;
 
 const CONNECTING = "Łączenie z serwerem…";
 
@@ -16,7 +18,7 @@ const mountStrip = ({ error = false, refreshing = false } = {}) => {
   const gateway = createTimerRealtimeFixture();
 
   const view = render(
-    <SocketProvider>
+    <SocketProvider accessPolicyObservers={NO_ACCESS_POLICY_OBSERVERS}>
       <ConnectionStatusStrip
         hasData
         error={error}

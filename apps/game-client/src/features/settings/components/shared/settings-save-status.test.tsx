@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
-import { useSettingsSaveStatusStore } from "@/features/settings/persistence/settings-save-status.store";
+import { settingsPatchQueue } from "@/lib/settings-persistence/settings-patch-client";
+import { useSettingsSaveStatusStore } from "@/lib/settings-persistence/settings-save-status.store";
 import { SettingsSaveStatus } from "./settings-save-status";
 
 describe("SettingsSaveStatus", () => {

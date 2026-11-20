@@ -7,16 +7,16 @@ import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
 } from "@lootlog/client/main";
-import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 import {
   createTimerFixture,
   createTimerGuildFixture,
-} from "@/features/timers/timer-fixtures";
+} from "@/test/timer-fixtures";
 import {
   ContextMenu,
   ContextMenuTrigger,
   ContextMenuContent,
-} from "./ui/context-menu";
+} from "@/components/ui/context-menu";
 import { DeleteTimerPopover } from "./delete-timer-popover";
 
 const setup = async (permissions: Permission[][] | null) => {

@@ -1,6 +1,6 @@
-import { NpcTypeChip } from "@/components/settings/npc-type-chip";
+import { NpcTypeChip } from "@/features/settings/components/shared/npc-type-chip";
 import { IconButton } from "@/components/ui/icon-button";
-import { SettingsRow } from "@/components/settings/settings-row";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
 import { Input } from "@/components/ui/input";
 import { Play } from "lucide-react";
 import type { FC } from "react";

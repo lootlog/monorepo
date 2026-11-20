@@ -1,8 +1,8 @@
 import { AsyncContent } from "@/components/async-content";
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import { SettingsToolbar } from "@/components/settings/settings-toolbar";
+import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
+import { SettingsToolbar } from "@/features/settings/components/shared/settings-toolbar";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ServerOrderList } from "@/features/settings/components/servers/server-order-list";

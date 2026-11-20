@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
-import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
+import { enqueueSettingsPatch } from "@/lib/settings-persistence/settings-patch-client";
 
 const STORAGE_KEY = storageKey("ll:battle-panel:state");
 

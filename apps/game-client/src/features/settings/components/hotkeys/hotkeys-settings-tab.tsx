@@ -1,7 +1,7 @@
-import { SettingsKeybindField } from "@/components/settings/settings-keybind-field";
-import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsKeybindField } from "@/features/settings/components/shared/settings-keybind-field";
+import { SettingsRow } from "@/features/settings/components/shared/settings-row";
+import { SettingsSection } from "@/features/settings/components/shared/settings-section";
+import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { Button } from "@/components/ui/button";
 import { useGameStore } from "@/store/game.store";
 import {

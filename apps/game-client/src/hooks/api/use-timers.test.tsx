@@ -2,13 +2,13 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { expect, it, onTestFinished } from "vitest";
-import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
+import { queryKeys } from "@/lib/query-keys";
 import { useTimers } from "./use-timers";
 import { createGameAccessCache } from "@/lib/game-access-cache";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { createTimerFixture } from "@/features/timers/timer-fixtures";
+import { createTimerFixture } from "@/test/timer-fixtures";
 
 it("does not refetch fresh timer data on focus or remount", async () => {
   const fixture = createTimerHttpFixture(() => Response.json([]));

@@ -2,14 +2,14 @@ import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
 } from "@lootlog/client/main";
-import { queryKeys } from "@/features/public-api/query-keys";
+import { queryKeys } from "@/lib/query-keys";
 import { useTimersStore } from "@/store/timers.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import type { Timer } from "@/api/timers.api";
-import { createTimerGuildFixture } from "./timer-fixtures";
-import { createTimerHttpFixture } from "./timer-http-fixtures";
+import { createTimerGuildFixture } from "@/test/timer-fixtures";
+import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 
 export const createTimerViewFixture = (timers: Timer[] = []) => {
   const fixture = createTimerHttpFixture();

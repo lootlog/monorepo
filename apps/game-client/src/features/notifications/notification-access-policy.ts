@@ -4,6 +4,7 @@ import {
   canReadPolicyNpc,
   type AccessPolicySnapshot,
 } from "@lootlog/protocol/realtime/access-policy";
+import type { RealtimeAccessPolicyObserver } from "@/contexts/socket-context";
 import { useNotificationsStore } from "@/store/notifications.store";
 
 type NotificationSource = {
@@ -93,4 +94,8 @@ export const reconcileNotificationAccess = (policy: AccessPolicySnapshot) => {
       ),
     };
   });
+};
+
+export const notificationAccessPolicyObserver: RealtimeAccessPolicyObserver = {
+  update: (_queryClient, policy) => reconcileNotificationAccess(policy),
 };
