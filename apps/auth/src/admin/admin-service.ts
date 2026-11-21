@@ -341,9 +341,10 @@ export class AdminService extends Context.Service<
 
       /**
        * Runs an action that Better Auth carries out, which cannot share a
-       * transaction with the audit log. The entry is written first, so nothing
-       * changes without one. An action that then fails or is cut short may
-       * have landed in part, so its entry stays and says it did not complete.
+       * transaction with the audit log. The entry is written first and says
+       * the action did not complete, so nothing changes without one and an
+       * action that fails, is cut short or dies with the process keeps that
+       * mark: it may have landed in part. Only a finished action clears it.
        */
       const audited = <A>(
         actor: string,
@@ -353,25 +354,32 @@ export class AdminService extends Context.Service<
         run: Effect.Effect<A, ApplicationError>,
       ) =>
         Effect.gen(function* () {
-          const id = yield* record(actor, action, targetUserId, details);
+          const id = yield* record(actor, action, targetUserId, {
+            ...details,
+            completed: false,
+          });
 
-          return yield* Effect.onError(run, () =>
-            database
-              .update(adminAuditLog)
-              .set({ details: { ...details, completed: false } })
-              .where(eq(adminAuditLog.id, id))
-              .pipe(
-                Effect.catchCause(() =>
-                  Effect.logError("Admin action left unmarked").pipe(
-                    Effect.annotateLogs({
-                      context: "Admin",
-                      action,
-                      targetUserId,
-                    }),
-                  ),
+          const result = yield* run;
+
+          // The action has landed; failing here would only hide that. Its
+          // entry keeps the mark and the operator checks what holds.
+          yield* database
+            .update(adminAuditLog)
+            .set({ details: details ?? null })
+            .where(eq(adminAuditLog.id, id))
+            .pipe(
+              Effect.catchCause(() =>
+                Effect.logError("Admin action left marked incomplete").pipe(
+                  Effect.annotateLogs({
+                    context: "Admin",
+                    action,
+                    targetUserId,
+                  }),
                 ),
               ),
-          );
+            );
+
+          return result;
         });
 
       const readAudit = Effect.fn("AdminService.readAudit")(function* (
