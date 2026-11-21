@@ -13,6 +13,9 @@ description: Every change to the HTTP, realtime and game client contracts, by th
 - The API records these tiles to describe where monsters spawn. Requests
   without them, or with a tile that is not a non-negative integer, behave as
   before.
+- Catalog NPCs add `locations[].tiles`: the map tiles (`x`, `y`) where Game
+  clients reported the NPC when it was killed, at most the 100 most reported
+  per map. The list is empty until the map's tiles are reported.
 
 ## 2026-11-20 — One error body in every service (breaking)
 

@@ -715,6 +715,12 @@ const messages = {
     locationsDescription:
       "Udział map w ostatnich walkach z tym potworem zapisanych przez Lootlog.",
     locationShare: "{{share}}%",
+    spawnTilesDescription:
+      "Kratki pod nazwą mapy to miejsca, w których dodatek widział potwora przy zabiciu.",
+    spawnTile: "Kratka {{tile}}",
+    spawnTiles: "Kratki {{tiles}}",
+    spawnArea:
+      "Obszar respu x\u00a0{{minX}}–{{maxX}}, y\u00a0{{minY}}–{{maxY}}",
     noLocationsYet: "Lootlog nie zna jeszcze map tego potwora.",
     showAllLocations: "Pokaż wszystkie mapy ({{count}})",
     showFewerLocations: "Pokaż mniej",

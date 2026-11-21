@@ -15,6 +15,7 @@ import {
   npcSnapshotTable,
   organizationLootRecordTable,
 } from "#src/database/drizzle/loot.schema";
+import { npcSpawnPositionTable } from "#src/database/drizzle/npc-spawn.schema";
 import { guildTable } from "#src/database/drizzle/organization.schema";
 import { makeMonsterStatisticsPublisher } from "#src/loots/monster-statistics";
 import { createOrganizationLootRecordFixture } from "./loot-fixtures.js";
@@ -111,6 +112,34 @@ it(
             hid: randomUUID(),
           })),
         );
+
+        // Game clients placed the titan on two tiles of its lair. Another
+        // map of the same name holds one stray report, and the exit, left
+        // out of the locations, holds one too.
+        const tile = (
+          mapId: number,
+          mapName: string,
+          x: number,
+          y: number,
+          reports: number,
+        ) => ({
+          gameVersion: "pl" as const,
+          mapId,
+          npcName: name,
+          mapName,
+          x,
+          y,
+          reports,
+        });
+
+        yield* database
+          .insert(npcSpawnPositionTable)
+          .values([
+            tile(500, "Nowa grota", 21, 7, 4),
+            tile(500, "Nowa grota", 12, 30, 2),
+            tile(501, "Nowa grota", 1, 1, 1),
+            tile(502, "Wyjście", 3, 3, 1),
+          ]);
       }),
     );
 
@@ -127,7 +156,11 @@ it(
       gameVersion: string;
       name: string;
       type: string | null;
-      locations?: Array<{ map: string; share: number }>;
+      locations?: Array<{
+        map: string;
+        share: number;
+        tiles: Array<{ x: number; y: number }>;
+      }>;
       formerLevels?: Array<{ lvl: number; until: string }>;
       retiredItemIds?: number[];
       lootMode?: string;
@@ -148,8 +181,15 @@ it(
       name,
       type: "TITAN",
       locations: [
-        { map: "Nowa grota", share: 0.9 },
-        { map: "Stara grota", share: 0.1 },
+        {
+          map: "Nowa grota",
+          share: 0.9,
+          tiles: [
+            { x: 12, y: 30 },
+            { x: 21, y: 7 },
+          ],
+        },
+        { map: "Stara grota", share: 0.1, tiles: [] },
       ],
       // The day the titan was first fought at its new level.
       formerLevels: [{ lvl: 110, until: "2026-01-11" }],

@@ -266,6 +266,15 @@ const CatalogNpcDto_Output = Schema.Struct({
         description:
           "The share of the NPC's latest recorded fights on the map, from 0 to 1, rounded to a hundredth.",
       }),
+      tiles: Schema.Array(
+        Schema.Struct({
+          x: FiniteNumber.annotate({ description: "The tile's column." }),
+          y: FiniteNumber.annotate({ description: "The tile's row." }),
+        }),
+      ).annotate({
+        description:
+          "Map tiles where Game clients reported the NPC when it was killed, ordered by column and row; at most the 100 most reported. A second-tier elite placed at random fills its spawn area. Empty until a Game client reports the map's tiles.",
+      }),
     }),
   ).annotate({
     description:
