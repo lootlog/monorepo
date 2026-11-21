@@ -283,9 +283,18 @@ test("reports come from the signed-in User the edge names, never a service or an
       (await boundary.handler("/catalog/reports", user, report)).status,
     ).toBe(201);
     expect(
-      (await boundary.handler("/catalog/reports?status=OPEN", user)).status,
+      (
+        await boundary.handler("/catalog/reports?status=OPEN", {
+          ...user,
+          "x-auth-roles": "wiki-moderator",
+        })
+      ).status,
     ).toBe(200);
-    expect(callers).toEqual([{ userId: "user-1" }, { userId: "user-1" }]);
+    // The roles the edge asserted reach the module with the caller.
+    expect(callers).toEqual([
+      { userId: "user-1", roles: [] },
+      { userId: "user-1", roles: ["wiki-moderator"] },
+    ]);
   } finally {
     await boundary.dispose();
   }

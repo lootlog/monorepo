@@ -14,6 +14,10 @@ import {
   ReauthenticationRequired,
   UnexpectedApplicationError,
 } from "@lootlog/protocol/http/errors";
+import {
+  parsePlatformRoles,
+  type PlatformRole,
+} from "@lootlog/schema/platform-roles";
 import { APIError } from "better-auth/api";
 import { and, eq } from "drizzle-orm";
 import { createLocalJWKSet, jwtVerify, type JSONWebKeySet } from "jose";
@@ -42,6 +46,8 @@ export interface VerifiedIdentity {
   readonly apiKeyAccess?: ApiKeyAccess;
   readonly userId: string;
   readonly discordId: string;
+  /** Platform roles of a signed-in User; an API key carries none. */
+  readonly roles?: ReadonlyArray<PlatformRole>;
 }
 
 export interface AccessTokenRequest {
@@ -56,7 +62,9 @@ interface IdpTokenResponse {
 }
 
 type SessionIdentity = {
-  readonly user: Pick<AppUserSession["user"], "id" | "discordId">;
+  readonly user: Pick<AppUserSession["user"], "id" | "discordId"> & {
+    readonly role?: string | null | undefined;
+  };
 };
 
 type AccessTokenPayload = {
@@ -244,6 +252,9 @@ export const createAuthService = ({
           return {
             userId: payload.sub,
             discordId: payload.discordId,
+            roles: parsePlatformRoles(
+              Predicate.isString(payload.role) ? payload.role : undefined,
+            ),
           } satisfies VerifiedIdentity;
         },
         catch: (cause) => cause,
@@ -258,6 +269,7 @@ export const createAuthService = ({
       return {
         userId: session.user.id,
         discordId: session.user.discordId,
+        roles: parsePlatformRoles(session.user.role),
       } satisfies VerifiedIdentity;
     }
 

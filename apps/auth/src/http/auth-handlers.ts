@@ -10,6 +10,7 @@ import {
   applicationErrorHttpResponse,
   reauthenticationRequiredResponse,
 } from "@lootlog/protocol/http/errors";
+import { AdminService } from "#src/admin/admin-service";
 import { AuthService } from "#src/auth/auth-service";
 import { AuthApi } from "#src/http-api/auth-api";
 import { noStore, requestHeaders, respond } from "./responses.js";
@@ -18,6 +19,10 @@ import {
   AUTH_DISCORD_ID_HEADER,
   AUTH_USER_ID_HEADER,
 } from "@lootlog/schema/api-key-access";
+import {
+  AUTH_ROLES_HEADER,
+  formatPlatformRoles,
+} from "@lootlog/schema/platform-roles";
 
 const verify = Effect.fn("AuthController_verify")(function* () {
   const auth = yield* AuthService;
@@ -35,6 +40,7 @@ const verify = Effect.fn("AuthController_verify")(function* () {
     const withIdentity = HttpServerResponse.setHeaders(response, {
       [AUTH_DISCORD_ID_HEADER]: identity.discordId,
       [AUTH_USER_ID_HEADER]: identity.userId,
+      [AUTH_ROLES_HEADER]: formatPlatformRoles(identity.roles ?? []),
       [API_KEY_ACCESS_HEADER]: identity.apiKeyAccess
         ? JSON.stringify(identity.apiKeyAccess)
         : "",
@@ -80,6 +86,16 @@ export const AuthHandlers = Layer.merge(
             ReauthenticationRequired: reauthenticationRequiredResponse,
           }),
         ),
+      )
+      .handle("AuthControllerListPlatformRoleHolders", ({ query, headers }) =>
+        Effect.gen(function* () {
+          const admin = yield* AdminService;
+          yield* noStore;
+
+          return yield* respond(
+            admin.listRoleHolders(headers.authorization, query.role),
+          );
+        }),
       )
       .handle("AuthControllerGetIdpToken", ({ payload, headers }) =>
         Effect.gen(function* () {

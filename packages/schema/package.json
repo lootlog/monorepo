@@ -46,7 +46,8 @@
     "./api-services": "./src/api-services.ts",
     "./internal-guilds": "./src/internal-guilds.ts",
     "./custom-theme": "./src/custom-theme.ts",
-    "./character-aura": "./src/character-aura.ts"
+    "./character-aura": "./src/character-aura.ts",
+    "./platform-roles": "./src/platform-roles.ts"
   },
   "scripts": {
     "lint": "oxlint src",

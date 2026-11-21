@@ -1,3 +1,4 @@
+import { AdminHandlers } from "./admin-handlers.js";
 import { ApiKeyHandlers } from "./api-key-handlers.js";
 import {
   serviceApiRoutes,
@@ -23,7 +24,14 @@ const makeBetterAuthHandler = (auth: typeof BetterAuthRuntime.Service) =>
     function* (request: HttpServerRequest.HttpServerRequest) {
       const webRequest = yield* HttpServerRequest.toWeb(request);
 
-      if (new URL(webRequest.url).pathname.includes("/api-key/"))
+      const { pathname } = new URL(webRequest.url);
+
+      // The admin plugin enforces bans; its endpoints would let anyone holding
+      // the `admin` role impersonate Users, so only the admin API manages them.
+      if (
+        pathname.includes("/api-key/") ||
+        pathname.startsWith(`${BETTER_AUTH_INTERNAL_PATH}/admin/`)
+      )
         return HttpServerResponse.empty({ status: 404 });
 
       const response = yield* Effect.tryPromise({
@@ -71,7 +79,7 @@ const BetterAuthRawRoutes = HttpRouter.use((router) =>
 
 export const AuthRoutes = Layer.merge(
   serviceApiRoutes(AuthApi).pipe(
-    Layer.provide(Layer.merge(AuthHandlers, ApiKeyHandlers)),
+    Layer.provide(Layer.mergeAll(AuthHandlers, ApiKeyHandlers, AdminHandlers)),
     Layer.provide(SchemaErrorResponseLive),
   ),
   BetterAuthRawRoutes,

@@ -3,12 +3,14 @@
 import {
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
   boolean,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import type { AdminAuditAction, AdminAuditDetails } from "#src/admin/audit";
 
 export const authUsers = pgTable(
   "user",
@@ -203,6 +205,29 @@ export const authApiKeys = pgTable(
     uniqueIndex("apikey_key_uidx").on(table.key),
     index("apikey_referenceId_idx").on(table.referenceId),
     index("apikey_configId_idx").on(table.configId),
+  ],
+);
+
+/**
+ * What an operator did in the admin panel. A row outlives the User it names,
+ * so `targetUserId` is not a foreign key.
+ */
+export const adminAuditLog = pgTable(
+  "admin_audit_log",
+  {
+    id: text("id").primaryKey(),
+    /** The operator's verified email. */
+    actor: text("actor").notNull(),
+    action: text("action").$type<AdminAuditAction>().notNull(),
+    targetUserId: text("targetUserId"),
+    details: jsonb("details").$type<AdminAuditDetails>(),
+    createdAt: timestamp("createdAt", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("admin_audit_log_createdAt_idx").on(table.createdAt),
+    index("admin_audit_log_targetUserId_idx").on(table.targetUserId),
   ],
 );
 

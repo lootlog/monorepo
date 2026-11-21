@@ -68,7 +68,7 @@ describe("deployment targets", () => {
       changedFiles: [".github/deployment-targets.json"],
     });
 
-    expect(rootPlan.dockerTargets).toHaveLength(9);
+    expect(rootPlan.dockerTargets).toHaveLength(10);
   });
 
   test("CI checks every affected package in exactly one workspace shard", async () => {
@@ -121,7 +121,9 @@ describe("deployment targets", () => {
       changedFiles: ["docker/developer.Dockerfile"],
     });
 
+    // The SSR applications share one Dockerfile.
     expect(developerPlan.dockerTargets.map(({ id }) => id)).toEqual([
+      "admin",
       "developer",
     ]);
 
@@ -131,7 +133,7 @@ describe("deployment targets", () => {
       changedFiles: ["patches/drizzle-orm.patch"],
     });
 
-    expect(patchPlan.dockerTargets).toHaveLength(9);
+    expect(patchPlan.dockerTargets).toHaveLength(10);
   });
 
   test("CI rebuilds affected images for workspace manifest changes", async () => {

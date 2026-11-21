@@ -1,3 +1,4 @@
+import { fixedGlobalChatAdmins } from "#src/global-chat/global-chat-admins";
 import { afterEach, describe, expect, it } from "bun:test";
 import { Effect, Schema } from "effect";
 import type {
@@ -190,7 +191,7 @@ const setup = async () => {
         publishChannelUpdate: (update) =>
           Effect.sync(() => void updates.push(update)),
       },
-      [admin.userId],
+      fixedGlobalChatAdmins([admin.userId]),
     ).pipe(Effect.provideService(ApiDatabase, database)),
   );
 

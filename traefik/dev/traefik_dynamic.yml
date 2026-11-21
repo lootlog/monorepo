@@ -252,6 +252,7 @@ http:
           X-Auth-User-Id: ""
           X-Auth-Discord-Id: ""
           X-Auth-Api-Key-Access: ""
+          X-Auth-Roles: ""
     apiForwardAuth:
       forwardAuth:
         address: "http://host.docker.internal:4001/auth/verify"
@@ -260,6 +261,7 @@ http:
           - "X-Auth-User-Id"
           - "X-Auth-Discord-Id"
           - "X-Auth-Api-Key-Access"
+          - "X-Auth-Roles"
         authRequestHeaders:
           - "X-Api-Key"
           - "Authorization"

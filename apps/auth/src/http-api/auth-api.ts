@@ -1,3 +1,4 @@
+import { AdminGroup } from "./contracts/admin/api.js";
 import { ApiKeysGroup } from "./contracts/auth/api-keys.js";
 /** Authoritative composition root for the auth HTTP contract. */
 import { HttpApi, OpenApi } from "effect/http-api";
@@ -13,5 +14,5 @@ export class AuthApi extends HttpApi.make("AuthApi")
     "Authentication and identity service documentation",
   )
   .annotate(OpenApi.Servers, [])
-  .add(healthGroup(), AuthGroup, ApiKeysGroup)
+  .add(healthGroup(), AuthGroup, ApiKeysGroup, AdminGroup)
   .middleware(SchemaErrorResponse) {}

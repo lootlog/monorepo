@@ -33,6 +33,17 @@
       ],
       "port": 3106,
       "autoPort": false
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "--cwd",
+        "apps/admin",
+        "dev"
+      ],
+      "port": 3012
     }
   ]
 }

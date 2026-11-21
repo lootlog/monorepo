@@ -207,6 +207,47 @@ export const toAuthProvider = (auth: LootlogAuth) => {
   return {
     ...auth,
     apiKeys: auth.api,
+    // Writes through Better Auth, so the sessions it keeps in the secondary
+    // storage follow the User row instead of serving the old one.
+    accounts: {
+      /**
+       * The session behind the request's cookie, as the store holds it now.
+       * The cookie cache would keep answering for minutes after a sign-out, a
+       * ban or a revoked session.
+       */
+      getFreshSession: async (headers: Headers) => {
+        // Only the cookie identifies the User here. The bearer plugin would
+        // read an Authorization header as a session token and replace it.
+        const session = await auth.api.getSession({
+          headers: new Headers({ cookie: headers.get("cookie") ?? "" }),
+          query: { disableCookieCache: true },
+        });
+
+        return session
+          ? { userId: session.user.id, name: session.user.name }
+          : null;
+      },
+      updateUser: async (
+        userId: string,
+        data: Partial<
+          Pick<
+            typeof betterAuthSchema.user.$inferSelect,
+            "role" | "banned" | "banReason" | "banExpires"
+          >
+        >,
+      ) => {
+        const { internalAdapter } = await auth.$context;
+        await internalAdapter.updateUser(userId, data);
+      },
+      revokeSessions: async (userId: string) => {
+        const { internalAdapter } = await auth.$context;
+        await internalAdapter.deleteUserSessions(userId);
+      },
+      revokeSession: async (token: string) => {
+        const { internalAdapter } = await auth.$context;
+        await internalAdapter.deleteSession(token);
+      },
+    },
     sessionCookieNames: {
       token: cookies.sessionToken.name,
       data: cookies.sessionData.name,
@@ -231,6 +272,7 @@ export class BetterAuthRuntime extends Context.Service<
   AuthProvider &
     Pick<LootlogAuth, "handler"> & {
       readonly apiKeys?: Pick<LootlogAuth["api"], "createApiKey">;
+      readonly accounts?: ReturnType<typeof toAuthProvider>["accounts"];
       readonly options: Pick<LootlogAuth["options"], "baseURL">;
     }
 >()("@lootlog/auth/BetterAuthRuntime") {

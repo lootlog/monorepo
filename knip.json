@@ -26,6 +26,9 @@
       "entry": ["src/main.ts!"],
       "project": ["src/**/*.ts!", "test/**/*.ts"]
     },
+    "apps/admin": {
+      "project": ["src/**/*.{ts,tsx,css}!", "*.{ts,mts,js,mjs}"]
+    },
     "apps/developer": {
       "project": ["src/**/*.{ts,tsx,css,mdx}!", "*.{ts,mts,js,mjs}"]
     },

@@ -13,7 +13,7 @@ import {
 } from "#src/global-chat/global-chat.data-layer";
 import type { RedisService } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
-import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
+import { GlobalChatAdminDirectory } from "#src/runtime/features/global-chat-admins";
 
 /**
  * Each channel keeps its keys under one hash tag. The single list that
@@ -136,12 +136,12 @@ export const globalChatData = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
-    const { globalChatAdminUserIds } = yield* ApiRuntimeConfig;
+    const admins = yield* GlobalChatAdminDirectory;
 
     return makeGlobalChatDataLayer(
       makeGlobalChatStore(redis),
       makeGlobalChatEvents(rabbit),
-      globalChatAdminUserIds,
+      admins,
     );
   }),
-);
+).pipe(Layer.provide(GlobalChatAdminDirectory.layer));

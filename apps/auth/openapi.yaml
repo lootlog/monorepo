@@ -172,6 +172,62 @@ paths:
                 - userId
                 - discordId
         required: true
+  /auth/internal/platform-role-holders:
+    get:
+      tags:
+        - auth
+      operationId: AuthController_listPlatformRoleHolders
+      parameters:
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum:
+              - admin
+              - wiki-moderator
+              - global-chat-admin
+          required: true
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userIds:
+                    type: array
+                    items:
+                      type: string
+                required:
+                  - userIds
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: Internal API caller only. Requires the AUTH_IDP_TOKEN_SECRET bearer credential. An admin holds every role, so admins are listed for each.
+      summary: List the users holding a platform role
   /auth/api-keys:
     get:
       tags:
@@ -638,8 +694,717 @@ paths:
               required:
                 - keyIds
         required: true
+  /admin/session:
+    get:
+      tags:
+        - admin
+      operationId: AdminController_session
+      parameters:
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOperator"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+  /admin/overview:
+    get:
+      tags:
+        - admin
+      operationId: AdminController_overview
+      parameters:
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOverview"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+  /admin/users:
+    get:
+      tags:
+        - admin
+      operationId: AdminController_listUsers
+      parameters:
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+          required: false
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum:
+              - admin
+              - wiki-moderator
+              - global-chat-admin
+          required: false
+        - name: banned
+          in: query
+          schema:
+            type: string
+            enum:
+              - "true"
+              - "false"
+          required: false
+        - name: limit
+          in: query
+          schema:
+            type: string
+            pattern: ^[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[Ee][+-]?\d+)?$
+          required: false
+        - name: offset
+          in: query
+          schema:
+            type: string
+            pattern: ^[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[Ee][+-]?\d+)?$
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUsersResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+  /admin/users/{id}:
+    get:
+      tags:
+        - admin
+      operationId: AdminController_getUser
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserDetails"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+  /admin/users/{id}/roles:
+    put:
+      tags:
+        - admin
+      operationId: AdminController_setUserRoles
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/AdminUser"
+                required:
+                  - user
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserResponse"
+        required: true
+  /admin/users/{id}/ban:
+    put:
+      tags:
+        - admin
+      operationId: AdminController_banUser
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/AdminUser"
+                required:
+                  - user
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetAdminUserRoles"
+        required: true
+    delete:
+      tags:
+        - admin
+      operationId: AdminController_unbanUser
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/AdminUser"
+                required:
+                  - user
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+  /admin/users/{id}/sessions:
+    delete:
+      tags:
+        - admin
+      operationId: AdminController_revokeUserSessions
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+  /admin/users/{id}/sessions/{sessionId}:
+    delete:
+      tags:
+        - admin
+      operationId: AdminController_revokeUserSession
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: sessionId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+  /admin/users/{id}/api-keys/{keyId}:
+    delete:
+      tags:
+        - admin
+      operationId: AdminController_revokeUserApiKey
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: keyId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+  /admin/audit:
+    get:
+      tags:
+        - admin
+      operationId: AdminController_listAudit
+      parameters:
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: limit
+          in: query
+          schema:
+            type: string
+            pattern: ^[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[Ee][+-]?\d+)?$
+          required: false
+        - name: offset
+          in: query
+          schema:
+            type: string
+            pattern: ^[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[Ee][+-]?\d+)?$
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAuditResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
 components:
   schemas:
+    HttpErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          nullable: true
+          type: string
+        details:
+          nullable: true
+          type: object
+      required:
+        - code
     RequestValidationError:
       type: object
       properties:
@@ -676,19 +1441,282 @@ components:
         - code
         - message
         - details
-    HttpErrorResponse:
+    AdminAuditResponse:
       type: object
       properties:
-        code:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAuditEntry"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      required:
+        - entries
+        - total
+    AdminAuditEntry:
+      type: object
+      properties:
+        id:
           type: string
-        message:
+        actor:
+          type: string
+        action:
+          type: string
+          enum:
+            - roles.set
+            - ban.set
+            - ban.lift
+            - sessions.revoke
+            - session.revoke
+            - api-key.revoke
+        targetUserId:
+          nullable: true
+          type: string
+        targetName:
           nullable: true
           type: string
         details:
           nullable: true
           type: object
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
-        - code
+        - id
+        - actor
+        - action
+        - targetUserId
+        - targetName
+        - details
+        - createdAt
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        image:
+          nullable: true
+          type: string
+        discordId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        roles:
+          type: array
+          items:
+            type: string
+            enum:
+              - admin
+              - wiki-moderator
+              - global-chat-admin
+        ban:
+          nullable: true
+          $ref: "#/components/schemas/AdminUserBan"
+        activeSessions:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      required:
+        - id
+        - name
+        - email
+        - image
+        - discordId
+        - createdAt
+        - roles
+        - ban
+        - activeSessions
+    AdminUserBan:
+      type: object
+      properties:
+        reason:
+          nullable: true
+          type: string
+        expiresAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - reason
+        - expiresAt
+    SetAdminUserRoles:
+      type: object
+      properties:
+        reason:
+          type: string
+        expiresAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - reason
+        - expiresAt
+    AdminUserResponse:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            type: string
+            enum:
+              - admin
+              - wiki-moderator
+              - global-chat-admin
+      required:
+        - roles
+    AdminUserDetails:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/AdminUser"
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminSession"
+        apiKeys:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminApiKey"
+        audit:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAuditEntry"
+      required:
+        - user
+        - sessions
+        - apiKeys
+        - audit
+    AdminApiKey:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        start:
+          nullable: true
+          type: string
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        expiresAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - id
+        - name
+        - start
+        - enabled
+        - createdAt
+        - expiresAt
+    AdminSession:
+      type: object
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        expiresAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        ipAddress:
+          nullable: true
+          type: string
+        userAgent:
+          nullable: true
+          type: string
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - expiresAt
+        - ipAddress
+        - userAgent
+    AdminUsersResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      required:
+        - users
+        - total
+    AdminOverview:
+      type: object
+      properties:
+        users:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        banned:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        activeSessions:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+                enum:
+                  - admin
+                  - wiki-moderator
+                  - global-chat-admin
+              users:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+            required:
+              - role
+              - users
+      required:
+        - users
+        - banned
+        - activeSessions
+        - roles
+    AdminOperator:
+      type: object
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+      required:
+        - userId
+        - name
     ReauthenticationRequiredEncoded:
       type: object
       properties:
