@@ -115,6 +115,7 @@ const makeRuntime = (
             revokeSessions: () => Effect.die("Not configured"),
             revokeSession: () => Effect.die("Not configured"),
             revokeApiKey: () => Effect.die("Not configured"),
+            listRoleHolders: () => Effect.die("Not configured"),
             listAudit: () => Effect.die("Not configured"),
           }),
         ),

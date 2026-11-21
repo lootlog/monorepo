@@ -8,6 +8,8 @@ import { Schema } from "effect";
  * - `admin` holds every other role.
  * - `wiki-moderator` reviews the reports readers send about catalog pages.
  * - `global-chat-admin` moderates the global chat and grants character auras.
+ *   The API reads its holders from the auth service, beside the Users in its
+ *   own `GLOBAL_CHAT_ADMIN_USER_IDS`.
  */
 export const PLATFORM_ROLES = [
   "admin",
@@ -25,6 +27,18 @@ export type PlatformRole = typeof PlatformRole.Type;
  * the identity headers beside it.
  */
 export const AUTH_ROLES_HEADER = "x-auth-roles";
+
+/**
+ * Where a service asks the auth service which Users hold a platform role, and
+ * what it answers. Internal: the caller presents the service credential it
+ * shares with the auth service, and the edge does not route the path.
+ */
+export const PLATFORM_ROLE_HOLDERS_PATH =
+  "/auth/internal/platform-role-holders";
+
+export const PlatformRoleHolders = Schema.Struct({
+  userIds: Schema.Array(Schema.String),
+});
 
 /** The role a User without platform roles is stored with. */
 const DEFAULT_STORED_ROLE = "user";

@@ -172,6 +172,62 @@ paths:
                 - userId
                 - discordId
         required: true
+  /auth/internal/platform-role-holders:
+    get:
+      tags:
+        - auth
+      operationId: AuthController_listPlatformRoleHolders
+      parameters:
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum:
+              - admin
+              - wiki-moderator
+              - global-chat-admin
+          required: true
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userIds:
+                    type: array
+                    items:
+                      type: string
+                required:
+                  - userIds
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: Internal API caller only. Requires the AUTH_IDP_TOKEN_SECRET bearer credential. An admin holds every role, so admins are listed for each.
+      summary: List the users holding a platform role
   /auth/api-keys:
     get:
       tags:

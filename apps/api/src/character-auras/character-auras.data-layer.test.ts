@@ -1,3 +1,4 @@
+import { fixedGlobalChatAdmins } from "#src/global-chat/global-chat-admins";
 import { afterEach, describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
@@ -62,7 +63,10 @@ const setup = async (
     ) =>
       boundary.run(
         Effect.flatMap(
-          makeCharacterAurasData(entitledUserIds, events),
+          makeCharacterAurasData(
+            fixedGlobalChatAdmins(entitledUserIds),
+            events,
+          ),
           operation,
         ),
       ),
@@ -131,8 +135,9 @@ describe("character auras", () => {
 
     // The same stored choices under a configuration that dropped the admin.
     const revoked = await admin.boundary.run(
-      Effect.flatMap(makeCharacterAurasData([], admin.events), (data) =>
-        data.getAuras(),
+      Effect.flatMap(
+        makeCharacterAurasData(fixedGlobalChatAdmins([]), admin.events),
+        (data) => data.getAuras(),
       ),
     );
 
@@ -167,8 +172,9 @@ describe("character auras", () => {
 
     // Dropped from the admins, the grant alone does not keep it showing.
     const dropped = await admin.boundary.run(
-      Effect.flatMap(makeCharacterAurasData([], admin.events), (data) =>
-        data.getAuras(),
+      Effect.flatMap(
+        makeCharacterAurasData(fixedGlobalChatAdmins([]), admin.events),
+        (data) => data.getAuras(),
       ),
     );
 
@@ -365,7 +371,7 @@ describe("character auras", () => {
     const lists = () =>
       boundary.run(
         Effect.flatMap(
-          makeCharacterAurasData(["admin"], events, {
+          makeCharacterAurasData(fixedGlobalChatAdmins(["admin"]), events, {
             list: (load) =>
               list
                 ? Effect.succeed(list)

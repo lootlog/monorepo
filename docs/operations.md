@@ -100,6 +100,14 @@ which the edge must clear on incoming requests and copy from `/auth/verify`
 like the identity headers beside it. Deploy the Traefik change before or with
 the auth service; until then no role is forwarded and role checks refuse.
 
+The API cannot learn global chat admins from the caller alone: it marks other
+Users' messages and shows their auras. It asks the auth service for the
+holders of `global-chat-admin` every minute
+(`/auth/internal/platform-role-holders`, with `AUTH_IDP_TOKEN_SECRET`) and
+adds them to `GLOBAL_CHAT_ADMIN_USER_IDS`. While the auth service cannot be
+reached the last answer stands. Deploy the auth service before the API; an
+API that gets no answer keeps working with the configured list.
+
 A role change, a revoked session, and a ban reach a signed-in browser within
 five minutes, when its session cookie cache expires; a bearer token issued
 before a ban stays valid for up to an hour. API keys of a banned User are

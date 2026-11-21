@@ -284,6 +284,23 @@ export type AuthControllerGetIdpToken200 = {
   scopes: string[];
 };
 
+export type AuthControllerListPlatformRoleHoldersParams = {
+role: AuthControllerListPlatformRoleHoldersRole;
+};
+
+export type AuthControllerListPlatformRoleHoldersRole = typeof AuthControllerListPlatformRoleHoldersRole[keyof typeof AuthControllerListPlatformRoleHoldersRole];
+
+
+export const AuthControllerListPlatformRoleHoldersRole = {
+  admin: 'admin',
+  'wiki-moderator': 'wiki-moderator',
+  'global-chat-admin': 'global-chat-admin',
+} as const;
+
+export type AuthControllerListPlatformRoleHolders200 = {
+  userIds: string[];
+};
+
 export type ApiKeysListApiKeys200KeysItemMode = typeof ApiKeysListApiKeys200KeysItemMode[keyof typeof ApiKeysListApiKeys200KeysItemMode];
 
 
@@ -1066,6 +1083,157 @@ export const useAuthControllerGetIdpToken = <TError = ErrorType<HttpErrorRespons
       > => {
       return useMutation(getAuthControllerGetIdpTokenMutationOptions(options), queryClient);
     }
+
+export const getAuthControllerListPlatformRoleHoldersUrl = (params: AuthControllerListPlatformRoleHoldersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/auth/internal/platform-role-holders?${stringifiedParams}` : `/auth/internal/platform-role-holders`
+}
+
+/**
+ * Internal API caller only. Requires the AUTH_IDP_TOKEN_SECRET bearer credential. An admin holds every role, so admins are listed for each.
+ * @summary List the users holding a platform role
+ */
+export const authControllerListPlatformRoleHolders = async (params: AuthControllerListPlatformRoleHoldersParams, options?: Parameters<typeof authFetch>[1]): Promise<AuthControllerListPlatformRoleHolders200> => {
+
+  return authFetch<AuthControllerListPlatformRoleHolders200>(getAuthControllerListPlatformRoleHoldersUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getAuthControllerListPlatformRoleHoldersQueryKey = (params?: AuthControllerListPlatformRoleHoldersParams,) => {
+    return [
+    `/auth/internal/platform-role-holders`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getAuthControllerListPlatformRoleHoldersQueryOptions = <TData = Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError = ErrorType<HttpErrorResponse | RequestValidationError>>(params: AuthControllerListPlatformRoleHoldersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAuthControllerListPlatformRoleHoldersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>> = ({ signal }) => authControllerListPlatformRoleHolders(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AuthControllerListPlatformRoleHoldersQueryResult = NonNullable<Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>>
+export type AuthControllerListPlatformRoleHoldersQueryError = ErrorType<HttpErrorResponse | RequestValidationError>
+
+
+export function useAuthControllerListPlatformRoleHolders<TData = Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError = ErrorType<HttpErrorResponse | RequestValidationError>>(
+ params: AuthControllerListPlatformRoleHoldersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>,
+          TError,
+          Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAuthControllerListPlatformRoleHolders<TData = Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError = ErrorType<HttpErrorResponse | RequestValidationError>>(
+ params: AuthControllerListPlatformRoleHoldersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>,
+          TError,
+          Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAuthControllerListPlatformRoleHolders<TData = Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError = ErrorType<HttpErrorResponse | RequestValidationError>>(
+ params: AuthControllerListPlatformRoleHoldersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List the users holding a platform role
+ */
+
+export function useAuthControllerListPlatformRoleHolders<TData = Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError = ErrorType<HttpErrorResponse | RequestValidationError>>(
+ params: AuthControllerListPlatformRoleHoldersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAuthControllerListPlatformRoleHoldersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List the users holding a platform role
+ */
+export const prefetchAuthControllerListPlatformRoleHoldersQuery = async <TData = Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError = ErrorType<HttpErrorResponse | RequestValidationError>>(
+ queryClient: QueryClient, params: AuthControllerListPlatformRoleHoldersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getAuthControllerListPlatformRoleHoldersQueryOptions(params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useAuthControllerListPlatformRoleHolders} query
+ */
+export const invalidateAuthControllerListPlatformRoleHolders = async (
+ queryClient: QueryClient, params: AuthControllerListPlatformRoleHoldersParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getAuthControllerListPlatformRoleHoldersQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List the users holding a platform role
+ */
+export const useSetAuthControllerListPlatformRoleHoldersQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: AuthControllerListPlatformRoleHoldersParams | undefined,updater: Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>> | undefined | ((old: Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>> | undefined) => Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>>({ exact: $exactMatch, queryKey: getAuthControllerListPlatformRoleHoldersQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary List the users holding a platform role
+ */
+export const useGetAuthControllerListPlatformRoleHoldersQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: AuthControllerListPlatformRoleHoldersParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof authControllerListPlatformRoleHolders>>>(getAuthControllerListPlatformRoleHoldersQueryKey(params));
+}
+
+
 
 export const getApiKeysListApiKeysUrl = () => {
 

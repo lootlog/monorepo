@@ -19,7 +19,7 @@ export const roleText: Record<
   "global-chat-admin": {
     name: "Administrator czatu globalnego",
     description:
-      "Docelowo: usuwanie i przypinanie wiadomości, wyciszenia, ogłoszenia na wszystkie światy i nadawanie aur. Usługa API czyta jeszcze listę GLOBAL_CHAT_ADMIN_USER_IDS, więc ta rola na razie niczego nie zmienia.",
+      "Usuwa i przypina wiadomości, wycisza graczy, pisze ogłoszenia na wszystkie światy oraz nosi i nadaje aury. Zmiana działa w ciągu minuty.",
   },
 };
 
@@ -105,7 +105,7 @@ export const text = {
 
   rolesHeading: "Role",
   rolesDescription:
-    "Zmiana działa od razu w panelu, a w usługach najpóźniej po 5 minutach, gdy odświeży się sesja użytkownika.",
+    "Zmiana działa od razu w panelu, a w usługach w ciągu kilku minut.",
   rolesSave: "Zapisz role",
 
   banHeading: "Ban",

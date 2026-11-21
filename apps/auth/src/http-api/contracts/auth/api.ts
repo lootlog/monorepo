@@ -8,6 +8,11 @@ import {
 } from "effect/http-api";
 import { ReauthenticationRequired } from "@lootlog/protocol/http/errors";
 import {
+  PLATFORM_ROLE_HOLDERS_PATH,
+  PlatformRole,
+  PlatformRoleHolders,
+} from "@lootlog/schema/platform-roles";
+import {
   BadRequest,
   ServiceUnavailable,
   TooManyRequests,
@@ -47,5 +52,21 @@ export class AuthGroup extends HttpApiGroup.make("auth").add(
     .annotate(
       OpenApi.Description,
       "Internal API caller only. Requires the AUTH_IDP_TOKEN_SECRET bearer credential; user sessions and forwarded identity headers do not authorize this operation.",
+    ),
+  HttpApiEndpoint.get(
+    "AuthControllerListPlatformRoleHolders",
+    PLATFORM_ROLE_HOLDERS_PATH,
+    {
+      headers: Schema.Struct({ authorization: Schema.optional(Schema.String) }),
+      query: Schema.Struct({ role: PlatformRole }),
+      error: [BadRequest, Unauthorized, ServiceUnavailable],
+      success: PlatformRoleHolders,
+    },
+  )
+    .annotate(OpenApi.Identifier, "AuthController_listPlatformRoleHolders")
+    .annotate(OpenApi.Summary, "List the users holding a platform role")
+    .annotate(
+      OpenApi.Description,
+      "Internal API caller only. Requires the AUTH_IDP_TOKEN_SECRET bearer credential. An admin holds every role, so admins are listed for each.",
     ),
 ) {}

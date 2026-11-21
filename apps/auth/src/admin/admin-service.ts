@@ -218,6 +218,14 @@ export class AdminService extends Context.Service<
       userId: string,
       keyId: string,
     ) => Effect.Effect<void, ApplicationError>;
+    /**
+     * The Users whose roles grant `role`, for a service that presents the
+     * internal service credential. An admin holds every role.
+     */
+    readonly listRoleHolders: (
+      authorization: string | undefined,
+      role: PlatformRole,
+    ) => Effect.Effect<{ userIds: ReadonlyArray<string> }, ApplicationError>;
     readonly listAudit: (page: {
       readonly limit?: number;
       readonly offset?: number;
@@ -628,6 +636,23 @@ export class AdminService extends Context.Service<
               keyId,
               name: key.name,
             });
+          },
+        ),
+
+        listRoleHolders: Effect.fn("AdminService.listRoleHolders")(
+          function* (authorization, role) {
+            if (!hasServiceAuthorization(authorization, config.idpTokenSecret))
+              return yield* new AuthenticationRequiredError();
+
+            const rows = yield* query(
+              database
+                .select({ id: authUsers.id })
+                .from(authUsers)
+                .where(or(holdsRole(role), holdsRole("admin")))
+                .orderBy(authUsers.id),
+            );
+
+            return { userIds: rows.map((row) => row.id) };
           },
         ),
 

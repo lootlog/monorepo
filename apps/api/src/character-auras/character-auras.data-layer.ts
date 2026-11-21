@@ -1,3 +1,4 @@
+import type { GlobalChatAdmins } from "#src/global-chat/global-chat-admins";
 import { and, asc, eq, inArray, isNotNull, or, type SQL } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
 import {
@@ -93,11 +94,11 @@ const uncached: CharacterAurasCache = {
 };
 
 /**
- * Auras are a perk of the Users in `adminUserIds` and of the Users an admin
+ * Auras are a perk of the global chat admins and of the Users an admin
  * granted them to. Each character wears its own aura, chosen by a User who
  * proved to play its account, and it shows while that User plays the account
  * last. A User who loses the perk keeps no shown aura: revoking a grant
- * deletes their auras, and an admin dropped from `adminUserIds` keeps the
+ * deletes their auras, and a User who stops being an admin keeps the
  * stored choices but no longer shows them, and may only remove them. Admin
  * auras are the admins' own: only they choose them, and only theirs show.
  * A personal aura is its holders' own in the same way: beside the admins, only
@@ -105,13 +106,12 @@ const uncached: CharacterAurasCache = {
  * auras in general, and only theirs shows.
  */
 export const makeCharacterAurasData = (
-  adminUserIds: ReadonlyArray<string>,
+  admins: GlobalChatAdmins,
   events: CharacterAurasEvents,
   cache: CharacterAurasCache = uncached,
 ) =>
   Effect.gen(function* () {
     const database = yield* ApiDatabase;
-    const admins = new Set(adminUserIds);
 
     const now = Effect.map(
       Clock.currentTimeMillis,
@@ -176,9 +176,9 @@ export const makeCharacterAurasData = (
             or(
               isNotNull(userCharacterAuraGrantTable.userId),
               isNotNull(userPersonalCharacterAuraGrantTable.userId),
-              admins.size === 0
+              admins.ids().length === 0
                 ? undefined
-                : inArray(characterAuraTable.userId, [...admins]),
+                : inArray(characterAuraTable.userId, [...admins.ids()]),
             ),
           ),
         )
@@ -503,11 +503,11 @@ export const makeCharacterAurasData = (
   });
 
 export const characterAurasDataLayer = (
-  adminUserIds: ReadonlyArray<string>,
+  admins: GlobalChatAdmins,
   events: CharacterAurasEvents,
   cache: CharacterAurasCache,
 ) =>
   Layer.effect(
     CharacterAurasData,
-    makeCharacterAurasData(adminUserIds, events, cache),
+    makeCharacterAurasData(admins, events, cache),
   );

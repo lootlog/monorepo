@@ -24,6 +24,8 @@ const ACTOR = "Operator (operator-1)";
 
 const SECRET = "integration-admin-secret";
 
+const IDP_SECRET = "integration-idp-secret";
+
 const AUTH_SECRET = "integration-only-secret-01234567890123456789";
 
 const adminAccountIds: string[] = [];
@@ -77,6 +79,7 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
       cookiePrefix: "test",
       adminAccountIds,
       adminApiSecret: Redacted.make(SECRET),
+      idpTokenSecret: Redacted.make(IDP_SECRET),
       authSecret: Redacted.make(AUTH_SECRET),
       discordClientId: "test-discord-client",
       discordClientSecret: Redacted.make("test-discord-secret"),
@@ -262,6 +265,27 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
     expect(users.map(({ id, roles }) => ({ id, roles }))).toEqual([
       { id: plain.id, roles: [] },
     ]);
+  });
+
+  it("lists a role's holders, admins among them, only to the internal service credential", async () => {
+    const chatAdmin = await createUser("Chat admin", "global-chat-admin");
+    const superAdmin = await createUser("Super admin", "wiki-moderator,admin");
+    await createUser("Wiki only", "wiki-moderator");
+
+    const holders = (authorization: string | undefined) =>
+      admin((service) =>
+        service.listRoleHolders(authorization, "global-chat-admin"),
+      );
+
+    const { userIds } = await holders(`Bearer ${IDP_SECRET}`);
+
+    expect(userIds).toContain(chatAdmin.id);
+    expect(userIds).toContain(superAdmin.id);
+    expect(userIds).toHaveLength(2);
+
+    // The panel's credential and a missing one open nothing here.
+    await expect(holders(`Bearer ${SECRET}`)).rejects.toThrow();
+    await expect(holders(undefined)).rejects.toThrow();
   });
 
   it("treats wildcard characters in a search as text", async () => {
