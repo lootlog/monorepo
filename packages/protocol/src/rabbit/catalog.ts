@@ -126,7 +126,7 @@ export const CatalogItemRevisions = Schema.Struct({
 export type CatalogItemRevisions = typeof CatalogItemRevisions.Type;
 
 /** A map tile where Game clients reported a monster standing. */
-export const CatalogMonsterSpawnTile = Schema.Struct({
+const CatalogMonsterSpawnTile = Schema.Struct({
   x: Schema.Number,
   y: Schema.Number,
 });

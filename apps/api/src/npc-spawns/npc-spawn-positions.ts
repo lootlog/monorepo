@@ -29,7 +29,7 @@ const isTile = (value: number | undefined): value is number =>
  * concurrent upserts lock rows in the same order. Older Game clients report
  * no map id or tile, so their NPCs add nothing.
  */
-export const toNpcSpawnPositions = (
+const toNpcSpawnPositions = (
   gameVersion: GameVersion,
   npcs: ReadonlyArray<ReportedNpcPosition>,
 ) =>
