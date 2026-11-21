@@ -34,6 +34,9 @@ const messages = {
     menu: "Menu",
     closeMenu: "Zamknij menu",
     events: "Eventy",
+    browse: "Przeglądaj",
+    tools: "Narzędzia",
+    itemsBySlot: "Przedmioty według slotu",
   },
   header: {
     brand: "Lootlog",
@@ -698,6 +701,8 @@ const messages = {
       "Złóż ekwipunek postaci, zobacz sumę statystyk jak w grze i udostępnij go linkiem.",
     calculatorsDescription:
       "Policz unik, blok, bonusy legendarne i koszty usług według wzorów z gry.",
+    socketsDescription:
+      "Sprawdź, jak powstają symbole i które bonusy legendarne pasują do gniazd.",
     open: "Otwórz",
     about: {
       title: "O wiki",
