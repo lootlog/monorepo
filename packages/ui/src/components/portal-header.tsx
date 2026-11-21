@@ -30,6 +30,11 @@ type PortalHeaderProps = {
   /** The brand link element, rendered with the portal's own router. */
   home: ReactElement;
   links: readonly PortalHeaderLink[];
+  /**
+   * Replaces the row of links in the bar, such as a navigation menu that
+   * groups them into panels. The menu still lists every link.
+   */
+  navigation?: ReactNode;
   search: ReactNode;
   compactSearch: ReactNode;
   /** Shown before the search on wide screens and at the bottom of the menu. */
@@ -71,7 +76,9 @@ const INLINE_CLASS_NAMES = {
 } as const;
 
 /**
- * The fixed top bar shared by the public documentation portals. Pages offset
+ * The fixed top bar shared by the public documentation portals. The links
+ * sit after the brand at every width: in the bar on wide screens, behind the
+ * menu, which opens from the same side, on narrow ones. Pages offset
  * their content with `#portal-content` from `@lootlog/ui/portal.css`.
  */
 export function PortalHeader({
@@ -79,6 +86,7 @@ export function PortalHeader({
   section,
   home,
   links,
+  navigation,
   search,
   compactSearch,
   status,
@@ -122,63 +130,68 @@ export function PortalHeader({
       {brand}
       <span
         aria-hidden="true"
-        className={cn("mx-1 h-5 w-px bg-sidebar-border", inline.bar)}
+        className="mx-1 h-5 w-px shrink-0 bg-sidebar-border"
       />
-      <HorizontalMenu
-        aria-label={labels.navigation}
-        className={cn("h-full", inline.bar)}
-      >
-        {links.map((link) => (
-          <li key={link.id}>
-            <PortalNavLink
-              variant="bar"
-              active={link.active}
-              render={link.render}
-            >
-              {link.label}
-            </PortalNavLink>
-          </li>
-        ))}
-      </HorizontalMenu>
+      {navigation ? (
+        <div className={inline.bar}>{navigation}</div>
+      ) : (
+        <HorizontalMenu
+          aria-label={labels.navigation}
+          className={cn("h-full", inline.bar)}
+        >
+          {links.map((link) => (
+            <li key={link.id}>
+              <PortalNavLink
+                variant="bar"
+                active={link.active}
+                render={link.render}
+              >
+                {link.label}
+              </PortalNavLink>
+            </li>
+          ))}
+        </HorizontalMenu>
+      )}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger
+          render=<Button variant="ghost" size="sm" className={inline.menu} />
+        >
+          {labels.menu}
+        </SheetTrigger>
+        <SheetContent
+          side="left"
+          className="gap-6 p-6"
+          closeLabel={labels.closeNavigation}
+        >
+          <SheetHeader className="p-0">
+            <SheetTitle>{title}</SheetTitle>
+            <SheetDescription className="sr-only">
+              {labels.navigation}
+            </SheetDescription>
+          </SheetHeader>
+          <nav aria-label={labels.navigation}>
+            <ul className="flex flex-col gap-1">
+              {links.map((link) => (
+                <li key={link.id}>
+                  <PortalNavLink
+                    variant="menu"
+                    active={link.active}
+                    render={link.render}
+                    onClick={() => setOpen(false)}
+                  >
+                    {link.label}
+                  </PortalNavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          {status && <div className="mt-auto self-start">{status}</div>}
+        </SheetContent>
+      </Sheet>
       <div className="ml-auto flex items-center gap-2 md:gap-3">
         <div className={inline.search}>{search}</div>
         {status && <div className="hidden lg:contents">{status}</div>}
         <div className={inline.menu}>{compactSearch}</div>
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger
-            render=<Button variant="ghost" size="sm" className={inline.menu} />
-          >
-            {labels.menu}
-          </SheetTrigger>
-          <SheetContent
-            className="gap-6 p-6"
-            closeLabel={labels.closeNavigation}
-          >
-            <SheetHeader className="p-0">
-              <SheetTitle>{title}</SheetTitle>
-              <SheetDescription className="sr-only">
-                {labels.navigation}
-              </SheetDescription>
-            </SheetHeader>
-            <nav aria-label={labels.navigation}>
-              <ul className="flex flex-col gap-1">
-                {links.map((link) => (
-                  <li key={link.id}>
-                    <PortalNavLink
-                      variant="menu"
-                      active={link.active}
-                      render={link.render}
-                      onClick={() => setOpen(false)}
-                    >
-                      {link.label}
-                    </PortalNavLink>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-            {status && <div className="mt-auto self-start">{status}</div>}
-          </SheetContent>
-        </Sheet>
         {actions}
       </div>
     </header>

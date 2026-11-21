@@ -40,7 +40,11 @@ export const EMPTY_ITEMS_SEARCH: ItemsSearch = {
   sort: "",
 };
 
-/** Every wiki section, in sidebar order; links open a section's empty search. */
+/**
+ * Every wiki section, in sidebar order; links open a section's empty search.
+ * The header groups the sections into the catalog the wiki browses and the
+ * tools that work on its items.
+ */
 export const WIKI_NAVIGATION = [
   {
     link: linkOptions({ to: "/" }),
@@ -53,42 +57,50 @@ export const WIKI_NAVIGATION = [
       search: EMPTY_ITEMS_SEARCH,
     }),
     labelKey: "navigation.items",
+    group: "browse",
     descriptionKey: "home.itemsDescription",
     icon: Package,
   },
   {
     link: linkOptions({ to: "/npcs", search: EMPTY_NPCS_SEARCH }),
     labelKey: "navigation.npcs",
+    group: "browse",
     descriptionKey: "home.npcsDescription",
     icon: Skull,
   },
   {
     link: linkOptions({ to: "/events" }),
     labelKey: "navigation.events",
+    group: "browse",
     descriptionKey: "home.eventsDescription",
     icon: CalendarDays,
   },
   {
     link: linkOptions({ to: "/set" }),
     labelKey: "navigation.set",
+    group: "tools",
     descriptionKey: "home.setDescription",
     icon: Backpack,
   },
   {
     link: linkOptions({ to: "/compare" }),
     labelKey: "navigation.compare",
+    group: "tools",
     descriptionKey: "home.compareDescription",
     icon: Scale,
   },
   {
     link: linkOptions({ to: "/calculators" }),
     labelKey: "navigation.calculators",
+    group: "tools",
     descriptionKey: "home.calculatorsDescription",
     icon: Calculator,
   },
   {
     link: linkOptions({ to: "/sockets" }),
     labelKey: "navigation.sockets",
+    group: "tools",
+    descriptionKey: "home.socketsDescription",
     icon: Gem,
   },
 ];

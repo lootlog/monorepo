@@ -4,6 +4,7 @@ import { t } from "@/i18n/messages";
 import { findWikiSection, WIKI_NAVIGATION } from "@/navigation/wiki-navigation";
 import { WikiHeaderSearch } from "./wiki-header-search";
 import { WikiMark } from "./wiki-mark";
+import { WikiNavigationMenu } from "./wiki-navigation-menu";
 import { WikiUserMenu } from "./wiki-user-menu";
 
 // The home page is the brand's link; the bar lists the sections.
@@ -11,8 +12,8 @@ const sections = WIKI_NAVIGATION.filter(({ link }) => link.to !== "/");
 
 /**
  * The bar the public portals share: the wiki, its sections, the search and
- * the account. The sections sit in the bar from `xl`; narrower screens open
- * them from the menu, so the bar stays one row.
+ * the account. From `lg` the sections open from two panels in the bar;
+ * narrower screens list them in the menu, so the bar stays one row.
  */
 export function WikiHeader() {
   const { pathname } = useLocation();
@@ -24,13 +25,14 @@ export function WikiHeader() {
       section={t("header.brandSuffix")}
       home={<Link to="/" />}
       mark={<WikiMark className="size-7 rounded-lg" />}
-      inlineFrom="xl"
+      inlineFrom="lg"
       links={sections.map((section) => ({
         id: section.link.to,
         label: t(section.labelKey),
         active: section === activeSection,
         render: <Link {...section.link} />,
       }))}
+      navigation={<WikiNavigationMenu activeSection={activeSection} />}
       search={<WikiHeaderSearch variant="field" />}
       compactSearch={<WikiHeaderSearch variant="icon" />}
       actions={<WikiUserMenu />}
