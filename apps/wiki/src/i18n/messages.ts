@@ -28,6 +28,7 @@ const messages = {
     npcs: "Potwory",
     compare: "Porównywarka",
     calculators: "Kalkulatory",
+    sockets: "Gniazda",
     set: "Mój zestaw",
     breadcrumbs: "Ścieżka strony",
     menu: "Menu",
@@ -118,6 +119,7 @@ const messages = {
     sections: "Części zestawu",
     statsTab: "Statystyki",
     skillsTab: "Umiejętności",
+    socketsTab: "Gniazda",
     upgradeCostTab: "Koszt ulepszenia",
     upgradeCostTitle: "Koszt ulepszenia zestawu",
     upgradeCostDescription:
@@ -412,7 +414,8 @@ const messages = {
       pointsValue: "{{value}} pkt",
       cumulative: "łącznie {{value}}",
       gold: "Złoto",
-      goldValue: "{{value}} zł",
+      goldMillions: "{{value}}m",
+      goldBillions: "{{value}}g",
       atMaxOnly: "tylko na +5",
       steps: "Koszt kolejnych poziomów",
       maxStepExtras: "oraz {{essence}} × {{currency}} i {{gold}}",
@@ -459,6 +462,84 @@ const messages = {
       heal: "Leczenie",
       slow: "Spowolnienie",
       lowevade: "Obniżanie uniku przeciwnika",
+    },
+  },
+  socket: {
+    label: "Gniazdo",
+    none: "Bez symbolu",
+    noneFleeting: "Symbol ulotny",
+    title: "Symbol w gnieździe",
+    description:
+      "Symbol włożony w gniazdo daje przedmiotowi bonus legendarny o sile poziomu pozornego przedmiotu, więc ulepszenie go wzmacnia. Do gniazda pasują symbole z przedziału poziomów przedmiotu przeznaczone dla jego klasy.",
+    fleeting:
+      "Przedmiot ma symbol ulotny z bonusem: {{bonus}}. Włożenie innego symbolu bezpowrotnie go zastępuje.",
+    noOptions: "Do gniazda tego przedmiotu nie pasuje żaden znany symbol.",
+    bonusLevel: "Siła bonusu jak na {{level}} lvl",
+    symbol: "Symbol",
+    recipe: "Receptura",
+    recipeDescription:
+      "Trzy komponenty z jednego przedziału poziomów łączy się w Rzemiośle operacją Fuzji. Inne połączenie trzech komponentów daje losowy symbol z przedziału.",
+    fusionCost: "Koszt Fuzji",
+    levels: "Poziom przedmiotu",
+    levelRange: "{{min}}–{{max}}",
+    count: "× {{count}}",
+    usedIn: "Używany w recepturach",
+    usedInDescription:
+      "Symbole z tego przedziału poziomów, których Fuzja wymaga tego komponentu, i ile jego sztuk potrzeba.",
+    chests: {
+      title: "Skrytki",
+      description:
+        "Skrytki z elit II i herosów dają jeden komponent: skrytka żywiołu w połowie przypadków swój, a pozostałe po 12,5%; uniwersalna każdy po równo. Skrytki zdwojonej mocy dają dwa komponenty, każdy losowany osobno z równymi szansami.",
+      drops: "Wypada ze skrytek",
+      dropsDescription:
+        "Skrytki z tego przedziału poziomów i szansa, że komponent z nich będzie tym.",
+      contents: "Zawartość skrytki",
+      one: "Otwarcie daje 1 komponent z przedziału {{min}}–{{max}} lvl.",
+      two: "Otwarcie daje 2 komponenty z przedziału {{min}}–{{max}} lvl, każdy losowany osobno.",
+      twice: "2 × {{chance}}",
+      range: "{{min}}–{{max}} lvl",
+    },
+    tiers: {
+      100: "Słabe symbole",
+      200: "Stabilne symbole",
+      300: "Emanujące symbole",
+    },
+    set: {
+      title: "Komponenty do symboli",
+      description:
+        "Komponenty i złoto potrzebne na symbole wybrane do gniazd założonych przedmiotów. Symbol wybierzesz prawym klikiem na przedmiocie z gniazdem.",
+      none: "Żaden założony przedmiot nie ma wybranego symbolu.",
+      noSockets: "Żaden założony przedmiot nie ma gniazda.",
+      fusions: "Fuzje",
+      gold: "Złoto na Fuzje",
+      components: "Komponenty",
+      componentsList: "Potrzebne komponenty",
+      items: "Symbole w przedmiotach",
+      emptySocket: "Gniazdo bez symbolu",
+    },
+    page: {
+      metaTitle: "Gniazda i symbole",
+      description:
+        "Jak z komponentów powstają symbole i które bonusy legendarne pasują do gniazd jakich przedmiotów.",
+      howTitle: "Jak to działa",
+      steps: {
+        components:
+          "Komponenty wypadają ze skrytek mocy, które zdobywa się z elit II i herosów. Poziom komponentu odpowiada poziomowi potwora, a skrytka żywiołu w połowie przypadków daje komponent swojego żywiołu.",
+        fusion:
+          "Fuzja w Rzemiośle łączy trzy komponenty z jednego przedziału poziomów w symbol. Każdy z dziesięciu bonusów ma swoją recepturę, taką samą we wszystkich przedziałach.",
+        enchant:
+          "Zaklinanie wkłada symbol do gniazda przedmiotu i wiąże przedmiot z postacią. Symbol da się później wyjąć za złoto albo Smocze Łuski.",
+        level:
+          "Bonus z symbolu ma siłę poziomu pozornego przedmiotu: ulepszona na +5 zbroja 93 lvl daje bonus jak na 108 lvl.",
+      },
+      socketedTitle: "Przedmioty z gniazdem",
+      socketed:
+        "Gniazdo mają wszystkie legendarne zbroje z Mirvenis-Adur oraz legendy z Krwawych Kopalni: naszyjniki (38 lvl), buty (60), rękawice (80), hełmy (110) i bronie pomocnicze (300).",
+      recipesTitle: "Receptury",
+      bonus: "Bonus",
+      components: "Komponenty",
+      tierSummary: "Przedmioty {{min}}–{{max}} lvl · Fuzja: {{gold}}",
+      source: "Zasady gry",
     },
   },
   uiLabels: {

@@ -45,7 +45,8 @@ export const decodeItemComparison = (value: string): ComparedItem[] =>
         ? [
             {
               id: Number(match[1]),
-              upgrade: decodeItemUpgrade(match[2], match[3]) ?? NO_UPGRADE,
+              upgrade:
+                decodeItemUpgrade(match[2], match[3], match[4]) ?? NO_UPGRADE,
             },
           ]
         : [];

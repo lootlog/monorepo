@@ -4,6 +4,7 @@ import type {
   UpgradeBonusKey,
   UpgradeLevel,
 } from "@lootlog/domain/item-upgrade";
+import type { SocketBonus } from "@lootlog/domain/item-socket";
 
 /** The wiki covers the Polish edition of Margonem for now. */
 export const WIKI_GAME_VERSION = "pl";
@@ -24,20 +25,32 @@ export const itemPageParams = (item: { id: number; name: string }) => ({
 });
 
 /**
- * The upgrade an item page shows the item at, and the character level an
- * elastic one is previewed at, so a link keeps them.
+ * The upgrade and socket symbol an item page shows the item with, and the
+ * character level an elastic one is previewed at, so a link keeps them.
  */
 export type ItemPageSearch = {
   upgrade?: UpgradeLevel;
   bonus?: UpgradeBonusKey;
+  symbol?: SocketBonus;
   level?: number;
 };
 
 export const itemPageSearch = ({
   level,
   bonus,
-}: ItemUpgrade): ItemPageSearch =>
-  level === 0 ? {} : { upgrade: level, bonus };
+  symbol,
+}: ItemUpgrade): ItemPageSearch => {
+  const search: ItemPageSearch = {};
+
+  if (level > 0) {
+    search.upgrade = level;
+    search.bonus = bonus;
+  }
+
+  if (symbol) search.symbol = symbol;
+
+  return search;
+};
 
 export const npcPageParams = (npc: { id: number; name: string }) => ({
   npcSlug: catalogPageSegment(npc),

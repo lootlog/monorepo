@@ -4,6 +4,7 @@ import {
   Backpack,
   Calculator,
   CalendarDays,
+  Gem,
   House,
   Package,
   Scale,
@@ -84,6 +85,11 @@ export const WIKI_NAVIGATION = [
     labelKey: "navigation.calculators",
     descriptionKey: "home.calculatorsDescription",
     icon: Calculator,
+  },
+  {
+    link: linkOptions({ to: "/sockets" }),
+    labelKey: "navigation.sockets",
+    icon: Gem,
   },
 ];
 

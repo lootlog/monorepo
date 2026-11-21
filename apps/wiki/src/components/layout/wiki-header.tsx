@@ -11,7 +11,7 @@ const sections = WIKI_NAVIGATION.filter(({ link }) => link.to !== "/");
 
 /**
  * The bar the public portals share: the wiki, its sections, the search and
- * the account. The sections sit in the bar from `lg`; narrower screens open
+ * the account. The sections sit in the bar from `xl`; narrower screens open
  * them from the menu, so the bar stays one row.
  */
 export function WikiHeader() {
@@ -24,7 +24,7 @@ export function WikiHeader() {
       section={t("header.brandSuffix")}
       home={<Link to="/" />}
       mark={<WikiMark className="size-7 rounded-lg" />}
-      inlineFrom="lg"
+      inlineFrom="xl"
       links={sections.map((section) => ({
         id: section.link.to,
         label: t(section.labelKey),

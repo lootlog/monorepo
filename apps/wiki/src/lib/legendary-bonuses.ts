@@ -39,6 +39,10 @@ const LEGENDARY_BONUS_ICONS = new Map(
   }),
 );
 
+/** The icon drawn for a legendary bonus. */
+export const legendaryBonusIcon = (name: string) =>
+  LEGENDARY_BONUS_ICONS.get(name) ?? Sparkles;
+
 // Bonuses players no longer search for, left out of the filters.
 const UNSEARCHED_BONUSES = new Set(["pushback", "resgain"]);
 
@@ -48,7 +52,7 @@ const UPCOMING_BONUSES = new Set(["frenzy", "retaliation"]);
 /** Every legendary bonus with its icon, as item cards name them. */
 const LEGENDARY_BONUSES = LEGENDARY_BONUS_NAMES.map((name) => ({
   name,
-  icon: LEGENDARY_BONUS_ICONS.get(name) ?? Sparkles,
+  icon: legendaryBonusIcon(name),
   isUpcoming: UPCOMING_BONUSES.has(name),
 }));
 
@@ -58,10 +62,12 @@ export const SEARCHABLE_LEGENDARY_BONUSES = sortBy(
   [({ isUpcoming }) => isUpcoming],
 );
 
-// `legbon` holds the bonus and the level it scales with, `verycrit,200`.
-const LEGENDARY_BONUS_STAT = /(?:^|;)legbon=([^,;]+)/;
+// `legbon` holds the bonus and the level it scales with, `verycrit,200`; a
+// symbol in the item's socket gives it the same way.
+const LEGENDARY_BONUS_STAT =
+  /(?:^|;)(?:legbon|socket_injection_legbon|socket_fleeting_legbon)=([^,;]+)/;
 
-/** The item's legendary bonus; unknown bonuses read as none. */
+/** The item's legendary bonus, its own or its socket's; unknown ones read as none. */
 export const findLegendaryBonus = (stat: string) => {
   const name = LEGENDARY_BONUS_STAT.exec(stat)?.[1];
 

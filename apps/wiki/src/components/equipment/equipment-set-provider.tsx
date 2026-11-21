@@ -11,6 +11,7 @@ import {
   unequipSlot,
 } from "@/lib/equipment-set";
 import { useSetCatalogItems } from "@/hooks/use-worn-items";
+import { isCrafted } from "@lootlog/domain/item-upgrade";
 
 const STORED_SET = {
   storageKey: "lootlog-wiki-equipment-set",
@@ -46,10 +47,9 @@ export function EquipmentSetProvider({ children }: { children: ReactNode }) {
 
             return {
               ...current,
-              upgrades:
-                upgrade.level > 0
-                  ? { ...upgrades, [slotId]: upgrade }
-                  : upgrades,
+              upgrades: isCrafted(upgrade)
+                ? { ...upgrades, [slotId]: upgrade }
+                : upgrades,
             };
           }),
         unequip: (slotId) => update((current) => unequipSlot(current, slotId)),

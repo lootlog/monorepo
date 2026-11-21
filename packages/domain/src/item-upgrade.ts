@@ -5,6 +5,12 @@ import {
   itemStatValue,
   parseItemStatEntries,
 } from "./item-stat.js";
+import {
+  hasSocket,
+  isSocketBonus,
+  type SocketBonus,
+  socketItemStat,
+} from "./item-socket.js";
 
 /**
  * Margonem's item upgrade (ulepszanie), from the game's rules at
@@ -27,10 +33,15 @@ export const upgradedItemLevel = (level: number, upgrade: UpgradeLevel) =>
   level + Math.round(level * 0.03) * upgrade;
 
 /**
- * How far an item is upgraded and, from +5, the extra bonus the player chose
- * for it.
+ * How the player crafted an item: how far it is upgraded, from +5 the extra
+ * bonus they chose for it, and the legendary bonus of the symbol set in its
+ * socket.
  */
-export type ItemUpgrade = { level: UpgradeLevel; bonus?: UpgradeBonusKey };
+export type ItemUpgrade = {
+  level: UpgradeLevel;
+  bonus?: UpgradeBonusKey;
+  symbol?: SocketBonus;
+};
 
 export const NO_UPGRADE: ItemUpgrade = { level: 0 };
 
@@ -385,6 +396,13 @@ const defenseScale = (item: UpgradableItem, key: string, shown: number) => {
   return undefined;
 };
 
+// An item's own legendary bonus and the ones a symbol in its socket gives.
+const LEGENDARY_BONUS_STATS = new Set([
+  "legbon",
+  "socket_injection_legbon",
+  "socket_fleeting_legbon",
+]);
+
 /** The item's stats computed at `toLevel`, without its upgrade entries. */
 const scaleStats = (item: UpgradableItem, toLevel: number) => {
   const rules = statRules(item.rarity, item.type);
@@ -398,7 +416,7 @@ const scaleStats = (item: UpgradableItem, toLevel: number) => {
       const values = value.split(",");
 
       // A legendary bonus is as strong as its item's virtual level.
-      if (key === "legbon" && values.length === 2) {
+      if (LEGENDARY_BONUS_STATS.has(key) && values.length === 2) {
         return `${key}=${values[0]},${toLevel}`;
       }
 
@@ -495,7 +513,7 @@ const addUpgradeBonus = (
  * `bonus=<stat>,<increase>`. The required level stays: upgrading raises only
  * the level the stats are computed at.
  */
-export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
+const upgradeLevelStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
   if (upgrade.level === 0 || !isUpgradable(item)) return item.stat;
 
   const toLevel = upgradedItemLevel(item.lvl, upgrade.level);
@@ -517,6 +535,34 @@ export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
     ";",
   );
 };
+
+/**
+ * The item's stats as the player crafted it, in the game's stat format: as
+ * upgraded, then with the chosen symbol in its socket, whose bonus is as
+ * strong as the item's upgraded level. Whether the socket takes that symbol
+ * the symbol's own stats tell (`symbolFits`), so callers that hold them
+ * check it; an item without a socket takes none.
+ */
+export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
+  const upgraded = upgradeLevelStat(item, upgrade);
+  const { symbol } = upgrade;
+
+  return symbol && hasSocket(item)
+    ? socketItemStat(
+        upgraded,
+        symbol,
+        upgradedItemLevel(item.lvl, isUpgradable(item) ? upgrade.level : 0),
+      )
+    : upgraded;
+};
+
+/** Whether the player crafted the item at all: upgraded it or set a symbol. */
+export const isCrafted = (upgrade: ItemUpgrade) =>
+  upgrade.level > 0 || upgrade.symbol !== undefined;
+
+/** Whether two crafts make the same item. */
+export const isSameUpgrade = (a: ItemUpgrade, b: ItemUpgrade) =>
+  a.level === b.level && a.bonus === b.bonus && a.symbol === b.symbol;
 
 /**
  * The extra bonus a +5 item offers: three drawn without repeats from its
@@ -562,29 +608,46 @@ export const isUpgradeBonusKey = (value: string): value is UpgradeBonusKey =>
 
 /**
  * An upgrade as a link writes it after an item id: `u` with its level, then
- * the +5 bonus's stat, such as `u5ds`. An item worn as dropped writes nothing.
+ * the +5 bonus's stat, then `-` and the bonus of the symbol in its socket,
+ * such as `u5ds-critred` or `-critred`. An item worn as dropped writes
+ * nothing.
  */
 export const encodeItemUpgrade = (upgrade: ItemUpgrade | undefined) =>
-  upgrade && upgrade.level > 0 ? `u${upgrade.level}${upgrade.bonus ?? ""}` : "";
-
-/** Matches `encodeItemUpgrade`'s text, capturing its level and bonus. */
-export const ITEM_UPGRADE_PATTERN = "(?:u(\\d)([a-z]*))?";
+  [
+    upgrade && upgrade.level > 0
+      ? `u${upgrade.level}${upgrade.bonus ?? ""}`
+      : "",
+    upgrade?.symbol ? `-${upgrade.symbol}` : "",
+  ].join("");
 
 /**
- * The upgrade a link's captured level and bonus name. A level it cannot read
- * is none, and a bonus counts only on a +5.
+ * Matches `encodeItemUpgrade`'s text, capturing its level, bonus and
+ * symbol.
+ */
+export const ITEM_UPGRADE_PATTERN = "(?:u(\\d)([a-z]*))?(?:-([a-z]+))?";
+
+/**
+ * The upgrade a link's captured level, bonus and symbol name. A level it
+ * cannot read is none, a bonus counts only on a +5, and an unknown symbol is
+ * none.
  */
 export const decodeItemUpgrade = (
   level: string | undefined,
   bonus: string | undefined,
+  symbol?: string,
 ): ItemUpgrade | undefined => {
   const value = Number(level);
+  const upgradeLevel = isUpgradeLevel(value) ? value : 0;
 
-  if (!isUpgradeLevel(value) || value === 0) return undefined;
+  const socket =
+    symbol !== undefined && isSocketBonus(symbol) ? { symbol } : {};
 
-  return value === 5 && bonus !== undefined && isUpgradeBonusKey(bonus)
-    ? { level: value, bonus }
-    : { level: value };
+  const upgrade: ItemUpgrade =
+    upgradeLevel === 5 && bonus !== undefined && isUpgradeBonusKey(bonus)
+      ? { level: upgradeLevel, bonus, ...socket }
+      : { level: upgradeLevel, ...socket };
+
+  return isCrafted(upgrade) ? upgrade : undefined;
 };
 
 /** A bonus group's power, which weighs its chance to be drawn. */

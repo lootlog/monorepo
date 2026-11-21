@@ -8,6 +8,7 @@ import { useItemForCharacter } from "@/hooks/use-item-for-character";
 import { t } from "@/i18n/messages";
 import {
   attackSpeedUpgrade,
+  isCrafted,
   NO_UPGRADE,
   upgradeItemStat,
 } from "@lootlog/domain/item-upgrade";
@@ -89,7 +90,7 @@ export function CatalogItemCard({
       <div className="flex shrink-0 gap-1">
         <EquipButton
           item={item}
-          upgrade={upgrade.level > 0 ? upgrade : undefined}
+          upgrade={isCrafted(upgrade) ? upgrade : undefined}
           compact
         />
         <CompareButton item={item} upgrade={upgrade} compact />

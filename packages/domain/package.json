@@ -24,6 +24,7 @@
     "./item-rarity": "./src/item-rarity.ts",
     "./item-type": "./src/item-type.ts",
     "./item-stat": "./src/item-stat.ts",
+    "./item-socket": "./src/item-socket.ts",
     "./item-upgrade": "./src/item-upgrade.ts",
     "./loot-acceptance": "./src/loot-acceptance.ts",
     "./loot-draw": "./src/loot-draw.ts",

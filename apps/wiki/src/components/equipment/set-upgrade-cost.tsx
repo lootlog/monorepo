@@ -110,7 +110,7 @@ export function SetUpgradeCost() {
                 label: t("upgrade.cost.points"),
                 value: formatNumber(points),
               },
-              { label: t("upgrade.cost.gold"), value: formatNumber(gold) },
+              { label: t("upgrade.cost.gold"), value: formatGold(gold) },
               ...currencyTiles,
             ]}
           />
