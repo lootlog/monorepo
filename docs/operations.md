@@ -94,6 +94,11 @@ app. Granting the `admin` platform role does not open the panel: only a change
 to `ADMIN_ACCOUNT_IDS` adds an operator. The audit log names the operator by
 Lootlog User.
 
+The audit entry of a role change, ban, or session revocation is written before
+the change, so nothing changes without one. When the change then fails or is
+cut short, the entry stays with `completed: false`: the change may have landed
+in part, and the User's page shows what holds.
+
 An operator cannot ban their own account: the ban would end their session and
 block the sign-in back. Another operator can still ban them.
 

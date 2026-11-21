@@ -40,6 +40,9 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
 
   let auth: ReturnType<typeof createLootlogAuth>;
 
+  /** Makes Better Auth refuse writes to a User, as when its store is down. */
+  let accountWritesFail = false;
+
   const admin = <A, E>(
     run: (service: typeof AdminService.Service) => Effect.Effect<A, E>,
   ) => runtime.runPromise(Effect.flatMap(AdminService, run));
@@ -114,7 +117,18 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
           database: drizzle({ client: pool }),
         });
 
-        return BetterAuthRuntime.of(toAuthProvider(auth));
+        const provider = toAuthProvider(auth);
+
+        return BetterAuthRuntime.of({
+          ...provider,
+          accounts: {
+            ...provider.accounts,
+            updateUser: (...input) =>
+              accountWritesFail
+                ? Promise.reject(new Error("Account store down"))
+                : provider.accounts.updateUser(...input),
+          },
+        });
       }),
     );
 
@@ -212,6 +226,29 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
         action: "ban.set",
         details: { reason: "Spam", expiresAt: null },
       },
+    ]);
+  });
+
+  it("keeps the entry of a ban that failed and says it did not complete", async () => {
+    const user = await createUser("Unbanned");
+
+    accountWritesFail = true;
+
+    try {
+      await expect(
+        admin((service) =>
+          service.ban(ACTOR, user.id, { reason: "Spam", expiresAt: null }),
+        ),
+      ).rejects.toThrow("Admin service unavailable");
+    } finally {
+      accountWritesFail = false;
+    }
+
+    const details = await admin((service) => service.getUser(user.id));
+
+    expect(details.user.ban).toBeNull();
+    expect(details.audit.map((entry) => entry.details)).toEqual([
+      { reason: "Spam", expiresAt: null, completed: false },
     ]);
   });
 
