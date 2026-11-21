@@ -77,6 +77,19 @@
             "explode": true
           },
           {
+            "name": "categories",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["equipment", "crafting", "other"]
+              },
+              "description": "Items of any of these categories: `equipment` for wearable gear, `crafting` for equipment-slot items meant only as crafting ingredients, and `other` for non-equippable items such as keys, bags and consumables."
+            },
+            "required": false
+          },
+          {
             "name": "professions",
             "in": "query",
             "schema": {

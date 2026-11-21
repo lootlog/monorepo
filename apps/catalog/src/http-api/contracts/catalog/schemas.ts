@@ -1,5 +1,6 @@
 /** Transport schemas owned by the public catalog HTTP module. */
 import * as Schema from "effect/Schema";
+import { ITEM_CATEGORIES } from "@lootlog/domain/item-type";
 import { BOSS_ORIGINS } from "@lootlog/domain/npc-type";
 import { PROFESSION_SHORTNAMES } from "@lootlog/domain/profession";
 import { GameVersionSchema } from "@lootlog/schema/game-version";
@@ -183,6 +184,12 @@ export const CatalogControllerGetItemsQuery = Schema.Struct({
   types: Schema.optionalKey(
     Schema.Array(Schema.String).annotate({
       description: "Item types, such as `ONE_HAND_WEAPON`.",
+    }),
+  ),
+  categories: Schema.optionalKey(
+    Schema.Array(Schema.Literals(ITEM_CATEGORIES)).annotate({
+      description:
+        "Items of any of these categories: `equipment` for wearable gear, `crafting` for equipment-slot items meant only as crafting ingredients, and `other` for non-equippable items such as keys, bags and consumables.",
     }),
   ),
   professions: Schema.optionalKey(

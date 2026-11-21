@@ -623,3 +623,16 @@ test("events take their name from the year the slug names, the latest first", as
     },
   ]);
 });
+
+test("narrows item searches by browse category", async () => {
+  const { catalog, searches } = catalogWith([]);
+
+  await Effect.runPromise(
+    catalog.getItems({
+      gameVersion: "pl",
+      categories: ["crafting", "other"],
+    }),
+  );
+
+  expect(searches[0]?.filter).toContain('category IN ["crafting", "other"]');
+});

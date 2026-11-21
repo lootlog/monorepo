@@ -81,6 +81,7 @@ export function SetItemPicker({
   const search: ItemsSearch = {
     ...EMPTY_ITEMS_SEARCH,
     query: debouncedQuery,
+    scope: "equipment",
     slot: fittingTypes ? "" : slotId,
     types: fittingTypes?.join(",") ?? "",
     professions: set.profession ?? "",

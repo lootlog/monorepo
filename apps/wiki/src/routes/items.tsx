@@ -14,6 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@lootlog/ui/components/toggle-group";
 import { ActiveFilterChips } from "@/components/common/active-filter-chips";
 import { FiltersAside } from "@/components/common/filters-aside";
 import { FiltersSheet } from "@/components/common/filters-sheet";
@@ -23,7 +27,10 @@ import { useDebouncedQuery } from "@/hooks/use-debounced-query";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import {
+  activeScopeTab,
+  effectiveScope,
   effectiveSort,
+  ITEM_SCOPE_TABS,
   type ItemsSearch,
   joinList,
   SORT_OPTIONS,
@@ -97,6 +104,15 @@ const activeFilters = (search: ItemsSearch): ActiveFilter[] => [
         },
       ]
     : []),
+  ...(search.scope === "crafting"
+    ? [
+        {
+          key: "crafting",
+          label: t("filters.crafting"),
+          clear: { scope: "other" },
+        },
+      ]
+    : []),
   ...LIST_FILTERS.flatMap(({ key, label }) => {
     const values = splitList(search[key]);
 
@@ -142,6 +158,8 @@ function ItemsRoute() {
   );
 
   const filters = activeFilters(search);
+  const scope = effectiveScope(search);
+  const currentScopeTab = activeScopeTab(scope);
 
   // The set's character as filters: its profession and what its level wears.
   const character = {
@@ -210,13 +228,22 @@ function ItemsRoute() {
               size="lg"
               aria-pressed={isForCharacter}
               title={t("filters.forCharacterTitle")}
-              onClick={() =>
-                change(
-                  isForCharacter
-                    ? { professions: "", maxLevel: undefined }
-                    : character,
-                )
-              }
+              onClick={() => {
+                if (isForCharacter) {
+                  change({ professions: "", maxLevel: undefined });
+
+                  return;
+                }
+
+                const next: Partial<ItemsSearch> = { ...character };
+
+                if (scope === "other" || scope === "crafting") {
+                  next.scope = search.query.trim() ? "equipment" : "";
+                  next.types = "";
+                }
+
+                change(next);
+              }}
             >
               <UserRound aria-hidden="true" />
               <span className="max-sm:sr-only">
@@ -226,6 +253,37 @@ function ItemsRoute() {
           ) : null}
           <FiltersSheet count={filters.length}>{panel}</FiltersSheet>
         </div>
+        <ToggleGroup
+          aria-label={t("filters.scope")}
+          variant="outline"
+          size="sm"
+          spacing={1.5}
+          className="flex-wrap"
+          value={[currentScopeTab]}
+          // One scope is always chosen: pressing it again keeps it.
+          onValueChange={([pressed]) => {
+            const next = ITEM_SCOPE_TABS.find((value) => value === pressed);
+
+            if (!next) return;
+
+            if (next === "equipment") {
+              change({
+                scope: search.query.trim() ? "equipment" : "",
+                types: "",
+              });
+            } else if (next === "other") {
+              change({ scope: "other", slot: "" });
+            } else {
+              change({ scope: search.query.trim() ? "" : "all" });
+            }
+          }}
+        >
+          {ITEM_SCOPE_TABS.map((value) => (
+            <ToggleGroupItem key={value} value={value}>
+              {t(`filters.scopeOptions.${value}`)}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
         <ItemResults
           params={toCatalogParams(search)}
           query={search.query}

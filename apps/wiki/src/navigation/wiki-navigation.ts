@@ -26,6 +26,7 @@ export const EMPTY_NPCS_SEARCH: NpcsSearch = {
 /** The item search with no filters, which links extend with their own. */
 export const EMPTY_ITEMS_SEARCH: ItemsSearch = {
   query: "",
+  scope: "",
   slot: "",
   types: "",
   professions: "",
