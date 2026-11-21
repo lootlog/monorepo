@@ -153,6 +153,9 @@ export const text = {
   auditTarget: "Użytkownik",
   auditDetails: "Szczegóły",
   auditDeletedUser: "Usunięty użytkownik",
+  auditIncomplete: "Nieukończone",
+  auditIncompleteHint:
+    "Działanie nie powiodło się albo zostało przerwane i mogło wykonać się częściowo. Sprawdź aktualny stan użytkownika.",
 
   cancel: "Anuluj",
   banConfirmTitle: (name: string) => `Zbanować użytkownika ${name}?`,

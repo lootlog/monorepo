@@ -1,3 +1,4 @@
+import { Badge } from "@lootlog/ui/components/badge";
 import {
   Table,
   TableBody,
@@ -44,7 +45,14 @@ export function AuditTable({
               {formatDateTime(entry.createdAt)}
             </TableCell>
             <TableCell className="font-medium">
-              {auditActionText[entry.action]}
+              <span className="flex flex-wrap items-center gap-2">
+                {auditActionText[entry.action]}
+                {entry.incomplete ? (
+                  <Badge variant="destructive" title={text.auditIncompleteHint}>
+                    {text.auditIncomplete}
+                  </Badge>
+                ) : null}
+              </span>
             </TableCell>
             {showTarget ? (
               <TableCell>
