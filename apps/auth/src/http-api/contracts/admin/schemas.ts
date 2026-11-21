@@ -20,7 +20,7 @@ export const AdminOperator = Schema.Struct({
   name: Schema.String,
 }).annotate({ identifier: "AdminOperator" });
 
-export const AdminUserBan = Schema.Struct({
+const AdminUserBan = Schema.Struct({
   reason: Schema.NullOr(Schema.String),
   /** Null for a ban without an end. */
   expiresAt: Schema.NullOr(DateTimeString),
@@ -41,7 +41,7 @@ export const AdminUser = Schema.Struct({
 
 export type AdminUser = typeof AdminUser.Type;
 
-export const AdminSession = Schema.Struct({
+const AdminSession = Schema.Struct({
   id: Schema.String,
   createdAt: DateTimeString,
   updatedAt: DateTimeString,
@@ -50,7 +50,7 @@ export const AdminSession = Schema.Struct({
   userAgent: Schema.NullOr(Schema.String),
 }).annotate({ identifier: "AdminSession" });
 
-export const AdminApiKey = Schema.Struct({
+const AdminApiKey = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   start: Schema.NullOr(Schema.String),
@@ -59,7 +59,7 @@ export const AdminApiKey = Schema.Struct({
   expiresAt: Schema.NullOr(DateTimeString),
 }).annotate({ identifier: "AdminApiKey" });
 
-export const AdminAuditAction = Schema.Literals(ADMIN_AUDIT_ACTIONS);
+const AdminAuditAction = Schema.Literals(ADMIN_AUDIT_ACTIONS);
 
 export const AdminAuditEntry = Schema.Struct({
   id: Schema.String,
