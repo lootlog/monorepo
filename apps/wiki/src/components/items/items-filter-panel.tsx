@@ -1,4 +1,4 @@
-import { Gem } from "lucide-react";
+import { EquipmentSlotIcon } from "@/components/equipment/equipment-slot-icon";
 import { useId } from "react";
 import {
   Select,
@@ -8,10 +8,7 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { resolveItemRarity } from "@lootlog/domain/item-rarity";
-import {
-  LOOT_RARITY_PILL_CLASS,
-  LOOT_RARITY_TEXT_CLASS,
-} from "@lootlog/ui/lib/item-rarity-colors";
+import { LOOT_RARITY_PILL_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { cn } from "cn";
 import { EquipmentGrid } from "@/components/equipment/equipment-grid";
 import { t } from "@/i18n/messages";
@@ -103,14 +100,9 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
         onClear={() => onChange({ slot: "" })}
         defaultOpen
       >
-        <div className="relative isolate flex flex-col items-center gap-2 overflow-hidden rounded-lg border border-border/50 bg-background/50 px-3 pt-3 pb-2">
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 -z-10 bg-[radial-gradient(70%_60%_at_50%_45%,color-mix(in_oklab,var(--primary)_10%,transparent),transparent_75%)]"
-          />
+        <div className="flex justify-center rounded-lg border border-border/50 bg-background/50 p-3">
           <EquipmentGrid
             renderSlot={(slot) => {
-              const Icon = slot.icon;
               const isSelected = search.slot === slot.id;
 
               return (
@@ -127,22 +119,11 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
                       : "border-border/70 bg-card/80 text-muted-foreground hover:border-primary/50 hover:text-primary",
                   )}
                 >
-                  <Icon aria-hidden="true" className="size-5" />
+                  <EquipmentSlotIcon slot={slot.id} className="size-5" />
                 </button>
               );
             }}
           />
-          <p
-            aria-live="polite"
-            className={cn(
-              "text-xs font-medium",
-              selectedSlot ? "text-primary" : "text-muted-foreground",
-            )}
-          >
-            {selectedSlot
-              ? t(`slots.${selectedSlot.id}`)
-              : t("filters.anySlot")}
-          </p>
         </div>
       </FilterSection>
 
@@ -185,12 +166,6 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
               <FilterTile
                 key={value}
                 label={t(`itemRarity.${value}`)}
-                icon={
-                  <Gem
-                    aria-hidden="true"
-                    className={cn("size-3.5", LOOT_RARITY_TEXT_CLASS[rarity])}
-                  />
-                }
                 pressed={rarities.isPressed(value)}
                 onPressedChange={rarities.toggle(value)}
                 className={LOOT_RARITY_PILL_CLASS[rarity]}

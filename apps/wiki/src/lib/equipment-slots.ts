@@ -1,16 +1,3 @@
-import {
-  CircleDot,
-  Footprints,
-  Gem,
-  Hand,
-  HardHat,
-  type LucideIcon,
-  Shield,
-  Shirt,
-  Sparkles,
-  Sword,
-} from "lucide-react";
-
 export type EquipmentSlotId =
   | "blessing"
   | "helmet"
@@ -26,7 +13,6 @@ export type EquipmentSlot = {
   id: EquipmentSlotId;
   /** One letter in a shared set link. */
   code: string;
-  icon: LucideIcon;
   /** Item types the slot holds. */
   types: readonly string[];
   /** Where the slot sits in Margonem's equipment grid. */
@@ -43,42 +29,36 @@ export const EQUIPMENT_SLOTS: readonly EquipmentSlot[] = [
   {
     id: "blessing",
     code: "l",
-    icon: Sparkles,
     types: ["BLESS"],
     position: "col-start-1 row-start-1",
   },
   {
     id: "helmet",
     code: "h",
-    icon: HardHat,
     types: ["HELMET"],
     position: "col-start-2 row-start-1",
   },
   {
     id: "ring",
     code: "r",
-    icon: CircleDot,
     types: ["RING"],
     position: "col-start-1 row-start-2",
   },
   {
     id: "necklace",
     code: "n",
-    icon: Gem,
     types: ["NECKLACE"],
     position: "col-start-2 row-start-2",
   },
   {
     id: "gloves",
     code: "g",
-    icon: Hand,
     types: ["GLOVES"],
     position: "col-start-3 row-start-2",
   },
   {
     id: "weapon",
     code: "w",
-    icon: Sword,
     types: [
       "ONE_HAND_WEAPON",
       "TWO_HAND_WEAPON",
@@ -91,21 +71,18 @@ export const EQUIPMENT_SLOTS: readonly EquipmentSlot[] = [
   {
     id: "armor",
     code: "a",
-    icon: Shirt,
     types: ["ARMOR"],
     position: "col-start-2 row-start-3",
   },
   {
     id: "secondary",
     code: "s",
-    icon: Shield,
     types: ["SHIELD", "HELP_WEAPON", "ORB_WEAPON", "QUIVER"],
     position: "col-start-3 row-start-3",
   },
   {
     id: "boots",
     code: "b",
-    icon: Footprints,
     types: ["BOOTS"],
     position: "col-start-2 row-start-4",
   },

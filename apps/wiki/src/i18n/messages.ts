@@ -57,7 +57,7 @@ const messages = {
     close: "zamknij",
   },
   slots: {
-    blessing: "Błoga",
+    blessing: "Błogosławieństwo",
     helmet: "Hełm",
     ring: "Pierścień",
     necklace: "Naszyjnik",
@@ -661,7 +661,6 @@ const messages = {
     slot: "Slot ekwipunku",
     level: "Poziom",
     levelChip: "Poziom {{min}}–{{max}}",
-    anySlot: "Każdy slot",
     levelBracket: "{{min}}–{{max}}",
     levelFrom: "{{min}}+",
     upcoming: "Wkrótce",

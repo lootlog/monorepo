@@ -1,4 +1,5 @@
 import { Plus, Replace, TriangleAlert } from "lucide-react";
+import { EquipmentSlotIcon } from "@/components/equipment/equipment-slot-icon";
 import { Button } from "@lootlog/ui/components/button";
 import { ItemNameLink } from "@/components/catalog/item-name-link";
 import { useSetItemPicker } from "@/contexts/set-item-picker-context";
@@ -24,13 +25,15 @@ export function EquipmentSetItemRow({
 }: EquipmentSetItemRowProps) {
   const { pickItem } = useSetItemPicker();
   const label = t(`slots.${slot.id}`);
-  const Icon = slot.icon;
   const issues = worn?.issues.map((issue) => t(`equipment.issues.${issue}`));
 
   return (
     <li className="grid min-h-7 grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-x-2.5 text-[0.8125rem]">
       <span role="img" aria-label={label} title={label}>
-        <Icon aria-hidden="true" className="size-4 text-muted-foreground" />
+        <EquipmentSlotIcon
+          slot={slot.id}
+          className="size-4 text-muted-foreground"
+        />
       </span>
       {worn ? (
         <>

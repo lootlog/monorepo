@@ -33,9 +33,12 @@ export function WikiLayout({ children }: { children: ReactNode }) {
       <WikiHeader />
       <div
         className={cn(
-          "mx-auto w-full flex-1 px-4 pb-10 md:px-6",
-          !isFullWidth && "max-w-[100rem]",
-          docksSet && "pb-24",
+          "mx-auto w-full flex-1 px-4 md:px-6",
+          // A pinned column fills the screen down to the dock, so any space
+          // left under it would scroll the page and cut off its top.
+          isFullWidth
+            ? "pb-(--wiki-dock-height)"
+            : ["max-w-[100rem]", docksSet ? "pb-24" : "pb-10"],
         )}
       >
         <main
