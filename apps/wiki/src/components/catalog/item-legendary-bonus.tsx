@@ -10,7 +10,7 @@ export function ItemLegendaryBonus({ stat }: { stat: string }) {
 
   return (
     <span className="flex min-w-0 items-center gap-1 text-xs text-emerald-400">
-      <bonus.icon aria-hidden="true" className="size-3 shrink-0" />
+      <bonus.icon aria-hidden="true" className="size-3.5 shrink-0" />
       <TruncatedText label={t(`legendaryBonus.${bonus.name}`)} />
     </span>
   );

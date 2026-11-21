@@ -1,8 +1,9 @@
 import {
   Ban,
+  Bomb,
   Crosshair,
-  Droplet,
-  Flame,
+  FlameKindling,
+  HeartCrack,
   HeartPulse,
   LifeBuoy,
   Repeat2,
@@ -13,7 +14,6 @@ import {
   Sun,
   Swords,
   Wind,
-  Zap,
 } from "lucide-react";
 import { sortBy } from "es-toolkit";
 import { LEGENDARY_BONUS_NAMES } from "@lootlog/ui/components/item-stat-utils";
@@ -21,8 +21,8 @@ import { LEGENDARY_BONUS_NAMES } from "@lootlog/ui/components/item-stat-utils";
 /** What each legendary bonus does, drawn as one icon. */
 const LEGENDARY_BONUS_ICONS = new Map(
   Object.entries({
-    anguish: Droplet,
-    cleanse: Flame,
+    anguish: HeartCrack,
+    cleanse: FlameKindling,
     critred: ShieldHalf,
     curse: Ban,
     dmgred: Shield,
@@ -35,7 +35,7 @@ const LEGENDARY_BONUS_ICONS = new Map(
     pushback: Wind,
     resgain: Sparkles,
     retaliation: Repeat2,
-    verycrit: Zap,
+    verycrit: Bomb,
   }),
 );
 

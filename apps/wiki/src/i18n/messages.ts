@@ -648,6 +648,12 @@ const messages = {
       b: "B",
       t: "T",
     },
+    eventItem: "Przedmiot eventowy: {{event}}",
+    gripShort: {
+      ONE_HAND_WEAPON: "1H",
+      ONE_AND_HALF_HAND_WEAPON: "1,5H",
+      TWO_HAND_WEAPON: "2H",
+    },
     damageTypes: {
       fire: "Obrażenia od ognia",
       light: "Obrażenia od błyskawic",
