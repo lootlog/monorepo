@@ -1,4 +1,7 @@
-import type { ApplicationError } from "@lootlog/protocol/http/errors";
+import {
+  type ApplicationError,
+  InvalidRequestError,
+} from "@lootlog/protocol/http/errors";
 import { Effect } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import {
@@ -51,7 +54,18 @@ export const AdminHandlers = HttpApiBuilder.group(
         ),
       )
       .handle("AdminBanUser", ({ params, payload }) =>
-        admin((service, actor) => service.ban(actor, params.id, payload)),
+        // Banning the own account ends the operator's session and blocks the
+        // sign-in back; with no other admin account nobody could lift it.
+        admin((service, actor, operator) =>
+          params.id === operator.userId
+            ? Effect.fail(
+                new InvalidRequestError({
+                  code: "CANNOT_BAN_SELF",
+                  message: "An operator cannot ban their own account",
+                }),
+              )
+            : service.ban(actor, params.id, payload),
+        ),
       )
       .handle("AdminUnbanUser", ({ params }) =>
         admin((service, actor) => service.unban(actor, params.id)),

@@ -34,7 +34,7 @@ export const Route = createRootRoute({
     if (access.status !== "admin")
       throw redirect({ to: "/sign-in", search: { reason: access.status } });
 
-    return { operator: access.name };
+    return { operator: { userId: access.userId, name: access.name } };
   },
   component: RootComponent,
   notFoundComponent: () => (
@@ -85,7 +85,7 @@ function RootComponent() {
                 </nav>
                 <p className="ml-auto text-xs text-muted-foreground">
                   {text.operator}:{" "}
-                  <span className="text-foreground">{operator}</span>
+                  <span className="text-foreground">{operator.name}</span>
                 </p>
               </>
             )}

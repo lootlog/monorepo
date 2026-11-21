@@ -111,6 +111,7 @@ export const text = {
   banHeading: "Ban",
   banDescription:
     "Ban kończy wszystkie sesje, blokuje logowanie i unieważnia klucze API użytkownika. Otwarta karta może działać jeszcze do 5 minut.",
+  banOwnAccount: "Nie możesz zbanować własnego konta.",
   banReasonLabel: "Powód bana",
   banReasonHint: "Zobaczysz go tutaj i w dzienniku. Użytkownik go nie widzi.",
   banDurationLabel: "Czas trwania",

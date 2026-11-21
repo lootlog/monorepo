@@ -15,7 +15,7 @@ import {
 } from "#src/auth/provider/better-auth";
 import { AppConfig, type AuthConfig } from "#src/config/env";
 import { AuthDatabase } from "#src/database/drizzle";
-import type { authUsers } from "#src/database/drizzle.schema";
+import { authApiKeys, type authUsers } from "#src/database/drizzle.schema";
 import { runAuthMigrations } from "#src/database/migrations";
 import { makeAuthPostgresLayer, PostgresPool } from "#src/database/postgres";
 import { AdminService } from "./admin-service.js";
@@ -231,6 +231,44 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
 
     expect(await internalAdapter.findSession(revoked.token)).toBeNull();
     expect(await internalAdapter.findSession(kept.token)).not.toBeNull();
+  });
+
+  it("revokes an API key only through its owner and records it", async () => {
+    const owner = await createUser("Key owner");
+    const other = await createUser("Bystander");
+    const keyId = crypto.randomUUID();
+    const now = new Date();
+
+    await runtime.runPromise(
+      Effect.flatMap(AuthDatabase, (database) =>
+        database.insert(authApiKeys).values({
+          id: keyId,
+          name: "Integration",
+          referenceId: owner.id,
+          key: crypto.randomUUID(),
+          createdAt: now,
+          updatedAt: now,
+        }),
+      ),
+    );
+
+    // A key id of one user is not revocable through another.
+    await expect(
+      admin((service) => service.revokeApiKey(ACTOR, other.id, keyId)),
+    ).rejects.toThrow("API key not found");
+
+    expect(
+      (await admin((service) => service.getUser(owner.id))).apiKeys,
+    ).toHaveLength(1);
+
+    await admin((service) => service.revokeApiKey(ACTOR, owner.id, keyId));
+
+    const details = await admin((service) => service.getUser(owner.id));
+
+    expect(details.apiKeys).toEqual([]);
+    expect(details.audit).toMatchObject([
+      { action: "api-key.revoke", details: { keyId, name: "Integration" } },
+    ]);
   });
 
   it("stores several roles and finds a user by any one of them", async () => {

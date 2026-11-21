@@ -51,7 +51,7 @@ const UsersInput = Schema.Struct({
 
 /** Who is operating the panel, or why the auth service lets nobody in. */
 export type OperatorAccess =
-  | { readonly status: "admin"; readonly name: string }
+  | { readonly status: "admin"; readonly userId: string; readonly name: string }
   | { readonly status: "signed-out" | "not-admin" };
 
 /**
@@ -63,7 +63,7 @@ export const getOperatorAccess = createServerFn({ method: "GET" }).handler(
     try {
       const operator = await adminControllerSession(asPanel());
 
-      return { status: "admin", name: operator.name };
+      return { status: "admin", userId: operator.userId, name: operator.name };
     } catch (error) {
       if (error instanceof ApiError && error.status === 401)
         return { status: "signed-out" };

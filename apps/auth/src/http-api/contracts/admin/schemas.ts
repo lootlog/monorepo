@@ -99,24 +99,26 @@ export const AdminUserDetails = Schema.Struct({
   audit: Schema.Array(AdminAuditEntry),
 }).annotate({ identifier: "AdminUserDetails" });
 
-export const AdminUserResponse = Schema.Struct({ user: AdminUser });
+export const AdminUserResponse = Schema.Struct({ user: AdminUser }).annotate({
+  identifier: "AdminUserResponse",
+});
 
 export const SetAdminUserRoles = Schema.Struct({
   roles: Schema.Array(PlatformRole),
-}).annotate({ identifier: "AdminUserResponse" });
+}).annotate({ identifier: "SetAdminUserRoles" });
 
 export const BanAdminUser = Schema.Struct({
   reason: Schema.Trim.check(Schema.isMinLength(1), Schema.isMaxLength(500)),
   /** Null bans until lifted. */
   expiresAt: Schema.NullOr(DateTimeString),
-}).annotate({ identifier: "SetAdminUserRoles" });
+}).annotate({ identifier: "BanAdminUser" });
 
 export type BanAdminUser = typeof BanAdminUser.Type;
 
 export const AdminAuditQuery = Schema.Struct({
   limit: Schema.optionalKey(PageSize.annotate({ default: 50 })),
   offset: Schema.optionalKey(NonNegativeSafeInteger.annotate({ default: 0 })),
-}).annotate({ identifier: "BanAdminUser" });
+});
 
 export const AdminAuditResponse = Schema.Struct({
   entries: Schema.Array(AdminAuditEntry),

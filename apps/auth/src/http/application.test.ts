@@ -381,6 +381,25 @@ describe("Auth HttpApi contract", () => {
     }
   });
 
+  it("refuses an operator's ban of their own account", async () => {
+    const caller = makeRuntime();
+
+    try {
+      const response = await caller.run(
+        new Request("http://localhost/admin/users/user-1/ban", {
+          method: "PUT",
+          headers: { ...adminCaller, "content-type": "application/json" },
+          body: JSON.stringify({ reason: "Mistake", expiresAt: null }),
+        }),
+      );
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ code: "CANNOT_BAN_SELF" });
+    } finally {
+      await caller.dispose();
+    }
+  });
+
   it("serves the existing health status", async () => {
     const response = await runtime.run(new Request("http://localhost/healthz"));
     expect(response.status).toBe(200);

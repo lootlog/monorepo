@@ -94,6 +94,9 @@ app. Granting the `admin` platform role does not open the panel: only a change
 to `ADMIN_ACCOUNT_IDS` adds an operator. The audit log names the operator by
 Lootlog User.
 
+An operator cannot ban their own account: the ban would end their session and
+block the sign-in back. Another operator can still ban them.
+
 Rotate `ADMIN_API_SECRET` by changing `adminApiSecret` in `admin-secrets` and
 restarting the `auth` and `admin` Deployments. To remove an operator, delete
 the User id from `ADMIN_ACCOUNT_IDS` and the email from the Access policy and

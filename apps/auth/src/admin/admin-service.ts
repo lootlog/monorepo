@@ -317,9 +317,10 @@ export class AdminService extends Context.Service<
         action: AdminAuditAction,
         targetUserId: string,
         details?: AdminAuditDetails,
+        executor: Pick<typeof database, "insert"> = database,
       ) =>
         query(
-          database.insert(adminAuditLog).values({
+          executor.insert(adminAuditLog).values({
             id: crypto.randomUUID(),
             actor,
             action,
@@ -615,27 +616,38 @@ export class AdminService extends Context.Service<
 
         revokeApiKey: Effect.fn("AdminService.revokeApiKey")(
           function* (actor, userId, keyId) {
-            const removed = yield* query(
-              database
-                .delete(authApiKeys)
-                .where(
-                  and(
-                    eq(authApiKeys.id, keyId),
-                    eq(authApiKeys.referenceId, userId),
-                  ),
-                )
-                .returning({ name: authApiKeys.name }),
-            );
+            // One transaction: a key must not vanish without its audit entry.
+            const key = yield* query(
+              database.transaction((transaction) =>
+                Effect.gen(function* () {
+                  const removed = yield* transaction
+                    .delete(authApiKeys)
+                    .where(
+                      and(
+                        eq(authApiKeys.id, keyId),
+                        eq(authApiKeys.referenceId, userId),
+                      ),
+                    )
+                    .returning({ name: authApiKeys.name });
 
-            const key = removed[0];
+                  const removedKey = removed[0];
+
+                  if (removedKey)
+                    yield* record(
+                      actor,
+                      "api-key.revoke",
+                      userId,
+                      { keyId, name: removedKey.name },
+                      transaction,
+                    );
+
+                  return removedKey;
+                }),
+              ),
+            );
 
             if (!key)
               return yield* new ResourceNotFoundError("API key not found");
-
-            yield* record(actor, "api-key.revoke", userId, {
-              keyId,
-              name: key.name,
-            });
           },
         ),
 
