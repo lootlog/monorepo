@@ -18,10 +18,23 @@ describe("equipment set link", () => {
     const set = {
       profession: "h" as const,
       level: 250,
-      items: { blessing: 60_532, helmet: 12_345, weapon: 678, boots: 9 },
+      items: {
+        blessing: 60_532,
+        helmet: 12_345,
+        weapon: 678,
+        boots: 9,
+        armor: 19_775,
+        gloves: 41,
+      },
       upgrades: {
         weapon: { level: 5 as const, bonus: "ds" as const },
         boots: { level: 2 as const },
+        armor: {
+          level: 5 as const,
+          bonus: "hp" as const,
+          symbol: "critred" as const,
+        },
+        gloves: { level: 0 as const, symbol: "curse" as const },
       },
       skills: { 41: 10, 168: 3 },
     };
@@ -31,11 +44,13 @@ describe("equipment set link", () => {
 
   it("keeps the readable parts of a mangled link", () => {
     expect(
-      decodeEquipmentSet("x999_h12u9_zz_q5_b7u3ds_g4u5xyz_168x4_7x0_9xx"),
+      decodeEquipmentSet(
+        "x999_h12u9_zz_q5_b7u3ds_g4u5xyz_n3-nothing_168x4_7x0_9xx",
+      ),
     ).toEqual({
       profession: null,
       level: null,
-      items: { helmet: 12, boots: 7, gloves: 4 },
+      items: { helmet: 12, boots: 7, gloves: 4, necklace: 3 },
       upgrades: { boots: { level: 3 }, gloves: { level: 5 } },
       skills: { 168: 4 },
     });

@@ -9,6 +9,7 @@ import {
 import {
   decodeItemUpgrade,
   encodeItemUpgrade,
+  isCrafted,
   type ItemUpgrade,
   ITEM_UPGRADE_PATTERN,
 } from "@lootlog/domain/item-upgrade";
@@ -17,8 +18,8 @@ export type Profession = (typeof PROFESSION_OPTIONS)[number];
 
 /**
  * A character's equipment: who wears it, the item id in each slot and how far
- * each worn item is upgraded, with its +5 bonus; a slot without an upgrade
- * wears it as dropped. `skills` holds the rank of each learned skill of the
+ * each worn item is upgraded, with its +5 bonus and the symbol in its socket;
+ * a slot without an upgrade wears it as dropped. `skills` holds the rank of each learned skill of the
  * profession's tree, by the skill's id.
  */
 export type EquipmentSet = {
@@ -100,7 +101,7 @@ export const equipItem = (
     ...kept,
     items: { ...kept.items, [slot.id]: item.id },
     upgrades:
-      nextUpgrade && nextUpgrade.level > 0
+      nextUpgrade && isCrafted(nextUpgrade)
         ? { ...upgrades, [slot.id]: nextUpgrade }
         : upgrades,
   };
@@ -129,8 +130,9 @@ const isProfession = (value: string): value is Profession =>
 /**
  * A set as a short, readable link value: the character first, then one
  * `<slot letter><item id>` per worn item, with `u<level>` after an upgraded
- * one and the +5 bonus's stat after that, then `<skill id>x<rank>` per
- * learned skill, such as `h250_h12345u5ds_b678u2_168x10`. An unknown
+ * one and the +5 bonus's stat after that, `-` and the socket's symbol bonus
+ * after a socketed one, then `<skill id>x<rank>` per learned skill, such as
+ * `h250_h12345u5ds_b678u2-critred_168x10`. An unknown
  * character is `-`.
  */
 export const encodeEquipmentSet = (set: EquipmentSet) =>
@@ -178,7 +180,7 @@ export const decodeEquipmentSet = (value: string): EquipmentSet => {
 
     items[slot.id] = Number(match[2]);
 
-    const upgrade = decodeItemUpgrade(match[3], match[4]);
+    const upgrade = decodeItemUpgrade(match[3], match[4], match[5]);
 
     if (upgrade) upgrades[slot.id] = upgrade;
   }

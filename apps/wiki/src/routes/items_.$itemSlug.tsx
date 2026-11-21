@@ -24,6 +24,12 @@ import { ItemRelatedDrops } from "@/components/items/item-related-drops";
 import { ItemRevisions } from "@/components/items/item-revisions";
 import { ItemElasticLevelSection } from "@/components/items/item-elastic-level-section";
 import { ItemUpgradeSection } from "@/components/items/item-upgrade-section";
+import { ItemSocketSections } from "@/components/items/item-socket-sections";
+import {
+  keepFittingSymbol,
+  socketItemsQuery,
+  useSocketCatalog,
+} from "@/hooks/use-socket-items";
 import { renderStatChanges } from "@/components/render-stat-changes";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { useStickyTop } from "@/hooks/use-sticky-top";
@@ -50,14 +56,19 @@ import { isCharacterLevel } from "@/lib/equipment-set";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import {
+  decodeItemUpgrade,
   isUpgradable,
-  isUpgradeBonusKey,
-  isUpgradeLevel,
   type ItemUpgrade,
   NO_UPGRADE,
   upgradeItemStat,
 } from "@lootlog/domain/item-upgrade";
 import { findStatChanges } from "@/lib/stat-changes";
+import {
+  findChest,
+  findComponent,
+  findSymbol,
+  hasSocket,
+} from "@lootlog/domain/item-socket";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
 export const Route = createFileRoute("/items_/$itemSlug")({
@@ -90,12 +101,24 @@ export const Route = createFileRoute("/items_/$itemSlug")({
 
     const source = relatedDropsSource(item);
 
+    // A socket, a symbol, a component or a chest shows the others.
+    const showsSocketItems =
+      hasSocket(item) ||
+      findSymbol(item.id) !== undefined ||
+      findComponent(item.id) !== undefined ||
+      findChest(item.id) !== undefined;
+
     await prefetchPageQueries(
       source
         ? queryClient.prefetchQuery(
             getCatalogControllerGetItemsQueryOptions(
               relatedDropsQuery(source.key),
             ),
+          )
+        : Promise.resolve(),
+      showsSocketItems
+        ? queryClient.prefetchQuery(
+            getCatalogControllerGetItemsQueryOptions(socketItemsQuery),
           )
         : Promise.resolve(),
     );
@@ -118,27 +141,30 @@ export const Route = createFileRoute("/items_/$itemSlug")({
   validateSearch: (search: {
     upgrade?: unknown;
     bonus?: unknown;
+    symbol?: unknown;
     level?: unknown;
   }): ItemPageSearch => {
-    const upgrade = Number(search.upgrade);
-    const bonus = String(search.bonus ?? "");
     const characterLevel = Number(search.level);
 
-    const level = isCharacterLevel(characterLevel)
-      ? { level: characterLevel }
-      : {};
+    const upgrade = decodeItemUpgrade(
+      String(search.upgrade ?? ""),
+      String(search.bonus ?? ""),
+      String(search.symbol ?? ""),
+    );
 
-    if (!isUpgradeLevel(upgrade) || upgrade === 0) return level;
+    const validated = itemPageSearch(upgrade ?? NO_UPGRADE);
 
-    // Only a +5 item carries a bonus.
-    return upgrade === 5 && isUpgradeBonusKey(bonus)
-      ? { upgrade, bonus, ...level }
-      : { upgrade, ...level };
+    if (isCharacterLevel(characterLevel)) validated.level = characterLevel;
+
+    return validated;
   },
 });
 
-const searchedUpgrade = ({ upgrade, bonus }: ItemPageSearch): ItemUpgrade =>
-  upgrade ? { level: upgrade, bonus } : NO_UPGRADE;
+const searchedUpgrade = ({
+  upgrade,
+  bonus,
+  symbol,
+}: ItemPageSearch): ItemUpgrade => ({ level: upgrade ?? 0, bonus, symbol });
 
 function ItemRoute() {
   const tooltipSticky = useStickyTop();
@@ -147,6 +173,8 @@ function ItemRoute() {
   const navigate = Route.useNavigate();
   const { set } = useEquipmentSet();
   const id = readPageSegment(itemSlug)?.id;
+  // The symbols tell whether a linked one fits the item's socket.
+  const { items: symbols } = useSocketCatalog(search.symbol !== undefined);
 
   const { data, isError } = useCatalogControllerGetItems(
     itemPageQuery(id ?? 0),
@@ -201,13 +229,22 @@ function ItemRoute() {
   const looted = itemForCharacter(item, search.level ?? set.level);
   const canUpgrade = isUpgradable(looted);
 
-  const upgrade = canUpgrade ? searchedUpgrade(search) : NO_UPGRADE;
+  const upgrade = canUpgrade
+    ? keepFittingSymbol(looted, searchedUpgrade(search), symbols)
+    : NO_UPGRADE;
 
   const stat = upgradeItemStat(looted, upgrade);
   const rarity = resolveItemRarity(item.rarity);
   const styles = ITEM_RARITY_STYLES[rarity];
   const typeLabel = item.type ? ITEM_TILE_LABELS.type[item.type] : undefined;
   const slot = findEquipmentSlot(item.type);
+
+  const showUpgrade = (next: ItemUpgrade) =>
+    void navigate({
+      replace: true,
+      resetScroll: false,
+      search: (prev) => ({ ...itemPageSearch(next), level: prev.level }),
+    });
 
   return (
     <article className={cn("flex flex-col gap-6 py-6", styles.accent)}>
@@ -313,22 +350,18 @@ function ItemRoute() {
               item={looted}
               upgrade={upgrade}
               changes={findStatChanges(looted.stat, stat)}
-              onChange={(next) =>
-                void navigate({
-                  replace: true,
-                  resetScroll: false,
-                  search: (prev) => ({
-                    ...itemPageSearch(next),
-                    level: prev.level,
-                  }),
-                })
-              }
+              onChange={showUpgrade}
             />
           ) : slot ? (
             <p className="text-sm text-muted-foreground">
               {t("upgrade.notUpgradable")}
             </p>
           ) : null}
+          <ItemSocketSections
+            item={looted}
+            upgrade={upgrade}
+            onChange={showUpgrade}
+          />
           <ItemRevisions item={item} />
           <ItemRelatedDrops item={item} />
         </div>

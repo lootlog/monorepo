@@ -7,8 +7,7 @@ import {
 import { COMMUNITY_LINKS } from "@lootlog/domain/public-sites";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { t } from "@/i18n/messages";
-
-const MARGONEM_LOOT_RULES_URL = "https://pomoc.margonem.pl/index/view,372";
+import { MECHANICS_DOCUMENTATION_URL } from "@/lib/calculators";
 
 /**
  * The day drop rates are counted from, and how they are counted, folded away,
@@ -43,7 +42,7 @@ export function DropRateMethod() {
           <p>
             {t("catalog.dropRateMethod.source")}{" "}
             <TextLink
-              href={MARGONEM_LOOT_RULES_URL}
+              href={MECHANICS_DOCUMENTATION_URL}
               target="_blank"
               rel="noopener noreferrer"
             >

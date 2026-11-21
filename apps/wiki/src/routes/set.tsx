@@ -10,6 +10,7 @@ import { EquipmentSetActions } from "@/components/equipment/equipment-set-action
 import { EquipmentSetPanel } from "@/components/equipment/equipment-set-panel";
 import { EquipmentSetStats } from "@/components/equipment/equipment-set-stats";
 import { SetUpgradeCost } from "@/components/equipment/set-upgrade-cost";
+import { SetSocketComponents } from "@/components/equipment/set-socket-components";
 import { SetSkillTree } from "@/components/skills/set-skill-tree";
 import { t } from "@/i18n/messages";
 
@@ -22,7 +23,8 @@ export const Route = createFileRoute("/set")({
 
 /**
  * The User's whole set: the character and what it wears stay in view beside
- * its stats, its skills and what upgrading it costs.
+ * its stats, its skills, what upgrading it costs and what its sockets'
+ * symbols are made of.
  */
 function SetRoute() {
   return (
@@ -43,6 +45,7 @@ function SetRoute() {
             <TabsTrigger value="cost">
               {t("setPage.upgradeCostTab")}
             </TabsTrigger>
+            <TabsTrigger value="sockets">{t("setPage.socketsTab")}</TabsTrigger>
           </TabsList>
           <TabsContent value="stats">
             <EquipmentSetStats />
@@ -52,6 +55,9 @@ function SetRoute() {
           </TabsContent>
           <TabsContent value="cost">
             <SetUpgradeCost />
+          </TabsContent>
+          <TabsContent value="sockets">
+            <SetSocketComponents />
           </TabsContent>
         </Tabs>
       </div>

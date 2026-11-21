@@ -18,6 +18,7 @@ import { Route as ModerationRouteImport } from './routes/moderation'
 import { Route as NpcsRouteImport } from './routes/npcs'
 import { Route as SetRouteImport } from './routes/set'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SocketsRouteImport } from './routes/sockets'
 import { Route as EventsEventSlugRouteImport } from './routes/events_.$eventSlug'
 import { Route as ItemsItemSlugRouteImport } from './routes/items_.$itemSlug'
 import { Route as NpcsNpcSlugRouteImport } from './routes/npcs_.$npcSlug'
@@ -69,6 +70,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SocketsRoute = SocketsRouteImport.update({
+  id: '/sockets',
+  path: '/sockets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsEventSlugRoute = EventsEventSlugRouteImport.update({
   id: '/events_/$eventSlug',
   path: '/events/$eventSlug',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/npcs': typeof NpcsRoute
   '/set': typeof SetRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sockets': typeof SocketsRoute
   '/events/$eventSlug': typeof EventsEventSlugRoute
   '/items/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/npcs': typeof NpcsRoute
   '/set': typeof SetRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sockets': typeof SocketsRoute
   '/events/$eventSlug': typeof EventsEventSlugRoute
   '/items/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/npcs': typeof NpcsRoute
   '/set': typeof SetRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sockets': typeof SocketsRoute
   '/events_/$eventSlug': typeof EventsEventSlugRoute
   '/items_/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs_/$npcSlug': typeof NpcsNpcSlugRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/npcs'
     | '/set'
     | '/sitemap.xml'
+    | '/sockets'
     | '/events/$eventSlug'
     | '/items/$itemSlug'
     | '/npcs/$npcSlug'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/npcs'
     | '/set'
     | '/sitemap.xml'
+    | '/sockets'
     | '/events/$eventSlug'
     | '/items/$itemSlug'
     | '/npcs/$npcSlug'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/npcs'
     | '/set'
     | '/sitemap.xml'
+    | '/sockets'
     | '/events_/$eventSlug'
     | '/items_/$itemSlug'
     | '/npcs_/$npcSlug'
@@ -205,6 +217,7 @@ export interface RootRouteChildren {
   NpcsRoute: typeof NpcsRoute
   SetRoute: typeof SetRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SocketsRoute: typeof SocketsRoute
   EventsEventSlugRoute: typeof EventsEventSlugRoute
   ItemsItemSlugRoute: typeof ItemsItemSlugRoute
   NpcsNpcSlugRoute: typeof NpcsNpcSlugRoute
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sockets': {
+      id: '/sockets'
+      path: '/sockets'
+      fullPath: '/sockets'
+      preLoaderRoute: typeof SocketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/events_/$eventSlug': {
       id: '/events_/$eventSlug'
       path: '/events/$eventSlug'
@@ -325,6 +345,7 @@ const rootRouteChildren: RootRouteChildren = {
   NpcsRoute: NpcsRoute,
   SetRoute: SetRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SocketsRoute: SocketsRoute,
   EventsEventSlugRoute: EventsEventSlugRoute,
   ItemsItemSlugRoute: ItemsItemSlugRoute,
   NpcsNpcSlugRoute: NpcsNpcSlugRoute,

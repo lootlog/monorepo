@@ -42,7 +42,7 @@ type PortalHeaderProps = {
    * From which width the links sit in the bar; narrower screens open them
    * from the menu. A portal with more links moves them later.
    */
-  inlineFrom?: "md" | "lg";
+  inlineFrom?: "md" | "lg" | "xl";
   labels: {
     skipToContent: string;
     navigation: string;
@@ -62,6 +62,11 @@ const INLINE_CLASS_NAMES = {
     bar: "hidden lg:block",
     search: "hidden lg:contents",
     menu: "lg:hidden",
+  },
+  xl: {
+    bar: "hidden xl:block",
+    search: "hidden xl:contents",
+    menu: "xl:hidden",
   },
 } as const;
 

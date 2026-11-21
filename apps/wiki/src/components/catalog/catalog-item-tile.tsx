@@ -8,6 +8,7 @@ import { itemPageParams, itemPageSearch } from "@/lib/catalog-links";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import {
+  isSameUpgrade,
   type ItemUpgrade,
   NO_UPGRADE,
   upgradeItemStat,
@@ -31,9 +32,7 @@ export function CatalogItemTile({
   const worn = useWornItem(findEquipmentSlot(item.type)?.id);
 
   const isSameItem =
-    worn?.item.id === item.id &&
-    worn.upgrade.level === upgrade.level &&
-    worn.upgrade.bonus === upgrade.bonus;
+    worn?.item.id === item.id && isSameUpgrade(worn.upgrade, upgrade);
 
   return (
     <ItemTile

@@ -68,7 +68,12 @@ export function ComparedItemHeader({ item, upgrade }: ComparedItemHeaderProps) {
           label={t("comparison.upgradeOf", { name: item.name })}
           value={upgrade.level}
           onChange={(level) =>
-            setUpgrade(item.id, level === upgrade.level ? upgrade : { level })
+            setUpgrade(
+              item.id,
+              level === upgrade.level
+                ? upgrade
+                : { level, symbol: upgrade.symbol },
+            )
           }
         />
       ) : null}

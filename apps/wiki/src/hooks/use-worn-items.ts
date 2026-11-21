@@ -20,12 +20,15 @@ import {
   NO_UPGRADE,
   upgradeItemStat,
 } from "@lootlog/domain/item-upgrade";
+import { keepFittingSymbol, useSocketCatalog } from "@/hooks/use-socket-items";
 
 type WornItemIssue = ItemRequirementIssue | "hands";
 
 export type WornItem = {
   /** The item at the set's level, with the stats its upgrade gives it. */
   item: CatalogItemDtoOutput;
+  /** The item at the set's level as it drops, before it is upgraded. */
+  dropped: CatalogItemDtoOutput;
   upgrade: ItemUpgrade;
   /** What keeps the set's character from wearing the item as the set has it. */
   issues: readonly WornItemIssue[];
@@ -53,24 +56,39 @@ export const useSetCatalogItems = (set: EquipmentSet) => {
   };
 };
 
-/** The set from the page's context with its items. */
+/**
+ * The set from the page's context with its items and, while one of them has
+ * a symbol, the catalog's symbols that tell whether it fits.
+ */
 const useSetItems = () => {
   const { set } = useEquipmentSet();
 
-  return { set, ...useSetCatalogItems(set) };
+  const hasSymbol = Object.values(set.upgrades).some(
+    (upgrade) => upgrade?.symbol !== undefined,
+  );
+
+  const { items: symbols } = useSocketCatalog(hasSymbol);
+
+  return { set, symbols, ...useSetCatalogItems(set) };
 };
 
 const wornIn = (
-  { set, itemsById }: ReturnType<typeof useSetItems>,
+  { set, itemsById, symbols }: ReturnType<typeof useSetItems>,
   slotId: EquipmentSlotId,
 ): WornItem | undefined => {
   const itemId: EquipmentSet["items"][EquipmentSlotId] = set.items[slotId];
   const item = itemId === undefined ? undefined : itemsById.get(itemId);
-  const upgrade = set.upgrades[slotId] ?? NO_UPGRADE;
 
   if (!item) return undefined;
 
   const looted = itemForCharacter(item, set.level);
+
+  const upgrade = keepFittingSymbol(
+    looted,
+    set.upgrades[slotId] ?? NO_UPGRADE,
+    symbols,
+  );
+
   const stat = upgradeItemStat(looted, upgrade);
 
   // A shared link can carry a pair no character holds at once.
@@ -79,6 +97,7 @@ const wornIn = (
 
   return {
     item: { ...looted, stat },
+    dropped: looted,
     upgrade,
     issues: [
       ...findRequirementIssues(stat, set),

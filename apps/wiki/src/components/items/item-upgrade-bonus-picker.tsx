@@ -1,4 +1,4 @@
-import { cn } from "cn";
+import { ChoiceCard } from "@/components/common/choice-card";
 import { t } from "@/i18n/messages";
 import {
   UPGRADE_BONUS_GROUP_POWER,
@@ -17,14 +17,6 @@ type ItemUpgradeBonusPickerProps = {
   onChange: (bonus: UpgradeBonusKey | undefined) => void;
 };
 
-const CARD =
-  "relative flex cursor-pointer flex-col gap-2 rounded-lg border p-3 transition-[background-color,border-color,box-shadow] duration-200 has-focus-visible:ring-2 has-focus-visible:ring-ring motion-reduce:transition-none";
-
-const cardState = (isChosen: boolean) =>
-  isChosen
-    ? "border-(--item-rarity) bg-[color-mix(in_oklab,var(--item-rarity)_12%,var(--card))] shadow-[0_0_24px_-8px_color-mix(in_oklab,var(--item-rarity)_60%,transparent)]"
-    : "border-border bg-card hover:border-[color-mix(in_oklab,var(--item-rarity)_50%,var(--border))]";
-
 /**
  * The extra bonus a +5 item can draw, grouped by how often the game offers
  * it, each card with its value at +5 and its chance to be among the three
@@ -38,18 +30,17 @@ export function ItemUpgradeBonusPicker({
   return (
     <fieldset className="flex flex-col gap-4">
       <legend className="sr-only">{t("upgrade.bonus")}</legend>
-      <label className={cn(CARD, "flex-row items-center", cardState(!value))}>
-        <input
-          type="radio"
-          name="item-upgrade-bonus"
-          checked={!value}
-          onChange={() => onChange(undefined)}
-          className="sr-only"
-        />
+      <ChoiceCard
+        name="item-upgrade-bonus"
+        value=""
+        checked={!value}
+        onChange={() => onChange(undefined)}
+        className="flex-row items-center"
+      >
         <span className="text-sm font-medium text-foreground">
           {t("upgrade.bonusNone")}
         </span>
-      </label>
+      </ChoiceCard>
       {UPGRADE_BONUS_GROUP_POWER.map((_power, group) => {
         const groupOptions = options.filter((option) => option.group === group);
 
@@ -63,18 +54,13 @@ export function ItemUpgradeBonusPicker({
                 const isChosen = option.key === value;
 
                 return (
-                  <label
+                  <ChoiceCard
                     key={option.key}
-                    className={cn(CARD, cardState(isChosen))}
+                    name="item-upgrade-bonus"
+                    value={option.key}
+                    checked={isChosen}
+                    onChange={() => onChange(option.key)}
                   >
-                    <input
-                      type="radio"
-                      name="item-upgrade-bonus"
-                      value={option.key}
-                      checked={isChosen}
-                      onChange={() => onChange(option.key)}
-                      className="sr-only"
-                    />
                     <span className="text-xs leading-tight text-muted-foreground">
                       {upgradeBonusName(option.key)}
                     </span>
@@ -95,7 +81,7 @@ export function ItemUpgradeBonusPicker({
                         {formatOfferChance(option.offerChance)}
                       </span>
                     </span>
-                  </label>
+                  </ChoiceCard>
                 );
               })}
             </div>

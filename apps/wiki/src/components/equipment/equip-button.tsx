@@ -4,7 +4,11 @@ import { Button } from "@lootlog/ui/components/button";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
-import { type ItemUpgrade, NO_UPGRADE } from "@lootlog/domain/item-upgrade";
+import {
+  isSameUpgrade,
+  type ItemUpgrade,
+  NO_UPGRADE,
+} from "@lootlog/domain/item-upgrade";
 
 type EquipButtonProps = {
   item: CatalogItemDtoOutput;
@@ -29,8 +33,7 @@ export function EquipButton({
 
   const isWorn =
     set.items[slot.id] === item.id &&
-    (upgrade === undefined ||
-      (worn.level === upgrade.level && worn.bonus === upgrade.bonus));
+    (upgrade === undefined || isSameUpgrade(worn, upgrade));
 
   const label = isWorn ? t("equipment.worn") : t("equipment.equip");
 

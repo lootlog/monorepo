@@ -58,6 +58,7 @@ export function ItemUpgradeSection({
           value={upgrade.level}
           onChange={(level) =>
             onChange({
+              ...upgrade,
               level,
               // The +5 bonus stays chosen only at +5.
               bonus: level === 5 ? upgrade.bonus : undefined,
@@ -102,7 +103,11 @@ export function ItemUpgradeSection({
             options={bonuses}
             value={upgrade.bonus}
             onChange={(bonus) =>
-              onChange(bonus ? { level: 5, bonus } : { level: upgrade.level })
+              onChange(
+                bonus
+                  ? { ...upgrade, level: 5, bonus }
+                  : { ...upgrade, bonus: undefined },
+              )
             }
           />
         </section>

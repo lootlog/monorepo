@@ -31,6 +31,10 @@ import {
   formatUpgradeBonusValue,
   upgradeBonusName,
 } from "@/lib/upgrade-bonus-text";
+import { legendaryBonusIcon } from "@/lib/legendary-bonuses";
+import { isSocketBonus } from "@lootlog/domain/item-socket";
+import { useSocketOptions } from "@/hooks/use-socket-items";
+import { hasItemStat } from "@lootlog/domain/item-stat";
 
 type EquipmentSlotMenuProps = {
   slotId: EquipmentSlotId;
@@ -42,8 +46,8 @@ type EquipmentSlotMenuProps = {
 const NO_BONUS = "none";
 
 /**
- * A worn item's context menu: its upgrade level, its +5 bonus, its page and
- * taking it off. A long press opens it on touch screens.
+ * A worn item's context menu: its upgrade level, its +5 bonus, the symbol in
+ * its socket, its page and taking it off. A long press opens it on touch screens.
  */
 export function EquipmentSlotMenu({
   slotId,
@@ -56,6 +60,13 @@ export function EquipmentSlotMenu({
   const { item } = worn;
   const canUpgrade = isUpgradable(item);
   const bonuses = upgradeBonusOptions(item);
+
+  // The item as dropped shows whether a fleeting symbol fills its socket.
+  const { options: symbols } = useSocketOptions(worn.dropped);
+
+  const noSymbol = hasItemStat(worn.dropped.stat, "socket_fleeting_legbon")
+    ? t("socket.noneFleeting")
+    : t("socket.none");
 
   return (
     <ContextMenu>
@@ -88,6 +99,7 @@ export function EquipmentSlotMenu({
 
                     // The +5 bonus stays chosen only at +5.
                     upgrade(slotId, {
+                      ...worn.upgrade,
                       level,
                       bonus: level === 5 ? worn.upgrade.bonus : undefined,
                     });
@@ -122,8 +134,8 @@ export function EquipmentSlotMenu({
                       upgrade(
                         slotId,
                         isUpgradeBonusKey(value)
-                          ? { level: 5, bonus: value }
-                          : { level: worn.upgrade.level },
+                          ? { ...worn.upgrade, level: 5, bonus: value }
+                          : { ...worn.upgrade, bonus: undefined },
                       )
                     }
                   >
@@ -163,6 +175,54 @@ export function EquipmentSlotMenu({
                 </ContextMenuSubContent>
               </ContextMenuSub>
             ) : null}
+            <ContextMenuSeparator />
+          </>
+        ) : null}
+        {symbols.length > 0 ? (
+          <>
+            <ContextMenuSub>
+              <ContextMenuSubTrigger>
+                {t("socket.label")}
+                <span className="ml-auto truncate pl-3 text-xs text-muted-foreground">
+                  {worn.upgrade.symbol
+                    ? t(`legendaryBonus.${worn.upgrade.symbol}`)
+                    : noSymbol}
+                </span>
+              </ContextMenuSubTrigger>
+              <ContextMenuSubContent className="max-h-96 w-64">
+                <ContextMenuRadioGroup
+                  value={worn.upgrade.symbol ?? NO_BONUS}
+                  onValueChange={(value: string) =>
+                    upgrade(slotId, {
+                      ...worn.upgrade,
+                      symbol: isSocketBonus(value) ? value : undefined,
+                    })
+                  }
+                >
+                  <ContextMenuRadioItem value={NO_BONUS}>
+                    {noSymbol}
+                  </ContextMenuRadioItem>
+                  <ContextMenuSeparator />
+                  {symbols.map(({ bonus }) => {
+                    const Icon = legendaryBonusIcon(bonus);
+
+                    return (
+                      <ContextMenuRadioItem
+                        key={bonus}
+                        value={bonus}
+                        className="gap-2"
+                      >
+                        <Icon
+                          aria-hidden="true"
+                          className="size-3.5 text-muted-foreground"
+                        />
+                        {t(`legendaryBonus.${bonus}`)}
+                      </ContextMenuRadioItem>
+                    );
+                  })}
+                </ContextMenuRadioGroup>
+              </ContextMenuSubContent>
+            </ContextMenuSub>
             <ContextMenuSeparator />
           </>
         ) : null}

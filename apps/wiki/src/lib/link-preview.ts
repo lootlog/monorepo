@@ -108,7 +108,7 @@ export const itemLinkPreview = (
 ): LinkPreview => {
   const looted = itemForCharacter(item, characterLevel ?? null);
   const shown = isUpgradable(looted) ? upgrade.level : 0;
-  const stat = shown > 0 ? upgradeItemStat(looted, upgrade) : looted.stat;
+  const stat = upgradeItemStat(looted, upgrade);
   const rarity = resolveItemRarity(item.rarity);
 
   const stats = mapStatsToDisplaySections(parseItemStatEntries(stat))

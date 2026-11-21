@@ -80,7 +80,7 @@ export function ItemUpgradeCost({ item, level }: ItemUpgradeCostProps) {
           },
           {
             label: t("upgrade.cost.gold"),
-            value: formatNumber(total.gold),
+            value: formatGold(total.gold),
             hint: atMaxOnly,
           },
         ]}
