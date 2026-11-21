@@ -110,6 +110,7 @@ export class HeroTrackerTimerProcessor {
       characterId,
       accountId,
       world: game.world,
+      gameVersion: game.gameVersion ?? undefined,
       npc: {
         icon: tracker.icon,
         id: npc.id,
@@ -121,6 +122,9 @@ export class HeroTrackerTimerProcessor {
         lvl: tracker.level,
         name: tracker.name,
         location: game.map.name,
+        mapId: game.map.id,
+        x: npc.x,
+        y: npc.y,
       },
     }).catch((error) => {
       this.reportedEntrances.delete(npc.id);

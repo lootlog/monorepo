@@ -12,6 +12,7 @@ import {
   PermissionDeniedError,
 } from "@lootlog/protocol/http/errors";
 import { ErrorKey } from "#src/timers/error-key";
+import { recordNpcSpawnPositions } from "#src/npc-spawns/npc-spawn-positions";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersIdentity } from "./timers-data.js";
 import { toTimersDataFailure } from "./timer-errors.js";
@@ -166,8 +167,12 @@ export const makeAutoTimer = (
       }),
     );
 
+  // Where the spawn stood is a fact of the game, kept whether or not an
+  // Organization takes the timer.
   return (identity: TimersIdentity, payload: CreateAutoTimerRequest) =>
-    operation(identity, payload).pipe(
+    recordNpcSpawnPositions(database, payload.gameVersion, [payload.npc]).pipe(
+      Effect.forkDetach,
+      Effect.andThen(operation(identity, payload)),
       Effect.tapError((error) =>
         error instanceof ApplicationError
           ? logRejection(payload, error)

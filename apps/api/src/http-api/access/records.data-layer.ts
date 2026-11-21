@@ -28,6 +28,8 @@ import {
   LootLikesResponse,
 } from "#src/contracts/loots/schemas";
 
+import type { GameVersion } from "@lootlog/schema/game-version";
+import type { ReportedNpcPosition } from "#src/npc-spawns/npc-spawn-positions";
 import { RecordsData, RecordsDataError } from "./records.access.js";
 
 export interface RecordsServices {
@@ -44,6 +46,10 @@ export interface RecordsServices {
   readonly userLootStats: ReturnType<typeof makeUserLootStats>;
   readonly lootSubmissionAcceptance: LootSubmissionAcceptance;
   readonly lootAllocation: LootAllocationOperations;
+  readonly recordNpcSpawnPositions: (
+    gameVersion: GameVersion,
+    npcs: ReadonlyArray<ReportedNpcPosition>,
+  ) => Effect.Effect<void>;
 }
 
 const decode = <A>(decoder: BoundaryDecoder<A>, value: unknown) =>
@@ -265,18 +271,25 @@ export const recordsDataLayer = (services: RecordsServices) =>
           })
           .pipe(Effect.as(true)),
       ),
+    // Where the NPCs stood is a fact of the game, kept whether or not an
+    // Organization takes the loot.
     createLoot: (caller, payload) =>
-      lootOperation(
-        "LootsController_createLoot",
-        services.lootSubmissionAcceptance.accept({
-          discordId: caller.discordId,
-          submission: {
-            ...payload,
-            loots: payload.loots.map((loot) => ({ ...loot })),
-            npcs: payload.npcs.map((npc) => ({ ...npc })),
-            players: payload.players.map((player) => ({ ...player })),
-          },
-        }),
+      services.recordNpcSpawnPositions(payload.gameVersion, payload.npcs).pipe(
+        Effect.forkDetach,
+        Effect.andThen(
+          lootOperation(
+            "LootsController_createLoot",
+            services.lootSubmissionAcceptance.accept({
+              discordId: caller.discordId,
+              submission: {
+                ...payload,
+                loots: payload.loots.map((loot) => ({ ...loot })),
+                npcs: payload.npcs.map((npc) => ({ ...npc })),
+                players: payload.players.map((player) => ({ ...player })),
+              },
+            }),
+          ),
+        ),
       ),
     getComments: (caller, lootId) =>
       lootOperation(

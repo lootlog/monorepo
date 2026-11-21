@@ -3,6 +3,17 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-21 — NPC map tiles
+
+- `POST /loots` accepts an optional `npcs[].mapId` with the existing optional
+  `npcs[].x` and `npcs[].y`: the Margonem map id and the tile where each NPC
+  of the fight or dialog stood.
+- `POST /timers/auto` accepts an optional `npc.mapId` with the existing
+  optional `npc.x` and `npc.y`, and an optional `gameVersion` (`pl` or `en`).
+- The API records these tiles to describe where monsters spawn. Requests
+  without them, or with a tile that is not a non-negative integer, behave as
+  before.
+
 ## 2026-11-20 — One error body in every service (breaking)
 
 Battlelog, Activity, Catalog and Search operations now fail the same way as

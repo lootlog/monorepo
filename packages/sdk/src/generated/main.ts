@@ -1348,9 +1348,28 @@ export type CreateTimerFromGameClientDtoNpc = {
   type: number;
   /** Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it. */
   isHeroFromEvent?: boolean;
+  /**
+     * Margonem id of the map the NPC stood on.
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  mapId?: number;
+  /** Map tile column where the removed spawn stood. */
   x?: number;
+  /** Map tile row where the removed spawn stood. */
   y?: number;
 };
+
+/**
+ * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API.
+ */
+export type CreateTimerFromGameClientDtoGameVersion = typeof CreateTimerFromGameClientDtoGameVersion[keyof typeof CreateTimerFromGameClientDtoGameVersion];
+
+
+export const CreateTimerFromGameClientDtoGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
 
 export type CreateTimerFromGameClientDtoActorCharacter = {
   /** @minLength 1 */
@@ -1396,6 +1415,8 @@ export interface CreateTimerFromGameClientDto {
      */
   world: string;
   npc: CreateTimerFromGameClientDtoNpc;
+  /** Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. */
+  gameVersion?: CreateTimerFromGameClientDtoGameVersion;
   /** @minLength 1 */
   characterId: string;
   /** @minLength 1 */
@@ -2212,7 +2233,15 @@ export type CreateLootDtoNpcsItem = {
   type: number;
   /** Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it. */
   isHeroFromEvent?: boolean;
+  /**
+     * Margonem id of the map the NPC stood on.
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  mapId?: number;
+  /** Map tile column where the NPC stood before the fight. */
   x?: number;
+  /** Map tile row where the NPC stood before the fight. */
   y?: number;
 };
 

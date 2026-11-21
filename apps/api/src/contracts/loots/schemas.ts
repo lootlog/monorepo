@@ -298,8 +298,21 @@ export const CreateLootRequest = Schema.Struct({
             "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.",
         }),
       ),
-      x: Schema.optionalKey(FiniteNumber),
-      y: Schema.optionalKey(FiniteNumber),
+      mapId: Schema.optionalKey(
+        PositiveSafeInteger.annotate({
+          description: "Margonem id of the map the NPC stood on.",
+        }),
+      ),
+      x: Schema.optionalKey(
+        FiniteNumber.annotate({
+          description: "Map tile column where the NPC stood before the fight.",
+        }),
+      ),
+      y: Schema.optionalKey(
+        FiniteNumber.annotate({
+          description: "Map tile row where the NPC stood before the fight.",
+        }),
+      ),
     }),
   ).check(
     Schema.isMinLength(1).annotate({
