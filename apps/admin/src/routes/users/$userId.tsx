@@ -13,8 +13,8 @@ import { getUser } from "@/server/queries";
 import type { UserAction } from "@/lib/user-action";
 
 type UserPageSearch = {
-  notice?: UserAction["action"];
-  error?: "failed";
+  notice?: UserAction["action"] | undefined;
+  error?: "failed" | undefined;
 };
 
 const readNotice = Schema.decodeUnknownOption(
@@ -34,17 +34,11 @@ export const Route = createFileRoute("/users/$userId")({
   validateSearch: (search: {
     notice?: unknown;
     error?: unknown;
-  }): UserPageSearch => {
-    const result: UserPageSearch = {};
-    const notice = Option.getOrUndefined(readNotice(search.notice));
-    const error = Option.getOrUndefined(readError(search.error));
-
-    if (notice !== undefined) result.notice = notice;
-
-    if (error !== undefined) result.error = error;
-
-    return result;
-  },
+  }): UserPageSearch => ({
+    // Both keys are returned even when empty, or a raw value would stay.
+    notice: Option.getOrUndefined(readNotice(search.notice)),
+    error: Option.getOrUndefined(readError(search.error)),
+  }),
   loader: ({ params }) => getUser({ data: params.userId }),
   component: UserPage,
 });
