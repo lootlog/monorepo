@@ -65,8 +65,9 @@ inspection and rollback constraints.
 holds no data: every read and write goes through the auth service's admin API
 (`/admin/*`), which records each change in `admin_audit_log`.
 
-The panel is reachable only through a dedicated Cloudflare tunnel whose public
-hostname is guarded by a Cloudflare Access application, and it opens only to
+The panel is reachable only through the Cloudflare tunnel that also serves
+Grafana, on its own public hostname guarded by its own Cloudflare Access
+application, and it opens only to
 the Lootlog session of a User listed in the auth service's
 `ADMIN_ACCOUNT_IDS`. Every control below must hold; none replaces another:
 
