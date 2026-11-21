@@ -16,6 +16,7 @@ import { cn } from "cn";
 import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
+import { ReportButton } from "@/components/reports/report-button";
 import { ItemDropSources } from "@/components/items/item-drop-sources";
 import { ItemEventLinks } from "@/components/items/item-event-links";
 import { ItemPageTooltip } from "@/components/items/item-page-tooltip";
@@ -271,6 +272,11 @@ function ItemRoute() {
         >
           <EquipButton item={item} upgrade={upgrade} />
           <CompareButton item={item} upgrade={upgrade} />
+          <ReportButton
+            subjectType="ITEM"
+            subjectId={item.id}
+            name={item.name}
+          />
         </div>
       </header>
 

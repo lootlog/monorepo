@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { EventScoringMode } from "@lootlog/domain/scoring";
-import { OptionCardGroup } from "@/components/common/option-card-group";
+import { OptionCardGroup } from "@lootlog/ui/components/option-card-group";
 
 interface ScoringModeSelectorProps {
   value: EventScoringMode;

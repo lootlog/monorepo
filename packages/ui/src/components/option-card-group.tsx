@@ -4,8 +4,8 @@ import {
   FieldDescription,
   FieldLabel,
   FieldTitle,
-} from "@lootlog/ui/components/field";
-import { RadioGroup, RadioGroupItem } from "@lootlog/ui/components/radio-group";
+} from "./field";
+import { RadioGroup, RadioGroupItem } from "./radio-group";
 import { cn } from "cn";
 import type { CSSProperties } from "react";
 

@@ -482,7 +482,93 @@ const messages = {
     signInFailed: "Nie udało się zalogować. Spróbuj ponownie.",
     openLootlog: "Otwórz Lootloga",
     appearance: "Wygląd",
+    moderation: "Zgłoszenia błędów",
     logout: "Wyloguj się",
+  },
+  reports: {
+    report: "Zgłoś błąd",
+    reported: "Zgłoszono",
+    title: "Zgłoś błąd na stronie",
+    description:
+      "Napisz, co się nie zgadza na stronie {{name}}. Zgłoszenie trafi do moderatorów wiki.",
+    signInRequired:
+      "Zaloguj się przez Discord, żeby zgłosić błąd. Dzięki temu moderatorzy wiedzą, że zgłoszenie wysłał gracz, a nie bot.",
+    pending:
+      "Twoje zgłoszenie czeka na moderatora. Możesz je zmienić albo wycofać.",
+    reasonLabel: "Co jest nie tak?",
+    commentLabel: "Szczegóły (opcjonalnie)",
+    commentRequiredLabel: "Szczegóły",
+    commentPlaceholder:
+      "Np. jaki poziom ma w grze albo gdzie naprawdę go spotkać.",
+    send: "Wyślij zgłoszenie",
+    update: "Zapisz zmiany",
+    withdraw: "Wycofaj zgłoszenie",
+    sendFailed: "Nie udało się wysłać zgłoszenia. Spróbuj ponownie.",
+    limitReached: "Wysłano dziś zbyt wiele zgłoszeń. Spróbuj ponownie jutro.",
+    reasons: {
+      NOT_IN_GAME: {
+        title: "Nie ma tego w grze",
+        ITEM: "Przedmiot testowy albo taki, którego nie da się zdobyć.",
+        NPC: "NPC testowy albo taki, którego nie da się spotkać.",
+      },
+      WRONG_DETAILS: {
+        title: "Złe dane",
+        ITEM: "Nazwa, poziom, typ albo statystyki nie zgadzają się z grą.",
+        NPC: "Nazwa, poziom albo rodzaj nie zgadzają się z grą.",
+      },
+      WRONG_DROPS: {
+        title: "Złe dropy",
+        ITEM: "Przedmiot nie wypada z podanych potworów albo brakuje źródła.",
+        NPC: "Lista dropów jest błędna albo niepełna.",
+      },
+      WRONG_LOCATIONS: {
+        title: "Złe mapy",
+        ITEM: "Mapy nie zgadzają się z grą.",
+        NPC: "Potwora nie ma na podanych mapach albo brakuje mapy.",
+      },
+      OTHER: {
+        title: "Coś innego",
+        ITEM: "Opisz problem w szczegółach.",
+        NPC: "Opisz problem w szczegółach.",
+      },
+    },
+  },
+  moderation: {
+    title: "Zgłoszenia błędów",
+    description:
+      "Strony wiki, które gracze zgłosili jako błędne. Najczęściej zgłaszane są na górze.",
+    signInRequired: "Zaloguj się, żeby zobaczyć zgłoszenia.",
+    moderatorsOnly: "Zgłoszenia mogą przeglądać tylko moderatorzy wiki.",
+    loadError: "Nie udało się wczytać zgłoszeń.",
+    statusLabel: "Stan zgłoszeń",
+    statuses: {
+      OPEN: "Otwarte",
+      RESOLVED: "Rozwiązane",
+      REJECTED: "Odrzucone",
+    },
+    empty: {
+      OPEN: "Brak otwartych zgłoszeń.",
+      RESOLVED: "Brak rozwiązanych zgłoszeń.",
+      REJECTED: "Brak odrzuconych zgłoszeń.",
+    },
+    actions: {
+      OPEN: "Otwórz ponownie",
+      RESOLVED: "Rozwiązane",
+      REJECTED: "Odrzuć",
+    },
+    subjectTypes: {
+      ITEM: "Przedmiot",
+      NPC: "NPC",
+    },
+    reportCount: "Zgłoszenia: {{count}}",
+    unknownName: "Nieznany wpis #{{id}}",
+    reviewFailed: "Nie udało się zapisać decyzji. Spróbuj ponownie.",
+    reopenConflict:
+      "Nie można otworzyć ponownie: zgłaszający wysłał już nowe zgłoszenie tej strony.",
+    pagination: "Strony zgłoszeń",
+    range: "{{from}}–{{to}} z {{total}}",
+    previous: "Poprzednie",
+    next: "Następne",
   },
   home: {
     eyebrow: "Wiki Margonem",
@@ -941,6 +1027,7 @@ const messages = {
     firstSeenOn: "W Lootlogu od",
     elasticLevel: "Jak postać",
     topMap: "Najczęstsza mapa",
+    actions: "Akcje potwora",
     allMaps: "Wszystkie mapy ({{count}})",
   },
   npcTypes: npcType satisfies Record<CatalogNpcDtoOutputType, string>,

@@ -189,6 +189,13 @@ const normalizeOperation = (
   }
 };
 
+/** An integer parameter's documented schema, which Effect encodes as a string. */
+export const integerSchema = (minimum: number, maximum: number) => ({
+  type: "integer",
+  minimum,
+  maximum,
+});
+
 export const preserveOpenApi30Contract = (
   input: unknown,
   parameterSchemas: Readonly<Record<string, JsonObject>> = {},

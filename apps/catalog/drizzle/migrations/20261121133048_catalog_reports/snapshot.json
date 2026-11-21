@@ -1,0 +1,408 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "7ab5b1b5-9ebd-4505-a6c1-18f1c02dcbfd",
+  "prevIds": ["2c7d5d7f-4056-4cf3-b276-89dcf743d523"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "CatalogReport"],
+      "writes": [
+        "s|tbl|public.CatalogReport",
+        "n|tbl|public.CatalogReport",
+        "e|tbl|public.CatalogReport",
+        "n|rel|public.CatalogReport",
+        "n|type|public.CatalogReport",
+        "n|rel|public.CatalogReport_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "CatalogReport",
+        "CatalogReport_open_reporter_subject_key"
+      ],
+      "writes": [
+        "s|idx|public.CatalogReport_open_reporter_subject_key",
+        "n|idx|public.CatalogReport_open_reporter_subject_key",
+        "e|idx|public.CatalogReport_open_reporter_subject_key",
+        "n|rel|public.CatalogReport_open_reporter_subject_key"
+      ],
+      "reads": [
+        "n|tbl|public.CatalogReport",
+        "n|sch|public",
+        "n|col|public.CatalogReport.reporterUserId",
+        "n|col|public.CatalogReport.subjectType",
+        "n|col|public.CatalogReport.gameVersion",
+        "n|col|public.CatalogReport.subjectId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "CatalogReport",
+        "CatalogReport_status_subject_idx"
+      ],
+      "writes": [
+        "s|idx|public.CatalogReport_status_subject_idx",
+        "n|idx|public.CatalogReport_status_subject_idx",
+        "e|idx|public.CatalogReport_status_subject_idx",
+        "n|rel|public.CatalogReport_status_subject_idx"
+      ],
+      "reads": [
+        "n|tbl|public.CatalogReport",
+        "n|sch|public",
+        "n|col|public.CatalogReport.status",
+        "n|col|public.CatalogReport.subjectType",
+        "n|col|public.CatalogReport.gameVersion",
+        "n|col|public.CatalogReport.subjectId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "CatalogReport",
+        "CatalogReport_reporter_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.CatalogReport_reporter_createdAt_idx",
+        "n|idx|public.CatalogReport_reporter_createdAt_idx",
+        "e|idx|public.CatalogReport_reporter_createdAt_idx",
+        "n|rel|public.CatalogReport_reporter_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.CatalogReport",
+        "n|sch|public",
+        "n|col|public.CatalogReport.reporterUserId",
+        "n|col|public.CatalogReport.createdAt"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "CatalogReport",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "subjectType",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "gameVersion",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "subjectId",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "reason",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "comment",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "reporterUserId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "status",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'OPEN'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "reviewedByUserId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "reviewedAt",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "createdAt",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "CatalogReport_open_reporter_subject_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "reporterUserId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "subjectType",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "gameVersion",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "subjectId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "\"status\" = 'OPEN'",
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "CatalogReport_status_subject_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "status",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "subjectType",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "gameVersion",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "subjectId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "CatalogReport_reporter_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "reporterUserId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CatalogReport",
+        "name": "CatalogReport_pkey",
+        "columns": ["id"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

@@ -1,4 +1,7 @@
-import { preserveOpenApi30Contract } from "@lootlog/schema/openapi-compatibility";
+import {
+  integerSchema,
+  preserveOpenApi30Contract,
+} from "@lootlog/schema/openapi-compatibility";
 import { OpenApi } from "effect/http-api";
 import { stringify } from "yaml";
 import { CatalogApi } from "#src/http-api/catalog-api";
@@ -21,11 +24,7 @@ preserveOpenApi30Contract(
     "NpcsController_getNpcs:ids": {
       schema: {
         type: "array",
-        items: {
-          type: "integer",
-          minimum: Number.MIN_SAFE_INTEGER,
-          maximum: Number.MAX_SAFE_INTEGER,
-        },
+        items: integerSchema(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
       },
     },
     "NpcsController_getNpcs:limit": numberWithDefault(10),
@@ -46,11 +45,7 @@ preserveOpenApi30Contract(
     "CatalogController_getItems:ids": {
       schema: {
         type: "array",
-        items: {
-          type: "integer",
-          minimum: Number.MIN_SAFE_INTEGER,
-          maximum: Number.MAX_SAFE_INTEGER,
-        },
+        items: integerSchema(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
       },
       style: "form",
       explode: true,
@@ -73,11 +68,7 @@ preserveOpenApi30Contract(
     "CatalogController_getNpcs:ids": {
       schema: {
         type: "array",
-        items: {
-          type: "integer",
-          minimum: Number.MIN_SAFE_INTEGER,
-          maximum: Number.MAX_SAFE_INTEGER,
-        },
+        items: integerSchema(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
       },
       style: "form",
       explode: true,
@@ -89,6 +80,15 @@ preserveOpenApi30Contract(
     "CatalogController_getNpcs:maxLevel": { schema: { type: "number" } },
     "CatalogController_getNpcs:limit": numberWithDefault(24),
     "CatalogController_getNpcs:offset": numberWithDefault(0),
+    "CatalogReportsController_getOwn:subjectId": {
+      schema: integerSchema(1, Number.MAX_SAFE_INTEGER),
+    },
+    "CatalogReportsController_list:limit": {
+      schema: { ...integerSchema(1, 100), default: 20 },
+    },
+    "CatalogReportsController_list:offset": {
+      schema: { ...integerSchema(0, Number.MAX_SAFE_INTEGER), default: 0 },
+    },
   },
   {
     "HealthzController_healthCheck:200": "Catalog service is healthy",

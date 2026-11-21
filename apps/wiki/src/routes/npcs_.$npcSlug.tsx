@@ -15,6 +15,7 @@ import { NpcDrops } from "@/components/npcs/npc-drops";
 import { ArticleSection } from "@/components/article/article-section";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
 import { NpcPortrait } from "@/components/common/npc-portrait";
+import { ReportButton } from "@/components/reports/report-button";
 import { NpcFacts } from "@/components/npcs/npc-facts";
 import { NpcFormerLevels } from "@/components/npcs/npc-former-levels";
 import { NpcLocations } from "@/components/npcs/npc-locations";
@@ -140,25 +141,40 @@ function NpcRoute() {
       />
 
       <header className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
           {npc ? (
             <>
-              <NpcPortrait key={npc.icon} icon={npc.icon} size="md" />
-              <div className="flex min-w-0 flex-col gap-1">
-                <p className="text-sm text-muted-foreground">
-                  <NpcKindLevel npc={npc} />
-                </p>
-                <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
-                  {npc.name}
-                </h1>
+              <div className="flex min-w-0 items-center gap-4">
+                <NpcPortrait key={npc.icon} icon={npc.icon} size="md" />
+                <div className="flex min-w-0 flex-col gap-1">
+                  <p className="text-sm text-muted-foreground">
+                    <NpcKindLevel npc={npc} />
+                  </p>
+                  <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
+                    {npc.name}
+                  </h1>
+                </div>
+              </div>
+              <div
+                role="group"
+                aria-label={t("npc.actions")}
+                className="flex flex-wrap gap-2"
+              >
+                <ReportButton
+                  subjectType="NPC"
+                  subjectId={npc.id}
+                  name={npc.name}
+                />
               </div>
             </>
           ) : (
             <>
-              <Skeleton className="size-24 shrink-0 rounded-lg" />
-              <div className="flex min-w-0 flex-col gap-2">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-10 w-72 max-w-full" />
+              <div className="flex min-w-0 items-center gap-4">
+                <Skeleton className="size-24 shrink-0 rounded-lg" />
+                <div className="flex min-w-0 flex-col gap-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-10 w-72 max-w-full" />
+                </div>
               </div>
             </>
           )}

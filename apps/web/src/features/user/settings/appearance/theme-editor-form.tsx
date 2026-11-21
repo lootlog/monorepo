@@ -4,7 +4,7 @@ import { WALLPAPERS } from "@lootlog/ui/themes/wallpapers";
 import { randomizeCustomTheme } from "@lootlog/domain/custom-theme";
 import { Button } from "@lootlog/ui/components/button";
 import { Dices } from "lucide-react";
-import { OptionCardGroup } from "@/components/common/option-card-group";
+import { OptionCardGroup } from "@lootlog/ui/components/option-card-group";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useUpdateUserTheme } from "@/hooks/api/user/use-user-themes";
 import { useTheme } from "@/hooks/context/use-theme";

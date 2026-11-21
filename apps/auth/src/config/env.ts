@@ -1,15 +1,10 @@
 import {
   baseServiceConfig,
   type BaseServiceConfiguration,
+  commaSeparatedConfig,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
 import { Config, Context, Layer, Option, Redacted } from "effect";
-
-const splitCommaSeparated = (value: string): string[] =>
-  value
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean);
 
 const optionalString = (name: string) => Config.option(Config.String(name));
 
@@ -52,14 +47,10 @@ const authConfig: Config.Config<AuthConfig> = Config.all({
   apiKeyStatusSecret: Config.option(
     Config.Redacted("API_KEY_STATUS_SECRET"),
   ).pipe(Config.map(Option.getOrUndefined)),
-  trustedOrigins: Config.String("TRUSTED_ORIGINS").pipe(
-    Config.map(splitCommaSeparated),
-  ),
+  trustedOrigins: commaSeparatedConfig("TRUSTED_ORIGINS"),
   cookieDomain: Config.String("COOKIE_DOMAIN"),
   cookiePrefix: Config.String("COOKIE_PREFIX"),
-  adminAccountIds: Config.String("ADMIN_ACCOUNT_IDS").pipe(
-    Config.map(splitCommaSeparated),
-  ),
+  adminAccountIds: commaSeparatedConfig("ADMIN_ACCOUNT_IDS"),
   authSecret: Config.Redacted("AUTH_SECRET"),
   appUrl: Config.String("APP_URL"),
   postgresql: Config.all({

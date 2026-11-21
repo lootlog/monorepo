@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import {
+  useMutation,
   useQuery,
   useQueryClient
 } from '@tanstack/react-query';
@@ -14,16 +15,19 @@ import type {
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
   InvalidateOptions,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import { catalogFetch } from '../mutators';
-import type { ErrorType } from '../mutators';
+import type { ErrorType , BodyType } from '../mutators';
 export type RequestValidationErrorCode = typeof RequestValidationErrorCode[keyof typeof RequestValidationErrorCode];
 
 
@@ -57,6 +61,219 @@ export interface HttpErrorResponse {
   message?: string | null;
   /** @nullable */
   details?: HttpErrorResponseDetails;
+}
+
+/**
+ * `OPEN` until a moderator reviews it; `RESOLVED` when the report was right, `REJECTED` when it was not. A moderator may open a reviewed report again.
+ */
+export type ReviewCatalogReportsRequestStatus = typeof ReviewCatalogReportsRequestStatus[keyof typeof ReviewCatalogReportsRequestStatus];
+
+
+export const ReviewCatalogReportsRequestStatus = {
+  OPEN: 'OPEN',
+  RESOLVED: 'RESOLVED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export interface ReviewCatalogReportsRequest {
+  /**
+     * @minItems 1
+     * @maxItems 100
+     * @items.pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$
+     */
+  reportIds: string[];
+  /** `OPEN` until a moderator reviews it; `RESOLVED` when the report was right, `REJECTED` when it was not. A moderator may open a reviewed report again. */
+  status: ReviewCatalogReportsRequestStatus;
+}
+
+/**
+ * The kind of catalog page: an item or an NPC.
+ */
+export type CatalogReportedSubjectDtoOutputSubjectType = typeof CatalogReportedSubjectDtoOutputSubjectType[keyof typeof CatalogReportedSubjectDtoOutputSubjectType];
+
+
+export const CatalogReportedSubjectDtoOutputSubjectType = {
+  ITEM: 'ITEM',
+  NPC: 'NPC',
+} as const;
+
+export type CatalogReportedSubjectDtoOutputGameVersion = typeof CatalogReportedSubjectDtoOutputGameVersion[keyof typeof CatalogReportedSubjectDtoOutputGameVersion];
+
+
+export const CatalogReportedSubjectDtoOutputGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+/**
+ * The kind of catalog page: an item or an NPC.
+ */
+export type CatalogReportDtoOutputSubjectType = typeof CatalogReportDtoOutputSubjectType[keyof typeof CatalogReportDtoOutputSubjectType];
+
+
+export const CatalogReportDtoOutputSubjectType = {
+  ITEM: 'ITEM',
+  NPC: 'NPC',
+} as const;
+
+export type CatalogReportDtoOutputGameVersion = typeof CatalogReportDtoOutputGameVersion[keyof typeof CatalogReportDtoOutputGameVersion];
+
+
+export const CatalogReportDtoOutputGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+/**
+ * What is wrong: `NOT_IN_GAME` for an entry players cannot get, such as a test item; `WRONG_DETAILS` for its name, level, type or statistics; `WRONG_DROPS` for the NPCs an item drops from or the items an NPC drops; `WRONG_LOCATIONS` for the maps an NPC is fought on; `OTHER`, which needs a comment.
+ */
+export type CatalogReportDtoOutputReason = typeof CatalogReportDtoOutputReason[keyof typeof CatalogReportDtoOutputReason];
+
+
+export const CatalogReportDtoOutputReason = {
+  NOT_IN_GAME: 'NOT_IN_GAME',
+  WRONG_DETAILS: 'WRONG_DETAILS',
+  WRONG_DROPS: 'WRONG_DROPS',
+  WRONG_LOCATIONS: 'WRONG_LOCATIONS',
+  OTHER: 'OTHER',
+} as const;
+
+/**
+ * `OPEN` until a moderator reviews it; `RESOLVED` when the report was right, `REJECTED` when it was not. A moderator may open a reviewed report again.
+ */
+export type CatalogReportDtoOutputStatus = typeof CatalogReportDtoOutputStatus[keyof typeof CatalogReportDtoOutputStatus];
+
+
+export const CatalogReportDtoOutputStatus = {
+  OPEN: 'OPEN',
+  RESOLVED: 'RESOLVED',
+  REJECTED: 'REJECTED',
+} as const;
+
+/**
+ * A report that a catalog page shows something wrong
+ */
+export interface CatalogReportDtoOutput {
+  id: string;
+  /** The kind of catalog page: an item or an NPC. */
+  subjectType: CatalogReportDtoOutputSubjectType;
+  gameVersion: CatalogReportDtoOutputGameVersion;
+  /**
+     * The item or NPC id the page shows.
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  subjectId: number;
+  /** What is wrong: `NOT_IN_GAME` for an entry players cannot get, such as a test item; `WRONG_DETAILS` for its name, level, type or statistics; `WRONG_DROPS` for the NPCs an item drops from or the items an NPC drops; `WRONG_LOCATIONS` for the maps an NPC is fought on; `OTHER`, which needs a comment. */
+  reason: CatalogReportDtoOutputReason;
+  /** @nullable */
+  comment: string | null;
+  /** `OPEN` until a moderator reviews it; `RESOLVED` when the report was right, `REJECTED` when it was not. A moderator may open a reviewed report again. */
+  status: CatalogReportDtoOutputStatus;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  reviewedAt: string | null;
+}
+
+/**
+ * A catalog page and its reports
+ */
+export interface CatalogReportedSubjectDtoOutput {
+  /** The kind of catalog page: an item or an NPC. */
+  subjectType: CatalogReportedSubjectDtoOutputSubjectType;
+  gameVersion: CatalogReportedSubjectDtoOutputGameVersion;
+  /**
+     * The item or NPC id the page shows.
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  subjectId: number;
+  /**
+     * The page's current name; `null` once the catalog lost it.
+     * @nullable
+     */
+  name: string | null;
+  /** @nullable */
+  icon: string | null;
+  /** The page's reports of the requested status, newest first. */
+  reports: CatalogReportDtoOutput[];
+}
+
+/**
+ * Reported catalog pages
+ */
+export interface CatalogReportsResponseDtoOutput {
+  /** Pages with reports of the requested status, the most reported first, then the most recently reported. */
+  subjects: CatalogReportedSubjectDtoOutput[];
+  /**
+     * Pages with reports of the requested status.
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  total: number;
+}
+
+export interface CatalogReportViewerResponse {
+  /** Whether the caller may review reports. */
+  canModerate: boolean;
+}
+
+export interface CatalogOwnReportResponse {
+  /** The caller's open report about the page, if any. */
+  report: CatalogReportDtoOutput | null;
+}
+
+/**
+ * The kind of catalog page: an item or an NPC.
+ */
+export type CreateCatalogReportRequestSubjectType = typeof CreateCatalogReportRequestSubjectType[keyof typeof CreateCatalogReportRequestSubjectType];
+
+
+export const CreateCatalogReportRequestSubjectType = {
+  ITEM: 'ITEM',
+  NPC: 'NPC',
+} as const;
+
+export type CreateCatalogReportRequestGameVersion = typeof CreateCatalogReportRequestGameVersion[keyof typeof CreateCatalogReportRequestGameVersion];
+
+
+export const CreateCatalogReportRequestGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+/**
+ * What is wrong: `NOT_IN_GAME` for an entry players cannot get, such as a test item; `WRONG_DETAILS` for its name, level, type or statistics; `WRONG_DROPS` for the NPCs an item drops from or the items an NPC drops; `WRONG_LOCATIONS` for the maps an NPC is fought on; `OTHER`, which needs a comment.
+ */
+export type CreateCatalogReportRequestReason = typeof CreateCatalogReportRequestReason[keyof typeof CreateCatalogReportRequestReason];
+
+
+export const CreateCatalogReportRequestReason = {
+  NOT_IN_GAME: 'NOT_IN_GAME',
+  WRONG_DETAILS: 'WRONG_DETAILS',
+  WRONG_DROPS: 'WRONG_DROPS',
+  WRONG_LOCATIONS: 'WRONG_LOCATIONS',
+  OTHER: 'OTHER',
+} as const;
+
+export interface CreateCatalogReportRequest {
+  /** The kind of catalog page: an item or an NPC. */
+  subjectType: CreateCatalogReportRequestSubjectType;
+  gameVersion: CreateCatalogReportRequestGameVersion;
+  /**
+     * The item or NPC id the page shows.
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  subjectId: number;
+  /** What is wrong: `NOT_IN_GAME` for an entry players cannot get, such as a test item; `WRONG_DETAILS` for its name, level, type or statistics; `WRONG_DROPS` for the NPCs an item drops from or the items an NPC drops; `WRONG_LOCATIONS` for the maps an NPC is fought on; `OTHER`, which needs a comment. */
+  reason: CreateCatalogReportRequestReason;
+  /** @maxLength 500 */
+  comment?: string;
 }
 
 /**
@@ -442,6 +659,64 @@ export const CatalogControllerGetIndexGameVersion = {
   pl: 'pl',
 } as const;
 
+export type CatalogReportsControllerListParams = {
+/**
+ * `OPEN` until a moderator reviews it; `RESOLVED` when the report was right, `REJECTED` when it was not. A moderator may open a reviewed report again.
+ */
+status?: CatalogReportsControllerListStatus;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * @minimum 0
+ * @maximum 9007199254740991
+ */
+offset?: number;
+};
+
+export type CatalogReportsControllerListStatus = typeof CatalogReportsControllerListStatus[keyof typeof CatalogReportsControllerListStatus];
+
+
+export const CatalogReportsControllerListStatus = {
+  OPEN: 'OPEN',
+  RESOLVED: 'RESOLVED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type CatalogReportsControllerGetOwnParams = {
+/**
+ * The kind of catalog page: an item or an NPC.
+ */
+subjectType: CatalogReportsControllerGetOwnSubjectType;
+gameVersion: CatalogReportsControllerGetOwnGameVersion;
+/**
+ * @minimum 1
+ * @maximum 9007199254740991
+ */
+subjectId: number;
+};
+
+export type CatalogReportsControllerGetOwnSubjectType = typeof CatalogReportsControllerGetOwnSubjectType[keyof typeof CatalogReportsControllerGetOwnSubjectType];
+
+
+export const CatalogReportsControllerGetOwnSubjectType = {
+  ITEM: 'ITEM',
+  NPC: 'NPC',
+} as const;
+
+export type CatalogReportsControllerGetOwnGameVersion = typeof CatalogReportsControllerGetOwnGameVersion[keyof typeof CatalogReportsControllerGetOwnGameVersion];
+
+
+export const CatalogReportsControllerGetOwnGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+export type CatalogReportsControllerWithdrawPathParameters = {
+ reportId: string,
+ }
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
@@ -1218,3 +1493,702 @@ export const useGetCatalogControllerGetIndexQueryData = () => {
   return (params?: CatalogControllerGetIndexParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof catalogControllerGetIndex>>>(getCatalogControllerGetIndexQueryKey(params));
 }
+
+
+
+export const getCatalogReportsControllerCreateUrl = () => {
+
+
+
+
+  return `/catalog/reports`
+}
+
+/**
+ * Report that a catalog page shows something wrong. A User keeps one open report per page: reporting it again replaces the reason and comment.
+ * @summary Report a catalog page
+ */
+export const catalogReportsControllerCreate = async (createCatalogReportRequest: CreateCatalogReportRequest, options?: Parameters<typeof catalogFetch>[1]): Promise<CatalogReportDtoOutput> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return catalogFetch<CatalogReportDtoOutput>(getCatalogReportsControllerCreateUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createCatalogReportRequest)
+  }
+);}
+
+
+
+
+
+export const getCatalogReportsControllerCreateMutationKey = () => ['catalogReportsControllerCreate'] as const;
+
+export const getCatalogReportsControllerCreateMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogReportsControllerCreate>>, TError,CatalogReportsControllerCreateMutationVariables, TContext>, request?: SecondParameter<typeof catalogFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof catalogReportsControllerCreate>>, TError,CatalogReportsControllerCreateMutationVariables, TContext> => {
+
+const mutationKey = getCatalogReportsControllerCreateMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof catalogReportsControllerCreate>>, CatalogReportsControllerCreateMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  catalogReportsControllerCreate(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CatalogReportsControllerCreateMutationResult = NonNullable<Awaited<ReturnType<typeof catalogReportsControllerCreate>>>
+    export type CatalogReportsControllerCreateMutationBody = BodyType<CreateCatalogReportRequest>
+    export type CatalogReportsControllerCreateMutationError = ErrorType<HttpErrorResponse | RequestValidationError>
+    export type CatalogReportsControllerCreateMutationVariables = {data: BodyType<CreateCatalogReportRequest>}
+
+    /**
+ * @summary Report a catalog page
+ */
+export const useCatalogReportsControllerCreate = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogReportsControllerCreate>>, TError,CatalogReportsControllerCreateMutationVariables, TContext>, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof catalogReportsControllerCreate>>,
+        TError,
+        CatalogReportsControllerCreateMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCatalogReportsControllerCreateMutationOptions(options), queryClient);
+    }
+
+export const getCatalogReportsControllerListUrl = (params?: CatalogReportsControllerListParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/catalog/reports?${stringifiedParams}` : `/catalog/reports`
+}
+
+/**
+ * List the pages with reports of one status and their reports; catalog moderators only.
+ * @summary List reported catalog pages
+ */
+export const catalogReportsControllerList = async (params?: CatalogReportsControllerListParams, options?: Parameters<typeof catalogFetch>[1]): Promise<CatalogReportsResponseDtoOutput> => {
+
+  return catalogFetch<CatalogReportsResponseDtoOutput>(getCatalogReportsControllerListUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCatalogReportsControllerListQueryKey = (params?: CatalogReportsControllerListParams,) => {
+    return [
+    `/catalog/reports`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCatalogReportsControllerListQueryOptions = <TData = Awaited<ReturnType<typeof catalogReportsControllerList>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(params?: CatalogReportsControllerListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerList>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCatalogReportsControllerListQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof catalogReportsControllerList>>> = ({ signal }) => catalogReportsControllerList(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CatalogReportsControllerListQueryResult = NonNullable<Awaited<ReturnType<typeof catalogReportsControllerList>>>
+export type CatalogReportsControllerListQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
+
+
+export function useCatalogReportsControllerList<TData = Awaited<ReturnType<typeof catalogReportsControllerList>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+ params: undefined |  CatalogReportsControllerListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogReportsControllerList>>,
+          TError,
+          Awaited<ReturnType<typeof catalogReportsControllerList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogReportsControllerList<TData = Awaited<ReturnType<typeof catalogReportsControllerList>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+ params?: CatalogReportsControllerListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogReportsControllerList>>,
+          TError,
+          Awaited<ReturnType<typeof catalogReportsControllerList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogReportsControllerList<TData = Awaited<ReturnType<typeof catalogReportsControllerList>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+ params?: CatalogReportsControllerListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerList>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List reported catalog pages
+ */
+
+export function useCatalogReportsControllerList<TData = Awaited<ReturnType<typeof catalogReportsControllerList>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+ params?: CatalogReportsControllerListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerList>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCatalogReportsControllerListQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List reported catalog pages
+ */
+export const prefetchCatalogReportsControllerListQuery = async <TData = Awaited<ReturnType<typeof catalogReportsControllerList>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+ queryClient: QueryClient, params?: CatalogReportsControllerListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerList>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getCatalogReportsControllerListQueryOptions(params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useCatalogReportsControllerList} query
+ */
+export const invalidateCatalogReportsControllerList = async (
+ queryClient: QueryClient, params?: CatalogReportsControllerListParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getCatalogReportsControllerListQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List reported catalog pages
+ */
+export const useSetCatalogReportsControllerListQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: CatalogReportsControllerListParams | undefined,updater: Awaited<ReturnType<typeof catalogReportsControllerList>> | undefined | ((old: Awaited<ReturnType<typeof catalogReportsControllerList>> | undefined) => Awaited<ReturnType<typeof catalogReportsControllerList>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof catalogReportsControllerList>>>({ exact: $exactMatch, queryKey: getCatalogReportsControllerListQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary List reported catalog pages
+ */
+export const useGetCatalogReportsControllerListQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params?: CatalogReportsControllerListParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof catalogReportsControllerList>>>(getCatalogReportsControllerListQueryKey(params));
+}
+
+
+
+export const getCatalogReportsControllerGetOwnUrl = (params: CatalogReportsControllerGetOwnParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/catalog/reports/own?${stringifiedParams}` : `/catalog/reports/own`
+}
+
+/**
+ * @summary Get your open report about a catalog page
+ */
+export const catalogReportsControllerGetOwn = async (params: CatalogReportsControllerGetOwnParams, options?: Parameters<typeof catalogFetch>[1]): Promise<CatalogOwnReportResponse> => {
+
+  return catalogFetch<CatalogOwnReportResponse>(getCatalogReportsControllerGetOwnUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCatalogReportsControllerGetOwnQueryKey = (params?: CatalogReportsControllerGetOwnParams,) => {
+    return [
+    `/catalog/reports/own`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCatalogReportsControllerGetOwnQueryOptions = <TData = Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(params: CatalogReportsControllerGetOwnParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCatalogReportsControllerGetOwnQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>> = ({ signal }) => catalogReportsControllerGetOwn(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CatalogReportsControllerGetOwnQueryResult = NonNullable<Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>>
+export type CatalogReportsControllerGetOwnQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
+
+
+export function useCatalogReportsControllerGetOwn<TData = Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+ params: CatalogReportsControllerGetOwnParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>,
+          TError,
+          Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogReportsControllerGetOwn<TData = Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+ params: CatalogReportsControllerGetOwnParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>,
+          TError,
+          Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogReportsControllerGetOwn<TData = Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+ params: CatalogReportsControllerGetOwnParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get your open report about a catalog page
+ */
+
+export function useCatalogReportsControllerGetOwn<TData = Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+ params: CatalogReportsControllerGetOwnParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCatalogReportsControllerGetOwnQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get your open report about a catalog page
+ */
+export const prefetchCatalogReportsControllerGetOwnQuery = async <TData = Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+ queryClient: QueryClient, params: CatalogReportsControllerGetOwnParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getCatalogReportsControllerGetOwnQueryOptions(params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useCatalogReportsControllerGetOwn} query
+ */
+export const invalidateCatalogReportsControllerGetOwn = async (
+ queryClient: QueryClient, params: CatalogReportsControllerGetOwnParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getCatalogReportsControllerGetOwnQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get your open report about a catalog page
+ */
+export const useSetCatalogReportsControllerGetOwnQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: CatalogReportsControllerGetOwnParams | undefined,updater: Awaited<ReturnType<typeof catalogReportsControllerGetOwn>> | undefined | ((old: Awaited<ReturnType<typeof catalogReportsControllerGetOwn>> | undefined) => Awaited<ReturnType<typeof catalogReportsControllerGetOwn>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>>({ exact: $exactMatch, queryKey: getCatalogReportsControllerGetOwnQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary Get your open report about a catalog page
+ */
+export const useGetCatalogReportsControllerGetOwnQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: CatalogReportsControllerGetOwnParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof catalogReportsControllerGetOwn>>>(getCatalogReportsControllerGetOwnQueryKey(params));
+}
+
+
+
+export const getCatalogReportsControllerWithdrawUrl = ({ reportId }: CatalogReportsControllerWithdrawPathParameters,) => {
+
+
+
+
+  return `/catalog/reports/${reportId}`
+}
+
+/**
+ * Remove the caller's own report while no moderator has reviewed it.
+ * @summary Withdraw your open report
+ */
+export const catalogReportsControllerWithdraw = async ({ reportId }: CatalogReportsControllerWithdrawPathParameters, options?: Parameters<typeof catalogFetch>[1]): Promise<void> => {
+
+  return catalogFetch<void>(getCatalogReportsControllerWithdrawUrl({ reportId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getCatalogReportsControllerWithdrawMutationKey = () => ['catalogReportsControllerWithdraw'] as const;
+
+export const getCatalogReportsControllerWithdrawMutationOptions = <TError = ErrorType<RequestValidationError | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogReportsControllerWithdraw>>, TError,CatalogReportsControllerWithdrawMutationVariables, TContext>, request?: SecondParameter<typeof catalogFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof catalogReportsControllerWithdraw>>, TError,CatalogReportsControllerWithdrawMutationVariables, TContext> => {
+
+const mutationKey = getCatalogReportsControllerWithdrawMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof catalogReportsControllerWithdraw>>, CatalogReportsControllerWithdrawMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  catalogReportsControllerWithdraw(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CatalogReportsControllerWithdrawMutationResult = NonNullable<Awaited<ReturnType<typeof catalogReportsControllerWithdraw>>>
+
+    export type CatalogReportsControllerWithdrawMutationError = ErrorType<RequestValidationError | HttpErrorResponse>
+    export type CatalogReportsControllerWithdrawMutationVariables = {pathParams: CatalogReportsControllerWithdrawPathParameters}
+
+    /**
+ * @summary Withdraw your open report
+ */
+export const useCatalogReportsControllerWithdraw = <TError = ErrorType<RequestValidationError | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogReportsControllerWithdraw>>, TError,CatalogReportsControllerWithdrawMutationVariables, TContext>, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof catalogReportsControllerWithdraw>>,
+        TError,
+        CatalogReportsControllerWithdrawMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCatalogReportsControllerWithdrawMutationOptions(options), queryClient);
+    }
+
+export const getCatalogReportsControllerGetViewerUrl = () => {
+
+
+
+
+  return `/catalog/reports/viewer`
+}
+
+/**
+ * @summary Get what the caller may do with reports
+ */
+export const catalogReportsControllerGetViewer = async ( options?: Parameters<typeof catalogFetch>[1]): Promise<CatalogReportViewerResponse> => {
+
+  return catalogFetch<CatalogReportViewerResponse>(getCatalogReportsControllerGetViewerUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCatalogReportsControllerGetViewerQueryKey = () => {
+    return [
+    `/catalog/reports/viewer`
+    ] as const;
+    }
+
+
+export const getCatalogReportsControllerGetViewerQueryOptions = <TData = Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCatalogReportsControllerGetViewerQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>> = ({ signal }) => catalogReportsControllerGetViewer({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CatalogReportsControllerGetViewerQueryResult = NonNullable<Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>>
+export type CatalogReportsControllerGetViewerQueryError = ErrorType<RequestValidationError | HttpErrorResponse>
+
+
+export function useCatalogReportsControllerGetViewer<TData = Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>,
+          TError,
+          Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogReportsControllerGetViewer<TData = Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>,
+          TError,
+          Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogReportsControllerGetViewer<TData = Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get what the caller may do with reports
+ */
+
+export function useCatalogReportsControllerGetViewer<TData = Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCatalogReportsControllerGetViewerQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get what the caller may do with reports
+ */
+export const prefetchCatalogReportsControllerGetViewerQuery = async <TData = Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError = ErrorType<RequestValidationError | HttpErrorResponse>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>, TError, TData>>, request?: SecondParameter<typeof catalogFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getCatalogReportsControllerGetViewerQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useCatalogReportsControllerGetViewer} query
+ */
+export const invalidateCatalogReportsControllerGetViewer = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getCatalogReportsControllerGetViewerQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get what the caller may do with reports
+ */
+export const useSetCatalogReportsControllerGetViewerQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof catalogReportsControllerGetViewer>> | undefined | ((old: Awaited<ReturnType<typeof catalogReportsControllerGetViewer>> | undefined) => Awaited<ReturnType<typeof catalogReportsControllerGetViewer>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>>({ exact: $exactMatch, queryKey: getCatalogReportsControllerGetViewerQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get what the caller may do with reports
+ */
+export const useGetCatalogReportsControllerGetViewerQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof catalogReportsControllerGetViewer>>>(getCatalogReportsControllerGetViewerQueryKey());
+}
+
+
+
+export const getCatalogReportsControllerReviewUrl = () => {
+
+
+
+
+  return `/catalog/reports/review`
+}
+
+/**
+ * Set the status of reports, resolving, rejecting or opening them again; catalog moderators only. Opening a report again conflicts when its reporter has opened another about the same page since.
+ * @summary Review catalog reports
+ */
+export const catalogReportsControllerReview = async (reviewCatalogReportsRequest: ReviewCatalogReportsRequest, options?: Parameters<typeof catalogFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return catalogFetch<void>(getCatalogReportsControllerReviewUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(reviewCatalogReportsRequest)
+  }
+);}
+
+
+
+
+
+export const getCatalogReportsControllerReviewMutationKey = () => ['catalogReportsControllerReview'] as const;
+
+export const getCatalogReportsControllerReviewMutationOptions = <TError = ErrorType<RequestValidationError | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogReportsControllerReview>>, TError,CatalogReportsControllerReviewMutationVariables, TContext>, request?: SecondParameter<typeof catalogFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof catalogReportsControllerReview>>, TError,CatalogReportsControllerReviewMutationVariables, TContext> => {
+
+const mutationKey = getCatalogReportsControllerReviewMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof catalogReportsControllerReview>>, CatalogReportsControllerReviewMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  catalogReportsControllerReview(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CatalogReportsControllerReviewMutationResult = NonNullable<Awaited<ReturnType<typeof catalogReportsControllerReview>>>
+    export type CatalogReportsControllerReviewMutationBody = BodyType<ReviewCatalogReportsRequest>
+    export type CatalogReportsControllerReviewMutationError = ErrorType<RequestValidationError | HttpErrorResponse>
+    export type CatalogReportsControllerReviewMutationVariables = {data: BodyType<ReviewCatalogReportsRequest>}
+
+    /**
+ * @summary Review catalog reports
+ */
+export const useCatalogReportsControllerReview = <TError = ErrorType<RequestValidationError | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogReportsControllerReview>>, TError,CatalogReportsControllerReviewMutationVariables, TContext>, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof catalogReportsControllerReview>>,
+        TError,
+        CatalogReportsControllerReviewMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCatalogReportsControllerReviewMutationOptions(options), queryClient);
+    }

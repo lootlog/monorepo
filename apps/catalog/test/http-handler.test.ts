@@ -10,6 +10,11 @@ import {
   CatalogOperations,
   type CatalogOperationsValue,
 } from "../src/http-api/catalog-operations.js";
+import {
+  CatalogReports,
+  type ReportCaller,
+  type ReportsModule,
+} from "../src/reports/reports.service.js";
 
 const SERVICE_TOKEN = "catalog-service-token-for-http-tests";
 
@@ -23,11 +28,52 @@ const config = CatalogConfig.of({
   meilisearchHost: "http://search.invalid",
   meilisearchApiKey: Redacted.make("unused"),
   serviceToken: Redacted.make(SERVICE_TOKEN),
+  moderatorUserIds: [],
 });
 
 const service = { [CATALOG_SERVICE_TOKEN_HEADER]: SERVICE_TOKEN };
 
-const makeBoundary = (overrides: Partial<CatalogOperationsValue> = {}) => {
+/** Reports as the catalog stores them, recording who each call came from. */
+const makeReports = (callers: ReportCaller[]): ReportsModule => {
+  const report = {
+    id: "4b0f4c8e-8f0e-4d6a-9d43-0d1c1a3b5e6f",
+    subjectType: "ITEM",
+    gameVersion: "pl",
+    subjectId: 1,
+    reason: "NOT_IN_GAME",
+    comment: null,
+    status: "OPEN",
+    createdAt: "2026-11-21T00:00:00.000Z",
+    reviewedAt: null,
+  } as const;
+
+  const record = (caller: ReportCaller) => {
+    callers.push(caller);
+  };
+
+  return {
+    create: (caller) =>
+      Effect.sync(() => record(caller)).pipe(Effect.as(report)),
+    getOwn: (caller) =>
+      Effect.sync(() => record(caller)).pipe(Effect.as({ report: null })),
+    withdraw: (caller) => Effect.sync(() => record(caller)),
+    viewer: (caller) => {
+      record(caller);
+
+      return { canModerate: false };
+    },
+    list: (caller) =>
+      Effect.sync(() => record(caller)).pipe(
+        Effect.as({ subjects: [], total: 0 }),
+      ),
+    review: (caller) => Effect.sync(() => record(caller)),
+  };
+};
+
+const makeBoundary = (
+  overrides: Partial<CatalogOperationsValue> = {},
+  reports: ReportsModule = makeReports([]),
+) => {
   const operations: CatalogOperationsValue = {
     catalogItems: () => Effect.succeed({ hits: [], estimatedTotalHits: 0 }),
     catalogNpcs: () => Effect.succeed({ hits: [], estimatedTotalHits: 0 }),
@@ -44,16 +90,23 @@ const makeBoundary = (overrides: Partial<CatalogOperationsValue> = {}) => {
   const boundary = HttpRouter.toWebHandler(
     CatalogRoutes.pipe(
       Layer.provide(Layer.succeed(CatalogOperations, operations)),
+      Layer.provide(Layer.succeed(CatalogReports, reports)),
       Layer.provide(Layer.succeed(CatalogConfig, config)),
       Layer.provide(HttpServer.layerServices),
     ),
     { disableLogger: true },
   );
 
-  const handler = (path: string, headers: Record<string, string> = service) =>
+  const handler = (
+    path: string,
+    headers: Record<string, string> = service,
+    init: RequestInit = {},
+  ) =>
     boundary.handler(
-      new Request(`http://localhost${path}`, { headers }),
-      Context.make(CatalogOperations, operations),
+      new Request(`http://localhost${path}`, { ...init, headers }),
+      Context.make(CatalogOperations, operations).pipe(
+        Context.add(CatalogReports, reports),
+      ),
     );
 
   return {
@@ -167,6 +220,72 @@ test("reads need the service token or an identity from the edge, and keys stay s
         "x-auth-api-key-access": "invalid",
       }),
     ).toBe(401);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("reports come from the signed-in User the edge names, never a service or an API key", async () => {
+  const callers: ReportCaller[] = [];
+  const boundary = makeBoundary({}, makeReports(callers));
+
+  const report = {
+    method: "POST",
+    body: JSON.stringify({
+      subjectType: "ITEM",
+      gameVersion: "pl",
+      subjectId: 1,
+      reason: "NOT_IN_GAME",
+    }),
+  };
+
+  const user = {
+    "x-auth-user-id": "user-1",
+    "x-auth-discord-id": "discord-1",
+    "content-type": "application/json",
+  };
+
+  try {
+    // The catalog token reads the catalog, but it is nobody's report.
+    expect(
+      (
+        await boundary.handler(
+          "/catalog/reports",
+          {
+            ...service,
+            "content-type": "application/json",
+          },
+          report,
+        )
+      ).status,
+    ).toBe(401);
+
+    // Reports are no part of the developer API, whatever the key allows.
+    const keyed = await boundary.handler(
+      "/catalog/reports",
+      {
+        ...user,
+        "x-auth-api-key-access": JSON.stringify({
+          keyId: "key",
+          organizationIds: [],
+          mode: "read-write",
+          personalData: true,
+          expiresAt: null,
+        }),
+      },
+      report,
+    );
+
+    expect(keyed.status).toBe(403);
+    expect(callers).toEqual([]);
+
+    expect(
+      (await boundary.handler("/catalog/reports", user, report)).status,
+    ).toBe(201);
+    expect(
+      (await boundary.handler("/catalog/reports?status=OPEN", user)).status,
+    ).toBe(200);
+    expect(callers).toEqual([{ userId: "user-1" }, { userId: "user-1" }]);
   } finally {
     await boundary.dispose();
   }

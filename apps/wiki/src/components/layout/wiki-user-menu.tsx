@@ -1,4 +1,6 @@
-import { ExternalLink, LogIn, LogOut, Palette } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ExternalLink, Flag, LogIn, LogOut, Palette } from "lucide-react";
+import { useCatalogReportsControllerGetViewer } from "@lootlog/client/catalog";
 import {
   Avatar,
   AvatarFallback,
@@ -17,14 +19,24 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 import { useWikiContext } from "@/contexts/wiki-context";
 import { useDiscordSignIn, useLogout } from "@lootlog/client/auth-session";
 import { useSession } from "@/hooks/use-session";
+import { useSignedInCatalogRequest } from "@/hooks/use-signed-in-catalog-request";
 import { t } from "@/i18n/messages";
 
-/** Signing in is optional: it brings the User's theme from the Web app. */
+/**
+ * Signing in is optional: it brings the User's theme from the Web app, lets
+ * them report pages, and opens the report queue to moderators.
+ */
 export function WikiUserMenu() {
   const { config, authClient } = useWikiContext();
   const { session, isPending } = useSession();
   const signIn = useDiscordSignIn(authClient);
   const { logout, isPending: isLogoutPending } = useLogout(authClient);
+  const request = useSignedInCatalogRequest();
+
+  const viewer = useCatalogReportsControllerGetViewer({
+    query: { enabled: session !== null },
+    request,
+  });
 
   if (isPending) {
     return <Skeleton className="size-8 shrink-0 rounded-full" />;
@@ -102,6 +114,15 @@ export function WikiUserMenu() {
             <Palette />
             {t("userMenu.appearance")}
           </DropdownMenuItem>
+          {viewer.data?.canModerate ? (
+            <DropdownMenuItem
+              render={<Link to="/moderation" />}
+              className="rounded-lg px-2.5 py-2"
+            >
+              <Flag />
+              {t("userMenu.moderation")}
+            </DropdownMenuItem>
+          ) : null}
         </div>
         <DropdownMenuSeparator className="m-0" />
         <div className="p-1.5">

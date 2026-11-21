@@ -46,3 +46,16 @@ export const redisUrlConfig: Config.Config<Redacted.Redacted<string>> =
       ),
     ),
   );
+
+/** A comma-separated variable as its entries, trimmed, without empty ones. */
+export const commaSeparatedConfig = (
+  name: string,
+): Config.Config<ReadonlyArray<string>> =>
+  Config.String(name).pipe(
+    Config.map((value) =>
+      value
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter((entry) => entry !== ""),
+    ),
+  );
