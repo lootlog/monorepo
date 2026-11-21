@@ -44,7 +44,7 @@ export function AuditTable({
             <TableCell className="whitespace-nowrap text-muted-foreground">
               {formatDateTime(entry.createdAt)}
             </TableCell>
-            <TableCell className="font-medium">
+            <TableCell className="whitespace-normal font-medium">
               <span className="flex flex-wrap items-center gap-2">
                 {auditActionText[entry.action]}
                 {entry.incomplete ? (
@@ -55,7 +55,7 @@ export function AuditTable({
               </span>
             </TableCell>
             {showTarget ? (
-              <TableCell>
+              <TableCell className="whitespace-normal break-words">
                 {entry.targetUserId !== null && entry.targetName !== null ? (
                   <Link
                     to="/users/$userId"
