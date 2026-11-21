@@ -65,6 +65,11 @@ These defaults define the work contract for every agent:
   instructions to do the work, not invitations to describe how it could be done.
 - Persist until the authorized outcome is complete. Do not stop at a plan,
   partial fix, or capability statement when the requested work can be completed.
+- Leave the code you work in better than you found it. When the task leads you
+  to an anti-pattern, duplicated logic, dead code, or another weak spot, fix it
+  in the same change rather than working around it, verify the fix like the
+  rest of the work, and list each such fix in the delivery notes. A fix that
+  touches a compatibility contract follows the migration rules below.
 - Inspect the repository before asking questions. Ask only when missing input
   would materially change the result, new authority is required, or the next
   action would be destructive or irreversible.
