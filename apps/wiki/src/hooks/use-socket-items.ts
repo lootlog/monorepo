@@ -68,13 +68,3 @@ export const useSocketOptions = (item: SocketedItem) => {
 
   return { options: socketOptions(item, items), isLoaded };
 };
-
-/** The upgrade with a symbol the item's socket does not take left out. */
-export const useFittingUpgrade = (
-  item: SocketedItem,
-  upgrade: ItemUpgrade,
-): ItemUpgrade => {
-  const { items } = useSocketCatalog(upgrade.symbol !== undefined);
-
-  return keepFittingSymbol(item, upgrade, items);
-};

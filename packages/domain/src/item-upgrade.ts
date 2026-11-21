@@ -540,7 +540,7 @@ const upgradeLevelStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
  * The item's stats as the player crafted it, in the game's stat format: as
  * upgraded, then with the chosen symbol in its socket, whose bonus is as
  * strong as the item's upgraded level. Whether the socket takes that symbol
- * the symbol's own stats tell (`symbolFits`), so callers that hold them
+ * the symbol's own stats tell (`socketOptions`), so callers that hold them
  * check it; an item without a socket takes none.
  */
 export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {

@@ -34,7 +34,7 @@ export const isSocketBonus = (value: string): value is SocketBonus =>
   SOCKET_BONUSES.some((bonus) => bonus === value);
 
 /** The five kinds of component, as the game's icons name them. */
-export const COMPONENT_ELEMENTS = [
+const COMPONENT_ELEMENTS = [
   "steel",
   "fire",
   "frost",
@@ -42,7 +42,7 @@ export const COMPONENT_ELEMENTS = [
   "venom",
 ] as const;
 
-export type ComponentElement = (typeof COMPONENT_ELEMENTS)[number];
+type ComponentElement = (typeof COMPONENT_ELEMENTS)[number];
 
 /**
  * The three components each symbol's recipe takes, the same in every level
@@ -332,7 +332,7 @@ type CatalogSymbol = { id: number; stat: string };
  * game's class numbers) whose level is within `target_min_lvl` and
  * `target_max_lvl`. An item without a socket takes none.
  */
-export const symbolFits = (
+const symbolFits = (
   symbol: Pick<CatalogSymbol, "stat">,
   item: SocketedItem,
 ) => {
