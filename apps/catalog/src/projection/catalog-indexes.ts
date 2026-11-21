@@ -1,4 +1,5 @@
 import type { IndexSettings } from "@lootlog/meilisearch/index-settings";
+import { classifyItemCategory } from "@lootlog/domain/item-type";
 import { npcIconDirectory } from "@lootlog/domain/npc-type";
 import { catalogItemTable, catalogNpcTable } from "#src/database/schema";
 
@@ -11,6 +12,8 @@ type CatalogEntry = {
   readonly icon?: unknown;
   readonly monsterKey?: unknown;
   readonly firstSeenAt?: unknown;
+  readonly type?: unknown;
+  readonly stat?: unknown;
 };
 
 /** When each monster was first seen, by monster key, in epoch milliseconds. */
@@ -69,6 +72,22 @@ const toNpcIndexDocuments = (
       monsterFirstSeen.get(String(entry.monsterKey ?? "")) ?? null,
   }));
 
+/**
+ * Item entries with their browse category derived from `type` and `stat`
+ * (`equipment`, `crafting`, or `other`), so stored entries need no rewrite.
+ */
+const toItemIndexDocuments = (entries: ReadonlyArray<CatalogEntry>) =>
+  entries.map((entry) => ({
+    ...entry,
+    category: classifyItemCategory({
+      type:
+        entry.type === null || entry.type === undefined
+          ? null
+          : String(entry.type),
+      stat: String(entry.stat ?? ""),
+    }),
+  }));
+
 export const catalogIndexes: Record<
   typeof ITEMS_INDEX | typeof NPCS_INDEX,
   CatalogIndex
@@ -94,12 +113,13 @@ export const catalogIndexes: Record<
   },
   [ITEMS_INDEX]: {
     table: catalogItemTable,
-    toDocuments: (entries) => [...entries],
+    toDocuments: toItemIndexDocuments,
     settings: {
       filterableAttributes: [
         "id",
         "gameVersion",
         "type",
+        "category",
         "rarity",
         "lvl",
         "elasticLevel",

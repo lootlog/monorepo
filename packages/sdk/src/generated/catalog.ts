@@ -304,6 +304,10 @@ gameVersion?: CatalogControllerGetItemsGameVersion;
 ids?: number[];
 rarities?: string[];
 types?: string[];
+/**
+ * Items of any of these categories: `equipment` for wearable gear, `crafting` for equipment-slot items meant only as crafting ingredients, and `other` for non-equippable items such as keys, bags and consumables.
+ */
+categories?: CatalogControllerGetItemsCategoriesItem[];
 professions?: string[];
 minLevel?: number;
 maxLevel?: number;
@@ -338,6 +342,15 @@ export type CatalogControllerGetItemsGameVersion = typeof CatalogControllerGetIt
 export const CatalogControllerGetItemsGameVersion = {
   en: 'en',
   pl: 'pl',
+} as const;
+
+export type CatalogControllerGetItemsCategoriesItem = typeof CatalogControllerGetItemsCategoriesItem[keyof typeof CatalogControllerGetItemsCategoriesItem];
+
+
+export const CatalogControllerGetItemsCategoriesItem = {
+  equipment: 'equipment',
+  crafting: 'crafting',
+  other: 'other',
 } as const;
 
 export type CatalogControllerGetItemsSort = typeof CatalogControllerGetItemsSort[keyof typeof CatalogControllerGetItemsSort];
@@ -437,7 +450,7 @@ export const getCatalogControllerGetItemsUrl = (params?: CatalogControllerGetIte
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["ids","rarities","types","professions","statKeys","excludedStatKeys","legendaryBonuses","dropSourceTypes"];
+    const explodeParameters = ["ids","rarities","types","categories","professions","statKeys","excludedStatKeys","legendaryBonuses","dropSourceTypes"];
 
     if (Array.isArray(value) && explodeParameters.includes(key)) {
       value.forEach((v) => {

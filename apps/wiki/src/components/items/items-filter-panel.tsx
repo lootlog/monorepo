@@ -20,6 +20,7 @@ import {
 } from "@/lib/item-options";
 import {
   BOSS_OPTIONS,
+  effectiveScope,
   EVENT_OPTIONS,
   type ItemsSearch,
   joinList,
@@ -91,6 +92,57 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
   ];
 
   const selectedSlot = findEquipmentSlotById(search.slot);
+  const scope = effectiveScope(search);
+  const isOtherScope = scope === "other" || scope === "crafting";
+  const isCrafting = scope === "crafting";
+
+  const toggleOtherType = (value: string) => (pressed: boolean) => {
+    const nextTypes = joinList(
+      pressed
+        ? [...types.values, value]
+        : types.values.filter((current) => current !== value),
+    );
+
+    if (!pressed) {
+      onChange({ types: nextTypes });
+
+      return;
+    }
+
+    const next: Partial<ItemsSearch> = { types: nextTypes, slot: "" };
+
+    if (scope === "equipment" || scope === "crafting") {
+      next.scope = "other";
+    }
+
+    onChange(next);
+  };
+
+  const selectSlot = (slotId: string, isSelected: boolean) => {
+    if (isSelected) {
+      onChange({ slot: "" });
+
+      return;
+    }
+
+    const next: Partial<ItemsSearch> = { slot: slotId, types: "" };
+
+    if (isOtherScope) {
+      next.scope = search.query.trim() ? "equipment" : "";
+    }
+
+    onChange(next);
+  };
+
+  const clearOtherTypes = () => {
+    const next: Partial<ItemsSearch> = { types: "" };
+
+    if (isCrafting) {
+      next.scope = "other";
+    }
+
+    onChange(next);
+  };
 
   return (
     <div className="flex flex-col">
@@ -111,7 +163,7 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
                   aria-pressed={isSelected}
                   aria-label={t(`slots.${slot.id}`)}
                   title={t(`slots.${slot.id}`)}
-                  onClick={() => onChange({ slot: isSelected ? "" : slot.id })}
+                  onClick={() => selectSlot(slot.id, isSelected)}
                   className={cn(
                     "flex size-full items-center justify-center rounded-lg border outline-none transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring active:scale-95 motion-reduce:transition-none",
                     isSelected
@@ -300,20 +352,36 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
       </FilterSection>
 
       <FilterSection
+        key={isOtherScope ? "other-types-open" : "other-types"}
         title={t("filters.otherTypes")}
-        count={types.count}
-        onClear={types.clear}
+        count={types.count + (isCrafting ? 1 : 0)}
+        onClear={clearOtherTypes}
+        defaultOpen={isOtherScope}
       >
-        <div className={TILE_GRID}>
-          {OTHER_TYPE_OPTIONS.map((value) => (
-            <FilterTile
-              key={value}
-              label={t(`itemType.${value}`)}
-              pressed={types.isPressed(value)}
-              onPressedChange={types.toggle(value)}
-              centered
-            />
-          ))}
+        <div className="flex flex-col gap-1.5">
+          <FilterTile
+            label={t("filters.crafting")}
+            pressed={isCrafting}
+            onPressedChange={(pressed) =>
+              onChange(
+                pressed
+                  ? { scope: "crafting", slot: "", types: "" }
+                  : { scope: "other" },
+              )
+            }
+            centered
+          />
+          <div className={TILE_GRID}>
+            {OTHER_TYPE_OPTIONS.map((value) => (
+              <FilterTile
+                key={value}
+                label={t(`itemType.${value}`)}
+                pressed={types.isPressed(value)}
+                onPressedChange={toggleOtherType(value)}
+                centered
+              />
+            ))}
+          </div>
         </div>
       </FilterSection>
     </div>

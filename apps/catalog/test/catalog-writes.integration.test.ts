@@ -205,8 +205,11 @@ test("keeps an item's worlds, earliest sighting and every NPC of its edition acr
     droppedByKeys: [npcCatalogKey(nosferatu), npcCatalogKey(vampire)],
     droppedByMonsterKeys: ["pl_Nosferatu_HERO", "pl_Wampir_HERO"],
   });
-  // The search index holds exactly what the database committed.
-  expect(projected.get(ITEMS_INDEX)?.get(uid)).toEqual(entry);
+  // The search index holds what the database committed plus the derived category.
+  expect(projected.get(ITEMS_INDEX)?.get(uid)).toEqual({
+    ...entry,
+    category: "other",
+  });
 });
 
 test("keeps each edition and name of one item as its own entry", async () => {
@@ -312,7 +315,10 @@ test("a new loot of an item keeps its drop rates, retirements and changes", asyn
     retiredDropMonsterKeys: ["pl_Kostucha_HERO"],
     changedOn: "2026-10-01",
   });
-  expect(projected.get(ITEMS_INDEX)?.get(uid)).toEqual(await storedItem(uid));
+  expect(projected.get(ITEMS_INDEX)?.get(uid)).toEqual({
+    ...(await storedItem(uid)),
+    category: "other",
+  });
 });
 
 test("replaces one monster's drop rates without touching another monster's", async () => {

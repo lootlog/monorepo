@@ -155,6 +155,11 @@ const levelFilter = (min: number | undefined, max: number | undefined) => {
     : bounds.join(" AND ");
 };
 
+const inFilter = (
+  field: string,
+  values: ReadonlyArray<string | number> | undefined,
+) => (values?.length ? buildMeilisearchInFilter(field, values) : undefined);
+
 /** The item filters of a query; `monsterKey` is the drop source's monster. */
 const itemFilters = (
   query: CatalogControllerGetItemsQuery,
@@ -164,14 +169,11 @@ const itemFilters = (
 
   return [
     gameVersionFilter(query.gameVersion),
-    query.ids?.length ? buildMeilisearchInFilter("id", query.ids) : undefined,
-    query.rarities?.length
-      ? buildMeilisearchInFilter("rarity", query.rarities)
-      : undefined,
-    types?.length ? buildMeilisearchInFilter("type", types) : undefined,
-    query.professions?.length
-      ? buildMeilisearchInFilter("requiredProfessions", query.professions)
-      : undefined,
+    inFilter("id", query.ids),
+    inFilter("rarity", query.rarities),
+    inFilter("type", types),
+    inFilter("category", query.categories),
+    inFilter("requiredProfessions", query.professions),
     levelFilter(query.minLevel, query.maxLevel),
     ...(query.statKeys ?? []).map(
       (key) => `statsKeys = ${JSON.stringify(key)}`,
@@ -179,12 +181,8 @@ const itemFilters = (
     ...(query.excludedStatKeys ?? []).map(
       (key) => `NOT statsKeys = ${JSON.stringify(key)}`,
     ),
-    query.legendaryBonuses?.length
-      ? buildMeilisearchInFilter("legendaryBonus", query.legendaryBonuses)
-      : undefined,
-    query.dropSourceTypes?.length
-      ? buildMeilisearchInFilter("droppedByTypes", query.dropSourceTypes)
-      : undefined,
+    inFilter("legendaryBonus", query.legendaryBonuses),
+    inFilter("droppedByTypes", query.dropSourceTypes),
     query.event === undefined
       ? undefined
       : `eventSlugs = ${JSON.stringify(query.event)}`,

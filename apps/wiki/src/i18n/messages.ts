@@ -880,6 +880,13 @@ const messages = {
       exclude: "Bez eventowych",
       only: "Tylko eventowe",
     },
+    scope: "Kategoria przedmiotów",
+    scopeOptions: {
+      equipment: "Ekwipunek",
+      other: "Pozostałe",
+      all: "Wszystkie",
+    },
+    crafting: "Składniki rzemieślnicze",
     otherTypes: "Pozostałe typy",
     remove: "Usuń filtr: {{filter}}",
     clearAll: "Wyczyść filtry",

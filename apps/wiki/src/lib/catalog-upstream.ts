@@ -30,6 +30,7 @@ const ITEM_PARAMETERS = {
   ids: true,
   rarities: true,
   types: true,
+  categories: true,
   professions: true,
   minLevel: true,
   maxLevel: true,
