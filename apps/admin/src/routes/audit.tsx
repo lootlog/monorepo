@@ -5,12 +5,13 @@ import { text } from "@/lib/messages";
 import { readPage } from "@/lib/users-search";
 import { AUDIT_PAGE_SIZE, listAudit } from "@/server/queries";
 
-export const Route = createFileRoute("/audit")({
-  validateSearch: (search: { page?: unknown }): { page?: number } => {
-    const page = readPage(search.page);
+type AuditSearch = { page?: number | undefined };
 
-    return page === undefined ? {} : { page };
-  },
+export const Route = createFileRoute("/audit")({
+  // Returns the key even when empty, or the raw value would stay in place.
+  validateSearch: (search: { page?: unknown }): AuditSearch => ({
+    page: readPage(search.page),
+  }),
   loaderDeps: ({ search }) => search,
   loader: ({ deps }) => listAudit({ data: deps.page ?? 1 }),
   component: AuditPage,
