@@ -1,4 +1,6 @@
 import { Link } from "@tanstack/react-router";
+import { useMaxWidth } from "@lootlog/ui/hooks/use-max-width";
+import { useState } from "react";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -25,6 +27,9 @@ const browseSections = WIKI_NAVIGATION.filter(
 
 const toolSections = WIKI_NAVIGATION.filter(({ group }) => group === "tools");
 
+/** Tailwind's `lg`, from which the header shows this menu in its bar. */
+const INLINE_MIN_WIDTH = 1024;
+
 type WikiNavigationMenuProps = {
   activeSection: WikiSection | undefined;
 };
@@ -34,6 +39,13 @@ type WikiNavigationMenuProps = {
  * equipment slot, and the tools that work on its items.
  */
 export function WikiNavigationMenu({ activeSection }: WikiNavigationMenuProps) {
+  const [openPanel, setOpenPanel] = useState<string | null>(null);
+  // The open panel is portaled, so hiding the bar would leave it floating
+  // over the narrow layout; close it when the bar gives way to the menu.
+  const collapsed = useMaxWidth(INLINE_MIN_WIDTH);
+
+  if (collapsed && openPanel !== null) setOpenPanel(null);
+
   const renderSection = (section: WikiSection) => (
     <li key={section.link.to}>
       <WikiNavigationMenuLink
@@ -56,9 +68,13 @@ export function WikiNavigationMenu({ activeSection }: WikiNavigationMenuProps) {
     );
 
   return (
-    <NavigationMenu aria-label={t("navigation.ariaLabel")}>
+    <NavigationMenu
+      aria-label={t("navigation.ariaLabel")}
+      value={openPanel}
+      onValueChange={setOpenPanel}
+    >
       <NavigationMenuList className="gap-1">
-        <NavigationMenuItem>
+        <NavigationMenuItem value="browse">
           <NavigationMenuTrigger className={triggerClassName(browseSections)}>
             {t("navigation.browse")}
           </NavigationMenuTrigger>
@@ -97,7 +113,7 @@ export function WikiNavigationMenu({ activeSection }: WikiNavigationMenuProps) {
             </div>
           </NavigationMenuContent>
         </NavigationMenuItem>
-        <NavigationMenuItem>
+        <NavigationMenuItem value="tools">
           <NavigationMenuTrigger className={triggerClassName(toolSections)}>
             {t("navigation.tools")}
           </NavigationMenuTrigger>
