@@ -8,7 +8,7 @@ import {
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
 
-export const CATALOG_REPORT_SUBJECT_TYPES = ["ITEM", "NPC"] as const;
+const CATALOG_REPORT_SUBJECT_TYPES = ["ITEM", "NPC"] as const;
 
 export const CatalogReportSubjectType = Schema.Literals(
   CATALOG_REPORT_SUBJECT_TYPES,
@@ -18,7 +18,7 @@ export const CatalogReportSubjectType = Schema.Literals(
 
 export type CatalogReportSubjectType = typeof CatalogReportSubjectType.Type;
 
-export const CATALOG_REPORT_REASONS = [
+const CATALOG_REPORT_REASONS = [
   "NOT_IN_GAME",
   "WRONG_DETAILS",
   "WRONG_DROPS",
@@ -35,11 +35,7 @@ export const CatalogReportReason = Schema.Literals(
 
 export type CatalogReportReason = typeof CatalogReportReason.Type;
 
-export const CATALOG_REPORT_STATUSES = [
-  "OPEN",
-  "RESOLVED",
-  "REJECTED",
-] as const;
+const CATALOG_REPORT_STATUSES = ["OPEN", "RESOLVED", "REJECTED"] as const;
 
 export const CatalogReportStatus = Schema.Literals(
   CATALOG_REPORT_STATUSES,
@@ -51,7 +47,7 @@ export const CatalogReportStatus = Schema.Literals(
 export type CatalogReportStatus = typeof CatalogReportStatus.Type;
 
 /** The longest comment a report keeps. */
-export const CATALOG_REPORT_COMMENT_MAX_LENGTH = 500;
+const CATALOG_REPORT_COMMENT_MAX_LENGTH = 500;
 
 const CatalogReportComment = Schema.String.check(
   Schema.isMaxLength(CATALOG_REPORT_COMMENT_MAX_LENGTH).annotate({
