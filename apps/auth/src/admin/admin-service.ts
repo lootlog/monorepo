@@ -317,10 +317,13 @@ export class AdminService extends Context.Service<
         action: AdminAuditAction,
         targetUserId: string,
         details?: AdminAuditDetails,
-      ) =>
-        query(
-          database.insert(adminAuditLog).values({
-            id: crypto.randomUUID(),
+        executor: Pick<typeof database, "insert"> = database,
+      ) => {
+        const id = crypto.randomUUID();
+
+        return query(
+          executor.insert(adminAuditLog).values({
+            id,
             actor,
             action,
             targetUserId,
@@ -332,7 +335,52 @@ export class AdminService extends Context.Service<
               Effect.annotateLogs({ context: "Admin", action, targetUserId }),
             ),
           ),
+          Effect.as(id),
         );
+      };
+
+      /**
+       * Runs an action that Better Auth carries out, which cannot share a
+       * transaction with the audit log. The entry is written first and says
+       * the action did not complete, so nothing changes without one and an
+       * action that fails, is cut short or dies with the process keeps that
+       * mark: it may have landed in part. Only a finished action clears it.
+       */
+      const audited = <A>(
+        actor: string,
+        action: AdminAuditAction,
+        targetUserId: string,
+        details: AdminAuditDetails | undefined,
+        run: Effect.Effect<A, ApplicationError>,
+      ) =>
+        Effect.gen(function* () {
+          const id = yield* record(actor, action, targetUserId, {
+            ...details,
+            completed: false,
+          });
+
+          const result = yield* run;
+
+          // The action has landed; failing here would only hide that. Its
+          // entry keeps the mark and the operator checks what holds.
+          yield* database
+            .update(adminAuditLog)
+            .set({ details: details ?? null })
+            .where(eq(adminAuditLog.id, id))
+            .pipe(
+              Effect.catchCause(() =>
+                Effect.logError("Admin action left marked incomplete").pipe(
+                  Effect.annotateLogs({
+                    context: "Admin",
+                    action,
+                    targetUserId,
+                  }),
+                ),
+              ),
+            );
+
+          return result;
+        });
 
       const readAudit = Effect.fn("AdminService.readAudit")(function* (
         page: { readonly limit: number; readonly offset: number },
@@ -525,8 +573,13 @@ export class AdminService extends Context.Service<
             const role = storePlatformRoles(roles);
             const next = parsePlatformRoles(role);
 
-            yield* account((accounts) => accounts.updateUser(userId, { role }));
-            yield* record(actor, "roles.set", userId, { previous, next });
+            yield* audited(
+              actor,
+              "roles.set",
+              userId,
+              { previous, next },
+              account((accounts) => accounts.updateUser(userId, { role })),
+            );
 
             return { user: yield* readUser(userId) };
           },
@@ -546,20 +599,21 @@ export class AdminService extends Context.Service<
 
           // The ban lands first: a session revoked before it could be replaced
           // by a new sign-in.
-          yield* account(async (accounts) => {
-            await accounts.updateUser(userId, {
-              banned: true,
-              banReason: ban.reason,
-              banExpires: expiresAt,
-            });
+          yield* audited(
+            actor,
+            "ban.set",
+            userId,
+            { reason: ban.reason, expiresAt: ban.expiresAt },
+            account(async (accounts) => {
+              await accounts.updateUser(userId, {
+                banned: true,
+                banReason: ban.reason,
+                banExpires: expiresAt,
+              });
 
-            await accounts.revokeSessions(userId);
-          });
-
-          yield* record(actor, "ban.set", userId, {
-            reason: ban.reason,
-            expiresAt: ban.expiresAt,
-          });
+              await accounts.revokeSessions(userId);
+            }),
+          );
 
           return { user: yield* readUser(userId) };
         }),
@@ -567,15 +621,19 @@ export class AdminService extends Context.Service<
         unban: Effect.fn("AdminService.unban")(function* (actor, userId) {
           yield* findUser(userId);
 
-          yield* account((accounts) =>
-            accounts.updateUser(userId, {
-              banned: false,
-              banReason: null,
-              banExpires: null,
-            }),
+          yield* audited(
+            actor,
+            "ban.lift",
+            userId,
+            undefined,
+            account((accounts) =>
+              accounts.updateUser(userId, {
+                banned: false,
+                banReason: null,
+                banExpires: null,
+              }),
+            ),
           );
-
-          yield* record(actor, "ban.lift", userId);
 
           return { user: yield* readUser(userId) };
         }),
@@ -583,8 +641,13 @@ export class AdminService extends Context.Service<
         revokeSessions: Effect.fn("AdminService.revokeSessions")(
           function* (actor, userId) {
             yield* findUser(userId);
-            yield* account((accounts) => accounts.revokeSessions(userId));
-            yield* record(actor, "sessions.revoke", userId);
+            yield* audited(
+              actor,
+              "sessions.revoke",
+              userId,
+              undefined,
+              account((accounts) => accounts.revokeSessions(userId)),
+            );
           },
         ),
 
@@ -608,34 +671,50 @@ export class AdminService extends Context.Service<
             if (!session)
               return yield* new ResourceNotFoundError("Session not found");
 
-            yield* account((accounts) => accounts.revokeSession(session.token));
-            yield* record(actor, "session.revoke", userId, { sessionId });
+            yield* audited(
+              actor,
+              "session.revoke",
+              userId,
+              { sessionId },
+              account((accounts) => accounts.revokeSession(session.token)),
+            );
           },
         ),
 
         revokeApiKey: Effect.fn("AdminService.revokeApiKey")(
           function* (actor, userId, keyId) {
-            const removed = yield* query(
-              database
-                .delete(authApiKeys)
-                .where(
-                  and(
-                    eq(authApiKeys.id, keyId),
-                    eq(authApiKeys.referenceId, userId),
-                  ),
-                )
-                .returning({ name: authApiKeys.name }),
-            );
+            // One transaction: a key must not vanish without its audit entry.
+            const key = yield* query(
+              database.transaction((transaction) =>
+                Effect.gen(function* () {
+                  const removed = yield* transaction
+                    .delete(authApiKeys)
+                    .where(
+                      and(
+                        eq(authApiKeys.id, keyId),
+                        eq(authApiKeys.referenceId, userId),
+                      ),
+                    )
+                    .returning({ name: authApiKeys.name });
 
-            const key = removed[0];
+                  const removedKey = removed[0];
+
+                  if (removedKey)
+                    yield* record(
+                      actor,
+                      "api-key.revoke",
+                      userId,
+                      { keyId, name: removedKey.name },
+                      transaction,
+                    );
+
+                  return removedKey;
+                }),
+              ),
+            );
 
             if (!key)
               return yield* new ResourceNotFoundError("API key not found");
-
-            yield* record(actor, "api-key.revoke", userId, {
-              keyId,
-              name: key.name,
-            });
           },
         ),
 

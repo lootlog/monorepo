@@ -965,84 +965,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  user:
-                    $ref: "#/components/schemas/AdminUser"
-                required:
-                  - user
-        "400":
-          description: ""
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: "#/components/schemas/HttpErrorResponse"
-                  - $ref: "#/components/schemas/RequestValidationError"
-        "401":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "403":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "404":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "503":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AdminUserResponse"
-        required: true
-  /admin/users/{id}/ban:
-    put:
-      tags:
-        - admin
-      operationId: AdminController_banUser
-      parameters:
-        - name: id
-          in: path
-          schema:
-            type: string
-            minLength: 1
-          required: true
-        - name: authorization
-          in: header
-          schema:
-            type: string
-          required: false
-        - name: cookie
-          in: header
-          schema:
-            type: string
-          required: false
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: "#/components/schemas/AdminUser"
-                required:
-                  - user
+                $ref: "#/components/schemas/AdminUserResponse"
         "400":
           description: ""
           content:
@@ -1081,6 +1004,73 @@ paths:
             schema:
               $ref: "#/components/schemas/SetAdminUserRoles"
         required: true
+  /admin/users/{id}/ban:
+    put:
+      tags:
+        - admin
+      operationId: AdminController_banUser
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BanAdminUser"
+        required: true
     delete:
       tags:
         - admin
@@ -1108,12 +1098,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  user:
-                    $ref: "#/components/schemas/AdminUser"
-                required:
-                  - user
+                $ref: "#/components/schemas/AdminUserResponse"
         "400":
           description: ""
           content:
@@ -1492,6 +1477,13 @@ components:
         - targetName
         - details
         - createdAt
+    AdminUserResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/AdminUser"
+      required:
+        - user
     AdminUser:
       type: object
       properties:
@@ -1549,7 +1541,7 @@ components:
       required:
         - reason
         - expiresAt
-    SetAdminUserRoles:
+    BanAdminUser:
       type: object
       properties:
         reason:
@@ -1562,7 +1554,7 @@ components:
       required:
         - reason
         - expiresAt
-    AdminUserResponse:
+    SetAdminUserRoles:
       type: object
       properties:
         roles:

@@ -140,7 +140,11 @@ export interface AdminUser {
   activeSessions: number;
 }
 
-export interface SetAdminUserRoles {
+export interface AdminUserResponse {
+  user: AdminUser;
+}
+
+export interface BanAdminUser {
   reason: string;
   /**
      * @nullable
@@ -149,17 +153,17 @@ export interface SetAdminUserRoles {
   expiresAt: string | null;
 }
 
-export type AdminUserResponseRolesItem = typeof AdminUserResponseRolesItem[keyof typeof AdminUserResponseRolesItem];
+export type SetAdminUserRolesRolesItem = typeof SetAdminUserRolesRolesItem[keyof typeof SetAdminUserRolesRolesItem];
 
 
-export const AdminUserResponseRolesItem = {
+export const SetAdminUserRolesRolesItem = {
   admin: 'admin',
   'wiki-moderator': 'wiki-moderator',
   'global-chat-admin': 'global-chat-admin',
 } as const;
 
-export interface AdminUserResponse {
-  roles: AdminUserResponseRolesItem[];
+export interface SetAdminUserRoles {
+  roles: SetAdminUserRolesRolesItem[];
 }
 
 export interface AdminSession {
@@ -507,24 +511,12 @@ export type AdminControllerGetUserPathParameters = {
 export type AdminControllerSetUserRolesPathParameters = {
  id: string,
  }
-export type AdminControllerSetUserRoles200 = {
-  user: AdminUser;
-};
-
 export type AdminControllerBanUserPathParameters = {
  id: string,
  }
-export type AdminControllerBanUser200 = {
-  user: AdminUser;
-};
-
 export type AdminControllerUnbanUserPathParameters = {
  id: string,
  }
-export type AdminControllerUnbanUser200 = {
-  user: AdminUser;
-};
-
 export type AdminControllerRevokeUserSessionsPathParameters = {
  id: string,
  }
@@ -2206,7 +2198,7 @@ export const getAdminControllerSetUserRolesUrl = ({ id }: AdminControllerSetUser
 }
 
 export const adminControllerSetUserRoles = async ({ id }: AdminControllerSetUserRolesPathParameters,
-    adminUserResponse: AdminUserResponse, options?: Parameters<typeof authFetch>[1]): Promise<AdminControllerSetUserRoles200> => {
+    setAdminUserRoles: SetAdminUserRoles, options?: Parameters<typeof authFetch>[1]): Promise<AdminUserResponse> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -2222,12 +2214,12 @@ export const adminControllerSetUserRoles = async ({ id }: AdminControllerSetUser
     }
     return headers;
   };
-return authFetch<AdminControllerSetUserRoles200>(getAdminControllerSetUserRolesUrl({ id }),
+return authFetch<AdminUserResponse>(getAdminControllerSetUserRolesUrl({ id }),
   {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(adminUserResponse)
+    body: JSON.stringify(setAdminUserRoles)
   }
 );}
 
@@ -2265,9 +2257,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type AdminControllerSetUserRolesMutationResult = NonNullable<Awaited<ReturnType<typeof adminControllerSetUserRoles>>>
-    export type AdminControllerSetUserRolesMutationBody = BodyType<AdminUserResponse>
+    export type AdminControllerSetUserRolesMutationBody = BodyType<SetAdminUserRoles>
     export type AdminControllerSetUserRolesMutationError = ErrorType<HttpErrorResponse | RequestValidationError>
-    export type AdminControllerSetUserRolesMutationVariables = {pathParams: AdminControllerSetUserRolesPathParameters;data: BodyType<AdminUserResponse>}
+    export type AdminControllerSetUserRolesMutationVariables = {pathParams: AdminControllerSetUserRolesPathParameters;data: BodyType<SetAdminUserRoles>}
 
     export const useAdminControllerSetUserRoles = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerSetUserRoles>>, TError,AdminControllerSetUserRolesMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
@@ -2289,7 +2281,7 @@ export const getAdminControllerBanUserUrl = ({ id }: AdminControllerBanUserPathP
 }
 
 export const adminControllerBanUser = async ({ id }: AdminControllerBanUserPathParameters,
-    setAdminUserRoles: SetAdminUserRoles, options?: Parameters<typeof authFetch>[1]): Promise<AdminControllerBanUser200> => {
+    banAdminUser: BanAdminUser, options?: Parameters<typeof authFetch>[1]): Promise<AdminUserResponse> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -2305,12 +2297,12 @@ export const adminControllerBanUser = async ({ id }: AdminControllerBanUserPathP
     }
     return headers;
   };
-return authFetch<AdminControllerBanUser200>(getAdminControllerBanUserUrl({ id }),
+return authFetch<AdminUserResponse>(getAdminControllerBanUserUrl({ id }),
   {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(setAdminUserRoles)
+    body: JSON.stringify(banAdminUser)
   }
 );}
 
@@ -2348,9 +2340,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type AdminControllerBanUserMutationResult = NonNullable<Awaited<ReturnType<typeof adminControllerBanUser>>>
-    export type AdminControllerBanUserMutationBody = BodyType<SetAdminUserRoles>
+    export type AdminControllerBanUserMutationBody = BodyType<BanAdminUser>
     export type AdminControllerBanUserMutationError = ErrorType<HttpErrorResponse | RequestValidationError>
-    export type AdminControllerBanUserMutationVariables = {pathParams: AdminControllerBanUserPathParameters;data: BodyType<SetAdminUserRoles>}
+    export type AdminControllerBanUserMutationVariables = {pathParams: AdminControllerBanUserPathParameters;data: BodyType<BanAdminUser>}
 
     export const useAdminControllerBanUser = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerBanUser>>, TError,AdminControllerBanUserMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
@@ -2371,9 +2363,9 @@ export const getAdminControllerUnbanUserUrl = ({ id }: AdminControllerUnbanUserP
   return `/admin/users/${id}/ban`
 }
 
-export const adminControllerUnbanUser = async ({ id }: AdminControllerUnbanUserPathParameters, options?: Parameters<typeof authFetch>[1]): Promise<AdminControllerUnbanUser200> => {
+export const adminControllerUnbanUser = async ({ id }: AdminControllerUnbanUserPathParameters, options?: Parameters<typeof authFetch>[1]): Promise<AdminUserResponse> => {
 
-  return authFetch<AdminControllerUnbanUser200>(getAdminControllerUnbanUserUrl({ id }),
+  return authFetch<AdminUserResponse>(getAdminControllerUnbanUserUrl({ id }),
   {
     ...options,
     method: 'DELETE'

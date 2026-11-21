@@ -1,8 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
 type RequestContext = {
-  /** The email Cloudflare Access verified. */
-  readonly accessEmail: string;
   /** The browser's cookies, which carry the operator's Lootlog session. */
   readonly cookie: string;
   /** Marks the scripts and styles this response may run. */

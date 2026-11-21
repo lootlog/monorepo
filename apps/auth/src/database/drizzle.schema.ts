@@ -216,7 +216,7 @@ export const adminAuditLog = pgTable(
   "admin_audit_log",
   {
     id: text("id").primaryKey(),
-    /** The operator's verified email. */
+    /** The operator's Lootlog name and User id. */
     actor: text("actor").notNull(),
     action: text("action").$type<AdminAuditAction>().notNull(),
     targetUserId: text("targetUserId"),

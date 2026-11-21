@@ -14,23 +14,22 @@ const secured = (response: Response, nonce: string) => {
   return securedResponse;
 };
 
+// Read once at start, so a half-configured panel fails to start instead of
+// passing its health check and refusing every request.
+const config = adminConfig();
+
 /** Every request passes the guard before any route or server function runs. */
 export default createServerEntry({
   async fetch(request) {
     const nonce = crypto.getRandomValues(new Uint8Array(16)).toBase64();
 
-    const decision = await authorizeRequest(
-      request,
-      adminConfig(),
-      verifyAccessToken,
-    );
+    const decision = await authorizeRequest(request, config, verifyAccessToken);
 
     if ("response" in decision) return secured(decision.response, nonce);
 
     return secured(
       await runRequest(
         {
-          accessEmail: decision.operator,
           cookie: request.headers.get("cookie") ?? "",
           nonce,
         },

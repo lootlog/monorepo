@@ -46,6 +46,7 @@ export const Route = createFileRoute("/users/$userId")({
 function UserPage() {
   const { user, sessions, apiKeys, audit } = Route.useLoaderData();
   const { notice, error } = Route.useSearch();
+  const { operator } = Route.useRouteContext();
 
   return (
     <>
@@ -83,7 +84,7 @@ function UserPage() {
           title={text.banHeading}
           description={text.banDescription}
         >
-          <BanForm user={user} />
+          <BanForm user={user} own={operator?.userId === user.id} />
         </Section>
       </div>
       <Section

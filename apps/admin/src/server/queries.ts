@@ -20,21 +20,26 @@ import { runUserAction } from "./user-actions.js";
 /** An audit entry as the pages show it, with its details already as text. */
 export type AuditRow = Omit<AdminAuditEntry, "details"> & {
   readonly details: string;
+  /** The action failed or was cut short, and may have landed in part. */
+  readonly incomplete: boolean;
 };
 
 /** What an entry recorded beside its action, as short readable text. */
-const toAuditRow = ({ details, ...entry }: AdminAuditEntry): AuditRow => ({
-  ...entry,
-  details:
-    details === null
-      ? ""
-      : Object.entries(details)
-          .map(
-            ([key, value]) =>
-              `${key}: ${Predicate.isString(value) ? value : JSON.stringify(value)}`,
-          )
-          .join(" · "),
-});
+const toAuditRow = ({ details, ...entry }: AdminAuditEntry): AuditRow => {
+  // The auth service marks an action it could not confirm; the rest describes it.
+  const { completed, ...described } = details ?? {};
+
+  return {
+    ...entry,
+    incomplete: completed === false,
+    details: Object.entries(described)
+      .map(
+        ([key, value]) =>
+          `${key}: ${Predicate.isString(value) ? value : JSON.stringify(value)}`,
+      )
+      .join(" · "),
+  };
+};
 
 export const USERS_PAGE_SIZE = 25;
 
@@ -51,7 +56,7 @@ const UsersInput = Schema.Struct({
 
 /** Who is operating the panel, or why the auth service lets nobody in. */
 export type OperatorAccess =
-  | { readonly status: "admin"; readonly name: string }
+  | { readonly status: "admin"; readonly userId: string; readonly name: string }
   | { readonly status: "signed-out" | "not-admin" };
 
 /**
@@ -63,7 +68,7 @@ export const getOperatorAccess = createServerFn({ method: "GET" }).handler(
     try {
       const operator = await adminControllerSession(asPanel());
 
-      return { status: "admin", name: operator.name };
+      return { status: "admin", userId: operator.userId, name: operator.name };
     } catch (error) {
       if (error instanceof ApiError && error.status === 401)
         return { status: "signed-out" };

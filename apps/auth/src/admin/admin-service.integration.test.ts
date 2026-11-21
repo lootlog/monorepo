@@ -15,7 +15,7 @@ import {
 } from "#src/auth/provider/better-auth";
 import { AppConfig, type AuthConfig } from "#src/config/env";
 import { AuthDatabase } from "#src/database/drizzle";
-import type { authUsers } from "#src/database/drizzle.schema";
+import { authApiKeys, type authUsers } from "#src/database/drizzle.schema";
 import { runAuthMigrations } from "#src/database/migrations";
 import { makeAuthPostgresLayer, PostgresPool } from "#src/database/postgres";
 import { AdminService } from "./admin-service.js";
@@ -39,6 +39,9 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
   >;
 
   let auth: ReturnType<typeof createLootlogAuth>;
+
+  /** Makes Better Auth refuse writes to a User, as when its store is down. */
+  let accountWritesFail = false;
 
   const admin = <A, E>(
     run: (service: typeof AdminService.Service) => Effect.Effect<A, E>,
@@ -114,7 +117,18 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
           database: drizzle({ client: pool }),
         });
 
-        return BetterAuthRuntime.of(toAuthProvider(auth));
+        const provider = toAuthProvider(auth);
+
+        return BetterAuthRuntime.of({
+          ...provider,
+          accounts: {
+            ...provider.accounts,
+            updateUser: (...input) =>
+              accountWritesFail
+                ? Promise.reject(new Error("Account store down"))
+                : provider.accounts.updateUser(...input),
+          },
+        });
       }),
     );
 
@@ -215,6 +229,29 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
     ]);
   });
 
+  it("keeps the entry of a ban that failed and says it did not complete", async () => {
+    const user = await createUser("Unbanned");
+
+    accountWritesFail = true;
+
+    try {
+      await expect(
+        admin((service) =>
+          service.ban(ACTOR, user.id, { reason: "Spam", expiresAt: null }),
+        ),
+      ).rejects.toThrow("Admin service unavailable");
+    } finally {
+      accountWritesFail = false;
+    }
+
+    const details = await admin((service) => service.getUser(user.id));
+
+    expect(details.user.ban).toBeNull();
+    expect(details.audit.map((entry) => entry.details)).toEqual([
+      { reason: "Spam", expiresAt: null, completed: false },
+    ]);
+  });
+
   it("revokes one session of a user and leaves the others", async () => {
     const user = await createUser("Two devices");
     const other = await createUser("Bystander");
@@ -231,6 +268,44 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
 
     expect(await internalAdapter.findSession(revoked.token)).toBeNull();
     expect(await internalAdapter.findSession(kept.token)).not.toBeNull();
+  });
+
+  it("revokes an API key only through its owner and records it", async () => {
+    const owner = await createUser("Key owner");
+    const other = await createUser("Bystander");
+    const keyId = crypto.randomUUID();
+    const now = new Date();
+
+    await runtime.runPromise(
+      Effect.flatMap(AuthDatabase, (database) =>
+        database.insert(authApiKeys).values({
+          id: keyId,
+          name: "Integration",
+          referenceId: owner.id,
+          key: crypto.randomUUID(),
+          createdAt: now,
+          updatedAt: now,
+        }),
+      ),
+    );
+
+    // A key id of one user is not revocable through another.
+    await expect(
+      admin((service) => service.revokeApiKey(ACTOR, other.id, keyId)),
+    ).rejects.toThrow("API key not found");
+
+    expect(
+      (await admin((service) => service.getUser(owner.id))).apiKeys,
+    ).toHaveLength(1);
+
+    await admin((service) => service.revokeApiKey(ACTOR, owner.id, keyId));
+
+    const details = await admin((service) => service.getUser(owner.id));
+
+    expect(details.apiKeys).toEqual([]);
+    expect(details.audit).toMatchObject([
+      { action: "api-key.revoke", details: { keyId, name: "Integration" } },
+    ]);
   });
 
   it("stores several roles and finds a user by any one of them", async () => {
