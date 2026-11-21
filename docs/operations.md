@@ -85,6 +85,9 @@ the Lootlog session of a User listed in the auth service's
   the panel at once. The edge denies `/admin` on the auth host. Without the
   secret, or with an empty admin list, the admin API refuses everyone.
 
+The panel answers with `Cache-Control: no-transform`, because the zone's Rocket
+Loader would otherwise rewrite its script tags and break the page.
+
 The panel's hostname must be a subdomain of the session cookie domain, so the
 browser sends it the Lootlog session; the operator signs in through the Web
 app. Granting the `admin` platform role does not open the panel: only a change
