@@ -1,0 +1,15 @@
+{
+  "extends": "@lootlog/typescript-config/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["bun", "vite/client"],
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "noEmit": true
+  },
+  "include": ["src", "vite.config.ts"],
+  "exclude": ["node_modules", ".output"]
+}

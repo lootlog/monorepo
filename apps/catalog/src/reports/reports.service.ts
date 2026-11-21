@@ -18,6 +18,10 @@ import {
   sql,
 } from "drizzle-orm";
 import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
+import {
+  hasPlatformRole,
+  type PlatformRole,
+} from "@lootlog/schema/platform-roles";
 import { Context, Effect, Layer } from "effect";
 import { groupBy } from "es-toolkit";
 import { CatalogConfig } from "#src/config/catalog-config";
@@ -48,7 +52,10 @@ export const DAILY_REPORT_LIMIT = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** The signed-in User a report request comes from. */
-export type ReportCaller = { readonly userId: string };
+export type ReportCaller = {
+  readonly userId: string;
+  readonly roles: ReadonlyArray<PlatformRole>;
+};
 
 type ReportRow = typeof catalogReportTable.$inferSelect;
 
@@ -102,8 +109,13 @@ export const makeReportsModule = (
 ) => {
   const moderators = new Set(moderatorUserIds);
 
+  // The configured list predates platform roles and still grants the queue.
+  const isModerator = (caller: ReportCaller) =>
+    moderators.has(caller.userId) ||
+    hasPlatformRole(caller.roles, "wiki-moderator");
+
   const requireModerator = (caller: ReportCaller) =>
-    moderators.has(caller.userId)
+    isModerator(caller)
       ? Effect.void
       : Effect.fail(new PermissionDeniedError("Catalog moderators only"));
 
@@ -462,7 +474,7 @@ export const makeReportsModule = (
     getOwn,
     withdraw,
     viewer: (caller: ReportCaller) => ({
-      canModerate: moderators.has(caller.userId),
+      canModerate: isModerator(caller),
     }),
     list,
     review,

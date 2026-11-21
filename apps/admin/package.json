@@ -1,0 +1,40 @@
+{
+  "name": "@lootlog/admin",
+  "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "start": "bun server.js",
+    "typecheck": "bun check",
+    "lint": "oxlint .",
+    "test": "bun test src"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.9.0",
+    "@lootlog/client": "workspace:*",
+    "@lootlog/schema": "workspace:*",
+    "@lootlog/ui": "workspace:*",
+    "@tanstack/react-router": "catalog:",
+    "@tanstack/react-start": "^1.169.1",
+    "effect": "catalog:",
+    "jose": "^6.2.12",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "oxc-transform-react": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

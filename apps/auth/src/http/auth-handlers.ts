@@ -18,6 +18,10 @@ import {
   AUTH_DISCORD_ID_HEADER,
   AUTH_USER_ID_HEADER,
 } from "@lootlog/schema/api-key-access";
+import {
+  AUTH_ROLES_HEADER,
+  formatPlatformRoles,
+} from "@lootlog/schema/platform-roles";
 
 const verify = Effect.fn("AuthController_verify")(function* () {
   const auth = yield* AuthService;
@@ -35,6 +39,7 @@ const verify = Effect.fn("AuthController_verify")(function* () {
     const withIdentity = HttpServerResponse.setHeaders(response, {
       [AUTH_DISCORD_ID_HEADER]: identity.discordId,
       [AUTH_USER_ID_HEADER]: identity.userId,
+      [AUTH_ROLES_HEADER]: formatPlatformRoles(identity.roles ?? []),
       [API_KEY_ACCESS_HEADER]: identity.apiKeyAccess
         ? JSON.stringify(identity.apiKeyAccess)
         : "",

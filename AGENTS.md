@@ -150,6 +150,10 @@ The main code areas are:
   `apps/landing`, `apps/docs`, and `apps/wiki` provide public surfaces.
   `apps/developer` provides API key management, integration guides, and API
   reference for developers.
+- `apps/admin` is the operator panel for platform roles, bans, and sessions.
+  It has no public route: a Cloudflare tunnel behind Cloudflare Access is its
+  only entry, it opens only to a User listed in `ADMIN_ACCOUNT_IDS`, and it
+  reaches Users only through the auth service's admin API.
 - `apps/api`, `apps/auth`, `apps/gateway`, `apps/battlelog`, `apps/activity`,
   `apps/search`, `apps/catalog`, and `apps/discord-bot` own independently
   deployed backend responsibilities.

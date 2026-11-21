@@ -48,6 +48,35 @@
         "yaml": "catalog:",
       },
     },
+    "apps/admin": {
+      "name": "@lootlog/admin",
+      "version": "0.0.1",
+      "dependencies": {
+        "@base-ui/react": "^1.9.0",
+        "@lootlog/client": "workspace:*",
+        "@lootlog/schema": "workspace:*",
+        "@lootlog/ui": "workspace:*",
+        "@tanstack/react-router": "catalog:",
+        "@tanstack/react-start": "^1.169.1",
+        "effect": "catalog:",
+        "jose": "^6.2.12",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+      },
+      "devDependencies": {
+        "@lootlog/typescript-config": "workspace:*",
+        "@tailwindcss/vite": "catalog:",
+        "@types/bun": "catalog:",
+        "@types/node": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "@vitejs/plugin-react": "catalog:",
+        "oxc-transform-react": "catalog:",
+        "tailwindcss": "catalog:",
+        "typescript": "catalog:",
+        "vite": "catalog:",
+      },
+    },
     "apps/api": {
       "name": "@lootlog/api",
       "version": "5.0.8",
@@ -1483,6 +1512,8 @@
     "@lezer/yaml": ["@lezer/yaml@1.0.4", "", { "dependencies": { "@lezer/common": "^1.2.0", "@lezer/highlight": "^1.0.0", "@lezer/lr": "^1.4.0" } }, "sha512-2lrrHqxalACEbxIbsjhqGpSW8kWpUKuY6RHgnSAFZa6qK62wvnPxA8hGOwOoDbwHcOFs5M4o27mjGu+P7TvBmw=="],
 
     "@lootlog/activity": ["@lootlog/activity@workspace:apps/activity"],
+
+    "@lootlog/admin": ["@lootlog/admin@workspace:apps/admin"],
 
     "@lootlog/api": ["@lootlog/api@workspace:apps/api"],
 

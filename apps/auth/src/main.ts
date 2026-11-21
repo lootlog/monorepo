@@ -1,4 +1,5 @@
 import { FetchHttpClient } from "effect/http";
+import { AdminService } from "#src/admin/admin-service";
 import { ApiKeyService } from "#src/auth/api-key-service";
 import { runService } from "@lootlog/instrumentation/service";
 import { Effect, Layer } from "effect";
@@ -38,7 +39,10 @@ const ApiKeysLive = ApiKeyService.layer.pipe(
   Layer.provide(AppConfig.layer),
 );
 
-const AuthServicesLive = AuthService.layer.pipe(
+const AuthServicesLive = Layer.merge(
+  AuthService.layer,
+  AdminService.layer,
+).pipe(
   Layer.provideMerge(ApiKeysLive),
   Layer.provideMerge(BetterAuthLive),
   Layer.provideMerge(InfrastructureLive),

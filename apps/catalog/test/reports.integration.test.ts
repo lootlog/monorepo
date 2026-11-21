@@ -12,6 +12,7 @@ import { migrateCatalogDatabase } from "#src/database/migrate";
 import {
   DAILY_REPORT_LIMIT,
   makeReportsModule,
+  type ReportCaller,
   type ReportsModule,
 } from "#src/reports/reports.service";
 
@@ -21,11 +22,11 @@ let pool: pg.Pool;
 
 let runtime: ManagedRuntime.ManagedRuntime<CatalogDatabase, unknown>;
 
-const moderator = { userId: "moderator" };
+const moderator: ReportCaller = { userId: "moderator", roles: [] };
 
-const alice = { userId: "alice" };
+const alice: ReportCaller = { userId: "alice", roles: [] };
 
-const bob = { userId: "bob" };
+const bob: ReportCaller = { userId: "bob", roles: [] };
 
 beforeAll(async () => {
   postgres = await new PostgreSqlContainer("postgres:18.7-alpine")
@@ -195,6 +196,23 @@ test("moderators alone see the queue, most reported page first, under its curren
   );
 
   expect(await failure((module) => module.list(alice, {}))).toBe("FORBIDDEN");
+
+  // A platform role opens the queue without the configured list; another
+  // role does not, and an admin holds every role.
+  expect(
+    await failure((module) =>
+      module.list({ ...alice, roles: ["global-chat-admin"] }, {}),
+    ),
+  ).toBe("FORBIDDEN");
+
+  for (const role of ["wiki-moderator", "admin"] as const) {
+    const caller: ReportCaller = { ...alice, roles: [role] };
+
+    expect((await reports((module) => module.list(caller, {}))).total).toBe(2);
+    expect(
+      await reports((module) => Effect.succeed(module.viewer(caller))),
+    ).toEqual({ canModerate: true });
+  }
 
   const queue = await reports((module) => module.list(moderator, {}));
 

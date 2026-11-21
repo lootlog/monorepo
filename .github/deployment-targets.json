@@ -11,6 +11,17 @@
     "development": true
   },
   {
+    "id": "admin",
+    "package": "@lootlog/admin",
+    "directory": "apps/admin",
+    "kind": "docker",
+    "dockerfile": "docker/developer.Dockerfile",
+    "image": "kamilwronka7/lootlog-admin",
+    "imageTitle": "Lootlog Admin Panel",
+    "imageDescription": "Operator panel for platform roles, bans and sessions, served only through a Cloudflare tunnel",
+    "development": false
+  },
+  {
     "id": "api",
     "package": "@lootlog/api",
     "directory": "apps/api",

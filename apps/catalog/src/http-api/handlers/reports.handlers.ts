@@ -3,6 +3,7 @@ import {
   AuthenticationRequiredError,
 } from "@lootlog/protocol/http/errors";
 import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
+import { readForwardedPlatformRoles } from "@lootlog/schema/platform-roles";
 import { Effect } from "effect";
 import { HttpServerRequest } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
@@ -31,7 +32,10 @@ const asCaller = <A, E>(
     if (!identity) return yield* new AuthenticationRequiredError();
     const reports = yield* CatalogReports;
 
-    return yield* operation(reports, { userId: identity.userId });
+    return yield* operation(reports, {
+      userId: identity.userId,
+      roles: readForwardedPlatformRoles(request.headers),
+    });
   }).pipe(Effect.catch(applicationErrorHttpResponse));
 
 export const ReportsHandlers = HttpApiBuilder.group(

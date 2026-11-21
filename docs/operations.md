@@ -58,3 +58,53 @@ Apply the new API and Battlelog database migrations before deploying their
 workers. See [loot publication recovery](../apps/api/drizzle/README.md) and
 [battle object cleanup](../apps/battlelog/drizzle/README.md) for pending-work
 inspection and rollback constraints.
+
+## Admin panel
+
+`apps/admin` manages platform roles, bans, sessions, and API keys of Users. It
+holds no data: every read and write goes through the auth service's admin API
+(`/admin/*`), which records each change in `admin_audit_log`.
+
+The panel is reachable only through a dedicated Cloudflare tunnel whose public
+hostname is guarded by a Cloudflare Access application, and it opens only to
+the Lootlog session of a User listed in the auth service's
+`ADMIN_ACCOUNT_IDS`. Every control below must hold; none replaces another:
+
+- No ingress route points at the `admin` Service, and a NetworkPolicy admits
+  only the tunnel's pods.
+- The panel verifies the Access token (`Cf-Access-Jwt-Assertion`) of every
+  request against the team's keys and the application audience, then requires
+  the email to be listed in `ADMIN_OPERATOR_EMAILS`. A production build refuses
+  to start without `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, and an operator.
+- State-changing requests must carry the panel's own origin (`ADMIN_ORIGIN`).
+- The auth service serves `/admin/*` only to a request that carries both the
+  `ADMIN_API_SECRET` bearer credential, which only the panel holds, and the
+  session cookie of a User in `ADMIN_ACCOUNT_IDS`. It reads that session from
+  the store on every request, so a sign-out, ban, or revoked session closes
+  the panel at once. The edge denies `/admin` on the auth host. Without the
+  secret, or with an empty admin list, the admin API refuses everyone.
+
+The panel's hostname must be a subdomain of the session cookie domain, so the
+browser sends it the Lootlog session; the operator signs in through the Web
+app. Granting the `admin` platform role does not open the panel: only a change
+to `ADMIN_ACCOUNT_IDS` adds an operator. The audit log names the operator by
+Lootlog User.
+
+Rotate `ADMIN_API_SECRET` by changing `adminApiSecret` in `admin-secrets` and
+restarting the `auth` and `admin` Deployments. To remove an operator, delete
+the User id from `ADMIN_ACCOUNT_IDS` and the email from the Access policy and
+`ADMIN_OPERATOR_EMAILS`.
+
+Platform roles reach the services as the `X-Auth-Roles` forward-auth header,
+which the edge must clear on incoming requests and copy from `/auth/verify`
+like the identity headers beside it. Deploy the Traefik change before or with
+the auth service; until then no role is forwarded and role checks refuse.
+
+A role change, a revoked session, and a ban reach a signed-in browser within
+five minutes, when its session cookie cache expires; a bearer token issued
+before a ban stays valid for up to an hour. API keys of a banned User are
+refused immediately.
+
+The Better Auth admin plugin still enforces bans at sign-in, but its HTTP
+endpoints (`/idp/admin/*`) answer 404: holding the `admin` role must not allow
+impersonating Users.

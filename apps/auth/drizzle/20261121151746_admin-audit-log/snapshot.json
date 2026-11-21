@@ -1,0 +1,228 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "7d5adb22-a617-4a13-b557-253da67387d3",
+  "prevIds": ["9dffe339-4753-40f2-b741-47773d2d225c"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "admin_audit_log"],
+      "writes": [
+        "s|tbl|public.admin_audit_log",
+        "n|tbl|public.admin_audit_log",
+        "e|tbl|public.admin_audit_log",
+        "n|rel|public.admin_audit_log",
+        "n|type|public.admin_audit_log",
+        "n|rel|public.admin_audit_log_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "admin_audit_log",
+        "admin_audit_log_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.admin_audit_log_createdAt_idx",
+        "n|idx|public.admin_audit_log_createdAt_idx",
+        "e|idx|public.admin_audit_log_createdAt_idx",
+        "n|rel|public.admin_audit_log_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.admin_audit_log",
+        "n|sch|public",
+        "n|col|public.admin_audit_log.createdAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "admin_audit_log",
+        "admin_audit_log_targetUserId_idx"
+      ],
+      "writes": [
+        "s|idx|public.admin_audit_log_targetUserId_idx",
+        "n|idx|public.admin_audit_log_targetUserId_idx",
+        "e|idx|public.admin_audit_log_targetUserId_idx",
+        "n|rel|public.admin_audit_log_targetUserId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.admin_audit_log",
+        "n|sch|public",
+        "n|col|public.admin_audit_log.targetUserId"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "admin_audit_log",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "admin_audit_log",
+        "name": "id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "admin_audit_log",
+        "name": "actor",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "admin_audit_log",
+        "name": "action",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "admin_audit_log",
+        "name": "targetUserId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "admin_audit_log",
+        "name": "details",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "admin_audit_log",
+        "name": "createdAt",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "admin_audit_log",
+        "name": "admin_audit_log_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "admin_audit_log",
+        "name": "admin_audit_log_targetUserId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "targetUserId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "admin_audit_log",
+        "name": "admin_audit_log_pkey",
+        "columns": ["id"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}
