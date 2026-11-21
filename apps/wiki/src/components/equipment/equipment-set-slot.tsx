@@ -1,4 +1,5 @@
 import { TriangleAlert, X } from "lucide-react";
+import { EquipmentSlotIcon } from "@/components/equipment/equipment-slot-icon";
 import { ItemTile } from "@lootlog/ui/components/item-tile";
 import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { cn } from "cn";
@@ -30,7 +31,6 @@ export function EquipmentSetSlot({ slot, worn }: EquipmentSetSlotProps) {
   const { unequip } = useEquipmentSet();
   const { pickItem } = useSetItemPicker();
   const label = t(`slots.${slot.id}`);
-  const Icon = slot.icon;
   const weapon = useWornItem(slot.id === "secondary" ? "weapon" : undefined);
 
   if (!worn && weaponTakesBothHands(weapon?.item.type)) {
@@ -44,7 +44,7 @@ export function EquipmentSetSlot({ slot, worn }: EquipmentSetSlotProps) {
           "border-dashed border-border/40 bg-transparent text-muted-foreground/40 shadow-none",
         )}
       >
-        <Icon aria-hidden="true" className="size-5" />
+        <EquipmentSlotIcon slot={slot.id} className="size-5" />
       </span>
     );
   }
@@ -61,7 +61,7 @@ export function EquipmentSetSlot({ slot, worn }: EquipmentSetSlotProps) {
           "cursor-pointer border-border/60 text-muted-foreground outline-none hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring",
         )}
       >
-        <Icon aria-hidden="true" className="size-5" />
+        <EquipmentSlotIcon slot={slot.id} className="size-5" />
       </button>
     );
   }
