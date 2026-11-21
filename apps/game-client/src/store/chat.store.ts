@@ -16,6 +16,12 @@ const decodeLegacySelectedGuild = Schema.decodeUnknownOption(
 
 export type ChatFilter = "all" | "normal" | "reports";
 
+/**
+ * The mode a fresh entry starts in, picked from the mode menu. A gathering is
+ * a one-off action, so only a message or a notification stays picked.
+ */
+export type ChatDefaultComposeMode = "message" | "notification";
+
 type ReplyableMessageType = Extract<MessageType, "NORMAL" | "NOTIFICATION">;
 
 export type ChatReplyDraft = {
@@ -36,8 +42,12 @@ interface ChatState {
   setChatFilter: (filter: ChatFilter) => void;
   filtersVisible: boolean;
   toggleFiltersVisible: () => void;
+  defaultComposeMode: ChatDefaultComposeMode;
+  setDefaultComposeMode: (mode: ChatDefaultComposeMode) => void;
+  /** A missing draft starts in `defaultComposeMode`. */
   draftsByGuild: Record<string, string>;
   setDraft: (guildId: string, message: string) => void;
+  clearDraft: (guildId: string) => void;
   replyDraftsByGuild: Record<string, ChatReplyDraft | undefined>;
   focusRequest: { guildId: string; sequence: number } | null;
   selectedGuildByCharacter: Record<string, string>;
@@ -68,10 +78,16 @@ export const useChatStore = create<ChatState>()(
           chatFilter: state.filtersVisible ? "all" : state.chatFilter,
         }));
       },
+      defaultComposeMode: "message",
+      setDefaultComposeMode: (mode) => set({ defaultComposeMode: mode }),
       draftsByGuild: {},
       setDraft: (guildId, message) =>
         set((state) => ({
           draftsByGuild: { ...state.draftsByGuild, [guildId]: message },
+        })),
+      clearDraft: (guildId) =>
+        set((state) => ({
+          draftsByGuild: omit(state.draftsByGuild, [guildId]),
         })),
       replyDraftsByGuild: {},
       focusRequest: null,
@@ -113,6 +129,7 @@ export const useChatStore = create<ChatState>()(
         commandGuildId: state.commandGuildId,
         chatFilter: state.chatFilter,
         filtersVisible: state.filtersVisible,
+        defaultComposeMode: state.defaultComposeMode,
       }),
       storage: createChangedOnlyStorage(createJSONStorage(() => localStorage)),
       version: 2,
@@ -124,7 +141,7 @@ export const useChatStore = create<ChatState>()(
       merge: (persisted, current) => {
         if (!isObjectRecord(persisted)) return current;
 
-        const { chatFilter } = persisted;
+        const { chatFilter, defaultComposeMode } = persisted;
 
         return {
           ...current,
@@ -136,6 +153,8 @@ export const useChatStore = create<ChatState>()(
               : chatFilter === "npc" || chatFilter === "party"
                 ? "reports"
                 : "all",
+          defaultComposeMode:
+            defaultComposeMode === "notification" ? "notification" : "message",
         };
       },
     },

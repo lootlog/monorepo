@@ -46,6 +46,7 @@ import {
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
 import { useGameStore } from "@/store/game.store";
 import { useChatStore } from "@/store/chat.store";
+import { getDefaultComposeDraft } from "@/features/chat/chat-command-prefix";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import {
@@ -267,8 +268,12 @@ export function useChatInputController({
 
   const { handlePartyCommand } = usePartyCommand();
 
+  const defaultDraft = useChatStore((state) =>
+    getDefaultComposeDraft(state.defaultComposeMode),
+  );
+
   const messageValue = useChatStore(
-    (state) => state.draftsByGuild[draftKey] ?? "",
+    (state) => state.draftsByGuild[draftKey] ?? defaultDraft,
   );
 
   const setMessageValue = (message: string) =>
@@ -569,17 +574,18 @@ export function useChatInputController({
     });
   };
 
+  // The next entry starts again in the default mode.
   const resetInputState = () => {
-    setMessageValue("");
+    useChatStore.getState().clearDraft(draftKey);
     clearReplyDraft();
 
     if (currentGuildRef.current !== selectedGuildId) return;
-    setCaretIndex(0);
+    setCaretIndex(defaultDraft.length);
     setDismissedMentionKey(null);
     setTabCompletionSession(null);
     setRequestedMentionIndex(-1);
     setIsClearConfirmOpen(false);
-    editorRef.current?.setValue("", 0);
+    editorRef.current?.setValue(defaultDraft, defaultDraft.length);
   };
 
   const completeSubmission = () => {
@@ -591,7 +597,7 @@ export function useChatInputController({
       return;
     }
 
-    focusEditorCaret(0);
+    focusEditorCaret(defaultDraft.length);
   };
 
   const handleClearChatConfirm = async () => {

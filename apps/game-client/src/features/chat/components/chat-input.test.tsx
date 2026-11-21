@@ -832,6 +832,75 @@ describe("ChatInput", () => {
     expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("/grp alarm");
   });
 
+  it("starts later entries in the mode picked from the menu until Backspace leaves it for one entry", async () => {
+    sendRequest.mockImplementation(async () =>
+      Response.json(createSentMessageResponse()),
+    );
+    notificationRequest.mockResolvedValue(
+      Response.json({ guildIds: ["guild-1"], notificationId: "n-1" }),
+    );
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const editor = getEditor();
+
+    await user.click(screen.getByRole("button", { name: "Tryb: Wiadomość" }));
+    await user.click(
+      await screen.findByRole("button", { name: /^Powiadomienie/ }),
+    );
+    await user.paste("alarm");
+    fireEvent.keyDown(editor, { key: "Enter" });
+
+    await waitFor(() => expect(notificationRequest).toHaveBeenCalledOnce());
+    await waitFor(() => expect(editor.textContent).toBe(""));
+    expect(
+      screen.getByRole("button", { name: "Tryb: Powiadomienie" }),
+    ).toBeInTheDocument();
+
+    await user.click(editor);
+    fireEvent.keyDown(editor, { key: "Backspace" });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Tryb: Wiadomość" }),
+      ).toBeInTheDocument(),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Tryb: Wiadomość" }));
+    expect(
+      await screen.findByRole("button", { name: /^Powiadomienie/ }),
+    ).toHaveTextContent("domyślny");
+    expect(
+      screen.getByRole("button", { name: /^Wiadomość/ }),
+    ).not.toHaveTextContent("domyślny");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(editor).toHaveFocus());
+
+    await user.paste("hello");
+    fireEvent.keyDown(editor, { key: "Enter" });
+
+    await waitFor(() => expect(sendRequest).toHaveBeenCalledTimes(2));
+    expect(notificationRequest).toHaveBeenCalledOnce();
+    expect(
+      JSON.parse(String(sendRequest.mock.calls[1]?.[1]?.body)),
+    ).toMatchObject({ message: "hello", type: "NORMAL" });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Tryb: Powiadomienie" }),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("opens command suggestions for a slash typed into an empty default notification", async () => {
+    useChatStore.getState().setDefaultComposeMode("notification");
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("/g");
+
+    expect(screen.getByText("Utwórz zbiórkę")).toBeInTheDocument();
+    expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("/g");
+  });
+
   it("operates the mode menu from the keyboard without keys reaching the game", async () => {
     const user = userEvent.setup();
     const windowKeyDownHandler = vi.fn<(event: KeyboardEvent) => void>();
