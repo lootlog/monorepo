@@ -29,6 +29,7 @@ import {
   upgradedAttackSpeed,
 } from "@lootlog/domain/item-upgrade";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
+import type { CatalogMonsterLocation } from "@lootlog/protocol/rabbit/catalog";
 import type { CatalogReads } from "#src/database/catalog-store";
 import type {
   CatalogControllerGetEventsQuery,
@@ -78,7 +79,8 @@ type CatalogNpcDocument = {
   prof: string;
   type: CatalogNpcsResponseDto_Output["hits"][number]["type"];
   gameVersion: CatalogNpcsResponseDto_Output["hits"][number]["gameVersion"];
-  locations?: CatalogNpcsResponseDto_Output["hits"][number]["locations"];
+  /** Stored as the API published them, with or without spawn tiles. */
+  locations?: ReadonlyArray<typeof CatalogMonsterLocation.Type>;
   formerLevels?: CatalogNpcsResponseDto_Output["hits"][number]["formerLevels"];
   current?: boolean;
   monsterKey: string;
@@ -229,7 +231,11 @@ const toCatalogNpc = ({
     monsterFirstSeenAt === undefined || monsterFirstSeenAt === null
       ? null
       : new Date(monsterFirstSeenAt).toISOString().slice(0, 10),
-  locations: locations ?? [],
+  // Locations stored before spawn tiles were published have none.
+  locations: (locations ?? []).map(({ tiles, ...location }) => ({
+    ...location,
+    tiles: tiles ?? [],
+  })),
   formerLevels: formerLevels ?? [],
 });
 

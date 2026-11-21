@@ -23,8 +23,8 @@ const trackedNpc = (id = 500) => ({
   id,
   // A spawn's runtime id and its template id are different numbers.
   tpl: id + 400,
-  x: 1,
-  y: 1,
+  x: 14,
+  y: 9,
   icon: "npc.gif",
   nick: "Stwór",
   prof: "m",
@@ -376,6 +376,7 @@ it("sends native respawn details and actor identity to the timer endpoint", asyn
     characterId: "101",
     accountId: "202",
     world: "luvia",
+    gameVersion: "pl",
     npc: {
       icon: "npc.gif",
       id: 500,
@@ -387,6 +388,9 @@ it("sends native respawn details and actor identity to the timer endpoint", asyn
       lvl: 250,
       name: "Stwór",
       location: "Urwisko",
+      mapId: 3327,
+      x: 14,
+      y: 9,
     },
   });
 });

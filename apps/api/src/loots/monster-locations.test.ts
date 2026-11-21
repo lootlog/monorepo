@@ -24,8 +24,8 @@ test("leaves out the maps players only carry a monster's loot to", () => {
       name: "Złoty Roger",
       type: "COLOSSUS",
       locations: [
-        { map: "Kryjówka Złotego Rogera", share: 0.97 },
-        { map: "Tuzmer", share: 0.02 },
+        { map: "Kryjówka Złotego Rogera", share: 0.97, tiles: [] },
+        { map: "Tuzmer", share: 0.02, tiles: [] },
       ],
     },
   ]);
@@ -45,8 +45,12 @@ test("lists each monster of an edition, name and type apart", () => {
       locations,
     ]),
   ).toEqual([
-    ["pl", "COLOSSUS", [{ map: "Kryjówka Złotego Rogera", share: 1 }]],
-    ["pl", "HERO", [{ map: "Ruchome Piaski", share: 1 }]],
-    ["en", "HERO", [{ map: "Shifting Sands", share: 1 }]],
+    [
+      "pl",
+      "COLOSSUS",
+      [{ map: "Kryjówka Złotego Rogera", share: 1, tiles: [] }],
+    ],
+    ["pl", "HERO", [{ map: "Ruchome Piaski", share: 1, tiles: [] }]],
+    ["en", "HERO", [{ map: "Shifting Sands", share: 1, tiles: [] }]],
   ]);
 });

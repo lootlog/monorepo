@@ -427,6 +427,9 @@ export class LootEventProcessor {
           npcLevel: npcData.level,
         }),
         location: mapName,
+        mapId: game.map.id,
+        x: npcData.x,
+        y: npcData.y,
       },
     ];
 

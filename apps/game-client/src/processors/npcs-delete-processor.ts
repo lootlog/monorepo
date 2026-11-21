@@ -9,6 +9,7 @@ import { MIN_RESP_BASE_SECONDS } from "@lootlog/domain/timers";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import type { GameVersion } from "@lootlog/schema/game-version";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { isSignedOut } from "@/lib/auth-client";
 import { createAutoTimer } from "@/api/timers.api";
@@ -37,7 +38,8 @@ export class NpcsDeleteProcessor {
       accountId: string;
       characterId: string;
       catchingGuildIds: readonly string[] | undefined;
-      mapId: number | string;
+      gameVersion: GameVersion | null;
+      mapId: number;
       mapName: string;
     } | null = null;
 
@@ -59,6 +61,7 @@ export class NpcsDeleteProcessor {
         accountId,
         characterId,
         catchingGuildIds,
+        gameVersion: game.gameVersion,
         mapId: map.id,
         mapName: map.name,
       };
@@ -132,6 +135,7 @@ export class NpcsDeleteProcessor {
         characterId: context.characterId,
         accountId: context.accountId,
         world,
+        gameVersion: context.gameVersion ?? undefined,
         npc: {
           icon: data.icon,
           id: data.id,
@@ -144,6 +148,9 @@ export class NpcsDeleteProcessor {
           lvl: data.level,
           name: npcName,
           location: context.mapName,
+          mapId: context.mapId,
+          x: data.x,
+          y: data.y,
         },
       }).catch((error) => {
         console.warn("[NpcsDeleteProcessor] Failed to create timer:", error);

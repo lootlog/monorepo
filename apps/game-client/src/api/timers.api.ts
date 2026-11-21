@@ -36,6 +36,7 @@ type CreateTimerOptions = {
   characterId: string;
   accountId: string;
   world: string;
+  gameVersion?: CreateTimerFromGameClientDto["gameVersion"];
   customMinSpawnTime?: Date;
   customMaxSpawnTime?: Date;
   entranceSecondsLeft?: number;
@@ -54,6 +55,7 @@ export function createAutoTimer(
       respawnRandomness: timer.respawnRandomness,
     }),
     world: timer.world,
+    ...(timer.gameVersion && { gameVersion: timer.gameVersion }),
     npc: timer.npc,
     characterId: timer.characterId,
     accountId: timer.accountId,

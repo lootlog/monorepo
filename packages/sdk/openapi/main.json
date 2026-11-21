@@ -21233,15 +21233,28 @@
                 "type": "boolean",
                 "description": "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it."
               },
+              "mapId": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
+                "description": "Margonem id of the map the NPC stood on."
+              },
               "x": {
-                "type": "number"
+                "type": "number",
+                "description": "Map tile column where the removed spawn stood."
               },
               "y": {
-                "type": "number"
+                "type": "number",
+                "description": "Map tile row where the removed spawn stood."
               }
             },
             "required": ["id", "name", "location", "lvl", "wt", "icon", "type"],
             "additionalProperties": false
+          },
+          "gameVersion": {
+            "type": "string",
+            "enum": ["en", "pl"],
+            "description": "Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API."
           },
           "characterId": {
             "type": "string",
@@ -22741,11 +22754,19 @@
                   "type": "boolean",
                   "description": "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it."
                 },
+                "mapId": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "Margonem id of the map the NPC stood on."
+                },
                 "x": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Map tile column where the NPC stood before the fight."
                 },
                 "y": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Map tile row where the NPC stood before the fight."
                 }
               },
               "required": [

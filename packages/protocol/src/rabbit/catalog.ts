@@ -125,10 +125,20 @@ export const CatalogItemRevisions = Schema.Struct({
 
 export type CatalogItemRevisions = typeof CatalogItemRevisions.Type;
 
-/** A map a monster is fought on, with the share of its latest fights there. */
+/** A map tile where Game clients reported a monster standing. */
+const CatalogMonsterSpawnTile = Schema.Struct({
+  x: Schema.Number,
+  y: Schema.Number,
+});
+
+/**
+ * A map a monster is fought on, with the share of its latest fights there and
+ * the tiles it spawns on; API revisions before the tiles omit them.
+ */
 export const CatalogMonsterLocation = Schema.Struct({
   map: Schema.String,
   share: Schema.Number,
+  tiles: Schema.optionalKey(Schema.Array(CatalogMonsterSpawnTile)),
 });
 
 /** A level a monster had before, until the day its next version appeared. */

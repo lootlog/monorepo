@@ -335,6 +335,25 @@ it("sends parsed battle participants and loot then stores the accepted id", asyn
   );
 });
 
+it("sends the map and tile of every NPC of a group fight for the wiki", async () => {
+  const fixture = createFixture();
+  useNpcsStore.getState().replaceNpcs([
+    { ...createRuntimeNpc(501, "Boss"), x: 14, y: 9 },
+    { ...createRuntimeNpc(502, "Sługa"), x: 15, y: 9, weight: 1 },
+  ]);
+  useBattleStore.setState((state) => ({
+    battleWarriors: {
+      ...state.battleWarriors,
+      "-502": createBattleWarrior(-502, { originalId: 502, name: "Sługa" }),
+    },
+  }));
+  fixture.processor.handleLootFromBattle(createBattleLootEvent());
+  expect((await fixture.payload()).npcs).toMatchObject([
+    { runtimeId: 501, location: "Ithan", mapId: 1, x: 14, y: 9 },
+    { runtimeId: 502, location: "Ithan", mapId: 1, x: 15, y: 9 },
+  ]);
+});
+
 it("submits different loot effects that share an event id", async () => {
   const fixture = createFixture();
   fixture.processor.handleLootFromBattle({
@@ -502,7 +521,17 @@ it.each([
     expect(await fixture.payload()).toMatchObject({
       gameVersion,
       source: "DIALOG",
-      npcs: [{ id: 501, name: "Kliknięty NPC", hpp: 0, location: "Ithan" }],
+      npcs: [
+        {
+          id: 501,
+          name: "Kliknięty NPC",
+          hpp: 0,
+          location: "Ithan",
+          mapId: 1,
+          x: 1,
+          y: 1,
+        },
+      ],
       players: [{ id: 101, name: "Tester", hpp: 50, accountId: 202 }],
     });
     await waitFor(() => expect(useLootStore.getState().lastLootId).toBe(999));

@@ -106,6 +106,9 @@ it("reports a claimed Hero Tracker's entrance once, measuring its respawn from t
       lvl: 282,
       wt: 0,
       location: "Jaskinia Piaskowej Burzy s.1",
+      mapId: 3331,
+      x: 17,
+      y: 22,
     },
   });
   expect(body.entranceSecondsLeft).toBe(1200);

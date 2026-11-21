@@ -30,6 +30,10 @@ export type Npc = {
   lvl: number;
   wt: number;
   location: string;
+  /** Margonem id of the map and the tile the NPC stood on before the fight. */
+  mapId?: number;
+  x?: number;
+  y?: number;
   type: number;
   isHeroFromEvent?: boolean;
 };
@@ -80,6 +84,9 @@ export const getBattleParticipants = (
         lvl: npcData.level,
         wt: npcData.weight,
         location: game?.map.name ?? "",
+        mapId: game?.map.id,
+        x: npcData.x,
+        y: npcData.y,
         type: npcData.type,
         isHeroFromEvent: npcData.isHeroFromEvent,
       });

@@ -1,4 +1,5 @@
 import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
+import { recordNpcSpawnPositions } from "#src/npc-spawns/npc-spawn-positions";
 import { getOrSetStaleJson } from "#src/redis/stale-json-cache";
 import { getLootListCacheScope } from "#src/shared/cache";
 import { makeUserFeed } from "#src/users/user-feed";
@@ -181,6 +182,8 @@ export const recordsServicesLive = Layer.effect(
         loots,
         lootStats,
         lootSubmissionAcceptance: acceptance,
+        recordNpcSpawnPositions: (gameVersion, npcs) =>
+          recordNpcSpawnPositions(database, gameVersion, npcs),
         lootAllocation: makeLootAllocationOperations({
           persistence: makeLootAllocationPersistence(database),
           cache: redis,

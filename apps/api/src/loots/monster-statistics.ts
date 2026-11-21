@@ -15,6 +15,7 @@ import {
 } from "./monster-levels.js";
 import {
   buildMonsterLocationsQuery,
+  buildMonsterSpawnTilesQuery,
   toMonsterLocations,
 } from "./monster-locations.js";
 import {
@@ -57,6 +58,7 @@ export const makeMonsterStatisticsPublisher = (
           dropRates: yield* buildDropRatesQuery(transaction),
           lootParties: yield* buildLootPartiesQuery(transaction),
           locations: yield* buildMonsterLocationsQuery(transaction),
+          spawnTiles: yield* buildMonsterSpawnTilesQuery(transaction),
           levels: yield* buildMonsterLevelsQuery(transaction),
         };
       }),
@@ -96,15 +98,16 @@ export const makeMonsterStatisticsPublisher = (
     );
 
     // The locations message carries each monster's former levels too.
-    const locations = toMonsterLocations(statistics.locations).map(
-      (monster): CatalogMonsterLocations => ({
-        ...monster,
-        formerLevels:
-          formerLevels.get(
-            JSON.stringify([monster.gameVersion, monster.name, monster.type]),
-          ) ?? [],
-      }),
-    );
+    const locations = toMonsterLocations(
+      statistics.locations,
+      statistics.spawnTiles,
+    ).map((monster): CatalogMonsterLocations => ({
+      ...monster,
+      formerLevels:
+        formerLevels.get(
+          JSON.stringify([monster.gameVersion, monster.name, monster.type]),
+        ) ?? [],
+    }));
 
     for (const batch of chunk(monsterDrops, MONSTERS_PER_MESSAGE))
       yield* rabbit.publish(

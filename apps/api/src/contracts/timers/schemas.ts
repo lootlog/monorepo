@@ -3,6 +3,7 @@ import * as Schema from "effect/Schema";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { MIN_RESP_BASE_SECONDS } from "@lootlog/domain/timers";
 import { ProfessionSchema } from "@lootlog/schema/loot";
+import { GameVersionSchema } from "@lootlog/schema/game-version";
 import {
   NonEmptyString,
   PositiveSafeInteger,
@@ -170,9 +171,28 @@ export const CreateAutoTimerRequest = Schema.Struct({
           "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.",
       }),
     ),
-    x: Schema.optionalKey(FiniteNumber),
-    y: Schema.optionalKey(FiniteNumber),
+    mapId: Schema.optionalKey(
+      PositiveSafeInteger.annotate({
+        description: "Margonem id of the map the NPC stood on.",
+      }),
+    ),
+    x: Schema.optionalKey(
+      FiniteNumber.annotate({
+        description: "Map tile column where the removed spawn stood.",
+      }),
+    ),
+    y: Schema.optionalKey(
+      FiniteNumber.annotate({
+        description: "Map tile row where the removed spawn stood.",
+      }),
+    ),
   }),
+  gameVersion: Schema.optionalKey(
+    GameVersionSchema.annotate({
+      description:
+        "Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API.",
+    }),
+  ),
   characterId: NonEmptyString,
   accountId: NonEmptyString,
   actorCharacter: Schema.optionalKey(TimerActorCharacterInput),

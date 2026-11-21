@@ -362,11 +362,20 @@ export const CatalogNpcDtoOutputGameVersion = {
   pl: 'pl',
 } as const;
 
+export type CatalogNpcDtoOutputLocationsItemTilesItem = {
+  /** The tile's column. */
+  x: number;
+  /** The tile's row. */
+  y: number;
+};
+
 export type CatalogNpcDtoOutputLocationsItem = {
   /** The map's name. */
   map: string;
   /** The share of the NPC's latest recorded fights on the map, from 0 to 1, rounded to a hundredth. */
   share: number;
+  /** Map tiles where Game clients reported the NPC when it was killed, ordered by column and row; at most the 100 most reported. A second-tier elite placed at random fills its spawn area. Empty until a Game client reports the map's tiles. */
+  tiles: CatalogNpcDtoOutputLocationsItemTilesItem[];
 };
 
 export type CatalogNpcDtoOutputFormerLevelsItem = {

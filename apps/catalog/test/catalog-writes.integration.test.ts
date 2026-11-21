@@ -515,7 +515,19 @@ test("the catalog index names an id the game gave to a later item by that item, 
 });
 
 test("a monster's maps and former levels reach each identity and survive new loots", async () => {
-  const locations = [{ map: "Grota Martwodrzewów - sala", share: 1 }];
+  // The second map comes from an API revision that published no tiles.
+  const hall = {
+    map: "Grota Martwodrzewów - sala",
+    share: 0.9,
+    tiles: [
+      { x: 12, y: 30 },
+      { x: 21, y: 7 },
+    ],
+  };
+
+  const cave = { map: "Grota Martwodrzewów", share: 0.1 };
+
+  const locations = [hall, cave];
   const formerLevels = [{ lvl: 252, until: "2026-01-15" }];
 
   const monster = {
@@ -542,6 +554,12 @@ test("a monster's maps and former levels reach each identity and survive new loo
   for (const npc of await storedNpcs()) {
     expect(npc).toMatchObject({ locations, formerLevels });
   }
+
+  const found = await catalog(({ reads }) =>
+    reads.getNpcs({ gameVersion: "pl", keys: [npcCatalogKey(reuzen)] }),
+  );
+
+  expect(found.hits[0]?.locations).toEqual([hall, { ...cave, tiles: [] }]);
 });
 
 test("a later loot of an unchanged monster sends nothing to the index and still outranks an older loot of another identity delivered after it", async () => {
