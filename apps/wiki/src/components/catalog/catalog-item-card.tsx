@@ -15,6 +15,8 @@ import { CatalogItemTile } from "./catalog-item-tile";
 import { type AttackSpeedRanking, ItemAttackSpeed } from "./item-attack-speed";
 import { ItemDamageTypes } from "./item-damage-types";
 import { ItemDropRate } from "./item-drop-rate";
+import { ItemEvent } from "./item-event";
+import { ItemGrip } from "./item-grip";
 import { ItemLegendaryBonus } from "./item-legendary-bonus";
 import { ItemNameLink } from "./item-name-link";
 import { ItemProfessions } from "./item-professions";
@@ -37,10 +39,9 @@ type CatalogItemCardProps = {
 
 /**
  * One item in a list as a dense row: its name over its level, professions,
- * damage types and legendary bonus, and where it drops last. An elastic item
- * shows as the set's character would loot it, and a list ranked by attack
- * speed at +5 shows each item at the upgrade it is ranked at, from its
- * tooltip to its page and the set.
+ * grip, damage types, event and legendary bonus, and where it drops last. An elastic item shows as the set's character would loot it, and a
+ * list ranked by attack speed at +5 shows each item at the upgrade it is
+ * ranked at, from its tooltip to its page and the set.
  */
 export function CatalogItemCard({
   item,
@@ -70,7 +71,9 @@ export function CatalogItemCard({
             <ItemAttackSpeed stat={shown.stat} bonus={upgrade.bonus} />
           ) : null}
           <ItemProfessions stat={shown.stat} />
+          <ItemGrip type={item.type} />
           <ItemDamageTypes stat={shown.stat} />
+          <ItemEvent stat={shown.stat} />
           <ItemLegendaryBonus stat={shown.stat} />
         </div>
         {showSource ? <ItemSource item={item} /> : null}

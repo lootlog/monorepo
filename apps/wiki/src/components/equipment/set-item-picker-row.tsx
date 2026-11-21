@@ -6,6 +6,7 @@ import { ItemImage } from "@lootlog/ui/components/item-image";
 import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-colors";
 import { cn } from "cn";
 import { ItemDamageTypes } from "@/components/catalog/item-damage-types";
+import { ItemEvent } from "@/components/catalog/item-event";
 import { ItemLegendaryBonus } from "@/components/catalog/item-legendary-bonus";
 import { HighlightedText } from "@/components/highlighted-text";
 import { useItemForCharacter } from "@/hooks/use-item-for-character";
@@ -62,6 +63,7 @@ export function SetItemPickerRow({
           </span>
           {typeLabel ? <span className="truncate">{typeLabel}</span> : null}
           <ItemDamageTypes stat={looted.stat} />
+          <ItemEvent stat={looted.stat} />
           <ItemLegendaryBonus stat={looted.stat} />
         </span>
       </span>
