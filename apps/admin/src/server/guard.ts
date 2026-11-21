@@ -26,7 +26,10 @@ const contentSecurityPolicy = (nonce: string) =>
 
 /** Headers every answer carries, refusals included. */
 const BASE_HEADERS = {
-  "cache-control": "no-store",
+  // `no-transform` keeps the Cloudflare edge from rewriting the page. Its
+  // Rocket Loader re-types every script tag, which breaks hydration, and the
+  // scripts it adds carry no nonce.
+  "cache-control": "no-store, no-transform",
   "cross-origin-opener-policy": "same-origin",
   "cross-origin-resource-policy": "same-origin",
   "permissions-policy": "camera=(), geolocation=(), microphone=()",
