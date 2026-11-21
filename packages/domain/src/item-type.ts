@@ -57,7 +57,7 @@ export const NON_LEGEND_ITEM_TYPES = [
 ] as const satisfies readonly ItemTypeValue[];
 
 /** Item types that fit one of Margonem's nine equipment slots, including blessings. */
-export const EQUIPPABLE_ITEM_TYPES = [
+const EQUIPPABLE_ITEM_TYPES = [
   ItemType.ONE_HAND_WEAPON,
   ItemType.TWO_HAND_WEAPON,
   ItemType.ONE_AND_HALF_HAND_WEAPON,
