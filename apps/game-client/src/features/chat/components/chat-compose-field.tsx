@@ -1,6 +1,9 @@
 import { ConfirmPopover } from "@/components/confirm-popover";
 import { ChatInputEditor } from "@/features/chat/components/chat-input-editor";
-import type { ChatCommandHints } from "@/features/chat/chat-command-prefix";
+import {
+  leaveNotificationForCommand,
+  type ChatCommandHints,
+} from "@/features/chat/chat-command-prefix";
 import type { useChatInputController } from "./use-chat-input-controller";
 import { cn } from "cn";
 import { Loader2 } from "lucide-react";
@@ -77,9 +80,16 @@ export function ChatComposeField({
               ? t("input.placeholder")
               : t("input.selectGuildPlaceholder")
           }
-          onChange={(nextMessage, nextCaretIndex) => {
+          onChange={(typedMessage, typedCaretIndex) => {
+            const nextMessage = leaveNotificationForCommand(
+              messageValue,
+              typedMessage,
+            );
+
             setMessageValue(nextMessage);
-            setCaretIndex(nextCaretIndex);
+            setCaretIndex(
+              typedCaretIndex - (typedMessage.length - nextMessage.length),
+            );
             setDismissedMentionKey(null);
             setTabCompletionSession(null);
             setRequestedMentionIndex(-1);

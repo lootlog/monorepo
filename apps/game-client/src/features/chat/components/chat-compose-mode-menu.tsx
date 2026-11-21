@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { CHAT_COMMAND_PREFIXES } from "@/features/chat/chat-command-prefix";
+import { useChatStore } from "@/store/chat.store";
 import {
   getCommandMode,
   toggleCommandMode,
@@ -37,7 +38,8 @@ const keepKeyInTrigger = (event: KeyboardEvent<HTMLElement>) => {
 /**
  * The composer's mode icon: it shows what Enter does, and pressing it lists
  * the modes with the prefix that switches to each while typing. Picking one
- * rewrites the prefix, keeps the typed text and returns to the field.
+ * rewrites the prefix, keeps the typed text and returns to the field; a
+ * picked message or notification also becomes the mode later entries start in.
  */
 export const ChatComposeModeMenu = ({
   controller,
@@ -60,12 +62,18 @@ export const ChatComposeModeMenu = ({
 
   const mode = getCommandMode(messageValue);
 
+  const defaultMode = useChatStore((state) => state.defaultComposeMode);
+
   const closeToEditor = () => {
     setOpen(false);
     focusEditorCaret(caretIndex);
   };
 
   const selectMode = (nextMode: CommandMode) => {
+    if (nextMode !== "party") {
+      useChatStore.getState().setDefaultComposeMode(nextMode);
+    }
+
     if (nextMode === mode) {
       closeToEditor();
 
@@ -95,7 +103,7 @@ export const ChatComposeModeMenu = ({
         ref={popupRef}
         side={side}
         align="start"
-        className="ll-action-menu ll:w-48 ll:overflow-hidden ll:p-0"
+        className="ll-action-menu ll:w-max ll:min-w-48 ll:overflow-hidden ll:p-0"
         initialFocus={() =>
           popupRef.current?.querySelector<HTMLElement>(
             'button[aria-pressed="true"]',
@@ -125,11 +133,20 @@ export const ChatComposeModeMenu = ({
               <ChatComposeModeIcon mode={item} className="ll:size-3.5" />
             ),
             trailing:
-              item === "message" ? undefined : (
-                <Kbd className="ll:h-4 ll:min-w-4 ll:text-[10px]">
-                  {CHAT_COMMAND_PREFIXES[item].trim()}
-                </Kbd>
-              ),
+              item === defaultMode || item !== "message" ? (
+                <>
+                  {item === defaultMode ? (
+                    <span className="ll:text-[10px] ll:text-muted-foreground">
+                      {t("input.modes.default")}
+                    </span>
+                  ) : null}
+                  {item === "message" ? null : (
+                    <Kbd className="ll:h-4 ll:min-w-4 ll:text-[10px]">
+                      {CHAT_COMMAND_PREFIXES[item].trim()}
+                    </Kbd>
+                  )}
+                </>
+              ) : undefined,
           }))}
           selected={new Set([mode])}
           onToggle={selectMode}

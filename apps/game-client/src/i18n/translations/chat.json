@@ -128,7 +128,8 @@
       "trigger": "Tryb: {{mode}}",
       "message": "Wiadomość",
       "notification": "Powiadomienie",
-      "party": "Zbiórka"
+      "party": "Zbiórka",
+      "default": "domyślny"
     }
   },
   "actions": {

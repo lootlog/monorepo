@@ -1,3 +1,5 @@
+import type { ChatDefaultComposeMode } from "@/store/chat.store";
+
 export type ChatCommandMode = "notification" | "party";
 
 /** What the composer shows in place of a hidden prefix while nothing follows it. */
@@ -14,6 +16,23 @@ export const CHAT_COMMAND_PREFIXES = {
   notification: "!",
   party: "/grp ",
 } satisfies Record<ChatCommandMode, string>;
+
+/** The entry a fresh composer starts with: the default mode's prefix. */
+export const getDefaultComposeDraft = (mode: ChatDefaultComposeMode) =>
+  mode === "notification" ? CHAT_COMMAND_PREFIXES.notification : "";
+
+/**
+ * A command started in an empty notification entry leaves the mode, so `/grp`
+ * and `/clr` still work while notifications are the default.
+ */
+export const leaveNotificationForCommand = (
+  previousMessage: string,
+  nextMessage: string,
+) =>
+  previousMessage === CHAT_COMMAND_PREFIXES.notification &&
+  nextMessage.startsWith(`${CHAT_COMMAND_PREFIXES.notification}/`)
+    ? nextMessage.slice(CHAT_COMMAND_PREFIXES.notification.length)
+    : nextMessage;
 
 export type ChatCommandPrefix = {
   mode: ChatCommandMode;
