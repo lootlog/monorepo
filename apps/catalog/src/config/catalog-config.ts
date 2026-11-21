@@ -1,6 +1,7 @@
 import {
   type BaseServiceConfiguration,
   baseServiceConfig,
+  commaSeparatedConfig,
 } from "@lootlog/instrumentation/service-config";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Config, Context, Effect, Layer, Option, Redacted } from "effect";
@@ -12,6 +13,8 @@ export interface CatalogConfigValue extends BaseServiceConfiguration {
   readonly meilisearchApiKey: Redacted.Redacted<string>;
   /** What trusted services, such as the wiki's Worker, present to read. */
   readonly serviceToken: Redacted.Redacted<string>;
+  /** Internal User ids allowed to review reports about catalog entries. */
+  readonly moderatorUserIds: ReadonlyArray<string>;
 }
 
 const LOCAL_SERVICE_TOKEN = "local-development-catalog-service-token";
@@ -53,6 +56,9 @@ export class CatalogConfig extends Context.Service<
         meilisearchHost: yield* Config.String("MEILISEARCH_HOST"),
         meilisearchApiKey: yield* Config.Redacted("MEILISEARCH_API_KEY"),
         serviceToken,
+        moderatorUserIds: yield* commaSeparatedConfig(
+          "CATALOG_MODERATOR_USER_IDS",
+        ).pipe(Config.withDefault([])),
       });
     }),
   );

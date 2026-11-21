@@ -5,6 +5,7 @@ import { SchemaErrorResponse } from "@lootlog/protocol/http/schema-error-respons
 import { HttpApi, OpenApi } from "effect/http-api";
 import { CatalogAccess } from "./catalog-access.js";
 import { CatalogGroup } from "./contracts/catalog/api.js";
+import { CatalogReportsGroup } from "./contracts/reports/api.js";
 
 export class CatalogApi extends HttpApi.make("CatalogApi")
   .annotate(OpenApi.Title, "Catalog API")
@@ -17,6 +18,7 @@ export class CatalogApi extends HttpApi.make("CatalogApi")
   .add(
     healthGroup("Check the health status of the catalog service"),
     CatalogGroup,
+    CatalogReportsGroup,
   )
   .middleware(CatalogAccess)
   .middleware(ApiKeyEndpointPolicy)

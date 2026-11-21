@@ -1,4 +1,5 @@
 import {
+  integerSchema,
   preserveOpenApi30Contract,
   setOpenApiCompatibilityValue,
 } from "@lootlog/schema/openapi-compatibility";
@@ -13,7 +14,7 @@ const boundedInteger = (
   maximum: number,
   defaultValue: number,
 ) => ({
-  schema: { type: "integer", minimum, maximum, default: defaultValue },
+  schema: { ...integerSchema(minimum, maximum), default: defaultValue },
 });
 
 preserveOpenApi30Contract(

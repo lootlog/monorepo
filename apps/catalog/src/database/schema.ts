@@ -6,6 +6,8 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -50,4 +52,48 @@ export const catalogNpcTable = pgTable(
       .defaultNow(),
   },
   (table) => [index("CatalogNpc_monsterKey_idx").on(table.monsterKey)],
+);
+
+/**
+ * A User's report that a catalog page shows something wrong. A page is an
+ * item or NPC id of one edition, as the wiki links it, so a report outlives
+ * the entries a rebuild replaces. A User keeps one open report per page.
+ */
+export const catalogReportTable = pgTable(
+  "CatalogReport",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    subjectType: text("subjectType").notNull(),
+    gameVersion: text("gameVersion").notNull(),
+    subjectId: integer("subjectId").notNull(),
+    reason: text("reason").notNull(),
+    comment: text("comment"),
+    reporterUserId: text("reporterUserId").notNull(),
+    status: text("status").notNull().default("OPEN"),
+    reviewedByUserId: text("reviewedByUserId"),
+    reviewedAt: timestamp("reviewedAt", { withTimezone: true }),
+    createdAt: timestamp("createdAt", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("CatalogReport_open_reporter_subject_key")
+      .on(
+        table.reporterUserId,
+        table.subjectType,
+        table.gameVersion,
+        table.subjectId,
+      )
+      .where(sql`${table.status} = 'OPEN'`),
+    index("CatalogReport_status_subject_idx").on(
+      table.status,
+      table.subjectType,
+      table.gameVersion,
+      table.subjectId,
+    ),
+    index("CatalogReport_reporter_createdAt_idx").on(
+      table.reporterUserId,
+      table.createdAt,
+    ),
+  ],
 );

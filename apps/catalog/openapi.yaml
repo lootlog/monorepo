@@ -482,6 +482,349 @@ paths:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
       summary: List every item and NPC in the public catalog
+  /catalog/reports:
+    post:
+      tags:
+        - CatalogReports
+      operationId: CatalogReportsController_create
+      parameters: []
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogReportDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+      description: "Report that a catalog page shows something wrong. A User keeps one open report per page: reporting it again replaces the reason and comment."
+      summary: Report a catalog page
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCatalogReportRequest"
+        required: true
+    get:
+      tags:
+        - CatalogReports
+      operationId: CatalogReportsController_list
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - OPEN
+              - RESOLVED
+              - REJECTED
+            description: "`OPEN` until a moderator reviews it; `RESOLVED` when the report was right, `REJECTED` when it was not. A moderator may open a reviewed report again."
+            default: OPEN
+          required: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          required: false
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 9007199254740991
+            default: 0
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogReportsResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: List the pages with reports of one status and their reports; catalog moderators only.
+      summary: List reported catalog pages
+  /catalog/reports/own:
+    get:
+      tags:
+        - CatalogReports
+      operationId: CatalogReportsController_getOwn
+      parameters:
+        - name: subjectType
+          in: query
+          schema:
+            type: string
+            enum:
+              - ITEM
+              - NPC
+            description: "The kind of catalog page: an item or an NPC."
+          required: true
+        - name: gameVersion
+          in: query
+          schema:
+            type: string
+            enum:
+              - en
+              - pl
+          required: true
+        - name: subjectId
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: true
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogOwnReportResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      summary: Get your open report about a catalog page
+  /catalog/reports/{reportId}:
+    delete:
+      tags:
+        - CatalogReports
+      operationId: CatalogReportsController_withdraw
+      parameters:
+        - name: reportId
+          in: path
+          schema:
+            type: string
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$
+            format: uuid
+          required: true
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: Remove the caller's own report while no moderator has reviewed it.
+      summary: Withdraw your open report
+  /catalog/reports/viewer:
+    get:
+      tags:
+        - CatalogReports
+      operationId: CatalogReportsController_getViewer
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogReportViewerResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      summary: Get what the caller may do with reports
+  /catalog/reports/review:
+    post:
+      tags:
+        - CatalogReports
+      operationId: CatalogReportsController_review
+      parameters: []
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: Set the status of reports, resolving, rejecting or opening them again; catalog moderators only. Opening a report again conflicts when its reporter has opened another about the same page since.
+      summary: Review catalog reports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewCatalogReportsRequest"
+        required: true
 components:
   schemas:
     RequestValidationError:
@@ -533,6 +876,196 @@ components:
           type: object
       required:
         - code
+    ReviewCatalogReportsRequest:
+      type: object
+      properties:
+        reportIds:
+          type: array
+          items:
+            type: string
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$
+            format: uuid
+          minItems: 1
+          maxItems: 100
+        status:
+          type: string
+          enum:
+            - OPEN
+            - RESOLVED
+            - REJECTED
+          description: "`OPEN` until a moderator reviews it; `RESOLVED` when the report was right, `REJECTED` when it was not. A moderator may open a reviewed report again."
+      required:
+        - reportIds
+        - status
+    CatalogReportsResponseDto_Output:
+      type: object
+      properties:
+        subjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogReportedSubjectDto_Output"
+          description: Pages with reports of the requested status, the most reported first, then the most recently reported.
+        total:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+          description: Pages with reports of the requested status.
+      required:
+        - subjects
+        - total
+      description: Reported catalog pages
+    CatalogReportedSubjectDto_Output:
+      type: object
+      properties:
+        subjectType:
+          type: string
+          enum:
+            - ITEM
+            - NPC
+          description: "The kind of catalog page: an item or an NPC."
+        gameVersion:
+          type: string
+          enum:
+            - en
+            - pl
+        subjectId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+          description: The item or NPC id the page shows.
+        name:
+          description: The page's current name; `null` once the catalog lost it.
+          nullable: true
+          type: string
+        icon:
+          nullable: true
+          type: string
+        reports:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogReportDto_Output"
+          description: The page's reports of the requested status, newest first.
+      required:
+        - subjectType
+        - gameVersion
+        - subjectId
+        - name
+        - icon
+        - reports
+      description: A catalog page and its reports
+    CatalogReportDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        subjectType:
+          type: string
+          enum:
+            - ITEM
+            - NPC
+          description: "The kind of catalog page: an item or an NPC."
+        gameVersion:
+          type: string
+          enum:
+            - en
+            - pl
+        subjectId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+          description: The item or NPC id the page shows.
+        reason:
+          type: string
+          enum:
+            - NOT_IN_GAME
+            - WRONG_DETAILS
+            - WRONG_DROPS
+            - WRONG_LOCATIONS
+            - OTHER
+          description: "What is wrong: `NOT_IN_GAME` for an entry players cannot get, such as a test item; `WRONG_DETAILS` for its name, level, type or statistics; `WRONG_DROPS` for the NPCs an item drops from or the items an NPC drops; `WRONG_LOCATIONS` for the maps an NPC is fought on; `OTHER`, which needs a comment."
+        comment:
+          nullable: true
+          type: string
+        status:
+          type: string
+          enum:
+            - OPEN
+            - RESOLVED
+            - REJECTED
+          description: "`OPEN` until a moderator reviews it; `RESOLVED` when the report was right, `REJECTED` when it was not. A moderator may open a reviewed report again."
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        reviewedAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - id
+        - subjectType
+        - gameVersion
+        - subjectId
+        - reason
+        - comment
+        - status
+        - createdAt
+        - reviewedAt
+      description: A report that a catalog page shows something wrong
+    CatalogReportViewerResponse:
+      type: object
+      properties:
+        canModerate:
+          type: boolean
+          description: Whether the caller may review reports.
+      required:
+        - canModerate
+    CatalogOwnReportResponse:
+      type: object
+      properties:
+        report:
+          description: The caller's open report about the page, if any.
+          nullable: true
+          $ref: "#/components/schemas/CatalogReportDto_Output"
+      required:
+        - report
+    CreateCatalogReportRequest:
+      type: object
+      properties:
+        subjectType:
+          type: string
+          enum:
+            - ITEM
+            - NPC
+          description: "The kind of catalog page: an item or an NPC."
+        gameVersion:
+          type: string
+          enum:
+            - en
+            - pl
+        subjectId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+          description: The item or NPC id the page shows.
+        reason:
+          type: string
+          enum:
+            - NOT_IN_GAME
+            - WRONG_DETAILS
+            - WRONG_DROPS
+            - WRONG_LOCATIONS
+            - OTHER
+          description: "What is wrong: `NOT_IN_GAME` for an entry players cannot get, such as a test item; `WRONG_DETAILS` for its name, level, type or statistics; `WRONG_DROPS` for the NPCs an item drops from or the items an NPC drops; `WRONG_LOCATIONS` for the maps an NPC is fought on; `OTHER`, which needs a comment."
+        comment:
+          type: string
+          maxLength: 500
+      required:
+        - subjectType
+        - gameVersion
+        - subjectId
+        - reason
     CatalogIndexResponseDto_Output:
       type: object
       properties:

@@ -14,6 +14,7 @@ import { Route as CalculatorsRouteImport } from './routes/calculators'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as ItemsRouteImport } from './routes/items'
+import { Route as ModerationRouteImport } from './routes/moderation'
 import { Route as NpcsRouteImport } from './routes/npcs'
 import { Route as SetRouteImport } from './routes/set'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -46,6 +47,11 @@ const EventsRoute = EventsRouteImport.update({
 const ItemsRoute = ItemsRouteImport.update({
   id: '/items',
   path: '/items',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModerationRoute = ModerationRouteImport.update({
+  id: '/moderation',
+  path: '/moderation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NpcsRoute = NpcsRouteImport.update({
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/events': typeof EventsRoute
   '/items': typeof ItemsRoute
+  '/moderation': typeof ModerationRoute
   '/npcs': typeof NpcsRoute
   '/set': typeof SetRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/events': typeof EventsRoute
   '/items': typeof ItemsRoute
+  '/moderation': typeof ModerationRoute
   '/npcs': typeof NpcsRoute
   '/set': typeof SetRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -126,6 +134,7 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/events': typeof EventsRoute
   '/items': typeof ItemsRoute
+  '/moderation': typeof ModerationRoute
   '/npcs': typeof NpcsRoute
   '/set': typeof SetRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/events'
     | '/items'
+    | '/moderation'
     | '/npcs'
     | '/set'
     | '/sitemap.xml'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/events'
     | '/items'
+    | '/moderation'
     | '/npcs'
     | '/set'
     | '/sitemap.xml'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/events'
     | '/items'
+    | '/moderation'
     | '/npcs'
     | '/set'
     | '/sitemap.xml'
@@ -189,6 +201,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   EventsRoute: typeof EventsRoute
   ItemsRoute: typeof ItemsRoute
+  ModerationRoute: typeof ModerationRoute
   NpcsRoute: typeof NpcsRoute
   SetRoute: typeof SetRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       path: '/items'
       fullPath: '/items'
       preLoaderRoute: typeof ItemsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/moderation': {
+      id: '/moderation'
+      path: '/moderation'
+      fullPath: '/moderation'
+      preLoaderRoute: typeof ModerationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/npcs': {
@@ -301,6 +321,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   EventsRoute: EventsRoute,
   ItemsRoute: ItemsRoute,
+  ModerationRoute: ModerationRoute,
   NpcsRoute: NpcsRoute,
   SetRoute: SetRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

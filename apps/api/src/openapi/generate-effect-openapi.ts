@@ -1,5 +1,6 @@
 import { Predicate } from "effect";
 import {
+  integerSchema,
   normalizeSchemaAnnotations,
   normalizeNullableSchema,
 } from "@lootlog/schema/openapi-compatibility";
@@ -47,12 +48,6 @@ const ENCODED_NUMBER_PATTERN =
   "^[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:[Ee][+-]?\\d+)?$";
 
 type JsonObject = Record<string, unknown>;
-
-const integerSchema = (minimum: number, maximum: number) => ({
-  type: "integer",
-  minimum,
-  maximum,
-});
 
 const queryParameterSchemas = new Map<string, JsonObject>(
   Object.entries({

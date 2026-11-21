@@ -1,4 +1,4 @@
-import { OptionCardGroup } from "@/components/common/option-card-group";
+import { OptionCardGroup } from "@lootlog/ui/components/option-card-group";
 import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
 import { useId } from "react";
 import { useWatch } from "react-hook-form";
