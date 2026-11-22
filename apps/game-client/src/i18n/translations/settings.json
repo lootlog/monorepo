@@ -197,16 +197,6 @@
       "threefaces": "Trzy twarze",
       "twineyes": "Dwoje oczu",
       "tulipwind": "Tulipanowy wiatr"
-    },
-    "grants": {
-      "grant": "Nadaj aurę",
-      "grantPersonal": "Nadaj aurę: {{aura}}",
-      "grantedPersonal": "Gracz może teraz wybrać aurę {{aura}} w ustawieniach Lootloga.",
-      "revoke": "Odbierz aurę",
-      "granted": "Gracz może teraz wybrać aurę w ustawieniach Lootloga.",
-      "revoked": "Aury odebrane.",
-      "noUser": "Ten gracz nie ma Lootloga na tym koncie.",
-      "failed": "Nie udało się zmienić dostępu do aury."
     }
   },
   "general": {

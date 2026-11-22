@@ -11,7 +11,7 @@ export const roleText: Record<
   admin: {
     name: "Administrator",
     description:
-      "Ma uprawnienia wszystkich pozostałych ról. Nadawaj tylko osobom, którym ufasz w pełni.",
+      "Ma uprawnienia wszystkich pozostałych ról, jako jedyny nadaje i odbiera aury oraz nosi aury administratorów. Nadawaj tylko osobom, którym ufasz w pełni.",
   },
   "wiki-moderator": {
     name: "Moderator Wiki",
@@ -21,7 +21,7 @@ export const roleText: Record<
   "global-chat-admin": {
     name: "Administrator czatu globalnego",
     description:
-      "Usuwa i przypina wiadomości, wycisza graczy, pisze ogłoszenia na wszystkie światy oraz nosi i nadaje aury. Zmiana działa w ciągu minuty.",
+      "Usuwa i przypina wiadomości, wycisza graczy i pisze ogłoszenia na wszystkie światy. Zmiana działa w ciągu minuty.",
   },
 };
 
@@ -64,7 +64,7 @@ export const auraNoticeText: Record<AuraAction["action"], string> = {
 
 export const auraRefusalText: Record<AuraRefusal | "failed", string> = {
   forbidden:
-    "Twoje konto nie jest administratorem czatu globalnego, więc API nie pozwala nadawać aur. Nadaj sobie tę rolę albo dodaj konto do GLOBAL_CHAT_ADMIN_USER_IDS.",
+    "Aury nadaje i odbiera tylko konto z rolą Administrator. Nadaj tę rolę swojemu kontu; zmiana działa w ciągu minuty.",
   "no-player":
     "Nikt nie potwierdził w Lootlogu, że gra na tym koncie. Gracz musi wejść do gry z dodatkiem.",
   failed: "Nie udało się zmienić aur. Spróbuj ponownie.",
@@ -205,7 +205,7 @@ export const text = {
   aurasProfileLink: "Profil w Margonem",
   aurasLootlogUser: "Użytkownik Lootloga",
   aurasAdmin:
-    "Administrator czatu globalnego: wybiera każdą aurę bez nadania, a odebranie nadań nie zdejmuje jego aur.",
+    "Administrator: wybiera każdą aurę bez nadania, a odebranie nadań nie zdejmuje jego aur.",
   aurasGeneralHeading: "Aury",
   aurasGeneralDescription:
     "Pozwala wybrać każdą aurę poza aurami administratorów i osobistymi.",

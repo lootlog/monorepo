@@ -13,7 +13,7 @@ import {
 } from "#src/global-chat/global-chat.data-layer";
 import type { RedisService } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
-import { GlobalChatAdminDirectory } from "#src/runtime/features/global-chat-admins";
+import { GlobalChatAdminDirectory } from "#src/runtime/features/platform-role-directories";
 
 const channelKeys = (world: string | undefined) => {
   const channel = `global-chat:{${world === undefined ? "all" : `world:${world}`}}`;

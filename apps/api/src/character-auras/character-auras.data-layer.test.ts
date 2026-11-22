@@ -1,4 +1,4 @@
-import { fixedGlobalChatAdmins } from "#src/global-chat/global-chat-admins";
+import { fixedRoleHolders } from "#src/platform-roles/role-holders";
 import { afterEach, describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
@@ -61,10 +61,7 @@ const setup = async (
     ) =>
       boundary.run(
         Effect.flatMap(
-          makeCharacterAurasData(
-            fixedGlobalChatAdmins(entitledUserIds),
-            events,
-          ),
+          makeCharacterAurasData(fixedRoleHolders(entitledUserIds), events),
           operation,
         ),
       ),
@@ -130,7 +127,7 @@ describe("character auras", () => {
 
     const revoked = await admin.boundary.run(
       Effect.flatMap(
-        makeCharacterAurasData(fixedGlobalChatAdmins([]), admin.events),
+        makeCharacterAurasData(fixedRoleHolders([]), admin.events),
         (data) => data.getAuras(),
       ),
     );
@@ -166,7 +163,7 @@ describe("character auras", () => {
 
     const dropped = await admin.boundary.run(
       Effect.flatMap(
-        makeCharacterAurasData(fixedGlobalChatAdmins([]), admin.events),
+        makeCharacterAurasData(fixedRoleHolders([]), admin.events),
         (data) => data.getAuras(),
       ),
     );
@@ -397,7 +394,7 @@ describe("character auras", () => {
     const lists = () =>
       boundary.run(
         Effect.flatMap(
-          makeCharacterAurasData(fixedGlobalChatAdmins(["admin"]), events, {
+          makeCharacterAurasData(fixedRoleHolders(["admin"]), events, {
             list: (load) =>
               list
                 ? Effect.succeed(list)

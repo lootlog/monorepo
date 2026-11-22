@@ -1,4 +1,4 @@
-import { fixedGlobalChatAdmins } from "#src/global-chat/global-chat-admins";
+import { fixedRoleHolders } from "#src/platform-roles/role-holders";
 import { afterEach, describe, expect, it } from "bun:test";
 import { Effect, Schema } from "effect";
 import type {
@@ -190,7 +190,7 @@ const setup = async () => {
         publishChannelUpdate: (update) =>
           Effect.sync(() => void updates.push(update)),
       },
-      fixedGlobalChatAdmins([admin.userId]),
+      fixedRoleHolders([admin.userId]),
     ).pipe(Effect.provideService(ApiDatabase, database)),
   );
 

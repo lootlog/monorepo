@@ -14091,7 +14091,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: List every user holding the grant of auras in general or a personal aura, with what they hold. Global chat admins only
+      description: List every user holding the grant of auras in general or a personal aura, with what they hold. Lootlog admins (the `admin` platform role) only
       summary: List character aura grant holders
   /character-auras/grants/game-accounts/{gameAccountId}:
     get:
@@ -14147,7 +14147,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: "Show which auras the user who last proved to play the Margonem account may choose: whether they are a global chat admin, hold the grant of auras in general, and which personal auras they were granted. Global chat admins only; 404 when no user proved to play the account"
+      description: "Show which auras the user who last proved to play the Margonem account may choose: whether they are a Lootlog admin, hold the grant of auras in general, and which personal auras they were granted. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account"
       summary: Get character aura grants
     put:
       tags:
@@ -14198,7 +14198,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Global chat admins only; 404 when no user proved to play the account
+      description: Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
       summary: Grant character auras
     delete:
       tags:
@@ -14249,7 +14249,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; global chat admins keep theirs. Global chat admins only; 404 when no user proved to play the account
+      description: Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; Lootlog admins keep theirs. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
       summary: Revoke character auras
   /character-auras/grants/game-accounts/{gameAccountId}/personal-auras/{auraId}:
     put:
@@ -14317,7 +14317,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Global chat admins only; 404 when no user proved to play the account
+      description: Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
       summary: Grant a personal character aura
 components:
   schemas:

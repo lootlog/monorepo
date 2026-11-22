@@ -65,21 +65,20 @@ inspection and rollback constraints.
 holds no data: every read and write goes through the auth service's admin API
 (`/admin/*`), which records each change in `admin_audit_log`.
 
-The panel also grants and revokes character auras for the User who plays a
-Margonem account, found from a pasted profile link
+The panel is also the only place to grant and revoke character auras for the
+User who plays a Margonem account, found from a pasted profile link
 (`https://www.margonem.pl/profile/view,<account id>`). Those calls go to the
 main API's `/character-auras/grants/*` endpoints at `LOOTLOG_API_URL`, the
 API as the edge serves it, with the operator's Lootlog session and without
 the Access cookie. The edge's forward-auth resolves the session, and the API
-allows them only to a global chat admin, exactly as for the Game client's
-grant menu, so the operator also needs that role or a place in
-`GLOBAL_CHAT_ADMIN_USER_IDS`. The user list's aura filter asks the API for every
+allows them only to holders of the `admin` platform role, so the operator
+needs that role too. The user list's aura filter asks the API for every
 holder of an aura grant (`/character-auras/grants`) under the same rule and
 passes their ids to the auth service's `POST /admin/users/search` as
 `userIds` or `excludedUserIds`, in the body so the list has no URL-length
-limit. `GET /admin/users` stays for panels deployed before it. These changes are not written to
-`admin_audit_log`. The panel refuses to start without `LOOTLOG_API_URL`, and
-its egress must reach that host.
+limit. `GET /admin/users` stays for panels deployed before it. These changes
+are not written to `admin_audit_log`. The panel refuses to start without
+`LOOTLOG_API_URL`, and its egress must reach that host.
 
 The panel is reachable only through the Cloudflare tunnel that also serves
 Grafana, on its own public hostname guarded by its own Cloudflare Access
@@ -129,13 +128,16 @@ which the edge must clear on incoming requests and copy from `/auth/verify`
 like the identity headers beside it. Deploy the Traefik change before or with
 the auth service; until then no role is forwarded and role checks refuse.
 
-The API cannot learn global chat admins from the caller alone: it marks other
-Users' messages and shows their auras. It asks the auth service for the
-holders of `global-chat-admin` every minute
-(`/auth/internal/platform-role-holders`, with `AUTH_IDP_TOKEN_SECRET`) and
-adds them to `GLOBAL_CHAT_ADMIN_USER_IDS`. While the auth service cannot be
-reached the last answer stands. Deploy the auth service before the API; an
-API that gets no answer keeps working with the configured list.
+The API cannot learn role holders from the caller alone: it marks other Users'
+messages and shows their auras. Every minute it asks the auth service
+(`/auth/internal/platform-role-holders`, with `AUTH_IDP_TOKEN_SECRET`) for the
+holders of `global-chat-admin`, which moderate the global chat together with
+`GLOBAL_CHAT_ADMIN_USER_IDS`, and for the holders of `admin`, the only Users
+who grant and revoke auras, choose any aura without a grant, and wear the
+admin auras. `GLOBAL_CHAT_ADMIN_USER_IDS` gives no aura rights. While the auth
+service cannot be reached the last answer stands. Deploy the auth service
+before the API; without `AUTH_IDP_TOKEN_SECRET` the API knows only the
+configured chat admins and no aura admin.
 
 A role change, a revoked session, and a ban reach a signed-in browser within
 five minutes, when its session cookie cache expires; a bearer token issued

@@ -133,7 +133,7 @@ player lists, link previews) and must carry no identifiers.
 
 ### Character auras
 
-- **`makeCharacterAurasData`** (`apps/api/src/character-auras/character-auras.data-layer.ts`): Auras belong to global chat admins and Users an admin granted them to, and show only while the chooser is the User who last proved to play the account and still has access. Revoking a grant deletes the User's auras; a User dropped from the admins keeps hidden choices and may only remove them.
+- **`makeCharacterAurasData`** (`apps/api/src/character-auras/character-auras.data-layer.ts`): Auras belong to holders of the `admin` platform role, the only Users who grant them, and to Users an admin granted them to; global chat moderation gives no aura rights, and show only while the chooser is the User who last proved to play the account and still has access. Revoking a grant deletes the User's auras; a User dropped from the admins keeps hidden choices and may only remove them.
 - **`PERSONAL_CHARACTER_AURA_IDS`** (`packages/schema/src/character-aura.ts`): Personal auras are granted to a User by name only; a general grant does not cover them, and admin auras are chosen only by admins.
 - **`CharacterAurasCache`** (`apps/api/src/character-auras/character-auras.data-layer.ts`): All auras and grants are cached as one shared copy, because they belong to a handful of Users and every Game client reads them at startup.
 - **`shownAuras`** (`apps/api/src/character-auras/character-auras.data-layer.ts`): The `DISTINCT ON ("accountId")` latest-proof lookup is limited to accounts that have an aura, avoiding a full scan of `UserMargonemAccount`.

@@ -1,4 +1,4 @@
-import type { GlobalChatAdmins } from "#src/global-chat/global-chat-admins";
+import type { RoleHolders } from "#src/platform-roles/role-holders";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { and, asc, desc, eq, gt, isNull, or, type SQL } from "drizzle-orm";
 import { Effect, Exit, Layer, Option, Schema } from "effect";
@@ -110,7 +110,7 @@ const channelWorld = (world: string | undefined) =>
 export const makeGlobalChatOperations = (
   store: GlobalChatStore,
   events: GlobalChatEvents,
-  admins: GlobalChatAdmins,
+  admins: RoleHolders,
 ) =>
   Effect.gen(function* () {
     const database = yield* ApiDatabase;
@@ -492,6 +492,6 @@ export const makeGlobalChatOperations = (
 export const makeGlobalChatDataLayer = (
   store: GlobalChatStore,
   events: GlobalChatEvents,
-  admins: GlobalChatAdmins,
+  admins: RoleHolders,
 ) =>
   Layer.effect(GlobalChatData, makeGlobalChatOperations(store, events, admins));

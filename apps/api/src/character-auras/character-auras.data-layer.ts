@@ -1,4 +1,4 @@
-import type { GlobalChatAdmins } from "#src/global-chat/global-chat-admins";
+import type { RoleHolders } from "#src/platform-roles/role-holders";
 import { and, asc, eq, inArray, isNotNull, or, type SQL } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
 import {
@@ -84,7 +84,7 @@ const uncached: CharacterAurasCache = {
 };
 
 export const makeCharacterAurasData = (
-  admins: GlobalChatAdmins,
+  admins: RoleHolders,
   events: CharacterAurasEvents,
   cache: CharacterAurasCache = uncached,
 ) =>
@@ -519,7 +519,7 @@ export const makeCharacterAurasData = (
   });
 
 export const characterAurasDataLayer = (
-  admins: GlobalChatAdmins,
+  admins: RoleHolders,
   events: CharacterAurasEvents,
   cache: CharacterAurasCache,
 ) =>

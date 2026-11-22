@@ -38886,7 +38886,7 @@ export const getCharacterAurasControllerListGrantHoldersUrl = () => {
 }
 
 /**
- * List every user holding the grant of auras in general or a personal aura, with what they hold. Global chat admins only
+ * List every user holding the grant of auras in general or a personal aura, with what they hold. Lootlog admins (the `admin` platform role) only
  * @summary List character aura grant holders
  */
 export const characterAurasControllerListGrantHolders = async ( options?: Parameters<typeof mainFetch>[1]): Promise<CharacterAuraGrantHoldersResponseDto> => {
@@ -39030,7 +39030,7 @@ export const getCharacterAurasControllerGetGrantsUrl = ({ gameAccountId }: Chara
 }
 
 /**
- * Show which auras the user who last proved to play the Margonem account may choose: whether they are a global chat admin, hold the grant of auras in general, and which personal auras they were granted. Global chat admins only; 404 when no user proved to play the account
+ * Show which auras the user who last proved to play the Margonem account may choose: whether they are a Lootlog admin, hold the grant of auras in general, and which personal auras they were granted. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
  * @summary Get character aura grants
  */
 export const characterAurasControllerGetGrants = async ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<CharacterAuraGrantsResponseDto> => {
@@ -39174,7 +39174,7 @@ export const getCharacterAurasControllerGrantAurasUrl = ({ gameAccountId }: Char
 }
 
 /**
- * Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Global chat admins only; 404 when no user proved to play the account
+ * Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
  * @summary Grant character auras
  */
 export const characterAurasControllerGrantAuras = async ({ gameAccountId }: CharacterAurasControllerGrantAurasPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
@@ -39249,7 +39249,7 @@ export const getCharacterAurasControllerRevokeAurasUrl = ({ gameAccountId }: Cha
 }
 
 /**
- * Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; global chat admins keep theirs. Global chat admins only; 404 when no user proved to play the account
+ * Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; Lootlog admins keep theirs. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
  * @summary Revoke character auras
  */
 export const characterAurasControllerRevokeAuras = async ({ gameAccountId }: CharacterAurasControllerRevokeAurasPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
@@ -39324,7 +39324,7 @@ export const getCharacterAurasControllerGrantPersonalAuraUrl = ({ gameAccountId,
 }
 
 /**
- * Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Global chat admins only; 404 when no user proved to play the account
+ * Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
  * @summary Grant a personal character aura
  */
 export const characterAurasControllerGrantPersonalAura = async ({ gameAccountId, auraId }: CharacterAurasControllerGrantPersonalAuraPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
