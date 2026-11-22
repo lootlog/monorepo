@@ -33,7 +33,6 @@ type RedisGatewayConfig = Pick<GatewayConfiguration["redis"], "keyPrefix">;
 
 export interface FederatedRealtimeMessage {
   readonly id: string;
-  /** Position in the federation stream; Redis adds it when it publishes. */
   readonly sequence?: number;
   readonly sourceInstanceId: string;
   readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
@@ -48,14 +47,10 @@ export interface FederatedRealtimeMessage {
   readonly recipientWorld?: string;
   readonly recipientMapId?: number;
   readonly recipientCharacterIds?: ReadonlyArray<string>;
-  /** Only readers of precise location receive it. */
   readonly presenceAudience?: "precise";
   readonly organizationId?: string;
-  /** `FRAME_SCHEMA` of the publishing replica. */
   readonly frameSchema?: string;
-  /** The frame, as its encoded JSON value. */
   readonly event?: Schema.Json;
-  /** Precise presence variant of `event` for readers of precise location. */
   readonly preciseEvent?: Schema.Json;
   readonly control?: {
     readonly type: "permissions.rebalance";
@@ -64,7 +59,6 @@ export interface FederatedRealtimeMessage {
   };
 }
 
-/** Canonical JSON texts of the frames that a published message carries. */
 export interface FederatedFrameTexts {
   readonly event: string;
   readonly preciseEvent?: string;
@@ -111,8 +105,6 @@ const decodeFederatedRealtimeMessageValue = Schema.decodeUnknownSync(
   FederatedRealtimeMessageSchema,
 );
 
-// Frames arrive as nested JSON, so one parse covers the envelope and its
-// frames; a string-wrapped frame would be escaped and parsed twice.
 export const decodeFederatedRealtimeMessage = (
   raw: string,
 ): FederatedRealtimeMessage =>
@@ -122,7 +114,6 @@ export const decodeFederatedRealtimeMessage = (
     parseRealtimeJson(raw),
   ) as FederatedRealtimeMessage;
 
-/** Splices the canonical frame texts in instead of encoding their values again. */
 export const encodeFederatedRealtimeMessage = (
   message: FederatedRealtimeMessage,
   frames: FederatedFrameTexts | undefined,
@@ -141,22 +132,14 @@ export const encodeFederatedRealtimeMessage = (
 
 const FEDERATION_SEQUENCE_KEY = "realtime:federation:v1:sequence";
 
-// Numbering and publication are one step, so a number exists only for a frame
-// Redis published.
 const publishSequencedScript = `
 local sequence = redis.call("INCR", KEYS[1])
 redis.call("PUBLISH", ARGV[1], '{"sequence":' .. sequence .. ',' .. string.sub(ARGV[2], 2))
 return sequence
 `;
 
-/** How long a hole in the federation sequence may wait for a reordered frame. */
 const FEDERATION_REORDER_WINDOW_MS = 1_000;
 
-/**
- * `interrupted`: the subscription dropped and frames may be missing.
- * `subscribed`: every sequenced frame since the last report arrived.
- * `gap`: sequenced frames were lost; sessions that expected them are stale.
- */
 export type FederationState = "subscribed" | "interrupted" | "gap";
 
 export class RedisGatewayStore {
@@ -264,11 +247,6 @@ export class RedisGatewayStore {
     }
   }
 
-  /**
-   * Pub/Sub has no replay. Sequence numbers show whether a dropped
-   * subscription lost frames, so `onStateChange` reports the gap only when it
-   * lost some. See {@link FederationState}.
-   */
   async subscribe(
     listener: (message: FederatedRealtimeMessage) => void,
     onStateChange: (state: FederationState) => void = () => undefined,
@@ -302,8 +280,6 @@ export class RedisGatewayStore {
           }),
         );
 
-        // Frames numbered up to the counter were published before this
-        // subscription existed or are already queued for it.
         const published = yield* redis.send<string | null>("GET", sequenceKey);
 
         const continuity = sequence.resume(
@@ -329,7 +305,6 @@ export class RedisGatewayStore {
           Effect.forkScoped,
         );
 
-        // A plain function: the frame loop stays free of a per-frame Effect.
         const deliver = (raw: string) => {
           try {
             const message = decodeFederatedRealtimeMessage(raw);
@@ -347,9 +322,7 @@ export class RedisGatewayStore {
             ) {
               listener(message);
             }
-          } catch {
-            // Malformed federation frames are isolated to Redis and never reach clients.
-          }
+          } catch {}
         };
 
         let reportedLoss = false;
@@ -359,9 +332,6 @@ export class RedisGatewayStore {
         while (true) {
           const { message: raw } = yield* Queue.take(messages);
 
-          // A dropped subscriber leaves its backlog readable until it drains.
-          // Report the interruption now so resubscription starts, but keep
-          // delivering the backlog: sessions may survive the interruption.
           if (!reportedLoss && !Predicate.isTagged(messages.state, "Open")) {
             reportedLoss = true;
             onStateChange("interrupted");
@@ -369,8 +339,6 @@ export class RedisGatewayStore {
 
           deliver(raw);
 
-          // Effect's automatic yield can retain this fiber for hundreds of ms.
-          // Release the event loop without dropping/reordering federation frames.
           batchSize++;
 
           if (batchSize >= 64 || performance.now() - batchStarted >= 4) {
@@ -428,7 +396,6 @@ export interface RedisGatewayCommands {
   readonly flushdb: () => Promise<"OK">;
 }
 
-/** The replica's connected Redis store, closed with the application. */
 export class GatewayRedis extends Context.Service<
   GatewayRedis,
   RedisGatewayStore
@@ -440,7 +407,6 @@ export class GatewayRedis extends Context.Service<
       const background = yield* Background;
       const client = yield* Redis.Redis;
 
-      // The Redis layer owns and closes the client.
       return yield* Effect.tryPromise({
         try: async () => {
           const store = new RedisGatewayStore(

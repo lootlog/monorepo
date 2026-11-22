@@ -34,7 +34,6 @@ import { makeAutoTimer } from "./timer-auto.data-layer.js";
 import type { AutoTimerGuildWritePorts } from "./timer-auto-guild-write.js";
 import { TimerHistoryAction } from "./timers.types.js";
 
-// Reads the dedup entry, then fills it as the sole lock holder.
 const singleFlightLocks = (
   onRelease: () => void = () => undefined,
 ): AutoTimerGuildWritePorts["locks"] => ({
@@ -472,7 +471,6 @@ it("writes a kill within the dedup window of an event respawn window that has no
             location: "Map",
             lvl: 100,
             wt: 85,
-            // Older old-interface clients report the rendered CDN URL.
             icon: "https://micc.garmory-cdn.cloud/obrazki/npc/her/hero.png",
             type: 2,
           },
@@ -580,8 +578,6 @@ it.each([false, true])(
       expect(firstResult._tag).toBe("Failure");
 
       if (restoredWindow) {
-        // Restoring an earlier snapshot replaces windowOpenedAt but retains the
-        // latest CREATE in history; the pending submission must not undo it.
         await boundary.run(
           database.update(timerTable).set({
             windowOpenedAt: new Date(Date.now() - 60_000),
@@ -606,13 +602,9 @@ it.each([false, true])(
       expect(
         await boundary.run(database.select().from(timerHistoryEntryTable)),
       ).toHaveLength(1);
-      // The event hero check committed with the first attempt survives its
-      // failed publication, and the retry does not queue a second one.
       expect(
         await boundary.run(database.select().from(eventHeroCheckOutboxTable)),
       ).toHaveLength(1);
-      // The failed attempt did not record its result, so its retry publishes
-      // again: delivery is at least once instead of possibly never.
       expect(publications).toEqual([
         RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
         RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
@@ -660,11 +652,7 @@ it.each([false, true])(
 );
 
 it.each([
-  // A private world: the tracker left its previous hiding place reporting a
-  // one-hour respawn, and an older client still reports the public default.
   { stored: 3600, reported: 5400, counted: 3600 },
-  // A world respawning three times faster: the stored public default was
-  // never observed, so the base the client scaled replaces it.
   { stored: 5400, reported: 1800, counted: 1800 },
 ])(
   "keeps one timer per Hero Tracker across hiding places, counting a $counted s respawn from the entrance closing when $stored s is stored and $reported s reported",
@@ -742,12 +730,10 @@ it.each([
             entranceSecondsLeft: 1200,
             world: "world",
             npc: {
-              // The next hiding place may give the tracker another runtime id.
               id: 190999,
               name: trackerName,
               location: "Jaskinia Piaskowej Burzy s.1",
               lvl: 282,
-              // Tracker templates carry no weight or profession.
               wt: 0,
               icon: "npc/tropiciel.gif",
               type: 0,
@@ -763,7 +749,6 @@ it.each([
       expect(timers).toHaveLength(1);
       const entranceClosesAt = timers[0]?.entranceClosesAt?.getTime() ?? 0;
 
-      // The countdown is placed on the server clock, not the reporter's.
       expect(entranceClosesAt).toBeGreaterThanOrEqual(reportedAt + 1_200_000);
       expect(entranceClosesAt).toBeLessThanOrEqual(Date.now() + 1_200_000);
       expect(timers[0]).toMatchObject({
@@ -839,8 +824,6 @@ it("keeps the window of an open Hero Tracker entrance when another player report
         }),
     });
 
-    // Another player arrives five minutes later; their countdown is off by
-    // a few seconds from the first report.
     await boundary.run(
       create(
         { discordId: member.userId, userId: "user" },

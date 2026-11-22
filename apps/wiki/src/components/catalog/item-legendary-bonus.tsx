@@ -2,7 +2,6 @@ import { TruncatedText } from "@/components/truncated-text";
 import { t } from "@/i18n/messages";
 import { findLegendaryBonus } from "@/lib/legendary-bonuses";
 
-/** The item's legendary bonus with its icon; nothing without one. */
 export function ItemLegendaryBonus({ stat }: { stat: string }) {
   const bonus = findLegendaryBonus(stat);
 

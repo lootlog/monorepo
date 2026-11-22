@@ -24,8 +24,6 @@ import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 const RANKING_PER_HERO = 10;
 
-// Discord rejects an embed with more than 25 fields or 6000 characters; the
-// margin keeps room for the title and the remainder note.
 const MAX_RANKING_FIELDS = 24;
 
 const MAX_RANKING_FIELD_CHARACTERS = 5500;
@@ -104,7 +102,6 @@ const eventsPath = (guildId: string) =>
 const startedAt = (event: LootlogEvent) =>
   new Date(event.startsAt ?? event.createdAt).getTime();
 
-/** Without a choice, the latest running event wins, then the latest one. */
 const selectEvent = (
   events: ReadonlyArray<LootlogEvent>,
   chosenId: string | null,
@@ -202,7 +199,6 @@ const rankingReply = (
     else {
       embed.addFields(fields);
 
-      // One note instead of a missing line under every hero.
       if (!ranking.some((entry) => entry.member.id === session.memberId))
         embed.setDescription(`_${COMMAND_TEXT.events.ownMissing}_`);
     }
@@ -271,7 +267,6 @@ const statusReply = (
     };
   });
 
-/** Points and kills of each Member summed over heroes, highest points first. */
 const memberTotals = (ranking: typeof EventRanking.Type) =>
   Object.entries(Array.groupBy(ranking, (entry) => String(entry.member.id)))
     .map(([memberId, entries]) => ({

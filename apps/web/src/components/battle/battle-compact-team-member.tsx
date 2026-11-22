@@ -11,7 +11,6 @@ import { useTranslation } from "react-i18next";
 
 export type BattleCompactTeamMemberProps = {
   cdnBaseUrl: string;
-  /** Group teams collapse to sprites in a narrow column; the stats table carries the names. */
   compact?: boolean;
   isCurrentCharacter: boolean;
   member: Warrior;

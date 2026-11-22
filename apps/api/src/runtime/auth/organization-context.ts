@@ -56,7 +56,6 @@ export type OrganizationContext = {
   readonly roles: ReadonlyArray<Role>;
 };
 
-/** The `RedisService` commands the Organization context cache needs. */
 export interface OrganizationContextCache extends GuildConfigurationCache {
   readonly setNX: (
     key: string,
@@ -73,16 +72,8 @@ export type OrganizationContextRefresh = (options: {
   readonly reason: string;
 }) => Effect.Effect<void, unknown>;
 
-// A context stays cached until its member reaches the soft TTL. Past two
-// thirds of the soft TTL a request queues a background refresh so active
-// members rarely reach that point. Past the soft TTL the stored member keeps
-// serving requests for the stale-access grace while the refresh runs in the
-// background; only a member Discord has not confirmed, or one past the grace,
-// makes the request wait for Discord.
 const REFRESH_AHEAD_FRACTION = 2 / 3;
 
-// Once the soft TTL has passed, a failed background refresh is queued again
-// after this long.
 const STALE_REFRESH_RETRY_SECONDS = 60;
 
 const refreshAheadKey = (userId: string, guildId: string) =>
@@ -93,9 +84,6 @@ export class OrganizationNotFound extends TaggedErrorClass<
   { readonly brand: unique symbol }
 >()("OrganizationNotFound", { guildId: Schema.String }) {}
 
-// The cache holds only the member and its roles, which cost a Discord sync to
-// refresh. The guild row and the capabilities derived from it are read on every
-// lookup, so a configuration change applies without evicting member entries.
 const CachedMemberEntry = Schema.Struct({
   member: Schema.Struct({
     ...createSelectSchema(memberTable, {
@@ -120,7 +108,6 @@ const decodeCachedMemberEntry = Schema.decodeUnknownOption(
   Schema.fromJsonString(CachedMemberEntry),
 );
 
-/** The cached member, while it is active and inside the soft TTL. */
 const readFreshCachedMember = (
   value: string,
   environment: RuntimeEnvironment,
@@ -229,9 +216,6 @@ export class OrganizationContextLookup extends Context.Service<
 
             const key = refreshAheadKey(options.userId, guildId);
 
-            // The marker lives until the context stops being fresh, and at
-            // least a retry interval after that, so each user and guild queues
-            // at most one refresh at a time.
             const claimed = yield* cache.setNX(
               key,
               "1",
@@ -252,10 +236,7 @@ export class OrganizationContextLookup extends Context.Service<
                 age <= softTtl
                   ? "organization-context-refresh-ahead"
                   : "organization-context-stale",
-            }).pipe(
-              // A failed enqueue must not block the retry until the soft TTL.
-              Effect.tapError(() => cache.del(key).pipe(Effect.ignore)),
-            );
+            }).pipe(Effect.tapError(() => cache.del(key).pipe(Effect.ignore)));
           }).pipe(
             Effect.ignore,
             Effect.withSpan("organization-context.refresh-ahead"),
@@ -310,7 +291,6 @@ export class OrganizationContextLookup extends Context.Service<
               if (
                 stored?.lastDiscordSyncAt &&
                 isActiveMember(stored) &&
-                // The caller must sign in again; only a Discord sync tells them.
                 stored.lastDiscordStatus !==
                   MEMBER_LAST_DISCORD_STATUS.UNAUTHORIZED
               ) {

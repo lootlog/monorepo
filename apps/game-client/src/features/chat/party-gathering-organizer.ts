@@ -3,7 +3,6 @@ import type {
   PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
 
-/** The organizer character as a gathering card shows it. */
 export type GatheringOrganizer = {
   nick: string;
   lvl?: number;

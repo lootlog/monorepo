@@ -108,7 +108,6 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
           name: "lootlog-test",
           icon: null,
           active: true,
-          // A new Organization draws no legends of heroes or titans.
           lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
         });
         expect(
@@ -131,7 +130,6 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
             banner: "banner-url",
             ownerId: "original-owner",
           },
-          // A bot released before banners must not clear the stored one.
           {
             name: "testowankox",
             icon: null,
@@ -148,7 +146,6 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
           const updated = decodeUpdated({ guildId, ...changes });
           yield* lifecycle.updateGuild(updated);
           const clearedAfterChange = clearedKeys.length;
-          // Every bot start republishes unchanged servers.
           yield* lifecycle.updateGuild(updated);
           expect(clearedKeys).toHaveLength(clearedAfterChange);
 
@@ -193,7 +190,6 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
           .insert(guildTable)
           .values(createGuildFixture({ id: guildId }));
 
-        // Later suites insert members through the sequence, so skip the fixture id.
         const { id: _id, ...member } = createMemberFixture({
           guildId,
           userId: "discord-1",
@@ -221,7 +217,6 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
         });
 
         yield* Effect.flip(lifecycle.deleteGuild({ guildId }));
-        // The redelivered event no longer finds an active member to remove.
         yield* lifecycle.deleteGuild({ guildId });
         expect(removed).toEqual([]);
 

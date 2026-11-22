@@ -83,7 +83,6 @@ export function unclaimHeroSighting({
   });
 }
 
-/** Adds a hero the player enters by hand to one Organization. */
 export function addHeroSighting(
   guildId: string,
   sighting: Omit<AddHeroSightingDto, "actorCharacter">,
@@ -105,7 +104,6 @@ export function addHeroSighting(
   });
 }
 
-/** Closes a sighting its author entered by hand, e.g. one added by mistake. */
 export function withdrawHeroSighting({
   guildId,
   sightingId,

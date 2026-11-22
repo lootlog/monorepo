@@ -291,10 +291,8 @@ it("fetches stored map threats once per connection while timer updates re-render
   const view = render(list([timer()]));
   await waitFor(() => expect(fetches()).toBe(1));
 
-  // Every realtime timer change projects a new list for the same scopes.
   for (let update = 0; update < 5; update += 1)
     view.rerender(list([timer(), timer()]));
-  // Let each replaced subscription's deferred release settle.
   await Promise.resolve();
   expect(fetches()).toBe(1);
 
@@ -313,13 +311,11 @@ function heroSighting(
     world: "alpha",
     hero: { key: name.toLowerCase(), name, lvl: 100, prof: null },
     mapName: "Karka-han",
-    // Confirmed just now, so the sighting still places the hero.
     lastSeenAt: new Date().toISOString(),
     ...overrides,
   });
 }
 
-/** Sightings follow the timer visibility, so the policy also grants it. */
 const heroSightingPolicy = (organizations: string[]) =>
   createAccessPolicySnapshot(
     organizations.map((id) => ({
@@ -346,7 +342,6 @@ function npcTimer(
 ): TimerWithTimeLeft {
   const base = timer();
 
-  // A hero's timer keeps the map it was killed on, which says nothing now.
   return { ...base, npc: { ...base.npc, type, name, location: "Ithan" } };
 }
 
@@ -362,7 +357,6 @@ it("places a hero timer on the map its current sighting names, in the timer's or
 
   queryClient.setQueryData(queryKeys.heroSightings("alpha"), [
     heroSighting("guild-1", "Tepeyollotl"),
-    // Another Organization's sighting does not place this Organization's timer.
     heroSighting("guild-2", "Mietek"),
     heroSighting("guild-1", "Viviana", {
       closedAt: "2026-11-03T12:01:00.000Z",
@@ -394,7 +388,6 @@ it("places a hero timer on the map its current sighting names, in the timer's or
   ).toBeVisible();
   expect(screen.getAllByRole("img")).toHaveLength(1);
 
-  // A later detection elsewhere closes the sighting the timer was placed by.
   upsertHeroSightings(queryClient, [
     heroSighting("guild-1", "Tepeyollotl", {
       closedAt: "2026-11-03T12:05:00.000Z",
@@ -428,14 +421,12 @@ it("stops placing a roaming hero's timer once nobody has confirmed it lately, ke
   const seenAgo = (ms: number) => new Date(Date.now() - ms).toISOString();
 
   queryClient.setQueryData(queryKeys.heroSightings("alpha"), [
-    // Turns unconfirmed while the timers are shown.
     heroSighting("guild-1", "Tepeyollotl", {
       lastSeenAt: seenAgo(HERO_SIGHTING_STALE_AFTER_MS - 1_500),
     }),
     heroSighting("guild-1", "Viviana", {
       lastSeenAt: seenAgo(HERO_SIGHTING_STALE_AFTER_MS + 60_000),
     }),
-    // A spawn the detector announced waits on its map however long it takes.
     heroSighting("guild-1", "Mietek", {
       state: "SPAWNING",
       lastSeenAt: seenAgo(HERO_SIGHTING_STALE_AFTER_MS + 60_000),
@@ -535,7 +526,6 @@ it("marks a roaming hero unconfirmed even when its stale timer fires a milliseco
 
     expect(mark()).not.toBeNull();
 
-    // Node timers can run before `Date.now()` reaches their delay.
     vi.setSystemTime(Date.now() - 1);
     await act(() => vi.advanceTimersByTimeAsync(60_000));
 

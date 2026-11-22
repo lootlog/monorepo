@@ -41,7 +41,6 @@ export const StatsCardSettingsSection = ({
   const [isCopying, setIsCopying] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Keyed by Organization so one server's cooldown never shows on another.
   const [nextRefresh, setNextRefresh] = useState<{
     guildId: string;
     at: string | number;

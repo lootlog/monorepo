@@ -36,7 +36,6 @@ import { RefreshMembersButton } from "./components/refresh-members-button";
 import { MembersList } from "./members-list";
 import type { MembersStats } from "./members.types";
 
-/** How many members each status filter holds. */
 const STATUS_FILTER_COUNTS: Record<MemberStatusFilter, keyof MembersStats> = {
   all: "totalMembers",
   active: "activeMembers",
@@ -92,8 +91,6 @@ export const MembersSettingsContent = () => {
     accessPolicy?.allows(Permission.OWNER),
   );
 
-  // The pills count the members the name filter leaves, so each shows where
-  // a name can be found.
   const searchedMembers = members?.filter((member) =>
     memberMatchesSearch({ member, search: searchValue }),
   );
@@ -114,7 +111,6 @@ export const MembersSettingsContent = () => {
   });
 
   const changeStatusFilter = (filter: MemberStatusFilter) => {
-    // The list starts over, so its top stays under the toolbar.
     getPageScroller(scrollElement, scrollsDocument)?.scrollTo({ top: 0 });
     startTransition(() => setStatusFilter(filter));
   };

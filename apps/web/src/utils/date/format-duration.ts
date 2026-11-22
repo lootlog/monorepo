@@ -1,12 +1,5 @@
 import { useTranslation } from "react-i18next";
 
-/**
- * - `human`: "45s", "4m 30s", "2h 5m"; zero parts drop.
- * - `compact`: "4:30" under an hour, "2h 5m" from one; "0:00" when none.
- * - `minutesSeconds`: "64m 5s", minutes uncapped; negative counts as zero.
- * - `clock`: "4:05" or "1:04:05", leading part unpadded.
- * - `countdown`: "04:05" under an hour, "01:04:05" under a day, then "2d 3h".
- */
 export type DurationStyle =
   | "human"
   | "compact"
@@ -78,11 +71,9 @@ const FORMATTERS: Record<DurationStyle, (seconds: number) => string> = {
   countdown: formatCountdown,
 };
 
-/** A duration in whole seconds, in one of the app's fixed styles. */
 export const formatDuration = (seconds: number, style: DurationStyle) =>
   FORMATTERS[style](seconds);
 
-/** Time spent online, in hours and minutes, as statistics show it. */
 export const useFormatOnlineDuration = () => {
   const { t } = useTranslation();
 

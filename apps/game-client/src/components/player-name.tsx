@@ -4,17 +4,11 @@ import type { FC } from "react";
 type PlayerNameProps = {
   className?: string;
   clanName?: string;
-  /** Unknown for players seen only through older clients. */
   level?: number;
   name: string;
   profession?: string;
 };
 
-/**
- * A player's nick with level and profession, then a faint dot and the clan,
- * dimmed. When the row is too narrow the clan gives way first, so the nick
- * stays readable.
- */
 export const PlayerName: FC<PlayerNameProps> = ({
   className,
   clanName,

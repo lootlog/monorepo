@@ -2,8 +2,6 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { SandboxWorld } from "./world";
 
-// Stands in for the native Communication.parseJSON: it mutates game state from a
-// packet before Lootlog's bridge wrapper observes the same packet.
 export function applyGameEvent(world: SandboxWorld, event: GameEvent): void {
   if (event.town) applyTown(world, event.town);
 
@@ -132,7 +130,6 @@ function composeNpc(
     x: entry.x,
     y: entry.y,
     nick: template.nick,
-    // Margonem's NPC objects default what a Hero Tracker template omits.
     prof: template.prof ?? "",
     type: template.type ?? 0,
     wt: template.warrior_type ?? 0,

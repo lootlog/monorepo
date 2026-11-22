@@ -49,9 +49,7 @@ it("ends only gatherings whose every Lootlog recorded the kill", async () => {
   const rooms = [
     room("killed", ["killer"], killed),
     room("killed-in-both", ["killer", "second-killer"], killed),
-    // The same NPC gathered for by another Organization stays open.
     room("other-lootlog", ["other"], killed),
-    // Ending a shared gathering would tell the other Lootlog about the kill.
     room("shared-with-other", ["killer", "other"], killed),
     room("other-npc", ["killer"], { ...killed, id: 8 }),
     room("other-map", ["killer"], { ...killed, location: "Inna mapa" }),
@@ -72,7 +70,6 @@ it("ends only gatherings whose every Lootlog recorded the kill", async () => {
     },
     eval: (script, keys, args) => {
       if (script === FIND_ACTIVE_READY_ROOM_IDS_SCRIPT) {
-        // Discovery keys are per Organization, so only its rooms are listed.
         return Effect.succeed(
           rooms.flatMap((entry) =>
             entry.guildIds.some((guildId) =>

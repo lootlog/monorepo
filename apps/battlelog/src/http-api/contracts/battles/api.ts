@@ -1,4 +1,3 @@
-/** Endpoints owned by the battles HTTP module. */
 import {
   BadRequest,
   Forbidden,

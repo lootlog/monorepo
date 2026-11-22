@@ -261,7 +261,6 @@ describe("DraggableWindow", () => {
 
     expect(windowElement.style.height).toBe("auto");
     expect(contentElement.style.maxHeight).toBe("180px");
-    // Only the frame's own size is observed, for placement and clamping.
     expect(resizeObserverObservedElements).toEqual([windowElement]);
     expect(mutationObserverCallbacks).toHaveLength(0);
   });
@@ -444,8 +443,6 @@ describe("DraggableWindow", () => {
     fireEvent.mouseMove(document, { buttons: 1, clientX: 100, clientY: 20 });
     fireEvent.mouseUp(document);
 
-    // The default derives from the window's size and would follow it; the
-    // window stays put.
     expect(useWindowsStore.getState().settings).toMatchObject({
       hasDefinedPosition: true,
       position: { x: 600, y: 120 },
@@ -494,8 +491,6 @@ describe("DraggableWindow", () => {
   it("keeps a window on-screen when only the visual viewport shrinks", async () => {
     await resizeViewport(1600, 1000);
 
-    // Pinch zoom and on-screen keyboards resize the visual viewport without a
-    // window resize event.
     const visualViewport = Object.assign(new EventTarget(), {
       width: 1600,
       height: 1000,

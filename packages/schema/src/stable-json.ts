@@ -12,6 +12,5 @@ export const stableJsonStringify = (value: unknown): string =>
       : entry,
   ) ?? "undefined";
 
-/** Stable, URL-safe cache-key fragment for an arbitrary JSON value. */
 export const stableJsonCacheKey = (value: unknown): string =>
   Base64Url.encode(stableJsonStringify(value));

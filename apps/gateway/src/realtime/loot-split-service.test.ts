@@ -30,7 +30,6 @@ describe("LootSplitService", () => {
     );
 
     expect(response).toEqual({ status: "accepted" });
-    // Loot split frames must not drain the map or battle ping budgets.
     expect(rateLimitKeys).toEqual(["loot-split:rate:user-1"]);
     expect(publications).toEqual([
       [

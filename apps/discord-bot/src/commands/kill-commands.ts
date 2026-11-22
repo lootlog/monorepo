@@ -28,12 +28,10 @@ import {
 
 const RANKING_LIMIT = 15;
 
-// The longest NPC search text the API accepts.
 const SEARCH_TEXT_MAX_LENGTH = 100;
 
 const NPC_KILLERS_LIMIT = 10;
 
-// The largest page the API serves, so the invoker is found beyond the top.
 const NPC_KILLERS_LOOKUP = 100;
 
 const RANKED_NPC_TYPES = [
@@ -44,7 +42,6 @@ const RANKED_NPC_TYPES = [
   "EVENT_HERO",
 ] as const;
 
-// A Member's `userId` is the Discord identity of that Member.
 const RankedMember = Schema.Struct({
   name: Schema.String,
   userId: Schema.String,
@@ -72,7 +69,6 @@ const TopNpcs = Schema.Struct({
   ),
 });
 
-// An NPC without visible kills answers `{ npc: null, killers: [] }`.
 const NpcKillers = Schema.Struct({
   npc: Schema.NullOr(
     Schema.Struct({
@@ -95,7 +91,6 @@ const NpcKillers = Schema.Struct({
 const killStatsPath = (guildId: string) =>
   `/guilds/${encodeURIComponent(guildId)}/stats/kills`;
 
-/** NPCs this Lootlog has killed, matching what a player typed so far. */
 export const searchKilledNpcs = (session: MemberSession, search: string) =>
   session
     .api(
@@ -174,7 +169,6 @@ export const rankingCommand: SlashCommand = {
     }),
 };
 
-/** Public statistics of another Member are about them, so they hear of it. */
 const pingInPublic = (invocation: CommandInvocation, target: string) =>
   target !== invocation.discordId &&
   invocation.options.boolean(VISIBILITY_OPTION) === true

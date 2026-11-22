@@ -1,4 +1,3 @@
-/** Endpoints owned by the user-lootlog-config HTTP module. */
 import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   HttpApiEndpoint,

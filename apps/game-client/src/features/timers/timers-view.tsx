@@ -93,8 +93,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const hiddenTimersForSettings =
     settingsKey === undefined ? [] : (hiddenTimers[settingsKey] ?? []);
 
-  // Typing updates the search box at once; the grid re-filters in an
-  // interruptible render that the next keystroke can abandon.
   const deferredSearchText = useDeferredValue(timerFiltersSearchText);
 
   const { areFiltersActive, timers: sortedTimers } = useTimerListProjection({
@@ -130,8 +128,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     setAddTimerOpen((open) => !open);
   };
 
-  // The window frame is rounded; the panel follows its bottom corners so it
-  // does not overlap the border.
   const addTimerOverlay = addTimerOpen ? (
     <AddTimerPanel
       guildId={guildId}
@@ -200,10 +196,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   if (isUnderBag) {
     return (
       <UnderBagTimers>
-        {/* Mirrors the window title bar: actions lead, the title sits in the
-            middle column, and the empty trailing column keeps it centered.
-            Same height as the title bar, with no gap before the content.
-            Compact view hides it, as it hides the window's title bar. */}
         {actions && (
           <div className="ll:grid ll:h-6 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:px-0.5">
             <div className="ll:flex ll:items-center ll:justify-self-start">

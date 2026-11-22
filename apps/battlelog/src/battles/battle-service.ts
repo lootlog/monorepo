@@ -6,18 +6,15 @@ import {
 import { Schema } from "effect";
 import type { PaginationResult } from "#src/battles/analytics/pagination";
 
-// Complete battle with all relations
 export interface BattleWithRelations extends Battle {
   warriors: BattleWarrior[];
 }
 
-// Service method parameters
 export interface CreateBattleParams {
   data: CreateBattleInput;
   userId: string;
 }
 
-// Service method return types
 export interface CreateBattleResult {
   battleId: string;
 }
@@ -30,7 +27,6 @@ export interface GetAllBattlesResult {
   };
 }
 
-// Raw battle data the raw endpoints return; R2 stores it for older battles
 const ParsedMoveSchema = Schema.Struct({
   attackerId: Schema.NullOr(Schema.String),
   defenderId: Schema.NullOr(Schema.String),

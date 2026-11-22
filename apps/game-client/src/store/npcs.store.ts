@@ -20,12 +20,6 @@ type NpcsState = {
   applyNpcBatch: (batch: NpcBatch) => void;
   clearNpcs: (mapChanged?: boolean) => void;
   getNpc: (id: number) => NpcSnapshot | undefined;
-  /**
-   * An NPC of the current map, including one removed from it since it was
-   * observed. Like Margonem's NpcManager `deleteNpc`, a removed NPC stays known
-   * until the map changes: a battle or loot that follows its `npcs_del` still
-   * identifies it.
-   */
   getMapNpc: (id: number) => NpcSnapshot | undefined;
   replaceNpcs: (npcs: readonly RuntimeNpc[], mapChanged?: boolean) => void;
 };
@@ -33,8 +27,6 @@ type NpcsState = {
 const createNpcSnapshot = (npc: RuntimeNpc): NpcSnapshot =>
   Object.freeze({ ...npc });
 
-// Spelled out instead of looping over field names: a keyed load per field
-// name goes megamorphic, and this runs for every NPC of every npcs packet.
 const areNpcSnapshotsEqual = (
   current: NpcSnapshot,
   next: RuntimeNpc,
@@ -53,8 +45,6 @@ const areNpcSnapshotsEqual = (
   current.groupId === next.groupId &&
   current.respawnRandomness === next.respawnRandomness;
 
-// Margonem keeps every removed NPC until the map changes. Lootlog needs one only
-// for a battle or loot shortly after its removal, so the oldest are dropped.
 const MAX_REMOVED_NPCS = 256;
 
 const indexNpcs = (npcs: readonly RuntimeNpc[]): NpcsById =>

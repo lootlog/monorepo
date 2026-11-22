@@ -16,7 +16,6 @@ type KillStatsRecordsProps = {
   data: Pick<GuildKillStatsResponseDtoOutput, "timeline" | "hourlyWeekday">;
 };
 
-/** The Organization's best moment, longest streak and busiest hour in the period. */
 export const KillStatsRecords = ({ data }: KillStatsRecordsProps) => {
   const { t } = useTranslation();
 

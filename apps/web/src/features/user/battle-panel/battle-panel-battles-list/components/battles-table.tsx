@@ -34,12 +34,10 @@ type BattlesTableProps = {
   activeFilterChips?: FilterChip[];
   battles: Battle[];
   clearFiltersLabel?: string;
-  /** The battles could not be loaded; a retry replaces the empty state. */
   hasError?: boolean;
   isRetrying?: boolean;
   onRetry?: () => void;
   isLoading?: boolean;
-  /** Previous results stay visible while the next page or filter set loads. */
   isRefreshing?: boolean;
   onClearFilters?: () => void;
   onMatchmakingClick?: () => void;
@@ -55,18 +53,12 @@ type BattlesTableProps = {
     onNextPage?: () => void;
     onPreviousPage?: () => void;
   };
-  /** The page's search; without it or filters the table sits under its page's filter bar. */
   search?: ReactNode;
-  /** The page's filters. */
   toolbar?: ReactNode;
-  /** The page's filters stacked for the panel narrow pages open them in. */
   stackedFilters?: ReactNode;
-  /** Scrolls the page back to its top when it changes, such as the page of results. */
   scrollResetKey?: string;
 };
 
-// Cells whose whole area opens the battle, so a click anywhere outside the
-// selection and actions cells navigates.
 const BATTLE_TABLE_LINK_COLUMN_IDS = new Set([
   "status",
   "leftTeam",
@@ -77,8 +69,6 @@ const BATTLE_TABLE_LINK_COLUMN_IDS = new Set([
 
 const BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID = "leftTeam";
 
-// The info cell keeps its own filter buttons, so its link sits underneath them
-// instead of wrapping them.
 const BATTLE_TABLE_OVERLAY_LINK_COLUMN_ID = "battleInfo";
 
 const LOADING_ROW_COUNT_WITHOUT_PAGINATION = 4;

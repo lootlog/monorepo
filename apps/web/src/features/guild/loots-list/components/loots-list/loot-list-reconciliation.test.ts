@@ -88,7 +88,6 @@ it("jitters reconnect reconciliation and bounds 500-client single, burst, duplic
     }),
   );
 
-  // One event per client is delayed and jittered, never a detail GET.
   for (const coordinator of coordinators) coordinator.markDirty();
   await vi.advanceTimersByTimeAsync(29_999);
   expect(listRequests).toBe(0);
@@ -97,7 +96,6 @@ it("jitters reconnect reconciliation and bounds 500-client single, burst, duplic
   expect(new Set(requestTimes).size).toBeGreaterThan(1);
   listRequests = 0;
 
-  // Duplicate and distinct events share the same constant-memory dirty bit.
   for (const coordinator of coordinators) {
     for (let event = 0; event < events; event++) coordinator.markDirty();
   }
@@ -106,7 +104,6 @@ it("jitters reconnect reconciliation and bounds 500-client single, burst, duplic
   expect(listRequests).toBe(clients);
 
   for (const coordinator of coordinators) {
-    // Reconnection plus redelivery does not multiply reconciliation.
     coordinator.markDirty();
     coordinator.markDirty();
   }

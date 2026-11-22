@@ -10,7 +10,6 @@ export const createHeroSightingMember = (
   ...overrides,
 });
 
-/** A current roaming sighting, as `GET /hero-sightings` returns it. */
 export const createHeroSighting = (
   overrides: Partial<HeroSightingResponseDto> = {},
 ): HeroSightingResponseDto => ({

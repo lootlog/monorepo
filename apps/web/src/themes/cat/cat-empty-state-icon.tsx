@@ -10,7 +10,6 @@ export const CatEmptyStateIcon: FC<{ className?: string }> = ({
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Ears */}
       <path
         d="M30 45 L20 15 L45 35 Z"
         fill="currentColor"
@@ -27,10 +26,8 @@ export const CatEmptyStateIcon: FC<{ className?: string }> = ({
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      {/* Inner ears */}
       <path d="M32 42 L25 22 L43 37 Z" fill="currentColor" opacity="0.08" />
       <path d="M88 42 L95 22 L77 37 Z" fill="currentColor" opacity="0.08" />
-      {/* Head */}
       <ellipse
         cx="60"
         cy="62"
@@ -41,7 +38,6 @@ export const CatEmptyStateIcon: FC<{ className?: string }> = ({
         stroke="currentColor"
         strokeWidth="2"
       />
-      {/* Closed eyes (sleeping) */}
       <path
         d="M42 58 Q47 62 52 58"
         stroke="currentColor"
@@ -58,9 +54,7 @@ export const CatEmptyStateIcon: FC<{ className?: string }> = ({
         fill="none"
         opacity="0.5"
       />
-      {/* Nose */}
       <path d="M58 68 L60 71 L62 68 Z" fill="currentColor" opacity="0.4" />
-      {/* Mouth */}
       <path
         d="M60 71 Q55 76 50 73"
         stroke="currentColor"
@@ -77,7 +71,6 @@ export const CatEmptyStateIcon: FC<{ className?: string }> = ({
         fill="none"
         opacity="0.3"
       />
-      {/* Whiskers */}
       <line
         x1="15"
         y1="63"
@@ -118,7 +111,6 @@ export const CatEmptyStateIcon: FC<{ className?: string }> = ({
         opacity="0.25"
         strokeLinecap="round"
       />
-      {/* Zzz */}
       <text
         x="88"
         y="38"

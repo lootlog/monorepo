@@ -309,7 +309,6 @@ describe("loot detail concurrent reads", () => {
 
     const controller = new AbortController();
 
-    // Yield inside the masked setup so the disconnect lands before the read starts.
     const abandoned = Array.from({ length: 1_024 }, (_, index) =>
       Effect.runPromiseExit(
         operations
@@ -401,7 +400,6 @@ describe("loot detail concurrent reads", () => {
         }),
       ),
     ).rejects.toThrow();
-    // A hidden loot must not accept a like, so persistence is never reached.
     expect(
       await Effect.runPromise(
         Effect.flip(

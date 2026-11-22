@@ -7,16 +7,6 @@ import type {
 } from "@lootlog/schema/loot-split";
 import { itemStatValue } from "@lootlog/domain/item-stat";
 
-/**
- * Group loot splits the hero takes part in, and every participant's choices
- * as far as this client knows them. Margonem tells each player only their own
- * choices (`loot.states`); the rest arrive from other Lootlog clients.
- *
- * Several splits can be open at once: a party leader can accept, disband and
- * regroup without the member who is still choosing, then fight again. A split
- * therefore keeps the participants it opened with.
- */
-
 type LootSplitParticipant = Readonly<{
   characterId: string;
   name: string;
@@ -24,54 +14,35 @@ type LootSplitParticipant = Readonly<{
 
 export type LootSplitItem = Readonly<{
   id: string;
-  /** Item hash, which the "Podział łupów" chat message quotes. */
   hid: string;
   name: string;
   icon: string;
-  /** Null for common items and rarities Lootlog does not track. */
   rarity: ItemRarityEnum | null;
 }>;
 
 type LootSplitView = Readonly<{
   choices: Readonly<Record<string, LootSplitChoice>>;
   accepted: boolean;
-  /**
-   * What accepted for the player instead of their click: a new fight or
-   * loot that closed the window, or their Margonem loot filter, which also
-   * keeps their choices from them.
-   */
   autoAccept: "newFight" | "lootFilter" | null;
 }>;
 
 export type LootSplit = Readonly<{
-  /** The smallest item id: item ids are unique server-wide. */
   id: string;
   phase: "open" | "resolved" | "expired";
   openedAt: number;
   deadline: number;
   closedAt: number | null;
   items: readonly LootSplitItem[];
-  /** Fight loot is split only among the fight's players. */
   fromFight: boolean;
   participants: readonly LootSplitParticipant[];
-  /** By character id; a participant without a view sent nothing. */
   views: Readonly<Record<string, LootSplitView>>;
 }>;
 
 export type LootSplitState = Readonly<{
   heroId: string | null;
   splits: readonly LootSplit[];
-  /** The split whose window the hero has; the game shows one at a time. */
   ownSplitId: string | null;
-  /**
-   * The hero sent `final=1` for its split; it counts as accepted only once
-   * the server answers without refusing it.
-   */
   acceptRequested: boolean;
-  /**
-   * Loot filter accepts that arrived before their split opened here: the
-   * sender's client learns of the fight a poll earlier than this one may.
-   */
   pendingFilterAccepts: ReadonlyArray<
     Readonly<{ characterId: string; at: number }>
   >;
@@ -79,13 +50,10 @@ export type LootSplitState = Readonly<{
 
 export type LootSplitStatus = "accepted" | "choosing" | "timedOut" | "unknown";
 
-/** Closed splits stay listed this long, so their outcome can be read. */
 export const CLOSED_SPLIT_LINGER_MS = 2_000;
 
-/** Used when the opening packet carries no server time. */
 const DEFAULT_SPLIT_SECONDS = 20;
 
-/** A filter accept waits this long for its split to open here. */
 const PENDING_FILTER_ACCEPT_MS = 5_000;
 
 export const EMPTY_LOOT_SPLIT_STATE: LootSplitState = {
@@ -107,11 +75,9 @@ export const getLootSplitStatus = (
 
   if (!view && characterId !== heroId) return "unknown";
 
-  // The game draws with the choices a player had when the time ran out.
   return split.phase === "expired" ? "timedOut" : "choosing";
 };
 
-// Game `states` values outside the known choices are ignored, not guessed.
 const toChoices = (states: Readonly<Record<string, number>>) => {
   const choices: Record<string, LootSplitChoice> = {};
 
@@ -134,7 +100,6 @@ const sameChoices = (
   );
 };
 
-// The game names rarities in lowercase; common items carry `common`.
 const RARITY_BY_STAT = new Map<string, ItemRarityEnum>([
   ["unique", ItemRarityEnum.UNIQUE],
   ["heroic", ItemRarityEnum.HEROIC],
@@ -145,10 +110,6 @@ const RARITY_BY_STAT = new Map<string, ItemRarityEnum>([
 const parseRarity = (stat: string) =>
   RARITY_BY_STAT.get(itemStatValue(stat, "rarity") ?? "") ?? null;
 
-/**
- * Whether a split drops an item of one of `rarities`; an empty list matches
- * every split.
- */
 export const splitDropsRarity = (
   split: LootSplit,
   rarities: readonly ItemRarityEnum[],
@@ -162,18 +123,12 @@ export const splitDropsRarity = (
   );
 };
 
-/** The command's parameter for each choice: `want`, `not` and `must`. */
 const COMMAND_CHOICES: ReadonlyArray<readonly [string, LootSplitChoice]> = [
   ["not", 0],
   ["want", 1],
   ["must", 2],
 ];
 
-/**
- * The choices a `loot&want=…&not=…&must=…` command names. SI "nie chcę
- * wszystkiego" accepts with every item under `not` in one request, so the
- * accept carries choices the server may never echo.
- */
 const parseCommandChoices = (command: string, split: LootSplit) => {
   const params = new URLSearchParams(command.slice(command.indexOf("&") + 1));
   const itemIds = new Set(split.items.map(({ id }) => id));
@@ -229,12 +184,6 @@ const updateOwnView = (
     : replaceSplit(state, setView(split, state.heroId, next));
 };
 
-/**
- * Starting a fight or receiving another loot closes the hero's loot window
- * without a request (NI `Battle.js` and `on_loot` call
- * `Loot.deleteItemsAndCloseLootWindow`, SI `lootWindow` and `closeLootWindow`);
- * the server then finalizes the hero's choices.
- */
 const closeOwnWindow = (state: LootSplitState): LootSplitState => {
   const closed = updateOwnView(state, (view) =>
     view.accepted ? view : { ...view, accepted: true, autoAccept: "newFight" },
@@ -246,12 +195,7 @@ const closeOwnWindow = (state: LootSplitState): LootSplitState => {
 export type LootSplitContext = Readonly<{
   at: number;
   heroId: string;
-  /** The party as the runtime knows it, for a packet that carries none. */
   party: readonly LootSplitParticipant[];
-  /**
-   * Character ids of the players in the fight that dropped the loot; party
-   * members who stayed out of it take no part in the split.
-   */
   fighters: ReadonlySet<string>;
 }>;
 
@@ -265,7 +209,6 @@ const partyFromEvent = (
       }))
     : null;
 
-/** The fight's players: the battle's positive warrior ids. */
 const getFighters = (event: GameEvent, context: LootSplitContext) =>
   event.f?.w
     ? new Set(Object.keys(event.f.w).filter((id) => !id.startsWith("-")))
@@ -283,11 +226,6 @@ const getParticipants = (
           characterId === heroId || fighters.has(characterId),
       );
 
-/**
- * A changed map hands the open loot window over again: NI re-inits without
- * closing it (`on_loot` closes it only once fully initialized), and SI reloads
- * the page. The split goes on with what this client already knows of it.
- */
 const resumeSplit = (
   state: LootSplitState,
   split: LootSplit,
@@ -329,7 +267,6 @@ const openSplit = (
 ): LootSplitState => {
   const loot = event.loot;
 
-  // `init` counts the split's participants; one is a solo loot.
   const grouped = loot?.init !== undefined && loot.init > 1;
 
   const items = Object.entries(event.item ?? {})
@@ -420,15 +357,9 @@ const updateOwnChoices = (
   updateOwnView(state, (view) => {
     const choices = toChoices(states);
 
-    // The answer to `final=1` repeats the states; nothing changed.
     return sameChoices(choices, view.choices) ? view : { ...view, choices };
   });
 
-/**
- * Settles a requested accept with the server's next answer. NI keeps the
- * loot window open when that answer carries `w` (`Loot.finalize`), so the
- * hero has not accepted after all.
- */
 const settleAccept = (
   state: LootSplitState,
   event: GameEvent,
@@ -451,14 +382,8 @@ const FILTER_ACCEPTED_VIEW: LootSplitView = {
   autoAccept: "lootFilter",
 };
 
-// The battle log line of a drop, such as `Nymphemonia: zdobyto Plecionka`.
 const DROP_LOG_PATTERN = /^0;0;txt=.+: zdobyto /u;
 
-/**
- * The fight's other players when the hero's loot filter accepted its drop.
- * The game then sends that client no loot window, no items and no
- * distribution message; the battle log still names the drop.
- */
 export const ownLootFilterAcceptRecipients = (
   event: GameEvent,
   context: LootSplitContext,
@@ -474,10 +399,6 @@ export const ownLootFilterAcceptRecipients = (
   return others.length > 0 ? others : null;
 };
 
-/**
- * Marks the sender as accepted by their loot filter in the newest open split
- * they take part in, or keeps the accept until that split opens.
- */
 export const applyRemoteFilterAccept = (
   state: LootSplitState,
   characterId: string,
@@ -508,7 +429,6 @@ export const applyRemoteFilterAccept = (
   return replaceSplit(state, setView(split, characterId, FILTER_ACCEPTED_VIEW));
 };
 
-/** Matches a "Podział łupów" message to its split by the quoted item hashes. */
 const resolveByDistribution = (
   state: LootSplitState,
   message: string,
@@ -523,7 +443,6 @@ const resolveByDistribution = (
       split.items.some(({ hid }) => message.includes(`ITEM#${hid}`))
         ? {
             ...split,
-            // Past the deadline, the game drew with whatever was chosen.
             phase: at >= split.deadline ? "expired" : "resolved",
             closedAt: at,
           }
@@ -540,8 +459,6 @@ export const applyGameEvent = (
   let next = state;
 
   if (event.loot?.init !== undefined) next = openSplit(next, event, context);
-  // A reload delivers the fight and its loot in one packet; only a fight
-  // without loot closes the window.
   else if (event.f?.init) next = closeOwnWindow(next);
   else if (event.loot?.states) next = updateOwnChoices(next, event.loot.states);
 
@@ -554,10 +471,6 @@ export const applyGameEvent = (
   return next;
 };
 
-/**
- * Follows the hero's `loot&…` requests, the same on NI and SI. An accept
- * (`final=1`) takes the choices it names and waits for the server's answer.
- */
 export const applyGameCommand = (
   state: LootSplitState,
   command: string,
@@ -587,7 +500,6 @@ export const applyRemoteChoices = (
   const split = state.splits.find(({ id }) => id === event.splitId);
   const sender = event.sender.characterId;
 
-  // Only a participant of an open split this client saw may fill it in.
   if (
     split?.phase !== "open" ||
     sender === state.heroId ||
@@ -632,10 +544,6 @@ export const expireSplits = (
   return changed ? { ...state, splits, pendingFilterAccepts } : state;
 };
 
-/**
- * Fills in the party of an open split that opened before this client knew
- * it: after a page reload the loot window can arrive ahead of the party.
- */
 export const fillParticipants = (
   state: LootSplitState,
   context: LootSplitContext,
@@ -669,7 +577,6 @@ export const fillParticipants = (
     : { ...state, splits };
 };
 
-/** Splits whose hero view changed, so the hero's choices must be shared. */
 export const changedOwnSplits = (
   previous: LootSplitState,
   next: LootSplitState,
@@ -688,7 +595,6 @@ export const changedOwnSplits = (
   });
 };
 
-/** Open splits in which the hero has a view, to share again after reconnecting. */
 export const openOwnSplits = (state: LootSplitState): LootSplit[] =>
   state.splits.filter(
     (split) =>

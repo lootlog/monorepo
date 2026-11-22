@@ -11,11 +11,6 @@ type Props = {
   errorLabel: string;
 };
 
-/**
- * The last row of an infinite list: a loader while pages remain, a retry row
- * when the next page failed, otherwise the end note. Loaded items stay above.
- * It sits edge to edge under the list, so it carries no surface of its own.
- */
 export const InfiniteListStatusRow = ({
   hasNextPage,
   hasError,

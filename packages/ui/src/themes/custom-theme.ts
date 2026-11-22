@@ -17,7 +17,6 @@ import { clamp } from "es-toolkit";
 import { THEME_CATALOG } from "./catalog";
 import { findWallpaper } from "./wallpapers";
 
-/** The User's own theme as the Web app applies it. */
 export interface AppliedCustomTheme {
   id: string;
   definition: CustomThemeDefinition;
@@ -26,12 +25,10 @@ export interface AppliedCustomTheme {
 const SYSTEM_SANS =
   'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
-/** Each font's family and its stylesheet, loaded only once it is picked. */
 export const CUSTOM_THEME_FONTS: Record<
   CustomThemeFontId,
   { label: string; family: string; load?: () => Promise<void> }
 > = {
-  // Geist ships with the shared stylesheet, so it needs no loading.
   geist: { label: "Geist", family: "Geist Variable" },
   inter: {
     label: "Inter",
@@ -75,14 +72,9 @@ export const CUSTOM_THEME_FONTS: Record<
   },
 };
 
-/**
- * The base radius every surface derives from. `pill` keeps rounded surfaces
- * and makes controls fully round through `--control-radius`.
- */
 const RADIUS_VALUES: Record<CustomThemeRadius, string> = {
   sharp: "0rem",
   soft: "0.375rem",
-  // As `--radius` in the shared stylesheet.
   default: "0.625rem",
   round: "0.875rem",
   pill: "0.875rem",
@@ -110,11 +102,6 @@ export const readCustomThemeId = (preference: string | null | undefined) =>
     ? preference.slice(CUSTOM_THEME_PREFERENCE_PREFIX.length)
     : null;
 
-/**
- * The custom properties a custom theme sets over its base theme's class: its
- * colours, wallpaper cover, font and radius. The root takes them for the
- * whole app; a theme list row takes them to preview the theme in place.
- */
 export type CustomThemeStyle = Record<`--${string}`, string>;
 
 export const customThemeStyle = (
@@ -139,32 +126,21 @@ export const customThemeStyle = (
   style["--font-sans"] = `"${font.family}", ${SYSTEM_SANS}`;
 
   style["--radius"] = RADIUS_VALUES[definition.radius];
-  // Unset outside a pill theme, so controls fall back to `--radius`.
   style["--control-radius"] =
     definition.radius === "pill" ? "9999px" : "initial";
 
   return style;
 };
 
-/** Loads the font a custom theme uses, so its preview and pages show it. */
 export const loadCustomThemeFont = (definition: CustomThemeDefinition) =>
   void CUSTOM_THEME_FONTS[definition.font].load?.();
 
-/** The root's custom properties and wallpaper attributes for a theme's look. */
 export interface ThemeRootAttributes {
   style: CustomThemeStyle;
-  /** `data-wallpaper`: a picked photo, no wallpaper, or the base's own. */
   wallpaper: "photo" | "none" | undefined;
-  /** `data-wallpaper-cover`: the wallpaper's cover follows the theme. */
   wallpaperCover: boolean;
 }
 
-/**
- * A theme's look as the root carries it over its base class: a custom theme's
- * tokens and wallpaper, and every theme's font and radius. A built-in theme
- * comes in as `createDefinitionFromBase`, which changes no colour. The server
- * renders a page's root from it; `applyThemeToRoot` sets it in the browser.
- */
 export const themeRootAttributes = (
   definition: CustomThemeDefinition,
 ): ThemeRootAttributes => {
@@ -190,7 +166,6 @@ export const themeRootAttributes = (
   };
 };
 
-/** Puts a theme's look on the root, replacing the one it had. */
 export const applyThemeToRoot = (
   root: HTMLElement,
   definition: CustomThemeDefinition,
@@ -212,10 +187,6 @@ export const applyThemeToRoot = (
   loadCustomThemeFont(definition);
 };
 
-/**
- * The last applied custom theme, read before React starts so a reload paints
- * it at once instead of flashing the base theme.
- */
 export const CUSTOM_THEME_CACHE_KEY = "lootlog-custom-theme";
 
 export const readCachedCustomTheme = (): AppliedCustomTheme | null => {
@@ -226,7 +197,6 @@ export const readCachedCustomTheme = (): AppliedCustomTheme | null => {
   }
 };
 
-/** The custom theme a selection names among the given themes. */
 export const findSelectedCustomTheme = (
   customThemeId: string | null,
   themes: readonly AppliedCustomTheme[],
@@ -245,15 +215,9 @@ export const writeCachedCustomTheme = (theme: AppliedCustomTheme | null) => {
     } else {
       localStorage.removeItem(CUSTOM_THEME_CACHE_KEY);
     }
-  } catch {
-    // Storage can be blocked; the theme still applies once preferences load.
-  }
+  } catch {}
 };
 
-/**
- * A built-in theme as a definition, which is also where a new custom theme
- * starts: no colour changed, and the base's own font and rounding.
- */
 export const createDefinitionFromBase = (
   baseThemeId: BuiltInThemeId,
 ): CustomThemeDefinition => {
@@ -268,10 +232,6 @@ export const createDefinitionFromBase = (
   };
 };
 
-/**
- * The surface knob for a picked background colour: its hue and colourfulness,
- * kept within the dark range the derived text stays readable on.
- */
 export const surfaceFromColor = (hex: string): CustomThemeSurface => {
   const [lightness, chroma, hue] = rgbToOklch(hexToRgb(hex));
 

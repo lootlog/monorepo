@@ -8,7 +8,6 @@ import { cn } from "cn";
 
 type DrawerContextValue = {
   modal: DrawerPrimitive.Root.Props["modal"];
-  /** Set on a resizable drawer: opens it to its full height. */
   expand: (() => void) | null;
   showSwipeHandle: boolean;
   swipeDirection: NonNullable<DrawerPrimitive.Root.Props["swipeDirection"]>;
@@ -24,19 +23,12 @@ function useDrawer() {
   return context;
 }
 
-/** A resizable drawer's medium detent, as a share of the screen height. */
 const MEDIUM_DETENT = 0.5;
 
-/** Its large detent: the drawer's full height. */
 const LARGE_DETENT = 1;
 
 type DrawerProps = DrawerPrimitive.Root.Props & {
   showSwipeHandle?: boolean;
-  /**
-   * Opens the drawer at half the screen, over the page it came from, and lets
-   * people drag it to its full height. Moving keyboard focus into the content
-   * opens it fully too, so nothing stays out of reach without a gesture.
-   */
   resizable?: boolean;
 };
 
@@ -70,7 +62,6 @@ function Drawer({
         modal={modal}
         swipeDirection={swipeDirection}
         onOpenChangeComplete={(open) => {
-          // The next opening starts at the medium detent again.
           if (!open) setSnapPoint(MEDIUM_DETENT);
           onOpenChangeComplete?.(open);
         }}
@@ -165,8 +156,6 @@ function DrawerContent({
           <DrawerPrimitive.Content
             data-slot="drawer-content"
             onFocus={(event) => {
-              // Keyboard focus only: the focus a tap leaves when it opens
-              // the drawer must not skip the medium detent.
               if (event.target.matches(":focus-visible")) expand?.();
             }}
             className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]"

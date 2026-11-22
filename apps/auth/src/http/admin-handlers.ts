@@ -12,10 +12,6 @@ import {
 import { AuthApi } from "#src/http-api/auth-api";
 import { noStore, requestHeaders, respond } from "./responses.js";
 
-/**
- * Runs an admin operation for the signed-in admin the panel acts for. `actor`
- * is how the audit log names them.
- */
 const admin = <A>(
   run: (
     service: typeof AdminService.Service,
@@ -54,8 +50,6 @@ export const AdminHandlers = HttpApiBuilder.group(
         ),
       )
       .handle("AdminBanUser", ({ params, payload }) =>
-        // Banning the own account ends the operator's session and blocks the
-        // sign-in back; with no other admin account nobody could lift it.
         admin((service, actor, operator) =>
           params.id === operator.userId
             ? Effect.fail(

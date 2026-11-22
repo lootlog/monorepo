@@ -9,11 +9,6 @@ import {
 
 const PROJECTION_BATCH = 500;
 
-/**
- * The incoming documents merged over the stored ones, keeping only those the
- * merge changed. Documents compare as JSON, the way the store returns them,
- * so a redelivered observation writes nothing.
- */
 export const changedDocuments = <Document extends { uid: string }>(
   incoming: ReadonlyArray<Document>,
   stored: ReadonlyArray<Document>,
@@ -36,7 +31,6 @@ export const changedDocuments = <Document extends { uid: string }>(
   });
 };
 
-/** Replaces documents in an index, one completed task per batch. */
 export const projectDocuments = <Document extends RecordAny>(
   index: Index<Document>,
   documents: ReadonlyArray<Document>,
@@ -51,7 +45,6 @@ export const projectDocuments = <Document extends RecordAny>(
     { discard: true },
   );
 
-/** Indexes the documents that differ from what the index already holds. */
 export const indexChangedDocuments = Effect.fn("Search.indexChangedDocuments")(
   function* <Document extends { uid: string }>(
     index: Index<Document>,
@@ -79,7 +72,6 @@ export const indexChangedDocuments = Effect.fn("Search.indexChangedDocuments")(
 
     yield* Metric.update(skipped, documents.length - uniqueDocuments.length);
 
-    // Batches hold disjoint uids, so their reads are independent.
     const changedBatches = yield* Effect.forEach(
       chunk(uniqueDocuments, 100),
       (batch) =>

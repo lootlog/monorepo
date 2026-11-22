@@ -13,7 +13,6 @@ import { SEARCH_OPERATIONS } from "./public-api-operations/search.js";
 import { CATALOG_OPERATIONS } from "./public-api-operations/catalog.js";
 import type { PublicApiService } from "./api-services.js";
 
-/** Explicit supported HTTP inventory. Unknown operations are session-only. */
 export type PublicApiOperation = {
   readonly service: PublicApiService;
   readonly method: string;
@@ -21,7 +20,6 @@ export type PublicApiOperation = {
   readonly operationId: string;
   readonly access: "read" | "write" | "session-only";
   readonly data: "organization" | "personal" | "mixed" | "public";
-  /** Parameters the Web app uses but the published SDK does not expose. */
   readonly sessionOnlyParameters?: ReadonlyArray<string>;
 };
 

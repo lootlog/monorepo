@@ -14,11 +14,6 @@ export class SearchOperationFailure extends TaggedErrorClass<
 const isInvalidRequest = (cause: unknown): boolean =>
   Predicate.hasProperty(cause, "type") && cause.type === "invalid_request";
 
-/**
- * A Meilisearch rejection of the request itself, such as an invalid document:
- * repeating the same items can never succeed. Transport errors, timeouts and
- * internal or auth failures may pass and stay retryable.
- */
 export const isPermanentSearchFailure = (
   error: SearchOperationFailure,
 ): boolean =>
@@ -35,7 +30,6 @@ export const attemptMeilisearch = <A>(
     catch: (cause) => new SearchOperationFailure({ operation, cause }),
   }).pipe(withAdapterSpan(operation, "meilisearch"));
 
-/** Enqueues a task and waits until it succeeds, by default for one minute. */
 export const completeMeilisearchTask = (
   operation: string,
   run: () => EnqueuedTaskPromise,

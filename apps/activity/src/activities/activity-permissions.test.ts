@@ -32,8 +32,6 @@ describe("Activity permissions", () => {
       }),
     );
 
-    // A working Redis, so any cache placed in front of the API would serve
-    // the stale grant on the second read.
     const store = new Map<string, string>();
 
     const redis = Redis.Redis.of({

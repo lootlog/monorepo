@@ -30,7 +30,6 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: docsCss },
-      // On lootlog.pl the landing page serves /brand, so the icons are assets.
       { rel: "icon", href: favicon, type: "image/svg+xml" },
       { rel: "apple-touch-icon", href: appleTouchIcon },
     ],

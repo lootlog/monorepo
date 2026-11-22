@@ -15,9 +15,7 @@ import { isLootDrawItem } from "@lootlog/domain/loot-draw";
 
 type Props = {
   loot: Loot;
-  /** `tile` fills the loot list; `embedded` is a row inside a section card. */
   variant?: "tile" | "embedded";
-  /** Names the loot's world, for lists that span every world. */
   showWorld?: boolean;
 };
 
@@ -37,12 +35,9 @@ export const LootsListItem = ({
       data-testid="loot-list-item"
       data-presentation={variant}
       className={cn(
-        // Isolated, so stack badges never paint over a pinned section heading.
         "group relative isolate flex h-full flex-col",
         LIST_TILE_HOVER_CLASS,
         variant === "tile" && LIST_TILE_RULE_CLASS,
-        // Alternate embedded rows so neighbouring kills stay apart in a dense
-        // list; legendary rows keep their own glow.
         variant === "embedded" && !hasLegendaryItem && "even:bg-background/40",
         hasLegendaryItem && "loot-legendary",
       )}
@@ -53,8 +48,6 @@ export const LootsListItem = ({
           loot={loot}
           headerActions=<LootHeaderActions loot={loot} />
           decorateItem={(item, tile) =>
-            // Any item a draw can cover; the tile applies the Organization's
-            // exclusions itself, so an open draw outlives them.
             isLootDrawItem(loot, item, []) ? (
               <LootItemDraw loot={loot} item={item}>
                 {tile}

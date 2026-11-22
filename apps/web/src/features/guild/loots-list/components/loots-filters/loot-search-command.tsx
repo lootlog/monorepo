@@ -101,7 +101,6 @@ export const LootSearchCommand = (
     canSearchDirectly,
   });
 
-  // Typing and Enter keep working after a scope is picked with the pointer.
   const handleScopeChange = (nextScope: GuildSearchScope) => {
     setScope(nextScope);
     inputRef.current?.focus();
@@ -128,7 +127,6 @@ export const LootSearchCommand = (
         </Kbd>
       </div>
       {scopeOptions.length > 1 && (
-        // Five scopes do not fit a phone; the grouped list scrolls instead.
         <div className="border-b border-border px-2.5 py-2 max-md:hidden">
           <AnimatedToggleGroup
             size="sm"
@@ -431,9 +429,7 @@ export const LootSearchCommand = (
       onValueChange={selectValue}
       title={t("loots.searchCommand.dialogTitle")}
       description={t("loots.searchCommand.dialogDescription")}
-      // Esc closes it on a keyboard; phones get the close button instead.
       showCloseButton={isMobile}
-      // On a phone the palette ends above the on-screen keyboard.
       className="top-[12vh] w-[calc(100%-1rem)] max-w-[600px] translate-y-0 rounded-xl border-border bg-card shadow-[0_24px_64px_rgba(0,0,0,0.55)] max-md:top-2 max-md:flex max-md:max-h-[calc(var(--visual-viewport-height,100dvh)-1rem)] max-md:flex-col sm:max-w-[600px] [&_[data-slot=command]]:rounded-xl [&_[data-slot=command]]:bg-card"
     >
       {dialogContent}

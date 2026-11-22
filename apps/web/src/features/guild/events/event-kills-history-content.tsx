@@ -36,8 +36,6 @@ export const EventKillsHistoryContent = ({
 
   const navigate = useNavigate();
 
-  // A hero's kills page names its hero in the URL, so its tabs move between
-  // those pages; the event's kills page keeps the choice on the page.
   const handleHeroChange = (heroId: string | undefined) => {
     if (!initialHeroId || !guildId || !eventId) {
       setEventHeroId(heroId);
@@ -130,7 +128,6 @@ export const EventKillsHistoryContent = ({
         ref={setScrollElement}
         className="min-h-0 flex-1"
       >
-        {/* A hero's kills open from its page, outside the event's tabs. */}
         {initialHeroId ? (
           <h1 className="sr-only">{t("events.kills.title")}</h1>
         ) : (

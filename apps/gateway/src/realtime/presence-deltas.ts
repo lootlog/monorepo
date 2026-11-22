@@ -10,7 +10,6 @@ import {
 import { storeCall } from "#src/realtime/realtime-errors";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 
-// Keeps a burst's frames far below the socket backpressure limit.
 const MAX_DELTA_CHANGES = 100;
 
 const DELTA_FLUSH_CONCURRENCY = 16;
@@ -18,7 +17,6 @@ const DELTA_FLUSH_CONCURRENCY = 16;
 const changedSession = (change: PresenceChange): string =>
   change.action === "upsert" ? change.presence.sessionId : change.sessionId;
 
-/** Coalesced presence changes, published per Organization as revisioned deltas. */
 export class PresenceDeltas {
   private readonly queued = new Map<string, Map<string, PresenceChange>>();
 
@@ -31,7 +29,6 @@ export class PresenceDeltas {
     const changes = this.queued.get(organizationId) ?? new Map();
     const sessionId = changedSession(change);
 
-    // A session's latest change supersedes its earlier ones in the batch.
     changes.delete(sessionId);
     changes.set(sessionId, change);
     this.queued.set(organizationId, changes);
@@ -64,8 +61,6 @@ export class PresenceDeltas {
           ),
         { concurrency: DELTA_FLUSH_CONCURRENCY, discard: true },
       ).pipe(
-        // Failed and interrupted batches, including those never started,
-        // return to the queue for the next flush.
         Effect.ensuring(
           Effect.sync(() => {
             for (const batch of unpublished) this.requeue(...batch);
@@ -127,7 +122,6 @@ export class PresenceDeltas {
     );
   }
 
-  // Changes queued since the failed flush are newer and keep precedence.
   private requeue(
     organizationId: string,
     changes: ReadonlyArray<PresenceChange>,

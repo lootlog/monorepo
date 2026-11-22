@@ -21,7 +21,6 @@ import { NpcsDeleteProcessor } from "./npcs-delete-processor";
 
 const trackedNpc = (id = 500) => ({
   id,
-  // A spawn's runtime id and its template id are different numbers.
   tpl: id + 400,
   x: 14,
   y: 9,
@@ -136,7 +135,6 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** The reason of each logged timer that was skipped without a request. */
 const skippedTimerReasons = () =>
   useLogsStore
     .getState()
@@ -263,7 +261,6 @@ it.each(["refetching", "invalidated"] as const)(
     if (state === "invalidated") {
       await queryClient.invalidateQueries({ queryKey: configKey });
     } else {
-      // Clearing the cache after the test cancels this refetch.
       queryClient
         .fetchQuery({
           queryKey: configKey,

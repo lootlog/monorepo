@@ -3,12 +3,10 @@ import { useId, type ReactNode } from "react";
 type HomeSectionProps = {
   title: string;
   description?: string;
-  /** A link to the full list, drawn beside the title. */
   action?: ReactNode;
   children: ReactNode;
 };
 
-/** One topic of the home page under its heading. */
 export function HomeSection({
   title,
   description,

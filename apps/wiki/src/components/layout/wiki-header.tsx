@@ -7,14 +7,8 @@ import { WikiMark } from "./wiki-mark";
 import { WikiNavigationMenu } from "./wiki-navigation-menu";
 import { WikiUserMenu } from "./wiki-user-menu";
 
-// The home page is the brand's link; the bar lists the sections.
 const sections = WIKI_NAVIGATION.filter(({ link }) => link.to !== "/");
 
-/**
- * The bar the public portals share: the wiki, its sections, the search and
- * the account. From `lg` the sections open from two panels in the bar;
- * narrower screens list them in the menu, so the bar stays one row.
- */
 export function WikiHeader() {
   const { pathname } = useLocation();
   const activeSection = findWikiSection(pathname);

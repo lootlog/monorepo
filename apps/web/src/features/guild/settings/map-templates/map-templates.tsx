@@ -85,7 +85,6 @@ export const MapTemplatesSettings = () => {
 
   const hasTemplates = Boolean(templates?.length);
 
-  // Small in the toolbar, regular as the empty state's call to action.
   const renderCreateButton = (size?: "sm") => (
     <Button
       size={size}
@@ -116,7 +115,6 @@ export const MapTemplatesSettings = () => {
       );
     }
 
-    // The first template starts here; the toolbar offers it once there is a list.
     if (!hasTemplates) {
       return (
         <SettingsListEmpty

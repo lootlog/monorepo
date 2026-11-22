@@ -36,12 +36,10 @@ type BridgeRoute<Key extends ConsumedRoutingKey> = (
   messageId: string | undefined,
 ) => Effect.Effect<void, unknown>;
 
-/** One route per consumed routing key; a queue without a route does not compile. */
 export type BridgeRoutes = {
   readonly [Key in ConsumedRoutingKey]: BridgeRoute<Key>;
 };
 
-/** Runs the route of `routingKey`, generic so the two stay correlated. */
 export const runBridgeRoute = <Key extends ConsumedRoutingKey>(
   routes: BridgeRoutes,
   routingKey: Key,
@@ -51,7 +49,6 @@ export const runBridgeRoute = <Key extends ConsumedRoutingKey>(
 
 const decodeString = Schema.decodeUnknownOption(Schema.String);
 
-/** Runs one realtime hub delivery; its rejection is retried by the queue. */
 const hubCall = (
   operation: string,
   deliver: () => Promise<void>,
@@ -82,7 +79,6 @@ type GatheringUpdateEnvelope = CanonicalRabbitEvent<
   typeof RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED
 >;
 
-// Names the first envelope field the update disagrees with, never its value.
 const gatheringUpdateMismatch = (
   data: GatheringUpdateEnvelope,
 ): string | undefined => {
@@ -125,7 +121,6 @@ const publishGatheringUpdate = (
   const update = data.update;
   const mismatch = gatheringUpdateMismatch(data);
 
-  // The envelope never changes on redelivery, so a retry would fail again.
   if (mismatch)
     return Effect.fail(
       new UnprocessableDelivery({
@@ -141,8 +136,6 @@ const publishGatheringUpdate = (
           type: "UPSERT",
           gathering: {
             ...update.gathering,
-            // The frame schema rejects a present but undefined npc, which a
-            // gathering announced with a message instead of an NPC would carry.
             ...(data.npc && { npc: data.npc }),
             guildIds: [data.guildId],
           },
@@ -186,7 +179,6 @@ export interface BridgeRouteDependencies {
   readonly coverage: Pick<CoveragePublisher, "publish">;
 }
 
-/** What each consumed routing key delivers to this replica's sessions. */
 export const gatewayBridgeRoutes = ({
   hub,
   commands,
@@ -209,7 +201,6 @@ export const gatewayBridgeRoutes = ({
       removedOrganizationId,
     );
 
-  /** Forwards an Organization's event to the subscribers of one topic. */
   const organizationRoute =
     <Key extends ConsumedRoutingKey>(
       topic: Scope["topic"],
@@ -323,8 +314,6 @@ export const gatewayBridgeRoutes = ({
           ? feedEntry
           : undefined;
 
-      // Web sessions read the snapshot and game sessions the summary; both
-      // deliver locally before either awaits federation.
       return Effect.all(
         [
           publish(
@@ -371,7 +360,6 @@ export const gatewayBridgeRoutes = ({
           ),
         { concurrency: "unbounded", discard: true },
       ),
-    // Delivery skips clients that did not join with KILL_STATS_FEATURE.
     [RabbitRoutingKey.USERS_KILL_STATS_CHANGED]: (data) =>
       hubCall("publishToUser", () =>
         hub.publishToUser(data.recipientUserId, {
@@ -396,8 +384,6 @@ export const gatewayBridgeRoutes = ({
         { v: 1, type: "global-chat.created", data },
         data.id,
       ),
-    // Each change carries the accounts' current auras, so a redelivery
-    // sets the same state again.
     [RabbitRoutingKey.CHARACTER_AURAS_CHANGED]: (data, messageId) =>
       publish(
         { topic: "global.character-auras" },

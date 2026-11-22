@@ -9,7 +9,6 @@ import {
 } from "react";
 import type { ChatScrollPosition } from "../components/chat-transcript";
 
-/** The transcript's message rows in document order, without date dividers. */
 export const getMessageRows = (viewport: HTMLElement): HTMLElement[] => {
   const list = viewport.querySelector("[data-message-id]")?.parentElement;
 
@@ -26,8 +25,6 @@ export const getViewportPosition = (
 ): ChatScrollPosition => {
   const box = viewport.getBoundingClientRect();
   const rows = getMessageRows(viewport);
-  // Rows stack top to bottom, so the first one reaching into the viewport is
-  // found by bisection instead of measuring every row above it.
   let low = 0;
   let high = rows.length;
   let rowTop = 0;
@@ -54,13 +51,6 @@ export const getViewportPosition = (
   };
 };
 
-/**
- * Keeps a MessageScroller transcript following new messages. The scroller
- * stops following on every wheel, touch or key scroll, even one at the bottom
- * that moves nothing, so following resumes whenever the reader is back at the
- * bottom. A held pointer pins the rows under it until release, so selecting
- * text is not moved by arriving messages.
- */
 export const useTranscriptFollow = (
   viewport: RefObject<HTMLDivElement | null>,
 ) => {

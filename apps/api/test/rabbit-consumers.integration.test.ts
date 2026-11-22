@@ -245,7 +245,6 @@ test("presence facts retry in place, in order, then dead-letter without blocking
         messages_ready: 0,
         messages_unacknowledged: 0,
       });
-      // The undecodable payload and the exhausted fact, nothing else.
       expect(queues.get(`${route.queue}.dlq`)).toMatchObject({
         messages_ready: 2,
       });
@@ -262,8 +261,6 @@ test("presence facts retry in place, in order, then dead-letter without blocking
     ),
   );
 
-  // Each fact settles before the next one starts: the transient failure
-  // recovers first, and the permanent one stops after three retries.
   expect(attempts).toEqual([
     "transient",
     "transient",
@@ -273,6 +270,5 @@ test("presence facts retry in place, in order, then dead-letter without blocking
     "permanent",
     "next",
   ]);
-  // The 1.75 s of backoff delays, not blocks, the rest of the queue.
   expect(nextHandledAt - publishedAt).toBeLessThan(5_000);
 }, 60_000);

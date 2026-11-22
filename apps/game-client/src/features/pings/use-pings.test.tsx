@@ -48,7 +48,6 @@ const monster = {
   ry: 9,
 };
 
-// Players are keyed by their id as a string, like the game does.
 const player = {
   collider: { box: [384, 240, 416, 320] as const },
   d: { id: "5001", x: 12, y: 9 },
@@ -109,7 +108,6 @@ const setup = async ({
   vi.stubGlobal("Engine", {
     apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
     map: { d: { id: 42 }, offset: [0, 0], size: { x: 100, y: 100 } },
-    // A 32×80 monster standing on tile (12, 9); the press lands on its body.
     npcs: {
       check: () => (npcUnderCursor ? { "91": monster } : {}),
       getById: (id: number) =>
@@ -260,7 +258,6 @@ describe("usePings on the map", () => {
     const test = await setup();
     act(() => {
       test.result.current.onPingStart(test.event());
-      // Flicking up selects the top ring option without waiting for the hold.
       test.canvas.dispatchEvent(
         new MouseEvent("mousemove", {
           bubbles: true,
@@ -555,7 +552,6 @@ describe("usePings in battle", () => {
 
     await test.receive(
       remoteBattlePing("7", "attack", 2),
-      // A teammate cannot mark an ally as the attack target.
       remoteBattlePing("2", "attack", 1),
       remoteBattlePing("2", "taunt", 1),
     );
@@ -598,9 +594,7 @@ describe("usePings in battle", () => {
 
     await test.receive(
       remoteBattlePing("2", "quick-fight", 2),
-      // A call comes from the sender's own warrior.
       remoteBattlePing("2", "quick-fight", 1),
-      // Only the hero's team may call it.
       remoteBattlePing("7", "quick-fight", 7),
     );
 
@@ -650,7 +644,6 @@ describe("usePings in battle", () => {
     });
     expect(battlePingStore.getSnapshot().target).toBeNull();
     expect(battlePingStore.getSnapshot().marks.size).toBe(1);
-    // The fight's history still says who was pinged.
     expect(
       battlePingStore.getSnapshot().history.map(({ type }) => type),
     ).toEqual(["taunt", "attack"]);

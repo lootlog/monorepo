@@ -112,14 +112,12 @@ test("Discord role revocation and deletion rebalance only active holders, surviv
       boundary.run(lifecycle.upsertRole(role)),
     ).rejects.toBeInstanceOf(RedisError);
     failInvalidation = false;
-    // The redelivered event sees no change; the committed outbox row repairs it.
     await boundary.run(lifecycle.upsertRole(role));
     expect(delivered).toEqual([]);
     await boundary.run(delivery.dispatchPending());
     expect(delivered).toEqual(["discord-1"]);
     expect(invalidated.has("other-discord")).toBe(false);
 
-    // A rename or recolor leaves every permission projection unchanged.
     delivered.length = 0;
     invalidated.clear();
     await boundary.run(
@@ -129,7 +127,6 @@ test("Discord role revocation and deletion rebalance only active holders, surviv
     expect(delivered).toEqual([]);
     expect(invalidated.size).toBe(0);
 
-    // Deleting the now permissionless role changes no projection either.
     await boundary.run(lifecycle.deleteRole(role));
     await boundary.run(delivery.dispatchPending());
     expect(delivered).toEqual([]);
@@ -152,7 +149,6 @@ test("Discord role revocation and deletion rebalance only active holders, surviv
       "broker unavailable",
     );
     failDelivery = false;
-    // Holders were queued before the assignments cascaded with the role.
     await boundary.run(delivery.dispatchPending());
     expect(delivered).toEqual(["discord-1"]);
   } finally {

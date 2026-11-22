@@ -21,12 +21,10 @@ type FeatureServices = Parameters<typeof gatewayFeatureRoutes>[0];
 
 type SessionFeatures = ConstructorParameters<typeof CommandHandler>[6];
 
-/** Admits every command, so a test exercises the command, not its rejection. */
 const admitAll: Pick<CommandAdmission, "tryAcquire"> = {
   tryAcquire: () => ({ admitted: true, release: () => {} }),
 };
 
-/** Feature services that die when a command reaches them. */
 export const unexpectedFeatures = {
   mapPings: { send: () => Effect.die("Unexpected map ping") },
   battlePings: { send: () => Effect.die("Unexpected battle ping") },
@@ -53,7 +51,6 @@ const quietSessionFeatures = {
   },
 } satisfies SessionFeatures;
 
-/** The Lootlog `organization-1` membership of a command test. */
 export const guild = (
   permissions: Permission[] = [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
   organizationId = "organization-1",
@@ -68,7 +65,6 @@ class FakeGuildStore {
   invalidate: GuildStore["invalidate"] = () => Effect.void;
 }
 
-/** Records what the handler sends; local sockets are those a test pushes. */
 class FakeHub {
   readonly deliveryOrder: string[] = [];
   readonly responses: unknown[] = [];
@@ -145,7 +141,6 @@ class FakeActivity {
     });
 }
 
-/** Presence I/O dies unless a test replaces it; reconciliation only records. */
 export class FakePresence {
   readonly reconciled: GatewaySocket[] = [];
 
@@ -163,10 +158,6 @@ export class FakePresence {
     });
 }
 
-/**
- * A CommandHandler over recording fakes. Each dependency a test passes
- * replaces its fake; the returned fakes are the ones the handler uses otherwise.
- */
 export const makeCommandHandler = ({
   guilds,
   verifier = {
@@ -211,7 +202,6 @@ export const makeCommandHandler = ({
     joinAdmission,
   );
 
-  /** Sends one command frame and waits until the handler settles it. */
   const send = (
     socket: GatewaySocket,
     command: Parameters<typeof commandFrame>[0],

@@ -15,10 +15,6 @@ export const useGuildId = () => {
   return guildIdFromPath ?? search.guild_id;
 };
 
-/**
- * The Organization the server rail marks: one being opened, at once and
- * before its page has loaded, otherwise the open one.
- */
 export const useRailGuildId = () => {
   const openGuildId = useGuildId();
   const openingSegment = usePendingFirstPathSegment();

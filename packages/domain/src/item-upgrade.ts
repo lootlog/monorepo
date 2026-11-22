@@ -12,12 +12,6 @@ import {
   socketItemStat,
 } from "./item-socket.js";
 
-/**
- * Margonem's item upgrade (ulepszanie), from the game's rules at
- * https://pomoc.margonem.pl/index/view,372. Each upgrade level raises the
- * item's virtual level, and its stats follow the formulas that level gives.
- */
-
 export const UPGRADE_LEVELS = [0, 1, 2, 3, 4, 5] as const;
 
 export type UpgradeLevel = (typeof UPGRADE_LEVELS)[number];
@@ -25,18 +19,11 @@ export type UpgradeLevel = (typeof UPGRADE_LEVELS)[number];
 export const isUpgradeLevel = (value: number): value is UpgradeLevel =>
   UPGRADE_LEVELS.some((level) => level === value);
 
-// Only items of level 20 and above take part in upgrading.
 const MIN_UPGRADE_ITEM_LEVEL = 20;
 
-/** `lvl + round(lvl * 0.03) * N`, the level an item's stats are computed at. */
 export const upgradedItemLevel = (level: number, upgrade: UpgradeLevel) =>
   level + Math.round(level * 0.03) * upgrade;
 
-/**
- * How the player crafted an item: how far it is upgraded, from +5 the extra
- * bonus they chose for it, and the legendary bonus of the symbol set in its
- * socket.
- */
 export type ItemUpgrade = {
   level: UpgradeLevel;
   bonus?: UpgradeBonusKey;
@@ -82,12 +69,6 @@ const CLASS_POWER = new Map(
   Object.entries({ HELMET: 0.33, BOOTS: 0.3, GLOVES: 0.25, SHIELD: 0.75 }),
 );
 
-/**
- * How a stat value grows: `base + amount * growth(level)`, where `amount` is
- * the item's own, such as the number of bonuses of that kind it was given.
- * `amounts` are those designers hand out besides whole and half ones, and
- * `decimals` the precision the game shows when it is not the value's own.
- */
 type Scale = {
   base: number;
   growth: (level: number) => number;
@@ -95,11 +76,6 @@ type Scale = {
   decimals?: number;
 };
 
-/**
- * Weapon damage is `8 * weapon_factor * (rarity_power + level_power)`, from
- * the game's table of factors by weapon class and damage type, and spread
- * around that mean by 10% for physical damage and 20% for fire and lightning.
- */
 const WEAPON_FACTORS = [
   0.3378, 0.2646, 0.0876, 0.0797, 0.2869, 0.1594, 0.1435, 0.5578, 0.4606, 0.153,
   0.4876, 0.239, 0.2152, 0.2391, 0.3984, 0.3267, 0.1084, 0.4016, 0.2072, 0.1865,
@@ -110,7 +86,6 @@ const WEAPON_FACTORS = [
 
 const DAMAGE_SPREADS = [0.8, 0.9, 1, 1.1, 1.2];
 
-// Absorption destruction's share of a weapon's power, by weapon class.
 const ABSORB_DESTRUCTION_SHARES = [0.33, 0.36, 0.24, 0.21, 0.12, 0.3];
 
 const POWER_AMOUNTS = [
@@ -120,23 +95,16 @@ const POWER_AMOUNTS = [
   ...ABSORB_DESTRUCTION_SHARES,
 ];
 
-/**
- * Per stat, how each of its comma-separated values grows, the last rule
- * covering the rest; `null` keeps a value. Stats without a rule, such as
- * critical chance or resistances, do not depend on level.
- */
 const statRules = (rarity: string | null, type: string | null) => {
   const factor = RARITY_FACTOR.get(rarity ?? "COMMON") ?? 0;
   const classPower = CLASS_POWER.get(type ?? "") ?? 1;
 
-  // Weapon damage, armor and absorption: `factor * (rarity_power + level_power)`.
   const power: Scale = {
     base: 0,
     growth: (level) => rarityPower(level, factor) + levelPower(level),
     amounts: POWER_AMOUNTS,
   };
 
-  // `base + amount * perLevel * level`
   const linear = (base: number, perLevel: number): Scale => ({
     base,
     growth: (level) => perLevel * level,
@@ -150,18 +118,14 @@ const statRules = (rarity: string | null, type: string | null) => {
       pdmg: [power],
       fire: [power],
       light: [power],
-      // The slowing that comes with frost and poison, then their damage.
       frost: [linear(0, 1), power],
       poison: [linear(0, 1), power],
-      // Its chance stays; its damage grows.
       wound: [null, power],
       ac: [power],
       absorb: [power],
       absorbm: [power],
       abdest: [power],
       acdmg: [
-        // A quiver's armor destruction is its own, `0.04 * level_power`; on
-        // other items it is bonuses.
         type === "QUIVER"
           ? { base: 0, growth: (level) => 0.04 * levelPower(level) }
           : {
@@ -174,11 +138,8 @@ const statRules = (rarity: string | null, type: string | null) => {
       ds: [linear(4, 5 / 9)],
       dz: [linear(4, 5 / 9)],
       di: [linear(4, 5 / 9)],
-      // Attack speed and slowing are kept in hundredths.
       sa: [linear(8, 0.25)],
       slow: [linear(8, 2 / 7)],
-      // The game's table reads `amt * 3.08 * round(8 + lvl + ...)`, but
-      // items of every level give the 8 once and round only the total.
       hp: [
         {
           base: HP_BASE,
@@ -200,8 +161,6 @@ const statRules = (rarity: string | null, type: string | null) => {
       blok: [linear(0, 3 / 20)],
       evade: [linear(0, 1 / 10)],
       lowevade: [linear(0, 1 / 10)],
-      // Shown to a tenth, so a whole value at one level is a fraction at
-      // another.
       hpbon: [{ ...linear(0, 1 / 100), decimals: 1 }],
       manabon: [linear(5, 1 / 4)],
       energybon: [{ base: 0, growth: (level) => 10 + level / 15 }],
@@ -213,7 +172,6 @@ const statRules = (rarity: string | null, type: string | null) => {
   );
 };
 
-/** The level an item is upgraded to, 0 when it is not. */
 export const itemStatUpgradeLevel = (stat: string) =>
   Number(itemStatValue(stat, "enhancement_upgrade_lvl") ?? 0);
 
@@ -222,11 +180,6 @@ const decimalsOf = (value: string) => value.split(".")[1]?.length ?? 0;
 const roundTo = (value: number, decimals: number) =>
   Number(value.toFixed(decimals));
 
-/**
- * The value at `toLevel` of one the item shows at `fromLevel`. The amount
- * behind a shown value is rounded away, so a whole or half amount that gives
- * the same value is taken as the item's: it is what designers hand out.
- */
 const scaleValue = (
   value: string,
   scale: Scale,
@@ -266,8 +219,6 @@ type UpgradableItem = {
   type: string | null;
 };
 
-// Item types worn in an equipment slot: quivers go in the secondary hand;
-// blessings are not equipment.
 const EQUIPMENT_TYPES = new Set([
   ...WEAPON_TYPES,
   "QUIVER",
@@ -280,10 +231,6 @@ const EQUIPMENT_TYPES = new Set([
   "NECKLACE",
 ]);
 
-/**
- * Whether the game lets the item be upgraded: worn equipment of level 20 and
- * up that neither runs out (cursed) nor expires.
- */
 export const isUpgradable = (item: UpgradableItem) =>
   EQUIPMENT_TYPES.has(item.type ?? "") &&
   item.lvl >= MIN_UPGRADE_ITEM_LEVEL &&
@@ -292,11 +239,6 @@ export const isUpgradable = (item: UpgradableItem) =>
 
 const ARMOR_PIECES = new Set(["ARMOR", "HELMET", "GLOVES", "BOOTS", "SHIELD"]);
 
-/**
- * An armor piece's armor and absorption factors by the professions it is
- * for, their letters in alphabetical order, from the game's armor table;
- * only magic users' pieces absorb.
- */
 const ARMOR_FACTOR = new Map(
   Object.entries({
     b: 0.1125,
@@ -334,11 +276,6 @@ const ABSORB_FACTOR = new Map(
   }),
 );
 
-/**
- * Armor and absorption an item has natively, `scale * factor * class_power *
- * (rarity_power + level_power)`, plus the bonuses it was given, each
- * `perBonus * level_power * class_power`: the two grow differently.
- */
 const DEFENSE_STATS = new Map(
   Object.entries({
     ac: { scale: 8, factors: ARMOR_FACTOR, perBonus: 0.15 },
@@ -347,17 +284,10 @@ const DEFENSE_STATS = new Map(
   }),
 );
 
-// An armor bonus raises the native value's quality by one, up to three.
 const MAX_QUALITY_BONUS = 3;
 
-// The most bonuses of one kind the game's table hands out.
 const MAX_DEFENSE_BONUSES = 6;
 
-/**
- * The item's armor or absorption at a level and with extra bonuses, from
- * the native part and bonus count that give the value it shows; none when
- * no split gives it, and the stat's own rule scales it instead.
- */
 const defenseScale = (item: UpgradableItem, key: string, shown: number) => {
   const defense = DEFENSE_STATS.get(key);
 
@@ -396,14 +326,12 @@ const defenseScale = (item: UpgradableItem, key: string, shown: number) => {
   return undefined;
 };
 
-// An item's own legendary bonus and the ones a symbol in its socket gives.
 const LEGENDARY_BONUS_STATS = new Set([
   "legbon",
   "socket_injection_legbon",
   "socket_fleeting_legbon",
 ]);
 
-/** The item's stats computed at `toLevel`, without its upgrade entries. */
 const scaleStats = (item: UpgradableItem, toLevel: number) => {
   const rules = statRules(item.rarity, item.type);
 
@@ -415,7 +343,6 @@ const scaleStats = (item: UpgradableItem, toLevel: number) => {
       const entry = `${key}=${value}`;
       const values = value.split(",");
 
-      // A legendary bonus is as strong as its item's virtual level.
       if (LEGENDARY_BONUS_STATS.has(key) && values.length === 2) {
         return `${key}=${values[0]},${toLevel}`;
       }
@@ -441,11 +368,6 @@ const scaleStats = (item: UpgradableItem, toLevel: number) => {
     });
 };
 
-/**
- * The item as the game makes it at another level, its required level and
- * stats both at `level`: an elastic item looted by a character of another
- * level.
- */
 export const itemAtLevel = <Item extends UpgradableItem>(
   item: Item,
   level: number,
@@ -460,12 +382,6 @@ export const itemAtLevel = <Item extends UpgradableItem>(
           .join(";"),
       };
 
-/**
- * The item's own stat names the +5 bonus raises: one more bonus of that
- * stat, so a base the stat already has is not added again; 0.94 attack speed
- * from one bonus at 345 becomes `round(8 + 2 * 0.25 * 345)` = 1.81, not 1.88.
- * An item without the stat gains it as one bonus.
- */
 const addUpgradeBonus = (
   entries: ReadonlyArray<string>,
   key: UpgradeBonusKey,
@@ -506,13 +422,6 @@ const addUpgradeBonus = (
   };
 };
 
-/**
- * The item's stats once upgraded, in the game's stat format, with the upgrade
- * level among them as the game lists it and, at +5, the chosen extra bonus:
- * it raises the item's own stat and is listed as the game stores it,
- * `bonus=<stat>,<increase>`. The required level stays: upgrading raises only
- * the level the stats are computed at.
- */
 const upgradeLevelStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
   if (upgrade.level === 0 || !isUpgradable(item)) return item.stat;
 
@@ -536,13 +445,6 @@ const upgradeLevelStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
   );
 };
 
-/**
- * The item's stats as the player crafted it, in the game's stat format: as
- * upgraded, then with the chosen symbol in its socket, whose bonus is as
- * strong as the item's upgraded level. Whether the socket takes that symbol
- * the symbol's own stats tell (`socketOptions`), so callers that hold them
- * check it; an item without a socket takes none.
- */
 export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
   const upgraded = upgradeLevelStat(item, upgrade);
   const { symbol } = upgrade;
@@ -556,19 +458,12 @@ export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
     : upgraded;
 };
 
-/** Whether the player crafted the item at all: upgraded it or set a symbol. */
 export const isCrafted = (upgrade: ItemUpgrade) =>
   upgrade.level > 0 || upgrade.symbol !== undefined;
 
-/** Whether two crafts make the same item. */
 export const isSameUpgrade = (a: ItemUpgrade, b: ItemUpgrade) =>
   a.level === b.level && a.bonus === b.bonus && a.symbol === b.symbol;
 
-/**
- * The extra bonus a +5 item offers: three drawn without repeats from its
- * class's pool, each with a chance by its group's power, the player keeping
- * one. Its value is one bonus of that stat at the item's +5 virtual level.
- */
 const UPGRADE_BONUS_KEYS = [
   "da",
   "di",
@@ -606,12 +501,6 @@ export type UpgradeBonusKey = (typeof UPGRADE_BONUS_KEYS)[number];
 export const isUpgradeBonusKey = (value: string): value is UpgradeBonusKey =>
   UPGRADE_BONUS_KEYS.some((key) => key === value);
 
-/**
- * An upgrade as a link writes it after an item id: `u` with its level, then
- * the +5 bonus's stat, then `-` and the bonus of the symbol in its socket,
- * such as `u5ds-critred` or `-critred`. An item worn as dropped writes
- * nothing.
- */
 export const encodeItemUpgrade = (upgrade: ItemUpgrade | undefined) =>
   [
     upgrade && upgrade.level > 0
@@ -620,17 +509,8 @@ export const encodeItemUpgrade = (upgrade: ItemUpgrade | undefined) =>
     upgrade?.symbol ? `-${upgrade.symbol}` : "",
   ].join("");
 
-/**
- * Matches `encodeItemUpgrade`'s text, capturing its level, bonus and
- * symbol.
- */
 export const ITEM_UPGRADE_PATTERN = "(?:u(\\d)([a-z]*))?(?:-([a-z]+))?";
 
-/**
- * The upgrade a link's captured level, bonus and symbol name. A level it
- * cannot read is none, a bonus counts only on a +5, and an unknown symbol is
- * none.
- */
 export const decodeItemUpgrade = (
   level: string | undefined,
   bonus: string | undefined,
@@ -650,12 +530,10 @@ export const decodeItemUpgrade = (
   return isCrafted(upgrade) ? upgrade : undefined;
 };
 
-/** A bonus group's power, which weighs its chance to be drawn. */
 export const UPGRADE_BONUS_GROUP_POWER = [10, 5, 1] as const;
 
 const ATTRIBUTES = ["da", "di", "ds", "dz"] as const;
 
-/** Each class set's pool, as its three groups. */
 const BONUS_POOLS: ReadonlyArray<{
   types: ReadonlySet<string>;
   groups: readonly [
@@ -690,7 +568,6 @@ const BONUS_POOLS: ReadonlyArray<{
   },
 ];
 
-// Absorption destruction, per weapon class, as a share of its power.
 const ABSORB_DESTRUCTION_SHARE = new Map(
   Object.entries({
     ONE_AND_HALF_HAND_WEAPON: 0.33,
@@ -700,7 +577,6 @@ const ABSORB_DESTRUCTION_SHARE = new Map(
   }),
 );
 
-/** What one bonus's value depends on. */
 type BonusContext = {
   level: number;
   levelPower: number;
@@ -709,10 +585,6 @@ type BonusContext = {
   type: string;
 };
 
-/**
- * Each stat's bonus formula from the game's bonus table, `base + amount *
- * perBonus`: the base comes once with the stat, whatever its bonus count.
- */
 const BONUS_VALUES: Record<
   UpgradeBonusKey,
   { base: number; perBonus: (context: BonusContext) => number }
@@ -721,7 +593,6 @@ const BONUS_VALUES: Record<
   ds: { base: 4, perBonus: ({ level }) => (5 * level) / 9 },
   dz: { base: 4, perBonus: ({ level }) => (5 * level) / 9 },
   di: { base: 4, perBonus: ({ level }) => (5 * level) / 9 },
-  // Attack speed and slowing are kept in hundredths.
   sa: { base: 8, perBonus: ({ level }) => 0.25 * level },
   slow: { base: 8, perBonus: ({ level }) => (2 * level) / 7 },
   crit: { base: 0, perBonus: () => 1 },
@@ -773,12 +644,6 @@ const BONUS_VALUES: Record<
   },
 };
 
-/**
- * Stats whose value the item's stat rules already count in bonuses of this
- * formula, so the +5 bonus is one more of them. Armor and absorption are
- * split into their native part and bonuses first; absorption destruction
- * comes from the item's quality, so its bonus adds on top.
- */
 const AMOUNT_SCALED_BONUSES: ReadonlySet<UpgradeBonusKey> = new Set([
   "da",
   "ds",
@@ -809,24 +674,16 @@ const bonusContext = (item: UpgradableItem, level: number): BonusContext => ({
   type: item.type ?? "",
 });
 
-/** The +5 bonuses the item's class draws from; none for other items. */
 const bonusPool = (item: UpgradableItem) =>
   BONUS_POOLS.find(({ types }) => types.has(item.type ?? ""))?.groups.flat();
 
 export type UpgradeBonusOption = {
   key: UpgradeBonusKey;
-  /** Its group, 0 for the most likely. */
   group: number;
-  /** How much it raises the item's stat at +5. */
   value: number;
-  /** The chance it is one of the three bonuses offered at +5. */
   offerChance: number;
 };
 
-/**
- * The chance each bonus is among `draws` drawn without repeats, each draw
- * weighted by power among the bonuses left.
- */
 const offerChances = (powers: ReadonlyArray<number>, draws: number) => {
   const chances = powers.map(() => 0);
 
@@ -855,7 +712,6 @@ const offerChances = (powers: ReadonlyArray<number>, draws: number) => {
 
 const OFFERED_BONUSES = 3;
 
-/** The extra bonuses the item's class can draw at +5; none when it cannot. */
 export const upgradeBonusOptions = (
   item: UpgradableItem,
 ): UpgradeBonusOption[] => {
@@ -883,10 +739,8 @@ export const upgradeBonusOptions = (
   }));
 };
 
-// The +5 bonuses that add attack speed: its own, agility and all attributes.
 const ATTACK_SPEED_BONUSES: ReadonlyArray<UpgradeBonusKey> = ["sa", "dz", "da"];
 
-/** The attack speed (`itemAttackSpeed`) of an item in the game's stat format. */
 export const itemStatAttackSpeed = (stat: string) =>
   itemAttackSpeed(
     Object.fromEntries(
@@ -897,12 +751,6 @@ export const itemStatAttackSpeed = (stat: string) =>
     ),
   );
 
-/**
- * The upgrade at which the item adds the most attack speed
- * (`itemAttackSpeed`): +5 with the bonus that gives it, as weapons can draw
- * attack speed and every piece agility and all attributes. An item the game
- * does not upgrade stays as dropped.
- */
 export const attackSpeedUpgrade = (item: UpgradableItem): ItemUpgrade => {
   if (!isUpgradable(item)) return NO_UPGRADE;
 
@@ -922,15 +770,9 @@ export const attackSpeedUpgrade = (item: UpgradableItem): ItemUpgrade => {
   );
 };
 
-/** The most attack speed the item adds, at its `attackSpeedUpgrade`. */
 export const upgradedAttackSpeed = (item: UpgradableItem) =>
   itemStatAttackSpeed(upgradeItemStat(item, attackSpeedUpgrade(item)));
 
-/**
- * Upgrade cost factors by rarity, from the game's rules: the points an
- * upgrade needs and the gold the +5 step takes. An upgraded item's points
- * follow their own formula.
- */
 const UPGRADE_COST_FACTORS = new Map(
   Object.entries({
     COMMON: { points: 1, gold: 1 },
@@ -941,24 +783,14 @@ const UPGRADE_COST_FACTORS = new Map(
   }),
 );
 
-/** The share of an upgrade's points each level, +0 to +5, takes in all. */
 const UPGRADE_LEVEL_COST_FACTORS = [0, 1, 2.1, 3.4, 5, 7] as const;
 
-// An item's crafting value in percent; most items have the full 100.
 const DEFAULT_ARTISAN_BONUS = 100;
 
-// The +5 step takes three times the currency the unupgraded item breaks into.
 const ESSENCE_COST_MULTIPLIER = 3;
 
-/**
- * What upgrading an item from +0 to a level costs: the upgrade points its
- * ingredients must give, and for the +5 step also the breakdown currency of
- * the item's rarity and gold, both taken once the points are in. The game's
- * rules do not say how it rounds, so each amount is rounded to a whole.
- */
 export type ItemUpgradeCost = {
   points: number;
-  /** In the breakdown currency of the item's rarity. */
   essence: number;
   gold: number;
 };
@@ -969,10 +801,6 @@ const NO_UPGRADE_COST: ItemUpgradeCost = {
   gold: 0,
 };
 
-/**
- * The cost of upgrading the item from +0 to `level`; none for an item the
- * game does not upgrade.
- */
 export const itemUpgradeCost = (
   item: UpgradableItem,
   level: UpgradeLevel,

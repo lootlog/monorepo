@@ -60,14 +60,12 @@ function getVendorChunkName(id: string) {
   return getChunkNameFromGroups(id, vendorChunkGroups);
 }
 
-// https://vitejs.dev/config/
 export default defineConfig({
   test: {
     env: { VITE_AUTH_SERVICE_URL: "http://auth.test" },
     setupFiles: "./src/test/setup.ts",
   },
   server: {
-    // The root path belongs to the landing page behind the local proxy.
     hmr: { path: "/web-hmr" },
     port: 3000,
     host: "0.0.0.0",
@@ -78,7 +76,6 @@ export default defineConfig({
   },
   resolve: {
     alias: [
-      // Path aliases
       {
         find: "@/components",
         replacement: path.resolve(import.meta.dirname, "./src/components"),
@@ -142,7 +139,6 @@ export default defineConfig({
         codeSplitting: {
           groups: [
             {
-              // Keep React and its JSX runtime out of optional vendor chunks.
               name: "vendor-react",
               test: (id) => getVendorChunkName(id) === "vendor-react",
               priority: 1,

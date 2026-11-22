@@ -10,7 +10,6 @@ describe("battleAnalyticsPaging", () => {
       size: 2,
     });
 
-    // Strict: the response contract rejects a cursor key present as undefined.
     expect(firstPage).toStrictEqual({
       records: ["a", "b"],
       totalRecords: 3,

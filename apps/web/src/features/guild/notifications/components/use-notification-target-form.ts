@@ -110,8 +110,6 @@ export const useNotificationTargetForm = ({
 
   const form = useForm<TargetFormValues>({
     resolver: standardSchemaResolver(targetFormSchema(t, isCreateMode)),
-    // A refetch of the target updates untouched fields and keeps the
-    // unsaved edits; closing the dialog discards them.
     values: {
       externalId: "",
       displayName: target?.displayName ?? "",

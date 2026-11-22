@@ -10,14 +10,9 @@ import { toast } from "@lootlog/ui/lib/toast";
 type DeleteThemeDialogProps = {
   theme: UserThemeResponseDto;
   trigger: ReactElement;
-  /** Runs once the theme is gone, such as leaving its editor. */
   onDeleted?: () => Promise<void>;
 };
 
-/**
- * Confirms deleting one of the User's themes. A theme in use hands the app
- * back to its base, as the server does with the stored preference.
- */
 export const DeleteThemeDialog = ({
   theme,
   trigger,

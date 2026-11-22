@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 type CopyState = "idle" | "success" | "error";
 
 type CopyDiagnosticsButtonProps = {
-  /** Builds the text at click time so it reflects the current state. */
   getReport: () => string;
   className?: string;
   variant?: "secondary" | "outline" | "ghost";
@@ -18,11 +17,6 @@ const COPY_ICON = {
   error: TriangleAlert,
 } as const;
 
-/**
- * The one "copy diagnostics" action. It reports the outcome in its own label,
- * so it also works where the game cannot show messages, such as the app error
- * window.
- */
 export const CopyDiagnosticsButton: FC<CopyDiagnosticsButtonProps> = ({
   getReport,
   className,

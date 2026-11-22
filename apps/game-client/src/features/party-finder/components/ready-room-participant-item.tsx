@@ -31,11 +31,6 @@ type ReadyRoomParticipantItemProps = {
   participant: PartyReadyRoomParticipant;
 };
 
-/**
- * One applicant waiting outside the party, painted like an online player row:
- * inviting is the row's own action (the button or a double-click), the rest
- * sits in its context menu.
- */
 export function ReadyRoomParticipantItem({
   room,
   participant,
@@ -54,9 +49,6 @@ export function ReadyRoomParticipantItem({
 
   const [relation] = relations;
 
-  // Margonem invites clan members and friends from anywhere, everyone else
-  // only when they stand next to the organizer, so befriending is the way to
-  // invite a remote applicant.
   const needsFriendship =
     relation !== "self" &&
     !relations.includes("friend") &&

@@ -44,7 +44,6 @@ type ProjectTimerListInput = {
   epoch: number;
   filters: TimerListFilters;
   preferences: TimerListPreferences;
-  /** From `getListedTimers`. */
   timers: TimerWithTimeLeft[];
 };
 
@@ -56,7 +55,6 @@ export const getTimerGroupingKey = (timer: Timer): string => {
   return `timer_${timer.timerKey}`;
 };
 
-/** One timer per grouping key: the latest maximum spawn time, with every report's members. */
 const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
   const timerGroups = new Map<
     string,
@@ -147,11 +145,6 @@ const filterExpiredTimers = (
   });
 };
 
-/**
- * Monster names of the selected lists, or `null` when no list filters the
- * view. A selected list deleted meanwhile (here or on another device) no
- * longer filters, so a stale selection cannot hide every timer.
- */
 const getSelectedListNpcNames = (
   selectedLists: string[],
   customLists: TimerListPreferences["customLists"],
@@ -298,7 +291,6 @@ const getDeduplicatedTimers = (timers: Timer[]) => {
   return Array.from(timersByCompositeKey.values());
 };
 
-/** The timers the list shows, one per tile: merged across guilds when grouping. */
 export const getListedTimers = (
   timers: Timer[],
   isGrouping: boolean,

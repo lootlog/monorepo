@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { BattleAnalyticsOverviewSkeleton } from "./components/battle-analytics-overview-skeleton";
 import { StatisticsFilterToolbarSkeleton } from "./components/statistics-filter-toolbar-skeleton";
 
-/** The analytics page while the character and its numbers load. */
 export const BattlePanelStatisticsSkeleton = () => {
   const { t } = useTranslation();
 

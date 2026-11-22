@@ -8,7 +8,6 @@ const SharedRoom = Schema.Struct({
 
 const readSharedRoom = Schema.decodeUnknownOption(SharedRoom);
 
-/** Check payload scope even for direct user delivery, which bypasses subscription audiences. */
 export function prepareApiKeyEventVisibility(event: ServerEvent) {
   const room =
     event.type === "party-ready-room.updated"
@@ -52,7 +51,6 @@ export function prepareApiKeyEventVisibility(event: ServerEvent) {
       case "battle-ping.received":
       case "loot-split.received":
       case "loot-split.auto-accepted":
-        // Its payload has no Organization: the hub checks the authoritative routing scope.
         return true;
       default:
         if ("organizationId" in event.data)

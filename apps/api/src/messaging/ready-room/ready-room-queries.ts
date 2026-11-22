@@ -50,7 +50,6 @@ export const listRooms = (
       identity.discordId,
     );
 
-    // Most players are in no room, so the guild lookup waits for one.
     if (aggregates.length === 0) return [];
 
     const guildIds = yield* context.accessibleGuildIds(identity.discordId);
@@ -97,8 +96,6 @@ export const getRoom = (
   notificationId: string,
   guildIds: ReadonlyArray<string>,
 ) =>
-  // The caller's own source visibility does not depend on the room, so it is
-  // read beside it.
   Effect.all(
     [
       context.getLive(notificationId),

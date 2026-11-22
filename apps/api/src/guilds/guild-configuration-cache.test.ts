@@ -59,7 +59,6 @@ describe("guild configuration cache", () => {
       await Effect.runPromise(readGuildConfigurationCache(cache, victimId)),
     ).toBeNull();
 
-    // A poisoned entry, however it got there, is evicted instead of served.
     cache.values.set(getGuildCacheKey(victimId), JSON.stringify(hijacker));
     expect(
       await Effect.runPromise(readGuildConfigurationCache(cache, victimId)),

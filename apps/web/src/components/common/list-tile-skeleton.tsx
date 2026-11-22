@@ -9,19 +9,12 @@ import {
 } from "./list-tile";
 
 type ListTileSkeletonProps = {
-  /** The tile's leading icon or avatar box; `none` starts with the title. */
   media?: "box" | "none";
-  /** Stands in for content beside the text, such as a status badge. */
   trailing?: ReactNode;
-  /** How many trailing action buttons to stand in for. */
   actions?: number;
   className?: string;
 };
 
-/**
- * Mirrors a linked tile: media, a title over a meta line, then optional
- * trailing content and an action.
- */
 export const ListTileSkeleton = ({
   media = "box",
   trailing,
@@ -36,7 +29,6 @@ export const ListTileSkeleton = ({
           <div className="flex h-5 items-center">
             <Skeleton className="h-4 w-2/3" />
           </div>
-          {/* One line of `MetaItem` text. */}
           <div className="text-xs leading-tight">
             <SkeletonLine className="h-3 w-1/2" />
           </div>

@@ -1,7 +1,6 @@
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import * as m from "framer-motion/m";
 
-// Wind streaks that sweep across the screen
 const streaks = [
   { y: "15%", duration: 8, delay: 0, width: 200, opacity: 0.06 },
   { y: "35%", duration: 12, delay: 3, width: 300, opacity: 0.045 },

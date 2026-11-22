@@ -14,17 +14,10 @@ export const selectedWarriorOrder = (
   asc(warriors.originalId),
 ];
 
-/**
- * Whether a battle has a warrior matching `conditions`, which read
- * `battleWarriorFilters`.
- */
 export const warriorExists = (
   battlesRef: typeof battles,
   ...conditions: (SQL | undefined)[]
 ) =>
-  // The owner narrows each lookup to that owner's adjacent index entries.
-  // OFFSET 0 keeps it correlated: flattened, a filter without one owner could
-  // scan every owner's warriors instead of just the visible battles.
   exists(sql`(
     SELECT 1 FROM ${battleWarriorFilters}
     WHERE ${and(

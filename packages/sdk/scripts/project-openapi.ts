@@ -15,7 +15,6 @@ import {
 
 const OPERATIONS: ReadonlyArray<PublicApiOperation> = PUBLIC_API_OPERATIONS;
 
-/** Project only explicitly supported operations and transitively referenced components. */
 export function projectOpenApi(input: JsonObject, service: PublicApiService) {
   if (!isObject(input.paths)) throw new TypeError("Invalid OpenAPI document");
   const paths: JsonObject = {};

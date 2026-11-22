@@ -17,7 +17,6 @@ const isHttpServerError = Schema.is(
   Schema.Finite.check(Schema.isBetween({ minimum: 500, maximum: 599 })),
 );
 
-// Promise-based adapters run outside an Effect fiber, but belong to its span.
 export const logSpanContext = new AsyncLocalStorage<
   Tracer.AnySpan | undefined
 >();
@@ -25,9 +24,6 @@ export const logSpanContext = new AsyncLocalStorage<
 export const currentLogSpan = () =>
   Fiber.getCurrent()?.cache.span ?? logSpanContext.getStore();
 
-// The HTTP server logs every response at Info, including 5xx responses and the
-// defect behind them. A 5xx response is logged at Error so it reaches error
-// alerts and filters; a 4xx response stays at Info.
 const withHttpServerErrorLevel = <Message>(
   options: Logger.Options<Message>,
 ): Logger.Options<Message> => {
@@ -40,7 +36,6 @@ const withHttpServerErrorLevel = <Message>(
     : options;
 };
 
-// Keeps a runaway cause chain from producing an unbounded log line.
 const MAX_CAUSE_LENGTH = 8_192;
 
 const boundCause = (cause: string | undefined) =>

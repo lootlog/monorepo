@@ -9,7 +9,6 @@ type EventPageTabsProps = {
   activeId: EventTab;
 };
 
-/** The event's sections, pinned under the app bar. */
 export const EventPageTabs = ({
   guildId,
   eventId,

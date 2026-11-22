@@ -17,7 +17,6 @@ export const Route = createFileRoute("/moderation")({
   }),
 });
 
-/** The reports readers sent about catalog pages, for the moderators to review. */
 function ModerationRoute() {
   const { session, isPending } = useSession();
   const request = useSignedInCatalogRequest();

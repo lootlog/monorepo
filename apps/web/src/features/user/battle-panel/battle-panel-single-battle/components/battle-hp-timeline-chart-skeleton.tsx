@@ -20,7 +20,6 @@ export function BattleHpTimelineChartSkeleton() {
   const { t } = useTranslation();
   const headingId = useId();
 
-  // The settings are persisted, so the skeleton can already match a hidden or expanded chart.
   const isChartHidden = useBattleHpTimelineSettingsStore(
     (state) => state.isChartHidden,
   );

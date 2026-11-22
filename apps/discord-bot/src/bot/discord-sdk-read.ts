@@ -11,10 +11,6 @@ export class DiscordSdkReadFailure extends TaggedErrorClass<
   retryable: Schema.Boolean,
 }) {}
 
-/**
- * Two bounded retries with a short jittered backoff: an immediate retry after a
- * 10 second timeout only re-enters the same saturated REST queue.
- */
 const retrySchedule = Schedule.exponential("500 millis").pipe(
   Schedule.jittered,
   Schedule.upTo({ times: 2 }),
@@ -40,8 +36,6 @@ export const discordSdkRead = <A>(
         }),
     }).pipe(
       Effect.timeout("10 seconds"),
-      // The SDK promise cannot be cancelled, so a timed out request is still
-      // queued in the REST manager; retrying would stack another one on top.
       Effect.mapError((error) =>
         Cause.isTimeoutError(error)
           ? new DiscordSdkReadFailure({

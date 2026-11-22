@@ -5,7 +5,6 @@ import { cn } from "cn";
 
 type PageHeaderProps = {
   icon?: LucideIcon;
-  /** Replaces the icon tile, for example with an avatar or an NPC tile. */
   media?: ReactNode;
   title: ReactNode;
   description?: ReactNode;

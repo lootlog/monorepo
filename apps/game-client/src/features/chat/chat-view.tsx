@@ -204,14 +204,12 @@ export const ChatView = ({
     selectedGuildId: effectiveSelectedGuildId,
   });
 
-  // Reconcile persisted selection when this view's server access subscription changes.
   useEffect(() => {
     const next = getNextSelectedGuildId(selectedGuildId, visibleGuilds);
 
     if (next !== undefined) setSelectedGuildId(next);
   }, [selectedGuildId, setSelectedGuildId, visibleGuilds]);
   const { hiddenNpcTypes } = useHiddenNpcTypes();
-  // Server message/access subscriptions and rank filters invalidate persisted read entries.
   useEffect(() => {
     if (!visibleGuilds) return;
     setReadState((current) =>
@@ -304,9 +302,6 @@ export const ChatView = ({
     retryFailed();
   };
 
-  // Both callbacks feed memoized transcript rows (see ChatTranscriptRow), so
-  // they must not change identity per render; the React Compiler memoizes
-  // them and they read the stores directly.
   const handleReplyToMessage = (
     message: ChatMessageType,
     member?: GuildMember,
@@ -473,7 +468,6 @@ export const ChatView = ({
       title={t("window.title")}
       onClose={() => useWindowsStore.getState().setOpen("chat", false)}
       minHeight={180}
-      // minWidth={260}
       actions={actions}
     >
       {content}

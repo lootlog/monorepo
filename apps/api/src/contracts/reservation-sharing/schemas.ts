@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the reservation-sharing feature. */
 import * as Schema from "effect/Schema";
 import { NonEmptyString, DateTimeString } from "@lootlog/schema/http-scalars";
 

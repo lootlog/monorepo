@@ -1,15 +1,9 @@
 import type { FC } from "react";
 
 type BattlePingGroundProps = {
-  /** A six-digit hex colour. */
   color: string;
 };
 
-/**
- * A pool of light under the warrior's feet with a ring, like the map marker's
- * ground ellipse. It sits where the game draws its own `.selector` and stays
- * behind the sprite.
- */
 export const BattlePingGround: FC<BattlePingGroundProps> = ({ color }) => (
   <div
     aria-hidden="true"

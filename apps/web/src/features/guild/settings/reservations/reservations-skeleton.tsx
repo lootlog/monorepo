@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { SettingsTabSkeleton } from "@/components/common/settings-tab-skeleton";
 import { ReservationShareGroup } from "./reservation-share-group";
 
-/** Each section's fields, so the skeleton shows their labels and descriptions. */
 const FORM_SECTIONS = [
   ["duration", ["minDuration", "maxDuration"]],
   ["schedule", ["granularity", "maxAdvance"]],

@@ -28,7 +28,6 @@ export const useWrappedAutoplay = ({
 
   const [isUserPaused, setIsUserPaused] = useState(false);
   const [isInteractionActive, setIsInteractionActive] = useState(false);
-  // Without interaction tracking nothing pauses, whatever was last recorded.
   const isInteractionPaused = interactionEnabled && isInteractionActive;
   const elapsedMillisecondsRef = useRef(0);
   const advance = useEffectEvent(onAdvance);

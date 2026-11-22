@@ -5,19 +5,12 @@ import { SkeletonLine } from "../skeleton-line";
 import { SectionCard } from "./section-card";
 
 type SectionCardSkeletonProps = {
-  /** Reserves the icon of a `SectionCardHeader` loaded with `icon`. */
   withIcon?: boolean;
   withDescription?: boolean;
-  /** The loading body; a chart-sized block when omitted. */
   children?: ReactNode;
   className?: string;
 };
 
-/**
- * A titled section card whose content is still loading. Its header is a real
- * `SectionCardHeader` with line placeholders, so it is exactly as tall as the
- * loaded one.
- */
 export const SectionCardSkeleton = ({
   withIcon = false,
   withDescription = true,

@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import type { StatisticsSearch } from "./statistics-search";
 
-/** Opens the legends tab with the current filters. */
 export function StatisticsAllLegendsLink({
   search,
 }: {

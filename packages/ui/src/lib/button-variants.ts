@@ -15,7 +15,6 @@ export const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
-        // A filter in a page's filter bar: quiet until it narrows the results.
         chip: "font-medium text-foreground hover:bg-muted/60 focus-visible:ring-inset focus-visible:ring-offset-0 data-popup-open:bg-muted/60 data-active:bg-primary/15 data-active:text-primary data-active:hover:bg-primary/20",
       },
       size: {

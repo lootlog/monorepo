@@ -7,12 +7,10 @@ import {
 import { Info } from "lucide-react";
 
 type InfoButtonProps = {
-  /** Names the explanation the button opens; also shown as its tooltip. */
   label: string;
   onClick: () => void;
 };
 
-/** A quiet icon button beside a list's actions that opens how it works. */
 export const InfoButton = ({ label, onClick }: InfoButtonProps) => (
   <Tooltip>
     <TooltipTrigger

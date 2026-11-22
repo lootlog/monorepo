@@ -14,15 +14,12 @@ const KPIS = [
   { icon: Moon, labelKey: "events.kills.kpiAvgAfk" },
 ] as const;
 
-/** Route-level stand-in for a member's event page: its details, hero tabs, totals and kills. */
 export const EventMemberSkeleton = () => {
   const { t } = useTranslation();
 
   return (
     <DetailSkeleton
       meta={
-        // The ranking place shows only for a single hero, so the default
-        // all-heroes view has the event name alone.
         <span className="text-xs leading-tight">
           <SkeletonLine className="h-3 w-28" />
         </span>

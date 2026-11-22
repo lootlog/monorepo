@@ -4,7 +4,6 @@ type FormFieldErrorProps = {
   message?: string;
 };
 
-/** Validation message under a single form field; renders nothing without one. */
 export const FormFieldError: FC<FormFieldErrorProps> = ({ message }) => {
   if (!message) {
     return null;

@@ -15,7 +15,6 @@ type TimerDetailsProps = {
   phase: TimerPhase;
 };
 
-/** A timer's spawn window, with its monster's wiki page. */
 export const TimerDetails: FC<TimerDetailsProps> = ({ timer, phase }) => {
   const { t } = useTranslation();
 

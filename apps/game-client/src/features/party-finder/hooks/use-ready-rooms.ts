@@ -29,33 +29,18 @@ export const readReadyRoomCache = (
   client.getQueryData<ReadyRoomCache>(queryKeys.readyRooms()) ??
   EMPTY_READY_ROOM_CACHE;
 
-/**
- * True once a list response has been applied and no resynchronization is
- * pending, so callers never act on a collection that may be incomplete. A
- * collection loaded before the gateway dropped does not count either: updates
- * missed while disconnected are only recovered by the next list.
- */
 export const areReadyRoomsSynchronized = (
   client: QueryClient = gameQueryClient,
 ): boolean =>
   useGlobalStore.getState().socketState.joined &&
   readReadyRoomCache(client).listAppliedAt !== null;
 
-/**
- * Marks the collection as awaiting a list response. Called before every
- * resynchronization so a socket update arriving while the request is in
- * flight, or after it failed, cannot present the collection as current.
- */
 export const invalidateReadyRoomSync = (client: QueryClient): void => {
   client.setQueryData<ReadyRoomCache>(queryKeys.readyRooms(), (cache) =>
     cache ? { ...cache, listAppliedAt: null } : cache,
   );
 };
 
-/**
- * Drops every known room, used when leaving the game: the next synchronization
- * has to start from an empty collection rather than merge into a stale one.
- */
 export const clearReadyRoomCache = (
   client: QueryClient = gameQueryClient,
 ): void => {
@@ -75,13 +60,6 @@ const decodeProjections = (
       : [],
   );
 
-/**
- * Owns the Ready Room collection the way useTimers owns timers: the list
- * response is authoritative for the rooms already known when the request left,
- * and socket updates and mutation responses write into the same cache entry.
- * Every consumer calls this, so a Ready Room view loads its own data instead
- * of depending on another component being mounted first.
- */
 export const useReadyRooms = <TData = ReadyRoomCache>(
   select?: (cache: ReadyRoomCache) => TData,
 ) => {
@@ -92,9 +70,6 @@ export const useReadyRooms = <TData = ReadyRoomCache>(
     queryKey: queryKeys.readyRooms(),
     enabled: joined,
     select,
-    // A collection that has never had a list applied, or whose sync was
-    // invalidated, must be fetched; once a list lands only an explicit
-    // resynchronization refetches it.
     staleTime: () =>
       readReadyRoomCache(queryClient).listAppliedAt === null ? 0 : Infinity,
     refetchOnWindowFocus: false,
@@ -138,11 +113,6 @@ export const useReadyRoomProjections = () =>
 export const useOwnedReadyRoom = () =>
   useReadyRooms(selectOwnedReadyRoom).data ?? null;
 
-/**
- * The room the Discord user organizes on the current Margonem account. Every
- * character of that account manages it and none may join it; other accounts
- * of the same Discord user join it like anyone else.
- */
 export const useAccountOwnedReadyRoom = () => {
   const accountId = useGameStore((state) => state.game?.hero.accountId);
   const room = useOwnedReadyRoom();
@@ -153,7 +123,6 @@ export const useAccountOwnedReadyRoom = () => {
 export const useHasOwnedReadyRoom = () =>
   useReadyRooms(selectHasOwnedRoom).data ?? false;
 
-/** The room the current character organizes or participates in. */
 export const useCurrentCharacterReadyRoom = () => {
   const accountId = useGameStore((state) => state.game?.hero.accountId);
   const characterId = useGameStore((state) => state.game?.hero.characterId);

@@ -28,7 +28,6 @@ const setup = async (
   const boundary = await createDatabaseBoundary();
   boundaries.push(boundary);
 
-  // What every Game client was told, in order.
   const announced: CharacterAurasChanged[] = [];
 
   const events = {
@@ -38,7 +37,6 @@ const setup = async (
         : Effect.sync(() => void announced.push(change)),
   };
 
-  // The gateway's fact that the User proved to play the account at `minute`.
   const verify = (userId: string, accountId: string, minute = 0) =>
     boundary.run(
       recordMargonemAccountVerification(boundary.database, {
@@ -73,13 +71,11 @@ const setup = async (
   };
 };
 
-// The `index`th character on a Margonem account.
 const character = (gameAccountId: string, index = 1) => ({
   gameAccountId,
   characterId: `${gameAccountId}0${index}`,
 });
 
-// What a list shows on the `index`th character of the account.
 const shown = <A extends CharacterAuraId | null>(
   gameAccountId: string,
   auraId: A,
@@ -125,7 +121,6 @@ describe("character auras", () => {
       ]),
     );
 
-    // The other characters of the same User, on either account, show none.
     expect(await admin.run((data) => data.getAuras)).toEqual({
       auras: [shown("101", "frost"), shown("202", "tide", 2)],
     });
@@ -133,7 +128,6 @@ describe("character auras", () => {
       [shown("101", "frost"), shown("202", "tide", 2)],
     );
 
-    // The same stored choices under a configuration that dropped the admin.
     const revoked = await admin.boundary.run(
       Effect.flatMap(
         makeCharacterAurasData(fixedGlobalChatAdmins([]), admin.events),
@@ -170,7 +164,6 @@ describe("character auras", () => {
       auras: [shown("202", "sovereign")],
     });
 
-    // Dropped from the admins, the grant alone does not keep it showing.
     const dropped = await admin.boundary.run(
       Effect.flatMap(
         makeCharacterAurasData(fixedGlobalChatAdmins([]), admin.events),
@@ -193,7 +186,6 @@ describe("character auras", () => {
       }),
     );
     await verify("second", "101", 5);
-    // A late redelivery of an older proof does not take the account back.
     await verify("first", "101", 1);
     await verify("second", "101", 2);
 
@@ -201,7 +193,6 @@ describe("character auras", () => {
       auras: [shown("101", "sakura", 2)],
     });
 
-    // Choosing for a character another User chose for takes it over.
     await run((data) =>
       data.updateOwnAura("second", character("101"), "frost"),
     );
@@ -269,7 +260,6 @@ describe("character auras", () => {
       ],
     });
 
-    // Revoking an admin's own account takes nothing from them.
     await run((data) =>
       Effect.all([
         data.revokeAuras("admin", "101"),
@@ -293,7 +283,6 @@ describe("character auras", () => {
       ),
     );
 
-    // A new grant does not bring the removed auras back.
     expect(regranted).toEqual({
       auras: [],
       canChange: true,
@@ -314,9 +303,6 @@ describe("character auras", () => {
       ]),
     );
 
-    // The grant of auras in general does not cover a personal one, a personal
-    // grant covers neither the other personal auras nor the rest, and only
-    // admins grant it.
     const refused = await run((data) =>
       Effect.all([
         Effect.flip(
@@ -349,7 +335,6 @@ describe("character auras", () => {
       auras: [shown("202", "skyborne")],
     });
 
-    // Revoking takes the personal grant and the aura with it.
     await run((data) => data.revokeAuras("admin", "202"));
 
     expect(await run((data) => data.getAuras)).toEqual({ auras: [] });
@@ -364,7 +349,6 @@ describe("character auras", () => {
     await verify("admin", "202");
     await verify("player", "101");
 
-    // Keeps each read until told to forget it, as the shared cache does.
     let list: CharacterAurasResponse | undefined;
     let holders: CharacterAuraHolders | undefined;
 
@@ -446,9 +430,7 @@ describe("character auras", () => {
         yield* data.updateOwnAura("player", character("303"), "tide");
         yield* data.updateOwnAura("player", character("303", 2), "venom");
         yield* data.revokeAuras("admin", "303");
-        // An admin keeps theirs, so nothing changes on their characters.
         yield* data.revokeAuras("admin", "101");
-        // Removing an aura the character does not wear announces nothing.
         yield* data.updateOwnAura("admin", character("101", 2), null);
         yield* data.updateOwnAura("admin", character("101"), null);
       }),
@@ -512,7 +494,6 @@ describe("character auras", () => {
     await deleteAccount("admin");
     await deleteAccount("granted");
 
-    // A new account under the same id starts without the grant.
     expect((await run((data) => data.getOwnAura("granted"))).canChange).toBe(
       false,
     );

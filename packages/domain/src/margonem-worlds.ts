@@ -1,10 +1,3 @@
-/**
- * Margonem's public worlds by the day each opened, newest first, from the
- * game's announcements. A world has the items of every event edition that
- * ended after it opened, so the item search hides the older ones for a
- * character there. Worlds opened before 2019 have only an approximate day,
- * the first announcement that names them: the catalog's events are newer.
- */
 export const MARGONEM_WORLDS = [
   { id: "luvia", name: "Luvia", openedOn: "2026-06-29", isApproximate: false },
   {

@@ -40,7 +40,6 @@ test("repeated guild reads queue one background refresh per stale guild", async 
         })),
       ),
     );
-    // Stored access synced long ago: stale on every read.
     await boundary.run(
       boundary.database.insert(memberTable).values(
         guildIds.map((guildId, index) =>
@@ -89,7 +88,6 @@ test("repeated guild reads queue one background refresh per stale guild", async 
     );
 
     const identity = { userId: "user-1", discordId: "discord-1" };
-    // Covers both enqueue paths: database, cache hit, then database again.
     await boundary.run(accessibleGuilds(identity));
     await boundary.run(accessibleGuilds(identity));
     cache.clear();

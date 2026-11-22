@@ -45,7 +45,6 @@ const bearer = Layer.succeed(
   }),
 );
 
-// What every handler group under test needs around it.
 const testHttpServices = Layer.mergeAll(
   bearer,
   apiKeyEndpointPolicyLayer("main"),

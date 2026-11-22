@@ -79,7 +79,6 @@ describe("global chat history", () => {
     const own = message("own", { isOwn: true });
     const data = pages([message("3"), own], [message("1"), message("3")]);
 
-    // The gateway never knows whose message it pins.
     const { isOwn: _isOwn, ...delivered } = own;
     const pinned = setGlobalChatPinned(data, delivered);
     const unpinned = setGlobalChatPinned(pinned, null);

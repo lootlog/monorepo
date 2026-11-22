@@ -39,7 +39,6 @@ type MemberMapPresenceStatsEntry = {
   afkTimeSeconds: number;
 };
 
-/** Scores the members assigned to a hero's maps when the hero is killed. */
 export const makeEventKillPoints = (
   pointsService: Pick<
     EventPoints,

@@ -7,7 +7,6 @@ import {
   buttonMagicCirclePositions,
 } from "./gremory-button-positions";
 
-// Destruction overlay for containers (static, always visible)
 export const DestructionOverlay = ({
   subtle = false,
   rounded = "rounded-xl",
@@ -21,7 +20,6 @@ export const DestructionOverlay = ({
     <>
       <DestructionFilter />
 
-      {/* Energy texture */}
       <div
         className={`absolute inset-0 pointer-events-none ${rounded} overflow-hidden`}
         style={{ opacity: intensity }}
@@ -35,7 +33,6 @@ export const DestructionOverlay = ({
         />
       </div>
 
-      {/* Multi-gradient overlay */}
       <div
         className={`absolute inset-0 pointer-events-none ${rounded}`}
         style={{
@@ -46,7 +43,6 @@ export const DestructionOverlay = ({
         }}
       />
 
-      {/* Edge glow */}
       <div
         className={`absolute inset-0 pointer-events-none ${rounded} overflow-hidden`}
       >

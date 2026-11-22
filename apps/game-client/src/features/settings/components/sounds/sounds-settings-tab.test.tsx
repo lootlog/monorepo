@@ -90,7 +90,6 @@ describe("SoundsSettingsTab", () => {
       name: "Powiadomienia",
     });
 
-    // The mute toggle is the slider's sibling inside the volume control.
     let control: HTMLElement | null = notificationsSlider;
     let muteButton: HTMLButtonElement | null = null;
 
@@ -129,7 +128,6 @@ describe("SoundsSettingsTab", () => {
     const user = userEvent.setup();
     render();
 
-    // The detector section lists the same types after the notifications one.
     const input = screen.getAllByRole("textbox", { name: "Heros" })[1]!;
     await user.type(input, "https://audio.test/hero.mp3");
 

@@ -31,7 +31,6 @@ describe("TimerColorPicker", () => {
     expect(
       screen.queryByRole("button", { name: "Granatowy" }),
     ).not.toBeInTheDocument();
-    // The swatch paints the overridden accent, not the default red.
     expect(red.firstElementChild).toHaveStyle({
       backgroundColor: "#222222",
     });

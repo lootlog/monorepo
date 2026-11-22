@@ -33,18 +33,8 @@ import { legacyAuraRenderer } from "../legacy-aura-surface";
 import { NEARBY_AURA_LIMIT, resolveMapAuraMode } from "../map-aura-mode";
 import { useOwnCharacterAura } from "./use-own-character-aura";
 
-/**
- * Auras change rarely and arrive live; the refresh catches up on a change
- * lost while disconnected or announced to an older gateway.
- */
 const AURAS_REFRESH_INTERVAL_MS = 5 * 60_000;
 
-/**
- * Shows every aura on the map: the hero's own as soon as it is chosen, and
- * the auras of other players' characters. NI draws
- * them on its map canvas and marks character tips; SI draws them beside its
- * character elements.
- */
 export const useCharacterAuras = () => {
   const canvas = auraRuntimeAdapter.isAvailable();
 
@@ -75,7 +65,6 @@ export const useCharacterAuras = () => {
   const { data: list } = useCharacterAurasControllerGetAuras({
     query: {
       queryKey: listKey,
-      // The first list comes with the startup request; later ones on refresh.
       queryFn: async ({ signal }) =>
         (await readGameClientBootstrap<CharacterAurasResponseDto>(listKey)) ??
         characterAurasControllerGetAuras({ signal }),
@@ -86,7 +75,6 @@ export const useCharacterAuras = () => {
     },
   });
 
-  // A change patches the list in place, so no player refetches it.
   useEffect(() => {
     if (!available || !socket) return;
 
@@ -96,7 +84,6 @@ export const useCharacterAuras = () => {
         (current) => applyCharacterAuraChanges(current, change),
       );
 
-      // The hero follows the User's own aura, which an admin may have revoked.
       const current = useGameStore.getState().game?.hero;
       const ownKey = getCharacterAurasControllerGetOwnAuraQueryKey();
 
@@ -134,8 +121,6 @@ export const useCharacterAuras = () => {
 
   const tipAuras = useRef(targets.byKey);
   const drawn = useRef<ReadonlyMap<string, CharacterAuraId>>(new Map());
-  // The hero's tip mark follows its own aura once its character is known;
-  // before that the listed auras may mark it, so it is rebuilt every time.
   const heroMark = useRef<string | null>(null);
 
   const hasAuras = targets.byCharacter.size > 0;
@@ -144,7 +129,6 @@ export const useCharacterAuras = () => {
     renderer?.setOthersLimit(mapAuras === "nearby" ? NEARBY_AURA_LIMIT : null);
   }, [renderer, mapAuras]);
 
-  // Installed before the targets apply, so tips rebuilt for them get the mark.
   useEffect(() => {
     if (!canvas || !hasAuras) return;
     const layer = auraRuntimeAdapter.getTipLayer();
@@ -166,13 +150,10 @@ export const useCharacterAuras = () => {
   useEffect(() => {
     if (!renderer) return;
     tipAuras.current = targets.byKey;
-    // Tips still mark the auras the map does not draw.
     renderer.setTargets(mapAuras === "off" ? new Map() : targets.byCharacter);
 
     if (!canvas) return;
 
-    // Cached tips keep the old mark until they are rebuilt, so every
-    // character whose aura appeared, changed or went away gets its tip rebuilt.
     const changed = new Set<string>();
 
     for (const key of new Set([

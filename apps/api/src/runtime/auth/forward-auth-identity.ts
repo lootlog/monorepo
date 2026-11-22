@@ -1,7 +1,6 @@
 import { Context, Effect, Option } from "effect";
 import type { ForwardAuthIdentityValue } from "@lootlog/schema/api-key-policy";
 
-/** Request-scoped identity asserted by the first-party auth proxy. */
 export class ForwardAuthIdentity extends Context.Service<
   ForwardAuthIdentity,
   ForwardAuthIdentityValue
@@ -15,7 +14,6 @@ export const requestScopedIdentity = Effect.map(
   (identity) => identity,
 ) as Effect.Effect<ForwardAuthIdentityValue>;
 
-/** Background jobs have no request identity and retain their own domain scope. */
 export const requestApiKeyAccess = Effect.map(
   Effect.serviceOption(ForwardAuthIdentity),
   (identity) => Option.getOrUndefined(identity)?.apiKey,

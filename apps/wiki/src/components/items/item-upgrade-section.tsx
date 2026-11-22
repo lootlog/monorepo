@@ -20,10 +20,6 @@ type ItemUpgradeSectionProps = {
   onChange: (upgrade: ItemUpgrade) => void;
 };
 
-/**
- * Upgrading the item: the level, what the stats are computed at and what
- * changes, and the bonus a +5 item adds.
- */
 export function ItemUpgradeSection({
   item,
   upgrade,
@@ -60,7 +56,6 @@ export function ItemUpgradeSection({
             onChange({
               ...upgrade,
               level,
-              // The +5 bonus stays chosen only at +5.
               bonus: level === 5 ? upgrade.bonus : undefined,
             })
           }

@@ -21,7 +21,6 @@ import { makeDiscordSyncDiagnostics } from "#src/discord/discord-sync-diagnostic
 import { makeRedisService, type RedisService } from "#src/redis/redis.service";
 import { httpClientFromResponses } from "./http-fixtures.js";
 
-// Bun's Response body stream is typed apart from the one REST declares.
 const memberResponse = (roles: ReadonlyArray<string>): ResponseLike => {
   const response = Response.json({ user: { id: "discord-1" }, roles });
 
@@ -74,8 +73,6 @@ describe("Discord guild member reads against Dragonfly", () => {
     await redisRuntime.dispose();
   });
 
-  // Everything but the auth service's and Discord's HTTP answers is the
-  // production wiring.
   const setUp = () => {
     const identity = {
       guildId: "guild-1",
@@ -142,8 +139,6 @@ describe("Discord guild member reads against Dragonfly", () => {
       message: "DISCORD_UNAUTHORIZED",
     });
 
-    // The auth service still returns the rejected token until the user signs
-    // in again, and Discord must not count another invalid request.
     await expect(client.getGuildMember(identity)).rejects.toMatchObject({
       message: "DISCORD_UNAUTHORIZED",
     });

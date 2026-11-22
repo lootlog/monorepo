@@ -40,7 +40,6 @@ export const normalizeRoutingRuleText = (name?: string) => {
   return trimmedName.length > 0 ? trimmedName : undefined;
 };
 
-/** Keeps only the accessible guilds a rule routes to, in the player's guild order. */
 const restrictToAvailableGuilds = (
   routingRules: DetectorRoutingRule[],
   availableGuildIds: string[],
@@ -77,14 +76,6 @@ const areRoutingRulesEqual = (
   );
 };
 
-/**
- * Delivery rules for the detector. Every edit is written straight through the
- * shared settings patch queue, which updates the cache optimistically and
- * re-applies pending patches when a server response lands. The rule list is
- * read from the cache at the moment of the edit, not from the render that
- * produced the click: a re-render lags the cache by a tick, so the previous
- * click of a rapid series would otherwise be dropped from the saved list.
- */
 export function useDetectorRoutingForm() {
   const { accountId, settings } = useCurrentGameAccountDetectorSettings();
 

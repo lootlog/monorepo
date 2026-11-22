@@ -39,7 +39,6 @@ export const metadataKey = (organizationId: string, sessionId: string) =>
 export const revisionKey = (organizationId: string) =>
   `presence:revision:${organizationId}`;
 
-// Releases a lease only while its holder still owns it.
 const RELEASE_LEASE = `
 -- presence:lease-release
 if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) end
@@ -81,7 +80,6 @@ export const withoutLocation = (presence: Basic | Precise): Basic => {
   return basic;
 };
 
-/** The Organization's unexpired presences, read fresh from Redis. */
 export const readOrganization = (
   redis: PresenceRedis,
   organizationId: string,

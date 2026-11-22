@@ -14,7 +14,6 @@ type SetupChecklistProps = {
   onDismiss: () => void;
 };
 
-/** The steps a new player takes before Lootlog works for this character. */
 export const SetupChecklist: FC<SetupChecklistProps> = ({
   steps,
   remaining,

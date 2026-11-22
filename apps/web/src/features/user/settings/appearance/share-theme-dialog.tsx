@@ -24,10 +24,6 @@ type ShareThemeDialogProps = {
   trigger: ReactElement;
 };
 
-/**
- * Hands on a theme by link. Opening it creates the link if the theme has
- * none, so sharing is one step; the link can be turned off here too.
- */
 export const ShareThemeDialog = ({ theme, trigger }: ShareThemeDialogProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);

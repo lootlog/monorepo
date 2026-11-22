@@ -18,7 +18,6 @@ export const SETTINGS_DOMAIN_VALUES = [
 
 export type SettingsDomainValue = (typeof SETTINGS_DOMAIN_VALUES)[number];
 
-/** Tab ids persisted by earlier releases; they still resolve to a path. */
 export const LEGACY_SETTINGS_TAB_VALUES = [
   "game-data",
   "catching",
@@ -34,11 +33,6 @@ type LegacySettingsTabValue = (typeof LEGACY_SETTINGS_TAB_VALUES)[number];
 
 export type SettingsTabValue = SettingsDomainValue | LegacySettingsTabValue;
 
-/**
- * Every subsection belongs to exactly one domain. Persisted paths may carry a
- * subsection under the domain that owned it in an earlier release, so the
- * owning domain is resolved from the subsection first.
- */
 export const SETTINGS_SUBSECTION_DOMAINS = {
   visibility: "servers",
   catching: "catching",
@@ -84,10 +78,6 @@ const DEFAULT_SETTINGS_PATH: SettingsPath = {
   subsection: "behavior",
 };
 
-/**
- * A domain opens on the subsection the settings manifest lists first, which
- * settings-manifest.test.ts checks.
- */
 export const SETTINGS_DOMAIN_FIRST_SUBSECTIONS = {
   general: "behavior",
   catching: "catching",
@@ -106,10 +96,6 @@ export const SETTINGS_DOMAIN_FIRST_SUBSECTIONS = {
   information: "whats-new",
 } as const satisfies Record<SettingsDomainValue, SettingsSubsectionValue>;
 
-/**
- * Tab ids persisted by earlier releases keep the destinations they had when
- * they were retired.
- */
 const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
   // SAFETY: the entries map every domain of a closed literal object to a path
   // that opens a subsection of that domain.

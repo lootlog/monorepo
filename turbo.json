@@ -22,7 +22,8 @@
         "**/*.tsx",
         ".oxlintrc.json",
         "$TURBO_ROOT$/.oxlintrc.json",
-        "$TURBO_ROOT$/.oxlintrc.react.json"
+        "$TURBO_ROOT$/.oxlintrc.react.json",
+        "$TURBO_ROOT$/tools/oxlint/**"
       ]
     },
     "typecheck": {

@@ -4,28 +4,18 @@ import type { FC, ReactNode } from "react";
 
 type SettingsColorRowProps = {
   name: ReactNode;
-  /** Secondary text next to the name, e.g. the HEX code. */
   meta?: ReactNode;
   borderColor: string;
   backgroundColor: string;
-  /** Marks a default colour that differs from its factory value. */
   modified?: boolean;
   modifiedLabel?: string;
-  /** Accessible name for the edit trigger; omit for a read-only row. */
   editLabel?: string;
-  /** Opens the editor; the trigger wraps the swatch and name. */
   editTrigger?: (trigger: ReactNode) => ReactNode;
-  /** Rendered sample of the colour in use, shown before the actions. */
   preview?: ReactNode;
-  /** Trailing actions menu / buttons. */
   children?: ReactNode;
   className?: string;
 };
 
-/**
- * One colour in a palette list: swatch + name act as the edit trigger, the
- * trailing slot holds the actions menu. Shared by NPC and timer colours.
- */
 export const SettingsColorRow: FC<SettingsColorRowProps> = ({
   name,
   meta,

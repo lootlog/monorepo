@@ -29,7 +29,6 @@ export const getOneVsOneStatsHeadClassName = ({
 }: {
   columnId: string;
   compact: boolean | undefined;
-  /** Sticky offset of the column header, which depends on where the table scrolls. */
   topClassName: string;
 }) =>
   columnId === ONE_VS_ONE_STATS_COLUMN_IDS.stat
@@ -69,10 +68,6 @@ const formatValue = (
   return String(value ?? 0);
 };
 
-/**
- * Every cell renders its own `<td>`: a category row and a stat row style the same column
- * differently, and the value cell owns its comparison bar.
- */
 export const getOneVsOneStatsColumns = ({
   booleanLabels,
   compact,
@@ -86,7 +81,6 @@ export const getOneVsOneStatsColumns = ({
   statHeader: string;
   user: BattleWarrior | undefined;
 }): OneVsOneStatsColumn[] => {
-  // Every value cell compares both warriors; without one the table shows its empty state.
   if (!user || !opponent) return [];
 
   const valueColumn = (

@@ -10,7 +10,6 @@ const finiteNumberInput = Schema.Union([
   ),
 ]);
 
-/** Decode finite numbers and nonblank numeric strings without coercing other inputs. */
 export const parseFiniteNumber = flow(
   Schema.decodeUnknownOption(finiteNumberInput),
   Option.getOrNull,

@@ -30,7 +30,6 @@ type SortBy = "kills" | "level";
 
 type SortOrder = "asc" | "desc";
 
-/** The sort key and NPC ID of the last NPC on the previous page. */
 export type NpcKillPageAfter = {
   readonly sortValue: number;
   readonly npcId: number;
@@ -45,13 +44,11 @@ type PageOptions = {
 };
 
 const NpcKillPageCursor = Schema.Struct({
-  /** Fingerprint of the filters and sort the cursor was issued for. */
   filters: Schema.String,
   sortValue: FiniteNumber,
   npcId: FiniteNumber,
 });
 
-/** The filters and sort of a page request, without its cursor and size. */
 export type NpcKillPageFilters =
   | Omit<UserNpcKillsQuery, "cursor" | "limit">
   | Omit<MemberKillsQuery, "cursor" | "limit">;
@@ -62,10 +59,6 @@ const filtersFingerprint = (filters: NpcKillPageFilters) =>
     .digest("base64url")
     .slice(0, 22);
 
-/**
- * Reads the keyset position of an NPC kill page cursor, rejecting a cursor
- * issued for other filters or another sort with a 400 `INVALID_CURSOR`.
- */
 export const decodeNpcKillPageCursor = (
   cursor: string | undefined,
   filters: NpcKillPageFilters,
@@ -82,10 +75,6 @@ export const decodeNpcKillPageCursor = (
 
 type KilledNpc = (typeof UserNpcKillsResponse.Type.items)[number];
 
-/**
- * Turns a `limit + 1` NPC page into its items and the opaque cursor of the
- * next page.
- */
 export const toNpcKillPage = (
   npcs: ReadonlyArray<KilledNpc>,
   limit: number,
@@ -117,8 +106,6 @@ const buildNpcKillPageSql = (
   const direction = options.sortOrder === "asc" ? asc : desc;
   const beyond = options.sortOrder === "asc" ? gt : lt;
 
-  // PostgreSQL materializes this multiply referenced CTE, keeping the page and
-  // its unpaginated overview on the same filtered rows in one MVCC snapshot.
   const filtered = query.$with("filtered").as(
     query
       .select({
@@ -153,7 +140,6 @@ const buildNpcKillPageSql = (
 
   const { after } = options;
 
-  // Keyset continuation: NPCs after the previous page's last (sort key, NPC ID).
   const page = query.$with("page").as(
     query
       .select()
@@ -170,8 +156,6 @@ const buildNpcKillPageSql = (
       .limit(options.limit),
   );
 
-  // Rank before reading descriptions so only the requested page is sorted.
-  // The latest row at the highest level describes the NPC.
   const metadata = query.$with("metadata").as(
     query
       .selectDistinctOn([filtered.npcId], {

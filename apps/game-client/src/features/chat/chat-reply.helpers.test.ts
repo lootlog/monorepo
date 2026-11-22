@@ -58,7 +58,6 @@ it("resolves historical quote names from Discord within the source organization 
   );
 
   expect(resolved[0]?.replyTo?.senderNick).toBe("DiscordName");
-  // A later derivation hands its memoized transcript row the same object.
   expect(
     resolveChatReplyNames(
       [reply],

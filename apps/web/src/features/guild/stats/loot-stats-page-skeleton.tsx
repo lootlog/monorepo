@@ -16,7 +16,6 @@ export const LootStatsPageSkeleton = () => {
 
   return (
     <div aria-busy="true">
-      {/* Narrow pages open their filters from a button instead of a bar. */}
       <FilterBar ariaLabel={t("kills.filters.title")}>
         {usesFilterBar && <StatsFiltersSkeleton />}
       </FilterBar>

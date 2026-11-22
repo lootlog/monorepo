@@ -1,4 +1,3 @@
-/** Endpoints owned by the internal HTTP module. */
 import { Unauthorized } from "../errors.js";
 import { Schema } from "effect";
 import {

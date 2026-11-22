@@ -212,8 +212,6 @@ function createReplayState() {
     y: 8,
   };
 
-  // Margonem sends the PvP mode with every town; without it NI map recovery
-  // would rebuild the game snapshot on every replayed packet.
   const rawMap = { id: 1, name: "Benchmark", visibility: 30, pvp: 0 };
 
   const rawNpcs = Object.fromEntries(

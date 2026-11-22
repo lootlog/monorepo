@@ -18,7 +18,6 @@ import {
   type ThemeSelection,
 } from "./resolver";
 
-/** What a selection paints with, given what is known about custom themes. */
 export type ThemeLook = {
   customThemeId: string | null;
   customTheme: AppliedCustomTheme | null;
@@ -26,11 +25,6 @@ export type ThemeLook = {
   theme: ThemeId;
 };
 
-/**
- * Resolves a selection to its look: the User's themes once they load, until
- * then the first cached copy of the selected custom theme, and a preview over
- * both.
- */
 export const resolveThemeLook = ({
   selection,
   userThemes,
@@ -59,16 +53,11 @@ export const resolveThemeLook = ({
   };
 };
 
-/** Where a surface remembers the applied theme for its next start. */
 export type ThemePersistence = {
   writeSelection: (selection: ThemeSelection) => void;
   writeCustomTheme: (theme: AppliedCustomTheme | null) => void;
 };
 
-/**
- * Applies a look to the document root and persists it. Returns the applied
- * class, a concrete cat for the cat roulette.
- */
 export const useThemeSync = ({
   selection,
   look,
@@ -91,7 +80,6 @@ export const useThemeSync = ({
     ),
   );
 
-  // The root keeps the applied class, so a cat roulette keeps its cat.
   useLayoutEffect(() => {
     // oxlint-disable-next-line react/set-state-in-effect -- the class is applied to the document root, and the cat roulette picks its cat there.
     setResolvedTheme(
@@ -108,8 +96,6 @@ export const useThemeSync = ({
   }, [persistence, selection]);
 
   useEffect(() => {
-    // Without the list and a copy, keep the stored copy; otherwise it follows
-    // what the page shows.
     if (customThemeId === null || userThemes || customTheme) {
       persistence.writeCustomTheme(customTheme);
     }

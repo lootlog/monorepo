@@ -20,7 +20,6 @@ const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
 
 const EVENT_KILL_RECENT_DEDUP_TTL_SECONDS = 30;
 
-/** Lets one of several concurrent reports of a hero kill record it for each matching active event hero. */
 export const makeEventHeroKillCheck = (
   repository: Pick<EventKillStore, "updateHero">,
   activeEventHeroRepository: ActiveEventHeroStore,
@@ -94,7 +93,6 @@ export const makeEventHeroKillCheck = (
         return;
       }
 
-      // Try to acquire lock - if another request already has it, silently return
       const lockToken = randomUUID();
 
       const lockAcquired = yield* redis
@@ -210,7 +208,6 @@ export const makeEventHeroKillCheck = (
                   updateData,
                 );
 
-                // The hero was removed from the event since it was matched.
                 if (!updatedHero) return;
 
                 eventHero = updatedHero;
@@ -278,7 +275,6 @@ export const makeEventHeroKillCheck = (
 
       yield* recordWhileLocked.pipe(
         Effect.ensuring(
-          // A lock that expired mid-write may belong to another request now.
           redis.deleteIfValue(lockKey, lockToken).pipe(
             withEventAdapterSpan("redis.deleteIfValue"),
             Effect.tapError((error) =>

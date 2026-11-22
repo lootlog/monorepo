@@ -8,10 +8,6 @@ type Props = Pick<
   "isHeroSighting" | "form" | "t"
 >;
 
-/**
- * The optional level range of the heroes a sighting rule announces; an empty
- * bound leaves that side open.
- */
 export const NotificationHeroLevelFields = ({
   isHeroSighting,
   form,
@@ -29,7 +25,6 @@ export const NotificationHeroLevelFields = ({
       form.setValue(name, value, { shouldDirty: true, shouldValidate: true });
 
   return (
-    // The order error belongs to the upper bound, which the lower one limits.
     <FormField
       control={form.control}
       name="npcLevelMax"
@@ -50,7 +45,6 @@ export const NotificationHeroLevelFields = ({
             maxLevel={npcLevelMax}
             onMinLevelChange={setLevel("npcLevelMin")}
             onMaxLevelChange={setLevel("npcLevelMax")}
-            // A form commits on submit, so a typed bound must not wait.
             debounceMs={0}
             size="default"
           />

@@ -5,10 +5,6 @@ import type { AutoCloseRespawnWindowJobData } from "#src/events/respawn/auto-clo
 import { RESPAWN_WINDOW_QUEUE } from "#src/events/respawn/respawn-queue.constant";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
-/**
- * Auto-close jobs of respawn windows. No worker consumes the queue any more;
- * events only remove the jobs still waiting in it.
- */
 export class RespawnWindowQueue extends Context.Service<
   RespawnWindowQueue,
   Queue<AutoCloseRespawnWindowJobData>

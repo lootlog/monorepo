@@ -10,7 +10,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { guildTable } from "./organization.schema.js";
 
-/** Channel deletions committed with their snapshot removal, pending a RabbitMQ publish. */
 export const discordGuildChannelDeletedOutboxTable = pgTable(
   "DiscordGuildChannelDeletedOutbox",
   {
@@ -29,7 +28,6 @@ export const discordGuildChannelDeletedOutboxTable = pgTable(
     })
       .onDelete("cascade")
       .onUpdate("cascade"),
-    // Matches the dispatcher's `lastAttemptAt ASC NULLS FIRST, id ASC` selection.
     index("DiscordGuildChannelDeletedOutbox_lastAttemptAt_id_idx").on(
       table.lastAttemptAt.asc().nullsFirst(),
       table.id.asc(),

@@ -9,11 +9,6 @@ export interface EventHeroCheckJob {
   readonly data: EventHeroKillJobData;
 }
 
-/**
- * Enqueues committed event hero checks. The deterministic job id and the kill
- * processor's window dedup make a repeated enqueue safe, so a failure after
- * enqueueing only costs a duplicate no-op job.
- */
 export const makeEventHeroCheckDispatcher = (
   database: typeof ApiDatabase.Service,
   enqueue: (job: EventHeroCheckJob) => Effect.Effect<void, unknown>,

@@ -113,7 +113,6 @@ describe("settings patch queue", () => {
       ],
     ]);
     expect(statuses.at(-1)).toBe("saved");
-    // A merged write must not drop the follow-up work of the earlier one.
     expect(invalidateLists).toHaveBeenCalledOnce();
     expect(markSaved).toHaveBeenCalledOnce();
   });
@@ -191,7 +190,6 @@ describe("settings patch queue", () => {
         let stored = structuredClone(initial);
 
         const { queue, send, statuses } = createHarness(async (batch) => {
-          // The API rejects duplicate documents within a single request.
           expect(
             new Set(
               batch.map(
@@ -210,7 +208,6 @@ describe("settings patch queue", () => {
           queue.enqueue({ operation: patch, queryKeys: [] });
 
           if (retry && index === 0) {
-            // Finish the failed save before editing its retained patch.
             // oxlint-disable-next-line no-await-in-loop
             await queue.flush();
           }
@@ -591,8 +588,6 @@ describe("settings patch queue", () => {
     finishSend();
     await vi.advanceTimersByTimeAsync(0);
 
-    // The response predates the later write; without re-applying it the
-    // form would briefly show the older server state.
     expect(applyOptimistic.mock.calls[0]?.[0]).toMatchObject({
       operation: laterPatch.operation,
     });

@@ -39,7 +39,6 @@ export const DiscordGuildSyncStatus = Schema.Literals([
 
 export type DiscordGuildSyncStatus = typeof DiscordGuildSyncStatus.Type;
 
-/** A Discord channel as the bot last saw it; the API keeps it as a snapshot. */
 export const DiscordGuildChannel = Schema.Struct({
   ...discordGuildChannelFields,
   lastSyncedAt: Schema.String,

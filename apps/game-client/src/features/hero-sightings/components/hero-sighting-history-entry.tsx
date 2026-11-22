@@ -16,7 +16,6 @@ type HeroSightingHistoryEntryProps = {
   now: number;
 };
 
-/** One past or current sighting in a hero's history, laid out like its list row. */
 export function HeroSightingHistoryEntry({
   sighting,
   now,
@@ -51,7 +50,6 @@ export function HeroSightingHistoryEntry({
           <time dateTime={sighting.firstSeenAt}>
             {format(firstSeenAt, "dd.MM HH:mm:ss")}
           </time>
-          {/* Later detections on the same map confirm the sighting. */}
           {lastSeenAt > firstSeenAt ? (
             <>
               <span className="ll:shrink-0 ll:whitespace-pre">{" – "}</span>

@@ -7,14 +7,12 @@ import { useTranslation } from "react-i18next";
 import { RetryButton } from "@/components/common/retry-button";
 
 type ScheduleStatusProps = {
-  /** The schedule bar, so the dates stay reachable while the hours load. */
   header: ReactNode;
   isError: boolean;
   isRetrying: boolean;
   onRetry: () => void;
 };
 
-/** Takes the hours' place while a spot's reservations load or fail to. */
 export const ScheduleStatus = ({
   header,
   isError,

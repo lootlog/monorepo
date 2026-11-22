@@ -6,11 +6,6 @@ import { createChangedOnlyStorage } from "./changed-only-storage";
 import { storageKey } from "@/lib/storage-key";
 import { withFallback } from "@lootlog/schema/stored-value";
 
-/**
- * Margonem's `SocietyData.RELATION`: how the server relates a player on the
- * hero's map to the hero. Faction relations (7, 8) say nothing about friends
- * or clans, so they are not learned from.
- */
 export const MARGONEM_RELATION = {
   NONE: 1,
   FRIEND: 2,
@@ -32,9 +27,7 @@ type CharacterSocial = Readonly<{
 type ClanDiplomacy = Readonly<Record<string, ClanRelation>>;
 
 export type SocialScopes = Readonly<{
-  /** The hero's own friends and enemies. */
   character: string;
-  /** The diplomacy of the hero's clan; null without a clan. */
   clan: string | null;
 }>;
 
@@ -79,7 +72,6 @@ const toCharacterIds = (characterIds: readonly string[]): CharacterIds =>
     ),
   );
 
-/** Storage scopes of the active hero; null before the game is known. */
 export const getSocialScopes = (hero: {
   accountId?: string;
   characterId?: string;
@@ -191,13 +183,6 @@ const decodePersistedSocialRelations = Schema.decodeUnknownOption(
   }),
 );
 
-/**
- * What the hero knows about other players. The game sends the friends and
- * enemies lists only while its society window is open, and clan diplomacy only
- * while the clan window shows it, so both are remembered per character and per
- * clan. Players met on the map carry the server's relation, which corrects the
- * remembered state as soon as it differs.
- */
 export const useSocialRelationsStore = create<SocialRelationsState>()(
   persist(
     (set) => ({
@@ -242,7 +227,6 @@ export const useSocialRelationsStore = create<SocialRelationsState>()(
 
           const ids = toCharacterIds(characterIds);
 
-          // The game resends whole lists; an unchanged one keeps the state.
           if (isEqual(social[list], ids)) return state;
 
           return {

@@ -41,7 +41,6 @@ const CHARACTER_PREFIX = "party-ready-room:v3:character:";
 
 const TERMINAL_TOMBSTONE_SECONDS = 60;
 
-/** Concurrent requests kept replacing the room's indexes; the caller may retry. */
 class ReadyRoomContended extends TaggedErrorClass<
   ReadyRoomContended,
   { readonly brand: unique symbol }
@@ -54,7 +53,6 @@ export interface ReadyRoomRedis {
     key: string,
     schema: S,
   ) => Effect.Effect<S["Type"] | null, RedisError>;
-  /** Resolves with the script's untyped reply; the caller decodes it. */
   readonly eval: (
     script: string,
     keys: ReadonlyArray<string>,
@@ -115,8 +113,6 @@ const discoveryKey = (guildId: string, world: string) =>
 const remainingTtl = (aggregate: ReadyRoomAggregate, clock: () => number) =>
   Math.ceil((Date.parse(aggregate.expiresAt) - clock()) / 1000);
 
-// The scripts' replies are this module's own contract: a reply outside it is a
-// defect, not a failure a caller could handle.
 const parseCommit = (
   result: unknown,
   aggregate: ReadyRoomAggregate,
@@ -183,7 +179,6 @@ export const makeReadyRoomRepository = (
   ) {
     const declaredKeys = new Set(keys);
 
-    // Bound work if concurrent requests keep replacing the indexed room.
     for (let attempt = 0; attempt < 8; attempt += 1) {
       const result = yield* redis.eval(script, [...declaredKeys], arguments_);
 
@@ -337,7 +332,6 @@ export const makeReadyRoomRepository = (
           userKey(participant.discordId),
           characterKey(next.world, participant.character.characterId),
           ...READY_ROOM_PUBLICATION_KEYS,
-          // The script takes the previous character's index as KEYS[6].
           ...(switchedCharacterId === undefined
             ? []
             : [characterKey(next.world, switchedCharacterId)]),

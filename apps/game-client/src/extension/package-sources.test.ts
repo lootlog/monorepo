@@ -14,8 +14,6 @@ import path from "node:path";
 
 const directories: string[] = [];
 
-// A Git hook exports GIT_DIR, GIT_INDEX_FILE and the like; inherited, they
-// point the fixture's Git commands at the repository being committed.
 const env = Object.fromEntries(
   Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")),
 );

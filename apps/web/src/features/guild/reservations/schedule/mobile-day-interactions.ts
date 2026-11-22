@@ -15,7 +15,6 @@ export type TouchSession = {
   identifier: number;
   latestClientX: number;
   latestClientY: number;
-  /** Recent horizontal positions, for the release velocity. */
   samples: SwipeSample[];
   startClientX: number;
   startClientY: number;
@@ -30,7 +29,6 @@ export const TOUCH_MOVE_TOLERANCE_PX = 8;
 
 export const SWIPE_DRAG_THRESHOLD_PX = 10;
 
-/** How far back the release velocity looks, so a closing flick counts. */
 const SWIPE_VELOCITY_WINDOW_MS = 100;
 
 export const SWIPE_COMMIT_TIMING = {
@@ -58,7 +56,6 @@ export const addSwipeSample = (
   }
 };
 
-/** The release velocity in px/s over the last moments of the gesture. */
 export const getSwipeVelocity = (
   session: TouchSession,
   clientX: number,

@@ -334,7 +334,6 @@ describe("Read cache Dragonfly integration", () => {
 
     if (generation === null) throw new Error("Missing generation");
 
-    // Existing deployments may already have persistent generation keys.
     await Effect.runPromise(cache.set(generationKey, generation));
     expect(await pttl(generationKey)).toBe(-1);
     expect(await read(entry)).toEqual({ value: 1 });
@@ -381,7 +380,6 @@ describe("Read cache Dragonfly integration", () => {
     const generation = await Effect.runPromise(cache.get(generationKey));
 
     try {
-      // Expire through Redis, without a wall-clock sleep in the test.
       await pexpire(generationKey, 0);
       expect(await Effect.runPromise(cache.get(generationKey))).toBeNull();
       expect(await write(entry, 2)).toEqual({ value: 2 });
@@ -1045,8 +1043,6 @@ describe("Read cache Dragonfly integration", () => {
         ),
       ).toBe(true);
 
-      // A warm entry is served without SQL, and invalidating the Organization's
-      // scopes does not drop it: statistics refresh by age, not by writes.
       await Effect.runPromise(
         cache.invalidateScopes(`loot-stats:${organization}`),
       );

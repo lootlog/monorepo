@@ -18,11 +18,6 @@ import type { KnownHero } from "@lootlog/domain/hero-sightings";
 
 const hintClassName = "ll:text-[11px] ll:text-gray-400";
 
-/**
- * Hero sighting form shown as an overlay inside the detected heroes window,
- * for a detector answer the add-on did not see. Like an answer, the hero goes
- * to every Lootlog the current character plays for.
- */
 export function AddHeroSightingForm(props: AddHeroSightingFormProps) {
   const {
     t,

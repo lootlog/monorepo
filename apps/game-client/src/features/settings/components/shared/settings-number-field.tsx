@@ -9,17 +9,11 @@ type SettingsNumberFieldProps = {
   min: number;
   max: number;
   step?: number;
-  /** Short unit shown after the field, e.g. "s" or "px". */
   unit?: string;
   disabled?: boolean;
-  /**
-   * `cell` fills a grid cell: no border, no spin buttons, typing straight
-   * into the cell; the frame appears only on focus.
-   */
   variant?: "default" | "cell";
   "aria-label"?: string;
   className?: string;
-  /** Called with a value already clamped to [min, max] on blur or Enter. */
   onCommit: (value: number) => void;
 };
 
@@ -35,10 +29,6 @@ const clampSettingsNumber = (
   return step >= 1 ? Math.round(clamped) : clamped;
 };
 
-/**
- * Numeric input for settings: edits stay local while typing and the clamped
- * value is committed on blur or Enter, so a half-typed number never persists.
- */
 export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
   id,
   value,
@@ -75,7 +65,6 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
       event.currentTarget.blur();
     }
 
-    // Escape reverts the draft; consuming it keeps the window open.
     if (event.key === "Escape") {
       event.preventDefault();
       cancelled.current = true;
@@ -93,8 +82,6 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
           : "ll:inline-flex ll:gap-1",
         className,
       )}
-      // The whole cell is the click target; the field itself stays narrow so
-      // the value sits centred under the column icon.
       onClick={variant === "cell" ? () => inputRef.current?.focus() : undefined}
     >
       <Input
@@ -123,7 +110,6 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
         <span
           className={cn(
             "ll:shrink-0 ll:text-xs ll:text-muted-foreground",
-            // Hangs right of the centred value so the digits stay under the icon.
             variant === "cell"
               ? "ll:pointer-events-none ll:absolute ll:top-1/2 ll:left-[calc(50%+0.8em)] ll:-translate-y-1/2"
               : "ll:w-5",

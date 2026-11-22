@@ -36,7 +36,6 @@ const onlyRate = (monsters: ReturnType<typeof toMonsterDropRates>) =>
   monsters[0]?.dropRates[0];
 
 test("counts the rolls of full parties, not their kills", () => {
-  // 1000 kills in parties of 10 rolled 5500 times.
   expect(
     onlyRate(
       toMonsterDropRates(
@@ -50,7 +49,6 @@ test("counts the rolls of full parties, not their kills", () => {
 test("estimates the rolls from recorded loots until enough kills name their party", () => {
   const monsters = toMonsterDropRates(
     [rate({ partyKills: 99, lootRolls: 99 })],
-    // Half the fights solo, half in tens: 3.25 rolls a fight.
     [parties({ players: 1 }), parties({ players: 10, items: 300 })],
   );
 
@@ -62,7 +60,6 @@ test("rolls a personal colossus loot once per member who wears the item", () => 
 
   const monsters = toMonsterDropRates(
     [
-      // A warriors' item, from kills with 3 warriors and 7 others each.
       rate({
         ...colossus,
         professions: "w",

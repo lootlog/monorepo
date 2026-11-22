@@ -11,7 +11,6 @@ import { getLootlogPortalContainer } from "./theme-boundary";
 
 const TooltipProviderContext = React.createContext(false);
 
-/** Whether the current open was started by hovering, so the popup follows the cursor. */
 const TooltipFollowsCursorContext = React.createContext(false);
 
 type TooltipProviderProps = Omit<BaseTooltip.Provider.Props, "delay"> & {
@@ -82,7 +81,6 @@ const CURSOR_OFFSETS: CursorTooltipOffsets = {
   padding: 8,
 };
 
-/** Anchor for Base UI's own (initial, resize, scroll) positioning: the pointer. */
 const getCursorAnchor = () => {
   const cursor = getCursorPoint();
 
@@ -110,7 +108,6 @@ type TooltipPositioningProps = Pick<
 > & {
   collisionPadding?: number;
   sideOffset?: number;
-  /** The content grows while open; see `CursorTooltipOffsets.growsWhileOpen`. */
   growsWhileOpen?: boolean;
 };
 
@@ -150,8 +147,6 @@ function TooltipContent({
         className="ll:z-[500]"
         collisionBoundary={collisionBoundary}
         collisionPadding={collisionPadding}
-        // A followed tooltip is placed only by the cursor follower: Base UI
-        // repositioning it on resize would fight it and flip its side.
         disableAnchorTracking={followsCursor}
         ref={registerFollower}
         side="bottom"

@@ -97,8 +97,6 @@ export class RolesData extends Context.Service<
                   return yield* new PermissionDeniedError();
                 }
 
-                // Republish on repeated saves too: a previous attempt may have
-                // committed the policy before cache invalidation or delivery failed.
                 const updated = yield* database
                   .update(roleTable)
                   .set({

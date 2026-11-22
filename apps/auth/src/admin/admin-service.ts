@@ -45,7 +45,6 @@ import type {
 
 type UserRow = typeof authUsers.$inferSelect;
 
-/** Audit entries shown beside one User. */
 const USER_AUDIT_LIMIT = 25;
 
 const unavailable = () =>
@@ -53,7 +52,6 @@ const unavailable = () =>
 
 const userNotFound = () => new ResourceNotFoundError("User not found");
 
-/** `%`, `_` and `\` match themselves in the search text. */
 const escapeLike = (text: string) => text.replace(/[\\%_]/gu, "\\$&");
 
 const inForce = (now: Date) =>
@@ -62,7 +60,6 @@ const inForce = (now: Date) =>
     or(isNull(authUsers.banExpires), gt(authUsers.banExpires, now)),
   );
 
-/** Matches a role inside the comma-separated list Better Auth stores. */
 const holdsRole = (role: PlatformRole) =>
   sql<boolean>`${role} = any(string_to_array(${authUsers.role}, ','))`;
 
@@ -89,20 +86,11 @@ const toUser = (
   activeSessions,
 });
 
-/** The signed-in admin an admin API request acts for. */
 export type AdminOperator = {
   readonly userId: string;
   readonly name: string;
 };
 
-/**
- * The operator of an admin API request. Two things must hold together: the
- * request comes from the admin panel, which alone knows the service secret,
- * and it carries the live session of a User listed as an admin account.
- * Neither a secret without such a session nor an admin's session presented
- * anywhere else opens the admin API, and nobody enters while the secret or
- * the admin list is not configured.
- */
 export const authorizeAdminRequest = Effect.fn("authorizeAdminRequest")(
   function* (
     headers: Headers,
@@ -140,14 +128,12 @@ export const authorizeAdminRequest = Effect.fn("authorizeAdminRequest")(
   },
 );
 
-/** How the audit log names an operator: readable, and exact by id. */
 export const auditActor = (operator: AdminOperator) =>
   `${operator.name} (${operator.userId})`;
 
 export class AdminService extends Context.Service<
   AdminService,
   {
-    /** The signed-in admin a request from the admin panel acts for. */
     readonly authorize: (
       headers: Headers,
     ) => Effect.Effect<AdminOperator, ApplicationError>;
@@ -194,7 +180,6 @@ export class AdminService extends Context.Service<
       userId: string,
       roles: ReadonlyArray<PlatformRole>,
     ) => Effect.Effect<{ user: AdminUser }, ApplicationError>;
-    /** Bans the User and ends every session they hold. */
     readonly ban: (
       actor: string,
       userId: string,
@@ -218,10 +203,6 @@ export class AdminService extends Context.Service<
       userId: string,
       keyId: string,
     ) => Effect.Effect<void, ApplicationError>;
-    /**
-     * The Users whose roles grant `role`, for a service that presents the
-     * internal service credential. An admin holds every role.
-     */
     readonly listRoleHolders: (
       authorization: string | undefined,
       role: PlatformRole,
@@ -245,7 +226,6 @@ export class AdminService extends Context.Service<
       const query = <A, E>(effect: Effect.Effect<A, E>) =>
         Effect.mapError(effect, unavailable);
 
-      /** A write that goes through Better Auth, so its session store follows. */
       const account = <A>(
         run: (accounts: NonNullable<typeof auth.accounts>) => Promise<A>,
       ) =>
@@ -339,13 +319,6 @@ export class AdminService extends Context.Service<
         );
       };
 
-      /**
-       * Runs an action that Better Auth carries out, which cannot share a
-       * transaction with the audit log. The entry is written first and says
-       * the action did not complete, so nothing changes without one and an
-       * action that fails, is cut short or dies with the process keeps that
-       * mark: it may have landed in part. Only a finished action clears it.
-       */
       const audited = <A>(
         actor: string,
         action: AdminAuditAction,
@@ -361,8 +334,6 @@ export class AdminService extends Context.Service<
 
           const result = yield* run;
 
-          // The action has landed; failing here would only hide that. Its
-          // entry keeps the mark and the operator checks what holds.
           yield* database
             .update(adminAuditLog)
             .set({ details: details ?? null })
@@ -545,7 +516,6 @@ export class AdminService extends Context.Service<
 
           return {
             user: toUser(row, sessions.length, now),
-            // The token is the credential itself and never leaves the service.
             sessions: sessions.map((session) => ({
               id: session.id,
               createdAt: session.createdAt.toISOString(),
@@ -597,8 +567,6 @@ export class AdminService extends Context.Service<
               message: "The ban must end in the future",
             });
 
-          // The ban lands first: a session revoked before it could be replaced
-          // by a new sign-in.
           yield* audited(
             actor,
             "ban.set",
@@ -683,7 +651,6 @@ export class AdminService extends Context.Service<
 
         revokeApiKey: Effect.fn("AdminService.revokeApiKey")(
           function* (actor, userId, keyId) {
-            // One transaction: a key must not vanish without its audit entry.
             const key = yield* query(
               database.transaction((transaction) =>
                 Effect.gen(function* () {

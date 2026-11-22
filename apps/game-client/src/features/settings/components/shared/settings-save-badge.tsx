@@ -3,22 +3,15 @@ import { AlertCircle, Check, Loader2 } from "lucide-react";
 import type { CSSProperties, FC } from "react";
 import type { SettingsSaveMarkStatus } from "@/lib/settings-persistence/settings-save-status.store";
 
-/** Contextual icon entrance: scale 0.25, blur 4px, opacity 0 -> rest. */
 export const SETTINGS_SAVE_ICON_ENTER_CLASS_NAME =
   "ll:flex ll:items-center ll:animate-in ll:fade-in-0 ll:zoom-in-[0.25] ll:blur-in-[4px] ll:duration-long ll:ease-enter";
 
 type SettingsSaveBadgeProps = {
   status: SettingsSaveMarkStatus;
   className?: string;
-  /** e.g. an `animationDelay` to stagger badges that appear together. */
   style?: CSSProperties;
 };
 
-/**
- * Small save indicator pinned to one item (a card, a row) while the title bar
- * indicator reports the whole queue. Decorative: the title bar carries the
- * live-region text, so this badge is hidden from assistive technology.
- */
 export const SettingsSaveBadge: FC<SettingsSaveBadgeProps> = ({
   status,
   className,

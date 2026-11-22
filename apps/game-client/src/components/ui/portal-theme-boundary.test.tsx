@@ -174,8 +174,6 @@ describe("overlay theme boundary", () => {
     expectContentInsideThemeBoundary("select-content");
     expect(screen.getByRole("combobox")).toHaveTextContent("One");
 
-    // Draggable windows carry their own z-index; a select opened inside one
-    // must not paint underneath the window.
     const selectPositioner = screen.getByTestId("select-content").parentElement;
 
     expect(selectPositioner).not.toBeNull();

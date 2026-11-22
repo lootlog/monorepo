@@ -2,7 +2,6 @@ import { ContextMenuItem } from "@lootlog/ui/components/context-menu";
 import { BookOpen } from "lucide-react";
 import type { ReactNode } from "react";
 
-/** A context menu entry that opens a catalog page on the wiki in a new tab. */
 export const WikiContextMenuItem = ({
   href,
   children,

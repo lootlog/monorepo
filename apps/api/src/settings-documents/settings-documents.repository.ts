@@ -32,7 +32,6 @@ type SettingsOperation = PatchSettingsDocuments["operations"][number];
 
 type StoredSettingsDocument = typeof userSettingDocumentTable.$inferSelect;
 
-/** Identifies one document of a user; scope types and domains contain no `:`. */
 const getSettingsDocumentKey = (
   domain: string,
   scopeType: SettingsScope["type"],
@@ -66,7 +65,6 @@ export class SettingsPersistenceError extends TaggedErrorClass<
   { readonly brand: unique symbol }
 >()("SettingsPersistenceError", { cause: Schema.Defect() }) {}
 
-/** A document changed after the client read the `updatedAt` it expects. */
 export class SettingsConflictError extends TaggedErrorClass<
   SettingsConflictError,
   { readonly brand: unique symbol }
@@ -99,7 +97,6 @@ export interface SettingsDocumentsRepositoryService {
     userId: string,
     guildId: string,
   ) => Effect.Effect<boolean, SettingsPersistenceError>;
-  /** The subset of `guildIds` the user is an active member of. */
   readonly findActiveGuildMemberships: (
     userId: string,
     guildIds: ReadonlyArray<string>,
@@ -159,8 +156,6 @@ export class SettingsDocumentsRepository extends Context.Service<
                     ),
                   ),
                 )
-                // One lock order for every batch keeps concurrent batches from
-                // deadlocking on each other's rows.
                 .orderBy(
                   userSettingDocumentTable.domain,
                   userSettingDocumentTable.scopeType,
@@ -179,8 +174,6 @@ export class SettingsDocumentsRepository extends Context.Service<
                 ]),
               );
 
-              // Patches to the same document apply in batch order, each over
-              // the result of the previous one.
               const nextDocuments = new Map<
                 string,
                 {
@@ -203,9 +196,6 @@ export class SettingsDocumentsRepository extends Context.Service<
 
                 yield* Effect.try({
                   try: () => {
-                    // Bring the stored document to the catalog version before
-                    // patching, so the row written below matches the version
-                    // it is stamped with.
                     const currentOverrides =
                       nextDocuments.get(key)?.overrides ??
                       (Predicate.isObject(stored?.overrides)
@@ -257,9 +247,6 @@ export class SettingsDocumentsRepository extends Context.Service<
                   continue;
                 }
 
-                // `updatedAt` is the document's version for
-                // `expectedUpdatedAt`, so every write moves it forward even
-                // within the millisecond of the previous one.
                 const data = {
                   overrides,
                   schemaVersion: SETTINGS_CATALOG[domain].schemaVersion,
@@ -384,8 +371,6 @@ export class SettingsDocumentsRepository extends Context.Service<
                   }),
                 ),
         applyOperations: (userId, operations) =>
-          // An empty batch would build a lock predicate matching every
-          // document of the user.
           operations.length === 0
             ? Effect.void
             : applyOperationsAttempt(userId, operations, 0),

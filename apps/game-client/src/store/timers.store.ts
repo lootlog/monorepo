@@ -85,7 +85,6 @@ interface TimersState {
   pinTimer: (guildId: string, timerId: string) => void;
   unpinTimer: (guildId: string, timerId: string) => void;
   setTimerColor: (npcName: string, color?: string) => void;
-  /** Adds the colour or replaces the one with its id. */
   setCustomColor: (color: CustomTimerColor) => void;
   deleteCustomColor: (id: string) => void;
   setDefaultColorName: (colorId: string, name: string) => void;
@@ -98,7 +97,6 @@ interface TimersState {
   resetAllDefaultColors: () => void;
   deleteDefaultColor: (colorId: string) => void;
   restoreDefaultColor: (colorId: string) => void;
-  /** Creates a list and returns its id. */
   addCustomList: (name: string, npcNames?: string[]) => string;
   renameCustomList: (id: string, name: string) => void;
   deleteCustomList: (id: string) => void;
@@ -135,10 +133,6 @@ const withNpcType = (
     ]),
   );
 
-// Each type joins stored filters once, in the version that introduced it; a
-// later choice to hide it stays. Event hero timers were hero timers before
-// version 8, so a filter that showed heroes keeps showing them; Hero Tracker
-// timers are new in version 9, so no stored filter could hide them.
 const withNewNpcTypes = (
   filters: StoredTimersFilters | undefined,
   version: number,
@@ -153,7 +147,6 @@ const withNewNpcTypes = (
     () => true,
   );
 
-/** Timer colours left without the given colour; its timers fall back to the default. */
 const withoutTimerColor = (
   timersColors: TimersState["timersColors"],
   colorId: string,
@@ -165,7 +158,6 @@ const withoutTimerColor = (
     ]),
   );
 
-/** Drops a default colour's custom look and name. */
 const withoutDefaultColorChanges = (
   state: Pick<TimersState, "overriddenDefaultColors" | "defaultColorNames">,
   colorId: string,

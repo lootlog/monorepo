@@ -33,7 +33,6 @@ export const createTimerFixture = (overrides: Partial<Timer> = {}): Timer => ({
   ...overrides,
 });
 
-/** `timer.created` as the API publishes it; it normalizes to `createTimerFixture()`. */
 export const createTimerEventFixture = (
   overrides: Partial<TimerUpdated> = {},
 ): TimerUpdated => ({

@@ -1,10 +1,8 @@
 import { Schema } from "effect";
 import { NonNegativeInt } from "./primitives.js";
 
-/** Pings placed on an enemy warrior. `attack` is the team's shared target. */
 const BATTLE_ENEMY_PING_TYPES = ["attack", "caution", "spare"] as const;
 
-/** Requests placed on an allied warrior (or on the sender's own warrior). */
 const BATTLE_REQUEST_PING_TYPES = [
   "attack-speed-aura",
   "atmo",
@@ -21,10 +19,6 @@ const BATTLE_REQUEST_PING_TYPES = [
   "taunt",
 ] as const;
 
-/**
- * Calls to the whole battle team, sent from the sender's own warrior. Only
- * sockets that negotiated `lootlog.battle-ping.team.v1` send or receive them.
- */
 const BATTLE_TEAM_PING_TYPES = ["quick-fight"] as const;
 
 const BATTLE_PING_TYPES = [
@@ -35,10 +29,8 @@ const BATTLE_PING_TYPES = [
 
 export type BattlePingType = (typeof BATTLE_PING_TYPES)[number];
 
-/** A Margonem party holds at most ten characters, so nine other recipients. */
 const MAX_BATTLE_PING_RECIPIENTS = 9;
 
-/** Margonem battle warrior ids: positive for characters, negative for NPCs. */
 const MAX_BATTLE_WARRIOR_ID = 2_147_483_647;
 
 const BattlePingTypeSchema = Schema.Literals(BATTLE_PING_TYPES);
@@ -69,7 +61,6 @@ export interface BattlePingSendPayload {
   expectedMapId: number;
   type: BattlePingType;
   warriorId: number;
-  /** Character ids of the other players on the sender's battle team. */
   recipientCharacterIds: readonly string[];
 }
 

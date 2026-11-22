@@ -10,16 +10,13 @@ const loaderSource = readFileSync(
   .replace("$GAME_CLIENT_URL$", "https://cdn.lootlog.test/game-client.user.js")
   .replace("$GAME_CLIENT_VERSION$", "1.2.3");
 
-/** Runs the userscript loader and returns the bundle script it requested. */
 const runLoader = () => {
   let requested: HTMLScriptElement | undefined;
-  // Keep the request off the network; the test decides how it ends.
   vi.spyOn(document.head, "appendChild").mockImplementation((node) => {
     if (node instanceof HTMLScriptElement) requested = node;
 
     return node;
   });
-  // Executes the shipped loader template as a userscript manager would.
   new Function(loaderSource)();
 
   if (!requested) throw new Error("The loader did not request the bundle");

@@ -50,10 +50,6 @@ export const GameCharacterOffline = Schema.Struct({
 
 export type GameCharacterOffline = typeof GameCharacterOffline.Type;
 
-/**
- * The gateway verified Margonem's signed proof that the User plays this
- * Margonem account. Facts may arrive late or twice; `verifiedAt` orders them.
- */
 export const MargonemAccountVerifiedV1 = Schema.Struct({
   version: Schema.Literal(1),
   userId: Schema.NonEmptyString,
@@ -75,8 +71,6 @@ const GuildRole = Schema.Struct({
   position: Schema.Finite,
 });
 
-// A bot released before banners omits `banner`; the API then keeps the stored
-// one instead of clearing it.
 const GuildBanner = Schema.optionalKey(NullableString);
 
 export const GuildCreated = Schema.Struct({
@@ -166,10 +160,6 @@ const OrganizationScopedEvent = Schema.Union([
   Schema.Struct({ organizationId: Schema.NonEmptyString }),
 ]);
 
-/**
- * A changed hero sighting, as the API's sighting response. The gateway reads
- * only the Organization, world and hero level it routes and authorizes by.
- */
 const GuildHeroSightingUpdated = Schema.Struct({
   guildId: Schema.NonEmptyString,
   world: Schema.NonEmptyString,
@@ -182,8 +172,6 @@ const PartyReadyRoomUpdated = Schema.Struct({
   update: Schema.Unknown,
 });
 
-// A refresh hint for the one user whose personal kill statistics a kill
-// changed. Kills of other Organization members never change them.
 const UserKillStatsChanged = Schema.Struct({
   recipientUserId: Schema.NonEmptyString,
 });
@@ -244,7 +232,6 @@ const ActivityActorSnapshot = Schema.Struct({
   prof: Schema.optional(Schema.String),
 });
 
-/** A signed session activity; see `activity-signature`. */
 export const ActivityLogCreated = Schema.Struct({
   userId: Schema.NonEmptyString,
   guildId: Schema.NonEmptyString,
@@ -259,7 +246,6 @@ export const ActivityLogCreated = Schema.Struct({
 
 export type ActivityLogCreated = typeof ActivityLogCreated.Type;
 
-/** A player as the search index keeps it, under `playerSearchId`. */
 export const SearchPlayer = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
@@ -306,7 +292,6 @@ const DiscordGuildChannelDeleted = Schema.Struct({
   syncState: DiscordGuildSyncState,
 });
 
-/** Cumulative confirmed game presence. A gap starts a new segment; retries never extend it. */
 export const UserOnlineCheckpointV1 = Schema.Struct({
   version: Schema.Literal(1),
   type: Schema.Literal("checkpoint"),
@@ -328,7 +313,6 @@ export const UserOnlineCheckpointV1 = Schema.Struct({
 
 export type UserOnlineCheckpointV1 = typeof UserOnlineCheckpointV1.Type;
 
-/** Published only after the durable publisher has drained its pending checkpoints. */
 const UserOnlineHealthV1 = Schema.Struct({
   version: Schema.Literal(1),
   type: Schema.Literal("collector"),
@@ -426,7 +410,6 @@ const canonicalRabbitEventSchemas = {
   ),
 } as const;
 
-/** The schema of each event, for consumers that decode with their own reader. */
 export const rabbitEventSchema = <
   RoutingKey extends CanonicalRabbitEventRoutingKey,
 >(

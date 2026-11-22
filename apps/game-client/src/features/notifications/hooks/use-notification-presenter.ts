@@ -46,8 +46,6 @@ export const useNotificationPresenter = () => {
 
         const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
 
-        // A report of an entrance that already closed is stale on arrival;
-        // the cleanup sweep removes an open one when it closes.
         const entranceClosesAtMs =
           "heroTracker" in notification
             ? getHeroTrackerEntranceClosesAtMs(notification)
@@ -84,8 +82,6 @@ export const useNotificationPresenter = () => {
       setOpen("notifications", true);
     });
 
-    // A report joining a listed row stays silent: automatic sending would
-    // otherwise replay the sound every few seconds.
     const soundKeys = new Set<string>();
 
     for (const presentation of addedPresentations) {

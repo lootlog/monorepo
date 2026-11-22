@@ -12,7 +12,6 @@ import { activityLevel, activityLevelClasses } from "./activity-calendar";
 import { formatIsoWeekday } from "@/components/common/kill-analytics/format-statistics-date";
 import { ActivityLegend } from "./activity-legend";
 
-/** Kills in one hour of one ISO weekday (1 = Monday), in Warsaw time. */
 type WeeklyActivityCell = { weekday: number; hour: number; kills: number };
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
@@ -31,7 +30,6 @@ type WeeklyActivityHeatmapProps = {
   label: string;
 };
 
-/** Activity by weekday (rows) and hour (columns), on the activity heatmap scale. */
 export function WeeklyActivityHeatmap({
   cells,
   label,

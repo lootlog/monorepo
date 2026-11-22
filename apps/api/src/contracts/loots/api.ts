@@ -1,4 +1,3 @@
-/** Endpoints owned by the loots HTTP module. */
 import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   HttpApiEndpoint,
@@ -220,7 +219,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .annotate(OpenApi.Summary, "Draw a loot item")
     .annotate(
       OpenApi.Description,
-      "Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. Any member who can read the loot may draw. 409 while the item has a standing draw",
+      "Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. Requires loot management. 409 while the item has a standing draw",
     ),
   HttpApiEndpoint.post(
     "LootsControllerVoidDraw",

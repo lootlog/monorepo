@@ -22,8 +22,6 @@ import type { ReadyRoomIdentity } from "./ready-room-data.js";
 import { MAX_CAS_ATTEMPTS } from "./ready-room-cas.js";
 import type { ReadyRoomContext } from "./ready-room.data-layer.js";
 
-// Observed IDs are authoritative; reported, registered, and previously
-// observed details fill each member's display fields in that priority.
 const observePartyMembers = (
   aggregate: ReadyRoomAggregate,
   memberIds: ReadonlySet<string>,
@@ -118,12 +116,6 @@ export const observeWithRetry = (
       }
     }
 
-    // Only unversioned reports may skip an unchanged, fresh observation.
-    // A versioned report always advances the revision: after a client
-    // timeout, the retry can carry the same expectedRevision as the
-    // request still in flight, and skipping the bump would let that older
-    // roster overwrite the acknowledged one. Heartbeats are longer than
-    // the refresh window, so they would commit a new revision anyway.
     if (
       expectedRevision === undefined &&
       changed.length === 0 &&

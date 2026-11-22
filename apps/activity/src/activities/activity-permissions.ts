@@ -16,7 +16,6 @@ import {
 
 const UserPermissions = Schema.Array(UserGuildPermissionsDtoSchema);
 
-/** The guild or the user's grants could not be read; the request cannot be authorized. */
 class PermissionsUnavailable extends TaggedErrorClass<
   PermissionsUnavailable,
   { readonly brand: unique symbol }
@@ -38,7 +37,6 @@ export interface PermissionsValue {
     string | null,
     PermissionsUnavailable | ApiHttpClientFailure
   >;
-  /** Reads the user's grants once; the result answers for any guild. */
   readonly getUserCapabilities: (
     discordId: string,
     userId: string,
@@ -178,8 +176,6 @@ export class Permissions extends Context.Service<
         return guild.id;
       });
 
-      // The API owns the grants cache and invalidates it when a member leaves
-      // or their roles change; a copy here would outlive both.
       const getUserPermissions = Effect.fn("Permissions.getUserPermissions")(
         function* (discordId: string, userId: string) {
           const url = new URL(

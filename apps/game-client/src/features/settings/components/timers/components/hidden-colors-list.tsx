@@ -19,7 +19,6 @@ interface HiddenColorsListProps {
   onRestore: (colorId: string) => void;
 }
 
-/** Collapsed list of hidden default colours with a restore action each. */
 export const HiddenColorsList: FC<HiddenColorsListProps> = ({
   hiddenColors,
   colorNames,

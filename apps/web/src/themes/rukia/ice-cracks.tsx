@@ -1,6 +1,5 @@
 import * as m from "framer-motion/m";
 
-// Ice crack lines
 export const IceCracks = ({ isVisible }: { isVisible: boolean }) => (
   <m.svg
     className="absolute inset-0 w-full h-full pointer-events-none"

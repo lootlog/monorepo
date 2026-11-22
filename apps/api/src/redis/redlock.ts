@@ -2,7 +2,6 @@ import { Effect, Option, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type * as Redis from "effect/persistence/Redis";
 
-/** How often, and how far apart, a contended lock is tried again. */
 export interface LockRetry {
   readonly retryCount: number;
   readonly retryDelay: number;
@@ -10,11 +9,9 @@ export interface LockRetry {
 }
 
 export interface RedlockOptions extends Partial<LockRetry> {
-  /** How long before expiry `using` extends a held lock. */
   readonly automaticExtensionThreshold?: number;
 }
 
-/** The Redis command the lock scripts run; each script replies with a key count. */
 export interface RedlockRedis {
   readonly eval: (
     script: string,
@@ -58,7 +55,6 @@ for _, key in ipairs(KEYS) do redis.call("pexpire", key, ARGV[2]) end
 return #KEYS
 `;
 
-/** The lock could not be taken, renewed, or was lost to another holder. */
 export class ExecutionError extends TaggedErrorClass<
   ExecutionError,
   { readonly brand: unique symbol }
@@ -81,10 +77,6 @@ export interface RedisLockManager {
     duration: number,
     options?: RedlockOptions,
   ) => Effect.Effect<RedisLock, ExecutionError>;
-  /**
-   * Runs `effect` while holding `resource`. When another owner still holds it
-   * after the retry budget, fails with `unavailable()` instead.
-   */
   readonly withLock: <A, E, R, U>(
     resource: string,
     duration: number,
@@ -92,12 +84,6 @@ export interface RedisLockManager {
     unavailable: () => U,
     retry?: Partial<LockRetry>,
   ) => Effect.Effect<A, E | U, R>;
-  /**
-   * Returns what `read` finds, or computes it with `fill` under the lock on
-   * `resource` so concurrent callers share one fill. A caller that finds the
-   * lock held reads again and retries it every `wait.retryDelay`, and fails
-   * with `unavailable()` once `wait.retryCount` retries pass.
-   */
   readonly singleFlight: <A, ReadError, FillError, R, U>(
     options: {
       readonly resource: string;
@@ -108,7 +94,6 @@ export interface RedisLockManager {
     read: Effect.Effect<Option.Option<A>, ReadError, R>,
     fill: Effect.Effect<A, FillError, R>,
   ) => Effect.Effect<A, ReadError | FillError | U, R>;
-  /** Runs `routine` while holding `resources`, extending the lock until it ends. */
   readonly using: <A, E, R>(
     resources: ReadonlyArray<string>,
     duration: number,

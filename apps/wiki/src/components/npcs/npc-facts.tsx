@@ -6,10 +6,6 @@ import { npcKind, npcProfession } from "@/lib/npc-summary";
 
 type Fact = { label: string; value: ReactNode };
 
-/**
- * The monster's key facts as one ruled line under its heading: its kind and
- * its level. The Locations section right below lists its maps.
- */
 export function NpcFacts({ npc }: { npc: CatalogNpcDtoOutput }) {
   const kind = npcKind(npc);
   const profession = npcProfession(npc.prof);
@@ -21,7 +17,6 @@ export function NpcFacts({ npc }: { npc: CatalogNpcDtoOutput }) {
       label: t("item.level"),
       value: npc.lvl > 0 ? npc.lvl : t("npc.elasticLevel"),
     },
-    // A catalog released before first sightings were served sends none.
     ...(npc.firstSeenOn
       ? [
           {

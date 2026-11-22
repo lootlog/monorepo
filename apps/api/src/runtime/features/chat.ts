@@ -8,7 +8,6 @@ import {
 import type { RedisService } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
-// Moderation-rare scan over at most CHAT_MESSAGE_LIMIT elements.
 const REPLACE_SCRIPT = `
 for index, value in ipairs(redis.call("LRANGE", KEYS[1], 0, -1)) do
   if value == ARGV[1] then

@@ -2,7 +2,6 @@ import type { MapGap } from "@/lib/api/event-types";
 
 type CoverageSegmentType = "COVERED" | MapGap["gapType"];
 
-/** Fill colour of a coverage segment, shared by timelines, legends and gap lists. */
 export const COVERAGE_SEGMENT_BG_CLASS_NAMES: Record<
   CoverageSegmentType,
   string
@@ -12,7 +11,6 @@ export const COVERAGE_SEGMENT_BG_CLASS_NAMES: Record<
   UNASSIGNED: "bg-signal-alert",
 };
 
-/** Text colour of a coverage segment's metric. */
 export const COVERAGE_SEGMENT_TEXT_CLASS_NAMES: Record<
   CoverageSegmentType,
   string
@@ -34,7 +32,6 @@ export const getMapCoverageColorClassName = (coveragePercent: number) => {
   return COVERAGE_SEGMENT_TEXT_CLASS_NAMES.COVERED;
 };
 
-/** Colour of a "covered of total maps" count: all, some or none covered. */
 export const getCoveredMapsColorClassName = (
   coveredMapsCount: number,
   totalMapsCount: number,

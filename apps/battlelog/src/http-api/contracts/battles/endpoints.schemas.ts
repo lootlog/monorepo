@@ -1,4 +1,3 @@
-/** endpoints transport definitions for battles. */
 import * as Schema from "effect/Schema";
 import {
   BattleRawResponseDto_Output,
@@ -37,7 +36,6 @@ import {
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
 
-// schemas
 const BattleAnalyticsQueryFields = {
   characterId: Schema.optionalKey(Schema.String),
   world: Schema.optionalKey(Schema.String),

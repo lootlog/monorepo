@@ -8,7 +8,6 @@ type SettingsVolumeControlProps = {
   label: string;
   muteLabel: string;
   unmuteLabel: string;
-  /** Volume in [0, 1]. */
   volume: number;
   muted: boolean;
   disabled?: boolean;
@@ -18,10 +17,6 @@ type SettingsVolumeControlProps = {
   className?: string;
 };
 
-/**
- * Mute toggle + volume slider + percentage readout. Used for the master
- * volume, per-category volumes and the map pings volume.
- */
 export const SettingsVolumeControl: FC<SettingsVolumeControlProps> = ({
   label,
   muteLabel,
@@ -35,7 +30,6 @@ export const SettingsVolumeControl: FC<SettingsVolumeControlProps> = ({
   className,
 }) => {
   const toggleLabel = muted ? unmuteLabel : muteLabel;
-  /** Remounts the icon with the bump class once per committed volume. */
   const [bumpKey, setBumpKey] = useState(0);
 
   return (

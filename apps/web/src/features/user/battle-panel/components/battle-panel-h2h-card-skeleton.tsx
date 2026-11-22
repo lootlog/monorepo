@@ -8,11 +8,9 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { BattlePanelWarriorSkeleton } from "./battle-panel-warrior-skeleton";
 
 type BattlePanelH2hCardSkeletonProps = {
-  /** Mirrors `BattlePanelH2hCard`'s `showRatingDelta` row. */
   withRatingDelta?: boolean;
 };
 
-/** Stands in for one `BattlePanelH2hCard`. */
 export const BattlePanelH2hCardSkeleton = ({
   withRatingDelta = false,
 }: BattlePanelH2hCardSkeletonProps) => (

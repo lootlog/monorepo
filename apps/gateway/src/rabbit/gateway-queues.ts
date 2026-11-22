@@ -6,9 +6,6 @@ import {
 } from "@lootlog/protocol/rabbit/topology";
 import { Option, Schema } from "effect";
 
-// A role edit queues one event per role holder, and each rebalance can wait
-// on the API. Rebalances read current permissions and are idempotent, so they
-// need no order and run side by side.
 const MEMBER_ACCESS_PREFETCH = 8;
 
 export const gatewayRoutes = [
@@ -97,15 +94,11 @@ export const gatewayRoutes = [
     RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER,
     { failure: "retry" },
   ),
-  // No retry or DLQ: each answer carries the whole list and the answering
-  // client already has it from HTTP, so a lost push heals on the next answer.
   consumerRoute(
     "gateway-guilds-notifications-going",
     RabbitRoutingKey.GUILDS_NOTIFICATIONS_GOING,
     { failure: "nack" },
   ),
-  // No retry or DLQ: a refresh hint; a lost one heals on the next kill or
-  // the statistics' own staleness.
   consumerRoute(
     "gateway-users-kill-stats-changed",
     RabbitRoutingKey.USERS_KILL_STATS_CHANGED,
@@ -204,9 +197,6 @@ const decodeString = Schema.decodeUnknownOption(Schema.String);
 
 const decodeNumber = Schema.decodeUnknownOption(Schema.Finite);
 
-// Identifies a dead-lettered delivery without logging its payload or any
-// member's Discord ID. Each field decodes on its own, because a delivery that
-// failed validation is the likeliest one to reach the DLQ.
 export const deadLetterIdentifiers = (content: Uint8Array) => {
   const payload = decodeJsonRecord(new TextDecoder().decode(content));
   const field = (key: string) => Option.map(payload, (data) => data[key]);

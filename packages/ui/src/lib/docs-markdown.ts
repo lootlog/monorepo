@@ -1,10 +1,3 @@
-/**
- * Markdown versions of documentation pages for AI assistants, following the
- * llms.txt convention (https://llmstxt.org): `/llms.txt` lists the pages,
- * `/llms-full.txt` holds all of them, and every page has a `.md` twin.
- */
-
-/** The `.md` twin of a documentation page URL; the index is `/docs/index.md`. */
 export function getMarkdownPath(pageUrl: string, slugs: readonly string[]) {
   return slugs.length === 0 ? `${pageUrl}/index.md` : `${pageUrl}.md`;
 }
@@ -30,7 +23,6 @@ type LlmsLink = { title: string; url: string; description?: string };
 
 type LlmsSection = { title: string; links: LlmsLink[] };
 
-/** The `/llms.txt` index: a title, a one-line summary, notes and link lists. */
 function formatLlmsIndex(index: {
   title: string;
   summary: string;
@@ -59,10 +51,6 @@ type PageTreeNode =
   | { type: "page"; url: string; external?: boolean }
   | { type: "folder"; index?: PageTreeNode; children: PageTreeNode[] };
 
-/**
- * Groups the pages of a Fumadocs page tree under its separators, in sidebar
- * order. Pages before the first separator go under `firstSection`.
- */
 function groupPageUrls(nodes: readonly PageTreeNode[], firstSection: string) {
   type Section = { title: string; urls: string[] };
 
@@ -73,7 +61,6 @@ function groupPageUrls(nodes: readonly PageTreeNode[], firstSection: string) {
   const visit = (node: PageTreeNode) => {
     if (node.type === "separator") {
       current = {
-        // Separators come from `---Name---` entries in meta.json.
         title: node.name ? String(node.name) : firstSection,
         urls: [],
       };
@@ -91,10 +78,8 @@ function groupPageUrls(nodes: readonly PageTreeNode[], firstSection: string) {
   return sections.filter((section) => section.urls.length > 0);
 }
 
-/** Layout-only MDX components: their content matters, the wrapper does not. */
 const layoutComponents = new Set(["Steps", "Step", "Tabs", "Tab", "Cards"]);
 
-/** Fumadocs `includeProcessedMarkdown` options for the `.md` page versions. */
 export const llmsMarkdownOptions = {
   headingIds: false,
   filterElement: (node: { type: string; name?: string | null }) =>
@@ -121,18 +106,12 @@ type DocsSiteSource<Page extends DocsSitePage> = {
   getPageTree(): { children: readonly PageTreeNode[] };
 };
 
-/**
- * The llms.txt surface of a Fumadocs site: the `.md` twin of every page, the
- * `/llms.txt` index and `/llms-full.txt`. Pages hidden from the sidebar are
- * listed last under `otherPagesSection`, so every page reaches AI assistants.
- */
 export function createDocsSite<Page extends DocsSitePage>({
   source,
   origin,
   llms,
 }: {
   source: DocsSiteSource<Page>;
-  /** The production origin pages are published under. */
   origin: string;
   llms: {
     title: string;
@@ -140,7 +119,6 @@ export function createDocsSite<Page extends DocsSitePage>({
     notes: string;
     firstSection: string;
     otherPagesSection: string;
-    /** Sections listed after the pages. */
     extraSections?: readonly LlmsSection[];
   };
 }) {
@@ -178,7 +156,6 @@ export function createDocsSite<Page extends DocsSitePage>({
   return {
     getPageMarkdownPath,
 
-    /** The `.md` twin of the page at a slug; `index` is the start page. */
     async pageMarkdownResponse(slug: string) {
       const page = source.getPage(slug === "index" ? [] : [slug]);
 

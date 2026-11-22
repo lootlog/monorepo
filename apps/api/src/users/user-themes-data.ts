@@ -48,7 +48,6 @@ export class UserThemesData extends Context.Service<
       userId: string,
       themeId: string,
     ) => Persisted<StoredUserTheme | null>;
-    /** Returns `null` once the User already has `CUSTOM_THEME_LIMIT` themes. */
     readonly create: (
       userId: string,
       payload: CreateUserThemeRequest,
@@ -59,10 +58,6 @@ export class UserThemesData extends Context.Service<
       payload: UpdateUserThemeRequest,
     ) => Persisted<StoredUserTheme | null>;
     readonly delete: (userId: string, themeId: string) => Persisted<boolean>;
-    /**
-     * Sets the share token only while the theme has none, then returns the
-     * stored theme, so concurrent requests all receive the one winning link.
-     */
     readonly claimShareToken: (
       userId: string,
       themeId: string,
@@ -115,8 +110,6 @@ export class UserThemesData extends Context.Service<
           persisted(
             database.transaction((transaction) =>
               Effect.gen(function* () {
-                // Serializes one User's creates so parallel requests cannot
-                // pass the limit check together.
                 yield* transaction.execute(
                   sql`SELECT pg_advisory_xact_lock(hashtext(${`user-theme:${userId}`}))`,
                 );
@@ -181,8 +174,6 @@ export class UserThemesData extends Context.Service<
                   Schema.Struct({ baseThemeId: BuiltInThemeIdSchema }),
                 )(deleted.definition);
 
-                // A User who had the theme selected keeps its look's base
-                // instead of pointing at a theme that no longer exists.
                 yield* transaction
                   .update(userSettingsTable)
                   .set({ theme: baseThemeId, updatedAt: yield* now })
@@ -218,7 +209,6 @@ export class UserThemesData extends Context.Service<
 
               if (claimed) return claimed;
 
-              // Another request set the token first, or the theme is gone.
               const [current] = yield* database
                 .select()
                 .from(userThemeTable)

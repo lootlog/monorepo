@@ -851,7 +851,6 @@ describe("organization workspace response boundaries", () => {
   });
 
   it("rejects a malformed reservation date at the response boundary", () => {
-    // A string date cannot come from the typed port; the boundary receives it.
     expect(
       Exit.isFailure(
         Effect.runSyncExit(
@@ -864,7 +863,6 @@ describe("organization workspace response boundaries", () => {
     ).toBe(true);
   });
 
-  // An extra runtime field the response contract cannot serialize.
   const constraintsWithFunction = {
     ...reservation.editingConstraints,
     bad: () => 1,

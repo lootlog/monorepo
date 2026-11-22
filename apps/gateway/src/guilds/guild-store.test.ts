@@ -179,7 +179,6 @@ describe("Gateway guild store", () => {
     );
 
     await started.promise;
-    // Another gateway fills the projection, then a revocation invalidates it.
     await redis.store.command.set(
       getUserGuildsCacheKey(options.discordId, options.userId),
       JSON.stringify({ guilds, cachedAt: Date.now() }),
@@ -317,7 +316,6 @@ describe("Gateway guild store", () => {
       Effect.runPromise(store.getUserGuilds(options)),
     ).resolves.toEqual([]);
 
-    // The fenced response is discarded; the first join gets current access.
     obsolete.resolve(httpResponse(200, guilds));
     await expect(first).resolves.toEqual([]);
     expect(calls).toBe(2);

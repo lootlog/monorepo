@@ -131,7 +131,6 @@ it("replaces a timer list still loading from the unreachable fallback when the f
       gateway.wire.open();
     });
     await gateway.join(["guild-1"]);
-    // The fallback snapshot may predate the subscription, so the join asks again.
     await waitFor(() => expect(fixture.requests).toHaveLength(2));
     earlyResponse.resolve(Response.json([early]));
     await waitFor(() =>

@@ -1,11 +1,5 @@
 import { Schema } from "effect";
 
-/**
- * What a hero detector reported. Margonem answers a detector scroll with
- * "grasuje w" ("roves in" in the English game) for a hero alive on the map
- * (`ROAMING`) and "pojawi się w" ("will appear in") for the map its next spawn
- * is placed on (`SPAWNING`).
- */
 export const HeroSightingState = {
   ROAMING: "ROAMING",
   SPAWNING: "SPAWNING",
@@ -19,12 +13,6 @@ export const HeroSightingStateSchema = Schema.Literals([
   HeroSightingState.SPAWNING,
 ]);
 
-/**
- * Why a sighting stopped being current. `PROBABLY_KILLED` is inferred from a
- * later detection that contradicts it; `KILLED` comes from a kill Lootlog
- * recorded itself; `WITHDRAWN` means a Member took back a sighting entered by
- * hand.
- */
 export const HeroSightingCloseReason = {
   KILLED: "KILLED",
   PROBABLY_KILLED: "PROBABLY_KILLED",

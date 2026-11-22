@@ -39,10 +39,6 @@ export function createAccessPolicy(
   return accessPolicy;
 }
 
-/**
- * Serializes a policy at a storage or transport adapter. Decision callers
- * should use `allows` or `allowsAny` instead.
- */
 export function getEffectiveCapabilities(
   accessPolicy: AccessPolicy,
 ): Capability[] {
@@ -75,12 +71,6 @@ export function resolveCapabilities(
   return [...explicitCapabilities];
 }
 
-/**
- * Role permissions that grant at least one of `required`, for storage queries
- * that match raw role permission arrays. Keeps them aligned with
- * {@link resolveCapabilities}, where OWNER and ADMIN expand to other
- * capabilities.
- */
 export function capabilitiesGrantingAny(
   required: readonly Capability[],
 ): Capability[] {
@@ -95,23 +85,11 @@ export function capabilitiesGrantingAny(
   return [...granting];
 }
 
-/**
- * Named requirements, so every surface checks "administer" and "moderate" the
- * same way. Each lists alternatives for {@link AccessPolicy.allowsAny}; OWNER
- * satisfies both through {@link resolveCapabilities}.
- */
 export const AccessRequirement = {
-  /** Organization configuration, roles, members, and Organization-wide resets. */
   ADMINISTER: [Capability.ADMIN],
-  /** Other members' content: reservations and individual chat messages. */
   MODERATE: [Capability.ADMIN, Capability.LOOTLOG_MANAGE],
 } as const satisfies Record<string, readonly Capability[]>;
 
-/**
- * The capabilities a member holds in one Organization before expansion: the
- * Discord guild owner holds OWNER, every other member the union of their role
- * permissions. Callers still decide whether the member row is active.
- */
 export function memberCapabilities(member: {
   readonly ownerId: string;
   readonly viewerId: string;

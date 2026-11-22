@@ -1,4 +1,3 @@
-/** Endpoints owned by the guilds HTTP module. */
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import {
   ActivitiesControllerDeleteActivity200,

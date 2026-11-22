@@ -37,7 +37,6 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
       aria-label={t("events.sidebarBanner.activeEvent")}
       className="relative isolate overflow-hidden border-b border-sidebar-border bg-primary/[0.04]"
     >
-      {/* The glow behind the heroes breathes, so the block reads as live. */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 animate-glow-breathe bg-[radial-gradient(70%_60%_at_100%_0%,color-mix(in_oklab,var(--color-primary)_18%,transparent),transparent)] motion-reduce:animate-none"
@@ -53,7 +52,6 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
         )}
       >
         <span className="flex min-w-0 flex-1 flex-col">
-          {/* Never wraps: the heroes widen on hover and would reflow the block. */}
           <span className="text-[0.6875rem] font-semibold tracking-wider whitespace-nowrap text-primary uppercase">
             {t("events.sidebarBanner.activeEvent")}
           </span>

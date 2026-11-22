@@ -17,20 +17,10 @@ import { EquipmentStatSection } from "./equipment-stat-section";
 
 type EquipmentSetTotalsProps = {
   totals: StatTotals;
-  /**
-   * What learned skills add, at the character's level; without it the
-   * window shows the items alone.
-   */
   skills?: { bonuses: SkillBonuses; level: number | null };
-  /** Whether the set has loaded, so a change of its totals is the User's. */
   isLoaded: boolean;
 };
 
-/**
- * The set's stats added up as the game's character window lists them, by
- * section, with the change the User's last edit of the set made. Every stat
- * keeps a row that opens when the set has it.
- */
 export function EquipmentSetTotals({
   totals,
   skills,

@@ -302,9 +302,6 @@ it("keeps authorized gathering rosters current across discovery, observations, a
 
     emptyIndex = true;
 
-    // Discovery reads the caller's guilds to find its indexes, but an empty
-    // result needs no source-role query. The caller's own rooms are indexed by
-    // User, so an empty list needs no query at all.
     for (const [path, queries] of [
       ["/messaging/party-gathering/active?world=experimental", 1],
       ["/messaging/party-gathering", 0],
@@ -567,8 +564,6 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       latestObservation.guildId,
     ]);
 
-    // The organizer's heartbeat re-reports an unchanged party; viewers must
-    // receive the renewed observation before it turns stale.
     now += PARTY_OBSERVATION_HEARTBEAT_MS;
 
     const heartbeat = await boundary.handler(
@@ -604,9 +599,6 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       update: { type: "UPSERT", gathering: renewed },
     });
 
-    // The heartbeat just renewed an unchanged roster, so an unversioned report
-    // would be skipped. A versioned one must still advance the revision, or a
-    // delayed request carrying the same revision could overwrite it.
     const observeAtRevision = (memberCharacterIds: string[]) =>
       boundary.handler(
         new Request(
@@ -754,7 +746,6 @@ it("keeps authorized gathering rosters current across discovery, observations, a
         ),
       );
 
-    // Every character of the organizer's Margonem account is the organizer.
     const sameAccount = await applyAs({
       ...base.organizerCharacter,
       characterId: "applicant",
@@ -762,7 +753,6 @@ it("keeps authorized gathering rosters current across discovery, observations, a
 
     expect(sameAccount.status).toBe(409);
 
-    // Another Margonem account of the same Discord user may join.
     const apply = await applyAs({
       ...base.organizerCharacter,
       accountId: "4",
@@ -904,7 +894,6 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       rooms.find((room) => room.notificationId === "own-filtered")?.status,
     ).toBe("CANCELLED");
 
-    // The organizer can now create gatherings in both Lootlogs.
     await databaseBoundary.run(
       databaseBoundary.database.insert(memberTable).values(
         createMemberFixture({

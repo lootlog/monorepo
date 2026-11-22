@@ -21,8 +21,6 @@ describe("Discord REST clients", () => {
   });
 
   test("creates per-user REST clients without process-lifetime sweeper timers", async () => {
-    // Each REST constructor would otherwise register two unreferenced
-    // intervals that keep the instance and its bearer token reachable forever.
     const factory = makeDiscordRestClients(authService("token-1"));
 
     const client = (userId: string, discordId: string) =>

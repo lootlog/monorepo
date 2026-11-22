@@ -19,12 +19,10 @@ import { ThemeRow } from "./theme-row";
 import { previewThemeClass } from "@lootlog/ui/themes/resolver";
 import { useCreateTheme } from "./use-create-theme";
 
-/** A random theme starts from one fixed palette, not the cat roulette. */
 const RANDOM_BASES = THEME_CATALOG.map(({ name }) => name).filter(
   (name) => name !== "cat-random",
 );
 
-/** The first step of a new theme: the built-in theme it starts from. */
 export const ThemeBasePickerPage = () => {
   const { t } = useTranslation();
   const { data: userThemes } = useUserThemes();

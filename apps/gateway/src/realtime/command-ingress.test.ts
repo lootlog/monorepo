@@ -336,7 +336,6 @@ test("queued commands on closed sockets cannot consume reserved disconnect capac
   await Effect.runPromise(cleanup);
   expect(target.closed).toEqual(["idle"]);
   expect(target.handled).toEqual([]);
-  // Only resume command work after proving that independent cleanup progressed.
   await target.runNext();
   await target.runNext();
   await target.runNext();
@@ -381,7 +380,6 @@ test("WebSocket close removes delivery targets immediately and rejects excess li
     ...socket("excess"),
     close: (code) => {
       closes.push(code ?? 1000);
-      // Bun can deliver close synchronously while the open callback rejects it.
       transport.close(excess, code);
     },
   };

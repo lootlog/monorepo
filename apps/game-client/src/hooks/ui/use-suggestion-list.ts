@@ -1,13 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
-/** Long enough for a click on a suggestion to land before the list closes. */
 const BLUR_CLOSE_DELAY_MS = 200;
 
-/**
- * Open state and keyboard highlight of the suggestions under a text input:
- * arrows move the highlight, Enter picks it, and Escape closes the list
- * before it reaches whatever contains the input.
- */
 export const useSuggestionList = <T>(items: readonly T[]) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -62,7 +56,6 @@ export const useSuggestionList = <T>(items: readonly T[]) => {
       event.preventDefault();
       onSelect(selected);
     } else if (event.key === "Escape" && isOpen) {
-      // Escape dismisses the suggestions first; the next one reaches the panel.
       event.stopPropagation();
       close();
     }

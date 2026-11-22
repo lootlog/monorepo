@@ -18,8 +18,6 @@ export interface EventWrappedLeaderResultDto {
   tiedWinnerCount: number;
 }
 
-// A type alias, not an interface: the response schema allows extra JSON keys,
-// and only an alias is assignable to its index signature.
 export type EventWrappedHeroCoverageDto = {
   heroNpcId: string;
   npcName: string;

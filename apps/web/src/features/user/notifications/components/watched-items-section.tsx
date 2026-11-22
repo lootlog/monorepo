@@ -14,14 +14,11 @@ const getWatchedItemGuildIds = (filters: { guildIds?: string[] } | null) =>
 type WatchedItemsSectionProps = {
   watchedItems: WatchedItemResponseDto[];
   guilds: Array<{ id: string; name: string }>;
-  /** Watching needs active direct messages, and stops at the limit. */
   canAddWatch: boolean;
   onAddWatch: () => void;
-  /** Controls after the add button, such as the explanation. */
   trailing?: ReactNode;
 };
 
-/** The player's watched items, tiled under a heading that counts them. */
 export const WatchedItemsSection = ({
   watchedItems,
   guilds,
@@ -46,7 +43,6 @@ export const WatchedItemsSection = ({
       tiled
       trailing={
         <div className="flex items-center gap-1">
-          {/* On phones the button keeps only its icon, so the title fits. */}
           <Button
             type="button"
             size="sm"
@@ -101,7 +97,6 @@ export const WatchedItemsSection = ({
       ) : (
         <ListTileEmpty icon={Package}>
           {t("settings.userNotifications.empty.watchedItems")}
-          {/* The section's description already says what watching does. */}
           {!canAddWatch &&
             ` ${t("settings.userNotifications.dm.requiredHint")}`}
         </ListTileEmpty>

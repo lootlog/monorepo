@@ -9,7 +9,6 @@ type RetryButtonProps = {
   size?: "sm" | "default";
 };
 
-/** Repeats a failed load or save; the one retry control across the app. */
 export const RetryButton = ({
   onRetry,
   isRetrying = false,

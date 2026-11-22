@@ -11,11 +11,6 @@ export type DomainJsonValue =
   | ReadonlyArray<DomainJsonValue>
   | { readonly [key: string]: DomainJsonValue };
 
-/**
- * Generic JSON boundary codec for endpoints whose application projection is
- * intentionally open. Concrete response schemas still validate the encoded
- * result; this codec owns only JSON-native values and Date serialization.
- */
 export const DomainJsonValue: Schema.Codec<DomainJsonValue> = Schema.suspend(
   (): Schema.Codec<DomainJsonValue> =>
     Schema.Union([

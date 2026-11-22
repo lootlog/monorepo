@@ -103,7 +103,6 @@ describe("NotificationsSettingsTab", () => {
     await user.click(cellOf("COLOSSUS-highlight"));
     expect(document.getElementById("COLOSSUS-highlight")).toBeChecked();
 
-    // A click on the switch itself must not be forwarded a second time.
     await user.click(
       screen.getByRole("switch", { name: "Kolos: Podświetlenie" }),
     );
@@ -114,8 +113,6 @@ describe("NotificationsSettingsTab", () => {
   });
 
   it("switches a whole column on unless every editable row is already on, skipping rows that are off", async () => {
-    // The column header is a tooltip trigger; hovering it would count
-    // cursor-tracking tooltip commits against the form-reset guard above.
     const user = userEvent.setup({ skipHover: true });
     setTestRuntimeGame({ hero: { accountId: "202" } });
     const initial = createGameAccountPreferences("202");

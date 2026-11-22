@@ -7,6 +7,5 @@ const KILL_SHIFTS = [
   { until: 24, key: "evening", icon: Sunset },
 ] as const;
 
-/** The part of the day an hour (0–23) falls in, named in `kills.records.shift`. */
 export const getKillShift = (hour: number) =>
   KILL_SHIFTS.find((shift) => hour < shift.until) ?? KILL_SHIFTS[3];

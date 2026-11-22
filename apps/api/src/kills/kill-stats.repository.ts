@@ -142,7 +142,6 @@ export const buildKillStatsCondition = (
       : undefined,
   );
 
-// The kill source applies `filter.periodStart`.
 const memberColumns = (source: MemberKillSource): FilterColumns => ({
   guildId: source.guildId,
   userId: source.discordUserId,
@@ -181,7 +180,6 @@ const guildDayColumns: FilterColumns = {
   npcName: guildKillDayTable.npcName,
 };
 
-/** Organization buckets, which keep the hour of every kill even for all-time statistics. */
 const guildBucketCondition = (filter: KillStatsFilter) =>
   and(
     buildKillStatsCondition(guildBucketColumns, filter),
@@ -238,7 +236,6 @@ export const makeKillStatsPersistence = (
         .pipe(Effect.map((rows) => rows[0] ?? null)),
     );
 
-  /** One page of `limit + 1` NPCs, so the caller can tell whether more follow. */
   const findMemberNpcPage = (
     filter: KillStatsFilter,
     limit: number,
@@ -425,8 +422,6 @@ export const makeKillStatsPersistence = (
     filter: KillStatsFilter,
     unit: KillTimelineUnit,
   ) => {
-    // Without a period start the daily rollup holds the same kills in far
-    // fewer rows; hours are only asked for by periods, which have a start.
     if (!filter.periodStart?.gte && unit === "day") {
       const day = sql<string>`to_char(${guildKillDayTable.day}, 'YYYY-MM-DD')`;
 
@@ -465,7 +460,6 @@ export const makeKillStatsPersistence = (
 
   const guildKillHourlyWeekday = (filter: KillStatsFilter) => {
     if (!filter.periodStart?.gte) {
-      // Slot n of the day's counters is local hour n - 1.
       const weekday = sql<number>`extract(isodow from ${guildKillDayTable.day})::int`;
       const hour = sql<number>`(hours.slot - 1)::int`;
 
@@ -482,7 +476,6 @@ export const makeKillStatsPersistence = (
             sql`unnest(${guildKillDayTable.hours}) with ordinality as hours(kills, slot)`,
             sql`true`,
           )
-          // Hours without kills are not cells of the heatmap.
           .where(
             and(
               buildKillStatsCondition(guildDayColumns, filter),

@@ -47,7 +47,6 @@ export interface VerifiedIdentity {
   readonly apiKeyAccess?: ApiKeyAccess;
   readonly userId: string;
   readonly discordId: string;
-  /** Platform roles of a signed-in User; an API key carries none. */
   readonly roles?: ReadonlyArray<PlatformRole>;
 }
 
@@ -75,7 +74,6 @@ type AccessTokenPayload = {
 } | null;
 
 export interface AuthProvider {
-  /** Resolved names of the session token cookie and the cookie cache cookie. */
   readonly sessionCookieNames: {
     readonly token: string;
     readonly data: string;
@@ -84,10 +82,6 @@ export interface AuthProvider {
     readonly getSession: (input: {
       headers: Headers;
     }) => Promise<SessionIdentity | null>;
-    /**
-     * The session plus the cookies Better Auth wants to write back, so a caller
-     * can return the refreshed cookie cache to the browser.
-     */
     readonly getSessionWithCookies: (input: { headers: Headers }) => Promise<{
       readonly session: SessionIdentity | null;
       readonly setCookie: ReadonlyArray<string>;
@@ -121,7 +115,6 @@ const reauthenticationRequired = () =>
     requiresReauth: true,
   });
 
-/** A failure the caller cannot act on: answered with an empty 500 and logged. */
 const internalServerError = (message: string) =>
   new UnexpectedApplicationError({ message });
 
@@ -146,11 +139,6 @@ const normalizeScopes = Function.compose(
   },
 );
 
-/**
- * How long a verified session cookie keeps its decision. One page load sends
- * the same cookie through Traefik a dozen times; a revoked session therefore
- * stays valid for at most this long on top of the cookie cache's own window.
- */
 export const SESSION_DECISION_TTL_MS = 5_000;
 
 const SESSION_DECISION_CAPACITY = 10_000;
@@ -198,11 +186,6 @@ export const createAuthService = ({
       }),
   );
 
-  /**
-   * Without a session token cookie Better Auth has nothing to resolve, so the
-   * lookup would always miss. Skipping it keeps API-key and bearer requests off
-   * the session store entirely.
-   */
   const hasSessionCookie = (headers: Headers) =>
     headers.get("cookie")?.includes(auth.sessionCookieNames.token) === true;
 
@@ -211,7 +194,6 @@ export const createAuthService = ({
     { readonly identity: VerifiedIdentity; readonly expiresAt: number }
   >();
 
-  /** Hash of the session cookies, so the cache never holds a credential. */
   const sessionDecisionKey = (headers: Headers) => {
     const cookie = headers.get("cookie") ?? "";
     const token = readCookie(cookie, auth.sessionCookieNames.token);
@@ -303,9 +285,6 @@ export const createAuthService = ({
         return { identity: yield* verifyApiKey(key), setCookie: [] };
       }
 
-      // Only a successful session decision is remembered, and only when it
-      // carries no cookie refresh: a refusal must flip as soon as the user
-      // signs in, and the refresh has to reach the browser.
       const decisionKey = authorizationHeader
         ? undefined
         : sessionDecisionKey(headers);
@@ -319,8 +298,6 @@ export const createAuthService = ({
       if (remembered && remembered.expiresAt > now)
         return { identity: remembered.identity, setCookie: [] };
 
-      // The cookie cache keeps the session store out of the common path. Its
-      // refresh only reaches the browser when this response carries it back.
       const {
         session,
         setCookie,
@@ -379,7 +356,6 @@ export const createAuthService = ({
               accountId,
             },
           }),
-        // Better Auth's own refusals are classified by the callers.
         catch: (cause) =>
           cause instanceof APIError
             ? cause
@@ -498,8 +474,6 @@ export const createAuthService = ({
             });
           }
 
-          // Better Auth reports every failed refresh of an expired token
-          // this way; the account exists and a new sign-in replaces the token.
           if (code === "FAILED_TO_GET_ACCESS_TOKEN") {
             return yield* tokenExpired();
           }

@@ -11,7 +11,6 @@ export type CreateActivity = ActivityLogCreated;
 
 const decodeBase = Schema.decodeUnknownSync(ActivityLogCreated);
 
-/** The actor fields an activity log row cannot be stored without. */
 const storedActorFields = [
   "accountId",
   "characterId",

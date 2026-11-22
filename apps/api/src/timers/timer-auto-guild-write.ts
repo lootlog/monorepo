@@ -43,12 +43,10 @@ export interface AutoTimerGuildWritePorts extends AutoTimerPersistencePorts {
     value: string,
     ttlSeconds: number,
   ) => Effect.Effect<void, RedisError>;
-  /** Wakes the dispatcher for checks committed with a timer. */
   readonly signalEventHeroChecks: Effect.Effect<void>;
   readonly locks: Pick<RedisLockManager, "singleFlight">;
 }
 
-// A concurrent report of the same kill waits up to 5 s for the first one.
 const DEDUP_LOCK_WAIT = { retryCount: 100, retryDelay: 50, retryJitter: 0 };
 
 const decodeCachedTimerProjection = Schema.decodeUnknownSync(
@@ -61,10 +59,6 @@ const projectionFromCache = (value: string) =>
     catch: (cause) => new TimersInfrastructureError({ cause }),
   });
 
-/**
- * Records a reported kill in one Lootlog and publishes it. Concurrent and
- * retried reports of the same kill share one stored timer.
- */
 export const writeGuildTimer = (
   database: typeof ApiDatabase.Service,
   ports: AutoTimerGuildWritePorts,
@@ -112,8 +106,6 @@ export const writeGuildTimer = (
         if (Predicate.isTagged(result, "Duplicate")) return response;
         yield* ports.signalEventHeroChecks;
 
-        // The dedup entry is written only after publication succeeds, so a
-        // retry of a failed attempt republishes instead of returning it.
         yield* ports.invalidateList(guildId);
 
         if (

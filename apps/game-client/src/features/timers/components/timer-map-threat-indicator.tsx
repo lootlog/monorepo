@@ -13,8 +13,6 @@ export function TimerMapThreatIndicator({
   const fresh = threat.freshCount > 0;
   const count = fresh ? threat.freshCount : threat.enemies.length;
 
-  // Fresh sightings sort first, so they are the leading `freshCount` enemies;
-  // once none is fresh, the count covers every enemy still shown.
   const counted = fresh
     ? threat.enemies.slice(0, threat.freshCount)
     : threat.enemies;

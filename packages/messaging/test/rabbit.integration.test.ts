@@ -94,8 +94,6 @@ describe("RabbitMessaging real broker integration", () => {
     channel.on("error", () => undefined);
 
     try {
-      // The broker closes the channel for this missing queue before processing
-      // the following publish, exercising amqplib's pending-confirm cleanup.
       const invalidQueue = channel
         .checkQueue(`missing-${crypto.randomUUID()}`)
         .catch(() => undefined);
@@ -214,8 +212,6 @@ describe("RabbitMessaging real broker integration", () => {
           ),
         ).pipe(RabbitMessaging.supervised),
       );
-      // Inspect after the application scope has closed: the recovery message
-      // must still be available, with no automatic DLQ consumer draining it.
       expect(await channel.checkQueue(deadLetterQueue)).toMatchObject({
         messageCount: 1,
         consumerCount: 0,

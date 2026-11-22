@@ -48,8 +48,6 @@ export function Reservations() {
   const guildId = useGuildId() ?? "";
   const [searchValue, setSearchValue] = useState("");
 
-  // Not persisted: a narrowing filter left on from an earlier visit hid the
-  // occupied spots, whose future slots are still open for reservations.
   const [filter, setFilter] = useState<ReservationFilter>("all");
 
   const { viewMode, setViewMode, canChooseViewMode } = useViewMode(

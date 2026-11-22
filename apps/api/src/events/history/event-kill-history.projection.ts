@@ -63,8 +63,6 @@ export const makeEventKillHistoryProjection = (
       ),
     );
 
-    // Reaches back to the minimum respawn time as well, so the breakdown can
-    // rebuild the whole scoring window's presence.
     const fallbackMemberIds = [
       ...new Set(
         normalizedPoints

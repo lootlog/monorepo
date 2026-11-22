@@ -42,13 +42,6 @@ type Transaction = Parameters<
   Parameters<ApiDatabaseValue["transaction"]>[0]
 >[0];
 
-/**
- * Reports whether a hero name is free in the event: no hero and no ranking
- * (rankings are keyed by hero name) uses it. Locking the event row serializes
- * every name assignment in the event, so two of them cannot both see the
- * name as free. The lock leaves the foreign-key share locks of kill and
- * ranking writes alone.
- */
 const isHeroNameTaken = (
   transaction: Transaction,
   eventId: string,
@@ -291,10 +284,6 @@ export const makeEventCatalogMutations = (
         return yield* new ResourceNotFoundError("Hero not found");
       }
 
-      // Rankings are keyed by hero name, so a rename moves them in place,
-      // keeping their ids for edit history. Locking the hero row first
-      // waits for kill ranking writes, which read the name under a share
-      // lock on the same row.
       const rows = yield* query(
         "events.catalog.updateHero",
         database.transaction((transaction) =>
@@ -358,11 +347,6 @@ export const makeEventCatalogMutations = (
       const hero = yield* findHero(guild.id, eventId, heroId);
 
       if (!hero) return yield* new ResourceNotFoundError("Hero not found");
-      // Kills, points, maps and tracking history cascade with the hero.
-      // Rankings are keyed by hero name, so remove them explicitly to keep
-      // ranking totals consistent with the remaining kill points. Deleting
-      // the hero first waits for ranking writes that hold a kill lock, so
-      // the ranking delete also sees rankings they committed meanwhile.
       yield* query(
         "events.catalog.deleteHero",
         database.transaction((transaction) =>

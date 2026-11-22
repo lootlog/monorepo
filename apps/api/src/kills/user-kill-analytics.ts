@@ -97,8 +97,6 @@ export const buildKillActivity = (
 ): UserKillActivityResponse => {
   const untimedKills = Math.max(0, raw.allTimeKills - raw.timedKills);
 
-  // Days before history starts are unknown, never zero: lifetime kills older
-  // than the first bucket, or kills older than per-character tracking.
   const historyStart = scope.characterId
     ? raw.trackedSince
     : untimedKills > 0

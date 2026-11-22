@@ -7,7 +7,6 @@ interface ScoringHowItWorksProps {
   minTrackingPercentForBonuses: number;
 }
 
-/** How the rule list resolves into points, shown above the rules. */
 export const ScoringHowItWorks = ({
   hardCapPoints,
   minTrackingPercentForBonuses,

@@ -5,7 +5,6 @@ const runtimeInterface =
     ? "si"
     : "ni";
 
-// Fake Margonem globals must exist before any game-client module is evaluated.
 const runtime = installSandboxRuntime(runtimeInterface);
 
 void import("@/bootstrap").then(async ({ bootstrapGameClient }) => {

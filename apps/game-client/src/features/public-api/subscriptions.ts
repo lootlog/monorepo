@@ -39,10 +39,6 @@ export function setupSubscriptions(
   let unsubscribeSocket: Unsubscribe | null = null;
   let unsubscribeReady: Unsubscribe | null = null;
 
-  /**
-   * Compares a world's timers per guild with the last published snapshot and
-   * stores the new one; `emit` publishes each guild whose timers changed.
-   */
   const diffWorldTimers = (query: Query, emit: boolean) => {
     const world = getQueryWorld(query);
     // SAFETY: callers pass only timer query matches; useTimers populates them

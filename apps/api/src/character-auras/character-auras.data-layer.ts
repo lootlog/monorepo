@@ -26,7 +26,6 @@ import {
   CharacterAurasOperationError,
 } from "./character-auras-data.js";
 
-// A stored id the Game client no longer draws reads as no aura.
 const isCharacterAuraId = Schema.is(CharacterAuraIdSchema);
 
 const operationError = (cause: unknown) =>
@@ -45,17 +44,12 @@ const byCharacter = (
   left.gameAccountId.localeCompare(right.gameAccountId) ||
   left.characterId.localeCompare(right.characterId);
 
-/** Tells every Game client which aura the accounts show now. */
 export interface CharacterAurasEvents {
   readonly publishChanged: (
     change: CharacterAurasChanged,
   ) => Effect.Effect<void, unknown>;
 }
 
-/**
- * Every stored aura and every grant. Both belong to a handful of Users, so
- * one copy answers each startup, including the usual one with neither.
- */
 export const CharacterAuraHolders = Schema.Struct({
   auras: Schema.Array(
     Schema.Struct({
@@ -73,10 +67,6 @@ export const CharacterAuraHolders = Schema.Struct({
 
 export type CharacterAuraHolders = typeof CharacterAuraHolders.Type;
 
-/**
- * Holds what every Game client reads at startup. Both reads are the same for
- * every reader, so one stored copy of each serves them all.
- */
 export interface CharacterAurasCache {
   readonly list: <E>(
     load: Effect.Effect<CharacterAurasResponse, E>,
@@ -93,18 +83,6 @@ const uncached: CharacterAurasCache = {
   invalidate: Effect.void,
 };
 
-/**
- * Auras are a perk of the global chat admins and of the Users an admin
- * granted them to. Each character wears its own aura, chosen by a User who
- * proved to play its account, and it shows while that User plays the account
- * last. A User who loses the perk keeps no shown aura: revoking a grant
- * deletes their auras, and a User who stops being an admin keeps the
- * stored choices but no longer shows them, and may only remove them. Admin
- * auras are the admins' own: only they choose them, and only theirs show.
- * A personal aura is its holders' own in the same way: beside the admins, only
- * a User granted that very aura chooses it, with or without the grant of
- * auras in general, and only theirs shows.
- */
 export const makeCharacterAurasData = (
   admins: GlobalChatAdmins,
   events: CharacterAurasEvents,
@@ -118,13 +96,6 @@ export const makeCharacterAurasData = (
       (millis) => new Date(millis),
     );
 
-    /**
-     * The auras that show on characters matching `where`: each was chosen by
-     * the User who proved to play its account last, while they have access.
-     * Scoping `DISTINCT ON ("accountId")` by the accounts with an aura keeps
-     * every proof for those accounts while avoiding a full-table scan of
-     * `UserMargonemAccount`.
-     */
     const shownAuras = (where?: SQL) => {
       const players = currentMargonemAccountPlayers(
         database,
@@ -243,7 +214,6 @@ export const makeCharacterAurasData = (
             .limit(1)
             .pipe(Effect.map((rows) => rows.length > 0));
 
-    // Any proof will do: the aura shows only while the User plays it last.
     const playsAccount = (userId: string, gameAccountId: string) =>
       database
         .select({ userId: userMargonemAccountTable.userId })
@@ -280,10 +250,6 @@ export const makeCharacterAurasData = (
       }),
     );
 
-    /**
-     * Only admins grant. The account names the User who proved to play it
-     * last, the same User whose auras show on its characters.
-     */
     const grantTarget = (callerUserId: string, gameAccountId: string) =>
       Effect.gen(function* () {
         if (!admins.has(callerUserId)) return yield* accessDenied();
@@ -303,11 +269,6 @@ export const makeCharacterAurasData = (
         return player ? player.userId : yield* notFound();
       });
 
-    /**
-     * Shows what the characters wear now without waiting for the next list
-     * refresh. The change is committed; a lost event reaches readers with
-     * that refresh.
-     */
     const announce = (characters: ReadonlyArray<CharacterAuraCharacter>) =>
       Effect.gen(function* () {
         if (characters.length === 0) return;
@@ -328,7 +289,6 @@ export const makeCharacterAurasData = (
         });
       }).pipe(ignorePublicationFailure);
 
-    // Writes check access against the database; this read shows it.
     const getOwnAura = (userId: string) =>
       Effect.gen(function* () {
         const { auras, grantedUserIds, personalGrants } = yield* holders;
@@ -369,7 +329,6 @@ export const makeCharacterAurasData = (
       updateOwnAura: (userId, character, auraId) =>
         Effect.gen(function* () {
           if (auraId === null) {
-            // Another User's choice for the character stays theirs.
             const removed = yield* database
               .delete(characterAuraTable)
               .where(
@@ -433,13 +392,11 @@ export const makeCharacterAurasData = (
           const userId = yield* grantTarget(callerUserId, gameAccountId);
           const grantedAt = yield* now;
 
-          // Granting again keeps the first grant.
           yield* database
             .insert(userCharacterAuraGrantTable)
             .values({ userId, grantedByUserId: callerUserId, grantedAt })
             .onConflictDoNothing({ target: userCharacterAuraGrantTable.userId })
             .pipe(Effect.mapError(operationError));
-          // A stored aura starts to show once its User is granted.
           yield* cache.invalidate;
         }),
       grantPersonalAura: (callerUserId, gameAccountId, auraId) =>
@@ -447,7 +404,6 @@ export const makeCharacterAurasData = (
           const userId = yield* grantTarget(callerUserId, gameAccountId);
           const grantedAt = yield* now;
 
-          // Granting again keeps the first grant.
           yield* database
             .insert(userPersonalCharacterAuraGrantTable)
             .values({
@@ -465,7 +421,6 @@ export const makeCharacterAurasData = (
             .pipe(Effect.mapError(operationError));
           yield* cache.invalidate;
         }),
-      // An admin keeps access, and the auras with it, while listed.
       revokeAuras: (callerUserId, gameAccountId) =>
         Effect.gen(function* () {
           const userId = yield* grantTarget(callerUserId, gameAccountId);

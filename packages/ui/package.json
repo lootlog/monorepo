@@ -67,7 +67,6 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "happy-dom": "^21.0.4",
-    "postcss-load-config": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "shadcn": "^4.22.1",

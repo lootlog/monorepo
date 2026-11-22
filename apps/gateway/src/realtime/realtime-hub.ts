@@ -78,32 +78,24 @@ type Response = RealtimeResponse;
 
 interface PublishedFrame {
   readonly event: Event;
-  /** Canonical JSON text, encoded on first use when absent. */
   text?: string;
 }
 
 const encodePublishedFrame = (frame: PublishedFrame): string =>
   (frame.text ??= JSON.stringify(frame.event));
 
-// ponytail: replay deduplication covers 10,000 events per live instance; use a durable inbox if retries must survive eviction or restarts.
 const MAX_DEDUPLICATION_ENTRIES = 10_000;
 
 const MAX_SUBSCRIPTIONS = 4_096;
 
 const MAX_SCOPE_BYTES = 1_024;
 
-/**
- * Identifies the frame schema of this build. A replica with the same schema
- * produced its frame bytes through that schema, so they carry no field this
- * replica would strip, and it forwards them without decoding and re-encoding.
- */
 const FRAME_SCHEMA = Bun.hash(
   JSON.stringify(Schema.toJsonSchemaDocument(RealtimeFrame)),
 ).toString(36);
 
 const CLOSE_BATCH_INTERVAL_MS = 100;
 
-/** Closes sockets in batches so their reconnects reach the other replicas and the API gradually. */
 export const closeGradually = (
   sockets: ReadonlyArray<GatewaySocket>,
   spreadMs: number,
@@ -125,20 +117,15 @@ export const closeGradually = (
     }
   });
 
-// How long sessions wait for a dropped subscription to prove it lost nothing.
-// Covers a 5 s Dragonfly stall plus the resubscribe backoff and reorder window.
 const FEDERATION_GRACE_MS = 15_000;
 
-// Spreads the closes when sessions did miss frames.
 const FEDERATION_CLOSE_SPREAD_MS = 10_000;
 
-/** The global chat channel of `world`, or the one every world shares. */
 export const globalChatScope = (world: string | undefined): Scope =>
   world === undefined
     ? { topic: "global.chat" }
     : { topic: "global.chat.world", world };
 
-/** Whether `topic` is a global chat channel of `globalChatScope`. */
 export const isGlobalChatTopic = (topic: Scope["topic"]): boolean =>
   topic === "global.chat" || topic === "global.chat.world";
 
@@ -149,18 +136,15 @@ export class RealtimeHub {
   private readonly sockets = new Map<string, GatewaySocket>();
   private readonly audiences = new RealtimeAudiences();
   private readonly backpressuredSockets = new WeakSet<GatewaySocket>();
-  // Insertion order makes the first entry the oldest.
   private readonly seenEventIds = new Set<string>();
   private readonly permissionRebalanceListeners = new Set<
     (discordId: string, userId: string) => Effect.Effect<void, unknown>
   >();
   private federated = false;
   private federationGrace: ReturnType<typeof setTimeout> | undefined;
-  /** Discards a continuity check that a later interruption or gap overtook. */
   private federationEpoch = 0;
   private draining = false;
   readonly instanceId = crypto.randomUUID();
-  /** Cluster-wide global chat counts, kept by `GatewayMetrics`; undefined until sampled. */
   globalChatCounts?: GlobalChatCounts;
 
   constructor(
@@ -182,7 +166,6 @@ export class RealtimeHub {
     );
   }
 
-  /** Why this instance must not accept WebSocket sessions, if it must not. */
   unavailableReason(): "draining" | "federation-unavailable" | undefined {
     if (this.draining) return "draining";
 
@@ -191,7 +174,6 @@ export class RealtimeHub {
     return undefined;
   }
 
-  /** Stops admitting sessions; established sockets keep receiving events. */
   startDraining(): void {
     this.draining = true;
   }
@@ -273,7 +255,6 @@ export class RealtimeHub {
         (scope) => Buffer.byteLength(JSON.stringify(scope)) > MAX_SCOPE_BYTES,
       )
     ) {
-      // Reconciliation must never retain subscriptions revoked by a permission change.
       for (const scope of socket.data.subscriptions.values())
         this.audiences.removeScope(scope, socket);
       socket.data.subscriptions.clear();
@@ -324,7 +305,6 @@ export class RealtimeHub {
     });
 
     this.deliver(message, prepared);
-    // Retry federation even when this instance already delivered the publication.
     await this.redis.publish(message, frames);
   }
 
@@ -337,10 +317,8 @@ export class RealtimeHub {
       readonly recipientWorld?: string;
       readonly recipientMapId?: number;
       readonly recipientCharacterIds?: readonly string[];
-      /** Limits delivery to readers of this Organization's precise presence location. */
       readonly organizationId?: string;
       readonly presenceAudience?: "precise";
-      /** Skips Redis when the caller knows no other replica has a recipient. */
       readonly localOnly?: boolean;
     } = {},
   ): Promise<void> {
@@ -430,7 +408,6 @@ export class RealtimeHub {
     await this.redis.publish(message, frames);
   }
 
-  /** Distinct scopes of `topic` that a local socket subscribes to. */
   getLocalScopes(topic: Scope["topic"]): Scope[] {
     return this.audiences.localScopes(topic);
   }
@@ -461,7 +438,6 @@ export class RealtimeHub {
       return;
     }
 
-    // Every frame is sequenced, so the resubscription proved none was lost.
     clearTimeout(this.federationGrace);
     this.federationGrace = undefined;
     this.markFederated();
@@ -475,8 +451,6 @@ export class RealtimeHub {
     });
   }
 
-  // Readiness is withdrawn at once, so no new session joins during the gap.
-  // Established sessions wait for the resubscription to prove it lost no frame.
   private interruptFederation(): void {
     this.federationEpoch++;
 
@@ -494,8 +468,6 @@ export class RealtimeHub {
     this.federationGrace.unref?.();
   }
 
-  // Frames lost in the gap may include permission rebalances. Rejoining
-  // re-reads Organization access and lets clients refetch current state.
   private closeAfterFederationGap(): void {
     this.federationEpoch++;
     clearTimeout(this.federationGrace);
@@ -510,8 +482,6 @@ export class RealtimeHub {
       },
     );
 
-    // A session must neither receive frames nor act on authority that a lost
-    // frame may have revoked while it waits for its close.
     for (const socket of sockets) {
       socket.data.closing = true;
       this.detach(socket);
@@ -597,7 +567,6 @@ export class RealtimeHub {
     this.deliver(message);
   }
 
-  /** The event of a frame and, when this replica encoded it, its JSON text. */
   private publicationFrame(
     value: Schema.Json | undefined,
     frameSchema: string | undefined,
@@ -615,8 +584,7 @@ export class RealtimeHub {
               ? // SAFETY: a replica with this schema encoded the value through it.
                 Result.succeed(value as RealtimeFrame)
               : Result.fail(new Error("Federation frame is not an object"))
-            : // Validation strips the fields of another schema before re-encoding.
-              tryDecodeRealtimeFrameValue(value);
+            : tryDecodeRealtimeFrameValue(value);
 
     if (decoded === undefined) return;
 
@@ -707,10 +675,6 @@ export class RealtimeHub {
     }
   }
 
-  /**
-   * The variant of a presence publication for readers of the Organization's
-   * precise location; `null` when that variant cannot be decoded.
-   */
   private preciseFrame(
     message: FederatedRealtimeMessage,
     local?: ReturnType<typeof prepareRealtimeFrame>,
@@ -775,7 +739,6 @@ export class RealtimeHub {
   }
 }
 
-/** This replica's socket registry and federation. */
 export class Hub extends Context.Service<Hub, RealtimeHub>()(
   "@lootlog/gateway/realtime/Hub",
 ) {

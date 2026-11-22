@@ -7,10 +7,6 @@ import { CalendarDays } from "lucide-react";
 import { t } from "@/i18n/messages";
 import { latestEventOf } from "@/lib/item-events";
 
-/**
- * Marks an item of an event with the events' icon, naming its latest event
- * in a tooltip; nothing for an item of none.
- */
 export function ItemEvent({ stat }: { stat: string }) {
   const event = latestEventOf(stat);
 

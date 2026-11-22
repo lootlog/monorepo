@@ -217,8 +217,6 @@ describe("NotificationsList", () => {
       <NotificationsList notifications={[third!, first!, second!]} />,
     );
 
-    // The first row moved into the second slot and slides down into it; the
-    // second row left the viewport, so it moves without an animation.
     expect(animate).toHaveBeenCalledTimes(1);
     expect(animate).toHaveBeenCalledWith(
       [

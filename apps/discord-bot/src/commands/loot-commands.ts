@@ -25,7 +25,6 @@ const SHOWN_LOOTS = 10;
 
 const SHOWN_ITEMS_PER_LOOT = 4;
 
-// Ten loots of a full party would pass Discord's 4096-character description.
 const SHOWN_PLAYERS_PER_LOOT = 5;
 
 const RARITIES = ["LEGENDARY", "HEROIC", "UPGRADED", "UNIQUE"] as const;
@@ -76,14 +75,12 @@ const itemLabel = (item: Loot["items"][number]) => {
   return rarity ? `${name} (${rarity.toLowerCase()})` : name;
 };
 
-/** Who looted what from which NPC, on two lines so long lists stay readable. */
 const lootLine = (loot: Loot) => {
   const items = loot.items.slice(0, SHOWN_ITEMS_PER_LOOT).map(itemLabel);
 
   if (loot.items.length > items.length)
     items.push(`+${loot.items.length - items.length}`);
 
-  // The strongest NPC names the loot, as everywhere in Lootlog.
   const [npc] = [...loot.npcs].sort((left, right) =>
     compareNpcsStrongestFirst(
       { ...left, npcId: left.id },
@@ -246,7 +243,6 @@ export const cardCommand: SlashCommand = {
   definition: guildCommand("karta", COMMAND_TEXT.card.description)
     .addBooleanOption(visibilityOption)
     .toJSON(),
-  // The card is public on the Web, so it needs no Member behind the request.
   run: (invocation) =>
     Effect.gen(function* () {
       const client = yield* LootlogClient;

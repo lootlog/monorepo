@@ -136,7 +136,6 @@ export const createReadyRoom = Effect.fn("createReadyRoom")(function* (
   const current = yield* identity;
   const accessible = yield* accessibleGuildIds(current.discordId);
 
-  // The request schema guarantees exactly one of the two fields.
   const guildId = payload.guildId ?? payload.guildIds?.[0];
 
   if (guildId === undefined || !accessible.includes(guildId)) {

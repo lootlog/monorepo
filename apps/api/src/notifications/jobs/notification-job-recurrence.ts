@@ -89,8 +89,6 @@ export const makeNotificationJobRecurrence = (
     const now = new Date(yield* Clock.currentTimeMillis);
     let next = following(rule.scheduledAt);
 
-    // A cycle closed late skips the occurrences that passed meanwhile instead
-    // of sending each of them at once.
     while (next && next <= now) next = following(next);
 
     if (!next) return;

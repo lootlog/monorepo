@@ -1,4 +1,3 @@
-/** Transport schemas owned by the public catalog HTTP module. */
 import * as Schema from "effect/Schema";
 import { ITEM_CATEGORIES } from "@lootlog/domain/item-type";
 import { BOSS_ORIGINS } from "@lootlog/domain/npc-type";
@@ -8,8 +7,6 @@ import { FiniteNumber, SafeInteger } from "@lootlog/schema/http-scalars";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 
-// Margonem numbers items in the order it adds them, so `id:desc` lists the
-// game's newest items.
 const CatalogItemSort = Schema.Literals([
   "relevance",
   "id:desc",
@@ -27,7 +24,6 @@ const CatalogItemSort = Schema.Literals([
 
 const Profession = Schema.Literals(PROFESSION_SHORTNAMES);
 
-/** Stats a public search may require; the rest stay out of the filter. */
 const CATALOG_STAT_KEYS = [
   "legbon",
   "hp",
@@ -41,13 +37,11 @@ const CATALOG_STAT_KEYS = [
   "heal",
   "energybon",
   "manabon",
-  // The events an item belongs to, such as `Wakacje 2026 r.`.
   "etiquette",
 ] as const;
 
 const CatalogStatKey = Schema.Literals(CATALOG_STAT_KEYS);
 
-/** Legendary bonuses Margonem items carry, by their stat names. */
 const CATALOG_LEGENDARY_BONUSES = [
   "anguish",
   "cleanse",

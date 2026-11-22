@@ -323,7 +323,6 @@ describe("RabbitMessaging", () => {
       }).pipe(Effect.provide(Logger.layer([logger]))),
     );
 
-    // The broker keeps only the payload, so the log is the only record of why.
     expect(logs).toMatchObject([
       {
         logLevel: "Warn",

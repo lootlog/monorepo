@@ -33,7 +33,6 @@ const config = CatalogConfig.of({
 
 const service = { [CATALOG_SERVICE_TOKEN_HEADER]: SERVICE_TOKEN };
 
-/** Reports as the catalog stores them, recording who each call came from. */
 const makeReports = (callers: ReportCaller[]): ReportsModule => {
   const report = {
     id: "4b0f4c8e-8f0e-4d6a-9d43-0d1c1a3b5e6f",
@@ -185,7 +184,6 @@ test("reads need the service token or an identity from the edge, and keys stay s
   };
 
   try {
-    // Probes need no caller.
     expect(await status("/healthz", {})).toBe(200);
     expect(await status("/catalog/items", {})).toBe(401);
     expect(
@@ -201,7 +199,6 @@ test("reads need the service token or an identity from the edge, and keys stay s
       }),
     ).toBe(200);
 
-    // A key reads every catalog read the developer portal lists.
     for (const path of [
       "/catalog/items",
       "/catalog/npcs",
@@ -246,7 +243,6 @@ test("reports come from the signed-in User the edge names, never a service or an
   };
 
   try {
-    // The catalog token reads the catalog, but it is nobody's report.
     expect(
       (
         await boundary.handler(
@@ -260,7 +256,6 @@ test("reports come from the signed-in User the edge names, never a service or an
       ).status,
     ).toBe(401);
 
-    // Reports are no part of the developer API, whatever the key allows.
     const keyed = await boundary.handler(
       "/catalog/reports",
       {
@@ -290,7 +285,6 @@ test("reports come from the signed-in User the edge names, never a service or an
         })
       ).status,
     ).toBe(200);
-    // The roles the edge asserted reach the module with the caller.
     expect(callers).toEqual([
       { userId: "user-1", roles: [] },
       { userId: "user-1", roles: ["wiki-moderator"] },

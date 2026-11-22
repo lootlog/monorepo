@@ -89,7 +89,6 @@ export const battlePanelAbyssSearchParsers = {
   characterId: parseAsString,
 };
 
-/** One Abyss season; its opponents tab adds the opponent search and sort. */
 export const battlePanelAbyssSeasonSearchParsers = {
   characterId: parseAsString,
   ...battlePanelCursorSearchParsers,
@@ -108,7 +107,6 @@ export const battlePanelHeadToHeadSearchParsers = {
 export const battlePanelPlayerVsPlayerSearchParsers = {
   ...battlePanelBaseSearchParsers,
   ...battlePanelCursorSearchParsers,
-  /** The Abyss season the page was opened from, to return to it. */
   seasonId: parseAsString,
 };
 
@@ -118,7 +116,6 @@ export const battlePanelSingleBattleSearchParsers = {
 
 const isString = Schema.is(Schema.String);
 
-/** A search value, or the first string of a repeated one. */
 const RouteSearchString = requiredWithFallback(
   Schema.Union([
     Schema.String,
@@ -138,7 +135,6 @@ const RouteSearchString = requiredWithFallback(
   undefined,
 );
 
-/** Comma-separated or repeated values, trimmed; none reads as missing. */
 const RouteSearchStrings = requiredWithFallback(
   Schema.Union([
     Schema.String.pipe(
@@ -262,7 +258,6 @@ const decodeBattlePanelBattlesRouteSearch = Schema.decodeUnknownSync(
   ),
 );
 
-/** The route search without the params that read as missing. */
 const toBattlePanelBattlesRouteSearch = (
   input: ReturnType<typeof decodeBattlePanelBattlesRouteSearch>,
 ): BattlePanelBattlesRouteSearch => {

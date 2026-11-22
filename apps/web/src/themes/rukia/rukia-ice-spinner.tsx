@@ -17,7 +17,6 @@ export const RukiaIceSpinner: FC<RukiaIceSpinnerProps> = ({ className }) => (
       filter: "drop-shadow(0 0 6px rgba(180, 220, 255, 0.5))",
     }}
   >
-    {/* Main axes */}
     <line
       x1="32"
       y1="4"
@@ -59,7 +58,6 @@ export const RukiaIceSpinner: FC<RukiaIceSpinnerProps> = ({ className }) => (
       opacity="0.5"
     />
 
-    {/* Branch tips - top */}
     <line
       x1="32"
       y1="4"
@@ -97,7 +95,6 @@ export const RukiaIceSpinner: FC<RukiaIceSpinnerProps> = ({ className }) => (
       opacity="0.4"
     />
 
-    {/* Branch tips - bottom */}
     <line
       x1="32"
       y1="60"
@@ -135,7 +132,6 @@ export const RukiaIceSpinner: FC<RukiaIceSpinnerProps> = ({ className }) => (
       opacity="0.4"
     />
 
-    {/* Branch tips - left */}
     <line
       x1="4"
       y1="32"
@@ -173,7 +169,6 @@ export const RukiaIceSpinner: FC<RukiaIceSpinnerProps> = ({ className }) => (
       opacity="0.4"
     />
 
-    {/* Branch tips - right */}
     <line
       x1="60"
       y1="32"
@@ -211,7 +206,6 @@ export const RukiaIceSpinner: FC<RukiaIceSpinnerProps> = ({ className }) => (
       opacity="0.4"
     />
 
-    {/* Center crystal */}
     <circle cx="32" cy="32" r="4" fill="currentColor" opacity="0.25" />
     <circle cx="32" cy="32" r="2" fill="currentColor" opacity="0.5" />
   </svg>

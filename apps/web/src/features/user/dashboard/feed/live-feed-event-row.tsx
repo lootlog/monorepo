@@ -20,10 +20,6 @@ type Props = {
   now: number;
 };
 
-/**
- * One event as a list tile, like the recent battles beside it: the NPC, where
- * and when, and the drop. A narrow feed moves the drop under the text.
- */
 export function LiveFeedEventRow({ group, now }: Props) {
   const { t } = useTranslation();
   const { npc, world, location, legendary } = describeFeedGroup(group);

@@ -11,25 +11,15 @@ type ChatTranscriptViewportProps = {
   ariaLabel: string;
   latestLabel: string;
   fontScalePercent: number;
-  /** Shown in place of the hidden viewport while there are no rows. */
   empty: ReactNode | null;
-  /** Floats above the rows, such as the older-history status. */
   overlay?: ReactNode;
-  /** Keeps the reader's rows in place when older history is prepended. */
   preserveScrollOnPrepend?: boolean;
-  /** Lets the reader select any text in the rows, not only message bodies. */
   selectableText?: boolean;
   onScroll?: () => void;
-  /** The transcript's shared popups; the row list becomes their trigger. */
   popups: ComponentType<{ children: ReactElement }>;
   children: ReactNode;
 };
 
-/**
- * The scrolling frame both chats share: it follows the newest message, keeps
- * the reader's position while they hold or scroll, and offers a way back to
- * the latest message.
- */
 export const ChatTranscriptViewport = ({
   viewport,
   ariaLabel,

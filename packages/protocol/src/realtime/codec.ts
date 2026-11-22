@@ -37,9 +37,6 @@ const tryEncodeFrame = (frame: RealtimeFrameType) =>
 export const tryEncodeRealtimeFrame = (frame: RealtimeFrameType) =>
   Result.map(tryEncodeFrame(frame), ({ text }) => text);
 
-// Only reuse values that a JSON round trip would leave unchanged. In particular,
-// open payloads may contain accessors, binary views, undefined or custom objects.
-// Keep the decoder as the authority for normalization and rejected keys.
 const isJsonStable = (value: unknown): value is Schema.Json => {
   if (Predicate.isNumber(value))
     return Number.isFinite(value) && !Object.is(value, -0);
@@ -78,13 +75,11 @@ const isJsonStable = (value: unknown): value is Schema.Json => {
   return true;
 };
 
-/** Encode once and retain the validated value when no wire normalization is needed. */
 export const prepareRealtimeFrame = (frame: RealtimeFrameType) => {
   const encoded = Result.getOrThrow(tryEncodeFrame(frame));
 
   return {
     text: encoded.text,
-    // An absent value requests the normal decoder path, never the original input.
     frame: isJsonStable(encoded.frame) ? encoded.frame : undefined,
   };
 };
@@ -92,31 +87,18 @@ export const prepareRealtimeFrame = (frame: RealtimeFrameType) => {
 export const encodeRealtimeFrame = (frame: RealtimeFrameType): string =>
   Result.getOrThrow(tryEncodeRealtimeFrame(frame));
 
-// Receivers that copy keys by assignment would turn this key into a prototype.
 const rejectProtoKey = (key: string, value: Schema.Json) => {
   if (key === "__proto__") throw new Error("The key __proto__ is not allowed");
 
   return value;
 };
 
-/**
- * Whether a JSON text cannot have a `__proto__` key. A key can spell it only
- * literally or through a `\u` escape.
- */
 const isWithoutProtoKey = (text: string): boolean =>
   !text.includes("__proto__") && !text.includes("\\u");
 
-/**
- * JSON-parse a realtime text, rejecting any `__proto__` key. The reviver makes
- * parsing several times slower, so it runs only when the text may need it.
- */
 export const parseRealtimeJson = (text: string): Schema.Json =>
   isWithoutProtoKey(text) ? JSON.parse(text) : JSON.parse(text, rejectProtoKey);
 
-/**
- * Parse a frame that a peer encoded through this schema, without validating it
- * again. Use `tryDecodeRealtimeFrame` for any other input.
- */
 export const tryParseEncodedRealtimeFrame = (text: string) =>
   Result.try({
     try: () => {
@@ -147,7 +129,6 @@ const tryDecode = (input: () => Schema.Json) =>
       }),
   });
 
-/** Validate a frame that arrived already parsed by `parseRealtimeJson`. */
 export const tryDecodeRealtimeFrameValue = (value: Schema.Json) =>
   tryDecode(() => value);
 
@@ -159,13 +140,11 @@ export const decodeRealtimeFrame = (text: string): RealtimeFrameType =>
 
 type CommandType = ClientCommand["type"];
 
-// Built on first use, so a client pays only for the commands it sends.
 const commandSuccessDecoders = new Map<
   CommandType,
   ReturnType<typeof Schema.decodeUnknownSync>
 >();
 
-/** Decode the `data` of a successful response to a command of this type. */
 export const decodeCommandSuccess = <Type extends CommandType>(
   type: Type,
   data: unknown,

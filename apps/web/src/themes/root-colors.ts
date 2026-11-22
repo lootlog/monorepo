@@ -6,10 +6,6 @@ import {
 
 type RootColors = Partial<Record<CustomThemeTokenKey, string>>;
 
-/**
- * Converts any CSS colour the browser understands, such as `oklch(...)`, to
- * `#RRGGBB` by painting one pixel, so a colour picker can show it.
- */
 const toHex = (context: CanvasRenderingContext2D, color: string) => {
   context.clearRect(0, 0, 1, 1);
   context.fillStyle = "#000000";
@@ -24,7 +20,6 @@ const toHex = (context: CanvasRenderingContext2D, color: string) => {
     .toUpperCase()}`;
 };
 
-/** The colour every token has on the page right now, as `#RRGGBB`. */
 const readRootColors = (root: HTMLElement): RootColors => {
   const context = document
     .createElement("canvas")
@@ -54,8 +49,6 @@ const subscribe = (onChange: () => void) => {
   return () => observer.disconnect();
 };
 
-// The theme lives in the root's class and inline tokens; they change
-// together, so they key the colours read from the page.
 const appliedThemeKey = () =>
   `${document.documentElement.className}|${document.documentElement.getAttribute("style") ?? ""}`;
 
@@ -73,8 +66,4 @@ const getColors = () => {
   return cached.colors;
 };
 
-/**
- * The page's token colours, kept current as the theme or its preview changes,
- * so a colour field shows exactly what the page paints.
- */
 export const useRootColors = () => useSyncExternalStore(subscribe, getColors);

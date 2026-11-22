@@ -8,12 +8,6 @@ import { characterAuraKey } from "./character-aura-targets";
 
 const isCharacterAuraId = Schema.is(CharacterAuraIdSchema);
 
-/**
- * The listed auras after a live change. Each change carries the characters'
- * current auras, so applying it twice changes nothing. An aura this client
- * cannot draw reads as none, as in the list. Without a list there is nothing
- * to patch: the first fetch brings the current one.
- */
 export function applyCharacterAuraChanges(
   list: CharacterAurasResponseDto | undefined,
   change: CharacterAurasChanged,

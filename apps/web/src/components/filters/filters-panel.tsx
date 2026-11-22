@@ -9,14 +9,12 @@ import { useTranslation } from "react-i18next";
 type FiltersPanelProps = {
   title: string;
   activeFilterCount: number;
-  /** Clears every filter from the header while any is active. */
   onClear?: () => void;
   children: ReactNode;
   titleAs: ComponentType<{ className?: string; children: ReactNode }>;
   hasCloseButton: boolean;
 };
 
-/** The header and scrolling fields of a `FiltersOverlay`. */
 export const FiltersPanel = ({
   title,
   activeFilterCount,
@@ -35,7 +33,6 @@ export const FiltersPanel = ({
           hasCloseButton ? "pr-12" : "pr-2",
         )}
       >
-        {/* The icon that opens the panel, in the accent, tells the title from the fields' labels. */}
         <SlidersHorizontal
           aria-hidden="true"
           className="size-4 shrink-0 text-primary"

@@ -1,7 +1,6 @@
 import { PlatformRole } from "@lootlog/schema/platform-roles";
 import { Schema } from "effect";
 
-/** How long a ban lasts; `permanent` lasts until lifted. */
 export const BAN_DURATIONS = ["1h", "24h", "7d", "30d", "permanent"] as const;
 
 export type BanDuration = (typeof BAN_DURATIONS)[number];
@@ -14,7 +13,6 @@ const BAN_HOURS: Record<BanDuration, number | null> = {
   permanent: null,
 };
 
-/** Something the operator does to one User. */
 export const UserAction = Schema.Union([
   Schema.Struct({
     action: Schema.Literal("roles"),
@@ -44,7 +42,6 @@ export const UserActionRequest = Schema.Struct({
   action: UserAction,
 });
 
-/** When a ban of the given duration ends, counted from `now`. */
 export const banExpiry = (duration: BanDuration, now: number) => {
   const hours = BAN_HOURS[duration];
 

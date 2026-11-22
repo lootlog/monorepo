@@ -29,7 +29,6 @@ test("a monster standing in many places does not crowd out another monster's dro
   const fields = (drop: ReturnType<typeof npcDrop>) =>
     toItemDropFields({ ...item, droppedBy: drop });
 
-  // Every Zamrożony czarodziej of a mine is its own catalog identity.
   const wizards = Array.from({ length: 24 }, (_, index) =>
     fields(npcDrop(8000 + index, "Zamrożony czarodziej")),
   ).reduce((stored, incoming) => mergeItemDropFields(incoming, stored));

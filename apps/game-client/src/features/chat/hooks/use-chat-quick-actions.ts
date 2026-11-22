@@ -13,7 +13,6 @@ import { getChatAlarmLocation } from "@/lib/margonem-runtime/adapters/chat-alarm
 import { getSelectedChatGuildId } from "@/store/chat.store";
 import { useGameStore } from "@/store/game.store";
 
-// Shared by the always-mounted hotkey handler and the visible action strip.
 const pendingActions = new Set<string>();
 
 export const useChatQuickActions = () => {

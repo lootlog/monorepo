@@ -1,6 +1,5 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
-/** Stands in for `InlineSearchField`, as tall as its input. */
 export const InlineSearchFieldSkeleton = () => (
   <div
     aria-hidden="true"

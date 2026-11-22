@@ -11,12 +11,6 @@ type TimersListFilterProps = {
   onChange: (selectedLists: string[]) => void;
 };
 
-/**
- * A row of the player's lists under the filter strip. A click toggles a list
- * and a right-click keeps only that one, so switching views takes one click;
- * "all" clears the selection, and with nothing selected no list filters the
- * timers.
- */
 export const TimersListFilter: FC<TimersListFilterProps> = ({
   lists,
   selectedLists,
@@ -24,7 +18,6 @@ export const TimersListFilter: FC<TimersListFilterProps> = ({
 }) => {
   const { t } = useTranslation("timers");
 
-  // Ids of lists deleted meanwhile no longer count as a selection.
   const selectedIds = new Set(selectedLists);
 
   const selected = lists

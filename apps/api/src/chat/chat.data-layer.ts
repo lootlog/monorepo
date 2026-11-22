@@ -34,7 +34,6 @@ export interface ChatRedis {
     start: number,
     stop: number,
   ) => Effect.Effect<ReadonlyArray<string>, RedisError>;
-  /** Atomically replaces the element equal to `previous`; false when it is gone. */
   readonly replace: (
     key: string,
     previous: string,
@@ -120,9 +119,6 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
       ),
     );
 
-  // Messages are replaced by value: a concurrent send trims the list and
-  // shifts every index, so writing back by position could overwrite another
-  // member's message.
   const endPartyGatheringMessages = (
     notificationId: string,
     guildIds: ReadonlyArray<string>,

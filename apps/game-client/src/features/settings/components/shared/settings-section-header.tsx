@@ -5,19 +5,10 @@ type SettingsSectionHeaderProps = {
   title?: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
-  /** `h4` for a group heading nested inside a section. */
   as?: "h3" | "h4";
   className?: string;
 };
 
-/**
- * Title and trailing actions of a settings section (a small caps label) or of
- * a group nested inside it (a regular heading with an optional description).
- *
- * The title always sits on the first line so every tab starts at the same
- * offset. Actions are centred against the whole text block (title plus
- * description) so they read the same in every section.
- */
 export const SettingsSectionHeader: FC<SettingsSectionHeaderProps> = ({
   title,
   description,

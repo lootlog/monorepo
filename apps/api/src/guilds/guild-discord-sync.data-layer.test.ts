@@ -27,8 +27,6 @@ const syncedState = (now: Date): DiscordGuildSyncState => ({
   updatedAt: now.toISOString(),
 });
 
-// The last attempt was a minute ago; a later state-only write (a gateway
-// event) touched the row ten seconds ago.
 const refreshOneMinuteAfterAttempt = async (
   status: DiscordGuildSyncState["status"],
   lastError: string | null,

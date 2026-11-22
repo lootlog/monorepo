@@ -20,7 +20,6 @@ export type FeedFilters = Pick<
   "excludedGuildIds" | "excludedNpcCategories" | "withLootOnly"
 >;
 
-/** One event: a kill, its loot, or both, with every Organization copy. */
 export type FeedGroup = {
   key: string;
   occurredAt: string;
@@ -32,7 +31,6 @@ export type FeedGroup = {
 
 const FEED_LIMIT = 20;
 
-/** History window shared by the API and the live list. */
 export const FEED_WINDOW_MS = 86_400_000;
 
 const occurrence = (item: FeedItem) => ({
@@ -45,11 +43,6 @@ const byNewest = (left: FeedGroup, right: FeedGroup) =>
   Date.parse(right.occurredAt) - Date.parse(left.occurredAt) ||
   right.key.localeCompare(left.key);
 
-/**
- * Groups Organization copies of one source event, then attaches each loot to
- * the closest kill of its NPC. The API links them with the same window, so
- * live entries merge the same way as the history.
- */
 export function groupFeedItems(items: FeedItems): FeedGroup[] {
   const copies = new Map<string, FeedItem[]>();
 
@@ -123,7 +116,6 @@ export function groupFeedItems(items: FeedItems): FeedGroup[] {
     .sort(byNewest);
 }
 
-/** Item filters the API applies; live entries pass through the same rules. */
 export function matchesFeedFilters(item: FeedItem, filters: FeedFilters) {
   return (
     !filters.excludedGuildIds.includes(item.guild.id) &&
@@ -164,8 +156,6 @@ export function mergeFeedItems(
         right.id.localeCompare(left.id),
     );
 
-  // A hidden kill stays only while its loot can still arrive and make it
-  // visible, so the loot-only feed never accumulates a day of kills.
   const kept = new Set<string>();
   let visible = 0;
 
@@ -268,7 +258,6 @@ export function liveFeedReducer(
         isError: false,
       };
     case "filters":
-      // Narrowing applies at once; the replacement snapshot fills new matches.
       return {
         ...state,
         filters: action.filters,
@@ -334,8 +323,6 @@ function receiveFeedItems(
       pending: undefined,
     };
 
-  // Only access revalidation can interrupt the reading snapshot.
-  // Normal refreshes may drop entries due to the rolling time/count limit.
   if (action.type === "received" && action.revalidatedAccess)
     return {
       ...state,
@@ -354,7 +341,6 @@ function receiveFeedItems(
   };
 }
 
-/** What a feed row shows for one event, whether it has a kill, loot, or both. */
 export function describeFeedGroup(group: FeedGroup) {
   const [loot] = group.loots;
   const source = group.kill ?? loot;

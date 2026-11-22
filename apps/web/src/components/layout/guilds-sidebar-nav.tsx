@@ -32,7 +32,6 @@ function getNavigationIcon(id: AppNavigationItemId, hasActiveEvents: boolean) {
 }
 
 type GuildsSidebarNavProps = {
-  /** Set when the Organization route failed; `forbidden` is a 403. */
   routeFailure?: "forbidden" | "unavailable";
 };
 
@@ -95,7 +94,6 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
               {t("layout.guildsSelector.noAccess")}
             </p>
           </CollapsePresence>
-          {/* Keyed, so another server's pins never stand in for its own. */}
           <GuildPinnedEventsSection
             key={guildId}
             guildId={guildId ?? ""}

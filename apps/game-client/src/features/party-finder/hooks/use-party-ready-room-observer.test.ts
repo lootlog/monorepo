@@ -226,8 +226,6 @@ describe("usePartyReadyRoomObserver", () => {
     renderObserver();
     await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(1));
 
-    // Party store updates such as HP changes arrive far more often than the
-    // heartbeat and must not keep postponing it.
     let currentHp = member.currentHp;
 
     const churn = window.setInterval(() => {

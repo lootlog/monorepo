@@ -34,7 +34,6 @@ afterEach(cleanup);
 
 it("names the member by the Organization's current nickname and opens who they are on Discord", async () => {
   renderIdentity(
-    // The record was written under a nickname the member has since changed.
     <MemberIdentity
       member={{ userId: "user-7" }}
       fallback={{ name: "Stary nick" }}

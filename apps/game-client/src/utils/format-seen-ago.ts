@@ -2,12 +2,6 @@ import { getFixedT } from "@/i18n/get-fixed-t";
 
 const SECOND_MS = 1_000;
 
-/**
- * How long ago something was seen: just now, in seconds under a minute, in
- * minutes under an hour, then in hours. A caller whose clock ticks once a
- * minute passes `"minute"`, so it says "just now" for the whole first minute
- * instead of a seconds count that would not move.
- */
 export const formatSeenAgo = (
   elapsedMs: number,
   precision: "second" | "minute" = "second",

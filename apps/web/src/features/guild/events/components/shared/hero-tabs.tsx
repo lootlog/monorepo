@@ -7,20 +7,13 @@ const ALL_HEROES_VALUE = "all";
 
 type HeroTabsProps = {
   heroes: readonly { id: string; npcName: string }[];
-  /** Which hero field identifies a tab; `undefined` selects "all heroes". */
   valueKey?: "id" | "npcName";
   value: string | undefined;
   onValueChange: (value: string | undefined) => void;
-  /** Adds a leading tab that clears the hero selection. */
   includeAll?: boolean;
-  /**
-   * `page` stands alone as the page's filter bar; `section` sits under a
-   * section card header.
-   */
   placement: "page" | "section";
 };
 
-/** Switches the hero a view shows; hidden while the event has one hero. */
 export const HeroTabs = ({
   heroes,
   valueKey = "id",
@@ -70,6 +63,5 @@ export const HeroTabs = ({
     return tabs;
   }
 
-  // The heroes lead the bar, as view tabs, where a search would sit.
   return <FilterBar search={tabs} />;
 };

@@ -137,7 +137,6 @@ export const BATTLE_BADGE_COLORS = {
   },
 } as const;
 
-/** Solid fills for stacked bars; hues follow the matching `BATTLE_TEXT_COLORS` entries. */
 export const BATTLE_SEGMENT_COLORS = {
   damage: {
     meleeDamage: "bg-blue-300",

@@ -17,13 +17,11 @@ import type {
   DiscordInvalidRequestStatus,
 } from "./discord.types.js";
 
-/** A Discord REST call that was rejected or answered with an unreadable body. */
 export class DiscordRestFailure extends TaggedErrorClass<
   DiscordRestFailure,
   { readonly brand: unique symbol }
 >()("DiscordRestFailure", { cause: Schema.Defect() }) {}
 
-/** Runs one Discord REST client call, keeping what it threw as the cause. */
 export const discordRest = <A>(run: () => Promise<A>) =>
   Effect.tryPromise({
     try: run,

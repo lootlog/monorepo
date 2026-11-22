@@ -7,7 +7,6 @@ import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
 import { AfkProcessor } from "./afk-processor";
 
-// The projection applies a packet's hero patch before processors run.
 const enterStasis = () => {
   const game = useGameStore.getState().game;
 
@@ -149,7 +148,6 @@ describe("AfkProcessor", () => {
     processor.handle({ h: { stasis: 1 } });
     expect(wire.frames).toEqual([]);
 
-    // Gaining a Lootlog publishes presence again.
     wire.receive({
       v: 1,
       type: "permissions.updated",

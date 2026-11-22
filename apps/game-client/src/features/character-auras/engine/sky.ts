@@ -1,30 +1,18 @@
-/**
- * What an aura's effect over the whole map draws from, and the helpers those effects
- * share. They run every frame over the whole screen, so each one is a few fills, sprite
- * blits and small rects: nothing here reads pixels back or allocates per frame.
- */
 import { rgba, type Rgb } from "./math";
 import { context2d, createCanvas } from "./silhouette";
 
-/** One frame of an effect over the whole map, in the context's units (screen px). */
 export interface MapScene {
   ctx: CanvasRenderingContext2D;
   width: number;
   height: number;
-  /** The aura's stepped clock, s: what its pieces round the character animate by. */
   time: number;
-  /** Seconds since the aura showed, every frame: what moves smoothly over the map. */
   now: number;
-  /** The camera, so things stay on the map as it scrolls. */
   view: readonly [number, number];
-  /** The character's chest and feet on screen. */
   x: number;
   y: number;
   feetY: number;
-  /** The top of the character on screen, and half its width. */
   top: number;
   half: number;
-  /** The aura's burst, 0..1 between ticks too; -1 while it rests. */
   burst: number;
   light: Rgb;
   mid: Rgb;
@@ -35,7 +23,6 @@ export function wrap(value: number, size: number): number {
   return ((value % size) + size) % size;
 }
 
-/** A 32-bit hash of a cell of a scattered field. */
 function hashCell(x: number, y: number, seed: number): number {
   let h =
     Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(seed, 40503);
@@ -45,11 +32,6 @@ function hashCell(x: number, y: number, seed: number): number {
   return (h ^ (h >>> 16)) >>> 0;
 }
 
-/**
- * Calls `each` for every point of an endless field (one point a `cell`, placed by its
- * hash) inside the `width`×`height` window whose top-left is at (`left`, `top`) in the
- * field: its position in the window and two numbers in 0..1 that are the point's own.
- */
 export function scatter(
   left: number,
   top: number,
@@ -78,7 +60,6 @@ export function scatter(
   }
 }
 
-/** A flat wash over the whole screen. */
 export function wash(
   { ctx, width, height }: MapScene,
   color: Rgb,
@@ -94,7 +75,6 @@ export function wash(
 
 const clearings = new Map<string, HTMLCanvasElement>();
 
-/** A square of `color` thinning out towards its centre: clear within `inner` px, full at `outer`. */
 function clearing(color: Rgb, inner: number, outer: number): HTMLCanvasElement {
   const key = `${color.join(",")}|${inner}|${outer}`;
   const cached = clearings.get(key);
@@ -121,12 +101,6 @@ function clearing(color: Rgb, inner: number, outer: number): HTMLCanvasElement {
   return canvas;
 }
 
-/**
- * A wash over the whole screen that thins out towards the character, so a dark sky
- * leaves the aura that brought it its light: clear within `inner` px, full beyond `outer`.
- * The thinning is one sprite built once and the rest four flat fills: a gradient over
- * the whole screen costs ten times a flat fill when the CPU draws it.
- */
 export function washAround(
   { ctx, width, height, x, y }: MapScene,
   color: Rgb,

@@ -12,13 +12,10 @@ type ThemeSettingRowProps = {
   label: string;
   labelId?: string;
   description?: string;
-  /** The control, such as a colour field or a slider. */
   children: ReactNode;
-  /** Set while the value differs from the base theme's; restores it. */
   onReset?: () => void;
 };
 
-/** One setting of a theme: its name, its control, and a way back. */
 export const ThemeSettingRow = ({
   label,
   labelId,
@@ -49,7 +46,6 @@ export const ThemeSettingRow = ({
       </span>
       <span className="flex items-center gap-1">
         {children}
-        {/* The slot keeps every row's control aligned whether or not it changed. */}
         <Button
           type="button"
           variant="ghost"

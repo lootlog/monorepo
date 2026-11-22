@@ -17,13 +17,8 @@ export const formatItemHid = (hid: string, world: string): string => {
   return `ITEM#${hid}.${world}`;
 };
 
-/**
- * Margonem writes a full 64-digit hex identifier, so text that merely starts
- * like one (`ITEM#abc`) is left alone.
- */
 const ITEM_HID_IN_TEXT_PATTERN = /ITEM#([0-9a-f]{64})\.([a-z]+)\b/i;
 
-/** The first item identifier written somewhere inside `text`. */
 export const findItemHidInText = (
   text: string,
 ): { start: number; end: number; hid: string; world: string } | null => {

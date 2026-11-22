@@ -48,7 +48,6 @@ const recordMemoryAndPresence = Effect.gen(function* () {
   yield* Metric.update(serviceUp, 1);
 });
 
-/** Start once per process in the observability layer's scope. */
 export const startRuntimeMetrics = Effect.gen(function* () {
   yield* recordMemoryAndPresence;
   let previousCpu = process.cpuUsage();

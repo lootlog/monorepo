@@ -14,12 +14,6 @@ import { useSetupChecklist } from "@/features/setup-checklist/use-setup-checklis
 import { openLootlogApp } from "@/lib/open-lootlog-app";
 import { useWindowsStore } from "@/store/windows.store";
 
-/**
- * The first quick access tile while this character's setup is incomplete: a
- * dot marks it, and its popover lists what is left. It leaves the bar once
- * setup is done or the player hides it; the "Lootlog page" menu brings it
- * back. It never opens on its own, so it cannot take focus from the game.
- */
 export const SetupChecklistButton: FC = () => {
   const { t } = useTranslation("quickAccess");
   const [open, setOpen] = useState(false);

@@ -11,7 +11,6 @@ import {
 } from "./loot-filter-sections";
 import { LootFiltersIconTooltip } from "./loot-filters-icon-tooltip";
 
-// Separates the rail's groups with the sidebar's own rule color.
 const railDivider = (
   <div
     aria-hidden="true"
@@ -21,17 +20,11 @@ const railDivider = (
 
 type LootFiltersRailProps = {
   state: LootFiltersState;
-  /** Opens the panel, scrolled to a section when one is given. */
   onOpen: (section?: LootFilterSectionKey) => void;
   isPanelOpen?: boolean;
-  /** Focuses the open button on mount, after the panel collapsed into it. */
   autoFocus?: boolean;
 };
 
-/**
- * The collapsed filters panel: it opens the panel, shows which sections narrow
- * the list, and applies quick filters without opening anything.
- */
 export const LootFiltersRail = ({
   state,
   onOpen,
@@ -52,7 +45,6 @@ export const LootFiltersRail = ({
 
   return (
     <div className="flex h-full w-14 flex-col">
-      {/* Matches the docked panel's header, so its rule continues the filter bar's. */}
       <div className="box-content flex h-12 shrink-0 items-center justify-center border-b border-sidebar-border">
         <LootFiltersIconTooltip
           label={t("loots.filtersPanel.expand")}
@@ -152,7 +144,6 @@ export const LootFiltersRail = ({
                       : "text-muted-foreground",
                   )}
                 >
-                  {/* Like Lootlogs without an icon in the app rail. */}
                   <span aria-hidden="true" className="text-sm font-semibold">
                     {filter.label.trim().charAt(0).toUpperCase()}
                   </span>

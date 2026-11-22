@@ -14,7 +14,6 @@ const CursorPayload = Schema.Struct({
   killedAt: Schema.String.check(
     Schema.isPattern(/^(?!0000)\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u),
   ),
-  // Kills recorded before the move to UUIDs keep their cuid IDs.
   id: Schema.NonEmptyString.check(Schema.isMaxLength(64)),
   scope: CursorScope,
 });

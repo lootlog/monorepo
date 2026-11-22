@@ -84,8 +84,6 @@ export const makeDeleteTimer = (
           });
         }
 
-        // Deleting a deleted timer changes nothing: no row rewrite (every
-        // update rewrites the Timer indexes) and no extra history entry.
         if (timer.deletedAt) return timer;
 
         const now = new Date(yield* Clock.currentTimeMillis);

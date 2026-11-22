@@ -892,7 +892,6 @@ const messages = {
     minLevelPlaceholder: "1",
     maxLevelPlaceholder: "300",
     sort: "Sortowanie",
-    // Every sort the catalog offers is listed, so each one needs a label.
     sortOptions: {
       relevance: "Trafność",
       "id:desc": "Najnowsze w grze",

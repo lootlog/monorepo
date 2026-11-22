@@ -16,8 +16,6 @@ import { formatNumber } from "@lootlog/domain/locale";
 
 export const Route = createFileRoute("/events_/$eventSlug")({
   component: EventRoute,
-  // The browser renders the page at once, so only a server render names the
-  // event in the title.
   loader: async ({ params, context: { queryClient } }) => {
     const query = eventItemsQueryOptions(params.eventSlug);
 
@@ -47,13 +45,11 @@ export const Route = createFileRoute("/events_/$eventSlug")({
   }),
 });
 
-/** Every item of one event, by monster, the strongest first, and rarity. */
 function EventRoute() {
   const { eventSlug } = Route.useParams();
 
   const { data: items, isError } = useEventItems(eventSlug);
 
-  // Any of the event's items names it as the game writes it.
   const name = eventNameOf(items ?? [], eventSlug);
 
   if (isError) {
@@ -72,8 +68,6 @@ function EventRoute() {
     );
   }
 
-  // The strongest monsters come first, an event boss's kinds side by side,
-  // and items of no known monster last.
   const monsters = orderBy(
     groupItemsByMonster(items ?? []),
     [

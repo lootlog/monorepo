@@ -4,40 +4,22 @@ const AIR_TAG_RELATIONS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
 const AIR_TAG_CLAN_ENEMY_RELATION = 6;
 
-/**
- * AirTags carry clan enemies only. A personal enemy is one member's private
- * list, not the Organization's, and nothing shows a neutral player, a friend
- * or a clan mate, who are most players on a map.
- */
 export const isAirTagClanEnemy = (
   relation: AirTagRelation | undefined,
 ): boolean => relation === AIR_TAG_CLAN_ENEMY_RELATION;
 
 export const AIR_TAG_MAX_BATCH_SIZE = 50;
 
-/**
- * One observer reports each target; the gateway names the others standbys.
- * It keeps the reporter for this long after their last sighting, which must
- * outlast the gap between two heartbeats of a target that stands still.
- */
 export const AIR_TAG_REPORTER_LEASE_MS = 6_000;
 
-/**
- * A standby reports a target again once nobody has for this long: the
- * fallback for a reporter that vanished without the gateway noticing. Longer
- * than the lease, so the gateway hands the target over, and short enough that
- * the sighting lands before the target expires.
- */
 export const AIR_TAG_STANDBY_TAKEOVER_MS = 7_000;
 
 const AIR_TAG_MAX_COORDINATE = 65_535;
 
 export const AIR_TAG_MAX_MAP_NAME_LENGTH = 128;
 
-/** A map threat is current this long after its last clan-enemy sighting. */
 export const AIR_TAG_MAP_THREAT_FRESH_MS = 10_000;
 
-/** After this long without a sighting, a map threat is dropped. */
 export const AIR_TAG_MAP_THREAT_TTL_MS = 30_000;
 
 export type AirTagRelation = (typeof AIR_TAG_RELATIONS)[number];
@@ -55,17 +37,10 @@ export interface AirTagObservation {
   x: number;
   y: number;
   lvl?: number;
-  /** Margonem profession letter, such as `w` or `m`. */
   prof?: string;
-  /** Margonem stasis: the player is away from the keyboard. */
   stasis?: boolean;
 }
 
-/**
- * `left-map`: the observer is certain the target left the map (logout, teleport,
- * gateway). `out-of-sight`: the target may still be on the map, beyond the
- * observer's war shadow range.
- */
 export type AirTagDepartureReason = "left-map" | "out-of-sight";
 
 export interface AirTagDeparture {
@@ -76,7 +51,6 @@ export interface AirTagDeparture {
 export interface AirTagObservationBatch {
   expectedMapId: number;
   observations: AirTagObservation[];
-  /** Sent only to gateways listing `lootlog.air-tag-scope-update.v1`. */
   departures?: AirTagDeparture[];
 }
 
@@ -98,14 +72,9 @@ export interface AirTagScopeSnapshot {
   epochStartedAt: number;
   revision: number;
   targets: AirTagTarget[];
-  /** Redis time of the snapshot; relates `observedAt` values to the local clock. */
   serverTime?: number;
 }
 
-/**
- * Every change of one scope from one merged batch. Removals precede updates:
- * `targets[i]` carries revision `revision - (targets.length - 1 - i)`.
- */
 export interface AirTagScopeUpdateEvent {
   guildId: string;
   world: string;
@@ -114,12 +83,7 @@ export interface AirTagScopeUpdateEvent {
   epochStartedAt: number;
   revision: number;
   targets: readonly AirTagTarget[];
-  /** Targets every observer lost sight of after one saw them leave the map. */
   removedTargetIds: readonly string[];
-  /**
-   * Targets whose reporter stopped watching: it lost sight of them, changed
-   * map or disconnected. A standby that still sees one reports it at once.
-   */
   unreportedTargetIds?: readonly string[];
 }
 
@@ -130,17 +94,14 @@ export interface AirTagMapThreatEnemy {
   lvl?: number;
   prof?: string;
   stasis?: boolean;
-  /** Time since the last clan-enemy sighting when the gateway sent the event; immune to client clock skew. */
   ageMs: number;
 }
 
-/** Every clan enemy an Organization member saw on one map within `AIR_TAG_MAP_THREAT_TTL_MS`. */
 export interface AirTagMapThreatEvent {
   guildId: string;
   world: string;
   mapId: number;
   mapName: string;
-  /** Redis time of the aggregation; a later list of the same map replaces an earlier one. */
   revision: number;
   enemies: readonly AirTagMapThreatEnemy[];
 }
@@ -169,11 +130,6 @@ export type AirTagObservationAck =
       status: "accepted";
       acceptedScopes: number;
       acceptedTargets: number;
-      /**
-       * Sightings of this batch another observer already reports in every
-       * scope. The sender may stay silent about them while it keeps
-       * receiving their updates.
-       */
       standbyTargetIds?: string[];
     }
   | {

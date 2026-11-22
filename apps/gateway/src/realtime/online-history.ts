@@ -29,11 +29,8 @@ const CLAIM_BATCH_SIZE = 100;
 
 const FLUSH_INTERVAL_MS = 5_000;
 
-// ponytail: cap each run at 1000 checkpoints; scale collectors if this falls behind.
 const MAX_BATCHES_PER_FLUSH = 10;
 
-// Persist every confirmed observation before publishing cumulative segments. A
-// process restart therefore loses no observation already accepted by Redis.
 const OBSERVE = `
 local now = tonumber(ARGV[1])
 local final = ARGV[2] == '1'
@@ -234,8 +231,6 @@ export class OnlineHistory {
           const now = this.now();
           this.degradedUntil = now + 180_000;
 
-          // Report a Redis outage through Rabbit too: another gateway may still
-          // be healthy and must not hide this collector's missing observations.
           if (now - this.lastHealthAt >= INTERVAL_MS) {
             yield* this.publish({
               version: 1,
@@ -273,7 +268,6 @@ export class OnlineHistory {
   }
 }
 
-/** Checkpoints of how long each character was online, signed for the activity service. */
 export class OnlineHistories extends Context.Service<
   OnlineHistories,
   OnlineHistory

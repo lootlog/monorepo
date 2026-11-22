@@ -32,15 +32,9 @@ import { ROUTES } from "@/config/routes";
 import { UnreadDot } from "@/components/whats-new/unread-dot";
 import { useWhatsNew } from "@/components/whats-new/use-whats-new";
 
-/** A 44px row, inset like the navigation rows above it. */
 const ROW_CLASS =
   "h-11 w-full justify-start gap-3 px-3 font-medium text-foreground [&_svg]:text-muted-foreground";
 
-/**
- * The account at the foot of the phone navigation sheet: a row like the
- * sections above it, which opens the account's actions as a sheet stacked
- * over the navigation instead of the desktop popover.
- */
 export const UserMenuSheet = () => {
   const { t } = useTranslation();
   const { setOpenMobile } = useSidebar();

@@ -77,11 +77,6 @@ const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
   return identity.userId;
 });
 
-/**
- * Answers an application failure with its declared status and the shared error
- * body. Any other failure is a defect: the middleware logs it and the server
- * answers 500.
- */
 const answerFailure = (failure: OperationError) =>
   Schema.is(ApplicationError)(failure.cause)
     ? applicationErrorHttpResponse(failure.cause)
@@ -94,11 +89,6 @@ const invalidJsonBody = new Schema.SchemaError(
   new SchemaIssue.InvalidValue({ message: "Expected a valid JSON body" }),
 );
 
-/**
- * Decodes the JSON body with the domain schema after the caller is
- * authenticated, and answers a body that does not match with the same 400
- * `VALIDATION_ERROR` as a request the contract rejects.
- */
 const withJsonBody = <I, A, R>(
   schema: Schema.Codec<I, unknown>,
   onExcessProperty: "error" | "ignore",
@@ -187,8 +177,6 @@ const BattlelogHandlers = Layer.mergeAll(
   ),
   HttpApiBuilder.group(BattlelogApi, "battles", (handlers) =>
     handlers
-      // Raw: the domain schema normalizes incomplete warrior snapshots that the
-      // published DTO cannot describe, and authentication precedes the body.
       .handleRaw("BattlesControllerCreateBattle", () =>
         secured(({ battles }, userId) =>
           withJsonBody(CreateBattleSchema, "error", (data: CreateBattleInput) =>
@@ -285,7 +273,6 @@ const BattlelogHandlers = Layer.mergeAll(
           battles.deleteBattle(params.battleId, userId),
         ),
       )
-      // Raw: authentication precedes decoding the body.
       .handleRaw("BattlesControllerUpdateBattle", ({ params }) =>
         secured(({ battles }, userId) =>
           withJsonBody(UpdateBattleSchema, "error", (data: BattleUpdate) =>
@@ -301,12 +288,8 @@ const BattlelogHandlers = Layer.mergeAll(
   ),
   HttpApiBuilder.group(BattlelogApi, "weapon-kills", (handlers) =>
     handlers
-      // Raw: the domain schema decodes the battle events like battle creation,
-      // and authentication precedes the body.
       .handleRaw("WeaponKillsControllerRecordWeaponKills", () =>
         secured(({ weaponKills }, userId) =>
-          // Game clients loaded before the proof was dropped still send
-          // `battleKey` and `margonemAccountProof`; their kills still count.
           withJsonBody(
             RecordWeaponKillsSchema,
             "ignore",
@@ -340,7 +323,6 @@ const BattlelogHandlers = Layer.mergeAll(
       ),
   ),
   HttpApiBuilder.group(BattlelogApi, "internal", (handlers) =>
-    // Raw: the cleanup credential is checked before the body is read.
     handlers.handleRaw("InternalControllerDeleteUserData", () =>
       respond(
         Effect.gen(function* () {

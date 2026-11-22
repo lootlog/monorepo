@@ -8,25 +8,19 @@ import { GLASS_SURFACE_CLASS } from "@lootlog/ui/lib/glass-surface";
 
 const TAB_BAR_OFFSET_PROPERTY = "--tab-bar-offset";
 
-/** The sidebar's spring, so the bar settles like the navigation does. */
 const SPRING = { type: "spring", stiffness: 520, damping: 40 } as const;
 
 const GLASS_CLASS = cn("pointer-events-auto", GLASS_SURFACE_CLASS);
 
-/** Height of the bar and diameter of the search circle while open. */
 const OPEN_SIZE = 64;
 
-/** The same while collapsed. */
 const COLLAPSED_SIZE = 48;
 
-/** Room between the bar and the search circle. */
 const GAP = 8;
 
 const TAB_CLASS =
   "relative flex size-full flex-col items-center justify-center gap-0.5 rounded-full text-2xs leading-none font-medium tracking-tighter outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-// Publishes the bar's height, so docked footers and the
-// page's last content stay above it. Hidden from `md` up, it measures zero.
 const publishTabBarOffset = (bar: HTMLDivElement | null) => {
   if (!bar) return;
 
@@ -47,7 +41,6 @@ const publishTabBarOffset = (bar: HTMLDivElement | null) => {
   };
 };
 
-/** What the bar sets on each tab's link. */
 type TabLinkProps = {
   className?: string;
   "aria-current"?: "page";
@@ -56,27 +49,19 @@ type TabLinkProps = {
 
 type TabBarTab = {
   id: string;
-  /** The section's full name, for the collapsed pill. */
   label: string;
-  /** The name under the icon. */
   shortLabel: string;
   icon: LucideIcon;
   active: boolean;
-  /** A count shown on the icon, such as the events running now. */
   badge?: number;
-  /** The link the tab renders, such as a router `Link`. */
   render: ReactElement<TabLinkProps>;
 };
 
 type TabBarMore = {
-  /** "More", which stays the tab's name so it reads as the way in. */
   shortLabel: string;
   icon: LucideIcon;
-  /** The open section when it is one of those behind "More". */
   activeSection?: ActiveSection;
-  /** The button's name while an open section is behind "More". */
   ariaLabel?: string;
-  /** Whether a section behind "More" carries a badge. */
   badged: boolean;
   onOpen: () => void;
 };
@@ -84,21 +69,13 @@ type TabBarMore = {
 type TabBarProps = {
   ariaLabel: string;
   tabs: readonly TabBarTab[];
-  /** The last tab, which opens the rest of the navigation. */
   more?: TabBarMore;
-  /** The site's search, as a circle at the bar's trailing end. */
   search?: { ariaLabel: string; onOpen: () => void };
-  /** The collapsed pill's name, from the open section's name. */
   expandLabel: (section: string) => string;
 };
 
-/** What the collapsed pill shows. */
 type ActiveSection = Pick<TabBarTab, "icon" | "label">;
 
-/**
- * The icon and name the collapsed pill shows: the open section's, or "More"
- * when no section is open, or the first tab's on a bar without "More".
- */
 const resolveActiveSection = (
   tabs: readonly TabBarTab[],
   more: TabBarMore | undefined,
@@ -114,14 +91,6 @@ const resolveActiveSection = (
   return { icon: tabs[0]?.icon ?? Search, label: tabs[0]?.label ?? "" };
 };
 
-/**
- * Phone navigation: a pill floating over the bottom edge with the sections
- * and, optionally, "More", and search as its own circle. Scrolling down
- * shrinks the pill to the current section and scrolling up opens it again,
- * following the scroll as it happens; tapping the collapsed pill opens it
- * too. The unsaved changes bar takes the edge over while it is shown.
- * Its `m` components need a `LazyMotion` with `domMax` above it.
- */
 export function TabBar({
   ariaLabel,
   tabs,
@@ -131,18 +100,13 @@ export function TabBar({
 }: TabBarProps) {
   const { progress, collapsed, expand } = useScrollCollapseProgress();
 
-  // Geometry and fades are driven by the scroll progress itself, so the bar
-  // moves with the page without rendering on every frame.
   const size = useTransform(progress, [0, 1], [OPEN_SIZE, COLLAPSED_SIZE]);
   const open = useTransform(progress, (value) => 1 - value);
 
-  // A motion value even without search: the template drops a literal 0,
-  // which leaves the width invalid and the pill without tabs.
   const searchRoom = useTransform(size, (value) => (search ? value + GAP : 0));
 
   const navWidth = useMotionTemplate`calc(${COLLAPSED_SIZE}px + (100% - ${COLLAPSED_SIZE}px - ${searchRoom}px) * ${open})`;
 
-  // The fades overlap around half-way, so the pill is never empty.
   const tabsOpacity = useTransform(progress, [0, 0.6], [1, 0]);
   const tabsScale = useTransform(progress, [0, 1], [1, 0.92]);
   const iconOpacity = useTransform(progress, [0.4, 0.9], [0, 1]);
@@ -165,8 +129,6 @@ export function TabBar({
   return (
     <div
       ref={publishTabBarOffset}
-      // A collapsed pill keeps the full bar's room, so the page does not
-      // shorten under the reader as it scrolls.
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 box-content flex h-16 items-end justify-between px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-300 motion-reduce:transition-none md:hidden [body:has([data-slot=unsaved-changes-bar])_&]:translate-y-[calc(100%+1rem)]"
     >
       <m.nav
@@ -176,11 +138,8 @@ export function TabBar({
       >
         <m.ul
           inert={collapsed}
-          // Keeps the open bar's width, so the tabs fade out in place
-          // instead of squeezing while the pill narrows.
           className={cn(
             "absolute inset-y-0 left-0 grid origin-left auto-cols-fr grid-flow-col p-1",
-            // The screen less the gutters, and the search circle and its gap.
             search ? "w-[calc(100vw-1rem-72px)]" : "w-[calc(100vw-1rem)]",
           )}
           style={{ opacity: tabsOpacity, scale: tabsScale }}

@@ -41,18 +41,12 @@ type Transaction = Parameters<
   Parameters<ApiDatabaseValue["transaction"]>[0]
 >[0];
 
-/**
- * Queues delivery of member changes in the transaction that commits them. A
- * change queued while an older one is being delivered bumps `version`, so the
- * in-flight delivery cannot delete it.
- */
 export const queueMemberDeliveries = (
   transaction: Transaction,
   memberIds: ReadonlyArray<number>,
   permissionsChanged: boolean,
 ) =>
   Effect.forEach(
-    // Sorted ids take row locks in one order across concurrent writers.
     chunk(
       memberIds.toSorted((left, right) => left - right),
       1000,
@@ -71,7 +65,6 @@ export const queueMemberDeliveries = (
     { discard: true },
   );
 
-// Longer than the delivery timeout, so an expired lease means the claimant died.
 const DELIVERY_LEASE = "30 seconds";
 
 export const makeMemberStore = (database: ApiDatabaseValue) => {
@@ -340,10 +333,6 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
     lte(memberSyncDeliveryTable.claimedUntil, sql`now()`),
   );
 
-  /**
-   * Leases one pending delivery in a single autocommitted statement, so no
-   * transaction or row lock is held while the caller talks to Redis/RabbitMQ.
-   */
   const claimDelivery = (memberId: number) =>
     operation(
       "memberStore.claimDelivery",
@@ -385,7 +374,6 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
       eq(memberSyncDeliveryTable.claimedUntil, claim.claimedUntil),
     );
 
-  /** Makes a claimed delivery available to the next attempt. */
   const releaseDelivery = (claim: DeliveryClaim) =>
     operation(
       "memberStore.releaseDelivery",
@@ -395,10 +383,6 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
         .where(ownClaim(claim)),
     );
 
-  /**
-   * Deletes the delivered version. Returns false and releases the claim when a
-   * newer change was queued during delivery, which then needs its own delivery.
-   */
   const completeDelivery = (claim: DeliveryClaim) =>
     operation(
       "memberStore.completeDelivery",

@@ -14,14 +14,8 @@ import { UnreadDot } from "./unread-dot";
 import { useWhatsNew } from "./use-whats-new";
 import { WhatsNewWeek } from "./whats-new-week";
 
-/** How many of the newest weeks the popover lists before the full page. */
 const POPOVER_WEEK_COUNT = 2;
 
-/**
- * The top bar's way to the latest changes. It sits at the bar's end, after
- * the page's search and context, so it keeps one place on every page. Phones
- * reach the same list from the account menu.
- */
 export const WhatsNewButton = () => {
   const { t, i18n } = useTranslation();
   const { weeks, unreadIds, markAllSeen } = useWhatsNew();
@@ -30,7 +24,6 @@ export const WhatsNewButton = () => {
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
 
-    // The marks stay while the list is open and clear once it was read.
     if (!open) markAllSeen();
   };
 
@@ -70,7 +63,6 @@ export const WhatsNewButton = () => {
               key={week.weekStart}
               aria-labelledby={`whats-new-popover-${week.weekStart}`}
             >
-              {/* The week stays in view while its changes scroll under it. */}
               <h3
                 id={`whats-new-popover-${week.weekStart}`}
                 className="sticky top-0 z-10 border-b bg-[color-mix(in_oklab,var(--muted)_45%,var(--popover))] px-4 py-1.5 text-xs font-semibold text-muted-foreground"

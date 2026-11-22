@@ -93,7 +93,6 @@ export class MapPingService {
   private hasValidPayload(payload: MapPingSendPayload): boolean {
     return (
       isMapPingSendPayload(payload) &&
-      // A ping targets one character at most.
       (payload.npcId === undefined || payload.playerId === undefined) &&
       payload.x <= MAX_COORDINATE &&
       payload.y <= MAX_COORDINATE
@@ -101,7 +100,6 @@ export class MapPingService {
   }
 }
 
-/** Relays map pings to players of the same map. */
 export class MapPings extends Context.Service<MapPings, MapPingService>()(
   "@lootlog/gateway/realtime/MapPings",
 ) {
@@ -113,7 +111,6 @@ export class MapPings extends Context.Service<MapPings, MapPingService>()(
   );
 }
 
-/** Map pings are relayed, never stored. */
 export const mapPingRoutes = (pings: Pick<MapPingService, "send">) =>
   ({
     "map-ping.send": {

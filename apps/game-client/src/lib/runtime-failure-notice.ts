@@ -9,9 +9,6 @@ export type RuntimeFailureKind =
 
 const NOTICE_ID = "lootlog-runtime-notice";
 
-// The overlay and its stylesheet tokens are gone once the runtime is disposed,
-// so the notice styles itself inline. The values mirror a Lootlog window at
-// the darkest opacity: white text, a translucent white rule and a 10px radius.
 const NOTICE_STYLE: Partial<CSSStyleDeclaration> = {
   position: "fixed",
   top: "68px",
@@ -62,12 +59,6 @@ const createElement = <Tag extends keyof HTMLElementTagNameMap>(
   return element;
 };
 
-/**
- * Tells the player that Lootlog stopped after its overlay was torn down, and
- * offers a reload and the diagnostics text. Plain DOM with inline styles: it
- * must work without React or the Lootlog stylesheet, and it never touches
- * Margonem globals.
- */
 export const showRuntimeFailureNotice = (
   kind: RuntimeFailureKind,
   diagnostics: string,
@@ -79,7 +70,6 @@ export const showRuntimeFailureNotice = (
     notice.id = NOTICE_ID;
     notice.setAttribute("role", "alert");
 
-    // Presses on the notice belong to Lootlog, not to the game underneath.
     for (const type of ["pointerdown", "mousedown", "click", "keydown"])
       notice.addEventListener(type, (event) => event.stopPropagation());
 
@@ -139,7 +129,5 @@ export const showRuntimeFailureNotice = (
     actions.append(dismiss, copy, reload);
     notice.append(title, description, actions);
     document.body.append(notice);
-  } catch {
-    // A failure notice must never affect the game.
-  }
+  } catch {}
 };

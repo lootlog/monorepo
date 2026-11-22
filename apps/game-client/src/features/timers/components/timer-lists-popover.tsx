@@ -17,10 +17,6 @@ type TimerListsPopoverProps = {
   npcName: string;
 };
 
-/**
- * Context menu entry that adds the timer's monster to the player's lists or
- * removes it; a new list can be created with the timer already on it.
- */
 export const TimerListsPopover: FC<TimerListsPopoverProps> = ({ npcName }) => {
   const { t } = useTranslation("timers");
   const [open, setOpen] = useState(false);
@@ -62,9 +58,6 @@ export const TimerListsPopover: FC<TimerListsPopoverProps> = ({ npcName }) => {
         align="start"
         side="right"
         className="ll-action-menu ll:w-56 ll:overflow-hidden ll:p-0"
-        // Keys would otherwise bubble through the portal to the context menu,
-        // whose typeahead swallows the letters typed into the list name.
-        // Escape still reaches the popover's document listener.
         onKeyDown={(event) => {
           if (event.key !== "Escape") event.stopPropagation();
         }}
@@ -74,8 +67,6 @@ export const TimerListsPopover: FC<TimerListsPopoverProps> = ({ npcName }) => {
             aria-label={t("lists.membershipLabel", { name: npcName })}
             items={lists.map((list) => ({ value: list.id, label: list.name }))}
             selected={memberOf}
-            // Lists without the monster are the ones to add it to, not
-            // switched-off entries.
             dimUnselected={false}
             onToggle={(id) =>
               setTimerListMembership(id, npcName, !memberOf.has(id))

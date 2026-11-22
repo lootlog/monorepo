@@ -56,8 +56,6 @@ import {
   type ThreatScope,
 } from "#src/realtime/air-tag-store";
 
-// A replica re-registers the scopes its sockets follow; a registration outlives
-// two missed refreshes, and a stale one only costs an unneeded publication.
 const INTEREST_REFRESH_MS = 30_000;
 
 const INTEREST_BATCH_SIZE = 100;
@@ -67,7 +65,6 @@ const federatedUpdates = Metric.counter(
   { incremental: true },
 );
 
-// Attributed once: deriving them on every batch costs more than the update.
 const skippedFederatedUpdates = Metric.withAttributes(federatedUpdates, {
   outcome: "skipped",
 });
@@ -86,7 +83,6 @@ interface ObservationBatch {
   readonly departures?: ReadonlyArray<AirTagDeparture>;
 }
 
-/** Logs are annotated only when written: annotating costs on every batch. */
 const warn = (message: string, cause: unknown) =>
   Effect.logWarning(message, cause).pipe(
     Effect.annotateLogs({ context: "AirTagService" }),
@@ -98,7 +94,6 @@ const UNAVAILABLE = {
 } as const;
 
 export class AirTagService {
-  /** Each socket's subscription changes one at a time, in the order it sent them. */
   private readonly subscriptionLocks = new WeakMap<
     GatewaySocket,
     Semaphore.Semaphore
@@ -232,8 +227,6 @@ export class AirTagService {
     if (scopes.length === 0)
       return Effect.succeed({ status: "rejected", code: "forbidden" });
 
-    // Counted before anything else: a batch with nothing to merge still
-    // spends the replica's shared command budget.
     const now = Date.now();
     let limit = admitConnectionBatch(socket.data, now);
 
@@ -246,8 +239,6 @@ export class AirTagService {
         retryAfterMs: limit.retryAfterMs,
       });
 
-    // The contract accepts every relation, and older clients report every
-    // player they see; most are not clan enemies and cost no Redis call.
     const sightings = payload.observations.filter((item) =>
       isAirTagClanEnemy(item.relation),
     );
@@ -274,22 +265,18 @@ export class AirTagService {
             observations.map((item) => item.targetId),
           );
 
-          // A sighting in the same batch supersedes a departure.
           const departures = [
             ...new Map(
               (payload.departures ?? []).map((item) => [item.targetId, item]),
             ).values(),
           ].filter((item) => !observedIds.has(item.targetId));
 
-          // Proof-checked characters only: a threat reaches the whole Organization's timers.
           const threatsAllowed =
             socket.data.confidence === "verified" &&
             context.mapName.length <= AIR_TAG_MAX_MAP_NAME_LENGTH;
 
           socket.data.airTagReported = true;
 
-          // Scopes are independent: a failed merge does not stop the others.
-          // Forking costs more than a merge, and most observers share one scope.
           return Effect.forEach(
             enabledScopes,
             (scope) =>
@@ -320,7 +307,6 @@ export class AirTagService {
     );
   }
 
-  /** Publishes each merged scope's threat and changes, in scope order. */
   private publishMerges(
     results: ReadonlyArray<
       Exit.Exit<{ scope: AirTagScope; result: MergeResult }, RealtimeStoreError>
@@ -331,13 +317,11 @@ export class AirTagService {
     const steps: Array<Effect.Effect<void, RealtimeStoreError>> = [];
     let acceptedScopes = 0;
     let acceptedTargets = 0;
-    // A sighting is redundant only when every scope has another reporter for it.
     let standby: Set<string> | undefined;
 
     for (const merged of results) {
       if (Exit.isFailure(merged)) {
         steps.push(warn("Failed to merge air tag observations", merged.cause));
-        // The sighting did not reach this scope, so nobody reports it there.
         standby = new Set();
         continue;
       }
@@ -410,7 +394,6 @@ export class AirTagService {
     );
   }
 
-  /** One publication per batch. */
   private publishScopeUpdate(
     scope: AirTagScope,
     excludeConnectionId: string,
@@ -446,7 +429,6 @@ export class AirTagService {
     );
   }
 
-  /** Current map threats of one Organization and world, for a client that just connected. */
   fetchMapThreats(
     socket: GatewaySocket,
     organizationId: string,
@@ -488,7 +470,6 @@ export class AirTagService {
   }
 
   clearSubscription(socket: GatewaySocket): void {
-    // The connection keeps running; its old map's standbys should not wait for it.
     runLogEffect(this.release(socket));
 
     for (const scope of socket.data.airTagScopes)
@@ -496,12 +477,6 @@ export class AirTagService {
     socket.data.airTagScopes = [];
   }
 
-  /**
-   * Gives up the targets this connection reports, on a map change or a
-   * disconnect, and tells each map so a standby takes them over at once
-   * instead of after the reporter's lease. Costs nothing for a connection
-   * that reported no one, which is most of them.
-   */
   release(socket: GatewaySocket): Effect.Effect<void> {
     if (!socket.data.airTagReported) return Effect.void;
     socket.data.airTagReported = false;
@@ -527,7 +502,6 @@ export class AirTagService {
                 })
               : Effect.void,
           ),
-          // The lease still hands the targets over, only later.
           Effect.catch((error) =>
             warn("Failed to release air tag targets", error),
           ),
@@ -600,11 +574,6 @@ export class AirTagService {
     );
   }
 
-  /**
-   * Sends a list the throttle held back, or retries one that failed to go out,
-   * even when the observer sends nothing more. Lives on this instance; a list
-   * lost with it stays in Redis for `fetchMapThreats`.
-   */
   private scheduleThreatFlush(
     scope: ThreatScope,
     delayMs: number,
@@ -650,7 +619,6 @@ export class AirTagService {
     );
   }
 
-  /** Retries the list later, or logs once it has failed too often. */
   private giveUpOrRetryThreat(
     scope: ThreatScope,
     failedAttempts: number,
@@ -672,9 +640,6 @@ export class AirTagService {
     event: AirTagMapThreatEvent,
     failedAttempts = 0,
   ): Effect.Effect<void> {
-    // The live publish does not read the snapshot, which serves later
-    // joiners, and a retry after a failed snapshot repeats the revisioned
-    // event.
     return storeCall("air-tag.threat-publish", async () => {
       await Promise.all([
         recordThreatMap(this.redis, event),
@@ -682,26 +647,19 @@ export class AirTagService {
           [{ topic: "organization.presence", organizationId: event.guildId }],
           { v: 1, type: "air-tag.map-threat-updated", data: event },
           {
-            // Any world: timers can show a world other than the recipient's own.
             recipientPlatform: "game",
-            // A sighting reveals which map an observing member is on.
             organizationId: event.guildId,
             presenceAudience: "precise",
           },
         ),
       ]);
     }).pipe(
-      // AirTag updates of the same batch must still go out; the list goes out again later.
       Effect.catch((error) =>
         this.giveUpOrRetryThreat(event, failedAttempts, error),
       ),
     );
   }
 
-  /**
-   * Registers this replica for a `map.air-tags` subscription made outside
-   * `air-tag.subscription`, so later updates merged on other replicas reach it.
-   */
   registerInterest(
     scope: SubscriptionScope,
   ): Effect.Effect<void, RealtimeStoreError> {
@@ -710,7 +668,6 @@ export class AirTagService {
     ]);
   }
 
-  /** Keeps this replica registered for every air-tag scope a local socket follows. */
   get runInterestRefresh() {
     return Effect.suspend(() => this.refreshInterest).pipe(
       Effect.catchCause((cause) =>
@@ -726,7 +683,6 @@ export class AirTagService {
     this.userBatches.sweep(now);
     this.disabledScopes.sweep(now);
 
-    // A registration script receives the keys of one Organization only.
     const byOrganization = Map.groupBy(
       this.hub.getLocalScopes("map.air-tags"),
       (scope) => scope.organizationId ?? "",
@@ -747,10 +703,6 @@ export class AirTagService {
     );
   }
 
-  /**
-   * The scopes not switched off, or null when Redis cannot say. The switch is
-   * cached, so an admitted batch costs Dragonfly its merge alone.
-   */
   private readEnabledScopes(
     scopes: ReadonlyArray<AirTagScope>,
     now: number,
@@ -767,7 +719,6 @@ export class AirTagService {
   }
 }
 
-/** AirTag observations, their scopes and map threats, with the interest refresh. */
 export class AirTags extends Context.Service<AirTags, AirTagService>()(
   "@lootlog/gateway/realtime/AirTags",
 ) {
@@ -801,7 +752,6 @@ export const airTagRoutes = (
         Effect.suspend(() => {
           const admission = observationAdmission.tryAcquire();
 
-          // A rejected batch loses nothing: the client merges it into its next one.
           if (admission.admitted === false)
             return Effect.succeed<AirTagObservationAck>({
               status: "rejected",

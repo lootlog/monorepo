@@ -15,7 +15,6 @@ export const useRefreshJobUpdates = (
   });
 
   const handleJoin = useEffectEvent((payload: GatewayJoin) => {
-    // The gateway does not replay progress missed while disconnected.
     if (
       payload.recover &&
       guildId !== undefined &&

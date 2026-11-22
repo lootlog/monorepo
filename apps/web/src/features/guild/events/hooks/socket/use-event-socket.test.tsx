@@ -85,7 +85,6 @@ describe("useEventSocket", () => {
         queryClient.setQueryData(queryKey, { items: [] });
       }
 
-      // One payload with the fields of every event type under test.
       const payload = {
         guildId: "guild-1",
         eventId: "event-1",

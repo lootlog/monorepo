@@ -57,7 +57,6 @@ it("leaves an unavailable part, and every later refetch, to the query's own endp
   const preferencesKey = getUsersControllerGetUserPreferencesQueryKey();
 
   try {
-    // Queries mounted before the game starts wait for its character.
     const startup = Promise.all([
       readGameClientBootstrap(guildsKey),
       readGameClientBootstrap(preferencesKey),
@@ -70,7 +69,6 @@ it("leaves an unavailable part, and every later refetch, to the query's own endp
     expect(requests).toEqual(["?gameAccountId=202&characterId=7"]);
     expect(client.getQueryData(guildsKey)).toEqual([guild]);
     expect(client.getQueryData(preferencesKey)).toBeUndefined();
-    // An invalidation after startup must read current data, not the bootstrap.
     expect(await readGameClientBootstrap(guildsKey)).toBeUndefined();
   } finally {
     stop();

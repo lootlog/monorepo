@@ -36,11 +36,6 @@ function toDiscordHttpSyncStatus(statusCode: number): DiscordHttpSyncStatus {
   return `${DISCORD_HTTP_SYNC_STATUS_PREFIX}${statusCode}`;
 }
 
-/**
- * A refresh that has not settled the member: stored access keeps serving
- * while it lasts. A Discord refusal keeps the stored member too, although
- * retrying it cannot succeed.
- */
 export function isTransientMemberSyncStatus(
   status: MemberRefreshStatus,
 ): boolean {
@@ -51,10 +46,6 @@ export function isTransientMemberSyncStatus(
   );
 }
 
-/**
- * A failure another attempt can fix. Discord answers a refusal the same way
- * until the member or the server changes, so it is not retried.
- */
 export function isRetryableMemberRefreshStatus(
   status: MemberRefreshStatus,
 ): boolean {
@@ -92,19 +83,12 @@ export function getTransientMemberSyncStatus(error: unknown): MemberSyncStatus {
   return MEMBER_DISCORD_SYNC_STATUS.ERROR;
 }
 
-/**
- * Discord is reachable and refused this member's request (for example 403),
- * so the failure belongs to the member, not to Discord or Lootlog. A 408 is
- * Lootlog's own request timeout, not a refusal.
- */
 export function isDiscordRefusalSyncStatus(
   status: MemberRefreshStatus,
 ): boolean {
   return /^DISCORD_HTTP_4\d\d$/.test(status) && status !== "DISCORD_HTTP_408";
 }
 
-// toDiscordRequestError keeps a Discord status it has no dedicated error for
-// as DISCORD_HTTP_ERROR with Discord's status in `details`.
 const decodeDiscordHttpError = Schema.decodeUnknownOption(
   Schema.Struct({
     code: Schema.Literal("DISCORD_HTTP_ERROR"),

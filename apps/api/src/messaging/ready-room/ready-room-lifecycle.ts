@@ -142,8 +142,6 @@ export const cancelAggregate = Effect.fnUntraced(function* (
         { concurrency: "unbounded", discard: true },
       ),
       context.publish(result.aggregate, recipients),
-      // The cancellation is committed and retries cannot repeat it, so a chat
-      // cleanup failure must neither skip publications nor fail the request.
       context.effects
         .endPartyGatheringMessages(
           result.aggregate.notificationId,
@@ -200,7 +198,6 @@ export const cancelRoom = (
     withAdapterSpan("PartyReadyRoomControllerCancel.redis", "ReadyRoomRedis"),
   );
 
-/** Restarts the organizer's gathering lifetime from now. */
 export const extendRoom = (
   context: ReadyRoomContext,
   identity: ReadyRoomIdentity,
@@ -247,7 +244,6 @@ export const extendRoom = (
   );
 
 export interface ReadyRoomNpcKill {
-  // The Lootlogs that recorded the kill as their own timer.
   readonly guildIds: ReadonlyArray<string>;
   readonly world: string;
   readonly npcId: number;
@@ -280,19 +276,12 @@ const closeKilledNpcRoom = (
         attempt + 1 < MAX_CAS_ATTEMPTS,
       () => closeKilledNpcRoom(context, notificationId, attempt + 1),
     ),
-    // A room that expired meanwhile is already gone.
     Effect.catchIf(
       (error) => error instanceof ResourceNotFoundError,
       () => Effect.void,
     ),
   );
 
-/**
- * Ends the gatherings for an NPC that their Lootlogs saw killed. Ending one
- * tells every Lootlog of the gathering why, so a gathering shared with a
- * Lootlog that did not record the kill stays open: another Organization's kill
- * never closes, or reveals itself through, its gatherings.
- */
 export const closeKilledNpcRooms = (
   context: ReadyRoomContext,
   kill: ReadyRoomNpcKill,

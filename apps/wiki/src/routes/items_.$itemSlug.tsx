@@ -73,7 +73,6 @@ import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
 export const Route = createFileRoute("/items_/$itemSlug")({
   component: ItemRoute,
-  // The page loads the item itself; a failed load leaves it the error.
   loader: async ({ params, location, context: { queryClient } }) => {
     const id = readPageSegment(params.itemSlug)?.id;
 
@@ -89,7 +88,6 @@ export const Route = createFileRoute("/items_/$itemSlug")({
 
     if (!item) return { item };
 
-    // An old link, or one with an outdated name, moves to the item's own URL.
     if (itemPageParams(item).itemSlug !== params.itemSlug) {
       throw redirect({
         to: "/items/$itemSlug",
@@ -101,7 +99,6 @@ export const Route = createFileRoute("/items_/$itemSlug")({
 
     const source = relatedDropsSource(item);
 
-    // A socket, a symbol, a component or a chest shows the others.
     const showsSocketItems =
       hasSocket(item) ||
       findSymbol(item.id) !== undefined ||
@@ -173,7 +170,6 @@ function ItemRoute() {
   const navigate = Route.useNavigate();
   const { set } = useEquipmentSet();
   const id = readPageSegment(itemSlug)?.id;
-  // The symbols tell whether a linked one fits the item's socket.
   const { items: symbols } = useSocketCatalog(search.symbol !== undefined);
 
   const { data, isError } = useCatalogControllerGetItems(
@@ -212,7 +208,6 @@ function ItemRoute() {
     );
   }
 
-  // An old link, or one with an outdated name, moves to the item's own URL.
   if (itemPageParams(item).itemSlug !== itemSlug) {
     return (
       <Navigate
@@ -224,8 +219,6 @@ function ItemRoute() {
     );
   }
 
-  // An elastic item shows as the previewed level, else the set's character,
-  // would loot it, and is upgraded from there. The preview leaves the set be.
   const looted = itemForCharacter(item, search.level ?? set.level);
   const canUpgrade = isUpgradable(looted);
 

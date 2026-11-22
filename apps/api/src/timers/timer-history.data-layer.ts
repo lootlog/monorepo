@@ -95,7 +95,6 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
         .select({ id: timerHistoryEntryTable.id })
         .from(timerHistoryEntryTable)
         .where(condition)
-        // Preserve insertion order without scanning unrelated Organizations through the primary key.
         .orderBy(desc(sql`${timerHistoryEntryTable.id}::bigint`))
         .limit(limit);
 

@@ -30,8 +30,6 @@ export const LootContent = ({
   const selectedNames = new Set(selectedPlayerNames);
 
   return (
-    // The container query lets the unassigned block sit beside the players
-    // when the card is wide and drop under them when it is not.
     <div
       className={cn(
         "@container flex flex-1 flex-wrap gap-x-4 gap-y-2.5 py-2.5",

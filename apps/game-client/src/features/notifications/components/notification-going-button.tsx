@@ -20,10 +20,6 @@ type NotificationGoingButtonProps = {
   notification: StoredNotification & NotificationWithServers;
 };
 
-/**
- * Tells the player's Lootlog "I'm going" to a reported NPC without setting up
- * a gathering; pressing it again takes the answer back.
- */
 export function NotificationGoingButton({
   notification,
 }: NotificationGoingButtonProps) {
@@ -49,9 +45,6 @@ export function NotificationGoingButton({
 
       if (!character) throw new Error("No current character");
 
-      // The player may have answered another report of this NPC than the one
-      // this row opened with, so taking it back reaches every report that
-      // lists them.
       const answered =
         next || userId === undefined
           ? []
@@ -73,8 +66,6 @@ export function NotificationGoingButton({
         ),
       );
     },
-    // The answer holds the same lists the Lootlogs push live, so the button
-    // settles without waiting for the socket.
     onSuccess: (answers) => {
       for (const { notificationId, guilds } of answers)
         for (const { guildId, going: players } of guilds)
@@ -83,7 +74,6 @@ export function NotificationGoingButton({
     onError: () => showRuntimeMessage(t("going.failed")),
   });
 
-  // The press shows at once; the Lootlog's answer list confirms it.
   const pressed = isPending ? variables : going;
 
   return (

@@ -55,7 +55,6 @@ export const ThemeEditorPage = () => {
   );
 
   return (
-    // Remount on a new theme so the draft starts from it.
     <ThemeEditorForm
       key={theme.id}
       theme={theme}

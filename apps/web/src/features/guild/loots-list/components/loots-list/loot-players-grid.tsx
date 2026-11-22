@@ -6,10 +6,6 @@ import { useTranslation } from "react-i18next";
 import type { LootRosterPlayer } from "./build-loot-roster";
 import { formatRosterPlayerDetail } from "./format-roster-player-detail";
 
-/**
- * Players without items under a heading, packed tighter than the recipients:
- * party members who got nothing, or those on the map outside the party.
- */
 export const LootPlayersGrid = ({
   title,
   players,

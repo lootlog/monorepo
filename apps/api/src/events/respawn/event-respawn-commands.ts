@@ -261,8 +261,6 @@ export const makeEventRespawnCommands = (
       return { success: true, minSpawnTime, maxSpawnTime };
     }),
 
-    // Effect.fn cannot infer this command: its result type feeds back into
-    // the factory's own return type.
     // @effect-diagnostics-next-line effectFnOpportunity:off
     close: (
       guild: { id: string },

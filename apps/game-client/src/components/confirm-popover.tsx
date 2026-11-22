@@ -14,7 +14,6 @@ type PopoverContentProps = ComponentProps<typeof PopoverContent>;
 type ConfirmPopoverProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Element that opens the confirmation; omit it and pass `anchor` instead. */
   trigger?: ReactElement;
   anchor?: PopoverContentProps["anchor"];
   side?: PopoverContentProps["side"];
@@ -24,17 +23,10 @@ type ConfirmPopoverProps = {
   description?: string;
   confirmLabel: string;
   confirmVariant?: ComponentProps<typeof Button>["variant"];
-  /** The confirmed action is running; the confirm button shows a spinner. */
   pending?: boolean;
   onConfirm: () => void;
 };
 
-/**
- * Asks before an action that removes or ends a record other members of the
- * Organization see. Focus lands on the cancel button, so an accidental Enter
- * or Space keeps the record, and Escape or an outside press cancels. Escape
- * closes only the confirmation, not a context menu it was opened from.
- */
 export const ConfirmPopover = ({
   open,
   onOpenChange,
@@ -69,10 +61,6 @@ export const ConfirmPopover = ({
         className="ll:w-64"
         initialFocus={cancelRef}
         finalFocus={finalFocus}
-        // Margonem handles every document key press whose target is not a
-        // text field (Enter opens its chat, digits use skills), so keys
-        // pressed while the confirmation holds focus stay inside it. That
-        // also hides Escape from the popover's own document listener.
         onKeyDown={(event) => {
           event.stopPropagation();
 

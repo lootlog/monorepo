@@ -29,12 +29,6 @@ const router = createRouter({
   stringifySearch,
   defaultPendingComponent: PageSkeleton,
   defaultPreload: "intent",
-  // A click answers within a frame or two with the target page's skeleton.
-  // Placeholders reveal themselves late (`animate-skeleton`), so a fast
-  // response still never flashes one and no minimum pending time is needed.
-  // The router renders whatever has resolved when this timer fires, so it
-  // stays above zero: parent layouts with cached data need a tick to settle,
-  // otherwise their generic skeleton wins over the page's own.
   defaultPendingMs: 50,
   defaultPendingMinMs: 0,
   scrollRestoration: true,

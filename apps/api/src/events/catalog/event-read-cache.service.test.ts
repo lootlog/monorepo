@@ -68,7 +68,6 @@ describe("EventReadCache", () => {
     expect(result.createdAt).toBeInstanceOf(Date);
     expect(result.nested.minSpawnTime).toBeInstanceOf(Date);
     expect(result.entries[0]?.startedAt).toBeInstanceOf(Date);
-    // A plain ISO string stays a string; only real Date instances survive as Date.
     expect(result.label).toBe("2026-06-19T12:00:00.000Z");
   });
 

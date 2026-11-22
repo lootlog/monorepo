@@ -4,12 +4,6 @@ type CountBadgeProps = {
   count: number;
 };
 
-/**
- * Repeated reports of one NPC collapse into a single chat row or notification;
- * the badge shows how many there were and bumps when another arrives. Outside
- * the chat its density variables are unset, so the fallbacks match the
- * readable chat preset.
- */
 export const CountBadge: FC<CountBadgeProps> = ({ count }) => {
   const badgeRef = useRef<HTMLSpanElement>(null);
   const previousCountRef = useRef(count);

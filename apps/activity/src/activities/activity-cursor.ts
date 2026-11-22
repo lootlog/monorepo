@@ -1,8 +1,5 @@
 import { Option, Schema } from "effect";
 
-// PostgreSQL keeps microseconds, so the cursor carries the timestamp as
-// PostgreSQL text. A cursor rounded to the millisecond would skip the rows that
-// share it with the last row of a page.
 const CURSOR_TIMESTAMP_PATTERN =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{1,6}Z$/;
 
@@ -28,14 +25,12 @@ export const parseActivityCursor = (
     Option.filter(
       ([createdAt]) =>
         CURSOR_TIMESTAMP_PATTERN.test(createdAt) &&
-        // JavaScript accepts year 0000; PostgreSQL rejects it on the cast.
         !createdAt.startsWith("0000") &&
         Number.isFinite(Date.parse(createdAt)),
     ),
     Option.map(([createdAt, id]) => ({ createdAt, id })),
   );
 
-/** A `nextCursor` from a previous page; anything else is a request error. */
 export const ActivityCursor = Schema.String.check(
   Schema.makeFilter((value) => Option.isSome(parseActivityCursor(value)), {
     expected: "a cursor returned by a previous page",

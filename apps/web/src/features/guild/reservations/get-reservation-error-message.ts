@@ -32,7 +32,6 @@ const RESERVATION_ERROR_CODES = new Set([
   "RESERVATION_SHARE_WITH_SELF",
 ]);
 
-/** The `details` value that completes each code's message. */
 const DETAIL_KEYS = new Map([
   ["ACTIVE_LIMIT_REACHED", "limit"],
   ["RESERVATION_TOO_SHORT", "minimumMinutes"],

@@ -11,22 +11,14 @@ import { EventHeaderSkeleton } from "./event-header-skeleton";
 import { EventPageTabs, type EventTab } from "./event-page-tabs";
 
 type EventHeaderProps = {
-  /** The section the page shows; pages outside the tabs leave it out. */
   tab?: EventTab;
 };
 
-/**
- * What every section of an event opens with: its details and actions, then
- * the section tabs. It renders straight in the page scroller marked
- * `data-under-top-bar`, so the tabs stay pinned.
- */
 export const EventHeader = ({ tab }: EventHeaderProps) => {
   const header = useEventHeader();
   const { event, t } = header;
 
   if (!event) {
-    // A page with data of its own can show while the event fails: keep the
-    // way to the other sections and a way to load the event again.
     if (!header.isEventError) return <EventHeaderSkeleton tab={tab} />;
 
     return (

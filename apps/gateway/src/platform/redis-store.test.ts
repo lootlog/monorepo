@@ -81,7 +81,6 @@ test("federation backlog yields to timers while preserving order and isolating m
               countAtTimer = received.length;
             }, 0);
 
-            // Make the timer due before the backlog could drain without yielding.
             const due = performance.now() + 2;
 
             while (performance.now() < due);
@@ -128,7 +127,6 @@ test("a dropped subscriber reports the interruption before delivering its whole 
                 new Redis.RedisError({ cause: "connection closed" }),
               );
 
-            // The subscription resolves to the Effect that ends with it.
             // @effect-diagnostics-next-line returnEffectInGen:off
             return Deferred.await(terminal);
           }),
@@ -158,7 +156,6 @@ test("a dropped subscriber reports the interruption before delivering its whole 
           "Subscriber loss was not reported",
         );
         expect(receivedAtLoss).toBeLessThan(backlog);
-        // Sessions may outlive the interruption, so the backlog still reaches them.
         yield* waitUntil(
           () => received >= backlog,
           "Backlog was not delivered",

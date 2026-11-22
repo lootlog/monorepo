@@ -10,14 +10,9 @@ import type { EquipmentSlot } from "@/lib/equipment-slots";
 type EquipmentSetItemRowProps = {
   slot: EquipmentSlot;
   worn: WornItem | undefined;
-  /** An empty slot no item can go in, such as beside a two-handed weapon. */
   isBlocked: boolean;
 };
 
-/**
- * One slot of the set as a line of text: what it holds, how far that is
- * upgraded and its level, with a way to pick an item for it.
- */
 export function EquipmentSetItemRow({
   slot,
   worn,

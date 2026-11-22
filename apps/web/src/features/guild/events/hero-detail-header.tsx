@@ -24,7 +24,6 @@ type Props = Pick<
   | "RespawnActionIcon"
 >;
 
-/** The hero's sprite, level and respawn, with the respawn window action. */
 export const HeroDetailHeader = ({
   hero,
   heroProf,

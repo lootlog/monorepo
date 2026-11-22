@@ -1,4 +1,4 @@
-import { type JsonCodec } from "@lootlog/database/redis-cache-fill";
+import type { JsonCodec } from "@lootlog/database/redis-cache-fill";
 import { expect, test } from "bun:test";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { Effect, Redacted } from "effect";
@@ -160,10 +160,8 @@ test("a token Discord rejected is not served again, while the token from a new s
 
   await Effect.runPromise(service.getIdpToken("user", "discord"));
   await Effect.runPromise(service.rejectIdpToken("user", "discord", "revoked"));
-  // A late 401 for an older token must not lift the newer token's rejection.
   await Effect.runPromise(service.rejectIdpToken("user", "discord", "older"));
 
-  // The auth service still holds the revoked token until the user signs in.
   response = issuedToken("revoked");
 
   const error = await Effect.runPromise(

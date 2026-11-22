@@ -7,7 +7,6 @@ type DetailSkeletonProps = {
   children: ReactNode;
 };
 
-/** Route-level stand-in for `DetailPage`: its details row and sections. */
 export const DetailSkeleton = ({
   meta,
   actions,

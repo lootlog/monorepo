@@ -3,17 +3,12 @@ import type { EventHeroNpc, EventRanking } from "@/lib/api/event-types";
 
 export type MyHeroScore = {
   hero: EventHeroNpc;
-  /** The member's place in the hero's ranking, by points; absent before a kill. */
   place?: number;
   playerCount: number;
   points: number;
   kills: number;
 };
 
-/**
- * The member's standing in each hero's ranking. Rankings are per hero, so a
- * place only exists within one hero.
- */
 export const getMyHeroScores = (
   heroes: EventHeroNpc[],
   rankings: EventRanking[],

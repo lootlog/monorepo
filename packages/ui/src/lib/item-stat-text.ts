@@ -16,14 +16,9 @@ const resolveTranslation = (path: string) =>
 
 const ITEM_STAT_TAG_NAMES = Object.keys(ITEM_STAT_TAG_CLASS_NAMES).join("|");
 
-/** The tags a translated stat marks its parts with for the tooltip. */
 export const itemStatTagPattern = () =>
   new RegExp(`<(${ITEM_STAT_TAG_NAMES})>(.*?)</\\1>`, "gs");
 
-/**
- * A stat's line as the game's tooltip words it, its parts still in their
- * tags, or undefined for a stat Lootlog has no wording for.
- */
 export const itemStatTemplate = (displayValue: ItemDisplayValue) => {
   const template = displayValue.key && resolveTranslation(displayValue.key);
 
@@ -40,7 +35,6 @@ export const itemStatTemplate = (displayValue: ItemDisplayValue) => {
   );
 };
 
-/** A stat's tooltip line as plain text, for a link preview. */
 export const itemStatText = (displayValue: ItemDisplayValue) => {
   if (!displayValue.key) return "";
 
@@ -50,7 +44,6 @@ export const itemStatText = (displayValue: ItemDisplayValue) => {
     return `${displayValue.key}: ${formatItemDisplayValue(displayValue.value)}`;
   }
 
-  // Tags nest, as a legendary bonus's value inside its description.
   let text = template;
   let untagged = text.replace(itemStatTagPattern(), "$2");
 

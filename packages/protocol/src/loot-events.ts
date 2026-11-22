@@ -3,12 +3,6 @@ import { LootSnapshot } from "./loot-summary.js";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
 
-/*
- * Loot and reservation events that RabbitMQ carries and the realtime gateway
- * forwards to browsers. They live apart from the RabbitMQ catalogue so the
- * realtime protocol does not bundle every server-only event schema.
- */
-
 export const GuildLootEventNpc = Schema.Struct({
   lvl: Schema.optional(Schema.NullOr(Schema.Finite)),
   prof: Schema.optional(Schema.NullOr(Schema.String)),
@@ -30,7 +24,6 @@ export const GuildLootCreatedEventV2 = Schema.Struct({
 
 export type GuildLootCreatedEventV2 = typeof GuildLootCreatedEventV2.Type;
 
-// Publishers before the snapshot omit `loot`; web clients then read the loot back.
 export const GuildLootCreatedMessageV2 = Schema.Struct({
   ...GuildLootCreatedEventV2.fields,
   loot: Schema.optional(LootSnapshot),

@@ -13,11 +13,6 @@ import { formatPercent } from "@/lib/calculator-format";
 import { LEGENDARY_BONUS_NAMES } from "@lootlog/ui/components/item-stat-utils";
 import { skillPlanLevel } from "@/lib/skills/skill-tree";
 
-/**
- * The legendary bonuses the set's items carry, each with the value they add
- * up to on the set's character: every further item adds half of the one
- * before it, and an item the character has outgrown adds less.
- */
 export function EquipmentLegendaryBonuses() {
   const { set } = useEquipmentSet();
   const { wornItems } = useSetSummary();

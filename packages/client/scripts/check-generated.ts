@@ -11,8 +11,6 @@ assertNoGeneratedDrift(
     ...API_SERVICE_NAMES.map((service) =>
       relative(repositoryRoot, serviceSpecPath(service)),
     ),
-    // The root `client:generate` also writes these specifications. They have
-    // no generated client: only internal and WebSocket callers use them.
     "apps/discord-bot/openapi.yaml",
     "apps/gateway/openapi.yaml",
     "packages/client/src/generated",

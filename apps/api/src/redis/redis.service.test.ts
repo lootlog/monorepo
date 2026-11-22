@@ -21,7 +21,6 @@ type RedisClientMock = {
 
 const createRedisService = (client: RedisClientMock) => {
   const redis = Redis.Redis.of({
-    // The driver reports a failed command as RedisError, never as a defect.
     send: <A>(command: string, ...args: ReadonlyArray<string>) =>
       Effect.tryPromise({
         catch: (cause) => new Redis.RedisError({ cause }),

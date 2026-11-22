@@ -6,7 +6,6 @@ import {
 } from "effect/http-api";
 import { httpErrorResponse } from "./errors.js";
 
-/** The `HttpErrorResponse` shape with its validation code and issues spelled out. */
 const RequestValidationError = Schema.Struct({
   code: Schema.Literal("VALIDATION_ERROR"),
   message: Schema.String,
@@ -22,7 +21,6 @@ const RequestValidationError = Schema.Struct({
   .annotate({ identifier: "RequestValidationError" })
   .pipe(HttpApiSchema.status(400));
 
-// The declared error documents the 400 response in OpenAPI and generated clients.
 export class SchemaErrorResponse extends HttpApiMiddleware.Service<SchemaErrorResponse>()(
   "@lootlog/protocol/SchemaErrorResponse",
   { error: RequestValidationError },
@@ -30,10 +28,6 @@ export class SchemaErrorResponse extends HttpApiMiddleware.Service<SchemaErrorRe
 
 const formatIssues = SchemaIssue.makeFormatterStandardSchemaV1();
 
-/**
- * The 400 `VALIDATION_ERROR` answer to a request part (`Payload`, `Query`,
- * `Params`, `Headers`) that does not match its schema.
- */
 export const requestValidationErrorResponse = (
   kind: HttpApiError.HttpApiSchemaError["kind"],
   error: Schema.SchemaError,
@@ -58,13 +52,10 @@ export const requestValidationErrorResponse = (
 
 export const SchemaErrorResponseLive =
   HttpApiMiddleware.layerSchemaErrorTransform(SchemaErrorResponse, (error) => {
-    // A response that does not match its own schema is a server defect.
     if (error.kind === "Body" || error.kind === "ResponseHeaders") {
       return Effect.fail(error);
     }
 
-    // A failure would be encoded by the first endpoint or middleware error
-    // schema that accepts it, so an open 401/403/404 schema could claim it.
     return Effect.succeed(
       requestValidationErrorResponse(error.kind, error.cause),
     );

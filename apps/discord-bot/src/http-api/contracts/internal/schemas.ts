@@ -2,7 +2,6 @@ import {
   DiscordGuildChannel,
   DiscordGuildSyncState,
 } from "@lootlog/schema/discord";
-/** Transport schemas owned by the internal HTTP module. */
 import { Schema } from "effect";
 import { HttpApiSchema } from "effect/http-api";
 

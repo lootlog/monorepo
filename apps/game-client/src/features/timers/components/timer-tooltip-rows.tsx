@@ -11,11 +11,6 @@ const LIST_CLASS_NAME =
 
 const ROW_CLASS_NAME = "ll:grid ll:grid-cols-[minmax(0,1fr)_auto] ll:gap-x-2";
 
-/**
- * The players or enemies of a timer tooltip: the first rows and a count of
- * the rest, which unfold, up to a longer limit, once the player keeps the
- * tooltip open.
- */
 export function TimerTooltipRows<Item>({
   items,
   expanded,

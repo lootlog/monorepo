@@ -1,4 +1,3 @@
-/** Transport schemas owned by the auth HTTP module. */
 import * as Schema from "effect/Schema";
 import { FiniteNumber } from "@lootlog/schema/http-scalars";
 import {

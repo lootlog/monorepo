@@ -8,10 +8,6 @@ import { getBattlesControllerGetAbyssSeasonsQueryOptions } from "@lootlog/client
 import type { QueryClient } from "@tanstack/react-query";
 import { findAbyssSeason } from "./abyss-formatters";
 
-/**
- * The season a season route shows, for its loaders. The layout and its tabs
- * load in parallel, so each resolves it; the seasons request is shared.
- */
 export const loadAbyssSeasonRoute = async ({
   queryClient,
   searchStr,

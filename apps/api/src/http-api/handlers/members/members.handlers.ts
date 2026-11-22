@@ -156,7 +156,6 @@ export const getCurrentMember = Effect.fn("getCurrentMember")(function* (
     service.getMe(current, guildId, refresh),
   );
 
-  // The open contract preserves additional domain fields, including nested dates.
   return yield* decodeDomainJson(NullableMemberResponse, value).pipe(
     Effect.mapError((cause) => new MembersOperationError({ cause })),
   );

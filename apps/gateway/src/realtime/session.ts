@@ -23,13 +23,11 @@ export interface AirTagScope {
   readonly subscription: SubscriptionScope;
 }
 
-/** The timer NPCs this socket last reported standing on its map. */
 export interface NpcPresenceState {
   readonly world: string;
   readonly characterId: string;
   readonly organizationIds: readonly string[];
   readonly npcs: ReadonlyMap<number, NpcPresenceNpc>;
-  /** The map the reporting character stands on, when its client named it. */
   readonly map: string | undefined;
 }
 
@@ -38,22 +36,16 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly platform: typeof PresencePlatform.Type;
   readonly userAgent?: string;
   joined: boolean;
-  /** Set when the gateway will close the socket; it no longer acts on commands. */
   closing?: boolean;
   guilds: UserGuildData[];
   subscriptions: Map<string, SubscriptionScope>;
   airTagScopes: AirTagScope[];
-  /** When this connection sent its recent sighting batches, for its rate limit. */
   airTagBatchesSentAt?: number[];
-  /** This connection reported a sighting in its current AirTag scopes. */
   airTagReported?: boolean;
   npcPresence?: NpcPresenceState;
-  /** Lootlogs whose activity log recorded this session's connection. */
   activityOrganizationIds?: string[];
   character?: typeof PresenceCharacter.Type;
-  /** The client joined with `CHARACTER_AURAS_FEATURE`, so it reads aura changes. */
   characterAuras?: boolean;
-  /** The client joined with `KILL_STATS_FEATURE`, so it reads `kill-stats.changed`. */
   killStats?: boolean;
   confidence: typeof PresenceConfidence.Type;
   presence?: BasicPresence & {

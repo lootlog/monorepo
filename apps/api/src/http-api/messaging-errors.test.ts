@@ -49,7 +49,6 @@ const database = new Proxy(databaseBoundary.database, {
 
 const unused = () => Effect.die("Unexpected ready-room operation");
 
-// The room a ready-room mutation checks for visibility before it runs.
 const visibleRoom = {
   schemaVersion: 3 as const,
   notificationId: "active",

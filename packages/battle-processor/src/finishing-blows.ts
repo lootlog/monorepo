@@ -3,18 +3,9 @@ import { parseBattleMoves, type BattleEvent } from "./battle-log.js";
 export type FinishingBlow = {
   killerId: string;
   victimId: string;
-  /** The index of the row that dealt the blow among the battle's rows. */
   moveIndex: number;
 };
 
-/**
- * The warriors who dealt each death of an opponent, in battle order. A row
- * reports both warriors' HP after it, so a target that falls in a row died to
- * its actor, and an actor that falls in a row with a target died to that
- * target's counter or reflected damage. A row without a target is a damage
- * over time tick; the log does not name its source, so the death goes to the
- * last opponent that acted on the victim. A revived warrior can die again.
- */
 export function findFinishingBlows(
   events: readonly BattleEvent[],
 ): FinishingBlow[] {

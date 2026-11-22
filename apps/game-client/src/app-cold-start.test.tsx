@@ -275,8 +275,6 @@ it("starts an initialized character with one bootstrap request, without repeatin
     expect(unexpected).toEqual([]);
     expect(webSocketFactory).toHaveBeenCalledTimes(1);
     expect(proofRequests).toHaveLength(1);
-    // The startup reads of guilds, preferences, the Lootlog configuration and
-    // the settings documents arrive in one bootstrap response.
     expect(requests).toHaveLength(8);
     expect(
       requests.filter(
@@ -297,7 +295,6 @@ it("starts an initialized character with one bootstrap request, without repeatin
     ).toHaveLength(1);
     expect(commands.filter((type) => type === "session.join")).toHaveLength(1);
     expect(requests.filter((path) => path === "GET /timers")).toHaveLength(1);
-    // Hero timers show where a detector last placed their hero.
     expect(
       requests.filter((path) => path === "GET /hero-sightings"),
     ).toHaveLength(1);

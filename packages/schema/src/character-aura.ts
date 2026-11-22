@@ -1,9 +1,5 @@
 import { Schema } from "effect";
 
-/**
- * Auras a Lootlog User can choose for each of their characters. The Game client owns how
- * each one looks; the server only stores and validates the id.
- */
 export const CHARACTER_AURA_IDS = [
   "divine",
   "hellfire",
@@ -62,9 +58,6 @@ export const CharacterAuraIdSchema = Schema.Literals(CHARACTER_AURA_IDS);
 
 export type CharacterAuraId = typeof CharacterAuraIdSchema.Type;
 
-/**
- * Auras only Lootlog admins may wear; a granted User chooses among the rest.
- */
 const ADMIN_CHARACTER_AURA_IDS = [
   "sovereign",
   "seraph",
@@ -93,10 +86,6 @@ const adminCharacterAuraIds: ReadonlySet<string> = new Set(
 export const isAdminCharacterAuraId = (id: CharacterAuraId): boolean =>
   adminCharacterAuraIds.has(id);
 
-/**
- * Auras made for single players. An admin grants each one by name: holding a
- * grant of auras in general does not let a User choose them.
- */
 export const PERSONAL_CHARACTER_AURA_IDS = [
   "skyborne",
   "joker",
@@ -124,21 +113,10 @@ export const isPersonalCharacterAuraId = (
   id: CharacterAuraId,
 ): id is PersonalCharacterAuraId => personalCharacterAuraIds.has(id);
 
-/**
- * Which auras a device draws on the map: all of them, the hero's and the few
- * nearest it, or none. `auto` draws all with graphics acceleration and the
- * nearest ones without it.
- */
 export const MAP_AURA_MODES = ["auto", "all", "nearby", "off"] as const;
 
 export type MapAuraMode = (typeof MAP_AURA_MODES)[number];
 
-/**
- * The auras Margonem characters now show after a change; a `null` aura means
- * the character shows none. Ids stay plain strings so a Game
- * client that does not know a newer aura skips it instead of rejecting the
- * whole realtime frame, which closes its connection.
- */
 export const CharacterAurasChangedSchema = Schema.Struct({
   auras: Schema.Array(
     Schema.Struct({

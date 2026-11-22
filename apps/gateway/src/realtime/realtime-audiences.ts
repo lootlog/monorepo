@@ -5,18 +5,15 @@ import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
 type Scope = SubscriptionScope;
 
-/** The optional scope fields in key order, after `topic`. */
 const SCOPE_FIELDS = ["organizationId", "eventId", "world", "mapId"] as const;
 
 const scopeValues = (scope: Scope) => SCOPE_FIELDS.map((field) => scope[field]);
 
-/** Identifies a scope; JSON keeps field values that contain delimiters apart. */
 export const getScopeKey = (scope: Scope): string =>
   JSON.stringify([scope.topic, ...scopeValues(scope)]);
 
 const decodeScope = Schema.decodeUnknownSync(SubscriptionScope);
 
-/** The scope `getScopeKey` encoded as `key`. */
 const decodeScopeKey = (key: string): Scope => {
   const [topic, ...values]: unknown[] = JSON.parse(key);
 
@@ -39,10 +36,8 @@ const getLocationAudienceKey = (
   mapId: number,
 ): string => JSON.stringify(["recipient-location", platform, world, mapId]);
 
-// Candidate selection and scope visibility both match a delivered scope.
 const scopeAudienceKeys = new WeakMap<Scope, string[]>();
 
-// Four optional fields produce at most 16 exact/wildcard subscription keys.
 const matchingScopeAudienceKeys = (scope: Scope): string[] => {
   const cached = scopeAudienceKeys.get(scope);
 
@@ -66,15 +61,10 @@ const matchingScopeAudienceKeys = (scope: Scope): string[] => {
   return audienceKeys;
 };
 
-/**
- * Indexes this replica's sockets by identity, subscription scope, and
- * recipient location, so a delivery visits only its possible recipients.
- */
 export class RealtimeAudiences {
   private readonly audiences = new Map<string, Set<GatewaySocket>>();
   private readonly locationKeys = new WeakMap<GatewaySocket, string>();
 
-  /** Adds or removes the identity and subscription audiences of a session. */
   addSession(socket: GatewaySocket): void {
     for (const key of this.sessionKeys(socket.data)) this.add(key, socket);
   }
@@ -92,7 +82,6 @@ export class RealtimeAudiences {
     this.remove(getScopeKey(scope), socket);
   }
 
-  /** Moves `socket` to the audience of its location; `undefined` leaves every location. */
   setLocation(
     socket: GatewaySocket,
     location: { readonly world: string; readonly mapId: number } | undefined,
@@ -115,7 +104,6 @@ export class RealtimeAudiences {
     }
   }
 
-  /** The audiences whose subscriptions match a delivered `scope`. */
   scopeAudiences(scope: Scope): Set<GatewaySocket>[] {
     return matchingScopeAudienceKeys(scope).flatMap((key) => {
       const audience = this.audiences.get(key);
@@ -130,7 +118,6 @@ export class RealtimeAudiences {
     ];
   }
 
-  /** Distinct scopes of `topic` that a local socket subscribes to. */
   localScopes(topic: Scope["topic"]): Scope[] {
     const prefix = JSON.stringify([topic]).slice(0, -1);
 
@@ -139,7 +126,6 @@ export class RealtimeAudiences {
       .map(decodeScopeKey);
   }
 
-  /** The sockets that may receive `message`, before visibility checks. */
   candidates(message: FederatedRealtimeMessage): ReadonlySet<GatewaySocket> {
     const keys: string[] = [];
 

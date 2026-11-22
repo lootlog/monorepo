@@ -4,15 +4,12 @@ import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import { HeaderSlotPortal } from "./header-slot-portal";
 import { TopBarItemGroup } from "./top-bar-item-group";
 
-/** The Organization's shared world, at the edge of the bar on the pages it scopes. */
 export const GuildWorldHeaderSwitcher = () => {
   const { world, setWorld } = useGuildWorld();
-  // Phone bars drop control borders: the group's glass frames it.
   const isMobile = useIsMobile();
 
   return (
     <HeaderSlotPortal slot="context">
-      {/* A labelled control keeps a group of its own. */}
       <TopBarItemGroup>
         <WorldSwitcher
           value={world}

@@ -10,10 +10,6 @@ type HeroSightingClaimButtonProps = {
   sighting: HeroSightingResponseDto;
 };
 
-/**
- * "Obstawiam" on a hero that will spawn or, once the member camps the hero,
- * "Wycofaj", which stays after the hero spawned.
- */
 export const HeroSightingClaimButton = ({
   sighting,
 }: HeroSightingClaimButtonProps) => {

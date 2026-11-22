@@ -22,25 +22,15 @@ const MODES = ["message", "notification", "party"] as const;
 
 type ChatComposeModeMenuProps = {
   controller: ReturnType<typeof useChatInputController>;
-  /** Where the list opens; the side facing away from the screen edge. */
   side: "top" | "bottom";
   iconClassName?: string;
   className?: string;
 };
 
-// Margonem handles every document key press whose target is not a text field
-// (Enter opens its chat, letters move the hero), so keys stay in the menu.
-// Escape on the trigger still reaches the Quick chat console, which closes.
 const keepKeyInTrigger = (event: KeyboardEvent<HTMLElement>) => {
   if (event.key !== "Escape") event.stopPropagation();
 };
 
-/**
- * The composer's mode icon: it shows what Enter does, and pressing it lists
- * the modes with the prefix that switches to each while typing. Picking one
- * rewrites the prefix, keeps the typed text and returns to the field; a
- * picked message or notification also becomes the mode later entries start in.
- */
 export const ChatComposeModeMenu = ({
   controller,
   side,
@@ -109,11 +99,7 @@ export const ChatComposeModeMenu = ({
             'button[aria-pressed="true"]',
           ) ?? true
         }
-        // Selecting a mode or Escape puts the caret back in the field; an
-        // outside press leaves focus where the player pressed.
         finalFocus={false}
-        // Stopping the keys also hides Escape from the popover's document
-        // listener, and from the Quick chat console, which stays open.
         onKeyDown={(event) => {
           event.stopPropagation();
 

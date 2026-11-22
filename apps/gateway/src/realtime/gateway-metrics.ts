@@ -63,7 +63,6 @@ const decodeCounts = Schema.decodeUnknownSync(
   ]),
 );
 
-/** Adds one User to the set under `key`. */
 const addUser = (
   sets: Map<string, Set<string>>,
   key: string,
@@ -75,24 +74,17 @@ const addUser = (
   sets.set(key, users);
 };
 
-/**
- * Unique Users per key on this replica. Replicas sum their counts, so a User
- * connected to two replicas counts twice.
- */
 const countUsers = (sets: Map<string, Set<string>>) =>
   Object.fromEntries([...sets].map(([key, users]) => [key, users.size]));
 
-/** The shared channel's key among global chat listener counts. */
 const SHARED_CHANNEL = "";
 
-/** Cluster-wide counts from one metrics sample. */
 export type GlobalChatCounts = {
   online: number;
   playersByWorld: Record<string, number>;
   listeners: Record<string, number>;
 };
 
-/** The shared channel counts every world; a world's channel only its own. */
 export const getGlobalChatStats = (
   counts: GlobalChatCounts,
   world: string | undefined,
@@ -152,10 +144,7 @@ const runtimeGauges = {
   maxBufferedBytes: Metric.gauge("lootlog_gateway_socket_buffered_bytes_max"),
 };
 
-// Fixed metric names, no user/Organization/connection labels or payload retention.
-// Sample independently of Redis health so a stalled dependency remains visible.
 export class GatewayRuntimeMetrics {
-  /** Samples this replica's sockets, ingress and admissions while it runs. */
   static readonly layer = Layer.effectDiscard(
     Effect.gen(function* () {
       const admissions = yield* CommandAdmissions;
@@ -227,7 +216,6 @@ export class GatewayRuntimeMetrics {
 }
 
 export class GatewayMetrics {
-  /** Samples the cluster's counts every 10 seconds while the replica runs. */
   static readonly layer = Layer.effectDiscard(
     Effect.gen(function* () {
       yield* new GatewayMetrics((yield* GatewayRedis).command, yield* Hub)
@@ -274,7 +262,6 @@ export class GatewayMetrics {
         addUser(worldPlayers, presence.character.world, data.discordId);
     }
 
-    // ponytail: one snapshot per replica is scanned every 10s; shard aggregation if replica/player counts make this Redis script costly.
     const counts = yield* Effect.tryPromise(() =>
       this.redis.eval(
         SAMPLE,
@@ -300,15 +287,12 @@ export class GatewayMetrics {
     ] = decodeCounts(counts);
 
     const chatCounts = { online: playerCount, playersByWorld, listeners };
-    // A new subscriber gets these at once instead of waiting for the next sample.
     this.hub.globalChatCounts = chatCounts;
     yield* Metric.update(connections, connectionCount);
     yield* Metric.update(gameSessions, sessionCount);
     yield* Metric.update(uniquePlayers, playerCount);
     yield* Metric.update(observedAt, this.now() / 1_000);
 
-    // Every replica reads the same cluster totals, so each tells only its own
-    // subscribers and nothing crosses federation.
     yield* Effect.forEach(
       chatListeners.keys(),
       (channel) => {

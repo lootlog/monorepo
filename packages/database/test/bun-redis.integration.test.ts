@@ -14,8 +14,6 @@ interface ProxySocketData {
   pending: Array<Uint8Array>;
 }
 
-// Forwards to Redis, or accepts connections without ever answering, which is
-// how a restarting Redis endpoint makes Bun's reconnect attempt time out.
 const startProxy = (upstreamHost: string, upstreamPort: number) => {
   let silent = false;
 
@@ -106,7 +104,6 @@ it("serves commands again after a reconnect attempt times out", async () => {
 
     proxy.setSilent(true);
 
-    // Bun gives up once a reconnect attempt hits connectionTimeout.
     await Bun.sleep(1_000);
 
     proxy.setSilent(false);

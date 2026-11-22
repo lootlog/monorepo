@@ -103,7 +103,6 @@ describe("per-character personal kills", () => {
     try {
       const createKill = makeKillCreation(boundary.database, cache);
 
-      // A kill from before per-character tracking: account-wide only.
       const earlier = new Date(Date.now() - 2 * 86_400_000);
       earlier.setUTCMinutes(0, 0, 0);
 
@@ -130,12 +129,10 @@ describe("per-character personal kills", () => {
       await boundary.run(
         createKill("discord-1", kill("char-a", details("Alpha"))),
       );
-      // The same kill reported by a second character in the party.
       await boundary.run(
         createKill("discord-1", kill("char-b", details("Beta"))),
       );
       claims.clear();
-      // An older Game client reports only the character id.
       await boundary.run(createKill("discord-1", kill("char-b")));
       claims.clear();
       await boundary.run(createKill("discord-1", kill("char-a")));
@@ -175,7 +172,6 @@ describe("per-character personal kills", () => {
       expect(alpha.overview.totalKills).toBe(2);
       expect(alpha.meta.coverage).toBe("partial");
       expect(alpha.npcs.map(({ totalKills }) => totalKills)).toEqual([2]);
-      // The legacy day is unknown for a character, never zero.
       expect(alpha.daily.slice(0, 6).every((day) => day.kills === null)).toBe(
         true,
       );
@@ -297,7 +293,6 @@ describe("personal NPC kill pages", () => {
         ).rejects.toBeInstanceOf(InvalidRequestError);
       }
 
-      // Another page size keeps the same position.
       const resized = await run(
         queries.getUserNpcKills("discord-1", {
           period: "all",

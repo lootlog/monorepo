@@ -35,7 +35,6 @@ const buildPaginationOptions = (query: BattleListQuery): PaginationOptions => {
   };
 };
 
-/** Lists, finds and updates stored battles, and decides who may see or change one. */
 export const makeBattleCatalog = (
   drizzle: BattleCatalogDatabase,
   paginationService: BattlePagination,
@@ -82,7 +81,6 @@ export const makeBattleCatalog = (
     );
   };
 
-  /** Accepts a battle ID or an ID from before UUIDv7 IDs, which old links use. */
   const resolveBattleId = (battleId: string) => {
     if (isBattleId(battleId)) return Effect.succeed(battleId.toLowerCase());
 

@@ -1,9 +1,5 @@
 import type { AppSocket } from "./socket";
 
-/**
- * Returns one source per socket, Lootlog and world, created on first use, so
- * every reader of a scope shares its subscription and snapshot.
- */
 export function createScopedSourceRegistry<Source>(
   create: (socket: AppSocket, guildId: string, world: string) => Source,
 ): (socket: AppSocket, guildId: string, world: string) => Source {
@@ -29,10 +25,6 @@ export function createScopedSourceRegistry<Source>(
   };
 }
 
-/**
- * Counts the readers of a source and stops it once the last one released it.
- * Each release counts once.
- */
 export class SourceReferences {
   private count = 0;
 
@@ -46,7 +38,6 @@ export class SourceReferences {
       if (!retained) return;
       retained = false;
       this.count -= 1;
-      // React may replace a subscription during the same commit.
       queueMicrotask(() => {
         if (this.count === 0) this.stop();
       });
@@ -54,7 +45,6 @@ export class SourceReferences {
   }
 }
 
-/** Listeners by key; a key is dropped with its last listener. */
 export class KeyedListeners<Key> {
   private readonly listenersByKey = new Map<Key, Set<() => void>>();
 

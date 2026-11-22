@@ -80,7 +80,6 @@ export function BattleHpTimelineMarkerGroup({
         fill="transparent"
         stroke="transparent"
       />
-      {/* An SVG group draws no outline, so the ring around the hit area shows focus. */}
       <circle
         cx={cx}
         cy={cy}

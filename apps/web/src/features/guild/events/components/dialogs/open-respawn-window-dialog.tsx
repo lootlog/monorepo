@@ -89,9 +89,7 @@ export const OpenRespawnWindowDialog = ({
         maxSpawnTime: values.maxTime.toISOString(),
       });
       form.reset(getDefaultValues());
-    } catch {
-      // Preserve the entered times for retry after the action reports its error.
-    }
+    } catch {}
   };
 
   const handleOpenChange = (isOpen: boolean) => {

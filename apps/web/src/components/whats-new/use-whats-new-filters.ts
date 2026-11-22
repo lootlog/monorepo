@@ -5,7 +5,6 @@ import {
 import { parseAsArrayOf, parseAsString, parseAsStringLiteral } from "nuqs";
 import { createQueryFilters } from "@/hooks/create-query-filters";
 
-/** The filters of the "Co nowego" page, kept in its address. */
 export const useWhatsNewFilters = createQueryFilters({
   surfaces: parseAsArrayOf(
     parseAsStringLiteral(CHANGELOG_SURFACES),

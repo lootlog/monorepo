@@ -21,7 +21,6 @@ const durationItems = BAN_DURATIONS.map((duration) => ({
   label: banDurationText[duration],
 }));
 
-/** Bans a User, or shows the ban in force with the way to lift it. */
 export function BanForm({ user, own }: { user: AdminUser; own: boolean }) {
   const [reason, setReason] = useState("");
   const [duration, setDuration] = useState<BanDuration>("7d");
@@ -54,7 +53,6 @@ export function BanForm({ user, own }: { user: AdminUser; own: boolean }) {
       </div>
     );
 
-  // The auth service refuses it too: the ban would lock the operator out.
   if (own)
     return (
       <p className="text-sm text-muted-foreground">{text.banOwnAccount}</p>

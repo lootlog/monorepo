@@ -7,8 +7,6 @@ import {
   buttonSnowflakePositions,
 } from "./frost-button-positions";
 
-// Frost overlay for containers where we don't want to wrap content (e.g., sheets with close buttons)
-// Styled like RukiaBorderGlow but static (always visible)
 export const FrostOverlay = ({
   subtle = false,
   rounded = "rounded-xl",
@@ -22,7 +20,6 @@ export const FrostOverlay = ({
     <>
       <FrostFilter />
 
-      {/* SVG frost texture */}
       <div
         className={`absolute inset-0 pointer-events-none ${rounded} overflow-hidden`}
         style={{ opacity: intensity }}
@@ -36,7 +33,6 @@ export const FrostOverlay = ({
         />
       </div>
 
-      {/* Multi-gradient overlay */}
       <div
         className={`absolute inset-0 pointer-events-none ${rounded}`}
         style={{
@@ -47,7 +43,6 @@ export const FrostOverlay = ({
         }}
       />
 
-      {/* Edge frost */}
       <div
         className={`absolute inset-0 pointer-events-none ${rounded} overflow-hidden`}
       >
@@ -88,7 +83,6 @@ export const FrostOverlay = ({
         />
       ))}
 
-      {/* Ice glow border */}
       <div
         className={`absolute inset-0 ${rounded} pointer-events-none`}
         style={{

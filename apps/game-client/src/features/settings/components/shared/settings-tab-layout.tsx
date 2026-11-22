@@ -6,11 +6,6 @@ type SettingsTabLayoutProps = {
   className?: string;
 };
 
-/**
- * Subsection body. The navigation already names the subsection, so it carries
- * no heading; the gap leaves room for the hairline each section draws above
- * itself.
- */
 export const SettingsTabLayout: FC<SettingsTabLayoutProps> = ({
   children,
   className,

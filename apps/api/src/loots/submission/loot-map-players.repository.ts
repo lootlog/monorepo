@@ -26,7 +26,6 @@ export function mapPlayersToSnapshotInputs(
   }));
 }
 
-// The caller must keep the locks and the entire capture in one transaction.
 export const captureLootMapPlayers = Effect.fnUntraced(function* (
   transaction: Pick<
     typeof ApiDatabase.Service,

@@ -11,7 +11,6 @@ type BattleDetailStatsPanelProps = {
   statsCustomization: ReturnType<typeof useStatsCustomization>;
 };
 
-/** The battle's full statistics table. */
 export function BattleDetailStatsPanel({
   battle,
   hideZeros,

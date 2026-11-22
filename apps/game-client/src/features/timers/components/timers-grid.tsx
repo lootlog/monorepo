@@ -68,8 +68,6 @@ export const TimersGrid: FC<TimersGridProps> = ({
         <TimerGridPopups
           className={cn(
             "ll:grid ll:pb-1",
-            // Every tile draws a line on its left edge; the grid reaches 1px
-            // past the window and clips it, so the first column draws none.
             legacyAppearance
               ? "ll:w-full ll:gap-0.5"
               : "ll:-ml-px ll:w-[calc(100%+1px)] ll:[clip-path:inset(0_0_0_1px)]",

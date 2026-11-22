@@ -5,20 +5,11 @@ import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table
 import { useFillRemainingHeight } from "@/hooks/utils/use-fill-remaining-height";
 
 type StatsSectionColumnsProps = {
-  /** Column counts and spans past `xl`, such as `xl:grid-cols-2`. */
   className?: string;
-  /**
-   * The page's last columns: they stretch to the bottom of the screen, so the
-   * rule between them does not stop short under shorter content.
-   */
   fill?: boolean;
   children: ReactNode;
 };
 
-/**
- * Banded sections side by side from `xl`, one rule between them; narrower
- * pages stack them.
- */
 export const StatsSectionColumns = ({
   className,
   fill = false,

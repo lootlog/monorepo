@@ -427,9 +427,6 @@ export class ApiKeyService extends Context.Service<
               API_KEY_ERRORS.disabled,
             );
 
-          // Read-only on purpose: Better Auth's verifyApiKey writes the key
-          // row twice per call (lastRequest, updatedAt) and cannot be told
-          // not to. Keys are stored under Better Auth's default hash.
           const hashedKey = yield* Effect.promise(() => defaultKeyHasher(key));
 
           const rows = yield* query(

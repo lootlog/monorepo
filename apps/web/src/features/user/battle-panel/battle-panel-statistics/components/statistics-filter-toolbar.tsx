@@ -11,11 +11,9 @@ export type StatisticsFiltersProps = {
   onMinLevelChange: (minLevel: number | undefined) => void;
   onMaxLevelChange: (maxLevel: number | undefined) => void;
   ph?: boolean;
-  /** Omit to offer no honor points filter. */
   onPhChange?: (ph: boolean) => void;
 };
 
-/** The battle statistics filters for the filter bar, after the character. */
 export const StatisticsFilterToolbar = ({
   period,
   onPeriodChange,

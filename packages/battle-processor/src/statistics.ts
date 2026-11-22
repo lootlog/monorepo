@@ -39,11 +39,6 @@ export type BattleStatisticsWarrior = Pick<
 > &
   LegendaryTotalWarrior;
 
-/**
- * Derives the battle awards from participant totals. A tie goes to the
- * warrior listed first, so pass warriors in the order the battle introduced
- * them.
- */
 export function calculateBattleStatistics(
   warriors: readonly BattleStatisticsWarrior[],
 ): BattleStatistics {
@@ -70,7 +65,6 @@ export function calculateBattleStatistics(
           warriorId: top.originalId,
           name: top.name,
           value,
-          // Omitted rather than undefined: the battlelog contract declares an optional key.
           ...(format && { formattedValue: format(value) }),
         }
       : null;

@@ -17,8 +17,6 @@ function TooltipProvider({
   );
 }
 
-// Tooltips hold no controls, so they close as soon as the pointer leaves the
-// trigger and never cover the next trigger, e.g. the cell above in a heatmap.
 function Tooltip({
   disableHoverablePopup = true,
   ...props

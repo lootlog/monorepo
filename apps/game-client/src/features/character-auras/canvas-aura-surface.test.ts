@@ -6,17 +6,10 @@ import { canvasAuraRenderer } from "./canvas-aura-surface";
 
 const DRAW_EVENT = "call-draw-add-to-renderer";
 
-/** The game's highest draw order when it reports none; the storm draws above it. */
 const ABOVE_EVERYTHING = 11;
 
-/**
- * A Margonem game whose renderer collects what the draw hook adds each frame. Characters
- * share one two-frame sprite, or each has its own with `ownSprites`; `walk` steps them all
- * onto the second frame.
- */
 function setGame(othersX: Record<string, number> = {}, ownSprites = false) {
   const canvas = installTestCanvas();
-  // Silhouettes put pixels they build into a Skia canvas.
   vi.stubGlobal("ImageData", SkiaImageData);
   const drawables: RuntimeDrawable[] = [];
   const sprites = new Map<number, HTMLCanvasElement>();
@@ -71,7 +64,6 @@ function setGame(othersX: Record<string, number> = {}, ownSprites = false) {
     walk() {
       frameX = 32;
     },
-    /** One game frame: the draw hook adds drawables, then the game draws them. */
     playFrame(context: CanvasRenderingContext2D) {
       drawables.length = 0;
       onDraw?.();
@@ -80,11 +72,9 @@ function setGame(othersX: Record<string, number> = {}, ownSprites = false) {
 
       return drawables.length;
     },
-    /** The draw orders of what the last frame added. */
     drawnOrders() {
       return [...new Set(drawables.map((d) => Math.round(d.getOrder())))];
     },
-    /** The characters whose auras the last frame drew, by their draw order. */
     characterOrders() {
       return this.drawnOrders()
         .filter((order) => order < ABOVE_EVERYTHING)
@@ -105,7 +95,6 @@ afterEach(() => {
 it("stops drawing an aura whose drawing keeps failing although its update succeeds", () => {
   vi.spyOn(console, "warn").mockImplementation(() => {});
   const game = setGame();
-  // A game context that fails every draw, while the frame update still succeeds.
   const { context } = game.canvas.create(800, 600);
   vi.spyOn(context, "getTransform").mockImplementation(() => {
     throw new Error("context lost");
@@ -128,7 +117,6 @@ it("draws only the auras nearest the hero while others are limited, and all agai
       ["1", "storm"],
       ["2", "frost"],
       ["3", "divine"],
-      // An admin aura is drawn however far it is, without taking a near aura's place.
       ["4", "sovereign"],
     ]),
   );
@@ -167,7 +155,6 @@ it("keeps the map lit when an admin arrives and darkens it only under the storm"
 
   expect(game.drawnOrders()).toContain(ABOVE_EVERYTHING);
 
-  // The time stop never dims the map between bursts, yet still has to reach it.
   canvasAuraRenderer.setTargets(new Map([["7", "timelord"]]));
   playFor(1);
 
@@ -177,7 +164,6 @@ it("keeps the map lit when an admin arrives and darkens it only under the storm"
 it("spreads new silhouettes over frames and keeps a walker's aura shown while its next one waits", () => {
   const game = setGame({ "1": 100, "2": 300, "3": 500 }, true);
   const { context } = game.canvas.create(800, 600);
-  // Every silhouette build takes longer than a frame's budget.
   let now = 0;
   vi.spyOn(performance, "now").mockImplementation(() => (now += 5));
   canvasAuraRenderer.setTargets(

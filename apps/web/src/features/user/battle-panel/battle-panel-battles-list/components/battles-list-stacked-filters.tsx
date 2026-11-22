@@ -18,7 +18,6 @@ type BattlesListStackedFiltersProps = {
   worlds: string[];
 };
 
-/** The battle list filters stacked for the panel narrow pages open. */
 export const BattlesListStackedFilters = ({
   filters,
   onFiltersChange,

@@ -2,15 +2,8 @@ import type { ReactNode } from "react";
 import { cn } from "cn";
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 
-// From `xl` each column fills the screen under the bands above it and
-// scrolls on its own, so the feed and the rule between the columns reach the
-// bottom of the page.
 const COLUMN_CLASS = "min-w-0 xl:min-h-0 xl:overflow-y-auto custom-scrollbar";
 
-/**
- * The feed beside a column of what the player checks at a glance. Narrower
- * pages stack them with the upcoming reservations before the feed.
- */
 export const DashboardColumns = ({
   feed,
   reservations,

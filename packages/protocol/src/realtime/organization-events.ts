@@ -1,8 +1,3 @@
-/**
- * Payloads of the Organization events the gateway forwards from the API
- * unread, as JSON on the wire. Payloads that the API also serves over HTTP
- * mirror that response.
- */
 import { Schema } from "effect";
 import {
   HeroSightingCloseReasonSchema,
@@ -42,7 +37,6 @@ const ChatNpc = Schema.Struct({
   wt: FiniteNumber,
   hpp: Schema.optionalKey(FiniteNumber),
   icon: NonEmptyString,
-  // The Margonem NPC type number as the client reported it.
   type: FiniteNumber,
   isHeroFromEvent: Schema.optionalKey(Schema.Boolean),
   x: Schema.optionalKey(FiniteNumber),
@@ -55,7 +49,6 @@ const partyGatheringDetailsFields = {
   maxLvl: Schema.optionalKey(FiniteNumber),
 };
 
-/** `chat.created`: the stored message, with the gateway's answer for each viewer. */
 export const ChatMessageCreated = Schema.Struct({
   id: NonEmptyString,
   guildId: NonEmptyString,
@@ -118,7 +111,6 @@ const TimerMember = Schema.Struct({
   avatar: Schema.NullOr(Schema.String),
   banner: Schema.NullOr(Schema.String),
   active: Schema.Boolean,
-  // The API sends none today.
   roles: Schema.mutable(
     Schema.Array(
       Schema.Struct({
@@ -138,7 +130,6 @@ const TimerMember = Schema.Struct({
   updatedAt: DateTimeString,
 });
 
-/** `timer.created`: the API's timer response. */
 export const TimerUpdated = Schema.Struct({
   guildId: Schema.String,
   npcId: FiniteNumber,
@@ -204,7 +195,6 @@ const HeroSightingCharacter = Schema.Struct({
   icon: Schema.NullOr(Schema.String),
 });
 
-/** `hero-sighting.updated`: the API's sighting response. */
 export const HeroSightingUpdated = Schema.Struct({
   id: FiniteNumber,
   guildId: Schema.String,
@@ -239,15 +229,10 @@ export const HeroSightingUpdated = Schema.Struct({
 
 export type HeroSightingUpdated = typeof HeroSightingUpdated.Encoded;
 
-/**
- * `reservation.created` and `reservation.deleted`, kept beside
- * `reservation.changed` for clients that predate it.
- */
 export const LegacyReservationChanged = Schema.Struct({
   guildId: NonEmptyString,
   reservation: Schema.Struct({
     id: FiniteNumber,
-    // The reserved spot's id.
     reservationId: Schema.String,
     createdDate: DateTimeString,
     fromDate: DateTimeString,
@@ -273,7 +258,6 @@ const GameCharacter = Schema.Struct({
   ),
 });
 
-/** `notification.sent`: the reported notification, for one Organization. */
 export const NotificationSent = Schema.Struct({
   guildId: NonEmptyString,
   notificationId: NonEmptyString,
@@ -293,7 +277,6 @@ export const NotificationSent = Schema.Struct({
       x: Schema.optionalKey(FiniteNumber),
       y: Schema.optionalKey(FiniteNumber),
       icon: NonEmptyString,
-      // Classified by the API from the reported Margonem type number.
       type: NpcTypeSchema,
       isHeroFromEvent: Schema.optionalKey(Schema.Boolean),
     }),
@@ -313,7 +296,6 @@ export const NotificationSent = Schema.Struct({
 
 export type NotificationSent = typeof NotificationSent.Encoded;
 
-/** `party-gathering.updated`: a gathering opened in one Organization. */
 export const PartyGatheringOpened = Schema.Struct({
   notificationId: NonEmptyString,
   guildId: NonEmptyString,
@@ -339,7 +321,6 @@ export const PartyGatheringOpened = Schema.Struct({
 
 export type PartyGatheringOpened = typeof PartyGatheringOpened.Encoded;
 
-/** `party-gathering.cancelled`. */
 export const PartyGatheringCancelled = Schema.Struct({
   notificationId: NonEmptyString,
   guildId: NonEmptyString,
@@ -347,7 +328,6 @@ export const PartyGatheringCancelled = Schema.Struct({
 
 export type PartyGatheringCancelled = typeof PartyGatheringCancelled.Encoded;
 
-/** `member-refresh.updated`: progress of a bulk member refresh. */
 export const MemberRefreshJobUpdated = Schema.Struct({
   jobId: FiniteNumber,
   guildId: NonEmptyString,
@@ -356,7 +336,6 @@ export const MemberRefreshJobUpdated = Schema.Struct({
   processedMembers: FiniteNumber,
   failedMembers: FiniteNumber,
   completedAt: Schema.NullOr(DateTimeString),
-  // Member ids by outcome, on the update that completes the job.
   refreshedIds: Schema.optionalKey(Schema.Array(Schema.String)),
   skippedIds: Schema.optionalKey(Schema.Array(Schema.String)),
   failedIds: Schema.optionalKey(Schema.Array(Schema.String)),

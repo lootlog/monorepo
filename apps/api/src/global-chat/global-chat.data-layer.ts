@@ -30,31 +30,25 @@ import {
   type GlobalChatCaller,
 } from "./global-chat-data.js";
 
-/** A kept message with its position in the channel; higher positions are newer. */
 type GlobalChatStoredEntry = {
   readonly position: number;
   readonly value: string;
 };
 
-/** Every `world` argument is undefined for the channel every world shares. */
 export interface GlobalChatStore {
-  /** Appends one message and trims the channel to its retention limit. */
   readonly append: (
     world: string | undefined,
     value: string,
   ) => Effect.Effect<void, unknown>;
-  /** Up to `count` messages older than `before`, newest first. */
   readonly page: (
     world: string | undefined,
     before: number | undefined,
     count: number,
   ) => Effect.Effect<ReadonlyArray<GlobalChatStoredEntry>, unknown>;
-  /** The kept message with this id, if the channel still keeps it. */
   readonly find: (
     world: string | undefined,
     id: string,
   ) => Effect.Effect<string | undefined, unknown>;
-  /** False when the channel no longer keeps the message. */
   readonly remove: (
     world: string | undefined,
     id: string,
@@ -62,12 +56,10 @@ export interface GlobalChatStore {
   readonly getPinned: (
     world: string | undefined,
   ) => Effect.Effect<string | undefined, unknown>;
-  /** Replaces the pinned message; undefined unpins it. */
   readonly setPinned: (
     world: string | undefined,
     value: string | undefined,
   ) => Effect.Effect<void, unknown>;
-  /** False while the User's previous message is still within the cooldown. */
   readonly acquireSendSlot: (userId: string) => Effect.Effect<boolean, unknown>;
 }
 
@@ -80,17 +72,8 @@ export interface GlobalChatEvents {
   ) => Effect.Effect<void, unknown>;
 }
 
-/**
- * The world list comes from timers, since Margonem refuses requests from the
- * API's addresses. A world appears once any Organization records a timer
- * there; the hour of caching keeps the scan off the send path.
- */
 const KNOWN_WORLDS_TTL = "1 hour";
 
-/**
- * The sender stays in storage only to mark the caller's own messages, to show
- * admins, and to let an admin mute the author of a kept message.
- */
 const StoredGlobalChatMessageJson = Schema.fromJsonString(
   Schema.Struct({
     ...GlobalChatMessageSchema.fields,
@@ -135,11 +118,6 @@ export const makeGlobalChatOperations = (
     const storeCall = <A>(effect: Effect.Effect<A, unknown>) =>
       effect.pipe(Effect.mapError(operationError));
 
-    /**
-     * Any active membership admits the caller. The Discord display name is
-     * the same on every membership; one that member sync has not refreshed
-     * yet falls back to the server nickname.
-     */
     const sender = ({ userId, discordId }: GlobalChatCaller) =>
       database
         .select({
@@ -211,7 +189,6 @@ export const makeGlobalChatOperations = (
           }),
         );
 
-    /** The message as every reader sees it; admin status follows the current list. */
     const published = ({
       senderUserId,
       isAdmin: _isAdmin,
@@ -235,7 +212,6 @@ export const makeGlobalChatOperations = (
         ? undefined
         : Option.getOrUndefined(parseStored(value));
 
-    /** A kept or pinned message; a pinned one can outlive the trimmed list. */
     const findMessage = (world: string | undefined, id: string) =>
       Effect.gen(function* () {
         const kept = parsed(yield* storeCall(store.find(world, id)));
@@ -246,7 +222,6 @@ export const makeGlobalChatOperations = (
         return pinned?.id === id ? pinned : yield* notFound();
       });
 
-    /** Fails with 404 when no mute matches. */
     const liftMute = (match: SQL) =>
       database
         .delete(globalChatMuteTable)
@@ -262,7 +237,6 @@ export const makeGlobalChatOperations = (
     const unpin = (world: string | undefined) =>
       Effect.gen(function* () {
         yield* storeCall(store.setPinned(world, undefined));
-        // Readers see the stored state on their next fetch if the broadcast is lost.
         yield* events
           .publishChannelUpdate({
             type: "pinned",
@@ -284,7 +258,6 @@ export const makeGlobalChatOperations = (
           yield* sender(caller);
           yield* requireChannel(world);
 
-          // One extra entry tells whether an older page exists.
           const [entries, pinned, mute] = yield* Effect.all(
             [
               storeCall(store.page(world, before, GLOBAL_CHAT_PAGE_SIZE + 1)),
@@ -340,7 +313,6 @@ export const makeGlobalChatOperations = (
 
           const worlds = yield* knownWorlds;
 
-          // Only a message to the shared channel alone names where it comes from.
           const originWorld =
             payload.world === undefined &&
             !payload.allWorlds &&
@@ -351,7 +323,6 @@ export const makeGlobalChatOperations = (
 
           const timestamp = new Date().toISOString();
 
-          // Each channel moderates its copy apart, so each copy has its own id.
           const compose = (
             world: string | undefined,
           ): StoredGlobalChatMessage => {
@@ -389,7 +360,6 @@ export const makeGlobalChatOperations = (
                   store.append(stored.world, encodeStored(stored)),
                 );
 
-                // The message is stored; a lost broadcast reaches readers on their next fetch.
                 yield* events
                   .publish(published(stored))
                   .pipe(ignorePublicationFailure);
@@ -457,7 +427,6 @@ export const makeGlobalChatOperations = (
                 gt(globalChatMuteTable.mutedUntil, new Date()),
               ),
             )
-            // PostgreSQL sorts nulls last in ascending order: lasting mutes go last.
             .orderBy(
               asc(globalChatMuteTable.mutedUntil),
               asc(globalChatMuteTable.displayName),
@@ -488,7 +457,6 @@ export const makeGlobalChatOperations = (
             createdAt: now,
           };
 
-          // Muting a muted sender again replaces the earlier mute.
           const [row] = yield* database
             .insert(globalChatMuteTable)
             .values({ id: Bun.randomUUIDv7(), userId: senderUserId, ...mute })

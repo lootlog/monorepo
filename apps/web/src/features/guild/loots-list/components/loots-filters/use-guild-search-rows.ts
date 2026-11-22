@@ -22,11 +22,6 @@ type GuildSearchRowsInput = {
   canSearchDirectly: boolean;
 };
 
-/**
- * Which result groups the palette shows and which row is highlighted. The
- * highlight follows the pointer and arrow keys, and returns to the first row
- * whenever the rows change: another query, results arriving, another scope.
- */
 export const useGuildSearchRows = ({
   trimmedSearch,
   pageResults,
@@ -46,7 +41,6 @@ export const useGuildSearchRows = ({
     ? { npcs: npcValues, items: itemValues, players: playerValues }
     : { npcs: [], items: [], players: [] };
 
-  // Pages count as a scope only for a query; before one they are quick links.
   const counts: Record<ScopedGroup, number> = {
     pages: trimmedSearch ? pageValues.length : 0,
     npcs: results.npcs.length,
@@ -58,12 +52,9 @@ export const useGuildSearchRows = ({
     counts[group] > 0 ? [{ group, count: counts[group] }] : [],
   );
 
-  // A scope left empty by a new query falls back to every result.
   const activeScope: GuildSearchScope =
     scope !== "all" && counts[scope] > 0 ? scope : "all";
 
-  // Stays offered while results load: it is the way around a slow or failing
-  // search service.
   const showDirectSearch = canSearchDirectly && activeScope === "all";
   const inScope = (group: ScopedGroup) => isInScope(activeScope, group);
 

@@ -28,7 +28,6 @@ type Event = typeof eventTable.$inferSelect;
 
 type EventHeroNpc = typeof eventHeroNpcTable.$inferSelect;
 
-/** Records one hero kill with its points, then closes the respawn window around it. */
 export const makeEventHeroKillRecording = (
   repository: Pick<EventKillStore, "findMaps" | "recordKill">,
   eventEmitter: EventEmitter,
@@ -45,7 +44,6 @@ export const makeEventHeroKillRecording = (
     guildId: string,
     eventHero: EventHeroNpc,
     event: Event,
-    // A manual close records the kill of a timer that may have no creator.
     timerData: Omit<KillTimerData, "memberId"> & {
       readonly memberId: number | null;
     },
@@ -177,9 +175,6 @@ export const makeEventHeroKillRecording = (
             : []),
         ];
 
-    // Each routing key has its own gateway queue, so their relative order
-    // was never delivered; only the cache invalidation above must precede
-    // them.
     yield* Effect.forEach(
       [
         eventEmitter.emit(RabbitRoutingKey.EVENT_HERO_KILLED, {

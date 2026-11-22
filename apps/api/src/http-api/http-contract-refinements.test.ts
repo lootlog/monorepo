@@ -28,7 +28,6 @@ import { KillHistoryQuery } from "#src/events/history/event-kill-history.schema"
 const rejects = (schema: Schema.ConstraintDecoder<unknown>) =>
   Function.compose(Schema.decodeUnknownResult(schema), Result.isFailure);
 
-/** Decodes a query the way HttpApi does: every value arrives as a string. */
 const decodeQuery =
   <S extends Schema.Top & { readonly DecodingServices: never }>(schema: S) =>
   (query: Record<string, string>) =>

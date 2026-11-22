@@ -97,8 +97,6 @@ const validateForm = (
   return issues;
 };
 
-// Every rule runs in one form-level check so all missing fields are reported
-// together.
 const createFormResolver = (t: FormTranslation) =>
   standardSchemaResolver(
     Schema.toStandardSchemaV1(
@@ -119,11 +117,6 @@ export function useAddHeroSightingForm({
   const { mutate: addHeroSighting, isPending } = useAddHeroSighting();
   const { targets, status: targetsStatus } = useAddHeroSightingTargets();
 
-  // The profession and the state are not fields. The profession comes with a
-  // suggestion or a pasted detector answer, the state only with a pasted
-  // answer, and both are sent only while the name is still that hero's. A hero
-  // added by hand is otherwise one that will spawn: nobody stops to write down
-  // a roaming hero.
   const knownHeroRef = useRef<
     | (Pick<KnownHero, "key" | "prof"> & { state?: AddHeroSightingDtoState })
     | null
@@ -165,7 +158,6 @@ export function useAddHeroSightingForm({
     suggestions.close();
   };
 
-  /** The game's detector chat line carries every field of the form. */
   const handleNamePaste = (event: ClipboardEvent<HTMLInputElement>) => {
     const detection = parseHeroDetectorMessage(
       event.clipboardData.getData("text"),
@@ -211,7 +203,6 @@ export function useAddHeroSightingForm({
         },
       },
       {
-        // The form stays open on failure so the player can correct and retry.
         onSuccess: ({ failures }) => {
           if (failures.length === 0) {
             onClose();

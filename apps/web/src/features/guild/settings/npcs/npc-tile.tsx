@@ -17,7 +17,6 @@ type NpcTileProps = {
   npc: LootlogConfigNpc;
 };
 
-/** One kind of monster and the rarities collected for it; the tile opens it. */
 export const NpcTile = ({ guildId, npc }: NpcTileProps) => {
   const { t } = useTranslation();
 

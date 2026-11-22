@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Main API events: assignment, ranking, monitoring, and pins. */
 export const MAIN_EVENT_OPERATIONS = [
   {
     service: "main",

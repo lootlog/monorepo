@@ -11,15 +11,9 @@ import {
 } from "./chat-popups-context";
 
 type ChatTranscriptPopupsProps = {
-  /** The message list; it becomes the trigger of the shared context menu. */
   children: ReactElement;
 };
 
-/**
- * One context menu and one tooltip of each kind for every message of a
- * transcript. The transcript renders all of its messages, and a popup root per
- * message made mounting a full history take several times longer.
- */
 export const ChatTranscriptPopups = ({
   children,
 }: ChatTranscriptPopupsProps) => {

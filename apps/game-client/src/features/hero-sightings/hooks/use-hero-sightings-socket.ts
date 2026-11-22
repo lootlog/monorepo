@@ -5,13 +5,11 @@ import { useSocket } from "@/contexts/socket-context";
 import { queryKeys } from "@/lib/query-keys";
 import { upsertHeroSightings } from "@/hooks/api/hero-sightings-cache";
 
-/** Applies live sighting changes and catches up on what a disconnect missed. */
 export const useHeroSightingsSocket = () => {
   const { socket, connected, joined, status } = useSocket();
   const queryClient = useQueryClient();
   const needsCatchUp = useRef(false);
 
-  // The gateway forwards the API's sighting response as is.
   const handleUpdate = useEffectEvent((sighting: HeroSightingResponseDto) => {
     upsertHeroSightings(queryClient, [sighting]);
   });

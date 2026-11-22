@@ -6,7 +6,6 @@ type StatsCountCellProps = {
   emphasized?: boolean;
 };
 
-/** Zeros are dimmed so the columns that matter stand out in a wide ranking. */
 export const StatsCountCell = ({
   value,
   emphasized = false,

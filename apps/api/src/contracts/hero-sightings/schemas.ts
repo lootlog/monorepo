@@ -1,4 +1,3 @@
-/** Shared input and output schemas for hero sightings. */
 import * as Schema from "effect/Schema";
 import {
   HeroSightingCloseReasonSchema,
@@ -112,7 +111,6 @@ export const CreateHeroSightingRequest = Schema.Struct({
 
 export type AddHeroSightingRequest = typeof AddHeroSightingRequest.Type;
 
-/** A name a person typed: bounded, and more than whitespace. */
 const TypedText = (maxLength: number) =>
   BoundedText(maxLength).check(
     Schema.isPattern(/\S/).annotate({
@@ -150,9 +148,6 @@ export const CreateHeroSightingResponse = Schema.Struct({
     Schema.Struct({
       guildId: Schema.String,
       guildName: Schema.String,
-      // The hero's current sighting after this detection; an older
-      // contradicting detection leaves the newer one current. Omitted when
-      // the caller's roles cannot see this hero in the Organization.
       sighting: Schema.optionalKey(HeroSightingResponse),
     }),
   ),
@@ -192,7 +187,6 @@ export type HeroSightingPath = typeof HeroSightingPath.Type;
 
 export const HeroSightingPath = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
-  // Bounded below the HeroSighting.id integer column.
   sightingId: Schema.String.check(Schema.isPattern(/^[1-9]\d{0,8}$/)),
 });
 

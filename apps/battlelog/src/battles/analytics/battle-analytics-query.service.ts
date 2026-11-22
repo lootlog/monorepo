@@ -46,8 +46,6 @@ type BattleAnalyticsQueryDatabase = Pick<DrizzleDatabase, "select"> & {
 export const makeBattleAnalyticsQuery = (
   drizzle: BattleAnalyticsQueryDatabase,
 ) => {
-  // The outer analytics cache owns this result. A nested cache generation can
-  // advance while this lookup still reads an older repeatable-read snapshot.
   const getCharacterIds = (
     userId: string,
     query: { characterId?: string | undefined; world?: string | undefined },
@@ -137,11 +135,6 @@ export const makeBattleAnalyticsQuery = (
     return and(
       buildCombatProfileWhere(battlesRef, params),
       eq(battlesRef.type, "1v1"),
-      // An unfinished battle has no result to count. Chunks compressed
-      // before `unfinished` existed hold only its default, and TimescaleDB
-      // 2.24 fails vectorized boolean filters on it ("unexpected column type
-      // 'boolean'"), including `= false` and `NOT`. `IS DISTINCT FROM` is
-      // not vectorized. Teams 0/0 cannot replace it: draws are stored so too.
       sql`${battlesRef.unfinished} is distinct from true`,
       params.hasFlee !== undefined
         ? eq(battlesRef.hasFlee, params.hasFlee)
@@ -199,7 +192,6 @@ export const makeBattleAnalyticsQuery = (
     characterIds: string[],
     hasFlee?: boolean,
   ) => {
-    // Resolve the same participant consistently across summary and detailed analytics.
     const user = drizzle
       .select({ team: battleWarriors.team, ph: battleWarriors.ph })
       .from(battleWarriors)

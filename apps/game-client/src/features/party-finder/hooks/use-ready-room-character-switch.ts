@@ -48,7 +48,6 @@ const readApplications = (): Record<string, RecordedApplication> => {
   }
 };
 
-/** Remembers, per Margonem account, the application its character holds. */
 const writeApplication = (
   accountId: string,
   application: RecordedApplication | null,
@@ -57,7 +56,6 @@ const writeApplication = (
   const stored = readApplications();
   const current = stored[accountId];
 
-  // The effect runs on every room update; write only what changed.
   if (
     application === null
       ? current === undefined
@@ -77,13 +75,9 @@ const writeApplication = (
 
   try {
     localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(applications));
-  } catch {
-    // Storage is a fallback for a slow relog; the live room still works.
-  }
+  } catch {}
 };
 
-// Statuses with which the server refuses the character itself, rather than
-// failing for a moment.
 const REFUSED_STATUSES = new Set([403, 409, 422]);
 
 const fitsLevel = (
@@ -92,15 +86,6 @@ const fitsLevel = (
 ) =>
   level >= (gathering.minLvl ?? 0) && level <= (gathering.maxLvl ?? Infinity);
 
-/**
- * A player who applied and then logs in to another character of the same
- * Margonem account keeps the application, now for the character they play.
- * When that character does not fit the gathering, the application ends.
- *
- * The server drops an application once its character has been offline for a
- * short grace period, which a slow relog can outlast; the account's last
- * application is remembered locally so the new character applies again.
- */
 export function useReadyRoomCharacterSwitch(): void {
   const synchronized = useReadyRoomsSynchronized();
   const projections = useReadyRoomProjections();
@@ -111,7 +96,6 @@ export function useReadyRoomCharacterSwitch(): void {
   const level = useGameStore((state) => state.game?.hero.level);
   const world = useGameStore((state) => state.game?.world);
   const inFlight = useRef(new Set<string>());
-  // Attempts that failed for this character; room updates do not repeat them.
   const failed = useRef(new Set<string>());
 
   useEffect(() => {
@@ -153,8 +137,6 @@ export function useReadyRoomCharacterSwitch(): void {
       );
     };
 
-    // The server decides eligibility; a character it refuses ends the
-    // application the previous character left behind.
     const apply = (
       notificationId: string,
       gatheringWorld: string,
@@ -226,8 +208,6 @@ export function useReadyRoomCharacterSwitch(): void {
 
     if (!recorded) return;
 
-    // The recorded character itself no longer applies: it withdrew, was
-    // removed, or the gathering ended.
     if (recorded.characterId === characterId) {
       writeApplication(accountId, null);
 

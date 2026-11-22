@@ -18,11 +18,6 @@ import { EquipmentSetPanel } from "./equipment-set-panel";
 import { EquipmentSetSlot } from "./equipment-set-slot";
 import { EquipmentSetStats } from "./equipment-set-stats";
 
-/**
- * The set docked at the bottom of every page: a link to its page and who
- * wears it, its slots in the middle, and a button that opens up the
- * character and every stat.
- */
 export function EquipmentSetDock() {
   const { wornItems } = useSetSummary();
 

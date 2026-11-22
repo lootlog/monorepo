@@ -13,14 +13,8 @@ import {
 
 const ITEMS_PER_MESSAGE = 200;
 
-// One run at a time across API replicas; the key is arbitrary but fixed.
 const ITEM_REVISIONS_LOCK = 7_316_205;
 
-/**
- * Publishes the changes the game made to every item with more than one
- * revision. Each item's list is complete, so the catalog replaces what it held
- * and a redelivery changes nothing.
- */
 export const makeItemRevisionsPublisher = (
   database: ApiDatabaseValue,
   rabbit: Pick<typeof RabbitMessaging.Service, "publish">,
@@ -32,7 +26,6 @@ export const makeItemRevisionsPublisher = (
           .select({
             acquired: sql<boolean>`pg_try_advisory_xact_lock(${ITEM_REVISIONS_LOCK})`,
           })
-          // The builder needs a source; one row runs the lock function once.
           .from(itemSnapshotTable)
           .limit(1);
 

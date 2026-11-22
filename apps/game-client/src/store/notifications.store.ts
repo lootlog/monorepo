@@ -40,15 +40,7 @@ export type StoredNotification = (
 ) & {
   listKey: string;
   receivedAtMs: number;
-  /**
-   * The latest report ids, oldest first, so a report delivered through
-   * several Organizations joins its row once.
-   */
   recentReportIds: string[];
-  /**
-   * Distinct reports grouped into this row, keyed by the Organization each
-   * first arrived through, so revoking an Organization drops its reports.
-   */
   reportCountByGuildId: Record<string, number>;
 };
 
@@ -58,11 +50,6 @@ export type NotificationAutoHideState = {
   durationMs: number;
 };
 
-/**
- * A countdown the row derived itself: a notification presented before its
- * category settings loaded has no stored auto-hide state, yet the cleanup
- * sweep still expires it from its arrival time.
- */
 export type NotificationAutoHideCountdown = {
   deadlineMs: number;
   durationMs: number;
@@ -80,11 +67,6 @@ export type NotificationPresentation = {
 
 const MAX_NOTIFICATIONS = 50;
 
-/**
- * One report reaches every Organization in the same burst, so a short window
- * recognises it; automatic sending can keep a row alive for hours, and keeping
- * every id would grow without bound.
- */
 const MAX_RECENT_REPORT_IDS = 32;
 
 interface NotificationsState {
@@ -92,7 +74,6 @@ interface NotificationsState {
   notificationAutoHideByListKey: Record<string, NotificationAutoHideState>;
   latestNotificationAnimationCycle: number;
   latestPresentationStartedEmpty: boolean;
-  /** Returns the presentations that opened a new row rather than joining one. */
   presentNotifications: (
     presentations: readonly NotificationPresentation[],
   ) => ReadonlySet<NotificationPresentation>;
@@ -121,16 +102,9 @@ const getMergedServers = (
   ...new Set([...currentNotification.servers, ...nextNotification.servers]),
 ];
 
-/** One NPC on one world, the unit notification rows group by. */
 export const getNpcWorldKey = (npcId: number | string, world: string) =>
   `${npcId}:${world}`;
 
-/**
- * Players with automatic sending report the same NPC every few seconds, so
- * reports of one NPC on one world share a row while it is listed: the first
- * report keeps its sender and data, later ones only raise the count. Party
- * gathering reports keep their own row because joining targets their id.
- */
 const getNpcGroupKey = (
   notification: PresentableNotification | StoredNotification,
 ) => {
@@ -146,8 +120,6 @@ const getNpcGroupKey = (
   return `${getNpcWorldKey(notification.npc.id, notification.world)}${getHeroTrackerGroupKeySuffix(notification)}`;
 };
 
-// Once a Hero Tracker's entrance opens, the row announcing it unclaimed is
-// stale: the open row replaces it.
 const getSupersededHeroTrackerNotifications = (
   notifications: readonly StoredNotification[],
 ): ReadonlySet<StoredNotification> => {
@@ -180,7 +152,6 @@ const upsertNotificationBatch = (
     receivedAtMs: number,
   ) => void,
 ) => {
-  // Oldest first, so a later index always wins for a shared lookup key.
   const rows = [...currentNotifications].reverse();
   const rowIndexByReportId = new Map<string, number>();
   const rowIndexByNpcGroupKey = new Map<string, number>();
@@ -233,8 +204,6 @@ const upsertNotificationBatch = (
 
     const isNewReport = reportRowIndex === undefined;
 
-    // A redelivered first report may carry updated content; any other match
-    // is a later report of a grouped NPC, which must not replace the sender.
     const storedNotification: StoredNotification = {
       ...(existingNotification.notificationId === notification.notificationId
         ? { ...existingNotification, ...notification }
@@ -319,8 +288,6 @@ export const useNotificationsStore = create<NotificationsState>()(
               (writableAutoHideState[listKey]?.pausedRemainingMs ?? null) !==
               null;
 
-            // A report joining a row whose countdown the player paused (an
-            // open mute menu) refills it without resuming it.
             writableAutoHideState[listKey] = isPaused
               ? {
                   deadlineMs: null,
@@ -361,8 +328,6 @@ export const useNotificationsStore = create<NotificationsState>()(
           });
         }
 
-        // Only a new row replays the entry animation and scrolls to the top; a
-        // report joining a listed row updates it in place.
         if (addedPresentations.size === 0) {
           return { notifications, notificationAutoHideByListKey };
         }
@@ -525,10 +490,6 @@ export const isMentionNotification = (
 ): notification is StoredNotification & MentionNotification =>
   "type" in notification && notification.type === "chat-mention";
 
-/**
- * A listed row always stands for at least one readable report: a report
- * counted under a revoked Organization may still have reached a kept one.
- */
 export const getNotificationReportCount = (notification: StoredNotification) =>
   Math.max(
     1,

@@ -45,7 +45,6 @@ export const CachedTimerProjectionSchema = Schema.Struct({
   wasReset: Schema.Boolean,
   actorCharacterLvl: Schema.NullOr(Schema.Finite),
   deletedAt: nullableIsoDatetimeCodec,
-  // Optional: cached projections written before Hero Trackers lack it.
   entranceClosesAt: Schema.optionalKey(nullableIsoDatetimeCodec),
   updatedAt: IsoDateTime,
   member: Schema.optionalKey(Schema.NullOr(CachedTimerMember)),
@@ -59,18 +58,12 @@ export const timerNpcField = (npc: unknown, key: string) =>
 
 const decodeTimerNpcRouting = Schema.decodeUnknownOption(NpcRoutingDataSchema);
 
-/** The stored timer NPC's routing fields, or `null` when they do not decode. */
 export const parseTimerNpcRouting = (npc: unknown): NpcRoutingData | null =>
   Option.getOrNull(decodeTimerNpcRouting(npc));
 
 const isPositiveSafeInteger = (value: unknown): value is number =>
   typeof value === "number" && Number.isSafeInteger(value) && value > 0;
 
-/**
- * `npcId` is the timer's own NPC id: a Margonem runtime id for automatic
- * timers, a generated id for manual and event timers. `templateId` is the
- * Margonem template observed with it, or null when no client reported one.
- */
 export type TimerNpcIdentity = {
   readonly npcId: number;
   readonly templateId: number | null;
@@ -209,7 +202,6 @@ export const mapTimerResponse = (timer: CachedTimerProjection) => {
   };
 };
 
-/** The timer as published: JSON carries its spawn window as ISO strings. */
 export const toTimerEvent = (
   response: ReturnType<typeof mapTimerResponse>,
 ) => ({

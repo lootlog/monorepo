@@ -57,12 +57,6 @@ type HeroListChanges = {
   newMaps: Array<{ heroNpcId: string; mapId: number; mapName: string }>;
 };
 
-/**
- * Matches the requested hero list to stored heroes by name and to stored maps
- * by map id, so retained heroes and maps keep their identities and history.
- * The list may add heroes and maps but never removes them: removal deletes
- * kills, points and tracking history, so it must use the dedicated endpoints.
- */
 const planHeroListUpdate = (
   existingHeroes: ReadonlyArray<ExistingHero>,
   existingMaps: ReadonlyArray<ExistingMap>,
@@ -255,8 +249,6 @@ export const makeEventUpdate =
             }
 
             if (heroNpcs) {
-              // Hold the heroes until commit so a concurrent hero deletion
-              // waits instead of removing a hero this update adds maps to.
               const existingHeroes = yield* transaction
                 .select()
                 .from(eventHeroNpcTable)
@@ -328,8 +320,6 @@ export const makeEventUpdate =
                 );
               }
 
-              // Like the dedicated endpoints, a map added to an existing hero
-              // starts unassigned; maps of a new hero start without a gap.
               const addedMaps = changes.newMaps.map((map) => ({
                 ...map,
                 id: Bun.randomUUIDv7(),

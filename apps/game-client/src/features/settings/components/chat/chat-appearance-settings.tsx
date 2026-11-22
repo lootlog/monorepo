@@ -41,7 +41,6 @@ export const ChatAppearanceSettingsForm = () => {
 
   const activePreset = getChatAppearancePreset(draft);
 
-  // Hand-tuned values leave every preset card unselected.
   const selectedPreset: ChatPresetChoice | null =
     activePreset === "custom" ? null : activePreset;
 

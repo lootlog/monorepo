@@ -49,16 +49,12 @@ export const ServerVisibilitySettingsTab = () => {
   const accessibleGuildIdSet = new Set(orderedGuilds.map((guild) => guild.id));
   const isFiltered = query.trim() !== "" || visibilityFilter !== "all";
 
-  // Derived from the cache at click time: rapid clicks each build on the
-  // previous optimistic state instead of the one this render was given.
   const toggleGuildVisibility = (guildId: string) => {
     updatePreferences.mutateFromCurrent((current) => ({
       hiddenGuildIds: toggleHiddenGuild(current?.hiddenGuildIds ?? [], guildId),
     }));
   };
 
-  // The full order is sent, so servers not in the stored order (new ones)
-  // keep their place instead of trailing behind the dragged one.
   const reorderGuilds = (guildIds: string[]) => {
     updatePreferences.mutateFromCurrent(() => ({ guildsOrder: guildIds }));
   };

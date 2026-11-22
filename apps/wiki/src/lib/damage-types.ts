@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 
-/** The kinds of harm a weapon deals beyond plain blows, each as a colored icon. */
 const DAMAGE_TYPES = [
   { key: "fire", icon: Flame, className: "text-orange-400" },
   { key: "light", icon: Zap, className: "text-yellow-300" },
@@ -18,7 +17,6 @@ const DAMAGE_TYPES = [
   { key: "pierce", icon: ShieldOff, className: "text-zinc-300" },
 ] as const;
 
-/** The damage types the item deals, in a fixed order. */
 export const findDamageTypes = (stat: string) => {
   const keys = new Set(parseItemStatEntries(stat).map(({ key }) => key));
 

@@ -52,8 +52,6 @@ function getPage(totalRecords: number, options: InMemoryPaginationOptions) {
       size,
       hasNext,
       hasPrev,
-      // Absent values are omitted, not undefined: the response contract
-      // declares optional keys and rejects an undefined value.
       ...(hasNext && { nextCursor: encodeCursor(endIndex) }),
       ...(hasPrev && {
         previousCursor: encodeCursor(Math.max(0, startIndex - size)),

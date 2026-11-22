@@ -1,4 +1,3 @@
-/** Authoritative composition root for the gateway HTTP contract. */
 import { HttpApi, OpenApi } from "effect/http-api";
 import { HealthGroup } from "./contracts/health/api.js";
 import { PresenceGroup } from "./contracts/presence/api.js";

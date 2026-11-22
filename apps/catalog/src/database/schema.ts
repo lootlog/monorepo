@@ -10,18 +10,12 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-/**
- * One catalog entry per edition, item id and name, as the search index holds
- * it. The document is the source of the index; the columns beside it are the
- * keys the writers look entries up by.
- */
 export const catalogItemTable = pgTable(
   "CatalogItem",
   {
     uid: text("uid").primaryKey(),
     gameVersion: text("gameVersion").notNull(),
     itemId: integer("itemId").notNull(),
-    /** The monsters that drop the item, as `npcMonsterKey` names them. */
     monsterKeys: text("monsterKeys")
       .array()
       .notNull()
@@ -40,7 +34,6 @@ export const catalogItemTable = pgTable(
   ],
 );
 
-/** One catalog entry per edition, identity namespace, NPC id and type. */
 export const catalogNpcTable = pgTable(
   "CatalogNpc",
   {
@@ -54,11 +47,6 @@ export const catalogNpcTable = pgTable(
   (table) => [index("CatalogNpc_monsterKey_idx").on(table.monsterKey)],
 );
 
-/**
- * A User's report that a catalog page shows something wrong. A page is an
- * item or NPC id of one edition, as the wiki links it, so a report outlives
- * the entries a rebuild replaces. A User keeps one open report per page.
- */
 export const catalogReportTable = pgTable(
   "CatalogReport",
   {

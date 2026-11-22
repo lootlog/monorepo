@@ -122,11 +122,6 @@ afterAll(async () => {
   await runtime.dispose();
 });
 
-/**
- * Seeds one 100-minute kill (08:00–09:40) and its kill points, then runs the
- * explicit recalculation and returns each member's stored base points and the
- * solo member's ranking total.
- */
 const recalculate = (params: {
   assignments: Array<{ member: "solo" | "late"; from: string; to: string }>;
   pointMembers: Array<"solo" | "late">;

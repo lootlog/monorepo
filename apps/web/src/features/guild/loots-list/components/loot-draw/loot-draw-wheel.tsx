@@ -9,39 +9,30 @@ const SIZE = 240;
 
 const CENTER = SIZE / 2;
 
-/** The rim's width; slices fill the circle inside it. */
 const RIM = 7;
 
 const RADIUS = SIZE / 2 - RIM - 2;
 
-/** Full turns before the wheel settles, so a spin reads as a spin. */
 const SPIN_TURNS = 7;
 
 const SPIN_MS = 6500;
 
-/** Past its stop the wheel drifts this far, then rolls back onto it. */
 const OVERSHOOT_DEGREES = 5;
 
-/** The share of the spin spent before the drift back begins. */
 const OVERSHOOT_AT = 0.88;
 
-/** More slices than this and the rim's pegs would merge into a band. */
 const MAX_PEGS = 48;
 
-/** Names run along the radius from the rim, at most this size. */
 const MAX_FONT_SIZE = 13;
 
 const MIN_FONT_SIZE = 8;
 
-/** The smallest size a long name shrinks to before it is cut. */
 const READABLE_FONT_SIZE = 9.5;
 
-/** Room left between a name and the rim, and around the hub. */
 const RIM_GAP = 8;
 
 const HUB_RADIUS = 20;
 
-/** A semibold name's average glyph width, as a share of its font size. */
 const GLYPH_WIDTH = 0.6;
 
 type WheelEntrant = { name: string };
@@ -67,25 +58,16 @@ const segmentPath = (from: number, to: number) => {
   return `M ${CENTER} ${CENTER} L ${start.x} ${start.y} A ${RADIUS} ${RADIUS} 0 ${largeArc} 1 ${end.x} ${end.y} Z`;
 };
 
-/**
- * A slice's name laid along its radius, as a wheel of names writes them: the
- * font fits the slice's width, and the name stops where neighbouring slices
- * get too narrow to hold it. Null when the slice is too thin for any name;
- * the legend still lists it.
- */
 const radialLabel = (name: string, from: number, to: number) => {
   const sweep = ((to - from) * Math.PI) / 180;
   const widest = Math.min(MAX_FONT_SIZE, sweep * (RADIUS * 0.8) * 0.75);
 
-  // How many characters fit along the radius at a font size: closer to the
-  // hub the slice narrows below the font height.
   const capacity = (fontSize: number) =>
     Math.floor(
       (RADIUS - RIM_GAP - Math.max(HUB_RADIUS, fontSize / sweep)) /
         (fontSize * GLYPH_WIDTH),
     );
 
-  // A long name first gets a smaller font, and is cut only below the floor.
   let fontSize = widest;
 
   while (
@@ -106,7 +88,6 @@ const radialLabel = (name: string, from: number, to: number) => {
 
   const middle = (from + to) / 2;
   const anchor = pointAt(middle, RADIUS - RIM_GAP);
-  // Names on the left half turn over, so none reads upside down.
   const flipped = middle > 180;
 
   return {
@@ -119,15 +100,6 @@ const radialLabel = (name: string, from: number, to: number) => {
   };
 };
 
-/**
- * A wheel with a slice per run of one entrant's tickets in `ticketOrder`, so
- * a shuffled order mixes the slices, and the pointer at the top. Given
- * `roll`, a position in that order, it turns until that ticket sits under
- * the pointer: spinning when `spin` is set, or already settled otherwise.
- * The pointer stops where `drawId` places it inside the ticket, often close
- * to a neighbour; the spin runs a little past it and rolls back. Once at
- * rest, the winner's slice stays lit and the others dim.
- */
 export const LootDrawWheel = ({
   entrants,
   ticketOrder,
@@ -140,10 +112,8 @@ export const LootDrawWheel = ({
   entrants: readonly WheelEntrant[];
   ticketOrder: readonly number[];
   roll: number | null;
-  /** Fixes where in the winning ticket the pointer stops. */
   drawId?: number;
   spin?: boolean;
-  /** Called once a spin rests on the result; a wheel shown at rest never spins. */
   onSettled?: () => void;
   className?: string;
 }) => {
@@ -153,7 +123,6 @@ export const LootDrawWheel = ({
   const wheelRef = useRef<SVGSVGElement>(null);
   const total = ticketOrder.length;
   const animate = spin && !reducedMotion;
-  // A wheel shown at rest is settled; a spinning one, once its spin ends.
   const [spinEnded, setSpinEnded] = useState(false);
   const rested = !animate || spinEnded;
   const landing = drawId === undefined ? 0.5 : lootDrawLandingOffset(drawId);
@@ -173,8 +142,6 @@ export const LootDrawWheel = ({
   useEffect(() => {
     if (!animate) return;
 
-    // The keyframes take the wheel past its stop and back; the style below
-    // holds the stop once they end.
     const animation = wheelRef.current?.animate(
       [
         {
@@ -199,7 +166,6 @@ export const LootDrawWheel = ({
     };
   }, [animate, settled]);
 
-  // Neighbouring tickets of one entrant share a slice.
   const runs = ticketOrder.reduce<
     { index: number; start: number; end: number }[]
   >((all, index, position) => {

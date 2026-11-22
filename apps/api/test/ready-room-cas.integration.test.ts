@@ -475,7 +475,6 @@ return 1`,
 
       if (!current) throw new Error("Created room missing");
       expect(current).toEqual(original);
-      // The HTTP character schema and storage decoder use different field order.
       expect(JSON.stringify(current)).not.toBe(JSON.stringify(original));
 
       const next: ReadyRoomAggregate = {
@@ -530,7 +529,6 @@ return 1`,
           status: "joined-elsewhere",
           notificationId: id,
         });
-        // A stale index must be recovered without accessing undeclared keys.
         await Effect.runPromise(redis.del(`party-ready-room:v3:room:${id}`));
         expect((await Effect.runPromise(joinOther())).status).toBe("committed");
       }
@@ -608,7 +606,6 @@ return 1`,
         .status,
     ).toBe("committed");
 
-    // Past the original expiry, every index still leads to the room.
     now += 20_000;
     expect(
       await Effect.runPromise(repository.findActive(room.guildIds, room.world)),
@@ -632,7 +629,6 @@ return 1`,
       ),
     ).toBeGreaterThan(5 * 60_000);
 
-    // A stale revision cannot extend the room again.
     expect(
       (await Effect.runPromise(repository.extend(joined.next, extended)))
         .status,

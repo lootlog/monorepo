@@ -15,11 +15,6 @@ import { BattlePingTargetRow } from "./battle-ping-target-row";
 import { getBattleWarrior } from "./battle-warriors";
 import { getPingPresentation } from "./ping-presentation";
 
-/**
- * Who pinged what in the current fight. The warriors only carry icons, so
- * this is where the sender, the target and the time are. It opens with the
- * fight's first ping; closing it hides it until the next fight.
- */
 export const BattlePingWindow = () => {
   const { t } = useTranslation("pings");
 
@@ -51,18 +46,12 @@ export const BattlePingWindow = () => {
 
   const hasHistory = history.length > 0;
   const visible = open && hasHistory;
-  // Ticks the "seconds ago" labels only while the window is shown, on the
-  // `performance.now()` timeline the pings were received on.
   const now = useNow(1_000, visible) - performance.timeOrigin;
 
-  // Opens once per fight: a rejected ping emptying the history must not
-  // reopen a window the player closed.
   useEffect(() => {
     if (fightPinged) setOpen("battle-pings", true);
   }, [fightPinged, setOpen]);
 
-  // Lets go of a highlighted warrior when the window goes away under the
-  // pointer.
   useEffect(() => {
     if (!visible) return;
 
@@ -143,8 +132,6 @@ export const BattlePingWindow = () => {
                     label={t(presentation.translationKey)}
                     onField={onField}
                     sender={formatSender(entry.senderName)}
-                    // Calls for healing or a quick fight are about the
-                    // sender's own warrior.
                     target={
                       warrior?.name === entry.senderName
                         ? null

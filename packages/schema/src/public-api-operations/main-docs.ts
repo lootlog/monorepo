@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Main API Organization documents. */
 export const MAIN_DOC_OPERATIONS = [
   {
     service: "main",

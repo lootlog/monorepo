@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import type { EquipmentSlotId } from "@/lib/equipment-slots";
 
-/** An open hand reaching to the right, palm down, thumb raised. */
 const HAND = (
   <>
     <path d="M2 9h6l3.6-3.4a1.6 1.6 0 0 1 2.3 2.2L12 10h8.5a1.5 1.5 0 0 1 0 3H19a1.5 1.5 0 0 1 0 3h-1.5a1 1 0 0 1 0 2H2z" />
@@ -9,7 +8,6 @@ const HAND = (
   </>
 );
 
-/** A left glove: a mitten with the thumb on its inner side and a cuff. */
 const GLOVE = (
   <>
     <path d="M2 16.5V7.5a3 3 0 0 1 6 0V12l1.8-1.8a1.4 1.4 0 0 1 2 2L8 16.5" />
@@ -19,12 +17,6 @@ const GLOVE = (
 
 const BOOT = "M0 0h5v9l3.4 1.6a2 2 0 0 1 1.1 1.8V15H0z";
 
-/**
- * The pictures the game draws in its empty equipment slots, drawn as line
- * icons: a sparkle for the blessing, a closed helmet, a ring, a necklace, a
- * pair of gloves, a hand reaching out to each side for the weapon and the
- * other hand, a tunic and a pair of boots.
- */
 const SLOT_ICONS: Record<EquipmentSlotId, ReactNode> = {
   helmet: (
     <>
@@ -74,7 +66,6 @@ type EquipmentSlotIconProps = {
   className?: string;
 };
 
-/** The game's picture of an empty equipment slot; decorative beside a label. */
 export function EquipmentSlotIcon({ slot, className }: EquipmentSlotIconProps) {
   return (
     <svg

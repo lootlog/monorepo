@@ -122,7 +122,6 @@ export const MemberStatsPage = () => {
     },
     npcType: {
       types: TRACKABLE_NPC_TYPES,
-      // "ALL" is the stored default, not a narrowing filter.
       value: settings.npcType === "ALL" ? undefined : settings.npcType,
       onValueChange: handleNpcTypeChange,
     },

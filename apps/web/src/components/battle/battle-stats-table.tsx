@@ -22,7 +22,6 @@ interface BattleStatsTableProps {
   headerActions?: ReactNode;
   hideZeros?: boolean;
   onHideZerosChange?: (value: boolean) => void;
-  /** Only the duel table supports it: the group table needs its own horizontal scroller. */
   pinnedHeader?: boolean;
   statsCustomizationConfig?: StatsCustomizationConfig;
 }
@@ -108,7 +107,6 @@ export function BattleStatsTable({
   return (
     <section
       aria-labelledby={showHeader ? headingId : undefined}
-      // `isolate` keeps the sticky cells' z-indexes from competing with the pinned chart.
       className="isolate w-full"
     >
       {showHeader && (

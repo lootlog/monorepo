@@ -6,10 +6,6 @@ import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import { LootSearchCommand } from "./loot-search-command";
 
-/**
- * The Organization search palette and its shortcut. The top bar renders the
- * button; both share the open state the guild shell owns.
- */
 export const GuildSearch = () => {
   const { isOpen, setIsOpen } = useContext(GuildSearchContext);
   const { data: accessPolicy } = useGuildPermissions();
@@ -19,8 +15,6 @@ export const GuildSearch = () => {
     .sidebarItems.filter((item) => item.visible)
     .map(({ id, label, href }) => ({ id, label, href }));
 
-  // The loot API enforces access; until the policy loads the palette offers
-  // loot search, like the sidebar offers the loot list.
   const canSearchLoots =
     accessPolicy?.allows(Capability.LOOTLOG_LOOTS_READ) ?? true;
 

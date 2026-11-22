@@ -11,7 +11,6 @@ import {
 } from "./ping-presentation";
 import { useAnimationEffects } from "@/hooks/use-animation-effects";
 
-/** Portals each warrior's battle pings into that warrior's game element. */
 export const BattlePingMarkers = () => {
   const { highlightedWarriorId, marks, target } = useSyncExternalStore(
     battlePingStore.subscribe,
@@ -24,7 +23,6 @@ export const BattlePingMarkers = () => {
     (mark) => mark.type === BATTLE_QUICK_FIGHT_TYPE,
   );
 
-  // A quick-fight call also lights the button the team should press.
   useEffect(() => {
     if (!quickFightCalled) return;
 

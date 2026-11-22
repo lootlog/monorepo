@@ -6,7 +6,7 @@ import {
   selectGuildIdsGrantingPermissions,
 } from "./member-access-query.js";
 import { Effect, Layer, Schema } from "effect";
-import { type RedisService } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import { capabilitiesGrantingAny } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
@@ -231,7 +231,6 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                             userCharactersLootlogSettingsTable.userId,
                             discordId,
                           ),
-                          // The summary is scoped to this Lootlog's characters.
                           arrayContains(
                             userCharactersLootlogSettingsTable.catchingGuildIds,
                             [guildId],

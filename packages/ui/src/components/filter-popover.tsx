@@ -31,20 +31,17 @@ type FilterPopoverSearchProps =
   | {
       showSearch?: true;
       searchPlaceholder: string;
-      /** Shown when the search matches no option. */
       emptyMessage: string;
     }
   | {
       showSearch: false;
       searchPlaceholder?: never;
-      /** Shown when there are no options at all. */
       emptyMessage?: string;
     };
 
 type FilterPopoverSelectionProps =
   | {
       multiSelect: true;
-      /** The trigger's text for the number of chosen options. */
       renderTriggerLabel: (selectedCount: number) => string;
     }
   | {
@@ -68,11 +65,8 @@ type FilterPopoverProps<T = string> = FilterPopoverSearchProps &
     contentClassName?: string;
     disabled?: boolean;
     shouldFilter?: boolean;
-    /** The filter's name on its chip in a filter bar; defaults to the placeholder. */
     label?: string;
-    /** The filter narrows the results; in a filter bar its chip takes the accent. */
     active?: boolean;
-    /** Shows the up-down chevron; a phone toolbar's menu goes without it. */
     indicator?: boolean;
   };
 
@@ -88,7 +82,6 @@ function getSelectedValues<T>(value: T | T[] | undefined): T[] {
   return [value];
 }
 
-/** The trigger's text: the chosen option, a count, or the placeholder. */
 function getTriggerLabel<T>({
   options,
   selectedValues,
@@ -203,7 +196,6 @@ export function FilterPopover<T extends string = string>({
       <PopoverContent
         className={cn(
           "overflow-hidden border-border bg-popover p-1 shadow-lg",
-          // A chip is as wide as its value, so the list keeps the field's width.
           inFilterBar ? "w-[200px]" : width,
           contentClassName,
         )}

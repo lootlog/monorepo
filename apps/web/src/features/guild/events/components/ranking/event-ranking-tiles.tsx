@@ -17,7 +17,6 @@ import { RankingMemberName } from "./ranking-member-name";
 import { formatDuration } from "@/utils/date/format-duration";
 
 type EventRankingTilesProps = {
-  /** Already ordered by points. */
   rankings: EventRanking[];
   guildId: string;
   eventId: string;
@@ -27,7 +26,6 @@ type EventRankingTilesProps = {
   isEditPending: boolean;
 };
 
-/** The ranking on phones, where the table's columns don't fit: one tile per member, opening their kills. */
 export const EventRankingTiles = ({
   rankings,
   guildId,
@@ -58,7 +56,6 @@ export const EventRankingTiles = ({
               isCurrentMember && VIEWER_ROW_CLASS,
             )}
           >
-            {/* The tile opens the member's kills; their name opens their profile. */}
             <div className="relative flex min-w-0 flex-1 self-stretch">
               <Link
                 to="/$guildId/events/$eventId/members/$memberId"

@@ -15,10 +15,6 @@ import type { RedisService } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { GlobalChatAdminDirectory } from "#src/runtime/features/global-chat-admins";
 
-/**
- * Each channel keeps its keys under one hash tag. The single list that
- * predates channels (`global-chat:messages`) is no longer read.
- */
 const channelKeys = (world: string | undefined) => {
   const channel = `global-chat:{${world === undefined ? "all" : `world:${world}`}}`;
 
@@ -29,11 +25,6 @@ const channelKeys = (world: string | undefined) => {
   };
 };
 
-/**
- * Scores each message by a counter instead of its time, so a page cursor keeps
- * pointing at the same message while newer ones arrive and older ones are
- * trimmed, and two messages in one millisecond keep their send order.
- */
 const APPEND_SCRIPT = `
 local position = redis.call("INCR", KEYS[1])
 redis.call("ZADD", KEYS[2], position, ARGV[1])
@@ -45,7 +36,6 @@ const PAGE_SCRIPT = `
 return redis.call("ZREVRANGEBYSCORE", KEYS[1], ARGV[1], "-inf", "WITHSCORES", "LIMIT", 0, tonumber(ARGV[2]))
 `;
 
-// Moderation is rare, so it scans the kept messages instead of indexing ids.
 const FIND_SCRIPT = `
 for _, value in ipairs(redis.call("ZRANGE", KEYS[1], 0, -1)) do
   local ok, message = pcall(cjson.decode, value)

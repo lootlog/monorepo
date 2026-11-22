@@ -44,11 +44,6 @@ export interface CurrentUserGuildPorts {
     readonly userId: string;
     readonly activeDiscordGuildIds: ReadonlyArray<string>;
   }) => Effect.Effect<void, MemberRemovalError>;
-  /**
-   * Serves the list from a cache unless `refresh` is set. `fresh` is false for
-   * a cached list, which may miss a server the user has joined since. `stale`
-   * marks a list past its max age that is shown while it is replaced.
-   */
   readonly discordGuilds: (
     identity: AuthenticatedIdentity,
     options: { readonly refresh: boolean },
@@ -137,7 +132,6 @@ export const makeCurrentUserGuilds = (
     const apiGuilds = discordGuilds.guilds;
     const discordGuildIds = apiGuilds.map(({ id }) => id);
 
-    // A cached list can predate a join, so only a fresh one may deactivate.
     if (discordGuilds.fresh) {
       yield* ports.deactivateMissing({
         ...identity,
@@ -209,8 +203,6 @@ export const makeCurrentUserGuilds = (
           left.rank - right.rank || left.guildId.localeCompare(right.guildId),
       );
 
-    // Only a refresh that can grant missing access waits on Discord, and at
-    // most twice per request; stored access is shown until the queue refreshes it.
     let immediate = 0;
 
     for (const candidate of candidates) {
@@ -264,8 +256,6 @@ export const makeCurrentUserGuilds = (
               ),
             }).allows(Permission.LOOTLOG_ACCESS)),
         ),
-        // A list past its max age may still show a departed Organization
-        // or miss a new one, so every entry from it is reported stale.
         isAccessDataStale: Boolean(
           discordGuilds.stale ||
           (!owner && (!lastSync || lastSync.getTime() < staleThreshold)),

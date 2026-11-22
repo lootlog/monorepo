@@ -11,7 +11,6 @@ import {
 
 type Listener = () => void;
 
-/** A standing NPC: when it was first reported, and on which map when known. */
 export type NpcStanding = { readonly since: number; readonly map?: string };
 
 const sameStanding = (
@@ -27,11 +26,8 @@ const toStanding = ({
   map?: string;
 }): NpcStanding => (map === undefined ? { since } : { since, map });
 
-/** Timer NPCs that members of one Organization see standing in one world. */
 export class NpcPresenceSource {
-  /** Each standing NPC, by runtime NPC id. */
   private readonly standing = new Map<number, NpcStanding>();
-  /** Revisions of updates newer than the snapshot, by runtime NPC id. */
   private readonly revisions = new Map<number, number>();
   private readonly npcListeners = new KeyedListeners<number>();
   private readonly references = new SourceReferences(() => this.stop());
@@ -45,7 +41,6 @@ export class NpcPresenceSource {
     readonly world: string,
   ) {}
 
-  /** When and where the NPC stands, or undefined when it does not. */
   getStanding = (npcId: number): NpcStanding | undefined =>
     this.standing.get(npcId);
 
@@ -84,7 +79,6 @@ export class NpcPresenceSource {
     void this.hydrate();
   };
 
-  /** NPCs reported before this client connected; newer updates keep their own state. */
   private readonly hydrate = async (): Promise<void> => {
     if (this.socket.connectionState !== "ready") return;
     const fetchId = ++this.fetchId;
@@ -93,7 +87,6 @@ export class NpcPresenceSource {
     try {
       snapshot = await this.socket.fetchNpcPresence(this.guildId, this.world);
     } catch {
-      // Access was revoked or the gateway is unavailable; nothing is known to stand.
       snapshot = { revision: 0, npcs: [] };
     }
 
@@ -113,7 +106,6 @@ export class NpcPresenceSource {
 
     this.snapshotRevision = snapshot.revision;
 
-    // Updates newer than the snapshot still guard their NPC against older ones.
     for (const [npcId, revision] of this.revisions) {
       if (revision <= snapshot.revision) this.revisions.delete(npcId);
     }
@@ -121,13 +113,11 @@ export class NpcPresenceSource {
     this.replace(next);
   };
 
-  // The realtime client decodes server events against the protocol schema.
   private readonly apply = (event: NpcPresenceEvent): void => {
     if (event.organizationId !== this.guildId || event.world !== this.world)
       return;
     const npcId = event.npc.id;
 
-    // Two gateway replicas may deliver updates of one world out of order.
     if (
       event.revision <=
       Math.max(this.snapshotRevision, this.revisions.get(npcId) ?? 0)
@@ -151,7 +141,6 @@ export class NpcPresenceSource {
       (npcId) => !sameStanding(this.standing.get(npcId), next.get(npcId)),
     );
 
-    // An unchanged NPC keeps its record, so its readers see no new snapshot.
     for (const npcId of next.keys()) {
       const current = this.standing.get(npcId);
 

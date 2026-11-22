@@ -11,7 +11,6 @@ export interface WidgetManager {
   ) => void;
 }
 
-/** Fields read by WidgetManager.createOneWidget from its native definition table. */
 interface WidgetDefinition {
   default?: boolean;
   index?: number;

@@ -11,11 +11,6 @@ type PageTabsProps = {
   ariaLabel: string;
 };
 
-/**
- * The tabs of a `PageTabsLayout`: a strip across the page, edge to edge,
- * pinned under the app bar. Sticky content after it, such as a list
- * toolbar, pins below it (see `page-scroll.css`).
- */
 export const PageTabs = ({
   tabs,
   basePath,
@@ -42,7 +37,6 @@ export const PageTabs = ({
             activeOptions={{ exact: true }}
             aria-current={active ? "page" : undefined}
             className={cn(
-              // Keyboard focus rings the label, not the strip's full height.
               "text-sm font-medium outline-none transition-colors after:pointer-events-none after:absolute after:inset-x-1 after:inset-y-2 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring",
               active
                 ? "text-foreground"

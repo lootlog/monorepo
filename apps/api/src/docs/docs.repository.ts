@@ -80,7 +80,6 @@ export interface DocsRepositoryService {
     discordId: string;
     title: string;
     content: GuildDocumentContent;
-    /** Rejects the save when another one advanced the document past it. */
     baseVersion?: number;
   }) => Effect.Effect<StoredDocument, DocsRepositoryFailure>;
   readonly listHistory: (
@@ -139,10 +138,6 @@ const documentHistoryValues = (
   editedAt: document.updatedAt,
 });
 
-/**
- * Every save stores the full content, so each document keeps only its newest
- * entries; the `record_lifecycle` migration pruned older rows once.
- */
 export const DOCUMENT_HISTORY_RETAINED_ENTRIES = 100;
 
 const insertDocumentHistory = Effect.fnUntraced(function* (
@@ -342,7 +337,6 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
               ),
             )
             .limit(1)
-            // Concurrent saves of one document check its version in turn.
             .for("update");
 
           const document = rows[0];

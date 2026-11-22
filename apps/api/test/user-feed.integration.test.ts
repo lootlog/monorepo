@@ -338,8 +338,6 @@ describe("personal Organization activity feed", () => {
 
     expect(ownerItems[0]?.groupKey).toBe(ownerItems[1]?.groupKey);
     expect((await run(makeUserFeed(database)(reader))).items).toHaveLength(1);
-    // Records hold their loot's NPC visibility, so a change to a stored
-    // snapshot reaches them only when the records are rewritten with it.
     await client.query(`UPDATE "NpcSnapshot" SET type='HERO' WHERE id=$1`, [
       npc.id,
     ]);
@@ -388,7 +386,6 @@ describe("personal Organization activity feed", () => {
     expect(await feed({ excludedNpcCategories: ["HERO"] })).toEqual(["kill:9"]);
     expect(await feed({ excludedGuildIds: [guild.id] })).toEqual([]);
 
-    // A loot stored under its template id still links through its spawn id.
     await run(kill(guild.id, { npcId: 11, npcType: "HERO" }));
 
     const templateLoot = await insertLoot(
@@ -449,7 +446,6 @@ describe("personal Organization activity feed", () => {
         ),
       );
 
-    // Linked to the boss's kill, the loot shares its group and its filter.
     expect(await feed({ withLootOnly: true })).toEqual(
       expect.arrayContaining(["kill:21", `loot:${loot.id}`]),
     );
@@ -763,7 +759,6 @@ describe("personal Organization activity feed", () => {
       `feed fixture270krows,90kscoped,30kloots executionms ${explain?.["Execution Time"]}, storage ${JSON.stringify(storage.rows)}\n`,
     );
     const feed = await run(makeUserFeed(database)(reader));
-    // Twenty groups, each at most one kill and its linked loot.
     expect(feed.items.length).toBeGreaterThanOrEqual(20);
     expect(feed.items.length).toBeLessThanOrEqual(40);
     expect(feed.items.every((item) => item.npc?.type === "ELITE2")).toBe(true);

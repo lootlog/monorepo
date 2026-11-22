@@ -5,7 +5,6 @@ import type { BattleTimelineResponseDtoOutput } from "@lootlog/client/battlelog"
 type BattleDetailChartProps = {
   characterId: string | null;
   selectedTurn: number | null;
-  /** Undefined while the timeline is still loading. */
   timeline: BattleTimelineResponseDtoOutput | undefined;
   onTurnSelect: (turn: number) => void;
 };

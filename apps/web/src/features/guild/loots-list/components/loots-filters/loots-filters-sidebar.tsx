@@ -36,17 +36,10 @@ import { LootQuickFilters } from "./loot-quick-filters";
 
 type LootsFiltersSidebarProps = {
   state: LootFiltersState;
-  /**
-   * Collapses the docked panel into the rail; overlays close themselves.
-   */
   onCollapse?: () => void;
-  /** Keeps the header's end free for the overlay's own close button. */
   hasOverlayCloseButton?: boolean;
-  /** The overlay's accessible title, or a heading in the docked panel. */
   titleAs?: ComponentType<{ className?: string; children: ReactNode }>;
-  /** Opens this section, scrolls to it and focuses its title on mount. */
   initialSection?: LootFilterSectionKey;
-  /** Focuses the collapse button on mount, after the rail handed over. */
   autoFocus?: boolean;
 };
 
@@ -56,7 +49,6 @@ const ALL_SECTIONS_OPEN: Record<LootFilterSectionKey, boolean> = {
   player: true,
 };
 
-/** The loot filters: quick filters, then one section per dimension. */
 export const LootsFiltersSidebar = ({
   state,
   onCollapse,
@@ -143,7 +135,6 @@ export const LootsFiltersSidebar = ({
             hasOverlayCloseButton ? "pr-12" : "pr-2",
           )}
         >
-          {/* The icon that opens the panel, in the accent, tells the title from the section headers. */}
           <SlidersHorizontal
             aria-hidden="true"
             className="size-4 shrink-0 text-primary"

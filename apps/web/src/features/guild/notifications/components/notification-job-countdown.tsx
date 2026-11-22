@@ -40,7 +40,6 @@ export const NotificationJobCountdown = ({
     ? t("settings.notifications.jobs.sendsIn", { time: remainingTimeLabel })
     : t("settings.notifications.jobs.sendsNow");
 
-  // Reads like a timer's countdown: the time alone, named for screen readers.
   return (
     <span
       title={label}

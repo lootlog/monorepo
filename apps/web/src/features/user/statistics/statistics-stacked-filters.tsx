@@ -8,7 +8,6 @@ import { toNpcType } from "./statistics-search";
 import { StatisticsPeriodSelect } from "./statistics-period-select";
 import { StatisticsSortSelect } from "./statistics-sort-select";
 
-/** The statistics filters stacked for the panel narrow pages open. */
 export function StatisticsStackedFilters({
   world,
   worlds,

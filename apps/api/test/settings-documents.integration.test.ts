@@ -16,7 +16,6 @@ const runtime = ManagedRuntime.make(
 
 beforeAll(async () => {
   await client.connect();
-  // Pause real writes until both transactions have taken their read snapshots.
   await client.query(`CREATE FUNCTION pause_settings_write() RETURNS trigger LANGUAGE plpgsql AS $$
     BEGIN
       IF current_setting('transaction_isolation') <> 'serializable' THEN
@@ -38,10 +37,6 @@ afterAll(async () => {
   await runtime.dispose();
 });
 
-/**
- * Waits until `count` writes are paused by the trigger (each request has done
- * every read it makes before writing), then lets them all continue.
- */
 const releaseAfterBlockedWrites = async (count: number) => {
   let blocked = 0;
 
@@ -145,7 +140,6 @@ it("applies a batch mixing stored, outdated, emptied, repeated and new documents
   const userId = crypto.randomUUID();
   const scope = { type: "USER", id: userId } as const;
 
-  // The write trigger above requires serializable transactions.
   await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
   await client.query(
     `INSERT INTO "UserSettingDocument" ("userId", "domain", "scopeType", "scopeId", "overrides", "schemaVersion", "updatedAt")
@@ -244,7 +238,6 @@ it("rejects a settings patch based on a stale read", async () => {
   const firstWrite = await patch({ allowWorldSelection: true }, null);
   expect(firstWrite).toBeInstanceOf(Date);
 
-  // Another client created the document after this one read it as missing.
   await expect(patch({ allowWorldSelection: false }, null)).resolves.toBe(409);
 
   if (!(firstWrite instanceof Date)) throw new Error("No updatedAt");
@@ -252,8 +245,6 @@ it("rejects a settings patch based on a stale read", async () => {
   const secondWrite = await patch({ allowWorldSelection: false }, firstWrite);
   expect(secondWrite).toBeInstanceOf(Date);
 
-  // The first read is stale once the second write has landed, even when both
-  // writes fall in the same millisecond.
   await expect(patch({ allowWorldSelection: true }, firstWrite)).resolves.toBe(
     409,
   );

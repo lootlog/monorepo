@@ -15,14 +15,12 @@ type BattleRecordsSectionProps = {
   isLoading: boolean;
 };
 
-// An average of zero means there were no battles with that result.
 const formatAverage = (seconds: number) =>
   seconds > 0 ? formatDuration(Math.round(seconds), "compact") : "–";
 
 const formatBattleDuration = (battle: { duration: number } | null) =>
   battle ? formatDuration(Math.round(battle.duration), "compact") : "–";
 
-/** The current streak and how long battles last, the longest ones linked. */
 export function BattleRecordsSection({
   streak,
   duration,
@@ -82,7 +80,6 @@ export function BattleRecordsSection({
               "–"
             )
           }
-          // The record of the same kind as the current streak, or of wins.
           detail={
             pending
               ? loadingDetail

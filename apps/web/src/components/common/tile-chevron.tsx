@@ -1,10 +1,5 @@
 import { ChevronRight } from "lucide-react";
 
-/**
- * The trailing chevron of a tile or row that opens a detail page. It nudges
- * forward while its link, marked with `group/tile`, is hovered or focused.
- * A card that navigates from its header uses `ChevronLink` instead.
- */
 export const TileChevron = () => (
   <ChevronRight
     aria-hidden

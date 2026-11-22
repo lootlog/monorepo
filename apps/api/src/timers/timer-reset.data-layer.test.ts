@@ -62,7 +62,6 @@ const readTimer = async () => {
   return timer;
 };
 
-/** The reset window as minutes from the reset. */
 const resetWindowMinutes = async () => {
   const { timerKey, world } = await readTimer();
   await boundary.run(
@@ -120,7 +119,6 @@ it("resets an event respawn timer to the window the event opened", async () => {
 
   const now = Date.now();
 
-  // No event is active any more, so the window may be reset.
   await boundary.run(
     timers.openEventRespawnTimer({
       guildId: guild.id,

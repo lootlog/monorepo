@@ -69,7 +69,6 @@ export const fetchLoot = Effect.fn("loots.fetchLoot")(function* (
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
   const loot = yield* data((service) => service.fetchLoot(caller, lootId));
-  // A filtered result deliberately does not reveal whether a record exists.
   const outcome = loot === null ? "unavailable" : "visible";
   yield* Metric.update(Metric.withAttributes(lootDetailReads, { outcome }), 1);
   yield* Effect.annotateCurrentSpan({
@@ -172,14 +171,12 @@ const getLootDraws = Effect.fn("loots.getDraws")(function* (
   return draws;
 });
 
-// Anyone who may read a loot may draw its items; the first standing result
-// wins. Voiding overrules a result, as managing loots does.
 export const createLootDraw = Effect.fn("loots.createDraw")(function* (
   guildId: string | undefined,
   lootId: number,
   payload: CreateLootDrawRequest,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_ARCHIVE);
 
   const draw = yield* data((service) =>
     service.createDraw(caller, lootId, payload),

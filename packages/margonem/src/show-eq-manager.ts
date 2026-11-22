@@ -1,4 +1,3 @@
-/** ShowEqManager.ts falls back to the current world when world is absent. */
 interface EquipmentPlayer {
   id: number;
   account: number;

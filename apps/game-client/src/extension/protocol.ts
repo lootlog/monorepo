@@ -49,26 +49,17 @@ const ExtensionHttpResponseSchema = Schema.Struct({
   body: Schema.String,
 });
 
-/** What the background returns for an `http` request. */
 export type ExtensionHttpResponse = typeof ExtensionHttpResponseSchema.Type;
 
 export const decodeExtensionHttpResponse = Schema.decodeUnknownSync(
   ExtensionHttpResponseSchema,
 );
 
-/**
- * Requests cross from the page into the extension, so unknown keys (and
- * header names over the key limit) are rejected rather than stripped.
- */
 export const decodeExtensionRequest = Schema.decodeUnknownSync(
   ExtensionRequestSchema,
   { onExcessProperty: "error" },
 );
 
-/**
- * Why the extension let go of a game tab: another tab took over, the extension
- * was updated, reloaded or disabled, or its background could not be reached.
- */
 const ExtensionClosedReasonSchema = Schema.Literals([
   "replaced",
   "invalidated",

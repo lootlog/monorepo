@@ -1,13 +1,6 @@
 import type { PersistStorage, StorageValue } from "zustand/middleware";
 import { shallow } from "zustand/vanilla/shallow";
 
-/**
- * persist rewrites storage after every set, even when the state did not change
- * or only transient fields outside partialize did. Skips writes whose persisted
- * fields are all unchanged, so a store updated from game packets or keystrokes
- * does not serialize and write synchronously each time. The payload format is
- * unchanged, so existing stored values load as before.
- */
 export function createChangedOnlyStorage<State>(
   storage: PersistStorage<State> | undefined,
 ): PersistStorage<State> | undefined {
@@ -15,8 +8,6 @@ export function createChangedOnlyStorage<State>(
 
   let lastWritten: StorageValue<State> | null = null;
 
-  // Hydration keeps the stored values, so the first set that changes only
-  // transient fields must not write them back over another tab's update.
   const remember = (value: StorageValue<State> | null) => {
     lastWritten = value;
 

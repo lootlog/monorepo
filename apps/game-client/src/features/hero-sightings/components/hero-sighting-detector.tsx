@@ -4,16 +4,11 @@ import type { HeroSightingMemberDto } from "@lootlog/client/main";
 import { MemberAvatar } from "@/components/member-avatar";
 import { heroSightingDetectorClassName } from "@/features/hero-sightings/hero-sighting-detector-style";
 
-/**
- * Who detected the hero, or entered it by hand, highlighted like the detector
- * among claimers.
- */
 export function HeroSightingDetector({
   member,
   manual,
 }: {
   member: HeroSightingMemberDto;
-  /** The sighting was entered by hand instead of read from a detector. */
   manual: boolean;
 }) {
   const { t } = useTranslation("heroSightings");

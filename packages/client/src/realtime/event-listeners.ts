@@ -15,7 +15,6 @@ export const unwrapOrganizationEvent = <Event extends ServerEvent>(
     ? event.data.payload
     : event.data) as ServerEventPayload<Event["type"]>;
 
-/** Listeners by event name; `Events` maps each name to the payload it carries. */
 export class RealtimeEventListeners<Events extends object> {
   private readonly listeners = new Map<keyof Events, Set<Listener<never>>>();
 

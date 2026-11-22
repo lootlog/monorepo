@@ -36,10 +36,6 @@ export type LootNpcNameSummary = Effect.Success<
   ReturnType<LootQueryPersistence["summarizeByNpcName"]>
 >;
 
-/**
- * List filters with the decoded keyset: `cursor` is the ID of the last loot
- * already returned, and rows come newest first.
- */
 export type LootListParams = Omit<LootsQuery, "cursor"> & {
   readonly cursor?: number;
 };
@@ -65,7 +61,6 @@ export interface LootQueryOperations {
     roles: Role[],
     lootId: number,
   ) => QueryEffect<LootQueryResult | null>;
-  /** Reads a loot as its Organization stores it; the caller applies member visibility. */
   readonly fetchOrganizationLoot: (
     guildId: string,
     lootId: number,

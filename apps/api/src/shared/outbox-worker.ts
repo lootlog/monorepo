@@ -3,12 +3,10 @@ import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import { Clock, Effect, Queue } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 
-/** Runs a durable-outbox dispatch on startup, on each signal, and every second as a fallback. */
 export const makeOutboxWorker = Effect.fnUntraced(function* (
   name: string,
   dispatch: Effect.Effect<void, unknown>,
 ) {
-  // A signal is only a hint: the database remains the durable source of work.
   const signals = yield* Queue.dropping<void>(1);
 
   const run = Effect.gen(function* () {
@@ -42,11 +40,6 @@ type OutboxTable = PgTable & {
   readonly lastAttemptAt: PgColumn;
 };
 
-/**
- * Delivers durable-outbox rows one locked row per transaction. A row is
- * deleted only after `deliver` succeeds; a failure stamps `lastAttemptAt` so
- * the next dispatch tries older work first. Delivery is at least once.
- */
 export const makeOutboxDispatcher = <Table extends OutboxTable, E>(
   name: string,
   database: typeof ApiDatabase.Service,

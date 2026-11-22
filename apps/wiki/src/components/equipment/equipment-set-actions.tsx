@@ -5,11 +5,9 @@ import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import { encodeEquipmentSet, EQUIPMENT_SET_PARAM } from "@/lib/equipment-set";
 
-/** Sharing the set as a link and clearing it. */
 export function EquipmentSetActions({
   compact = false,
 }: {
-  /** Icons alone, for a panel's header. */
   compact?: boolean;
 }) {
   const { set, clear } = useEquipmentSet();

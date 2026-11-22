@@ -670,8 +670,6 @@ describe("durable private online history", () => {
             observedAt: new Date(Date.parse(cutoff) + 7200_000),
           },
         ]);
-        // Rows written outside ingest reach the rollup the way production
-        // history does: folded from the intervals.
         yield* foldAllIntervals(sql);
         yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt")
           SELECT 'batch-tracking-' || n, ${cutoff}::timestamptz FROM generate_series(1, 2001) n`;
@@ -1123,7 +1121,6 @@ describe("durable private online history", () => {
           { onlineSeconds: 0, worlds: [], worldsComplete: true },
         ]);
 
-        // A world counts only its own time, not the overlapping union.
         for (const [world, seconds] of [
           ["luvia", [3600, 3600, 0]],
           ["classic", [0, 3600, 0]],

@@ -77,10 +77,6 @@ const guildIdsGranting = (
     Effect.map((rows) => rows.map(({ guild }) => guild.id)),
   );
 
-/**
- * Organizations where the caller may change their own reservations: the same
- * read and write requirement as the Organization reservation endpoints.
- */
 const writableReservationGuildIds = (
   database: typeof ApiDatabase.Service,
   discordId: string,
@@ -110,7 +106,6 @@ const writableReservationGuildIds = (
 
 const findReservationWithGuild = (
   database: typeof ApiDatabase.Service,
-  // At least one condition, so the lookup can never match every reservation.
   conditions: readonly [SQL, ...ReadonlyArray<SQL | undefined>],
 ) =>
   database
@@ -172,8 +167,6 @@ const publishEvent = (
         ]),
   ];
 
-  // The reservation is saved; a missed hint leaves realtime views stale until
-  // their next read, so it is logged rather than failing the mutation.
   return Effect.all(publications, {
     concurrency: "unbounded",
     discard: true,

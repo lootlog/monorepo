@@ -4,14 +4,11 @@ import { cn } from "cn";
 import { t } from "@/i18n/messages";
 
 type FiltersHeaderProps = {
-  /** How many filters narrow the search now. */
   count: number;
-  /** The title element, such as a sheet's accessible title. */
   renderTitle?: (title: string) => ReactNode;
   className?: string;
 };
 
-/** The top of the filters: what they are and how many apply. */
 export function FiltersHeader({
   count,
   renderTitle = (title) => (

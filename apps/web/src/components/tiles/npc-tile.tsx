@@ -31,8 +31,6 @@ export const NpcTile: FC<NpcTileProps> = ({
   const { icon, lvl, name } = npc;
   const sharedTooltip = useSharedTooltip();
 
-  // A fixed box as large as the biggest sprite, so the row never grows when
-  // the image arrives.
   const tileClassName = cn(
     "relative flex h-10 w-8 items-center justify-center",
     className,

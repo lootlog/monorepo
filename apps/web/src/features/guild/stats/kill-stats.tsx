@@ -120,7 +120,6 @@ export const KillStats = () => {
 
       <KillStatsTimeline data={data?.timeline} isLoading={isLoading} />
 
-      {/* An API from before the timeline omits it during a rollout. */}
       {data?.timeline && data.hourlyWeekday?.length > 0 && (
         <>
           <KillStatsRecords data={data} />

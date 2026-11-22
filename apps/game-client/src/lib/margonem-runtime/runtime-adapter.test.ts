@@ -206,7 +206,6 @@ describe("SI runtime adapter", () => {
     vi.stubGlobal("map", map);
     vi.stubGlobal("g", {
       init: 5,
-      // The old interface stores the rendered URL of the icon NI keeps relative.
       npc: {
         [gameNpc.id]: {
           ...gameNpc,

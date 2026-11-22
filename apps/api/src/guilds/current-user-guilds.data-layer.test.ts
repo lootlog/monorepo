@@ -35,7 +35,6 @@ test("guild list waits on Discord only for missing access and at most twice", as
         updatedAt: new Date(0),
       }),
     );
-    // Stored access synced long ago: stale, but already granting access.
     await boundary.run(
       boundary.database.insert(memberTable).values(
         createMemberFixture({
@@ -73,7 +72,6 @@ test("guild list waits on Discord only for missing access and at most twice", as
               features: [],
             })),
           }),
-        // Every synchronous refresh is rate limited and ends up queued.
         refreshMember: ({ guildId }) =>
           Effect.sync(() => {
             refreshed.push(guildId);
@@ -121,7 +119,6 @@ test("guild list past its max age reports every Organization as stale", async ()
         updatedAt: new Date(0),
       }),
     );
-    // Member access synced just now, so only the list can be stale.
     await boundary.run(
       boundary.database.insert(memberTable).values(
         createMemberFixture({

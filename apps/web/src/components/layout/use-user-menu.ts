@@ -19,10 +19,6 @@ export const SIGNAL_DOT_COLOR: Record<LiveSignal, string> = {
   offline: "bg-signal-timer",
 };
 
-/**
- * What the account menu shows and does, shared by the desktop sidebar's
- * popover and the phone navigation sheet.
- */
 export const useUserMenu = () => {
   const { t } = useTranslation();
   const { user, isPending } = useUser();

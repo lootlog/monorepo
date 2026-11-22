@@ -29,7 +29,6 @@ const SEARCH_RESULTS_ID = "settings-search-results";
 const isSearchShortcut = (event: KeyboardEvent) =>
   (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f";
 
-/** Window width below which the domain list collapses to an icon rail. */
 const SETTINGS_COMPACT_WIDTH = 600;
 
 export const SettingsTabs = () => {
@@ -72,7 +71,6 @@ export const SettingsTabs = () => {
     ? path.subsection
     : activeDomain.subsections[0].id;
 
-  // Items are built only while searching: each one translates its labels.
   const results = query
     ? searchSettings(buildSettingsSearchItems(visibleDomains, t), query)
     : [];
@@ -83,7 +81,6 @@ export const SettingsTabs = () => {
     if (overlayOpen) searchInputRef.current?.focus();
   }, [overlayOpen]);
 
-  // Search and highlight state belongs to one open window.
   useEffect(() => () => useSettingsUiStore.getState().reset(), []);
 
   const navigate = (domainId: string, subsectionId?: string) => {
@@ -117,8 +114,6 @@ export const SettingsTabs = () => {
 
     if (event.key !== "Escape") return;
 
-    // Escape first clears the search and closes the overlay; once there is
-    // nothing left to dismiss the window frame closes settings.
     if (query) {
       event.preventDefault();
       clearQuery();

@@ -52,7 +52,6 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   });
 
   const handleJoin = useEffectEvent((data: GatewayJoin) => {
-    // A first join leaves the freshly loaded data alone.
     if (data.recover)
       void reconcileEventPolicyQueries(queryClient, data.accessPolicyChanges);
 

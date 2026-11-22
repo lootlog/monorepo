@@ -14,7 +14,6 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useCreateTheme } from "./use-create-theme";
 
-/** A theme someone shared by link: previewed at once, saved as a copy. */
 export const ThemeImportPage = () => {
   const { t } = useTranslation();
   const { setPreview } = useTheme();
@@ -33,8 +32,6 @@ export const ThemeImportPage = () => {
     { query: { retry: false } },
   );
 
-  // A placeholder is the previous link's theme: never preview or save it
-  // under this link.
   const sharedTheme = isPlaceholderData ? undefined : sharedThemeData;
 
   useEffect(() => {

@@ -7,10 +7,6 @@ type DetailBarFactProps = {
   className?: string;
 };
 
-/**
- * One fact about the page's subject, its value under a quiet label. On a bar
- * wide enough for one row, a rule sets each fact apart from the one before it.
- */
 export const DetailBarFact = ({
   label,
   children,
@@ -23,7 +19,6 @@ export const DetailBarFact = ({
     )}
   >
     <span className="text-2xs leading-4 text-muted-foreground">{label}</span>
-    {/* A block, not a flex row: text in a flex row clips without an ellipsis. */}
     <span className="block min-w-0 truncate text-sm leading-5 font-medium tabular-nums">
       {children}
     </span>

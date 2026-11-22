@@ -11,10 +11,6 @@ type NpcKindLevelProps = {
   };
 };
 
-/**
- * An NPC's kind in the colour Lootlog gives its type, then its level as the
- * game writes it: `Heros · 271h`.
- */
 export function NpcKindLevel({ npc }: NpcKindLevelProps) {
   const kind = npcKindOf(npc);
   const level = npcLevel(npc);

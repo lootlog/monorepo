@@ -36,7 +36,6 @@ const getSegmentSignature = (segment: ChatMentionSegment) => {
   ].join(":");
 };
 
-/** Mentions are found in the whole text, exactly as the chat renders it. */
 const getExpectedSignature = (
   message: string,
   mentionContext?: ChatMentionContext,
@@ -105,7 +104,6 @@ const rebuildTokenNodes = (mentionContext?: ChatMentionContext) => {
   $selectChatInputRange(selectionOffsets[0], selectionOffsets[1]);
 };
 
-/** Keeps the editor's atomic mention nodes in step with its text. */
 export const ChatInputTokensPlugin: FC<ChatInputTokensPluginProps> = ({
   mentionContext,
 }) => {

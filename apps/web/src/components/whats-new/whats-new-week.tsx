@@ -9,10 +9,6 @@ type WhatsNewWeekProps = {
 
 const ROW_CLASS = "border-b px-4";
 
-/**
- * A week's changes in the top bar's list: each one ruled off from the next,
- * its fixes folded below.
- */
 export const WhatsNewWeek = ({ week, unreadIds }: WhatsNewWeekProps) => (
   <>
     {week.entries.map((item) => (

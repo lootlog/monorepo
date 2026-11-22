@@ -6,7 +6,6 @@ type BattleDetailSummaryProps = {
   battle: Battle;
 };
 
-/** A duel is a head-to-head balance; a group battle is about who contributed what. */
 export function BattleDetailSummary({ battle }: BattleDetailSummaryProps) {
   return battle.type === "1v1" ? (
     <BattleSummarySection battle={battle} />

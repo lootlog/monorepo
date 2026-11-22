@@ -6,10 +6,6 @@ import {
   type CalculatorId,
 } from "@/components/calculators/calculator-list";
 
-/**
- * The calculators by topic. From `lg` a list beside the open calculator;
- * narrower screens scroll it sideways above it.
- */
 export function CalculatorNav({ current }: { current: CalculatorId }) {
   return (
     <nav aria-label={t("calculators.contents")}>

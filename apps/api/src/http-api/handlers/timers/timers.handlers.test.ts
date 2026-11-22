@@ -287,7 +287,6 @@ describe("Timers HttpApi handlers", () => {
     },
   );
 
-  // Values the typed port cannot carry are checked at the response boundary.
   it.each([
     { ...storedTimer, updatedAt: "invalid" },
     { ...storedTimer, npc: { ...storedTimer.npc, lvl: "100" } },
@@ -316,8 +315,6 @@ describe("Timers HttpApi handlers", () => {
             roles: receivedAccess.roles,
           });
 
-          // The timer module applies per-NPC visibility and returns no entries
-          // for this level-restricted role.
           return Effect.succeed([]);
         },
       }),

@@ -13,10 +13,6 @@ type HeroSightingHistoryProps = {
   now: number;
 };
 
-/**
- * The hero's latest sightings, newest first, in each Lootlog whose sighting
- * the row shows; each Lootlog's history follows its own access.
- */
 export function HeroSightingHistory({ row, now }: HeroSightingHistoryProps) {
   const { t } = useTranslation("heroSightings");
 

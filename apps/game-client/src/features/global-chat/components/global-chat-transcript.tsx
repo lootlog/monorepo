@@ -17,15 +17,10 @@ type GlobalChatTranscriptProps = {
   rowContext: GlobalChatRowContext;
   hasOlder: boolean;
   loadingOlder: boolean;
-  /** A failed older page waits for the player instead of retrying in a loop. */
   olderFailed: boolean;
   onLoadOlder: () => void;
 };
 
-/**
- * Follows the newest message and mounts older rows when scrolled to the top,
- * reading an older page once every loaded row is mounted.
- */
 export const GlobalChatTranscript = ({
   appearance,
   rows,
@@ -39,13 +34,11 @@ export const GlobalChatTranscript = ({
   const { start } = useMessageScrollerScrollable();
   const viewport = useRef<HTMLDivElement>(null);
   const isEmpty = rows.length === 0;
-  // Also true while the history is shorter than the viewport, which fills it.
   const atStart = !isEmpty && !start;
   const transcriptWindow = useTranscriptWindow(rows);
   const loadOlder = useEffectEvent(onLoadOlder);
   const revealOlder = useEffectEvent(transcriptWindow.revealOlder);
 
-  // Mounts the loaded rows above the window before reading an older page.
   useEffect(() => {
     if (!atStart) return;
 

@@ -10,7 +10,6 @@ type WikiNavigationMenuLinkProps = {
   active: boolean;
 };
 
-/** A wiki section in a header panel: its icon, its name and what it holds. */
 export function WikiNavigationMenuLink({
   link,
   icon: Icon,

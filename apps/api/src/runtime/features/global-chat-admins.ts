@@ -16,12 +16,6 @@ const decodeRoleHolders = Schema.decodeUnknownEffect(
   Schema.fromJsonString(PlatformRoleHolders),
 );
 
-/**
- * The global chat admins shared by the chat and the character auras: the
- * configured Users and the holders of the `global-chat-admin` platform role,
- * which the auth service owns. Without the service credential only the
- * configured Users are admins.
- */
 export class GlobalChatAdminDirectory extends Context.Service<
   GlobalChatAdminDirectory,
   GlobalChatAdmins

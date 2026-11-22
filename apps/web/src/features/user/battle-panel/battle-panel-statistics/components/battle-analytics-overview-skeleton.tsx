@@ -9,7 +9,6 @@ type BattleAnalyticsOverviewSkeletonProps = {
   rated?: boolean;
 };
 
-/** `BattleAnalyticsOverview`'s sections while their numbers load. */
 export function BattleAnalyticsOverviewSkeleton({
   rated = false,
 }: BattleAnalyticsOverviewSkeletonProps) {

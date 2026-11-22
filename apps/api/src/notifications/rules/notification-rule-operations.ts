@@ -362,7 +362,6 @@ export const makeNotificationRuleOperations = (
       }
     });
 
-  // The policy rejects a request by throwing; anything else is a fault.
   const invalidRuleValues = (cause: unknown) =>
     cause instanceof InvalidRequestError
       ? cause

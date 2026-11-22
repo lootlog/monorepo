@@ -159,7 +159,6 @@ export const NpcKillersPage = () => {
         footer={
           <TablePaginationFooter
             totalLabel={
-              // A search narrows the top killers, so its count stays exact.
               isCapped && !settings.search
                 ? t("kills.npcKillers.totalTop", { limit: total })
                 : t("kills.fullRanking.total", { count: total })

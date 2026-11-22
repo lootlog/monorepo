@@ -5,7 +5,7 @@ import {
 } from "@lootlog/protocol/http/errors";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ContextLogger } from "@lootlog/instrumentation";
-import { type RedisStore } from "#src/infrastructure/redis-store";
+import type { RedisStore } from "#src/infrastructure/redis-store";
 import { Effect } from "effect";
 import type { BattleCatalog } from "#src/battles/catalog/battle-catalog";
 import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
@@ -127,7 +127,6 @@ const createWarriorSnapshots = (
   );
 };
 
-/** Reads a battle's submitted events and the timeline derived from them. */
 export const makeBattleTimelineRead = (
   drizzle: BattleTimelineReadDatabase,
   r2Service: Pick<BattleObjectStorage, "getBattleData">,
@@ -139,7 +138,6 @@ export const makeBattleTimelineRead = (
 ) => {
   const logger = new ContextLogger("Battles");
 
-  /** R2 keeps timelines of battles saved before UUIDv7 IDs under their legacy ID. */
   const getBattleObjectId = (battleId: string) => {
     return drizzle.query.battleLegacyIds
       .findFirst({
@@ -152,10 +150,6 @@ export const makeBattleTimelineRead = (
       );
   };
 
-  /**
-   * Battles saved since timelines moved to Postgres keep their submitted
-   * events there. Older battles keep theirs in R2 under their object ID.
-   */
   const loadRawBattleData = (battle: RawBattleSource) => {
     return drizzle.query.battleTimelines
       .findFirst({

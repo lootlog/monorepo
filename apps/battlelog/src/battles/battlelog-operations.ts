@@ -34,8 +34,6 @@ const toBattleResponseInput = (battle: BattleWithRelations) => ({
   ...battle,
   createdAt: battle.createdAt.toISOString(),
   updatedAt: battle.updatedAt.toISOString(),
-  // Awards break ties by the order the battle introduced its warriors: the
-  // game lists them in an object keyed by numeric ID, so ascending ID order.
   statistics: calculateBattleStatistics(
     [...battle.warriors].sort(
       (left, right) => Number(left.originalId) - Number(right.originalId),

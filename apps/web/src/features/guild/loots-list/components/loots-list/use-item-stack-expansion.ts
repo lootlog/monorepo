@@ -50,7 +50,6 @@ export const useItemStackExpansion = (
 
   const closeStack = useEffectEvent(() => setExpansion(null));
 
-  // Grid regrouping can remount the card while its expanded stack stays open.
   useLayoutEffect(() => {
     if (!anchorRect) return;
     const currentRect = stackRef.current?.getBoundingClientRect();

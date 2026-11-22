@@ -51,7 +51,6 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
 
   const form = useForm<FormValues>({
     resolver: standardSchemaResolver(formSchema),
-    // A refetch updates untouched fields and keeps the unsaved edits.
     values: {
       LEGENDARY: npc.allowedRarities.includes("LEGENDARY"),
       HEROIC: npc.allowedRarities.includes("HEROIC"),
@@ -96,7 +95,6 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
 
   return (
     <Form {...form}>
-      {/* Room below the last section for the docked save bar. */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="pb-24">
         <BandSection
           id="npc-rarities"
@@ -126,7 +124,6 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
                       className={cn("size-4", rarity.color)}
                     />
                   </span>
-                  {/* The label covers the tile, so the whole tile toggles. */}
                   <FormLabel
                     className={cn(
                       "flex-1 cursor-pointer text-sm font-medium after:absolute after:inset-0",

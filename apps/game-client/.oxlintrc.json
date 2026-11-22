@@ -34,7 +34,12 @@
     "no-var": "error",
     "prefer-const": "error",
     "no-duplicate-imports": "error",
-    "no-empty": "warn",
+    "no-empty": [
+      "warn",
+      {
+        "allowEmptyCatch": true
+      }
+    ],
     "no-empty-function": "off",
     "no-eval": "error",
     "no-implied-eval": "error",

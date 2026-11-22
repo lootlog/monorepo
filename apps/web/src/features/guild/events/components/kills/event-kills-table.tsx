@@ -74,8 +74,6 @@ const getColumnClassName = (columnId: string, isPreview: boolean) => {
     return "hidden w-0 sm:table-cell sm:w-28 lg:w-36";
   }
 
-  // The preview card is narrow at every viewport, so its columns follow the
-  // card width instead of the screen.
   if (columnId === "respawnTime") {
     if (isPreview) {
       return "hidden w-0 text-right @md/kills:table-cell @md/kills:w-32";
@@ -95,10 +93,6 @@ const getColumnClassName = (columnId: string, isPreview: boolean) => {
   return "";
 };
 
-/**
- * The event's kills: the whole history, edge to edge on its page and as tiles
- * where the table would not fit, or the latest few in the event's preview card.
- */
 export const EventKillsTable = (props: EventKillsTableProps) => {
   const { t } = useTranslation();
   const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
@@ -130,7 +124,6 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
     >
       <TanStackTableHeader
         table={table}
-        // A short preview scrolls past whole; only the history pins it.
         className={isPreview ? "bg-sidebar" : FILTERED_TABLE_HEADER_CLASS}
         rowClassName="border-b-1! border-border hover:bg-transparent"
         getHeadClassName={(header) =>
@@ -149,7 +142,6 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
             getColumnClassName(cell.column.id, isPreview),
           )
         }
-        // The whole row opens the kill; only its first cell takes focus.
         renderCellContent={(cell, content) => (
           <KillCellLink
             guildId={guildId}
@@ -165,7 +157,6 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
           </KillCellLink>
         )}
       />
-      {/* A failed refresh keeps the last kills; the notice says they may be stale. */}
       {isPreview && hasError && (
         <TableBody>
           <TableRow className="hover:bg-transparent">

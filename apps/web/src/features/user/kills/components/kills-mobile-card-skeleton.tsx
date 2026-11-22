@@ -6,7 +6,6 @@ import {
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
-/** Stands in for one `KillsMobileList` card. */
 export const KillsMobileCardSkeleton = () => (
   <div
     data-list-tile

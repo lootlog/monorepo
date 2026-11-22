@@ -1,10 +1,3 @@
-/**
- * How a timer tile is painted: `accent` is the swatch colour in pickers, the
- * standing pulse and the legacy tile border, `fill` is the translucent row
- * background.
- * Custom and overridden colours use the same pair under the names
- * `borderColor` and `backgroundColor`.
- */
 export type TimerColorPaint = {
   accent: string;
   fill: string;
@@ -18,12 +11,6 @@ const paint = (hex: string): TimerColorPaint => ({
   fill: `${hex}${TILE_FILL_ALPHA_HEX}`,
 });
 
-/**
- * Built-in colours keep the legacy hues and saturation (OKLCH chroma capped at
- * 0.2) on one lightness band (yellow and lime sit a little lighter, blue and
- * purple darker to stay apart from sky and violet), so no colour outshines the
- * others behind white text.
- */
 export const TIMERS_COLORS = {
   red: paint("#f4514e"),
   orange: paint("#fb7c03"),
@@ -36,11 +23,9 @@ export const TIMERS_COLORS = {
   violet: paint("#a98efe"),
   purple: paint("#9452d9"),
   pink: paint("#f057a1"),
-  // "Bez koloru": no fill, a faint accent for the swatch and standing pulse.
   white: { accent: "#9ca3af66", fill: "#9ca3af00" },
 } satisfies Record<string, TimerColorPaint>;
 
-/** The legacy appearance keeps the vivid colours it was designed with. */
 const LEGACY_ACCENTS = {
   red: "#ef4444",
   orange: "#f97316",
@@ -100,10 +85,6 @@ type StoredTimerColor = {
   borderColor: string;
 };
 
-/**
- * Resolves the paint for a timer from its selected colour id: a custom colour
- * or an overridden default wins, then the built-in palette, then "no colour".
- */
 export const resolveTimerColorPaint = (
   selectedColor: string,
   customColor: StoredTimerColor | undefined,
@@ -132,7 +113,6 @@ export const resolveTimerColorPaint = (
   );
 };
 
-/** The colour a player picked for a monster, with the stored paint it may name. */
 export const getTimerColorConfig = (
   npcName: string,
   timersColors: Readonly<Record<string, string | undefined>>,

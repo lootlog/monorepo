@@ -1,17 +1,9 @@
-/**
- * The game's "Szybka walka" button in the new interface's battle controller.
- * The game creates it once per battle window.
- */
 const QUICK_FIGHT_BUTTON_SELECTOR = ".battle-controller .auto-fight-btn";
 
 export const isQuickFightButton = (target: EventTarget | null) =>
   target instanceof Element &&
   target.closest(QUICK_FIGHT_BUTTON_SELECTOR) !== null;
 
-/**
- * A glow ring on the button's border box, drawn by a Lootlog element inside
- * the game's button so the button's own styles stay untouched.
- */
 const createGlowLayer = (shadow: string) => {
   const layer = document.createElement("div");
   layer.setAttribute("aria-hidden", "true");
@@ -26,11 +18,6 @@ const createGlowLayer = (shadow: string) => {
   return layer;
 };
 
-/**
- * Makes the quick-fight button glow in a ping's colour and returns the undo.
- * The pulse fades a wider static glow in and out over a narrow one, so it
- * animates only opacity and never repaints the button.
- */
 export const highlightQuickFightButton = (color: string, pulse: boolean) => {
   const button = document.querySelector<HTMLElement>(
     QUICK_FIGHT_BUTTON_SELECTOR,

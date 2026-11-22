@@ -2,10 +2,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "@lootlog/ui/lib/toast";
 
-/**
- * Copies an item identifier (`ITEM#…`) and reports the result. `copyingId` is
- * the identifier still being written, so a list can mark just that row busy.
- */
 export const useCopyItemId = () => {
   const { t } = useTranslation();
   const [copyingId, setCopyingId] = useState<string | null>(null);

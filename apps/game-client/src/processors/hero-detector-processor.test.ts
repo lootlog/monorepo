@@ -17,7 +17,6 @@ const configKey =
 
 const NOW = Date.parse("2026-11-03T12:00:00Z");
 
-// A detector answer as Margonem puts it in the system chat.
 const DETECTOR_ANSWER =
   "[b]Tepeyollotl (258b)[/b] grasuje w: Oztotl Tzacua p.2 - sala 2";
 
@@ -99,7 +98,6 @@ it("reports a fresh detector answer once with Margonem's answer time, then offer
   const fixture = createFixture();
 
   fixture.handle(systemChat(answer(501)));
-  // The same answer arrives again with the next chat packet.
   fixture.handle(systemChat(answer(501)));
 
   await waitFor(() => expect(fixture.requests).toHaveLength(1));
@@ -121,7 +119,6 @@ it("reports a fresh detector answer once with Margonem's answer time, then offer
       sighting,
     ]),
   );
-  // Reporting never claims on its own; the player decides in the window.
   expect(useWindowsStore.getState()["hero-sightings"].open).toBe(true);
   expect(fixture.requests.some((entry) => entry.url.includes("/claim"))).toBe(
     false,
@@ -153,7 +150,6 @@ it("sends nothing for a character whose catching list is known to be empty", asy
 });
 
 it("offers the visible sightings when another Organization accepts the detection but hides the hero", async () => {
-  // guild-2 accepted the detection, but the player's roles there cannot see this hero.
   const fixture = createFixture(
     ["guild-1", "guild-2"],
     [

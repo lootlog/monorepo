@@ -1,6 +1,5 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
-/** Stands in for a 36px warrior row: a scaled player sprite beside its name and level. */
 export const BattlePanelWarriorSkeleton = () => (
   <div className="flex min-w-0 items-center gap-2">
     <Skeleton className="h-9 w-6 shrink-0 rounded-sm" />

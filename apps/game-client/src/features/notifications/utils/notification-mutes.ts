@@ -21,12 +21,6 @@ type MuteableNotification =
   | PartyGatheringNotification
   | StoredNotification;
 
-/**
- * Colossi and Hero Trackers change their runtime id between spawn places, so
- * their mutes are stored under a hash of the bare name. Stored mutes depend on
- * it: a Hero Tracker is not keyed like its timers and kills
- * (`getTimerNpcId`), which hash a prefixed, normalized name.
- */
 const getStableNpcId = (
   npcId: number,
   npcName: string,
@@ -36,7 +30,6 @@ const getStableNpcId = (
     ? hashNpcKey(String(npcName ?? ""))
     : Math.abs(npcId);
 
-/** The NPC a notification reports, with the key its mute is stored under. */
 const getNpcMuteTarget = (notification: MuteableNotification) => {
   if (!("npc" in notification) || !notification.npc) return null;
 

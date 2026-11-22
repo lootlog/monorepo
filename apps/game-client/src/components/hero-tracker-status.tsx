@@ -5,11 +5,9 @@ import { parseMsToTime } from "@lootlog/datetime";
 import { useNow } from "@/hooks/ui/use-now";
 
 type HeroTrackerStatusProps = {
-  /** Epoch ms when the entrance closes; absent while nobody claimed it. */
   entranceClosesAt: number | undefined;
 };
 
-/** Whether a Hero Tracker waits to be claimed or how long its entrance stays open. */
 export const HeroTrackerStatus: FC<HeroTrackerStatusProps> = ({
   entranceClosesAt,
 }) => {
@@ -46,7 +44,6 @@ export const HeroTrackerStatus: FC<HeroTrackerStatusProps> = ({
     );
   }
 
-  // Entrances stay open for minutes, so the hour field is noise in a tight row.
   const time = parseMsToTime(remainingMs).replace(/^00:/, "");
   const label = t("heroTracker.open", { time });
 

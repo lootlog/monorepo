@@ -156,7 +156,6 @@ describe("extension game entrypoint cleanup", () => {
         throw failure;
       });
 
-    // The real transport isolates errors thrown by its closed callback.
     expect(closeBackground).not.toThrow();
     expect(channel().closePort).toHaveBeenCalledOnce();
     expect(closeBackground).not.toThrow();

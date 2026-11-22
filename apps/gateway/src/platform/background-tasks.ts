@@ -40,7 +40,6 @@ export const unmanagedBackgroundTaskRunner: BackgroundTaskRunner = (
   );
 };
 
-/** Runs work outside a request, supervised by the application's scope. */
 export class Background extends Context.Service<
   Background,
   {

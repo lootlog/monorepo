@@ -134,8 +134,6 @@ beforeEach(() => {
   );
 });
 
-// Sonner can schedule multiple removal callbacks for one toast. Drain even those
-// left after the toast disappears before unmounting and destroying the DOM.
 afterEach(async () => {
   await waitFor(() => {
     if (client.isMutating() || client.isFetching())
@@ -213,7 +211,6 @@ function dispatchPointer(
     clientY: y,
   });
 
-  // happy-dom omits page coordinates consumed by the browser drag engine.
   Object.defineProperties(event, { pageX: { value: 20 }, pageY: { value: y } });
   fireEvent(target, event);
 }

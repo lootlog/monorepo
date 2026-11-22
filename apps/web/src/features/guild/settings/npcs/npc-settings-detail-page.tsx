@@ -42,7 +42,6 @@ export const NpcSettingsDetailPage = () => {
     );
   }
 
-  // The route has no loader, so this page shows its own loading and failure.
   if (!npc) {
     return isError ? (
       <SettingsListError

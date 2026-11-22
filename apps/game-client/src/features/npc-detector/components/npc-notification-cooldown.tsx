@@ -17,13 +17,6 @@ const getRemainingMs = (endsAt: number) =>
 const getRingOffset = (remainingMs: number) =>
   RING_CIRCUMFERENCE * (1 - remainingMs / NPC_NOTIFICATION_COOLDOWN_MS);
 
-/**
- * Owns the per-row countdown so the list and its rows stay untouched while
- * a cooldown runs: the label re-renders once per second boundary and the ring
- * is a single Web Animation instead of a state tick per frame. The parent
- * keys it by the deadline, so a fresh notification during a cooldown mounts a
- * new countdown instead of continuing the old one.
- */
 export const NpcNotificationCooldown = ({
   animationEffectsEnabled,
   endsAt,

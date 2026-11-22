@@ -38,10 +38,8 @@ const logEntryPattern = [
   ["w-1/2", "w-3/5", "w-2/3", "w-2/5"],
 ];
 
-// A full-height rail shows more entries than one pattern pass.
 const logEntries = [...logEntryPattern, ...logEntryPattern];
 
-/** Stands in for the battle: teams, chart and balance beside the log rail. */
 export const BattlePanelSingleBattleSkeleton = () => {
   const { t } = useTranslation();
 

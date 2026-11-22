@@ -14,13 +14,6 @@ export const AUTO_HIDE_MAX_SECONDS = 600;
 
 type NotificationSwitch = "show" | "ignoreOtherWorlds" | "highlight" | "sound";
 
-/**
- * Per-category notification rules plus the shared server list. Every change
- * is written straight through the shared settings patch queue, which updates
- * the cache optimistically, batches rapid clicks into one request and
- * re-applies patches still pending when a server response lands, so a switch
- * never snaps back mid-save.
- */
 export function useNotificationRulesForm() {
   const { settings } = useCurrentGameAccountNotificationSettings();
 
@@ -44,7 +37,6 @@ export function useNotificationRulesForm() {
     checked: boolean,
   ) => setRule(type, { [field]: checked });
 
-  /** `seconds` arrives already clamped by the number field. */
   const setAutoHideTimeout = (type: NotificationType, seconds: number) =>
     setRule(type, { autoHideTimeout: seconds });
 
@@ -58,7 +50,6 @@ export function useNotificationRulesForm() {
     });
   };
 
-  /** Sets one switch in every category where it is editable (its row is on). */
   const setSwitchForAll = (field: NotificationSwitch, checked: boolean) => {
     const notifications = Object.fromEntries(
       NOTIFICATION_TYPES.filter(

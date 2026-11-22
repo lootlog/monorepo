@@ -50,7 +50,6 @@ export function DashboardRecentBattles() {
         query={query}
         compact
         loading={
-          // One placeholder row per requested battle, sized like a loaded row.
           <ul role="status" aria-label={t("common.loading")}>
             {Array.from(
               { length: DASHBOARD_RECENT_BATTLES_PARAMS.size },

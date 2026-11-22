@@ -199,8 +199,6 @@ describe("ActivityRepository", () => {
 
         pending = create();
 
-        // Wait for the real unique-index conflict, not an arbitrary delay.
-        // The resolver's first read cannot see the owner's uncommitted row.
         let blocked = false;
 
         for (let attempt = 0; attempt < 200; attempt += 1) {
@@ -341,10 +339,6 @@ describe("ActivityRepository", () => {
   });
 
   it("paginates by microsecond creation time across mixed identifier formats", async () => {
-    // Recent rows: the retention job drops anything older than seven days as
-    // soon as it runs. The two middle rows share a creation time and the oldest
-    // one falls in the same millisecond, where a cursor rounded to milliseconds
-    // would skip all three.
     await pool.query(
       `INSERT INTO "Activity" ("id", "userId", "guildId", "discordId", "type", "createdAt", "source", "idempotencyKey") VALUES
         ('zzzzzzzzzzzzzzzzzzzzzzzzz', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', date_trunc('minute', now()) - interval '1 minute', 'WEB_APP', 'pagination-newest'),
@@ -461,8 +455,6 @@ describe("ActivityRepository", () => {
     );
     await insert("uncompressed-today", "1 minute");
 
-    // What the policy does to chunks past its window, without racing its
-    // background run over the same chunk.
     await pool.query(
       `SELECT compress_chunk(chunk, if_not_compressed => true)
        FROM show_chunks('"Activity"', older_than => INTERVAL '1 day') AS chunk`,
@@ -496,7 +488,6 @@ describe("ActivityRepository", () => {
         expect(
           (yield* repository.findMany({ guildId, limit: 5 })).data,
         ).toEqual(activitiesWithIds("compressed-newer"));
-        // Another Organization's row shared the chunk and must survive the delete.
         expect(
           (yield* repository.findMany({
             guildId: "guild-compressed-other",
@@ -528,7 +519,6 @@ describe("ActivityRepository", () => {
 
     const runner = await pool.connect();
     const reader = await pool.connect();
-    // Without the job's own lock bound, fail on this timeout instead of waiting for the reader.
     await runner.query(`SET statement_timeout = '5s'`);
 
     const retain = () => runner.query(`CALL run_job($1)`, [jobs[0].job_id]);
@@ -537,14 +527,12 @@ describe("ActivityRepository", () => {
       await insert("retention-kept", "6 days");
       await insert("retention-expired", "9 days");
 
-      // Every activity write reads snapshots, so dropping a chunk must not lock them.
       await reader.query("BEGIN");
       await reader.query(`SELECT count(*) FROM "ActivityActorSnapshot"`);
       await retain();
       expect(await remaining()).toEqual(["retention-kept"]);
       await reader.query("COMMIT");
 
-      // A pending drop blocks every later query on its chunk, so it gives up instead.
       await insert("retention-late", "9 days");
       await reader.query("BEGIN");
       await reader.query(`SELECT count(*) FROM "Activity"`);

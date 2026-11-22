@@ -21,17 +21,9 @@ type SkillTierProps = {
   weapons: ReadonlySet<SkillWeapon>;
   selectedId: number | undefined;
   onSelect: (skillId: number) => void;
-  /**
-   * The chosen skill's panel, shown under its tier where the tree has no
-   * room for it at its side.
-   */
   panel: ReactNode;
 };
 
-/**
- * One tier of the tree: the level and spent points it opens at, then its
- * skills in the game's order. A tier the character cannot learn yet says so.
- */
 export function SkillTier({
   tree,
   tierLevel,

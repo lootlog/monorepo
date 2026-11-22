@@ -1,6 +1,5 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
-/** Placeholder for a 32x48 character sprite: a head over a body. */
 export const PlayerSilhouetteSkeleton = () => (
   <div aria-hidden="true" className="relative h-12 w-8 rounded-lg bg-muted/20">
     <Skeleton className="absolute left-1/2 top-1 size-3.5 -translate-x-1/2 rounded-full" />

@@ -65,9 +65,6 @@ const DELTA_FLUSH_INTERVAL_MS = 250;
 
 const REDIS_TTL_SECONDS = Math.ceil(PRESENCE_EXPIRY_MS / 1_000);
 
-// One call refreshes a session in one Organization, so no call spans the keys of
-// two Organizations: KEYS 1 is the expiry index, then presence, metadata and
-// the Organization index.
 const REFRESH_PRESENCE = `
 -- presence:refresh
 for key = 2, #KEYS, 3 do
@@ -82,7 +79,6 @@ end
 return 1
 `;
 
-// One call removes a session from one Organization, with the same key layout.
 const REMOVE_PRESENCE = `
 -- presence:remove
 for key = 2, #KEYS, 3 do
@@ -94,10 +90,6 @@ end
 return 1
 `;
 
-/**
- * Organization presence of this replica's sessions. Snapshots, deltas, expiry
- * and character departures each live in their own module; this composes them.
- */
 export class PresenceStore {
   private readonly snapshots: PresenceSnapshots;
 
@@ -276,7 +268,6 @@ export class PresenceStore {
 
       yield* this.offline.schedule(presence);
 
-      // Coverage is derived; a failed event must not keep the session online.
       if ("location" in presence && presence.location?.map && this.coverage) {
         const { coverage } = this;
         const mapName = presence.location.map;
@@ -368,7 +359,6 @@ export class PresenceStore {
   get runDeltaFlush() {
     return this.flushDeltas.pipe(
       Effect.repeat(Schedule.spaced(DELTA_FLUSH_INTERVAL_MS)),
-      // Queued removals exist nowhere else; deliver them before Redis closes.
       Effect.ensuring(
         this.flushDeltas.pipe(Effect.timeout("1 second"), Effect.ignore),
       ),
@@ -461,8 +451,6 @@ export class PresenceStore {
     });
   }
 
-  // Redis commands may settle after their Effect caller is interrupted. Writes
-  // queue their delta when they settle, so every stored change is announced.
   private refresh(
     organizationIds: ReadonlyArray<string>,
     presence: Basic | Precise,
@@ -471,8 +459,6 @@ export class PresenceStore {
   ) {
     if (organizationIds.length === 0) return Effect.void;
 
-    // Metadata lastSeen survives the payload TTL, so expiry still knows the
-    // departure. A refresh restores the Organization and due indexes.
     return Effect.forEach(
       organizationIds,
       (organizationId) =>
@@ -588,7 +574,6 @@ export class PresenceStore {
   }
 }
 
-/** Organization presence of this replica's sessions, with its sweeps. */
 export class Presence extends Context.Service<Presence, PresenceStore>()(
   "@lootlog/gateway/realtime/Presence",
 ) {

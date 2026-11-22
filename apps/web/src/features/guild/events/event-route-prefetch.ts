@@ -16,8 +16,6 @@ const prefetchEventHeroTimers = async (
   queryClient: QueryClient,
   params: EventRouteParams,
 ) => {
-  // The parent layout loader owns the overview request and its errors; this
-  // joins the same in-flight fetch only to learn the event's world.
   const event = await queryClient
     .ensureQueryData(getShowEventQueryOptions(params))
     .catch(() => undefined);
@@ -32,10 +30,6 @@ const prefetchEventHeroTimers = async (
   );
 };
 
-/**
- * Starts the event page queries that the layout loader does not wait for, so
- * they load beside the overview instead of after it.
- */
 export const prefetchEventDetailQueries = (
   queryClient: QueryClient,
   params: EventRouteParams,

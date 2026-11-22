@@ -3,13 +3,6 @@ import type { AdminConfig } from "./config.js";
 
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
-/**
- * Only the panel's own scripts run, and only those the response marked: markup
- * that slips into a name or a ban reason cannot execute, call out, post a form
- * elsewhere or be framed. Inline style attributes stay allowed because the UI
- * components position their popups with them; the style elements they add
- * carry the nonce.
- */
 const contentSecurityPolicy = (nonce: string) =>
   [
     "default-src 'none'",
@@ -24,16 +17,11 @@ const contentSecurityPolicy = (nonce: string) =>
     "frame-ancestors 'none'",
   ].join("; ");
 
-/** Headers every answer carries, refusals included. */
 const BASE_HEADERS = {
-  // `no-transform` keeps the Cloudflare edge from rewriting the page. Its
-  // Rocket Loader re-types every script tag, which breaks hydration, and the
-  // scripts it adds carry no nonce.
   "cache-control": "no-store, no-transform",
   "cross-origin-opener-policy": "same-origin",
   "cross-origin-resource-policy": "same-origin",
   "permissions-policy": "camera=(), geolocation=(), microphone=()",
-  // `no-referrer` would also blank the Origin header the guard checks on forms.
   "referrer-policy": "same-origin",
   "x-content-type-options": "nosniff",
   "x-frame-options": "DENY",
@@ -41,7 +29,6 @@ const BASE_HEADERS = {
 };
 
 export const securityHeaders = (production: boolean, nonce: string) =>
-  // The development server injects its own scripts and styles.
   production
     ? {
         ...BASE_HEADERS,
@@ -55,12 +42,6 @@ const refuse = (status: 401 | 403, message: string) =>
     headers: { "content-type": "text/plain; charset=utf-8" },
   });
 
-/**
- * Decides who is operating the panel, or refuses the request.
- *
- * A browser sends the Access cookie with a form another site submits, so a
- * state-changing request must also come from the panel's own origin.
- */
 export const authorizeRequest = async (
   request: Request,
   config: AdminConfig,

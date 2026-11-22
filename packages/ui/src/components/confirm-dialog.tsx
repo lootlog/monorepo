@@ -30,20 +30,15 @@ import {
 } from "react";
 
 type ConfirmDialogBaseProps = {
-  /** Resolving closes the dialog; rejecting keeps it open for a retry. */
   onConfirm: () => void | Promise<void>;
   title: ReactNode;
   description: ReactNode;
   confirmButtonLabel: string;
   cancelButtonLabel: string;
-  /** Destructive actions use the destructive button; reversible ones the default. */
   variant?: "destructive" | "default";
   disabled?: boolean;
-  /** Work started outside the dialog that must finish before it can close. */
   pending?: boolean;
-  /** Requires typing this text before the action unlocks. */
   confirmText?: string;
-  /** Labels the typed confirmation input; required with `confirmText`. */
   confirmLabel?: string;
   finalFocus?: ComponentProps<typeof AlertDialogContent>["finalFocus"];
 };
@@ -56,7 +51,6 @@ type ConfirmDialogTriggerProps = {
   onOpenChange?: (open: boolean) => void;
 };
 
-/** Opened from elsewhere, such as a menu item, so it renders no trigger. */
 type ConfirmDialogControlledProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -118,7 +112,6 @@ export function ConfirmDialog({
       await onConfirm();
       handleOpenChange(false);
     } catch {
-      // The action reports its own error; the dialog stays for a retry.
       setIsSubmitting(false);
     }
   };
@@ -158,8 +151,6 @@ export function ConfirmDialog({
       )}
       <AlertDialogContent
         finalFocus={finalFocus}
-        // React events bubble through the portal to the trigger's ancestors,
-        // such as a clickable row; a click inside the dialog must not reach them.
         onClick={(event) => event.stopPropagation()}
       >
         <AlertDialogHeader>

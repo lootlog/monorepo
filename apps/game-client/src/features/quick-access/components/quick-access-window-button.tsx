@@ -7,13 +7,10 @@ export type QuickAccessWindowButtonProps = {
   windowId: WindowId;
   label: string;
   icon: ReactNode;
-  /** Hotkey whose binding the tooltip shows next to the label. */
   hotkeyAction?: HotkeyAction;
-  /** Something new waits in the window; the label tells what. */
   badge?: { count: number; label: string };
 };
 
-/** Toggles one Lootlog window and lights up while that window is open. */
 export const QuickAccessWindowButton: FC<QuickAccessWindowButtonProps> = ({
   windowId,
   label,

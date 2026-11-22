@@ -14,11 +14,8 @@ export type OnboardingStep = {
 };
 
 type OnboardingSignals = {
-  /** `undefined` while the Organization list is unknown. */
   organizationCount: number | undefined;
-  /** Lifetime kills credited to the user, `undefined` while unknown. */
   lifetimeKills: number | undefined;
-  /** Recorded battles on the dashboard, `undefined` while unknown. */
   recentBattles: number | undefined;
 };
 
@@ -35,12 +32,6 @@ const getGameActivity = (
   return false;
 };
 
-/**
- * Setup checklist for the personal dashboard, or `null` when it must stay
- * hidden. Recorded kills or battles prove the game client already works; the
- * API exposes no other signal, so a member whose activity is still unknown
- * never sees the checklist.
- */
 export const getOnboardingSteps = ({
   organizationCount,
   lifetimeKills,

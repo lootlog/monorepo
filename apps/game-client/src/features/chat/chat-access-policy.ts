@@ -62,8 +62,6 @@ const scheduleRefresh = (
       return guildId !== undefined && guildIds.has(guildId);
     };
 
-    // An older response cannot cover this reconnect. Let it finish, then
-    // reconcile once more instead of repeatedly cancelling HTTP requests.
     for (const query of queryClient.getQueryCache().findAll({ predicate })) {
       const guildId = getChatMessagesQueryGuildId(query);
 
@@ -122,7 +120,6 @@ export const refreshChatAfterReconnect = (
     if (guildId) state.pendingGuilds.add(guildId);
   }
 
-  // Closed histories remain lazy, but must still catch up when opened.
   void queryClient.invalidateQueries({ predicate, refetchType: "none" });
   scheduleRefresh(queryClient, state, true);
 };
@@ -135,7 +132,6 @@ export const retainChatAccessPolicy = (queryClient: QueryClient) => {
     state.listeners -= 1;
 
     if (state.listeners === 0) {
-      // The policy belongs to the session that retained it.
       state.policy = undefined;
       clearTimeout(state.timer);
       state.timer = undefined;
@@ -226,7 +222,6 @@ const retainReadableRefreshes = (
   }
 };
 
-/** One coordinator per cache: several mounted chat listeners must share refresh work. */
 export const applyChatAccessPolicy = (
   queryClient: QueryClient,
   policy: AccessPolicySnapshot,
@@ -304,7 +299,6 @@ export const applyChatAccessPolicy = (
       interruptedUnloadedGuilds.push(guildId);
   }
 
-  // Cancellation reverts synchronously; prune after it so late responses cannot restore revoked rows.
   void queryClient.cancelQueries({
     predicate: (query) => affected(query) && !preserveInitialRequest(query),
   });

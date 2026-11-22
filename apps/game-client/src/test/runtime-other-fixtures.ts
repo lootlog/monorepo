@@ -3,7 +3,6 @@ import { normalizeRuntimeOtherData } from "@/lib/margonem-runtime/runtime-adapte
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { useOthersStore } from "@/store/others.store";
 
-/** Seed both owners just as runtime projection does, preserving native handle identity. */
 export function seedRuntimeOthers(
   handles: Readonly<Record<string, OtherHandle>>,
 ): void {

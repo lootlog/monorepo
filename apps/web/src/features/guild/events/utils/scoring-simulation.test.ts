@@ -26,8 +26,6 @@ const simulate = (presetId: (typeof SIMULATION_PRESETS)[number]["id"]) => {
 
 describe("timeline simulation with the solo / small group rulebook", () => {
   it("keeps the solo base when a second member joins for the last 5 minutes", () => {
-    // The same kill recalculated by the API awards 3 and 0
-    // (apps/api/test/event-scoring-presence.integration.test.ts).
     expect(simulate("lateSecondMember")).toEqual({
       "Gracz A": 3,
       "Gracz B": 0,
@@ -105,7 +103,6 @@ it("ends the simulated window at the maximum respawn like live scoring", () => {
     ],
   });
 
-  // B arrives only after the maximum respawn, so A watched the whole window solo.
   expect(analysis.window.end.toISOString()).toBe("2026-01-15T09:00:00.000Z");
   expect(results.map((entry) => entry.explanation.result.basePoints)).toEqual([
     3, 0,
@@ -121,7 +118,6 @@ it("reads entered clock times in the rules' timezone, not the browser's", () => 
 
   const { analysis } = simulateScoringTimeline(rulebook, preset.timeline);
 
-  // 08:00 and 09:40 Europe/Warsaw in January (UTC+1).
   expect(analysis.window.start?.toISOString()).toBe("2026-01-15T07:00:00.000Z");
   expect(analysis.window.end.toISOString()).toBe("2026-01-15T08:40:00.000Z");
 });

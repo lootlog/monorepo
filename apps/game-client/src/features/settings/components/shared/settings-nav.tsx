@@ -39,10 +39,6 @@ const moveRailFocus = (event: KeyboardEvent<HTMLDivElement>) => {
   buttons[(index + offset + buttons.length) % buttons.length]?.focus();
 };
 
-/**
- * Domain navigation: icon and label list when the window is wide, an icon
- * rail with the search entry point when it is narrow.
- */
 export const SettingsNav: FC<SettingsNavProps> = ({
   domains,
   activeDomainId,

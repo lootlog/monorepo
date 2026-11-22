@@ -262,7 +262,6 @@ describe("filtered loot reads", () => {
       expect(await run(allocation.findAuthorizedLoot(options))).toMatchObject({
         id: 2,
       });
-      // Revocation after the initial read must still prevent the durable update.
       await run(
         database
           .update(roleTable)
@@ -435,8 +434,6 @@ describe("filtered loot reads", () => {
           },
         ]),
       );
-      // Only 1 and 2 are readable with these roles. Higher IDs exercise
-      // filtering before LIMIT, including records outside this Organization.
       await run(
         database.insert(lootTable).values(
           Array.from({ length: 8 }, (_, index) => ({
@@ -544,8 +541,6 @@ describe("filtered loot reads", () => {
       );
 
       expect(list.map(({ id }) => id)).toEqual([2, 1]);
-      // A shared loot's comments belong to its Organization record. The other
-      // Organization's comments must not inflate this count; no comments is zero.
       expect(
         list.map(({ id, commentsCount }) => ({ id, commentsCount })),
       ).toEqual([
@@ -580,8 +575,6 @@ describe("filtered loot reads", () => {
         ).toEqual(expectedIds);
       }
 
-      // Every loot holds a legendary and a unique item: a rarity none of them
-      // has matches nothing, and one listed rarity is enough to match.
       for (const { rarities, expectedIds } of [
         { rarities: ["HEROIC" as const], expectedIds: [] },
         {
@@ -622,8 +615,6 @@ describe("filtered loot reads", () => {
         ).map(({ id }) => id),
       ).toEqual([1]);
 
-      // A role granting heroes at high levels cannot authorize a low hero;
-      // null metadata and empty encounters must also fail closed.
       for (const lootId of [3, 4, 5, 6, 7, 8]) {
         expect(
           await run(query.fetchLootById(guild, permissions, roles, lootId)),
@@ -647,7 +638,6 @@ describe("filtered loot reads", () => {
         await run(query.fetchLootsByGuildId(guild, permissions, [], filters)),
       ).toEqual([]);
 
-      // OWNER bypasses NPC restrictions, but never Organization isolation or archive state.
       expect(
         (
           await run(
@@ -765,9 +755,6 @@ describe("free-text loot search", () => {
         ]),
       );
 
-      // 2 matches through an item, 3 through an NPC, 4 through a player. 1
-      // carries the term only in its map name and must not match. 5 matches
-      // nothing, and 6 matches everywhere but belongs to another Organization.
       const locations = [
         "Grota Cieni",
         "Puszcza",
@@ -837,28 +824,20 @@ describe("free-text loot search", () => {
           )
         ).map(({ id }) => id);
 
-      // A term that resolves to no snapshot and no location must return
-      // nothing rather than dropping the predicate and listing every loot.
       expect(await search({ search: "smok" })).toEqual([]);
-      // Loot 1 carries "Cieni" only in its map name, so it stays out.
       expect(await search({ search: "cien" })).toEqual([4, 3, 2]);
-      // Case-insensitive substring semantics, one field at a time.
       expect(await search({ search: "CIEN" })).toEqual([4, 3, 2]);
-      // A map name is not searchable, even an exact one.
       expect(await search({ search: "Grota Cieni" })).toEqual([]);
       expect(await search({ search: "iecz Cieni" })).toEqual([2]);
       expect(await search({ search: "enisty" })).toEqual([3]);
       expect(await search({ search: "eniolub" })).toEqual([4]);
-      // Search intersects other filters instead of replacing them.
       expect(await search({ search: "cien", cursor: 3 })).toEqual([2]);
       expect(await search({ search: "cien", limit: 2 })).toEqual([4, 3]);
       expect(await search({ search: "cien", world: "other" })).toEqual([]);
       expect(
         await search({ search: "cien", npcs: ["Cienisty Golem"] }),
       ).toEqual([3]);
-      // A blank term is not a filter.
       expect(await search({ search: "  " })).toEqual([5, 4, 3, 2, 1]);
-      // LIKE wildcards in the term are literal, not "match anything".
       expect(await search({ search: "%" })).toEqual([]);
       expect(await search({ search: "_" })).toEqual([]);
       expect(await search({ search: "Cien_sty" })).toEqual([]);

@@ -14,16 +14,10 @@ type FiltersOverlayProps = {
   onOpenChange: (open: boolean) => void;
   title: string;
   activeFilterCount: number;
-  /** Clears every filter from the header while any is active. */
   onClear?: () => void;
   children: ReactNode;
 };
 
-/**
- * The filters of a page too narrow to list them in its filter bar, styled
- * like the loot filters panel: a drawer from the bottom edge on phones and a
- * sheet from the right edge on wider screens.
- */
 export const FiltersOverlay = ({
   open,
   onOpenChange,

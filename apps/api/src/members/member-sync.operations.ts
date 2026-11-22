@@ -58,7 +58,6 @@ export const makeMemberSync = (
 
       return {
         member: attempt?.member ?? null,
-        // A member that is not stored has no earlier status to repeat.
         statusChanged: attempt?.statusChanged ?? true,
       };
     },
@@ -174,9 +173,6 @@ export const makeMemberSync = (
           status: MEMBER_DISCORD_SYNC_STATUS.UNAUTHORIZED,
         });
 
-        // Every request of a member who must sign in again repeats this
-        // attempt, because only the auth service knows about a new sign-in.
-        // Only the first one is news.
         yield* (statusChanged ? Effect.logWarning : Effect.logDebug)({
           message: "Member must sign in again to refresh from Discord",
           guildId: options.guildId,

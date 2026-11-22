@@ -27,21 +27,14 @@ const browseSections = WIKI_NAVIGATION.filter(
 
 const toolSections = WIKI_NAVIGATION.filter(({ group }) => group === "tools");
 
-/** Tailwind's `lg`, from which the header shows this menu in its bar. */
 const INLINE_MIN_WIDTH = 1024;
 
 type WikiNavigationMenuProps = {
   activeSection: WikiSection | undefined;
 };
 
-/**
- * The wiki's sections in the header bar: the catalog with a shortcut to each
- * equipment slot, and the tools that work on its items.
- */
 export function WikiNavigationMenu({ activeSection }: WikiNavigationMenuProps) {
   const [openPanel, setOpenPanel] = useState<string | null>(null);
-  // The open panel is portaled, so hiding the bar would leave it floating
-  // over the narrow layout; close it when the bar gives way to the menu.
   const collapsed = useMaxWidth(INLINE_MIN_WIDTH);
 
   if (collapsed && openPanel !== null) setOpenPanel(null);

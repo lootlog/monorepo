@@ -24,10 +24,6 @@ export const useTimers = ({ world }: UseTimersOptions) => {
   return query;
 };
 
-/**
- * Timers already loaded for the world, without requesting them: the timers
- * feature owns loading and live updates.
- */
 export const useLoadedTimers = (world: string): Timer[] | undefined =>
   useQuery<Timer[]>({ queryKey: queryKeys.timers(world), queryFn: skipToken })
     .data;

@@ -2,10 +2,6 @@ import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { isCurrentHeroSighting } from "@lootlog/domain/hero-sightings";
 import { sortBy } from "es-toolkit";
 
-/**
- * What a sighting tells now: where the hero roams or will spawn, that a
- * roaming hero went unconfirmed too long to be trusted, or why it closed.
- */
 export type HeroSightingStatus =
   | "ROAMING"
   | "SPAWNING"
@@ -21,17 +17,11 @@ export const getHeroSightingStatus = (
 ): HeroSightingStatus => {
   if (sighting.closedAt !== null) return sighting.closeReason ?? "CLOSED";
 
-  // Open but no longer current: a roaming hero unconfirmed for too long.
   if (!isCurrentHeroSighting(sighting, now)) return "STALE";
 
   return sighting.state;
 };
 
-/**
- * The board's sections, in the order to act on them: a spawn to camp comes
- * before a roaming hero, which the players near it already fight. Closed ones
- * share one.
- */
 export const HERO_SIGHTING_GROUPS = [
   "SPAWNING",
   "ROAMING",
@@ -48,7 +38,6 @@ export const getHeroSightingGroup = (
     ? "CLOSED"
     : status;
 
-/** Orders a board by status, then by the latest news within each status. */
 export const sortHeroSightings = (
   sightings: readonly HeroSightingResponseDto[],
   now: number,

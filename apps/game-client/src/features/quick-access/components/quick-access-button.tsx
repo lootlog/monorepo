@@ -8,7 +8,6 @@ export type QuickAccessButtonProps = Omit<
   "children" | "tooltip"
 > & {
   icon: ReactNode;
-  /** Shown as key caps next to the label; hidden when unassigned. */
   binding?: HotkeyBinding;
 };
 
@@ -17,12 +16,6 @@ const isAssigned = (
 ): binding is HotkeyBinding =>
   binding !== undefined && (binding.type === "mouse" || binding.key !== "");
 
-/**
- * One taskbar-style tile of the quick access bar: the shared icon button with
- * the window's hotkey in its tooltip. Extra props (including `ref` and popover
- * trigger props) go straight to the button so it can serve as a
- * `PopoverTrigger` render target.
- */
 export const QuickAccessButton: FC<QuickAccessButtonProps> = ({
   label,
   icon,

@@ -2,25 +2,17 @@ import { cn } from "cn";
 import { Search, X } from "lucide-react";
 import type { ReactNode, Ref } from "react";
 
-/** The input inside an `InlineSearchField`, a plain one or a combobox's. */
 export const INLINE_SEARCH_INPUT_CLASS =
   "h-8 min-w-0 flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed [&::-webkit-search-cancel-button]:hidden";
 
 type InlineSearchFieldProps = {
-  /** The input, styled with `INLINE_SEARCH_INPUT_CLASS`. */
   children: ReactNode;
-  /** Shows the clear button while the field has a value. */
   onClear?: () => void;
   clearLabel: string;
   className?: string;
-  /** Anchors a list of suggestions under the whole field. */
   ref?: Ref<HTMLDivElement>;
 };
 
-/**
- * A borderless search that reads as part of the bar it opens, such as a list
- * toolbar or a filter bar, rather than as a second global search.
- */
 export const InlineSearchField = ({
   children,
   onClear,

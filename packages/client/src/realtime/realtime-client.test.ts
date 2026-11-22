@@ -90,7 +90,6 @@ const publishedPresence = {
 
 type SuccessFields = Partial<SessionJoined> & Partial<BasicPresence>;
 
-/** The gateway's success `data` for a command, with fields a test cares about. */
 const successData = (command: ClientCommand, fields?: SuccessFields) => {
   switch (command.type) {
     case "session.join":
@@ -294,7 +293,6 @@ describe("RealtimeClient", () => {
     );
     await flushMessages();
 
-    // Commands decoded from a server connection must never reach event consumers.
     socketAt(sockets, 0).message(
       encodeRealtimeFrame({
         v: 1,
@@ -854,7 +852,6 @@ describe("RealtimeClient", () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(sockets).toHaveLength(2);
 
-    // The delay applies to that rejection only.
     socketAt(sockets, 1).close();
     await vi.advanceTimersByTimeAsync(1_000);
     expect(sockets).toHaveLength(3);
@@ -928,7 +925,6 @@ describe("RealtimeClient", () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(sockets).toHaveLength(2);
 
-    // A dropped connection keeps the short backoff.
     socketAt(sockets, 1).close();
     await vi.advanceTimersByTimeAsync(2_000);
     expect(sockets).toHaveLength(3);
@@ -1001,7 +997,6 @@ describe("RealtimeClient", () => {
     socket.open();
 
     await expect(
-      // A caller outside TypeScript can send any payload.
       client.request("presence.publish", JSON.parse('{"organizationIds":1}')),
     ).rejects.toThrow();
     expect(socket.sent).toEqual([]);
@@ -1097,7 +1092,6 @@ describe("RealtimeClient", () => {
       const sentBeforeRefresh = socket.sent.length;
 
       await advance(500);
-      // Preserve gateway FIFO: the publication was queued before this heartbeat.
       socket.message(
         encodeRealtimeFrame({
           v: 1,

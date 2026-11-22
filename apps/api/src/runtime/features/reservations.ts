@@ -29,7 +29,6 @@ export const reservationSharingData = Layer.unwrap(
   ),
 );
 
-/** Reservation reads and mutations over one cached spot catalog. */
 export const reservationData = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;

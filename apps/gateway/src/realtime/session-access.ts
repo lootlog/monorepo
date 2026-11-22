@@ -56,13 +56,11 @@ export const sessionAccessPolicy = (session: PermissionViewer) => {
   };
 };
 
-/** Whether a socket kept its subscriptions, and what to log about the change. */
 type AccessAnnouncement = {
   readonly resubscribed: boolean;
   readonly warnings: ReadonlyArray<Effect.Effect<void>>;
 };
 
-/** Moves one socket to its changed access policy and tells its client. */
 export const announceAccess = (
   hub: Pick<RealtimeHub, "replaceSubscriptions" | "sendEvent">,
   socket: GatewaySocket,

@@ -58,10 +58,6 @@ const grant = (guildId: string): Grant => ({
 const setup = async () => {
   let grants = [grant("organization-1"), grant("organization-2")];
 
-  // The API's internal permissions endpoint keeps answering from its warm
-  // projection until a read demands fresh grants; apps/api tests that side in
-  // user-guild-permissions.test.ts. Reconciliation must demand fresh data, or
-  // the gateway would commit grants the member no longer has.
   let warm: Grant[] | undefined;
   let permissionRequests = 0;
 
@@ -73,7 +69,6 @@ const setup = async () => {
         Object.fromEntries(new URL(request.url).searchParams),
       );
 
-      // A required read bypasses the warm projection without replacing it.
       if (query.freshness === "required")
         return HttpClientResponse.fromWeb(request, Response.json(grants));
 
@@ -94,7 +89,6 @@ const setup = async () => {
 
   const redis = makeGuildStoreRedis(identity);
 
-  // The third replica holds none of the member's sockets.
   const stores = Array.from({ length: 3 }, () =>
     makeGuildStore(config, redis.store, http),
   );
@@ -306,7 +300,6 @@ for (const change of ["role", "membership"] as const) {
         : RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
     );
 
-    // One fresh read per replica holding the member's sockets; the idle one reads none.
     expect(system.permissionRequests() - requestsBefore).toBe(2);
 
     for (const target of system.targets) target.frames.length = 0;
@@ -340,7 +333,6 @@ for (const change of ["role", "membership"] as const) {
         ).toBe(false);
     }
 
-    // A subsequent join must use the revised gateway projection, not the warm API grant.
     const reconnect = await system.join(system.first, "reconnect", [
       "organization-1",
     ]);

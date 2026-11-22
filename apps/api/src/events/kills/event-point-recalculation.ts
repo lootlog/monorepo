@@ -89,10 +89,6 @@ export type EventPointRecalculation = ReturnType<
   typeof makeEventPointRecalculation
 >;
 
-/**
- * One presence analysis per kill, shared by every participant: the kill's
- * ranking members and their assignment records on the hero's maps.
- */
 function analyzePresenceByKillId(params: {
   killPointsByKillId: Record<
     string,
@@ -151,11 +147,6 @@ function analyzePresenceByKillId(params: {
   return presenceByKillId;
 }
 
-/**
- * The ranking's manual adjustment comes from its edit history rather than
- * the stored column: recalculation before 5ef9e687a3 wrote unrecorded
- * adjustments there, and an adjustment backed by no edit is not one.
- */
 function resolveManualAdjustmentPoints(
   adjustments: ReadonlyMap<string, number>,
   existingRanking?: { id: string },
@@ -253,7 +244,6 @@ function calculateTrackingMetricsForKill(params: {
   };
 }
 
-/** Recomputes every kill point and ranking of an event under its current scoring rules. */
 export const makeEventPointsRecalculator = (
   repository: Pick<
     EventPointsStore,

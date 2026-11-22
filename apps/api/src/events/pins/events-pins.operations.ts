@@ -12,7 +12,6 @@ export const makeEventsPins = (persistence: PinnedEventsPersistence) => ({
     guildData: { id: string },
   ) {
     const referenceTime = new Date(yield* Clock.currentTimeMillis);
-    // The cleanup deletes only pins that the active read excludes.
 
     const [, pinnedEvents] = yield* Effect.all(
       [

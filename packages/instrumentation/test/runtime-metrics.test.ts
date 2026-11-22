@@ -22,7 +22,6 @@ test("idle processes emit runtime measurements and stop sampling when their scop
       Effect.runSync(Metric.value(processHeapUsage)).value,
     ).toBeGreaterThan(0);
     const before = Effect.runSync(Metric.value(processEventLoopDelay)).count;
-    // The first CPU sample needs ten seconds plus any scheduler delay.
     const deadline = performance.now() + 13_000;
 
     while (

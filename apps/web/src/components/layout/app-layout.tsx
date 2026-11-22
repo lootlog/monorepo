@@ -17,7 +17,6 @@ import { SupportAnnouncement } from "@/components/common/support-announcement";
 import { getRouteErrorStatus } from "@/lib/router/route-errors";
 
 export const AppLayout = () => {
-  // The shell follows the page on screen, which stays until the next loads.
   const pathname = usePresentedPathname();
 
   const guildRouteMatch = useMatches({
@@ -50,9 +49,6 @@ export const AppLayout = () => {
 
   const isCompactSidebar = isStandaloneRoute;
 
-  // A failed Organization route keeps the navigation column: without an
-  // access policy its sections collapse, so moving between servers with and
-  // without access never shifts the layout.
   const sidebarNavigation = isCompactSidebar ? null : isUserRoute ? (
     <UserSidebarNav />
   ) : showGuildNav || hasFailedGuildRoute ? (
@@ -72,10 +68,7 @@ export const AppLayout = () => {
       className="flex min-h-dvh w-full flex-col bg-background text-foreground md:h-dvh md:overflow-hidden"
       data-design-system="signal-v2"
     >
-      {/* Loaded with the shell: arriving later, it would push the page down. */}
       <SupportAnnouncement />
-      {/* Desktop navigation stays expanded; only the mobile sheet opens and
-          closes, from its menu button, so Ctrl/Cmd+B stays with the page. */}
       <SidebarProvider
         open
         keyboardShortcut={false}

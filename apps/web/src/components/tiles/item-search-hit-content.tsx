@@ -13,10 +13,6 @@ type ItemSearchHitContentProps = {
   };
 };
 
-/**
- * One item in a search list: its icon, name, rarity and level, inside whichever
- * row element the list selects it with.
- */
 export const ItemSearchHitContent = ({ item }: ItemSearchHitContentProps) => {
   const { t } = useTranslation();
 

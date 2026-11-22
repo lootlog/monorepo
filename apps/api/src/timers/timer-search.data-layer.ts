@@ -94,8 +94,6 @@ export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
     const limit = query.limit ?? DEFAULT_LIMIT;
     const results: ReturnType<typeof projectSearchTimer> = [];
 
-    // Visibility is applied per batch, so hidden timers never take a visible
-    // result's place under the limit.
     for (let offset = 0; results.length < limit; offset += SEARCH_BATCH_SIZE) {
       const batch = yield* readBatch(offset);
       results.push(...batch.flatMap(projectSearchTimer));

@@ -9,21 +9,15 @@ import {
 
 const BADGE_SIZE = 16;
 
-/** How long an expiring icon takes to fade out at the end of its countdown. */
 const FADE_OUT_MS = 400;
 
 type BattlePingIconProps = {
-  /** Drains the badge's ring and fades the icon out as the ping ends. */
   countdown?: ComponentProps<typeof PingBadgeRing>["countdown"];
   highlighted?: boolean;
   icon: PingIconName;
   tone: PingTone;
 };
 
-/**
- * One battle ping on a warrior: only its icon badge, so it never covers the
- * fight. Who sent it and why is in the battle ping window.
- */
 export const BattlePingIcon: FC<BattlePingIconProps> = ({
   countdown,
   highlighted = false,

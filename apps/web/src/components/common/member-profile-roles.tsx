@@ -2,7 +2,6 @@ import type { MemberReferenceResponseDtoOutputRolesItem as MemberRole } from "@l
 import { discordRoleCssColor } from "@lootlog/domain/member-display-role";
 import { useTranslation } from "react-i18next";
 
-/** A member's Discord roles, highest first, each with its colour. */
 export const MemberProfileRoles = ({ roles }: { roles: MemberRole[] }) => {
   const { t } = useTranslation();
 

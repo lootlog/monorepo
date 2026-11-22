@@ -18,7 +18,6 @@ const tabs = {
   monsters: StatisticsMonsters,
 };
 
-/** A kill statistics tab; loots read their own statistics. */
 export function StatisticsContent({
   tab,
   ...props

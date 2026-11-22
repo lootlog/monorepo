@@ -1,7 +1,3 @@
-/**
- * A damped spring in 2D: props hung on the character (cloud, moon, skulls, runes) follow it
- * through one, so they trail behind a walk and overshoot a little when it stops.
- */
 export class Spring {
   x: number;
   y: number;
@@ -13,7 +9,6 @@ export class Spring {
     this.y = y;
   }
 
-  /** Semi-implicit Euler step towards (tx, ty); stable for `dt` up to ~2/√stiffness. */
   step(tx: number, ty: number, dt: number, stiffness = 40, damping = 7): void {
     this.vx += ((tx - this.x) * stiffness - this.vx * damping) * dt;
     this.vy += ((ty - this.y) * stiffness - this.vy * damping) * dt;

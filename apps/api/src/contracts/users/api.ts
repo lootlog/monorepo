@@ -1,6 +1,5 @@
 import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import { UserFeedQuery, UserFeedResponse } from "./feed-schemas.js";
-/** Endpoints owned by the users HTTP module. */
 import {
   HttpApiEndpoint,
   HttpApiGroup,

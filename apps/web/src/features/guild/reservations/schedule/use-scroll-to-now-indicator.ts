@@ -4,7 +4,6 @@ import {
   usePageScrollsDocument,
 } from "@/hooks/utils/use-page-scroll";
 
-/** Centres the current time in the schedule's scroller when it comes into view. */
 export const useScrollToNowIndicator = (
   nowRef: RefObject<HTMLElement | null>,
   isNowShown: boolean,

@@ -9,11 +9,6 @@ export type GuildChannelDeletedEvent = CanonicalRabbitEvent<
   typeof RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED
 >;
 
-/**
- * Publishes committed channel deletions. A broker-confirmed row that was not
- * yet deleted is replayed under the same message id, and consumers remove the
- * snapshot and notification target idempotently.
- */
 export const makeGuildChannelDeletedDispatcher = <E>(
   database: typeof ApiDatabase.Service,
   publish: (

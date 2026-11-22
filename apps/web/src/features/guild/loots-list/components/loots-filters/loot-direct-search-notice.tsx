@@ -9,12 +9,6 @@ export type LootDirectSearchNoticeProps = {
   className?: string;
 };
 
-/**
- * Says that the loot list is matching a raw term against its own snapshot rows
- * rather than the search service, and offers the way back out. Shown wherever
- * that state is visible: the search palette that starts it and the filters
- * panel that lists everything else narrowing the list.
- */
 export const LootDirectSearchNotice = ({
   term,
   onClear,

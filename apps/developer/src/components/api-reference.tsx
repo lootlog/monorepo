@@ -6,10 +6,8 @@ import { useRef } from "react";
 import { PUBLIC_API_SERVICES } from "@lootlog/schema/api-services";
 import { portalText as t } from "@/lib/translations";
 import { useReferenceNavigationMotion } from "@/lib/use-reference-navigation-motion";
-// Imported here, not by the route, so only the reference page loads Scalar's CSS.
 import "@/styles/reference.css";
 
-// Scalar reapplies navigation when configuration changes, including on hash renders.
 const configuration = {
   persistAuth: false,
   proxyUrl: "",

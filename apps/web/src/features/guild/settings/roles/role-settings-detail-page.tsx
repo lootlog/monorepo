@@ -42,7 +42,6 @@ export const RoleSettingsDetailPage = () => {
     );
   }
 
-  // The route has no loader, so this page shows its own loading and failure.
   if (!role) {
     return isError ? (
       <SettingsListError

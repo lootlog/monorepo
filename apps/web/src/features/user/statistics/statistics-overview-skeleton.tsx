@@ -11,7 +11,6 @@ import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 import { StatisticsLegends } from "./statistics-legends";
 import { STATISTICS_PREVIEW_SIZE } from "./statistics-top-npcs";
 
-/** StatisticsOverview's layout while the numbers load. */
 export function StatisticsOverviewSkeleton() {
   const { t } = useTranslation();
 
@@ -19,7 +18,6 @@ export function StatisticsOverviewSkeleton() {
     <div role="status" aria-label={t("common.loading")}>
       <KillStatsOverview
         isLoading
-        // The change and its comparison wrap where the loaded ones would.
         loadingTotalDetail={
           <span className="flex flex-wrap items-center gap-1">
             <SkeletonLine className="h-3 w-24" />

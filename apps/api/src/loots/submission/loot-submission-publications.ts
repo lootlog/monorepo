@@ -25,11 +25,6 @@ import type { AcceptedNpcSnapshot } from "#src/loots/submission/loot-submission-
 import { mapItems, mapPlayers } from "./loot-submission-normalization.js";
 import type { AcceptanceOutcome } from "./loot-submission-outcome.js";
 
-/**
- * The NPC the items came from: a dialog's or a fight's only NPC, or the only
- * boss of a group fight (`DROP_SOURCE_BOSS_TYPES`). Other sources, such as
- * a lootbox, have none.
- */
 function findDropSource(
   npcs: AcceptedNpcSnapshot[],
   submission: CreateLootRequest,
@@ -84,7 +79,6 @@ export function createdPublications(
 export function newLootPublications(options: {
   lootId: number;
   npcs: AcceptedNpcSnapshot[];
-  /** When the API accepted the loot; the catalog keeps the earliest. */
   observedAt: Date;
   outcome: AcceptanceOutcome;
   submission: CreateLootRequest;
@@ -148,8 +142,6 @@ export function newLootPublications(options: {
     options.npcs.flatMap((npc): CatalogNpcObservation[] => {
       const { icon, lvl, wt, type, margonemType } = npc;
 
-      // A submitted NPC always carries these; only a revision stored before
-      // they were required can lack one, and the catalog needs them all.
       if (
         icon === null ||
         lvl === null ||
@@ -167,8 +159,6 @@ export function newLootPublications(options: {
           wt,
           type,
           margonemType,
-          // The catalog keeps the latest observation of an entry; loot ids
-          // order observations even when deliveries arrive out of order.
           lootId: options.lootId,
           ...(npc.snapshotHash && { snapshotHash: npc.snapshotHash }),
           world: options.submission.world,
@@ -186,7 +176,6 @@ export function newLootPublications(options: {
         id: item.id,
         name: item.name,
         icon: item.icon,
-        // The catalog describes revisions, not looted instances.
         stat: splitItemStat(item.stat).revision,
         lvl: item.lvl,
         rarity: item.rarity ?? null,

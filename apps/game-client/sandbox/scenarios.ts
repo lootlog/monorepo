@@ -42,11 +42,6 @@ const lootItem = (
   tpl: 0,
 });
 
-/**
- * A group loot as Margonem sends it after a party fight: the party, the items
- * in `loc: "l"` and the hero's own default states. Other participants' choices
- * arrive only from their Lootlog clients through the gateway.
- */
 const createGroupLootEvent = (world: SandboxWorld): GameEvent => {
   const ids = [nextLootItemId, nextLootItemId + 1, nextLootItemId + 2].map(
     String,

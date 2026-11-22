@@ -19,8 +19,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { guildTable, memberTable, npcTypeEnum } from "./organization.schema.js";
 
-// The codec makes a select read the column as text. Without it the driver
-// asks for binary results and hands back the wire bytes of a multirange.
 const int4multirange = customType<{ data: string }>({
   dataType: () => "int4multirange",
   codec: "int4multirange",
@@ -83,8 +81,6 @@ export const lootSourceEnum = pgEnum("LootSource", [
   "FIGHT",
 ]);
 
-// GameVersion from @lootlog/schema/game-version. NULL means unknown: an older
-// client or an unrecognized host; never read it as either edition.
 export const gameVersionEnum = pgEnum("GameVersion", ["pl", "en"]);
 
 export const lootShareSourceEnum = pgEnum("LootShareSource", [
@@ -131,11 +127,7 @@ export const itemSnapshotTable = pgTable(
     id: serial("id").notNull().primaryKey(),
     itemId: integer("itemId").notNull(),
     gameVersion: gameVersionEnum("gameVersion").notNull(),
-    // Hash of the revision stats alone; revisions of one item that differ only
-    // in presentation or edition share it.
     statsHash: text("statsHash").notNull(),
-    // Revision identity from createItemSnapshotHash. Null on revisions written
-    // before editions that the LOO-250 repair retired into a promoted one.
     snapshotHash: text("snapshotHash"),
     name: text("name").notNull(),
     icon: text("icon").notNull(),
@@ -165,8 +157,6 @@ export const lootItemTable = pgTable(
     lootId: integer("lootId").notNull(),
     itemSnapshotId: integer("itemSnapshotId").notNull(),
     hid: text("hid").notNull(),
-    // Per-instance stats (ITEM_INSTANCE_STAT_KEYS) of this looted item; null
-    // when it had none or was accepted before they were stored here.
     instanceStat: text("instanceStat"),
   },
   (table) => [
@@ -174,8 +164,6 @@ export const lootItemTable = pgTable(
       table["lootId"],
       table["itemSnapshotId"],
     ),
-    // Only equality lookups read hid, a 64-character hex digest; a hash index
-    // stores a 4-byte code per row instead of the digest.
     index("LootItem_hid_idx").using("hash", table["hid"]),
     index("LootItem_itemSnapshotId_lootId_idx").on(
       table["itemSnapshotId"],
@@ -228,8 +216,6 @@ export const playerSnapshotTable = pgTable(
       table["characterId"],
     ),
     index("PlayerSnapshot_name_idx").on(table["name"]),
-    // Free-text loot search resolves player names to snapshot ids; the btree
-    // above cannot serve a substring match.
     index("PlayerSnapshot_name_trgm_idx").using(
       "gin",
       sql`${table["name"]} gin_trgm_ops`,
@@ -247,7 +233,6 @@ export const lootPlayerTable = pgTable(
     hpp: integer("hpp"),
   },
   (table) => [
-    // Players are read per loot in insertion order, so the key leads with lootId.
     primaryKey({
       columns: [table["lootId"], table["id"]],
       name: "LootPlayer_pkey",
@@ -275,8 +260,6 @@ export const npcSnapshotTable = pgTable(
   {
     id: serial("id").notNull().primaryKey(),
     npcId: integer("npcId").notNull(),
-    // NpcIdentityNamespace from @lootlog/schema/npc-identity. `legacy` rows come
-    // from clients that sent an overloaded id; do not infer their meaning.
     identityNamespace: text("identityNamespace")
       .$type<NpcIdentityNamespace>()
       .default(NpcIdentityNamespace.LEGACY)
@@ -310,14 +293,10 @@ export const lootNpcTable = pgTable(
     id: serial("id").notNull().primaryKey(),
     lootId: integer("lootId").notNull(),
     npcSnapshotId: integer("npcSnapshotId").notNull(),
-    // Margonem runtime id of the looted spawn; null for clients that sent only
-    // an overloaded id. The snapshot holds the catalog identity.
     runtimeNpcId: integer("runtimeNpcId"),
   },
   (table) => [
     index("LootNpc_lootId_idx").on(table["lootId"]),
-    // Covers the loot list's NPC filter, which reads every loot of the chosen
-    // NPCs as an index-only scan; its prefix serves the snapshot lookups.
     index("LootNpc_npcSnapshotId_lootId_idx").on(
       table["npcSnapshotId"],
       table["lootId"],
@@ -347,25 +326,11 @@ export const organizationLootRecordTable = pgTable(
     guildId: text("guildId").notNull(),
     archivedAt: timestamp("archivedAt", { mode: "date", precision: 3 }),
     archivedByMemberId: integer("archivedByMemberId"),
-    // The world and creation time of the loot this record stands for. Both are
-    // immutable once the loot is accepted, and both are filters of the
-    // organization's loot list, so holding them here lets the list scan this
-    // table alone: the join to Loot that only tested them was 80% of the
-    // buffers one page read. NOT NULL is what lets the page filter on them
-    // instead of on Loot, so the constraint is the contract, not a hint.
     lootWorld: text("lootWorld").notNull(),
     lootCreatedAt: timestamp("lootCreatedAt", {
       mode: "date",
       precision: 3,
     }).notNull(),
-    // What the loot list filters on beyond the world, copied from the loot's
-    // items and NPCs when the record is written (loot-record-facts.ts): the
-    // rarities its items have, the types its NPCs have, and the level and
-    // visibility class of each NPC (loot-visibility.ts). Testing them through
-    // LootItem and LootNpc ran a subquery each for every record a page
-    // scanned. A loot's items and NPCs do not change after acceptance; a data
-    // migration that changes them, or the rarity, type or level of a snapshot,
-    // must rewrite these columns too.
     lootRarityMask: smallint("lootRarityMask").notNull(),
     npcTypeMask: smallint("npcTypeMask").notNull(),
     npcVisibility: int4multirange("npcVisibility").notNull(),
@@ -380,20 +345,6 @@ export const organizationLootRecordTable = pgTable(
       table["lootId"],
     ),
     index("OrganizationLootRecord_lootId_idx").on(table["lootId"]),
-    // Serves the loot page: an Organization's active records on one world in
-    // the page's `ORDER BY "lootId" DESC`, so a page reads about `limit` rows.
-    // The two masks and the NPC visibility are trailing keys only to be read
-    // from the index: a page that rejects most records, such as a rare rarity
-    // or NPC type or a member limited to a few levels, is then an index-only
-    // scan and does not fetch a heap row per rejected record. (Drizzle has no
-    // INCLUDE.)
-    // Both details are what makes the index ordered. The archive filter is the
-    // predicate, not a key column, because PostgreSQL does not treat
-    // `IS NULL` as an equality for ordering; and the key must be NULLS FIRST,
-    // the default of DESC, because `.desc()` alone emits NULLS LAST, which
-    // does not match. Without either, the planner, which also estimates
-    // guildId and lootWorld as independent, sorted the Organization's whole
-    // world history for every page (1.36M buffers for 6 legendary loots).
     index("OrganizationLootRecord_guildId_world_lootId_page_active_idx")
       .on(
         table["guildId"],
@@ -404,13 +355,6 @@ export const organizationLootRecordTable = pgTable(
         table["npcVisibility"],
       )
       .where(sql`${table["archivedAt"]} IS NULL`),
-    // Serves the user feed's last-24-hours window. Records are appended in
-    // creation order, so the newest ones share a few hundred heap pages and a
-    // block-range index finds them for a few hundred kB, where a btree on
-    // (guildId, createdAt) costs 748 MB. Without either, the feed read every
-    // record of the user's Organizations: 152k buffers, 400 ms of a 470 ms
-    // query. autosummarize keeps the newest ranges summarized between
-    // vacuums; an unsummarized range is still read, never skipped.
     index("OrganizationLootRecord_createdAt_brin_idx")
       .using("brin", table["createdAt"])
       .with({ pages_per_range: 16, autosummarize: "on" }),
@@ -446,7 +390,6 @@ export const lootMapPlayerTable = pgTable(
   {
     organizationLootRecordId: integer("organizationLootRecordId").notNull(),
     playerSnapshotId: integer("playerSnapshotId").notNull(),
-    // Null for add-ons that captured the map before reporting levels.
     lvl: integer("lvl"),
   },
   (table) => [
@@ -572,7 +515,6 @@ export const lootLikeTable = pgTable(
   ],
 );
 
-/** One entrant of a loot draw, as it stood when the draw ran. */
 export type LootDrawEntrantRecord = {
   name: string;
   accountId: number | null;
@@ -580,10 +522,6 @@ export type LootDrawEntrantRecord = {
   prof: ProfessionEnum | null;
   lvl: number | null;
   icon: string | null;
-  /**
-   * WINNER caught the item in the game and PARTY was another party member;
-   * MAP and MANUAL stood outside the party.
-   */
   source: "WINNER" | "PARTY" | "MAP" | "MANUAL";
   tickets: number;
 };
@@ -595,9 +533,7 @@ export const lootDrawTable = pgTable(
     organizationLootRecordId: integer("organizationLootRecordId").notNull(),
     itemHid: text("itemHid").notNull(),
     entrants: jsonb("entrants").$type<LootDrawEntrantRecord[]>().notNull(),
-    // The wheel's tickets in order, each an index into `entrants`.
     ticketOrder: jsonb("ticketOrder").$type<number[]>().notNull(),
-    // The drawn position in `ticketOrder`.
     roll: integer("roll").notNull(),
     winnerIndex: integer("winnerIndex").notNull(),
     createdByMemberId: integer("createdByMemberId").notNull(),
@@ -613,7 +549,6 @@ export const lootDrawTable = pgTable(
       table["organizationLootRecordId"],
       table["createdAt"],
     ),
-    // One standing result per item: a retried draw cannot add a second one.
     uniqueIndex("LootDraw_organizationLootRecordId_itemHid_active_key")
       .on(table["organizationLootRecordId"], table["itemHid"])
       .where(sql`${table["voidedAt"]} IS NULL`),

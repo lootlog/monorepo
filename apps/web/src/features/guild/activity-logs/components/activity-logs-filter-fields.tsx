@@ -18,7 +18,6 @@ const dayFormatter = new Intl.DateTimeFormat(PRODUCT_LOCALE);
 
 type ActivityLogsFilterFieldsProps = {
   model: ReturnType<typeof useActivityLogsFilterModel>;
-  /** Full-width `FilterPanelField` sections for the filters panel instead of the bar. */
   stacked?: boolean;
 };
 

@@ -29,8 +29,6 @@ const role = (
   updatedAt: new Date(0),
 });
 
-// These predicates use SQL shared by PostgreSQL and SQLite. Execute the actual
-// Drizzle predicate so a missing WHERE clause cannot masquerade as denied access.
 const visibleNpcIds = (
   roles: KillQueryRole[],
   capabilities: Capability[] = [],

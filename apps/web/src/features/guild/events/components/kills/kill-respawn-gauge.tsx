@@ -4,16 +4,13 @@ const RADIUS = 20;
 
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-// Keeps a kill right at the minimum spawn visible as a dot on the ring.
 const MIN_VISIBLE_FILL = 0.02;
 
 type KillRespawnGaugeProps = {
-  /** Share of the respawn window that passed before the kill, 0–1. */
   fill: number;
   isOverdue: boolean;
 };
 
-/** A ring that fills with the part of the respawn window used by the kill. */
 export const KillRespawnGauge = ({
   fill,
   isOverdue,

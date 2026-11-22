@@ -1,4 +1,3 @@
-// SVG filter for destruction energy glow
 export const DestructionFilter = () => (
   <svg width="0" height="0" className="absolute">
     <defs>

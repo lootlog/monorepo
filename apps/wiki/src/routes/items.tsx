@@ -67,7 +67,6 @@ type ActiveFilter = {
   clear: Partial<ItemsSearch>;
 };
 
-/** One removable chip per active filter, in the panel's order. */
 const activeFilters = (search: ItemsSearch): ActiveFilter[] => [
   ...(search.slot
     ? [{ key: "slot", label: t(`slots.${search.slot}`), clear: { slot: "" } }]
@@ -136,7 +135,6 @@ export const Route = createFileRoute("/items")({
     links: [canonicalLink("/items")],
   }),
   validateSearch: validateItemsSearch,
-  // A link holds only the filters it sets.
   search: { middlewares: [stripSearchParams(EMPTY_ITEMS_SEARCH)] },
 });
 
@@ -161,7 +159,6 @@ function ItemsRoute() {
   const scope = effectiveScope(search);
   const currentScopeTab = activeScopeTab(scope);
 
-  // The set's character as filters: its profession and what its level wears.
   const character = {
     professions: set.profession ?? "",
     maxLevel: set.level ?? undefined,
@@ -260,7 +257,6 @@ function ItemsRoute() {
           spacing={1.5}
           className="flex-wrap"
           value={[currentScopeTab]}
-          // One scope is always chosen: pressing it again keeps it.
           onValueChange={([pressed]) => {
             const next = ITEM_SCOPE_TABS.find((value) => value === pressed);
 

@@ -39,11 +39,6 @@ import { currentStatsPeriodStart } from "#src/kills/kill-stats-period";
 
 type Role = typeof roleTable.$inferSelect;
 
-/**
- * Statistics read the whole history of an Organization, so they are served
- * for hours and recomputed in the background; the response says when they
- * were computed.
- */
 const FRESH_SECONDS = 3 * 3_600;
 
 const RETAIN_SECONDS = 24 * 3_600;
@@ -254,7 +249,6 @@ export const readLootStatsRarityTimeline = <E>(
         { total: number; byRarity: Partial<Record<ItemRarity, number>> }
       >();
 
-      // Rarity totals cover the same loot items as the timeline, excluding items without a rarity.
       const rarityCounts = new Map<ItemRarity, number>();
 
       for (const row of result) {

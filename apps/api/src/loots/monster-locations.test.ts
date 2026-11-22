@@ -10,8 +10,6 @@ const fights = (map: string, count: number) => ({
 });
 
 test("leaves out the maps players only carry a monster's loot to", () => {
-  // Złoty Roger's latest fights: his lair, Tuzmer after the teleport out, and
-  // a stray loot from a map players pass through.
   expect(
     toMonsterLocations([
       fights("Tuzmer", 23),

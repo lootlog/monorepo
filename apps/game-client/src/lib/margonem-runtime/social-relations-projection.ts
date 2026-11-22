@@ -13,8 +13,6 @@ import {
   type PlayerRelationObservation,
 } from "@/store/social-relations.store";
 
-// Row widths of the flattened lists, from Society.setHowRecordsOnPerson and
-// Diplomacy.updateFriend / updateEnemy. Every row starts with the id.
 const FRIEND_ROW = 11;
 
 const ENEMY_ROW = 7;
@@ -26,8 +24,6 @@ const CLAN_ENEMY_ROW = 6;
 const rowIds = (list: readonly (number | string)[], rowWidth: number) =>
   chunk(list, rowWidth).map(([id]) => String(id ?? ""));
 
-// Other.js merges each packet into the player's data, so a relation can come
-// with the CREATE entry or with a later partial update of the same player.
 const decodeRelatedPlayer = Schema.decodeUnknownOption(
   Schema.Struct({
     relation: Schema.Number,
@@ -69,10 +65,6 @@ const observe = (observations: readonly PlayerRelationObservation[]) => {
   useSocialRelationsStore.getState().observePlayers(scopes, observations);
 };
 
-/**
- * Learns from the relation each player on the map arrives with: packet
- * entries, or the handles of players already there when Lootlog started.
- */
 export function observeOthers(
   others: Readonly<Record<string, OtherEntry | OtherHandle>>,
 ): void {
@@ -90,7 +82,6 @@ export function observeOthers(
   observe(observations);
 }
 
-/** Replaces the remembered lists the game sent in full. */
 export function applySocialLists(event: GameEvent): void {
   if (!event.friends && !event.enemies && !event.clan_fr && !event.clan_en)
     return;

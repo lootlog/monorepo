@@ -22,7 +22,6 @@ type DeletionTransaction = Parameters<
   Parameters<DrizzleDatabase["transaction"]>[0]
 >[0];
 
-/** SQL removal and its object cleanup intent commit together; retries need no battle row. */
 export const makeBattleDeletion = (
   database: Pick<
     DrizzleDatabase,
@@ -86,9 +85,6 @@ export const makeBattleDeletion = (
     )
     .pipe(Effect.withSpan("BattleDeletion.drain"));
 
-  // Battle hypertables have no foreign keys, so a battle's rows are removed
-  // together here. Only battles saved before UUIDv7 IDs still own an R2
-  // object, kept under their legacy ID.
   const removeBattles = (
     transaction: DeletionTransaction,
     owner: { userId: string; battleId?: string },
@@ -100,8 +96,6 @@ export const makeBattleDeletion = (
           owner.battleId ? eq(battleId, owner.battleId) : undefined,
         );
 
-      // A whole owner's deletion removes compressed batches without
-      // decompressing them; a single battle decompresses one batch.
       yield* transaction.execute(
         sql`SELECT set_config('timescaledb.max_tuples_decompressed_per_dml_transaction', '0', true)`,
       );

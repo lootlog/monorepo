@@ -28,7 +28,6 @@ type ClaimedTracker = {
   readonly respawnRandomness: number | undefined;
 };
 
-/** A Hero Tracker in the packet whose countdown just started or restarted. */
 const findClaimedTracker = (
   npc: EventNpc,
   event: GameEvent,
@@ -60,16 +59,10 @@ const findClaimedTracker = (
   };
 };
 
-/**
- * Starts a Hero Tracker timer when its colossus entrance opens: the timer
- * counts the entrance down, then the tracker's respawn after it closes.
- */
 export class HeroTrackerTimerProcessor {
   private readonly reportedEntrances = new Map<number, number>();
 
   handle(event: GameEvent, ingress?: RuntimeIngressSnapshot): void {
-    // Ingress captures the game only for packets that need its pre-event
-    // state; an NPC update reads the current one.
     const game = ingress?.game ?? useGameStore.getState().game;
 
     if (!game || isSignedOut()) return;
@@ -84,7 +77,6 @@ export class HeroTrackerTimerProcessor {
   private isNewEntrance({ npc, entranceClosesAt }: ClaimedTracker): boolean {
     const reported = this.reportedEntrances.get(npc.id);
 
-    // One report per entrance is enough; the API merges other players' ones.
     return (
       reported === undefined ||
       !isSameHeroTrackerEntrance(reported, entranceClosesAt)

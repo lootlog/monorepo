@@ -45,7 +45,6 @@ import {
   type AccessPolicyChange,
 } from "@lootlog/protocol/realtime/access-policy";
 
-/** A new access policy and what changed against the previous one. */
 export type AccessUpdate = {
   readonly accessPolicy: AccessPolicySnapshot;
   readonly changes: readonly AccessPolicyChange[];
@@ -78,38 +77,27 @@ export const getGameSessionIdentity = (
 ): string =>
   JSON.stringify([data.world, data.accountId, data.characterId, data.clan?.id]);
 
-/** How long a join waits for `session.hello` before it fails into a retry. */
 const SESSION_HELLO_TIMEOUT_MS = 5_000;
 
-/** Server events this client consumes itself instead of forwarding. */
 type ConsumedEventType =
   | "session.hello"
   | "session.joined"
   | "permissions.updated"
   | "presence.delta";
 
-/**
- * What AppSocket listeners hear: every other server event under its protocol
- * type, and the events of the connection itself.
- */
 export type AppSocketEvents = {
   readonly [
     Type in Exclude<ServerEvent["type"], ConsumedEventType>
   ]: ServerEventPayload<Type>;
 } & {
-  /** Follows the transport. */
   readonly connect: undefined;
   readonly disconnect: undefined;
-  /** The character's session joined. */
   readonly join: JoinResult;
   readonly "access.updated": AccessUpdate;
-  /** The followed channel, once its subscription is live. */
   readonly "global-chat.subscribed": GlobalChatChannel;
-  /** A presence publication was accepted. */
   readonly "presence.published": {
     readonly organizationIds: readonly string[];
   };
-  /** One online player's change. */
   readonly "presence.changed": PlayerPresence;
 };
 
@@ -126,7 +114,6 @@ export class AppSocket {
   private readonly unsubscribeState: () => void;
   private disposed = false;
   private joinedOrganizationIds: string[] = [];
-  /** The current character's Lootlogs; nothing is published until they are known. */
   private presenceOrganizationIds: readonly string[] | undefined;
   private currentAccessPolicy: AccessPolicySnapshot | undefined;
   private wasConnected = false;
@@ -141,12 +128,10 @@ export class AppSocket {
     promise: Promise<SessionJoined>;
     cancel: () => void;
   } | null = null;
-  /** The followed global chat channel, if any; every join drops the subscription. */
   private globalChatChannel: GlobalChatChannel | undefined;
   id: string | undefined;
 
   constructor() {
-    // SocketProvider owns every join with the current character and a fresh proof.
     this.realtime.setReconnectHandler(async () => {});
     this.unsubscribeEvents = this.realtime.subscribe((event) =>
       this.handleServerEvent(event),
@@ -180,7 +165,6 @@ export class AppSocket {
     return this.wasConnected;
   }
 
-  /** The transport's own reading, which tells a first connect from a retry. */
   get connectionState(): RealtimeConnectionState {
     return this.connectionStateValue;
   }
@@ -203,7 +187,6 @@ export class AppSocket {
     this.realtime.probeLatency();
   }
 
-  /** Current map threats of one Organization and world. */
   async fetchAirTagMapThreats(
     organizationId: string,
     world: string,
@@ -216,12 +199,10 @@ export class AppSocket {
     return response.threats;
   }
 
-  /** Replaces the timer NPCs this character reports standing on its map. */
   reportNpcPresence(report: NpcPresenceReport): Promise<NpcPresenceReportAck> {
     return this.realtime.request("npc-presence.report", report);
   }
 
-  /** NPCs standing in one Organization and world. */
   fetchNpcPresence(
     organizationId: string,
     world: string,
@@ -232,19 +213,12 @@ export class AppSocket {
     });
   }
 
-  /**
-   * Follows one global chat channel, or none when `undefined`. The
-   * subscription is renewed after every join and emits
-   * `global-chat.subscribed` with the channel once live, so its reader can
-   * fetch what it missed while not subscribed.
-   */
   followGlobalChat(channel: GlobalChatChannel | undefined): void {
     const previous = this.globalChatChannel;
 
     if (previous === channel) return;
     this.globalChatChannel = channel;
 
-    // Until a join, the next join renews the subscription.
     if (this.connectionState !== "ready") return;
 
     if (previous !== undefined)
@@ -269,7 +243,6 @@ export class AppSocket {
       if (subscribed && this.globalChatChannel === channel)
         this.listeners.emit("global-chat.subscribed", channel);
     } catch {
-      // The next join renews it; until then the reader keeps fetched history.
       if (import.meta.env.DEV)
         console.warn("[Gateway] Failed to update the global chat subscription");
     }
@@ -375,8 +348,6 @@ export class AppSocket {
     ensureCurrent();
     let helloTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    // A gateway that never says hello must fail the join, so the player gets
-    // HTTP snapshots and a retry instead of a silent half-connected session.
     const connectionId = await Promise.race([
       this.hello.promise,
       new Promise<never>((_resolve, reject) => {
@@ -425,7 +396,6 @@ export class AppSocket {
 
     ensureCurrent();
 
-    // Undefined when the connection closed before the join was sent.
     if (!response) throw new Error("Invalid session.join response");
     this.id = response.connectionId;
 
@@ -433,9 +403,6 @@ export class AppSocket {
 
     this.applyAccessPolicy(response.accessPolicy);
 
-    // The gateway grants presence only where this character publishes and
-    // runs one connection's commands in order, so the publication sent here
-    // settles before anything joined starts reading presence.
     void this.publishPresence();
 
     this.dispatchJoin(response, data);
@@ -448,7 +415,6 @@ export class AppSocket {
     return response;
   }
 
-  /** Sends one command; `timeoutMs` bounds the wait for its response. */
   request<Type extends CommandType>(
     type: Type,
     data: CommandData<Type>,
@@ -470,10 +436,6 @@ export class AppSocket {
     ]).finally(() => clearTimeout(timeout));
   }
 
-  /**
-   * Follows the catching scope of the current character; `undefined` while it
-   * is unknown, so a scope of another account or character is never published.
-   */
   setPresenceOrganizations(
     organizationIds: readonly string[] | undefined,
   ): void {
@@ -496,7 +458,6 @@ export class AppSocket {
       void this.publishPresence();
   }
 
-  /** Publishes the character, map and stasis as they are now. */
   async publishPresence(): Promise<void> {
     const game = useGameStore.getState().game;
     const organizationIds = this.presenceOrganizationIds;
@@ -525,17 +486,13 @@ export class AppSocket {
         },
         clientObservedAt: Date.now(),
       });
-      // The gateway opens a Lootlog's presence once this character is
-      // visible there, and announces that before it answers.
       this.listeners.emit("presence.published", { organizationIds });
     } catch {
-      // Presence is best effort; the next publication carries the current state.
       if (import.meta.env.DEV)
         console.warn("[Gateway] Failed to publish presence");
     }
   }
 
-  /** One Lootlog's online game characters in one world. */
   async fetchPresence(
     organizationId: string,
     world: string,
@@ -553,7 +510,6 @@ export class AppSocket {
         players: toPlayerPresenceResponse(organizationId, response.presences),
       };
     } catch (cause) {
-      // Transport failures must remain failures so presence callers can retry them.
       if (isOrganizationAccessDenied(cause))
         return { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" };
       throw cause;
@@ -649,7 +605,6 @@ export const disposeSocket = (): void => {
   activeSocket.dispose();
 };
 
-/** Publishes the projected presence once the gateway has joined a Lootlog. */
 export const publishPlayerPresence = (): void => {
   const { connected, joinedGuilds } = useGlobalStore.getState().socketState;
 

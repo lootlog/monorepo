@@ -1,4 +1,3 @@
-/** KEYS: rate-limit key. ARGV: window milliseconds, limit, unique attempt ID. */
 export const slidingWindowRateLimitScript = ({
   refreshExpiryOnReject,
   includeTimestamp,

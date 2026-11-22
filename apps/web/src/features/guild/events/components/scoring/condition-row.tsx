@@ -35,7 +35,6 @@ import { ScoringConditionGroupSize } from "./scoring-condition-group-size";
 
 import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
-/** Condition types grouped by what they look at, in picker order. */
 const CONDITION_GROUPS = [
   {
     id: "presence",

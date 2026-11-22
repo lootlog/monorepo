@@ -17,7 +17,6 @@ import type { BotConfig } from "#src/config/bot-config";
 import { COMMAND_TEXT } from "./command-messages.js";
 import type { CommandFailure, LootlogClient } from "./lootlog-client.js";
 
-/** The option values Discord resolved for one invocation. */
 export interface CommandOptions {
   readonly subcommand: string | null;
   readonly string: (name: string) => string | null;
@@ -29,7 +28,6 @@ export interface CommandInvocation {
   readonly guildId: string;
   readonly discordId: string;
   readonly options: CommandOptions;
-  /** Permissions Discord grants the bot in the channel of the invocation. */
   readonly appPermissions: bigint;
 }
 
@@ -39,7 +37,6 @@ export interface AutocompleteInvocation extends CommandInvocation {
 
 export interface CommandReply {
   readonly content?: string;
-  /** Discord IDs the reply may notify; every other mention stays silent. */
   readonly pings?: ReadonlyArray<string>;
   readonly embeds?: ReadonlyArray<EmbedBuilder>;
   readonly components?: ReadonlyArray<ActionRowBuilder<ButtonBuilder>>;
@@ -53,10 +50,6 @@ export interface AutocompleteChoice {
 
 export type CommandServices = LootlogClient | BotConfig;
 
-/**
- * A reply is public only when the caller set the visibility option, so a
- * command or subcommand without that option always answers privately.
- */
 export interface SlashCommand {
   readonly definition: RESTPostAPIChatInputApplicationCommandsJSONBody;
   readonly run: (
@@ -73,7 +66,6 @@ export interface SlashCommand {
 
 export const VISIBILITY_OPTION = "publiczne";
 
-/** Discord rejects autocomplete answers with more choices or longer names. */
 export const MAX_AUTOCOMPLETE_CHOICES = 25;
 
 const MAX_CHOICE_NAME_LENGTH = 100;
@@ -88,11 +80,9 @@ export const choice = (name: string, value: string): AutocompleteChoice => ({
 
 const LOOTLOG_COLOR = 0xf5a524;
 
-/** The read time in the footer tells a later reader how fresh the data is. */
 export const lootlogEmbed = (title: string, color = LOOTLOG_COLOR) =>
   new EmbedBuilder().setColor(color).setTitle(title).setTimestamp();
 
-/** The default NPC type colors of the Game client, so both surfaces match. */
 export const npcTypeColor = (type: string) =>
   isAppearanceNpcType(type)
     ? Number.parseInt(DEFAULT_NPC_TYPE_COLORS[type].slice(1), 16)
@@ -125,28 +115,19 @@ export const openInLootlog = (webAppUrl: string, guildId: string, path = "") =>
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
-/**
- * The top of a ranking, numbered as the battle panel ranks its tables, with
- * the invoking Member's own line highlighted, or appended with its real
- * position when it ranks below the top.
- */
 export const rankedLines = <A>(
   entries: ReadonlyArray<A>,
   options: {
     readonly limit: number;
-    /** The Markdown-escaped name of a ranked Member. */
     readonly name: (entry: A) => string;
     readonly detail: (entry: A) => string;
     readonly isOwn: (entry: A) => boolean;
     readonly ownDiscordId: string;
-    /** Shown without an own entry; leave it out when `entries` may be cut. */
     readonly ownMissing?: string | undefined;
   },
 ) => {
   const own = entries.findIndex(options.isOwn);
 
-  // The invoker's own line mentions them, which never notifies inside an
-  // embed, so a public ranking pings nobody.
   const numbered = (entry: A, index: number) => {
     const place = MEDALS[index] ?? `\`${index + 1}.\``;
 
@@ -173,7 +154,6 @@ const TIMESTAMP_STYLES = {
   f: TimestampStyles.ShortDateTime,
 } as const;
 
-/** Discord renders this in each viewer's own time zone and keeps it current. */
 export const discordTime = (
   date: string,
   style: keyof typeof TIMESTAMP_STYLES = "R",

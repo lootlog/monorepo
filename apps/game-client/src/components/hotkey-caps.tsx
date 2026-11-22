@@ -8,7 +8,6 @@ type HotkeyCapsProps = {
   kbdClassName?: string;
 };
 
-/** A hotkey binding as key caps: modifiers and key joined by plus signs. */
 export const HotkeyCaps: FC<HotkeyCapsProps> = ({
   binding,
   className,

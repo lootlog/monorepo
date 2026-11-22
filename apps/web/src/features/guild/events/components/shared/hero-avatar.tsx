@@ -8,11 +8,9 @@ type HeroAvatarProps = {
     npcName: string;
     npcIcon?: string | null;
   };
-  /** `portrait` shows the sprite at up to 56px for a page header. */
   size?: "default" | "portrait";
 };
 
-/** A hero's NPC sprite, or a swords tile while the game has not reported one. */
 export const HeroAvatar = ({ hero, size = "default" }: HeroAvatarProps) => (
   <div
     className={cn(

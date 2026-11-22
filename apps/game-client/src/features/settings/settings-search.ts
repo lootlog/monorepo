@@ -31,11 +31,9 @@ const normalizeSearchText = (value: string): string =>
 const tokenize = (value: string): string[] =>
   value.split(/[\s,.;:()/\\-]+/u).filter(Boolean);
 
-/** How many edits (insert, delete, replace, adjacent swap) a token needs to become another; stops counting above `limit`. */
 const editDistance = (left: string, right: string, limit: number): number => {
   if (Math.abs(left.length - right.length) > limit) return limit + 1;
 
-  // An index outside a row reads as unreachable, so the minimums ignore it.
   const cell = (row: readonly number[], index: number) =>
     row[index] ?? Number.POSITIVE_INFINITY;
 
@@ -77,7 +75,6 @@ const editDistance = (left: string, right: string, limit: number): number => {
   return cell(previousRow, right.length);
 };
 
-/** Typo budget grows with the token so short words stay exact. */
 const typoBudget = (token: string): number => {
   if (token.length >= 8) return 2;
 
@@ -86,7 +83,6 @@ const typoBudget = (token: string): number => {
   return 0;
 };
 
-/** Points one query token earns against one searchable text; 0 when it does not match. */
 const scoreToken = (queryToken: string, text: string): number => {
   if (text === queryToken) return 100;
 
@@ -119,7 +115,6 @@ interface SearchableField {
   weight: number;
 }
 
-/** The label always comes first; scoring reads it for the phrase bonus. */
 type SearchableFields = [SearchableField, ...SearchableField[]];
 
 const getSearchableFields = (item: SettingsSearchItem): SearchableFields => {
@@ -140,11 +135,6 @@ const getSearchableFields = (item: SettingsSearchItem): SearchableFields => {
   return fields;
 };
 
-/**
- * Every query token must match some field; the score is the sum of the best
- * weighted token match, with a bonus when the whole phrase sits in the label
- * so "skala tekstu" outranks controls that merely mention both words.
- */
 const getMatchScore = (
   item: SettingsSearchItem,
   normalizedQuery: string,
@@ -198,18 +188,12 @@ export const searchSettings = (
   return matches.map(({ item }) => item);
 };
 
-/**
- * Character ranges of `text` that the query tokens cover, for emphasising
- * matches in results. Diacritics are ignored the same way search ignores them.
- */
 export const findSearchMatchRanges = (
   text: string,
   query: string,
 ): SettingsSearchMatchRange[] => {
   const normalizedText = normalizeSearchText(text);
 
-  // Normalisation only strips combining marks and lowercases, so offsets
-  // hold as long as the text has no precomposed characters that expand.
   if (normalizedText.length !== text.length) return [];
 
   const ranges: SettingsSearchMatchRange[] = [];
@@ -245,7 +229,6 @@ export const findSearchMatchRanges = (
 
 type Translate = (key: string) => string;
 
-/** Flattens the visible manifest into searchable, ordered items. */
 export const buildSettingsSearchItems = (
   domains: readonly SettingsDomainManifestItem<SettingsControlId>[],
   t: Translate,

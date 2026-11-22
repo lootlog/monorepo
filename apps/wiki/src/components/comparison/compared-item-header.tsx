@@ -14,15 +14,10 @@ import { itemPageParams, itemPageSearch } from "@/lib/catalog-links";
 import { isUpgradable, type ItemUpgrade } from "@lootlog/domain/item-upgrade";
 
 type ComparedItemHeaderProps = {
-  /** The item as dropped; its column shows it at `upgrade`. */
   item: CatalogItemDtoOutput;
   upgrade: ItemUpgrade;
 };
 
-/**
- * One compared item at the head of its column: its tile and page, the
- * upgrade it is compared at, and ways to wear it or take it out.
- */
 export function ComparedItemHeader({ item, upgrade }: ComparedItemHeaderProps) {
   const { remove, setUpgrade } = useItemComparison();
   const rarity = resolveItemRarity(item.rarity);

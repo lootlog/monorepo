@@ -1,4 +1,3 @@
-/** Endpoints owned by the hero sightings HTTP module. */
 import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   HttpApiEndpoint,

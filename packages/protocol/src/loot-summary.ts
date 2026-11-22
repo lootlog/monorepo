@@ -15,7 +15,6 @@ export const MapPlayersSnapshot = Schema.Array(
     name: NonEmptyString,
     prof: Schema.NullOr(ProfessionSchema),
     icon: Schema.NullOr(Schema.String),
-    // Add-ons before loot draws send no level; a draw needs one to enter.
     lvl: Schema.optionalKey(Schema.NullOr(PositiveSafeInteger)),
   }),
 ).check(Schema.isMinLength(1));
@@ -45,7 +44,6 @@ export const LootPlayerResponse = Schema.Struct({
   hpp: Schema.NullOr(FiniteNumber),
 });
 
-/** The standing result of a loot item's draw: who won it, as the draw entered them. */
 export const LootStandingDrawResponse = Schema.Struct({
   drawId: FiniteNumber,
   itemHid: Schema.String,
@@ -84,7 +82,6 @@ export const LootSummary = Schema.Struct({
 
 export type LootSummary = typeof LootSummary.Type;
 
-/** Same shape as the HTTP `MemberSummary`. */
 const LootMember = Schema.Struct({
   id: Schema.Finite,
   name: Schema.String,
@@ -99,7 +96,6 @@ const LootSubmission = Schema.Struct({
   member: LootMember,
 });
 
-/** One Organization's view of a loot, as its HTTP list and detail responses encode it. */
 export const LootSnapshot = Schema.Struct({
   id: Schema.Finite,
   uniqueId: Schema.String,
@@ -115,9 +111,7 @@ export const LootSnapshot = Schema.Struct({
   updatedAt: Schema.String,
   submissions: Schema.optionalKey(Schema.Array(LootSubmission)),
   commentsCount: Schema.Finite,
-  // Publishers before likes omit them.
   likes: Schema.optionalKey(Schema.Array(LootMember)),
-  // Publishers before draws on the list omit them.
   standingDraws: Schema.optionalKey(Schema.Array(LootStandingDrawResponse)),
 });
 

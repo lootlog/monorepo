@@ -6,8 +6,6 @@ const commitSha = "1234567890abcdef1234567890abcdef12345678";
 
 const buildTimestamp = "2026-07-23T10:20:30.000Z";
 
-// Each test re-imports the tab's whole module graph after resetModules, which
-// can outlast the default timeout while the full suite loads the machine.
 describe("InformationSettingsTab", { timeout: 20_000 }, () => {
   beforeEach(() => {
     vi.resetModules();

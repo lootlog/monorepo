@@ -10,7 +10,6 @@ import { cn } from "cn";
 import { canWriteGuildDocs } from "@/lib/docs-permissions";
 import { GUILD_DOC_COLUMN_CLASS } from "./guild-doc-column";
 
-/** Formatting controls per toolbar group, as the editor toolbar lays them out. */
 const TOOLBAR_GROUPS = [2, 4, 5, 6, 3];
 
 const TEXT_LINE_WIDTHS = ["w-1/3", "w-11/12", "w-4/5", "w-full", "w-2/3"];

@@ -274,7 +274,6 @@ describe("Auth HttpApi contract", () => {
       }),
     );
 
-    // The fake Better Auth handler would have answered 201.
     expect(response.status).toBe(404);
   });
 
@@ -415,7 +414,6 @@ describe("Auth HttpApi contract", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("x-auth-user-id")).toBe("user-1");
     expect(response.headers.get("x-auth-discord-id")).toBe("discord-1");
-    // A role the catalog no longer knows grants nothing downstream.
     expect(response.headers.get("x-auth-roles")).toBe("wiki-moderator");
     expect(await response.json()).toEqual({ status: "OK" });
 

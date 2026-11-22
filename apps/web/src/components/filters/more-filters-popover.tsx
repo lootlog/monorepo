@@ -13,13 +13,11 @@ import { Award, SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type MoreFiltersPopoverProps = {
-  /** Delay before a typed level bound is committed. */
   levelDebounceMs?: number;
   maxLevel?: number;
   minLevel?: number;
   onMaxLevelChange: (maxLevel: number | undefined) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
-  /** Omit to offer only the level range. */
   onPhChange?: (ph: boolean) => void;
   ph?: boolean;
   phCheckboxId?: string;

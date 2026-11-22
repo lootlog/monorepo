@@ -63,8 +63,6 @@ export const NpcsList: FC<NpcsListProps> = ({
     })),
   );
 
-  // The setting alone drives countdowns, which step under reduced motion;
-  // movement also follows the operating system preference.
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
@@ -132,9 +130,6 @@ export const NpcsList: FC<NpcsListProps> = ({
 
   const itemCount = npcs?.length ?? 0;
 
-  // Counts the rows the window shows, not every stored detection: the last
-  // visible row is dismissed through the window's close button, which also
-  // clears detections the window's routing hides.
   const hasMultipleNpcs = itemCount > 1;
   const viewportHeight = viewport.height || NPC_LIST_FALLBACK_HEIGHT_PX;
 

@@ -15,8 +15,6 @@ import {
 
 type Event = ServerEvent;
 
-// Pings and loot split choices carry no Organization, so they reach sockets
-// only through authorized routing scopes.
 export const isPingEvent = (
   event: Event,
 ): event is Extract<
@@ -56,7 +54,6 @@ export const prepareScopeVisibility = (
 ): ((socket: GatewaySocket) => boolean) => {
   const scopes = message.scopes ?? (message.scope ? [message.scope] : []);
 
-  // A ping carries no Organization in its payload, so only routing scopes can authorize it.
   if (isPingEvent(frame) && scopes.length === 0) return () => false;
   const organizationId = eventOrganizationId(frame);
 
@@ -145,7 +142,6 @@ export const matchesPresenceAudience = (
   return canReadPreciseLocation(socket.data, message.organizationId);
 };
 
-/** Encodes a chat event once per permission variant of one delivery. */
 export const encodeChatEvent = (
   event: Extract<Event, { type: "chat.created" }>,
   frames: Map<boolean, string>,

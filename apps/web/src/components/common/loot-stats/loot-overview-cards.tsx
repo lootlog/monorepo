@@ -12,7 +12,6 @@ const percentFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
 
 type LootOverviewCardsProps = {
   data?: LootStatsResponseDtoOutputOverview;
-  /** Legendary items the user's characters caught, in place of their share. */
   caughtLegendaryItems?: number;
   isLoading?: boolean;
 };

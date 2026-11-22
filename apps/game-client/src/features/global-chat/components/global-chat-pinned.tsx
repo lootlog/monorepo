@@ -12,7 +12,6 @@ type GlobalChatPinnedProps = {
   canUnpin: boolean;
 };
 
-/** The message an admin pinned above the channel's history. */
 export const GlobalChatPinned = ({
   channel,
   message,

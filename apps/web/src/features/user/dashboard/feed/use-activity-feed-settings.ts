@@ -40,7 +40,6 @@ const withSettings = (
   };
 };
 
-/** Feed filters and pause state stored on the account. */
 export function useActivityFeedSettings() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -51,8 +50,6 @@ export function useActivityFeedSettings() {
     query: { staleTime: 60_000, retry: false },
   });
 
-  // A queued change applies its optimistic value before earlier saves answer,
-  // so only the last pending save may replace the cached settings.
   const isLastSave = () =>
     queryClient.isMutating({ mutationKey: MUTATION_KEY }) <= 1;
 
@@ -104,7 +101,6 @@ export function useActivityFeedSettings() {
 
   return {
     settings: readSettings(query.data),
-    /** Settings resolved, or unavailable and replaced by defaults. */
     isReady: query.isSuccess || query.isError,
     canSave: preferences !== undefined && query.isSuccess,
     update: (patch: Partial<ActivityFeedSettings>) => mutation.mutate(patch),

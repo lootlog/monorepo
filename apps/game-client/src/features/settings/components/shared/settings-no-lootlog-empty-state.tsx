@@ -4,10 +4,6 @@ import { SettingsEmptyState } from "@/features/settings/components/shared/settin
 import { Button } from "@/components/ui/button";
 import { openLootlogApp } from "@/lib/open-lootlog-app";
 
-/**
- * Stands in for every Lootlog list or picker in settings while the player
- * belongs to no Lootlog, with the same copy and way out as the windows.
- */
 export const SettingsNoLootlogEmptyState: FC = () => {
   const { t } = useTranslation("common");
 

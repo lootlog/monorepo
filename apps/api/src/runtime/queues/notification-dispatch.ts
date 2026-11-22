@@ -10,7 +10,6 @@ import {
 import type { NotificationQueue } from "#src/notifications/jobs/notification-job-scheduler";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
-/** Schedules a notification job's dispatch, one queue entry per job id. */
 export class NotificationDispatchQueue extends Context.Service<
   NotificationDispatchQueue,
   NotificationQueue

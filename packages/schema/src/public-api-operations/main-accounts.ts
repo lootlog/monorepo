@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Main API users, Organization members, guilds, and roles. */
 export const MAIN_ACCOUNT_OPERATIONS = [
   {
     service: "main",
@@ -9,8 +8,6 @@ export const MAIN_ACCOUNT_OPERATIONS = [
     operationId: "UsersController_getUserFeed",
     access: "read",
     data: "mixed",
-    // Dashboard filters; exposing them would move the SDK call's request
-    // options behind a new query argument.
     sessionOnlyParameters: [
       "excludedGuildIds",
       "excludedNpcCategories",

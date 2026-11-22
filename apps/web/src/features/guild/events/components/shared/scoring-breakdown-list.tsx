@@ -9,7 +9,6 @@ type ScoringBreakdownListProps = {
   totalPoints: number;
 };
 
-/** A kill's points broken into base, bonuses and adjustments, with the total. */
 export const ScoringBreakdownList = ({
   items,
   totalPoints,

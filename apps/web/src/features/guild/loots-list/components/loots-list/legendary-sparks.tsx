@@ -5,10 +5,8 @@ import "./legendary-loot.css";
 
 type SparkStyle = CSSProperties & { "--spark-color": string };
 
-/** Matches the `loot-spark-rise-*` keyframes in `legendary-loot.css`. */
 const SPARK_PATH_COUNT = 6;
 
-// Tailwind orange-200 to orange-500: pale sparks next to hotter ones.
 const SPARK_COLORS = ["#fed7aa", "#fdba74", "#fb923c", "#f97316"];
 
 const SPARK_EASINGS = ["linear", "ease-out", "cubic-bezier(0.3, 0, 0.7, 1)"];
@@ -19,16 +17,9 @@ const between = (random: () => number, min: number, max: number) =>
 const pickIndex = (random: () => number, length: number) =>
   Math.floor(random() * length);
 
-/**
- * Seeded by the loot, so a loot keeps its embers across re-renders and
- * scrolling while neighbouring loots never move in step. Every running ember
- * costs main-thread work whenever the page renders a frame, so the count
- * stays small.
- */
 const buildSparkStyles = (seed: number): SparkStyle[] => {
   const random = createSeededRandom(seed + 1);
 
-  // The first draws of a small seed sit close together; skip them.
   random();
   random();
 
@@ -56,7 +47,6 @@ const buildSparkStyles = (seed: number): SparkStyle[] => {
   });
 };
 
-/** Embers behind a legendary loot; the parent carries `loot-legendary`. */
 export const LegendarySparks = ({ seed }: { seed: number }) => {
   usePauseSparksWhileScrolling();
 

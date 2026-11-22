@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the guild-stats-card feature. */
 import * as Schema from "effect/Schema";
 
 export type RefreshStatsCardResponse = typeof RefreshStatsCardResponse.Type;

@@ -82,6 +82,7 @@ jobs:
       - run: bun test ./scripts
       - run: bun run format:check
       - run: bun run knip
+      - run: bun run comments:ratchet
       # The root is not a workspace, so Turbo never lints the CI planning scripts.
       - name: Lint repository scripts
         run: bunx oxlint scripts

@@ -143,7 +143,6 @@ const eventRouting = (event: NpcEvent): Routing | null => {
 
   if (!Predicate.isObject(payload)) return null;
 
-  // Never let an envelope for one Organization authorize another source.
   if (
     payload.guildId !== undefined &&
     payload.guildId !== event.data.organizationId
@@ -162,7 +161,6 @@ const eventRouting = (event: NpcEvent): Routing | null => {
     case "timer.created":
       return npcRouting(payload.npc);
     case "hero-sighting.updated":
-      // A detector answer names only the hero; every sighting is a hero's.
       return Predicate.isObject(payload.hero)
         ? npcRouting({ type: "HERO", lvl: payload.hero.lvl })
         : null;
@@ -170,7 +168,6 @@ const eventRouting = (event: NpcEvent): Routing | null => {
       return payload.npc === undefined
         ? { tier: "base" }
         : npcRouting(payload.npc);
-    // Only NPC notifications take answers, so a missing NPC denies the push.
     case "notification.going":
       return npcRouting(payload.npc);
     case "chat.created":
@@ -191,16 +188,6 @@ const eventRouting = (event: NpcEvent): Routing | null => {
   }
 };
 
-/**
- * NPC feature visibility for the realtime socket. The rule itself lives in
- * `@lootlog/domain`, shared with the REST reads' `canReadChatNpcSource`; this
- * only maps the event type onto a feature.
- *
- * Owner/ADMIN bypass and the party-gathering organizer bypass are applied by
- * `prepareNpcSourceEvent` before this is asked. An undecodable routing
- * envelope never reaches here: `npcRouting` returns null and the push is
- * denied.
- */
 const canReadFeatureEvent = (
   guild: UserGuildData,
   event: NpcEvent,
@@ -253,7 +240,6 @@ const canReadEventHeroSource = (
   );
 };
 
-// A removal carries only the room identity, so it must reach former members too.
 export const isReadyRoomRemoval = (event: Event): boolean =>
   event.type === "party-ready-room.updated" &&
   Predicate.isObject(event.data.payload) &&

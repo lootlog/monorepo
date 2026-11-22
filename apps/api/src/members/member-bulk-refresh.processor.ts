@@ -59,7 +59,6 @@ export const makeMemberBulkRefreshProcessor = (
   }) =>
     Effect.gen(function* () {
       const { jobId, guildId, memberIds } = job.data;
-      // A retried attempt starts over, so its counts replace the last attempt's.
       yield* database
         .update(memberRefreshJobTable)
         .set({

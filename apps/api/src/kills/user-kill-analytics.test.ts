@@ -103,7 +103,6 @@ describe("personal kill analytics calendar semantics", () => {
       null,
       null,
     ]);
-    // Tracked but without kills of this character: a real zero.
     expect(result.daily[3]).toMatchObject({ kills: 0, partial: true });
     expect(result.daily[5]).toMatchObject({ kills: 4, partial: false });
 

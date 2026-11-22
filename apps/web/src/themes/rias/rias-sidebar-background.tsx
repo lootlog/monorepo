@@ -6,7 +6,6 @@ export const RiasSidebarBackground = () => {
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {/* Floating destruction particles */}
       {[
         { x: "15%", y: "12%", size: 4, delay: 0 },
         { x: "82%", y: "20%", size: 3, delay: 1.5 },
@@ -61,7 +60,6 @@ export const RiasSidebarBackground = () => {
         </m.div>
       ))}
 
-      {/* Small rotating magic circles */}
       {[
         { x: "8%", y: "25%", size: 16, rotation: 15, duration: 15 },
         { x: "90%", y: "50%", size: 14, rotation: -20, duration: 20 },

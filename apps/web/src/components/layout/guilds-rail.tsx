@@ -7,7 +7,6 @@ type GuildsRailProps = {
   onSelect?: () => void;
 };
 
-/** The desktop server rail: the personal space over a scrolling list. */
 export const GuildsRail = ({ children }: GuildsRailProps) => (
   <div className="flex flex-col gap-2 w-16 border-r border-solid border-sidebar-border pt-2 pb-2 h-full overflow-hidden">
     <UserNavItem />

@@ -129,7 +129,6 @@ const SelectedValueChips = ({
               key={option.value}
               className={cn(
                 multiSelectVariants({ variant }),
-                // Keeps a chosen value within the 36px field.
                 "h-auto [&_[data-slot=combobox-chip-remove]]:size-5",
               )}
               removeLabel={t("common.removeOption", { label: option.label })}

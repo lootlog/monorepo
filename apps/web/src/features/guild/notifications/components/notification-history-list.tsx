@@ -27,7 +27,6 @@ type NotificationHistoryListProps = {
   onRetry: () => void;
 };
 
-/** Finished deliveries under a rule name filter and status pills. */
 export const NotificationHistoryList = ({
   historyJobs,
   isLoading,
@@ -53,8 +52,6 @@ export const NotificationHistoryList = ({
     groupBy(nameMatches, (job) => job.status),
   );
 
-  // A status the name filter or new deliveries left without jobs loses its
-  // pill, so it stops filtering too instead of hiding every row.
   const activeStatuses = selectedStatuses.filter((status) =>
     statusGroups.some(([groupStatus]) => groupStatus === status),
   );

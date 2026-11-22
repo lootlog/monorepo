@@ -17,7 +17,6 @@ export const RiasMagicSpinner: FC<RiasMagicSpinnerProps> = ({ className }) => (
       filter: "drop-shadow(0 0 6px rgba(200, 30, 60, 0.4))",
     }}
   >
-    {/* Outer circle */}
     <circle
       cx="32"
       cy="32"
@@ -28,7 +27,6 @@ export const RiasMagicSpinner: FC<RiasMagicSpinnerProps> = ({ className }) => (
       strokeDasharray="4 3"
     />
 
-    {/* Middle circle */}
     <circle
       cx="32"
       cy="32"
@@ -38,7 +36,6 @@ export const RiasMagicSpinner: FC<RiasMagicSpinnerProps> = ({ className }) => (
       opacity="0.45"
     />
 
-    {/* Inner pentagram star */}
     <polygon
       points="32,8 46.1,51.4 9.2,24.6 54.8,24.6 17.9,51.4"
       stroke="currentColor"
@@ -48,7 +45,6 @@ export const RiasMagicSpinner: FC<RiasMagicSpinnerProps> = ({ className }) => (
       strokeLinejoin="round"
     />
 
-    {/* Inner hexagon */}
     <polygon
       points="32,18 44.1,25 44.1,39 32,46 19.9,39 19.9,25"
       stroke="currentColor"
@@ -57,7 +53,6 @@ export const RiasMagicSpinner: FC<RiasMagicSpinnerProps> = ({ className }) => (
       opacity="0.3"
     />
 
-    {/* Center circle */}
     <circle
       cx="32"
       cy="32"
@@ -68,7 +63,6 @@ export const RiasMagicSpinner: FC<RiasMagicSpinnerProps> = ({ className }) => (
     />
     <circle cx="32" cy="32" r="2" fill="currentColor" opacity="0.4" />
 
-    {/* Cardinal runes/marks */}
     <line
       x1="32"
       y1="3"

@@ -19,7 +19,6 @@ export const EventsHandlers = HttpApiBuilder.group(
     const operations = yield* EventOperations;
     const endpoints = eventEndpointBuilders(authorization);
 
-    // Spread order is route registration order.
     return handlers.handleAll({
       ...eventCatalogHandlers(endpoints, operations),
       ...eventAssignmentHandlers(endpoints, operations),

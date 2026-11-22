@@ -15,7 +15,6 @@ type EventKillTilesProps = {
   eventId: string;
 };
 
-/** The kill history on phones, where the table's columns don't fit: one tile per kill. */
 export const EventKillTiles = ({
   kills,
   guildId,

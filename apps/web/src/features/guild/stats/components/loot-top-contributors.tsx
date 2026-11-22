@@ -38,7 +38,6 @@ export const LootTopContributors = ({
           key={member.userId}
           rank={index + 1}
           media={
-            // The name beside it opens the profile; one target per member.
             <MemberIdentity
               member={{ memberId: member.memberId }}
               fallback={{

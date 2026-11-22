@@ -13,9 +13,12 @@ import {
   getNotificationsUserControllerGetWatchedItemsQueryKey,
   type GuildResponseDtoOutput,
 } from "@lootlog/client/main";
+import type { Capability } from "@lootlog/domain/access-policy";
 import { createOrganizationTestWrapper } from "./router";
 
-export async function createLootTestWrapper() {
+export async function createLootTestWrapper({
+  capabilities = [],
+}: { capabilities?: Capability[] } = {}) {
   const RouterWrapper = await createOrganizationTestWrapper();
 
   const client = new QueryClient({
@@ -50,7 +53,7 @@ export async function createLootTestWrapper() {
   );
   client.setQueryData(
     getGuildsControllerGetGuildPermissionsQueryKey({ guildId: "guild-1" }),
-    [],
+    capabilities,
   );
   client.setQueryData(sessionQueryOptions.queryKey, {
     data: null,

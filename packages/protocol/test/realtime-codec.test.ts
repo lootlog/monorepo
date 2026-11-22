@@ -260,7 +260,6 @@ describe("realtime JSON codec", () => {
       },
     });
 
-    // Text from outside this codec can spell the key with whitespace or escapes.
     const variants = [
       frame,
       frame.replace('"__proto__":', '"__proto__" :'),

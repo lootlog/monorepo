@@ -4,7 +4,6 @@ import { Option, Schema } from "effect";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { requiredWithFallback } from "@lootlog/schema/stored-value";
 
-/** The search param a link may use to open an Organization on a world. */
 const GUILD_WORLD_SEARCH_PARAM = "world";
 
 const GUILD_WORLD_CHANGE_EVENT = "lootlog:guild-world-change";
@@ -12,18 +11,14 @@ const GUILD_WORLD_CHANGE_EVENT = "lootlog:guild-world-change";
 const getGuildWorldStorageKey = (guildId: string | undefined) =>
   `lootlog:guild:${guildId ?? "global"}:world`;
 
-// Anything unreadable falls back to all worlds instead of failing the page.
 const decodeStoredGuildWorld = Schema.decodeUnknownSync(
   requiredWithFallback(Schema.NullOr(Schema.String), null),
 );
 
-// An empty value comes from the time a world had to be picked first.
 const toGuildWorld = (value: string | null | undefined) => value || null;
 
-// Without storage the chosen world still lasts for this tab.
 const unstoredGuildWorlds = new Map<string, string | null>();
 
-/** The world remembered for an Organization; `null` is all worlds. */
 export const readStoredGuildWorld = (
   guildId: string | undefined,
 ): string | null => {
@@ -42,7 +37,6 @@ export const readStoredGuildWorld = (
   }
 };
 
-/** The world a route loader scopes to, as `useGuildWorld` will read it. */
 export const readGuildWorld = (
   guildId: string | undefined,
   searchStr: string,
@@ -50,7 +44,6 @@ export const readGuildWorld = (
   toGuildWorld(new URLSearchParams(searchStr).get(GUILD_WORLD_SEARCH_PARAM)) ??
   readStoredGuildWorld(guildId);
 
-/** Remembers an Organization's world and tells every mounted reader. */
 export const storeGuildWorld = (
   guildId: string | undefined,
   world: string | null,
@@ -82,24 +75,16 @@ const decodeGuildWorldSearch = Schema.decodeUnknownOption(
 );
 
 const useUrlWorld = () =>
-  // The router's own search, not a copy that catches up a render later: on a
-  // move between Organizations it must never pair one's world with the other.
   toGuildWorld(
     Option.getOrUndefined(decodeGuildWorldSearch(useSearch({ strict: false })))
       ?.world,
   );
 
 const useStoredGuildWorld = (guildId: string | undefined) =>
-  // Read on every render, so moving to another Organization never shows the
-  // previous one's world for a render.
   useSyncExternalStore(subscribeToStoredGuildWorld, () =>
     readStoredGuildWorld(guildId),
   );
 
-/**
- * The world every Organization page is scoped to; `null` is all worlds. A
- * link's `?world=` wins until it has been remembered for the Organization.
- */
 export const useGuildWorld = () => {
   const guildId = useGuildId();
   const urlWorld = useUrlWorld();
@@ -111,11 +96,6 @@ export const useGuildWorld = () => {
   };
 };
 
-/**
- * Remembers the world a link carries and drops it from the URL, so the
- * Organization's pages keep clean addresses and navigate once. Mount once,
- * under the Organization route.
- */
 export const useGuildWorldFromUrl = () => {
   const guildId = useGuildId();
   const urlWorld = useUrlWorld();

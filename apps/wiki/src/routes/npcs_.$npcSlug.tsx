@@ -37,8 +37,6 @@ import {
 
 export const Route = createFileRoute("/npcs_/$npcSlug")({
   component: NpcRoute,
-  // The page loads the monster and its drops itself; a failed load leaves
-  // it the error.
   loader: async ({ params, context: { queryClient } }) => {
     const query = npcPageQuery(params.npcSlug);
 
@@ -52,7 +50,6 @@ export const Route = createFileRoute("/npcs_/$npcSlug")({
 
     if (!npc) return { npc: undefined, drops: [] };
 
-    // Old links carry the catalog key or an outdated name.
     if (npcPageParams(npc).npcSlug !== params.npcSlug) {
       throw redirect({
         to: "/npcs/$npcSlug",
@@ -84,8 +81,6 @@ function NpcRoute() {
 
   const query = npcPageQuery(npcSlug);
 
-  // The id finds the monster; old links carry the catalog key instead and
-  // move to the id and name once it loads.
   const npcQuery = useCatalogControllerGetNpcs(query ?? {}, {
     query: { enabled: query !== undefined },
   });
