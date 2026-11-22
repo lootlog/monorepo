@@ -22,6 +22,7 @@ export type AuraPaint = (context: CanvasRenderingContext2D) => void;
 export type ShownAura<C extends RuntimeAuraCharacter> = {
   character: C;
   place: AuraPlacement;
+  revision: number | null;
   back: AuraPaint;
   front: AuraPaint;
 };
@@ -269,6 +270,7 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
         ? {
             character,
             place: drawn.place,
+            revision: drawn.aura.paintRevision(),
             back: drawn.back,
             front: drawn.front,
           }
