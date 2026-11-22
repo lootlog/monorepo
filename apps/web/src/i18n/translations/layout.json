@@ -66,13 +66,26 @@
     "fixes": "Poprawki ({{count}})",
     "types": {
       "feature": "Nowość",
-      "improvement": "Usprawnienie"
+      "improvement": "Usprawnienie",
+      "fix": "Poprawka"
     },
     "surfaces": {
       "game-client": "Dodatek",
       "web": "Aplikacja",
       "discord": "Discord",
       "wiki": "Wiki"
+    },
+    "noResults": "Brak pasujących zmian",
+    "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej zmian.",
+    "filters": {
+      "title": "Filtry zmian",
+      "search": "Szukaj w zmianach…",
+      "surface": "Gdzie",
+      "type": "Rodzaj",
+      "selectedCount_one": "{{count}} wybrany",
+      "selectedCount_few": "{{count}} wybrane",
+      "selectedCount_many": "{{count}} wybranych",
+      "selectedCount_other": "{{count}} wybranych"
     }
   },
   "supportAnnouncement": {

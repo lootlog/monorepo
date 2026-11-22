@@ -122,29 +122,36 @@ export const useActivityLogsFilterModel = () => {
   };
 
   const updateFilters = (newFilters: Partial<typeof filters>) => {
-    setFilters((currentFilters) => {
-      const mergedFilters = {
-        ...currentFilters,
-        ...newFilters,
-      };
+    // Typing a name replaces the address; a history entry per keystroke
+    // would trap Back.
+    const isTyping = "name" in newFilters || "clanName" in newFilters;
 
-      return {
-        types: (() => {
-          const nextTypes = getActivityLogTypes(mergedFilters.types);
+    return setFilters(
+      (currentFilters) => {
+        const mergedFilters = {
+          ...currentFilters,
+          ...newFilters,
+        };
 
-          return nextTypes.length > 0 ? nextTypes : null;
-        })(),
-        sources: (() => {
-          const nextSources = getActivityLogSources(mergedFilters.sources);
+        return {
+          types: (() => {
+            const nextTypes = getActivityLogTypes(mergedFilters.types);
 
-          return nextSources.length > 0 ? nextSources : null;
-        })(),
-        startDate: mergedFilters.startDate || null,
-        endDate: mergedFilters.endDate || null,
-        name: mergedFilters.name || null,
-        clanName: mergedFilters.clanName || null,
-      };
-    });
+            return nextTypes.length > 0 ? nextTypes : null;
+          })(),
+          sources: (() => {
+            const nextSources = getActivityLogSources(mergedFilters.sources);
+
+            return nextSources.length > 0 ? nextSources : null;
+          })(),
+          startDate: mergedFilters.startDate || null,
+          endDate: mergedFilters.endDate || null,
+          name: mergedFilters.name || null,
+          clanName: mergedFilters.clanName || null,
+        };
+      },
+      { history: isTyping ? "replace" : "push" },
+    );
   };
 
   const activityTypes: {

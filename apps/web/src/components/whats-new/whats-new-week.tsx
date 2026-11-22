@@ -7,16 +7,22 @@ type WhatsNewWeekProps = {
   unreadIds: readonly string[];
 };
 
-/** A week's changes: what is new first, its fixes folded below. */
+const ROW_CLASS = "border-b px-4";
+
+/**
+ * A week's changes in the top bar's list: each one ruled off from the next,
+ * its fixes folded below.
+ */
 export const WhatsNewWeek = ({ week, unreadIds }: WhatsNewWeekProps) => (
-  <div className="flex flex-col gap-4">
+  <>
     {week.entries.map((item) => (
       <WhatsNewEntry
         key={item.id}
         item={item}
         isUnread={unreadIds.includes(item.id)}
+        className={`${ROW_CLASS} py-3`}
       />
     ))}
-    <WhatsNewFixes fixes={week.fixes} />
-  </div>
+    <WhatsNewFixes fixes={week.fixes} className={ROW_CLASS} />
+  </>
 );

@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import {
+  filterChangelog,
   getUnreadHighlightIds,
   groupChangelogByWeek,
   markHighlightsSeen,
@@ -24,6 +25,8 @@ test("a Sunday closes its week and the next Monday opens a new one", () => {
     item("sunday", "2026-11-15"),
     item("monday", "2026-11-16"),
     item("fix", "2026-11-17", { type: "fix" }),
+    item("feature", "2026-11-16", { type: "feature" }),
+    item("tuesday", "2026-11-17"),
     item("highlight", "2026-11-16", { type: "feature", highlight: true }),
   ]);
 
@@ -36,7 +39,7 @@ test("a Sunday closes its week and the next Monday opens a new one", () => {
   ).toEqual([
     {
       weekStart: "2026-11-16",
-      entries: ["highlight", "monday"],
+      entries: ["tuesday", "highlight", "feature", "monday"],
       fixes: ["fix"],
     },
     { weekStart: "2026-11-09", entries: ["sunday"], fixes: [] },
@@ -62,4 +65,26 @@ test("opening the list in an older build keeps what a newer build marked seen", 
     "newer",
   ]);
   expect(markHighlightsSeen(olderBuild, null)).toEqual(["old"]);
+});
+
+test("a filter keeps an entry met on any chosen surface and narrows by type", () => {
+  const items = [
+    item("both", "2026-11-18", { surfaces: ["game-client", "web"] }),
+    item("wiki", "2026-11-18", { surfaces: ["wiki"] }),
+    item("web-fix", "2026-11-18", { type: "fix", title: "Lista WALK" }),
+  ];
+
+  const ids = (filters: Parameters<typeof filterChangelog>[1]) =>
+    filterChangelog(items, filters).map((entry) => entry.id);
+
+  expect(ids({ surfaces: ["web"], types: [], search: "" })).toEqual([
+    "both",
+    "web-fix",
+  ]);
+  expect(ids({ surfaces: ["web"], types: ["fix"], search: "" })).toEqual([
+    "web-fix",
+  ]);
+  expect(ids({ surfaces: [], types: [], search: " walk " })).toEqual([
+    "web-fix",
+  ]);
 });

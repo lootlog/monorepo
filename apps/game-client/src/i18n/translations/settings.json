@@ -250,7 +250,6 @@
     "title": "Co nowego",
     "thisWeek": "Ten tydzień",
     "unread": "Nieprzeczytane",
-    "fixes": "Poprawki",
     "howItWorks": "Jak to działa",
     "allChanges": "Wszystkie zmiany",
     "badge_one": "{{count}} nowość w Lootlogu",
@@ -259,7 +258,8 @@
     "badge_other": "{{count}} nowości w Lootlogu",
     "types": {
       "feature": "Nowość",
-      "improvement": "Usprawnienie"
+      "improvement": "Usprawnienie",
+      "fix": "Poprawka"
     },
     "surfaces": {
       "game-client": "Dodatek",

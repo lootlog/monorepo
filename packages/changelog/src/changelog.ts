@@ -1,7 +1,16 @@
-/** Where a player meets the change. */
-export type ChangelogSurface = "game-client" | "web" | "discord" | "wiki";
+/** Where a player meets the change, in the order filters list them. */
+export const CHANGELOG_SURFACES = [
+  "game-client",
+  "web",
+  "wiki",
+  "discord",
+] as const;
 
-export type ChangelogEntryType = "feature" | "improvement" | "fix";
+export type ChangelogSurface = (typeof CHANGELOG_SURFACES)[number];
+
+export const CHANGELOG_ENTRY_TYPES = ["feature", "improvement", "fix"] as const;
+
+export type ChangelogEntryType = (typeof CHANGELOG_ENTRY_TYPES)[number];
 
 /**
  * One change a player can notice, written in Polish in the pull request that
@@ -34,7 +43,7 @@ export type ChangelogItem = ChangelogEntry & { id: string };
 export type ChangelogWeek = {
   /** The Monday the week starts on, as `YYYY-MM-DD`. */
   weekStart: string;
-  /** Features and improvements, highlights first. */
+  /** Features and improvements, newest first. */
   entries: ChangelogItem[];
   fixes: ChangelogItem[];
 };
@@ -80,10 +89,51 @@ export const formatWeekRange = (weekStart: string, locale: string) => {
     : `${dayAndMonth.format(start)} – ${dayAndMonth.format(end)}`;
 };
 
-const highlightsFirst = (a: ChangelogItem, b: ChangelogItem) =>
-  Number(b.highlight ?? false) - Number(a.highlight ?? false);
+/** The day an entry merged, such as "18 lis". */
+export const formatChangelogDay = (date: string, locale: string) =>
+  new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(date));
 
-/** Weeks from the newest, each led by its highlights. */
+export type ChangelogFilters = {
+  /** Keeps entries met on any of these surfaces; empty keeps every surface. */
+  surfaces: readonly ChangelogSurface[];
+  /** Keeps entries of these types; empty keeps every type. */
+  types: readonly ChangelogEntryType[];
+  /** Keeps entries whose title or summary contains the phrase. */
+  search: string;
+};
+
+/** The entries the player's filters leave. */
+export const filterChangelog = (
+  items: readonly ChangelogItem[],
+  { surfaces, types, search }: ChangelogFilters,
+) => {
+  const phrase = search.trim().toLocaleLowerCase();
+
+  return items.filter(
+    (item) =>
+      (surfaces.length === 0 ||
+        item.surfaces.some((surface) => surfaces.includes(surface))) &&
+      (types.length === 0 || types.includes(item.type)) &&
+      (phrase === "" ||
+        `${item.title} ${item.summary ?? ""}`
+          .toLocaleLowerCase()
+          .includes(phrase)),
+  );
+};
+
+// Among the changes of one day, what a player would not find alone leads,
+// then what is new, then what got better.
+const getDayRank = (item: ChangelogItem) => {
+  if (item.highlight) return 0;
+
+  return item.type === "feature" ? 1 : 2;
+};
+
+/** Weeks from the newest, each with its changes from the newest. */
 export const groupChangelogByWeek = (
   items: readonly ChangelogItem[],
 ): ChangelogWeek[] => {
@@ -92,7 +142,7 @@ export const groupChangelogByWeek = (
   const newestFirst = [...items].sort(
     (a, b) =>
       b.date.localeCompare(a.date) ||
-      highlightsFirst(a, b) ||
+      getDayRank(a) - getDayRank(b) ||
       a.id.localeCompare(b.id),
   );
 
@@ -104,10 +154,7 @@ export const groupChangelogByWeek = (
     weeks.set(weekStart, week);
   }
 
-  return [...weeks.values()].map((week) => ({
-    ...week,
-    entries: week.entries.sort(highlightsFirst),
-  }));
+  return [...weeks.values()];
 };
 
 const getHighlightIds = (items: readonly ChangelogItem[]) =>
