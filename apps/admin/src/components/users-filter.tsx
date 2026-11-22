@@ -39,6 +39,7 @@ const auraItems = [
 export function UsersFilter({ search }: { search: UsersSearch }) {
   return (
     <form
+      key={[search.search, search.role, search.banned, search.aura].join("\n")}
       method="get"
       action="/"
       role="search"

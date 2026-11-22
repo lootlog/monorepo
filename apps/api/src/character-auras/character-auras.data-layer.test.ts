@@ -106,6 +106,31 @@ describe("character auras", () => {
     });
   });
 
+  it("follows the admins as they change, without a restart", async () => {
+    const { boundary, events, verify } = await setup([]);
+    let admins: ReadonlyArray<string> = ["former"];
+
+    const holders = {
+      has: (userId: string) => admins.includes(userId),
+      ids: () => admins,
+    };
+
+    await verify("admin", "101");
+
+    const listed = await boundary.run(
+      Effect.flatMap(makeCharacterAurasData(holders, events), (data) =>
+        Effect.gen(function* () {
+          admins = ["admin"];
+          yield* data.updateOwnAura("admin", character("101"), "sovereign");
+
+          return yield* data.getAuras;
+        }),
+      ),
+    );
+
+    expect(listed).toEqual({ auras: [shown("101", "sovereign")] });
+  });
+
   it("shows an aura only on the character it was chosen for, and only while its User has access", async () => {
     const admin = await setup(["admin"]);
 
