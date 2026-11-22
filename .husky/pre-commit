@@ -9,4 +9,7 @@ bunx lint-staged
 echo "\n🔍 Linting and type checking changed packages..."
 bunx turbo run lint typecheck --filter=[HEAD]
 
+echo "\n🧹 Checking for unused files, exports and dependencies..."
+bun run knip
+
 echo "\n✅ Pre-commit checks passed!"
