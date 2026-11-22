@@ -109,6 +109,8 @@ export class AirTagMinimapController {
   private unsubscribeTargets: (() => void) | null = null;
   private unsubscribeHover: (() => void) | null = null;
   private releaseMembers: Array<() => void> = [];
+  /** The sources held, so joining or leaving an Organization swaps them. */
+  private heldMembers: ReturnType<typeof getAirTagMemberSources> = [];
   private hoverCanvas: HTMLCanvasElement | null = null;
   private readonly images = new Map<string, HTMLCanvasElement>();
 
@@ -141,11 +143,7 @@ export class AirTagMinimapController {
     if (this.unsubscribeDraw || !this.hasMarkersToDraw()) return;
     this.unsubscribeDraw = rendererRuntimeAdapter.subscribeDraw(this.drawFrame);
 
-    // A member of another clan of the Organization is no enemy, and a presence
-    // source knows its members only while someone holds it.
-    this.releaseMembers = getAirTagMemberSources().map((source) =>
-      source.subscribeChanges(this.forgetEnemies),
-    );
+    this.holdMembers();
   };
 
   /**
@@ -156,6 +154,28 @@ export class AirTagMinimapController {
     return showsAirTagsOnMap() && airTagReceiveController.hasTargets();
   }
 
+  /**
+   * A member of another clan of the Organization is no enemy, and a presence
+   * source knows its members only while someone holds it. The sources are
+   * cached per socket, Organization and world, so the same ones come back
+   * until the player joins or leaves an Organization or changes world.
+   */
+  private holdMembers(): void {
+    const sources = getAirTagMemberSources();
+
+    if (
+      sources.length === this.heldMembers.length &&
+      sources.every((source, index) => source === this.heldMembers[index])
+    )
+      return;
+
+    for (const release of this.releaseMembers) release();
+    this.heldMembers = sources;
+    this.releaseMembers = sources.map((source) =>
+      source.subscribeChanges(this.forgetEnemies),
+    );
+  }
+
   /** The next frame re-reads which enemies are unseen. */
   private readonly forgetEnemies = (): void => {
     this.refreshedAt = 0;
@@ -164,6 +184,7 @@ export class AirTagMinimapController {
   private detach(): void {
     for (const release of this.releaseMembers) release();
     this.releaseMembers = [];
+    this.heldMembers = [];
     this.unsubscribeDraw?.();
     this.unsubscribeDraw = null;
     this.unsubscribeHover?.();
@@ -184,6 +205,7 @@ export class AirTagMinimapController {
 
     if (now - this.refreshedAt >= REFRESH_INTERVAL_MS) {
       this.refreshedAt = now;
+      this.holdMembers();
       this.enemies = readUnseenAirTagEnemies(now).enemies;
     }
 

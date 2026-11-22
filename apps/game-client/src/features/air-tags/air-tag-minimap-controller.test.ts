@@ -1,4 +1,9 @@
+import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import type { AirTagTarget } from "@lootlog/schema/air-tag";
+import { Permission } from "@lootlog/schema/permissions";
+import { getSocket } from "@/lib/socket";
+import { useGlobalStore } from "@/store/global.store";
+import { createOnlinePlayersTest } from "@/test/online-players-fixtures";
 import {
   setTestRuntimeGame,
   testRuntimeWindow,
@@ -173,6 +178,53 @@ describe("AirTagMinimapController", () => {
     report([target({})]);
     expect(minimap.isDrawing()).toBe(false);
     controller.setEnabled(false, labels);
+  });
+
+  it("loads the presence of an Organization joined while it draws, with the players window closed", async () => {
+    const harness = createOnlinePlayersTest();
+
+    getSocket().connect();
+    harness.open();
+    await harness.join(
+      ["guild-1", "guild-2"],
+      createAccessPolicySnapshot(
+        ["guild-1", "guild-2"].map((id) => ({
+          guild: { id, ownerId: "owner" },
+          roles: [
+            {
+              permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+              lvlRangeFrom: 1,
+              lvlRangeTo: 300,
+            },
+          ],
+        })),
+        "user",
+      ),
+    );
+    setTestRuntimeGame({ world: "luvia", map: RED_MAP });
+    useGlobalStore.getState().setSocketState({ joinedGuilds: ["guild-1"] });
+
+    const minimap = installMinimap();
+    const controller = new AirTagMinimapController();
+
+    report([target({})]);
+    controller.setEnabled(true, labels);
+    await vi.waitFor(() =>
+      expect(harness.fetchPresence).toHaveBeenCalledWith("guild-1", "luvia"),
+    );
+    expect(harness.fetchPresence).not.toHaveBeenCalledWith("guild-2", "luvia");
+
+    // Its members must stop counting as enemies without anyone opening a list.
+    useGlobalStore
+      .getState()
+      .setSocketState({ joinedGuilds: ["guild-1", "guild-2"] });
+    minimap.frame();
+    await vi.waitFor(() =>
+      expect(harness.fetchPresence).toHaveBeenCalledWith("guild-2", "luvia"),
+    );
+
+    controller.setEnabled(false, labels);
+    useGlobalStore.getState().setSocketState({ joinedGuilds: [] });
   });
 
   it("draws nothing for a kind the player hid on the game's minimap", () => {
