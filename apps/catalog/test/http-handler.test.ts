@@ -28,7 +28,6 @@ const config = CatalogConfig.of({
   meilisearchHost: "http://search.invalid",
   meilisearchApiKey: Redacted.make("unused"),
   serviceToken: Redacted.make(SERVICE_TOKEN),
-  moderatorUserIds: [],
 });
 
 const service = { [CATALOG_SERVICE_TOKEN_HEADER]: SERVICE_TOKEN };

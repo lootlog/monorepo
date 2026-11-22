@@ -55,7 +55,7 @@ the API keeps reading them.
 - **`ApiKeyEndpointPolicy`** (`packages/protocol/src/http/api-key-http.ts`): The policy only adds API key restrictions; a request without the assertion header is a session that each service still authorizes. `ApiKeyHttpErrors` declares 429 because the edge enforces API key rate limits before the service.
 - **`readApiKeyAccess`** (`packages/schema/src/api-key-policy.ts`): The reader returns `undefined` for a session and `null` for a malformed proxy assertion, which callers must fail closed on.
 - **`readForwardedPlatformRoles`** (`packages/schema/src/platform-roles.ts`): No platform roles are forwarded for API key requests, so a key never acts with its owner's roles.
-- **`PLATFORM_ROLES`** (`packages/schema/src/platform-roles.ts`): `admin`, `wiki-moderator`, and `global-chat-admin` have the auth service as their only writer and the admin panel as the only surface that changes them; `admin` implies every role, and the API reads chat and aura admins only from these roles.
+- **`PLATFORM_ROLES`** (`packages/schema/src/platform-roles.ts`): `admin`, `wiki-moderator`, and `global-chat-admin` have the auth service as their only writer and the admin panel as the only surface that changes them; `admin` implies every role, and they are the only source of chat admins, aura admins and catalog moderators: no environment variable adds one.
 - **`parsePlatformRoles`** (`packages/schema/src/platform-roles.ts`): Unknown role names are dropped, so a role removed from the catalog stops granting anything.
 - **`PLATFORM_ROLE_HOLDERS_PATH`** (`packages/schema/src/platform-roles.ts`): The path is internal: callers present the service credential shared with the auth service, and the edge does not route it.
 

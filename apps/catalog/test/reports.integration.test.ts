@@ -22,7 +22,10 @@ let pool: pg.Pool;
 
 let runtime: ManagedRuntime.ManagedRuntime<CatalogDatabase, unknown>;
 
-const moderator: ReportCaller = { userId: "moderator", roles: [] };
+const moderator: ReportCaller = {
+  userId: "moderator",
+  roles: ["wiki-moderator"],
+};
 
 const alice: ReportCaller = { userId: "alice", roles: [] };
 
@@ -74,9 +77,7 @@ const reports = <A>(
 ) =>
   runtime.runPromise(
     Effect.gen(function* () {
-      return yield* run(
-        makeReportsModule(yield* CatalogDatabase, [moderator.userId]),
-      );
+      return yield* run(makeReportsModule(yield* CatalogDatabase));
     }),
   );
 
