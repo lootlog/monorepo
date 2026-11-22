@@ -24,7 +24,8 @@ export const LootDrawButton = ({
     ({ itemHid }) => itemHid === item.hid,
   )?.winner;
 
-  if (!showsDraw(loot, item)) return null;
+  // An open draw stays, so voiding an excluded item's result keeps its dialog.
+  if (!open && !showsDraw(loot, item)) return null;
 
   return (
     <>

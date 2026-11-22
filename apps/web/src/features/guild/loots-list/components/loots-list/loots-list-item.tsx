@@ -11,7 +11,7 @@ import { LootHeaderActions } from "./loot-header-actions";
 import { LootItemStackLootIdContext } from "./loot-item-stack-context";
 import { LegendarySparks } from "./legendary-sparks";
 import { LootItemDraw } from "@/features/guild/loots-list/components/loot-draw/loot-item-draw";
-import { useLootDrawRules } from "@/features/guild/loots-list/components/loot-draw/use-loot-draw-rules";
+import { isLootDrawItem } from "@lootlog/domain/loot-draw";
 
 type Props = {
   loot: Loot;
@@ -27,7 +27,6 @@ export const LootsListItem = ({
   showWorld = false,
 }: Props) => {
   const { filters, setFilters } = useLootsFilters();
-  const { showsDraw } = useLootDrawRules();
 
   const hasLegendaryItem = loot.items.some(
     (item) => item.rarity === DisplayItemRarity.LEGENDARY,
@@ -54,7 +53,9 @@ export const LootsListItem = ({
           loot={loot}
           headerActions=<LootHeaderActions loot={loot} />
           decorateItem={(item, tile) =>
-            showsDraw(loot, item) ? (
+            // Any item a draw can cover; the tile applies the Organization's
+            // exclusions itself, so an open draw outlives them.
+            isLootDrawItem(loot, item, []) ? (
               <LootItemDraw loot={loot} item={item}>
                 {tile}
               </LootItemDraw>

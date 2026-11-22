@@ -79,14 +79,21 @@ describe("LootsListItem", () => {
         winner: { name: "Zwycięzca", prof: "MAGE", lvl: 284 },
       },
     ];
-    render(<LootsListItem loot={loot} />, {
+
+    const { rerender } = render(<LootsListItem loot={loot} />, {
       wrapper: await createLootTestWrapper(),
     });
 
-    expect(
-      await screen.findAllByRole("button", {
-        name: "loots.details.draw.wonByItem",
-      }),
-    ).not.toHaveLength(0);
+    const [trophy] = await screen.findAllByRole("button", {
+      name: "loots.details.draw.wonByItem",
+    });
+
+    if (!trophy) throw new Error("Missing standing winner");
+    fireEvent.click(trophy);
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+
+    // Voiding refreshes the loot without its result; the open draw stays.
+    rerender(<LootsListItem loot={{ ...loot, standingDraws: [] }} />);
+    expect(screen.getByRole("dialog")).toBeTruthy();
   });
 });
