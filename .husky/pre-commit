@@ -6,6 +6,9 @@ set -e
 echo "📝 Formatting staged files..."
 bunx lint-staged
 
+echo "\n📏 Checking staged file sizes..."
+bun scripts/check-staged-file-tokens.ts
+
 echo "\n🔍 Linting and type checking changed packages..."
 bunx turbo run lint typecheck --filter=[HEAD]
 

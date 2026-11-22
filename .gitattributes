@@ -1,5 +1,23 @@
 # Lock files should be treated as generated
 bun.lock linguist-generated=true
+skills-lock.json linguist-generated=true
 
 # Generated files
 **/generated/** linguist-generated=true -whitespace
+*.gen.ts linguist-generated=true
+apps/*/openapi.yaml linguist-generated=true
+packages/sdk/openapi/*.json linguist-generated=true
+**/drizzle/**/snapshot.json linguist-generated=true
+
+# Third-party files copied into the repository
+.agents/skills/agent-browser/** linguist-vendored=true
+.agents/skills/better-auth-best-practices/** linguist-vendored=true
+.agents/skills/codebase-design/** linguist-vendored=true
+.agents/skills/install-anti-slop/** linguist-vendored=true
+.agents/skills/refactor/** linguist-vendored=true
+.agents/skills/shadcn/** linguist-vendored=true
+.agents/skills/turborepo/** linguist-vendored=true
+.agents/skills/vercel-react-best-practices/** linguist-vendored=true
+.agents/skills/web-design-guidelines/** linguist-vendored=true
+tools/oxlint/anti-slop/vendor/** linguist-vendored=true
+apps/web/public/lottie/** linguist-vendored=true
