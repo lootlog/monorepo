@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import { LootDrawDialog } from "./loot-draw-dialog";
-import { useIsLootDrawItem } from "./use-is-loot-draw-item";
+import { useLootDrawRules } from "./use-loot-draw-rules";
 
 /** Opens a legendary item's draw from its row, naming the standing winner. */
 export const LootDrawButton = ({
@@ -18,13 +18,13 @@ export const LootDrawButton = ({
 }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const isLootDrawItem = useIsLootDrawItem();
+  const { canDraw, showsDraw } = useLootDrawRules();
 
   const winner = loot.standingDraws.find(
     ({ itemHid }) => itemHid === item.hid,
   )?.winner;
 
-  if (!isLootDrawItem(loot, item)) return null;
+  if (!showsDraw(loot, item)) return null;
 
   return (
     <>
@@ -55,6 +55,7 @@ export const LootDrawButton = ({
         loot={loot}
         item={item}
         canVoid={canVoid}
+        canDraw={canDraw(loot, item)}
         open={open}
         onOpenChange={setOpen}
       />

@@ -4,7 +4,7 @@ import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import { EmptyState } from "@/components/common/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
 import { RetryButton } from "@/components/common/retry-button";
-import { CircleAlert } from "lucide-react";
+import { Ban, CircleAlert } from "lucide-react";
 import { useState, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import type { Item, Loot } from "@/lib/loots/loot-types";
@@ -23,11 +23,14 @@ export const LootDrawDialogBody = ({
   loot,
   item,
   canVoid,
+  canDraw,
   bodyRef,
 }: {
   loot: Loot;
   item: Item;
   canVoid: boolean;
+  /** False once the Organization excludes the item's NPC type. */
+  canDraw: boolean;
   /** Takes the dialog's initial focus. */
   bodyRef: RefObject<HTMLDivElement | null>;
 }) => {
@@ -86,7 +89,14 @@ export const LootDrawDialogBody = ({
             onRevealed={() => setLockedHeight(null)}
           />
         )}
-        {data && !standing && (
+        {data && !standing && !canDraw && (
+          <EmptyState
+            compact
+            icon={Ban}
+            title={t("loots.details.draw.disabled")}
+          />
+        )}
+        {data && !standing && canDraw && (
           <LootDrawEditor
             loot={loot}
             item={item}

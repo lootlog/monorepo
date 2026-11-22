@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useCanManageLoots } from "@/features/guild/loots-list/use-can-manage-loots";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import { LootDrawDialog } from "./loot-draw-dialog";
+import { useLootDrawRules } from "./use-loot-draw-rules";
 
 /**
  * A drawable item's tile on the loot list, with its draw at hand: a trophy
@@ -24,6 +25,7 @@ export const LootItemDraw = ({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const canVoid = useCanManageLoots();
+  const { canDraw } = useLootDrawRules();
 
   const winner = loot.standingDraws.find(
     ({ itemHid }) => itemHid === item.hid,
@@ -91,6 +93,7 @@ export const LootItemDraw = ({
         loot={loot}
         item={item}
         canVoid={canVoid}
+        canDraw={canDraw(loot, item)}
         open={open}
         onOpenChange={setOpen}
       />
