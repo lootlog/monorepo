@@ -42,7 +42,8 @@ type MinimapRuntimeWindow = Window & {
   Engine?: {
     miniMapController?: {
       handHeldMiniMapController?: {
-        canUpdate?: (type: string, kind: string) => void;
+        /** HandHeldMiniMapController.js returns its `showObject[type][kind]` flag. */
+        canUpdate?: (type: string, kind: string) => boolean | undefined;
         getColorByKind?: (kind: string) => string | undefined;
         // oxlint-disable-next-line anti-slop/no-icon-in-symbol-names -- The game names its own method.
         // oxlint-disable-next-line anti-slop/no-shape-in-symbol-names -- The game names its own method.
@@ -61,7 +62,7 @@ type MinimapRuntimeWindow = Window & {
         getMiniMapTipController?: () => {
           getObjectFromCordsArray?: (
             tiles: ReadonlyArray<{ x: number; y: number }>,
-          ) => void;
+          ) => object | null;
           show?: (
             event: MinimapHoverEvent,
             object: { getTip: () => TipContent; getRef: () => null },

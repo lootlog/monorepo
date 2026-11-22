@@ -473,8 +473,10 @@ export class AirTagObservationController {
     }
 
     for (const departure of batch.departures ?? []) {
+      // A player seen again as a clan enemy supersedes the departure; one
+      // withdrawn while staying in sight still owes it.
       if (
-        !this.targets.has(departure.targetId) &&
+        !isAirTagClanEnemy(this.targets.get(departure.targetId)?.relation) &&
         !this.departures.has(departure.targetId)
       )
         this.departures.set(departure.targetId, departure);

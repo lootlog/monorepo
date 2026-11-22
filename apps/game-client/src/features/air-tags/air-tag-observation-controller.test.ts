@@ -301,6 +301,15 @@ describe("AirTagObservationController", () => {
     });
     vi.advanceTimersByTime(AIR_TAG_HEARTBEAT_INTERVAL_MS * 2);
     expect(publisher).toHaveBeenCalledTimes(2);
+
+    // The gateway rate-limited the withdrawal: it still has to go out.
+    const withdrawal = publisher.mock.calls[1]?.[0];
+
+    if (!withdrawal) throw new Error("Expected a batch");
+    controller.retry(withdrawal, AIR_TAG_BATCH_INTERVAL_MS);
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    expect(publisher).toHaveBeenLastCalledWith(withdrawal);
+    expect(publisher).toHaveBeenCalledTimes(3);
   });
 
   it("falls silent about a target another observer reports, and takes it over when their sightings stop", () => {

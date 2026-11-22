@@ -16,6 +16,7 @@ import { showsAirTagsOnMap } from "./air-tag-game-visibility";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import {
   AIR_TAG_TARGET_TTL_MS,
+  getAirTagMemberSources,
   readUnseenAirTagEnemies,
 } from "./air-tag-unseen-enemies";
 import type { AirTagTarget } from "@lootlog/schema/air-tag";
@@ -107,6 +108,7 @@ export class AirTagMinimapController {
   private unsubscribeDraw: (() => void) | null = null;
   private unsubscribeTargets: (() => void) | null = null;
   private unsubscribeHover: (() => void) | null = null;
+  private releaseMembers: Array<() => void> = [];
   private hoverCanvas: HTMLCanvasElement | null = null;
   private readonly images = new Map<string, HTMLCanvasElement>();
 
@@ -138,6 +140,12 @@ export class AirTagMinimapController {
 
     if (this.unsubscribeDraw || !this.hasMarkersToDraw()) return;
     this.unsubscribeDraw = rendererRuntimeAdapter.subscribeDraw(this.drawFrame);
+
+    // A member of another clan of the Organization is no enemy, and a presence
+    // source knows its members only while someone holds it.
+    this.releaseMembers = getAirTagMemberSources().map((source) =>
+      source.subscribeChanges(this.forgetEnemies),
+    );
   };
 
   /**
@@ -148,7 +156,14 @@ export class AirTagMinimapController {
     return showsAirTagsOnMap() && airTagReceiveController.hasTargets();
   }
 
+  /** The next frame re-reads which enemies are unseen. */
+  private readonly forgetEnemies = (): void => {
+    this.refreshedAt = 0;
+  };
+
   private detach(): void {
+    for (const release of this.releaseMembers) release();
+    this.releaseMembers = [];
     this.unsubscribeDraw?.();
     this.unsubscribeDraw = null;
     this.unsubscribeHover?.();

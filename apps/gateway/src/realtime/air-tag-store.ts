@@ -595,8 +595,9 @@ const DISABLED_FLAG_TTL_MS = 30_000;
 
 /**
  * The operator's kill switch for one Organization and world, set by hand in
- * Dragonfly. Every batch and subscription asks, so a replica reads a flag at
- * most once per `DISABLED_FLAG_TTL_MS`, and the switch takes that long to act.
+ * Dragonfly. Every batch and subscription asks, so a replica reads a flag
+ * about once per `DISABLED_FLAG_TTL_MS`, and the switch takes that long to
+ * act. Callers that find it stale at the same moment each read it.
  */
 export class DisabledScopes {
   private readonly flags = new Map<

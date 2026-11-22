@@ -168,6 +168,10 @@ for (const [scenario, frames] of Object.entries(scenarios)) {
         if (socket.data.airTagBatchesSentAt)
           socket.data.airTagBatchesSentAt.length = 0;
 
+        // One user may send 45 batches per 3 s on a replica; a user per
+        // batch keeps that limit out of the measurement too.
+        Object.assign(socket.data, { userId: `user-${index}` });
+
         await Effect.runPromise(handler.handle(socket, input));
       }
   };

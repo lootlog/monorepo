@@ -3013,28 +3013,27 @@ describe("realtime Dragonfly integration", () => {
 
     const sighting = { observations: [clanEnemy] };
 
-    // The first to report a target keeps it; the acknowledgement names no standby.
-    expect(await report(reporter, sighting)).toEqual({
+    // Accepted, and nobody else reports the target: no standby is named.
+    const reported = {
       status: "accepted",
       acceptedScopes: 1,
       acceptedTargets: 1,
-    });
+    } as const;
+
+    // The first to report a target keeps it; the acknowledgement names no standby.
+    expect(await report(reporter, sighting)).toEqual(reported);
     expect(await report(standby, sighting)).toMatchObject({
       status: "accepted",
       standbyTargetIds: [clanEnemy.targetId],
     });
-    expect(await report(reporter, sighting)).not.toHaveProperty(
-      "standbyTargetIds",
-    );
+    expect(await report(reporter, sighting)).toEqual(reported);
 
     // The reporter loses sight: whoever reports next takes the target at once.
     await report(reporter, {
       observations: [],
       departures: [{ targetId: clanEnemy.targetId, reason: "out-of-sight" }],
     });
-    expect(await report(standby, sighting)).not.toHaveProperty(
-      "standbyTargetIds",
-    );
+    expect(await report(standby, sighting)).toEqual(reported);
     expect(await report(reporter, sighting)).toMatchObject({
       standbyTargetIds: [clanEnemy.targetId],
     });
@@ -3056,9 +3055,7 @@ describe("realtime Dragonfly integration", () => {
           data.unreportedTargetIds?.includes(clanEnemy.targetId) === true,
       ),
     );
-    expect(await report(remaining, sighting)).not.toHaveProperty(
-      "standbyTargetIds",
-    );
+    expect(await report(remaining, sighting)).toEqual(reported);
 
     await Effect.runPromise(
       sourceAirTags.updateSubscription(walker.socket, {
@@ -3073,9 +3070,7 @@ describe("realtime Dragonfly integration", () => {
 
     // The reporter vanishes without a word; the lease runs out.
     await Bun.sleep(AIR_TAG_REPORTER_LEASE_MS + 100);
-    expect(await report(walker, sighting)).not.toHaveProperty(
-      "standbyTargetIds",
-    );
+    expect(await report(walker, sighting)).toEqual(reported);
   }, 30_000);
 
   test("air-tag updates cross Redis only for maps another replica follows", async () => {
