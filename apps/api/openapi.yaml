@@ -28742,6 +28742,21 @@ components:
           type: number
         reservationActiveLimitPerSpot:
           type: number
+        lootDrawExcludedNpcTypes:
+          type: array
+          items:
+            type: string
+            enum:
+              - COMMON
+              - ELITE
+              - ELITE2
+              - ELITE3
+              - HERO
+              - EVENT_HERO
+              - COLOSSUS
+              - TITAN
+              - HERO_TRACKER
+              - NPC
       required:
         - id
         - name
@@ -28752,6 +28767,7 @@ components:
         - reservationTimeGranularityMinutes
         - reservationMaxAdvanceDays
         - reservationActiveLimitPerSpot
+        - lootDrawExcludedNpcTypes
       additionalProperties: false
     UserGuildPermissionsDto:
       type: object
@@ -28926,6 +28942,22 @@ components:
           type: integer
           minimum: 1
           maximum: 10
+        lootDrawExcludedNpcTypes:
+          type: array
+          items:
+            type: string
+            enum:
+              - COMMON
+              - ELITE
+              - ELITE2
+              - ELITE3
+              - HERO
+              - EVENT_HERO
+              - COLOSSUS
+              - TITAN
+              - HERO_TRACKER
+              - NPC
+          maxItems: 10
       additionalProperties: false
     ManageableOrganizationResponse:
       type: object

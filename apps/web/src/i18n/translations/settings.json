@@ -75,6 +75,10 @@
       "refreshHint": "Regeneracja jest dostępna raz na 5 minut.",
       "refreshSuccess": "Obraz statystyk został odświeżony",
       "refreshError": "Nie udało się odświeżyć obrazu statystyk"
+    },
+    "lootDraws": {
+      "title": "Losowanie legend",
+      "description": "Koło pojawia się przy niezwiązanych na stałe legendach z zaznaczonych typów potworów. Domyślnie legend z herosów i tytanów się nie losuje."
     }
   },
   "roles": {

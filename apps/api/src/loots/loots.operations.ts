@@ -383,7 +383,11 @@ export const makeLootsOperations = ({
 
         if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
 
-        const built = buildLootDrawEntrants(loot, options.body);
+        const built = buildLootDrawEntrants(
+          loot,
+          options.body,
+          options.guild.lootDrawExcludedNpcTypes,
+        );
 
         if ("error" in built) {
           return yield* Effect.fail(

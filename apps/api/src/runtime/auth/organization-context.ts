@@ -40,6 +40,7 @@ import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config
 const CachedGuild = createSelectSchema(guildTable, {
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
+  lootDrawExcludedNpcTypes: (schema) => Schema.mutable(schema),
 });
 
 const decodeCachedGuild = Schema.decodeUnknownSync(

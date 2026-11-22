@@ -9,7 +9,10 @@ import type { LootDrawEntrantRecord } from "#src/database/drizzle/loot.schema";
 import { ErrorKey } from "#src/loots/error-key";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 
-type LootDrawLoot = Pick<LootQueryResult, "items" | "players" | "lootShare">;
+type LootDrawLoot = Pick<
+  LootQueryResult,
+  "items" | "players" | "lootShare" | "npcs"
+>;
 
 export type LootDrawEntrantsResult =
   | { readonly entrants: LootDrawEntrantRecord[] }
@@ -40,7 +43,8 @@ const fromPartyMember = (
 });
 
 /**
- * Checks a manager's draw for one of the loot's drawable items. When a party
+ * Checks a manager's draw for one of the loot's drawable items, skipping
+ * the NPC types the Organization excludes. When a party
  * member caught it, they are the one WINNER; an item nobody caught has none.
  * PARTY entrants must be other members of the party; both are stored as the
  * loot records them. MAP and MANUAL entrants must be outside the party.
@@ -51,12 +55,13 @@ const fromPartyMember = (
 export const buildLootDrawEntrants = (
   loot: LootDrawLoot,
   request: CreateLootDrawRequest,
+  excludedNpcTypes: readonly string[],
 ): LootDrawEntrantsResult => {
   const item = loot.items.find(({ hid }) => hid === request.itemHid);
 
   if (!item) return { error: ErrorKey.LOOT_DRAW_ITEM_NOT_FOUND };
 
-  if (!isLootDrawItem(item)) {
+  if (!isLootDrawItem(loot, item, excludedNpcTypes)) {
     return { error: ErrorKey.LOOT_DRAW_ITEM_NOT_DRAWABLE };
   }
 

@@ -41,6 +41,7 @@ const guildFixture = {
   reservationTimeGranularityMinutes: 5,
   reservationMaxAdvanceDays: 7,
   reservationActiveLimitPerSpot: 1,
+  lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
 } satisfies GuildResponseDtoOutput;
 
 const renderForm = async (
@@ -196,6 +197,7 @@ it.each(["moj-klan", "klan123", "me"])(
     expect(await request.json()).toEqual({
       vanityUrl,
       publicStatsCardEnabled: false,
+      lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
     });
     expect(screen.queryByRole("alert")).toBeNull();
     await waitFor(() =>
@@ -229,6 +231,7 @@ it("allows correcting an invalid vanity URL and submitting it", async () => {
   expect(await request.json()).toEqual({
     vanityUrl: "moj-klan",
     publicStatsCardEnabled: false,
+    lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
   });
   expect(screen.queryByRole("alert")).toBeNull();
 });
@@ -252,6 +255,7 @@ it("sends null when clearing an existing vanity URL", async () => {
   expect(await request.json()).toEqual({
     vanityUrl: null,
     publicStatsCardEnabled: false,
+    lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
   });
   expect(screen.queryByRole("alert")).toBeNull();
   await waitFor(() =>
@@ -288,5 +292,31 @@ it("shows the API error for an unavailable vanity URL and lets the user retry", 
   expect(await request.json()).toEqual({
     vanityUrl: "available-name",
     publicStatsCardEnabled: false,
+    lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
+  });
+});
+
+it("draws the legends of a monster type once its tile is checked", async () => {
+  const save = vi.fn((_init?: RequestInit) =>
+    Promise.resolve(Response.json(guildFixture)),
+  );
+
+  await renderForm(save);
+
+  const hero = screen.getByRole("checkbox", { name: "npcType.HERO" });
+  const elite = screen.getByRole("checkbox", { name: "npcType.ELITE2" });
+
+  expect(hero.getAttribute("aria-checked")).toBe("false");
+  expect(elite.getAttribute("aria-checked")).toBe("true");
+
+  fireEvent.click(hero);
+  fireEvent.click(elite);
+  await submitForm();
+
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+  const request = new Request("https://api.test", save.mock.calls[0]?.[0]);
+
+  expect(await request.json()).toMatchObject({
+    lootDrawExcludedNpcTypes: ["EVENT_HERO", "TITAN", "ELITE2"],
   });
 });

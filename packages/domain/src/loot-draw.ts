@@ -1,5 +1,7 @@
+import { minBy } from "es-toolkit";
 import { hasItemStat } from "./item-stat.js";
 import { PRODUCT_LOCALE } from "./locale.js";
+import { getNpcTypeStrengthRank } from "./npc-type.js";
 
 /**
  * The draw a Lootlog runs for a looted legendary item among the players who
@@ -24,14 +26,40 @@ export type LootDrawItem = Readonly<{
 export type LootDrawCandidate = Readonly<{ prof: string | null }>;
 
 /**
- * Only legendary items are drawn among the players left out of the party,
- * and only those the winner can hand over: colossi and titans drop items
- * bound for good (`permbound`).
+ * NPC types whose legendary items an Organization does not draw until it
+ * changes its settings: heroes, event heroes and titans.
  */
-export const isLootDrawItem = (item: {
-  rarity: string | null | undefined;
-  stat: string;
-}) => item.rarity === "LEGENDARY" && !hasItemStat(item.stat, "permbound");
+export const DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES = [
+  "HERO",
+  "EVENT_HERO",
+  "TITAN",
+] as const;
+
+/**
+ * The type of the NPC that names a fight: the strongest one, so a boss
+ * always wins over its escort.
+ */
+const lootNpcType = (npcs: readonly { type: string | null }[]) =>
+  minBy(npcs, ({ type }) => getNpcTypeStrengthRank(type))?.type ?? null;
+
+/**
+ * Only legendary items are drawn among the players left out of the party,
+ * only those the winner can hand over (colossi drop items bound for good,
+ * `permbound`), and never those of an NPC type the Organization excludes.
+ */
+export const isLootDrawItem = (
+  loot: { npcs: readonly { type: string | null }[] },
+  item: { rarity: string | null | undefined; stat: string },
+  excludedNpcTypes: readonly string[],
+) => {
+  if (item.rarity !== "LEGENDARY" || hasItemStat(item.stat, "permbound")) {
+    return false;
+  }
+
+  const npcType = lootNpcType(loot.npcs);
+
+  return npcType === null || !excludedNpcTypes.includes(npcType);
+};
 
 /**
  * Whether a loot keeps the players on the map at the drop: a fight that

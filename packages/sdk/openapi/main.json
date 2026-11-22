@@ -20183,6 +20183,24 @@
           },
           "reservationActiveLimitPerSpot": {
             "type": "number"
+          },
+          "lootDrawExcludedNpcTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "COMMON",
+                "ELITE",
+                "ELITE2",
+                "ELITE3",
+                "HERO",
+                "EVENT_HERO",
+                "COLOSSUS",
+                "TITAN",
+                "HERO_TRACKER",
+                "NPC"
+              ]
+            }
           }
         },
         "required": [
@@ -20194,7 +20212,8 @@
           "reservationMinDurationMinutes",
           "reservationTimeGranularityMinutes",
           "reservationMaxAdvanceDays",
-          "reservationActiveLimitPerSpot"
+          "reservationActiveLimitPerSpot",
+          "lootDrawExcludedNpcTypes"
         ],
         "additionalProperties": false
       },
@@ -20233,6 +20252,25 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 10
+          },
+          "lootDrawExcludedNpcTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "COMMON",
+                "ELITE",
+                "ELITE2",
+                "ELITE3",
+                "HERO",
+                "EVENT_HERO",
+                "COLOSSUS",
+                "TITAN",
+                "HERO_TRACKER",
+                "NPC"
+              ]
+            },
+            "maxItems": 10
           }
         },
         "additionalProperties": false

@@ -3,6 +3,7 @@ import {
   FiniteNumber,
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 
 export type StatusOk = typeof StatusOk.Type;
 
@@ -29,6 +30,8 @@ export const OrganizationSummary = Schema.Struct({
   reservationTimeGranularityMinutes: FiniteNumber,
   reservationMaxAdvanceDays: FiniteNumber,
   reservationActiveLimitPerSpot: FiniteNumber,
+  /** NPC types whose legendary items the Organization does not draw. */
+  lootDrawExcludedNpcTypes: Schema.Array(NpcTypeSchema),
 }).annotate({ identifier: "GuildResponseDto_Output" });
 
 export type SuccessResponse = typeof SuccessResponse.Type;

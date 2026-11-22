@@ -45,6 +45,7 @@ const guild = {
   reservationTimeGranularityMinutes: 15,
   reservationMaxAdvanceDays: 7,
   reservationActiveLimitPerSpot: 3,
+  lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
   documentLimit: 50,
   createdAt: now,
   updatedAt: now,

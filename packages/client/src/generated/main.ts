@@ -10053,6 +10053,22 @@ export interface InternalMemberIdentityDto {
   memberId: number;
 }
 
+export type GuildResponseDtoOutputLootDrawExcludedNpcTypesItem = typeof GuildResponseDtoOutputLootDrawExcludedNpcTypesItem[keyof typeof GuildResponseDtoOutputLootDrawExcludedNpcTypesItem];
+
+
+export const GuildResponseDtoOutputLootDrawExcludedNpcTypesItem = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
+  NPC: 'NPC',
+} as const;
+
 export interface GuildResponseDtoOutput {
   id: string;
   name: string;
@@ -10069,6 +10085,7 @@ export interface GuildResponseDtoOutput {
   reservationTimeGranularityMinutes: number;
   reservationMaxAdvanceDays: number;
   reservationActiveLimitPerSpot: number;
+  lootDrawExcludedNpcTypes: GuildResponseDtoOutputLootDrawExcludedNpcTypesItem[];
 }
 
 export type UserGuildPermissionsDtoGuild = {
@@ -10173,6 +10190,22 @@ export interface DiscordGuildSyncStateResponseDto {
   updatedAt: string;
 }
 
+export type UpdateGuildConfigDtoLootDrawExcludedNpcTypesItem = typeof UpdateGuildConfigDtoLootDrawExcludedNpcTypesItem[keyof typeof UpdateGuildConfigDtoLootDrawExcludedNpcTypesItem];
+
+
+export const UpdateGuildConfigDtoLootDrawExcludedNpcTypesItem = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
+  NPC: 'NPC',
+} as const;
+
 export interface UpdateGuildConfigDto {
   /**
      * @minLength 1
@@ -10205,6 +10238,8 @@ export interface UpdateGuildConfigDto {
      * @maximum 10
      */
   reservationActiveLimitPerSpot?: number;
+  /** @maxItems 10 */
+  lootDrawExcludedNpcTypes?: UpdateGuildConfigDtoLootDrawExcludedNpcTypesItem[];
 }
 
 export interface ManageableOrganizationResponse {

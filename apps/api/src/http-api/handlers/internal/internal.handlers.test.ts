@@ -1,3 +1,4 @@
+import { DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES } from "@lootlog/domain/loot-draw";
 import {
   createGuildFixture,
   createMemberFixture,
@@ -31,6 +32,7 @@ const guild = {
   reservationTimeGranularityMinutes: 15,
   reservationMaxAdvanceDays: 14,
   reservationActiveLimitPerSpot: 1,
+  lootDrawExcludedNpcTypes: [...DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES],
 };
 
 describe("internal guild HttpApi handlers", () => {

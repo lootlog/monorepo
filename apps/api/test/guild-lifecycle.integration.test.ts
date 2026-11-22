@@ -108,6 +108,8 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
           name: "lootlog-test",
           icon: null,
           active: true,
+          // A new Organization draws no legends of heroes or titans.
+          lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
         });
         expect(
           yield* db

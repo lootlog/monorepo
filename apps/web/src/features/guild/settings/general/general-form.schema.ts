@@ -1,6 +1,7 @@
 import { Schema } from "effect";
 import type { TFunction } from "i18next";
 import { parseVanityUrl } from "@lootlog/domain/organization-vanity-url";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 
 export const createGeneralFormSchema = (t: TFunction) =>
   Schema.toStandardSchemaV1(
@@ -17,6 +18,7 @@ export const createGeneralFormSchema = (t: TFunction) =>
         }),
       ),
       publicStatsCardEnabled: Schema.Boolean,
+      lootDrawExcludedNpcTypes: Schema.Array(NpcTypeSchema),
     }),
   );
 

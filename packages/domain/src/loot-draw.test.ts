@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   capturesMapPlayers,
+  DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES,
   formatLootDrawTickets,
   groupedLootDrawTicketOrder,
   isLootDrawItem,
@@ -65,14 +66,34 @@ describe("isLootDrawTicketOrder", () => {
 });
 
 describe("isLootDrawItem", () => {
+  const elite = { npcs: [{ type: "ELITE2" }] };
+  const legendary = { rarity: "LEGENDARY", stat: "binds;lvl=243" };
+
   it("draws only legendary items that are not bound for good", () => {
-    expect(isLootDrawItem({ rarity: "LEGENDARY", stat: "binds;lvl=243" })).toBe(
-      true,
-    );
+    expect(isLootDrawItem(elite, legendary, [])).toBe(true);
     expect(
-      isLootDrawItem({ rarity: "LEGENDARY", stat: "lvl=279;permbound" }),
+      isLootDrawItem(
+        elite,
+        { rarity: "LEGENDARY", stat: "lvl=279;permbound" },
+        [],
+      ),
     ).toBe(false);
-    expect(isLootDrawItem({ rarity: "UNIQUE", stat: "lvl=279" })).toBe(false);
+    expect(
+      isLootDrawItem(elite, { rarity: "UNIQUE", stat: "lvl=279" }, []),
+    ).toBe(false);
+  });
+
+  it("skips the legendary items of an excluded boss, not of its escort", () => {
+    const heroFight = { npcs: [{ type: "ELITE" }, { type: "HERO" }] };
+
+    expect(
+      isLootDrawItem(
+        heroFight,
+        legendary,
+        DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES,
+      ),
+    ).toBe(false);
+    expect(isLootDrawItem(heroFight, legendary, ["ELITE"])).toBe(true);
   });
 });
 

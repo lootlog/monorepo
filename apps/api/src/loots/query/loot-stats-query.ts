@@ -30,11 +30,13 @@ import {
   lootSubmissionTable as submission,
   lootTable as loot,
   npcSnapshotTable as npc,
-  npcTypeEnum,
   organizationLootRecordTable as record,
 } from "#src/database/drizzle/loot.schema";
 import { userCharactersLootlogSettingsTable as settings } from "#src/database/drizzle/user.schema";
-import { memberTable as member } from "#src/database/drizzle/organization.schema";
+import {
+  memberTable as member,
+  npcTypeEnum,
+} from "#src/database/drizzle/organization.schema";
 import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { NON_LEGEND_ITEM_TYPES } from "@lootlog/domain/item-type";
 import { strongestNpcFirst } from "#src/loots/strongest-npc-order";

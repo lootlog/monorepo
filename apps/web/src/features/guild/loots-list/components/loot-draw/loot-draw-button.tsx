@@ -1,10 +1,10 @@
 import { Button } from "@lootlog/ui/components/button";
-import { isLootDrawItem } from "@lootlog/domain/loot-draw";
 import { Dices, Trophy } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import { LootDrawDialog } from "./loot-draw-dialog";
+import { useIsLootDrawItem } from "./use-is-loot-draw-item";
 
 /** Opens a legendary item's draw from its row, naming the standing winner. */
 export const LootDrawButton = ({
@@ -18,12 +18,13 @@ export const LootDrawButton = ({
 }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const isLootDrawItem = useIsLootDrawItem();
 
   const winner = loot.standingDraws.find(
     ({ itemHid }) => itemHid === item.hid,
   )?.winner;
 
-  if (!isLootDrawItem(item)) return null;
+  if (!isLootDrawItem(loot, item)) return null;
 
   return (
     <>

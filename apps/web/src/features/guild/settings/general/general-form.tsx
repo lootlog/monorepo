@@ -33,6 +33,7 @@ import {
   type GeneralFormValues,
 } from "./general-form.schema";
 import { StatsCardSettingsSection } from "./stats-card-settings-section";
+import { LootDrawSettingsSection } from "./loot-draw-settings-section";
 
 export const GeneralForm = () => {
   const { t } = useTranslation();
@@ -53,11 +54,13 @@ export const GeneralForm = () => {
     defaultValues: {
       vanityUrl: "",
       publicStatsCardEnabled: false,
+      lootDrawExcludedNpcTypes: [],
     },
     // A refetch updates untouched fields and keeps the unsaved edits.
     values: guild && {
       vanityUrl: guild.vanityUrl ?? "",
       publicStatsCardEnabled: guild.publicStatsCardEnabled,
+      lootDrawExcludedNpcTypes: guild.lootDrawExcludedNpcTypes,
     },
     resetOptions: { keepDirtyValues: true },
   });
@@ -71,6 +74,7 @@ export const GeneralForm = () => {
         data: {
           vanityUrl: values.vanityUrl.length > 0 ? values.vanityUrl : null,
           publicStatsCardEnabled: values.publicStatsCardEnabled,
+          lootDrawExcludedNpcTypes: [...values.lootDrawExcludedNpcTypes],
         },
       },
       {
@@ -97,6 +101,7 @@ export const GeneralForm = () => {
           form.reset({
             vanityUrl: data.vanityUrl ?? "",
             publicStatsCardEnabled: data.publicStatsCardEnabled,
+            lootDrawExcludedNpcTypes: data.lootDrawExcludedNpcTypes,
           });
         },
         onError: (error) => {
@@ -146,6 +151,8 @@ export const GeneralForm = () => {
         </BandSection>
 
         {guild && <StatsCardSettingsSection form={form} guild={guild} />}
+
+        <LootDrawSettingsSection form={form} />
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}

@@ -1,0 +1,42 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "9e261729-4a58-4930-a994-1ff73d191612",
+  "prevIds": ["d15ed0a8-b998-40fc-b776-94a120109f28"],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Guild",
+        "lootDrawExcludedNpcTypes"
+      ],
+      "writes": [
+        "s|col|public.Guild.lootDrawExcludedNpcTypes",
+        "n|col|public.Guild.lootDrawExcludedNpcTypes",
+        "e|col|public.Guild.lootDrawExcludedNpcTypes"
+      ],
+      "reads": ["n|tbl|public.Guild", "n|sch|public", "n|enum|public.NpcType"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Guild",
+        "name": "lootDrawExcludedNpcTypes",
+        "type": "NpcType",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{HERO,EVENT_HERO,TITAN}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

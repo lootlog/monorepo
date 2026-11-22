@@ -93,6 +93,11 @@ const buildGuildConfigurationUpdate = (
     update.reservationActiveLimitPerSpot =
       payload.reservationActiveLimitPerSpot;
 
+  if (payload.lootDrawExcludedNpcTypes !== undefined)
+    update.lootDrawExcludedNpcTypes = [
+      ...new Set(payload.lootDrawExcludedNpcTypes),
+    ];
+
   return update;
 };
 
