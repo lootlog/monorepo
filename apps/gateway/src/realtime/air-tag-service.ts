@@ -92,10 +92,6 @@ const warn = (message: string, cause: unknown) =>
     Effect.annotateLogs({ context: "AirTagService" }),
   );
 
-type BatchAdmission =
-  | { status: "admitted"; enabledScopes: AirTagScope[] }
-  | { status: "rate-limited"; retryAfterMs: number };
-
 const UNAVAILABLE = {
   status: "rejected",
   code: "temporarily-unavailable",
@@ -236,6 +232,20 @@ export class AirTagService {
     if (scopes.length === 0)
       return Effect.succeed({ status: "rejected", code: "forbidden" });
 
+    // Counted before anything else: a batch with nothing to merge still
+    // spends the replica's shared command budget.
+    const now = Date.now();
+    let limit = admitConnectionBatch(socket.data, now);
+
+    if (limit.admitted) limit = this.userBatches.admit(socket.data.userId, now);
+
+    if (limit.admitted === false)
+      return Effect.succeed({
+        status: "rejected",
+        code: "rate-limited",
+        retryAfterMs: limit.retryAfterMs,
+      });
+
     // The contract accepts every relation, and older clients report every
     // player they see; most are not clan enemies and cost no Redis call.
     const sightings = payload.observations.filter((item) =>
@@ -249,19 +259,12 @@ export class AirTagService {
         acceptedTargets: 0,
       });
 
-    return this.admit(socket, scopes).pipe(
+    return this.readEnabledScopes(scopes, now).pipe(
       Effect.flatMap(
         (
-          admission,
+          enabledScopes,
         ): Effect.Effect<AirTagObservationAck, RealtimeStoreError> => {
-          if (!admission) return Effect.succeed(UNAVAILABLE);
-
-          if (admission.status === "rate-limited")
-            return Effect.succeed({
-              status: "rejected",
-              code: "rate-limited",
-              retryAfterMs: admission.retryAfterMs,
-            });
+          if (!enabledScopes) return Effect.succeed(UNAVAILABLE);
 
           const observations = [
             ...new Map(sightings.map((item) => [item.targetId, item])).values(),
@@ -288,7 +291,7 @@ export class AirTagService {
           // Scopes are independent: a failed merge does not stop the others.
           // Forking costs more than a merge, and most observers share one scope.
           return Effect.forEach(
-            admission.enabledScopes,
+            enabledScopes,
             (scope) =>
               mergeObservations(this.redis, this.hub.instanceId, scope, {
                 observer: socket.data.connectionId,
@@ -301,7 +304,7 @@ export class AirTagService {
                 Effect.exit,
               ),
             {
-              concurrency: admission.enabledScopes.length > 1 ? "unbounded" : 1,
+              concurrency: enabledScopes.length > 1 ? "unbounded" : 1,
             },
           ).pipe(
             Effect.flatMap((results) =>
@@ -745,36 +748,22 @@ export class AirTagService {
   }
 
   /**
-   * The batch's rate-limit verdict and enabled scopes, or null when Redis
-   * cannot say whether the scopes are switched off. Both limits are counted
-   * in process, so an admitted batch costs Dragonfly its merge alone.
+   * The scopes not switched off, or null when Redis cannot say. The switch is
+   * cached, so an admitted batch costs Dragonfly its merge alone.
    */
-  private admit(
-    socket: GatewaySocket,
+  private readEnabledScopes(
     scopes: ReadonlyArray<AirTagScope>,
-  ): Effect.Effect<BatchAdmission | null> {
-    const now = Date.now();
-    let limit = admitConnectionBatch(socket.data, now);
-
-    if (limit.admitted) limit = this.userBatches.admit(socket.data.userId, now);
-
-    if (limit.admitted === false)
-      return Effect.succeed<BatchAdmission>({
-        status: "rate-limited",
-        retryAfterMs: limit.retryAfterMs,
-      });
-
-    return this.disabledScopes.filterEnabled(this.redis, scopes, now).pipe(
-      Effect.map((enabledScopes): BatchAdmission => ({
-        status: "admitted",
-        enabledScopes,
-      })),
-      Effect.catch((error) =>
-        warn("Failed to admit air tag observations", error).pipe(
-          Effect.as(null),
+    now: number,
+  ): Effect.Effect<AirTagScope[] | null> {
+    return this.disabledScopes
+      .filterEnabled(this.redis, scopes, now)
+      .pipe(
+        Effect.catch((error) =>
+          warn("Failed to admit air tag observations", error).pipe(
+            Effect.as(null),
+          ),
         ),
-      ),
-    );
+      );
   }
 }
 

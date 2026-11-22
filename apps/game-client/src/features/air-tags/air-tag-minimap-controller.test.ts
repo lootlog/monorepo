@@ -167,6 +167,11 @@ describe("AirTagMinimapController", () => {
     airTagReceiveController.clear();
     minimap.frame();
     expect(minimap.isDrawing()).toBe(false);
+
+    // Enemies are reported on every map, but drawn only on a red one.
+    setTestRuntimeGame({ map: { ...RED_MAP, pvp: 0 } });
+    report([target({})]);
+    expect(minimap.isDrawing()).toBe(false);
     controller.setEnabled(false, labels);
   });
 

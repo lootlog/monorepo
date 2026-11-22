@@ -12,6 +12,7 @@ import {
   type MinimapSquares,
 } from "@/lib/margonem-runtime/adapters/minimap-player-runtime-adapter";
 import { getCanvasPoint } from "@/features/pings/map-ping-controller";
+import { showsAirTagsOnMap } from "./air-tag-game-visibility";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import {
   AIR_TAG_TARGET_TTL_MS,
@@ -135,9 +136,17 @@ export class AirTagMinimapController {
     // The next frame re-reads which enemies are unseen.
     this.refreshedAt = 0;
 
-    if (this.unsubscribeDraw || !airTagReceiveController.hasTargets()) return;
+    if (this.unsubscribeDraw || !this.hasMarkersToDraw()) return;
     this.unsubscribeDraw = rendererRuntimeAdapter.subscribeDraw(this.drawFrame);
   };
+
+  /**
+   * Members report enemies on every map, but only a red map shows them, so
+   * elsewhere a reported enemy is no reason to run in the game's frame.
+   */
+  private hasMarkersToDraw(): boolean {
+    return showsAirTagsOnMap() && airTagReceiveController.hasTargets();
+  }
 
   private detach(): void {
     this.unsubscribeDraw?.();
@@ -150,7 +159,7 @@ export class AirTagMinimapController {
   }
 
   private readonly drawFrame = (): void => {
-    if (!airTagReceiveController.hasTargets()) {
+    if (!this.hasMarkersToDraw()) {
       this.detach();
 
       return;

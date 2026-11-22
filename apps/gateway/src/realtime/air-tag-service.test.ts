@@ -48,6 +48,68 @@ describe("AirTagService", () => {
   });
 });
 
+describe("AirTagService batches with nothing to merge", () => {
+  test("count against the connection's limit without touching Redis", async () => {
+    const unexpected = () => Promise.reject(new Error("Unexpected Redis call"));
+
+    const service = new AirTagService(
+      { command: { eval: unexpected, mget: unexpected, smembers: unexpected } },
+      {
+        instanceId: crypto.randomUUID(),
+        getLocalScopes: () => [],
+        subscribe: () => {},
+        unsubscribe: () => {},
+        publishToScopes: () => Promise.reject(new Error("Unexpected publish")),
+      },
+    );
+
+    const socket = makeGamePingSocket();
+    socket.data.airTagScopes = [
+      {
+        guildId: "organization-1",
+        world: "classic",
+        mapId: 7,
+        subscription: {
+          topic: "map.air-tags",
+          organizationId: "organization-1",
+          world: "classic",
+          mapId: 7,
+        },
+      },
+    ];
+
+    // An older client reports every player it sees; none here is a clan enemy.
+    const publish = () =>
+      Effect.runPromise(
+        service.publishObservations(socket, {
+          expectedMapId: 7,
+          observations: [
+            {
+              targetId: "neutral",
+              nickname: "Neutral",
+              relation: 1,
+              x: 1,
+              y: 2,
+            },
+          ],
+        }),
+      );
+
+    for (let index = 0; index < 15; index += 1) {
+      expect(await publish()).toEqual({
+        status: "accepted",
+        acceptedScopes: 1,
+        acceptedTargets: 0,
+      });
+    }
+
+    expect(await publish()).toMatchObject({
+      status: "rejected",
+      code: "rate-limited",
+    });
+  });
+});
+
 describe("AirTagService map threats", () => {
   test("publishes a map threat again when the first publication fails", async () => {
     const threatEvent = {
