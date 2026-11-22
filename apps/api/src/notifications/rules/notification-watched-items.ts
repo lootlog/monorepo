@@ -219,7 +219,7 @@ export const makeNotificationWatchedItems = (
           ? mapRule(rule, targets.get(rule.id) ?? [])
           : null,
         itemSnapshot: snapshot
-          ? Schema.decodeUnknownSync(WatchedItemSnapshotResponse)({
+          ? Schema.decodeSync(WatchedItemSnapshotResponse)({
               name: snapshot.name,
               icon: snapshot.icon,
               rarity: snapshot.rarity,
@@ -237,11 +237,9 @@ export const makeNotificationWatchedItems = (
       const uniqueIds = [...new Set(inputIds)];
 
       if (uniqueIds.length === 0) {
-        return yield* Effect.fail(
-          new InvalidRequestError({
-            code: NotificationError.AT_LEAST_ONE_GUILD_REQUIRED,
-          }),
-        );
+        return yield* new InvalidRequestError({
+          code: NotificationError.AT_LEAST_ONE_GUILD_REQUIRED,
+        });
       }
 
       const scopedOrganizations = yield* apiKeyAccessibleGuilds(database);
@@ -256,11 +254,9 @@ export const makeNotificationWatchedItems = (
       });
 
       if (resolved.length !== uniqueIds.length) {
-        return yield* Effect.fail(
-          new InvalidRequestError({
-            code: NotificationError.SELECTED_GUILDS_NOT_AVAILABLE_FOR_AUTHENTICATED_USER,
-          }),
-        );
+        return yield* new InvalidRequestError({
+          code: NotificationError.SELECTED_GUILDS_NOT_AVAILABLE_FOR_AUTHENTICATED_USER,
+        });
       }
 
       return [...new Set(resolved)].sort();
@@ -302,11 +298,9 @@ export const makeNotificationWatchedItems = (
     const targetIds = yield* activeTargetIds(discordId);
 
     if (targetIds.length === 0) {
-      return yield* Effect.fail(
-        new ResourceConflictError({
-          code: NotificationError.ACTIVE_DISCORD_DM_TARGET_REQUIRED,
-        }),
-      );
+      return yield* new ResourceConflictError({
+        code: NotificationError.ACTIVE_DISCORD_DM_TARGET_REQUIRED,
+      });
     }
 
     const existing = yield* findByScope(discordId, params.itemId, params.world);
@@ -333,15 +327,13 @@ export const makeNotificationWatchedItems = (
       const currentCount = rows[0]?.value ?? 0;
 
       if (currentCount >= WATCHED_ITEM_LIMIT) {
-        return yield* Effect.fail(
-          new ResourceConflictError({
-            code: NotificationError.USER_WATCHED_ITEM_LIMIT_REACHED,
-            details: {
-              watchedItemLimit: WATCHED_ITEM_LIMIT,
-              watchedItemCount: currentCount,
-            },
-          }),
-        );
+        return yield* new ResourceConflictError({
+          code: NotificationError.USER_WATCHED_ITEM_LIMIT_REACHED,
+          details: {
+            watchedItemLimit: WATCHED_ITEM_LIMIT,
+            watchedItemCount: currentCount,
+          },
+        });
       }
     }
 
@@ -476,11 +468,9 @@ export const makeNotificationWatchedItems = (
       yield* requireNotificationRuleApiKeyScope(database, rows[0].rule);
 
     if (!item) {
-      return yield* Effect.fail(
-        new ResourceNotFoundError({
-          code: NotificationError.WATCHED_ITEM_NOT_FOUND,
-        }),
-      );
+      return yield* new ResourceNotFoundError({
+        code: NotificationError.WATCHED_ITEM_NOT_FOUND,
+      });
     }
 
     if (item.notificationRuleId !== null) {

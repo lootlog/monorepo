@@ -276,8 +276,8 @@ export const makeBattleTimelineRead = (
         );
 
       if (!battle)
-        return yield* Effect.fail(
-          new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
+        return yield* new ResourceNotFoundError(
+          `Battle with ID ${battleId} not found`,
         );
 
       return normalizeRawBattleData(yield* loadRawBattleData(battle));
@@ -307,10 +307,8 @@ export const makeBattleTimelineRead = (
         );
 
       if (!battle)
-        return yield* Effect.fail(
-          new ResourceNotFoundError(
-            `Public battle with ID ${battleId} not found`,
-          ),
+        return yield* new ResourceNotFoundError(
+          `Public battle with ID ${battleId} not found`,
         );
 
       return normalizeRawBattleData(yield* loadRawBattleData(battle));

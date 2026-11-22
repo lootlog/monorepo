@@ -59,10 +59,10 @@ import {
   AccountOrganizationOperationError,
 } from "#src/guilds/account-organization-data";
 
-export class BattlelogCleanupFailed extends TaggedErrorClass<BattlelogCleanupFailed>()(
-  "BattlelogCleanupFailed",
-  { status: Schema.Number },
-) {}
+export class BattlelogCleanupFailed extends TaggedErrorClass<
+  BattlelogCleanupFailed,
+  { readonly brand: unique symbol }
+>()("BattlelogCleanupFailed", { status: Schema.Finite }) {}
 
 type RemovedMember = {
   readonly discordId: string;

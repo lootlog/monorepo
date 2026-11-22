@@ -88,7 +88,7 @@ export const makeRabbitBridgeHarness = (
 
   const deliver = (
     routingKey: string,
-    payload: typeof Schema.Json.Type,
+    payload: Schema.Json,
     {
       messageId,
       redelivered = false,

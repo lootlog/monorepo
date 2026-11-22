@@ -1,3 +1,4 @@
+import { OperationError } from "@lootlog/instrumentation/operation";
 import { ApiKeyService } from "#src/auth/api-key-service";
 import {
   hasServiceAuthorization,
@@ -119,7 +120,7 @@ const internalServerError = (message: string) =>
 
 const parseExpiresAt = Function.compose(
   Schema.decodeUnknownOption(
-    Schema.Union([Schema.String, Schema.Number, Schema.Date]),
+    Schema.Union([Schema.String, Schema.Finite, Schema.Date]),
   ),
   Option.flatMap(DateTime.make),
 );
@@ -208,38 +209,34 @@ export const createAuthService = ({
 
   const validateBearerToken = Effect.fn("AuthService.validateBearerToken")(
     function* (token: string) {
-      const jwks = yield* Effect.tryPromise({
-        try: () => auth.api.getJwks(),
-        catch: (cause) => cause,
-      }).pipe(Effect.orElseSucceed(() => null));
+      const jwks = yield* Effect.tryPromise(() => auth.api.getJwks()).pipe(
+        Effect.orElseSucceed(() => null),
+      );
 
       if (!jwks) {
         return null;
       }
 
-      return yield* Effect.tryPromise({
-        try: async () => {
-          const { payload } = await jwtVerify(token, createLocalJWKSet(jwks), {
-            issuer: appUrl,
-            audience: appUrl,
-          });
+      return yield* Effect.tryPromise(async () => {
+        const { payload } = await jwtVerify(token, createLocalJWKSet(jwks), {
+          issuer: appUrl,
+          audience: appUrl,
+        });
 
-          if (
-            !Predicate.isString(payload.sub) ||
-            !Predicate.isString(payload.discordId)
-          ) {
-            return null;
-          }
+        if (
+          !Predicate.isString(payload.sub) ||
+          !Predicate.isString(payload.discordId)
+        ) {
+          return null;
+        }
 
-          return {
-            userId: payload.sub,
-            discordId: payload.discordId,
-            roles: parsePlatformRoles(
-              Predicate.isString(payload.role) ? payload.role : undefined,
-            ),
-          } satisfies VerifiedIdentity;
-        },
-        catch: (cause) => cause,
+        return {
+          userId: payload.sub,
+          discordId: payload.discordId,
+          roles: parsePlatformRoles(
+            Predicate.isString(payload.role) ? payload.role : undefined,
+          ),
+        } satisfies VerifiedIdentity;
       }).pipe(Effect.orElseSucceed(() => null));
     },
   );
@@ -359,7 +356,13 @@ export const createAuthService = ({
               accountId,
             },
           }),
-        catch: (cause) => cause,
+        catch: (cause) =>
+          cause instanceof APIError
+            ? cause
+            : new OperationError({
+                operation: "auth.discord.getAccessToken",
+                cause,
+              }),
       });
     },
   );

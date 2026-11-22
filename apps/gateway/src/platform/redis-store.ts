@@ -1,3 +1,4 @@
+import { OperationError } from "@lootlog/instrumentation/operation";
 import { RedisScriptCache } from "@lootlog/database/redis-script";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import {
@@ -37,8 +38,8 @@ export interface FederatedRealtimeMessage {
   readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
   readonly partyGatheringSource?: PartyGatheringEventSource;
   readonly scopeKey?: string;
-  readonly scope?: typeof SubscriptionScope.Type;
-  readonly scopes?: ReadonlyArray<typeof SubscriptionScope.Type>;
+  readonly scope?: SubscriptionScope;
+  readonly scopes?: ReadonlyArray<SubscriptionScope>;
   readonly userId?: string;
   readonly discordId?: string;
   readonly excludeConnectionId?: string;
@@ -65,13 +66,13 @@ export interface FederatedFrameTexts {
 
 const FederatedRealtimeMessageSchema = Schema.Struct({
   id: Schema.String,
-  sequence: Schema.optional(Schema.Number),
+  sequence: Schema.optional(Schema.Finite),
   sourceInstanceId: Schema.String,
   partyGatheringSource: Schema.optional(PartyGatheringEventSourceSchema),
   sourceNpcs: Schema.optional(
     Schema.Array(
       Schema.Struct({
-        level: Schema.NullOr(Schema.Number),
+        level: Schema.NullOr(Schema.Finite),
         type: Schema.NullOr(Schema.String),
       }),
     ),
@@ -84,7 +85,7 @@ const FederatedRealtimeMessageSchema = Schema.Struct({
   excludeConnectionId: Schema.optional(Schema.String),
   recipientPlatform: Schema.optional(Schema.Literals(["game", "web-app"])),
   recipientWorld: Schema.optional(Schema.String),
-  recipientMapId: Schema.optional(Schema.Number),
+  recipientMapId: Schema.optional(Schema.Finite),
   recipientCharacterIds: Schema.optional(Schema.Array(Schema.String)),
   presenceAudience: Schema.optional(Schema.Literal("precise")),
   organizationId: Schema.optional(Schema.String),
@@ -304,18 +305,7 @@ export class RedisGatewayStore {
           Effect.forkScoped,
         );
 
-        let reportedLoss = false;
-        let batchStarted = performance.now();
-        let batchSize = 0;
-
-        while (true) {
-          const { message: raw } = yield* Queue.take(messages);
-
-          if (!reportedLoss && !Predicate.isTagged(messages.state, "Open")) {
-            reportedLoss = true;
-            onStateChange("interrupted");
-          }
-
+        const deliver = (raw: string) => {
           try {
             const message = decodeFederatedRealtimeMessage(raw);
 
@@ -333,6 +323,21 @@ export class RedisGatewayStore {
               listener(message);
             }
           } catch {}
+        };
+
+        let reportedLoss = false;
+        let batchStarted = performance.now();
+        let batchSize = 0;
+
+        while (true) {
+          const { message: raw } = yield* Queue.take(messages);
+
+          if (!reportedLoss && !Predicate.isTagged(messages.state, "Open")) {
+            reportedLoss = true;
+            onStateChange("interrupted");
+          }
+
+          deliver(raw);
 
           batchSize++;
 
@@ -416,7 +421,7 @@ export class GatewayRedis extends Context.Service<
           return store;
         },
         catch: (cause) =>
-          new Error("Failed to connect Gateway Redis", { cause }),
+          new OperationError({ operation: "gateway.redis.connect", cause }),
       });
     }),
   );

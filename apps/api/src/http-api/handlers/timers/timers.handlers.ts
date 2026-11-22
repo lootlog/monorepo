@@ -43,10 +43,13 @@ import {
   type TimersNotFound,
 } from "#src/timers/timer-errors";
 
-export class TimersAccessDenied extends TaggedErrorClass<TimersAccessDenied>()(
-  "TimersAccessDenied",
-  { status: Schema.Literals([401, 403]), code: Schema.String },
-) {}
+export class TimersAccessDenied extends TaggedErrorClass<
+  TimersAccessDenied,
+  { readonly brand: unique symbol }
+>()("TimersAccessDenied", {
+  status: Schema.Literals([401, 403]),
+  code: Schema.String,
+}) {}
 
 export class TimersAuthorization extends Context.Service<
   TimersAuthorization,

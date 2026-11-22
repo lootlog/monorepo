@@ -105,7 +105,7 @@ it("expires only the disconnected character's existing gathering or application,
       );
 
       return room
-        ? Schema.decodeUnknownEffect(schema)(room).pipe(Effect.orDie)
+        ? Schema.decodeEffect(schema)(room).pipe(Effect.orDie)
         : Effect.succeed(null);
     },
     eval: (script, _keys, args) => {
@@ -116,7 +116,7 @@ it("expires only the disconnected character's existing gathering or application,
           EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
         ].includes(script)
       ) {
-        const next = Schema.decodeUnknownSync(
+        const next = Schema.decodeSync(
           Schema.fromJsonString(PartyReadyRoomAggregateSchema),
         )(String(args[1]));
 

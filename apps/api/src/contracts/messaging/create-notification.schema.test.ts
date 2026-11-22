@@ -4,7 +4,7 @@ import { Result, Schema } from "effect";
 
 describe("SendNotificationRequest", () => {
   it("keeps npc coordinates when present", () => {
-    const result = Schema.decodeUnknownSync(SendNotificationRequest)({
+    const result = Schema.decodeSync(SendNotificationRequest)({
       npc: {
         id: 911169,
         hpp: 0,
@@ -27,7 +27,7 @@ describe("SendNotificationRequest", () => {
   });
 
   it("requires the organizer character for party gathering notifications", () => {
-    const result = Schema.decodeUnknownResult(SendNotificationRequest)({
+    const result = Schema.decodeResult(SendNotificationRequest)({
       npc: {
         id: 911169,
         location: "Glusza Swistu",
@@ -46,7 +46,7 @@ describe("SendNotificationRequest", () => {
   });
 
   it("accepts a party gathering notification with an organizer character", () => {
-    const result = Schema.decodeUnknownResult(SendNotificationRequest)({
+    const result = Schema.decodeResult(SendNotificationRequest)({
       npc: {
         id: 911169,
         location: "Glusza Swistu",
@@ -73,7 +73,7 @@ describe("SendNotificationRequest", () => {
   });
 
   it("rejects a party gathering notification addressed to several Lootlogs", () => {
-    const result = Schema.decodeUnknownResult(SendNotificationRequest)({
+    const result = Schema.decodeResult(SendNotificationRequest)({
       npc: {
         id: 911169,
         location: "Glusza Swistu",

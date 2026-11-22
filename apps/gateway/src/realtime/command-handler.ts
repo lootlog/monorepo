@@ -74,9 +74,9 @@ import {
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 
-type Command = typeof ClientCommand.Type;
+type Command = ClientCommand;
 
-type RealtimeResponse = typeof Response.Type;
+type RealtimeResponse = Response;
 
 const errorResponse = (
   requestId: string,

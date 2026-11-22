@@ -326,8 +326,7 @@ export const makeCreateHeroSighting = (
       { concurrency: "unbounded" },
     );
 
-    if (guildRows.length === 0)
-      return yield* Effect.fail(new PermissionDeniedError());
+    if (guildRows.length === 0) return yield* new PermissionDeniedError();
 
     const catching = new Set(catchingGuildIds);
 
@@ -344,12 +343,10 @@ export const makeCreateHeroSighting = (
     }));
 
     if (targets.length === 0)
-      return yield* Effect.fail(
-        new InvalidRequestError({
-          code: "NO_GUILDS_ON_THE_CATCHING_WHITELIST",
-          details: { submittedGuilds: [], rejectedGuilds },
-        }),
-      );
+      return yield* new InvalidRequestError({
+        code: "NO_GUILDS_ON_THE_CATCHING_WHITELIST",
+        details: { submittedGuilds: [], rejectedGuilds },
+      });
 
     const outcomes = yield* Effect.forEach(
       targets,
@@ -392,12 +389,10 @@ export const makeCreateHeroSighting = (
     }
 
     if (submittedGuilds.length === 0)
-      return yield* Effect.fail(
-        new InvalidRequestError({
-          code: "NO_GUILD_ACCEPTS_THIS_SIGHTING",
-          details: { submittedGuilds: [], rejectedGuilds },
-        }),
-      );
+      return yield* new InvalidRequestError({
+        code: "NO_GUILD_ACCEPTS_THIS_SIGHTING",
+        details: { submittedGuilds: [], rejectedGuilds },
+      });
 
     return { submittedGuilds, rejectedGuilds };
   });
@@ -548,7 +543,7 @@ const loadVisibleSighting = Effect.fnUntraced(function* (
     sighting.guildId !== access.guild.id ||
     !canRead(guildReader(access), sighting)
   )
-    return yield* Effect.fail(notFound());
+    return yield* notFound();
 
   return sighting;
 });
@@ -560,7 +555,7 @@ export const makeHeroSightingClaims = (
   const publishCurrent = Effect.fnUntraced(function* (sightingId: number) {
     const [updated] = yield* loadHeroSightings(database, [sightingId]);
 
-    if (!updated) return yield* Effect.fail(notFound());
+    if (!updated) return yield* notFound();
     yield* ports.publish(updated);
 
     return updated;
@@ -574,9 +569,7 @@ export const makeHeroSightingClaims = (
     const sighting = yield* loadVisibleSighting(database, access, sightingId);
 
     if (sighting.closedAt !== null)
-      return yield* Effect.fail(
-        new ResourceConflictError({ code: "HERO_SIGHTING_CLOSED" }),
-      );
+      return yield* new ResourceConflictError({ code: "HERO_SIGHTING_CLOSED" });
 
     yield* database.transaction((transaction) =>
       Effect.gen(function* () {
@@ -680,9 +673,9 @@ export const makeManualHeroSightings = (
         };
 
     if (!canRead(guildReader(access), { hero: { lvl: hero.heroLvl } }))
-      return yield* Effect.fail(
-        new PermissionDeniedError({ code: "HERO_SIGHTING_LEVEL_NOT_VISIBLE" }),
-      );
+      return yield* new PermissionDeniedError({
+        code: "HERO_SIGHTING_LEVEL_NOT_VISIBLE",
+      });
 
     const mapKey = normalizeNpcName(payload.mapName);
 
@@ -708,13 +701,12 @@ export const makeManualHeroSightings = (
       sighting.detectedBy.memberId !== access.member.id &&
       !guildReader(access).administers
     )
-      return yield* Effect.fail(new PermissionDeniedError());
+      return yield* new PermissionDeniedError();
 
     const closed = () =>
       new ResourceConflictError({ code: "HERO_SIGHTING_NOT_WITHDRAWABLE" });
 
-    if (!sighting.manual || sighting.closedAt !== null)
-      return yield* Effect.fail(closed());
+    if (!sighting.manual || sighting.closedAt !== null) return yield* closed();
 
     const now = new Date(yield* Clock.currentTimeMillis);
 
@@ -741,11 +733,11 @@ export const makeManualHeroSightings = (
         .returning({ id: heroSightingTable.id }),
     );
 
-    if (withdrawn.length === 0) return yield* Effect.fail(closed());
+    if (withdrawn.length === 0) return yield* closed();
 
     const [updated] = yield* loadHeroSightings(database, [sightingId]);
 
-    if (!updated) return yield* Effect.fail(notFound());
+    if (!updated) return yield* notFound();
     yield* ports.publish(updated);
 
     return updated;

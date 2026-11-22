@@ -277,11 +277,9 @@ export const makeNotificationRuleOperations = (
   ) =>
     Effect.gen(function* () {
       if (targetIds.length === 0) {
-        return yield* Effect.fail(
-          new InvalidRequestError({
-            code: NotificationError.AT_LEAST_ONE_TARGET_REQUIRED,
-          }),
-        );
+        return yield* new InvalidRequestError({
+          code: NotificationError.AT_LEAST_ONE_TARGET_REQUIRED,
+        });
       }
 
       const rows = yield* database
@@ -297,11 +295,9 @@ export const makeNotificationRuleOperations = (
         );
 
       if (rows.length !== targetIds.length) {
-        return yield* Effect.fail(
-          new InvalidRequestError({
-            code: NotificationError.INVALID_NOTIFICATION_TARGETS,
-          }),
-        );
+        return yield* new InvalidRequestError({
+          code: NotificationError.INVALID_NOTIFICATION_TARGETS,
+        });
       }
 
       return [...targetIds];
@@ -335,12 +331,10 @@ export const makeNotificationRuleOperations = (
 
       if (ownerType === NotificationOwnerType.USER) {
         if (ruleCount >= USER_RULE_LIMIT) {
-          return yield* Effect.fail(
-            new ResourceConflictError({
-              code: NotificationError.USER_NOTIFICATION_RULE_LIMIT_REACHED,
-              details: { ruleLimit: USER_RULE_LIMIT, ruleCount },
-            }),
-          );
+          return yield* new ResourceConflictError({
+            code: NotificationError.USER_NOTIFICATION_RULE_LIMIT_REACHED,
+            details: { ruleLimit: USER_RULE_LIMIT, ruleCount },
+          });
         }
 
         return;
@@ -355,22 +349,23 @@ export const makeNotificationRuleOperations = (
       const guild = guilds[0];
 
       if (!guild) {
-        return yield* Effect.fail(
-          new ResourceNotFoundError({
-            code: NotificationError.GUILD_NOT_FOUND,
-          }),
-        );
+        return yield* new ResourceNotFoundError({
+          code: NotificationError.GUILD_NOT_FOUND,
+        });
       }
 
       if (ruleCount >= guild.notificationRuleLimit) {
-        return yield* Effect.fail(
-          new ResourceConflictError({
-            code: NotificationError.GUILD_NOTIFICATION_RULE_LIMIT_REACHED,
-            details: { ruleLimit: guild.notificationRuleLimit, ruleCount },
-          }),
-        );
+        return yield* new ResourceConflictError({
+          code: NotificationError.GUILD_NOTIFICATION_RULE_LIMIT_REACHED,
+          details: { ruleLimit: guild.notificationRuleLimit, ruleCount },
+        });
       }
     });
+
+  const invalidRuleValues = (cause: unknown) =>
+    cause instanceof InvalidRequestError
+      ? cause
+      : new OperationError({ operation: "notifications.rules.values", cause });
 
   const create = Effect.fn("notifications.rules.create")(function* (
     ownerType: NotificationOwnerTypeValue,
@@ -387,7 +382,7 @@ export const makeNotificationRuleOperations = (
 
     const values = yield* Effect.try({
       try: () => createNotificationRuleValues(ownerType, ownerId, data),
-      catch: (cause) => cause,
+      catch: invalidRuleValues,
     });
 
     const organizations = yield* apiKeyAccessibleGuilds(database);
@@ -452,7 +447,7 @@ export const makeNotificationRuleOperations = (
 
     const values = yield* Effect.try({
       try: () => updateNotificationRuleValues(ownerType, existing, data),
-      catch: (cause) => cause,
+      catch: invalidRuleValues,
     });
 
     const organizations = yield* apiKeyAccessibleGuilds(database);
@@ -536,19 +531,15 @@ export const makeNotificationRuleOperations = (
     const rule = rules.find((candidate) => candidate.id === ruleId);
 
     if (!rule) {
-      return yield* Effect.fail(
-        new ResourceNotFoundError({
-          code: NotificationError.NOTIFICATION_RULE_NOT_FOUND,
-        }),
-      );
+      return yield* new ResourceNotFoundError({
+        code: NotificationError.NOTIFICATION_RULE_NOT_FOUND,
+      });
     }
 
     if (!rule.enabled) {
-      return yield* Effect.fail(
-        new ResourceConflictError({
-          code: NotificationError.ONLY_ENABLED_RULES_CAN_BE_TEST_TRIGGERED,
-        }),
-      );
+      return yield* new ResourceConflictError({
+        code: NotificationError.ONLY_ENABLED_RULES_CAN_BE_TEST_TRIGGERED,
+      });
     }
 
     const activeTargets = rule.targets
@@ -556,11 +547,9 @@ export const makeNotificationRuleOperations = (
       .filter((target) => target.active && target.canSend);
 
     if (activeTargets.length === 0) {
-      return yield* Effect.fail(
-        new ResourceConflictError({
-          code: NotificationError.NOTIFICATION_RULE_REQUIRES_ACTIVE_SENDABLE_TARGET,
-        }),
-      );
+      return yield* new ResourceConflictError({
+        code: NotificationError.NOTIFICATION_RULE_REQUIRES_ACTIVE_SENDABLE_TARGET,
+      });
     }
 
     const usage = yield* testUsage(activeTargets.map(({ id }) => id));
@@ -575,16 +564,14 @@ export const makeNotificationRuleOperations = (
         usage,
       );
 
-      return yield* Effect.fail(
-        new ResourceConflictError({
-          code: NotificationError.TEST_TRIGGER_LIMIT_REACHED_FOR_RULE,
-          details: {
-            limit: worst.limit,
-            windowSeconds: worst.windowSeconds,
-            nextAvailableAt: worst.nextAvailableAt,
-          },
-        }),
-      );
+      return yield* new ResourceConflictError({
+        code: NotificationError.TEST_TRIGGER_LIMIT_REACHED_FOR_RULE,
+        details: {
+          limit: worst.limit,
+          windowSeconds: worst.windowSeconds,
+          nextAvailableAt: worst.nextAvailableAt,
+        },
+      });
     }
 
     const scheduledFor = new Date(yield* Clock.currentTimeMillis);
@@ -630,11 +617,9 @@ export const makeNotificationRuleOperations = (
     });
 
     if (created.length === 0) {
-      return yield* Effect.fail(
-        new ResourceConflictError({
-          code: NotificationError.NO_TEST_JOBS_CREATED_FOR_RULE,
-        }),
-      );
+      return yield* new ResourceConflictError({
+        code: NotificationError.NO_TEST_JOBS_CREATED_FOR_RULE,
+      });
     }
 
     return { success: true as const };

@@ -289,13 +289,11 @@ export const makeGuildDiscordSyncData = (
         (yield* Clock.currentTimeMillis) - cooldownFrom.getTime();
 
       if (elapsedMs < cooldownMs) {
-        return yield* Effect.fail(
-          new RateLimitedError({
-            code: "DISCORD_SYNC_REFRESH_COOLDOWN",
-            message: "Discord sync was refreshed too recently",
-            retryAfterMs: cooldownMs - elapsedMs,
-          }),
-        );
+        return yield* new RateLimitedError({
+          code: "DISCORD_SYNC_REFRESH_COOLDOWN",
+          message: "Discord sync was refreshed too recently",
+          retryAfterMs: cooldownMs - elapsedMs,
+        });
       }
     }
 

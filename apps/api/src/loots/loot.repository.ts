@@ -317,11 +317,9 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
               const record = records[0];
 
               if (!record) {
-                return yield* Effect.fail(
-                  new PermissionDeniedError({
-                    code: ErrorKey.CANT_CREATE_COMMENT,
-                  }),
-                );
+                return yield* new PermissionDeniedError({
+                  code: ErrorKey.CANT_CREATE_COMMENT,
+                });
               }
 
               const member = yield* findActiveGuildMember(
@@ -331,12 +329,10 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
               );
 
               if (!member) {
-                return yield* Effect.fail(
-                  new OperationError({
-                    operation: "loots.comments.create.member",
-                    cause: "member-missing",
-                  }),
-                );
+                return yield* new OperationError({
+                  operation: "loots.comments.create.member",
+                  cause: "member-missing",
+                });
               }
 
               const comments = yield* transaction
@@ -352,12 +348,10 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
               const comment = comments[0];
 
               if (!comment) {
-                return yield* Effect.fail(
-                  new OperationError({
-                    operation: "loots.comments.create.insert",
-                    cause: "insert-failed",
-                  }),
-                );
+                return yield* new OperationError({
+                  operation: "loots.comments.create.insert",
+                  cause: "insert-failed",
+                });
               }
 
               return { comment, member };
@@ -368,12 +362,10 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
           const comment = comments[0];
 
           if (!comment) {
-            return yield* Effect.fail(
-              new OperationError({
-                operation: "loots.comments.create.projection",
-                cause: "projection-missing",
-              }),
-            );
+            return yield* new OperationError({
+              operation: "loots.comments.create.projection",
+              cause: "projection-missing",
+            });
           }
 
           return {
@@ -425,8 +417,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                 .limit(1)
                 .for("update");
 
-              if (!record)
-                return yield* Effect.fail(new ResourceNotFoundError());
+              if (!record) return yield* new ResourceNotFoundError();
 
               const member = yield* findActiveGuildMember(
                 transaction,
@@ -435,9 +426,9 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
               );
 
               if (!member) {
-                return yield* Effect.fail(
-                  new PermissionDeniedError({ code: "MEMBER_NOT_FOUND" }),
-                );
+                return yield* new PermissionDeniedError({
+                  code: "MEMBER_NOT_FOUND",
+                });
               }
 
               const [standing] = yield* transaction
@@ -453,11 +444,9 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                 .limit(1);
 
               if (standing) {
-                return yield* Effect.fail(
-                  new ResourceConflictError({
-                    code: ErrorKey.LOOT_DRAW_ALREADY_EXISTS,
-                  }),
-                );
+                return yield* new ResourceConflictError({
+                  code: ErrorKey.LOOT_DRAW_ALREADY_EXISTS,
+                });
               }
 
               const [created] = yield* transaction
@@ -475,12 +464,10 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                 .returning();
 
               if (!created) {
-                return yield* Effect.fail(
-                  new OperationError({
-                    operation: "loots.draws.create.insert",
-                    cause: "insert-failed",
-                  }),
-                );
+                return yield* new OperationError({
+                  operation: "loots.draws.create.insert",
+                  cause: "insert-failed",
+                });
               }
 
               yield* transaction
@@ -499,12 +486,10 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
           const [projected] = yield* projectDraws(options.lootId, [draw]);
 
           if (!projected) {
-            return yield* Effect.fail(
-              new OperationError({
-                operation: "loots.draws.create.projection",
-                cause: "projection-missing",
-              }),
-            );
+            return yield* new OperationError({
+              operation: "loots.draws.create.projection",
+              cause: "projection-missing",
+            });
           }
 
           return projected;
@@ -537,19 +522,15 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                 .for("update", { of: lootDrawTable });
 
               if (!found) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError({
-                    code: ErrorKey.LOOT_DRAW_NOT_FOUND,
-                  }),
-                );
+                return yield* new ResourceNotFoundError({
+                  code: ErrorKey.LOOT_DRAW_NOT_FOUND,
+                });
               }
 
               if (found.draw.voidedAt !== null) {
-                return yield* Effect.fail(
-                  new ResourceConflictError({
-                    code: ErrorKey.LOOT_DRAW_ALREADY_VOIDED,
-                  }),
-                );
+                return yield* new ResourceConflictError({
+                  code: ErrorKey.LOOT_DRAW_ALREADY_VOIDED,
+                });
               }
 
               const member = yield* findActiveGuildMember(
@@ -559,9 +540,9 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
               );
 
               if (!member) {
-                return yield* Effect.fail(
-                  new PermissionDeniedError({ code: "MEMBER_NOT_FOUND" }),
-                );
+                return yield* new PermissionDeniedError({
+                  code: "MEMBER_NOT_FOUND",
+                });
               }
 
               const [voided] = yield* transaction
@@ -575,12 +556,10 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                 .returning();
 
               if (!voided) {
-                return yield* Effect.fail(
-                  new OperationError({
-                    operation: "loots.draws.void.update",
-                    cause: "update-failed",
-                  }),
-                );
+                return yield* new OperationError({
+                  operation: "loots.draws.void.update",
+                  cause: "update-failed",
+                });
               }
 
               yield* transaction
@@ -599,12 +578,10 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
           const [projected] = yield* projectDraws(options.lootId, [draw]);
 
           if (!projected) {
-            return yield* Effect.fail(
-              new OperationError({
-                operation: "loots.draws.void.projection",
-                cause: "projection-missing",
-              }),
-            );
+            return yield* new OperationError({
+              operation: "loots.draws.void.projection",
+              cause: "projection-missing",
+            });
           }
 
           return projected;
@@ -639,12 +616,10 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
             );
 
             if (!member) {
-              return yield* Effect.fail(
-                new OperationError({
-                  operation: "loots.likes.set.member",
-                  cause: "member-missing",
-                }),
-              );
+              return yield* new OperationError({
+                operation: "loots.likes.set.member",
+                cause: "member-missing",
+              });
             }
 
             if (options.liked) {

@@ -34,10 +34,10 @@ export type BattleObjectCache = Pick<
   | "zrem"
 >;
 
-class BattleObjectStorageError extends TaggedErrorClass<BattleObjectStorageError>()(
-  "BattleObjectStorageError",
-  { cause: Schema.Defect() },
-) {}
+class BattleObjectStorageError extends TaggedErrorClass<
+  BattleObjectStorageError,
+  { readonly brand: unique symbol }
+>()("BattleObjectStorageError", { cause: Schema.Defect() }) {}
 
 const r2 = <A>(send: (signal: AbortSignal) => Promise<A>) =>
   Effect.tryPromise({
@@ -213,7 +213,7 @@ export const makeBattleObjectStorage = (
 
         return yield* Effect.try({
           try: () => decodeJson(cachedData),
-          catch: (cause) => cause,
+          catch: (cause) => new BattleObjectStorageError({ cause }),
         });
       }
 
@@ -221,7 +221,7 @@ export const makeBattleObjectStorage = (
 
       const parsedData = yield* Effect.try({
         try: () => decodeJson(data),
-        catch: (cause) => cause,
+        catch: (cause) => new BattleObjectStorageError({ cause }),
       });
 
       yield* cacheData(battleId, data);
@@ -258,9 +258,9 @@ export const makeBattleObjectStorage = (
         );
 
         if (response.Errors?.some((error) => !error.Key)) {
-          return yield* Effect.fail(
-            new BattleObjectStorageError({ cause: response.Errors }),
-          );
+          return yield* new BattleObjectStorageError({
+            cause: response.Errors,
+          });
         }
 
         const errors = new Set(response.Errors?.map((error) => error.Key));

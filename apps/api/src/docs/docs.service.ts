@@ -178,9 +178,7 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
         const result = yield* repository.listDocuments(guildId);
 
         if (!result.guild) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Guild not found"),
-          );
+          return yield* new ResourceNotFoundError("Guild not found");
         }
 
         const max = Math.max(
@@ -265,9 +263,7 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
         );
 
         if (!history) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Document history not found"),
-          );
+          return yield* new ResourceNotFoundError("Document history not found");
         }
 
         return yield* mapHistoryRecord(guildId, history);

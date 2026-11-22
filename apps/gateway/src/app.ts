@@ -10,6 +10,7 @@ import {
 import { OnlineHistories } from "#src/realtime/online-history";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import { recordHttpServerMetrics } from "@lootlog/instrumentation";
+import { promiseOperation } from "@lootlog/instrumentation/operation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
   REALTIME_JSON_SUBPROTOCOL,
@@ -312,7 +313,7 @@ export const createGatewayFetch =
           : { ...baseRequestAttributes, "http.route": route };
 
       const result = await application.runPromise(
-        Effect.tryPromise({ try: handle, catch: (cause) => cause }).pipe(
+        promiseOperation("gateway.http.handle", handle).pipe(
           Effect.onExit(() =>
             Effect.annotateCurrentSpan("http.response.status_code", status),
           ),
@@ -330,7 +331,7 @@ export const createGatewayFetch =
         ),
       );
 
-      if (!result.ok) throw result.error;
+      if (!result.ok) throw result.error.cause;
 
       return result.value;
     } finally {

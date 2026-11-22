@@ -160,10 +160,10 @@ export const makeReservationReadDataLayer = (
                 { concurrency: "unbounded" },
               );
 
-              const { from, to } = yield* Effect.try({
-                try: () => parseReservationWindow(fromValue, toValue),
-                catch: (cause) => cause,
-              });
+              const { from, to } = yield* parseReservationWindow(
+                fromValue,
+                toValue,
+              );
 
               const windowCondition = and(
                 eq(reservationTable.spotId, spotId),

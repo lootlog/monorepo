@@ -40,7 +40,7 @@ export const getCharacterSettingsScopeId = (
   characterId: string,
 ) => `${gameAccountId}:${characterId}`;
 
-type RawSettingsValues = Record<string, typeof Schema.Json.Type>;
+type RawSettingsValues = Record<string, Schema.Json>;
 
 export interface SettingsFieldDefinition<TValue = unknown> {
   defaultValue: TValue;
@@ -89,7 +89,7 @@ const field = <TValue>(
   isValid,
 });
 
-type JsonValue = typeof Schema.Json.Type;
+type JsonValue = Schema.Json;
 
 type OpaqueSettingsRecord = Record<string, JsonValue>;
 

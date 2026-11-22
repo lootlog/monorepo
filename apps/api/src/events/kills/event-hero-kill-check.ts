@@ -28,17 +28,17 @@ export const makeEventHeroKillCheck = (
 ) => {
   const logContext = Effect.annotateLogs({ context: "EventKills" });
 
-  function checkAndRecordEventHeroKill(
-    guildId: string,
-    world: string,
-    npcId: number,
-    npcName: string,
-    npcIcon: string,
-    timerData: KillTimerData,
-    isManualClose = false,
-    npcLvl?: number,
-  ) {
-    return Effect.gen(function* () {
+  const checkAndRecordEventHeroKill = Effect.fn("events.kills.checkAndRecord")(
+    function* (
+      guildId: string,
+      world: string,
+      npcId: number,
+      npcName: string,
+      npcIcon: string,
+      timerData: KillTimerData,
+      isManualClose = false,
+      npcLvl?: number,
+    ) {
       const lockKey = getEventKillLockKey(guildId, world, npcId);
       const windowKey = getEventHeroKillWindowKey(timerData);
 
@@ -288,8 +288,8 @@ export const makeEventHeroKillCheck = (
           ),
         ),
       );
-    }).pipe(Effect.withSpan("events.kills.checkAndRecord"));
-  }
+    },
+  );
 
   function findActiveEventHeroesByNpc(
     guildId: string,

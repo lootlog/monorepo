@@ -23,15 +23,21 @@ export type OrganizationWorkspaceGuildAccess = OrganizationWorkspaceIdentity & {
   readonly permissions: ReadonlyArray<PermissionValue>;
 };
 
-export class OrganizationWorkspaceAccessDenied extends TaggedErrorClass<OrganizationWorkspaceAccessDenied>()(
-  "OrganizationWorkspaceAccessDenied",
-  { status: Schema.Literals([401, 403]), code: Schema.String },
-) {}
+export class OrganizationWorkspaceAccessDenied extends TaggedErrorClass<
+  OrganizationWorkspaceAccessDenied,
+  { readonly brand: unique symbol }
+>()("OrganizationWorkspaceAccessDenied", {
+  status: Schema.Literals([401, 403]),
+  code: Schema.String,
+}) {}
 
-export class OrganizationWorkspaceNotFound extends TaggedErrorClass<OrganizationWorkspaceNotFound>()(
-  "OrganizationWorkspaceNotFound",
-  { status: Schema.Literal(404), code: Schema.String },
-) {}
+export class OrganizationWorkspaceNotFound extends TaggedErrorClass<
+  OrganizationWorkspaceNotFound,
+  { readonly brand: unique symbol }
+>()("OrganizationWorkspaceNotFound", {
+  status: Schema.Literal(404),
+  code: Schema.String,
+}) {}
 
 type AccessFailure =
   | OrganizationWorkspaceAccessDenied

@@ -32,7 +32,7 @@ const runtime = ManagedRuntime.make(ApiDatabaseLive);
 const guildId = "guild-lifecycle-test";
 
 const decodeCreated = (payload: typeof GuildCreated.Encoded) =>
-  Schema.decodeUnknownSync(GuildCreated)(
+  Schema.decodeSync(GuildCreated)(
     decodeRabbitEventJson(
       RabbitRoutingKey.GUILDS_CREATE,
       JSON.stringify(payload),
@@ -40,7 +40,7 @@ const decodeCreated = (payload: typeof GuildCreated.Encoded) =>
   );
 
 const decodeUpdated = (payload: typeof GuildUpdated.Encoded) =>
-  Schema.decodeUnknownSync(GuildUpdated)(
+  Schema.decodeSync(GuildUpdated)(
     decodeRabbitEventJson(
       RabbitRoutingKey.GUILDS_UPDATE,
       JSON.stringify(payload),

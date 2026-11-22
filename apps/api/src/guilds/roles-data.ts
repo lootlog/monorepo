@@ -74,8 +74,7 @@ export class RolesData extends Context.Service<
 
                 const role = roles[0];
 
-                if (!role)
-                  return yield* Effect.fail(new ResourceNotFoundError());
+                if (!role) return yield* new ResourceNotFoundError();
 
                 const owners = yield* database
                   .select({ ownerId: guildTable.ownerId })
@@ -95,7 +94,7 @@ export class RolesData extends Context.Service<
                   roleIsAdministrative !== newPermissionsAreAdministrative &&
                   owners[0]?.ownerId !== discordId
                 ) {
-                  return yield* Effect.fail(new PermissionDeniedError());
+                  return yield* new PermissionDeniedError();
                 }
 
                 const updated = yield* database

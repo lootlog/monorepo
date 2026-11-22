@@ -38,10 +38,12 @@ export interface TimerDeletedEvent {
   readonly npcId?: number;
 }
 
-class NotificationTimerRebuildError extends TaggedErrorClass<NotificationTimerRebuildError>()(
-  "NotificationTimerRebuildError",
-  { ruleIds: Schema.Array(Schema.Number) },
-) {}
+class NotificationTimerRebuildError extends TaggedErrorClass<
+  NotificationTimerRebuildError,
+  { readonly brand: unique symbol }
+>()("NotificationTimerRebuildError", {
+  ruleIds: Schema.Array(Schema.Finite),
+}) {}
 
 const HERO_SIGHTING_NOTIFICATION_MAX_AGE_MS = 15 * 60 * 1000;
 
@@ -115,11 +117,9 @@ export const makeNotificationsEvents = (options: {
       }
 
       if (failures.length > 0) {
-        return yield* Effect.fail(
-          new NotificationTimerRebuildError({
-            ruleIds: failures.map(({ ruleId }) => ruleId),
-          }),
-        );
+        return yield* new NotificationTimerRebuildError({
+          ruleIds: failures.map(({ ruleId }) => ruleId),
+        });
       }
     },
   );

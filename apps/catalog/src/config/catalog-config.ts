@@ -1,6 +1,7 @@
 import {
   type BaseServiceConfiguration,
   baseServiceConfig,
+  InvalidServiceConfiguration,
   commaSeparatedConfig,
 } from "@lootlog/instrumentation/service-config";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
@@ -34,18 +35,14 @@ export class CatalogConfig extends Context.Service<
         ? configuredToken.value
         : base.environment === RuntimeEnvironment.LOCAL
           ? Redacted.make(LOCAL_SERVICE_TOKEN)
-          : yield* Effect.fail(
-              new Error(
-                `CATALOG_SERVICE_TOKEN is required when ENV=${base.environment}`,
-              ),
-            );
+          : yield* new InvalidServiceConfiguration({
+              message: `CATALOG_SERVICE_TOKEN is required when ENV=${base.environment}`,
+            });
 
       if (Redacted.value(serviceToken).length < 32)
-        return yield* Effect.fail(
-          new Error(
-            "CATALOG_SERVICE_TOKEN must contain at least 32 characters",
-          ),
-        );
+        return yield* new InvalidServiceConfiguration({
+          message: "CATALOG_SERVICE_TOKEN must contain at least 32 characters",
+        });
 
       return CatalogConfig.of({
         ...base,

@@ -30,15 +30,18 @@ export interface AuthorizedEventCaller {
   readonly roles: ReadonlyArray<Role>;
 }
 
-export class EventsAccessDenied extends TaggedErrorClass<EventsAccessDenied>()(
-  "EventsAccessDenied",
-  { status: Schema.Literals([401, 403]), code: Schema.String },
-) {}
+export class EventsAccessDenied extends TaggedErrorClass<
+  EventsAccessDenied,
+  { readonly brand: unique symbol }
+>()("EventsAccessDenied", {
+  status: Schema.Literals([401, 403]),
+  code: Schema.String,
+}) {}
 
-export class EventsNotFound extends TaggedErrorClass<EventsNotFound>()(
-  "EventsNotFound",
-  { status: Schema.Literal(404), code: Schema.String },
-) {}
+export class EventsNotFound extends TaggedErrorClass<
+  EventsNotFound,
+  { readonly brand: unique symbol }
+>()("EventsNotFound", { status: Schema.Literal(404), code: Schema.String }) {}
 
 export interface EventAuthorizationRequirement {
   readonly guildId: string;

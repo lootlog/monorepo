@@ -18,10 +18,13 @@ import {
   type VolunteerForPartyRequest,
 } from "#src/contracts/messaging/schemas";
 
-export class MessagingAccessDenied extends TaggedErrorClass<MessagingAccessDenied>()(
-  "MessagingAccessDenied",
-  { status: Schema.Literal(401), code: Schema.String },
-) {}
+export class MessagingAccessDenied extends TaggedErrorClass<
+  MessagingAccessDenied,
+  { readonly brand: unique symbol }
+>()("MessagingAccessDenied", {
+  status: Schema.Literal(401),
+  code: Schema.String,
+}) {}
 
 export class MessagingIdentity extends Context.Service<
   MessagingIdentity,
@@ -36,9 +39,9 @@ export const sendNotification = (payload: SendNotificationRequest) =>
     const data = yield* MessagingData;
     const result = yield* data.sendNotification(authenticated, payload);
 
-    return yield* Schema.decodeUnknownEffect(SentNotificationResponse)(
-      result,
-    ).pipe(Effect.mapError((cause) => new MessagingOperationError({ cause })));
+    return yield* Schema.decodeEffect(SentNotificationResponse)(result).pipe(
+      Effect.mapError((cause) => new MessagingOperationError({ cause })),
+    );
   });
 
 const volunteerForNotification = (
@@ -61,9 +64,9 @@ const answerNotificationGoing = (
 
     const result = yield* data.going(authenticated, notificationId, payload);
 
-    return yield* Schema.decodeUnknownEffect(NotificationGoingResponse)(
-      result,
-    ).pipe(Effect.mapError((cause) => new MessagingOperationError({ cause })));
+    return yield* Schema.decodeEffect(NotificationGoingResponse)(result).pipe(
+      Effect.mapError((cause) => new MessagingOperationError({ cause })),
+    );
   });
 
 type MessagingHttpFailure = MessagingAccessDenied | MessagingOperationError;

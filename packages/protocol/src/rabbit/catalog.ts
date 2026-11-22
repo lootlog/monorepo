@@ -5,22 +5,22 @@ import { Schema } from "effect";
 const ObservedAt = Schema.String;
 
 const CatalogDropSource = Schema.Struct({
-  id: Schema.Number,
+  id: Schema.Finite,
   identityNamespace: NpcIdentityNamespaceSchema,
   name: Schema.String,
-  lvl: Schema.NullOr(Schema.Number),
+  lvl: Schema.NullOr(Schema.Finite),
   icon: Schema.NullOr(Schema.String),
   type: Schema.NullOr(Schema.String),
-  margonemType: Schema.NullOr(Schema.Number),
+  margonemType: Schema.NullOr(Schema.Finite),
   gameVersion: GameVersionSchema,
 });
 
 export const CatalogItemObservation = Schema.Struct({
-  id: Schema.Number,
+  id: Schema.Finite,
   name: Schema.String,
   icon: Schema.String,
   stat: Schema.String,
-  lvl: Schema.Number,
+  lvl: Schema.Finite,
   rarity: Schema.NullOr(Schema.String),
   type: Schema.NullOr(Schema.String),
   worlds: Schema.Array(Schema.String),
@@ -32,19 +32,19 @@ export const CatalogItemObservation = Schema.Struct({
 export type CatalogItemObservation = typeof CatalogItemObservation.Type;
 
 export const CatalogNpcObservation = Schema.Struct({
-  id: Schema.Number,
+  id: Schema.Finite,
   identityNamespace: NpcIdentityNamespaceSchema,
   prof: Schema.NullishOr(Schema.String),
   icon: Schema.String,
   name: Schema.String,
-  lvl: Schema.Number,
-  wt: Schema.Number,
+  lvl: Schema.Finite,
+  wt: Schema.Finite,
   type: Schema.String,
-  margonemType: Schema.Number,
+  margonemType: Schema.Finite,
   world: Schema.String,
   gameVersion: GameVersionSchema,
   snapshotHash: Schema.optionalKey(Schema.String),
-  lootId: Schema.Number,
+  lootId: Schema.Finite,
   observedAt: ObservedAt,
 });
 
@@ -58,14 +58,14 @@ export const CatalogMonsterDrops = Schema.Struct({
   gameVersion: GameVersionSchema,
   name: Schema.String,
   type: Schema.NullOr(Schema.String),
-  retiredItemIds: Schema.Array(Schema.Number),
+  retiredItemIds: Schema.Array(Schema.Finite),
   lootMode: CatalogLootMode,
   dropRates: Schema.Array(
     Schema.Struct({
-      itemId: Schema.Number,
-      drops: Schema.Number,
-      kills: Schema.Number,
-      rolls: Schema.Number,
+      itemId: Schema.Finite,
+      drops: Schema.Finite,
+      kills: Schema.Finite,
+      rolls: Schema.Finite,
       basis: CatalogLootRollsBasis,
     }),
   ),
@@ -78,7 +78,7 @@ const Day = Schema.String.check(Schema.isPattern(/^\d{4}-\d{2}-\d{2}$/));
 const CatalogItemRevision = Schema.Struct({
   name: Schema.String,
   icon: Schema.String,
-  lvl: Schema.Number,
+  lvl: Schema.Finite,
   stat: Schema.String,
   previousName: Schema.String,
   previousIcon: Schema.String,
@@ -89,25 +89,25 @@ const CatalogItemRevision = Schema.Struct({
 
 export const CatalogItemRevisions = Schema.Struct({
   gameVersion: GameVersionSchema,
-  id: Schema.Number,
+  id: Schema.Finite,
   revisions: Schema.Array(CatalogItemRevision),
 });
 
 export type CatalogItemRevisions = typeof CatalogItemRevisions.Type;
 
 const CatalogMonsterSpawnTile = Schema.Struct({
-  x: Schema.Number,
-  y: Schema.Number,
+  x: Schema.Finite,
+  y: Schema.Finite,
 });
 
 export const CatalogMonsterLocation = Schema.Struct({
   map: Schema.String,
-  share: Schema.Number,
+  share: Schema.Finite,
   tiles: Schema.optionalKey(Schema.Array(CatalogMonsterSpawnTile)),
 });
 
 export const CatalogMonsterFormerLevel = Schema.Struct({
-  lvl: Schema.Number,
+  lvl: Schema.Finite,
   until: Schema.String,
 });
 

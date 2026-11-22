@@ -16,10 +16,10 @@ import {
   type SettingsDocumentsResponse as ServiceSettingsDocumentsResponse,
 } from "./settings-documents.service.js";
 
-export class SettingsOperationError extends TaggedErrorClass<SettingsOperationError>()(
-  "SettingsOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class SettingsOperationError extends TaggedErrorClass<
+  SettingsOperationError,
+  { readonly brand: unique symbol }
+>()("SettingsOperationError", { cause: Schema.Defect() }) {}
 
 export type SettingsDocumentsOperation = Effect.Effect<
   SettingsDocumentsResponse,

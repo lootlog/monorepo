@@ -13,7 +13,8 @@ comments it had when the rule landed. This skill spends that budget down.
 Argument: the path to clean (a workspace, a feature directory, or a file).
 Without one, pick the workspace with the largest total in the baseline.
 
-Tool directives (`oxlint-disable`, `@ts-expect-error`, `@vitest-environment`,
+Tool directives (`oxlint-disable`, `@ts-expect-error`, `@effect-diagnostics`,
+`@vitest-environment`,
 `/// <reference>`, `#__PURE__`, knip's `@alias`), userscript `==UserScript==`
 headers, and the `SAFETY:` justifications that
 `anti-slop/require-safety-comment-for-type-assertion` demands are not comments

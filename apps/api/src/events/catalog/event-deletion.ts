@@ -61,7 +61,7 @@ export const makeEventDeletion =
         );
 
       if (!rows[0]) {
-        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
+        return yield* new ResourceNotFoundError("Event not found");
       }
 
       const heroes = yield* database
@@ -85,7 +85,7 @@ export const makeEventDeletion =
           getEffectiveCapabilities(accessPolicy),
         ).length !== heroes.length
       ) {
-        return yield* Effect.fail(new ResourceNotFoundError("Hero not found"));
+        return yield* new ResourceNotFoundError("Hero not found");
       }
 
       const jobs = yield* Effect.all(

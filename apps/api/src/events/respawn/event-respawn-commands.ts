@@ -30,7 +30,7 @@ import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getEventHeroNpcId } from "@lootlog/domain/npc-identity";
 
 export interface EventRespawnQueue {
-  readonly delayed: () => Effect.Effect<
+  readonly delayed: Effect.Effect<
     ReadonlyArray<{
       readonly heroId: string;
       readonly remove: Effect.Effect<void, unknown>;
@@ -116,7 +116,7 @@ export const makeEventRespawnCommands = (
 
   const cancelAutoClose = (heroId: string) =>
     Effect.gen(function* () {
-      const jobs = yield* queue.delayed();
+      const jobs = yield* queue.delayed;
       yield* Effect.forEach(
         jobs.filter((job) => job.heroId === heroId),
         (job) => job.remove,
@@ -125,146 +125,143 @@ export const makeEventRespawnCommands = (
     }).pipe(withAdapterSpan("events.respawn.cancelAutoClose", "events.bullmq"));
 
   return {
-    open: (
+    open: Effect.fn("EventsMonitoringController_openRespawnWindow")(function* (
       guild: { id: string },
       eventId: string,
       heroId: string,
       data: OpenRespawnWindowRequest,
       actorMemberId: number,
-    ) =>
-      Effect.gen(function* () {
-        const heroRows = yield* query(
-          "events.respawn.open.hero",
-          queryEventHero(database, guild.id, eventId, heroId),
-        );
+    ) {
+      const heroRows = yield* query(
+        "events.respawn.open.hero",
+        queryEventHero(database, guild.id, eventId, heroId),
+      );
 
-        const row = heroRows[0];
+      const row = heroRows[0];
 
-        if (!row)
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Hero not found"),
-          );
+      if (!row) return yield* new ResourceNotFoundError("Hero not found");
 
-        const minSpawnTime = new Date(data.minSpawnTime);
-        const maxSpawnTime = new Date(data.maxSpawnTime);
+      const minSpawnTime = new Date(data.minSpawnTime);
+      const maxSpawnTime = new Date(data.maxSpawnTime);
 
-        const timer = yield* timers.openEventRespawnTimer({
-          guildId: guild.id,
-          world: row.event.world,
-          npcId: getEventHeroNpcId(row.hero),
-          npcName: row.hero.npcName,
-          npcIcon: row.hero.npcIcon ?? null,
-          minSpawnTime,
-          maxSpawnTime,
-          createdById: actorMemberId,
-          isUsingSyntheticId: row.hero.npcId === null,
-        });
+      const timer = yield* timers.openEventRespawnTimer({
+        guildId: guild.id,
+        world: row.event.world,
+        npcId: getEventHeroNpcId(row.hero),
+        npcName: row.hero.npcName,
+        npcIcon: row.hero.npcIcon ?? null,
+        minSpawnTime,
+        maxSpawnTime,
+        createdById: actorMemberId,
+        isUsingSyntheticId: row.hero.npcId === null,
+      });
 
-        yield* cancelAutoClose(heroId);
+      yield* cancelAutoClose(heroId);
 
-        const maps = yield* query(
-          "events.respawn.open.maps",
-          database
-            .select()
-            .from(eventMapTable)
-            .where(eq(eventMapTable.heroNpcId, heroId)),
-        );
+      const maps = yield* query(
+        "events.respawn.open.maps",
+        database
+          .select()
+          .from(eventMapTable)
+          .where(eq(eventMapTable.heroNpcId, heroId)),
+      );
 
-        const assignments =
-          maps.length === 0
-            ? []
-            : yield* query(
-                "events.respawn.open.assignments",
-                database
-                  .select({ mapId: eventMapToMemberTable.A })
-                  .from(eventMapToMemberTable)
-                  .innerJoin(
-                    eventMapTable,
-                    eq(eventMapTable.id, eventMapToMemberTable.A),
-                  )
-                  .innerJoin(
-                    memberTable,
-                    eq(memberTable.id, eventMapToMemberTable.B),
-                  )
-                  .where(
-                    and(
-                      eq(eventMapTable.heroNpcId, heroId),
-                      eq(memberTable.active, true),
-                    ),
-                  ),
-              );
-
-        const assignedMapIds = new Set(assignments.map(({ mapId }) => mapId));
-
-        const windowOpenedAt =
-          timer.windowOpenedAt ?? new Date(yield* Clock.currentTimeMillis);
-
-        yield* Effect.forEach(
-          maps,
-          (map) => {
-            const gapType = assignedMapIds.has(map.id)
-              ? ("UNCOVERED" as const)
-              : ("UNASSIGNED" as const);
-
-            return query(
-              "events.respawn.open.gap",
+      const assignments =
+        maps.length === 0
+          ? []
+          : yield* query(
+              "events.respawn.open.assignments",
               database
-                .select({ id: eventMapCoverageGapTable.id })
-                .from(eventMapCoverageGapTable)
+                .select({ mapId: eventMapToMemberTable.A })
+                .from(eventMapToMemberTable)
+                .innerJoin(
+                  eventMapTable,
+                  eq(eventMapTable.id, eventMapToMemberTable.A),
+                )
+                .innerJoin(
+                  memberTable,
+                  eq(memberTable.id, eventMapToMemberTable.B),
+                )
                 .where(
                   and(
-                    eq(eventMapCoverageGapTable.mapId, map.id),
-                    eq(eventMapCoverageGapTable.gapType, gapType),
-                    isNull(eventMapCoverageGapTable.endedAt),
+                    eq(eventMapTable.heroNpcId, heroId),
+                    eq(memberTable.active, true),
                   ),
-                )
-                .limit(1),
-            ).pipe(
-              Effect.flatMap((existing) =>
-                existing[0]
-                  ? Effect.void
-                  : query(
-                      "events.respawn.open.gap.insert",
-                      database.insert(eventMapCoverageGapTable).values({
-                        id: Bun.randomUUIDv7(),
-                        mapId: map.id,
-                        heroNpcId: heroId,
-                        gapType,
-                        startedAt: windowOpenedAt,
-                      }),
-                    ).pipe(Effect.asVoid),
-              ),
+                ),
             );
-          },
-          { concurrency: 1, discard: true },
-        );
-        yield* Effect.all(
-          [
-            invalidate(guild.id, eventId),
-            publish(RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
-              guildId: guild.id,
-              eventId,
-              heroId,
-              heroNpcLvl: row.hero.npcLvl,
-            }),
-            Effect.forEach(
-              maps,
-              (map) =>
-                publish(RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE, {
-                  guildId: guild.id,
-                  eventId,
-                  mapId: map.id,
-                  heroNpcLvl: row.hero.npcLvl,
-                }),
-              { concurrency: "unbounded", discard: true },
+
+      const assignedMapIds = new Set(assignments.map(({ mapId }) => mapId));
+
+      const windowOpenedAt =
+        timer.windowOpenedAt ?? new Date(yield* Clock.currentTimeMillis);
+
+      yield* Effect.forEach(
+        maps,
+        (map) => {
+          const gapType = assignedMapIds.has(map.id)
+            ? ("UNCOVERED" as const)
+            : ("UNASSIGNED" as const);
+
+          return query(
+            "events.respawn.open.gap",
+            database
+              .select({ id: eventMapCoverageGapTable.id })
+              .from(eventMapCoverageGapTable)
+              .where(
+                and(
+                  eq(eventMapCoverageGapTable.mapId, map.id),
+                  eq(eventMapCoverageGapTable.gapType, gapType),
+                  isNull(eventMapCoverageGapTable.endedAt),
+                ),
+              )
+              .limit(1),
+          ).pipe(
+            Effect.flatMap((existing) =>
+              existing[0]
+                ? Effect.void
+                : query(
+                    "events.respawn.open.gap.insert",
+                    database.insert(eventMapCoverageGapTable).values({
+                      id: Bun.randomUUIDv7(),
+                      mapId: map.id,
+                      heroNpcId: heroId,
+                      gapType,
+                      startedAt: windowOpenedAt,
+                    }),
+                  ).pipe(Effect.asVoid),
             ),
-          ],
-          { concurrency: "unbounded", discard: true },
-        );
+          );
+        },
+        { concurrency: 1, discard: true },
+      );
+      yield* Effect.all(
+        [
+          invalidate(guild.id, eventId),
+          publish(RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
+            guildId: guild.id,
+            eventId,
+            heroId,
+            heroNpcLvl: row.hero.npcLvl,
+          }),
+          Effect.forEach(
+            maps,
+            (map) =>
+              publish(RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE, {
+                guildId: guild.id,
+                eventId,
+                mapId: map.id,
+                heroNpcLvl: row.hero.npcLvl,
+              }),
+            { concurrency: "unbounded", discard: true },
+          ),
+        ],
+        { concurrency: "unbounded", discard: true },
+      );
 
-        return { success: true, minSpawnTime, maxSpawnTime };
-      }).pipe(Effect.withSpan("EventsMonitoringController_openRespawnWindow")),
+      return { success: true, minSpawnTime, maxSpawnTime };
+    }),
 
+    // @effect-diagnostics-next-line effectFnOpportunity:off
     close: (
       guild: { id: string },
       eventId: string,
@@ -281,9 +278,7 @@ export const makeEventRespawnCommands = (
         const row = heroRows[0];
 
         if (!row) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Hero not found"),
-          );
+          return yield* new ResourceNotFoundError("Hero not found");
         }
 
         const timerLookup = {
@@ -321,10 +316,8 @@ export const makeEventRespawnCommands = (
 
         if (data.createNewWindow) {
           if (!data.newMinSpawnTime || !data.newMaxSpawnTime) {
-            return yield* Effect.fail(
-              new InvalidRequestError(
-                "Missing spawn window bounds for new window",
-              ),
+            return yield* new InvalidRequestError(
+              "Missing spawn window bounds for new window",
             );
           }
 

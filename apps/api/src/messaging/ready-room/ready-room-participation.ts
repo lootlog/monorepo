@@ -114,9 +114,9 @@ export const joinWithRetry = (
     const aggregate = yield* context.getLive(notificationId);
 
     if (aggregate.organizerCharacter.accountId === character.accountId) {
-      return yield* Effect.fail(
-        new ResourceConflictError({ code: "CHARACTER_ALREADY_JOINED" }),
-      );
+      return yield* new ResourceConflictError({
+        code: "CHARACTER_ALREADY_JOINED",
+      });
     }
 
     const visibleGuilds = yield* readyRoomSourceVisibility(
@@ -134,9 +134,7 @@ export const joinWithRetry = (
       (aggregate.maxLvl === undefined || character.lvl <= aggregate.maxLvl);
 
     if (!sharesGuild || world !== aggregate.world || !meetsLevel) {
-      return yield* Effect.fail(
-        new PermissionDeniedError({ code: "INELIGIBLE_CHARACTER" }),
-      );
+      return yield* new PermissionDeniedError({ code: "INELIGIBLE_CHARACTER" });
     }
 
     const existing = Object.values(aggregate.participants).find(
@@ -149,9 +147,9 @@ export const joinWithRetry = (
         existing.discordId !== discordId ||
         existing.character.accountId !== character.accountId
       ) {
-        return yield* Effect.fail(
-          new ResourceConflictError({ code: "CHARACTER_ALREADY_JOINED" }),
-        );
+        return yield* new ResourceConflictError({
+          code: "CHARACTER_ALREADY_JOINED",
+        });
       }
 
       return yield* context.projectionForViewer(aggregate, discordId);
@@ -179,25 +177,19 @@ export const joinWithRetry = (
     );
 
     if (result.status === "joined-elsewhere") {
-      return yield* Effect.fail(
-        new ResourceConflictError({
-          code: "ALREADY_JOINED_ELSEWHERE",
-          details: { notificationId: result.notificationId },
-        }),
-      );
+      return yield* new ResourceConflictError({
+        code: "ALREADY_JOINED_ELSEWHERE",
+        details: { notificationId: result.notificationId },
+      });
     }
 
     if (result.status === "missing") {
-      return yield* Effect.fail(
-        new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
-      );
+      return yield* new ResourceNotFoundError({ code: "ROOM_EXPIRED" });
     }
 
     if (result.status === "conflict") {
       return attempt + 1 >= MAX_CAS_ATTEMPTS
-        ? yield* Effect.fail(
-            new ResourceConflictError({ code: "REVISION_CONFLICT" }),
-          )
+        ? yield* new ResourceConflictError({ code: "REVISION_CONFLICT" })
         : yield* joinWithRetry(
             context,
             discordId,
@@ -230,9 +222,7 @@ export const withdrawWithRetry = (
     const participant = aggregate.participants[participantId];
 
     if (!participant || participant.discordId !== discordId) {
-      return yield* Effect.fail(
-        new PermissionDeniedError({ code: "FORBIDDEN" }),
-      );
+      return yield* new PermissionDeniedError({ code: "FORBIDDEN" });
     }
 
     const { recipients, viewerGuildIds } =
@@ -245,16 +235,12 @@ export const withdrawWithRetry = (
     const result = yield* exitParticipant(context, aggregate, participantId);
 
     if (result.status === "missing") {
-      return yield* Effect.fail(
-        new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
-      );
+      return yield* new ResourceNotFoundError({ code: "ROOM_EXPIRED" });
     }
 
     if (result.status === "conflict") {
       return attempt + 1 >= MAX_CAS_ATTEMPTS
-        ? yield* Effect.fail(
-            new ResourceConflictError({ code: "REVISION_CONFLICT" }),
-          )
+        ? yield* new ResourceConflictError({ code: "REVISION_CONFLICT" })
         : yield* withdrawWithRetry(
             context,
             discordId,
@@ -288,11 +274,9 @@ export const removeParticipant = (
     );
 
     if (!aggregate.participants[payload.participantId]) {
-      return yield* Effect.fail(
-        new InvalidEntityError({
-          code: "INVALID_STATE_TRANSITION",
-        }),
-      );
+      return yield* new InvalidEntityError({
+        code: "INVALID_STATE_TRANSITION",
+      });
     }
 
     const { recipients, viewerGuildIds } =

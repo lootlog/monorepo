@@ -4,13 +4,13 @@ import { NonNegativeInt } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
 
 export const GuildLootEventNpc = Schema.Struct({
-  lvl: Schema.optional(Schema.NullOr(Schema.Number)),
+  lvl: Schema.optional(Schema.NullOr(Schema.Finite)),
   prof: Schema.optional(Schema.NullOr(Schema.String)),
   type: Schema.optional(
-    Schema.NullOr(Schema.Union([Schema.Number, Schema.String])),
+    Schema.NullOr(Schema.Union([Schema.Finite, Schema.String])),
   ),
   wt: Schema.optional(
-    Schema.NullOr(Schema.Union([Schema.Number, Schema.String])),
+    Schema.NullOr(Schema.Union([Schema.Finite, Schema.String])),
   ),
 });
 

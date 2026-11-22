@@ -11,64 +11,67 @@ export const makeEventRespawn = (
   eventReadCache: EventReadCache,
   timers: EventTimersPort,
 ) => {
-  const load = (guildId: string, eventId: string, heroId: string) =>
-    Effect.gen(function* () {
-      const hero = yield* repository.findHero(guildId, eventId, heroId);
+  const load = Effect.fn("events.respawn.config.load")(function* (
+    guildId: string,
+    eventId: string,
+    heroId: string,
+  ) {
+    const hero = yield* repository.findHero(guildId, eventId, heroId);
 
-      if (!hero) {
-        return yield* Effect.fail(new ResourceNotFoundError("Hero not found"));
-      }
+    if (!hero) {
+      return yield* new ResourceNotFoundError("Hero not found");
+    }
 
-      const now = new Date(yield* Clock.currentTimeMillis);
+    const now = new Date(yield* Clock.currentTimeMillis);
 
-      const timer = yield* timers.getEventRespawnTimer({
-        guildId,
-        world: hero.event.world,
-        npcId: getEventHeroNpcId(hero),
-        npcName: hero.npcName,
-      });
+    const timer = yield* timers.getEventRespawnTimer({
+      guildId,
+      world: hero.event.world,
+      npcId: getEventHeroNpcId(hero),
+      npcName: hero.npcName,
+    });
 
-      if (!timer) {
-        return {
-          hasTimer: false,
-          windowStatus: "NONE" as const,
-          minSpawnTime: null,
-          maxSpawnTime: null,
-          overdueMs: null,
-        };
-      }
-
-      const minSpawnTime = new Date(timer.minSpawnTime);
-      const maxSpawnTime = new Date(timer.maxSpawnTime);
-
-      if (now < minSpawnTime) {
-        return {
-          hasTimer: false,
-          windowStatus: "WAITING" as const,
-          minSpawnTime: timer.minSpawnTime,
-          maxSpawnTime: timer.maxSpawnTime,
-          overdueMs: null,
-        };
-      }
-
-      if (now < maxSpawnTime) {
-        return {
-          hasTimer: true,
-          windowStatus: "OPEN" as const,
-          minSpawnTime: timer.minSpawnTime,
-          maxSpawnTime: timer.maxSpawnTime,
-          overdueMs: null,
-        };
-      }
-
+    if (!timer) {
       return {
-        hasTimer: true,
-        windowStatus: "OVERDUE" as const,
+        hasTimer: false,
+        windowStatus: "NONE" as const,
+        minSpawnTime: null,
+        maxSpawnTime: null,
+        overdueMs: null,
+      };
+    }
+
+    const minSpawnTime = new Date(timer.minSpawnTime);
+    const maxSpawnTime = new Date(timer.maxSpawnTime);
+
+    if (now < minSpawnTime) {
+      return {
+        hasTimer: false,
+        windowStatus: "WAITING" as const,
         minSpawnTime: timer.minSpawnTime,
         maxSpawnTime: timer.maxSpawnTime,
-        overdueMs: Math.max(0, now.getTime() - maxSpawnTime.getTime()),
+        overdueMs: null,
       };
-    }).pipe(Effect.withSpan("events.respawn.config.load"));
+    }
+
+    if (now < maxSpawnTime) {
+      return {
+        hasTimer: true,
+        windowStatus: "OPEN" as const,
+        minSpawnTime: timer.minSpawnTime,
+        maxSpawnTime: timer.maxSpawnTime,
+        overdueMs: null,
+      };
+    }
+
+    return {
+      hasTimer: true,
+      windowStatus: "OVERDUE" as const,
+      minSpawnTime: timer.minSpawnTime,
+      maxSpawnTime: timer.maxSpawnTime,
+      overdueMs: Math.max(0, now.getTime() - maxSpawnTime.getTime()),
+    };
+  });
 
   return {
     getHeroRespawnConfig(guildId: string, eventId: string, heroId: string) {

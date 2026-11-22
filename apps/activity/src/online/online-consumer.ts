@@ -106,7 +106,7 @@ export const OnlineConsumer = Layer.effectDiscard(
           );
         }),
     );
-    yield* repository.prune().pipe(
+    yield* repository.prune.pipe(
       Effect.catch(() =>
         Effect.logWarning("Online history retention cleanup failed"),
       ),

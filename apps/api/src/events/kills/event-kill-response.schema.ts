@@ -10,15 +10,15 @@ import {
 
 const EventKillHeroNpcResponse = Schema.Struct({
   id: Schema.String,
-  npcId: Schema.NullOr(Schema.Number),
+  npcId: Schema.NullOr(Schema.Finite),
   npcName: Schema.String,
   npcIcon: Schema.NullOr(Schema.String),
-  npcLvl: Schema.NullOr(Schema.Number),
+  npcLvl: Schema.NullOr(Schema.Finite),
 });
 
 const EventKillParticipantRoleResponse = Schema.Struct({
-  position: Schema.NullOr(Schema.Number),
-  color: Schema.NullOr(Schema.Number),
+  position: Schema.NullOr(Schema.Finite),
+  color: Schema.NullOr(Schema.Finite),
 });
 
 const EventKillParticipantMapDataResponse = Schema.Struct({
@@ -26,21 +26,21 @@ const EventKillParticipantMapDataResponse = Schema.Struct({
   mapName: Schema.String,
   assignedAt: flexibleIsoDatetimeCodec,
   unassignedAt: nullableFlexibleIsoDatetimeCodec,
-  assignmentDurationSeconds: Schema.Number,
-  presenceTimeSeconds: Schema.Number,
-  afkTimeSeconds: Schema.Number,
+  assignmentDurationSeconds: Schema.Finite,
+  presenceTimeSeconds: Schema.Finite,
+  afkTimeSeconds: Schema.Finite,
 });
 
 const EventKillParticipantResponse = Schema.Struct({
   id: Schema.String,
-  memberId: Schema.Number,
-  points: Schema.Number,
-  basePoints: Schema.Number,
-  manualAdjustmentPoints: Schema.optionalKey(Schema.NullOr(Schema.Number)),
-  trackingDurationSeconds: Schema.NullOr(Schema.Number),
-  trackingDurationPercentage: Schema.NullOr(Schema.Number),
-  timeOnMapSeconds: Schema.Number,
-  afkPercentage: Schema.Number,
+  memberId: Schema.Finite,
+  points: Schema.Finite,
+  basePoints: Schema.Finite,
+  manualAdjustmentPoints: Schema.optionalKey(Schema.NullOr(Schema.Finite)),
+  trackingDurationSeconds: Schema.NullOr(Schema.Finite),
+  trackingDurationPercentage: Schema.NullOr(Schema.Finite),
+  timeOnMapSeconds: Schema.Finite,
+  afkPercentage: Schema.Finite,
   wasPresent: Schema.Boolean,
   bonusBreakdown: Schema.optionalKey(Schema.NullOr(jsonValueSchema)),
   member: MemberSummary,
@@ -75,11 +75,11 @@ export const KillDetailResponse = Schema.Struct({
     killedAt: IsoDateTime,
     minSpawnTimeAtKill: IsoDateTime,
     maxSpawnTimeAtKill: IsoDateTime,
-    timerCreatedById: Schema.NullOr(Schema.Number),
+    timerCreatedById: Schema.NullOr(Schema.Finite),
     isManualClose: Schema.Boolean,
-    respawnDurationSeconds: Schema.NullOr(Schema.Number),
-    windowDurationSeconds: Schema.NullOr(Schema.Number),
-    resolvedAfterMaxSpawnTimeMs: Schema.NullOr(Schema.Number),
+    respawnDurationSeconds: Schema.NullOr(Schema.Finite),
+    windowDurationSeconds: Schema.NullOr(Schema.Finite),
+    resolvedAfterMaxSpawnTimeMs: Schema.NullOr(Schema.Finite),
     heroNpc: KillDetailHeroNpcResponse,
     timerCreatedBy: Schema.NullOr(MemberSummary),
     points: Schema.Array(KillDetailParticipantResponse),
@@ -92,9 +92,9 @@ export const KillDetailResponse = Schema.Struct({
 
 export const EventHeroStatsResponse = Schema.Struct({
   heroId: Schema.String,
-  npcId: Schema.NullOr(Schema.Number),
+  npcId: Schema.NullOr(Schema.Finite),
   npcName: Schema.String,
-  npcLvl: Schema.NullOr(Schema.Number),
+  npcLvl: Schema.NullOr(Schema.Finite),
   npcProf: Schema.NullOr(Schema.String),
-  killCount: Schema.Number,
+  killCount: Schema.Finite,
 });

@@ -37,7 +37,7 @@ const Timer = Schema.Struct({
   wasReset: Schema.Boolean,
   npc: Schema.Struct({
     name: Schema.String,
-    lvl: Schema.Number,
+    lvl: Schema.Finite,
     type: Schema.String,
     location: Schema.String,
     icon: Schema.NullOr(Schema.String),

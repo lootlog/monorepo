@@ -16,10 +16,10 @@ import type {
   UserOnlineResponse,
 } from "#src/http-api/contracts/users/schemas";
 
-export class OnlineIngestRejected extends TaggedErrorClass<OnlineIngestRejected>()(
-  "OnlineIngestRejected",
-  { message: Schema.String },
-) {}
+export class OnlineIngestRejected extends TaggedErrorClass<
+  OnlineIngestRejected,
+  { readonly brand: unique symbol }
+>()("OnlineIngestRejected", { message: Schema.String }) {}
 
 export interface OnlineRepositoryValue {
   readonly ingest: (
@@ -29,7 +29,7 @@ export interface OnlineRepositoryValue {
     userId: string,
     query: UserOnlineQuery,
   ) => Effect.Effect<UserOnlineResponse, ActivityDatabaseFailure>;
-  readonly prune: () => Effect.Effect<void, ActivityDatabaseFailure>;
+  readonly prune: Effect.Effect<void, ActivityDatabaseFailure>;
 }
 
 export class OnlineRepository extends Context.Service<
@@ -48,11 +48,9 @@ export class OnlineRepository extends Context.Service<
         const now = yield* Clock.currentTimeMillis;
 
         if (Date.parse(event.observedAt) > now + 60_000)
-          return yield* Effect.fail(
-            new OnlineIngestRejected({
-              message: "Online observation is in the future",
-            }),
-          );
+          return yield* new OnlineIngestRejected({
+            message: "Online observation is in the future",
+          });
 
         if (event.type === "collector") {
           yield* sql`INSERT INTO "UserOnlineCollector" (id, "trackingStartedAt", "observedAt", status, "degradedUntil")
@@ -72,11 +70,9 @@ export class OnlineRepository extends Context.Service<
           Date.parse(event.startedAt) > Date.parse(event.endedAt) ||
           Date.parse(event.endedAt) > Date.parse(event.observedAt)
         ) {
-          return yield* Effect.fail(
-            new OnlineIngestRejected({
-              message: "Invalid online interval ordering",
-            }),
-          );
+          return yield* new OnlineIngestRejected({
+            message: "Invalid online interval ordering",
+          });
         }
 
         const cutoff = onlineHistoryCutoff(now);
@@ -102,11 +98,9 @@ export class OnlineRepository extends Context.Service<
           RETURNING "world", EXISTS (SELECT 1 FROM prior) AS "wasKnown"`;
 
             if (!inserted.length)
-              return yield* Effect.fail(
-                new OnlineIngestRejected({
-                  message: "Online segment start or world cannot change",
-                }),
-              );
+              return yield* new OnlineIngestRejected({
+                message: "Online segment start or world cannot change",
+              });
             yield* inserted[0]?.world === null && inserted[0].wasKnown
               ? rebuildOnlineDays(
                   sql,
@@ -217,7 +211,7 @@ export class OnlineRepository extends Context.Service<
         };
       });
 
-      const prune = Effect.fn("OnlineRepository.prune")(function* () {
+      const prune = Effect.gen(function* () {
         const now = yield* Clock.currentTimeMillis;
 
         const cutoff = onlineHistoryCutoff(now);
@@ -339,7 +333,7 @@ export class OnlineRepository extends Context.Service<
             }),
           );
         }
-      });
+      }).pipe(Effect.withSpan("OnlineRepository.prune"));
 
       return OnlineRepository.of({ ingest, find, prune });
     }),

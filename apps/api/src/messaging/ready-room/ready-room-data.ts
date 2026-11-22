@@ -24,10 +24,10 @@ export type ReadyRoomIdentity = {
   readonly discordId: string;
 };
 
-export class ReadyRoomOperationError extends TaggedErrorClass<ReadyRoomOperationError>()(
-  "ReadyRoomOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class ReadyRoomOperationError extends TaggedErrorClass<
+  ReadyRoomOperationError,
+  { readonly brand: unique symbol }
+>()("ReadyRoomOperationError", { cause: Schema.Defect() }) {}
 
 type DataEffect<A> = Effect.Effect<A, ReadyRoomOperationError>;
 
@@ -35,7 +35,7 @@ export class ReadyRoomData extends Context.Service<
   ReadyRoomData,
   {
     readonly characterOffline: (
-      event: typeof GameCharacterOffline.Type,
+      event: GameCharacterOffline,
     ) => DataEffect<void>;
     readonly accessibleGuildIds: (
       discordId: string,

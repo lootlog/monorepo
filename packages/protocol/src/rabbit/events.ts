@@ -66,9 +66,9 @@ const NullableString = Schema.NullOr(Schema.String);
 const GuildRole = Schema.Struct({
   id: Schema.NonEmptyString,
   name: Schema.NonEmptyString,
-  color: Schema.Number,
+  color: Schema.Finite,
   admin: Schema.Boolean,
-  position: Schema.Number,
+  position: Schema.Finite,
 });
 
 const GuildBanner = Schema.optionalKey(NullableString);
@@ -222,13 +222,13 @@ const EventRespawnWindowChanged = Schema.Struct({
 });
 
 const ActivityActorSnapshot = Schema.Struct({
-  accountId: Schema.optional(Schema.Number),
-  characterId: Schema.optional(Schema.Number),
+  accountId: Schema.optional(Schema.Finite),
+  characterId: Schema.optional(Schema.Finite),
   name: Schema.optional(Schema.String),
   clanName: Schema.optional(Schema.String),
-  clanId: Schema.optional(Schema.Number),
+  clanId: Schema.optional(Schema.Finite),
   icon: Schema.optional(Schema.String),
-  lvl: Schema.optional(Schema.Number),
+  lvl: Schema.optional(Schema.Finite),
   prof: Schema.optional(Schema.String),
 });
 
@@ -249,11 +249,11 @@ export type ActivityLogCreated = typeof ActivityLogCreated.Type;
 export const SearchPlayer = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
-  lvl: Schema.Number,
+  lvl: Schema.Finite,
   prof: Schema.String,
   icon: Schema.String,
-  characterId: Schema.Number,
-  accountId: Schema.Number,
+  characterId: Schema.Finite,
+  accountId: Schema.Finite,
   world: Schema.String,
 });
 
@@ -456,5 +456,5 @@ export const decodeRabbitEventJson = <
 ): CanonicalRabbitEvent<RoutingKey> =>
   decodeRabbitEvent(
     routingKey,
-    Schema.decodeUnknownSync(Schema.fromJsonString(Schema.Unknown))(input),
+    Schema.decodeSync(Schema.fromJsonString(Schema.Unknown))(input),
   );

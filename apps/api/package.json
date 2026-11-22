@@ -23,7 +23,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "bun dist/src/main.js",
     "start:debug": "bun --conditions=development --inspect-wait --watch src/main.ts",
-    "lint": "oxlint src test && effect-tsgo diagnostics --project tsconfig.json --severity error",
+    "lint": "oxlint src test && effect-tsgo diagnostics --project tsconfig.json --severity error,warning --strict",
     "typecheck": "bun check -p tsconfig.json",
     "format": "oxfmt src test",
     "test": "bun --conditions=development test --timeout=30000 --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' --path-ignore-patterns='**/*.e2e.*'",

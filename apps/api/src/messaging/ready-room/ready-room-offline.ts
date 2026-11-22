@@ -12,7 +12,7 @@ import { exitParticipant } from "./ready-room-participation.js";
 const offlineRoom = (
   context: ReadyRoomContext,
   notificationId: string,
-  event: typeof GameCharacterOffline.Type,
+  event: GameCharacterOffline,
   attempt = 0,
 ): Effect.Effect<void, unknown> =>
   Effect.gen(function* () {
@@ -64,9 +64,7 @@ const offlineRoom = (
     );
 
     if (result.status === "conflict")
-      return yield* Effect.fail(
-        new ResourceConflictError({ code: "REVISION_CONFLICT" }),
-      );
+      return yield* new ResourceConflictError({ code: "REVISION_CONFLICT" });
 
     if (result.status === "committed")
       yield* context.publish(result.aggregate, recipients);
@@ -81,7 +79,7 @@ const offlineRoom = (
 
 export const characterOffline = (
   context: ReadyRoomContext,
-  event: typeof GameCharacterOffline.Type,
+  event: GameCharacterOffline,
 ) =>
   context.repository
     .findForUser(event.discordId)

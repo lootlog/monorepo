@@ -217,13 +217,13 @@ export class PresenceStore {
   ): Effect.Effect<number, PresenceFailure> {
     return Effect.gen({ self: this }, function* () {
       if (sessionId !== socket.data.connectionId || !socket.data.presence) {
-        return yield* Effect.fail(new PresenceSessionMismatch());
+        return yield* new PresenceSessionMismatch();
       }
 
       yield* this.reconcileAccess(socket);
 
       if (!socket.data.presence) {
-        return yield* Effect.fail(new PresenceNotPublished());
+        return yield* new PresenceNotPublished();
       }
 
       const presence = { ...socket.data.presence, lastSeen: this.now() };
@@ -348,7 +348,7 @@ export class PresenceStore {
     );
   }
 
-  flushDeltas(): Effect.Effect<void> {
+  get flushDeltas(): Effect.Effect<void> {
     return Effect.suspend(() => {
       this.snapshots.prune();
 
@@ -356,28 +356,28 @@ export class PresenceStore {
     });
   }
 
-  runDeltaFlush() {
-    return this.flushDeltas().pipe(
+  get runDeltaFlush() {
+    return this.flushDeltas.pipe(
       Effect.repeat(Schedule.spaced(DELTA_FLUSH_INTERVAL_MS)),
       Effect.ensuring(
-        this.flushDeltas().pipe(Effect.timeout("1 second"), Effect.ignore),
+        this.flushDeltas.pipe(Effect.timeout("1 second"), Effect.ignore),
       ),
     );
   }
 
-  runExpirySweep(): Effect.Effect<void> {
+  get runExpirySweep(): Effect.Effect<void> {
     return this.expiry.run();
   }
 
-  sweepExpired(): Effect.Effect<void, unknown> {
+  get sweepExpired(): Effect.Effect<void, unknown> {
     return this.expiry.sweep();
   }
 
-  runOfflineSweep(): Effect.Effect<void> {
+  get runOfflineSweep(): Effect.Effect<void> {
     return this.offline.run();
   }
 
-  sweepOffline(): Effect.Effect<void, unknown> {
+  get sweepOffline(): Effect.Effect<void, unknown> {
     return this.offline.sweep();
   }
 
@@ -596,9 +596,9 @@ export class Presence extends Context.Service<Presence, PresenceStore>()(
             .pipe(Effect.asVoid),
       );
 
-      yield* presence.runDeltaFlush().pipe(Effect.forkScoped);
-      yield* presence.runExpirySweep().pipe(Effect.forkScoped);
-      yield* presence.runOfflineSweep().pipe(Effect.forkScoped);
+      yield* presence.runDeltaFlush.pipe(Effect.forkScoped);
+      yield* presence.runExpirySweep.pipe(Effect.forkScoped);
+      yield* presence.runOfflineSweep.pipe(Effect.forkScoped);
 
       return presence;
     }),

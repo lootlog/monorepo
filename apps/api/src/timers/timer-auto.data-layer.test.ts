@@ -332,13 +332,11 @@ it.each([false, true])(
 
                 if (routingKey === RabbitRoutingKey.GUILDS_TIMERS_DELETE) {
                   if (failRealtime)
-                    return yield* Effect.fail(
-                      new MessagingError({
-                        operation: "publish",
-                        message: "Realtime delivery unavailable",
-                        cause: undefined,
-                      }),
-                    );
+                    return yield* new MessagingError({
+                      operation: "publish",
+                      message: "Realtime delivery unavailable",
+                      cause: undefined,
+                    });
                   yield* Deferred.await(notificationStarted);
                 }
 

@@ -111,8 +111,8 @@ const insertLoot = async (
   npc: { npcId: number; type: string; runtimeNpcId?: number },
   recordedAt: Date,
 ) => {
-  const [loot] = Schema.decodeUnknownSync(
-    Schema.Array(Schema.Struct({ id: Schema.Number })),
+  const [loot] = Schema.decodeSync(
+    Schema.Array(Schema.Struct({ id: Schema.Finite })),
   )(
     (
       await client.query(
@@ -238,8 +238,8 @@ describe("personal Organization activity feed", () => {
         .where(eq(guildTable.id, other.guild.id)),
     );
 
-    const loot = Schema.decodeUnknownSync(
-      Schema.Array(Schema.Struct({ id: Schema.Number })),
+    const loot = Schema.decodeSync(
+      Schema.Array(Schema.Struct({ id: Schema.Finite })),
     )(
       (
         await client.query(
@@ -257,8 +257,8 @@ describe("personal Organization activity feed", () => {
       [loot.id, guild.id, other.guild.id],
     );
 
-    const npc = Schema.decodeUnknownSync(
-      Schema.Array(Schema.Struct({ id: Schema.Number })),
+    const npc = Schema.decodeSync(
+      Schema.Array(Schema.Struct({ id: Schema.Finite })),
     )(
       (
         await client.query(
@@ -422,8 +422,8 @@ describe("personal Organization activity feed", () => {
     const { guild, owner } = await seed();
     await run(kill(guild.id, { npcId: 21, npcType: "ELITE2", npcLvl: 50 }));
 
-    const [loot] = Schema.decodeUnknownSync(
-      Schema.Array(Schema.Struct({ id: Schema.Number })),
+    const [loot] = Schema.decodeSync(
+      Schema.Array(Schema.Struct({ id: Schema.Finite })),
     )(
       (
         await client.query(
@@ -478,7 +478,7 @@ describe("personal Organization activity feed", () => {
       Schema.Struct({
         feedEntry: UserFeedItem,
         sourceNpcs: Schema.Array(
-          Schema.Struct({ level: Schema.Number, type: Schema.String }),
+          Schema.Struct({ level: Schema.Finite, type: Schema.String }),
         ),
       }),
     )(JSON.parse(new TextDecoder().decode(message.content)));
@@ -738,12 +738,12 @@ describe("personal Organization activity feed", () => {
       query.params,
     );
 
-    const explain = Schema.decodeUnknownSync(
+    const explain = Schema.decodeSync(
       Schema.Array(
         Schema.Struct({
           "QUERY PLAN": Schema.Array(
             Schema.Struct({
-              "Execution Time": Schema.Number,
+              "Execution Time": Schema.Finite,
               Plan: Schema.Unknown,
             }),
           ),

@@ -73,10 +73,10 @@ import {
   type OrganizationContext,
 } from "#src/runtime/auth/organization-context";
 
-class OrganizationForbidden extends TaggedErrorClass<OrganizationForbidden>()(
-  "OrganizationForbidden",
-  {},
-) {}
+class OrganizationForbidden extends TaggedErrorClass<
+  OrganizationForbidden,
+  { readonly brand: unique symbol }
+>()("OrganizationForbidden", {}) {}
 
 type PermissionRequirements = {
   readonly allOf?: ReadonlyArray<PermissionValue>;

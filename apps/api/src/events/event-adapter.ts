@@ -1,10 +1,11 @@
+import { promiseOperation } from "@lootlog/instrumentation/operation";
 import { Effect } from "effect";
 
 export const runPromiseAdapter = <A>(
   adapter: string,
   operation: () => Promise<A>,
 ) =>
-  Effect.tryPromise({ try: operation, catch: (cause) => cause }).pipe(
+  promiseOperation(`events.adapter.${adapter}`, operation).pipe(
     Effect.withSpan(`events.adapter.${adapter}`),
   );
 

@@ -106,9 +106,7 @@ export const makeEventsCatalogRead = (
         const event = yield* scopedEvent(guildId, eventId);
 
         if (!event) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Event not found"),
-          );
+          return yield* new ResourceNotFoundError("Event not found");
         }
 
         const heroNpcs = yield* findHeroes([eventId]);
@@ -134,7 +132,7 @@ export const makeEventsCatalogRead = (
       const event = rows[0];
 
       if (!event) {
-        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
+        return yield* new ResourceNotFoundError("Event not found");
       }
 
       const heroes = yield* findHeroes([eventId]);
@@ -232,9 +230,7 @@ export const makeEventsCatalogRead = (
           const event = yield* scopedEvent(guild.id, eventId);
 
           if (!event) {
-            return yield* Effect.fail(
-              new ResourceNotFoundError("Event not found"),
-            );
+            return yield* new ResourceNotFoundError("Event not found");
           }
 
           const heroes = yield* findHeroes([eventId]);

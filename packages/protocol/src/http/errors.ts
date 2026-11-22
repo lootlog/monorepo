@@ -11,7 +11,10 @@ export const HttpErrorResponse = Schema.Struct({
 
 export type HttpErrorResponse = typeof HttpErrorResponse.Type;
 
-export class ReauthenticationRequired extends TaggedErrorClass<ReauthenticationRequired>()(
+export class ReauthenticationRequired extends TaggedErrorClass<
+  ReauthenticationRequired,
+  { readonly brand: unique symbol }
+>()(
   "ReauthenticationRequired",
   { code: Schema.String, requiresReauth: Schema.Literal(true) },
   { httpApiStatus: 401 },
@@ -57,15 +60,15 @@ export type ApplicationErrorInput =
       readonly retryAfterMs?: number;
     };
 
-export class ApplicationError extends TaggedErrorClass<ApplicationError>()(
-  "ApplicationError",
-  {
-    kind: Schema.Literals(Object.values(ApplicationErrorKind)),
-    message: Schema.String,
-    body: HttpErrorResponse,
-    retryAfterMs: Schema.optional(Schema.Number),
-  },
-) {
+export class ApplicationError extends TaggedErrorClass<
+  ApplicationError,
+  { readonly brand: unique symbol }
+>()("ApplicationError", {
+  kind: Schema.Literals(Object.values(ApplicationErrorKind)),
+  message: Schema.String,
+  body: HttpErrorResponse,
+  retryAfterMs: Schema.optional(Schema.Finite),
+}) {
   constructor(
     kind: ApplicationErrorKind,
     input: ApplicationErrorInput,

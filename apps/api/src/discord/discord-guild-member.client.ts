@@ -22,6 +22,8 @@ import {
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import type { DiscordRateLimiter } from "./discord-rate-limiter.service.js";
 import {
+  discordRest,
+  DiscordRestFailure,
   failIfDiscordRateLimited,
   isDiscordNotFoundError,
   recordInvalidDiscordRequest,
@@ -87,14 +89,12 @@ export const makeDiscordGuildMemberClient = (dependencies: {
 
     return restClients.withRestClient(userId, discordId, (rest) =>
       Effect.gen(function* () {
-        const response = yield* Effect.tryPromise({
-          try: () =>
-            rest.queueRequest({
-              fullRoute: path,
-              method: RequestMethod.Get,
-            }),
-          catch: (error) => error,
-        });
+        const response = yield* discordRest(() =>
+          rest.queueRequest({
+            fullRoute: path,
+            method: RequestMethod.Get,
+          }),
+        );
 
         yield* rateLimiter.updateRateLimitFromHeaders(
           userId,
@@ -102,15 +102,12 @@ export const makeDiscordGuildMemberClient = (dependencies: {
           response.headers,
         );
 
-        const member = yield* Effect.tryPromise({
-          try: () => parseResponse(response),
-          catch: (error) => error,
-        });
+        const member = yield* discordRest(() => parseResponse(response));
 
         if (!isApiGuildMember(member))
-          return yield* Effect.fail(
-            new TypeError("Invalid Discord guild member response"),
-          );
+          return yield* new DiscordRestFailure({
+            cause: new TypeError("Invalid Discord guild member response"),
+          });
 
         yield* Effect.logDebug({
           message: "Discord API returned member data",
@@ -121,25 +118,28 @@ export const makeDiscordGuildMemberClient = (dependencies: {
       }).pipe(
         Effect.catch((error) =>
           Effect.gen(function* () {
+            const cause =
+              error instanceof DiscordRestFailure ? error.cause : error;
+
             yield* recordInvalidDiscordRequest(
               diagnostics,
               "guild-member",
-              error,
+              cause,
             );
 
-            if (isDiscordNotFoundError(error) || isDiscordForbidden(error)) {
-              return yield* Effect.fail(error);
+            if (isDiscordNotFoundError(cause) || isDiscordForbidden(cause)) {
+              return yield* error;
             }
 
-            if (error instanceof RateLimitError) {
+            if (cause instanceof RateLimitError) {
               yield* rateLimiter.setRateLimitForUser(
                 userId,
                 "guild-member",
-                error.retryAfter,
+                cause.retryAfter,
               );
             }
 
-            return yield* Effect.fail(toDiscordRequestError(error));
+            return yield* toDiscordRequestError(cause);
           }),
         ),
       ),
@@ -154,11 +154,11 @@ export const makeDiscordGuildMemberClient = (dependencies: {
 
       return Effect.gen(function* () {
         if (yield* redis.get(notFoundKey)) {
-          return yield* Effect.fail(new ResourceNotFoundError());
+          return yield* new ResourceNotFoundError();
         }
 
         if (yield* redis.get(forbiddenKey)) {
-          return yield* Effect.fail(discordForbiddenError());
+          return yield* discordForbiddenError();
         }
 
         yield* failIfDiscordRateLimited(rateLimiter, userId, "guild-member");
@@ -167,41 +167,44 @@ export const makeDiscordGuildMemberClient = (dependencies: {
       }).pipe(
         Effect.catch((error) =>
           Effect.gen(function* () {
-            if (error instanceof ResourceNotFoundError) {
-              return yield* Effect.fail(error);
+            const cause =
+              error instanceof DiscordRestFailure ? error.cause : error;
+
+            if (cause instanceof ResourceNotFoundError) {
+              return yield* cause;
             }
 
-            if (isDiscordNotFoundError(error)) {
+            if (isDiscordNotFoundError(cause)) {
               yield* Effect.logDebug({
                 message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
               });
               yield* redis.set(notFoundKey, "1", refusalCacheTtl);
 
-              return yield* Effect.fail(new ResourceNotFoundError());
+              return yield* new ResourceNotFoundError();
             }
 
-            if (isDiscordForbidden(error)) {
+            if (isDiscordForbidden(cause)) {
               yield* Effect.logWarning({
                 message: "Discord refused the guild member request",
                 guildId,
                 userId,
-                discordCode: error.code,
+                discordCode: cause.code,
               });
               yield* redis.set(forbiddenKey, "1", refusalCacheTtl);
 
-              return yield* Effect.fail(discordForbiddenError());
+              return yield* discordForbiddenError();
             }
 
-            if (error instanceof ApplicationError) {
-              return yield* Effect.fail(error);
+            if (cause instanceof ApplicationError) {
+              return yield* cause;
             }
 
             yield* Effect.logError({
               message: `Failed to fetch guild member for guildId: ${guildId}, userId: ${userId}`,
-              error,
+              error: cause,
             });
 
-            return yield* Effect.fail(toDiscordRequestError(error));
+            return yield* toDiscordRequestError(cause);
           }),
         ),
       );

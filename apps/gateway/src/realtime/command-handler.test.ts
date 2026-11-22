@@ -209,7 +209,7 @@ test.each([
       () => {},
     );
 
-    await Effect.runPromise(hub.start());
+    await Effect.runPromise(hub.start);
 
     const count = () => {
       const metric = Effect.runSync(Metric.snapshot).find(
@@ -1298,8 +1298,7 @@ describe("CommandHandler session lifecycle", () => {
 
       const remote = replica(bus.store.publish, () => Effect.void);
 
-      for (const { hub } of [local, remote])
-        await Effect.runPromise(hub.start());
+      for (const { hub } of [local, remote]) await Effect.runPromise(hub.start);
 
       const result = await Effect.runPromise(
         Effect.gen(function* () {
@@ -1445,7 +1444,7 @@ describe("CommandHandler session lifecycle", () => {
 
       const permissions = unavailablePermissions(retryable);
       makeCommandHandler({ guilds: permissions.store, hub });
-      await Effect.runPromise(hub.start());
+      await Effect.runPromise(hub.start);
       const target = makeTestSocket(makeSession({ guilds: [guild()] }));
       hub.register(target.socket);
 
@@ -1772,7 +1771,7 @@ test("client NPC policy decisions match gateway source filtering across roles an
           const npc = { type, lvl };
 
           for (const feature of ["timers", "chat", "notifications"] as const) {
-            let event: typeof ServerEvent.Type;
+            let event: ServerEvent;
 
             if (feature === "timers")
               event = {

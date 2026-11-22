@@ -68,12 +68,10 @@ const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
   const identity = readForwardAuthIdentity(request.headers);
 
   if (!identity) {
-    return yield* Effect.fail(
-      new OperationError({
-        operation: "Battlelog.currentUserId",
-        cause: new AuthenticationRequiredError(),
-      }),
-    );
+    return yield* new OperationError({
+      operation: "Battlelog.currentUserId",
+      cause: new AuthenticationRequiredError(),
+    });
   }
 
   return identity.userId;

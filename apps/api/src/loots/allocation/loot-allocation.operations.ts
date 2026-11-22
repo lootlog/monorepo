@@ -174,9 +174,9 @@ export const makeLootAllocationOperations = (options: {
         const parsed = parseChatAllocation(input.message);
 
         if (Object.keys(parsed).length === 0) {
-          return yield* Effect.fail(
-            new InvalidRequestError({ code: ErrorKey.MISSING_LOOT_SHARE }),
-          );
+          return yield* new InvalidRequestError({
+            code: ErrorKey.MISSING_LOOT_SHARE,
+          });
         }
 
         const players = authorized.lootPlayers.map(
@@ -252,8 +252,8 @@ export const makeLootAllocationOperations = (options: {
           if (!state) return yield* deniedOrHidden(input);
 
           if (state.lootShareSource !== LootShareSource.CHAT_MESSAGE) {
-            return yield* Effect.fail(
-              new DependencyUnavailableError("Failed to persist loot share"),
+            return yield* new DependencyUnavailableError(
+              "Failed to persist loot share",
             );
           }
 

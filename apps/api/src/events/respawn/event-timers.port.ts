@@ -62,10 +62,10 @@ type EventHeroTimer = Pick<
   "npcId" | "timerKey" | "world" | "minSpawnTime" | "maxSpawnTime" | "npc"
 >;
 
-export class EventTimersError extends TaggedErrorClass<EventTimersError>()(
-  "EventTimersError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
+export class EventTimersError extends TaggedErrorClass<
+  EventTimersError,
+  { readonly brand: unique symbol }
+>()("EventTimersError", { operation: Schema.String, cause: Schema.Defect() }) {}
 
 interface EventTimersDependencies {
   readonly store: EventTimerStore;
@@ -176,7 +176,9 @@ export const makeEventTimersPort = ({
       () =>
         new EventTimersError({
           operation: `${operation}.lock.acquire`,
-          cause: new ExecutionError("Unable to acquire Redis lock"),
+          cause: new ExecutionError({
+            message: "Unable to acquire Redis lock",
+          }),
         }),
     );
 

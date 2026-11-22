@@ -91,7 +91,7 @@ export interface PartyReadyRoomInvitationTarget {
 }
 
 const PartyReadyRoomClanSchema = Schema.Struct({
-  id: Schema.optionalKey(Schema.Number),
+  id: Schema.optionalKey(Schema.Finite),
   name: Schema.optionalKey(Schema.String),
 });
 
@@ -99,7 +99,7 @@ const PartyReadyRoomCharacterSchema = Schema.Struct({
   accountId: Schema.String,
   characterId: Schema.String,
   icon: Schema.String,
-  lvl: Schema.Number,
+  lvl: Schema.Finite,
   nick: Schema.String,
   prof: Schema.String,
   clan: Schema.optionalKey(PartyReadyRoomClanSchema),
@@ -115,15 +115,15 @@ const PartyReadyRoomParticipantSchema = Schema.Struct({
 });
 
 export const PartyGatheringNpcSchema = Schema.Struct({
-  id: Schema.optionalKey(Schema.Number),
+  id: Schema.optionalKey(Schema.Finite),
   prof: Schema.optionalKey(Schema.String),
   icon: Schema.optionalKey(Schema.String),
   name: Schema.String,
   location: Schema.String,
-  lvl: Schema.Number,
+  lvl: Schema.Finite,
   type: Schema.String,
-  x: Schema.optionalKey(Schema.Number),
-  y: Schema.optionalKey(Schema.Number),
+  x: Schema.optionalKey(Schema.Finite),
+  y: Schema.optionalKey(Schema.Finite),
 });
 
 export type PartyGatheringNpc = typeof PartyGatheringNpcSchema.Type;
@@ -247,12 +247,12 @@ export const PartyReadyRoomAggregateSchema = Schema.Struct({
   guildIds: Schema.mutable(Schema.Array(Schema.String)),
   world: Schema.String,
   description: Schema.optionalKey(Schema.String),
-  minLvl: Schema.optionalKey(Schema.Number),
-  maxLvl: Schema.optionalKey(Schema.Number),
+  minLvl: Schema.optionalKey(Schema.Finite),
+  maxLvl: Schema.optionalKey(Schema.Finite),
   partyMemberCount: Schema.optionalKey(NonNegativeSafeInteger),
   partyState: Schema.optionalKey(PartyGatheringPartyStateSchema),
   status: Schema.Literals(PARTY_READY_ROOM_STATUSES),
-  revision: Schema.Number,
+  revision: Schema.Finite,
   createdAt: Schema.String,
   updatedAt: Schema.String,
   expiresAt: Schema.String,
@@ -299,7 +299,7 @@ const PartyReadyRoomRemoveUpdateSchema = Schema.Struct({
   schemaVersion: Schema.Literal(3),
   type: Schema.Literal("REMOVE"),
   notificationId: Schema.String,
-  revision: Schema.Number,
+  revision: Schema.Finite,
 });
 
 const PartyReadyRoomClientUpdateSchema = Schema.Union([

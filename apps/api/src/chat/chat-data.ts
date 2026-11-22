@@ -8,10 +8,10 @@ import type {
 import type { ChatMessageViewer } from "./chat-message-viewer.js";
 import type { ChatStoredMessage } from "./chat-stored-message.js";
 
-export class ChatOperationError extends TaggedErrorClass<ChatOperationError>()(
-  "ChatOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class ChatOperationError extends TaggedErrorClass<
+  ChatOperationError,
+  { readonly brand: unique symbol }
+>()("ChatOperationError", { cause: Schema.Defect() }) {}
 
 type DataEffect<A> = Effect.Effect<A, ChatOperationError>;
 

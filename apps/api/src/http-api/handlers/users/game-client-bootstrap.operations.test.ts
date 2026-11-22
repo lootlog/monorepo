@@ -139,7 +139,7 @@ const run = ({
         Layer.succeed(
           CharacterAurasData,
           CharacterAurasData.of({
-            getAuras: () => Effect.succeed({ auras: [] }),
+            getAuras: Effect.succeed({ auras: [] }),
             getOwnAura: () =>
               Effect.succeed({
                 auras: [],

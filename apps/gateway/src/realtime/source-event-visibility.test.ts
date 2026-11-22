@@ -6,7 +6,7 @@ import type { SessionData } from "./session.js";
 import { canReadSourceEvent } from "./source-event-visibility.js";
 import { canSubscribe } from "./subscription-policy.js";
 
-type Event = typeof ServerEvent.Type;
+type Event = ServerEvent;
 
 const role = (permissions: Permission[], from = 200, to = 500) => ({
   id: "role",

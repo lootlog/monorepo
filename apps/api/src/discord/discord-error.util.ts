@@ -8,13 +8,25 @@ import {
   DependencyUnavailableError,
   AuthenticationRequiredError,
 } from "@lootlog/protocol/http/errors";
-import { Clock, Effect } from "effect";
+import { Clock, Effect, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { DiscordRateLimiter } from "./discord-rate-limiter.service.js";
 import type { DiscordSyncDiagnostics } from "./discord-sync-diagnostics.service.js";
 import type {
   DiscordEndpoint,
   DiscordInvalidRequestStatus,
 } from "./discord.types.js";
+
+export class DiscordRestFailure extends TaggedErrorClass<
+  DiscordRestFailure,
+  { readonly brand: unique symbol }
+>()("DiscordRestFailure", { cause: Schema.Defect() }) {}
+
+export const discordRest = <A>(run: () => Promise<A>) =>
+  Effect.tryPromise({
+    try: run,
+    catch: (cause) => new DiscordRestFailure({ cause }),
+  });
 
 type DiscordApplicationError = {
   status: number;
@@ -85,7 +97,7 @@ export const failIfDiscordRateLimited = (
         )
       : undefined;
 
-    return yield* Effect.fail(createDiscordRateLimitError(retryAfterMs));
+    return yield* createDiscordRateLimitError(retryAfterMs);
   });
 
 export const recordInvalidDiscordRequest = (

@@ -32,7 +32,7 @@ import type {
 import type { UpdateUserPreferencesRequest } from "#src/contracts/users/schemas";
 import { AccountOrganizationOperationError } from "#src/guilds/account-organization-data";
 
-type JsonValue = typeof Schema.Json.Type;
+type JsonValue = Schema.Json;
 
 type SettingsOperation = PatchSettingsDocuments["operations"][number];
 

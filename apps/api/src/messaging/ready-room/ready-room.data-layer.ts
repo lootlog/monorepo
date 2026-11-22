@@ -294,9 +294,7 @@ const makeReadyRoomContext = (
       Effect.flatMap((aggregate) =>
         Effect.gen(function* () {
           if (!aggregate || Date.parse(aggregate.expiresAt) <= clock()) {
-            return yield* Effect.fail(
-              new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
-            );
+            return yield* new ResourceNotFoundError({ code: "ROOM_EXPIRED" });
           }
 
           const keyScope = yield* apiKeyAccessibleGuilds(
@@ -308,9 +306,7 @@ const makeReadyRoomContext = (
             const accessible = new Set(keyScope.map(({ id }) => id));
 
             if (!aggregate.guildIds.every((id) => accessible.has(id))) {
-              return yield* Effect.fail(
-                new PermissionDeniedError({ code: "FORBIDDEN" }),
-              );
+              return yield* new PermissionDeniedError({ code: "FORBIDDEN" });
             }
           }
 

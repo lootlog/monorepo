@@ -45,6 +45,12 @@ const bearer = Layer.succeed(
   }),
 );
 
+const testHttpServices = Layer.mergeAll(
+  bearer,
+  apiKeyEndpointPolicyLayer("main"),
+  SchemaErrorResponseLive,
+);
+
 const unexpected = () => Effect.die("Unexpected operation");
 
 const unusedEvents = {
@@ -181,10 +187,9 @@ describe("domain errors across the HTTP boundary", () => {
           const client = yield* HttpApiTest.groups(LootlogApi, [
             "notifications",
           ]).pipe(
-            Effect.provide(NotificationsHandlers),
-            Effect.provide(bearer),
-            Effect.provide(apiKeyEndpointPolicyLayer("main")),
-            Effect.provide(SchemaErrorResponseLive),
+            Effect.provide(
+              Layer.provideMerge(NotificationsHandlers, testHttpServices),
+            ),
           );
 
           const response =
@@ -228,10 +233,9 @@ describe("domain errors across the HTTP boundary", () => {
       Effect.scoped(
         Effect.gen(function* () {
           const client = yield* HttpApiTest.groups(LootlogApi, ["events"]).pipe(
-            Effect.provide(EventsHandlers),
-            Effect.provide(bearer),
-            Effect.provide(apiKeyEndpointPolicyLayer("main")),
-            Effect.provide(SchemaErrorResponseLive),
+            Effect.provide(
+              Layer.provideMerge(EventsHandlers, testHttpServices),
+            ),
           );
 
           const response =
@@ -307,11 +311,11 @@ describe("domain errors across the HTTP boundary", () => {
         Effect.gen(function* () {
           const client = yield* HttpApiTest.groups(LootlogApi, ["timers"]).pipe(
             Effect.provide(
-              TimersHandlers.pipe(HttpRouter.provideRequest(services)),
+              Layer.provideMerge(
+                TimersHandlers.pipe(HttpRouter.provideRequest(services)),
+                testHttpServices,
+              ),
             ),
-            Effect.provide(bearer),
-            Effect.provide(apiKeyEndpointPolicyLayer("main")),
-            Effect.provide(SchemaErrorResponseLive),
           );
 
           const response =
@@ -322,7 +326,7 @@ describe("domain errors across the HTTP boundary", () => {
 
           return { status: response.status, text: yield* response.text };
         }),
-      ).pipe(Effect.provide(services), Effect.provide(platform)),
+      ).pipe(Effect.provide([services, platform])),
     );
 
     expect(result.status).toBe(409);

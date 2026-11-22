@@ -112,43 +112,38 @@ export const makeEventParticipation = (
     );
 
   return {
-    getPending: (
+    getPending: Effect.fn(
+      "EventsRankingController_getPendingParticipationConfirmations",
+    )(function* (
       guild: { id: string },
       eventId: string,
       member: { id: number },
-    ) =>
-      Effect.gen(function* () {
-        const eventRows = yield* query(
-          "events.participation.event",
-          database
-            .select({ id: eventTable.id })
-            .from(eventTable)
-            .where(
-              and(eq(eventTable.id, eventId), eq(eventTable.guildId, guild.id)),
-            )
-            .limit(1),
-        );
+    ) {
+      const eventRows = yield* query(
+        "events.participation.event",
+        database
+          .select({ id: eventTable.id })
+          .from(eventTable)
+          .where(
+            and(eq(eventTable.id, eventId), eq(eventTable.guildId, guild.id)),
+          )
+          .limit(1),
+      );
 
-        if (!eventRows[0])
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Event not found"),
-          );
-        const now = new Date(yield* Clock.currentTimeMillis);
+      if (!eventRows[0])
+        return yield* new ResourceNotFoundError("Event not found");
+      const now = new Date(yield* Clock.currentTimeMillis);
 
-        const [pending, expired] = yield* Effect.all(
-          [
-            participationPoints(eventId, member.id, now, false),
-            participationPoints(eventId, member.id, now, true),
-          ],
-          { concurrency: "unbounded" },
-        );
+      const [pending, expired] = yield* Effect.all(
+        [
+          participationPoints(eventId, member.id, now, false),
+          participationPoints(eventId, member.id, now, true),
+        ],
+        { concurrency: "unbounded" },
+      );
 
-        return { items: dedupe(pending), expiredItems: dedupe(expired) };
-      }).pipe(
-        Effect.withSpan(
-          "EventsRankingController_getPendingParticipationConfirmations",
-        ),
-      ),
+      return { items: dedupe(pending), expiredItems: dedupe(expired) };
+    }),
 
     acknowledgeExpired: (
       guild: { id: string },
@@ -186,13 +181,13 @@ export const makeEventParticipation = (
         ),
       ),
 
-    confirm: (
-      guild: { id: string },
-      eventId: string,
-      killId: string,
-      member: { id: number },
-    ) =>
-      Effect.gen(function* () {
+    confirm: Effect.fn("EventsRankingController_confirmParticipationForKill")(
+      function* (
+        guild: { id: string },
+        eventId: string,
+        killId: string,
+        member: { id: number },
+      ) {
         const rows = yield* query(
           "events.participation.confirm.find",
           database
@@ -221,9 +216,7 @@ export const makeEventParticipation = (
         );
 
         if (rows.length === 0) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Kill point not found"),
-          );
+          return yield* new ResourceNotFoundError("Kill point not found");
         }
 
         const unconfirmed = rows.filter(
@@ -243,8 +236,8 @@ export const makeEventParticipation = (
               point.confirmationDeadlineAt < now,
           )
         ) {
-          return yield* Effect.fail(
-            new InvalidRequestError("Confirmation window has expired"),
+          return yield* new InvalidRequestError(
+            "Confirmation window has expired",
           );
         }
 
@@ -313,9 +306,8 @@ export const makeEventParticipation = (
         yield* afterConfirmation(guild.id, eventId);
 
         return { success: true as const, confirmedNow: true };
-      }).pipe(
-        Effect.withSpan("EventsRankingController_confirmParticipationForKill"),
-      ),
+      },
+    ),
   };
 };
 

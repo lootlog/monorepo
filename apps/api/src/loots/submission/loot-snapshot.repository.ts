@@ -72,9 +72,7 @@ const resolveSnapshotIds = <Input extends object, E>(
       const id = ids.get(inputKey(input));
 
       if (id === undefined) {
-        return yield* Effect.fail(
-          new DependencyUnavailableError(snapshots.failure),
-        );
+        return yield* new DependencyUnavailableError(snapshots.failure);
       }
 
       resolved.push(id);
@@ -204,8 +202,8 @@ export const resolveNpcSnapshots = (
       const snapshot = snapshotById.get(id);
 
       if (!snapshot) {
-        return yield* Effect.fail(
-          new DependencyUnavailableError("Failed to resolve NPC snapshot"),
+        return yield* new DependencyUnavailableError(
+          "Failed to resolve NPC snapshot",
         );
       }
 

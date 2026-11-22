@@ -446,13 +446,13 @@ export const makeSettingsDocuments = (
   };
 };
 
-export class SettingsRequestError extends TaggedErrorClass<SettingsRequestError>()(
-  "SettingsRequestError",
-  {
-    status: Schema.Literals([400, 403, 409]),
-    message: Schema.String,
-  },
-) {
+export class SettingsRequestError extends TaggedErrorClass<
+  SettingsRequestError,
+  { readonly brand: unique symbol }
+>()("SettingsRequestError", {
+  status: Schema.Literals([400, 403, 409]),
+  message: Schema.String,
+}) {
   getStatus() {
     return this.status;
   }

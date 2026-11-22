@@ -81,34 +81,34 @@ export interface AuthorizedGuildCaller extends AuthenticatedCaller {
   readonly roles: ReadonlyArray<Role>;
 }
 
-export class RecordsAccessDenied extends TaggedErrorClass<RecordsAccessDenied>()(
-  "RecordsAccessDenied",
-  {
-    status: Schema.Literals([401, 403]),
-    code: Schema.String,
-  },
-) {}
+export class RecordsAccessDenied extends TaggedErrorClass<
+  RecordsAccessDenied,
+  { readonly brand: unique symbol }
+>()("RecordsAccessDenied", {
+  status: Schema.Literals([401, 403]),
+  code: Schema.String,
+}) {}
 
-export class RecordsNotFound extends TaggedErrorClass<RecordsNotFound>()(
-  "RecordsNotFound",
-  {
-    status: Schema.Literal(404),
-    code: Schema.String,
-  },
-) {}
+export class RecordsNotFound extends TaggedErrorClass<
+  RecordsNotFound,
+  { readonly brand: unique symbol }
+>()("RecordsNotFound", {
+  status: Schema.Literal(404),
+  code: Schema.String,
+}) {}
 
-class RecordsBadRequest extends TaggedErrorClass<RecordsBadRequest>()(
-  "RecordsBadRequest",
-  {
-    status: Schema.Literal(400),
-    code: Schema.String,
-  },
-) {}
+class RecordsBadRequest extends TaggedErrorClass<
+  RecordsBadRequest,
+  { readonly brand: unique symbol }
+>()("RecordsBadRequest", {
+  status: Schema.Literal(400),
+  code: Schema.String,
+}) {}
 
-export class RecordsDataError extends TaggedErrorClass<RecordsDataError>()(
-  "RecordsDataError",
-  { cause: Schema.Defect() },
-) {}
+export class RecordsDataError extends TaggedErrorClass<
+  RecordsDataError,
+  { readonly brand: unique symbol }
+>()("RecordsDataError", { cause: Schema.Defect() }) {}
 
 export class RecordsAuthorization extends Context.Service<
   RecordsAuthorization,

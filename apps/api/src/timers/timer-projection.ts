@@ -13,7 +13,7 @@ import { nullableIsoDatetimeCodec } from "#src/shared/schema/response-codecs";
 const isNpcType = Schema.is(NpcTypeSchema);
 
 const CachedTimerMember = Schema.Struct({
-  id: Schema.Number,
+  id: Schema.Finite,
   userId: Schema.String,
   guildId: Schema.String,
   type: Schema.Literals(["OWNER", "ADMIN", "USER", "BOT"]),
@@ -30,20 +30,20 @@ const CachedTimerCharacter = Schema.Struct({
   name: Schema.String,
   prof: Schema.NullOr(Schema.String),
   icon: Schema.NullOr(Schema.String),
-  characterId: Schema.Number,
-  accountId: Schema.Number,
+  characterId: Schema.Finite,
+  accountId: Schema.Finite,
 });
 
 export const CachedTimerProjectionSchema = Schema.Struct({
   guildId: Schema.String,
-  npcId: Schema.Number,
+  npcId: Schema.Finite,
   timerKey: Schema.String,
   world: Schema.String,
   minSpawnTime: IsoDateTime,
   maxSpawnTime: IsoDateTime,
   npc: Schema.Unknown,
   wasReset: Schema.Boolean,
-  actorCharacterLvl: Schema.NullOr(Schema.Number),
+  actorCharacterLvl: Schema.NullOr(Schema.Finite),
   deletedAt: nullableIsoDatetimeCodec,
   entranceClosesAt: Schema.optionalKey(nullableIsoDatetimeCodec),
   updatedAt: IsoDateTime,

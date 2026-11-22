@@ -284,9 +284,7 @@ describe("member response projections", () => {
       };
 
       expect(
-        await Effect.runPromise(
-          Schema.decodeUnknownEffect(MemberBoundary)(value),
-        ),
+        await Effect.runPromise(Schema.decodeEffect(MemberBoundary)(value)),
       ).toEqual(
         await Effect.runPromise(decodeDomainJson(MemberResponse, value)),
       );

@@ -24,7 +24,7 @@
   },
   "scripts": {
     "typecheck": "bun check",
-    "lint": "oxlint src/*.ts src/realtime scripts orval.config.ts --deny-warnings",
+    "lint": "oxlint src/*.ts src/realtime scripts orval.config.ts --deny-warnings && effect-tsgo diagnostics --project tsconfig.json --severity error,warning --strict",
     "test": "bun test",
     "client:check": "bun ./scripts/check-generated.ts",
     "client:generate": "bun ./scripts/generate.ts"
@@ -35,6 +35,7 @@
     "better-auth": "1.7.16"
   },
   "devDependencies": {
+    "@effect/tsgo": "0.67.3",
     "@lootlog/typescript-config": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "@types/bun": "catalog:",

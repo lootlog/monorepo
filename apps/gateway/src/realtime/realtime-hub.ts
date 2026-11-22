@@ -1,3 +1,7 @@
+import {
+  type OperationError,
+  promiseOperation,
+} from "@lootlog/instrumentation/operation";
 import { canReadApiKeyEvent } from "#src/realtime/api-key-event-visibility";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import { prepareChatMessagePermissions } from "#src/realtime/chat-message-envelope";
@@ -20,7 +24,15 @@ import {
   REALTIME_SERVER_CLOSE_CODES,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Context, Effect, Layer, Predicate, Result, Schema } from "effect";
+import {
+  type Cause,
+  Context,
+  Effect,
+  Layer,
+  Predicate,
+  Result,
+  Schema,
+} from "effect";
 import {
   GatewayConfig,
   type GatewayConfiguration,
@@ -58,11 +70,11 @@ import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
 import type { PartyGatheringEventSource } from "#src/realtime/npc-event-visibility";
 import type { GlobalChatCounts } from "#src/realtime/gateway-metrics";
 
-type Scope = typeof SubscriptionScope.Type;
+type Scope = SubscriptionScope;
 
-type Event = typeof ServerEvent.Type;
+type Event = ServerEvent;
 
-type Response = typeof RealtimeResponse.Type;
+type Response = RealtimeResponse;
 
 interface PublishedFrame {
   readonly event: Event;
@@ -141,19 +153,17 @@ export class RealtimeHub {
     private readonly runBackground: BackgroundTaskRunner = unmanagedBackgroundTaskRunner,
   ) {}
 
-  start(): Effect.Effect<void, unknown> {
-    return Effect.tryPromise({
-      try: () =>
-        this.redis.subscribe(
-          (message) => this.receiveFederated(message),
-          (state) => {
-            if (state === "subscribed") this.restoreFederation();
-            else if (state === "interrupted") this.interruptFederation();
-            else this.closeAfterFederationGap();
-          },
-        ),
-      catch: (cause) => cause,
-    });
+  get start(): Effect.Effect<void, OperationError> {
+    return promiseOperation("realtime.federation.subscribe", () =>
+      this.redis.subscribe(
+        (message) => this.receiveFederated(message),
+        (state) => {
+          if (state === "subscribed") this.restoreFederation();
+          else if (state === "interrupted") this.interruptFederation();
+          else this.closeAfterFederationGap();
+        },
+      ),
+    );
   }
 
   unavailableReason(): "draining" | "federation-unavailable" | undefined {
@@ -358,16 +368,14 @@ export class RealtimeHub {
   publishPermissionRebalance(
     discordId: string,
     userId: string,
-  ): Effect.Effect<void, unknown> {
-    return Effect.tryPromise({
-      try: () =>
-        this.redis.publish({
-          id: crypto.randomUUID(),
-          sourceInstanceId: this.instanceId,
-          control: { type: "permissions.rebalance", discordId, userId },
-        }),
-      catch: (cause) => cause,
-    }).pipe(Effect.timeout("10 seconds"));
+  ): Effect.Effect<void, OperationError | Cause.TimeoutError> {
+    return promiseOperation("realtime.federation.publish", () =>
+      this.redis.publish({
+        id: crypto.randomUUID(),
+        sourceInstanceId: this.instanceId,
+        control: { type: "permissions.rebalance", discordId, userId },
+      }),
+    ).pipe(Effect.timeout("10 seconds"));
   }
 
   async publishPresence(
@@ -574,7 +582,7 @@ export class RealtimeHub {
           : frameSchema === FRAME_SCHEMA
             ? Predicate.isObject(value)
               ? // SAFETY: a replica with this schema encoded the value through it.
-                Result.succeed(value as typeof RealtimeFrame.Type)
+                Result.succeed(value as RealtimeFrame)
               : Result.fail(new Error("Federation frame is not an object"))
             : tryDecodeRealtimeFrameValue(value);
 
@@ -743,7 +751,7 @@ export class Hub extends Context.Service<Hub, RealtimeHub>()(
         (yield* Background).run,
       );
 
-      yield* hub.start();
+      yield* hub.start;
 
       return hub;
     }),

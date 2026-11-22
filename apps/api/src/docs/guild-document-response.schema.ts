@@ -11,7 +11,7 @@ const GuildDocumentListItem = Schema.Struct({
   id: Schema.String,
   guildId: Schema.String,
   title: Schema.String,
-  version: Schema.Number,
+  version: Schema.Finite,
   createdByMemberId: Schema.String,
   createdBy: GuildDocumentEditor,
   updatedByMemberId: Schema.String,
@@ -31,9 +31,9 @@ export const GuildDocumentListResponse = Schema.Struct({
   items: Schema.Array(GuildDocumentListItem),
   limit: Schema.Struct({
     canCreate: Schema.Boolean,
-    max: Schema.Number,
-    trashed: Schema.Number,
-    used: Schema.Number,
+    max: Schema.Finite,
+    trashed: Schema.Finite,
+    used: Schema.Finite,
   }),
 });
 
@@ -50,7 +50,7 @@ const GuildDocumentHistoryItem = Schema.Struct({
   id: Schema.String,
   documentId: Schema.String,
   guildId: Schema.String,
-  version: Schema.Number,
+  version: Schema.Finite,
   title: Schema.String,
   action: Schema.Literals(["SAVE", "DELETE", "RESTORE"]),
   actorMemberId: Schema.String,

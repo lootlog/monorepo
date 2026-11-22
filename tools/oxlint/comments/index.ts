@@ -8,6 +8,7 @@ const repositoryRoot = resolve(import.meta.dirname, "../../..");
 const toolDirectivePatterns = [
   /^(?:oxlint|eslint)-(?:disable|enable)/u,
   /^@ts-(?:expect-error|ignore|nocheck|check)\b/u,
+  /^@effect-diagnostics(?:-next-line)?\b/u,
   /^\/\s*<reference\b/u,
   /^@vitest-environment\b/u,
   /^[#@]__PURE__$/u,

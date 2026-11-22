@@ -674,7 +674,9 @@ describe("durable private online history", () => {
         yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt")
           SELECT 'batch-tracking-' || n, ${cutoff}::timestamptz FROM generate_series(1, 2001) n`;
         yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt") VALUES ('batch-fresh', ${now}::timestamptz)`;
-      }).pipe(Effect.provide(ActivityDatabase.layer), Effect.provide(database)),
+      }).pipe(
+        Effect.provide(Layer.provideMerge(ActivityDatabase.layer, database)),
+      ),
     );
 
     const history = await runAt(
@@ -687,7 +689,7 @@ describe("durable private online history", () => {
           status: "healthy",
           observedAt: "2025-08-01T00:00:00Z",
         });
-        yield* repo.prune();
+        yield* repo.prune;
 
         return yield* repo.find("batch-retained", {
           from: cutoff.slice(0, 10),
@@ -754,7 +756,7 @@ describe("durable private online history", () => {
 
     const prune = Effect.gen(function* () {
       const repo = yield* OnlineRepository;
-      yield* repo.prune();
+      yield* repo.prune;
     });
 
     await Promise.all([runAt(now, prune), runAt(now, prune)]);
@@ -815,7 +817,7 @@ describe("durable private online history", () => {
 
     const prune = Effect.gen(function* () {
       const repo = yield* OnlineRepository;
-      yield* repo.prune();
+      yield* repo.prune;
     });
 
     try {
@@ -874,7 +876,7 @@ describe("durable private online history", () => {
     await run(
       Effect.gen(function* () {
         const repo = yield* OnlineRepository;
-        yield* repo.prune();
+        yield* repo.prune;
         yield* repo.ingest(expired);
       }),
     );
@@ -920,7 +922,7 @@ describe("durable private online history", () => {
       later,
       Effect.gen(function* () {
         const repo = yield* OnlineRepository;
-        yield* repo.prune();
+        yield* repo.prune;
         yield* repo.ingest(input);
         yield* repo.ingest({
           ...input,
@@ -973,7 +975,7 @@ describe("durable private online history", () => {
       ),
       Layer.provideMerge(
         Layer.succeed(ActivityReadiness, {
-          check: () => Effect.die("unused readiness"),
+          check: Effect.die("unused readiness"),
         }),
       ),
       Layer.provideMerge(

@@ -78,15 +78,15 @@ export type NotificationJobStatus =
 export const NotificationFiltersSchema = Schema.Struct({
   guildIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.String))),
   world: Schema.optionalKey(Schema.String),
-  npcId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
-  npcIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
+  npcId: Schema.optionalKey(Schema.NullOr(Schema.Finite)),
+  npcIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Finite))),
   npcTemplateIds: Schema.optionalKey(
-    Schema.mutable(Schema.Array(Schema.Number)),
+    Schema.mutable(Schema.Array(Schema.Finite)),
   ),
-  itemId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
-  itemIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
-  npcLevelMin: Schema.optionalKey(Schema.Number),
-  npcLevelMax: Schema.optionalKey(Schema.Number),
+  itemId: Schema.optionalKey(Schema.NullOr(Schema.Finite)),
+  itemIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Finite))),
+  npcLevelMin: Schema.optionalKey(Schema.Finite),
+  npcLevelMax: Schema.optionalKey(Schema.Finite),
 });
 
 export type NotificationFilters = typeof NotificationFiltersSchema.Type;
@@ -169,7 +169,7 @@ export const LootCreatedNotificationEventV2Schema = Schema.Struct({
   npcs: Schema.Array(
     Schema.Struct({
       type: Schema.NullOr(Schema.String),
-      lvl: Schema.NullOr(Schema.Number),
+      lvl: Schema.NullOr(Schema.Finite),
     }),
   ),
 });
@@ -191,7 +191,7 @@ export const LootDrawResolvedNotificationEventSchema = Schema.Struct({
     hid: Schema.String,
     name: Schema.String,
     icon: Schema.String,
-    lvl: Schema.Number,
+    lvl: Schema.Finite,
   }),
   npcName: Schema.NullOr(Schema.String),
   draw: Schema.Struct({
@@ -200,7 +200,7 @@ export const LootDrawResolvedNotificationEventSchema = Schema.Struct({
       Schema.Struct({
         name: Schema.String,
         prof: Schema.NullOr(ProfessionSchema),
-        lvl: Schema.NullOr(Schema.Number),
+        lvl: Schema.NullOr(Schema.Finite),
         tickets: Schema.Int,
       }),
     ),

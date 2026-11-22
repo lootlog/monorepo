@@ -3,13 +3,13 @@ import type { EnqueuedTaskPromise } from "meilisearch";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Predicate, Schema } from "effect";
 
-export class SearchOperationFailure extends TaggedErrorClass<SearchOperationFailure>()(
-  "SearchOperationFailure",
-  {
-    operation: Schema.String,
-    cause: Schema.Defect(),
-  },
-) {}
+export class SearchOperationFailure extends TaggedErrorClass<
+  SearchOperationFailure,
+  { readonly brand: unique symbol }
+>()("SearchOperationFailure", {
+  operation: Schema.String,
+  cause: Schema.Defect(),
+}) {}
 
 const isInvalidRequest = (cause: unknown): boolean =>
   Predicate.hasProperty(cause, "type") && cause.type === "invalid_request";

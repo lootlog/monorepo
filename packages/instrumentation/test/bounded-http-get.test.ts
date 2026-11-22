@@ -158,8 +158,8 @@ test("waits a growing backoff between retries instead of repeating a failed burs
         nextDoubleUnsafe: () => 0.999,
         nextIntUnsafe: () => 0,
       }),
-      Effect.provide(TestClock.layer()),
-      Effect.provide(
+      Effect.provide([
+        TestClock.layer(),
         FetchHttpClient.layer.pipe(
           Layer.provide(
             Layer.succeed(
@@ -175,7 +175,7 @@ test("waits a growing backoff between retries instead of repeating a failed burs
             ),
           ),
         ),
-      ),
+      ]),
     ),
   );
 

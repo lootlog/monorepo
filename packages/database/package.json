@@ -15,7 +15,7 @@
     "./bullmq": "./src/bullmq.ts"
   },
   "scripts": {
-    "lint": "oxlint src test",
+    "lint": "oxlint src test && effect-tsgo diagnostics --project tsconfig.json --severity error,warning --strict",
     "typecheck": "bun check",
     "test": "bun test --path-ignore-patterns='**/*.integration.*'",
     "test:integration": "bun test .integration."
@@ -31,6 +31,7 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
+    "@effect/tsgo": "0.67.3",
     "@lootlog/typescript-config": "workspace:*",
     "@testcontainers/postgresql": "^12.2.1",
     "@types/bun": "catalog:",

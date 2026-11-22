@@ -2,20 +2,26 @@ import { Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { ApplicationError } from "@lootlog/protocol/http/errors";
 
-export class HeroSightingsNotFound extends TaggedErrorClass<HeroSightingsNotFound>()(
-  "HeroSightingsNotFound",
-  { status: Schema.Literal(404), code: Schema.String },
-) {}
+export class HeroSightingsNotFound extends TaggedErrorClass<
+  HeroSightingsNotFound,
+  { readonly brand: unique symbol }
+>()("HeroSightingsNotFound", {
+  status: Schema.Literal(404),
+  code: Schema.String,
+}) {}
 
-export class HeroSightingsMemberNotFound extends TaggedErrorClass<HeroSightingsMemberNotFound>()(
-  "HeroSightingsMemberNotFound",
-  { guildId: Schema.String, userId: Schema.String },
-) {}
+export class HeroSightingsMemberNotFound extends TaggedErrorClass<
+  HeroSightingsMemberNotFound,
+  { readonly brand: unique symbol }
+>()("HeroSightingsMemberNotFound", {
+  guildId: Schema.String,
+  userId: Schema.String,
+}) {}
 
-class HeroSightingsInfrastructureError extends TaggedErrorClass<HeroSightingsInfrastructureError>()(
-  "HeroSightingsInfrastructureError",
-  { cause: Schema.Defect() },
-) {}
+class HeroSightingsInfrastructureError extends TaggedErrorClass<
+  HeroSightingsInfrastructureError,
+  { readonly brand: unique symbol }
+>()("HeroSightingsInfrastructureError", { cause: Schema.Defect() }) {}
 
 export type HeroSightingsDataFailure =
   | ApplicationError

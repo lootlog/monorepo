@@ -43,8 +43,7 @@ export const makeEventHeroSummary = (
 
       const event = events[0];
 
-      if (!event)
-        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
+      if (!event) return yield* new ResourceNotFoundError("Event not found");
 
       const heroNpcs = yield* query(
         "events.heroSummary.heroes",
@@ -78,8 +77,8 @@ export const makeEventHeroSummary = (
   };
 
   return {
-    getTimers: (guild: { id: string }, eventId: string, world: string) =>
-      Effect.gen(function* () {
+    getTimers: Effect.fn("EventsRankingController_getEventHeroTimers")(
+      function* (guild: { id: string }, eventId: string, world: string) {
         const { heroNpcs } = yield* eventWithHeroes(guild.id, eventId);
 
         if (heroNpcs.length === 0) return [];
@@ -94,7 +93,7 @@ export const makeEventHeroSummary = (
           const npc = isObjectRecord(timer.npc) ? timer.npc : {};
 
           return {
-            npcLvl: Schema.is(Schema.Number)(npc.lvl) ? npc.lvl : null,
+            npcLvl: Schema.is(Schema.Finite)(npc.lvl) ? npc.lvl : null,
             npcId: timer.npcId,
             world: timer.world,
             minSpawnTime: timer.minSpawnTime,
@@ -102,7 +101,8 @@ export const makeEventHeroSummary = (
             npc: extractEventTimerNpc(timer.npc),
           };
         });
-      }).pipe(Effect.withSpan("EventsRankingController_getEventHeroTimers")),
+      },
+    ),
 
     getStats: (guild: { id: string }, eventId: string) =>
       cachedStats(

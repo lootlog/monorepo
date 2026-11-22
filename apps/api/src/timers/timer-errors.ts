@@ -2,25 +2,28 @@ import { Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { ApplicationError } from "@lootlog/protocol/http/errors";
 
-export class TimersNotFound extends TaggedErrorClass<TimersNotFound>()(
-  "TimersNotFound",
-  { status: Schema.Literal(404), code: Schema.String },
-) {}
+export class TimersNotFound extends TaggedErrorClass<
+  TimersNotFound,
+  { readonly brand: unique symbol }
+>()("TimersNotFound", { status: Schema.Literal(404), code: Schema.String }) {}
 
-export class TimersMemberNotFound extends TaggedErrorClass<TimersMemberNotFound>()(
-  "TimersMemberNotFound",
-  { guildId: Schema.String, discordId: Schema.String },
-) {}
+export class TimersMemberNotFound extends TaggedErrorClass<
+  TimersMemberNotFound,
+  { readonly brand: unique symbol }
+>()("TimersMemberNotFound", {
+  guildId: Schema.String,
+  discordId: Schema.String,
+}) {}
 
-export class TimersInvariantViolation extends TaggedErrorClass<TimersInvariantViolation>()(
-  "TimersInvariantViolation",
-  { code: Schema.String },
-) {}
+export class TimersInvariantViolation extends TaggedErrorClass<
+  TimersInvariantViolation,
+  { readonly brand: unique symbol }
+>()("TimersInvariantViolation", { code: Schema.String }) {}
 
-export class TimersInfrastructureError extends TaggedErrorClass<TimersInfrastructureError>()(
-  "TimersInfrastructureError",
-  { cause: Schema.Defect() },
-) {}
+export class TimersInfrastructureError extends TaggedErrorClass<
+  TimersInfrastructureError,
+  { readonly brand: unique symbol }
+>()("TimersInfrastructureError", { cause: Schema.Defect() }) {}
 
 export type TimersDataFailure =
   | ApplicationError

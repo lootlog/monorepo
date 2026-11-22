@@ -33,10 +33,10 @@ type WriteDatabase = Pick<
   "delete" | "insert" | "select" | "update"
 >;
 
-export class DocsPersistenceError extends TaggedErrorClass<DocsPersistenceError>()(
-  "DocsPersistenceError",
-  { cause: Schema.Defect() },
-) {}
+export class DocsPersistenceError extends TaggedErrorClass<
+  DocsPersistenceError,
+  { readonly brand: unique symbol }
+>()("DocsPersistenceError", { cause: Schema.Defect() }) {}
 
 type DocsRepositoryFailure = ApplicationError | DocsPersistenceError;
 
@@ -261,9 +261,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           const guild = guildRows[0];
 
           if (!guild)
-            return yield* Effect.fail(
-              new ResourceNotFoundError("Guild not found"),
-            );
+            return yield* new ResourceNotFoundError("Guild not found");
 
           const usedRows = yield* transaction
             .select({ value: count() })
@@ -276,8 +274,8 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           );
 
           if ((usedRows[0]?.value ?? 0) >= limit) {
-            return yield* Effect.fail(
-              new ResourceConflictError("Guild document limit reached"),
+            return yield* new ResourceConflictError(
+              "Guild document limit reached",
             );
           }
 
@@ -301,9 +299,9 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           const document = rows[0];
 
           if (!document) {
-            return yield* Effect.fail(
-              new DocsPersistenceError({ cause: "Document was not returned" }),
-            );
+            return yield* new DocsPersistenceError({
+              cause: "Document was not returned",
+            });
           }
 
           yield* insertDocumentHistory(transaction, document, "SAVE");
@@ -344,16 +342,14 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           const document = rows[0];
 
           if (!document)
-            return yield* Effect.fail(
-              new ResourceNotFoundError("Document not found"),
-            );
+            return yield* new ResourceNotFoundError("Document not found");
 
           if (
             options.baseVersion !== undefined &&
             options.baseVersion !== document.version
           )
-            return yield* Effect.fail(
-              new ResourceConflictError("Document has a newer version"),
+            return yield* new ResourceConflictError(
+              "Document has a newer version",
             );
 
           if (
@@ -381,9 +377,9 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           const updated = updatedRows[0];
 
           if (!updated) {
-            return yield* Effect.fail(
-              new DocsPersistenceError({ cause: "Document was not returned" }),
-            );
+            return yield* new DocsPersistenceError({
+              cause: "Document was not returned",
+            });
           }
 
           yield* insertDocumentHistory(transaction, updated, "SAVE");
@@ -464,14 +460,10 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           const document = rows[0];
 
           if (!document)
-            return yield* Effect.fail(
-              new ResourceNotFoundError("Document not found"),
-            );
+            return yield* new ResourceNotFoundError("Document not found");
 
           if (options.action === "RESTORE" && !document.deletedAt) {
-            return yield* Effect.fail(
-              new ResourceConflictError("Document is not in trash"),
-            );
+            return yield* new ResourceConflictError("Document is not in trash");
           }
 
           const now = new Date(yield* Clock.currentTimeMillis);
@@ -491,9 +483,9 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           const updated = updatedRows[0];
 
           if (!updated) {
-            return yield* Effect.fail(
-              new DocsPersistenceError({ cause: "Document was not returned" }),
-            );
+            return yield* new DocsPersistenceError({
+              cause: "Document was not returned",
+            });
           }
 
           yield* insertDocumentHistory(transaction, updated, options.action);
@@ -520,14 +512,10 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
         const document = rows[0];
 
         if (!document)
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Document not found"),
-          );
+          return yield* new ResourceNotFoundError("Document not found");
 
         if (!document.deletedAt) {
-          return yield* Effect.fail(
-            new ResourceConflictError("Document is not in trash"),
-          );
+          return yield* new ResourceConflictError("Document is not in trash");
         }
 
         yield* protect(

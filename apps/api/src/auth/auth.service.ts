@@ -26,7 +26,7 @@ const DEFAULT_REQUEST_TIMEOUT = 5000;
 
 const IdpTokenSuccess = Schema.Struct({
   accessToken: Schema.String,
-  expiresIn: Schema.Number,
+  expiresIn: Schema.Finite,
   scopes: Schema.mutable(Schema.Array(Schema.String)),
 });
 
@@ -70,13 +70,13 @@ export const fingerprintAccessToken = (accessToken: string) =>
 const hasRequiredScopes = (token: IdpToken) =>
   DISCORD_AUTH_SCOPES.every((scope) => token.scopes.includes(scope));
 
-class AuthHttpResponseError extends TaggedErrorClass<AuthHttpResponseError>()(
-  "AuthHttpResponseError",
-  {
-    status: Schema.Number,
-    data: Schema.UndefinedOr(IdpTokenResponse),
-  },
-) {
+class AuthHttpResponseError extends TaggedErrorClass<
+  AuthHttpResponseError,
+  { readonly brand: unique symbol }
+>()("AuthHttpResponseError", {
+  status: Schema.Finite,
+  data: Schema.UndefinedOr(IdpTokenResponse),
+}) {
   override get message() {
     return `Request failed with status code ${this.status}`;
   }
@@ -111,21 +111,19 @@ const mapResponseError = (
         message: `Account not found for user ${userId}`,
       });
 
-      return yield* Effect.fail(new AccountNotFoundError());
+      return yield* new AccountNotFoundError();
     }
 
     if (isTokenErrorCode(reason)) {
       yield* Effect.logDebug({ message: `Token error for user ${userId}` });
 
-      return yield* Effect.fail(new TokenExpiredError());
+      return yield* new TokenExpiredError();
     }
 
     if (status === 401) {
-      return yield* Effect.fail(
-        new AuthServiceUnavailableError({
-          message: "Auth service rejected the internal service credential",
-        }),
-      );
+      return yield* new AuthServiceUnavailableError({
+        message: "Auth service rejected the internal service credential",
+      });
     }
 
     if (status >= 400 && status < 500) {
@@ -133,9 +131,7 @@ const mapResponseError = (
         message: `Auth service returned client error for user ${userId}: ${error.message}`,
       });
 
-      return yield* Effect.fail(
-        new AuthBadRequestError({ message: error.message }),
-      );
+      return yield* new AuthBadRequestError({ message: error.message });
     }
 
     return yield* connectionFailure(userId, error.message);
@@ -180,9 +176,10 @@ export const makeAuthService = (options: {
         : undefined;
 
       if (response.status < 200 || response.status >= 300) {
-        return yield* Effect.fail(
-          new AuthHttpResponseError({ status: response.status, data }),
-        );
+        return yield* new AuthHttpResponseError({
+          status: response.status,
+          data,
+        });
       }
 
       if (!data) {
@@ -190,11 +187,9 @@ export const makeAuthService = (options: {
           message: `Empty response from auth service for user ${userId}`,
         });
 
-        return yield* Effect.fail(
-          new AuthServiceUnavailableError({
-            message: "Empty response from auth service",
-          }),
-        );
+        return yield* new AuthServiceUnavailableError({
+          message: "Empty response from auth service",
+        });
       }
 
       return data;
@@ -237,7 +232,7 @@ export const makeAuthService = (options: {
         const reason = failureReason(response);
 
         if (reason === "ACCOUNT_NOT_FOUND") {
-          return yield* Effect.fail(new AccountNotFoundError());
+          return yield* new AccountNotFoundError();
         }
 
         if (isTokenErrorCode(reason)) {
@@ -245,31 +240,27 @@ export const makeAuthService = (options: {
             message: `Token error for user ${userId}: ${reason}`,
           });
 
-          return yield* Effect.fail(new TokenExpiredError());
+          return yield* new TokenExpiredError();
         }
 
         yield* Effect.logError({
           message: `Unknown error from auth service for user ${userId}: ${reason}`,
         });
 
-        return yield* Effect.fail(
-          new AuthServiceUnavailableError({
-            message: `Auth service error: ${reason}`,
-          }),
-        );
+        return yield* new AuthServiceUnavailableError({
+          message: `Auth service error: ${reason}`,
+        });
       }
 
       if (!hasRequiredScopes(response)) {
-        return yield* Effect.fail(
-          new InvalidScopesError({
-            required: DISCORD_AUTH_SCOPES,
-            actual: response.scopes,
-          }),
-        );
+        return yield* new InvalidScopesError({
+          required: DISCORD_AUTH_SCOPES,
+          actual: response.scopes,
+        });
       }
 
       if (yield* isRejected(response)) {
-        return yield* Effect.fail(new DiscordTokenRejectedError());
+        return yield* new DiscordTokenRejectedError();
       }
 
       const cacheTtl = Math.min(

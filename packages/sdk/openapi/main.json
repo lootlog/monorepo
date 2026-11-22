@@ -28076,15 +28076,7 @@
             "type": "object",
             "properties": {
               "id": {
-                "anyOf": [
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string",
-                    "enum": ["Infinity", "-Infinity", "NaN"]
-                  }
-                ]
+                "type": "number"
               },
               "prof": {
                 "type": "string"
@@ -28099,40 +28091,16 @@
                 "type": "string"
               },
               "lvl": {
-                "anyOf": [
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string",
-                    "enum": ["Infinity", "-Infinity", "NaN"]
-                  }
-                ]
+                "type": "number"
               },
               "type": {
                 "type": "string"
               },
               "x": {
-                "anyOf": [
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string",
-                    "enum": ["Infinity", "-Infinity", "NaN"]
-                  }
-                ]
+                "type": "number"
               },
               "y": {
-                "anyOf": [
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string",
-                    "enum": ["Infinity", "-Infinity", "NaN"]
-                  }
-                ]
+                "type": "number"
               }
             },
             "required": ["name", "location", "lvl", "type"],
@@ -28320,15 +28288,7 @@
                   "type": "object",
                   "properties": {
                     "id": {
-                      "anyOf": [
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "string",
-                          "enum": ["Infinity", "-Infinity", "NaN"]
-                        }
-                      ]
+                      "type": "number"
                     },
                     "name": {
                       "type": "string"
@@ -28677,15 +28637,7 @@
                 "type": "object",
                 "properties": {
                   "id": {
-                    "anyOf": [
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string",
-                        "enum": ["Infinity", "-Infinity", "NaN"]
-                      }
-                    ]
+                    "type": "number"
                   },
                   "prof": {
                     "type": "string"
@@ -28700,40 +28652,16 @@
                     "type": "string"
                   },
                   "lvl": {
-                    "anyOf": [
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string",
-                        "enum": ["Infinity", "-Infinity", "NaN"]
-                      }
-                    ]
+                    "type": "number"
                   },
                   "type": {
                     "type": "string"
                   },
                   "x": {
-                    "anyOf": [
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string",
-                        "enum": ["Infinity", "-Infinity", "NaN"]
-                      }
-                    ]
+                    "type": "number"
                   },
                   "y": {
-                    "anyOf": [
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string",
-                        "enum": ["Infinity", "-Infinity", "NaN"]
-                      }
-                    ]
+                    "type": "number"
                   }
                 },
                 "required": ["name", "location", "lvl", "type"],
@@ -28921,15 +28849,7 @@
                       "type": "object",
                       "properties": {
                         "id": {
-                          "anyOf": [
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "type": "string",
-                              "enum": ["Infinity", "-Infinity", "NaN"]
-                            }
-                          ]
+                          "type": "number"
                         },
                         "name": {
                           "type": "string"

@@ -5,7 +5,7 @@ import { Result, Schema } from "effect";
 
 describe("UpdateOrganizationConfigRequest", () => {
   it("returns a translation key instead of localized backend copy", () => {
-    const result = Schema.decodeUnknownResult(UpdateOrganizationConfigRequest)({
+    const result = Schema.decodeResult(UpdateOrganizationConfigRequest)({
       reservationTimeGranularityMinutes: 7,
     });
 

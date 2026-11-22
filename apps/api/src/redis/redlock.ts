@@ -1,4 +1,5 @@
-import { Effect, Option } from "effect";
+import { Effect, Option, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type * as Redis from "effect/persistence/Redis";
 
 export interface LockRetry {
@@ -54,7 +55,13 @@ for _, key in ipairs(KEYS) do redis.call("pexpire", key, ARGV[2]) end
 return #KEYS
 `;
 
-export class ExecutionError extends Error {}
+export class ExecutionError extends TaggedErrorClass<
+  ExecutionError,
+  { readonly brand: unique symbol }
+>()("ExecutionError", {
+  message: Schema.String,
+  cause: Schema.optional(Schema.Defect()),
+}) {}
 
 const retryWait = (retry: LockRetry) =>
   retry.retryDelay + Math.floor(Math.random() * (retry.retryJitter + 1));
@@ -115,12 +122,17 @@ export const makeRedisLockManager = (
     extend: (duration) =>
       redis.eval(EXTEND_SCRIPT, resources, [value, duration]).pipe(
         Effect.mapError(
-          (cause) => new ExecutionError("Redis lock renewal failed", { cause }),
+          (cause) =>
+            new ExecutionError({ message: "Redis lock renewal failed", cause }),
         ),
         Effect.flatMap((extended) =>
           extended === resources.length
             ? Effect.void
-            : Effect.fail(new ExecutionError("Redis lock ownership was lost")),
+            : Effect.fail(
+                new ExecutionError({
+                  message: "Redis lock ownership was lost",
+                }),
+              ),
         ),
       ),
   });
@@ -155,11 +167,10 @@ export const makeRedisLockManager = (
         }
       }
 
-      return yield* Effect.fail(
-        new ExecutionError("Unable to acquire Redis lock", {
-          cause: lastCause,
-        }),
-      );
+      return yield* new ExecutionError({
+        message: "Unable to acquire Redis lock",
+        cause: lastCause,
+      });
     });
 
   return {

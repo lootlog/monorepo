@@ -9,7 +9,7 @@ describe("Point adjustment validation", () => {
   describe("UpdateRankingPointsRequest", () => {
     it("accepts decimal values with more than two decimal places", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateRankingPointsRequest)({
+        Schema.decodeSync(UpdateRankingPointsRequest)({
           pointsDelta: 1.234,
         }),
       ).not.toThrow();
@@ -17,7 +17,7 @@ describe("Point adjustment validation", () => {
 
     it("accepts negative delta values", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateRankingPointsRequest)({
+        Schema.decodeSync(UpdateRankingPointsRequest)({
           pointsDelta: -0.25,
         }),
       ).not.toThrow();
@@ -25,7 +25,7 @@ describe("Point adjustment validation", () => {
 
     it("rejects infinity values", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateRankingPointsRequest)({
+        Schema.decodeSync(UpdateRankingPointsRequest)({
           pointsDelta: Number.POSITIVE_INFINITY,
         }),
       ).toThrow();
@@ -35,7 +35,7 @@ describe("Point adjustment validation", () => {
   describe("UpdateKillPointRequest", () => {
     it("accepts decimal values with more than two decimal places", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateKillPointRequest)({
+        Schema.decodeSync(UpdateKillPointRequest)({
           pointsDelta: 0.125,
         }),
       ).not.toThrow();
@@ -43,7 +43,7 @@ describe("Point adjustment validation", () => {
 
     it("accepts negative delta values", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateKillPointRequest)({
+        Schema.decodeSync(UpdateKillPointRequest)({
           pointsDelta: -0.25,
         }),
       ).not.toThrow();

@@ -14,7 +14,7 @@ import {
 import type { UserGuildData } from "#src/guilds/guild";
 import type { SessionData } from "#src/realtime/session";
 
-type Event = typeof ServerEvent.Type;
+type Event = ServerEvent;
 
 export const lootEventVisibilityNpcs = (
   npcs: ReadonlyArray<typeof GuildLootEventNpc.Type>,
