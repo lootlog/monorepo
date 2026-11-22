@@ -44,8 +44,12 @@ export const RabbitConsumers = Layer.effectDiscard(
     const rabbit = yield* RabbitMessaging;
     const redis = yield* ApiRedis;
     const database = yield* ApiDatabase;
-    const { runLootPublications } = yield* RecordsServices;
+
+    const { runLootPublications, runLootDrawAnnouncements } =
+      yield* RecordsServices;
+
     yield* runLootPublications.pipe(Effect.forkScoped);
+    yield* runLootDrawAnnouncements.pipe(Effect.forkScoped);
     const readyRooms = yield* ReadyRoomData;
     const guildSync = yield* GuildDiscordSync;
     const { memberDelivery } = yield* MemberServices;

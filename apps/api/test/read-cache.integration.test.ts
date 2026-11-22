@@ -889,7 +889,7 @@ describe("Read cache Dragonfly integration", () => {
           );
 
           const operations = makeLootsOperations({
-            publishDrawResolved: () => Effect.void,
+            signalDrawAnnouncements: Effect.void,
             persistence: makeLootPersistence(db),
             query: makeLootQueryOperations(makeLootQueryPersistence(db)),
             redis: cache,

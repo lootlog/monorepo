@@ -1,0 +1,243 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "d15ed0a8-b998-40fc-b776-94a120109f28",
+  "prevIds": ["a111f6b0-a060-4f2f-9cfa-0ad31373dfa2"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "LootDrawAnnouncementOutbox"],
+      "writes": [
+        "s|tbl|public.LootDrawAnnouncementOutbox",
+        "n|tbl|public.LootDrawAnnouncementOutbox",
+        "e|tbl|public.LootDrawAnnouncementOutbox",
+        "n|rel|public.LootDrawAnnouncementOutbox",
+        "n|type|public.LootDrawAnnouncementOutbox",
+        "n|rel|public.LootDrawAnnouncementOutbox_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "LootDrawAnnouncementOutbox",
+        "LootDrawAnnouncementOutbox_lastAttemptAt_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.LootDrawAnnouncementOutbox_lastAttemptAt_id_idx",
+        "n|idx|public.LootDrawAnnouncementOutbox_lastAttemptAt_id_idx",
+        "e|idx|public.LootDrawAnnouncementOutbox_lastAttemptAt_id_idx",
+        "n|rel|public.LootDrawAnnouncementOutbox_lastAttemptAt_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.LootDrawAnnouncementOutbox",
+        "n|sch|public",
+        "n|col|public.LootDrawAnnouncementOutbox.lastAttemptAt",
+        "n|col|public.LootDrawAnnouncementOutbox.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": ["table", "public", "LootDrawAnnouncementOutbox"],
+      "writes": [
+        "s|fk|public.LootDrawAnnouncementOutbox.LootDrawAnnouncementOutbox_guildId_fkey",
+        "n|fk|public.LootDrawAnnouncementOutbox.LootDrawAnnouncementOutbox_guildId_fkey",
+        "e|fk|public.LootDrawAnnouncementOutbox.LootDrawAnnouncementOutbox_guildId_fkey",
+        "n|con|public.LootDrawAnnouncementOutbox.LootDrawAnnouncementOutbox_guildId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.LootDrawAnnouncementOutbox",
+        "n|sch|public",
+        "n|tbl|public.Guild",
+        "n|sch|public",
+        "n|col|public.LootDrawAnnouncementOutbox.guildId",
+        "n|col|public.Guild.id",
+        "e|uniqueness|public.Guild.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "LootDrawAnnouncementOutbox",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "LootDrawAnnouncementOutbox",
+        "name": "id",
+        "type": "serial",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "LootDrawAnnouncementOutbox",
+        "name": "guildId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "LootDrawAnnouncementOutbox",
+        "name": "lootId",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "LootDrawAnnouncementOutbox",
+        "name": "drawId",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "LootDrawAnnouncementOutbox",
+        "name": "outcome",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "LootDrawAnnouncementOutbox",
+        "name": "lastAttemptAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "LootDrawAnnouncementOutbox",
+        "name": "createdAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "LootDrawAnnouncementOutbox",
+        "name": "LootDrawAnnouncementOutbox_lastAttemptAt_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "lastAttemptAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": true,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "LootDrawAnnouncementOutbox",
+        "name": "LootDrawAnnouncementOutbox_guildId_fkey",
+        "nameExplicit": true,
+        "columns": ["guildId"],
+        "schemaTo": "public",
+        "tableTo": "Guild",
+        "columnsTo": ["id"],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "LootDrawAnnouncementOutbox",
+        "name": "LootDrawAnnouncementOutbox_pkey",
+        "columns": ["id"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}
