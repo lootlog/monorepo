@@ -82,7 +82,7 @@ export function NpcLocations({ npc }: { npc: CatalogNpcDtoOutput }) {
     <div className="flex flex-col gap-2">
       <ul
         id="npc-location-list"
-        className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-x-6 rounded-xl border border-border/50 bg-card px-4 py-2"
+        className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,15rem),1fr))] gap-x-6 rounded-xl border border-border/50 bg-card px-4 py-2"
       >
         {shown.map(({ map, share, tiles }) => {
           const spawn = describeSpawnTiles(tiles, randomArea);
