@@ -23,6 +23,9 @@ export const getReservationCollectionClassName = (viewMode: ViewMode) =>
 export const getReservationCellClassName = (viewMode: ViewMode) =>
   viewMode === "grid" ? LIST_TILE_GRID_CELL_CLASS : LIST_TILE_RULE_CLASS;
 
-/** A list row: the spot, its status, then its actions, on one line. */
+/**
+ * A list row laid out like a timer row: the spot's monster, its name with the
+ * status under it, then its actions at the row's end.
+ */
 export const RESERVATION_LIST_ROW_CLASS =
-  "grid min-h-14 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-x-6 py-2";
+  "flex min-h-14 items-center gap-3 py-2.5";

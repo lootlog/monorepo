@@ -214,11 +214,11 @@ export function ReservationCard({
           </>
         ) : (
           <>
-            <div className="flex min-w-0 items-center gap-3">
-              {images[0] && <NpcSearchTile icon={images[0].image} />}
+            {images[0] && <NpcSearchTile icon={images[0].image} />}
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
               {title}
+              {status}
             </div>
-            {status}
             {actions}
           </>
         )}
