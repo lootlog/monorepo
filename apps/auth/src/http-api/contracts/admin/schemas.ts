@@ -80,6 +80,18 @@ export const AdminUsersQuery = Schema.Struct({
 
 export type AdminUsersQuery = typeof AdminUsersQuery.Type;
 
+const UserIds = Schema.Array(
+  Schema.NonEmptyString.check(Schema.isMaxLength(100)),
+).check(Schema.isMaxLength(20_000));
+
+export const SearchAdminUsers = Schema.Struct({
+  ...AdminUsersQuery.fields,
+  userIds: Schema.optionalKey(UserIds),
+  excludedUserIds: Schema.optionalKey(UserIds),
+}).annotate({ identifier: "SearchAdminUsers" });
+
+export type SearchAdminUsers = typeof SearchAdminUsers.Type;
+
 export const AdminUsersResponse = Schema.Struct({
   users: Schema.Array(AdminUser),
   total: NonNegativeSafeInteger,

@@ -8,6 +8,8 @@ import {
 import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import {
   CharacterAuraGameAccountParams,
+  CharacterAuraGrantHoldersResponse,
+  CharacterAuraGrantsResponse,
   CharacterAurasResponse,
   OwnCharacterAuraResponse,
   PersonalCharacterAuraGrantParams,
@@ -55,6 +57,40 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
       OpenApi.Description,
       "Choose the aura one Margonem character of the authenticated user wears, or remove it with null; fails with 403 when choosing one without access to auras, a personal aura not granted to the user, or for a character on an account the user did not prove to play",
     ),
+  HttpApiEndpoint.get(
+    "CharacterAurasControllerListGrantHolders",
+    "/character-auras/grants",
+    {
+      success: CharacterAuraGrantHoldersResponse,
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "CharacterAurasController_listGrantHolders")
+    .annotate(OpenApi.Summary, "List character aura grant holders")
+    .annotate(
+      OpenApi.Description,
+      "List every user holding the grant of auras in general or a personal aura, with what they hold. Lootlog admins (the `admin` platform role) only",
+    ),
+  HttpApiEndpoint.get(
+    "CharacterAurasControllerGetGrants",
+    "/character-auras/grants/game-accounts/:gameAccountId",
+    {
+      params: CharacterAuraGameAccountParams,
+      success: CharacterAuraGrantsResponse,
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "CharacterAurasController_getGrants")
+    .annotate(OpenApi.Summary, "Get character aura grants")
+    .annotate(
+      OpenApi.Description,
+      "Show which auras the user who last proved to play the Margonem account may choose: whether they are a Lootlog admin, hold the grant of auras in general, and which personal auras they were granted. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account",
+    ),
   HttpApiEndpoint.put(
     "CharacterAurasControllerGrantAuras",
     "/character-auras/grants/game-accounts/:gameAccountId",
@@ -72,7 +108,7 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     .annotate(OpenApi.Summary, "Grant character auras")
     .annotate(
       OpenApi.Description,
-      "Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Global chat admins only; 404 when no user proved to play the account",
+      "Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account",
     ),
   HttpApiEndpoint.put(
     "CharacterAurasControllerGrantPersonalAura",
@@ -91,7 +127,7 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     .annotate(OpenApi.Summary, "Grant a personal character aura")
     .annotate(
       OpenApi.Description,
-      "Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Global chat admins only; 404 when no user proved to play the account",
+      "Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account",
     ),
   HttpApiEndpoint.delete(
     "CharacterAurasControllerRevokeAuras",
@@ -110,6 +146,6 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     .annotate(OpenApi.Summary, "Revoke character auras")
     .annotate(
       OpenApi.Description,
-      "Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; global chat admins keep theirs. Global chat admins only; 404 when no user proved to play the account",
+      "Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; Lootlog admins keep theirs. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account",
     ),
 ) {}

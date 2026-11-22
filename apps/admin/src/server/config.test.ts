@@ -6,6 +6,7 @@ const base = {
   ADMIN_API_SECRET: "secret",
   ADMIN_ORIGIN: "https://admin.example.test/",
   LOOTLOG_WEB_URL: "https://example.test",
+  LOOTLOG_API_URL: "https://api.example.test",
 };
 
 const access = {

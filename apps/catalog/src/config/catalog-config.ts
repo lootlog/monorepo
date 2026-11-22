@@ -2,7 +2,6 @@ import {
   type BaseServiceConfiguration,
   baseServiceConfig,
   InvalidServiceConfiguration,
-  commaSeparatedConfig,
 } from "@lootlog/instrumentation/service-config";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Config, Context, Effect, Layer, Option, Redacted } from "effect";
@@ -13,7 +12,6 @@ export interface CatalogConfigValue extends BaseServiceConfiguration {
   readonly meilisearchHost: string;
   readonly meilisearchApiKey: Redacted.Redacted<string>;
   readonly serviceToken: Redacted.Redacted<string>;
-  readonly moderatorUserIds: ReadonlyArray<string>;
 }
 
 const LOCAL_SERVICE_TOKEN = "local-development-catalog-service-token";
@@ -51,9 +49,6 @@ export class CatalogConfig extends Context.Service<
         meilisearchHost: yield* Config.String("MEILISEARCH_HOST"),
         meilisearchApiKey: yield* Config.Redacted("MEILISEARCH_API_KEY"),
         serviceToken,
-        moderatorUserIds: yield* commaSeparatedConfig(
-          "CATALOG_MODERATOR_USER_IDS",
-        ).pipe(Config.withDefault([])),
       });
     }),
   );

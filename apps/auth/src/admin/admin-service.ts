@@ -22,6 +22,7 @@ import {
   ilike,
   inArray,
   isNull,
+  notInArray,
   or,
   sql,
 } from "drizzle-orm";
@@ -39,7 +40,7 @@ import {
 import type {
   AdminAuditEntry,
   AdminUser,
-  AdminUsersQuery,
+  SearchAdminUsers,
   BanAdminUser,
 } from "#src/http-api/contracts/admin/schemas";
 
@@ -147,7 +148,7 @@ export class AdminService extends Context.Service<
       ApplicationError
     >;
     readonly listUsers: (
-      query: AdminUsersQuery,
+      query: SearchAdminUsers,
     ) => Effect.Effect<
       { users: ReadonlyArray<AdminUser>; total: number },
       ApplicationError
@@ -445,6 +446,12 @@ export class AdminService extends Context.Service<
                   eq(authUsers.discordId, search),
                 ),
             input.role === undefined ? undefined : holdsRole(input.role),
+            input.userIds === undefined
+              ? undefined
+              : inArray(authUsers.id, [...input.userIds]),
+            input.excludedUserIds === undefined
+              ? undefined
+              : notInArray(authUsers.id, [...input.excludedUserIds]),
             input.banned === undefined
               ? undefined
               : input.banned

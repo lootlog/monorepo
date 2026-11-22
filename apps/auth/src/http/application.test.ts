@@ -375,6 +375,25 @@ describe("Auth HttpApi contract", () => {
         banned: true,
         limit: 10,
       });
+
+      const holders = Array.from(
+        { length: 600 },
+        (_, index) => `user-${index}`,
+      );
+
+      const searched = await caller.run(
+        new Request("http://localhost/admin/users/search", {
+          method: "POST",
+          headers: { ...adminCaller, "content-type": "application/json" },
+          body: JSON.stringify({ excludedUserIds: holders, limit: 10 }),
+        }),
+      );
+
+      expect(searched.status).toBe(200);
+      expect(caller.listUsers).toHaveBeenLastCalledWith({
+        excludedUserIds: holders,
+        limit: 10,
+      });
     } finally {
       await caller.dispose();
     }

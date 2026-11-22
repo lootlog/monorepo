@@ -1,4 +1,4 @@
-import type { GlobalChatAdmins } from "#src/global-chat/global-chat-admins";
+import type { RoleHolders } from "#src/platform-roles/role-holders";
 import { and, asc, eq, inArray, isNotNull, or, type SQL } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
 import {
@@ -84,7 +84,7 @@ const uncached: CharacterAurasCache = {
 };
 
 export const makeCharacterAurasData = (
-  admins: GlobalChatAdmins,
+  admins: RoleHolders,
   events: CharacterAurasEvents,
   cache: CharacterAurasCache = uncached,
 ) =>
@@ -387,6 +387,67 @@ export const makeCharacterAurasData = (
 
           return yield* getOwnAura(userId);
         }),
+      listGrantHolders: (callerUserId) =>
+        Effect.gen(function* () {
+          if (!admins.has(callerUserId)) return yield* accessDenied();
+
+          const [granted, personalGrants] = yield* Effect.all([
+            database
+              .select({ userId: userCharacterAuraGrantTable.userId })
+              .from(userCharacterAuraGrantTable),
+            database
+              .select({
+                userId: userPersonalCharacterAuraGrantTable.userId,
+                auraId: userPersonalCharacterAuraGrantTable.auraId,
+              })
+              .from(userPersonalCharacterAuraGrantTable),
+          ]).pipe(Effect.mapError(operationError));
+
+          const grantedUserIds = new Set(granted.map((row) => row.userId));
+
+          const personal = Map.groupBy(personalGrants, (row) => row.userId);
+
+          const userIds = new Set([...grantedUserIds, ...personal.keys()]);
+
+          return {
+            holders: [...userIds].toSorted().map((userId) => {
+              const held = new Set(
+                personal.get(userId)?.map((row) => row.auraId),
+              );
+
+              return {
+                userId,
+                granted: grantedUserIds.has(userId),
+                personalAuraIds: PERSONAL_CHARACTER_AURA_IDS.filter((auraId) =>
+                  held.has(auraId),
+                ),
+              };
+            }),
+          };
+        }),
+      getGrants: (callerUserId, gameAccountId) =>
+        Effect.gen(function* () {
+          const userId = yield* grantTarget(callerUserId, gameAccountId);
+
+          const [granted, personalGrants] = yield* Effect.all([
+            isGranted(userId),
+            database
+              .select({ auraId: userPersonalCharacterAuraGrantTable.auraId })
+              .from(userPersonalCharacterAuraGrantTable)
+              .where(eq(userPersonalCharacterAuraGrantTable.userId, userId)),
+          ]).pipe(Effect.mapError(operationError));
+
+          const personal = new Set(personalGrants.map((row) => row.auraId));
+
+          return {
+            userId,
+            admin: admins.has(userId),
+            granted,
+            personalAuraIds: PERSONAL_CHARACTER_AURA_IDS.filter((auraId) =>
+              personal.has(auraId),
+            ),
+          };
+        }),
       grantAuras: (callerUserId, gameAccountId) =>
         Effect.gen(function* () {
           const userId = yield* grantTarget(callerUserId, gameAccountId);
@@ -457,7 +518,7 @@ export const makeCharacterAurasData = (
   });
 
 export const characterAurasDataLayer = (
-  admins: GlobalChatAdmins,
+  admins: RoleHolders,
   events: CharacterAurasEvents,
   cache: CharacterAurasCache,
 ) =>

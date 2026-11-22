@@ -1,6 +1,7 @@
 export interface AdminConfig {
   readonly authUrl: string;
   readonly adminApiSecret: string;
+  readonly apiUrl: string;
   readonly origin: string;
   readonly webUrl: string;
   readonly access:
@@ -44,6 +45,7 @@ export const readAdminConfig = (
   return {
     authUrl: required(environment, "AUTH_INTERNAL_URL"),
     adminApiSecret: required(environment, "ADMIN_API_SECRET"),
+    apiUrl: new URL(required(environment, "LOOTLOG_API_URL")).href,
     origin: new URL(required(environment, "ADMIN_ORIGIN")).origin,
     webUrl: new URL(required(environment, "LOOTLOG_WEB_URL")).href,
     access,

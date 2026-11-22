@@ -14048,7 +14048,107 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdateOwnCharacterAuraDto"
         required: true
+  /character-auras/grants:
+    get:
+      tags:
+        - character-auras
+      operationId: CharacterAurasController_listGrantHolders
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: CharacterAuraGrantHoldersResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterAuraGrantHoldersResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: List every user holding the grant of auras in general or a personal aura, with what they hold. Lootlog admins (the `admin` platform role) only
+      summary: List character aura grant holders
   /character-auras/grants/game-accounts/{gameAccountId}:
+    get:
+      tags:
+        - character-auras
+      operationId: CharacterAurasController_getGrants
+      parameters:
+        - name: gameAccountId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: CharacterAuraGrantsResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterAuraGrantsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: "Show which auras the user who last proved to play the Margonem account may choose: whether they are a Lootlog admin, hold the grant of auras in general, and which personal auras they were granted. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account"
+      summary: Get character aura grants
     put:
       tags:
         - character-auras
@@ -14098,7 +14198,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Global chat admins only; 404 when no user proved to play the account
+      description: Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
       summary: Grant character auras
     delete:
       tags:
@@ -14149,7 +14249,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; global chat admins keep theirs. Global chat admins only; 404 when no user proved to play the account
+      description: Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; Lootlog admins keep theirs. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
       summary: Revoke character auras
   /character-auras/grants/game-accounts/{gameAccountId}/personal-auras/{auraId}:
     put:
@@ -14217,7 +14317,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Global chat admins only; 404 when no user proved to play the account
+      description: Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
       summary: Grant a personal character aura
 components:
   schemas:
@@ -14291,6 +14391,71 @@ components:
         - _tag
         - code
         - requiresReauth
+      additionalProperties: false
+    CharacterAuraGrantsResponseDto:
+      type: object
+      properties:
+        userId:
+          type: string
+        admin:
+          type: boolean
+        granted:
+          type: boolean
+        personalAuraIds:
+          type: array
+          items:
+            type: string
+            enum:
+              - skyborne
+              - joker
+              - nightowl
+              - sunder
+              - fortyfour
+              - thirteenth
+              - ninepins
+              - threefaces
+              - twineyes
+              - tulipwind
+      required:
+        - userId
+        - admin
+        - granted
+        - personalAuraIds
+      additionalProperties: false
+    CharacterAuraGrantHoldersResponseDto:
+      type: object
+      properties:
+        holders:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+              granted:
+                type: boolean
+              personalAuraIds:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - skyborne
+                    - joker
+                    - nightowl
+                    - sunder
+                    - fortyfour
+                    - thirteenth
+                    - ninepins
+                    - threefaces
+                    - twineyes
+                    - tulipwind
+            required:
+              - userId
+              - granted
+              - personalAuraIds
+            additionalProperties: false
+      required:
+        - holders
       additionalProperties: false
     OwnCharacterAuraResponseDto:
       type: object

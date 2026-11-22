@@ -24,7 +24,6 @@ import { Settings } from "@/features/settings/settings";
 import { Timers } from "@/features/timers/timers";
 import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handlers";
 import { gameEventObservers } from "@/composition/feature-observers";
-import { useCharacterAuraGrantMenu } from "@/features/character-auras/hooks/use-character-aura-grant-menu";
 import { useCharacterAuras } from "@/features/character-auras/hooks/use-character-auras";
 import { useGlobalStore } from "@/store/global.store";
 import { useHotkeys } from "@/features/hotkeys/use-hotkeys";
@@ -49,7 +48,6 @@ import { useSelectedLootlogGuildInitialization } from "@/hooks/use-selected-loot
 export const AppContent = () => {
   useGameClientBootstrap();
   useCharacterAuras();
-  useCharacterAuraGrantMenu();
   useGameEventHandlers(gameEventObservers);
   useInit();
   useSelectedLootlogGuildInitialization();

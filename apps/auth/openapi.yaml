@@ -876,6 +876,61 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
+  /admin/users/search:
+    post:
+      tags:
+        - admin
+      operationId: AdminController_searchUsers
+      parameters:
+        - name: authorization
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: cookie
+          in: header
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUsersResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchAdminUsers"
+        required: true
   /admin/users/{id}:
     get:
       tags:
@@ -1661,6 +1716,44 @@ components:
       required:
         - users
         - total
+    SearchAdminUsers:
+      type: object
+      properties:
+        search:
+          type: string
+          maxLength: 100
+        role:
+          type: string
+          enum:
+            - admin
+            - wiki-moderator
+            - global-chat-admin
+        banned:
+          type: boolean
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+        offset:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+          default: 0
+        userIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+          maxItems: 20000
+        excludedUserIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+          maxItems: 20000
     AdminOverview:
       type: object
       properties:

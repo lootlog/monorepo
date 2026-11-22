@@ -5,6 +5,8 @@ import type {
   PersonalCharacterAuraId,
 } from "@lootlog/schema/character-aura";
 import type {
+  CharacterAuraGrantHoldersResponse,
+  CharacterAuraGrantsResponse,
   CharacterAurasResponse,
   OwnCharacterAuraResponse,
 } from "#src/contracts/character-auras/schemas";
@@ -51,6 +53,13 @@ export class CharacterAurasData extends Context.Service<
       character: CharacterAuraCharacter,
       auraId: CharacterAuraId | null,
     ) => Operation<OwnCharacterAuraResponse>;
+    readonly listGrantHolders: (
+      callerUserId: string,
+    ) => Operation<CharacterAuraGrantHoldersResponse>;
+    readonly getGrants: (
+      callerUserId: string,
+      gameAccountId: string,
+    ) => Operation<CharacterAuraGrantsResponse>;
     readonly grantAuras: (
       callerUserId: string,
       gameAccountId: string,

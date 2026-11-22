@@ -1,9 +1,10 @@
 import {
   type AdminAuditEntry,
-  type AdminControllerListUsersParams,
+  type AdminUsersResponse,
+  type SearchAdminUsers,
   adminControllerGetUser,
   adminControllerListAudit,
-  adminControllerListUsers,
+  adminControllerSearchUsers,
   adminControllerOverview,
   adminControllerSession,
 } from "@lootlog/client/auth";
@@ -12,8 +13,10 @@ import { PlatformRole } from "@lootlog/schema/platform-roles";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { Predicate, Schema } from "effect";
+import type { AuraRefusal } from "@/lib/aura-action";
 import { UserActionRequest } from "@/lib/user-action";
 import { asPanel } from "./auth-api.js";
+import { listAuraHolderIds } from "./character-auras.js";
 import { adminConfig } from "./config.js";
 import { runUserAction } from "./user-actions.js";
 
@@ -47,8 +50,11 @@ const UsersInput = Schema.Struct({
   search: Schema.optional(Schema.String),
   role: Schema.optional(PlatformRole),
   banned: Schema.optional(Schema.Boolean),
+  aura: Schema.optional(Schema.Boolean),
   page: Page,
 });
+
+type UsersPage = AdminUsersResponse & { readonly auraRefusal?: AuraRefusal };
 
 export type OperatorAccess =
   | { readonly status: "admin"; readonly userId: string; readonly name: string }
@@ -82,19 +88,29 @@ export const getOverview = createServerFn({ method: "GET" }).handler(() =>
 
 export const listUsers = createServerFn({ method: "GET" })
   .validator(Schema.decodeUnknownSync(UsersInput))
-  .handler(({ data }) => {
-    const params: AdminControllerListUsersParams = {
-      limit: `${USERS_PAGE_SIZE}`,
-      offset: `${(data.page - 1) * USERS_PAGE_SIZE}`,
+  .handler(async ({ data }): Promise<UsersPage> => {
+    const query: SearchAdminUsers = {
+      limit: USERS_PAGE_SIZE,
+      offset: (data.page - 1) * USERS_PAGE_SIZE,
     };
 
-    if (data.search) params.search = data.search.slice(0, 100);
+    if (data.search) query.search = data.search.slice(0, 100);
 
-    if (data.role) params.role = data.role;
+    if (data.role) query.role = data.role;
 
-    if (data.banned !== undefined) params.banned = `${data.banned}`;
+    if (data.banned !== undefined) query.banned = data.banned;
 
-    return adminControllerListUsers(params, asPanel());
+    if (data.aura !== undefined) {
+      const holders = await listAuraHolderIds();
+
+      if (holders.status !== "ok")
+        return { users: [], total: 0, auraRefusal: holders.status };
+
+      if (data.aura) query.userIds = [...holders.value];
+      else query.excludedUserIds = [...holders.value];
+    }
+
+    return adminControllerSearchUsers(query, asPanel());
   });
 
 export const getUser = createServerFn({ method: "GET" })

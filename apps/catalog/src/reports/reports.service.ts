@@ -24,7 +24,6 @@ import {
 } from "@lootlog/schema/platform-roles";
 import { Context, Effect, Layer } from "effect";
 import { groupBy } from "es-toolkit";
-import { CatalogConfig } from "#src/config/catalog-config";
 import {
   CatalogDatabase,
   type CatalogDatabaseValue,
@@ -97,14 +96,8 @@ const npcGameVersion = sql`${catalogNpcTable.document}->>'gameVersion'`;
 
 const isCurrentNpc = sql`${catalogNpcTable.document}->'current' is distinct from 'false'::jsonb`;
 
-export const makeReportsModule = (
-  database: CatalogDatabaseValue,
-  moderatorUserIds: ReadonlyArray<string>,
-) => {
-  const moderators = new Set(moderatorUserIds);
-
+export const makeReportsModule = (database: CatalogDatabaseValue) => {
   const isModerator = (caller: ReportCaller) =>
-    moderators.has(caller.userId) ||
     hasPlatformRole(caller.roles, "wiki-moderator");
 
   const requireModerator = (caller: ReportCaller) =>
@@ -476,10 +469,9 @@ export class CatalogReports extends Context.Service<
   static readonly layer = Layer.effect(
     CatalogReports,
     Effect.gen(function* () {
-      const { moderatorUserIds } = yield* CatalogConfig;
       const database = yield* CatalogDatabase;
 
-      return CatalogReports.of(makeReportsModule(database, moderatorUserIds));
+      return CatalogReports.of(makeReportsModule(database));
     }),
   );
 }

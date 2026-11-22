@@ -5,6 +5,7 @@ import { authorizeRequest } from "./guard.js";
 const config: AdminConfig = {
   authUrl: "http://auth:4000",
   adminApiSecret: "secret",
+  apiUrl: "https://api.example.test/",
   origin: "https://admin.example.test",
   webUrl: "https://example.test/",
   access: { teamDomain: "team.cloudflareaccess.com", audience: "aud" },

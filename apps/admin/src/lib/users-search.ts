@@ -5,6 +5,7 @@ export type UsersSearch = {
   search?: string | undefined;
   role?: PlatformRole | undefined;
   banned?: "yes" | "no" | undefined;
+  aura?: "yes" | "no" | undefined;
   page?: number | undefined;
 };
 
@@ -21,7 +22,7 @@ const readText = read(
 
 const readRole = read(PlatformRole);
 
-const readBanned = read(Schema.Literals(["yes", "no"]));
+const readYesNo = read(Schema.Literals(["yes", "no"]));
 
 const readPageText = read(
   Schema.String.check(Schema.isPattern(/^(?:[2-9]|[1-9]\d{1,5})$/u)),
@@ -44,10 +45,12 @@ export const validateUsersSearch = (search: {
   search?: unknown;
   role?: unknown;
   banned?: unknown;
+  aura?: unknown;
   page?: unknown;
 }): UsersSearch => ({
   search: readText(search.search),
   role: readRole(search.role),
-  banned: readBanned(search.banned),
+  banned: readYesNo(search.banned),
+  aura: readYesNo(search.aura),
   page: readPage(search.page),
 });

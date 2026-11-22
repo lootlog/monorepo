@@ -211,6 +211,44 @@ export interface AdminUsersResponse {
   total: number;
 }
 
+export type SearchAdminUsersRole = typeof SearchAdminUsersRole[keyof typeof SearchAdminUsersRole];
+
+
+export const SearchAdminUsersRole = {
+  admin: 'admin',
+  'wiki-moderator': 'wiki-moderator',
+  'global-chat-admin': 'global-chat-admin',
+} as const;
+
+export interface SearchAdminUsers {
+  /** @maxLength 100 */
+  search?: string;
+  role?: SearchAdminUsersRole;
+  banned?: boolean;
+  /**
+     * @minimum 1
+     * @maximum 100
+     */
+  limit?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  offset?: number;
+  /**
+     * @maxItems 20000
+     * @items.minLength 1
+     * @items.maxLength 100
+     */
+  userIds?: string[];
+  /**
+     * @maxItems 20000
+     * @items.minLength 1
+     * @items.maxLength 100
+     */
+  excludedUserIds?: string[];
+}
+
 export type AdminOverviewRolesItemRole = typeof AdminOverviewRolesItemRole[keyof typeof AdminOverviewRolesItemRole];
 
 
@@ -2060,6 +2098,88 @@ export const useGetAdminControllerListUsersQueryData = () => {
 }
 
 
+
+export const getAdminControllerSearchUsersUrl = () => {
+
+
+
+
+  return `/admin/users/search`
+}
+
+export const adminControllerSearchUsers = async (searchAdminUsers: SearchAdminUsers, options?: Parameters<typeof authFetch>[1]): Promise<AdminUsersResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authFetch<AdminUsersResponse>(getAdminControllerSearchUsersUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(searchAdminUsers)
+  }
+);}
+
+
+
+
+
+export const getAdminControllerSearchUsersMutationKey = () => ['adminControllerSearchUsers'] as const;
+
+export const getAdminControllerSearchUsersMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerSearchUsers>>, TError,AdminControllerSearchUsersMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminControllerSearchUsers>>, TError,AdminControllerSearchUsersMutationVariables, TContext> => {
+
+const mutationKey = getAdminControllerSearchUsersMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerSearchUsers>>, AdminControllerSearchUsersMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  adminControllerSearchUsers(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminControllerSearchUsersMutationResult = NonNullable<Awaited<ReturnType<typeof adminControllerSearchUsers>>>
+    export type AdminControllerSearchUsersMutationBody = BodyType<SearchAdminUsers>
+    export type AdminControllerSearchUsersMutationError = ErrorType<HttpErrorResponse | RequestValidationError>
+    export type AdminControllerSearchUsersMutationVariables = {data: BodyType<SearchAdminUsers>}
+
+    export const useAdminControllerSearchUsers = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerSearchUsers>>, TError,AdminControllerSearchUsersMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminControllerSearchUsers>>,
+        TError,
+        AdminControllerSearchUsersMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminControllerSearchUsersMutationOptions(options), queryClient);
+    }
 
 export const getAdminControllerGetUserUrl = ({ id }: AdminControllerGetUserPathParameters,) => {
 

@@ -11,7 +11,7 @@ import {
 } from "#src/character-auras/character-auras.data-layer";
 import type { RedisService } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
-import { GlobalChatAdminDirectory } from "#src/runtime/features/global-chat-admins";
+import { LootlogAdminDirectory } from "#src/runtime/features/platform-role-directories";
 import { CHARACTER_AURAS_CACHE_SCOPE } from "#src/shared/cache";
 
 const listCodec = makeJsonCodec(CharacterAurasResponse);
@@ -60,7 +60,7 @@ export const characterAurasData = Layer.unwrap(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
     const redis = yield* ApiRedis;
-    const admins = yield* GlobalChatAdminDirectory;
+    const admins = yield* LootlogAdminDirectory;
 
     return characterAurasDataLayer(
       admins,
@@ -68,4 +68,4 @@ export const characterAurasData = Layer.unwrap(
       makeCharacterAurasCache(redis),
     );
   }),
-).pipe(Layer.provide(GlobalChatAdminDirectory.layer));
+).pipe(Layer.provide(LootlogAdminDirectory.layer));

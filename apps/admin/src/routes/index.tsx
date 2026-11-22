@@ -1,9 +1,10 @@
+import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { OverviewTiles } from "@/components/overview-tiles";
 import { Pagination } from "@/components/pagination";
 import { UsersFilter } from "@/components/users-filter";
 import { UsersTable } from "@/components/users-table";
-import { text } from "@/lib/messages";
+import { auraRefusalText, text } from "@/lib/messages";
 import { validateUsersSearch } from "@/lib/users-search";
 import { USERS_PAGE_SIZE, getOverview, listUsers } from "@/server/queries";
 
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/")({
           search: deps.search,
           role: deps.role,
           banned: deps.banned === undefined ? undefined : deps.banned === "yes",
+          aura: deps.aura === undefined ? undefined : deps.aura === "yes",
         },
       }),
     ]);
@@ -43,6 +45,13 @@ function UsersPage() {
           </p>
         </div>
         <UsersFilter search={search} />
+        {users.auraRefusal === undefined ? null : (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {auraRefusalText[users.auraRefusal]}
+            </AlertDescription>
+          </Alert>
+        )}
         <UsersTable users={users.users} />
         <Pagination
           page={search.page ?? 1}
