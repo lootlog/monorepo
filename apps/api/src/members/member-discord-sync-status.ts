@@ -92,7 +92,7 @@ export function isDiscordRefusalSyncStatus(
 const decodeDiscordHttpError = Schema.decodeUnknownOption(
   Schema.Struct({
     code: Schema.Literal("DISCORD_HTTP_ERROR"),
-    details: Schema.Struct({ status: Schema.Number }),
+    details: Schema.Struct({ status: Schema.Finite }),
   }),
 );
 

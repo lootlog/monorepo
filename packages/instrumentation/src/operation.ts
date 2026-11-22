@@ -1,10 +1,10 @@
 import { Effect, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
-export class OperationError extends TaggedErrorClass<OperationError>()(
-  "OperationError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
+export class OperationError extends TaggedErrorClass<
+  OperationError,
+  { readonly brand: unique symbol }
+>()("OperationError", { operation: Schema.String, cause: Schema.Defect() }) {}
 
 export const withAdapterSpan =
   (
@@ -31,3 +31,12 @@ export const adapterOperation =
       ),
       withAdapterSpan(operation, adapter),
     );
+
+export const promiseOperation = <A>(
+  operation: string,
+  run: (signal: AbortSignal) => PromiseLike<A>,
+): Effect.Effect<A, OperationError> =>
+  Effect.tryPromise({
+    try: run,
+    catch: (cause) => new OperationError({ operation, cause }),
+  });

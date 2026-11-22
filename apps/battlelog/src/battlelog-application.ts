@@ -1,3 +1,4 @@
+import { OperationError } from "@lootlog/instrumentation/operation";
 import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
@@ -47,7 +48,8 @@ export class BattlelogApplication extends Context.Service<
         .send("PING")
         .pipe(
           Effect.mapError(
-            (cause) => new Error("Failed to initialize Redis", { cause }),
+            (cause) =>
+              new OperationError({ operation: "battlelog.redis.ping", cause }),
           ),
         );
       const redis = makeRedisStore(redisClient);

@@ -34,11 +34,11 @@ import type { GatewaySocket } from "#src/realtime/session";
 import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
 import { canSubscribe } from "#src/realtime/subscription-policy";
 
-type Command = typeof ClientCommand.Type;
+type Command = ClientCommand;
 
-type Scope = typeof SubscriptionScope.Type;
+type Scope = SubscriptionScope;
 
-type Event = typeof ServerEvent.Type;
+type Event = ServerEvent;
 
 export type SessionCommand =
   | "session.join"

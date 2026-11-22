@@ -490,9 +490,7 @@ export const makeLootSubmissionAcceptancePersistence = (
         const loot = createdLoots[0];
 
         if (!loot) {
-          return yield* Effect.fail(
-            new DependencyUnavailableError("Failed to create loot"),
-          );
+          return yield* new DependencyUnavailableError("Failed to create loot");
         }
 
         const itemSnapshotIds = yield* resolveItemSnapshotIds(

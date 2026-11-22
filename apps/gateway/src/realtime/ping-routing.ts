@@ -14,7 +14,7 @@ const RATE_LIMIT_SCRIPT = slidingWindowRateLimitScript({
 });
 
 const decodeRateLimitReply = Schema.decodeUnknownSync(
-  Schema.Tuple([Schema.Number, Schema.Number, Schema.Number]),
+  Schema.Tuple([Schema.Finite, Schema.Finite, Schema.Finite]),
 );
 
 export type PingScriptStore = {

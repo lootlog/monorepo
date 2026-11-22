@@ -15,10 +15,13 @@ export interface NotificationDispatch {
   ) => Effect.Effect<void, unknown, never>;
 }
 
-class NotificationDispatchFailure extends TaggedErrorClass<NotificationDispatchFailure>()(
-  "NotificationDispatchFailure",
-  { jobId: Schema.String, cause: Schema.Defect() },
-) {}
+class NotificationDispatchFailure extends TaggedErrorClass<
+  NotificationDispatchFailure,
+  { readonly brand: unique symbol }
+>()("NotificationDispatchFailure", {
+  jobId: Schema.String,
+  cause: Schema.Defect(),
+}) {}
 
 export const makeNotificationDispatchProcessor = (
   notifications: NotificationDispatch,

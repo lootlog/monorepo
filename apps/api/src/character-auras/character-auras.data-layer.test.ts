@@ -118,7 +118,7 @@ describe("character auras", () => {
       ]),
     );
 
-    expect(await admin.run((data) => data.getAuras())).toEqual({
+    expect(await admin.run((data) => data.getAuras)).toEqual({
       auras: [shown("101", "frost"), shown("202", "tide", 2)],
     });
     expect((await admin.run((data) => data.getOwnAura("admin"))).auras).toEqual(
@@ -128,7 +128,7 @@ describe("character auras", () => {
     const revoked = await admin.boundary.run(
       Effect.flatMap(
         makeCharacterAurasData(fixedRoleHolders([]), admin.events),
-        (data) => data.getAuras(),
+        (data) => data.getAuras,
       ),
     );
 
@@ -157,14 +157,14 @@ describe("character auras", () => {
       data.updateOwnAura("admin", character("202"), "sovereign"),
     );
 
-    expect(await admin.run((data) => data.getAuras())).toEqual({
+    expect(await admin.run((data) => data.getAuras)).toEqual({
       auras: [shown("202", "sovereign")],
     });
 
     const dropped = await admin.boundary.run(
       Effect.flatMap(
         makeCharacterAurasData(fixedRoleHolders([]), admin.events),
-        (data) => data.getAuras(),
+        (data) => data.getAuras,
       ),
     );
 
@@ -186,7 +186,7 @@ describe("character auras", () => {
     await verify("first", "101", 1);
     await verify("second", "101", 2);
 
-    expect(await run((data) => data.getAuras())).toEqual({
+    expect(await run((data) => data.getAuras)).toEqual({
       auras: [shown("101", "sakura", 2)],
     });
 
@@ -194,7 +194,7 @@ describe("character auras", () => {
       data.updateOwnAura("second", character("101"), "frost"),
     );
 
-    expect(await run((data) => data.getAuras())).toEqual({
+    expect(await run((data) => data.getAuras)).toEqual({
       auras: [shown("101", "frost"), shown("101", "sakura", 2)],
     });
     expect((await run((data) => data.getOwnAura("first"))).auras).toEqual([]);
@@ -206,7 +206,7 @@ describe("character auras", () => {
       ]),
     );
 
-    expect(await run((data) => data.getAuras())).toEqual({ auras: [] });
+    expect(await run((data) => data.getAuras)).toEqual({ auras: [] });
   });
 
   it("refuses an aura for a character on an account its User did not prove to play", async () => {
@@ -219,7 +219,7 @@ describe("character auras", () => {
     );
 
     expect(refused._tag).toBe("CharacterAuraAccessDenied");
-    expect(await run((data) => data.getAuras())).toEqual({ auras: [] });
+    expect(await run((data) => data.getAuras)).toEqual({ auras: [] });
   });
 
   it("lets an admin grant auras to the User who plays an account, and revoking removes the auras they chose", async () => {
@@ -282,7 +282,7 @@ describe("character auras", () => {
       ]),
     );
 
-    expect(await run((data) => data.getAuras())).toEqual({
+    expect(await run((data) => data.getAuras)).toEqual({
       auras: [
         shown("101", "frost"),
         shown("101", "tide", 2),
@@ -297,7 +297,7 @@ describe("character auras", () => {
       ]),
     );
 
-    expect(await run((data) => data.getAuras())).toEqual({
+    expect(await run((data) => data.getAuras)).toEqual({
       auras: [shown("202", "void")],
     });
     expect(await grantsOf101()).toEqual({
@@ -370,13 +370,13 @@ describe("character auras", () => {
       personalAuraIds: ["skyborne"],
       canGrant: false,
     });
-    expect(await run((data) => data.getAuras())).toEqual({
+    expect(await run((data) => data.getAuras)).toEqual({
       auras: [shown("202", "skyborne")],
     });
 
     await run((data) => data.revokeAuras("admin", "202"));
 
-    expect(await run((data) => data.getAuras())).toEqual({ auras: [] });
+    expect(await run((data) => data.getAuras)).toEqual({ auras: [] });
     expect(
       (await run((data) => data.getOwnAura("holder"))).personalAuraIds,
     ).toEqual([]);
@@ -415,7 +415,7 @@ describe("character auras", () => {
           (data) =>
             Effect.gen(function* () {
               const see = Effect.all([
-                Effect.map(data.getAuras(), ({ auras }) => auras),
+                Effect.map(data.getAuras, ({ auras }) => auras),
                 Effect.map(
                   data.getOwnAura("player"),
                   ({ auras, canChange }) => ({ auras, canChange }),
@@ -500,7 +500,7 @@ describe("character auras", () => {
     await verify("admin", "101");
     await run((data) => data.updateOwnAura("admin", character("101"), "frost"));
 
-    expect(await run((data) => data.getAuras())).toEqual({
+    expect(await run((data) => data.getAuras)).toEqual({
       auras: [shown("101", "frost")],
     });
   });
@@ -537,7 +537,7 @@ describe("character auras", () => {
       false,
     );
 
-    expect(await run((data) => data.getAuras())).toEqual({
+    expect(await run((data) => data.getAuras)).toEqual({
       auras: [shown("202", "tide")],
     });
   });

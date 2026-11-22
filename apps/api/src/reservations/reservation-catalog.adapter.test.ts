@@ -7,22 +7,20 @@ import {
   ReservationCatalogUnavailable,
 } from "./reservation-catalog.adapter.js";
 
-const makeHttpClient = (status: number, payload: typeof Schema.Json.Type) =>
+const makeHttpClient = (status: number, payload: Schema.Json) =>
   httpClientFromResponses(() =>
     Effect.succeed(Response.json(payload, { status })),
   );
 
 const emptyCache = (): ReservationCatalogCache => ({
   getJson: () => Effect.succeed(null),
-  setJson: vi.fn(() => Effect.succeed(undefined)),
+  setJson: vi.fn(() => Effect.undefined),
 });
 
-const cacheWith = (
-  value: typeof Schema.Json.Type,
-): ReservationCatalogCache => ({
+const cacheWith = (value: Schema.Json): ReservationCatalogCache => ({
   getJson: (_key, schema) =>
-    Effect.sync(() => Schema.decodeUnknownSync(schema)(value)),
-  setJson: vi.fn(() => Effect.succeed(undefined)),
+    Effect.sync(() => Schema.decodeSync(schema)(value)),
+  setJson: vi.fn(() => Effect.undefined),
 });
 
 describe("reservation catalog Effect adapter", () => {

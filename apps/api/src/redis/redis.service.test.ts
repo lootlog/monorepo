@@ -74,7 +74,7 @@ const fromPromise = <A>(factory: () => Promise<A>) =>
   Effect.tryPromise({ try: factory, catch: (error) => error });
 
 describe("RedisService", () => {
-  const valueCodec = makeJsonCodec(Schema.Struct({ value: Schema.Number }));
+  const valueCodec = makeJsonCodec(Schema.Struct({ value: Schema.Finite }));
   const cachedCodec = makeJsonCodec(Schema.Struct({ cached: Schema.Boolean }));
   const freshCodec = makeJsonCodec(Schema.Struct({ fresh: Schema.Boolean }));
   it("deletes pattern matches with SCAN batches instead of KEYS", async () => {

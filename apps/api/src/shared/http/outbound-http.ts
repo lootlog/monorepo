@@ -5,13 +5,13 @@ import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 
 type OutboundHttpMethod = "GET" | "POST";
 
-export class OutboundHttpFailure extends TaggedErrorClass<OutboundHttpFailure>()(
-  "OutboundHttpFailure",
-  {
-    reason: Schema.Literals(["response-too-large", "timeout", "transport"]),
-    retryable: Schema.Boolean,
-  },
-) {}
+export class OutboundHttpFailure extends TaggedErrorClass<
+  OutboundHttpFailure,
+  { readonly brand: unique symbol }
+>()("OutboundHttpFailure", {
+  reason: Schema.Literals(["response-too-large", "timeout", "transport"]),
+  retryable: Schema.Boolean,
+}) {}
 
 export interface OutboundHttpRequest {
   readonly adapter: string;

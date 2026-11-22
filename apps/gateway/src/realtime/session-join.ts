@@ -33,12 +33,9 @@ import {
   organizationIds,
 } from "#src/realtime/subscription-policy";
 
-type Event = typeof ServerEvent.Type;
+type Event = ServerEvent;
 
-type JoinData = Extract<
-  typeof ClientCommand.Type,
-  { type: "session.join" }
->["data"];
+type JoinData = Extract<ClientCommand, { type: "session.join" }>["data"];
 
 export interface SessionJoinDependencies {
   readonly guilds: Pick<GuildStore, "getUserGuilds">;
@@ -93,13 +90,13 @@ export const joinSession = (
     const wasJoined = socket.data.joined;
 
     if (socket.data.platform === "game" && !data.character)
-      return yield* Effect.fail(new GameCharacterRequired());
+      return yield* new GameCharacterRequired();
 
     if (
       socket.data.apiKeyAccess &&
       (data.character || data.margonemAccountProof)
     )
-      return yield* Effect.fail(new OrganizationAccessDenied());
+      return yield* new OrganizationAccessDenied();
 
     let confidence: SessionData["confidence"] = "reported";
     let announceVerified: Effect.Effect<void> = Effect.void;
@@ -189,7 +186,7 @@ export const joinSession = (
         );
       hub.setPresence(socket, undefined);
 
-      return yield* Effect.fail(new NoAuthorizedOrganizations());
+      return yield* new NoAuthorizedOrganizations();
     }
 
     socket.data.guilds = authorizedGuilds;

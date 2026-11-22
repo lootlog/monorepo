@@ -8,7 +8,7 @@ const DISCORD_TOKEN_ENDPOINT = "https://discord.com/api/oauth2/token";
 
 const decodeRefreshRefusal = Schema.decodeUnknownOption(
   Schema.Struct({
-    status: Schema.optional(Schema.Number),
+    status: Schema.optional(Schema.Finite),
     error: Schema.optional(Schema.String),
   }),
 );

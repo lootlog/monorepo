@@ -116,19 +116,15 @@ export const makeNotificationGuildTargets = (
     data: CreateNotificationTargetRequest,
   ) {
     if (data.targetType !== NotificationTargetType.CHANNEL) {
-      return yield* Effect.fail(
-        new InvalidRequestError({
-          code: NotificationError.GUILD_TARGETS_MUST_BE_CHANNELS,
-        }),
-      );
+      return yield* new InvalidRequestError({
+        code: NotificationError.GUILD_TARGETS_MUST_BE_CHANNELS,
+      });
     }
 
     if (!data.externalId) {
-      return yield* Effect.fail(
-        new InvalidRequestError({
-          code: NotificationError.GUILD_CHANNEL_TARGET_REQUIRES_EXTERNAL_ID,
-        }),
-      );
+      return yield* new InvalidRequestError({
+        code: NotificationError.GUILD_CHANNEL_TARGET_REQUIRES_EXTERNAL_ID,
+      });
     }
 
     const available = yield* channels.selectable(guildId);
@@ -138,11 +134,9 @@ export const makeNotificationGuildTargets = (
     );
 
     if (!selected) {
-      return yield* Effect.fail(
-        new InvalidRequestError({
-          code: NotificationError.SELECTED_DISCORD_CHANNEL_NOT_AVAILABLE,
-        }),
-      );
+      return yield* new InvalidRequestError({
+        code: NotificationError.SELECTED_DISCORD_CHANNEL_NOT_AVAILABLE,
+      });
     }
 
     const now = new Date(yield* Clock.currentTimeMillis);
@@ -187,12 +181,10 @@ export const makeNotificationGuildTargets = (
     const target = rows[0];
 
     if (!target) {
-      return yield* Effect.fail(
-        new OperationError({
-          operation: "notifications.targets.create.returning",
-          cause: "Notification target was not returned",
-        }),
-      );
+      return yield* new OperationError({
+        operation: "notifications.targets.create.returning",
+        cause: "Notification target was not returned",
+      });
     }
 
     return target;

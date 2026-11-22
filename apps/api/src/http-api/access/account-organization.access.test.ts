@@ -99,7 +99,7 @@ const makeData = (
   overrides: Partial<AccountOrganizationData["Service"]> = {},
 ) =>
   AccountOrganizationData.of({
-    deleteAccount: () => Effect.succeed(undefined),
+    deleteAccount: () => Effect.undefined,
     getUserPreferences: () => Effect.succeed(userPreferences),
     userOwnsTheme: () => Effect.succeed(true),
     updateUserPreferences: () => Effect.succeed(userPreferences),
@@ -187,20 +187,22 @@ describe("Users and Guilds HttpApi handlers", () => {
             GuildsHandlers.pipe(HttpRouter.provideRequest(services)),
           ),
           Effect.provideService(BearerSecurityMiddleware, bearer),
-          Effect.provide(apiKeyEndpointPolicyLayer("main")),
-          Effect.provide(SchemaErrorResponseLive),
+          Effect.provide([
+            apiKeyEndpointPolicyLayer("main"),
+            SchemaErrorResponseLive,
+          ]),
         );
 
         return yield* client.guilds.GuildsControllerGetManageableUserGuilds();
       }),
     ).pipe(
-      Effect.provide(
+      Effect.provide([
         provideServices(
           makeAuthorization(),
           makeData({ getManageableUserGuilds }),
         ),
-      ),
-      Effect.provide(httpApiTestServices),
+        httpApiTestServices,
+      ]),
     );
 
     const response = await Effect.runPromise(responseEffect);
@@ -230,8 +232,10 @@ describe("Users and Guilds HttpApi handlers", () => {
             GuildsHandlers.pipe(HttpRouter.provideRequest(services)),
           ),
           Effect.provideService(BearerSecurityMiddleware, bearer),
-          Effect.provide(apiKeyEndpointPolicyLayer("main")),
-          Effect.provide(SchemaErrorResponseLive),
+          Effect.provide([
+            apiKeyEndpointPolicyLayer("main"),
+            SchemaErrorResponseLive,
+          ]),
         );
 
         return yield* Effect.all([
@@ -245,7 +249,7 @@ describe("Users and Guilds HttpApi handlers", () => {
           }),
         ]);
       }),
-    ).pipe(Effect.provide(services), Effect.provide(httpApiTestServices));
+    ).pipe(Effect.provide([services, httpApiTestServices]));
 
     const runnableResponsesEffect = responsesEffect;
     const responses = await Effect.runPromise(runnableResponsesEffect);

@@ -16,7 +16,7 @@ export type GuildLootCreatedEventV2 = {
 };
 
 const GuildLootEventNpcSchema = Schema.Struct({
-  lvl: Schema.optionalKey(Schema.NullOr(Schema.Number)),
+  lvl: Schema.optionalKey(Schema.NullOr(Schema.Finite)),
   ...NpcRoutingDataSchema.fields,
 });
 

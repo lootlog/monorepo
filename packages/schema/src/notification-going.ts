@@ -26,7 +26,7 @@ export const NotificationGoingUpdateSchema = Schema.Struct({
   reporterUserId: Schema.String,
   npcName: Schema.String,
   npcId: Schema.optionalKey(FiniteNumber),
-  npc: Schema.Struct({ ...NpcRoutingDataSchema.fields, lvl: Schema.Number }),
+  npc: Schema.Struct({ ...NpcRoutingDataSchema.fields, lvl: Schema.Finite }),
   going: Schema.Array(NotificationGoingPlayerSchema),
 });
 

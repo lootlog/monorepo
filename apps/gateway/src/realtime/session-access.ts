@@ -20,7 +20,7 @@ import {
   type PermissionViewer,
 } from "#src/realtime/subscription-policy";
 
-type Event = typeof ServerEvent.Type;
+type Event = ServerEvent;
 
 export const scopedGuilds = (
   session: SessionData,

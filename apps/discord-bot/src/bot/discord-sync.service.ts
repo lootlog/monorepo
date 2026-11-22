@@ -53,14 +53,14 @@ type ResolveGuildResult =
   | { kind: "not_found"; lastError: string }
   | { kind: "failed"; cause: unknown };
 
-export class DiscordSyncFailure extends TaggedErrorClass<DiscordSyncFailure>()(
-  "DiscordSyncFailure",
-  {
-    operation: Schema.String,
-    reason: Schema.String,
-    cause: Schema.Unknown,
-  },
-) {}
+export class DiscordSyncFailure extends TaggedErrorClass<
+  DiscordSyncFailure,
+  { readonly brand: unique symbol }
+>()("DiscordSyncFailure", {
+  operation: Schema.String,
+  reason: Schema.String,
+  cause: Schema.Unknown,
+}) {}
 
 const errorReason = (cause: unknown): string => {
   if (cause instanceof DiscordSdkReadFailure) return errorReason(cause.cause);
@@ -386,7 +386,7 @@ export const makeDiscordSync = (publisher: EventPublisher, client: Client) => {
       const resolved = yield* resolveGuild(guildId);
 
       if (resolved.kind === "failed") {
-        return yield* Effect.fail(failure("resolveGuild", resolved.cause));
+        return yield* failure("resolveGuild", resolved.cause);
       }
 
       if (resolved.kind === "not_found") {

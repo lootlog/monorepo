@@ -465,30 +465,30 @@ export interface MergeResult {
 const MergeResultJson = Schema.fromJsonString(
   Schema.Struct({
     epochId: Schema.String,
-    epochStartedAt: Schema.Number,
-    revision: Schema.Number,
-    acceptedTargets: Schema.Number,
+    epochStartedAt: Schema.Finite,
+    revision: Schema.Finite,
+    acceptedTargets: Schema.Finite,
     targets: Schema.Array(AirTagTargetSchema),
     removed: Schema.Array(Schema.String),
     standby: Schema.Array(Schema.String),
     unreported: Schema.Array(Schema.String),
     threat: Schema.optionalKey(
       Schema.Struct({
-        revision: Schema.Number,
+        revision: Schema.Finite,
         enemies: AirTagMapThreatEventSchema.fields.enemies,
       }),
     ),
-    threatPendingMs: Schema.optionalKey(Schema.Number),
+    threatPendingMs: Schema.optionalKey(Schema.Finite),
     remoteRecipients: Schema.Boolean,
   }),
 );
 
 const ThreatFlushJson = Schema.fromJsonString(
   Schema.Union([
-    Schema.Struct({ retryInMs: Schema.Number }),
+    Schema.Struct({ retryInMs: Schema.Finite }),
     Schema.Struct({
       mapName: Schema.String,
-      revision: Schema.Number,
+      revision: Schema.Finite,
       enemies: AirTagMapThreatEventSchema.fields.enemies,
     }),
   ]),
@@ -497,9 +497,9 @@ const ThreatFlushJson = Schema.fromJsonString(
 const SnapshotResultJson = Schema.fromJsonString(
   Schema.Struct({
     epochId: Schema.String,
-    epochStartedAt: Schema.Number,
-    revision: Schema.Number,
-    serverTime: Schema.Number,
+    epochStartedAt: Schema.Finite,
+    revision: Schema.Finite,
+    serverTime: Schema.Finite,
     targets: Schema.Array(AirTagTargetSchema),
   }),
 );
@@ -507,7 +507,7 @@ const SnapshotResultJson = Schema.fromJsonString(
 const ThreatSnapshotJson = Schema.fromJsonString(
   Schema.Struct({
     mapName: Schema.String,
-    revision: Schema.Number,
+    revision: Schema.Finite,
     enemies: AirTagMapThreatEventSchema.fields.enemies,
   }),
 );
@@ -655,7 +655,7 @@ export const mergeObservations = (
       AIR_TAG_REPORTER_LEASE_MS,
     );
 
-    const { threat, ...parsed } = Schema.decodeUnknownSync(MergeResultJson)(
+    const { threat, ...parsed } = Schema.decodeSync(MergeResultJson)(
       String(result),
     );
 
@@ -675,8 +675,8 @@ export const mergeObservations = (
 const ReleaseResultJson = Schema.fromJsonString(
   Schema.Struct({
     epochId: Schema.String,
-    epochStartedAt: Schema.Number,
-    revision: Schema.Number,
+    epochStartedAt: Schema.Finite,
+    revision: Schema.Finite,
     released: Schema.Array(Schema.String),
   }),
 );
@@ -695,7 +695,7 @@ export const releaseReportedTargets = (
 
     return result === ""
       ? undefined
-      : Schema.decodeUnknownSync(ReleaseResultJson)(result);
+      : Schema.decodeSync(ReleaseResultJson)(result);
   });
 
 export const loadScopeSnapshot = (
@@ -715,9 +715,7 @@ export const loadScopeSnapshot = (
       INTEREST_TTL_MS,
     );
 
-    const snapshot = Schema.decodeUnknownSync(SnapshotResultJson)(
-      String(result),
-    );
+    const snapshot = Schema.decodeSync(SnapshotResultJson)(String(result));
 
     return {
       guildId: scope.guildId,
@@ -767,7 +765,7 @@ export const loadMapThreat = (redis: ScriptStore, scope: ThreatScope) => {
 
       if (result === "") return [];
 
-      const snapshot = Schema.decodeUnknownSync(ThreatSnapshotJson)(result);
+      const snapshot = Schema.decodeSync(ThreatSnapshotJson)(result);
 
       return [{ ...scope, ...snapshot, enemies: [...snapshot.enemies] }];
     },
@@ -796,7 +794,7 @@ export const takeThreatFlush = (
 
     return result === ""
       ? undefined
-      : Schema.decodeUnknownSync(ThreatFlushJson)(result);
+      : Schema.decodeSync(ThreatFlushJson)(result);
   });
 };
 

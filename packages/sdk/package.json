@@ -58,7 +58,7 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "bun check",
-    "lint": "oxlint src/*.ts scripts *.ts --deny-warnings",
+    "lint": "oxlint src/*.ts scripts *.ts --deny-warnings && effect-tsgo diagnostics --project tsconfig.json --severity error,warning --strict",
     "test": "bun test",
     "prepack": "bun run build",
     "client:generate": "bun scripts/generate.ts",
@@ -69,6 +69,7 @@
     "effect": "4.1.2"
   },
   "devDependencies": {
+    "@effect/tsgo": "0.67.3",
     "@lootlog/client": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",

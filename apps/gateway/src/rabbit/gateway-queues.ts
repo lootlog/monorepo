@@ -195,7 +195,7 @@ const decodeRecord = Schema.decodeUnknownOption(
 
 const decodeString = Schema.decodeUnknownOption(Schema.String);
 
-const decodeNumber = Schema.decodeUnknownOption(Schema.Number);
+const decodeNumber = Schema.decodeUnknownOption(Schema.Finite);
 
 export const deadLetterIdentifiers = (content: Uint8Array) => {
   const payload = decodeJsonRecord(new TextDecoder().decode(content));

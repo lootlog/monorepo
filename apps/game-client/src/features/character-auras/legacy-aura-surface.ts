@@ -8,12 +8,34 @@ import {
   type AuraPaint,
   type CharacterAuraSurface,
   type ShownArrival,
+  type ShownAura,
 } from "./character-aura-renderer";
 import { auraScreenBox } from "./engine/layers";
+import type { AuraPlacement } from "./engine/placement";
 
 const MAP_CAMERA = [0, 0] as const;
 
-const shownLayers = new Map<string, LegacyAuraLayers>();
+type ShownLayers = {
+  layers: LegacyAuraLayers;
+  paintedPlace: AuraPlacement | null;
+  paintedRevision: number | null;
+};
+
+const shownLayers = new Map<string, ShownLayers>();
+
+function isPainted(
+  { paintedPlace, paintedRevision }: ShownLayers,
+  shown: ShownAura<LegacyAuraCharacter>,
+): boolean {
+  return (
+    paintedPlace !== null &&
+    paintedRevision !== null &&
+    paintedRevision === shown.revision &&
+    paintedPlace.silhouette === shown.place.silhouette &&
+    paintedPlace.x === shown.place.x &&
+    paintedPlace.y === shown.place.y
+  );
+}
 
 const veil = legacyAuraRuntimeAdapter.createVeil();
 
@@ -71,14 +93,27 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
     let layers = shownLayers.get(key);
 
     if (!layers) {
-      layers = legacyAuraRuntimeAdapter.createLayers();
+      layers = {
+        layers: legacyAuraRuntimeAdapter.createLayers(),
+        paintedPlace: null,
+        paintedRevision: null,
+      };
       shownLayers.set(key, layers);
     }
 
+    const { back, front } = layers.layers;
     const box = auraScreenBox(shown.place);
-    legacyAuraRuntimeAdapter.placeLayers(layers, shown.character.element, box);
-    paintLayer(layers.back, box.x, box.y, shown.back);
-    paintLayer(layers.front, box.x, box.y, shown.front);
+    legacyAuraRuntimeAdapter.placeLayers(
+      layers.layers,
+      shown.character.element,
+      box,
+    );
+
+    if (isPainted(layers, shown)) return;
+    layers.paintedPlace = shown.place;
+    layers.paintedRevision = shown.revision;
+    paintLayer(back, box.x, box.y, shown.back);
+    paintLayer(front, box.x, box.y, shown.front);
   },
 
   release(key) {
@@ -86,7 +121,7 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
 
     if (!layers) return;
     shownLayers.delete(key);
-    legacyAuraRuntimeAdapter.removeLayers(layers);
+    legacyAuraRuntimeAdapter.removeLayers(layers.layers);
   },
 
   presentArrival(arrival) {

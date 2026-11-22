@@ -18,23 +18,23 @@ import type {
 
 export type StoredUserTheme = typeof userThemeTable.$inferSelect;
 
-export class UserThemeNotFound extends TaggedErrorClass<UserThemeNotFound>()(
-  "UserThemeNotFound",
-  { status: Schema.Literal(404) },
-) {}
+export class UserThemeNotFound extends TaggedErrorClass<
+  UserThemeNotFound,
+  { readonly brand: unique symbol }
+>()("UserThemeNotFound", { status: Schema.Literal(404) }) {}
 
-export class UserThemeLimitReached extends TaggedErrorClass<UserThemeLimitReached>()(
-  "UserThemeLimitReached",
-  {
-    status: Schema.Literal(409),
-    code: Schema.Literal("USER_THEME_LIMIT_REACHED"),
-  },
-) {}
+export class UserThemeLimitReached extends TaggedErrorClass<
+  UserThemeLimitReached,
+  { readonly brand: unique symbol }
+>()("UserThemeLimitReached", {
+  status: Schema.Literal(409),
+  code: Schema.Literal("USER_THEME_LIMIT_REACHED"),
+}) {}
 
-export class UserThemesPersistenceError extends TaggedErrorClass<UserThemesPersistenceError>()(
-  "UserThemesPersistenceError",
-  { cause: Schema.Defect() },
-) {}
+export class UserThemesPersistenceError extends TaggedErrorClass<
+  UserThemesPersistenceError,
+  { readonly brand: unique symbol }
+>()("UserThemesPersistenceError", { cause: Schema.Defect() }) {}
 
 export type Persisted<A> = Effect.Effect<A, UserThemesPersistenceError>;
 

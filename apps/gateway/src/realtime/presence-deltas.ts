@@ -100,7 +100,7 @@ export class PresenceDeltas {
                   : change,
               ),
             },
-          }) satisfies typeof ServerEvent.Type;
+          }) satisfies ServerEvent;
 
         const basicEvent = makeEvent(false);
 

@@ -7,7 +7,7 @@ import {
 
 describe("WarriorsRecordSchema", () => {
   it("should accept valid warriors record with two teams", () => {
-    const result = Schema.decodeUnknownResult(WarriorsRecordSchema)({
+    const result = Schema.decodeResult(WarriorsRecordSchema)({
       "101": {
         originalId: 101,
         name: "Warrior1",
@@ -30,7 +30,7 @@ describe("WarriorsRecordSchema", () => {
   });
 
   it("should reject warriors record with only one team", () => {
-    const result = Schema.decodeUnknownResult(WarriorsRecordSchema)({
+    const result = Schema.decodeResult(WarriorsRecordSchema)({
       "101": {
         originalId: 101,
         name: "Warrior1",
@@ -53,7 +53,7 @@ describe("WarriorsRecordSchema", () => {
   });
 
   it("should reject NPC warriors (negative IDs)", () => {
-    const result = Schema.decodeUnknownResult(WarriorsRecordSchema)({
+    const result = Schema.decodeResult(WarriorsRecordSchema)({
       "-1": {
         originalId: -101,
         name: "NPC",
@@ -76,7 +76,7 @@ describe("WarriorsRecordSchema", () => {
   });
 
   it("should reject a warrior keyed differently from its originalId", () => {
-    const result = Schema.decodeUnknownResult(WarriorsRecordSchema)({
+    const result = Schema.decodeResult(WarriorsRecordSchema)({
       "101": {
         originalId: 101,
         name: "Warrior1",
@@ -99,13 +99,13 @@ describe("WarriorsRecordSchema", () => {
   });
 
   it("should reject empty warriors record", () => {
-    const result = Schema.decodeUnknownResult(WarriorsRecordSchema)({});
+    const result = Schema.decodeResult(WarriorsRecordSchema)({});
 
     expect(Result.isFailure(result)).toBe(true);
   });
 
   it("should drop incomplete warrior snapshots from battle events", () => {
-    const result = Schema.decodeUnknownResult(CreateBattleSchema)({
+    const result = Schema.decodeResult(CreateBattleSchema)({
       accountId: "9822301",
       characterId: "617",
       world: "gordion",

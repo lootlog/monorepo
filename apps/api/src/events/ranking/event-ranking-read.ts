@@ -23,21 +23,21 @@ const CachedEventRankingResponse = Schema.Array(
   Schema.Struct({
     id: Schema.String,
     eventId: Schema.String,
-    memberId: Schema.Number,
+    memberId: Schema.Finite,
     heroNpcName: Schema.String,
-    totalPoints: Schema.Number,
-    manualAdjustmentPoints: Schema.Number,
-    totalKills: Schema.Number,
-    totalTimeSeconds: Schema.Number,
-    avgAfkPercentage: Schema.Number,
+    totalPoints: Schema.Finite,
+    manualAdjustmentPoints: Schema.Finite,
+    totalKills: Schema.Finite,
+    totalTimeSeconds: Schema.Finite,
+    avgAfkPercentage: Schema.Finite,
     pointsModified: Schema.Boolean,
     updatedAt: IsoDateTime,
     member: Schema.Struct({
       ...MemberSummary.fields,
       roles: Schema.Array(
         Schema.Struct({
-          position: Schema.Number,
-          color: Schema.NullOr(Schema.Number),
+          position: Schema.Finite,
+          color: Schema.NullOr(Schema.Finite),
         }),
       ),
     }),
@@ -57,7 +57,7 @@ export const makeEventRankingRead = (
         .limit(1);
 
       if (!eventRows[0]) {
-        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
+        return yield* new ResourceNotFoundError("Event not found");
       }
 
       const rows = yield* database

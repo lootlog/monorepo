@@ -13,18 +13,18 @@ import {
 } from "@lootlog/schema/internal-guilds";
 import { BotConfig } from "#src/config/bot-config";
 
-export class CommandFailure extends TaggedErrorClass<CommandFailure>()(
-  "CommandFailure",
-  {
-    reason: Schema.Literals([
-      "not-linked",
-      "reauthenticate",
-      "forbidden",
-      "not-found",
-      "unavailable",
-    ]),
-  },
-) {}
+export class CommandFailure extends TaggedErrorClass<
+  CommandFailure,
+  { readonly brand: unique symbol }
+>()("CommandFailure", {
+  reason: Schema.Literals([
+    "not-linked",
+    "reauthenticate",
+    "forbidden",
+    "not-found",
+    "unavailable",
+  ]),
+}) {}
 
 type QueryValue = string | number | boolean | ReadonlyArray<string>;
 
@@ -117,7 +117,7 @@ export class LootlogClient extends Context.Service<
 
               if (failure) return Effect.fail(failure);
 
-              return Schema.decodeUnknownEffect(Schema.fromJsonString(schema))(
+              return Schema.decodeEffect(Schema.fromJsonString(schema))(
                 new TextDecoder().decode(body),
               ).pipe(
                 Effect.mapError(

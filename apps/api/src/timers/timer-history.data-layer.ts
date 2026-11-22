@@ -72,11 +72,9 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
           );
 
         if (matches.length > 1) {
-          return yield* Effect.fail(
-            new InvalidRequestError({
-              code: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
-            }),
-          );
+          return yield* new InvalidRequestError({
+            code: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
+          });
         }
 
         timerKey = matches[0]?.timerKey ?? timerIdentifier;

@@ -10,7 +10,7 @@ import {
 } from "../src/runtime-metrics.js";
 
 test("idle processes emit runtime measurements and stop sampling when their scope closes", async () => {
-  const scope = Effect.runSync(Scope.make());
+  const scope = Scope.makeUnsafe();
 
   try {
     await Effect.runPromise(startRuntimeMetrics.pipe(Scope.provide(scope)));

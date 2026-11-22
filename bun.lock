@@ -582,6 +582,7 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@effect/tsgo": "0.67.3",
         "@lootlog/typescript-config": "workspace:*",
         "@types/bun": "catalog:",
         "@types/node": "catalog:",
@@ -597,6 +598,7 @@
         "better-auth": "1.7.16",
       },
       "devDependencies": {
+        "@effect/tsgo": "0.67.3",
         "@lootlog/typescript-config": "workspace:*",
         "@tanstack/react-query": "catalog:",
         "@types/bun": "catalog:",
@@ -630,6 +632,7 @@
         "pg": "^8.23.1",
       },
       "devDependencies": {
+        "@effect/tsgo": "0.67.3",
         "@lootlog/typescript-config": "workspace:*",
         "@testcontainers/postgresql": "^12.2.1",
         "@types/bun": "catalog:",
@@ -658,6 +661,7 @@
         "es-toolkit": "catalog:",
       },
       "devDependencies": {
+        "@effect/tsgo": "0.67.3",
         "@lootlog/typescript-config": "workspace:*",
         "@types/bun": "catalog:",
         "typescript": "catalog:",
@@ -684,6 +688,7 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@effect/tsgo": "0.67.3",
         "@lootlog/typescript-config": "workspace:*",
         "@types/bun": "catalog:",
         "typescript": "catalog:",
@@ -709,6 +714,7 @@
         "meilisearch": "^0.62.0",
       },
       "devDependencies": {
+        "@effect/tsgo": "0.67.3",
         "@lootlog/typescript-config": "workspace:*",
         "@types/bun": "catalog:",
         "typescript": "catalog:",
@@ -723,6 +729,7 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@effect/tsgo": "0.67.3",
         "@lootlog/typescript-config": "workspace:*",
         "@types/node": "catalog:",
         "testcontainers": "^12.2.1",
@@ -737,6 +744,7 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@effect/tsgo": "0.67.3",
         "@lootlog/typescript-config": "workspace:*",
         "@types/node": "catalog:",
         "typescript": "catalog:",
@@ -749,6 +757,7 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@effect/tsgo": "0.67.3",
         "@lootlog/typescript-config": "workspace:*",
         "@types/bun": "catalog:",
         "typescript": "catalog:",
@@ -761,6 +770,7 @@
         "effect": "4.1.2",
       },
       "devDependencies": {
+        "@effect/tsgo": "0.67.3",
         "@lootlog/client": "workspace:*",
         "@lootlog/protocol": "workspace:*",
         "@lootlog/schema": "workspace:*",

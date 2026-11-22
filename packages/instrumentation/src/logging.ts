@@ -14,7 +14,7 @@ const isLogContext = Schema.is(Schema.Struct({ context: Schema.String }));
 const isLogMessage = Schema.is(Schema.Struct({ message: Schema.String }));
 
 const isHttpServerError = Schema.is(
-  Schema.Number.check(Schema.isBetween({ minimum: 500, maximum: 599 })),
+  Schema.Finite.check(Schema.isBetween({ minimum: 500, maximum: 599 })),
 );
 
 export const logSpanContext = new AsyncLocalStorage<

@@ -1,3 +1,4 @@
+import { promiseOperation } from "@lootlog/instrumentation/operation";
 import { makeEventKillHistory } from "#src/events/history/event-kill-history";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.repository";
@@ -203,21 +204,18 @@ export const eventsServicesLive = Layer.effect(
           redis,
           timers,
           {
-            delayed: () =>
-              Effect.tryPromise({
-                try: () => respawnQueue.getJobs(["delayed"]),
-                catch: (error) => error,
-              }).pipe(
-                Effect.map((jobs) =>
-                  jobs.map((job) => ({
-                    heroId: job.data.heroId,
-                    remove: Effect.tryPromise({
-                      try: () => job.remove(),
-                      catch: (error) => error,
-                    }).pipe(Effect.asVoid),
-                  })),
-                ),
+            delayed: promiseOperation("events.respawn.queue.getJobs", () =>
+              respawnQueue.getJobs(["delayed"]),
+            ).pipe(
+              Effect.map((jobs) =>
+                jobs.map((job) => ({
+                  heroId: job.data.heroId,
+                  remove: promiseOperation("events.respawn.queue.remove", () =>
+                    job.remove(),
+                  ).pipe(Effect.asVoid),
+                })),
               ),
+            ),
           },
           {
             publish: (routingKey, payload) =>

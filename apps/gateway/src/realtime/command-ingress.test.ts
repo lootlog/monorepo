@@ -361,7 +361,7 @@ test("WebSocket close removes delivery targets immediately and rejects excess li
     () => {},
   );
 
-  await Effect.runPromise(hub.start());
+  await Effect.runPromise(hub.start);
 
   const target = setup({
     active: 1,
@@ -408,7 +408,7 @@ test("drain refuses new sessions, closes local sockets and waits for their disco
     () => {},
   );
 
-  await Effect.runPromise(hub.start());
+  await Effect.runPromise(hub.start);
 
   const cleanedUp: string[] = [];
 
@@ -472,7 +472,7 @@ test("announces the connection before join", async () => {
     () => {},
   );
 
-  await Effect.runPromise(hub.start());
+  await Effect.runPromise(hub.start);
   const target = setup();
   const transport = createGatewayWebSocket({ hub, ingress: target.ingress });
   const frames: ReturnType<typeof decodeRealtimeFrame>[] = [];

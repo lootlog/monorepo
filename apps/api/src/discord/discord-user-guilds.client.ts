@@ -18,7 +18,7 @@ import type { LockRetry, RedisLockManager } from "#src/redis/redlock";
 import { Clock, Deferred, Effect, Option, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { RedisError } from "effect/persistence/Redis";
-import { decodeJsonUnknown } from "#src/shared/schema/json";
+import { decodeJsonUnknownEffect } from "#src/shared/schema/json";
 import {
   getCompleteUserGuildsCacheKey,
   getCompleteUserGuildsLockKey,
@@ -31,6 +31,8 @@ import {
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import type { DiscordRateLimiter } from "./discord-rate-limiter.service.js";
 import {
+  discordRest,
+  DiscordRestFailure,
   failIfDiscordRateLimited,
   recordInvalidDiscordRequest,
   toDiscordRequestError,
@@ -38,9 +40,9 @@ import {
 import type { DiscordRestClients } from "./discord-rest-client.factory.js";
 import type { DiscordSyncDiagnostics } from "./discord-sync-diagnostics.service.js";
 
-const decodeCompleteUserGuildsEntry = Schema.decodeUnknownSync(
+const decodeCompleteUserGuildsEntry = Schema.decodeUnknownEffect(
   Schema.fromJsonString(
-    Schema.Struct({ guilds: Schema.Unknown, fetchedAt: Schema.Number }),
+    Schema.Struct({ guilds: Schema.Unknown, fetchedAt: Schema.Finite }),
   ),
 );
 
@@ -108,10 +110,10 @@ const COMPLETE_GUILDS_LOCK_WAIT: LockRetry = {
   retryJitter: 0,
 };
 
-class GuildsLockUnavailable extends TaggedErrorClass<GuildsLockUnavailable>()(
-  "GuildsLockUnavailable",
-  {},
-) {}
+class GuildsLockUnavailable extends TaggedErrorClass<
+  GuildsLockUnavailable,
+  { readonly brand: unique symbol }
+>()("GuildsLockUnavailable", {}) {}
 
 const toCompleteUserGuildsResult = (
   entry: CompleteUserGuildsEntry,
@@ -159,15 +161,13 @@ export const makeDiscordUserGuildsClient = (dependencies: {
     }
 
     return Effect.gen(function* () {
-      const response = yield* Effect.tryPromise({
-        try: () =>
-          rest.queueRequest({
-            fullRoute: Routes.userGuilds(),
-            method: RequestMethod.Get,
-            query,
-          }),
-        catch: (error) => error,
-      });
+      const response = yield* discordRest(() =>
+        rest.queueRequest({
+          fullRoute: Routes.userGuilds(),
+          method: RequestMethod.Get,
+          query,
+        }),
+      );
 
       yield* rateLimiter.updateRateLimitFromHeaders(
         userId,
@@ -175,31 +175,31 @@ export const makeDiscordUserGuildsClient = (dependencies: {
         response.headers,
       );
 
-      const guilds = yield* Effect.tryPromise({
-        try: () => parseResponse(response),
-        catch: (error) => error,
-      });
+      const guilds = yield* discordRest(() => parseResponse(response));
 
       if (!isApiGuildArray(guilds))
-        return yield* Effect.fail(
-          new TypeError("Invalid Discord guild list response"),
-        );
+        return yield* new DiscordRestFailure({
+          cause: new TypeError("Invalid Discord guild list response"),
+        });
 
       return guilds;
     }).pipe(
       Effect.catch((error) =>
         Effect.gen(function* () {
-          yield* recordInvalidDiscordRequest(diagnostics, "guilds", error);
+          const cause =
+            error instanceof DiscordRestFailure ? error.cause : error;
 
-          if (error instanceof RateLimitError) {
+          yield* recordInvalidDiscordRequest(diagnostics, "guilds", cause);
+
+          if (cause instanceof RateLimitError) {
             yield* rateLimiter.setRateLimitForUser(
               userId,
               "guilds",
-              error.retryAfter,
+              cause.retryAfter,
             );
           }
 
-          return yield* Effect.fail(toDiscordRequestError(error));
+          return yield* toDiscordRequestError(cause);
         }),
       ),
     );
@@ -221,11 +221,9 @@ export const makeDiscordUserGuildsClient = (dependencies: {
         const lastGuild = page[page.length - 1];
 
         if (!lastGuild || lastGuild.id === after) {
-          return yield* Effect.fail(
-            new DependencyUnavailableError({
-              code: "DISCORD_GUILDS_PAGINATION_INCOMPLETE",
-            }),
-          );
+          return yield* new DependencyUnavailableError({
+            code: "DISCORD_GUILDS_PAGINATION_INCOMPLETE",
+          });
         }
 
         after = lastGuild.id;
@@ -259,10 +257,7 @@ export const makeDiscordUserGuildsClient = (dependencies: {
         return null;
       }
 
-      const parsed = yield* Effect.try({
-        try: () => decodeJsonUnknown(cached),
-        catch: (error) => error,
-      }).pipe(
+      const parsed = yield* decodeJsonUnknownEffect(cached).pipe(
         Effect.catch((error) =>
           Effect.logDebug({
             message: "Failed to parse Discord guilds cache",
@@ -290,10 +285,7 @@ export const makeDiscordUserGuildsClient = (dependencies: {
         return null;
       }
 
-      const parsed = yield* Effect.try({
-        try: () => decodeCompleteUserGuildsEntry(cached),
-        catch: (error) => error,
-      }).pipe(
+      const parsed = yield* decodeCompleteUserGuildsEntry(cached).pipe(
         Effect.catch((error) =>
           Effect.as(
             Effect.logDebug({

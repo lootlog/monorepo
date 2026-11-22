@@ -1,6 +1,6 @@
 import {
-  OperationError,
-  withAdapterSpan,
+  adapterOperation,
+  promiseOperation,
 } from "@lootlog/instrumentation/operation";
 import type { Job, Queue as BullQueue } from "bullmq";
 import { Clock, Effect } from "effect";
@@ -92,7 +92,7 @@ export const makeMemberRefreshScheduler = (
   ports: MemberRefreshSchedulerPorts,
 ) => {
   const bull = <A>(run: () => Promise<A>) =>
-    Effect.tryPromise({ try: run, catch: (cause) => cause });
+    promiseOperation("members.refresh.queue", run);
 
   const updateExisting = Effect.fnUntraced(function* (
     job: Job<MemberRefreshJobData>,
@@ -130,7 +130,7 @@ export const makeMemberRefreshScheduler = (
       Effect.catch((error) =>
         Effect.gen(function* () {
           if (
-            errorCode(error) === -3 &&
+            errorCode(error.cause) === -3 &&
             (yield* bull(() => job.getState())) !== "delayed"
           ) {
             return;
@@ -172,38 +172,35 @@ export const makeMemberRefreshScheduler = (
       ? Math.max(nextRefreshAt.getTime() - (yield* Clock.currentTimeMillis), 0)
       : 0;
 
-    yield* Effect.gen(function* () {
-      const id = jobId(data.userId, data.guildId);
-      const existing = yield* bull(() => queue.getJob(id));
+    yield* adapterOperation("bullmq")(
+      "members.refresh.queue",
+      Effect.gen(function* () {
+        const id = jobId(data.userId, data.guildId);
+        const existing = yield* bull(() => queue.getJob(id));
 
-      if (!existing) {
-        yield* bull(() => add(id, data, delay));
+        if (!existing) {
+          yield* bull(() => add(id, data, delay));
 
-        return;
-      }
+          return;
+        }
 
-      const state = yield* bull(() => existing.getState());
+        const state = yield* bull(() => existing.getState());
 
-      if (["completed", "failed", "unknown"].includes(state)) {
-        yield* bull(() => existing.remove()).pipe(
-          Effect.catchIf(
-            (error) => errorCode(error) === -1,
-            () => Effect.void,
-          ),
-        );
+        if (["completed", "failed", "unknown"].includes(state)) {
+          yield* bull(() => existing.remove()).pipe(
+            Effect.catchIf(
+              (error) => errorCode(error.cause) === -1,
+              () => Effect.void,
+            ),
+          );
 
-        yield* bull(() => add(id, data, delay));
+          yield* bull(() => add(id, data, delay));
 
-        return;
-      }
+          return;
+        }
 
-      yield* updateExisting(existing, data, delay, state);
-    }).pipe(
-      Effect.mapError(
-        (cause) =>
-          new OperationError({ operation: "members.refresh.queue", cause }),
-      ),
-      withAdapterSpan("members.refresh.queue", "bullmq"),
+        yield* updateExisting(existing, data, delay, state);
+      }),
     );
     yield* ports.recordMetric({ outcome: "queued", reason: data.reason });
 

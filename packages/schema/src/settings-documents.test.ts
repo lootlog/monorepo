@@ -9,7 +9,7 @@ const timestamp = "2026-09-03T00:00:00.000Z";
 
 describe("settings documents HTTP codecs", () => {
   it("decodes request defaults into a total application value", () => {
-    const decoded = Schema.decodeUnknownSync(PatchSettingsDocumentsSchema)({
+    const decoded = Schema.decodeSync(PatchSettingsDocumentsSchema)({
       operations: [
         {
           domain: "appearance",
@@ -52,9 +52,7 @@ describe("settings documents HTTP codecs", () => {
       },
     };
 
-    const decoded = Schema.decodeUnknownSync(SettingsDocumentsResponseSchema)(
-      encoded,
-    );
+    const decoded = Schema.decodeSync(SettingsDocumentsResponseSchema)(encoded);
 
     expect(decoded.domains.appearance?.updatedAt).toEqual(new Date(timestamp));
     expect(decoded.domains.appearance?.layers[0]?.updatedAt).toEqual(
@@ -70,7 +68,7 @@ describe("settings documents HTTP codecs", () => {
       false,
     );
     expect(() =>
-      Schema.decodeUnknownSync(SettingsDocumentsResponseSchema)({
+      Schema.decodeSync(SettingsDocumentsResponseSchema)({
         domains: {
           appearance: {
             effective: {},

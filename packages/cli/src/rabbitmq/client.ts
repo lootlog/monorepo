@@ -12,7 +12,7 @@ import { styleText } from "node:util";
 
 interface PublishOptions {
   routingKey: string;
-  payload: typeof Schema.Json.Type;
+  payload: Schema.Json;
 }
 
 const signatureHeaders = (options: PublishOptions) => {

@@ -5,9 +5,9 @@ import type {
 } from "@lootlog/protocol/realtime";
 import type { SessionData } from "#src/realtime/session";
 
-type Topic = typeof RealtimeLogicalTopic.Type;
+type Topic = RealtimeLogicalTopic;
 
-type Scope = typeof SubscriptionScope.Type;
+type Scope = SubscriptionScope;
 
 export type PermissionViewer = Pick<SessionData, "discordId" | "guilds"> &
   Partial<Pick<SessionData, "platform" | "presence">>;

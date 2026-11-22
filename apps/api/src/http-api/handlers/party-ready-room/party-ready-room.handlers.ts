@@ -26,10 +26,13 @@ import {
   type ResolvePartyInvitationsRequest,
 } from "#src/contracts/party-ready-room/schemas";
 
-export class ReadyRoomAccessDenied extends TaggedErrorClass<ReadyRoomAccessDenied>()(
-  "ReadyRoomAccessDenied",
-  { status: Schema.Literals([401, 403]), code: Schema.String },
-) {}
+export class ReadyRoomAccessDenied extends TaggedErrorClass<
+  ReadyRoomAccessDenied,
+  { readonly brand: unique symbol }
+>()("ReadyRoomAccessDenied", {
+  status: Schema.Literals([401, 403]),
+  code: Schema.String,
+}) {}
 
 export class ReadyRoomAuthorization extends Context.Service<
   ReadyRoomAuthorization,

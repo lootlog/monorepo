@@ -119,9 +119,9 @@ const ChangesJson = Schema.fromJsonString(
     Schema.Struct({
       npc: NpcPresenceNpcSchema,
       standing: Schema.Boolean,
-      since: Schema.Number,
+      since: Schema.Finite,
       map: Schema.optionalKey(Schema.String),
-      revision: Schema.Number,
+      revision: Schema.Finite,
     }),
   ),
 );
@@ -132,7 +132,7 @@ const decodeSnapshot = Schema.decodeUnknownSync(
   Schema.fromJsonString(NpcPresenceSnapshotSchema),
 );
 
-type Event = typeof ServerEvent.Type;
+type Event = ServerEvent;
 
 type Operation = {
   organizationId: string;

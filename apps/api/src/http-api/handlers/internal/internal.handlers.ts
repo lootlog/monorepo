@@ -20,65 +20,61 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
     Effect.mapError((cause) => new InternalGuildsOperationError({ cause })),
   );
 
-export const getInternalUserPermissions = (
-  discordId: string,
-  userId: string,
-  freshness?: "required",
-) =>
-  Effect.gen(function* () {
-    if (discordId.length === 0 || userId.length === 0) return [];
-    const data = yield* InternalGuildsData;
+export const getInternalUserPermissions = Effect.fn(
+  "GuildsInternalControllerGetUserPermissions",
+  {
+    attributes: { operationId: "GuildsInternalControllerGetUserPermissions" },
+  },
+)(function* (discordId: string, userId: string, freshness?: "required") {
+  if (discordId.length === 0 || userId.length === 0) return [];
+  const data = yield* InternalGuildsData;
 
-    return yield* Effect.flatMap(
-      data.getUserPermissions(discordId, userId, freshness),
-      (value) => decode(InternalUserPermissionsResponse, value),
-    );
-  }).pipe(
-    Effect.withSpan("GuildsInternalControllerGetUserPermissions", {
-      attributes: { operationId: "GuildsInternalControllerGetUserPermissions" },
-    }),
+  return yield* Effect.flatMap(
+    data.getUserPermissions(discordId, userId, freshness),
+    (value) => decode(InternalUserPermissionsResponse, value),
   );
+});
 
-export const getInternalGuild = (idOrVanityUrl: string) =>
-  Effect.gen(function* () {
-    const data = yield* InternalGuildsData;
+export const getInternalGuild = Effect.fn(
+  "GuildsInternalControllerGetGuildByIdOrVanityUrl",
+  {
+    attributes: {
+      operationId: "GuildsInternalControllerGetGuildByIdOrVanityUrl",
+    },
+  },
+)(function* (idOrVanityUrl: string) {
+  const data = yield* InternalGuildsData;
 
-    const guild = yield* data.getGuild(idOrVanityUrl);
+  const guild = yield* data.getGuild(idOrVanityUrl);
 
-    if (guild === null) {
-      return yield* new InternalGuildNotFound({
-        status: 404,
-        code: "GUILD_NOT_FOUND",
-      });
-    }
+  if (guild === null) {
+    return yield* new InternalGuildNotFound({
+      status: 404,
+      code: "GUILD_NOT_FOUND",
+    });
+  }
 
-    return yield* decode(OrganizationSummary, guild);
-  }).pipe(
-    Effect.withSpan("GuildsInternalControllerGetGuildByIdOrVanityUrl", {
-      attributes: {
-        operationId: "GuildsInternalControllerGetGuildByIdOrVanityUrl",
-      },
-    }),
-  );
+  return yield* decode(OrganizationSummary, guild);
+});
 
-const getInternalMemberIdentity = (guildId: string, discordId: string) =>
-  Effect.gen(function* () {
-    const data = yield* InternalGuildsData;
-    const identity = yield* data.getMemberIdentity(guildId, discordId);
+const getInternalMemberIdentity = Effect.fn(
+  "GuildsInternalControllerGetMemberIdentity",
+  {
+    attributes: { operationId: "GuildsInternalControllerGetMemberIdentity" },
+  },
+)(function* (guildId: string, discordId: string) {
+  const data = yield* InternalGuildsData;
+  const identity = yield* data.getMemberIdentity(guildId, discordId);
 
-    if (identity === null) {
-      return yield* new InternalMemberNotFound({
-        status: 404,
-        code: "MEMBER_NOT_FOUND",
-      });
-    }
+  if (identity === null) {
+    return yield* new InternalMemberNotFound({
+      status: 404,
+      code: "MEMBER_NOT_FOUND",
+    });
+  }
 
-    return yield* decode(InternalMemberIdentityResponse, identity);
-  }).pipe(
-    Effect.withSpan("GuildsInternalControllerGetMemberIdentity", {
-      attributes: { operationId: "GuildsInternalControllerGetMemberIdentity" },
-    }),
-  );
+  return yield* decode(InternalMemberIdentityResponse, identity);
+});
 
 const orDieHttpFailure = <A, R>(
   effect: Effect.Effect<A, InternalGuildsOperationError, R>,

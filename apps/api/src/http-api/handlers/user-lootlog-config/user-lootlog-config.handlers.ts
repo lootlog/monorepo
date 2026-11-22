@@ -19,10 +19,13 @@ import {
   type PlayersCatchingOrganizationsRequest,
 } from "#src/contracts/user-lootlog-config/schemas";
 
-export class UserLootlogConfigAccessDenied extends TaggedErrorClass<UserLootlogConfigAccessDenied>()(
-  "UserLootlogConfigAccessDenied",
-  { status: Schema.Literal(401), code: Schema.String },
-) {}
+export class UserLootlogConfigAccessDenied extends TaggedErrorClass<
+  UserLootlogConfigAccessDenied,
+  { readonly brand: unique symbol }
+>()("UserLootlogConfigAccessDenied", {
+  status: Schema.Literal(401),
+  code: Schema.String,
+}) {}
 
 export class UserLootlogConfigIdentity extends Context.Service<
   UserLootlogConfigIdentity,

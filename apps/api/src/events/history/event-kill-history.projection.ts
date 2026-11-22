@@ -25,7 +25,7 @@ export const makeEventKillHistoryProjection = (
     const kill = yield* repository.findKillDetail(heroId, killId);
 
     if (!kill) {
-      return yield* Effect.fail(new ResourceNotFoundError("Kill not found"));
+      return yield* new ResourceNotFoundError("Kill not found");
     }
 
     const effectiveKilledAt = getEffectiveWindowEndAt(
@@ -272,7 +272,7 @@ export const makeEventKillHistoryProjection = (
     const kill = yield* repository.findKill(heroId, killId);
 
     if (!kill) {
-      return yield* Effect.fail(new ResourceNotFoundError("Kill not found"));
+      return yield* new ResourceNotFoundError("Kill not found");
     }
 
     const [summary, maps] = yield* Effect.all(

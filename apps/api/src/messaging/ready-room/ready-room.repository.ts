@@ -41,10 +41,10 @@ const CHARACTER_PREFIX = "party-ready-room:v3:character:";
 
 const TERMINAL_TOMBSTONE_SECONDS = 60;
 
-class ReadyRoomContended extends TaggedErrorClass<ReadyRoomContended>()(
-  "ReadyRoomContended",
-  {},
-) {}
+class ReadyRoomContended extends TaggedErrorClass<
+  ReadyRoomContended,
+  { readonly brand: unique symbol }
+>()("ReadyRoomContended", {}) {}
 
 type ReadyRoomFailure = RedisError | ReadyRoomContended;
 

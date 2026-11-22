@@ -19,7 +19,7 @@ test("member responses preserve nullable lookup and its extensible JSON fields",
   expect(decode(null)).toBeNull();
   expect(decode(member)).toEqual(member);
   const { extra: _extra, ...knownFields } = member;
-  expect(Schema.decodeUnknownSync(MemberResponse)(member)).toEqual(knownFields);
+  expect(Schema.decodeSync(MemberResponse)(member)).toEqual(knownFields);
   expect(() =>
     decode({ ...member, updatedAt: "2026-02-29T12:00:00Z" }),
   ).toThrow();

@@ -14,14 +14,14 @@ export const CoverageGapResponse = Schema.Struct({
   gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
   startedAt: IsoDateTime,
   endedAt: nullableIsoDatetimeCodec,
-  durationSeconds: Schema.NullOr(Schema.Number),
+  durationSeconds: Schema.NullOr(Schema.Finite),
 });
 
 export const NullableCoverageGapResponse = Schema.NullOr(CoverageGapResponse);
 
 export const HeroCoverageGapResponse = Schema.Struct({
   ...CoverageGapResponse.fields,
-  map: Schema.Struct({ mapName: Schema.String, mapId: Schema.Number }),
+  map: Schema.Struct({ mapName: Schema.String, mapId: Schema.Finite }),
 });
 
 const KillTimelineAssignmentResponse = Schema.Struct({
@@ -35,27 +35,27 @@ const KillTimelineGapResponse = Schema.Struct({
   gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
   startedAt: flexibleIsoDatetimeCodec,
   endedAt: nullableFlexibleIsoDatetimeCodec,
-  durationSeconds: Schema.NullOr(Schema.Number),
+  durationSeconds: Schema.NullOr(Schema.Finite),
 });
 
 export const KillTimelineMapResponse = Schema.Struct({
   mapId: Schema.String,
   mapName: Schema.String,
-  numericMapId: Schema.Number,
+  numericMapId: Schema.Finite,
   assignments: Schema.Array(KillTimelineAssignmentResponse),
   gaps: Schema.Array(KillTimelineGapResponse),
 });
 
 export const HeroPresenceStatsResponse = Schema.Struct({
-  totalCoverageSeconds: Schema.Number,
-  totalEventSeconds: Schema.Number,
-  presencePercentage: Schema.Number,
+  totalCoverageSeconds: Schema.Finite,
+  totalEventSeconds: Schema.Finite,
+  presencePercentage: Schema.Finite,
   memberStats: Schema.Array(
     Schema.Struct({
       member: MemberSummary,
-      totalTimeSeconds: Schema.Number,
-      afkTimeSeconds: Schema.Number,
-      afkPercentage: Schema.Number,
+      totalTimeSeconds: Schema.Finite,
+      afkTimeSeconds: Schema.Finite,
+      afkPercentage: Schema.Finite,
     }),
   ),
 });
@@ -65,5 +65,5 @@ export const HeroRespawnConfigResponse = Schema.Struct({
   windowStatus: Schema.Literals(["OPEN", "WAITING", "OVERDUE", "NONE"]),
   minSpawnTime: nullableIsoDatetimeCodec,
   maxSpawnTime: nullableIsoDatetimeCodec,
-  overdueMs: Schema.NullOr(Schema.Number),
+  overdueMs: Schema.NullOr(Schema.Finite),
 });

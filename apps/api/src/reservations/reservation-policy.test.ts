@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { Effect } from "effect";
 import type { ReservationSettings } from "@lootlog/domain/reservations";
 import {
   parseReservationWindow,
@@ -16,34 +17,40 @@ const settings: ReservationSettings = {
 describe("reservation policy", () => {
   it("accepts an aligned reservation", () => {
     expect(() =>
-      validateReservationTime({
-        startsAt: new Date("2026-08-26T12:15:00.000Z"),
-        endsAt: new Date("2026-08-26T13:15:00.000Z"),
-        now: new Date("2026-08-26T12:00:00.000Z"),
-        settings,
-      }),
+      Effect.runSync(
+        validateReservationTime({
+          startsAt: new Date("2026-08-26T12:15:00.000Z"),
+          endsAt: new Date("2026-08-26T13:15:00.000Z"),
+          now: new Date("2026-08-26T12:00:00.000Z"),
+          settings,
+        }),
+      ),
     ).not.toThrow();
   });
 
   it("rejects times outside the configured grid", () => {
     expect(() =>
-      validateReservationTime({
-        startsAt: new Date("2026-08-26T12:10:00.000Z"),
-        endsAt: new Date("2026-08-26T13:10:00.000Z"),
-        now: new Date("2026-08-26T12:00:00.000Z"),
-        settings,
-      }),
+      Effect.runSync(
+        validateReservationTime({
+          startsAt: new Date("2026-08-26T12:10:00.000Z"),
+          endsAt: new Date("2026-08-26T13:10:00.000Z"),
+          now: new Date("2026-08-26T12:00:00.000Z"),
+          settings,
+        }),
+      ),
     ).toThrowError(expect.objectContaining({ kind: "invalid-entity" }));
   });
 
   it("classifies a past start as an invalid entity", () => {
     expect(() =>
-      validateReservationTime({
-        startsAt: new Date("2026-08-26T11:45:00.000Z"),
-        endsAt: new Date("2026-08-26T12:30:00.000Z"),
-        now: new Date("2026-08-26T12:00:00.000Z"),
-        settings,
-      }),
+      Effect.runSync(
+        validateReservationTime({
+          startsAt: new Date("2026-08-26T11:45:00.000Z"),
+          endsAt: new Date("2026-08-26T12:30:00.000Z"),
+          now: new Date("2026-08-26T12:00:00.000Z"),
+          settings,
+        }),
+      ),
     ).toThrowError(
       expect.objectContaining({
         body: { code: "RESERVATION_START_IN_PAST" },
@@ -54,12 +61,14 @@ describe("reservation policy", () => {
 
   it("preserves Organization settings in domain error details", () => {
     expect(() =>
-      validateReservationTime({
-        startsAt: new Date("2026-08-26T12:15:00.000Z"),
-        endsAt: new Date("2026-08-26T12:20:00.000Z"),
-        now: new Date("2026-08-26T12:00:00.000Z"),
-        settings: { ...settings, reservationMinDurationMinutes: 15 },
-      }),
+      Effect.runSync(
+        validateReservationTime({
+          startsAt: new Date("2026-08-26T12:15:00.000Z"),
+          endsAt: new Date("2026-08-26T12:20:00.000Z"),
+          now: new Date("2026-08-26T12:00:00.000Z"),
+          settings: { ...settings, reservationMinDurationMinutes: 15 },
+        }),
+      ),
     ).toThrowError(
       expect.objectContaining({
         body: {
@@ -73,9 +82,11 @@ describe("reservation policy", () => {
 
   it("limits a calendar query to 31 days", () => {
     expect(() =>
-      parseReservationWindow(
-        "2026-08-01T00:00:00.000Z",
-        "2026-09-02T00:00:00.000Z",
+      Effect.runSync(
+        parseReservationWindow(
+          "2026-08-01T00:00:00.000Z",
+          "2026-09-02T00:00:00.000Z",
+        ),
       ),
     ).toThrowError(expect.objectContaining({ kind: "invalid-request" }));
   });

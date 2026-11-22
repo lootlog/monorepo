@@ -59,10 +59,14 @@ export interface NotificationDispatchPublisher {
   ) => Effect.Effect<void, unknown, never>;
 }
 
-export class NotificationJobDispatchFailure extends TaggedErrorClass<NotificationJobDispatchFailure>()(
-  "NotificationJobDispatchFailure",
-  { operation: Schema.String, jobId: Schema.String, cause: Schema.Defect() },
-) {}
+export class NotificationJobDispatchFailure extends TaggedErrorClass<
+  NotificationJobDispatchFailure,
+  { readonly brand: unique symbol }
+>()("NotificationJobDispatchFailure", {
+  operation: Schema.String,
+  jobId: Schema.String,
+  cause: Schema.Defect(),
+}) {}
 
 const targetBlockedReason = (target: NotificationDispatchJob["target"]) => {
   if (!target.active) return "Notification target is disabled";

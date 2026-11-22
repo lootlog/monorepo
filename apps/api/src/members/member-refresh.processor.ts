@@ -6,10 +6,10 @@ import type { MemberRefreshScheduler } from "./member-refresh-scheduler.js";
 import type { MemberRefreshPorts } from "./member-refresh.operations.js";
 import { isRetryableMemberRefreshStatus } from "./member-discord-sync-status.js";
 
-export class MemberRefreshRetryable extends TaggedErrorClass<MemberRefreshRetryable>()(
-  "MemberRefreshRetryable",
-  { status: Schema.String },
-) {
+export class MemberRefreshRetryable extends TaggedErrorClass<
+  MemberRefreshRetryable,
+  { readonly brand: unique symbol }
+>()("MemberRefreshRetryable", { status: Schema.String }) {
   override get message() {
     return `MEMBER_REFRESH_${this.status}`;
   }
@@ -85,6 +85,7 @@ export const makeMemberRefreshProcessor = ({
           reason: "MEMBER_REFRESH_LOCKED",
         });
 
+        // @effect-diagnostics-next-line globalErrorInEffectFailure:off
         return yield* Effect.fail(new DelayedError());
       }
 

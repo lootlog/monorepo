@@ -27,21 +27,21 @@ export type AuthorizedGuild = {
   readonly permissions: ReadonlyArray<PermissionValue>;
 };
 
-export class AccountOrganizationAccessDenied extends TaggedErrorClass<AccountOrganizationAccessDenied>()(
-  "AccountOrganizationAccessDenied",
-  {
-    status: Schema.Literals([401, 403]),
-    code: Schema.String,
-  },
-) {}
+export class AccountOrganizationAccessDenied extends TaggedErrorClass<
+  AccountOrganizationAccessDenied,
+  { readonly brand: unique symbol }
+>()("AccountOrganizationAccessDenied", {
+  status: Schema.Literals([401, 403]),
+  code: Schema.String,
+}) {}
 
-export class AccountOrganizationNotFound extends TaggedErrorClass<AccountOrganizationNotFound>()(
-  "AccountOrganizationNotFound",
-  {
-    status: Schema.Literal(404),
-    code: Schema.String,
-  },
-) {}
+export class AccountOrganizationNotFound extends TaggedErrorClass<
+  AccountOrganizationNotFound,
+  { readonly brand: unique symbol }
+>()("AccountOrganizationNotFound", {
+  status: Schema.Literal(404),
+  code: Schema.String,
+}) {}
 
 type AuthorizationFailure =
   | AccountOrganizationAccessDenied

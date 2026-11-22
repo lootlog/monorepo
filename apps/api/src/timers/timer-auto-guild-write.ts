@@ -3,7 +3,6 @@ import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { publishTimerEvents } from "./timer-update-publication.js";
 import { Effect, Predicate, Schema } from "effect";
 import type { RedisError } from "effect/persistence/Redis";
-import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { loadHeroSightings } from "#src/hero-sightings/hero-sighting-query";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
@@ -50,14 +49,13 @@ export interface AutoTimerGuildWritePorts extends AutoTimerPersistencePorts {
 
 const DEDUP_LOCK_WAIT = { retryCount: 100, retryDelay: 50, retryJitter: 0 };
 
+const decodeCachedTimerProjection = Schema.decodeUnknownSync(
+  Schema.fromJsonString(CachedTimerProjectionSchema),
+);
+
 const projectionFromCache = (value: string) =>
   Effect.try({
-    try: () =>
-      mapTimerResponse(
-        Schema.decodeUnknownSync(CachedTimerProjectionSchema)(
-          decodeJsonUnknown(value),
-        ),
-      ),
+    try: () => mapTimerResponse(decodeCachedTimerProjection(value)),
     catch: (cause) => new TimersInfrastructureError({ cause }),
   });
 
@@ -81,9 +79,7 @@ export const writeGuildTimer = (
 
   return Effect.gen(function* () {
     if (!hasTimerWeight(payload)) {
-      return yield* Effect.fail(
-        new InvalidRequestError({ code: ErrorKey.WT_TOO_LOW }),
-      );
+      return yield* new InvalidRequestError({ code: ErrorKey.WT_TOO_LOW });
     }
 
     return yield* ports.locks.singleFlight(

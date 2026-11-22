@@ -2,6 +2,7 @@ import { calculateBattleStatistics } from "@lootlog/battle-processor/statistics"
 import { Effect, Schema } from "effect";
 import {
   adapterOperation,
+  promiseOperation,
   withAdapterSpan,
 } from "@lootlog/instrumentation/operation";
 import type { Battles } from "#src/battles/battles.service";
@@ -41,12 +42,12 @@ const toBattleResponseInput = (battle: BattleWithRelations) => ({
 });
 
 const normalizeBattleResponse = (battle: BattleWithRelations) =>
-  Schema.decodeUnknownSync(BattleResponseSchemas.battle)(
+  Schema.decodeSync(BattleResponseSchemas.battle)(
     toBattleResponseInput(battle),
   );
 
 const normalizePublicBattleResponse = (battle: BattleWithRelations) =>
-  Schema.decodeUnknownSync(BattleResponseSchemas.publicBattle)(
+  Schema.decodeSync(BattleResponseSchemas.publicBattle)(
     toBattleResponseInput(battle),
   );
 
@@ -251,11 +252,9 @@ export const makeBattlelogOperations = (
       deleteUserData: battlelogOperation(
         "InternalController_deleteUserData",
         (body: DeleteUserData) =>
-          Effect.tryPromise({
-            try: () =>
-              deleteQueue.add("delete-user-battles", { userId: body.userId }),
-            catch: (cause) => cause,
-          }).pipe(
+          promiseOperation("InternalController_deleteUserData", () =>
+            deleteQueue.add("delete-user-battles", { userId: body.userId }),
+          ).pipe(
             Effect.as({ status: "ACCEPTED" as const }),
             withAdapterSpan(
               "InternalController_enqueueDeleteUserData",

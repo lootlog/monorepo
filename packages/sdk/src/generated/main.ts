@@ -5752,15 +5752,15 @@ export interface CreateVolunteerDto {
 }
 
 export type PartyReadyRoomProjectionDtoOutputNpc = {
-  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  id?: number;
   prof?: string;
   icon?: string;
   name: string;
   location: string;
-  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  lvl: number;
   type: string;
-  x?: number | 'Infinity' | '-Infinity' | 'NaN';
-  y?: number | 'Infinity' | '-Infinity' | 'NaN';
+  x?: number;
+  y?: number;
 };
 
 export type PartyReadyRoomProjectionDtoOutputSchemaVersion = typeof PartyReadyRoomProjectionDtoOutputSchemaVersion[keyof typeof PartyReadyRoomProjectionDtoOutputSchemaVersion];
@@ -5830,7 +5830,7 @@ export type PartyReadyRoomProjectionDtoOutputPartyState = {
 };
 
 export type PartyReadyRoomProjectionDtoOutputVolunteersItemClan = {
-  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  id?: number;
   name?: string;
 };
 
@@ -6095,15 +6095,15 @@ export const PartyReadyRoomClientUpdateDtoOutputType = {
 } as const;
 
 export type PartyReadyRoomClientUpdateDtoOutputProjectionNpc = {
-  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  id?: number;
   prof?: string;
   icon?: string;
   name: string;
   location: string;
-  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  lvl: number;
   type: string;
-  x?: number | 'Infinity' | '-Infinity' | 'NaN';
-  y?: number | 'Infinity' | '-Infinity' | 'NaN';
+  x?: number;
+  y?: number;
 };
 
 export type PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion = typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion];
@@ -6173,7 +6173,7 @@ export type PartyReadyRoomClientUpdateDtoOutputProjectionPartyState = {
 };
 
 export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemClan = {
-  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  id?: number;
   name?: string;
 };
 

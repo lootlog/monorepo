@@ -11,7 +11,7 @@ const booleanString = Schema.Literals(["true", "false"]).pipe(
   }),
 );
 
-const numberInput = Schema.Union([Schema.Number, Schema.NumberFromString]);
+const numberInput = Schema.Union([Schema.Finite, Schema.FiniteFromString]);
 
 export const dateTimeString = Schema.String.check(
   Schema.isPattern(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/u),

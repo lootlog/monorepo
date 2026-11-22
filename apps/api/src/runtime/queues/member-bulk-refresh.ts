@@ -1,3 +1,4 @@
+import { promiseOperation } from "@lootlog/instrumentation/operation";
 import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
 import type { Job } from "bullmq";
 import { Context, Effect, Layer, type Redacted } from "effect";
@@ -25,15 +26,13 @@ export class MemberBulkRefreshQueue extends Context.Service<
 
       return MemberBulkRefreshQueue.of({
         enqueue: (data) =>
-          Effect.tryPromise({
-            try: () =>
-              queue.add("bulk-refresh", data, {
-                attempts: 3,
-                backoff: { type: "exponential", delay: 2000 },
-                jobId: `member-bulk-refresh-${data.jobId}`,
-              }),
-            catch: (cause) => cause,
-          }).pipe(Effect.asVoid),
+          promiseOperation("members.bulkRefresh.queue.add", () =>
+            queue.add("bulk-refresh", data, {
+              attempts: 3,
+              backoff: { type: "exponential", delay: 2000 },
+              jobId: `member-bulk-refresh-${data.jobId}`,
+            }),
+          ).pipe(Effect.asVoid),
       });
     }),
   );

@@ -179,6 +179,7 @@ export class Aura {
   private preset: AuraPreset;
   private time = 0;
   private tick = 0;
+  private revision = 0;
   private carry = 0;
   private flash = 0;
   private bolts: Bolt[] = [];
@@ -279,6 +280,10 @@ export class Aura {
     }
   }
 
+  paintRevision(): number | null {
+    return this.preset.herald && arrivalEvent(this.age) ? null : this.revision;
+  }
+
   private summon(place: AuraPlacement, intensity: number): Summon | null {
     if (!this.preset.herald || !place.ground) return null;
     const event = arrivalEvent(this.age);
@@ -306,6 +311,7 @@ export class Aura {
 
   private wear(): void {
     this.preset = this.worn();
+    this.revision++;
     this.rgb = colorsOf(this.preset);
     this.bolts = [];
     this.dragon = null;
@@ -345,6 +351,7 @@ export class Aura {
   private step(place: AuraPlacement | null, intensity: number): void {
     this.time += TICK;
     this.tick++;
+    this.revision++;
     this.flash = Math.max(0, this.flash - TICK * 4);
     const frame = place ? this.physicsFrame(place) : null;
 

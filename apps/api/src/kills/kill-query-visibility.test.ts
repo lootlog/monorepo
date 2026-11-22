@@ -71,7 +71,7 @@ const visibleNpcIds = (
     const query = new PgDialect().sqlToQuery(condition);
 
     const parameters = Schema.decodeUnknownSync(
-      Schema.Array(Schema.Union([Schema.String, Schema.Number])),
+      Schema.Array(Schema.Union([Schema.String, Schema.Finite])),
     )(query.params);
 
     return database

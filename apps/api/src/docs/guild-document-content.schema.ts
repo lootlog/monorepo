@@ -12,7 +12,7 @@ const JsonValueSchema: Schema.Codec<JsonValue> = Schema.suspend(
   (): Schema.Codec<JsonValue> =>
     Schema.Union([
       Schema.String,
-      Schema.Number,
+      Schema.Finite,
       Schema.Boolean,
       Schema.Null,
       Schema.Array(JsonValueSchema),

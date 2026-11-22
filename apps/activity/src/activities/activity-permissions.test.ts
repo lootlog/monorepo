@@ -79,8 +79,12 @@ describe("Activity permissions", () => {
 
     const [before, after] = await Effect.runPromise(
       Effect.all([read, read]).pipe(
-        Effect.provide(Permissions.layer),
-        Effect.provide(Layer.succeed(ApiHttpClient, ApiHttpClient.of({ get }))),
+        Effect.provide(
+          Layer.provide(
+            Permissions.layer,
+            Layer.succeed(ApiHttpClient, ApiHttpClient.of({ get })),
+          ),
+        ),
         Effect.provideService(ActivityConfig, config),
         Effect.provideService(Redis.Redis, redis),
       ),

@@ -84,7 +84,12 @@ export class AccessRebalancer {
           { concurrency: 2 },
         );
 
-        return [invalidated, published];
+        const outcomes: ReadonlyArray<Exit.Exit<void, unknown>> = [
+          invalidated,
+          published,
+        ];
+
+        return outcomes;
       });
 
       const [, results] = yield* Effect.all([cleanup, federate], {

@@ -97,7 +97,7 @@ describe("event update Effect module", () => {
         catalog,
       );
 
-      const request = Schema.decodeUnknownSync(UpdateEventRequest)(data);
+      const request = Schema.decodeSync(UpdateEventRequest)(data);
 
       const result = boundary.run(
         updateEvent(

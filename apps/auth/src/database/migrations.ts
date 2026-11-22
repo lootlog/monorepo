@@ -1,7 +1,8 @@
 import { fileURLToPath } from "node:url";
 import { migrate } from "drizzle-orm/effect-postgres/migrator";
 import { readMigrationFiles } from "drizzle-orm/migrator";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { SqlClient } from "effect/sql/SqlClient";
 import type { SqlError } from "effect/sql/SqlError";
 import type { AuthDatabaseValue } from "./drizzle.js";
@@ -191,6 +192,11 @@ export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
   return { status, source, pendingMigrations, integrityViolations };
 });
 
+class AuthMigrationRejected extends TaggedErrorClass<
+  AuthMigrationRejected,
+  { readonly brand: unique symbol }
+>()("AuthMigrationRejected", { message: Schema.String }) {}
+
 export const runAuthMigrations = Effect.fn("runAuthMigrations")(function* (
   database: AuthDatabaseValue,
   client: AuthMigrationClient & Pick<SqlClient, "withTransaction">,
@@ -203,20 +209,18 @@ export const runAuthMigrations = Effect.fn("runAuthMigrations")(function* (
       const plan = yield* planAuthMigration(client);
 
       if (plan.status === "blocked") {
-        return yield* Effect.fail(
-          new Error(
-            `Auth migration preflight is blocked: ${plan.integrityViolations.map(({ code, count }) => `${code}=${count}`).join(", ")}. No database changes were applied.`,
-          ),
-        );
+        return yield* new AuthMigrationRejected({
+          message: `Auth migration preflight is blocked: ${plan.integrityViolations.map(({ code, count }) => `${code}=${count}`).join(", ")}. No database changes were applied.`,
+        });
       }
 
       yield* migrate(database, migrationConfig);
       const result = yield* planAuthMigration(client);
 
       if (result.status !== "up-to-date") {
-        return yield* Effect.fail(
-          new Error("Auth migration verification failed; changes rolled back."),
-        );
+        return yield* new AuthMigrationRejected({
+          message: "Auth migration verification failed; changes rolled back.",
+        });
       }
     }),
   );

@@ -20,7 +20,7 @@ export interface AirTagScope {
   readonly guildId: string;
   readonly world: string;
   readonly mapId: number;
-  readonly subscription: typeof SubscriptionScope.Type;
+  readonly subscription: SubscriptionScope;
 }
 
 export interface NpcPresenceState {
@@ -38,7 +38,7 @@ export interface SessionData extends AuthenticatedIdentity {
   joined: boolean;
   closing?: boolean;
   guilds: UserGuildData[];
-  subscriptions: Map<string, typeof SubscriptionScope.Type>;
+  subscriptions: Map<string, SubscriptionScope>;
   airTagScopes: AirTagScope[];
   airTagBatchesSentAt?: number[];
   airTagReported?: boolean;
@@ -48,7 +48,7 @@ export interface SessionData extends AuthenticatedIdentity {
   characterAuras?: boolean;
   killStats?: boolean;
   confidence: typeof PresenceConfidence.Type;
-  presence?: typeof BasicPresence.Type & {
+  presence?: BasicPresence & {
     readonly location?: {
       readonly mapId?: number;
       readonly map: string;

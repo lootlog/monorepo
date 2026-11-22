@@ -18,20 +18,26 @@ import type { guildTable } from "#src/database/drizzle/organization.schema";
 import { findActiveGuildMember } from "#src/members/member-access-query";
 import type { UserOrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
 
-export class InternalMemberNotFound extends TaggedErrorClass<InternalMemberNotFound>()(
-  "InternalMemberNotFound",
-  { status: Schema.Literal(404), code: Schema.Literal("MEMBER_NOT_FOUND") },
-) {}
+export class InternalMemberNotFound extends TaggedErrorClass<
+  InternalMemberNotFound,
+  { readonly brand: unique symbol }
+>()("InternalMemberNotFound", {
+  status: Schema.Literal(404),
+  code: Schema.Literal("MEMBER_NOT_FOUND"),
+}) {}
 
-export class InternalGuildNotFound extends TaggedErrorClass<InternalGuildNotFound>()(
-  "InternalGuildNotFound",
-  { status: Schema.Literal(404), code: Schema.Literal("GUILD_NOT_FOUND") },
-) {}
+export class InternalGuildNotFound extends TaggedErrorClass<
+  InternalGuildNotFound,
+  { readonly brand: unique symbol }
+>()("InternalGuildNotFound", {
+  status: Schema.Literal(404),
+  code: Schema.Literal("GUILD_NOT_FOUND"),
+}) {}
 
-export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuildsOperationError>()(
-  "InternalGuildsOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class InternalGuildsOperationError extends TaggedErrorClass<
+  InternalGuildsOperationError,
+  { readonly brand: unique symbol }
+>()("InternalGuildsOperationError", { cause: Schema.Defect() }) {}
 
 export type InternalGuildsCache = UserGuildPermissionsCache &
   GuildConfigurationCache;

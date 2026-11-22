@@ -5,7 +5,7 @@ import { Option, Schema } from "effect";
 import type { UserGuildData } from "#src/guilds/guild";
 import type { SessionData } from "#src/realtime/session";
 
-type ChatEvent = Extract<typeof ServerEvent.Type, { type: "chat.created" }>;
+type ChatEvent = Extract<ServerEvent, { type: "chat.created" }>;
 
 export const prepareChatMessagePermissions = (event: ChatEvent) => {
   const payload = Schema.decodeUnknownOption(

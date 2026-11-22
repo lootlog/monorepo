@@ -30,7 +30,7 @@ const CachedGuildDataJson = Schema.fromJsonString(
   Schema.Union([
     Schema.Struct({
       guilds: Schema.Array(UserGuildPermissionsDtoSchema),
-      cachedAt: Schema.Number,
+      cachedAt: Schema.Finite,
       revision: Schema.optional(Schema.String),
     }),
     Schema.Struct({
@@ -56,22 +56,22 @@ redis.call("SET", KEYS[1], ARGV[2], "EX", ARGV[3])
 return 1
 `;
 
-export class GuildStoreFailure extends TaggedErrorClass<GuildStoreFailure>()(
-  "GuildStoreFailure",
-  {
-    reason: Schema.Literals([
-      "invalid-response",
-      "response-too-large",
-      "status",
-      "timeout",
-      "transport",
-      "cache",
-      "invalidated",
-    ]),
-    retryable: Schema.Boolean,
-    status: Schema.optional(Schema.Number),
-  },
-) {}
+export class GuildStoreFailure extends TaggedErrorClass<
+  GuildStoreFailure,
+  { readonly brand: unique symbol }
+>()("GuildStoreFailure", {
+  reason: Schema.Literals([
+    "invalid-response",
+    "response-too-large",
+    "status",
+    "timeout",
+    "transport",
+    "cache",
+    "invalidated",
+  ]),
+  retryable: Schema.Boolean,
+  status: Schema.optional(Schema.Finite),
+}) {}
 
 export interface GuildStore {
   readonly getUserGuilds: (
@@ -94,9 +94,7 @@ const failure = (
   });
 
 const decodeGuilds = (body: ArrayBuffer): UserGuildData[] => {
-  return [
-    ...Schema.decodeUnknownSync(UserGuildsJson)(new TextDecoder().decode(body)),
-  ];
+  return [...Schema.decodeSync(UserGuildsJson)(new TextDecoder().decode(body))];
 };
 
 const cacheCommand = <A>(command: () => Promise<A>) =>
@@ -154,9 +152,7 @@ export const makeGuildStore = (
     cacheCommand(() => redis.command.get(key)).pipe(
       Effect.map((value) => ({
         entry: value
-          ? Option.getOrNull(
-              Schema.decodeUnknownOption(CachedGuildDataJson)(value),
-            )
+          ? Option.getOrNull(Schema.decodeOption(CachedGuildDataJson)(value))
           : null,
         revision:
           Option.getOrUndefined(
@@ -186,7 +182,7 @@ export const makeGuildStore = (
     );
 
     if (committed !== 1)
-      return yield* Effect.fail(failure("invalidated", { retryable: true }));
+      return yield* failure("invalidated", { retryable: true });
 
     return guilds;
   });
@@ -253,7 +249,7 @@ export const makeGuildStore = (
       return [...fallback.guilds];
     }
 
-    return yield* Effect.fail(result.failure);
+    return yield* result.failure;
   });
 
   return {

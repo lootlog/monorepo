@@ -77,13 +77,11 @@ test("Discord role revocation and deletion rebalance only active holders, surviv
           expect(invalidated.has(discordId)).toBe(true);
 
           if (failDelivery)
-            return yield* Effect.fail(
-              new MessagingError({
-                operation: "publish",
-                message: "broker unavailable",
-                cause: undefined,
-              }),
-            );
+            return yield* new MessagingError({
+              operation: "publish",
+              message: "broker unavailable",
+              cause: undefined,
+            });
 
           expect(
             yield* selectAccessibleGuilds(boundary.database, discordId).pipe(

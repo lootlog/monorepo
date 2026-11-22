@@ -13,20 +13,20 @@ export type StoredMapTemplate = {
   readonly createdAt: Date;
 };
 
-export class MapTemplateNotFound extends TaggedErrorClass<MapTemplateNotFound>()(
-  "MapTemplateNotFound",
-  {
-    status: Schema.Literal(404),
-    code: Schema.Literal("MAP_TEMPLATE_NOT_FOUND"),
-  },
-) {}
+export class MapTemplateNotFound extends TaggedErrorClass<
+  MapTemplateNotFound,
+  { readonly brand: unique symbol }
+>()("MapTemplateNotFound", {
+  status: Schema.Literal(404),
+  code: Schema.Literal("MAP_TEMPLATE_NOT_FOUND"),
+}) {}
 
-export class MapTemplatesPersistenceError extends TaggedErrorClass<MapTemplatesPersistenceError>()(
-  "MapTemplatesPersistenceError",
-  {
-    cause: Schema.Defect(),
-  },
-) {}
+export class MapTemplatesPersistenceError extends TaggedErrorClass<
+  MapTemplatesPersistenceError,
+  { readonly brand: unique symbol }
+>()("MapTemplatesPersistenceError", {
+  cause: Schema.Defect(),
+}) {}
 
 export class MapTemplatesData extends Context.Service<
   MapTemplatesData,

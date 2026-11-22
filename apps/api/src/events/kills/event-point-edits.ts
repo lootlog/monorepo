@@ -72,14 +72,14 @@ export const makeEventPointEdits = (
     );
 
   return {
-    updateRanking: (
-      guild: { id: string },
-      eventId: string,
-      rankingId: string,
-      data: UpdateRankingPointsRequest,
-      userId: string,
-    ) =>
-      Effect.gen(function* () {
+    updateRanking: Effect.fn("EventsRankingController_updateRankingPoints")(
+      function* (
+        guild: { id: string },
+        eventId: string,
+        rankingId: string,
+        data: UpdateRankingPointsRequest,
+        userId: string,
+      ) {
         const scoped = yield* query(
           "events.points.updateRanking.find",
           database
@@ -99,9 +99,7 @@ export const makeEventPointEdits = (
         const ranking = scoped[0]?.ranking;
 
         if (!ranking)
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Ranking not found"),
-          );
+          return yield* new ResourceNotFoundError("Ranking not found");
         const delta = roundPoints(data.pointsDelta);
 
         if (delta === 0) return ranking;
@@ -173,17 +171,18 @@ export const makeEventPointEdits = (
         yield* afterEdit(guild.id, eventId);
 
         return updated;
-      }).pipe(Effect.withSpan("EventsRankingController_updateRankingPoints")),
+      },
+    ),
 
-    updateKillPoint: (
-      guild: { id: string },
-      eventId: string,
-      killId: string,
-      killPointId: string,
-      data: UpdateKillPointRequest,
-      userId: string,
-    ) =>
-      Effect.gen(function* () {
+    updateKillPoint: Effect.fn("EventsRankingController_updateKillPoint")(
+      function* (
+        guild: { id: string },
+        eventId: string,
+        killId: string,
+        killPointId: string,
+        data: UpdateKillPointRequest,
+        userId: string,
+      ) {
         const scoped = yield* query(
           "events.points.updateKillPoint.find",
           selectEventKillPoints(database)
@@ -202,9 +201,7 @@ export const makeEventPointEdits = (
         const row = scoped[0];
 
         if (!row)
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Kill point not found"),
-          );
+          return yield* new ResourceNotFoundError("Kill point not found");
         const delta = roundPoints(data.pointsDelta);
 
         if (delta === 0)
@@ -273,7 +270,8 @@ export const makeEventPointEdits = (
         yield* afterEdit(guild.id, eventId);
 
         return updated;
-      }).pipe(Effect.withSpan("EventsRankingController_updateKillPoint")),
+      },
+    ),
   };
 };
 

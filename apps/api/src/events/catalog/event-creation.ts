@@ -103,12 +103,10 @@ export const makeEventCreation =
             const event = eventRows[0];
 
             if (!event) {
-              return yield* Effect.fail(
-                new OperationError({
-                  operation: "events.create.insert",
-                  cause: new Error("Event was not returned"),
-                }),
-              );
+              return yield* new OperationError({
+                operation: "events.create.insert",
+                cause: new Error("Event was not returned"),
+              });
             }
 
             const heroes = [];

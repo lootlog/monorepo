@@ -37,7 +37,7 @@ export const AdminHandlers = HttpApiBuilder.group(
       .handle("AdminSession", () =>
         admin((_service, _actor, operator) => Effect.succeed(operator)),
       )
-      .handle("AdminOverview", () => admin((service) => service.overview()))
+      .handle("AdminOverview", () => admin((service) => service.overview))
       .handle("AdminListUsers", ({ query }) =>
         admin((service) => service.listUsers(query)),
       )

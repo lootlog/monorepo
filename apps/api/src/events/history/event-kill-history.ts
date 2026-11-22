@@ -88,7 +88,7 @@ export const makeEventKillHistory = ({
       );
 
     if (rows.length === 0)
-      return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
+      return yield* new ResourceNotFoundError("Event not found");
 
     const visibleHeroes = rows.flatMap(({ hero }) =>
       hero &&
@@ -101,7 +101,7 @@ export const makeEventKillHistory = ({
       query.heroId !== undefined &&
       !visibleHeroes.some((hero) => hero.id === query.heroId)
     )
-      return yield* Effect.fail(new ResourceNotFoundError("Hero not found"));
+      return yield* new ResourceNotFoundError("Hero not found");
 
     const heroIds = visibleHeroes
       .filter((hero) => query.heroId === undefined || hero.id === query.heroId)
@@ -130,7 +130,7 @@ export const makeEventKillHistory = ({
     const member = members[0];
 
     if (memberId !== undefined && !member)
-      return yield* Effect.fail(new ResourceNotFoundError("Member not found"));
+      return yield* new ResourceNotFoundError("Member not found");
 
     const scope: HistoryCursorScope = {
       guildId: context.guildId,

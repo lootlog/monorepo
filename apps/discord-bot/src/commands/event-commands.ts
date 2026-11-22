@@ -45,9 +45,9 @@ const Events = Schema.Array(
     createdAt: Schema.String,
     heroNpcs: Schema.Array(
       Schema.Struct({
-        npcId: Schema.NullOr(Schema.Number),
+        npcId: Schema.NullOr(Schema.Finite),
         npcName: Schema.String,
-        npcLvl: Schema.NullOr(Schema.Number),
+        npcLvl: Schema.NullOr(Schema.Finite),
       }),
     ),
   }),
@@ -58,15 +58,15 @@ type LootlogEvent = (typeof Events.Type)[number];
 const EventRanking = Schema.Array(
   Schema.Struct({
     heroNpcName: Schema.String,
-    totalPoints: Schema.Number,
-    totalKills: Schema.Number,
-    member: Schema.Struct({ id: Schema.Number, name: Schema.String }),
+    totalPoints: Schema.Finite,
+    totalKills: Schema.Finite,
+    member: Schema.Struct({ id: Schema.Finite, name: Schema.String }),
   }),
 );
 
 const EventTimers = Schema.Array(
   Schema.Struct({
-    npcId: Schema.Number,
+    npcId: Schema.Finite,
     minSpawnTime: Schema.String,
     maxSpawnTime: Schema.String,
   }),
@@ -76,18 +76,18 @@ const Leader = Schema.Struct({
   winner: Schema.NullOr(
     Schema.Struct({
       member: Schema.Struct({ name: Schema.String }),
-      primaryValue: Schema.Number,
+      primaryValue: Schema.Finite,
     }),
   ),
 });
 
 const EventWrapped = Schema.Struct({
   overview: Schema.Struct({
-    totalKills: Schema.Number,
-    participantCount: Schema.Number,
-    totalPoints: Schema.Number,
-    coveragePercentage: Schema.Number,
-    totalLoots: Schema.Number,
+    totalKills: Schema.Finite,
+    participantCount: Schema.Finite,
+    totalPoints: Schema.Finite,
+    coveragePercentage: Schema.Finite,
+    totalLoots: Schema.Finite,
   }),
   leaders: Schema.Struct({
     topHunter: Leader,

@@ -64,7 +64,7 @@ export const decodeNpcKillPageCursor = (
   filters: NpcKillPageFilters,
 ): Effect.Effect<NpcKillPageAfter | undefined, InvalidRequestError> =>
   cursor === undefined
-    ? Effect.succeed(undefined)
+    ? Effect.undefined
     : decodePageCursor(NpcKillPageCursor, cursor).pipe(
         Effect.flatMap(({ filters: issuedFor, sortValue, npcId }) =>
           issuedFor === filtersFingerprint(filters)
@@ -92,9 +92,9 @@ export const toNpcKillPage = (
 
 const NpcKillPage = Schema.Struct({
   npcs: UserNpcKillsResponse.fields.items,
-  total: Schema.Number,
-  totalParticipations: Schema.Number,
-  participationsByType: Schema.Record(Schema.String, Schema.Number),
+  total: Schema.Finite,
+  totalParticipations: Schema.Finite,
+  participationsByType: Schema.Record(Schema.String, Schema.Finite),
 });
 
 const buildNpcKillPageSql = (

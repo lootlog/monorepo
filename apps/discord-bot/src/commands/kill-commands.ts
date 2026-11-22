@@ -48,12 +48,12 @@ const RankedMember = Schema.Struct({
 });
 
 const GuildKillStats = Schema.Struct({
-  overview: Schema.Struct({ guildUniqueKills: Schema.Number }),
+  overview: Schema.Struct({ guildUniqueKills: Schema.Finite }),
   memberRanking: Schema.Array(
     Schema.Struct({
       member: RankedMember,
-      totalParticipations: Schema.Number,
-      participationsByType: Schema.Record(Schema.String, Schema.Number),
+      totalParticipations: Schema.Finite,
+      participationsByType: Schema.Record(Schema.String, Schema.Finite),
     }),
   ),
 });
@@ -61,10 +61,10 @@ const GuildKillStats = Schema.Struct({
 const TopNpcs = Schema.Struct({
   topNpcs: Schema.Array(
     Schema.Struct({
-      npcId: Schema.Number,
+      npcId: Schema.Finite,
       npcName: Schema.String,
       npcType: Schema.String,
-      npcLvl: Schema.Number,
+      npcLvl: Schema.Finite,
     }),
   ),
 });
@@ -74,16 +74,16 @@ const NpcKillers = Schema.Struct({
     Schema.Struct({
       npcName: Schema.String,
       npcType: Schema.String,
-      npcLvl: Schema.Number,
+      npcLvl: Schema.Finite,
       npcIcon: Schema.NullOr(Schema.String),
-      uniqueGuildKills: Schema.Number,
-      totalMemberParticipations: Schema.Number,
+      uniqueGuildKills: Schema.Finite,
+      totalMemberParticipations: Schema.Finite,
     }),
   ),
   killers: Schema.Array(
     Schema.Struct({
       member: RankedMember,
-      participationCount: Schema.Number,
+      participationCount: Schema.Finite,
     }),
   ),
 });

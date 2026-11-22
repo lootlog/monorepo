@@ -28,11 +28,14 @@ const withUser = <A, E>(
     return yield* operation(data, userId);
   });
 
-export const getCharacterAuras = () =>
-  Effect.flatMap(CharacterAurasData, (data) => data.getAuras());
+export const getCharacterAuras = Effect.flatMap(
+  CharacterAurasData,
+  (data) => data.getAuras,
+);
 
-export const getOwnCharacterAura = () =>
-  withUser((data, userId) => data.getOwnAura(userId));
+export const getOwnCharacterAura = withUser((data, userId) =>
+  data.getOwnAura(userId),
+);
 
 const toHttpResponse = <A, R>(
   effect: Effect.Effect<A, CharacterAurasFailure, R>,
@@ -49,10 +52,10 @@ export const CharacterAurasHandlers = HttpApiBuilder.group(
   (handlers) =>
     handlers
       .handle("CharacterAurasControllerGetAuras", () =>
-        toHttpResponse(getCharacterAuras()),
+        toHttpResponse(getCharacterAuras),
       )
       .handle("CharacterAurasControllerGetOwnAura", () =>
-        toHttpResponse(getOwnCharacterAura()),
+        toHttpResponse(getOwnCharacterAura),
       )
       .handle("CharacterAurasControllerUpdateOwnAura", ({ payload }) =>
         toHttpResponse(

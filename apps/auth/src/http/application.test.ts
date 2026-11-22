@@ -106,7 +106,7 @@ const makeRuntime = (
                 adminUserIds: ["user-1"],
                 getFreshSession: () => Effect.succeed(adminSession),
               }),
-            overview: () => Effect.die("Not configured"),
+            overview: Effect.die("Not configured"),
             listUsers,
             getUser: () => Effect.die("Not configured"),
             setRoles: () => Effect.die("Not configured"),

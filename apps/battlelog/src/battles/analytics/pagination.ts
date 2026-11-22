@@ -3,12 +3,12 @@ import type { DeepMutable } from "#src/battles/battle-response-types";
 import type { SortOrder } from "#src/battles/catalog/query-battles";
 
 export const CursorPaginationSchema = Schema.Struct({
-  size: Schema.Number,
+  size: Schema.Finite,
   hasNext: Schema.Boolean,
   hasPrev: Schema.Boolean,
   nextCursor: Schema.optionalKey(Schema.String),
   previousCursor: Schema.optionalKey(Schema.String),
-  total: Schema.optionalKey(Schema.Number),
+  total: Schema.optionalKey(Schema.Finite),
 });
 
 export type CursorPagination = DeepMutable<typeof CursorPaginationSchema.Type>;

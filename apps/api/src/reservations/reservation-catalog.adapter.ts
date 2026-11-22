@@ -29,13 +29,13 @@ export interface ReservationCatalogCache {
   ) => Effect.Effect<void, RedisError>;
 }
 
-export class ReservationCatalogUnavailable extends TaggedErrorClass<ReservationCatalogUnavailable>()(
-  "ReservationCatalogUnavailable",
-  {
-    status: Schema.optional(Schema.Number),
-    cause: Schema.optional(Schema.Defect()),
-  },
-) {}
+export class ReservationCatalogUnavailable extends TaggedErrorClass<
+  ReservationCatalogUnavailable,
+  { readonly brand: unique symbol }
+>()("ReservationCatalogUnavailable", {
+  status: Schema.optional(Schema.Finite),
+  cause: Schema.optional(Schema.Defect()),
+}) {}
 
 type CatalogFailure = ReservationCatalogUnavailable | OutboundHttpFailure;
 

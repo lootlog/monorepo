@@ -44,8 +44,8 @@ const readQueues = Effect.promise(async () => {
     Schema.Array(
       Schema.Struct({
         name: Schema.String,
-        messages_ready: Schema.Number,
-        messages_unacknowledged: Schema.Number,
+        messages_ready: Schema.Finite,
+        messages_unacknowledged: Schema.Finite,
       }),
     ),
   )(JSON.parse(result.output));

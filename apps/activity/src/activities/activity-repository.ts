@@ -45,10 +45,10 @@ import {
 } from "#src/database/schema";
 import type { CreateActivity, QueryActivities } from "./activity-model.js";
 
-export class ActivityNotFound extends TaggedErrorClass<ActivityNotFound>()(
-  "ActivityNotFound",
-  { id: Schema.String },
-) {}
+export class ActivityNotFound extends TaggedErrorClass<
+  ActivityNotFound,
+  { readonly brand: unique symbol }
+>()("ActivityNotFound", { id: Schema.String }) {}
 
 export type ActivityRecord = ReturnType<typeof mapActivityRow>;
 

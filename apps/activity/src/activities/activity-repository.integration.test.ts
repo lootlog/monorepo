@@ -27,9 +27,7 @@ describe("ActivityRepository", () => {
       .start();
     pool = new pg.Pool({ connectionString: postgres.getConnectionUri() });
     await Effect.runPromise(
-      Effect.gen(function* () {
-        yield* migrateActivityDatabase;
-      }).pipe(
+      migrateActivityDatabase.pipe(
         Effect.provide(
           makePostgresLayer({
             url: Redacted.make(postgres.getConnectionUri()),

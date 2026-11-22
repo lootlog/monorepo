@@ -10,7 +10,7 @@ import { getNpcType, isHeroTrackerName } from "./npc-type.js";
 
 const isNpcTypeEnum = Schema.is(NpcTypeSchema);
 
-const isNumericNpcType = Schema.is(Schema.Number);
+const isNumericNpcType = Schema.is(Schema.Finite);
 
 export function resolveNpcType(
   npc?: NpcRoutingData | null,

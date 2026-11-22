@@ -32,15 +32,15 @@ export type EventEndpointHandlers = {
   >;
 };
 
-class EventsBadRequest extends TaggedErrorClass<EventsBadRequest>()(
-  "EventsBadRequest",
-  { status: Schema.Literal(400), code: Schema.String },
-) {}
+class EventsBadRequest extends TaggedErrorClass<
+  EventsBadRequest,
+  { readonly brand: unique symbol }
+>()("EventsBadRequest", { status: Schema.Literal(400), code: Schema.String }) {}
 
-class EventsDataError extends TaggedErrorClass<EventsDataError>()(
-  "EventsDataError",
-  { cause: Schema.Defect() },
-) {}
+class EventsDataError extends TaggedErrorClass<
+  EventsDataError,
+  { readonly brand: unique symbol }
+>()("EventsDataError", { cause: Schema.Defect() }) {}
 
 type EventsHttpFailure =
   | ApplicationError

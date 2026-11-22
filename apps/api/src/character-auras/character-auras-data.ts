@@ -11,20 +11,20 @@ import type {
   OwnCharacterAuraResponse,
 } from "#src/contracts/character-auras/schemas";
 
-export class CharacterAuraAccessDenied extends TaggedErrorClass<CharacterAuraAccessDenied>()(
-  "CharacterAuraAccessDenied",
-  { status: Schema.Literal(403) },
-) {}
+export class CharacterAuraAccessDenied extends TaggedErrorClass<
+  CharacterAuraAccessDenied,
+  { readonly brand: unique symbol }
+>()("CharacterAuraAccessDenied", { status: Schema.Literal(403) }) {}
 
-export class CharacterAuraGrantTargetNotFound extends TaggedErrorClass<CharacterAuraGrantTargetNotFound>()(
-  "CharacterAuraGrantTargetNotFound",
-  { status: Schema.Literal(404) },
-) {}
+export class CharacterAuraGrantTargetNotFound extends TaggedErrorClass<
+  CharacterAuraGrantTargetNotFound,
+  { readonly brand: unique symbol }
+>()("CharacterAuraGrantTargetNotFound", { status: Schema.Literal(404) }) {}
 
-export class CharacterAurasOperationError extends TaggedErrorClass<CharacterAurasOperationError>()(
-  "CharacterAurasOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class CharacterAurasOperationError extends TaggedErrorClass<
+  CharacterAurasOperationError,
+  { readonly brand: unique symbol }
+>()("CharacterAurasOperationError", { cause: Schema.Defect() }) {}
 
 export interface CharacterAuraCharacter {
   readonly gameAccountId: string;
@@ -41,7 +41,7 @@ type Operation<A> = Effect.Effect<A, CharacterAurasFailure>;
 export class CharacterAurasData extends Context.Service<
   CharacterAurasData,
   {
-    readonly getAuras: () => Effect.Effect<
+    readonly getAuras: Effect.Effect<
       CharacterAurasResponse,
       CharacterAurasOperationError
     >;

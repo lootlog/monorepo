@@ -9,7 +9,7 @@ import {
 describe("response codecs", () => {
   it("round-trips dates through the existing ISO representation", () => {
     const wire = "2026-09-03T00:00:00.000Z";
-    const decoded = Schema.decodeUnknownSync(IsoDateTime)(wire);
+    const decoded = Schema.decodeSync(IsoDateTime)(wire);
     expect(decoded).toEqual(new Date(wire));
     expect(Schema.encodeSync(IsoDateTime)(decoded)).toBe(wire);
   });
@@ -33,7 +33,7 @@ describe("response codecs", () => {
 
   it("validates nested JSON values", () => {
     expect(
-      Schema.decodeUnknownSync(jsonValueSchema)({ nested: [true, null, 1] }),
+      Schema.decodeSync(jsonValueSchema)({ nested: [true, null, 1] }),
     ).toEqual({ nested: [true, null, 1] });
   });
 });

@@ -2,50 +2,53 @@ import { ORGANIZATION_ACCESS_DENIED_MESSAGE } from "@lootlog/protocol/realtime";
 import { Effect, Match, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
-export class SessionNotJoined extends TaggedErrorClass<SessionNotJoined>()(
-  "SessionNotJoined",
-  {},
-) {}
+export class SessionNotJoined extends TaggedErrorClass<
+  SessionNotJoined,
+  { readonly brand: unique symbol }
+>()("SessionNotJoined", {}) {}
 
-export class SubscriptionLimitExceeded extends TaggedErrorClass<SubscriptionLimitExceeded>()(
-  "SubscriptionLimitExceeded",
-  {},
-) {}
+export class SubscriptionLimitExceeded extends TaggedErrorClass<
+  SubscriptionLimitExceeded,
+  { readonly brand: unique symbol }
+>()("SubscriptionLimitExceeded", {}) {}
 
-export class OrganizationAccessDenied extends TaggedErrorClass<OrganizationAccessDenied>()(
-  "OrganizationAccessDenied",
-  {},
-) {}
+export class OrganizationAccessDenied extends TaggedErrorClass<
+  OrganizationAccessDenied,
+  { readonly brand: unique symbol }
+>()("OrganizationAccessDenied", {}) {}
 
-export class GameCharacterRequired extends TaggedErrorClass<GameCharacterRequired>()(
-  "GameCharacterRequired",
-  {},
-) {}
+export class GameCharacterRequired extends TaggedErrorClass<
+  GameCharacterRequired,
+  { readonly brand: unique symbol }
+>()("GameCharacterRequired", {}) {}
 
-export class NoAuthorizedOrganizations extends TaggedErrorClass<NoAuthorizedOrganizations>()(
-  "NoAuthorizedOrganizations",
-  {},
-) {}
+export class NoAuthorizedOrganizations extends TaggedErrorClass<
+  NoAuthorizedOrganizations,
+  { readonly brand: unique symbol }
+>()("NoAuthorizedOrganizations", {}) {}
 
-export class JoinCapacityExceeded extends TaggedErrorClass<JoinCapacityExceeded>()(
-  "JoinCapacityExceeded",
-  { retryAfterMs: Schema.Number },
-) {}
+export class JoinCapacityExceeded extends TaggedErrorClass<
+  JoinCapacityExceeded,
+  { readonly brand: unique symbol }
+>()("JoinCapacityExceeded", { retryAfterMs: Schema.Finite }) {}
 
-export class PresenceSessionMismatch extends TaggedErrorClass<PresenceSessionMismatch>()(
-  "PresenceSessionMismatch",
-  {},
-) {}
+export class PresenceSessionMismatch extends TaggedErrorClass<
+  PresenceSessionMismatch,
+  { readonly brand: unique symbol }
+>()("PresenceSessionMismatch", {}) {}
 
-export class PresenceNotPublished extends TaggedErrorClass<PresenceNotPublished>()(
-  "PresenceNotPublished",
-  {},
-) {}
+export class PresenceNotPublished extends TaggedErrorClass<
+  PresenceNotPublished,
+  { readonly brand: unique symbol }
+>()("PresenceNotPublished", {}) {}
 
-export class RealtimeStoreError extends TaggedErrorClass<RealtimeStoreError>()(
-  "RealtimeStoreError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
+export class RealtimeStoreError extends TaggedErrorClass<
+  RealtimeStoreError,
+  { readonly brand: unique symbol }
+>()("RealtimeStoreError", {
+  operation: Schema.String,
+  cause: Schema.Defect(),
+}) {}
 
 export const storeCall = <A>(
   operation: string,
@@ -56,10 +59,13 @@ export const storeCall = <A>(
     catch: (cause) => new RealtimeStoreError({ operation, cause }),
   });
 
-export class RealtimeDependencyError extends TaggedErrorClass<RealtimeDependencyError>()(
-  "RealtimeDependencyError",
-  { operation: Schema.String, cause: Schema.Defect() },
-) {}
+export class RealtimeDependencyError extends TaggedErrorClass<
+  RealtimeDependencyError,
+  { readonly brand: unique symbol }
+>()("RealtimeDependencyError", {
+  operation: Schema.String,
+  cause: Schema.Defect(),
+}) {}
 
 type CommandRejection =
   | JoinCapacityExceeded

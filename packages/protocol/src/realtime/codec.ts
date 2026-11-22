@@ -7,14 +7,14 @@ import {
   type RealtimeFrame as RealtimeFrameType,
 } from "./protocol.js";
 
-export class RealtimeCodecError extends TaggedErrorClass<RealtimeCodecError>()(
-  "RealtimeCodecError",
-  {
-    operation: Schema.Literals(["decode", "encode"]),
-    message: Schema.String,
-    cause: Schema.Defect(),
-  },
-) {}
+export class RealtimeCodecError extends TaggedErrorClass<
+  RealtimeCodecError,
+  { readonly brand: unique symbol }
+>()("RealtimeCodecError", {
+  operation: Schema.Literals(["decode", "encode"]),
+  message: Schema.String,
+  cause: Schema.Defect(),
+}) {}
 
 const getErrorMessage = (cause: unknown): string =>
   cause instanceof Error ? cause.message : String(cause);

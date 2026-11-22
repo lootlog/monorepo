@@ -93,24 +93,22 @@ export const makeReservationSharingDataLayer = (
           const row = rows[0];
 
           if (!row) {
-            return yield* Effect.fail(
-              new ResourceNotFoundError({ code: "INVITATION_NOT_FOUND" }),
-            );
+            return yield* new ResourceNotFoundError({
+              code: "INVITATION_NOT_FOUND",
+            });
           }
 
           if (row.invitation.acceptedAt) {
-            return yield* Effect.fail(
-              new ResourceConflictError({ code: "INVITATION_ALREADY_USED" }),
-            );
+            return yield* new ResourceConflictError({
+              code: "INVITATION_ALREADY_USED",
+            });
           }
 
           if (
             row.invitation.revokedAt ||
             row.invitation.expiresAt <= new Date(yield* Clock.currentTimeMillis)
           ) {
-            return yield* Effect.fail(
-              new ResourceGoneError({ code: "INVITATION_EXPIRED" }),
-            );
+            return yield* new ResourceGoneError({ code: "INVITATION_EXPIRED" });
           }
 
           return { ...row.invitation, sourceGuild: row.sourceGuild };
@@ -269,9 +267,9 @@ export const makeReservationSharingDataLayer = (
                 .returning({ id: reservationShareInvitationTable.id });
 
               if (rows.length === 0) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError({ code: "INVITATION_NOT_FOUND" }),
-                );
+                return yield* new ResourceNotFoundError({
+                  code: "INVITATION_NOT_FOUND",
+                });
               }
             }),
           ),
@@ -296,11 +294,9 @@ export const makeReservationSharingDataLayer = (
               const share = shares[0];
 
               if (!share) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError({
-                    code: "RESERVATION_SHARE_NOT_FOUND",
-                  }),
-                );
+                return yield* new ResourceNotFoundError({
+                  code: "RESERVATION_SHARE_NOT_FOUND",
+                });
               }
 
               const now = new Date(yield* Clock.currentTimeMillis);
@@ -362,19 +358,15 @@ export const makeReservationSharingDataLayer = (
               );
 
               if (!targetGuild) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError({
-                    code: "TARGET_ORGANIZATION_NOT_FOUND",
-                  }),
-                );
+                return yield* new ResourceNotFoundError({
+                  code: "TARGET_ORGANIZATION_NOT_FOUND",
+                });
               }
 
               if (targetGuild.id === invitation.sourceGuildId) {
-                return yield* Effect.fail(
-                  new ResourceConflictError({
-                    code: "RESERVATION_SHARE_WITH_SELF",
-                  }),
-                );
+                return yield* new ResourceConflictError({
+                  code: "RESERVATION_SHARE_WITH_SELF",
+                });
               }
 
               const [firstGuildId, secondGuildId] = orderGuildPair(
@@ -457,17 +449,15 @@ export const makeReservationSharingDataLayer = (
               );
 
               if (result.kind === "expired") {
-                return yield* Effect.fail(
-                  new ResourceGoneError({ code: "INVITATION_EXPIRED" }),
-                );
+                return yield* new ResourceGoneError({
+                  code: "INVITATION_EXPIRED",
+                });
               }
 
               if (result.kind === "exists") {
-                return yield* Effect.fail(
-                  new ResourceConflictError({
-                    code: "RESERVATION_SHARE_EXISTS",
-                  }),
-                );
+                return yield* new ResourceConflictError({
+                  code: "RESERVATION_SHARE_EXISTS",
+                });
               }
 
               if (result.kind === "insert-failed") {

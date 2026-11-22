@@ -28,15 +28,15 @@ const DeliveryOperation = Schema.Literals([
 
 type DeliveryOperation = typeof DeliveryOperation.Type;
 
-class DiscordDeliveryFailure extends TaggedErrorClass<DiscordDeliveryFailure>()(
-  "DiscordDeliveryFailure",
-  {
-    operation: DeliveryOperation,
-    errorCode: Schema.String,
-    reason: Schema.String,
-    retryable: Schema.Boolean,
-  },
-) {}
+class DiscordDeliveryFailure extends TaggedErrorClass<
+  DiscordDeliveryFailure,
+  { readonly brand: unique symbol }
+>()("DiscordDeliveryFailure", {
+  operation: DeliveryOperation,
+  errorCode: Schema.String,
+  reason: Schema.String,
+  retryable: Schema.Boolean,
+}) {}
 
 const truncateToDiscordLimit = (content: string) =>
   content.length <= discordMessageLimit

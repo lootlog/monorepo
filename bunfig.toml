@@ -3,29 +3,6 @@ linker = "isolated"
 # Wait three days before installing a newly published version, so a
 # compromised release can be caught and unpublished before it lands here.
 minimumReleaseAge = "3d"
-# Better Auth 1.7.16 security release (2026-11-03). Remove after 2026-11-07.
-minimumReleaseAgeExcludes = [
-  "better-auth",
-  "better-call",
-  "@better-auth/api-key",
-  "@better-auth/core",
-  "@better-auth/drizzle-adapter",
-  "@better-auth/kysely-adapter",
-  "@better-auth/memory-adapter",
-  "@better-auth/mongo-adapter",
-  "@better-auth/prisma-adapter",
-  "@better-auth/telemetry",
-  # @effect/tsgo 0.67.3 (2026-11-05) for the Effect diagnostics in apps/api;
-  # scoped to that version. Remove after 2026-11-08.
-  "@effect/tsgo@0.67.3",
-  "@effect/tsgo-darwin-arm64@0.67.3",
-  "@effect/tsgo-darwin-x64@0.67.3",
-  "@effect/tsgo-linux-arm@0.67.3",
-  "@effect/tsgo-linux-arm64@0.67.3",
-  "@effect/tsgo-linux-x64@0.67.3",
-  "@effect/tsgo-win32-arm64@0.67.3",
-  "@effect/tsgo-win32-x64@0.67.3",
-]
 
 [install.lockfile]
 save = true

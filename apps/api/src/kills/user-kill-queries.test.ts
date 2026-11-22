@@ -33,7 +33,7 @@ describe("user kill queries Effect module", () => {
         getOrSet: (key, schema) => {
           observedKey = key;
 
-          return Effect.sync(() => Schema.decodeUnknownSync(schema)(expected));
+          return Effect.sync(() => Schema.decodeSync(schema)(expected));
         },
       };
 

@@ -56,7 +56,7 @@
     "./custom-theme": "./src/custom-theme.ts"
   },
   "scripts": {
-    "lint": "oxlint src",
+    "lint": "oxlint src && effect-tsgo diagnostics --project tsconfig.json --severity error,warning --strict",
     "typecheck": "bun check",
     "test": "bun test"
   },
@@ -67,6 +67,7 @@
     "es-toolkit": "catalog:"
   },
   "devDependencies": {
+    "@effect/tsgo": "0.67.3",
     "@lootlog/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
     "typescript": "catalog:"

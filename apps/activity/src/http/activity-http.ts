@@ -54,7 +54,7 @@ import type {
 import { Permissions } from "#src/activities/activity-permissions";
 
 export interface ActivityReadinessValue {
-  readonly check: () => Effect.Effect<
+  readonly check: Effect.Effect<
     ReadyzControllerCheck200 | ReadyzControllerCheck503
   >;
 }
@@ -76,33 +76,32 @@ export class ActivityReadiness extends Context.Service<
         Effect.map(Option.isSome),
       );
 
-      const check = () =>
-        Effect.acquireUseRelease(
-          Effect.forkIn(probe, scope),
-          (fiber) => Fiber.join(fiber).pipe(Effect.timeout("3 seconds")),
-          (fiber) =>
-            Fiber.interrupt(fiber).pipe(
-              Effect.forkIn(scope, { startImmediately: true }),
-              Effect.asVoid,
-            ),
-        ).pipe(
-          Effect.orElseSucceed(() => false),
-          Effect.map((up) =>
-            up
-              ? {
-                  status: "ok" as const,
-                  info: { database: { status: "up" as const } },
-                  error: null,
-                  details: { database: { status: "up" as const } },
-                }
-              : {
-                  status: "error" as const,
-                  info: null,
-                  error: { database: { status: "down" as const } },
-                  details: { database: { status: "down" as const } },
-                },
+      const check = Effect.acquireUseRelease(
+        Effect.forkIn(probe, scope),
+        (fiber) => Fiber.join(fiber).pipe(Effect.timeout("3 seconds")),
+        (fiber) =>
+          Fiber.interrupt(fiber).pipe(
+            Effect.forkIn(scope, { startImmediately: true }),
+            Effect.asVoid,
           ),
-        );
+      ).pipe(
+        Effect.orElseSucceed(() => false),
+        Effect.map((up) =>
+          up
+            ? {
+                status: "ok" as const,
+                info: { database: { status: "up" as const } },
+                error: null,
+                details: { database: { status: "up" as const } },
+              }
+            : {
+                status: "error" as const,
+                info: null,
+                error: { database: { status: "down" as const } },
+                details: { database: { status: "down" as const } },
+              },
+        ),
+      );
 
       return ActivityReadiness.of({ check });
     }),
@@ -242,7 +241,7 @@ const ActivityHandlers = Layer.mergeAll(
       .handle("ReadyzControllerCheck", () =>
         Effect.gen(function* () {
           const readiness = yield* ActivityReadiness;
-          const result = yield* readiness.check();
+          const result = yield* readiness.check;
 
           return result.status === "ok" ? result : yield* Effect.fail(result);
         }),

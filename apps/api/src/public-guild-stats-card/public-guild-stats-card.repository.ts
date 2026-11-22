@@ -23,10 +23,10 @@ type GuildStatsCardLootStats = {
   readonly heroicItems: number;
 };
 
-export class PublicGuildStatsCardPersistenceError extends TaggedErrorClass<PublicGuildStatsCardPersistenceError>()(
-  "PublicGuildStatsCardPersistenceError",
-  { cause: Schema.Defect() },
-) {}
+export class PublicGuildStatsCardPersistenceError extends TaggedErrorClass<
+  PublicGuildStatsCardPersistenceError,
+  { readonly brand: unique symbol }
+>()("PublicGuildStatsCardPersistenceError", { cause: Schema.Defect() }) {}
 
 export interface PublicGuildStatsCardRepositoryService {
   readonly findActiveGuild: (

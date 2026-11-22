@@ -38,27 +38,27 @@ export interface AuthorizedDocsCaller {
   readonly roles: ReadonlyArray<Role>;
 }
 
-export class DocsNotFound extends TaggedErrorClass<DocsNotFound>()(
-  "DocsNotFound",
-  { status: Schema.Literal(404), code: Schema.String },
-) {}
+export class DocsNotFound extends TaggedErrorClass<
+  DocsNotFound,
+  { readonly brand: unique symbol }
+>()("DocsNotFound", { status: Schema.Literal(404), code: Schema.String }) {}
 
-export class DocsConflict extends TaggedErrorClass<DocsConflict>()(
-  "DocsConflict",
-  { status: Schema.Literal(409), code: Schema.String },
-) {}
+export class DocsConflict extends TaggedErrorClass<
+  DocsConflict,
+  { readonly brand: unique symbol }
+>()("DocsConflict", { status: Schema.Literal(409), code: Schema.String }) {}
 
-class DocsInvalidInput extends TaggedErrorClass<DocsInvalidInput>()(
-  "DocsInvalidInput",
-  { status: Schema.Literal(400), code: Schema.String },
-) {}
+class DocsInvalidInput extends TaggedErrorClass<
+  DocsInvalidInput,
+  { readonly brand: unique symbol }
+>()("DocsInvalidInput", { status: Schema.Literal(400), code: Schema.String }) {}
 
-export class DocsDataError extends TaggedErrorClass<DocsDataError>()(
-  "DocsDataError",
-  {
-    cause: Schema.Defect(),
-  },
-) {}
+export class DocsDataError extends TaggedErrorClass<
+  DocsDataError,
+  { readonly brand: unique symbol }
+>()("DocsDataError", {
+  cause: Schema.Defect(),
+}) {}
 
 export type DocsFailure =
   | DocsConflict

@@ -6,10 +6,14 @@ import {
   validateReservationTime as getReservationTimeValidationIssue,
   type ReservationSettings,
 } from "@lootlog/domain/reservations";
+import { Effect } from "effect";
 
 const MAX_WINDOW_MS = 31 * 24 * 60 * 60 * 1000;
 
-export function parseReservationWindow(fromValue: string, toValue: string) {
+export function parseReservationWindow(
+  fromValue: string,
+  toValue: string,
+): Effect.Effect<{ from: Date; to: Date }, InvalidRequestError> {
   const from = new Date(fromValue);
   const to = new Date(toValue);
   const durationMs = to.getTime() - from.getTime();
@@ -19,14 +23,16 @@ export function parseReservationWindow(fromValue: string, toValue: string) {
     Number.isNaN(to.getTime()) ||
     durationMs <= 0
   ) {
-    throw new InvalidRequestError({ code: "INVALID_TIME_RANGE" });
+    return Effect.fail(new InvalidRequestError({ code: "INVALID_TIME_RANGE" }));
   }
 
   if (durationMs > MAX_WINDOW_MS) {
-    throw new InvalidRequestError({ code: "RESERVATION_WINDOW_TOO_LARGE" });
+    return Effect.fail(
+      new InvalidRequestError({ code: "RESERVATION_WINDOW_TOO_LARGE" }),
+    );
   }
 
-  return { from, to };
+  return Effect.succeed({ from, to });
 }
 
 export function validateReservationTime(options: {
@@ -35,12 +41,12 @@ export function validateReservationTime(options: {
   settings: ReservationSettings;
   now?: Date;
   allowPastStart?: boolean;
-}): void {
+}): Effect.Effect<void, InvalidEntityError> {
   const issue = getReservationTimeValidationIssue(options);
 
-  if (issue) {
-    const { code, ...details } = issue;
+  if (!issue) return Effect.void;
 
-    throw new InvalidEntityError({ code, details });
-  }
+  const { code, ...details } = issue;
+
+  return Effect.fail(new InvalidEntityError({ code, details }));
 }

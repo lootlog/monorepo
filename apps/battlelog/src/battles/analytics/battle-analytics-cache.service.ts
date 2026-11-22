@@ -68,7 +68,7 @@ export const makeBattleAnalyticsCache = (
           Effect.catch((error) => {
             logger.warn("Battle analytics cache unavailable", error);
 
-            return Effect.succeed(undefined);
+            return Effect.undefined;
           }),
         );
 

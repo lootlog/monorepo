@@ -126,7 +126,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       );
 
       if (guilds.length === 0) {
-        return yield* Effect.fail(new PermissionDeniedError());
+        return yield* new PermissionDeniedError();
       }
 
       const guildById = new Map(guilds.map((guild) => [guild.id, guild]));
@@ -143,18 +143,13 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       );
 
       if (filteredGuildIds.length === 0) {
-        return yield* Effect.fail(
-          new InvalidRequestError({
-            code: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
-            details: {
-              submittedGuilds: [],
-              rejectedGuilds: mapRejectedGuilds(
-                guildById,
-                whitelisted.rejected,
-              ),
-            },
-          }),
-        );
+        return yield* new InvalidRequestError({
+          code: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
+          details: {
+            submittedGuilds: [],
+            rejectedGuilds: mapRejectedGuilds(guildById, whitelisted.rejected),
+          },
+        });
       }
 
       const { lootlogConfigs, members } = yield* Effect.all(
@@ -174,7 +169,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             !parseCharacterIdentity(player.id, player.accountId, LEGACY_ID),
         )
       ) {
-        return yield* Effect.fail(new InvalidRequestError("Invalid player id"));
+        return yield* new InvalidRequestError("Invalid player id");
       }
 
       const npcData = yield* Effect.try({
@@ -186,9 +181,9 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       });
 
       if (npcData.primary.wt < MIN_LOOT_NPC_WT) {
-        return yield* Effect.fail(
-          new InvalidRequestError({ code: ErrorKey.NPC_WT_TOO_LOW }),
-        );
+        return yield* new InvalidRequestError({
+          code: ErrorKey.NPC_WT_TOO_LOW,
+        });
       }
 
       const primaryNpcType = getNpcType(NpcType, npcData.primary);
@@ -204,15 +199,13 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       });
 
       if (outcome.submissionData.length === 0) {
-        return yield* Effect.fail(
-          new InvalidRequestError({
-            code: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
-            details: {
-              submittedGuilds: [],
-              rejectedGuilds: outcome.rejectedGuilds,
-            },
-          }),
-        );
+        return yield* new InvalidRequestError({
+          code: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
+          details: {
+            submittedGuilds: [],
+            rejectedGuilds: outcome.rejectedGuilds,
+          },
+        });
       }
 
       const mapPlayersSnapshot = capturesMapPlayers({

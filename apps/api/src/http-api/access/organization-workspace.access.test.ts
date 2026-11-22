@@ -146,8 +146,8 @@ const makeData = (
 ) =>
   OrganizationWorkspaceData.of({
     create: () => Effect.succeed(reservation),
-    deleteVisible: () => Effect.succeed(undefined),
-    deleteOwned: () => Effect.succeed(undefined),
+    deleteVisible: () => Effect.undefined,
+    deleteOwned: () => Effect.undefined,
     updateOwned: () => Effect.succeed(reservation),
     ...overrides,
   });
@@ -162,8 +162,8 @@ const makeReadData = (
         items: [],
         window: { from: reservation.startsAt, to: reservation.endsAt },
       }),
-    pinSpot: () => Effect.succeed(undefined),
-    unpinSpot: () => Effect.succeed(undefined),
+    pinSpot: () => Effect.undefined,
+    unpinSpot: () => Effect.undefined,
     ...overrides,
   });
 
@@ -179,8 +179,8 @@ const makeSharingData = (
         expiresAt: share.createdAt,
         createdAt: share.createdAt,
       }),
-    revokeInvitation: () => Effect.succeed(undefined),
-    revokeShare: () => Effect.succeed(undefined),
+    revokeInvitation: () => Effect.undefined,
+    revokeShare: () => Effect.undefined,
     previewInvitation: () =>
       Effect.succeed({
         sourceOrganization: share.partner,
@@ -588,11 +588,13 @@ const respondThroughApi = <A, E>(
           ),
         ),
         Effect.provideService(BearerSecurityMiddleware, bearer),
-        Effect.provide(apiKeyEndpointPolicyLayer("main")),
-        Effect.provide(SchemaErrorResponseLive),
+        Effect.provide([
+          apiKeyEndpointPolicyLayer("main"),
+          SchemaErrorResponseLive,
+        ]),
         Effect.flatMap(call),
       ),
-    ).pipe(Effect.provide(services), Effect.provide(platform)),
+    ).pipe(Effect.provide([services, platform])),
   );
 };
 
@@ -761,28 +763,22 @@ describe("organization workspace response boundaries", () => {
 
   it("preserves dates, nullable values, open fields and stripping in reservation projections", () => {
     expect(
-      Effect.runSync(
-        Schema.decodeUnknownEffect(ReservationBoundary)(richReservation),
-      ),
+      Effect.runSync(Schema.decodeEffect(ReservationBoundary)(richReservation)),
     ).toEqual(
       Effect.runSync(decodeDomainJson(ReservationResponse, richReservation)),
     );
     const mine = { items: [richReservation] };
     expect(
-      Effect.runSync(Schema.decodeUnknownEffect(MyReservationsBoundary)(mine)),
+      Effect.runSync(Schema.decodeEffect(MyReservationsBoundary)(mine)),
     ).toEqual(Effect.runSync(decodeDomainJson(MyReservationsResponse, mine)));
     const window = { ...mine, window: { from: date, to: date.toISOString() } };
     expect(
-      Effect.runSync(
-        Schema.decodeUnknownEffect(ReservationWindowBoundary)(window),
-      ),
+      Effect.runSync(Schema.decodeEffect(ReservationWindowBoundary)(window)),
     ).toEqual(
       Effect.runSync(decodeDomainJson(ReservationWindowResponse, window)),
     );
     expect(
-      Effect.runSync(
-        Schema.decodeUnknownEffect(ReservationSpotsBoundary)([spot]),
-      ),
+      Effect.runSync(Schema.decodeEffect(ReservationSpotsBoundary)([spot])),
     ).toEqual(
       Effect.runSync(decodeDomainJson(ReservationSpotsResponse, [spot])),
     );
@@ -814,15 +810,13 @@ describe("organization workspace response boundaries", () => {
   it("preserves sharing list and invitation response projections", () => {
     const shares = { ...sharingList, pendingInvitations: [invitation] };
     expect(
-      Effect.runSync(
-        Schema.decodeUnknownEffect(ReservationSharesBoundary)(shares),
-      ),
+      Effect.runSync(Schema.decodeEffect(ReservationSharesBoundary)(shares)),
     ).toEqual(
       Effect.runSync(decodeDomainJson(ReservationSharesResponse, shares)),
     );
     expect(
       Effect.runSync(
-        Schema.decodeUnknownEffect(CreatedReservationShareInvitationBoundary)(
+        Schema.decodeEffect(CreatedReservationShareInvitationBoundary)(
           invitation,
         ),
       ),
@@ -840,9 +834,7 @@ describe("organization workspace response boundaries", () => {
 
     expect(
       Effect.runSync(
-        Schema.decodeUnknownEffect(ReservationShareInvitationPreviewBoundary)(
-          preview,
-        ),
+        Schema.decodeEffect(ReservationShareInvitationPreviewBoundary)(preview),
       ),
     ).toEqual(
       Effect.runSync(
@@ -851,7 +843,7 @@ describe("organization workspace response boundaries", () => {
     );
     expect(
       Effect.runSync(
-        Schema.decodeUnknownEffect(AcceptedReservationShareBoundary)(share),
+        Schema.decodeEffect(AcceptedReservationShareBoundary)(share),
       ),
     ).toEqual(
       Effect.runSync(decodeDomainJson(AcceptedReservationShareResponse, share)),

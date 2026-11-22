@@ -15,18 +15,18 @@ const PUBLIC_CACHE_CONTROL = "public, max-age=300, must-revalidate";
 
 const LOCAL_CACHE_CONTROL = "no-store";
 
-export class PublicSystemAccessDenied extends TaggedErrorClass<PublicSystemAccessDenied>()(
-  "PublicSystemAccessDenied",
-  {
-    status: Schema.Literals([401, 403, 404]),
-    code: Schema.String,
-  },
-) {}
+export class PublicSystemAccessDenied extends TaggedErrorClass<
+  PublicSystemAccessDenied,
+  { readonly brand: unique symbol }
+>()("PublicSystemAccessDenied", {
+  status: Schema.Literals([401, 403, 404]),
+  code: Schema.String,
+}) {}
 
-export class PublicSystemOperationError extends TaggedErrorClass<PublicSystemOperationError>()(
-  "PublicSystemOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class PublicSystemOperationError extends TaggedErrorClass<
+  PublicSystemOperationError,
+  { readonly brand: unique symbol }
+>()("PublicSystemOperationError", { cause: Schema.Defect() }) {}
 
 export class PublicSystemAuthorization extends Context.Service<
   PublicSystemAuthorization,

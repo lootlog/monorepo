@@ -6,7 +6,7 @@ export type OrganizationWorkspaceIdentity = {
   readonly discordId: string;
 };
 
-export class OrganizationWorkspaceOperationError extends TaggedErrorClass<OrganizationWorkspaceOperationError>()(
-  "OrganizationWorkspaceOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class OrganizationWorkspaceOperationError extends TaggedErrorClass<
+  OrganizationWorkspaceOperationError,
+  { readonly brand: unique symbol }
+>()("OrganizationWorkspaceOperationError", { cause: Schema.Defect() }) {}

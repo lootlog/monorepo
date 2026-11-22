@@ -50,10 +50,13 @@ const docsEndpointIdentifiers = [
 
 export type DocsEndpointIdentifier = (typeof docsEndpointIdentifiers)[number];
 
-export class DocsAccessDenied extends TaggedErrorClass<DocsAccessDenied>()(
-  "DocsAccessDenied",
-  { status: Schema.Literals([401, 403]), code: Schema.String },
-) {}
+export class DocsAccessDenied extends TaggedErrorClass<
+  DocsAccessDenied,
+  { readonly brand: unique symbol }
+>()("DocsAccessDenied", {
+  status: Schema.Literals([401, 403]),
+  code: Schema.String,
+}) {}
 
 export interface DocsAuthorizationRequirement {
   readonly guildId: string;
