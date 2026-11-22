@@ -59,24 +59,31 @@ export const WhatsNewButton = () => {
         align="end"
         sideOffset={8}
         collisionPadding={12}
-        className="flex max-h-[min(34rem,var(--available-height))] w-96 flex-col p-0"
+        className="flex max-h-[min(34rem,var(--available-height))] w-[26rem] flex-col p-0"
       >
         <h2 className="border-b px-4 py-3 text-sm font-semibold">
           {t("layout.whatsNew.title")}
         </h2>
-        <div className="min-h-0 flex-1 divide-y overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {weeks.slice(0, POPOVER_WEEK_COUNT).map((week) => (
-            <section key={week.weekStart} className="px-4 py-3">
-              <p className="pb-3 text-xs font-semibold text-muted-foreground">
+            <section
+              key={week.weekStart}
+              aria-labelledby={`whats-new-popover-${week.weekStart}`}
+            >
+              {/* The week stays in view while its changes scroll under it. */}
+              <h3
+                id={`whats-new-popover-${week.weekStart}`}
+                className="sticky top-0 z-10 border-b bg-[color-mix(in_oklab,var(--muted)_45%,var(--popover))] px-4 py-1.5 text-xs font-semibold text-muted-foreground"
+              >
                 {isCurrentWeek(week.weekStart)
                   ? t("layout.whatsNew.thisWeek")
                   : formatWeekRange(week.weekStart, i18n.language)}
-              </p>
+              </h3>
               <WhatsNewWeek week={week} unreadIds={unreadIds} />
             </section>
           ))}
         </div>
-        <div className="border-t p-1.5">
+        <div className="-mt-px border-t p-1.5">
           <Button
             variant="ghost"
             size="sm"

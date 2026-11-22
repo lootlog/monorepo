@@ -29,31 +29,20 @@ export const WhatsNewSettingsTab = () => {
         <SettingsSection
           key={week.weekStart}
           controlId={index === 0 ? "whats-new" : undefined}
+          contentClassName="ll:gap-0"
           title={
             isCurrentWeek(week.weekStart)
               ? t("settings.whatsNew.thisWeek")
               : formatWeekRange(week.weekStart, i18n.language)
           }
         >
-          {week.entries.map((item) => (
+          {[...week.entries, ...week.fixes].map((item) => (
             <WhatsNewEntry
               key={item.id}
               item={item}
               isUnread={unreadOnOpen.includes(item.id)}
             />
           ))}
-          {week.fixes.length > 0 ? (
-            <div className="ll:px-2 ll:py-1.5">
-              <h4 className="ll:m-0 ll:text-xs ll:font-semibold ll:text-muted-foreground">
-                {t("settings.whatsNew.fixes")}
-              </h4>
-              <ul className="ll:m-0 ll:mt-1 ll:flex ll:list-disc ll:flex-col ll:gap-1 ll:pl-4 ll:text-xs ll:leading-[17px] ll:text-pretty ll:text-muted-foreground">
-                {week.fixes.map((fix) => (
-                  <li key={fix.id}>{fix.title}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
         </SettingsSection>
       ))}
       <Button
