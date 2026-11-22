@@ -1,7 +1,6 @@
 import {
   type BaseServiceConfiguration,
   baseServiceConfig,
-  commaSeparatedConfig,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
@@ -37,7 +36,6 @@ export interface ApiConfiguration extends BaseServiceConfiguration {
     readonly retentionDays: number;
   };
   readonly nodeWarningDiagnosticsEnabled: boolean;
-  readonly globalChatAdminUserIds: ReadonlyArray<string>;
   readonly hostName: string | undefined;
 }
 
@@ -77,9 +75,6 @@ export const apiConfiguration: Config.Config<ApiConfiguration> = Config.all({
     "NODE_WARNING_DIAGNOSTICS_ENABLED",
     false,
   ),
-  globalChatAdminUserIds: commaSeparatedConfig(
-    "GLOBAL_CHAT_ADMIN_USER_IDS",
-  ).pipe(Config.withDefault([])),
   hostName: Config.option(Config.String("HOSTNAME")).pipe(
     Config.map(Option.getOrUndefined),
   ),

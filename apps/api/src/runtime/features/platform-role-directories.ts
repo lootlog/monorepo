@@ -17,19 +17,13 @@ const decodeRoleHolders = Schema.decodeUnknownEffect(
   Schema.fromJsonString(PlatformRoleHolders),
 );
 
-const roleHolders = (
-  role: PlatformRole,
-  configuredUserIds: (
-    config: ApiRuntimeConfig["Service"],
-  ) => ReadonlyArray<string>,
-) =>
+const roleHolders = (role: PlatformRole) =>
   Effect.gen(function* () {
     const config = yield* ApiRuntimeConfig;
     const httpClient = yield* HttpClient.HttpClient;
     const secret = config.authIdpTokenSecret;
-    const configured = configuredUserIds(config);
 
-    if (!secret) return fixedRoleHolders(configured);
+    if (!secret) return fixedRoleHolders([]);
 
     const url = new URL(
       `${PLATFORM_ROLE_HOLDERS_PATH}?role=${role}`,
@@ -57,10 +51,7 @@ const roleHolders = (
       return userIds;
     });
 
-    return yield* makeRefreshingRoleHolders({
-      configuredUserIds: configured,
-      fetchRoleHolders,
-    });
+    return yield* makeRefreshingRoleHolders({ fetchRoleHolders });
   });
 
 export class GlobalChatAdminDirectory extends Context.Service<
@@ -69,7 +60,7 @@ export class GlobalChatAdminDirectory extends Context.Service<
 >()("@lootlog/api/GlobalChatAdminDirectory") {
   static readonly layer = Layer.effect(
     GlobalChatAdminDirectory,
-    roleHolders("global-chat-admin", (config) => config.globalChatAdminUserIds),
+    roleHolders("global-chat-admin"),
   );
 }
 
@@ -79,6 +70,6 @@ export class LootlogAdminDirectory extends Context.Service<
 >()("@lootlog/api/LootlogAdminDirectory") {
   static readonly layer = Layer.effect(
     LootlogAdminDirectory,
-    roleHolders("admin", () => []),
+    roleHolders("admin"),
   );
 }

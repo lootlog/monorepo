@@ -131,13 +131,12 @@ the auth service; until then no role is forwarded and role checks refuse.
 The API cannot learn role holders from the caller alone: it marks other Users'
 messages and shows their auras. Every minute it asks the auth service
 (`/auth/internal/platform-role-holders`, with `AUTH_IDP_TOKEN_SECRET`) for the
-holders of `global-chat-admin`, which moderate the global chat together with
-`GLOBAL_CHAT_ADMIN_USER_IDS`, and for the holders of `admin`, the only Users
-who grant and revoke auras, choose any aura without a grant, and wear the
-admin auras. `GLOBAL_CHAT_ADMIN_USER_IDS` gives no aura rights. While the auth
-service cannot be reached the last answer stands. Deploy the auth service
-before the API; without `AUTH_IDP_TOKEN_SECRET` the API knows only the
-configured chat admins and no aura admin.
+holders of `global-chat-admin`, who moderate the global chat, and of `admin`,
+the only Users who grant and revoke auras, choose any aura without a grant,
+and wear the admin auras. The platform roles are the only source of both; no
+environment variable adds a chat or aura admin. While the auth service cannot
+be reached the last answer stands. Deploy the auth service before the API;
+without `AUTH_IDP_TOKEN_SECRET` the API knows no chat or aura admin.
 
 A role change, a revoked session, and a ban reach a signed-in browser within
 five minutes, when its session cookie cache expires; a bearer token issued

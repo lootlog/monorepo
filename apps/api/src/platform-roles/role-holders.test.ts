@@ -13,7 +13,6 @@ describe("makeRefreshingRoleHolders", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         const admins = yield* makeRefreshingRoleHolders({
-          configuredUserIds: ["configured"],
           fetchRoleHolders: Effect.suspend(() =>
             answer === "down" ? Effect.fail("down") : Effect.succeed(answer),
           ),
@@ -24,16 +23,16 @@ describe("makeRefreshingRoleHolders", () => {
           Effect.sync(() => admins.ids().toSorted()),
         );
 
-        expect(admins.ids()).toEqual(["configured"]);
+        expect(admins.ids()).toEqual([]);
 
         answer = ["granted"];
-        expect(yield* afterRefresh).toEqual(["configured", "granted"]);
+        expect(yield* afterRefresh).toEqual(["granted"]);
 
         answer = "down";
-        expect(yield* afterRefresh).toEqual(["configured", "granted"]);
+        expect(yield* afterRefresh).toEqual(["granted"]);
 
         answer = [];
-        expect(yield* afterRefresh).toEqual(["configured"]);
+        expect(yield* afterRefresh).toEqual([]);
         expect(admins.has("granted")).toBe(false);
       }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
     );

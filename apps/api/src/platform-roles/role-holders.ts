@@ -17,20 +17,19 @@ export const ROLE_HOLDERS_REFRESH = Duration.minutes(1);
 
 export const makeRefreshingRoleHolders = Effect.fn("makeRefreshingRoleHolders")(
   function* <E>(options: {
-    readonly configuredUserIds: ReadonlyArray<string>;
     readonly fetchRoleHolders: Effect.Effect<ReadonlyArray<string>, E>;
   }) {
-    let admins = new Set(options.configuredUserIds);
+    let holders = new Set<string>();
 
     const refresh = options.fetchRoleHolders.pipe(
       Effect.matchEffect({
         onSuccess: (roleHolders) =>
           Effect.sync(() => {
-            admins = new Set([...options.configuredUserIds, ...roleHolders]);
+            holders = new Set(roleHolders);
           }),
         onFailure: () =>
           Effect.logWarning(
-            "Global chat admins not refreshed; the last known set stands",
+            "Platform role holders not refreshed; the last known set stands",
           ),
       }),
     );
@@ -45,8 +44,8 @@ export const makeRefreshingRoleHolders = Effect.fn("makeRefreshingRoleHolders")(
     );
 
     return {
-      has: (userId) => admins.has(userId),
-      ids: () => [...admins],
+      has: (userId) => holders.has(userId),
+      ids: () => [...holders],
     } satisfies RoleHolders;
   },
 );

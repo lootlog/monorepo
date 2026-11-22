@@ -38,15 +38,4 @@ describe("apiConfiguration", () => {
       loadWith({ TIMER_CLEANUP_ENABLED: "enabled" }),
     ).rejects.toBeDefined();
   });
-
-  it("reads global chat admins as a comma-separated User id list", async () => {
-    const config = await loadWith({
-      GLOBAL_CHAT_ADMIN_USER_IDS: " user-1, ,user-2,",
-    });
-
-    const unset = await loadWith({});
-
-    expect(config.globalChatAdminUserIds).toEqual(["user-1", "user-2"]);
-    expect(unset.globalChatAdminUserIds).toEqual([]);
-  });
 });
