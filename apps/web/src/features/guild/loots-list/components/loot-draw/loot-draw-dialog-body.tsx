@@ -79,7 +79,7 @@ export const LootDrawDialogBody = ({
             onRevealed={() => setLockedHeight(null)}
           />
         )}
-        {data && !standing && !canDraw && (
+        {data && !standing && canVoid && !canDraw && (
           <EmptyState
             compact
             icon={Ban}

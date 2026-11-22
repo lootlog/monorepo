@@ -176,7 +176,7 @@ export const createLootDraw = Effect.fn("loots.createDraw")(function* (
   lootId: number,
   payload: CreateLootDrawRequest,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_ARCHIVE);
 
   const draw = yield* data((service) =>
     service.createDraw(caller, lootId, payload),
