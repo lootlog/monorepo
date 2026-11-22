@@ -23,12 +23,21 @@ import {
   scheduledMessageNotification,
   ruleTestWithWorld,
   ruleTestWithoutWorld,
+  DEFAULT_LOOT_DRAW_TEMPLATE,
+  LOOT_DRAW_RESOLVED_TITLE,
+  lootDrawMessage,
+  lootDrawOutcomeLine,
 } from "#src/notifications/content/notification-messages";
+import { formatLootDrawTickets } from "@lootlog/domain/loot-draw";
+import { Schema } from "effect";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/content/discord-timestamp";
 import {
   NotificationScheduleAnchor,
   type DiscordNotificationAllowedMentions,
   type NotificationScheduleStrategy,
+  LootDrawOutcome,
+  LootDrawResolvedNotificationEventSchema,
+  type LootDrawResolvedNotificationEvent,
   NotificationTargetType,
   NotificationTriggerType,
 } from "@lootlog/schema/notifications";
@@ -60,6 +69,18 @@ const hasAllowedMentionValues = (params: {
   (params.roles?.length ?? 0) > 0 ||
   (params.users?.length ?? 0) > 0 ||
   params.repliedUser !== undefined;
+
+/**
+ * Replaces each `{{name}}` the values name; any other placeholder stays as
+ * written, so a template never loses text it did not mean to fill.
+ */
+const fillTemplate = (
+  template: string,
+  values: Readonly<Record<string, string>>,
+) =>
+  template.replaceAll(/\{\{(\w+)\}\}/g, (match, name: string) =>
+    Object.hasOwn(values, name) ? (values[name] ?? match) : match,
+  );
 
 class NotificationContent {
   buildTimerNotificationPayload(params: {
@@ -210,11 +231,7 @@ class NotificationContent {
       world: sighting.world,
     } satisfies Record<string, string>;
 
-    const content = template.replaceAll(
-      /\{\{(ruleName|heroName|heroLevel|mapName|state|detectedBy|world)\}\}/g,
-      (_match, placeholder: keyof typeof placeholderValues) =>
-        placeholderValues[placeholder] ?? "",
-    );
+    const content = fillTemplate(template, placeholderValues);
 
     return {
       title: HERO_SIGHTED_TITLE,
@@ -233,6 +250,66 @@ class NotificationContent {
       heroSightingId: sighting.id,
       heroName: sighting.hero.name,
       mapName: sighting.mapName,
+      contentTemplate: template,
+    } satisfies JsonObject;
+  }
+
+  /**
+   * A draw's message. The payload keeps the draw as it was announced, so the
+   * wheel image drawn at dispatch shows this outcome, not a later one.
+   */
+  buildLootDrawPayload(params: {
+    notificationRule: {
+      id: number;
+      name: string | null;
+      triggerType: NotificationTriggerType;
+      contentTemplate?: string | null;
+    };
+    target: {
+      targetType: NotificationTargetType;
+    };
+    event: LootDrawResolvedNotificationEvent;
+  }) {
+    const { event } = params;
+    const { draw } = event;
+    const winner = draw.entrants[draw.winnerIndex];
+    const winnerName = winner?.name ?? "";
+
+    const voided =
+      event.outcome === LootDrawOutcome.VOIDED ? draw.voided : null;
+
+    const template =
+      params.notificationRule.contentTemplate ?? DEFAULT_LOOT_DRAW_TEMPLATE;
+
+    const placeholderValues = {
+      ruleName:
+        params.notificationRule.name?.trim() || LOOT_DRAW_RESOLVED_TITLE,
+      itemName: event.item.name,
+      winnerName,
+      outcome: lootDrawOutcomeLine(
+        winnerName,
+        formatLootDrawTickets(winner?.tickets ?? 0),
+        voided,
+      ),
+      drawnBy: draw.drawnBy,
+      npcName: event.npcName ?? "",
+      world: event.world,
+      reason: voided?.reason ?? "",
+    } satisfies Record<string, string>;
+
+    return {
+      title: LOOT_DRAW_RESOLVED_TITLE,
+      message: lootDrawMessage(event.item.name, winnerName, voided !== null),
+      content: fillTemplate(template, placeholderValues),
+      ...this.allowedMentionsField(template, params.target.targetType),
+      ruleId: params.notificationRule.id,
+      ruleName: params.notificationRule.name,
+      triggerType: params.notificationRule.triggerType,
+      world: event.world,
+      lootId: event.lootId,
+      lootDraw: Schema.encodeSync(LootDrawResolvedNotificationEventSchema)(
+        event,
+      ),
       contentTemplate: template,
     } satisfies JsonObject;
   }
@@ -438,11 +515,7 @@ class NotificationContent {
       scheduledFor: this.formatNotificationDate(params.scheduledFor),
     } satisfies Record<string, string>;
 
-    return params.template.replaceAll(
-      /\{\{(ruleName|npcName|npcId|world|minSpawnTime|maxSpawnTime|scheduledFor)\}\}/g,
-      (_match, placeholder: keyof typeof placeholderValues) =>
-        placeholderValues[placeholder],
-    );
+    return fillTemplate(params.template, placeholderValues);
   }
 
   private renderScheduledMessageContent(params: {
@@ -457,11 +530,7 @@ class NotificationContent {
       scheduledFor: this.formatNotificationDate(params.scheduledFor),
     } satisfies Record<string, string>;
 
-    return params.template.replaceAll(
-      /\{\{(ruleName|scheduledFor)\}\}/g,
-      (_match, placeholder: keyof typeof placeholderValues) =>
-        placeholderValues[placeholder],
-    );
+    return fillTemplate(params.template, placeholderValues);
   }
 }
 

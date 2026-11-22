@@ -27,10 +27,12 @@ export const LootDrawLayout = ({
   const { t } = useTranslation();
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
-      <div className="grid justify-items-center gap-2">
+    <div className="grid gap-4 lg:grid-cols-[20rem_minmax(0,1fr)] lg:items-start">
+      {/* The top inset keeps the pointer, which stands above the wheel,
+          inside the scrolling body. */}
+      <div className="grid justify-items-center gap-2 pt-2">
         {wheel}
-        <div className="flex h-8 gap-1">{wheelActions}</div>
+        {wheelActions && <div className="flex h-8 gap-1">{wheelActions}</div>}
       </div>
       <div className="grid min-w-0 gap-3">
         <div className="min-w-0 overflow-hidden rounded-lg border border-border">

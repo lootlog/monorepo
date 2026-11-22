@@ -1,32 +1,45 @@
+import { lootDrawLandingOffset } from "@lootlog/domain/loot-draw";
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { cn } from "cn";
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { lootDrawSegmentColor } from "./loot-draw-colors";
 
 const SIZE = 240;
 
-const RADIUS = SIZE / 2 - 4;
-
 const CENTER = SIZE / 2;
 
-/** Full turns before the wheel settles, so a spin reads as a spin. */
-const SPIN_TURNS = 6;
+/** The rim's width; slices fill the circle inside it. */
+const RIM = 7;
 
-const SPIN_MS = 4500;
+const RADIUS = SIZE / 2 - RIM - 2;
+
+/** Full turns before the wheel settles, so a spin reads as a spin. */
+const SPIN_TURNS = 7;
+
+const SPIN_MS = 6500;
+
+/** Past its stop the wheel drifts this far, then rolls back onto it. */
+const OVERSHOOT_DEGREES = 5;
+
+/** The share of the spin spent before the drift back begins. */
+const OVERSHOOT_AT = 0.88;
+
+/** More slices than this and the rim's pegs would merge into a band. */
+const MAX_PEGS = 48;
 
 /** Names run along the radius from the rim, at most this size. */
-const MAX_FONT_SIZE = 11;
+const MAX_FONT_SIZE = 13;
 
-const MIN_FONT_SIZE = 7;
+const MIN_FONT_SIZE = 8;
 
 /** The smallest size a long name shrinks to before it is cut. */
-const READABLE_FONT_SIZE = 8.5;
+const READABLE_FONT_SIZE = 9.5;
 
 /** Room left between a name and the rim, and around the hub. */
-const RIM_GAP = 9;
+const RIM_GAP = 8;
 
-const HUB_RADIUS = 22;
+const HUB_RADIUS = 20;
 
 /** A semibold name's average glyph width, as a share of its font size. */
 const GLYPH_WIDTH = 0.6;
@@ -111,11 +124,15 @@ const radialLabel = (name: string, from: number, to: number) => {
  * a shuffled order mixes the slices, and the pointer at the top. Given
  * `roll`, a position in that order, it turns until that ticket sits under
  * the pointer: spinning when `spin` is set, or already settled otherwise.
+ * The pointer stops where `drawId` places it inside the ticket, often close
+ * to a neighbour; the spin runs a little past it and rolls back. Once at
+ * rest, the winner's slice stays lit and the others dim.
  */
 export const LootDrawWheel = ({
   entrants,
   ticketOrder,
   roll,
+  drawId,
   spin = false,
   onSettled,
   className,
@@ -123,6 +140,8 @@ export const LootDrawWheel = ({
   entrants: readonly WheelEntrant[];
   ticketOrder: readonly number[];
   roll: number | null;
+  /** Fixes where in the winning ticket the pointer stops. */
+  drawId?: number;
   spin?: boolean;
   /** Called once a spin rests on the result; a wheel shown at rest never spins. */
   onSettled?: () => void;
@@ -130,30 +149,55 @@ export const LootDrawWheel = ({
 }) => {
   const { t } = useTranslation();
   const reducedMotion = usePrefersReducedMotion();
+  const shineId = useId();
+  const wheelRef = useRef<SVGSVGElement>(null);
   const total = ticketOrder.length;
+  const animate = spin && !reducedMotion;
+  // A wheel shown at rest is settled; a spinning one, once its spin ends.
+  const [spinEnded, setSpinEnded] = useState(false);
+  const rested = !animate || spinEnded;
+  const landing = drawId === undefined ? 0.5 : lootDrawLandingOffset(drawId);
 
   const settled =
     roll === null || total === 0
       ? 0
-      : SPIN_TURNS * 360 - ((roll + 0.5) / total) * 360;
+      : SPIN_TURNS * 360 - ((roll + landing) / total) * 360;
 
-  const animate = spin && !reducedMotion;
-  // A spin rests at 0 for its first frame, so the transition has a distance to run.
-  const [hasStarted, setHasStarted] = useState(false);
-  const rotation = animate && !hasStarted ? 0 : settled;
-  const settle = useEffectEvent(() => onSettled?.());
+  const winnerIndex = roll === null ? null : (ticketOrder[roll] ?? null);
+
+  const settle = useEffectEvent(() => {
+    setSpinEnded(true);
+    onSettled?.();
+  });
 
   useEffect(() => {
     if (!animate) return;
 
-    const frame = requestAnimationFrame(() => setHasStarted(true));
+    // The keyframes take the wheel past its stop and back; the style below
+    // holds the stop once they end.
+    const animation = wheelRef.current?.animate(
+      [
+        {
+          transform: "rotate(0deg)",
+          easing: "cubic-bezier(0.12, 0.6, 0.08, 1)",
+        },
+        {
+          transform: `rotate(${settled + OVERSHOOT_DEGREES}deg)`,
+          offset: OVERSHOOT_AT,
+          easing: "cubic-bezier(0.45, 0, 0.3, 1)",
+        },
+        { transform: `rotate(${settled}deg)` },
+      ],
+      { duration: SPIN_MS },
+    );
+
     const done = setTimeout(settle, SPIN_MS);
 
     return () => {
-      cancelAnimationFrame(frame);
+      animation?.cancel();
       clearTimeout(done);
     };
-  }, [animate]);
+  }, [animate, settled]);
 
   // Neighbouring tickets of one entrant share a slice.
   const runs = ticketOrder.reduce<
@@ -182,6 +226,9 @@ export const LootDrawWheel = ({
     return [{ index, from, to, label, start }];
   });
 
+  const dimmed = (index: number) =>
+    rested && winnerIndex !== null && index !== winnerIndex;
+
   return (
     <div
       role="img"
@@ -189,22 +236,37 @@ export const LootDrawWheel = ({
         entrants: entrants.map(({ name }) => name).join(", "),
       })}
       className={cn(
-        "relative mx-auto aspect-square w-full max-w-60",
+        "relative mx-auto aspect-square w-full max-w-80",
         className,
       )}
     >
       <svg
+        ref={wheelRef}
         viewBox={`0 0 ${SIZE} ${SIZE}`}
-        className="size-full drop-shadow-sm"
-        style={{
-          transform: `rotate(${rotation}deg)`,
-          transition: animate
-            ? `transform ${SPIN_MS}ms cubic-bezier(0.15, 0.7, 0.1, 1)`
-            : undefined,
-        }}
+        className="size-full drop-shadow-md"
+        style={{ transform: `rotate(${settled}deg)` }}
       >
+        <defs>
+          <radialGradient id={shineId} cx="35%" cy="30%" r="75%">
+            <stop offset="0%" stopColor="white" stopOpacity={0.22} />
+            <stop offset="55%" stopColor="white" stopOpacity={0.04} />
+            <stop offset="100%" stopColor="black" stopOpacity={0.18} />
+          </radialGradient>
+        </defs>
+        <circle
+          cx={CENTER}
+          cy={CENTER}
+          r={RADIUS + RIM / 2}
+          fill="none"
+          stroke="var(--border)"
+          strokeWidth={RIM}
+        />
         {segments.map(({ index, from, to, label, start }) => (
-          <g key={start}>
+          <g
+            key={start}
+            className="transition-opacity duration-500 motion-reduce:transition-none"
+            opacity={dimmed(index) ? 0.5 : 1}
+          >
             <path
               d={segmentPath(from, to)}
               fill={lootDrawSegmentColor(index)}
@@ -232,12 +294,52 @@ export const LootDrawWheel = ({
             )}
           </g>
         ))}
-        <circle cx={CENTER} cy={CENTER} r={14} fill="var(--background)" />
+        <circle
+          cx={CENTER}
+          cy={CENTER}
+          r={RADIUS}
+          fill={`url(#${shineId})`}
+          pointerEvents="none"
+        />
+        {segments.length > 1 &&
+          segments.length <= MAX_PEGS &&
+          segments.map(({ from, start }) => {
+            const peg = pointAt(from, RADIUS + RIM / 2);
+
+            return (
+              <circle
+                key={`peg-${start}`}
+                cx={peg.x}
+                cy={peg.y}
+                r={2}
+                fill="var(--muted-foreground)"
+              />
+            );
+          })}
+        <circle
+          cx={CENTER}
+          cy={CENTER}
+          r={16}
+          fill="var(--card)"
+          stroke="var(--border)"
+          strokeWidth={2}
+        />
+        <circle cx={CENTER} cy={CENTER} r={5} fill="var(--primary)" />
       </svg>
-      <span
+      <svg
         aria-hidden="true"
-        className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1 border-x-8 border-t-[14px] border-x-transparent border-t-foreground"
-      />
+        viewBox="0 0 20 26"
+        className="absolute left-1/2 top-0 w-6 -translate-x-1/2 -translate-y-2 drop-shadow-md"
+      >
+        <path
+          d="M10 25 L2.5 9 A8 8 0 1 1 17.5 9 Z"
+          fill="var(--foreground)"
+          stroke="var(--background)"
+          strokeWidth={1.5}
+          strokeLinejoin="round"
+        />
+        <circle cx={10} cy={8} r={2.5} fill="var(--background)" />
+      </svg>
     </div>
   );
 };

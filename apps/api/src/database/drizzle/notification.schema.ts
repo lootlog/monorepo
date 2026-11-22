@@ -35,6 +35,7 @@ export const notificationTriggerTypeEnum = pgEnum("NotificationTriggerType", [
   "WATCHED_ITEM_DROPPED",
   "SCHEDULED_MESSAGE",
   "HERO_SIGHTED",
+  "LOOT_DRAW_RESOLVED",
 ]);
 
 export const notificationScheduleStrategyEnum = pgEnum(

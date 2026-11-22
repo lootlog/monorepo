@@ -1,4 +1,7 @@
-import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
+import type {
+  LootStandingDrawResponse,
+  MapPlayersSnapshot,
+} from "@lootlog/protocol/loot-summary";
 import type { MemberSummary } from "#src/contracts/shared";
 import type { lootTable } from "#src/database/drizzle/loot.schema";
 import type { LootItemDto } from "#src/loots/query/loot-item";
@@ -36,4 +39,5 @@ export type LootQueryResult = LootQueryBase & {
   submissions: SubmissionWithMember[];
   commentsCount: number;
   likes: MemberSummary[];
+  standingDraws: LootStandingDrawResponse[];
 };

@@ -205,6 +205,7 @@ describe("notification job dispatch", () => {
         },
         () => Effect.void,
         () => undefined,
+        { filesFor: () => Effect.succeed([]) },
       );
 
       await run(dispatch("job-1", firstAttempt));
@@ -309,6 +310,7 @@ describe("notification job dispatch", () => {
           { publish: () => Effect.die("Revoked source must not publish") },
           () => Effect.void,
           () => undefined,
+          { filesFor: () => Effect.succeed([]) },
         );
 
         const dispatching = run(delayedDispatch("job-2", firstAttempt));
@@ -370,6 +372,7 @@ describe("notification job dispatch", () => {
       },
       () => Effect.void,
       () => undefined,
+      { filesFor: () => Effect.succeed([]) },
     );
 
     await Effect.runPromise(dispatch("job-1", { retrying: false }));
@@ -403,6 +406,7 @@ describe("notification job dispatch", () => {
       },
       () => Effect.void,
       () => undefined,
+      { filesFor: () => Effect.succeed([]) },
     );
 
     await Effect.runPromise(dispatch("job-1", { retrying: true }));

@@ -152,4 +152,23 @@ describe("ruleFormSchema", () => {
       validate(5, { ...heroRule, npcLevelMin: 300 }).issues,
     ).toBeUndefined();
   });
+
+  // The API keeps a draw rule to one world; the form must say so before saving.
+  it("asks a loot draw rule for one world, and nothing about monsters", () => {
+    const drawRule = {
+      ...createBaseTimerFormValues(),
+      triggerType: NotificationTriggerType.LOOT_DRAW_RESOLVED,
+      npcIds: [],
+    };
+
+    expect(
+      validate(5, { ...drawRule, world: ALL_WORLDS_VALUE }).issues,
+    ).toEqual([
+      expect.objectContaining({
+        path: ["world"],
+        message: "settings.notifications.validation.worldRequired",
+      }),
+    ]);
+    expect(validate(5, drawRule).issues).toBeUndefined();
+  });
 });

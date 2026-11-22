@@ -2,18 +2,19 @@ import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import type { Item } from "@/lib/loots/loot-types";
 import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import { useTranslation } from "react-i18next";
-import { Fragment, type ReactNode } from "react";
+import { Fragment } from "react";
+import type { DecorateLootItem } from "./item-stack";
 
 export const LootUnassignedItems = ({
   items,
   watchContext,
   selectedItemNames,
-  renderItem,
+  decorateItem,
 }: {
   items: Item[];
   watchContext: WatchedItemScope;
   selectedItemNames: string[];
-  renderItem?: (item: Item) => ReactNode;
+  decorateItem?: DecorateLootItem;
 }) => {
   const { t } = useTranslation();
 
@@ -25,19 +26,21 @@ export const LootUnassignedItems = ({
         {t("loots.list.unassignedItems")}
       </span>
       <div className="flex flex-row flex-wrap gap-1.5">
-        {items.map((item, itemIdx) => (
-          <Fragment key={`unassigned-${item.hid}-${itemIdx}`}>
-            {renderItem ? (
-              renderItem(item)
-            ) : (
-              <WatchableItemTile
-                item={item}
-                watchContext={watchContext}
-                selectedItemNames={selectedItemNames}
-              />
-            )}
-          </Fragment>
-        ))}
+        {items.map((item, itemIdx) => {
+          const tile = (
+            <WatchableItemTile
+              item={item}
+              watchContext={watchContext}
+              selectedItemNames={selectedItemNames}
+            />
+          );
+
+          return (
+            <Fragment key={`unassigned-${item.hid}-${itemIdx}`}>
+              {decorateItem ? decorateItem(item, tile) : tile}
+            </Fragment>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import type { ItemRarityEnum } from "@lootlog/schema/item-rarity";
-import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
+import { itemIconUrl } from "@lootlog/domain/margonem-cdn";
 import type { FC } from "react";
 import { useGameStore } from "@/store/game.store";
 import type { LootSplitItem } from "./loot-split-model";

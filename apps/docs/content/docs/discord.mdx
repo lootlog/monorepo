@@ -1,10 +1,10 @@
 ---
 title: Discord i powiadomienia
-description: Jak ustawić powiadomienia Lootlog na Discordzie. Kanał dla bota, reguły przypomnień przed spawnem i wykrycia herosa, prywatne wiadomości i komendy bota.
+description: Jak ustawić powiadomienia Lootlog na Discordzie. Kanał dla bota, reguły przypomnień przed spawnem, wykrycia herosa i wyniku koła, prywatne wiadomości i komendy bota.
 ---
 
 Bot Lootlog przenosi dane z gry na Wasz serwer Discord. Wysyła na kanały
-przypomnienia przed respawnem i wykrycia herosów, a komendami pokaże timery,
+przypomnienia przed respawnem, wykrycia herosów i wyniki koła, a komendami pokaże timery,
 rankingi, łupy i rezerwacje bez otwierania gry.
 
 Bota dodaje administrator serwera przy
@@ -54,11 +54,12 @@ kanałów.
 
 ### Reguły powiadomień
 
-| Typ                             | Kiedy bot pisze                                                    |
-| ------------------------------- | ------------------------------------------------------------------ |
-| **Przypomnienie przed spawnem** | Przed respawnem potwora z timerem, z wybranym wyprzedzeniem        |
-| **Wykrycie herosa**             | Gdy ktoś [wykryje](/docs/heroes), gdzie pojawi się heros           |
-| **Zaplanowana wiadomość**       | O wybranej porze: jednorazowo, co X godzin, codziennie, co tydzień |
+| Typ                             | Kiedy bot pisze                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Przypomnienie przed spawnem** | Przed respawnem potwora z timerem, z wybranym wyprzedzeniem                                |
+| **Wykrycie herosa**             | Gdy ktoś [wykryje](/docs/heroes), gdzie pojawi się heros                                   |
+| **Wynik koła**                  | Gdy ktoś zakręci [kołem o legendę](/docs/loot-list#losowanie-legendy) albo unieważni wynik |
+| **Zaplanowana wiadomość**       | O wybranej porze: jednorazowo, co X godzin, codziennie, co tydzień                         |
 
 **Przypomnienie przed spawnem**
 
@@ -78,6 +79,13 @@ jest od razu na liście, a wykrywający ma czas dojść na miejsce. **Poziom her
 od / do** zawęża regułę. Przy wykryciu
 [dodanym ręcznie](/docs/heroes#ręczne-dodawanie-wykrycia) nazwa osoby ma
 dopisek „(ręcznie)".
+
+**Wynik koła** wysyła wiadomość z obrazkiem koła, gdy ktoś zakręci kołem o
+legendę z wybranego świata: przedmiot, zwycięzca, jego losy i pozostali
+uczestnicy. Gdy ktoś unieważni wynik, bot wysyła drugą wiadomość z powodem.
+Reguła wysyła każdy wynik, także dla łupu ukrytego przed częścią ról, więc
+wybierz kanał, który widzą właściwe osoby. **Wyślij test** wysyła samą
+wiadomość, bez obrazka.
 
 **Szablon wiadomości** ustala treść. Masz gotowe szablony **Prosty**,
 **Szczegółowy** i **Minimalny**, zmienne, formatowanie Markdown i wzmianki

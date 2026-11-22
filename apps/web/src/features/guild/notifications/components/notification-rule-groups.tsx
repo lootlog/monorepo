@@ -11,6 +11,7 @@ import { useCancelNotificationJob } from "./use-cancel-notification-job";
 const GROUP_ORDER = [
   NotificationTriggerType.TIMER_BEFORE_SPAWN,
   NotificationTriggerType.HERO_SIGHTED,
+  NotificationTriggerType.LOOT_DRAW_RESOLVED,
   NotificationTriggerType.SCHEDULED_MESSAGE,
 ] as const;
 
@@ -21,7 +22,10 @@ type NotificationRuleGroupsProps = {
   empty: ReactNode;
 };
 
-/** Rules grouped by what triggers them: spawn reminders, hero sightings, then scheduled messages. */
+/**
+ * Rules grouped by what triggers them: spawn reminders, hero sightings, loot
+ * draws, then scheduled messages.
+ */
 export const NotificationRuleGroups = ({
   overview,
   rules,

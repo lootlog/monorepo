@@ -251,12 +251,13 @@ const validateScheduledRule = (
   }
 };
 
-const validateHeroSightingRule = (
+// A hero sighting and a loot draw each happen on one world, so their rules
+// watch one.
+const validateSingleWorld = (
   data: RuleFormData,
   issues: RuleFormIssues,
   t: Translator,
 ) => {
-  // A detector answer belongs to one world, so a hero rule watches one.
   if (!data.world || data.world === ALL_WORLDS_VALUE) {
     addIssue(
       issues,
@@ -264,6 +265,14 @@ const validateHeroSightingRule = (
       "world",
     );
   }
+};
+
+const validateHeroSightingRule = (
+  data: RuleFormData,
+  issues: RuleFormIssues,
+  t: Translator,
+) => {
+  validateSingleWorld(data, issues, t);
 
   if (
     data.npcLevelMin !== undefined &&
@@ -324,6 +333,10 @@ export const ruleFormSchema = (t: Translator, maxNpcCount: number) =>
 
         if (data.triggerType === NotificationTriggerType.HERO_SIGHTED) {
           validateHeroSightingRule(data, issues, t);
+        }
+
+        if (data.triggerType === NotificationTriggerType.LOOT_DRAW_RESOLVED) {
+          validateSingleWorld(data, issues, t);
         }
 
         return issues;

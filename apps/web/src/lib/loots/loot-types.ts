@@ -34,4 +34,5 @@ export const lootFromSnapshot = (snapshot: LootSnapshot): Loot => ({
   lootShare: lootShareFromEvent(snapshot.lootShare),
   submissions: snapshot.submissions && [...snapshot.submissions],
   likes: snapshot.likes ? [...snapshot.likes] : [],
+  standingDraws: snapshot.standingDraws ? [...snapshot.standingDraws] : [],
 });

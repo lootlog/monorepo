@@ -33,6 +33,7 @@ const SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES = [
   NotificationTriggerType.TIMER_BEFORE_SPAWN,
   NotificationTriggerType.SCHEDULED_MESSAGE,
   NotificationTriggerType.HERO_SIGHTED,
+  NotificationTriggerType.LOOT_DRAW_RESOLVED,
 ] as const;
 
 export const getNotificationTriggerTranslationKey = (
@@ -49,6 +50,8 @@ export const getNotificationTriggerTranslationKey = (
       return "settings.notifications.triggers.scheduledMessage";
     case NotificationTriggerType.HERO_SIGHTED:
       return "settings.notifications.triggers.heroSighted";
+    case NotificationTriggerType.LOOT_DRAW_RESOLVED:
+      return "settings.notifications.triggers.lootDrawResolved";
   }
 };
 
@@ -166,6 +169,16 @@ export const HERO_SIGHTING_PRESET_MINIMAL = "{{heroName}} - {{mapName}}";
 
 export const getDefaultHeroSightingContentTemplate = () =>
   HERO_SIGHTING_PRESET_SIMPLE;
+
+export const LOOT_DRAW_PRESET_SIMPLE =
+  "## Koło: {{itemName}}\n\n{{outcome}}\nZakręcił: **{{drawnBy}}** · Świat: **{{world}}**";
+
+export const LOOT_DRAW_PRESET_DETAILED =
+  "## 🎡 {{itemName}}\n\n{{outcome}}\n🐉 {{npcName}}\n🌍 {{world}}\n🎲 Zakręcił: {{drawnBy}}";
+
+export const LOOT_DRAW_PRESET_MINIMAL = "{{itemName}}: {{outcome}}";
+
+export const getDefaultLootDrawContentTemplate = () => LOOT_DRAW_PRESET_SIMPLE;
 
 export const getDefaultGuildNotificationRuleContentTemplate = () =>
   TIMER_PRESET_SIMPLE;

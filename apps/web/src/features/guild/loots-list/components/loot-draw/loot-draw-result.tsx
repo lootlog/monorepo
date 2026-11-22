@@ -19,14 +19,15 @@ export const LootDrawResult = ({
   draw,
   draws,
   spin,
-  canManage,
+  canVoid,
   onRevealed,
 }: {
   draw: LootDrawResponseDto;
   draws: ReturnType<typeof useLootDraws>;
   /** Spins the wheel to the result, for the draw the viewer just ran. */
   spin: boolean;
-  canManage: boolean;
+  /** Members who manage loots may overrule a result. */
+  canVoid: boolean;
   /** Called when a spin settles and the winner shows. */
   onRevealed?: () => void;
 }) => {
@@ -43,12 +44,13 @@ export const LootDrawResult = ({
           entrants={draw.entrants}
           ticketOrder={draw.ticketOrder}
           roll={draw.roll}
+          drawId={draw.id}
           spin={spin}
           onSettled={() => {
             setRevealed(true);
             onRevealed?.();
           }}
-          className="max-lg:max-w-48"
+          className="max-lg:max-w-64"
         />
       }
       entrantsCount={draw.entrants.length}
@@ -100,7 +102,7 @@ export const LootDrawResult = ({
         </div>
       }
       below={
-        canManage && revealed ? (
+        canVoid && revealed ? (
           <LootDrawVoidForm key={draw.id} draw={draw} draws={draws} />
         ) : undefined
       }

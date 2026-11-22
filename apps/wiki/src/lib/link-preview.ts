@@ -11,7 +11,7 @@ import {
 } from "@lootlog/domain/item-upgrade";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
 import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
-import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
+import { itemIconUrl } from "@lootlog/domain/margonem-cdn";
 import {
   ITEM_STAT_FOOTER_SECTIONS,
   mapStatsToDisplaySections,

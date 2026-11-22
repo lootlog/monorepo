@@ -66,6 +66,39 @@ describe("notification mentions", () => {
     expect(payload.allowedMentions).toBeUndefined();
   });
 
+  it("does not let a player name or void reason in a loot draw ping anyone", () => {
+    const payload = makeNotificationContent().buildLootDrawPayload({
+      notificationRule: {
+        id: 9,
+        name: "Koło",
+        triggerType: NotificationTriggerType.LOOT_DRAW_RESOLVED,
+        contentTemplate: null,
+      },
+      target: channel,
+      event: {
+        guildId: "guild-1",
+        world: "tarhuna",
+        lootId: 1,
+        outcome: "VOIDED",
+        item: { hid: "hid", name: "<@&123>", icon: "i.gif", lvl: 1 },
+        npcName: null,
+        draw: {
+          id: 1,
+          entrants: [
+            { name: "@everyone", prof: null, lvl: null, tickets: 1 },
+            { name: "Grimm", prof: null, lvl: null, tickets: 1 },
+          ],
+          winnerIndex: 0,
+          drawnBy: "@here",
+          voided: { by: "Wrona", reason: "<@&123>" },
+        },
+      },
+    });
+
+    expect(payload.content).toContain("@everyone");
+    expect(payload.allowedMentions).toBeUndefined();
+  });
+
   it("does not let a Member-named manual timer ping @here", () => {
     expect(manualTimer(null, "@here").allowedMentions).toBeUndefined();
   });

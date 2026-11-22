@@ -19,11 +19,13 @@ import {
   sum,
 } from "drizzle-orm";
 import { Effect, Schema } from "effect";
+import type { ProfessionEnum } from "@lootlog/schema/loot";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { containsPattern } from "#src/shared/sql-like";
 import {
   itemSnapshotTable,
   lootCommentTable,
+  lootDrawTable,
   lootLikeTable,
   lootItemTable,
   lootMapPlayerTable,
@@ -481,6 +483,38 @@ export const makeLootQueryPersistence = (
       )
       .orderBy(asc(lootLikeTable.createdAt), asc(lootLikeTable.memberId));
 
+  // The winner is the entrant the draw recorded, so a renamed player keeps
+  // the name the wheel showed.
+  const selectStandingDraws = (guildId: string, ids: ReadonlyArray<number>) =>
+    database
+      .select({
+        lootId: organizationLootRecordTable.lootId,
+        drawId: lootDrawTable.id,
+        itemHid: lootDrawTable.itemHid,
+        winnerName: sql<string>`${lootDrawTable.entrants} -> ${lootDrawTable.winnerIndex} ->> 'name'`,
+        winnerProf: sql<ProfessionEnum | null>`${lootDrawTable.entrants} -> ${lootDrawTable.winnerIndex} ->> 'prof'`,
+        winnerLvl: sql<
+          number | null
+        >`(${lootDrawTable.entrants} -> ${lootDrawTable.winnerIndex} ->> 'lvl')::int`,
+      })
+      .from(lootDrawTable)
+      .innerJoin(
+        organizationLootRecordTable,
+        eq(
+          organizationLootRecordTable.id,
+          lootDrawTable.organizationLootRecordId,
+        ),
+      )
+      .where(
+        and(
+          eq(organizationLootRecordTable.guildId, guildId),
+          isNull(organizationLootRecordTable.archivedAt),
+          inArray(organizationLootRecordTable.lootId, [...ids]),
+          isNull(lootDrawTable.voidedAt),
+        ),
+      )
+      .orderBy(asc(lootDrawTable.id));
+
   const hydrate = (guildId: string, lootIds: ReadonlyArray<number>) => {
     if (lootIds.length === 0) return Effect.succeed([]);
 
@@ -496,6 +530,7 @@ export const makeLootQueryPersistence = (
           selectCommentCounts(guildId, lootIds),
           selectMapPlayers(guildId, lootIds),
           selectLikes(guildId, lootIds),
+          selectStandingDraws(guildId, lootIds),
         ] as const,
         { concurrency: "unbounded" },
       ).pipe(
@@ -509,6 +544,7 @@ export const makeLootQueryPersistence = (
             commentCounts,
             mapPlayers,
             likes,
+            standingDraws,
           ]) => {
             const itemsByLoot = Map.groupBy(items, ({ lootId }) => lootId);
             const playersByLoot = Map.groupBy(players, ({ lootId }) => lootId);
@@ -526,6 +562,11 @@ export const makeLootQueryPersistence = (
             );
 
             const likesByLoot = Map.groupBy(likes, ({ lootId }) => lootId);
+
+            const drawsByLoot = Map.groupBy(
+              standingDraws,
+              ({ lootId }) => lootId,
+            );
 
             const commentsByLoot = new Map(
               commentCounts.map(
@@ -553,6 +594,15 @@ export const makeLootQueryPersistence = (
               likes: (likesByLoot.get(loot.id) ?? []).map(
                 ({ lootId: _lootId, ...member }) => member,
               ),
+              standingDraws: (drawsByLoot.get(loot.id) ?? []).map((draw) => ({
+                drawId: draw.drawId,
+                itemHid: draw.itemHid,
+                winner: {
+                  name: draw.winnerName,
+                  prof: draw.winnerProf,
+                  lvl: draw.winnerLvl,
+                },
+              })),
             }));
           },
         ),

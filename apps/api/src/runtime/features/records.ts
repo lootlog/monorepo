@@ -114,6 +114,13 @@ export const recordsServicesLive = Layer.effect(
       persistence: makeLootPersistence(database),
       query: lootQuery,
       redis,
+      publishDrawResolved: (event) =>
+        rabbit.publish(
+          eventMessage(
+            RabbitRoutingKey.NOTIFICATIONS_LOOT_DRAW_RESOLVED,
+            event,
+          ),
+        ),
     });
 
     const killStatsPersistence = makeKillStatsPersistence(database);

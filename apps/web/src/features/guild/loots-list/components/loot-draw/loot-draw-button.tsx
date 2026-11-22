@@ -5,32 +5,25 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import { LootDrawDialog } from "./loot-draw-dialog";
-import { useLootDraws } from "./use-loot-draws";
 
-/**
- * Opens a legendary item's draw: managers run it, everyone sees the
- * standing result, whose winner the button names.
- */
+/** Opens a legendary item's draw from its row, naming the standing winner. */
 export const LootDrawButton = ({
   loot,
   item,
-  canManage,
+  canVoid,
 }: {
   loot: Loot;
   item: Item;
-  canManage: boolean;
+  canVoid: boolean;
 }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const { drawsQuery } = useLootDraws(loot.id);
 
-  const standing = drawsQuery.data?.find(
-    (draw) => draw.itemHid === item.hid && draw.voided === null,
-  );
+  const winner = loot.standingDraws.find(
+    ({ itemHid }) => itemHid === item.hid,
+  )?.winner;
 
-  const winner = standing?.entrants[standing.winnerIndex];
-
-  if (!isLootDrawItem(item) || (!canManage && !winner)) return null;
+  if (!isLootDrawItem(item)) return null;
 
   return (
     <>
@@ -57,15 +50,13 @@ export const LootDrawButton = ({
           <Dices className="size-4" />
         </Button>
       )}
-      {open && (
-        <LootDrawDialog
-          loot={loot}
-          item={item}
-          canManage={canManage}
-          open={open}
-          onOpenChange={setOpen}
-        />
-      )}
+      <LootDrawDialog
+        loot={loot}
+        item={item}
+        canVoid={canVoid}
+        open={open}
+        onOpenChange={setOpen}
+      />
     </>
   );
 };

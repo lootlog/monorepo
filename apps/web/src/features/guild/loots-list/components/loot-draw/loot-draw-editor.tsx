@@ -122,7 +122,7 @@ export const LootDrawEditor = ({
           entrants={entrants}
           ticketOrder={ticketOrder}
           roll={null}
-          className="max-lg:max-w-48"
+          className="max-lg:max-w-64"
         />
       }
       wheelActions={

@@ -1,7 +1,7 @@
 import { cn } from "cn";
 import type { FC } from "react";
 
-import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
+import { itemIconUrl } from "@lootlog/domain/margonem-cdn";
 import type { DisplayItemRarity } from "@lootlog/domain/item-rarity";
 import { ITEM_RARITY_FRAME_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 

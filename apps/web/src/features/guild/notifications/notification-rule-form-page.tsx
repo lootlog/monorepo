@@ -40,6 +40,7 @@ export const NotificationRuleFormPage = () => {
     isSubmitting,
     isScheduledMessage,
     isHeroSighting,
+    isLootDraw,
     isTimerRule,
     maxNpcCount,
     npcSearch,
@@ -167,7 +168,9 @@ export const NotificationRuleFormPage = () => {
                   ? t("settings.notifications.ruleDialog.whenScheduledMessage")
                   : isHeroSighting
                     ? t("settings.notifications.ruleDialog.whenHeroSighting")
-                    : t("settings.notifications.ruleDialog.whenTimer")
+                    : isLootDraw
+                      ? t("settings.notifications.ruleDialog.whenLootDraw")
+                      : t("settings.notifications.ruleDialog.whenTimer")
               }
             >
               <NotificationNpcFields

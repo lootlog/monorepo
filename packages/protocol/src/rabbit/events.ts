@@ -15,6 +15,7 @@ import {
   DiscordNotificationDeliveryResultSchema,
   DiscordNotificationSendCommandSchema,
   LootCreatedNotificationEventV2Schema,
+  LootDrawResolvedNotificationEventSchema,
 } from "@lootlog/schema/notifications";
 import {
   CatalogItemObservation,
@@ -402,6 +403,8 @@ const canonicalRabbitEventSchemas = {
     GuildHeroSightingUpdated,
   [RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED]:
     LootCreatedNotificationEventV2Schema,
+  [RabbitRoutingKey.NOTIFICATIONS_LOOT_DRAW_RESOLVED]:
+    LootDrawResolvedNotificationEventSchema,
   [RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED]: NotificationTimerDeleted,
   [RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED]: NotificationTimerUpdated,
   [RabbitRoutingKey.PRESENCE_CHECK_REQUEST]: PresenceCheckRequested,

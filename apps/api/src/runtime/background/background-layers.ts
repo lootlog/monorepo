@@ -165,6 +165,9 @@ export const RabbitConsumers = Layer.effectDiscard(
     yield* consume(apiRabbitRoutes.lootCreated, (data) =>
       notificationEvents.handleLootCreated(data),
     );
+    yield* consume(apiRabbitRoutes.lootDrawResolved, (data) =>
+      notificationEvents.handleLootDrawResolved(data),
+    );
     yield* consume(
       apiRabbitRoutes.notificationsDeliveryResult,
       (data) => notificationEvents.handleDeliveryResult(data),

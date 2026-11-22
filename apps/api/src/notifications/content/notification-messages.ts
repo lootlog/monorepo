@@ -36,6 +36,34 @@ export const heroSightingMessage = (
   world: string,
 ) => `${heroName} — ${state.toLowerCase()}: ${mapName} (świat ${world}).`;
 
+export const DEFAULT_LOOT_DRAW_TEMPLATE = [
+  "## Koło: {{itemName}}",
+  "",
+  "{{outcome}}",
+  "Zakręcił: **{{drawnBy}}** · Świat: **{{world}}**",
+].join("\n");
+
+export const LOOT_DRAW_RESOLVED_TITLE = "Wynik koła";
+
+/** What happened to the draw, as the message's `{{outcome}}` says it. */
+export const lootDrawOutcomeLine = (
+  winnerName: string,
+  tickets: string,
+  voided: { readonly by: string; readonly reason: string } | null,
+) =>
+  voided
+    ? `Wynik unieważniony przez **${voided.by}** (wygrał ${winnerName}). Powód: ${voided.reason}`
+    : `Wygrywa **${winnerName}** (${tickets}).`;
+
+export const lootDrawMessage = (
+  itemName: string,
+  winnerName: string,
+  voided: boolean,
+) =>
+  voided
+    ? `Unieważniono wynik losowania ${itemName} (wygrał ${winnerName}).`
+    : `${itemName}: wygrywa ${winnerName}.`;
+
 export const TIMER_NOTIFICATION_TITLE = "Nadchodzacy spawn";
 
 export const SCHEDULED_MESSAGE_TITLE = "Zaplanowana wiadomosc";

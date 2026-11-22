@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Item } from "@/lib/loots/loot-types";
+import type { DecorateLootItem } from "./item-stack";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { cn } from "cn";
@@ -19,7 +19,7 @@ export const LootPresentation = ({
   onShowPlayerLoots,
   selectedPlayerNames = EMPTY_NAMES,
   selectedItemNames = EMPTY_NAMES,
-  renderItem,
+  decorateItem,
   showWorld = false,
 }: {
   loot: LootPresentationData;
@@ -27,7 +27,7 @@ export const LootPresentation = ({
   onShowPlayerLoots?: (name: string) => void;
   selectedPlayerNames?: string[];
   selectedItemNames?: string[];
-  renderItem?: (item: Item) => ReactNode;
+  decorateItem?: DecorateLootItem;
   /** Names the loot's world, for lists that span every world. */
   showWorld?: boolean;
 }) => {
@@ -54,7 +54,7 @@ export const LootPresentation = ({
         onShowPlayerLoots={onShowPlayerLoots}
         selectedPlayerNames={selectedPlayerNames}
         selectedItemNames={selectedItemNames}
-        renderItem={renderItem}
+        decorateItem={decorateItem}
       />
       <LootFooter
         world={showWorld ? loot.world : undefined}

@@ -328,6 +328,7 @@ describe("event wrapped summary", () => {
         makeEventWrappedStore(database),
         { getJson: () => Effect.succeed(null), setJson: () => Effect.void },
         makeLootsOperations({
+          publishDrawResolved: () => Effect.void,
           persistence: makeLootPersistence(database),
           query: makeLootQueryOperations(makeLootQueryPersistence(database)),
           redis: {

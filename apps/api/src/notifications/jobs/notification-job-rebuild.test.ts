@@ -27,6 +27,7 @@ import {
 } from "#src/database/drizzle/timer.schema";
 import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { makeNotificationContent } from "#src/notifications/content/notification-content.service";
+import type { LootDrawResolvedNotificationEvent } from "@lootlog/schema/notifications";
 import { makeNotificationEventStore } from "#src/notifications/delivery/notification-event.repository";
 import { makeNotificationsEvents } from "#src/notifications/delivery/notifications-events.handler";
 import {
@@ -197,6 +198,25 @@ const staleTimerJob = (
       world: "fobos",
       timerKey: `hero:${npcId}`,
     }),
+  });
+
+/** The event handlers that schedule instant jobs, over a seeded database. */
+const instantEvents = (
+  fixture: Awaited<ReturnType<typeof seedTimerNotifications>>,
+) =>
+  makeNotificationsEvents({
+    store: makeNotificationEventStore(fixture.database),
+    scheduler: fixture.scheduler,
+    matching: fixture.matching,
+    guildTargets: makeNotificationGuildTargets(
+      fixture.database,
+      { selectable: () => Effect.die("channels must not be listed") },
+      fixture.scheduler,
+    ),
+    findGuilds: () => Effect.succeed([]),
+    delivery: () => Effect.void,
+    rebuild: fixture.makeRebuild(false),
+    content: makeNotificationContent(),
   });
 
 describe("notification job rebuild", () => {
@@ -835,20 +855,7 @@ describe("notification job rebuild", () => {
     });
 
     try {
-      const events = makeNotificationsEvents({
-        store: makeNotificationEventStore(fixture.database),
-        scheduler: fixture.scheduler,
-        matching: fixture.matching,
-        guildTargets: makeNotificationGuildTargets(
-          fixture.database,
-          { selectable: () => Effect.die("channels must not be listed") },
-          fixture.scheduler,
-        ),
-        findGuilds: () => Effect.succeed([]),
-        delivery: () => Effect.void,
-        rebuild: fixture.makeRebuild(false),
-        content: makeNotificationContent(),
-      });
+      const events = instantEvents(fixture);
 
       const member = {
         memberId: 1,
@@ -907,6 +914,122 @@ describe("notification job rebuild", () => {
       // Target 3 is inactive, and rule 8 watches heroes from level 300.
       expect(jobs).toEqual([
         { targetId: 1, sourceEventId: "hero-sighting:41:SPAWNING" },
+      ]);
+    } finally {
+      await fixture.boundary.dispose();
+    }
+  });
+  it("announces a loot draw once for each outcome, only on its world", async () => {
+    const fixture = await seedTimerNotifications({
+      rules: [
+        createNotificationRuleFixture({
+          id: 7,
+          ownerType: "GUILD",
+          ownerId: "guild-1",
+          guildId: "guild-1",
+          world: "fobos",
+          triggerType: "LOOT_DRAW_RESOLVED",
+          filters: {},
+          contentTemplate: "{{itemName}}: {{outcome}}",
+        }),
+        createNotificationRuleFixture({
+          id: 8,
+          ownerType: "GUILD",
+          ownerId: "guild-1",
+          guildId: "guild-1",
+          world: "nomada",
+          triggerType: "LOOT_DRAW_RESOLVED",
+          filters: {},
+        }),
+      ],
+      links: [
+        { ruleId: 7, targetId: 1 },
+        { ruleId: 7, targetId: 3 },
+        { ruleId: 8, targetId: 2 },
+      ],
+      now: Date.now(),
+    });
+
+    try {
+      const events = instantEvents(fixture);
+
+      const drawn: LootDrawResolvedNotificationEvent = {
+        guildId: "guild-1",
+        world: "fobos",
+        lootId: 77,
+        outcome: "DRAWN",
+        item: {
+          hid: "hid",
+          name: "Ślepie demona",
+          icon: "nas/1.gif",
+          lvl: 200,
+        },
+        npcName: "Tytan Ognia",
+        draw: {
+          id: 5,
+          entrants: [
+            { name: "Kaliandra", prof: "MAGE", lvl: 251, tickets: 3 },
+            { name: "Grimm", prof: "WARRIOR", lvl: 248, tickets: 1 },
+          ],
+          winnerIndex: 1,
+          drawnBy: "Wrona",
+          voided: null,
+        },
+      };
+
+      // A redelivered draw is the same news.
+      await fixture.boundary.run(events.handleLootDrawResolved(drawn));
+      await fixture.boundary.run(events.handleLootDrawResolved(drawn));
+      await fixture.boundary.run(
+        events.handleLootDrawResolved({
+          ...drawn,
+          outcome: "VOIDED",
+          draw: { ...drawn.draw, voided: { by: "Wrona", reason: "Wróg" } },
+        }),
+      );
+
+      const jobs = await fixture.boundary.run(
+        fixture.database
+          .select({
+            targetId: notificationJobTable.targetId,
+            sourceEntityType: notificationJobTable.sourceEntityType,
+            sourceEventId: notificationJobTable.sourceEventId,
+            payloadSnapshot: notificationJobTable.payloadSnapshot,
+          })
+          .from(notificationJobTable)
+          .orderBy(asc(notificationJobTable.sourceEventId)),
+      );
+
+      // Target 3 is inactive, and rule 8 watches another world.
+      expect(
+        jobs.map(({ targetId, sourceEntityType, sourceEventId }) => ({
+          targetId,
+          sourceEntityType,
+          sourceEventId,
+        })),
+      ).toEqual([
+        {
+          targetId: 1,
+          sourceEntityType: "loot-draw",
+          sourceEventId: "loot-draw:5:DRAWN",
+        },
+        {
+          targetId: 1,
+          sourceEntityType: "loot-draw",
+          sourceEventId: "loot-draw:5:VOIDED",
+        },
+      ]);
+      // Each message tells its own outcome and keeps the draw for its image.
+      expect(jobs.map(({ payloadSnapshot }) => payloadSnapshot)).toEqual([
+        expect.objectContaining({
+          content: "Ślepie demona: Wygrywa **Grimm** (1 los).",
+          lootDraw: expect.objectContaining({ outcome: "DRAWN" }),
+        }),
+        expect.objectContaining({
+          content:
+            "Ślepie demona: Wynik unieważniony przez **Wrona** (wygrał Grimm). Powód: Wróg",
+          lootDraw: expect.objectContaining({ outcome: "VOIDED" }),
+        }),
       ]);
     } finally {
       await fixture.boundary.dispose();

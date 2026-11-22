@@ -1,6 +1,9 @@
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
-import { MAX_LOOT_DRAW_TICKETS } from "@lootlog/domain/loot-draw";
+import {
+  lootDrawTicketShare,
+  MAX_LOOT_DRAW_TICKETS,
+} from "@lootlog/domain/loot-draw";
 import { Minus, Plus, Trophy, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatRosterPlayerDetail } from "@/features/guild/loots-list/components/loots-list/format-roster-player-detail";
@@ -43,10 +46,7 @@ export const LootDrawEntrantRow = ({
   const { t } = useTranslation();
   const detail = formatRosterPlayerDetail(t, entrant);
 
-  const percent =
-    totalTickets > 0
-      ? Math.round((entrant.tickets / totalTickets) * 1000) / 10
-      : 0;
+  const percent = lootDrawTicketShare(entrant.tickets, totalTickets);
 
   return (
     <li

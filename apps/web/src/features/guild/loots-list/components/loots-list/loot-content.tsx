@@ -3,7 +3,7 @@ import { LootUnassignedItems } from "./loot-unassigned-items";
 import type { ItemsByPlayer } from "./build-loot-presentation";
 import type { Loot, Item } from "@/lib/loots/loot-types";
 import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
-import type { ReactNode } from "react";
+import type { DecorateLootItem } from "./item-stack";
 import { cn } from "cn";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { LOOT_PLAYERS_ROW_CLASS } from "./loot-players-row";
@@ -16,7 +16,7 @@ export const LootContent = ({
   onShowPlayerLoots,
   selectedPlayerNames,
   selectedItemNames,
-  renderItem,
+  decorateItem,
 }: {
   sortedPlayers: Loot["players"];
   itemsByPlayer: ItemsByPlayer;
@@ -25,7 +25,7 @@ export const LootContent = ({
   onShowPlayerLoots?: (playerName: string) => void;
   selectedPlayerNames: string[];
   selectedItemNames: string[];
-  renderItem?: (item: Item) => ReactNode;
+  decorateItem?: DecorateLootItem;
 }) => {
   const selectedNames = new Set(selectedPlayerNames);
 
@@ -53,7 +53,7 @@ export const LootContent = ({
             hasPlayerFilter={selectedPlayerNames.length > 0}
             isPlayerSelected={selectedNames.has(player.name)}
             selectedItemNames={selectedItemNames}
-            renderItem={renderItem}
+            decorateItem={decorateItem}
           />
         ))}
       </div>
@@ -61,7 +61,7 @@ export const LootContent = ({
         items={unassignedItems}
         watchContext={watchContext}
         selectedItemNames={selectedItemNames}
-        renderItem={renderItem}
+        decorateItem={decorateItem}
       />
     </div>
   );

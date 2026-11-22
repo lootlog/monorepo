@@ -10,6 +10,8 @@ import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
 import { LootItemStackLootIdContext } from "./loot-item-stack-context";
 import { LegendarySparks } from "./legendary-sparks";
+import { isLootDrawItem } from "@lootlog/domain/loot-draw";
+import { LootItemDraw } from "@/features/guild/loots-list/components/loot-draw/loot-item-draw";
 
 type Props = {
   loot: Loot;
@@ -50,6 +52,15 @@ export const LootsListItem = ({
         <LootPresentation
           loot={loot}
           headerActions=<LootHeaderActions loot={loot} />
+          decorateItem={(item, tile) =>
+            isLootDrawItem(item) ? (
+              <LootItemDraw loot={loot} item={item}>
+                {tile}
+              </LootItemDraw>
+            ) : (
+              tile
+            )
+          }
           onShowPlayerLoots={(playerName) =>
             setFilters({ players: [playerName] })
           }

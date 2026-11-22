@@ -20,6 +20,9 @@ import { discordRoleCssColor } from "@lootlog/domain/member-display-role";
 import {
   HERO_SIGHTING_PRESET_DETAILED,
   HERO_SIGHTING_PRESET_MINIMAL,
+  LOOT_DRAW_PRESET_DETAILED,
+  LOOT_DRAW_PRESET_MINIMAL,
+  LOOT_DRAW_PRESET_SIMPLE,
   HERO_SIGHTING_PRESET_SIMPLE,
   SCHEDULED_PRESET_MINIMAL,
   SCHEDULED_PRESET_SIMPLE,
@@ -304,11 +307,31 @@ export const useNotificationTemplateEditor = ({
     },
   ];
 
+  const lootDrawPresets = [
+    {
+      key: "simple",
+      label: t("settings.notifications.templateEditor.presets.simple"),
+      value: LOOT_DRAW_PRESET_SIMPLE,
+    },
+    {
+      key: "detailed",
+      label: t("settings.notifications.templateEditor.presets.detailed"),
+      value: LOOT_DRAW_PRESET_DETAILED,
+    },
+    {
+      key: "minimal",
+      label: t("settings.notifications.templateEditor.presets.minimal"),
+      value: LOOT_DRAW_PRESET_MINIMAL,
+    },
+  ];
+
   const templatePresets = isScheduledMessage
     ? scheduledMessagePresets
     : triggerType === NotificationTriggerType.HERO_SIGHTED
       ? heroSightingPresets
-      : timerPresets;
+      : triggerType === NotificationTriggerType.LOOT_DRAW_RESOLVED
+        ? lootDrawPresets
+        : timerPresets;
 
   const handleEditorKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!activeSuggestion || filteredSuggestions.length === 0) {

@@ -121,6 +121,12 @@ export const apiRabbitRoutes = {
     RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED,
     { failure: "retry", rejectToRetryQueue: false },
   ),
+  // Instant jobs keyed by the draw and its outcome: a redelivery sends once.
+  lootDrawResolved: consumerRoute(
+    "backend-notifications-loot-draw-resolved",
+    RabbitRoutingKey.NOTIFICATIONS_LOOT_DRAW_RESOLVED,
+    { failure: "retry" },
+  ),
 };
 
 export const ApiRabbitLive = Layer.unwrap(

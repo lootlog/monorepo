@@ -64,6 +64,7 @@ export const RabbitRoutingKey = {
   NOTIFICATIONS_DISCORD_SEND: "notifications.discord.send",
   NOTIFICATIONS_HERO_SIGHTING_UPDATED: "notifications.hero-sighting.updated",
   NOTIFICATIONS_LOOT_CREATED: "notifications.loot.created",
+  NOTIFICATIONS_LOOT_DRAW_RESOLVED: "notifications.loot-draw.resolved",
   NOTIFICATIONS_TIMER_DELETED: "notifications.timer.deleted",
   NOTIFICATIONS_TIMER_UPDATED: "notifications.timer.updated",
   GAME_CHARACTER_OFFLINE: "game.character.offline",

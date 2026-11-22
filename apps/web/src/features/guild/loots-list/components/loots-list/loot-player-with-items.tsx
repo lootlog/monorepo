@@ -1,9 +1,8 @@
 import { PlayerTile } from "@/components/tiles/player-tile";
-import { ItemStack } from "./item-stack";
+import { ItemStack, type DecorateLootItem } from "./item-stack";
 import { cn } from "cn";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
-import type { ReactNode } from "react";
 
 export const LootPlayerWithItems = ({
   player,
@@ -13,7 +12,7 @@ export const LootPlayerWithItems = ({
   hasPlayerFilter,
   isPlayerSelected,
   selectedItemNames,
-  renderItem,
+  decorateItem,
 }: {
   player: Loot["players"][number];
   items: Item[];
@@ -22,7 +21,7 @@ export const LootPlayerWithItems = ({
   hasPlayerFilter: boolean;
   isPlayerSelected: boolean;
   selectedItemNames: string[];
-  renderItem?: (item: Item) => ReactNode;
+  decorateItem?: DecorateLootItem;
 }) => (
   <div className="flex flex-col items-center gap-0.5">
     <PlayerTile
@@ -42,7 +41,7 @@ export const LootPlayerWithItems = ({
     />
     <ItemStack
       playerId={player.id}
-      renderItem={renderItem}
+      decorateItem={decorateItem}
       items={items}
       watchContext={watchContext}
       selectedItemNames={selectedItemNames}
