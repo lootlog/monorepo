@@ -108,6 +108,10 @@ export const text = {
   filterAnyStatus: "Wszyscy",
   filterBanned: "Zbanowani",
   filterNotBanned: "Bez bana",
+  filterAura: "Aura",
+  filterAnyAura: "Dowolna",
+  filterWithAura: "Z aurą",
+  filterWithoutAura: "Bez aury",
   filterApply: "Filtruj",
   filterClear: "Wyczyść",
 

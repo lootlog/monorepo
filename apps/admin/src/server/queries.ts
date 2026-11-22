@@ -1,6 +1,7 @@
 import {
   type AdminAuditEntry,
   type AdminControllerListUsersParams,
+  type AdminUsersResponse,
   adminControllerGetUser,
   adminControllerListAudit,
   adminControllerListUsers,
@@ -12,8 +13,10 @@ import { PlatformRole } from "@lootlog/schema/platform-roles";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { Predicate, Schema } from "effect";
+import type { AuraRefusal } from "@/lib/aura-action";
 import { UserActionRequest } from "@/lib/user-action";
 import { asPanel } from "./auth-api.js";
+import { listAuraHolderIds } from "./character-auras.js";
 import { adminConfig } from "./config.js";
 import { runUserAction } from "./user-actions.js";
 
@@ -51,8 +54,12 @@ const UsersInput = Schema.Struct({
   search: Schema.optional(Schema.String),
   role: Schema.optional(PlatformRole),
   banned: Schema.optional(Schema.Boolean),
+  aura: Schema.optional(Schema.Boolean),
   page: Page,
 });
+
+/** A page of the user list, or why the API would not name aura holders. */
+type UsersPage = AdminUsersResponse & { readonly auraRefusal?: AuraRefusal };
 
 /** Who is operating the panel, or why the auth service lets nobody in. */
 export type OperatorAccess =
@@ -91,7 +98,7 @@ export const getOverview = createServerFn({ method: "GET" }).handler(() =>
 
 export const listUsers = createServerFn({ method: "GET" })
   .validator(Schema.decodeUnknownSync(UsersInput))
-  .handler(({ data }) => {
+  .handler(async ({ data }): Promise<UsersPage> => {
     const params: AdminControllerListUsersParams = {
       limit: `${USERS_PAGE_SIZE}`,
       offset: `${(data.page - 1) * USERS_PAGE_SIZE}`,
@@ -102,6 +109,21 @@ export const listUsers = createServerFn({ method: "GET" })
     if (data.role) params.role = data.role;
 
     if (data.banned !== undefined) params.banned = `${data.banned}`;
+
+    if (data.aura !== undefined) {
+      // The API owns the grants, so it names their holders first.
+      const holders = await listAuraHolderIds();
+
+      if (holders.status !== "ok")
+        return { users: [], total: 0, auraRefusal: holders.status };
+
+      // An empty list in the address would read as no filter at all.
+      if (data.aura && holders.value.length === 0)
+        return { users: [], total: 0 };
+
+      if (data.aura) params.userIds = [...holders.value];
+      else params.excludedUserIds = [...holders.value];
+    }
 
     return adminControllerListUsers(params, asPanel());
   });

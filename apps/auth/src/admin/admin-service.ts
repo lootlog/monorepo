@@ -22,6 +22,7 @@ import {
   ilike,
   inArray,
   isNull,
+  notInArray,
   or,
   sql,
 } from "drizzle-orm";
@@ -474,6 +475,12 @@ export class AdminService extends Context.Service<
                   eq(authUsers.discordId, search),
                 ),
             input.role === undefined ? undefined : holdsRole(input.role),
+            input.userIds === undefined
+              ? undefined
+              : inArray(authUsers.id, [...input.userIds]),
+            input.excludedUserIds === undefined
+              ? undefined
+              : notInArray(authUsers.id, [...input.excludedUserIds]),
             input.banned === undefined
               ? undefined
               : input.banned

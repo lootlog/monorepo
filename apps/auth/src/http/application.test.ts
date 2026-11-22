@@ -364,16 +364,22 @@ describe("Auth HttpApi contract", () => {
       });
 
       const users = await caller.run(
-        new Request("http://localhost/admin/users?banned=true&limit=10", {
-          headers: adminCaller,
-        }),
+        new Request(
+          "http://localhost/admin/users?banned=true&limit=10&userIds=user-1&excludedUserIds=user-2&excludedUserIds=user-3",
+          {
+            headers: adminCaller,
+          },
+        ),
       );
 
       expect(users.status).toBe(200);
       expect(users.headers.get("cache-control")).toBe("no-store");
       expect(await users.json()).toEqual({ users: [], total: 0 });
+      // A single id arrives as a list, like several.
       expect(caller.listUsers).toHaveBeenCalledWith({
         banned: true,
+        userIds: ["user-1"],
+        excludedUserIds: ["user-2", "user-3"],
         limit: 10,
       });
     } finally {

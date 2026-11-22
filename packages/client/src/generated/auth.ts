@@ -479,6 +479,16 @@ search?: string;
 role?: AdminControllerListUsersRole;
 banned?: AdminControllerListUsersBanned;
 /**
+ * @maxItems 500
+ * @items.minLength 1
+ */
+userIds?: string[];
+/**
+ * @maxItems 500
+ * @items.minLength 1
+ */
+excludedUserIds?: string[];
+/**
  * @pattern ^[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[Ee][+-]?\d+)?$
  */
 limit?: string;
@@ -1930,6 +1940,14 @@ export const getAdminControllerListUsersUrl = (params?: AdminControllerListUsers
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["userIds","excludedUserIds"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
 
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : String(value))

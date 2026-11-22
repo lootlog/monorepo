@@ -14048,6 +14048,51 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdateOwnCharacterAuraDto"
         required: true
+  /character-auras/grants:
+    get:
+      tags:
+        - character-auras
+      operationId: CharacterAurasController_listGrantHolders
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: CharacterAuraGrantHoldersResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterAuraGrantHoldersResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: List every user holding the grant of auras in general or a personal aura, with what they hold. Global chat admins only
+      summary: List character aura grant holders
   /character-auras/grants/game-accounts/{gameAccountId}:
     get:
       tags:
@@ -14376,6 +14421,41 @@ components:
         - admin
         - granted
         - personalAuraIds
+      additionalProperties: false
+    CharacterAuraGrantHoldersResponseDto:
+      type: object
+      properties:
+        holders:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+              granted:
+                type: boolean
+              personalAuraIds:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - skyborne
+                    - joker
+                    - nightowl
+                    - sunder
+                    - fortyfour
+                    - thirteenth
+                    - ninepins
+                    - threefaces
+                    - twineyes
+                    - tulipwind
+            required:
+              - userId
+              - granted
+              - personalAuraIds
+            additionalProperties: false
+      required:
+        - holders
       additionalProperties: false
     OwnCharacterAuraResponseDto:
       type: object

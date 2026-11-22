@@ -279,6 +279,14 @@ describe("character auras", () => {
       granted: true,
       personalAuraIds: ["joker"],
     });
+    expect(await run((data) => data.listGrantHolders("admin"))).toEqual({
+      holders: [
+        { userId: "player", granted: true, personalAuraIds: ["joker"] },
+      ],
+    });
+    expect(
+      (await run((data) => Effect.flip(data.listGrantHolders("player"))))._tag,
+    ).toBe("CharacterAuraAccessDenied");
     await run((data) =>
       Effect.all([
         data.updateOwnAura("player", character("101"), "frost"),
@@ -310,6 +318,9 @@ describe("character auras", () => {
       admin: false,
       granted: false,
       personalAuraIds: [],
+    });
+    expect(await run((data) => data.listGrantHolders("admin"))).toEqual({
+      holders: [],
     });
     expect(await run((data) => data.getOwnAura("player"))).toEqual({
       auras: [],

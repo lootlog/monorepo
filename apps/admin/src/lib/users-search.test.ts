@@ -9,6 +9,7 @@ describe("validateUsersSearch", () => {
       search: " kuchar ",
       role: "any",
       banned: "",
+      aura: "any",
       page: "abc",
     });
 
@@ -16,6 +17,7 @@ describe("validateUsersSearch", () => {
       search: "kuchar",
       role: undefined,
       banned: undefined,
+      aura: undefined,
       page: undefined,
     });
     expect(Object.hasOwn(search, "role")).toBe(true);

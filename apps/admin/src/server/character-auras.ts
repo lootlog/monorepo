@@ -1,6 +1,7 @@
 import {
   type CharacterAuraGrantsResponseDto,
   characterAurasControllerGetGrants,
+  characterAurasControllerListGrantHolders,
   characterAurasControllerGrantAuras,
   characterAurasControllerGrantPersonalAura,
   characterAurasControllerRevokeAuras,
@@ -16,7 +17,7 @@ import {
 import { GAME_ACCOUNT_ID } from "@/lib/margonem-account";
 import { asOperator } from "./lootlog-api.js";
 
-type AuraResult<A> =
+export type AuraResult<A> =
   | { readonly status: "ok"; readonly value: A }
   | { readonly status: AuraRefusal };
 
@@ -36,6 +37,20 @@ const settle = async <A>(request: Promise<A>): Promise<AuraResult<A>> => {
 
     throw error;
   }
+};
+
+/** The Users holding an aura grant, in general or a personal one. */
+export const listAuraHolderIds = async () => {
+  const result = await settle(
+    characterAurasControllerListGrantHolders(asOperator()),
+  );
+
+  return result.status === "ok"
+    ? {
+        status: result.status,
+        value: result.value.holders.map((holder) => holder.userId),
+      }
+    : result;
 };
 
 const runAuraAction = (gameAccountId: string, action: AuraAction) => {

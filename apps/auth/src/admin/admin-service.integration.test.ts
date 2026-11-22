@@ -340,6 +340,22 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
     expect(users.map(({ id, roles }) => ({ id, roles }))).toEqual([
       { id: plain.id, roles: [] },
     ]);
+
+    // The panel narrows the list to the Users another service names.
+    const listed = async (query: {
+      userIds?: ReadonlyArray<string>;
+      excludedUserIds?: ReadonlyArray<string>;
+    }) =>
+      (await admin((service) => service.listUsers(query))).users
+        .map(({ id }) => id)
+        .filter((id) => id === plain.id || id === moderator.id)
+        .sort();
+
+    expect(await listed({ userIds: [plain.id] })).toEqual([plain.id]);
+    expect(await listed({ userIds: [] })).toEqual([]);
+    expect(await listed({ excludedUserIds: [plain.id] })).toEqual([
+      moderator.id,
+    ]);
   });
 
   it("lists a role's holders, admins among them, only to the internal service credential", async () => {

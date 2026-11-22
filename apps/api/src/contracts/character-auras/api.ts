@@ -9,6 +9,7 @@ import {
 import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import {
   CharacterAuraGameAccountParams,
+  CharacterAuraGrantHoldersResponse,
   CharacterAuraGrantsResponse,
   CharacterAurasResponse,
   OwnCharacterAuraResponse,
@@ -56,6 +57,21 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     .annotate(
       OpenApi.Description,
       "Choose the aura one Margonem character of the authenticated user wears, or remove it with null; fails with 403 when choosing one without access to auras, a personal aura not granted to the user, or for a character on an account the user did not prove to play",
+    ),
+  HttpApiEndpoint.get(
+    "CharacterAurasControllerListGrantHolders",
+    "/character-auras/grants",
+    {
+      success: CharacterAuraGrantHoldersResponse,
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "CharacterAurasController_listGrantHolders")
+    .annotate(OpenApi.Summary, "List character aura grant holders")
+    .annotate(
+      OpenApi.Description,
+      "List every user holding the grant of auras in general or a personal aura, with what they hold. Global chat admins only",
     ),
   HttpApiEndpoint.get(
     "CharacterAurasControllerGetGrants",

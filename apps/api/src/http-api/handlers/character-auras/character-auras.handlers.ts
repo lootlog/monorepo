@@ -68,6 +68,11 @@ export const CharacterAurasHandlers = HttpApiBuilder.group(
           ),
         ),
       )
+      .handle("CharacterAurasControllerListGrantHolders", () =>
+        toHttpResponse(
+          withUser((data, userId) => data.listGrantHolders(userId)),
+        ),
+      )
       .handle("CharacterAurasControllerGetGrants", ({ params }) =>
         toHttpResponse(
           withUser((data, userId) =>

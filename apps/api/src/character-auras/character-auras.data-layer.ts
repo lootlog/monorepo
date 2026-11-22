@@ -430,6 +430,44 @@ export const makeCharacterAurasData = (
           return yield* getOwnAura(userId);
         }),
       // Read from the tables: an operator checks a change they just made.
+      listGrantHolders: (callerUserId) =>
+        Effect.gen(function* () {
+          if (!admins.has(callerUserId)) return yield* accessDenied();
+
+          const [granted, personalGrants] = yield* Effect.all([
+            database
+              .select({ userId: userCharacterAuraGrantTable.userId })
+              .from(userCharacterAuraGrantTable),
+            database
+              .select({
+                userId: userPersonalCharacterAuraGrantTable.userId,
+                auraId: userPersonalCharacterAuraGrantTable.auraId,
+              })
+              .from(userPersonalCharacterAuraGrantTable),
+          ]).pipe(Effect.mapError(operationError));
+
+          const grantedUserIds = new Set(granted.map((row) => row.userId));
+
+          const personal = Map.groupBy(personalGrants, (row) => row.userId);
+
+          const userIds = new Set([...grantedUserIds, ...personal.keys()]);
+
+          return {
+            holders: [...userIds].toSorted().map((userId) => {
+              const held = new Set(
+                personal.get(userId)?.map((row) => row.auraId),
+              );
+
+              return {
+                userId,
+                granted: grantedUserIds.has(userId),
+                personalAuraIds: PERSONAL_CHARACTER_AURA_IDS.filter((auraId) =>
+                  held.has(auraId),
+                ),
+              };
+            }),
+          };
+        }),
       getGrants: (callerUserId, gameAccountId) =>
         Effect.gen(function* () {
           const userId = yield* grantTarget(callerUserId, gameAccountId);

@@ -831,6 +831,24 @@ paths:
               - "true"
               - "false"
           required: false
+        - name: userIds
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              minLength: 1
+            maxItems: 500
+          required: false
+        - name: excludedUserIds
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              minLength: 1
+            maxItems: 500
+          required: false
         - name: limit
           in: query
           schema:

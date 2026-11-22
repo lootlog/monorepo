@@ -5,6 +5,8 @@ export type UsersSearch = {
   search?: string | undefined;
   role?: PlatformRole | undefined;
   banned?: "yes" | "no" | undefined;
+  /** Whether the User holds an aura grant: in general or a personal one. */
+  aura?: "yes" | "no" | undefined;
   page?: number | undefined;
 };
 
@@ -21,7 +23,7 @@ const readText = read(
 
 const readRole = read(PlatformRole);
 
-const readBanned = read(Schema.Literals(["yes", "no"]));
+const readYesNo = read(Schema.Literals(["yes", "no"]));
 
 // The first page carries no number, so a link to it stays clean.
 const readPageText = read(
@@ -57,10 +59,12 @@ export const validateUsersSearch = (search: {
   search?: unknown;
   role?: unknown;
   banned?: unknown;
+  aura?: unknown;
   page?: unknown;
 }): UsersSearch => ({
   search: readText(search.search),
   role: readRole(search.role),
-  banned: readBanned(search.banned),
+  banned: readYesNo(search.banned),
+  aura: readYesNo(search.aura),
   page: readPage(search.page),
 });

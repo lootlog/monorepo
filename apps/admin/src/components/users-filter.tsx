@@ -31,6 +31,12 @@ const statusItems = [
   { value: "no", label: text.filterNotBanned },
 ];
 
+const auraItems = [
+  { value: ANY, label: text.filterAnyAura },
+  { value: "yes", label: text.filterWithAura },
+  { value: "no", label: text.filterWithoutAura },
+];
+
 /** The user list filters: a form that puts them in the address bar. */
 export function UsersFilter({ search }: { search: UsersSearch }) {
   return (
@@ -38,9 +44,9 @@ export function UsersFilter({ search }: { search: UsersSearch }) {
       method="get"
       action="/"
       role="search"
-      className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-2 md:items-end xl:grid-cols-[minmax(0,1fr)_16rem_10rem_auto]"
+      className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-3 md:items-end xl:grid-cols-[minmax(0,1fr)_16rem_10rem_10rem_auto]"
     >
-      <div className="grid gap-1.5 md:col-span-2 xl:col-span-1">
+      <div className="grid gap-1.5 md:col-span-3 xl:col-span-1">
         <Label htmlFor="filter-search">{text.filterSearch}</Label>
         <Input
           id="filter-search"
@@ -85,7 +91,22 @@ export function UsersFilter({ search }: { search: UsersSearch }) {
           </SelectContent>
         </Select>
       </div>
-      <div className="flex gap-2">
+      <div className="grid gap-1.5">
+        <Label htmlFor="filter-aura">{text.filterAura}</Label>
+        <Select name="aura" items={auraItems} defaultValue={search.aura ?? ANY}>
+          <SelectTrigger id="filter-aura" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {auraItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex gap-2 md:col-span-3 xl:col-span-1">
         <Button type="submit">{text.filterApply}</Button>
         <Link to="/" className={buttonVariants({ variant: "outline" })}>
           {text.filterClear}

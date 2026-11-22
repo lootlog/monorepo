@@ -76,11 +76,19 @@ export type AdminAuditEntry = typeof AdminAuditEntry.Type;
 
 export const AdminUserParams = Schema.Struct({ id: Schema.NonEmptyString });
 
+const UserIds = Schema.Array(Schema.NonEmptyString).check(
+  Schema.isMaxLength(500),
+);
+
 export const AdminUsersQuery = Schema.Struct({
   /** Part of a name or email, or a whole User or Discord id. */
   search: Schema.optionalKey(Schema.String.check(Schema.isMaxLength(100))),
   role: Schema.optionalKey(PlatformRole),
   banned: Schema.optionalKey(Schema.Boolean),
+  /** Only these Users, such as the holders of a grant another service owns. */
+  userIds: Schema.optionalKey(UserIds),
+  /** Every User but these. */
+  excludedUserIds: Schema.optionalKey(UserIds),
   limit: Schema.optionalKey(PageSize.annotate({ default: 25 })),
   offset: Schema.optionalKey(NonNegativeSafeInteger.annotate({ default: 0 })),
 });

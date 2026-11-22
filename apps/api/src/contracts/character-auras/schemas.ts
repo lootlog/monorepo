@@ -60,6 +60,20 @@ export const CharacterAuraGrantsResponse = Schema.Struct({
 export type CharacterAuraGrantsResponse =
   typeof CharacterAuraGrantsResponse.Type;
 
+export const CharacterAuraGrantHoldersResponse = Schema.Struct({
+  /** Every User holding the grant of auras or a personal aura. */
+  holders: Schema.Array(
+    Schema.Struct({
+      userId: Schema.String,
+      granted: Schema.Boolean,
+      personalAuraIds: Schema.Array(PersonalCharacterAuraIdSchema),
+    }),
+  ),
+}).annotate({ identifier: "CharacterAuraGrantHoldersResponseDto" });
+
+export type CharacterAuraGrantHoldersResponse =
+  typeof CharacterAuraGrantHoldersResponse.Type;
+
 export const CharacterAurasResponse = Schema.Struct({
   auras: Schema.Array(CharacterAuraResponse),
 }).annotate({ identifier: "CharacterAurasResponseDto" });

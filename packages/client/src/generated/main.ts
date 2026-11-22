@@ -99,6 +99,32 @@ export interface CharacterAuraGrantsResponseDto {
   personalAuraIds: CharacterAuraGrantsResponseDtoPersonalAuraIdsItem[];
 }
 
+export type CharacterAuraGrantHoldersResponseDtoHoldersItemPersonalAuraIdsItem = typeof CharacterAuraGrantHoldersResponseDtoHoldersItemPersonalAuraIdsItem[keyof typeof CharacterAuraGrantHoldersResponseDtoHoldersItemPersonalAuraIdsItem];
+
+
+export const CharacterAuraGrantHoldersResponseDtoHoldersItemPersonalAuraIdsItem = {
+  skyborne: 'skyborne',
+  joker: 'joker',
+  nightowl: 'nightowl',
+  sunder: 'sunder',
+  fortyfour: 'fortyfour',
+  thirteenth: 'thirteenth',
+  ninepins: 'ninepins',
+  threefaces: 'threefaces',
+  twineyes: 'twineyes',
+  tulipwind: 'tulipwind',
+} as const;
+
+export type CharacterAuraGrantHoldersResponseDtoHoldersItem = {
+  userId: string;
+  granted: boolean;
+  personalAuraIds: CharacterAuraGrantHoldersResponseDtoHoldersItemPersonalAuraIdsItem[];
+};
+
+export interface CharacterAuraGrantHoldersResponseDto {
+  holders: CharacterAuraGrantHoldersResponseDtoHoldersItem[];
+}
+
 export type OwnCharacterAuraResponseDtoPersonalAuraIdsItem = typeof OwnCharacterAuraResponseDtoPersonalAuraIdsItem[keyof typeof OwnCharacterAuraResponseDtoPersonalAuraIdsItem];
 
 
@@ -38850,6 +38876,150 @@ export const useCharacterAurasControllerUpdateOwnAura = <TError = ErrorType<Requ
       > => {
       return useMutation(getCharacterAurasControllerUpdateOwnAuraMutationOptions(options), queryClient);
     }
+
+export const getCharacterAurasControllerListGrantHoldersUrl = () => {
+
+
+
+
+  return `/character-auras/grants`
+}
+
+/**
+ * List every user holding the grant of auras in general or a personal aura, with what they hold. Global chat admins only
+ * @summary List character aura grant holders
+ */
+export const characterAurasControllerListGrantHolders = async ( options?: Parameters<typeof mainFetch>[1]): Promise<CharacterAuraGrantHoldersResponseDto> => {
+
+  return mainFetch<CharacterAuraGrantHoldersResponseDto>(getCharacterAurasControllerListGrantHoldersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCharacterAurasControllerListGrantHoldersQueryKey = () => {
+    return [
+    `/character-auras/grants`
+    ] as const;
+    }
+
+
+export const getCharacterAurasControllerListGrantHoldersQueryOptions = <TData = Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCharacterAurasControllerListGrantHoldersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>> = ({ signal }) => characterAurasControllerListGrantHolders({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CharacterAurasControllerListGrantHoldersQueryResult = NonNullable<Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>>
+export type CharacterAurasControllerListGrantHoldersQueryError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+
+
+export function useCharacterAurasControllerListGrantHolders<TData = Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>,
+          TError,
+          Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCharacterAurasControllerListGrantHolders<TData = Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>,
+          TError,
+          Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCharacterAurasControllerListGrantHolders<TData = Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List character aura grant holders
+ */
+
+export function useCharacterAurasControllerListGrantHolders<TData = Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCharacterAurasControllerListGrantHoldersQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List character aura grant holders
+ */
+export const prefetchCharacterAurasControllerListGrantHoldersQuery = async <TData = Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getCharacterAurasControllerListGrantHoldersQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useCharacterAurasControllerListGrantHolders} query
+ */
+export const invalidateCharacterAurasControllerListGrantHolders = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getCharacterAurasControllerListGrantHoldersQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List character aura grant holders
+ */
+export const useSetCharacterAurasControllerListGrantHoldersQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>> | undefined | ((old: Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>> | undefined) => Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>>({ exact: $exactMatch, queryKey: getCharacterAurasControllerListGrantHoldersQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary List character aura grant holders
+ */
+export const useGetCharacterAurasControllerListGrantHoldersQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof characterAurasControllerListGrantHolders>>>(getCharacterAurasControllerListGrantHoldersQueryKey());
+}
+
+
 
 export const getCharacterAurasControllerGetGrantsUrl = ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters,) => {
 

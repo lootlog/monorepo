@@ -73,7 +73,10 @@ API as the edge serves it, with the operator's Lootlog session and without
 the Access cookie. The edge's forward-auth resolves the session, and the API
 allows them only to a global chat admin, exactly as for the Game client's
 grant menu, so the operator also needs that role or a place in
-`GLOBAL_CHAT_ADMIN_USER_IDS`. These changes are not written to
+`GLOBAL_CHAT_ADMIN_USER_IDS`. The user list's aura filter asks the API for every
+holder of an aura grant (`/character-auras/grants`) under the same rule and
+passes their ids to the auth service's `/admin/users` as `userIds` or
+`excludedUserIds`. These changes are not written to
 `admin_audit_log`. The panel refuses to start without `LOOTLOG_API_URL`, and
 its egress must reach that host.
 
