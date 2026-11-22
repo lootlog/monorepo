@@ -5,6 +5,7 @@ import {
   AIR_TAG_MAX_BATCH_SIZE,
   isAirTagObservation,
   isAirTagRelation,
+  isAirTagClanEnemy,
   type AirTagDeparture,
   type AirTagDepartureReason,
   type AirTagObservation,
@@ -84,6 +85,11 @@ const toObservation = ({
 
 type ObservationPublisher = (batch: AirTagObservationBatch) => void;
 
+/**
+ * Every player the game sent: any of them can turn into an enemy, and the
+ * hero seeing one leave hides a marker another member still reports. Only
+ * clan enemies are published.
+ */
 type LocalAirTagTarget = AirTagObservation & {
   dir: number;
   lastPublishedAt: number;
@@ -91,6 +97,8 @@ type LocalAirTagTarget = AirTagObservation & {
   lastPublishedY: number;
   /** The gateway counts this character among the target's observers. */
   sent: boolean;
+  /** The gateway said another observer reports this target. */
+  standby: boolean;
 };
 
 type RuntimeOtherData = Partial<Omit<OtherCreate, "action">> & {
@@ -121,6 +129,8 @@ export class AirTagObservationController {
   private mapId: number | null = null;
   private publisher: ObservationPublisher | null = null;
   private onLeftMap: ((targetId: string) => void) | null = null;
+  private isReportedByOthers: (targetId: string, now: number) => boolean = () =>
+    false;
 
   constructor(options: AirTagObservationControllerOptions = {}) {
     this.now = options.now ?? (() => Date.now());
@@ -139,6 +149,7 @@ export class AirTagObservationController {
     mapId,
     publisher,
     onLeftMap,
+    isReportedByOthers,
   }: {
     enabled: boolean;
     canPublish: boolean;
@@ -146,6 +157,8 @@ export class AirTagObservationController {
     publisher: ObservationPublisher;
     /** A player the hero saw leave the map. */
     onLeftMap?: (targetId: string) => void;
+    /** Whether another observer's sighting of the target arrived recently. */
+    isReportedByOthers?: (targetId: string, now: number) => boolean;
   }): void {
     const active = enabled && canPublish;
     const mapChanged = this.mapId !== mapId;
@@ -154,6 +167,7 @@ export class AirTagObservationController {
     this.active = active;
     this.publisher = publisher;
     this.onLeftMap = onLeftMap ?? null;
+    this.isReportedByOthers = isReportedByOthers ?? (() => false);
 
     if (!active || mapChanged) this.clearState();
 
@@ -241,6 +255,7 @@ export class AirTagObservationController {
       sent:
         this.targets.get(targetId)?.sent === true ||
         this.departures.delete(targetId),
+      standby: false,
     };
 
     this.retainTargetCapacity(targetId);
@@ -254,8 +269,15 @@ export class AirTagObservationController {
     const target = this.targets.get(targetId);
 
     if (!target) return;
+    const wasThreat = isAirTagClanEnemy(target.relation);
     const moved = this.applyMovement(target, update);
     const changed = this.applyAttributes(target, update, moved);
+
+    if (!isAirTagClanEnemy(target.relation)) {
+      if (wasThreat) this.withdraw(target);
+
+      return;
+    }
 
     const movedFarEnough =
       Math.max(
@@ -267,7 +289,10 @@ export class AirTagObservationController {
       moved &&
       this.now() - target.lastPublishedAt >= AIR_TAG_HEARTBEAT_INTERVAL_MS;
 
-    if (changed || movedFarEnough || heartbeatDue) {
+    if (
+      (changed || movedFarEnough || heartbeatDue) &&
+      !this.isSilent(target, this.now())
+    ) {
       this.queue(target, this.now());
     }
   }
@@ -332,6 +357,61 @@ export class AirTagObservationController {
     return changed;
   }
 
+  /**
+   * A standby says nothing about a target while its reporter's sightings keep
+   * arriving. Once they stop, the heartbeat finds the target overdue and this
+   * observer offers to take it over.
+   */
+  private isSilent(target: LocalAirTagTarget, now: number): boolean {
+    return target.standby && this.isReportedByOthers(target.targetId, now);
+  }
+
+  /** What the gateway said of an accepted batch: which sightings were redundant. */
+  applyAcknowledgement(
+    batch: AirTagObservationBatch,
+    standbyTargetIds: readonly string[],
+  ): void {
+    if (batch.expectedMapId !== this.mapId) return;
+    const standby = new Set(standbyTargetIds);
+
+    for (const { targetId } of batch.observations) {
+      const target = this.targets.get(targetId);
+
+      if (target) target.standby = standby.has(targetId);
+    }
+  }
+
+  /**
+   * The gateway said these targets lost their reporter. This observer offers
+   * each one it still sees; the gateway keeps the first offer.
+   */
+  takeOver(targetIds: readonly string[]): void {
+    if (!this.active) return;
+    const now = this.now();
+
+    for (const targetId of targetIds) {
+      const target = this.targets.get(targetId);
+
+      if (!target) continue;
+      target.standby = false;
+      this.queue(target, now);
+    }
+  }
+
+  /** Stops reporting a player who is no longer an enemy, such as after a clan war ends. */
+  private withdraw(target: LocalAirTagTarget): void {
+    this.pending.delete(target.targetId);
+
+    if (!target.sent) return;
+    target.sent = false;
+    // Another member may still see an enemy in them, so they only fade for this observer.
+    this.departures.set(target.targetId, {
+      targetId: target.targetId,
+      reason: "out-of-sight",
+    });
+    this.scheduleBatch();
+  }
+
   private handleDelete(targetId: string): void {
     const target = this.targets.get(targetId);
     this.targets.delete(targetId);
@@ -366,6 +446,8 @@ export class AirTagObservationController {
   }
 
   private queue(target: LocalAirTagTarget, publishedAt: number): void {
+    if (!isAirTagClanEnemy(target.relation)) return;
+
     target.lastPublishedAt = publishedAt;
     target.lastPublishedX = target.x;
     target.lastPublishedY = target.y;
@@ -384,15 +466,17 @@ export class AirTagObservationController {
 
     for (const observation of batch.observations) {
       if (
-        this.targets.has(observation.targetId) &&
+        isAirTagClanEnemy(this.targets.get(observation.targetId)?.relation) &&
         !this.pending.has(observation.targetId)
       )
         this.pending.set(observation.targetId, observation);
     }
 
     for (const departure of batch.departures ?? []) {
+      // A player seen again as a clan enemy supersedes the departure; one
+      // withdrawn while staying in sight still owes it.
       if (
-        !this.targets.has(departure.targetId) &&
+        !isAirTagClanEnemy(this.targets.get(departure.targetId)?.relation) &&
         !this.departures.has(departure.targetId)
       )
         this.departures.set(departure.targetId, departure);
@@ -461,7 +545,11 @@ export class AirTagObservationController {
       if (!this.active) return;
 
       const now = this.now();
-      const targets = [...this.targets.values()];
+
+      const targets = [...this.targets.values()].filter(
+        (target) =>
+          isAirTagClanEnemy(target.relation) && !this.isSilent(target, now),
+      );
 
       if (
         !targets.some(
@@ -511,7 +599,15 @@ export class AirTagObservationController {
       return;
     }
 
-    const [oldestTargetId, oldest] = this.targets.entries().next().value ?? [];
+    // A player nobody is told about goes first; the oldest enemy only on a map full of them.
+    let [oldestTargetId, oldest] = this.targets.entries().next().value ?? [];
+
+    for (const [id, target] of this.targets) {
+      if (isAirTagClanEnemy(target.relation)) continue;
+      oldestTargetId = id;
+      oldest = target;
+      break;
+    }
 
     if (oldestTargetId === undefined) return;
     this.targets.delete(oldestTargetId);

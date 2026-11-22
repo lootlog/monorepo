@@ -25,7 +25,7 @@ const other: OtherCreate = {
   prof: "w",
   attr: 0,
   is_blessed: 0,
-  relation: 1,
+  relation: 6,
 };
 
 const dispatcher = () =>

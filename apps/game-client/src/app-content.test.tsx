@@ -47,7 +47,7 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
     notifications: createNotificationsSettings(),
     detector: createDetectorSettings(),
     pings: { enabled: true },
-    airTags: { enabled: false },
+    airTags: { enabled: false, minimap: false },
     hasStoredNotifications: true,
     hasStoredDetector: true,
     hasStoredPings: true,

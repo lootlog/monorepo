@@ -313,7 +313,14 @@ export const normalizeBattlePings = normalizeEnabledFlag(
   defaultBattlePingPreferences,
 );
 
-export const normalizeAirTags = normalizeEnabledFlag(defaultAirTagPreferences);
+export const normalizeAirTags = flow(readPreferenceRecord, (settings) => ({
+  enabled: Predicate.isBoolean(settings?.enabled)
+    ? settings.enabled
+    : defaultAirTagPreferences.enabled,
+  minimap: Predicate.isBoolean(settings?.minimap)
+    ? settings.minimap
+    : defaultAirTagPreferences.minimap,
+}));
 
 const isItemRarity = Schema.is(ItemRaritySchema);
 

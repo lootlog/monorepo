@@ -239,9 +239,7 @@ describe("AirTagReceiveController", () => {
       requestId: "request-1",
       scopes: [
         createSnapshot({
-          targets: [
-            createTarget({ enemyObservedAt: 1_500, observedAt: 1_500 }),
-          ],
+          targets: [createTarget({ observedAt: 1_500 })],
         }),
         createSnapshot({
           guildId: "guild-2",
@@ -249,7 +247,6 @@ describe("AirTagReceiveController", () => {
             createTarget({
               x: 20,
               observedAt: 2_000,
-              clanEnemyObservedAt: 1_800,
             }),
           ],
         }),
@@ -257,11 +254,7 @@ describe("AirTagReceiveController", () => {
     });
 
     expect(controller.getRenderableTargets(2_100, 10_000)).toEqual([
-      expect.objectContaining({
-        x: 20,
-        enemyObservedAt: 1_500,
-        clanEnemyObservedAt: 1_800,
-      }),
+      expect.objectContaining({ x: 20, observedAt: 2_000 }),
     ]);
   });
 

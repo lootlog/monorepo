@@ -45,6 +45,8 @@ export interface SessionData extends AuthenticatedIdentity {
   airTagScopes: AirTagScope[];
   /** When this connection sent its recent sighting batches, for its rate limit. */
   airTagBatchesSentAt?: number[];
+  /** This connection reported a sighting in its current AirTag scopes. */
+  airTagReported?: boolean;
   npcPresence?: NpcPresenceState;
   /** Lootlogs whose activity log recorded this session's connection. */
   activityOrganizationIds?: string[];

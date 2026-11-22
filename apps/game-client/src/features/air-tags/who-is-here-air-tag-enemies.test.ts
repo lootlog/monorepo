@@ -4,7 +4,7 @@ import { selectUnseenAirTagEnemies } from "./who-is-here-air-tag-enemies";
 const target = (overrides: Partial<AirTagTarget>): AirTagTarget => ({
   targetId: "1",
   nickname: "Target",
-  relation: 1,
+  relation: 6,
   x: 1,
   y: 1,
   observedAt: 1_000,
@@ -12,31 +12,19 @@ const target = (overrides: Partial<AirTagTarget>): AirTagTarget => ({
 });
 
 describe("selectUnseenAirTagEnemies", () => {
-  it("lists only enemies the player cannot see, clan enemies first, keeping a recent enemy sighting by any member", () => {
+  it("lists only clan enemies the player cannot see, leaving out one member's personal enemy", () => {
     const enemies = selectUnseenAirTagEnemies(
       [
-        target({ targetId: "neutral", nickname: "Neutral" }),
+        target({ targetId: "neutral", nickname: "Neutral", relation: 1 }),
+        // An older gateway still passes on a member's personal enemy.
         target({ targetId: "personal", nickname: "Alpha", relation: 3 }),
-        target({ targetId: "clan", nickname: "Zeta", relation: 6 }),
-        // Reported as neutral now, but another member saw a clan enemy 2 s ago.
-        target({
-          targetId: "sticky",
-          nickname: "Beta",
-          clanEnemyObservedAt: 3_000,
-        }),
-        target({ targetId: "visible", relation: 6 }),
+        target({ targetId: "clan", nickname: "Zeta" }),
+        target({ targetId: "other", nickname: "Beta" }),
+        target({ targetId: "visible" }),
       ],
-      {
-        now: 5_000,
-        ttlMs: 10_000,
-        isSeenByHero: ({ targetId }) => targetId === "visible",
-      },
+      ({ targetId }) => targetId === "visible",
     );
 
-    expect(enemies.map((enemy) => enemy.targetId)).toEqual([
-      "sticky",
-      "clan",
-      "personal",
-    ]);
+    expect(enemies.map((enemy) => enemy.targetId)).toEqual(["other", "clan"]);
   });
 });

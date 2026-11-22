@@ -1,8 +1,6 @@
-import { slidingWindowRateLimitScript } from "@lootlog/database/sliding-window-rate-limit";
 import {
-  AIR_TAG_CLAN_ENEMY_RELATION,
-  AIR_TAG_ENEMY_RELATION,
   AIR_TAG_MAP_THREAT_TTL_MS,
+  AIR_TAG_REPORTER_LEASE_MS,
   AirTagMapThreatEventSchema,
   AirTagTargetSchema,
   type AirTagDeparture,
@@ -53,7 +51,7 @@ const THREAT_REFRESH_MS = 4_000;
 // Caps full-list fan-out per map; a change inside the window is sent with the next sighting.
 export const THREAT_BROADCAST_THROTTLE_MS = 1_000;
 
-// One game tab sends at most two batches a second.
+// One game tab sends a batch a second; the rest is room for retries.
 const CONNECTION_BATCH_RATE_LIMIT = 15;
 
 // Several characters of one user may each observe a busy map.
@@ -61,39 +59,16 @@ const USER_BATCH_RATE_LIMIT = 45;
 
 const BATCH_RATE_WINDOW_MS = 3_000;
 
-// One round trip admits a batch: the user limit, then each scope's disabled
-// flag. The shared limiter reads KEYS and ARGV, so it runs as a function whose
-// parameters shadow them. The connection limit is enforced in process by
-// {@link admitConnectionBatch}.
-const ADMISSION_SCRIPT = `
-local function consume(KEYS, ARGV)
-${slidingWindowRateLimitScript({ refreshExpiryOnReject: true, includeTimestamp: false })}
-end
-local user=consume({KEYS[1]},{ARGV[1],ARGV[2],ARGV[3]})
-if user[1] ~= 1 then return user end
-local result={1,0}
-for i=2,#KEYS do
-  if redis.call("GET",KEYS[i]) == "1" then result[i+1]=1 else result[i+1]=0 end
-end
-return result
-`;
-
-export type ConnectionBatchAdmission =
+export type BatchRateAdmission =
   | { readonly admitted: true }
   | { readonly admitted: false; readonly retryAfterMs: number };
 
-/**
- * The connection limit over the same window the shared limiter used. A
- * connection only ever reports through the replica that holds its socket, so
- * this needs no shared state, and a flooding connection no longer reaches
- * Dragonfly at all.
- */
-export const admitConnectionBatch = (
-  session: Pick<SessionData, "airTagBatchesSentAt">,
+/** Counts a batch against a sliding window of earlier ones, unless it is full. */
+const admitWithinWindow = (
+  sentAt: number[],
+  limit: number,
   now: number,
-): ConnectionBatchAdmission => {
-  const sentAt = (session.airTagBatchesSentAt ??= []);
-
+): BatchRateAdmission => {
   let kept = 0;
 
   for (const at of sentAt) {
@@ -104,7 +79,7 @@ export const admitConnectionBatch = (
 
   const oldest = sentAt[0];
 
-  if (oldest !== undefined && sentAt.length >= CONNECTION_BATCH_RATE_LIMIT) {
+  if (oldest !== undefined && sentAt.length >= limit) {
     return {
       admitted: false,
       retryAfterMs: Math.max(1, oldest + BATCH_RATE_WINDOW_MS - now),
@@ -116,7 +91,50 @@ export const admitConnectionBatch = (
   return { admitted: true };
 };
 
-const AdmissionReply = Schema.Array(Schema.Number);
+/**
+ * The connection limit. A connection only ever reports through the replica
+ * that holds its socket, so this needs no shared state, and a flooding
+ * connection never reaches Dragonfly.
+ */
+export const admitConnectionBatch = (
+  session: Pick<SessionData, "airTagBatchesSentAt">,
+  now: number,
+): BatchRateAdmission =>
+  admitWithinWindow(
+    (session.airTagBatchesSentAt ??= []),
+    CONNECTION_BATCH_RATE_LIMIT,
+    now,
+  );
+
+/**
+ * The limit across one user's connections, kept by this replica. A user whose
+ * characters connect to several replicas gets the limit on each: it bounds
+ * the load one user can cause, and that bound costs no Dragonfly call.
+ */
+export class UserBatchLimiter {
+  private readonly sentAtByUser = new Map<string, number[]>();
+
+  admit(userId: string, now: number): BatchRateAdmission {
+    let sentAt = this.sentAtByUser.get(userId);
+
+    if (!sentAt) {
+      sentAt = [];
+      this.sentAtByUser.set(userId, sentAt);
+    }
+
+    return admitWithinWindow(sentAt, USER_BATCH_RATE_LIMIT, now);
+  }
+
+  /** Forgets users whose window has emptied. */
+  sweep(now: number): void {
+    for (const [userId, sentAt] of this.sentAtByUser) {
+      const latest = sentAt.at(-1);
+
+      if (latest === undefined || now - latest >= BATCH_RATE_WINDOW_MS)
+        this.sentAtByUser.delete(userId);
+    }
+  }
+}
 
 // Shared by the observation and snapshot scripts.
 const LUA_COMMON = `
@@ -127,8 +145,6 @@ end
 local function public(target)
   local result = { targetId=target.targetId, nickname=target.nickname, relation=target.relation, x=target.x, y=target.y, lvl=target.lvl, prof=target.prof, stasis=target.stasis, observedAt=target.observedAt }
   if target.clan ~= nil then result.clan=target.clan end
-  if target.enemyObservedAt ~= nil then result.enemyObservedAt=target.enemyObservedAt end
-  if target.clanEnemyObservedAt ~= nil then result.clanEnemyObservedAt=target.clanEnemyObservedAt end
   return result
 end
 local function clanId(target)
@@ -162,12 +178,6 @@ end
 `;
 
 const MERGE_SCRIPT = `${LUA_COMMON}
-local function effective(target, now, ttl, enemy, clanEnemy)
-  if target.clanEnemyObservedAt ~= nil and now - tonumber(target.clanEnemyObservedAt) < ttl then return clanEnemy end
-  if target.enemyObservedAt ~= nil and now - tonumber(target.enemyObservedAt) < ttl then return enemy end
-  return tonumber(target.relation)
-end
-local function isThreat(relation, enemy, clanEnemy) return relation == enemy or relation == clanEnemy end
 -- An observation omits level, profession and stasis when they did not change; keep the last reported value.
 local function carry(target, observation, existing, field)
   if observation[field] ~= nil then target[field]=observation[field] elseif existing ~= nil then target[field]=existing[field] end
@@ -207,16 +217,15 @@ local ttl=tonumber(ARGV[3])
 local idle=tonumber(ARGV[4])
 local maxTargets=tonumber(ARGV[5])
 local interval=tonumber(ARGV[6])
-local enemy=tonumber(ARGV[7])
-local clanEnemy=tonumber(ARGV[8])
-local threatTtl=tonumber(ARGV[9])
-local threatRefresh=tonumber(ARGV[10])
-local threatThrottle=tonumber(ARGV[11])
-local threatsAllowed=ARGV[12] == "1"
-local mapName=ARGV[13]
-local observer=ARGV[14]
-local departures=cjson.decode(ARGV[15])
-local instance=ARGV[16]
+local threatTtl=tonumber(ARGV[7])
+local threatRefresh=tonumber(ARGV[8])
+local threatThrottle=tonumber(ARGV[9])
+local threatsAllowed=ARGV[10] == "1"
+local mapName=ARGV[11]
+local observer=ARGV[12]
+local departures=cjson.decode(ARGV[13])
+local instance=ARGV[14]
+local lease=tonumber(ARGV[15])
 local raw=redis.call("GET",KEYS[3])
 local metadata
 if raw == false then
@@ -229,6 +238,10 @@ local count=redis.call("HLEN",KEYS[1])
 local accepted=0
 local updates={}
 local removed={}
+-- Sightings whose target another observer reports; this one may fall silent.
+local standby={}
+-- Targets this observer reported and no longer watches, which stay on the map.
+local unreported={}
 local threatRemoved=false
 -- Caller-deduplicated ids, and a departure never shares a target with a
 -- sighting, so one read covers both loops.
@@ -252,6 +265,9 @@ for _,departure in ipairs(departures) do
     if observers[observer] ~= nil then
       observers[observer]=nil
       if departure.reason == "left-map" then target.departed=true end
+      local wasReporter=target.reporter == observer
+      -- The next observer to report the target takes it over at once.
+      if wasReporter then target.reporter=nil end
       if target.departed == true and next(observers) == nil then
         drops[#drops+1]=departure.targetId
         stored[departure.targetId]=nil
@@ -262,6 +278,7 @@ for _,departure in ipairs(departures) do
       else
         target.seenBy=observers
         stage(departure.targetId,cjson.encode(target))
+        if wasReporter then unreported[#unreported+1]=departure.targetId end
       end
     end
   end
@@ -269,27 +286,8 @@ end
 if #threatDrops > 0 and redis.call("HDEL",KEYS[4],unpack(threatDrops)) > 0 then threatRemoved=true end
 for _,observation in ipairs(observations) do
   local existing=stored[observation.targetId]
-  local shouldAccept=true
-  if existing == nil and count >= maxTargets then
-    shouldAccept=false
-    if isThreat(tonumber(observation.relation),enemy,clanEnemy) then
-      -- A full map evicting a non-threat is rare, and it scans committed state,
-      -- so the staged writes go out first.
-      flush()
-      local candidates=redis.call("ZRANGE",KEYS[2],0,-1)
-      for _,candidateId in ipairs(candidates) do
-        local candidateRaw=redis.call("HGET",KEYS[1],candidateId)
-        if candidateRaw ~= false then
-          local candidate=cjson.decode(candidateRaw)
-          if not isThreat(effective(candidate,now,ttl,enemy,clanEnemy),enemy,clanEnemy) then
-            redis.call("HDEL",KEYS[1],candidateId); redis.call("ZREM",KEYS[2],candidateId)
-            stored[candidateId]=nil
-            count=count-1; shouldAccept=true; break
-          end
-        end
-      end
-    end
-  end
+  -- Every stored target is a clan enemy, so a full map has no one to make room.
+  local shouldAccept=existing ~= nil or count < maxTargets
   if shouldAccept then
     local target={targetId=observation.targetId,nickname=observation.nickname,relation=observation.relation,x=observation.x,y=observation.y,observedAt=now,lastBroadcastAt=0}
     if observation.clan ~= nil then target.clan=observation.clan end
@@ -298,15 +296,20 @@ for _,observation in ipairs(observations) do
     carry(target,observation,existing,"stasis")
     target.seenBy={}
     if existing ~= nil then
-      target.enemyObservedAt=existing.enemyObservedAt; target.clanEnemyObservedAt=existing.clanEnemyObservedAt; target.lastBroadcastAt=tonumber(existing.lastBroadcastAt) or 0
+      target.lastBroadcastAt=tonumber(existing.lastBroadcastAt) or 0
       target.seenBy=liveObservers(existing,now,ttl)
     end
     target.seenBy[observer]=now
-    if tonumber(observation.relation) == enemy then target.enemyObservedAt=now end
-    if tonumber(observation.relation) == clanEnemy then target.clanEnemyObservedAt=now end
+    -- One reporter per target: theirs until they fall silent for the lease.
+    if existing ~= nil and existing.reporter ~= nil and existing.reporter ~= observer and now-tonumber(existing.reporterAt or 0) < lease then
+      target.reporter=existing.reporter; target.reporterAt=existing.reporterAt
+      standby[#standby+1]=target.targetId
+    else
+      target.reporter=observer; target.reporterAt=now
+    end
     local broadcast=existing == nil
     if existing ~= nil then
-      broadcast=tonumber(existing.x) ~= tonumber(target.x) or tonumber(existing.y) ~= tonumber(target.y) or existing.nickname ~= target.nickname or clanId(existing) ~= clanId(target) or existing.lvl ~= target.lvl or existing.prof ~= target.prof or existing.stasis ~= target.stasis or effective(existing,now,ttl,enemy,clanEnemy) ~= effective(target,now,ttl,enemy,clanEnemy) or now-target.lastBroadcastAt >= interval
+      broadcast=tonumber(existing.x) ~= tonumber(target.x) or tonumber(existing.y) ~= tonumber(target.y) or existing.nickname ~= target.nickname or clanId(existing) ~= clanId(target) or existing.lvl ~= target.lvl or existing.prof ~= target.prof or existing.stasis ~= target.stasis or now-target.lastBroadcastAt >= interval
     end
     if broadcast then
       metadata.revision=tonumber(metadata.revision)+1; target.lastBroadcastAt=now
@@ -322,11 +325,11 @@ redis.call("SET",KEYS[3],cjson.encode(metadata),"EX",idle)
 -- EXPIRE on a missing key does nothing, so it needs no EXISTS guard.
 redis.call("EXPIRE",KEYS[1],idle)
 redis.call("EXPIRE",KEYS[2],idle)
--- Map threats: clan enemies with a clan, from verified observers only.
+-- Map threats: every sighting is a clan enemy; one with a clan, from a verified observer, reaches timers.
 local sightings={}
 if threatsAllowed then
   for _,observation in ipairs(observations) do
-    if tonumber(observation.relation) == clanEnemy and observation.clan ~= nil then table.insert(sightings,observation) end
+    if observation.clan ~= nil then table.insert(sightings,observation) end
   end
 end
 local stateRaw=redis.call("GET",KEYS[5])
@@ -390,8 +393,31 @@ local function othersInterested(key)
   local mine=redis.call("ZSCORE",key,instance)
   return mine == false or tonumber(mine) <= now
 end
-local remoteRecipients=(#updates > 0 or #removed > 0) and (othersInterested(KEYS[6]) or othersInterested(KEYS[7]))
-return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=remoteRecipients}),{"targets","removed","enemies"})
+local remoteRecipients=(#updates > 0 or #removed > 0 or #unreported > 0) and (othersInterested(KEYS[6]) or othersInterested(KEYS[7]))
+return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,standby=standby,unreported=unreported,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=remoteRecipients}),{"targets","removed","standby","unreported","enemies"})
+`;
+
+// Gives up every target one connection reports on a map, when it stops
+// following the map without a departure for each: a map change or a disconnect.
+const RELEASE_SCRIPT = `
+local raw=redis.call("GET",KEYS[2])
+if raw == false then return "" end
+local rows=redis.call("HGETALL",KEYS[1])
+local released={}
+local writes={}
+for i=1,#rows,2 do
+  local target=cjson.decode(rows[i+1])
+  if target.reporter == ARGV[1] then
+    target.reporter=nil
+    if target.seenBy ~= nil then target.seenBy[ARGV[1]]=nil end
+    writes[#writes+1]=rows[i]; writes[#writes+1]=cjson.encode(target)
+    released[#released+1]=rows[i]
+  end
+end
+if #released == 0 then return "" end
+redis.call("HSET",KEYS[1],unpack(writes))
+local metadata=cjson.decode(raw)
+return cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,released=released})
 `;
 
 const SNAPSHOT_SCRIPT = `${LUA_COMMON}
@@ -454,6 +480,10 @@ export interface MergeResult {
   acceptedTargets: number;
   targets: AirTagScopeUpdateEvent["targets"];
   removed: string[];
+  /** Sightings of the batch another observer reports in this scope. */
+  standby: string[];
+  /** Targets the observer was the reporter of and stopped watching. */
+  unreported: string[];
   threat?: { revision: number; enemies: AirTagMapThreatEnemy[] };
   threatPendingMs?: number;
   remoteRecipients: boolean;
@@ -467,6 +497,8 @@ const MergeResultJson = Schema.fromJsonString(
     acceptedTargets: Schema.Number,
     targets: Schema.Array(AirTagTargetSchema),
     removed: Schema.Array(Schema.String),
+    standby: Schema.Array(Schema.String),
+    unreported: Schema.Array(Schema.String),
     threat: Schema.optionalKey(
       Schema.Struct({
         revision: Schema.Number,
@@ -558,50 +590,65 @@ export const interestKeyFor = (scope: SubscriptionScope): string => {
       });
 };
 
-/** Each scope's disabled flag, in scope order. */
-export const readDisabledFlags = (
-  redis: ScriptStore,
-  scopes: ReadonlyArray<AirTagScope>,
-) =>
-  storeCall("air-tag.disabled", () =>
-    redis.command.mget(scopes.map((scope) => disabledKey(scope))),
-  );
+/** How long a replica trusts what it read of the kill switch. */
+const DISABLED_FLAG_TTL_MS = 30_000;
 
-export type BatchAdmission =
-  | { status: "admitted"; enabledScopes: AirTagScope[] }
-  | { status: "rate-limited"; retryAfterMs: number };
+/**
+ * The operator's kill switch for one Organization and world, set by hand in
+ * Dragonfly. Every batch and subscription asks, so a replica reads a flag
+ * about once per `DISABLED_FLAG_TTL_MS`, and the switch takes that long to
+ * act. Callers that find it stale at the same moment each read it.
+ */
+export class DisabledScopes {
+  private readonly flags = new Map<
+    string,
+    { disabled: boolean; readAt: number }
+  >();
 
-/** The batch's rate-limit verdict and enabled scopes, or null for an unexpected reply. */
-export const admitBatch = (
-  redis: ScriptStore,
-  userId: string,
-  scopes: ReadonlyArray<AirTagScope>,
-): Effect.Effect<BatchAdmission | null, RealtimeStoreError> =>
-  storeCall("air-tag.admission", async () => {
-    const reply = await redis.command.eval(
-      ADMISSION_SCRIPT,
-      1 + scopes.length,
-      `air-tag:rate:${userId}`,
-      ...scopes.map((scope) => disabledKey(scope)),
-      BATCH_RATE_WINDOW_MS,
-      USER_BATCH_RATE_LIMIT,
-      crypto.randomUUID(),
+  /** The scopes whose Organization and world are not switched off, in order. */
+  filterEnabled(
+    redis: ScriptStore,
+    scopes: ReadonlyArray<AirTagScope>,
+    now: number,
+  ): Effect.Effect<AirTagScope[], RealtimeStoreError> {
+    const stale = [
+      ...new Set(
+        scopes.flatMap((scope) => {
+          const key = disabledKey(scope);
+          const flag = this.flags.get(key);
+
+          return !flag || now - flag.readAt >= DISABLED_FLAG_TTL_MS
+            ? [key]
+            : [];
+        }),
+      ),
+    ];
+
+    const enabled = () =>
+      scopes.filter(
+        (scope) => this.flags.get(disabledKey(scope))?.disabled !== true,
+      );
+
+    if (stale.length === 0) return Effect.sync(enabled);
+
+    return storeCall("air-tag.disabled", () => redis.command.mget(stale)).pipe(
+      Effect.map((values) => {
+        stale.forEach((key, index) =>
+          this.flags.set(key, { disabled: values[index] === "1", readAt: now }),
+        );
+
+        return enabled();
+      }),
     );
+  }
 
-    if (!Array.isArray(reply)) return null;
-
-    const [admitted, retryAfterMs = 0, ...disabled] = Schema.decodeUnknownSync(
-      AdmissionReply,
-    )(reply.map(Number));
-
-    if (admitted !== 1)
-      return { status: "rate-limited", retryAfterMs } as const;
-
-    return {
-      status: "admitted",
-      enabledScopes: scopes.filter((_, index) => disabled[index] !== 1),
-    } as const;
-  });
+  /** Forgets flags no batch or subscription asked about lately. */
+  sweep(now: number): void {
+    for (const [key, flag] of this.flags) {
+      if (now - flag.readAt >= DISABLED_FLAG_TTL_MS) this.flags.delete(key);
+    }
+  }
+}
 
 export const mergeObservations = (
   redis: ScriptStore,
@@ -638,8 +685,6 @@ export const mergeObservations = (
       IDLE_TTL_SECONDS,
       MAX_TARGETS,
       BROADCAST_INTERVAL_MS,
-      AIR_TAG_ENEMY_RELATION,
-      AIR_TAG_CLAN_ENEMY_RELATION,
       AIR_TAG_MAP_THREAT_TTL_MS,
       THREAT_REFRESH_MS,
       THREAT_BROADCAST_THROTTLE_MS,
@@ -648,6 +693,7 @@ export const mergeObservations = (
       observer,
       JSON.stringify(departures),
       instanceId,
+      AIR_TAG_REPORTER_LEASE_MS,
     );
 
     const { threat, ...parsed } = Schema.decodeUnknownSync(MergeResultJson)(
@@ -658,12 +704,44 @@ export const mergeObservations = (
       ...parsed,
       targets: [...parsed.targets],
       removed: [...parsed.removed],
+      standby: [...parsed.standby],
+      unreported: [...parsed.unreported],
       ...(threat && {
         threat: { revision: threat.revision, enemies: [...threat.enemies] },
       }),
     };
   });
 };
+
+const ReleaseResultJson = Schema.fromJsonString(
+  Schema.Struct({
+    epochId: Schema.String,
+    epochStartedAt: Schema.Number,
+    revision: Schema.Number,
+    released: Schema.Array(Schema.String),
+  }),
+);
+
+/**
+ * Releases the targets `observer` reports in the scope; undefined when it
+ * reported none. The scope's revision is unchanged: no target changed.
+ */
+export const releaseReportedTargets = (
+  redis: ScriptStore,
+  scope: AirTagScope,
+  observer: string,
+) =>
+  storeCall("air-tag.release", async () => {
+    const [targets, , metadata] = scopeKeys(scope);
+
+    const result = String(
+      await redis.command.eval(RELEASE_SCRIPT, 2, targets, metadata, observer),
+    );
+
+    return result === ""
+      ? undefined
+      : Schema.decodeUnknownSync(ReleaseResultJson)(result);
+  });
 
 /** The scope's targets, registering this replica for its later updates. */
 export const loadScopeSnapshot = (

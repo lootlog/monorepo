@@ -34,7 +34,7 @@ const preferences = (enabled: boolean): UserGameAccountPreferences => ({
   notifications: createNotificationsSettings(),
   detector: createDetectorSettings(),
   pings: { enabled },
-  airTags: { enabled: true },
+  airTags: { enabled: true, minimap: false },
   hasStoredNotifications: true,
   hasStoredDetector: true,
   hasStoredPings: true,

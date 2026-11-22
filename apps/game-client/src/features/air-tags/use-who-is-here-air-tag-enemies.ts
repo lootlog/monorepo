@@ -4,37 +4,20 @@ import {
   isWhoIsHereOpen,
   subscribeWhoIsHereVisibility,
 } from "@/lib/margonem-runtime/adapters/who-is-here-runtime-adapter";
-import { getPlayersPresenceSource } from "@/lib/players-presence-source";
-import { getSocket } from "@/lib/socket";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useOthersStore } from "@/store/others.store";
-import { isSeenByHero, showsAirTagsOnMap } from "./air-tag-game-visibility";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import {
-  selectUnseenAirTagEnemies,
-  type WhoIsHereAirTagEnemy,
-} from "./who-is-here-air-tag-enemies";
-
-const AIR_TAG_TARGET_TTL_MS = 10_000;
+  getAirTagMemberSources,
+  readUnseenAirTagEnemies,
+} from "./air-tag-unseen-enemies";
+import type { AirTagTarget } from "@lootlog/schema/air-tag";
 
 const AGE_TICK_MS = 1_000;
 
-/** Live presence of every joined Organization on this world; cached per socket. */
-function getMemberSources() {
-  const world = useGameStore.getState().game?.world;
-  const { joinedGuilds } = useGlobalStore.getState().socketState;
-
-  if (!world || joinedGuilds.length === 0) return [];
-  const socket = getSocket();
-
-  return joinedGuilds.map((guildId) =>
-    getPlayersPresenceSource(socket, guildId, world),
-  );
-}
-
 type WhoIsHereAirTagView = {
-  enemies: WhoIsHereAirTagEnemy[];
+  enemies: AirTagTarget[];
   /** Where the rows render; resolved only while there are rows to show. */
   host: HTMLElement | null;
   /** Unseen enemies are reported, before members of the Organizations are removed. */
@@ -55,41 +38,25 @@ const EMPTY_VIEW: WhoIsHereAirTagView = {
   signature: "",
 };
 
-const getRowsSignature = (enemies: readonly WhoIsHereAirTagEnemy[]) =>
+const getRowsSignature = (enemies: readonly AirTagTarget[]) =>
   enemies
     .map(
       (enemy) =>
-        `${enemy.targetId}|${enemy.nickname}|${enemy.lvl}|${enemy.clan?.id}|${enemy.stasis}|${enemy.effectiveRelation}`,
+        `${enemy.targetId}|${enemy.nickname}|${enemy.lvl}|${enemy.clan?.id}|${enemy.stasis}`,
     )
     .join(",");
 
 function readView(now: number): WhoIsHereAirTagView {
   // A closed window shows no rows, so it costs no reads or presence requests.
-  if (!showsAirTagsOnMap() || !isWhoIsHereOpen()) return { ...EMPTY_VIEW, now };
+  if (!isWhoIsHereOpen()) return { ...EMPTY_VIEW, now };
 
-  const targets = airTagReceiveController.getRenderableTargets(
-    now,
-    AIR_TAG_TARGET_TTL_MS,
-  );
-
-  const candidates = selectUnseenAirTagEnemies(targets, {
-    now,
-    ttlMs: AIR_TAG_TARGET_TTL_MS,
-    isSeenByHero,
-  });
-
-  const members = candidates.length > 0 ? getMemberSources() : [];
-
-  // Members of another Margonem clan in the same Organization can be reported as enemies.
-  const enemies = candidates.filter(
-    (enemy) => !members.some((source) => source.isOnlineMember(enemy.targetId)),
-  );
+  const { enemies, hasCandidates, hasTargets } = readUnseenAirTagEnemies(now);
 
   return {
     enemies,
     host: enemies.length > 0 ? getWhoIsHereAirTagHost() : null,
-    hasCandidates: candidates.length > 0,
-    hasTargets: targets.length > 0,
+    hasCandidates,
+    hasTargets,
     now,
     signature: getRowsSignature(enemies),
   };
@@ -167,7 +134,9 @@ export function useWhoIsHereAirTagEnemies() {
 
     // Only while enemies are reported: loading presence costs a request per Organization.
     const releaseMembers = hasCandidates
-      ? getMemberSources().map((source) => source.subscribeChanges(schedule))
+      ? getAirTagMemberSources().map((source) =>
+          source.subscribeChanges(schedule),
+        )
       : [];
 
     schedule();

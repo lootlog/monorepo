@@ -31,7 +31,7 @@ const createOther = (overrides: Partial<OtherCreate> = {}): OtherCreate => ({
   prof: "w",
   attr: 0,
   is_blessed: 0,
-  relation: 1,
+  relation: 6,
   ...overrides,
 });
 
@@ -252,7 +252,7 @@ describe("AirTagObservationController", () => {
     expect(publisher).not.toHaveBeenCalled();
   });
 
-  it("republishes a relation or clan that changes mid-session and ignores a malformed one", () => {
+  it("reports a player only while they are an enemy, and ignores a malformed relation", () => {
     const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
     const controller = new AirTagObservationController();
     controller.configure({
@@ -261,8 +261,15 @@ describe("AirTagObservationController", () => {
       mapId: 42,
       publisher,
     });
-    controller.handle({ "123": createOther({ relation: 1 }) });
-    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    // Neutral players, friends and clan mates are most of a map; none is reported.
+    controller.handle({
+      "123": createOther({ relation: 1 }),
+      friend: createOther({ relation: 2 }),
+      mate: createOther({ relation: 4 }),
+    });
+    controller.handle({ "123": { x: 20, y: 10, dir: 1 } });
+    vi.advanceTimersByTime(AIR_TAG_HEARTBEAT_INTERVAL_MS * 2);
+    expect(publisher).not.toHaveBeenCalled();
 
     // A clan war declared while both players stay on the map.
     controller.handle({
@@ -273,6 +280,7 @@ describe("AirTagObservationController", () => {
       expectedMapId: 42,
       observations: [
         expect.objectContaining({
+          targetId: "123",
           relation: 6,
           clan: { id: 7, name: "Rivals" },
         }),
@@ -281,7 +289,87 @@ describe("AirTagObservationController", () => {
 
     controller.handle({ "123": { relation: 99 } });
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    expect(publisher).toHaveBeenCalledTimes(1);
+
+    // The war ends: the gateway stops counting this observer, and no heartbeat follows.
+    controller.handle({ "123": { relation: 1 } });
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    expect(publisher).toHaveBeenLastCalledWith({
+      expectedMapId: 42,
+      observations: [],
+      departures: [{ targetId: "123", reason: "out-of-sight" }],
+    });
+    vi.advanceTimersByTime(AIR_TAG_HEARTBEAT_INTERVAL_MS * 2);
     expect(publisher).toHaveBeenCalledTimes(2);
+
+    // The gateway rate-limited the withdrawal: it still has to go out.
+    const withdrawal = publisher.mock.calls[1]?.[0];
+
+    if (!withdrawal) throw new Error("Expected a batch");
+    controller.retry(withdrawal, AIR_TAG_BATCH_INTERVAL_MS);
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    expect(publisher).toHaveBeenLastCalledWith(withdrawal);
+    expect(publisher).toHaveBeenCalledTimes(3);
+  });
+
+  it("falls silent about a target another observer reports, and takes it over when their sightings stop", () => {
+    const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
+    const controller = new AirTagObservationController();
+    let reportedByOthers = true;
+
+    controller.configure({
+      enabled: true,
+      canPublish: true,
+      mapId: 42,
+      publisher,
+      isReportedByOthers: () => reportedByOthers,
+    });
+    controller.handle({
+      "123": createOther(),
+      "456": createOther({ nick: "Second" }),
+    });
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+
+    const first = publisher.mock.calls[0]?.[0];
+
+    if (!first) throw new Error("Expected a batch");
+    // The gateway already has a reporter for 123; this observer keeps 456.
+    controller.applyAcknowledgement(first, ["123"]);
+    publisher.mockClear();
+
+    controller.handle({ "123": { x: 20, y: 10, dir: 1 } });
+    vi.advanceTimersByTime(AIR_TAG_HEARTBEAT_INTERVAL_MS * 3);
+    expect(publisher).toHaveBeenCalled();
+    expect(
+      publisher.mock.calls.flatMap(([batch]) =>
+        batch.observations.map((item) => item.targetId),
+      ),
+    ).not.toContain("123");
+
+    // The gateway says the reporter stopped watching: no waiting for silence.
+    publisher.mockClear();
+    controller.takeOver(["123", "gone"]);
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    expect(publisher).toHaveBeenCalledWith({
+      expectedMapId: 42,
+      observations: [expect.objectContaining({ targetId: "123", x: 20 })],
+    });
+
+    const offer = publisher.mock.calls[0]?.[0];
+
+    if (!offer) throw new Error("Expected a batch");
+    // Another standby was quicker.
+    controller.applyAcknowledgement(offer, ["123"]);
+
+    // The reporter left or lost its connection: nothing arrives any more.
+    reportedByOthers = false;
+    publisher.mockClear();
+    vi.advanceTimersByTime(
+      AIR_TAG_HEARTBEAT_INTERVAL_MS + AIR_TAG_BATCH_INTERVAL_MS,
+    );
+    expect(
+      publisher.mock.calls.flatMap(([batch]) => batch.observations),
+    ).toContainEqual(expect.objectContaining({ targetId: "123", x: 20 }));
   });
 
   it("forgets targets on a reload so players who left meanwhile stop sending heartbeats", () => {

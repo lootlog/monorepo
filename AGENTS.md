@@ -329,6 +329,10 @@ find it unchanged on the next.
   affected OpenAPI specifications and generated clients, and update callers
   and contract checks for the intended behavior. Run `bun run client:check`
   before pushing; successful generation alone is not verification.
+- Run `bun run knip` from the repository root before committing. It reports
+  exports, files, and dependencies that nothing uses any more, which a
+  simplification or a deleted caller leaves behind and no per-workspace lint
+  or typecheck catches. Remove the leftover or drop its `export`.
 - Tests must protect observable behavior, business invariants, real
   regressions, authorization boundaries, or meaningful integration contracts.
   Each test must answer: “What real regression would this catch?”

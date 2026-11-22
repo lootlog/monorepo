@@ -48,13 +48,15 @@ const airTags = new AirTagService(
                   {
                     targetId: "target",
                     nickname: "Enemy",
-                    relation: 3,
+                    relation: 6,
                     x: 1,
                     y: 2,
                     observedAt: 1,
                   },
                 ],
                 removed: [],
+                standby: [],
+                unreported: [],
                 remoteRecipients: false,
               })
             : [1, 0, 0],
@@ -117,7 +119,7 @@ const scenarios = {
       data: {
         expectedMapId: 7,
         observations: [
-          { targetId: "target", nickname: "Enemy", relation: 3, x: 1, y: 2 },
+          { targetId: "target", nickname: "Enemy", relation: 6, x: 1, y: 2 },
         ],
       },
     }),
@@ -165,6 +167,10 @@ for (const [scenario, frames] of Object.entries(scenarios)) {
         // observation is admitted and the benchmark measures the merge.
         if (socket.data.airTagBatchesSentAt)
           socket.data.airTagBatchesSentAt.length = 0;
+
+        // One user may send 45 batches per 3 s on a replica; a user per
+        // batch keeps that limit out of the measurement too.
+        Object.assign(socket.data, { userId: `user-${index}` });
 
         await Effect.runPromise(handler.handle(socket, input));
       }

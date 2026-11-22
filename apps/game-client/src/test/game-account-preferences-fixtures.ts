@@ -12,7 +12,7 @@ export const createGameAccountPreferences = (
   notifications: createNotificationsSettings(),
   detector: createDetectorSettings(),
   pings: { enabled: true },
-  airTags: { enabled: true },
+  airTags: { enabled: true, minimap: false },
   hasStoredNotifications: true,
   hasStoredDetector: true,
   hasStoredPings: true,

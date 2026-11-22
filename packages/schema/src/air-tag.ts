@@ -2,11 +2,33 @@ import { Schema } from "effect";
 
 const AIR_TAG_RELATIONS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
-export const AIR_TAG_ENEMY_RELATION = 3;
+const AIR_TAG_CLAN_ENEMY_RELATION = 6;
 
-export const AIR_TAG_CLAN_ENEMY_RELATION = 6;
+/**
+ * AirTags carry clan enemies only. A personal enemy is one member's private
+ * list, not the Organization's, and nothing shows a neutral player, a friend
+ * or a clan mate, who are most players on a map.
+ */
+export const isAirTagClanEnemy = (
+  relation: AirTagRelation | undefined,
+): boolean => relation === AIR_TAG_CLAN_ENEMY_RELATION;
 
 export const AIR_TAG_MAX_BATCH_SIZE = 50;
+
+/**
+ * One observer reports each target; the gateway names the others standbys.
+ * It keeps the reporter for this long after their last sighting, which must
+ * outlast the gap between two heartbeats of a target that stands still.
+ */
+export const AIR_TAG_REPORTER_LEASE_MS = 6_000;
+
+/**
+ * A standby reports a target again once nobody has for this long: the
+ * fallback for a reporter that vanished without the gateway noticing. Longer
+ * than the lease, so the gateway hands the target over, and short enough that
+ * the sighting lands before the target expires.
+ */
+export const AIR_TAG_STANDBY_TAKEOVER_MS = 7_000;
 
 const AIR_TAG_MAX_COORDINATE = 65_535;
 
@@ -66,8 +88,6 @@ export interface AirTagSubscriptionPayload {
 
 export interface AirTagTarget extends AirTagObservation {
   observedAt: number;
-  enemyObservedAt?: number;
-  clanEnemyObservedAt?: number;
 }
 
 export interface AirTagScopeSnapshot {
@@ -96,6 +116,11 @@ export interface AirTagScopeUpdateEvent {
   targets: readonly AirTagTarget[];
   /** Targets every observer lost sight of after one saw them leave the map. */
   removedTargetIds: readonly string[];
+  /**
+   * Targets whose reporter stopped watching: it lost sight of them, changed
+   * map or disconnected. A standby that still sees one reports it at once.
+   */
+  unreportedTargetIds?: readonly string[];
 }
 
 export interface AirTagMapThreatEnemy {
@@ -144,6 +169,12 @@ export type AirTagObservationAck =
       status: "accepted";
       acceptedScopes: number;
       acceptedTargets: number;
+      /**
+       * Sightings of this batch another observer already reports in every
+       * scope. The sender may stay silent about them while it keeps
+       * receiving their updates.
+       */
+      standbyTargetIds?: string[];
     }
   | {
       status: "rejected";
@@ -202,8 +233,6 @@ export const AirTagObservationBatchSchema = Schema.Struct({
 export const AirTagTargetSchema = Schema.Struct({
   ...AirTagObservationSchema.fields,
   observedAt: SafeNatural,
-  enemyObservedAt: Schema.optionalKey(SafeNatural),
-  clanEnemyObservedAt: Schema.optionalKey(SafeNatural),
 });
 
 const AirTagScopeIdentityFields = {
@@ -225,6 +254,7 @@ export const AirTagScopeUpdateEventSchema = Schema.Struct({
   ...AirTagScopeIdentityFields,
   targets: Schema.Array(AirTagTargetSchema),
   removedTargetIds: Schema.Array(ShortString),
+  unreportedTargetIds: Schema.optionalKey(Schema.Array(ShortString)),
 });
 
 export const AirTagMapThreatEventSchema = Schema.Struct({

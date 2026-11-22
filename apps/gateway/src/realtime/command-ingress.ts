@@ -7,6 +7,7 @@ import {
 import type { GatewaySocket } from "#src/realtime/session";
 import { Activity } from "#src/rabbit/activity-publisher";
 import { Commands } from "#src/realtime/command-handler";
+import { AirTags } from "#src/realtime/air-tag-service";
 import { NpcPresence } from "#src/realtime/npc-presence-service";
 import { Presence } from "#src/realtime/presence-store";
 
@@ -234,6 +235,7 @@ export class Ingress extends Context.Service<Ingress, CommandIngress>()(
       const activity = yield* Activity;
       const presence = yield* Presence;
       const npcPresence = yield* NpcPresence;
+      const airTags = yield* AirTags;
 
       return new CommandIngress(
         (socket, message) => commands.handle(socket, message),
@@ -274,8 +276,10 @@ export class Ingress extends Context.Service<Ingress, CommandIngress>()(
                       ),
                     ),
                   ),
+                // Its failures are logged inside: the lease covers them.
+                airTags.release(socket),
               ],
-              { concurrency: 3, discard: true },
+              { concurrency: 4, discard: true },
             );
           }),
         (yield* Background).run,

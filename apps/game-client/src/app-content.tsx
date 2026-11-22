@@ -31,6 +31,7 @@ import { useHotkeys } from "@/features/hotkeys/use-hotkeys";
 import { useInit } from "@/hooks/use-init";
 import { useGameClientBootstrap } from "@/hooks/use-game-client-bootstrap";
 import { usePings } from "@/features/pings/use-pings";
+import { useAirTagMinimap } from "@/features/air-tags/use-air-tag-minimap";
 import { useAirTags } from "@/features/air-tags/use-air-tags";
 import { WhoIsHereAirTags } from "@/features/air-tags/who-is-here-air-tags";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
@@ -55,6 +56,7 @@ export const AppContent = () => {
   useSettingsHydration();
   const pingHotkeyHandlers = usePings();
   useAirTags();
+  useAirTagMinimap();
   useNpcPresenceReporter();
   useLootSplitSync();
   usePresencePublicationScope();
