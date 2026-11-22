@@ -6,13 +6,11 @@ type KillCellLinkProps = {
   guildId: string;
   eventId: string;
   kill: { id: string; heroNpcId: string; heroNpc: { npcName: string } };
-  /** The row's keyboard stop, named after the kill. */
   primary: boolean;
   className?: string;
   children: ReactNode;
 };
 
-/** One cell of a kill row, opening the kill's details. */
 export const KillCellLink = ({
   guildId,
   eventId,

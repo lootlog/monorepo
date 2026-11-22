@@ -374,7 +374,6 @@ describe.each([
     expect(getReinstallButton()).not.toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
 
-    // A newer status read does not lift the server's refresh deadline.
     await client.invalidateQueries({
       queryKey: getGuildsControllerGetGuildDiscordSyncStatusQueryKey({
         guildId: "guild-1",

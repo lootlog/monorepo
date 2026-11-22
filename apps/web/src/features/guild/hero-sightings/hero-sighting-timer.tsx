@@ -14,17 +14,13 @@ import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type HeroSightingTimerProps = {
-  /** The hero's live timer, as the timers page lists it. */
   timer: TimerResponseDto | undefined;
-  /** The hero's latest timer, kept after its window ended. */
   lastTimer: TimerResponseDto | undefined;
   countdownMode: TimerCountdownMode;
   removeTimerAfterMs: number;
   className?: string;
 };
 
-// A window on another day names it once, so an old one does not read as
-// today's.
 const formatWindow = (from: string, to: string, now: number) => {
   const start = timestampToDate(
     from,
@@ -39,11 +35,6 @@ const formatWindow = (from: string, to: string, now: number) => {
   return `${start}–${end}`;
 };
 
-/**
- * The sighted hero's respawn timer, counting down as on the timers page. Once
- * its window ended or it was deleted, it says since when the board lost
- * track of the hero.
- */
 export const HeroSightingTimer = ({
   timer,
   lastTimer,
@@ -56,8 +47,6 @@ export const HeroSightingTimer = ({
 
   useEffect(() => subscribeToSecondClock(() => setNow(Date.now())), []);
 
-  // Until the live list loads, or while it fails, a latest timer that was not
-  // deleted still counts down; the phase sends an ended one below.
   const liveTimer = timer ?? (lastTimer?.deletedAt ? undefined : lastTimer);
   const liveTimeLeft = liveTimer && getTimerTimeLeft(liveTimer, now);
 
@@ -115,7 +104,6 @@ export const HeroSightingTimer = ({
           className="text-sm"
         />
       </span>
-      {/* A window across days is longer than the board's timer column. */}
       <span className="text-xs text-muted-foreground tabular-nums">
         {t("heroSightings.lastSpawnWindow", {
           window: formatWindow(ended.minSpawnTime, ended.maxSpawnTime, now),

@@ -309,8 +309,6 @@ function resetPipelineState(): void {
   runtimeEventPipeline.setReady(true);
 }
 
-// The replay enters the real foreign successData boundary, including fragmentary
-// native packets and their serialized forms; the bridge owns field decoding.
 function dispatchRuntimeEvent(payload: unknown): unknown {
   return dispatchRuntimeEvents([payload])[0];
 }
@@ -608,7 +606,6 @@ describe("game event pipeline golden replay", () => {
               hpp: 0,
               icon: "boss.gif",
               id: 100,
-              // The NPC never reached the map store: no template is invented.
               runtimeId: 100,
               templateId: null,
               location: "Nithal",

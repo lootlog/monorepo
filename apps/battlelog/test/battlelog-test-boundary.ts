@@ -11,7 +11,6 @@ import {
   battlelogHttpMiddleware,
 } from "../src/http/battlelog-http.js";
 
-/** The battlelog HTTP routes and middleware over the given operations. */
 export const makeBattlelogTestBoundary = (
   testOperations: BattlelogOperations,
   cleanupSecret?: Redacted.Redacted<string>,

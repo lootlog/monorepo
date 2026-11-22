@@ -58,7 +58,6 @@ const setup = async () => {
       })),
     ),
   );
-  // Loot 1 is shared by both Organizations; loot 2 is archived in the first.
   await run(
     database.insert(organizationLootRecordTable).values([
       createOrganizationLootRecordFixture({
@@ -137,7 +136,6 @@ describe("loot likes", () => {
   it("keeps one like per Member, isolates Organizations and ignores repeated requests", async () => {
     const { first, second, setLike, likerIds } = await setup();
 
-    // A retried like must not count twice.
     await setLike("alice", first.id, 1, true);
     expect(
       (await setLike("alice", first.id, 1, true))?.map(({ id }) => id),
@@ -146,14 +144,12 @@ describe("loot likes", () => {
       (await setLike("bob", first.id, 1, true))?.map(({ id }) => id),
     ).toEqual([1, 2]);
 
-    // The same loot in another Organization has its own likes.
     expect(
       (await setLike("alice", second.id, 1, true))?.map(({ id }) => id),
     ).toEqual([3]);
     expect(await likerIds(first, 1)).toEqual([1, 2]);
     expect(await likerIds(second, 1)).toEqual([3]);
 
-    // Unliking removes only the caller's like, and repeating it is harmless.
     expect(
       (await setLike("alice", first.id, 1, false))?.map(({ id }) => id),
     ).toEqual([2]);

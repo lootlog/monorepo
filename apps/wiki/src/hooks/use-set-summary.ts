@@ -5,11 +5,6 @@ import { sumItemStats } from "@/lib/item-stat-totals";
 import { sumSkillBonuses } from "@/lib/skills/skill-stats";
 import { wornSkillWeapons } from "@/lib/skills/skill-tree";
 
-/**
- * The set as worn, its stats added up and what its learned skills add. A
- * change counts as the User's once the set has loaded: loading it shows its
- * stats, not a gain.
- */
 export const useSetSummary = () => {
   const { set } = useEquipmentSet();
   const { wornItems, isLoaded } = useLoadedWornItems();

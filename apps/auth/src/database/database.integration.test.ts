@@ -232,7 +232,6 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         authCookies.sessionData.name,
       );
 
-      // Exercise the raw endpoint and cookie cache as well as the server API hook.
       const cachedSession = await auth.handler(
         new Request(`${auth.options.baseURL}/get-session`, {
           headers: cookieHeaders,
@@ -485,7 +484,6 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
           }),
         ).toBeNull();
 
-        // Two auth service runtimes must share one Redis budget for this key.
         const otherRuntime = makeKeysRuntime(true);
 
         try {
@@ -540,7 +538,6 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         });
         expect(JSON.stringify(rejections)).not.toContain(key.key);
 
-        // A failed shared counter must not bypass enforcement or masquerade as 429.
         const redisClient = await keysRuntime.runPromise(Redis.Redis);
         await keysRuntime.runPromise(
           redisClient.send(
@@ -561,7 +558,6 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         );
 
         expect(stored[0]?.key).not.toBe(key.key);
-        // Verification is a hot path and must stay read-only on the key row.
         expect(stored[0]?.lastRequest).toBeNull();
         await expect(
           keysRuntime.runPromise(keys.rename("another-user", key.id, "stolen")),

@@ -26,9 +26,6 @@ const createRouteLoaderAbortError = () => {
   return error;
 };
 
-// A query the loader awaits can be cancelled while the route is still active,
-// e.g. when the previous page's observer unmounts or a socket update cancels
-// it. The query reverts to its previous state, so loading again refetches it.
 const MAX_ROUTE_LOADER_ATTEMPTS = 3;
 
 export const withRouteLoaderCancellation = async <T>(

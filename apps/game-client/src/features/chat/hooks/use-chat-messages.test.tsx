@@ -117,8 +117,6 @@ describe("useChatMessagesListener", () => {
     });
 
   it("ingests chat events that another feature already listens to", async () => {
-    // The party gathering bar listens to the same events and, as a child of
-    // the chat, subscribes first.
     const gatheringListener = vi.fn();
     getSocket().on("chat.created", gatheringListener);
     getSocket().on("chat.deleted", gatheringListener);

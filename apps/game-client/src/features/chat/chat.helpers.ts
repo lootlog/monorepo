@@ -13,11 +13,9 @@ const CHAT_NPC_GROUP_WINDOW_MS = 60_000;
 
 export const CHAT_VISIBLE_MESSAGE_LIMIT = 500;
 
-/** The player's local calendar day, which the date dividers label. */
 const getChatMessageDayKey = (timestamp: string) =>
   format(new Date(timestamp), "yyyy-MM-dd");
 
-/** Inserts a divider before the first item of each local day. */
 export const withChatDateDividers = <Item>(
   items: Iterable<Item>,
   getTimestamp: (item: Item) => string,
@@ -72,10 +70,6 @@ export type ChatRenderableMessage =
       message: ChatMessageType;
     };
 
-/**
- * Row objects are rebuilt on every derivation pass, so memoized rows compare
- * content instead of identity: the same message reference, count and members.
- */
 export const areChatRenderablesEqual = (
   left: ChatRenderableMessage,
   right: ChatRenderableMessage,
@@ -272,11 +266,6 @@ const getChatNpcGroupKey = (message: ChatMessageType) => {
 
 type ChatNpcGroupRow = Extract<ChatRenderableMessage, { kind: "npc-group" }>;
 
-/**
- * Rows for messages already in chronological order: identical NPC reports
- * within a minute fold into their first report, and each day opens with a
- * divider.
- */
 export const getChatRenderableMessages = (
   messages: ChatMessageType[],
 ): ChatRenderableMessage[] => {

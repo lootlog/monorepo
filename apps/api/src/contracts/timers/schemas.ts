@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the timers feature. */
 import * as Schema from "effect/Schema";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { MIN_RESP_BASE_SECONDS } from "@lootlog/domain/timers";
@@ -116,10 +115,6 @@ const TimerNpcSearchResult = Schema.Struct({
 
 export type CreateAutoTimerRequest = typeof CreateAutoTimerRequest.Type;
 
-/**
- * A Hero Tracker's in-game entrance countdown. Margonem opens it for minutes,
- * so an hour bounds it while keeping every close time a valid date.
- */
 export const HeroTrackerEntranceSecondsLeft = FiniteNumber.check(
   Schema.isGreaterThan(0),
   Schema.isLessThanOrEqualTo(3600),
@@ -303,8 +298,6 @@ export const TimerOrganizationPath = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
 });
 
-// Bounded by the Timer.npcId integer column, so larger ids fail validation
-// instead of the query.
 const MAX_TIMER_NPC_ID = 2_147_483_647;
 
 const TimerNpcId = Schema.Number.check(

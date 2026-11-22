@@ -19,12 +19,10 @@ const reportedAt = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
 
 type ReportedSubjectCardProps = {
   subject: CatalogReportedSubjectDtoOutput;
-  /** The status this subject's reports are being moved to, while it saves. */
   pendingStatus: CatalogReportDtoOutputStatus | undefined;
   onReview: (status: CatalogReportDtoOutputStatus) => void;
 };
 
-/** A reported page and what its reporters said, with the moderator's choices. */
 export function ReportedSubjectCard({
   subject,
   pendingStatus,

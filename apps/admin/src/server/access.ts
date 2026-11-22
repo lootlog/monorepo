@@ -2,7 +2,6 @@ import { Predicate } from "effect";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { AdminConfig } from "./config.js";
 
-/** The header Cloudflare Access adds to every request it lets through. */
 export const ACCESS_TOKEN_HEADER = "cf-access-jwt-assertion";
 
 type Access = NonNullable<AdminConfig["access"]>;
@@ -23,11 +22,6 @@ const keySetFor = (teamDomain: string) => {
   return keySet;
 };
 
-/**
- * The email in an Access token signed by the team for this application, or
- * undefined when the token is forged, expired or meant for another one. The
- * tunnel alone proves nothing: anything inside the cluster can reach the port.
- */
 export const verifyAccessToken = async (
   token: string,
   access: Access,

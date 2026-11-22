@@ -26,7 +26,6 @@ export const BattleSummarySection: FC<BattleSummarySectionProps> = ({
   const { friendly, enemy } = getBattleTeamSummaries(battle);
   const { leftTeam, rightTeam } = getBattleTeamPresentation(battle);
 
-  // A duel names its two fighters; a group battle falls back to the team labels.
   const friendlyLabel =
     leftTeam.length === 1 && leftTeam[0]
       ? leftTeam[0].name

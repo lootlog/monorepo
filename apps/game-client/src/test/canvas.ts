@@ -1,11 +1,9 @@
 import { createCanvas, Image, type Canvas } from "@napi-rs/canvas";
 import { vi } from "vitest";
 
-// The browser canvas overload accepts either dimensions or existing ImageData.
 const isCanvasDimension = (value: number | ImageData): value is number =>
   typeof value === "number";
 
-/** Run browser canvas drawing against Skia, including real compositing and pixels. */
 export const installTestCanvas = () => {
   const contexts = new WeakMap<HTMLCanvasElement, CanvasRenderingContext2D>();
   const loadedImages = new WeakMap<HTMLImageElement, Canvas>();

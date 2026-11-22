@@ -2,9 +2,7 @@ import type { BattlePingType } from "@lootlog/schema/battle-ping";
 import { getPingPresentation } from "./ping-presentation";
 
 export type BattlePingMark = {
-  /** The history entry this mark shows. */
   entryId: number;
-  /** True when an ally asked the local hero for this. */
   forMe: boolean;
   senderName: string;
   type: BattlePingType;
@@ -12,19 +10,15 @@ export type BattlePingMark = {
 };
 
 export type BattlePingTarget = {
-  /** The history entry this target shows. */
   entryId: number;
-  /** `performance.now()` time the target was picked. */
   receivedAt: number;
   senderName: string;
   warriorId: number;
 };
 
-/** One ping of the current fight, kept after its mark leaves the warrior. */
 type BattlePingEntry = {
   id: number;
   forMe: boolean;
-  /** `performance.now()` time the ping arrived or was sent. */
   receivedAt: number;
   senderName: string;
   type: BattlePingType;
@@ -33,16 +27,9 @@ type BattlePingEntry = {
 
 type BattlePingSnapshot = {
   marks: ReadonlyMap<number, BattlePingMark>;
-  /** The team's shared attack target; the latest `attack` ping wins. */
   target: BattlePingTarget | null;
-  /** The fight's pings, newest first. */
   history: readonly BattlePingEntry[];
-  /**
-   * The fight has had a ping, even one retracted since; only the battle's end
-   * resets it.
-   */
   fightPinged: boolean;
-  /** The warrior a history entry under the pointer refers to. */
   highlightedWarriorId: number | null;
 };
 
@@ -62,7 +49,6 @@ const EMPTY_SNAPSHOT: BattlePingSnapshot = {
   highlightedWarriorId: null,
 };
 
-/** A long fight keeps its recent pings; older ones no longer matter. */
 const HISTORY_LIMIT = 20;
 
 const defaultDependencies: StoreDependencies = {
@@ -71,11 +57,6 @@ const defaultDependencies: StoreDependencies = {
   setTimer: (callback, delayMs) => globalThis.setTimeout(callback, delayMs),
 };
 
-/**
- * Battle pings for the current fight. Marks expire on their own; the shared
- * target stays until it is replaced, its warrior dies, or the battle ends.
- * The history keeps the fight's latest pings until the battle ends.
- */
 class BattlePingStore {
   private readonly dependencies: StoreDependencies;
   private readonly listeners = new Set<() => void>();
@@ -87,7 +68,6 @@ class BattlePingStore {
     this.dependencies = { ...defaultDependencies, ...dependencies };
   }
 
-  /** Shows a ping and returns its history entry id. */
   apply(input: {
     forMe: boolean;
     senderName: string;
@@ -134,11 +114,6 @@ class BattlePingStore {
     return entryId;
   }
 
-  /**
-   * Undoes a local ping the gateway rejected: the team never saw it, so it
-   * leaves the history, and its mark or target unless another ping already
-   * replaced it.
-   */
   retract(entryId: number, previousTarget: BattlePingTarget | null): void {
     const { history, marks, target } = this.snapshot;
     const nextHistory = history.filter(({ id }) => id !== entryId);
@@ -168,10 +143,6 @@ class BattlePingStore {
     });
   }
 
-  /**
-   * Drops the mark and target shown on a warrior, e.g. once it died. Its
-   * history entries stay.
-   */
   removeWarrior(warriorId: number): void {
     const { marks, target } = this.snapshot;
 
@@ -188,7 +159,6 @@ class BattlePingStore {
     });
   }
 
-  /** Points at the warrior of the history entry under the pointer. */
   highlightWarrior(warriorId: number | null): void {
     if (this.snapshot.highlightedWarriorId === warriorId) {
       return;

@@ -5,11 +5,9 @@ import { NotificationDiscordMessage } from "./notification-discord-message";
 type NotificationMessagePreviewProps = {
   contentTemplate: string;
   guildRoles: GuildRole[];
-  /** Off where a tab already names the preview. */
   withLabel?: boolean;
 };
 
-/** The message as it will look on Discord, named as a preview with sample data. */
 export const NotificationMessagePreview = ({
   contentTemplate,
   guildRoles,

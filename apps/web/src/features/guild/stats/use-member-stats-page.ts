@@ -37,7 +37,6 @@ export function useMemberStatsPage() {
 
   const filterParams = buildMemberKillsParams(settings);
 
-  // A cursor is valid only for the filters it was issued for.
   const pages = useCursorStack(JSON.stringify(filterParams));
 
   const { data, isLoading } = useKillsControllerGetMemberKills(

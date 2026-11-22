@@ -45,8 +45,6 @@ describe("notification job recovery", () => {
           .values({ ruleId: rule.id, targetId: target.id }),
       );
 
-      // A daily reminder created by the recurrence whose delayed queue entry
-      // never fired, and a recent job whose queue write failed.
       await boundary.run(
         database.insert(notificationJobTable).values([
           createNotificationJobFixture({
@@ -66,7 +64,6 @@ describe("notification job recovery", () => {
             attemptCount: 0,
             scheduledFor: lostAt,
           }),
-          // A timer warning whose spawn window is still open.
           createNotificationJobFixture({
             id: "timer",
             idempotencyKey: "timer",
@@ -137,8 +134,6 @@ describe("notification job recovery", () => {
       });
       expect(jobs.find((job) => job.id === "lost")?.status).toBe("PENDING");
       expect(jobs.find((job) => job.id === "timer")?.status).toBe("PENDING");
-      // The rule resumes at its next future occurrence; the months it missed
-      // are not sent as a burst of stale reminders.
       expect(jobs).toHaveLength(4);
       expect(next?.status).toBe("PENDING");
       expect(next?.scheduledFor.getTime()).toBeGreaterThan(startedAt);

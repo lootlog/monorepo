@@ -11,14 +11,8 @@ type AsyncStatusIndicatorProps = {
   label: string;
   onRetry?: () => void;
   retryLabel?: string;
-  /** Replaces the retry icon when the action is not a retry, e.g. sign in. */
   retryIcon?: ReactNode;
   className?: string;
-  /**
-   * `strip` renders a full-width toolbar strip that stacks with the other
-   * strips (rules only on top and bottom); `inline` renders a pill sized to
-   * its label.
-   */
   layout?: "inline" | "strip";
 };
 
@@ -69,7 +63,6 @@ export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
       )}
       <span className="ll:min-w-0 ll:flex-1">{label}</span>
       {onRetry && retryLabel ? (
-        // Pulled into the padding so the 24px target keeps the pill's height.
         <IconButton
           label={retryLabel}
           className="ll:-my-1.5 ll:-mr-1.5"

@@ -57,7 +57,6 @@ type CharacterTooltipCatchingGuildsState = {
     guilds: UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem[],
     fetchedAt: number,
   ) => void;
-  /** Marks characters without a Lootlog owner, in one store update. */
   setUnavailable: (keys: readonly string[]) => void;
 };
 

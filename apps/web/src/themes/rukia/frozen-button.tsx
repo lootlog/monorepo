@@ -11,8 +11,6 @@ import {
   buttonSnowflakePositions,
 } from "./frost-button-positions";
 
-// Frozen wrapper for rectangular buttons - matches RukiaBorderGlow visual style
-// but keeps button text readable by not covering it with opaque overlays
 export const FrozenButton = ({
   children,
   isHovered,
@@ -39,7 +37,6 @@ export const FrozenButton = ({
         <>
           <FrostFilter />
 
-          {/* Frost texture + edge frost - only on hover, skipped on active to keep text readable */}
           {!isActive && (
             <>
               <m.div
@@ -108,7 +105,6 @@ export const FrozenButton = ({
             />
           ))}
 
-          {/* Ice glow border - outer glow only, no inset */}
           <m.div
             className={`absolute inset-0 ${rounded} pointer-events-none`}
             initial={{ opacity: 0 }}
@@ -121,7 +117,6 @@ export const FrozenButton = ({
             transition={{ duration: 0.3 }}
           />
 
-          {/* Active state: shimmer + cyan border */}
           {isActive && !subtle && (
             <>
               <m.div
@@ -156,7 +151,6 @@ export const FrozenButton = ({
             </>
           )}
 
-          {/* Active burst (one-shot) */}
           {isActive && !subtle && (
             <m.div
               className={`absolute inset-0 ${rounded} pointer-events-none`}
@@ -172,7 +166,6 @@ export const FrozenButton = ({
         </>
       )}
 
-      {/* Content */}
       <div className="relative z-10 flex-1 min-h-0">{children}</div>
     </div>
   );

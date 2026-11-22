@@ -5,7 +5,6 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import type { ReactElement, ReactNode } from "react";
 
-/** Names a filters icon button beside it, with an optional line of state. */
 export const LootFiltersIconTooltip = ({
   trigger,
   label,

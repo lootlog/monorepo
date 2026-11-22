@@ -72,11 +72,9 @@ export class NpcsDeleteProcessor {
     deletedNpcs.forEach(({ data, deletion }) => {
       if (!data || !deletion.respBaseSeconds) return;
 
-      // A Hero Tracker has no weight; its departure reports its respawn.
       if (data.weight < MIN_TIMER_NPC_WT && !isHeroTrackerName(data.name))
         return;
 
-      // The action log is the only trace of a timer players expected.
       const skip = (reason: string) =>
         logSkippedAction({
           actionType: "create_timer",
@@ -94,8 +92,6 @@ export class NpcsDeleteProcessor {
         return;
       }
 
-      // A character in stasis learns about kills late, so the deletion time
-      // is not the kill time. Margonem's own kill timer skips these too.
       if (game?.hero.stasis) {
         skip("stasis");
 

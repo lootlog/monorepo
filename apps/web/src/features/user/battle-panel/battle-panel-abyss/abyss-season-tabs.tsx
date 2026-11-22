@@ -9,7 +9,6 @@ type AbyssSeasonTabsProps = {
   activeId: AbyssSeasonTab | undefined;
 };
 
-/** The season's sections, pinned under the app bar. */
 export const AbyssSeasonTabs = ({
   seasonId,
   characterId,

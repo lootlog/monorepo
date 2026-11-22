@@ -12,11 +12,6 @@ import {
   type WindowViewport,
 } from "./window-viewport";
 
-/**
- * A drag session measures the viewport once on pointer down and only
- * re-measures when the visual viewport itself resizes (pinch zoom), never per
- * pointer move.
- */
 type DragInfo = {
   offsetX: number;
   offsetY: number;
@@ -45,17 +40,11 @@ const getNextDragSessionId = () => {
 
 type UseDragConfig = {
   ref: React.RefObject<HTMLDivElement | null>;
-  /** Where the element is displayed; a drag starts from and moves relative to it. */
   position: WindowPosition;
-  /** Receives the dropped position, only when the drag actually moved the element. */
   onDragStop: (position: WindowPosition) => void;
   isLocked?: boolean;
 };
 
-/**
- * Moves an element with a coalesced transform while the pointer is down and
- * reports the dropped position once. The caller owns the resting position.
- */
 export const useDrag = ({
   ref,
   position,
@@ -152,8 +141,6 @@ export const useDrag = ({
     draggedPositionRef.current = null;
     setIsDragging(false);
 
-    // A press without movement is not a placement: it must not turn a default
-    // position into a saved one.
     if (draggedPosition) {
       onDragStopRef.current(draggedPosition);
     }
@@ -198,8 +185,6 @@ export const useDrag = ({
 
     if (!evt.isPrimary || evt.button !== 0) return;
 
-    // An icon is an SVG element, not an HTMLElement; pressing one inside a
-    // drag area must still start the drag.
     if (!(evt.target instanceof Element)) return;
 
     if (evt.target.getAttribute("data-state") === "input") return;
@@ -214,8 +199,6 @@ export const useDrag = ({
     if (!startDrag(evt.clientX * scale, evt.clientY * scale, viewport)) return;
 
     activePointerIdRef.current = evt.pointerId;
-    // Cancelling pointerdown suppresses the compatibility mousedown, whose
-    // default action would start a text selection that follows the drag.
     evt.preventDefault();
     evt.stopPropagation();
   };
@@ -245,8 +228,6 @@ export const useDrag = ({
     [ref],
   );
 
-  // The dropped position reaches the caller's state in the same render that
-  // ends the drag, so the transform is removed exactly when `left`/`top` move.
   useLayoutEffect(() => {
     if (isDragging || !hasDragStylesRef.current) return;
     const draggableElement = ref.current;

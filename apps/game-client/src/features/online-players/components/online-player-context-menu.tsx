@@ -11,7 +11,6 @@ type OnlinePlayerContextMenuProps = {
   onShowProfile: () => void;
 };
 
-/** The items of an online player's menu in the list's shared context menu. */
 export const OnlinePlayerContextMenu: FC<OnlinePlayerContextMenuProps> = ({
   canAddFriend,
   canShowGameContextActions,

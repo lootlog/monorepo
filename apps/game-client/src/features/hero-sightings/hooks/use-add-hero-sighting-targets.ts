@@ -7,11 +7,6 @@ type AddHeroSightingTarget = {
   readonly name: string | undefined;
 };
 
-/**
- * Where a hero entered by hand goes, like a detector answer: every Lootlog
- * the current character plays for in which the player may write sightings.
- * `status` tells why there is none.
- */
 export const useAddHeroSightingTargets = () => {
   const catchingGuildIds = useCurrentCharacterCatchingGuildIds();
   const writableGuildIds = useHeroSightingWriteAccess(catchingGuildIds ?? []);

@@ -9,7 +9,6 @@ type SettingsChoiceCardsProps<Value extends string> = {
   id?: string;
   label: string;
   options: readonly SettingsChoiceOption<Value>[];
-  /** `null` renders the group with no selected card. */
   value: Value | null;
   disabled?: boolean;
   onChange: (value: Value) => void;
@@ -25,10 +24,6 @@ const findIndex = <Value extends string>(
     options.findIndex((option) => option.value === value),
   );
 
-/**
- * Radio group rendered as a grid of cards. One card per option: title,
- * optional one-line description and a check mark on the selected one.
- */
 export const SettingsChoiceCards = <Value extends string>({
   id,
   label,
@@ -38,7 +33,6 @@ export const SettingsChoiceCards = <Value extends string>({
   onChange,
   className,
 }: SettingsChoiceCardsProps<Value>) => {
-  // With nothing selected the first enabled card carries the roving tab stop.
   const focusableValue =
     options.find((option) => !option.disabled)?.value ?? null;
 

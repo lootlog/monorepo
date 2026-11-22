@@ -12,10 +12,6 @@ type EmptyStateProps = {
   title: string;
 };
 
-/**
- * Quiet placeholder for a window whose list has nothing to show: what is
- * missing, optionally why or what brings entries back, and one way out.
- */
 export const EmptyState: FC<EmptyStateProps> = ({
   action,
   className,

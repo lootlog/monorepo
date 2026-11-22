@@ -27,7 +27,6 @@ export const lootlogCommand: SlashCommand = {
         .setDescription(text.diagnosticsDescription),
     )
     .toJSON(),
-  // Both answers help someone who may not be a Member yet.
   run: (invocation) =>
     Effect.gen(function* () {
       const { webAppUrl } = yield* BotConfig;

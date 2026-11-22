@@ -6,10 +6,6 @@ import { SymbolRecipe } from "@/components/sockets/symbol-recipe";
 import { t } from "@/i18n/messages";
 import { formatGold } from "@/lib/upgrade-cost-format";
 
-/**
- * How a symbol is made: the components fused into it, the level range of
- * the items it goes into and the fusion's cost.
- */
 export function ItemSymbolSection({ symbol }: { symbol: SymbolInfo }) {
   const { tier } = symbol;
 

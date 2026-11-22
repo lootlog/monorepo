@@ -17,8 +17,6 @@ import { useTranslation } from "react-i18next";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
-// Built on first use so the bundle does not load locale data while it
-// evaluates during the game's startup.
 const getBuildTimestampFormatter = once(
   () =>
     new Intl.DateTimeFormat(PRODUCT_LOCALE, {
@@ -35,7 +33,6 @@ export const InformationSettingsTab = () => {
   const metadataRows: {
     label: string;
     value: string;
-    /** Raw value offered to the clipboard; undefined hides the copy action. */
     copyValue?: string;
   }[] = [
     {

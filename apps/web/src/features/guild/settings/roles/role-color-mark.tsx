@@ -1,4 +1,3 @@
-/** A role's colour as a dot on a tint of itself, in the place of a tile's icon. */
 export const RoleColorMark = ({ color }: { color: string }) => (
   <span
     aria-hidden

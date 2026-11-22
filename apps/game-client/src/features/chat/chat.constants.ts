@@ -2,7 +2,6 @@ export const CHAT_QUERY_GC_TIME_MS = 30 * 60 * 1000;
 
 export const CHAT_INPUT_MAX_LENGTH = 128;
 
-// Keep integration unavailable until it is ready for release.
 export const CHAT_INTEGRATION_ENABLED = false;
 
 export const CHAT_GATHERING_ACTION_CLASS =

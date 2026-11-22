@@ -369,8 +369,6 @@ it("submits different loot effects that share an event id", async () => {
   expect(fixture.requests).toHaveLength(2);
 });
 
-// The API rejects loot from a character that catches for no Organization;
-// submitting it only produces a 400 response.
 it.each([
   "no Organization",
   "no Organization for longer than the stale time",
@@ -395,8 +393,6 @@ it.each([
   },
 );
 
-// Only certain rejections may be skipped: without a current catching scope
-// the API decides, otherwise loot it would accept disappears silently.
 it.each<[string, () => Promise<void>]>([
   ["has not loaded", async () => {}],
   [
@@ -443,9 +439,6 @@ it.each<[string, () => Promise<void>]>([
   expect(await fixture.payload(1)).toMatchObject({ source: "DIALOG" });
 });
 
-// Lootlog settings are invisible to members, so the API's refusal is the only
-// source: it may silence nothing but loot those same settings refuse, and
-// only until a changed setting could plausibly have been missed.
 it("stops resubmitting loot the Lootlog settings refused until the refusal expires", async () => {
   const fixture = createFixture();
   const log = vi.spyOn(console, "log").mockImplementation(() => undefined);

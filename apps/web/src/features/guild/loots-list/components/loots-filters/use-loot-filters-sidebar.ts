@@ -43,7 +43,6 @@ type SavedFilter = {
   };
 };
 
-// Selection order does not change which loots match a saved filter.
 const normalizeSavedFilters = (filters: SavedFilter["filters"]) =>
   Object.fromEntries(
     Object.entries(filters)
@@ -56,7 +55,6 @@ const normalizeSavedFilters = (filters: SavedFilter["filters"]) =>
 
 type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
 
-// Selected names need no lookup: the filter value is the label.
 const getEntitySearchParams = (
   search: string,
   world: string | null | undefined,
@@ -77,14 +75,11 @@ const getHidQueryState = (
   };
 };
 
-// Filters match by name, so one hit per name is enough for the option list.
 const uniqueByName = <Hit extends { name: string }>(hits: Hit[] | undefined) =>
   uniqBy(hits ?? [], (hit) => hit.name);
 
 const hasLevelRange = (min: string, max: string) => Number(Boolean(min || max));
 
-// Every selected value counts, and a level range counts once, so a section's
-// count matches what the player picked in it.
 const getFilterSectionState = (filters: LootFilters) => {
   const npcActiveFilterCount =
     filters.npcTypes.length +
@@ -114,7 +109,6 @@ const getFilterSectionState = (filters: LootFilters) => {
   };
 };
 
-// Level bounds travel through the URL as strings; the inputs work on numbers.
 const toLevelNumber = (value: string) =>
   value.length > 0 ? Number(value) : undefined;
 
@@ -188,8 +182,6 @@ export const useLootFiltersSidebar = () => {
     world,
   );
 
-  // Every world of an edition shares its NPCs and items, so their search
-  // takes no world.
   const npcsSearchParams =
     debouncedNpcsSearchValue.length > 0
       ? { search: debouncedNpcsSearchValue, limit: 10 }
@@ -237,7 +229,6 @@ export const useLootFiltersSidebar = () => {
   const npcHits = uniqueByName(npcsQuery.data?.hits);
   const itemHits = uniqueByName(itemsQuery.data?.hits);
 
-  // A pending debounce reads as "searching" so the list never shows stale hits.
   const isPlayersSearching =
     playersSearchValue !== debouncedPlayersSearchValue ||
     playersQuery.isFetching;
@@ -318,7 +309,6 @@ export const useLootFiltersSidebar = () => {
     setCustomFilters((prev) => prev.filter((filter) => filter.id !== id));
   };
 
-  // A quick filter replaces the filters but keeps a direct text search.
   const applyFilter = (filterData: SavedFilter["filters"]) => {
     const { search } = filters;
 
@@ -365,7 +355,6 @@ export const useLootFiltersSidebar = () => {
   const clearPlayerFilters = () =>
     updateFilters({ players: [], playerLevelMin: "", playerLevelMax: "" });
 
-  // Picking the applied view again takes it off.
   const toggleQuickFilter = (filterData: SavedFilter["filters"]) => {
     if (isQuickFilterApplied(filterData)) {
       applyFilter({});

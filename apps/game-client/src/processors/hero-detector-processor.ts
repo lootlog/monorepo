@@ -15,13 +15,8 @@ import { useGameStore } from "@/store/game.store";
 import { useHeroSightingsStore } from "@/store/hero-sightings.store";
 import { useWindowsStore } from "@/store/windows.store";
 
-/**
- * Margonem re-delivers recent chat history after a login or a reload; an
- * answer older than this was already reported, or is no longer news.
- */
 const MAX_DETECTION_AGE_MS = 2 * 60 * 1000;
 
-/** Answers kept to skip repeats; far more than one window of fresh ones. */
 const MAX_HANDLED_MESSAGE_IDS = 64;
 
 type DetectorAnswer = {
@@ -36,10 +31,6 @@ const readDetectorAnswer = (message: ChatEventMsg): DetectorAnswer | null => {
   return detection ? { message, detection } : null;
 };
 
-/**
- * Reports the hero detector's answers in the system chat as hero sightings,
- * then offers the player to claim the hero they found.
- */
 export class HeroDetectorProcessor {
   private readonly handledMessageIds = new Set<number>();
 
@@ -62,7 +53,6 @@ export class HeroDetectorProcessor {
     }
   }
 
-  /** True the first time a fresh answer is seen. */
   private claimMessage({ id, ts }: ChatEventMsg, now: number): boolean {
     if (now - ts * 1000 > MAX_DETECTION_AGE_MS) return false;
 
@@ -108,8 +98,6 @@ export class HeroDetectorProcessor {
       observedAt: new Date(message.ts * 1000).toISOString(),
     })
       .then(({ submittedGuilds }) => {
-        // An Organization whose access hides this hero from the player still
-        // accepts the detection, but returns no sighting to show or claim.
         const sightings = submittedGuilds.flatMap(({ sighting }) =>
           sighting ? [sighting] : [],
         );

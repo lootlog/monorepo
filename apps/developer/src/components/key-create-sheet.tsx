@@ -34,7 +34,6 @@ import { apiKeysCreateApiKey } from "@lootlog/client/auth";
 import { getKeyErrorMessage, readKeyForm } from "@/lib/key-client";
 import { portalText as t } from "@/lib/translations";
 
-/** The intro with the create button, and the sheet holding the new key's form. */
 export function KeyCreateSheet({
   organizations,
   disabled,
@@ -48,7 +47,6 @@ export function KeyCreateSheet({
   keyLimitReached: boolean;
   triggerRef: RefObject<HTMLButtonElement | null>;
   finalFocus: () => HTMLElement | null;
-  /** Receives the secret, which the server shows only once. */
   onCreated: (secret: string) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);

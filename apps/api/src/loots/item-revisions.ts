@@ -13,11 +13,6 @@ import {
   lootTable,
 } from "#src/database/drizzle/loot.schema";
 
-/**
- * When every revision of an item that has more than one was first and last
- * looted. Revisions are dated by their loots: a revision row's own creation
- * time is when it was stored, and backfills stored most of them at once.
- */
 export const buildItemRevisionsQuery = (database: ApiDatabaseValue) => {
   const revised = database.$with("revised_items").as(
     database
@@ -63,7 +58,6 @@ export const buildItemRevisionsQuery = (database: ApiDatabaseValue) => {
     .groupBy(itemSnapshotTable.id);
 };
 
-/** One revision of an item and when Lootlog saw it looted. */
 export type LootedItemRevision = {
   readonly gameVersion: GameVersion;
   readonly itemId: number;
@@ -83,23 +77,13 @@ const warsawDay = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
 });
 
-/** The calendar day in Poland, as `YYYY-MM-DD`. */
 const toWarsawDay = (instant: Date) => warsawDay.format(instant);
 
 const statEntries = (stat: string) =>
   new Map(parseItemStatEntries(stat).map(({ key, value }) => [key, value]));
 
-/**
- * The stats without `etiquette`, the events an item was last available
- * during. The game writes it onto an event item when the event ends and adds
- * a year each time it returns, which leaves the item itself as it was.
- */
 const withoutEvents = (stat: string) => withoutItemStat(stat, "etiquette");
 
-/**
- * Revisions that differ only in their events as one revision, looted from
- * the first loot of any of them to the last.
- */
 const mergeEventRevisions = (
   revisions: ReadonlyArray<LootedItemRevision>,
 ): LootedItemRevision[] =>
@@ -118,7 +102,6 @@ const mergeEventRevisions = (
     return first && last ? [{ ...first, lastLootedAt: last.lastLootedAt }] : [];
   });
 
-/** The stat keys, and `name` or `icon`, that differ between two revisions. */
 const changedFields = (
   before: LootedItemRevision,
   after: LootedItemRevision,
@@ -139,18 +122,10 @@ type Change = {
   readonly before: LootedItemRevision;
   readonly after: LootedItemRevision;
   readonly fields: ReadonlyArray<string>;
-  /** The game changed the item after this, when the old revision was looted last. */
   readonly changedAfter: Date;
-  /** ...and before this, when the new one was looted first. */
   readonly changedBy: Date;
 };
 
-/**
- * The changes between consecutive revisions, or none when the revisions
- * overlap: a revision still looted after the next one appeared is not an
- * older version but a variant, as items whose stats follow something other
- * than their level have, so no order of them is a history.
- */
 const consecutiveChanges = (
   revisions: ReadonlyArray<LootedItemRevision>,
 ): Change[] | null => {
@@ -184,11 +159,6 @@ const consecutiveChanges = (
   return changes;
 };
 
-/**
- * One game change of an elastic item, seen at several of its levels: every
- * level's window holds the moment, so their overlap does too. Levels whose
- * windows do not overlap saw different changes and stay apart.
- */
 const mergeLevelChanges = (changes: ReadonlyArray<Change>): Change[] =>
   Object.values(groupBy(changes, ({ fields }) => fields.join(";"))).flatMap(
     (same) => {
@@ -220,13 +190,6 @@ const toRevision = ({ before, after, changedAfter, changedBy }: Change) => ({
   changedBy: toWarsawDay(changedBy),
 });
 
-/**
- * Every item with more than one revision, with the changes the game made to
- * it, oldest first; an empty list clears what an earlier run published.
- * Events an item was available during are not a change and are left out. An
- * elastic item's revisions differ by level as well, so only revisions of
- * one level are compared.
- */
 export const toItemRevisionHistories = (
   rows: ReadonlyArray<LootedItemRevision>,
 ) =>

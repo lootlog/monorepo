@@ -11,7 +11,6 @@ import { rabbitEventSchema } from "@lootlog/protocol/rabbit/events";
 import { SearchHttpServer } from "#src/http-api/search-http";
 import { SearchOperations } from "#src/http-api/search-operations";
 
-// Replays get their own queue, so a backfill never delays live loots.
 const searchQueues = {
   players: queue("search-players-index", RabbitRoutingKey.SEARCH_PLAYERS_INDEX),
   playersReplay: queue(
@@ -24,7 +23,6 @@ export const SearchConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
     const search = yield* SearchOperations;
 
-    // Live and replayed players share one wire shape.
     for (const { name } of Object.values(searchQueues)) {
       yield* consumeInBatches({
         queue: name,

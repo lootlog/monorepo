@@ -17,17 +17,11 @@ import { legendaryBonusIcon } from "@/lib/legendary-bonuses";
 import { formatGold } from "@/lib/upgrade-cost-format";
 
 type ItemSocketSectionProps = {
-  /** The item as dropped, at the level it is shown at. */
   item: CatalogItemDtoOutput;
   upgrade: ItemUpgrade;
   onChange: (upgrade: ItemUpgrade) => void;
 };
 
-/**
- * The symbol set in the item's socket: the legendary bonuses whose symbols
- * fit it, and for the chosen one how strong its bonus is, what it is fused
- * from and what the fusion costs.
- */
 export function ItemSocketSection({
   item,
   upgrade,

@@ -20,11 +20,6 @@ type Props = {
   roomSummary?: PartyGatheringSummary;
   pending: boolean;
   stale: boolean;
-  /**
-   * `room` is shown as the user's own gathering. Its viewer is ORGANIZER for
-   * every character of the organizer's Discord user, including one that only
-   * participates in it, so the projection alone cannot decide this.
-   */
   organizer?: boolean;
   hasOwnGathering?: boolean;
   onApply: (candidate: PartyGatheringSummary) => void;

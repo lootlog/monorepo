@@ -45,21 +45,12 @@ type IndexedItem = Omit<IndexItem, "droppedBy" | "observedAt"> &
   ItemLevelFields & {
     uid: string;
     worlds: string[];
-    /** The monsters of `droppedBy` that no longer drop the item. */
     retiredDropMonsterKeys?: string[];
-    /** How often the kills of the monsters of `droppedBy` drop the item. */
     dropRates?: ItemDropRate[];
-    /** The changes the game made to the item, oldest first. */
     revisions?: ItemRevisionsCommand["items"][number]["revisions"];
-    /** The day the item's latest change was first looted, to list it by. */
     changedOn?: string | null;
   };
 
-/**
- * One monster's copies of an item over the kills that could record them and
- * the loot rolls of those kills. Entries indexed before rolls were counted
- * have none until the next daily run replaces them.
- */
 export type ItemDropRate = {
   monsterKey: string;
   drops: number;
@@ -83,10 +74,6 @@ const sameMonsterDrops = (left: MonsterDropFields, right: MonsterDropFields) =>
     sortBy(right.dropRates, [({ monsterKey }) => monsterKey]),
   );
 
-/**
- * The retired drops of an item seen dropping again: a monster that drops it
- * is no longer retired. Entries indexed before the field existed stay without.
- */
 const remainingRetiredDrops = (
   incoming: Pick<ItemDropFields, "droppedByMonsterKeys">,
   stored: Pick<IndexedItem, "retiredDropMonsterKeys"> | undefined,
@@ -99,11 +86,6 @@ const remainingRetiredDrops = (
         ),
       };
 
-/**
- * One catalog entry per edition, item id and name. A template observed in
- * Polish and English, or renamed, keeps each name searchable instead of the
- * last observation replacing it.
- */
 export const itemCatalogKey = (
   item: Pick<IndexItem, "id" | "name" | "gameVersion">,
 ) =>
@@ -137,11 +119,6 @@ const mergeItemsByCatalogKey = (
   return [...itemsByKey.values()];
 };
 
-/**
- * The stored shape of items: one document per catalog key with its worlds
- * merged, the searchable stat fields expanded and the attack speed the item
- * adds at +5. The seed script and the consumer share it.
- */
 const toItemDocuments = (items: ReadonlyArray<IndexItem>) =>
   mergeItemsByCatalogKey(items).map((item) => ({
     ...item,
@@ -149,15 +126,10 @@ const toItemDocuments = (items: ReadonlyArray<IndexItem>) =>
     upgradedAttackSpeed: upgradedAttackSpeed(item),
   }));
 
-/**
- * Runs one change to the catalog's entries; see `makeCatalogStore`. `run` can
- * run twice, so it derives what it saves and returns from what it reads.
- */
 export type CatalogWrite = <A, E>(
   run: (change: CatalogChange<ItemEntry, NpcEntry>) => Effect.Effect<A, E>,
 ) => Effect.Effect<A, E | CatalogWriteFailure>;
 
-/** A stored item entry: its document with the fields the API sets on a schedule. */
 export type ItemEntry = ReturnType<typeof toItemDocuments>[number] &
   Pick<
     IndexedItem,
@@ -216,12 +188,6 @@ export const makeItemsModule = (write: CatalogWrite) => {
     yield* countEntries("items", itemsWithSearchFields.length, changedCount);
   });
 
-  /**
-   * Replaces each monster's retired drops and drop rates on the items it
-   * drops. Only those fields are written, so drops indexed meanwhile are
-   * kept; a concurrent drop may restore a retirement until the next run,
-   * never lose a source.
-   */
   const setMonsterDrops = Effect.fn("CatalogItems.setMonsterDrops")(function* (
     data: MonsterDropsCommand,
   ) {
@@ -288,10 +254,6 @@ export const makeItemsModule = (write: CatalogWrite) => {
     );
   });
 
-  /**
-   * Replaces the changes of each item, on every catalog entry of its edition
-   * and id: a renamed item has one entry per name.
-   */
   const setItemRevisions = Effect.fn("CatalogItems.setItemRevisions")(
     function* (data: ItemRevisionsCommand) {
       yield* write((change) =>

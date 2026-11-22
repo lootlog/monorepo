@@ -11,10 +11,6 @@ import { SocketItem } from "./socket-item";
 
 type SymbolCardProps = { tier: SymbolTier; bonus: SocketBonus };
 
-/**
- * One symbol of a level range: the symbol and the components its recipe
- * takes.
- */
 export function SymbolCard({ tier, bonus }: SymbolCardProps) {
   const itemsById = useSocketItems();
   const symbolId = tier.symbols[bonus];

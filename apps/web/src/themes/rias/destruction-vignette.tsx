@@ -1,7 +1,6 @@
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import * as m from "framer-motion/m";
 
-// Pulsating Power of Destruction vignette - breathing crimson edges
 export const DestructionVignette = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
 

@@ -12,7 +12,6 @@ const rememberVisitedPersonalPanel = (match: {
 }) => {
   const userId = match.context.session?.data?.user.id;
 
-  // A failed restoration lands here without the user choosing this panel.
   if (!match.context.isRestoreFallback && userId) {
     rememberPersonalPanel(userId);
   }

@@ -3,8 +3,6 @@ import { validateUsersSearch } from "./users-search.js";
 
 describe("validateUsersSearch", () => {
   it('overrides what the filter form sends for "no filter" instead of leaving it in the address', () => {
-    // The router lays the result over the raw search, so only a present key
-    // replaces the form's `any` before it reaches the loader as a role.
     const search = validateUsersSearch({
       search: " kuchar ",
       role: "any",

@@ -35,7 +35,6 @@ export const Route = createFileRoute("/users/$userId")({
     notice?: unknown;
     error?: unknown;
   }): UserPageSearch => ({
-    // Both keys are returned even when empty, or a raw value would stay.
     notice: Option.getOrUndefined(readNotice(search.notice)),
     error: Option.getOrUndefined(readError(search.error)),
   }),

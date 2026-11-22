@@ -114,8 +114,6 @@ export const LootItemFilters = ({
         />
       </div>
 
-      {/* Without a world the HID cannot be resolved to an item, but the
-            filter still applies, so it stays visible by its number. */}
       {filters.hid && (
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground">

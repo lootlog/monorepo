@@ -15,7 +15,6 @@ import {
   relatedDropsSource,
 } from "@/lib/catalog-page-queries";
 
-/** The other items of the monster the item drops from, as a gallery. */
 export function ItemRelatedDrops({ item }: { item: CatalogItemDtoOutput }) {
   const source = relatedDropsSource(item);
 

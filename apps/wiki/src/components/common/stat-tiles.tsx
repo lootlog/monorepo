@@ -3,19 +3,15 @@ import { cn } from "cn";
 type StatTile = {
   label: string;
   value: string;
-  /** A gain beside the value, such as `+7`. */
   extra?: string | null;
-  /** A muted note under the value, such as when it applies. */
   hint?: string;
 };
 
 type StatTilesProps = {
   tiles: ReadonlyArray<StatTile>;
-  /** The grid's columns; three by default. */
   className?: string;
 };
 
-/** A row of small figures, each a label over its value, announced as it changes. */
 export function StatTiles({ tiles, className }: StatTilesProps) {
   return (
     <dl className={cn("grid grid-cols-3 gap-2", className)}>

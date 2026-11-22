@@ -148,7 +148,6 @@ describe("all-time weekday heatmap", () => {
         }),
       );
 
-      // 2026-07-16 is a Thursday.
       expect(cells).toEqual([{ weekday: 4, hour: 5, kills: 3 }]);
     } finally {
       await boundary.dispose();

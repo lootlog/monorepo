@@ -8,7 +8,6 @@ type Props = {
   guildIds: readonly string[];
 };
 
-/** The organizer's Lootlog member name, in their role colour. */
 export function ChatGatheringOrganizerMember({
   organizerDiscordId,
   guildIds,

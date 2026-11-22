@@ -1,13 +1,5 @@
-/**
- * The handheld minimap's own view of other players: how it draws each kind,
- * what the player chose to show, and the tip it opens on hover. Lootlog draws
- * players the game does not know about the same way.
- */
-
-/** HandHeldMiniMapData.KIND of a clan enemy. */
 const CLAN_ENEMY_KIND = "cl-en";
 
-/** HandHeldMiniMapData.STATIC_ICONS. */
 export const MINIMAP_ICON = { square: 0, circle: 1, rhomb: 2 } as const;
 
 type MinimapIcon = (typeof MINIMAP_ICON)[keyof typeof MINIMAP_ICON];
@@ -18,11 +10,8 @@ export type MinimapSquares = {
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
   margin: { left: number; top: number };
-  /** One map tile in canvas pixels. */
   normalSize: number;
-  /** A marker's side: a tile, or the game's minimum on a zoomed-out map. */
   minSize: number;
-  /** How far a marker larger than its tile is shifted to stay centred. */
   squareMargin: number;
 };
 
@@ -34,7 +23,6 @@ type JQueryTipTarget = {
   off?: (events: string) => void;
 };
 
-/** The jQuery mouse event the game's own minimap handlers receive. */
 export type MinimapHoverEvent = { clientX: number; clientY: number };
 
 type MinimapRuntimeWindow = Window & {
@@ -42,7 +30,6 @@ type MinimapRuntimeWindow = Window & {
   Engine?: {
     miniMapController?: {
       handHeldMiniMapController?: {
-        /** HandHeldMiniMapController.js returns its `showObject[type][kind]` flag. */
         canUpdate?: (type: string, kind: string) => boolean | undefined;
         getColorByKind?: (kind: string) => string | undefined;
         // oxlint-disable-next-line anti-slop/no-icon-in-symbol-names -- The game names its own method.
@@ -90,7 +77,6 @@ const HOVER_EVENTS = "mousemove.lootlogAirTags";
 
 const PLAYER_TIP_TYPE = "t_other";
 
-// The game stores a colour with or without its hash.
 const BARE_HEX_COLOR = /^[0-9a-f]{6}$/i;
 
 const isMinimapIcon = (icon: unknown): icon is MinimapIcon =>
@@ -98,7 +84,6 @@ const isMinimapIcon = (icon: unknown): icon is MinimapIcon =>
   icon === MINIMAP_ICON.circle ||
   icon === MINIMAP_ICON.rhomb;
 
-/** The open minimap's canvas and tile sizes; null while it is closed or not built. */
 export function getMinimapSquares(): MinimapSquares | null {
   const miniMapWindow = getController()?.getHandHeldMiniMapWindow?.();
 
@@ -123,10 +108,6 @@ export function getMinimapSquares(): MinimapSquares | null {
   };
 }
 
-/**
- * How the minimap draws clan enemies, or null when the player turned them off
- * in the minimap's own settings.
- */
 export function getMinimapClanEnemyStyle(): MinimapPlayerStyle | null {
   const controller = getController();
 
@@ -144,7 +125,6 @@ export function getMinimapClanEnemyStyle(): MinimapPlayerStyle | null {
   };
 }
 
-/** Whether the game already answers a hover on this tile with its own tip. */
 export function hasMinimapObjectAt(x: number, y: number): boolean {
   return Boolean(
     getController()
@@ -153,10 +133,6 @@ export function hasMinimapObjectAt(x: number, y: number): boolean {
   );
 }
 
-/**
- * The tip html the game builds for a player: nick, level, profession and
- * clan, through every addon hooked into character tips.
- */
 export function buildPlayerTipHtml(player: {
   nick: string;
   level?: number;
@@ -177,7 +153,6 @@ export function buildPlayerTipHtml(player: {
   }
 }
 
-/** Opens the minimap's own tip at the cursor, as hovering a native marker does. */
 export function showMinimapTip(event: MinimapHoverEvent, html: string): void {
   getController()
     ?.getMiniMapTipController?.()
@@ -187,11 +162,6 @@ export function showMinimapTip(event: MinimapHoverEvent, html: string): void {
     });
 }
 
-/**
- * Follows the cursor over the minimap. The handler is bound through the
- * game's jQuery, so it runs after the game's own, which has by then shown or
- * hidden its tip.
- */
 export function subscribeMinimapHover(
   canvas: HTMLCanvasElement,
   handler: (event: MinimapHoverEvent) => void,
@@ -211,17 +181,12 @@ export function subscribeMinimapHover(
   return () => {
     try {
       getRuntimeWindow().$?.(canvas).off?.(HOVER_EVENTS);
-    } catch {
-      // The canvas is gone with its handlers.
-    }
+    } catch {}
   };
 }
 
-/** Gives an element the game's own player tip on hover; null removes it. */
 export function setPlayerTip(element: Element, html: string | null): void {
   try {
     getRuntimeWindow().$?.(element).tip?.(html, PLAYER_TIP_TYPE);
-  } catch {
-    // The row keeps its previous tip.
-  }
+  } catch {}
 }

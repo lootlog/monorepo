@@ -32,7 +32,6 @@ import {
   type RolesFormInput,
 } from "./roles-form.schema";
 
-// Flatten for form schema and submission
 const PERMISSIONS = PERMISSION_CATEGORIES.flatMap((group) => group.permissions);
 
 const DEFAULT_LVL_RANGE_FROM = "0";
@@ -67,7 +66,6 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
     resolver: standardSchemaResolver(createRolesFormSchema(t), undefined, {
       raw: true,
     }),
-    // A refetch updates untouched fields and keeps the unsaved edits.
     values: toRolesFormValues(role),
     resetOptions: { keepDirtyValues: true },
   });
@@ -111,7 +109,6 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
 
   return (
     <Form {...form}>
-      {/* Room below the last section for the docked save bar. */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="pb-24" noValidate>
         <BandSection
           id="role-level-range"
@@ -194,7 +191,6 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                       onCheckedChange={field.onChange}
                     >
                       <div className="flex min-w-0 flex-1 flex-col gap-1">
-                        {/* The label covers the tile, so the whole tile toggles. */}
                         <FormLabel className="cursor-pointer text-sm font-medium after:absolute after:inset-0">
                           {t(`permissions.${permission}`)}
                         </FormLabel>

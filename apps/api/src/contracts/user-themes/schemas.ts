@@ -1,4 +1,3 @@
-/** Shared input and output schemas for a User's own web themes. */
 import { Schema } from "effect";
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import {
@@ -10,7 +9,6 @@ export const UserThemeResponse = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   definition: CustomThemeDefinitionSchema,
-  /** Set while the theme is shared by link; `null` once sharing stops. */
   shareToken: Schema.NullOr(Schema.String),
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
@@ -42,7 +40,6 @@ export const SharedUserThemeParams = Schema.Struct({
   shareToken: Schema.String,
 });
 
-/** What a share link reveals: the theme itself, never who made it. */
 export const SharedUserThemeResponse = Schema.Struct({
   name: Schema.String,
   definition: CustomThemeDefinitionSchema,

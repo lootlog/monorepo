@@ -17,7 +17,6 @@ interface ScoringSimulatorTimelineEditorProps {
 
 const makeId = () => Math.random().toString(36).slice(2, 10);
 
-/** The simulated respawn window and every participant's presence intervals. */
 export const ScoringSimulatorTimelineEditor = ({
   timeline,
   onChange,

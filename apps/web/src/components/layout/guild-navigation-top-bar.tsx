@@ -121,7 +121,6 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
 }) => {
   const { t } = useTranslation();
   const { setIsOpen: setIsSearchOpen } = useContext(GuildSearchContext);
-  // Breadcrumbs name the page on screen, not the one still loading.
   const path = usePresentedPathname();
   const params = useParams({ strict: false });
   const guildRouteData = guildRouteApi.useLoaderData();

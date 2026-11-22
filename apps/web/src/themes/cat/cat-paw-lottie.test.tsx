@@ -9,8 +9,6 @@ const { playback } = vi.hoisted(() => ({
   playback: vi.fn(),
 }));
 
-// lottie-react is the external animation renderer; happy-dom has no canvas context
-// required by its engine at import time. Keep the application component real.
 vi.mock("lottie-react", () => ({
   Lottie: playback,
 }));

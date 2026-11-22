@@ -16,13 +16,10 @@ import { formatNumber } from "@lootlog/domain/locale";
 
 type NpcResultsProps = {
   params: NpcSearchParams;
-  /** The typed phrase, highlighted in names. */
   query: string;
-  /** The active filters, shown beside the count. */
   filters?: ReactNode;
 };
 
-/** The NPC search's hits, a page at a time, with how many there are. */
 export function NpcResults({ params, query, filters }: NpcResultsProps) {
   const { data, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({

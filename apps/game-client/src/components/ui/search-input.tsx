@@ -15,18 +15,12 @@ type SearchInputProps = Omit<
   value: string;
   placeholder: string;
   size?: InputSize;
-  /** `borderless` embeds the field in a flat toolbar strip. */
   variant?: Extract<InputVariant, "filled" | "borderless">;
-  /** Empties the field from the clear button shown while it has a value. */
   onClear: () => void;
   clearLabel: string;
   className?: string;
 };
 
-/**
- * Search field: filled input with a leading search icon and a clear button.
- * Every search box in the client shares this look and behavior.
- */
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
   function SearchInput(
     {

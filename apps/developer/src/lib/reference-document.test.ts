@@ -14,8 +14,6 @@ import { PUBLIC_API_SERVICES } from "@lootlog/schema/api-services";
 const specs = { main, activity, battlelog, catalog, search };
 
 describe("API reference metadata", () => {
-  // Scalar hides a tag that no x-tagGroups entry lists, so a new API group
-  // without metadata would silently drop its operations from the sidebar.
   test.each(PUBLIC_API_SERVICES)(
     "%s lists every operation tag in exactly one named group",
     (service) => {

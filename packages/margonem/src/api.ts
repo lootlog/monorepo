@@ -29,5 +29,4 @@ export type ApiData = {
   AFTER_INTERFACE_START: "afterInterfaceStart";
 };
 
-// Api.js forwards eventData unchanged to registered callbacks, including addon payloads.
 export type ApiEventCallback = (eventData: unknown) => void;

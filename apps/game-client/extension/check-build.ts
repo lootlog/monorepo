@@ -8,7 +8,6 @@ export async function checkBuild(
   mode: string,
   command: "build" | "serve" = "build",
 ) {
-  // WXT serve adds its development server to CSP and uses unbundled modules.
   if (command === "serve") return;
 
   const manifest = JSON.parse(
@@ -85,7 +84,6 @@ export async function checkBuild(
         await readFile(path.join(directory, file)),
       );
 
-      // Chromium's IsStringUTF8 also rejects Unicode noncharacters, unlike TextDecoder.
       for (const character of source) {
         const code = character.codePointAt(0) ?? 0;
 

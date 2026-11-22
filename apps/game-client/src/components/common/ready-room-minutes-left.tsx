@@ -5,7 +5,6 @@ type Props = {
   expiresAt: string;
 };
 
-/** The compact countdown of a gathering card. */
 export function ReadyRoomMinutesLeft({ expiresAt }: Props) {
   const { t } = useTranslation("chat");
   const minutes = useReadyRoomMinutesLeft(expiresAt);

@@ -15,22 +15,13 @@ type CalculatorCardProps = {
   title: string;
   description: string;
   source: FormulaSource;
-  /** The documentation page an official formula comes from. */
   sourceUrl?: string;
-  /** How the result is computed, folded under the card. */
   formula: string;
-  /** Actions beside the title, such as filling the fields from the set. */
   actions?: ReactNode;
-  /** The answers, beside the fields where there is room. */
   results: ReactNode;
-  /** The fields. */
   children: ReactNode;
 };
 
-/**
- * One calculator: what it answers and where its formula comes from, its
- * fields beside its results, and the formula itself folded away.
- */
 export function CalculatorCard({
   id,
   title,

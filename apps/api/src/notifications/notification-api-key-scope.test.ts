@@ -578,7 +578,6 @@ test("personal API keys cannot cancel Organization reservation reminders through
         ),
       );
 
-    // The reported exploit must fail before touching either persistence or the queue.
     await expect(run(rules.deleteUser("discord-1", 7))).rejects.toBeInstanceOf(
       PermissionDeniedError,
     );
@@ -641,7 +640,6 @@ test("personal API keys cannot cancel Organization reservation reminders through
         .sort((a, b) => a - b),
     ).toEqual([8, 10]);
     expect(removeFromQueue).not.toHaveBeenCalled();
-    // Rejected names must not leave behind a new or renamed inaccessible rule.
     await expect(
       run(
         rules.createUser("discord-1", {
@@ -669,7 +667,6 @@ test("personal API keys cannot cancel Organization reservation reminders through
     expect(persistedRules.find(({ id }) => id === 8)?.name).toBe(
       "Personal message",
     );
-    // Personal scheduled messages remain manageable, while a session retains its existing access.
     expect(await run(rules.deleteUser("discord-1", 8))).toEqual({
       success: true,
     });

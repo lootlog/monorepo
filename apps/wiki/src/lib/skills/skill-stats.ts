@@ -13,11 +13,6 @@ import {
   type SkillWeapon,
 } from "@/lib/skills/skill-tree";
 
-/**
- * The passive stats learned skills add, by the game's stat name. Only the
- * stats the character window counts: the rest act in combat, on a skill's
- * use or after a hit, and are read from the skill itself.
- */
 export type SkillBonuses = ReadonlyMap<string, number>;
 
 const PASSIVE_STATS = new Set([
@@ -89,20 +84,14 @@ const PASSIVE_STATS = new Set([
   "of-wounddmgbon_perw",
 ]);
 
-// Strength adds damage only through the weapon a stat names.
 const WEAPON_BOUND_STATS = new Map<string, SkillWeapon>([
   ["str1h", "1h"],
   ["str2h", "2h"],
   ["of-str", "h"],
 ]);
 
-/** The game counts these reductions as positive amounts. */
 const ABSOLUTE_STATS = new Set(["redacdmg_per", "heal_per-enemies"]);
 
-/**
- * What the learned skills add to the character window. A skill counts once
- * the character reaches its level and wears what it needs.
- */
 export const sumSkillBonuses = (
   tree: readonly SkillDefinition[],
   ranks: SkillRanks,
@@ -157,14 +146,9 @@ const scaled = (
 ) =>
   item === undefined ? undefined : round(item * (1 + (percent ?? 0) / 100));
 
-/** Points a percentage skill adds, as the game converts it at the level. */
 const levelPoints = (percent: number | undefined, level: number) =>
   percent === undefined ? undefined : Math.round((percent * level) / 20);
 
-/**
- * How skills change each stat of the window, as the game's character stats
- * combine them: some add, some raise what the items give by a percentage.
- */
 const COMBINED_STATS = new Map<string, Combine>(
   Object.entries({
     sa: (item, bonus) => {
@@ -198,7 +182,6 @@ const COMBINED_STATS = new Map<string, Combine>(
   } satisfies Record<string, Combine>),
 );
 
-/** A window stat with the items' total and what skills add to it. */
 export const setStatValueWithSkills = (
   totals: StatTotals,
   stat: SetStatDefinition,
@@ -217,14 +200,9 @@ type SkillStat = {
   id: string;
   key: string;
   unit?: "%";
-  /** The game stores a share of an attribute as a fraction. */
   percent?: true;
 };
 
-/**
- * The stats only skills give, in a section after the window's own: what an
- * attribute adds, chances that act in combat and damage taken or dealt.
- */
 export const SKILL_STATS: readonly SkillStat[] = [
   { id: "str1h", key: "str1h", unit: "%", percent: true },
   { id: "str2h", key: "str2h", unit: "%", percent: true },
@@ -273,7 +251,6 @@ export const SKILL_STATS: readonly SkillStat[] = [
   { id: "energygain", key: "energygain" },
 ];
 
-/** A skill-only stat's value; none when no learned skill gives it. */
 export const skillStatValue = (bonuses: SkillBonuses, stat: SkillStat) => {
   const value = bonuses.get(stat.key);
 

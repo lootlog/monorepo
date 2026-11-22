@@ -137,8 +137,6 @@ const setup = async (lootSplit?: { enabled: boolean; rarities: string[] }) => {
     expect(useGlobalStore.getState().socketState.joined).toBe(true),
   );
 
-  // The game hands packets to `parseJSON` and requests to `_g`; Lootlog
-  // observes both through the wrappers it installed.
   const receivePacket = (event: GameEvent) =>
     act(() => {
       native.communication.parseJSON(event);
@@ -197,7 +195,6 @@ it("shares the hero's choices with the split's other participants and shows thei
     ]),
   );
 
-  // Two quick changes leave as one frame with the latest choices.
   await sendCommand("loot&want=1200653660&not=1200653658&must=&final=0");
   await receivePacket({
     loot: { source: "fight", states: { "1200653658": 0, "1200653660": 1 } },
@@ -214,14 +211,12 @@ it("shares the hero's choices with the split's other participants and shows thei
 
   await sendCommand("loot&want=&not=1200653658,1200653660&must=&final=1");
   await new Promise((resolve) => setTimeout(resolve, 200));
-  // The party sees the accept only once the server takes it.
   expect(sentChoices()).toHaveLength(2);
   await receivePacket({
     loot: { source: "fight", states: { "1200653658": 0, "1200653660": 0 } },
   });
   await waitFor(() => expect(sentChoices()).toHaveLength(3));
   expect(sentChoices()[2]?.accepted).toBe(true);
-  // Observing the requests never changes what the game sends.
   expect(request).toHaveBeenCalledTimes(3);
 
   await act(() =>
@@ -247,7 +242,6 @@ it("shares the hero's choices with the split's other participants and shows thei
     }),
   ).toBeInTheDocument();
   expect(split).toHaveTextContent("Wybiera: 1");
-  // Garberere sent nothing: no Lootlog, or no shared Lootlog.
   expect(split).toHaveTextContent("Bez danych: 1");
   act(() => view.unmount());
 });
@@ -304,7 +298,6 @@ it("opens the window only for a split that drops a chosen rarity, and shares cho
   expect(
     await screen.findByRole("region", { name: "Podział łupów" }),
   ).toHaveTextContent("Knoper S");
-  // The earlier split dropped nothing chosen, so it stays out of the window.
   expect(
     screen.queryByRole("region", { name: "Wcześniejszy podział" }),
   ).toBeNull();
@@ -327,7 +320,6 @@ it("tells the fight's players when the hero's loot filter took the drop, and sho
     type: 0,
   });
 
-  // The game sends a filtered player no loot window, only the battle log.
   await receivePacket({
     f: {
       init: "1",

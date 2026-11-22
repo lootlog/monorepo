@@ -28,7 +28,6 @@ export const useNotifications = () => {
   const { isReady: areMutesReady, mutes } = useCurrentUserNotificationMutes();
   const world = useGameStore((state) => state.game?.world ?? "unknown");
 
-  // The ingress keeps the latest callback, so it reads current settings.
   const processNotifications = (notifications: readonly Notification[]) => {
     const requests = notifications.flatMap((data) =>
       isOwnNotification(

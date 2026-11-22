@@ -56,7 +56,6 @@ function renderStatistics(
                     firstKilledAt: "2026-09-01T10:00:00Z",
                     lastKilledAt: "2026-09-05T10:00:00Z",
                   },
-                  // Another world reuses the same character id.
                   {
                     characterId: "7",
                     world: "luvia",
@@ -180,7 +179,6 @@ it("restores URL filters, keeps them while changing tabs, narrows only the monst
       .getByRole("link", { name: "Aktywność" })
       .getAttribute("aria-current"),
   ).toBeNull();
-  // Below the results table width the filters open from a floating button.
   fireEvent.click(screen.getByRole("button", { name: /^Filtry/ }));
   fireEvent.click(await screen.findByRole("combobox", { name: "Okres" }));
   const weekOption = await screen.findByRole("option", { name: "7 dni" });

@@ -4,26 +4,15 @@ import type { FC, ReactNode } from "react";
 
 type SettingsPickerCardProps = {
   value: string;
-  /** Accessible name, also shown as the native tooltip for truncated titles. */
   label: string;
-  /** Decorative visual on the left, e.g. an avatar or a sprite. */
   leading: ReactNode;
   title: ReactNode;
   subtitle?: ReactNode;
-  /** Trailing indicator, e.g. a check mark on multi-choice pickers. */
   trailing?: ReactNode;
-  /** Status pinned to the card's top-right corner, e.g. a save badge. */
   badge?: ReactNode;
   className?: string;
 };
 
-/**
- * Grid cell of a settings picker: a toggle styled as a card with a visual,
- * a title and an optional subtitle. Selected cards are tinted and outlined
- * with the primary colour; unselected ones are dimmed a little so the chosen
- * ones read at a glance. Style `trailing` with `group-data-pressed/picker-card`
- * to reveal it only on selected cards.
- */
 export const SettingsPickerCard: FC<SettingsPickerCardProps> = ({
   value,
   label,
@@ -68,6 +57,5 @@ export const SettingsPickerCard: FC<SettingsPickerCardProps> = ({
   </ToggleGroupItem>
 );
 
-/** Grid that wraps picker cards to the available width. */
 export const settingsPickerGridClassName =
   "ll:grid ll:w-full ll:grid-cols-[repeat(auto-fill,minmax(min(100%,10.5rem),1fr))] ll:gap-1.5";

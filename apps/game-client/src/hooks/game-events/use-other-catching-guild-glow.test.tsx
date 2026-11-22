@@ -120,7 +120,6 @@ let engine: ReturnType<typeof createEngine>;
 
 type DrawnGlow = { d: { id: string }; getColor: () => string };
 
-/** The Lootlog glow colours the game draws this frame, by character id. */
 function drawnGlows(): Map<string, string> {
   const drawables: unknown[] = engine.others.getDrawableList();
 
@@ -415,7 +414,6 @@ describe("useOtherCatchingGuildGlow", () => {
     });
 
     await waitFor(() => {
-      // Native fetch failures become retryable ApiErrors: both batches make their one retry.
       expect(endpoint).toHaveBeenCalledTimes(4);
       expect(
         useCharacterTooltipCatchingGuildsStore.getState().entriesByKey[

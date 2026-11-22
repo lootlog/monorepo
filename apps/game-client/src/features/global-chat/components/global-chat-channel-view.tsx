@@ -20,14 +20,12 @@ type GlobalChatChannelViewProps = {
   worlds: ReadonlyArray<string>;
 };
 
-/** One channel: its counts and switcher, pinned message, history and input. */
 export const GlobalChatChannelView = ({
   channel,
   worlds,
 }: GlobalChatChannelViewProps) => {
   const { t } = useTranslation("globalChat");
   const { chatAppearance } = useChatAppearanceSettings();
-  // The global chat shows no send time, whatever the chat window's setting.
   const appearance = { ...chatAppearance, showTimestamp: false };
   const { query, addSentMessage } = useGlobalChat(channel);
   const newest = query.data?.pages[0];
@@ -81,7 +79,6 @@ export const GlobalChatChannelView = ({
               hasOlder={query.hasNextPage}
               loadingOlder={query.isFetchingNextPage}
               olderFailed={query.isFetchNextPageError}
-              // A paused retry is not "fetching"; joining it keeps retries bounded.
               onLoadOlder={() =>
                 void query.fetchNextPage({ cancelRefetch: false })
               }

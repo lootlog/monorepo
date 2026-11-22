@@ -22,11 +22,6 @@ export type BattleLogSearchToolbarProps = {
   onNext: () => void;
 };
 
-/**
- * The log's first row, like a list toolbar: a borderless search with the match counter and
- * arrows. It pins at `--battle-log-sticky-top`, under the chart pinned above the log, or else
- * under the page's pinned bars.
- */
 export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
   ref,
   query,

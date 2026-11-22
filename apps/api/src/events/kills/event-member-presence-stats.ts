@@ -16,7 +16,6 @@ type PresenceLogAggregation = {
   mapName: string;
 };
 
-/** Time on a hero's maps and AFK share per member, aggregated from presence logs. */
 export const makeEventMemberPresenceStats = (
   repository: Pick<EventPointsStore, "findMaps" | "findPresenceLogs">,
 ) => {

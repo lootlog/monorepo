@@ -10,11 +10,6 @@ import { useWindowsStore } from "@/store/windows.store";
 
 const STORAGE_KEY = storageKey("ll:backend-preferences-warning-dismissed");
 
-/**
- * Where releases before server-side settings kept notification and detector
- * preferences. Only a browser whose copy still holds settings had something
- * that was not carried over; an empty `{"state":{}}` lost nothing.
- */
 const LEGACY_PREFERENCES_KEYS = [
   storageKey("ll-notifications-state"),
   storageKey("ll-npc-detector-state"),

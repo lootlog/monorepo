@@ -11,19 +11,12 @@ import {
 import { configureWikiServerApiClients } from "@/lib/configure-api-clients";
 import { PUBLIC_SITE_ORIGINS, sitemapXml } from "@lootlog/domain/public-sites";
 
-// The whole catalog arrives in one response; it may take longer than a page.
 const CATALOG_TIMEOUT_MS = 10_000;
 
-// Search engines read the sitemap a few times a day; the catalog changes
-// with game updates.
 const CACHE_CONTROL = "public, max-age=3600";
 
 const PAGES = ["/", "/items", "/npcs", "/events", "/calculators"];
 
-/**
- * Every catalog page under its canonical address, so search engines find
- * the items and monsters no other page links to.
- */
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
@@ -43,8 +36,6 @@ export const Route = createFileRoute("/sitemap.xml")({
           ),
         ]).catch(() => undefined);
 
-        // A partial sitemap would tell search engines the pages left out
-        // are gone.
         if (!catalog) {
           return new Response(null, {
             status: 503,

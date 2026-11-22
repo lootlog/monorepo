@@ -10,10 +10,6 @@ const percent = new Intl.NumberFormat(PRODUCT_LOCALE, {
   signDisplay: "exceptZero",
 });
 
-/**
- * The stats an upgrade changes, as the item shows them upgraded, each with
- * how much it grew; a share reads the same for points, hundredths and ranges.
- */
 export function ItemUpgradeChanges({
   changes,
 }: {

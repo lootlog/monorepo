@@ -32,7 +32,6 @@ export function MobileDaySchedule({
   onReservationCancel,
   cancellingReservationId,
 }: MobileDayScheduleProps & {
-  /** The schedule bar, which scrolls with the hours in the page scroller. */
   header?: ReactNode;
 }) {
   const {
@@ -66,8 +65,6 @@ export function MobileDaySchedule({
     cancellingReservationId,
   });
 
-  // Below `md` the document scrolls the page, and a viewport that hid its
-  // horizontal overflow there would become a scroller of its own.
   return (
     <ScrollArea
       data-under-top-bar
@@ -80,9 +77,6 @@ export function MobileDaySchedule({
       }}
     >
       {header}
-      {/* Isolated, so reservations scrolling past stay under the bar. It clips
-          the day track rather than hiding it, so focusing an hour cannot
-          scroll the track sideways. */}
       <div
         ref={swipeSurfaceRef}
         data-slot="mobile-day-swipe-surface"
@@ -92,8 +86,6 @@ export function MobileDaySchedule({
         )}
       >
         <div data-slot="compact-schedule-scroll-content">
-          {/* Its own compositor layer, so dragging and settling the day only
-              move pixels that are already painted. */}
           <div
             ref={swipeTrackRef}
             data-slot="mobile-day-swipe-track"

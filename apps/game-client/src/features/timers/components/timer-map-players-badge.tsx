@@ -3,11 +3,8 @@ import { cn } from "cn";
 type TimerMapPlayersBadgeProps = {
   tone: "ally" | "enemy";
   count: number;
-  /** Someone is not AFK; a count where everyone is AFK turns orange. */
   active: boolean;
-  /** Every sighting is older than the fresh window. */
   stale?: boolean;
-  /** Accessible name; without it the badge is decorative. */
   label?: string;
 };
 
@@ -18,11 +15,6 @@ const TONE_CLASS_NAMES = {
   enemy: "ll:text-red-400",
 };
 
-/**
- * How many players are on a timer's map. Colour tells the side, or orange
- * when everyone there is AFK; opacity tells whether the sighting is still
- * fresh.
- */
 export function TimerMapPlayersBadge({
   tone,
   count,

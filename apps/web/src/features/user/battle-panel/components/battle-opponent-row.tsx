@@ -17,13 +17,10 @@ import { useTranslation } from "react-i18next";
 
 type BattleOpponentRowProps = {
   record: HeadToHeadRecord;
-  /** The head-to-head page with this opponent. */
   link: LinkProps;
-  /** Abyss battles also show how the rating moved against the opponent. */
   rated?: boolean;
 };
 
-/** One opponent in a list: who, the record against them and when last. */
 export const BattleOpponentRow = ({
   record,
   link,

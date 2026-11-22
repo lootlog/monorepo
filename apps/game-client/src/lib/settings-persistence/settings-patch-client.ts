@@ -51,10 +51,6 @@ export const readCurrentSettingsDocuments = () =>
     getCurrentSettingsDocumentsQueryKey(),
   );
 
-/**
- * Resolves the concrete scope for a patch from the signed-in user and the
- * current character. Returns undefined while that context is unknown.
- */
 const resolveSettingsScope = (
   scopeType: SettingsScopeType,
   guildId?: string,
@@ -92,12 +88,6 @@ const resolveSettingsScope = (
 const isGuildOperation = (operation: SettingsOperation) =>
   operation.scope.type === "GUILD";
 
-/**
- * The read context a batch is resolved in, so the response matches the cache
- * entry it replaces: the character context for user/account/character
- * writes, the guild for guild-only writes. A mixed batch has no single
- * context and is reconciled with a refetch instead.
- */
 const getPatchContext = (
   operations: SettingsOperation[],
 ): SettingsDocumentsContextDto | undefined => {
@@ -137,10 +127,6 @@ const applyOptimisticOperation = (
   );
 };
 
-/**
- * Puts a save response into the cache entry its context matches. Returns
- * false when no entry holds that document, so the queue refetches instead.
- */
 const applyServerDocuments = (
   response: SettingsDocuments,
   operations: SettingsOperation[],
@@ -214,14 +200,6 @@ export const settingsPatchQueue = createSettingsPatchQueue({
   },
 });
 
-/**
- * Sends the writes still waiting in the debounce window when the page goes
- * away (a character or account switch reloads it). `keepalive` lets the
- * request outlive the page when the client fetches directly (userscript);
- * the extension hands the request to its background worker, which is not
- * tied to the page. A write already in flight keeps the rest waiting, so
- * they are lost in that case rather than sent out of order.
- */
 export const flushSettingsOnPageHide = () => {
   const flush = () => void settingsPatchQueue.flush({ keepalive: true });
   window.addEventListener("pagehide", flush);
@@ -234,15 +212,10 @@ export type EnqueueSettingsPatchInput = {
   set?: SettingsOperation["set"];
   unset?: string[];
   scopeType?: SettingsScopeType;
-  /** Required for GUILD scoped patches; also selects the guild cache entry. */
   guildId?: string;
   afterSave?: () => void;
 };
 
-/**
- * Queues a settings write against the current user/character context.
- * Returns false when the context is not known yet and the write was dropped.
- */
 export const enqueueSettingsPatch = ({
   domain,
   set = {},

@@ -20,7 +20,6 @@ type UseVirtualInfiniteScrollOptions = {
 type UseResetScrollTopOptions = {
   behavior?: ScrollBehavior;
   enabled?: boolean;
-  /** The page's scroll viewport. */
   getScrollElement: () => HTMLElement | null;
   resetKey: string | undefined;
 };
@@ -61,10 +60,6 @@ export const useVirtualInfiniteScroll = ({
   ]);
 };
 
-/**
- * Returns the page to its top when `resetKey` changes, such as when filters
- * replace the list. Mounting leaves the position to scroll restoration.
- */
 export const useResetScrollTop = ({
   behavior,
   enabled = true,

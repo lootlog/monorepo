@@ -17,12 +17,10 @@ const DASHED_TILE_CLASS =
   "flex size-11 items-center justify-center rounded-lg border border-dashed border-sidebar-foreground/30 text-sidebar-foreground/60";
 
 type GuildNavCreateProps = {
-  /** `strip` is the labelled tile of the phone sheet. */
   variant?: "rail" | "strip";
   onSelect?: () => void;
 };
 
-// Ends the guild list like Discord's "Add a Server", sized as a guild avatar.
 export const GuildNavCreate: FC<GuildNavCreateProps> = ({
   variant = "rail",
   onSelect,

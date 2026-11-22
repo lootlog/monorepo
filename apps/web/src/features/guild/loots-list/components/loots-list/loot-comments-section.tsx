@@ -12,16 +12,11 @@ import { LootCommentForm } from "./loot-comment-form";
 import { LootCommentsFeed } from "./loot-comments-feed";
 import { useLootComments } from "./use-loot-comments";
 
-/**
- * Comments under the loot, collapsed: few loots get any, so the items keep
- * the room. They load when the section opens.
- */
 export const LootCommentsSection = ({
   lootId,
   commentsCount,
 }: {
   lootId: number;
-  /** The count the loot carries, shown until the comments load. */
   commentsCount: number;
 }) => {
   const { t } = useTranslation();

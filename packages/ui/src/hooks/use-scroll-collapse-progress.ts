@@ -9,16 +9,12 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useIsMobile } from "./use-mobile.js";
 
-/** How far the reader scrolls to take the chrome all the way in or out. */
 const COLLAPSE_DISTANCE = 56;
 
-/** Near the top the chrome opens with the distance left to the top. */
 const TOP_ZONE = 64;
 
-/** How long the page rests before a half-way chrome settles. */
 const SETTLE_DELAY_MS = 120;
 
-/** The sidebar's spring, so the chrome settles like the navigation does. */
 const SETTLE_SPRING = { type: "spring", stiffness: 520, damping: 40 } as const;
 
 type Settling = { current: AnimationPlaybackControls | null };
@@ -37,13 +33,6 @@ const settleTo = (
   );
 };
 
-/**
- * How collapsed scroll-away chrome is, from 0 (open) to 1 (collapsed). It
- * follows the scroll as it happens, as iOS toolbars do: scrolling down takes
- * it in, scrolling up brings it back, and it may rest half-way while a finger
- * holds the page. Once the page rests it settles to the nearer end. The
- * chrome is a phone's, so from `md` up it stays open.
- */
 export const useScrollCollapseProgress = () => {
   const scrollsDocument = useIsMobile();
   const reduceMotion = useReducedMotion();
@@ -51,8 +40,6 @@ export const useScrollCollapseProgress = () => {
   const [collapsed, setCollapsed] = useState(false);
   const settling = useRef<AnimationPlaybackControls | null>(null);
 
-  // Renders only when the chrome crosses half-way, which is when its
-  // controls swap.
   useMotionValueEvent(progress, "change", (value) => {
     setCollapsed(value > 0.5);
   });

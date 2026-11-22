@@ -13,25 +13,13 @@ import {
   type RefObject,
 } from "react";
 
-/**
- * Below the `md` breakpoint the document scrolls every page, so mobile
- * browsers can collapse their toolbars and offer pull-to-refresh. From `md`
- * up the app shell has a fixed height and each page scrolls its own viewport,
- * which then only grows with its content below `md`.
- */
 export const usePageScrollsDocument = () => useIsMobile();
 
-/** The scroller that moves a page: its own viewport, or the document. */
 export type PageScroller = {
-  /** Receives the scroll, wheel and touch events of the scroller. */
   eventTarget: HTMLElement | Window;
   getScrollTop: () => number;
   getMaxScrollTop: () => number;
   scrollTo: (options: ScrollToOptions) => void;
-  /**
-   * The band of the viewport the reader sees, in client coordinates. The
-   * document's `scroll-padding-top` excludes the app bar pinned over it.
-   */
   getVisibleBand: () => { top: number; bottom: number };
 };
 
@@ -69,10 +57,6 @@ export const getPageScroller = (
   };
 };
 
-/**
- * Calls `onScroll` while the document scrolls the page. A page viewport
- * reports its own scrolling through the scroll area's `onScroll`.
- */
 export const useDocumentScrollListener = (onScroll: () => void) => {
   const scrollsDocument = usePageScrollsDocument();
   const handleScroll = useEffectEvent(onScroll);
@@ -87,7 +71,6 @@ export const useDocumentScrollListener = (onScroll: () => void) => {
   }, [scrollsDocument]);
 };
 
-// Options that depend on the scroller are chosen here, not by the caller.
 type ScrollerBoundOption =
   | "getScrollElement"
   | "observeElementRect"
@@ -101,21 +84,10 @@ type PageVirtualizerOptions<TItemElement extends Element> = Omit<
   ReactVirtualizerOptions<HTMLDivElement, TItemElement>,
   ScrollerBoundOption
 > & {
-  /** The page's scroll viewport. */
   scrollElement: HTMLDivElement | null;
-  /** Where the first item starts; defaults to the top of the viewport. */
   listRef?: RefObject<Element | null>;
 };
 
-/**
- * Virtualizes a list in the page scroller. Items start at
- * `virtualizer.options.scrollMargin`, so position them relative to the list
- * with `item.start - scrollMargin`.
- *
- * The virtualizer mutates in place, so React Compiler must not memoize reads
- * from it. The compiler skips direct `useVirtualizer` callers on its own, but
- * not callers of this hook: mark them with `"use no memo"`.
- */
 export const usePageVirtualizer = <TItemElement extends Element>({
   scrollElement: viewport,
   listRef,
@@ -141,7 +113,6 @@ export const usePageVirtualizer = <TItemElement extends Element>({
 
       if (!viewport) return;
 
-      // The viewport's own list starts at zero even after scroll restoration.
       setScrollMargin(
         list === viewport
           ? 0
@@ -151,7 +122,6 @@ export const usePageVirtualizer = <TItemElement extends Element>({
 
     updateScrollMargin();
 
-    // Content above the list, such as filters or a loaded overview, moves it.
     const observer = new ResizeObserver(updateScrollMargin);
 
     if (scrollsDocument) observer.observe(document.body);
@@ -188,10 +158,6 @@ export const usePageVirtualizer = <TItemElement extends Element>({
   return scrollsDocument ? documentVirtualizer : viewportVirtualizer;
 };
 
-/**
- * Spacer heights around the rendered rows of a virtualized list that keeps
- * its rows in normal flow, such as table rows.
- */
 export const getVirtualListPadding = (
   virtualItems: VirtualItem[],
   totalSize: number,

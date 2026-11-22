@@ -27,8 +27,6 @@ const guildNamesByIdCache = new WeakMap<
   Record<string, string>
 >();
 
-// Legacy JSON response fields accept numeric strings; retain their historical
-// coercion and fallback rules before exposing normalized application settings.
 export const getNumber = (value: unknown, fallback = 0) => {
   if (typeof value === "number") {
     return value;
@@ -91,7 +89,6 @@ const guildMembersByUserIdCache = new WeakMap<
   Record<string, MemberSummaryResponseDtoOutput>
 >();
 
-/** Keyed by the member array identity so chat rows keep stable member props across renders. */
 export const mapGuildMembersByUserId = (
   members?: MemberSummaryResponseDtoOutput[],
 ) => {

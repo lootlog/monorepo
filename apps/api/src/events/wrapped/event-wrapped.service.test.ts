@@ -121,8 +121,6 @@ describe("event wrapped summary", () => {
         ),
       );
 
-      // Each window's bounds are inclusive; one assignment per map makes every
-      // wrongly included or excluded assignment change the map totals.
       await run(
         database.insert(eventHeroKillTable).values([
           {
@@ -133,8 +131,6 @@ describe("event wrapped summary", () => {
             maxSpawnTimeAtKill: minute(20),
           },
           {
-            // Killed before its minimum spawn time: only an assignment spanning
-            // the inverted range covers it.
             id: "inverted",
             heroNpcId: "zlodziej",
             minSpawnTimeAtKill: minute(50),
@@ -261,13 +257,10 @@ describe("event wrapped summary", () => {
       );
 
       const loots = [
-        // Both window bounds are inclusive.
         { npcs: [1], items: [1, 2, 3, 4], createdAt: eventStart },
-        // A hero named twice, or in another case, counts the loot twice.
         { npcs: [1, 2], items: [3] },
         { npcs: [1, 3], items: [1], createdAt: eventEnd },
         { npcs: [1, 5], items: [2, 5] },
-        // Above the role's level range.
         { npcs: [4], items: [1] },
         { npcs: [1], items: [1], createdAt: millisecond(eventEnd, 1) },
         { npcs: [1], items: [1], archived: true },
@@ -392,8 +385,6 @@ describe("event wrapped summary", () => {
         ),
       ).toEqual({ patryk: 6, zlodziej: 0, absent: 0 });
 
-      // Maps per window: {m1, m2}, {m4, m1} and {m4, m2}. A alone covers two
-      // maps in one window; B's included assignments cover one map each.
       expect(owner.overview.avgMapsPerSpawnWindow).toBe(2);
       expect(owner.leaders.mostFlexible).toEqual({
         winner: {

@@ -23,8 +23,6 @@ import {
 import { ActivityConfig } from "#src/config/activity-config";
 import { OnlineIngestRejected, OnlineRepository } from "./online-repository.js";
 
-// Rejected deliveries return through the retry queue in order; a checkpoint
-// that can never apply is dead-lettered by the consumer itself.
 const onlineRoute = consumerRoute(
   "activity-user-online-checkpoint-v1",
   RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
@@ -91,14 +89,11 @@ export const OnlineConsumer = Layer.effectDiscard(
           }).pipe(Effect.result);
 
           if (Result.isFailure(parsed)) {
-            // Ack only after confirmed DLQ publication; do not consume and discard its evidence.
             yield* rejectEvent(delivery, "Invalid signed online event");
 
             return;
           }
 
-          // Transient failures retain ordering: health cannot overtake a pending
-          // checkpoint. Invalid intervals cannot recover and must release the queue.
           yield* repository.ingest(parsed.success).pipe(
             Effect.retry({
               schedule: Schedule.spaced("5 seconds"),
@@ -115,7 +110,6 @@ export const OnlineConsumer = Layer.effectDiscard(
       Effect.catch(() =>
         Effect.logWarning("Online history retention cleanup failed"),
       ),
-      // The repository gates completed hours; poll sooner to recover failed batches.
       Effect.repeat(Schedule.spaced("1 minute")),
       Effect.forkScoped,
     );

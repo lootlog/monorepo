@@ -4,14 +4,8 @@ import {
   readCatalogUpstream,
 } from "@/lib/catalog-upstream";
 
-// Catalog answers are the same for every reader and change a few times a
-// day, so the edge keeps them briefly instead of asking the cluster again.
 const CACHE_SECONDS = 60;
 
-/**
- * The browser's way to the catalog: the Worker adds the token the catalog
- * service requires, which never reaches the page.
- */
 export const Route = createFileRoute("/api/catalog/$")({
   server: {
     handlers: {
@@ -26,7 +20,6 @@ export const Route = createFileRoute("/api/catalog/$")({
 
         if (!upstream) return new Response(null, { status: 404 });
 
-        // The key is the catalog's URL, which carries no credential.
         const key = new Request(upstream);
         const cache = await caches.open("catalog");
         const cached = await cache.match(key);

@@ -20,7 +20,6 @@ import {
 } from "@/components/layout/use-user-menu";
 import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
 
-/** The avatar column continues the server rail above it. */
 const BAR_GRID =
   "grid h-14 w-full grid-cols-[4rem_minmax(0,1fr)_2.75rem] items-center";
 
@@ -41,7 +40,6 @@ export const UserMenu = () => {
     openInstallAddon,
   } = useUserMenu();
 
-  // The bar needs only the session, so it does not wait for preferences.
   if (!user) {
     return (
       <div className={cn(BAR_GRID, "bg-sidebar")}>

@@ -5,10 +5,8 @@ const SANDBOX_PORT = 3010;
 
 const SANDBOX_PATH = "/sandbox/";
 
-// Local Traefik routes every Lootlog service by path on http://localhost.
 const LOCAL_STACK_URL = "http://localhost";
 
-// The gateway classifies a socket as a Game client only for Margonem origins.
 const SANDBOX_GAME_ORIGIN = "https://luvia.margonem.pl";
 
 const proxyTo = (origin: string, ws = false): ProxyOptions => ({
@@ -18,8 +16,6 @@ const proxyTo = (origin: string, ws = false): ProxyOptions => ({
   headers: { origin },
 });
 
-// The Vite root stays at the app directory so Tailwind scans src/ exactly as the
-// userscript dev server does; the sandbox page lives under /sandbox/.
 const redirectRootToSandbox = (): Plugin => ({
   name: "lootlog-sandbox-root-redirect",
   configureServer(server) {
@@ -32,8 +28,6 @@ const redirectRootToSandbox = (): Plugin => ({
   },
 });
 
-// Standalone game-client on a fake Margonem runtime. Same-origin proxying keeps
-// the local session cookie and avoids widening CORS or trusted-origin configs.
 export default defineConfig(({ mode }) => {
   const shared = gameClientViteConfig(mode);
 

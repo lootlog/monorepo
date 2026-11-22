@@ -5,7 +5,6 @@ export type LootFiltersState = ReturnType<typeof useLootFiltersSidebar>;
 
 export type LootFilterSectionKey = "npc" | "item" | "player";
 
-/** The filters panel's groups, in order; the rail lists the same ones. */
 export const LOOT_FILTER_SECTIONS: ReadonlyArray<{
   key: LootFilterSectionKey;
   icon: LucideIcon;

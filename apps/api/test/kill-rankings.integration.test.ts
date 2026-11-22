@@ -151,7 +151,6 @@ beforeAll(async () => {
         .insert(memberKillTotalTable)
         .values(stats.map(({ periodStart: _start, ...row }) => row));
       yield* db.insert(memberKillBucketTable).values(stats);
-      // An old bucket outside the lifetime totals, as account deletion left them.
       yield* db.insert(memberKillBucketTable).values({
         ...described,
         memberId: first.id,
@@ -441,7 +440,6 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-/** The ISO weekday and hour of an instant in Warsaw, as the SQL groups it. */
 const warsawSlot = (date: Date) => {
   const parts = new Map(
     new Intl.DateTimeFormat("en-US", {
@@ -487,7 +485,6 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, co
       });
 
       const buckets = [
-        // 23:00 on Tuesday and midnight on Wednesday in Warsaw (CEST).
         bucket(new Date("2026-07-14T21:00:00Z"), 2),
         bucket(new Date("2026-07-14T22:00:00Z"), 3),
         bucket(new Date("2026-07-15T22:00:00Z"), 50, NpcType.HERO),
@@ -497,7 +494,6 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, co
 
       yield* db.insert(guildKillBucketTable).values(buckets);
 
-      // The kill writer keeps the day rollup beside the buckets.
       yield* db.insert(guildKillDayTable).values(
         buckets.map(({ periodStart, kills, ...row }) => ({
           guildId: row.guildId,
@@ -514,7 +510,6 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, co
         })),
       );
 
-      // 100 Elita II kills predate hourly history and live only in the totals.
       yield* db
         .insert(guildKillTotalTable)
         .values(
@@ -541,8 +536,6 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, co
         { date: "2026-07-17", kills: 0 },
       ]);
       expect(all.timeline.points.at(-1)?.kills).toBe(4);
-      // The 4 kills of the current hour land in its own Warsaw slot, which can
-      // be one of the seeded slots when the suite runs at that hour.
       const now = warsawSlot(currentHour);
 
       const slot = (weekday: number, hour: number, kills: number) => ({
@@ -658,7 +651,6 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
           maxSpawnTimeAtKill: now,
         })),
       );
-      // 10 computed points plus a 5-point manual adjustment from an earlier kill.
       yield* db.insert(eventRankingTable).values({
         id: randomUUID(),
         eventId,
@@ -686,8 +678,6 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
         pointsModified,
       });
 
-      // Both kills credit the whole crew, listed in opposite orders; only
-      // `first` has a ranking yet, so both transactions race to create the rest.
       const applied = yield* Effect.all(
         [
           store.addKillToRankings(
@@ -710,8 +700,6 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
 
       expect(applied).toEqual([true, true]);
 
-      // The first attempt fails after `second` sorts ahead of a member that
-      // no longer exists; none of it may survive into the retry.
       const failedAttempt = yield* Effect.exit(
         store.addKillToRankings(eventId, retriedKill, [
           entry(2_147_483_647, 100, 100),
@@ -752,7 +740,6 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
                 manualAdjustmentPoints: 5,
                 totalKills: 3,
                 totalTimeSeconds: 120,
-                // (10 + 40 + 20) / 3 in either kill order, rounded to hundredths.
                 avgAfkPercentage: 23.33,
                 pointsModified: true,
               };
@@ -813,8 +800,6 @@ test("concurrent hero renames onto one name give it to exactly one hero", async 
       const guild = { id: guildId };
       const npcName = "Wspólna nazwa";
 
-      // Holding both hero rows queues the renames behind one lock, so their
-      // name checks start together once it is released.
       const holdHeroes = db.transaction((transaction) =>
         Effect.gen(function* () {
           yield* transaction
@@ -880,8 +865,6 @@ test("renaming a hero deleted while the rename waits for its row is a 404", asyn
         .insert(eventHeroNpcTable)
         .values({ id: heroId, eventId, npcName: "Heros" });
 
-      // The rename still finds the hero, then waits for the deleting
-      // transaction's row lock and only sees the row gone afterwards.
       const deleteHero = db.transaction((transaction) =>
         Effect.gen(function* () {
           yield* transaction

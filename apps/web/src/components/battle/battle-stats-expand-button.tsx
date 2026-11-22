@@ -6,7 +6,6 @@ import type { FC, ReactNode } from "react";
 export type BattleStatsExpandButtonProps = {
   children: ReactNode;
   className?: string;
-  /** Dense numeric cells mark the expandable value with an underline instead of a chevron. */
   dense?: boolean;
   expanded: boolean;
   onToggle: () => void;

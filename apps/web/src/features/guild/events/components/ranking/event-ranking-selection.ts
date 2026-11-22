@@ -30,10 +30,6 @@ export const getRankingSelection = <
   };
 };
 
-/**
- * The leaders by points, plus the member's own place when it falls outside
- * them.
- */
 export const getRankingLeaders = <
   Ranking extends { totalPoints: number; memberId: number },
 >(

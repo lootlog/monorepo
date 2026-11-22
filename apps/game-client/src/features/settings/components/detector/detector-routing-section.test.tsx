@@ -66,8 +66,6 @@ const secondRule: DetectorRoutingRule = {
 
 const routingRules: DetectorRoutingRule[] = [firstRule, secondRule];
 
-// The settings queue may split edits across requests when its debounce window
-// closes between them; the last request carries the state the server keeps.
 const savedBody = () =>
   JSON.parse(String(harness.request.mock.calls.at(-1)?.[1]?.body));
 
@@ -171,8 +169,6 @@ describe("DetectorRoutingSection", () => {
 
     render();
 
-    // The second click must build on the first's optimistic state, so the
-    // saved rule drops both Lootlogi however the queue batches the two edits.
     await user.click(
       screen.getByRole("button", { name: "Gamma", pressed: true }),
     );

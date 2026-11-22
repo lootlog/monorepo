@@ -24,7 +24,6 @@ export function createBackgroundConnection(
     if (!disposed) postMessage(encodeMessage(message));
   };
 
-  // Rejoining needs a fresh proof from the current game document, never the old proof.
   realtime.setReconnectHandler(async () => {});
 
   const unsubscribeEvents = realtime.subscribe((event) =>
@@ -153,7 +152,6 @@ function executeGameCommand(realtime: RealtimeClient, command: unknown) {
     case "npc-presence.report":
     case "npc-presence.fetch":
       return realtime.request(frame.type, frame.data);
-    // The page follows only global chat channels; Organization topics stay default scopes.
     case "subscription.subscribe":
     case "subscription.unsubscribe":
       if (

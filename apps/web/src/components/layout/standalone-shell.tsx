@@ -48,7 +48,6 @@ export const StandaloneShell = ({ children }: StandaloneShellProps) => {
         </AppTopBar>
       }
     >
-      {/* Pages render their sections straight in the page scroller. */}
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
         {children}
       </ScrollArea>

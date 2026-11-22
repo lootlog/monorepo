@@ -10,7 +10,6 @@ type TimersListChipProps = {
   children: ReactNode;
 };
 
-/** A list toggle; the check mark shows the selection without relying on colour. */
 export const TimersListChip: FC<TimersListChipProps> = ({
   pressed,
   title,

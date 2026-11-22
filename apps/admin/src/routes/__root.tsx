@@ -24,8 +24,6 @@ export const Route = createRootRoute({
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
-  // Leaves a visitor without an admin session at the sign-in page instead of
-  // a wall of refused requests. The auth service authorizes every call again.
   beforeLoad: async ({ location }) => {
     if (location.pathname === "/sign-in") return { operator: undefined };
 

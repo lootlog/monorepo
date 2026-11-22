@@ -3,7 +3,6 @@ import {
   BattleResponseFields,
   BattlePagination,
 } from "../shared.js";
-/** catalog transport definitions for battles. */
 import * as Schema from "effect/Schema";
 import { FiniteNumber } from "@lootlog/schema/http-scalars";
 

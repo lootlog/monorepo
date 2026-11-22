@@ -8,8 +8,6 @@ import { useWindowsStore } from "@/store/windows.store";
 export const HeroSightings = () => {
   useHeroSightingsSocket();
 
-  // Loaded while the window is closed too: hero timers show the map a hero
-  // was detected on.
   const { world } = useTimersWorld();
   useHeroSightings(world);
 

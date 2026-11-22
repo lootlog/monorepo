@@ -141,8 +141,6 @@ describe("loot visibility", () => {
       expect(
         await visible([], [role("reader", [Permission.LOOTLOG_LOOTS_READ])]),
       ).toEqual([4]);
-      // Two NPCs of one loot, each inside a different role's range: no single
-      // range covers both, yet every NPC is covered.
       expect(
         await visible(
           [],

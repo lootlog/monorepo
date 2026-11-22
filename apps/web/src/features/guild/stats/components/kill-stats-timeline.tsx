@@ -37,7 +37,6 @@ export const KillStatsTimeline = ({
     );
   }
 
-  // All-time totals include kills from before hourly history began.
   const firstDate = data.points[0]?.date;
 
   const description =

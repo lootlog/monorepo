@@ -28,12 +28,6 @@ import { useTranslation } from "react-i18next";
 
 const ICON_CLASS_NAME = "ll:size-4";
 
-/**
- * Lootlog's "start bar": one tile per window, lit while that window is open.
- * Players tuck it under Margonem's top bar, so the default height stays at
- * one row of tiles and only the width grows with the tile count. Collapsed,
- * only the connection state and the expand button remain.
- */
 export const QuickAccess = () => {
   const { t } = useTranslation("quickAccess");
   const open = useWindowsStore((state) => state["quick-access"].open);

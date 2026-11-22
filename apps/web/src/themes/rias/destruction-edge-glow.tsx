@@ -1,4 +1,3 @@
-// Edge energy glow for the global overlay
 export const DestructionEdgeGlow = () => (
   <div
     className="absolute inset-0"

@@ -4,7 +4,6 @@ import { Reactivity } from "effect/reactivity";
 import { SqlClient } from "effect/sql";
 import { ConnectionError, SqlError } from "effect/sql/SqlError";
 
-// OpenTelemetry database client connection metrics, sampled from the pool.
 const connectionCount = Metric.gauge("db.client.connection.count", {
   description: "PostgreSQL pool connections by state",
   attributes: { unit: "" },
@@ -43,11 +42,7 @@ export const makePostgresLayer = (options: PgClient.PgPoolConfig) =>
   Layer.effectContext(
     Effect.gen(function* () {
       const client = yield* PgClient.make({
-        // A connection that silently stops responding fails its queries
-        // instead of leaving them hanging.
         keepAlive: "30 seconds",
-        // An exhausted pool fails checkouts so callers see the outage and
-        // retry, instead of queueing requests without bound.
         acquireTimeout: "10 seconds",
         ...options,
       });

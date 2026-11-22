@@ -3,8 +3,6 @@ import { applyGameEvent } from "./apply-event";
 import { logSandbox } from "./sandbox-log";
 import type { SandboxWorld } from "./world";
 
-// Native wrappers such as Npc and Other keep identity across reads; Lootlog
-// caches other-player handles and patches tooltip methods on them.
 function createHandleCache<Data extends object>() {
   const handles = new WeakMap<Data, { d: Data }>();
 
@@ -29,9 +27,6 @@ function mapValues<Data extends object, Handle>(
   );
 }
 
-// Covers the Engine surface read by src/lib/margonem-runtime adapters. Optional
-// subsystems (renderer, minimap, chat host, tooltips) stay absent so their
-// adapters take the same "unavailable" path they take during game startup.
 export function createNiEngine(world: SandboxWorld) {
   const npcHandle = createHandleCache<SandboxWorld["npcs"][string]>();
   const otherHandle = createHandleCache<SandboxWorld["others"][string]>();

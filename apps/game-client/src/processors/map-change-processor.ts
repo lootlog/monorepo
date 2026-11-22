@@ -11,8 +11,6 @@ export class MapChangeProcessor {
 
   constructor(private readonly observers: readonly GameEventObserver[] = []) {}
 
-  // Lootlog may start on an already loaded map, so the first town packet can
-  // be a real transition away from the map whose NPCs were bootstrapped.
   bootstrap(): void {
     this.previousMapId ??= useGameStore.getState().game?.map.id ?? null;
   }

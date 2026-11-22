@@ -36,13 +36,11 @@ import { useDeleteNotificationTarget } from "./use-delete-notification-target";
 
 type NotificationChannelRowProps = {
   target: NotificationTargetResponseDto;
-  /** Every rule, to name the ones that send here. */
   rules: GuildNotificationRulesResponseDto["items"];
   actionsDisabled: boolean;
   onEdit: (target: NotificationTargetResponseDto) => void;
 };
 
-/** One Discord channel: which rules send to it, and why it cannot deliver if so. */
 export const NotificationChannelRow = ({
   target,
   rules,

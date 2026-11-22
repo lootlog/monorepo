@@ -157,7 +157,6 @@ describe("lootlog configuration response conversion", () => {
   });
 
   it("retains conversion of dates and nulls in open configuration fields", async () => {
-    // A column added to the configuration row reaches the open response fields.
     const withExtraColumn = {
       ...config,
       extra: { dates: [new Date(1), null] },
@@ -197,8 +196,6 @@ describe("lootlog configuration response conversion", () => {
 
     expect(error._tag).toBe("LootlogConfigOperationError");
 
-    // Values outside the database enums cannot come from the typed port, so
-    // the response boundary that receives them is checked directly.
     for (const source of [
       { ...npc, npcType: "INVALID" },
       { ...npc, allowedRarities: [null] },
@@ -211,7 +208,6 @@ describe("lootlog configuration response conversion", () => {
     }
 
     for (const extra of [undefined, 1n]) {
-      // A column with a non-JSON value reaches the open response fields.
       const withExtraColumn = { ...config, extra };
 
       const layer = provideServices(

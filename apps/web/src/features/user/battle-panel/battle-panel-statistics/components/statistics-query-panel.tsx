@@ -14,15 +14,10 @@ type StatisticsQueryPanelProps = {
     data: unknown;
     refetch: () => void;
   };
-  /** The section's heading, kept over the failure so it is clear what failed. */
   title?: string;
   children?: ReactNode;
 };
 
-/**
- * One statistics section's query: its content, a failure with a retry in its
- * place, or a notice over the last good copy when a refresh fails.
- */
 export function StatisticsQueryPanel({
   query,
   title,

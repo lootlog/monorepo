@@ -5,7 +5,6 @@ type Props = {
   organizer: GatheringOrganizer;
 };
 
-/** The organizer's character; the clan has a line of its own below. */
 export function ChatGatheringHeader({ organizer }: Props) {
   return (
     <PlayerName

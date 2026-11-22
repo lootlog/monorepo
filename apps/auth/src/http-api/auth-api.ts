@@ -1,6 +1,5 @@
 import { AdminGroup } from "./contracts/admin/api.js";
 import { ApiKeysGroup } from "./contracts/auth/api-keys.js";
-/** Authoritative composition root for the auth HTTP contract. */
 import { HttpApi, OpenApi } from "effect/http-api";
 import { healthGroup } from "@lootlog/instrumentation/service";
 import { AuthGroup } from "./contracts/auth/api.js";

@@ -22,7 +22,6 @@ const STATUS_TEXT_CLASS = {
   secondary: "text-muted-foreground",
 } as const;
 
-/** The event's status, world, assignment window and dates as labelled facts. */
 export const EventHeaderMeta = ({
   t,
   event,

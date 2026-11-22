@@ -6,7 +6,6 @@ type StatisticsSortableHeaderProps = {
   label: string;
 };
 
-/** The header of a numeric statistics column the ranking sorts by. */
 export function StatisticsSortableHeader({
   column,
   label,

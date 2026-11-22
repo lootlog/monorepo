@@ -1,9 +1,5 @@
 import type { StatisticsFiltersProps } from "./statistics-filters";
 
-/**
- * How many statistics filters narrow the results, for the button that opens
- * them on narrow pages.
- */
 export const countActiveStatisticsFilters = ({
   world,
   days,

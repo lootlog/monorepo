@@ -16,11 +16,8 @@ export type ItemSearchFields = {
   numericStats: Record<string, number>;
   statsKeys: string[];
   requiredProfessions: string[];
-  /** The legendary bonus without its level, such as `verycrit`; null without one. */
   legendaryBonus: string | null;
-  /** The slugs of the events the item belongs to, such as `wakacje-2026`. */
   eventSlugs: string[];
-  /** The attack speed the item adds to a character with 100 agility or more. */
   attackSpeed: number;
 };
 
@@ -51,7 +48,6 @@ export const createItemSearchFields = (statRaw: string): ItemSearchFields => {
   let legendaryBonus: string | null = null;
   let eventSlugs: string[] = [];
 
-  // Indexed values end at a second `=`, as they always have.
   for (const entry of parseItemStatEntries(statRaw)) {
     if (!entry.key || entry.value === true) {
       continue;
@@ -69,7 +65,6 @@ export const createItemSearchFields = (statRaw: string): ItemSearchFields => {
       continue;
     }
 
-    // `legbon` holds the bonus and the level it scales with, `verycrit,200`.
     if (key === "legbon") {
       legendaryBonus = value.split(",")[0] || null;
     }

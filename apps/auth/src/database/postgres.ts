@@ -4,7 +4,6 @@ import { makePostgresLayer } from "@lootlog/database";
 import { Context, Duration, Effect, Layer, Redacted } from "effect";
 import pg from "pg";
 
-/** Better Auth's Promise-based Drizzle adapter owns a separate scoped pool. */
 export class PostgresPool extends Context.Service<PostgresPool, pg.Pool>()(
   "@lootlog/auth/PostgresPool",
 ) {}

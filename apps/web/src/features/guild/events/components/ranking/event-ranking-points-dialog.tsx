@@ -27,8 +27,6 @@ export const EventRankingPointsDialog = ({
   return (
     <ManualPointsEditDialog
       open
-      // Keep the focus container stable while its action button remounts:
-      // the row's last cell, or a phone tile's actions.
       finalFocus={() =>
         document
           .getElementById(`event-ranking-row-${ranking.id}`)

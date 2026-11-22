@@ -48,7 +48,6 @@ it("preserves zoom and native horizontal gestures and normalizes line and page d
     { deltaX: 80, deltaY: 20 },
   ]) {
     const event = new WheelEvent("wheel", { ...input, cancelable: true });
-    // Happy DOM WheelEvent omits MouseEvent modifiers.
     Object.defineProperty(event, "ctrlKey", {
       value: "ctrlKey" in input && input.ctrlKey,
     });

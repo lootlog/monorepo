@@ -5,7 +5,6 @@ import {
   encodeItemComparison,
 } from "./item-comparison";
 
-// A catalog necklace trimmed to the stats tested, and a rival with other ones.
 const necklace = "crit=3;da=122;evade=23;heal=514;lvl=227;rarity=heroic";
 
 const otherNecklace = "crit=3;da=150;evade=10;hp=900;lvl=200;rarity=heroic";

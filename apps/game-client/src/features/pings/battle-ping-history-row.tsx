@@ -12,22 +12,17 @@ import {
 
 type BattlePingHistoryRowProps = {
   ago: string;
-  /** The warrior is dead; its pings no longer apply. */
   dead: boolean;
-  /** The ping was addressed to the local hero. */
   forMe: boolean;
   icon: PingIconName;
   label: string;
-  /** The ping is still shown on its warrior. */
   onField: boolean;
   sender: string;
-  /** Who the ping is about; absent when the sender pinged their own warrior. */
   target: string | null;
   tone: PingTone;
   warriorId: number;
 };
 
-/** One ping of the fight: what, from whom, about whom, and how long ago. */
 export const BattlePingHistoryRow: FC<BattlePingHistoryRowProps> = ({
   ago,
   dead,

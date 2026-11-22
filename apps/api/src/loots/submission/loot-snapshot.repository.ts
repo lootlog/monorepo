@@ -23,16 +23,10 @@ type NpcObservationInput = Omit<
   "id" | "identityNamespace" | "world" | "gameVersion" | "snapshotHash"
 > & { readonly identityNamespace: NpcIdentityNamespace };
 
-/** Unique natural key of a snapshot table: a Margonem id and a variant text. */
 type SnapshotKey = readonly [number, string];
 
 type StoredSnapshotKey = { id: number; key: SnapshotKey };
 
-/**
- * Resolves one snapshot id per input, in input order, with at most three
- * statements for the whole batch. Repeated inputs share one snapshot and keep
- * their position, so callers can link every instance.
- */
 const resolveSnapshotIds = <Input extends object, E>(
   inputs: readonly Input[],
   snapshots: {
@@ -51,8 +45,6 @@ const resolveSnapshotIds = <Input extends object, E>(
 
     const inputKey = (input: Input) => JSON.stringify(snapshots.keyOf(input));
 
-    // The first submitted variant of a key is stored, as sequential inserts did.
-    // Concurrent submissions insert their overlapping keys in the same order.
     const unique = sortBy(uniqBy(inputs, inputKey), [
       (input) => snapshots.keyOf(input)[0],
       (input) => snapshots.keyOf(input)[1],
@@ -60,9 +52,6 @@ const resolveSnapshotIds = <Input extends object, E>(
 
     const ids = new Map<string, number>();
 
-    // Read existing rows, insert the missing ones, then read keys that a
-    // concurrent submission committed first: a conflicting insert returns no
-    // row, but the next READ COMMITTED statement sees it.
     for (const resolve of [
       snapshots.select,
       snapshots.insert,
@@ -94,7 +83,6 @@ const resolveSnapshotIds = <Input extends object, E>(
     return resolved;
   });
 
-// Legacy rows have no hash and never match an observation lookup.
 const itemKey = (item: {
   itemId: number;
   snapshotHash: string | null;
@@ -125,11 +113,6 @@ const toNpcKeys = (
   rows: Array<{ id: number; npcId: number; snapshotHash: string | null }>,
 ) => rows.map((row) => ({ id: row.id, key: npcKey(row) }));
 
-/**
- * Resolves the observed revision of each item, in input order. A localized
- * name, rename or icon change is a new revision instead of reusing the first
- * row stored for the same item id and stats.
- */
 export const resolveItemSnapshotIds = (
   database: SnapshotDatabase,
   items: readonly ItemObservationInput[],
@@ -163,19 +146,12 @@ export const resolveItemSnapshotIds = (
     failure: "Failed to resolve item snapshot",
   });
 
-/**
- * Resolves the immutable observation revision of each NPC, in input order.
- * Any observed attribute change produces a new revision instead of reusing the
- * first row stored for the same id and name. `world` stays null: it is
- * deprecated on revisions and kept only for rows written before editions.
- */
 export const resolveNpcSnapshots = (
   database: SnapshotDatabase,
   gameVersion: GameVersion,
   npcs: readonly NpcObservationInput[],
 ) =>
   Effect.gen(function* () {
-    // One revision serves every world of the edition; the loot keeps its world.
     const observations = npcs.map((npc) => {
       const observation = { ...npc, gameVersion };
 
@@ -216,7 +192,6 @@ export const resolveNpcSnapshots = (
 
     if (ids.length === 0) return [];
 
-    // Publications describe the persisted revisions, not the request payload.
     const rows = yield* database
       .select()
       .from(npcSnapshotTable)

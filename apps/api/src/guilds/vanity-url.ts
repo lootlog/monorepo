@@ -1,7 +1,6 @@
 import { parseVanityUrl as parseOrganizationVanityUrl } from "@lootlog/domain/organization-vanity-url";
 import { ErrorKey } from "./error-key.js";
 
-/** Slugs the requested vanity URL and validates the form that gets stored. */
 export const parseVanityUrl = (
   input: string,
 ):

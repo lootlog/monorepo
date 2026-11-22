@@ -6,7 +6,6 @@ import {
 } from "@/store/global-chat.store";
 import { useGlobalChatChannel } from "../hooks/use-global-chat-channel";
 
-/** Players online on the shown channel's world, or across Lootlog. */
 export const GlobalChatOnline = () => {
   const { t } = useTranslation("globalChat");
   const { channel } = useGlobalChatChannel({ loadWorlds: true });

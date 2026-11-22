@@ -32,43 +32,19 @@ import {
 } from "#src/database/drizzle/loot.schema";
 import { buildFightSources } from "./monster-fights.js";
 
-/**
- * Kills a share needs before it says anything: below this, one lucky drop
- * moves it by more than a percentage point. Kills that named their party
- * need as many before their rolls replace the estimate from loots.
- */
 const MIN_DROP_RATE_KILLS = 100;
 
-/**
- * Colossi whose loots give at least this many items per party member give
- * every member an item of their own; the rest share a loot, as those summoned
- * by Hero Trackers do.
- */
 const PERSONAL_LOOT_ITEMS_PER_MEMBER = 0.9;
 
 const sumOf = (column: AnyColumn | SQL.Aliased, alias: string) =>
   sql<number>`sum(${column})::float8`.as(alias);
 
-/**
- * How often each boss dropped each item, each kill and each drop counted
- * once however many Organizations recorded it. The game client records a
- * loot only when it drops something above common, so the loots alone cannot
- * tell how many kills dropped nothing; boss kills can. A kill counts for an
- * item when an Organization that recorded it keeps the item's rarity for the
- * boss's type: elsewhere it could not have recorded the drop. A drop counts
- * when an Organization that recorded its loot keeps the rarity. Both are
- * counted from the first boss kill on. Settings are read as they are now; an
- * Organization that changed them counts its earlier kills by today's. Alongside the kills come the loot rolls and party
- * members of the kills that named their party, which `toMonsterDropRates`
- * turns into rolls.
- */
 export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
   Effect.gen(function* () {
     const since = yield* selectBossKillsStart(database);
 
     if (!since) return [];
 
-    // Boss kills name a world, loots an edition.
     const editions = database.$with("world_editions").as(
       database
         .selectDistinct({
@@ -79,7 +55,6 @@ export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
         .where(gte(lootTable.createdAt, since)),
     );
 
-    // Kills recorded by the same Organizations share their eligibility.
     const killGroups = database.$with("kill_groups").as(
       database
         .select({
@@ -124,7 +99,6 @@ export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
         .from(killGroups),
     );
 
-    // The rarities at least one of each group's Organizations keeps.
     const groupRarities = database.$with("group_rarities").as(
       database
         .selectDistinct({
@@ -144,7 +118,6 @@ export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
         ),
     );
 
-    // Each boss's kills that could record a drop of each rarity.
     const rarityKills = database.$with("rarity_kills").as(
       database
         .select({
@@ -183,9 +156,6 @@ export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
 
     const fightSources = buildFightSources(database, since);
 
-    // The rarities each boss loot could be recorded with, by any
-    // Organization that recorded it. Loots and kills go to the same
-    // Organizations, so each of them also recorded the kill.
     const lootRarities = database.$with("loot_rarities").as(
       database
         .selectDistinct({
@@ -221,8 +191,6 @@ export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
         ),
     );
 
-    // Every copy of a loot counts once: a kill rolls several times, or once
-    // a member, but one loot is one kill whoever recorded it.
     const bossDrops = database.$with("boss_drops").as(
       database
         .select({
@@ -265,7 +233,6 @@ export const buildDropRatesQuery = (database: ApiDatabaseValue) =>
         )
         .where(
           and(
-            // Kills are counted for bosses only.
             inArray(npcSnapshotTable.type, [...DROP_SOURCE_BOSS_TYPES]),
             isNotNull(itemSnapshotTable.rarity),
           ),
@@ -329,13 +296,6 @@ const selectBossKillsStart = (database: ApiDatabaseValue) =>
     .from(bossKillTable)
     .pipe(Effect.map(([window]) => window?.start ?? null));
 
-/**
- * The parties of each boss's recorded fights since the first boss kill, by
- * party size: how many fights had that many players, the items they recorded
- * and their players of each profession. The game client records a fight only
- * when it drops something above common, so they stand in for the parties of
- * kills that did not name theirs.
- */
 export const buildLootPartiesQuery = (database: ApiDatabaseValue) =>
   Effect.gen(function* () {
     const since = yield* selectBossKillsStart(database);
@@ -418,22 +378,18 @@ export const buildLootPartiesQuery = (database: ApiDatabaseValue) =>
 
 type PartyMembers = Readonly<Record<LootRollProfession, number>>;
 
-/** One boss's drops of one item over the kills that could record it. */
 export type ItemDropRate = PartyMembers & {
   readonly gameVersion: GameVersion;
   readonly name: string;
   readonly type: string | null;
   readonly itemId: number;
-  /** Margonem's `reqp` of the item; null when every profession wears it. */
   readonly professions: string | null;
   readonly drops: number;
   readonly kills: number;
-  /** The kills that named their party, and what their parties add up to. */
   readonly partyKills: number;
   readonly lootRolls: number;
 };
 
-/** One boss's recorded fights of one party size. */
 export type LootParties = PartyMembers & {
   readonly gameVersion: GameVersion;
   readonly name: string;
@@ -443,13 +399,8 @@ export type LootParties = PartyMembers & {
   readonly items: number;
 };
 
-/**
- * Whether each member rolls their own loot, read from the boss's type and
- * its recorded fights, or the party shares one.
- */
 type LootMode = "SHARED" | "PERSONAL";
 
-/** Where a boss's loot rolls per kill come from. */
 type LootRollsBasis = "PARTY" | "LOOTS";
 
 const bossKey = ({
@@ -462,7 +413,6 @@ const bossKey = ({
 const professionsOf = (reqp: string | null) =>
   LOOT_ROLL_PROFESSIONS.filter((prof) => !reqp || reqp.includes(prof));
 
-/** What a boss's recorded fights say about its parties. */
 const describeLootParties = (parties: ReadonlyArray<LootParties>) => {
   const fights = sum(parties.map(({ fights }) => fights));
   const players = sum(parties.map((row) => row.players * row.fights));
@@ -477,7 +427,6 @@ const describeLootParties = (parties: ReadonlyArray<LootParties>) => {
       parties[0]?.type === "COLOSSUS" &&
       players > 0 &&
       items / players >= PERSONAL_LOOT_ITEMS_PER_MEMBER,
-    // Every member survived and the levels allow it, as far as loots tell.
     rollsPerFight:
       sum(
         parties.map((row) => getExpectedSharedRolls(row.players) * row.fights),
@@ -486,14 +435,6 @@ const describeLootParties = (parties: ReadonlyArray<LootParties>) => {
   };
 };
 
-/**
- * Each boss's drop rates that say something: enough kills, and no more drops
- * than rolls, which only a kill the API never heard of could leave. Rolls are
- * the kills times the rolls a kill gets on average: for a shared loot the
- * rolls its party got, for a personal loot its members who can wear the item.
- * Kills that named their party give that average once there are enough of
- * them; until then the parties of the boss's recorded fights estimate it.
- */
 export const toMonsterDropRates = (
   rows: ReadonlyArray<ItemDropRate>,
   lootParties: ReadonlyArray<LootParties>,

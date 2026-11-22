@@ -18,15 +18,9 @@ import { TIMER_LIMITS } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 
-// A Hero Tracker template has no weight; its name alone admits it.
 export const hasTimerWeight = (payload: CreateAutoTimerRequest) =>
   payload.npc.wt >= MIN_TIMER_NPC_WT || isHeroTrackerName(payload.npc.name);
 
-/**
- * When a reported Hero Tracker entrance closes. The countdown is placed on the
- * server clock, so a reporter's clock cannot shift the window; deployed Game
- * clients still send their own close time.
- */
 export const getReportedEntranceClosesAt = (
   payload: CreateAutoTimerRequest,
   now: Date,
@@ -37,12 +31,6 @@ export const getReportedEntranceClosesAt = (
   return payload.entranceClosesAt ? new Date(payload.entranceClosesAt) : null;
 };
 
-/**
- * The respawn an entrance report counts. A base observed when a tracker left
- * this world stays authoritative for the following entrances: clients older
- * than the world's respawn multiplier report the public default on every
- * world. A stored public default is no observation, so the report replaces it.
- */
 export const getEntranceRespBaseSeconds = (
   payload: CreateAutoTimerRequest,
   previousTimer: typeof timerTable.$inferSelect | null,
@@ -53,10 +41,6 @@ export const getEntranceRespBaseSeconds = (
     ? previousTimer.latestRespBaseSeconds
     : payload.respBaseSeconds;
 
-/**
- * The stored timer when a report repeats the entrance it already counts:
- * every player near a tracker sees the same countdown.
- */
 export const findSameEntranceTimer = (
   timer: typeof timerTable.$inferSelect | null,
   entranceClosesAt: Date | null,
@@ -72,7 +56,6 @@ export const findSameEntranceTimer = (
     ? timer
     : null;
 
-/** A tracker respawns after its entrance closes, not when it is reported. */
 const getRespawnStart = (payload: CreateAutoTimerRequest, now: Date) => {
   const entranceClosesAt = getReportedEntranceClosesAt(payload, now);
 
@@ -142,7 +125,6 @@ export const makeNpc = (
   knownTemplateId: number | null = null,
 ) => ({
   id: payload.npc.id,
-  // Older clients omit the template; keep the one observed for this spawn.
   templateId: payload.npc.templateId ?? knownTemplateId,
   name: payload.npc.name,
   prof: getProfByShortname(payload.npc.prof ?? ""),

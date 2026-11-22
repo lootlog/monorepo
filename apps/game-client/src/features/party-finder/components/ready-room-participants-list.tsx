@@ -8,10 +8,6 @@ type ReadyRoomParticipantsListProps = {
   room: PartyReadyRoomOrganizerProjection;
 };
 
-/**
- * Applicants still waiting for an invitation. Those already in the party are
- * left out: the party counter in the header accounts for them.
- */
 export function ReadyRoomParticipantsList({
   room,
 }: ReadyRoomParticipantsListProps) {

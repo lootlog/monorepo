@@ -28,10 +28,8 @@ import { useTranslation } from "react-i18next";
 import { ThemeRow } from "./theme-row";
 import { useCreateTheme } from "./use-create-theme";
 
-/** A share token: URL-safe base64, as the API issues them. */
 const SHARE_TOKEN = /^[\w-]{16,64}$/u;
 
-/** Reads the token from a share link, or takes a bare token as it is. */
 const readShareToken = (input: string) => {
   const value = input.trim();
   const fromLink = /\/import\/([\w-]{16,64})(?:[/?#]|$)/u.exec(value)?.[1];
@@ -39,7 +37,6 @@ const readShareToken = (input: string) => {
   return fromLink ?? (SHARE_TOKEN.test(value) ? value : null);
 };
 
-/** Saves a copy of a theme someone shared, after a look at it. */
 export const ImportThemeDialog = ({ trigger }: { trigger: ReactElement }) => {
   const { t } = useTranslation();
   const inputId = useId();
@@ -54,7 +51,6 @@ export const ImportThemeDialog = ({ trigger }: { trigger: ReactElement }) => {
       { query: { enabled: shareToken !== null, retry: false } },
     );
 
-  // A placeholder is the previous link's theme: never show or save it.
   const sharedTheme =
     shareToken !== null && !isPlaceholderData ? data : undefined;
 

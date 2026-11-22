@@ -101,7 +101,6 @@ export const deleteUserTheme = Effect.fn("deleteUserTheme")(function* (
   return { success: true };
 });
 
-/** 128 random bits, URL-safe: unguessable, so the link is the permission. */
 const makeShareToken = () => randomBytes(16).toString("base64url");
 
 export const shareUserTheme = Effect.fn("shareUserTheme")(function* (

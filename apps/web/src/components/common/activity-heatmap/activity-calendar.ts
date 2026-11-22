@@ -8,7 +8,6 @@ export type ActivityDay = {
   worldsComplete?: boolean;
 };
 
-/** Fill for each activity level, shared by every activity heatmap and its legend. */
 export const activityLevelClasses = {
   unknown: "bg-muted/30 border border-dashed border-muted-foreground/50",
   zero: "bg-muted",

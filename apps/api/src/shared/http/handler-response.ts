@@ -17,10 +17,6 @@ const DEFAULT_STATUS_CODES = new Map<number, string>([
   [503, "SERVICE_UNAVAILABLE"],
 ]);
 
-/**
- * Answers a domain failure that carries its status and, optionally, its code.
- * A 401 always asks the caller to sign in again.
- */
 export const statusCodeResponse = (error: {
   readonly status: number;
   readonly code?: string;
@@ -44,6 +40,5 @@ export const pathString = (value: unknown, name: string) =>
     ? Effect.succeed(value)
     : Effect.die(new TypeError(`${name} path parameter must be a string`));
 
-/** Preserve missing or non-string legacy route parameters for authorization to reject. */
 export const optionalPathString = (value: unknown): string | undefined =>
   typeof value === "string" ? value : undefined;

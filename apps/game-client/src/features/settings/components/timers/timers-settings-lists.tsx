@@ -16,10 +16,6 @@ import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 
-/**
- * Creates, renames and deletes the player's timer lists and shows which
- * monsters each one holds. Timers join a list from their context menu.
- */
 export const TimersSettingsLists: FC = () => {
   const { t } = useTranslation();
 

@@ -17,15 +17,8 @@ export type UnsavedChangesBarProps = {
   saveLabel?: string;
 };
 
-/** The sidebar's spring, so the bar settles like the navigation does. */
 const SPRING = { type: "spring", stiffness: 500, damping: 40 } as const;
 
-/**
- * The save bar of a form page, docked to the bottom edge as the top bar is to
- * the top. It renders inside the page's form, so its save button submits that
- * form, and ⌘S or Ctrl+S presses it while there are changes, unless the keys
- * come from a dialog or another form.
- */
 export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
   isDirty,
   isSubmitting,
@@ -51,13 +44,10 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
 
       const target = event.target instanceof Element ? event.target : null;
 
-      // A dialog over the page, such as one adding a channel, keeps its keys:
-      // the shortcut must not save the form underneath it.
       if (target?.closest('[role="dialog"], [role="alertdialog"]')) {
         return;
       }
 
-      // A form page saves its own changes instead of the browser saving the page.
       event.preventDefault();
 
       const submit = submitRef.current;
@@ -96,10 +86,6 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
           transition={SPRING}
           className="fixed right-0 bottom-0 left-0 z-50 md:left-(--sidebar-width)"
         >
-          {/*
-            The top bar's surface, blur and hairline, mirrored at the bottom
-            edge; its hairline continues the sidebar footer's.
-          */}
           <div
             className={cn(
               "box-content flex h-14 items-center gap-1 border-t border-sidebar-border bg-sidebar/80 opaque:bg-sidebar opaque:backdrop-blur-none pb-[env(safe-area-inset-bottom)] backdrop-blur-lg backdrop-saturate-150",
@@ -120,7 +106,6 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
                 {resetLabel ?? t("common.reset")}
               </Button>
               <span className="relative flex">
-                {/* Once the bar lands, two accent rings ripple out of the save button. */}
                 <m.span
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-primary"
@@ -141,7 +126,6 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
                   aria-keyshortcuts="Meta+S Control+S"
                 >
                   {saveLabel ?? t("common.save")}
-                  {/* Keyboards only: phones drop the hint. */}
                   <KbdGroup
                     aria-hidden="true"
                     className="-mr-1.5 max-sm:hidden"

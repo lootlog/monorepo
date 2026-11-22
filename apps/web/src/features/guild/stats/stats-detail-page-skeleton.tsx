@@ -8,7 +8,6 @@ type StatsDetailPageSkeletonProps = Pick<
   "rowContent"
 >;
 
-/** Stands in for a member's or monster's stats page: its details row and table. */
 export const StatsDetailPageSkeleton = ({
   rowContent,
 }: StatsDetailPageSkeletonProps) => (

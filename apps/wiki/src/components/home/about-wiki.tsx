@@ -7,7 +7,6 @@ const FACTS = [
   { key: "planning", icon: Backpack },
 ] as const;
 
-/** Where the wiki's data comes from and what it covers. */
 export function AboutWiki() {
   return (
     <ul className="grid divide-border rounded-xl border border-border/50 bg-card max-md:divide-y md:grid-cols-3 md:divide-x">

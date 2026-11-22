@@ -20,7 +20,6 @@ type RoleTileProps = {
   role: GuildRole;
 };
 
-/** One role in the role list: its level range and permissions; the tile opens it. */
 export const RoleTile = ({ guildId, role }: RoleTileProps) => {
   const { t } = useTranslation();
   const color = discordRoleColorHex(role.color) ?? "FFFFFF";

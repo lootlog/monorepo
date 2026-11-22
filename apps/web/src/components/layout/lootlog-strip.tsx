@@ -2,8 +2,6 @@ import { UserNavItem } from "@/components/layout/user-nav-item";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
-// The sheet opens with the open Lootlog in view, wherever it sits in the
-// list; while the list loads, the tile appears later.
 const revealActiveTile = (strip: HTMLDivElement | null) => {
   if (!strip) return;
 
@@ -33,14 +31,9 @@ const revealActiveTile = (strip: HTMLDivElement | null) => {
 
 type LootlogStripProps = {
   children: ReactNode;
-  /** Called when an entry navigates or opens a dialog. */
   onSelect?: () => void;
 };
 
-/**
- * The phone sheet's row of labelled Lootlogs, which takes the server rail's
- * place: the personal space first, then each Lootlog.
- */
 export const LootlogStrip = ({ children, onSelect }: LootlogStripProps) => {
   const { t } = useTranslation();
 

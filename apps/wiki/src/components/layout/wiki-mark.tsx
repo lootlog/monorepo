@@ -1,6 +1,5 @@
 import { cn } from "cn";
 
-/** The wiki's app icon, the same drawing as its favicon. */
 export function WikiMark({ className }: { className?: string }) {
   return (
     <img

@@ -5,7 +5,6 @@ import {
   resolveTabBarSections,
 } from "@/navigation/app-navigation";
 
-/** The personal space's phone navigation. */
 export const UserTabBar = () => {
   const matches = useMatches();
   const { sidebarItems } = resolveAppNavigation({ matches });

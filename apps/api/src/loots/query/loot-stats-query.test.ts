@@ -147,7 +147,6 @@ describe("loot statistics at the PostgreSQL boundary", () => {
           yield* db.execute(
             sql`insert into "Guild" (id, name, "ownerId", "updatedAt") values ('stats-day', 'Day', 'owner', now())`,
           );
-          // 23:30 UTC on 1 January is already 00:30 on 2 January in Warsaw.
           yield* db.execute(
             sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt", "gameVersion") values (1, 'day-1', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 23:30:00', now(), 'pl')`,
           );

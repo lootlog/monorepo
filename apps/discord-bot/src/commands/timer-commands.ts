@@ -51,7 +51,6 @@ type Timer = typeof Timer.Type;
 
 const Timers = Schema.Array(Timer);
 
-/** A timer stays current until its spawn window closes. */
 const readCurrentTimers = (session: MemberSession, world?: string) =>
   Effect.gen(function* () {
     const timers = yield* session.api(
@@ -97,7 +96,6 @@ const spawnWindow = (timer: Timer, now: number) => {
 const timerName = (timer: Timer) =>
   `${escapeMarkdown(timer.npc.name)} (${timer.npc.lvl})`;
 
-// Timers are unique per world, so a choice carries both halves of the key.
 const timerChoiceValue = (timer: Timer) => `${timer.world}|${timer.timerKey}`;
 
 export const timersCommand: SlashCommand = {

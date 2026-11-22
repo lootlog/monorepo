@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the kills feature. */
 import * as Schema from "effect/Schema";
 import {
   PageSize,
@@ -39,7 +38,6 @@ const KilledNpcSummary = Schema.Struct({
   totalKills: FiniteNumber,
 });
 
-/** NPCs matching the filters across all pages, for the result count. */
 const KillPageTotal = FiniteNumber;
 
 const RankedKiller = Schema.Struct({
@@ -67,10 +65,6 @@ export const CreateKillRequest = Schema.Struct({
   }),
   characterId: NonEmptyString,
   accountId: NonEmptyString,
-  /**
-   * The party as the battle ended, which decides how many times the boss's
-   * loot is rolled; omitted by older Game clients.
-   */
   party: Schema.optionalKey(
     Schema.Array(
       Schema.Struct({
@@ -84,7 +78,6 @@ export const CreateKillRequest = Schema.Struct({
       }),
     ).check(Schema.isMaxLength(30)),
   ),
-  /** The reporting character, shown when filtering personal statistics by character. */
   character: Schema.optionalKey(
     Schema.Struct({
       name: NonEmptyString,
@@ -118,22 +111,13 @@ const GuildKillStatsBody = Schema.Struct({
       participationsByType: KillCountsByNpcType,
     }),
   ),
-  /**
-   * Kills per hour (`date` is the UTC instant starting the hour) or per Warsaw
-   * calendar day (`date` is "YYYY-MM-DD"), with empty buckets as zero.
-   */
   timeline: Schema.Struct({
     unit: Schema.Literals(["hour", "day"]),
-    /**
-     * All-time kills recorded before hourly history began, which the timeline
-     * and `hourlyWeekday` leave out; always 0 for a bounded period.
-     */
     untimedKills: FiniteNumber,
     points: Schema.Array(
       Schema.Struct({ date: Schema.String, kills: FiniteNumber }),
     ),
   }),
-  /** Kills by ISO weekday (1 = Monday) and hour in Warsaw time. */
   hourlyWeekday: Schema.Array(
     Schema.Struct({
       weekday: FiniteNumber,
@@ -147,7 +131,6 @@ export { GuildKillStatsBody };
 
 export const GuildKillStatsResponse = Schema.Struct({
   ...GuildKillStatsBody.fields,
-  /** When the statistics were computed; they refresh in the background. */
   computedAt: DateTimeString,
 }).annotate({ identifier: "GuildKillStatsResponseDto_Output" });
 
@@ -183,10 +166,8 @@ export type NpcType = typeof NpcType.Type;
 
 export const NpcType = NpcTypeSchema.annotate({ identifier: "NpcType" });
 
-/** Default and documented size of the guild top NPCs ranking. */
 export const GUILD_TOP_NPCS_DEFAULT_LIMIT = 10;
 
-/** Default and documented size of each guild top killers ranking. */
 export const GUILD_TOP_KILLERS_DEFAULT_LIMIT = 5;
 
 export type GuildTopNpcsQuery = typeof GuildTopNpcsQuery.Type;
@@ -289,7 +270,6 @@ export const GuildKillStatsQuery = Schema.Struct({
 
 export type UserKillStatsQuery = typeof UserKillStatsQuery.Type;
 
-/** Default size of the personal top NPCs list. */
 export const USER_TOP_NPCS_DEFAULT_LIMIT = 5;
 
 export const UserKillStatsQuery = Schema.Struct({
@@ -334,7 +314,6 @@ export const NpcKillersPath = Schema.Struct({
 
 export type NpcKillersQuery = typeof NpcKillersQuery.Type;
 
-/** Default size of the killers ranking of one NPC. */
 export const NPC_KILLERS_DEFAULT_LIMIT = 50;
 
 export const NpcKillersQuery = Schema.Struct({

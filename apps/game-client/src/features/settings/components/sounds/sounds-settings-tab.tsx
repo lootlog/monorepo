@@ -23,7 +23,6 @@ import { useTranslation } from "react-i18next";
 
 const DEFAULT_NPC_CONFIG = { volume: 0.5, soundUrl: "" };
 
-/** Volume a muted category comes back to when unmuted. */
 const UNMUTED_VOLUME = 0.5;
 
 const isValidUrl = (url: string): boolean => {
@@ -57,7 +56,6 @@ export function SoundsSettingsTab() {
     Record<string, Record<string, string>>
   >({});
 
-  // The slider keeps its own drag preview; the stored volume is the value.
   const volumes: Record<VisibleSoundCategory, number> = {
     notifications: settings?.notificationsVolume ?? UNMUTED_VOLUME,
     detector: settings?.detectorVolume ?? UNMUTED_VOLUME,
@@ -67,7 +65,6 @@ export function SoundsSettingsTab() {
   const commitVolume = (category: VisibleSoundCategory, value: number) =>
     updateSettings({ [`${category}Volume`]: value });
 
-  // A muted category is persisted as volume 0, so muting needs no extra flag.
   const toggleMuted = (category: VisibleSoundCategory) =>
     commitVolume(category, volumes[category] === 0 ? UNMUTED_VOLUME : 0);
 
@@ -81,8 +78,6 @@ export function SoundsSettingsTab() {
     { label: t("common:npcTypes.message"), key: "message" },
   ];
 
-  // The "timers" category stays out of the UI while timer sounds are
-  // unsupported; its persisted config and volume are preserved untouched.
   const categories: {
     id: ConfigurableSoundCategory;
     label: string;
@@ -168,7 +163,6 @@ export function SoundsSettingsTab() {
 
           const currentConfig = categoryConfig[key] ?? DEFAULT_NPC_CONFIG;
 
-          // The shared settings patch queue debounces and merges these.
           updateSettings({
             [configKey]: { [key]: { ...currentConfig, soundUrl } },
           });

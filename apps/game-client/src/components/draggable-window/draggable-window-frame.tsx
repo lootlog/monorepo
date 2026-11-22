@@ -79,8 +79,6 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
   } = useDraggableWindowFrame(frameProps);
 
   return (
-    // Non-modal: the game stays usable while a window is open. The container
-    // takes focus when the player opens the window and closes it on Escape.
     <div
       role="dialog"
       aria-labelledby={disableTitle ? undefined : titleId}
@@ -117,8 +115,6 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
             "ll-window-preparing": animationPhase === "preparing",
             "ll-window-enter": animationPhase === "enter",
             "ll-window-exit": animationPhase === "exit",
-            // Light backgrounds cannot give white text enough contrast over
-            // bright game art, so the three lightest levels outline the text.
             "ll:[text-shadow:0_0_2px_rgb(0_0_0),0_1px_2px_rgb(0_0_0)]":
               opacity <= 3,
             "ll:bg-black/15": opacity === 1,
@@ -197,8 +193,6 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
           {children}
         </div>
       </div>
-      {/* Outside the clipped body so its hit area can straddle the corner
-          instead of covering window content. */}
       {(allowsHorizontalResize || allowsVerticalResize) && !isLocked && (
         <WindowResizeHandle
           minWidth={minWidth}

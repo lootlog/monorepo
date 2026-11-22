@@ -4,7 +4,6 @@ import { resolveDefaultWindowPosition } from "./window-default-placement";
 
 const PINNED_WINDOWS: WindowId[] = ["quick-access", "timers", "chat"];
 
-// Opened by the game on its own, so the player never placed them either.
 const ALERT_WINDOWS: WindowId[] = [
   "npc-detector",
   "notifications",
@@ -17,7 +16,6 @@ const TOOL_WINDOWS: WindowId[] = [
   "create-party-gathering",
 ];
 
-// Prompts that can be up together while the game runs.
 const CONCURRENT_PROMPTS: WindowId[] = [
   "settings",
   "backend-preferences-warning",
@@ -49,7 +47,6 @@ const place = (ids: WindowId[], viewport: Viewport) =>
     ...sizeOf(id),
   }));
 
-/** Names every window that leaves the viewport or covers another one. */
 const findLayoutProblems = (ids: WindowId[], viewport: Viewport) => {
   const placed = place(ids, viewport);
 
@@ -73,7 +70,6 @@ const findLayoutProblems = (ids: WindowId[], viewport: Viewport) => {
   return [...outside, ...overlapping];
 };
 
-/** The camera centres on the hero: its tile and the tiles around it. */
 const heroArea = (viewport: Viewport): Rect => ({
   x: viewport.width / 2 - 48,
   y: viewport.height / 2 - 48,

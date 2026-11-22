@@ -16,10 +16,8 @@ const permissionRebalanceRetry = Schedule.max([
   Schedule.recurs(3),
 ]);
 
-// Bounds how long unconfirmed authority survives a failing permission lookup.
 const PERMISSION_REBALANCE_DEADLINE = "30 seconds";
 
-/** Moves a user's local sockets to the access their memberships now grant. */
 export class AccessRebalancer {
   constructor(
     private readonly guilds: Pick<GuildStore, "getUserGuilds" | "invalidate">,
@@ -64,7 +62,6 @@ export class AccessRebalancer {
     removedOrganizationId?: string,
   ): Effect.Effect<void, unknown> {
     return Effect.gen({ self: this }, function* () {
-      // A confirmed removal needs no permission lookup, so revoke it before any I/O.
       const cleanup =
         removedOrganizationId === undefined
           ? Effect.void
@@ -74,8 +71,6 @@ export class AccessRebalancer {
               ),
             );
 
-      // A failed cache invalidation or publication must not prevent revocation.
-      // Preserve failures for Rabbit redelivery after attempting every boundary.
       const federate = Effect.gen({ self: this }, function* () {
         const invalidated = yield* Effect.exit(
           this.guilds.invalidate({ discordId, userId }),
@@ -110,8 +105,6 @@ export class AccessRebalancer {
         while: (error) => error.retryable,
       }),
       Effect.timeout(PERMISSION_REBALANCE_DEADLINE),
-      // Sockets must not keep authority that could not be confirmed.
-      // The invalidated cache makes their next session.join fail closed.
       Effect.catch((error) =>
         Effect.logError(
           "Permission rebalance unavailable; reconnecting affected sockets",
@@ -125,7 +118,6 @@ export class AccessRebalancer {
     );
   }
 
-  // Commit every local socket's authority before yielding to external I/O.
   private commitAccess(
     discordId: string,
     userId: string,

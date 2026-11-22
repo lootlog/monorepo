@@ -1,19 +1,3 @@
-/**
- * Rebuilds the catalog's search indexes from its database.
- *
- * Each index is rebuilt in a shadow index (`<name>_rebuild`) with the
- * service settings, filled from its table in large batches, then every
- * shadow index is swapped into place in one atomic task, so searches never
- * see a half-built index. Batches are enqueued without waiting, so
- * Meilisearch merges them into a few indexing runs.
- *
- * The consumers keep writing to the live indexes while this runs; an entry
- * they change after its page was read is replaced by the older copy until
- * its next change. Run it at a quiet hour.
- *
- * Usage: `bun run projection:rebuild` in `apps/catalog` with the service's
- * environment.
- */
 import { BunRuntime } from "@effect/platform-bun";
 import {
   ensureIndex,
@@ -38,7 +22,6 @@ import {
 
 const ROWS_PER_PAGE = 5_000;
 
-// Meilisearch rejects request bodies over 12.5 MB.
 const BATCH_PAYLOAD_LIMIT_BYTES = 8 * 1024 * 1024;
 
 const TASK_TIMEOUT_MS = 30 * 60 * 1000;
@@ -48,7 +31,6 @@ const rebuildIndexName = (indexName: string) => `${indexName}_rebuild`;
 const completeTask = (operation: string, run: () => EnqueuedTaskPromise) =>
   completeMeilisearchTask(operation, run, { timeout: TASK_TIMEOUT_MS });
 
-/** Whether Meilisearch answered the request, or its task, with this code. */
 const hasErrorCode = (error: SearchOperationFailure, code: string) =>
   getMeilisearchErrorCode(error) === code ||
   getMeilisearchErrorCode(error.cause) === code;
@@ -56,14 +38,12 @@ const hasErrorCode = (error: SearchOperationFailure, code: string) =>
 const formatDuration = (startedAt: number) =>
   `${((performance.now() - startedAt) / 1000).toFixed(1)}s`;
 
-/** Splits documents into batches under the payload limit. */
 const toBatches = (documents: ReadonlyArray<object>) => {
   const batches: object[][] = [];
   let batch: object[] = [];
   let batchBytes = 0;
 
   for (const document of documents) {
-    // One more byte for the separating comma.
     const bytes = Buffer.byteLength(JSON.stringify(document)) + 1;
 
     if (batch.length > 0 && batchBytes + bytes > BATCH_PAYLOAD_LIMIT_BYTES) {
@@ -104,7 +84,6 @@ const rebuildProjection = Effect.gen(function* () {
       ),
     );
 
-  /** Reads a table page by page in primary key order into a shadow index. */
   const fill = Effect.fnUntraced(function* (
     indexName: string,
     {
@@ -114,8 +93,6 @@ const rebuildProjection = Effect.gen(function* () {
   ) {
     const filledAt = performance.now();
 
-    // Pages cut a monster's identities apart, so its first sighting is read
-    // over the whole table first. `min` over the JSON field has no builder.
     const monsterFirstSeen: MonsterFirstSeen =
       table === catalogNpcTable
         ? new Map(

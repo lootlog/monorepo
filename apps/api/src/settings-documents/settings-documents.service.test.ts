@@ -305,7 +305,6 @@ describe("settings documents Effect module", () => {
               unset: [],
             },
           ],
-          // A character without its game account cannot be resolved.
           context: { characterId: "char-1" },
         }),
       ),

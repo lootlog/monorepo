@@ -26,7 +26,6 @@ import {
   CatalogNpcObservation,
 } from "@lootlog/protocol/rabbit/catalog";
 
-/** A delivery the catalog cannot apply is kept in `catalog.dlq`. */
 const catalogQueue = (
   name: string,
   routingKey: RabbitQueueDefinition["routingKey"],
@@ -36,8 +35,6 @@ const catalogQueue = (
     deadLetterRoutingKey: RabbitRoutingKey.CATALOG_DLQ,
   });
 
-// Replays get their own queues, so live loots never queue behind a backfill;
-// every change that saves still takes its turn on the catalog's writer lock.
 const catalogQueues = {
   items: catalogQueue(
     "catalog.items.index",
@@ -70,7 +67,6 @@ const catalogQueues = {
   }),
 };
 
-/** Only a search rejection of the request itself can never succeed. */
 const isPermanent = (error: CatalogWriteFailure) =>
   error instanceof SearchOperationFailure && isPermanentSearchFailure(error);
 

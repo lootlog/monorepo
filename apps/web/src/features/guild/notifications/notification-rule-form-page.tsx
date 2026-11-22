@@ -101,7 +101,6 @@ export const NotificationRuleFormPage = () => {
       </h1>
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
         <Form {...form}>
-          {/* Room below the last section for the floating save bar. */}
           <form onSubmit={form.handleSubmit(handleSubmit)} className="pb-24">
             <BandSection
               id="rule-form-basics"

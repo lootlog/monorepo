@@ -215,8 +215,6 @@ export class GuildConfigurationData extends Context.Service<
                   );
                 }
 
-                // The row is cached under every key it was looked up by, so a
-                // change must evict the id entry and both vanity entries.
                 yield* Effect.forEach(
                   [
                     ...new Set(

@@ -25,11 +25,6 @@ type TimersNpcTypeFilterProps = {
   onChange: (selectedNpcTypes: NpcType[]) => void;
 };
 
-/**
- * One strip cell that opens the monster type checklist, so the filter row
- * does not show a second row of tiles under the guild switcher. Each entry's
- * "only" button (or a right-click on the entry) keeps only that type.
- */
 export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
   selectedNpcTypes,
   onChange,

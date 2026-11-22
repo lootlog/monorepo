@@ -29,8 +29,6 @@ type SandboxPartyMember = {
   accountId: number;
 };
 
-// Mutable Margonem-like state. Objects are mutated in place because the game
-// hands out long-lived references (window.hero, Engine.hero.d, g.npc).
 export type SandboxWorld = {
   world: string;
   hero: SandboxHero;

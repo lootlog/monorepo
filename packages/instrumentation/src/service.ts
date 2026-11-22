@@ -21,25 +21,16 @@ import {
 import { observabilityLayer, type ServiceIdentity } from "./observability.js";
 
 type RunServiceOptions<E, R> = {
-  /** The service's own configuration, with every requirement provided. */
   readonly config: Effect.Effect<ServiceIdentity, unknown>;
   readonly application: Layer.Layer<never, E, R>;
 } & ([R] extends [never]
   ? { readonly supervise?: undefined }
   : {
-      /**
-       * Ends the process when a runtime dependency, such as the RabbitMQ
-       * connection, fails after start.
-       */
       readonly supervise: (
         program: Effect.Effect<never, E, R>,
       ) => Effect.Effect<never, unknown, never>;
     });
 
-/**
- * Starts a backend service: observability from its configuration, scoped
- * logging for code outside Effect, and the application layer until shutdown.
- */
 export const runService = <E, R>(options: RunServiceOptions<E, R>): void => {
   const program = Effect.gen(function* () {
     yield* installScopedLogRunner;
@@ -58,7 +49,6 @@ export const runService = <E, R>(options: RunServiceOptions<E, R>): void => {
   );
 };
 
-/** The standard `/healthz` liveness group every HTTP service exposes. */
 export const healthGroup = (description?: string) => {
   const endpoint = HttpApiEndpoint.get(
     "HealthzControllerHealthCheck",
@@ -77,10 +67,6 @@ export const healthGroup = (description?: string) => {
   );
 };
 
-/**
- * The service's HTTP API with its generated document at `/openapi.json` and,
- * when given, the committed YAML document at `/doc`.
- */
 export const serviceApiRoutes = <
   Id extends string,
   Groups extends HttpApiGroup.Constraint,
@@ -105,10 +91,6 @@ export const serviceApiRoutes = <
   );
 };
 
-/**
- * Serves routes on `0.0.0.0:port` with route and request metrics. An extra
- * middleware runs inside the metrics middleware, so its outcome is measured.
- */
 export const serviceHttpServer = <A, E, R>(options: {
   readonly routes: Layer.Layer<A, E, R>;
   readonly port: number;
@@ -118,8 +100,6 @@ export const serviceHttpServer = <A, E, R>(options: {
   const routes = options.routes.pipe(Layer.provide(httpServerRouteMetrics));
   const measured = HttpRouter.serve(routes, { middleware: httpServerMetrics });
 
-  // `HttpMiddleware` erases requirements to `any`; the server keeps the
-  // requirements of its routes, which an inner middleware must not add to.
   const served: typeof measured =
     inner === undefined
       ? measured

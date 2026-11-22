@@ -6,7 +6,6 @@ import { TimerHeroSightingIndicator } from "./timer-hero-sighting-indicator";
 import type { TimerHeroSighting } from "./timer-map-presence-provider";
 import { TimerTooltipSection } from "./timer-tooltip-section";
 
-/** Where a detector placed the timer's hero, how long ago and who claims it. */
 export function TimerHeroSightingSection({
   heroSighting: { sighting, unconfirmed },
 }: {

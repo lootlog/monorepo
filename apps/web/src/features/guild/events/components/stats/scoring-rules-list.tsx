@@ -15,7 +15,6 @@ interface ScoringRulesListProps {
   t: TFunction;
 }
 
-/** One group of scoring rules under a small heading that explains it. */
 export const ScoringRulesList = ({
   label,
   hint,

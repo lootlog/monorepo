@@ -159,12 +159,10 @@ export const RabbitConsumers = Layer.effectDiscard(
       (data) => notificationEvents.handleTimerDeleted(data),
       orderedHandlerRetry,
     );
-    yield* consume(
-      apiRabbitRoutes.heroSightingUpdated, // The routed fact is the API's own sighting response; decode all of it.
-      (data) =>
-        decodeHeroSighting(data).pipe(
-          Effect.flatMap(notificationEvents.handleHeroSightingUpdated),
-        ),
+    yield* consume(apiRabbitRoutes.heroSightingUpdated, (data) =>
+      decodeHeroSighting(data).pipe(
+        Effect.flatMap(notificationEvents.handleHeroSightingUpdated),
+      ),
     );
     yield* consume(apiRabbitRoutes.lootCreated, (data) =>
       notificationEvents.handleLootCreated(data),
@@ -270,8 +268,6 @@ export const ScheduledJobs = Layer.effectDiscard(
       ),
       "15 * * * *",
     );
-    // Off peak (03:30-06:30 CET); a run interrupted by a restart resumes in
-    // the next hour.
     yield* forkCronTask(
       makeMemberKillPurge(database)().pipe(
         Effect.catch((error) =>

@@ -15,7 +15,6 @@ const observeOnce = async (
   queryKey: readonly unknown[],
   queryFn: () => Promise<never>,
 ) => {
-  // Only the retry decision is under test; the backoff would add seconds.
   const observer = new QueryObserver(queryClient, {
     queryKey,
     queryFn,

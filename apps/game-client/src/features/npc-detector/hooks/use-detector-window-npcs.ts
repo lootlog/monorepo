@@ -4,10 +4,6 @@ import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { getNpcType } from "@lootlog/domain/npc-type";
 import { getDetectorNpcSettings } from "@lootlog/schema/account-preferences";
 
-/**
- * The detections the detector window lists: those whose NPC type the current
- * game account both detects and routes to the window.
- */
 export const useDetectorWindowNpcs = () => {
   const npcs = useNpcDetectorStore((state) => state.npcs);
   const { settings } = useCurrentGameAccountDetectorSettings();

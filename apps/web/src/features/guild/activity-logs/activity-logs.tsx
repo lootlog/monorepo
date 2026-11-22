@@ -33,7 +33,7 @@ import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 const ACTIVITY_LOGS_PAGE_LIMIT = 20;
 
 export const ActivityLogs = () => {
-  "use no memo"; // Reads a virtualizer that mutates in place; see usePageVirtualizer.
+  "use no memo";
 
   const { t } = useTranslation();
   const themedKey = useThemedKey();

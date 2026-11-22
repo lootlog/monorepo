@@ -16,11 +16,6 @@ type EventMapRow = typeof eventMapTable.$inferSelect;
 
 type EventMapLocationRow = typeof eventMapLocationTable.$inferSelect;
 
-/**
- * Reads event maps with their assigned members. Every read takes a fixed
- * number of statements regardless of how many heroes, locations, or maps
- * it covers.
- */
 export const makeEventMapRead = <Failure>(
   database: typeof ApiDatabase.Service,
   query: <A, E>(
@@ -45,13 +40,9 @@ export const makeEventMapRead = <Failure>(
               eventMapToMemberTable.A,
               maps.map(({ id }) => id),
             ),
-            // Members who left the Discord server keep their assignment rows
-            // until the window closes; they no longer cover the map.
             eq(memberTable.active, true),
           ),
         )
-        // Primary-key order keeps each map's members stable however many
-        // maps one read covers.
         .orderBy(asc(eventMapToMemberTable.A), asc(eventMapToMemberTable.B)),
     );
 
@@ -81,7 +72,6 @@ export const makeEventMapRead = <Failure>(
     }));
   });
 
-  /** Hydrated maps of the heroes, optionally only those in one location. */
   const heroMaps = (heroIds: ReadonlyArray<string>, locationId?: string) =>
     heroIds.length === 0
       ? Effect.succeed([])
@@ -101,10 +91,6 @@ export const makeEventMapRead = <Failure>(
             .orderBy(asc(eventMapTable.mapId)),
         ).pipe(Effect.flatMap(hydrateMaps));
 
-  /**
-   * Each hero's ordered locations with their maps, and the maps outside any
-   * location. Every map is hydrated once.
-   */
   const heroMapLayouts = (heroIds: ReadonlyArray<string>) =>
     Effect.all(
       {

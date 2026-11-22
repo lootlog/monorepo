@@ -8,8 +8,6 @@ import {
   type ReactNode,
 } from "react";
 
-// Shorter than the 500 ms long press that opens the guild context menu, so a
-// hold followed by a move drags while a still hold still opens the menu.
 const TOUCH_HOLD_DELAY_MS = 250;
 
 const TOUCH_HOLD_TOLERANCE_PX = 8;
@@ -35,9 +33,6 @@ type GuildReorderItemProps<T> = {
   className?: string;
 };
 
-// Reorder.Item's own drag listener sets `touch-action: pan-x`, which blocks
-// scrolling of the rail on touch screens. A mouse or pen drags right
-// away; touch scrolls natively and drags only after a press and hold.
 export const GuildReorderItem = <T,>({
   value,
   children,
@@ -56,8 +51,6 @@ export const GuildReorderItem = <T,>({
 
     if (!item) return;
 
-    // React listens to touchmove passively, so only a native listener can stop
-    // the rail from scrolling under a lifted item.
     const preventScroll = (event: TouchEvent) => {
       if (hold.current?.isLifted) event.preventDefault();
     };
@@ -119,7 +112,6 @@ export const GuildReorderItem = <T,>({
       return;
     }
 
-    // A still hold opened the context menu; the menu wins over the drag.
     if (itemRef.current?.querySelector("[data-popup-open]")) {
       if (touchHold.isDragging) dragControls.cancel();
       releaseHold();

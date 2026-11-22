@@ -10,7 +10,6 @@ type LootDrawSettingsSectionProps = {
   form: UseFormReturn<GeneralFormValues>;
 };
 
-/** The monster types whose legendary items get a wheel on the loot list. */
 export const LootDrawSettingsSection = ({
   form,
 }: LootDrawSettingsSectionProps) => {
@@ -47,7 +46,6 @@ export const LootDrawSettingsSection = ({
                   )
                 }
               >
-                {/* The label covers the tile, so the whole tile toggles. */}
                 <FormLabel className="flex-1 cursor-pointer text-sm font-medium after:absolute after:inset-0">
                   {t(`npcType.${type}`)}
                 </FormLabel>

@@ -5,17 +5,6 @@ import type { Fragment } from "effect/sql/Statement";
 
 type Sql = PgClient.PgClient;
 
-/**
- * Folds online intervals into "UserOnlineDay". The source yields "userId",
- * world, start and finish; each interval is split at Warsaw midnights and
- * merged into the stored spans of every day it touches. Set union makes the
- * statement idempotent, so redeliveries, overlapping sessions, out-of-order
- * checkpoints and a rebuild racing live ingestion all converge. Days whose
- * stored spans already contain the new ones are not rewritten.
- *
- * Tagged SQL because the Drizzle builder has no multirange operators or
- * lateral generate_series.
- */
 export const upsertOnlineDays = (sql: Sql, source: Fragment) => sql`
   INSERT INTO "UserOnlineDay" ("userId", "date", "world", "spans")
   SELECT s."userId", g::date, COALESCE(s.world, ''),
@@ -35,13 +24,6 @@ export const upsertOnlineDays = (sql: Sql, source: Fragment) => sql`
   SET "spans" = "UserOnlineDay"."spans" + EXCLUDED."spans"
   WHERE NOT "UserOnlineDay"."spans" @> EXCLUDED."spans"`;
 
-/**
- * Rebuilds the days an interval touches from the intervals themselves. A union
- * cannot take back time that was attributed to a world before a world-less
- * replay turned its segment unknown, so that rare case recomputes instead of
- * folding. Every interval overlapping those days is refolded, not only the one
- * that triggered the rebuild.
- */
 export const rebuildOnlineDays = (
   sql: Sql,
   userId: string,

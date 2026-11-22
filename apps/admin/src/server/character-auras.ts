@@ -21,10 +21,6 @@ export type AuraResult<A> =
   | { readonly status: "ok"; readonly value: A }
   | { readonly status: AuraRefusal };
 
-/**
- * Turns the refusals an operator can act on into answers: an operator who is
- * no global chat admin, and an account no Lootlog User proved to play.
- */
 const settle = async <A>(request: Promise<A>): Promise<AuraResult<A>> => {
   try {
     return { status: "ok", value: await request };
@@ -39,7 +35,6 @@ const settle = async <A>(request: Promise<A>): Promise<AuraResult<A>> => {
   }
 };
 
-/** The Users holding an aura grant, in general or a personal one. */
 export const listAuraHolderIds = async () => {
   const result = await settle(
     characterAurasControllerListGrantHolders(asOperator()),
@@ -73,7 +68,6 @@ const runAuraAction = (gameAccountId: string, action: AuraAction) => {
   }
 };
 
-/** What the User who plays the account may choose. */
 export const getAuraGrants = createServerFn({ method: "GET" })
   .validator(
     Schema.decodeUnknownSync(
@@ -89,10 +83,6 @@ export const getAuraGrants = createServerFn({ method: "GET" })
       ),
   );
 
-/**
- * Grants or revokes auras through the API, which allows it only to a global
- * chat admin. The guard has already verified the operator and the origin.
- */
 export const performAuraAction = createServerFn({ method: "POST" })
   .validator(Schema.decodeUnknownSync(AuraActionRequest))
   .handler(async ({ data }): Promise<AuraRefusal | undefined> => {

@@ -1,9 +1,5 @@
 const DISCORD_CDN = "https://cdn.discordapp.com/";
 
-/**
- * A User's Discord avatar, or their initial. The content security policy only
- * loads images from Discord's CDN, so any other address falls back too.
- */
 export function UserAvatar({
   name,
   image,

@@ -11,14 +11,11 @@ import type { SettingsSaveStatus } from "./settings-save-status.store";
 
 type QueuedSettingsPatch = {
   operation: SettingsOperation;
-  /** Cache entries this operation belongs to (optimistic update + reconcile). */
   queryKeys: QueryKey[];
-  /** Extra work after the server accepted the patch (e.g. invalidate lists). */
   afterSave?: () => void;
 };
 
 type SettingsSendOptions = {
-  /** Lets the request outlive the page (sent while the page unloads). */
   keepalive?: boolean;
 };
 
@@ -28,15 +25,10 @@ export type SettingsPatchQueueConfig<TResponse = unknown> = {
     options: SettingsSendOptions,
   ) => Promise<TResponse>;
   applyOptimistic: (patch: QueuedSettingsPatch) => void;
-  /**
-   * Puts the documents a save returned into the cache. Returning false means
-   * the response could not stand in for a refetch, so the queue reconciles.
-   */
   applyServerDocuments?: (
     response: TResponse,
     operations: SettingsOperation[],
   ) => boolean;
-  /** Re-synchronize cache entries with the server (called after success/failure). */
   reconcile: (queryKeys: QueryKey[]) => Promise<void>;
   onStatus: (status: SettingsSaveStatus) => void;
   onError?: (cause: unknown) => void;
@@ -45,13 +37,7 @@ export type SettingsPatchQueueConfig<TResponse = unknown> = {
 
 export type SettingsPatchQueue = {
   enqueue: (patch: QueuedSettingsPatch) => void;
-  /**
-   * Send pending patches now instead of waiting for the debounce window.
-   * While a request is in flight the pending patches wait for it, so they
-   * can never overtake an older write to the same document.
-   */
   flush: (options?: SettingsSendOptions) => Promise<void>;
-  /** Re-send the patches retained after a failed request. */
   retry: () => Promise<void>;
   reset: () => void;
 };
@@ -75,8 +61,6 @@ const mergeOperations = (
     ...incoming.unset,
   ];
 
-  // An ancestor reset followed by a child write cannot be expressed in one
-  // patch without restoring old siblings or creating a set/unset conflict.
   if (
     currentPaths.some((currentPath) =>
       incomingPaths.some(
@@ -110,10 +94,6 @@ const mergeOperations = (
   };
 };
 
-/**
- * The API accepts one operation per document and one id per scope type.
- * Preserve reset boundaries in separate, ordered requests.
- */
 const groupIntoBatches = (patches: QueuedSettingsPatch[]) => {
   const { "": userOnly = [], ...batches } = groupBy(patches, ({ operation }) =>
     operation.scope.type === "USER"
@@ -137,8 +117,6 @@ const groupIntoBatches = (patches: QueuedSettingsPatch[]) => {
     for (const patch of patches) {
       const key = operationKey(patch.operation);
 
-      // The API accepts a document only once per request. Keep dependent
-      // patches in separate requests so the server applies them in order.
       if (documentKeys.has(key)) {
         batches.push(batch);
         batch = [];
@@ -193,8 +171,6 @@ export const createSettingsPatchQueue = <TResponse>(
       {
         operation,
         queryKeys: collectQueryKeys([latest, incoming]),
-        // Each write keeps its own follow-up work (save marks, list
-        // invalidation, import bookkeeping) when it merges into another.
         afterSave: () => {
           latest.afterSave?.();
           incoming.afterSave?.();
@@ -203,18 +179,12 @@ export const createSettingsPatchQueue = <TResponse>(
     ];
   };
 
-  /** Re-lays the patches queued after `documents` were produced on top. */
   const reapplyPending = () => {
     for (const patches of pending.values()) {
       for (const patch of patches) config.applyOptimistic(patch);
     }
   };
 
-  /**
-   * Refreshes the cache from the server, then lays the patches queued in the
-   * meantime back on top: the refetched documents predate them, and without
-   * this the form would briefly show, and could reset to, the stale state.
-   */
   const reconcile = async (queryKeys: QueryKey[]) => {
     await config.reconcile(queryKeys);
     reapplyPending();
@@ -234,8 +204,6 @@ export const createSettingsPatchQueue = <TResponse>(
       for (const [index, batch] of batches.entries()) {
         const operations = batch.map((patch) => patch.operation);
 
-        // Batches must reach the server in order: each one carries a merged
-        // state for its scopes and later batches may depend on earlier ones.
         // oxlint-disable-next-line no-await-in-loop
         const response = await config.send(operations, options);
 
@@ -277,7 +245,6 @@ export const createSettingsPatchQueue = <TResponse>(
 
     inFlight = (async () => {
       while (pending.size > 0) {
-        // Only one request is in flight at a time by design.
         // oxlint-disable-next-line no-await-in-loop
         await sendPatches(takePending(), options);
       }

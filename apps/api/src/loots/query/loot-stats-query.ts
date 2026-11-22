@@ -44,7 +44,6 @@ import { statsLocalTimeOfUtc } from "#src/kills/kill-stats-period";
 
 export const runLootStatsQuery = adapterOperation("loot-stats.postgres");
 
-/** Items of legendary rarity, whatever their type. */
 const legendary =
   sql<number>`count(${lootItem.id}) filter (where ${item.rarity} = 'LEGENDARY')`.mapWith(
     Number,
@@ -55,24 +54,16 @@ const heroic =
     Number,
   );
 
-/** The strongest of a loot's NPCs ranks first and names the loot. */
 const strongestNpcRank = (lootId: SQLWrapper) =>
   sql<number>`row_number() over (partition by ${lootId} order by ${sql.join(strongestNpcFirst, sql`, `)})`.as(
     "rn",
   );
 
-/** Legends, as `NON_LEGEND_ITEM_TYPES` defines them; counters of legendary rarity use `legendary`. */
 const legend = and(
   eq(item.rarity, "LEGENDARY"),
   notInArray(item.itemType, [...NON_LEGEND_ITEM_TYPES]),
 );
 
-/**
- * The timeline point of a loot. An hour is its UTC instant; a day or a week
- * is the calendar one in `MARGONEM_TIME_ZONE`, as kill statistics count them,
- * given as that local midnight written in UTC. Both PostgreSQL drivers decode
- * the native timestamp; a column codec adds a costly text cast.
- */
 const lootTimelineDate = (unit: "hour" | "day" | "week") =>
   unit === "hour"
     ? sql<Date>`date_trunc('hour', ${loot.createdAt})`
@@ -103,7 +94,6 @@ export const buildLootStatsQueries = (
 
   const scope = and(
     organization,
-    // Preserve the raw query's timestamptz binding, including non-UTC sessions.
     options.dateFrom
       ? gte(loot.createdAt, sql.param(options.dateFrom))
       : undefined,
@@ -112,7 +102,6 @@ export const buildLootStatsQueries = (
 
   const eligibleNpc = and(
     ne(npc.type, "COMMON"),
-    // Keep the array parameter: expanding IN values changed join estimates on production-sized data.
     options.npcTypes?.length
       ? sql`${npc.type} = ANY(${sql.param(options.npcTypes)}::${sql.identifier(npcTypeEnum.enumName)}[])`
       : undefined,
@@ -176,7 +165,6 @@ export const buildLootStatsQueries = (
       ? timelineBase.innerJoin(validLoots, eq(validLoots.lootId, loot.id))
       : timelineBase.innerJoin(record, eq(record.lootId, loot.id)).where(scope)
   )
-    // Group timestamps, not the driver's text-cast selection alias.
     .groupBy(timelineDate, item.rarity)
     .orderBy(asc(timelineDate));
 
@@ -273,7 +261,6 @@ export const buildLootStatsQueries = (
     .orderBy(desc(countDistinct(loot.id)))
     .limit(10);
 
-  // A semi-join keeps one row per loot item however many of the loot's NPCs qualify.
   const topItems = database
     .select({
       item_id: item.itemId,
@@ -308,24 +295,16 @@ export const buildLootStatsQueries = (
   return { overview, timeline, topNpcs, topContributors, topItems };
 };
 
-/**
- * Loots of fights one of the user's registered characters took part in, kept
- * when an Organization of theirs holds the loot and lets them see it. A loot in
- * several Organizations counts once.
- */
 export const buildUserLootIdsQuery = (
   database: LootStatsDatabase,
   options: {
     discordId: string;
-    /** Start of the first counted Europe/Warsaw day. */
     start: string;
     world?: string;
     characterId?: number;
-    /** Matches a visible Organization record of `LootPlayer.lootId`. */
     visibleRecord: SQL;
   },
 ) => {
-  // Settings ids are text; only numeric ones can name a Margonem character.
   const numeric = (column: typeof settings.accountId) =>
     sql`${column} ~ '^[0-9]{1,9}$'`;
 
@@ -347,10 +326,6 @@ export const buildUserLootIdsQuery = (
       ),
   );
 
-  // A character's fights span its whole history, and only LootPlayer's
-  // player index reaches them. Loot ids grow with createdAt, so the first id
-  // of the period bounds it without reading each loot; loots committed out of
-  // order within a moment of the period's start may fall on the other side.
   const firstLootId = database
     .select({ id: loot.id })
     .from(loot)
@@ -378,9 +353,7 @@ export const buildUserLootIdsQuery = (
     .innerJoin(loot, eq(loot.id, lootPlayer.lootId))
     .where(
       and(
-        // Dialog rewards list the player too, but only fights count.
         eq(loot.source, "FIGHT"),
-        // A loot's players are snapshots of its world.
         options.world ? eq(player.world, options.world) : undefined,
         options.characterId === undefined
           ? undefined
@@ -402,22 +375,16 @@ export const buildUserLootIdsQuery = (
     );
 };
 
-/**
- * What the user's characters caught among the chosen loots: every item of a
- * loot they fought alone, and the items its loot share gives them otherwise.
- */
 export const buildUserCaughtItemsQueries = (
   database: LootStatsDatabase,
   options: {
     lootIds: number[];
-    /** Loot share keys: a character id followed by its account id. */
     shareKeys: string[];
   },
 ) => {
   const selected = (lootId: SQLWrapper) =>
     sql`${lootId} = ANY(${sql.param(options.lootIds)}::int[])`;
 
-  // The loot's only player, who caught every item.
   const soloLoots = database
     .select({
       lootId: lootPlayer.lootId,
@@ -432,8 +399,6 @@ export const buildUserCaughtItemsQueries = (
 
   const shareKeys = sql`${sql.param(options.shareKeys)}::text[]`;
 
-  // The loot's shared items of every key of the user, as one array of
-  // [share key, hid] pairs.
   const sharedArray = sql`(
     select coalesce(jsonb_agg(jsonb_build_array(share_key, shared.hid)), '[]'::jsonb)
     from unnest(${shareKeys}) as share_key,
@@ -463,14 +428,11 @@ export const buildUserCaughtItemsQueries = (
   return { soloLoots, sharedItems };
 };
 
-/** The statistics of loots chosen once by buildUserLootIdsQuery. */
 export const buildUserLootStatsQueries = (
   database: LootStatsDatabase,
   options: {
     lootIds: number[];
-    /** Loots of a lone character of the user, who took every item. */
     soloLootIds: number[];
-    /** Items the loot shares give the user's characters, by their loot. */
     sharedItems: { lootId: number; hid: string }[];
     truncUnit: "day" | "week";
   },
@@ -478,8 +440,6 @@ export const buildUserLootStatsQueries = (
   const selected = (lootId: SQLWrapper) =>
     sql`${lootId} = ANY(${sql.param(options.lootIds)}::int[])`;
 
-  // Chosen by buildUserCaughtItemsQueries; the driver cannot type an empty
-  // array parameter.
   const caught =
     or(
       options.soloLootIds.length
@@ -495,7 +455,6 @@ export const buildUserLootStatsQueries = (
       total_loots: countDistinct(lootItem.lootId),
       total_items: count(lootItem.id),
       legendary_items: legendary,
-      // The same items as legendary_items, so the tile counts what it shows.
       caught_legendary_items:
         sql<number>`count(${lootItem.id}) filter (where ${item.rarity} = 'LEGENDARY' and ${caught})`.mapWith(
           Number,
@@ -527,7 +486,6 @@ export const buildUserLootStatsQueries = (
     database
       .select({
         lootId: lootNpc.lootId,
-        // Kills record the runtime spawn id that a loot reports beside its catalog id.
         npcId: sql<number>`coalesce(${lootNpc.runtimeNpcId}, ${npc.npcId})`.as(
           "npc_id",
         ),
@@ -580,7 +538,6 @@ export const buildUserLootStatsQueries = (
       item_id: item.itemId,
       name: item.name,
       icon: item.icon,
-      // The latest revision's stats describe the item in its tooltip.
       stat: sql<string>`(array_agg(${item.statRaw} order by ${lootItem.id} desc))[1]`,
       type: sql<
         string | null

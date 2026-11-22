@@ -18,7 +18,6 @@ type SettingsSearchResultsProps = {
 export const getSettingsSearchOptionId = (controlId: string) =>
   `settings-search-option-${controlId}`;
 
-/** Wraps the parts of `text` the query matched in `<mark>`. */
 const emphasize = (text: string, query: string): ReactNode => {
   const ranges = findSearchMatchRanges(text, query);
 
@@ -45,11 +44,6 @@ const emphasize = (text: string, query: string): ReactNode => {
   return parts;
 };
 
-/**
- * Search results grouped by the place they open: one small-caps heading per
- * domain › subsection, then the matching controls as options with the
- * matched text emphasised and a one-line description underneath.
- */
 export const SettingsSearchResults: FC<SettingsSearchResultsProps> = ({
   id,
   label,

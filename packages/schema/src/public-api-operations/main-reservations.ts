@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Main API reservation spots, reservations, and reservation shares. */
 export const MAIN_RESERVATION_OPERATIONS = [
   {
     service: "main",

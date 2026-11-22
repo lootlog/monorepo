@@ -18,11 +18,6 @@ type HeroSightingHistoryEntryProps = {
 
 const FACT_LABEL_CLASS = "text-xs text-muted-foreground";
 
-/**
- * One sighting on a hero's timeline: where, when, who found it, who camps it.
- * Its `li` is a `group`, so the line joining the entries starts at the first
- * and ends at the last.
- */
 export const HeroSightingHistoryEntry = ({
   sighting,
   now,

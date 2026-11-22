@@ -14,16 +14,13 @@ import { MemberTile } from "./member-tile";
 type MembersListProps = MemberActivitySources & {
   members: GuildMember[];
   guildOwnerId: string | undefined;
-  /** The page's scroll viewport. */
   scrollElement: HTMLDivElement | null;
   canManageMembers: boolean;
   guildId: string;
 };
 
-/** A member tile's height: a 20px name line and a 15px meta line, padded. */
 const TILE_ESTIMATE = 64;
 
-/** The member tiles, rendered as they scroll into view. */
 export const MembersList = ({
   members,
   guildOwnerId,
@@ -32,7 +29,7 @@ export const MembersList = ({
   guildId,
   ...activitySources
 }: MembersListProps) => {
-  "use no memo"; // Reads a virtualizer that mutates in place; see usePageVirtualizer.
+  "use no memo";
 
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -60,7 +57,6 @@ export const MembersList = ({
 
   return (
     <>
-      {/* Takes focus back when the member a dialog was for has left the list. */}
       <div ref={listRef} tabIndex={-1} className="outline-none">
         {topPadding > 0 && (
           <div aria-hidden="true" style={{ height: topPadding }} />

@@ -32,7 +32,6 @@ export async function createKill(
   return response;
 }
 
-/** The contract accepts a submission id; the Game client always sends one. */
 export type CreateBattleOptions = CreateBattleDto & {
   submissionId: string;
 };

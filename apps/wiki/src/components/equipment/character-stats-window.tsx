@@ -11,9 +11,7 @@ type CharacterStatLine = {
   id: string;
   unit?: "%";
   value: (stats: CharacterStats) => number;
-  /** The top of a damage range. */
   max?: (stats: CharacterStats) => number;
-  /** A stat every character has keeps its row at zero; others hide. */
   always?: true;
 };
 
@@ -124,13 +122,8 @@ type CharacterStatsWindowProps = {
   isLoaded: boolean;
 };
 
-// Chances and attack speed keep their hundredths, as the game shows them.
 const rounded = (value: number) => Math.round(value * 100) / 100;
 
-/**
- * The whole character as the game's window shows it: what the profession
- * has at its level, with the worn items and the learned skills.
- */
 export function CharacterStatsWindow({
   profession,
   level,

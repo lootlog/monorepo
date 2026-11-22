@@ -9,7 +9,6 @@ import {
 import { PresenceStore } from "#src/realtime/presence-store";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
-// Requires Docker. Reply sizes use JSON encoding, not Redis wire bytes.
 const workloads = [
   { organizations: 1, sessionsPerOrganization: 100, replicas: 1 },
   { organizations: 10, sessionsPerOrganization: 100, replicas: 1 },
@@ -149,7 +148,6 @@ try {
     const sweepMs = performance.now() - started;
     measured = false;
 
-    // Consecutive INFO snapshots include one measurement command in their delta.
     const serverCommands =
       (await readServerCommands()) - serverCommandsBefore - 1;
 

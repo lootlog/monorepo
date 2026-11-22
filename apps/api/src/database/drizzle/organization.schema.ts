@@ -120,7 +120,6 @@ export const guildTable = pgTable(
       .default(DEFAULT_RESERVATION_SETTINGS.reservationActiveLimitPerSpot)
       .notNull(),
     documentLimit: integer("documentLimit").default(50).notNull(),
-    /** NPC types whose legendary items the Organization does not draw. */
     lootDrawExcludedNpcTypes: npcTypeEnum("lootDrawExcludedNpcTypes")
       .array()
       .default([...DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES])
@@ -132,8 +131,6 @@ export const guildTable = pgTable(
     active: boolean("active").default(true).notNull(),
   },
   (table) => [
-    // Organization ids are Discord snowflakes (digits only). A vanity URL that
-    // could be one must not exist, so it can never be mistaken for an id.
     check(
       "Guild_vanityUrl_not_id_like_check",
       sql`${table["vanityUrl"]} <> '' AND ${table["vanityUrl"]} !~ '^[0-9]+$'`,
@@ -183,18 +180,10 @@ export const memberTable = pgTable(
     guildId: text("guildId").notNull(),
     type: memberTypeEnum("type").default("USER").notNull(),
     name: text("name").notNull(),
-    /** The User's Discord display name, independent of the server nickname in `name`. */
     discordDisplayName: text("discordDisplayName"),
-    /** The Discord handle, which stays the same when the names above change. */
     username: text("username"),
-    /**
-     * The avatar shown for the member: the address of their per-server avatar,
-     * or the hash of the User's own avatar when they set none for this server.
-     */
     avatar: text("avatar"),
-    /** The hash of the User's own avatar, also when a per-server one hides it. */
     globalAvatar: text("globalAvatar"),
-    /** The hash of the per-server banner. */
     banner: text("banner"),
     joinedAt: timestamp("joinedAt", { mode: "date", precision: 3 }),
     active: boolean("active").default(true).notNull(),

@@ -6,24 +6,15 @@ import { useSourceDraft } from "./use-source-draft";
 
 type SettingsColorHexFieldProps = {
   id?: string;
-  /** Accessible name of the native picker; also shown above it unless hidden. */
   label: string;
   showLabel?: boolean;
   hexLabel: string;
-  /** Committed 6-digit HEX colour. */
   value: string;
-  /** Live update while the native picker drags or a valid HEX is typed. */
   onChange: (color: string) => void;
-  /** Persist the colour once the picker or the text field loses focus. */
   onCommit: (color: string) => void;
   className?: string;
 };
 
-/**
- * Native colour picker paired with a HEX text field. The text field keeps its
- * own draft so a half-typed value never reaches the store; an invalid value
- * snaps back to the committed colour on blur.
- */
 export const SettingsColorHexField: FC<SettingsColorHexFieldProps> = ({
   id,
   label,

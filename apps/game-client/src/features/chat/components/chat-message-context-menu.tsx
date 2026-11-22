@@ -35,7 +35,6 @@ export type ChatMessageContextMenuProps = {
   onReply?: () => void;
 };
 
-/** The items of a player message's menu in the transcript's shared context menu. */
 export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
   canDelete,
   canReply,
@@ -99,7 +98,6 @@ export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
           trigger={
             <ContextMenuItem
               disabled={isDeleting}
-              // Keeps the menu open while the confirmation is shown.
               onSelect={(event) => event.preventDefault()}
             >
               <Trash2

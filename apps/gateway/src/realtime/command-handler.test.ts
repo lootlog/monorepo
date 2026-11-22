@@ -46,7 +46,6 @@ import type { SessionData } from "#src/realtime/session";
 import type { MargonemAccountVerifiedV1 } from "@lootlog/protocol/rabbit/events";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 
-/** A socket that has not joined yet. */
 const newSocket = (overrides: Partial<SessionData> = {}) =>
   makeTestSocket(makeSession({ joined: false, ...overrides }));
 
@@ -128,7 +127,6 @@ test("heartbeat completion metrics include defects and interruptions without cre
   }
 
   expect(exits.map(Exit.isSuccess)).toEqual([true, true, false, false]);
-  // A defect is answered so the client retries; an interruption is not.
   expect(hub.responses).toHaveLength(3);
   expect(spans).toEqual([]);
 
@@ -406,7 +404,6 @@ describe("presence reciprocity", () => {
     presence.snapshot = (_viewer, organizationId) =>
       Effect.succeed({ organizationId, revision: 1, presences: [] });
 
-    // The local record changes before the Redis write fails.
     presence.publish = (target, data) =>
       Effect.sync(() => {
         target.data.presence = onlinePresence(
@@ -630,7 +627,6 @@ describe("CommandHandler session lifecycle", () => {
 
     expect(socket.data.joined).toBe(true);
     expect(socket.data.confidence).toBe("reported");
-    // A Lootlog logs the character only once it publishes presence there.
     expect(activity.calls).toEqual([]);
     expect(hub.responses).toContainEqual(
       expect.objectContaining({ requestId: "request-1", status: "success" }),
@@ -725,12 +721,10 @@ describe("CommandHandler session lifecycle", () => {
     const running = joinFresh("running");
 
     while (requests === 0) await Bun.sleep(1);
-    // A second join waits for the running one instead of adding API load.
     await joinFresh("concurrent");
     gate.resolve();
     await running;
     await joinFresh("admitted");
-    // The burst is spent; a token refills after one second.
     await joinFresh("drained");
     now = 1_000;
     await joinFresh("refilled");
@@ -807,12 +801,10 @@ describe("CommandHandler session lifecycle", () => {
     const running = observe("running");
 
     while (merges === 0) await Bun.sleep(1);
-    // The running batch holds the only slot; a second one must not queue behind it.
     await observe("concurrent");
     stalled.resolve();
     await running;
     await observe("admitted");
-    // The burst is spent and nothing refills it.
     await observe("drained");
 
     const accepted = {
@@ -882,7 +874,6 @@ describe("CommandHandler session lifecycle", () => {
       "integration-ping",
     );
 
-    // Compare the serialized frames: an undefined `data` would vanish on the wire.
     expect(hub.responses.map((r) => JSON.parse(JSON.stringify(r)))).toEqual([
       { v: 1, requestId: "game-ping", status: "success", data: {} },
       { v: 1, requestId: "integration-ping", status: "success", data: {} },
@@ -1093,7 +1084,6 @@ describe("CommandHandler session lifecycle", () => {
       expect(target.socket.data.joined).toBe(false);
       expect(target.socket.data.subscriptions.size).toBe(0);
       expect(target.socket.data.airTagScopes).toEqual([]);
-      // The presence fake only records, so this proves the handler clears it.
       expect(target.socket.data.presence).toBeUndefined();
       expect(presence.reconciled).toEqual([target.socket]);
       expect(activity.calls).toEqual(
@@ -1661,7 +1651,6 @@ describe("CommandHandler session lifecycle", () => {
       },
     ]);
 
-    // The Game client rejects any reply that fails this decoder.
     for (const response of hub.responses)
       expect(() =>
         decodeCommandSuccess(
@@ -1874,7 +1863,6 @@ test("API key sockets reject presence writes and expired leases before dispatch"
 
   const { socket, closes } = makeTestSocket(session);
 
-  // The session is joined in the key's Lootlog, so only the API key guard rejects.
   await send(
     socket,
     { type: "presence.heartbeat", data: { sessionId: "session-1" } },

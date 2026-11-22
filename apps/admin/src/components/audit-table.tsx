@@ -12,7 +12,6 @@ import { formatDateTime } from "@/lib/format";
 import { auditActionText, text } from "@/lib/messages";
 import type { AuditRow } from "@/server/queries";
 
-/** Audit entries, newest first; `showTarget` adds the User each one concerns. */
 export function AuditTable({
   entries,
   showTarget,

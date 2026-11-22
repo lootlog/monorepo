@@ -10,7 +10,6 @@ export type BattleDetailPanelTabsProps = {
   onActivePanelChange: (panel: BattleDetailPanel) => void;
 };
 
-/** The panels beside the battle as a strip of tabs pinned over them, like page tabs. */
 export const BattleDetailPanelTabs: FC<BattleDetailPanelTabsProps> = ({
   activePanel,
   panels,

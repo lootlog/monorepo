@@ -14,14 +14,9 @@ import { WhatsNewTypeBadge } from "./whats-new-type-badge";
 type WhatsNewEntryProps = {
   item: ChangelogItem;
   isUnread: boolean;
-  /** The inset and rule of the list the entry sits in. */
   className?: string;
 };
 
-/**
- * One change: what kind it is and when it shipped, then what the player can
- * do now and where.
- */
 export const WhatsNewEntry = ({
   item,
   isUnread,

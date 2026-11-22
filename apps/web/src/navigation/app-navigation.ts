@@ -9,7 +9,6 @@ import { canViewHeroSightings } from "@/lib/hero-sightings-permissions";
 
 declare module "@tanstack/react-router" {
   interface StaticDataRouteOption {
-    /** What the route adds to the breadcrumbs of every page it matches. */
     navigation?: RouteNavigation;
   }
 }
@@ -31,7 +30,6 @@ export type AppNavigationMatch = {
   staticData?: { navigation?: RouteNavigation };
 };
 
-/** Search params a breadcrumb's page needs, such as the character it shows. */
 type BreadcrumbSearch = Record<string, string>;
 
 export type Breadcrumb = {
@@ -42,30 +40,18 @@ export type Breadcrumb = {
 
 export type RouteNavigationContext = {
   t: (key: string, options?: TOptions) => string;
-  /** The match of the route that declares the navigation. */
   match: AppNavigationMatch;
-  /** The pathname of the parent route's match, which sibling pages extend. */
   parentPath: string;
   matches: readonly AppNavigationMatch[];
   currentBattle?: Battle;
-  /** The name of the entity the page shows, looked up by the top bar. */
   currentEntityLabel?: string;
   organizationName?: string;
 };
 
-/**
- * A route's place in the page hierarchy. Parent routes name the pages above
- * it; a route whose parent is not its breadcrumb parent, such as a detail page
- * beside a list, names the missing pages as ancestors.
- */
 export type RouteNavigation = (context: RouteNavigationContext) => {
-  /** Pages above the route that its parent routes do not name, outermost first. */
   ancestors?: Breadcrumb[];
-  /** The route's own breadcrumb, linking to the route below a deeper page. */
   label?: string;
-  /** A tab beside its siblings: the page is titled by its section and has no way back. */
   tab?: boolean;
-  /** What the document title names after the page, such as the Organization. */
   documentContext?: string;
 };
 
@@ -91,23 +77,18 @@ export type AppNavigationSidebarItem = {
   active: boolean;
   href: string;
   label: string;
-  /** The label where space is tight, such as a tab bar. */
   shortLabel: string;
-  /** Heading of the sidebar group the item belongs to; the first group has none. */
   group?: string;
   visible: boolean;
 };
 
 export type AppNavigationHeading = {
   title: string;
-  /** The pages above this one, from the section down; tabs of a section have none. */
   trail: Breadcrumb[];
-  /** The sidebar item the page belongs to, whose icon leads the heading. */
   section: AppNavigationItemId | null;
 };
 
 export type AppNavigation = {
-  /** What the top bar names: the page title and, on a child page, its parent. */
   heading: AppNavigationHeading;
   documentTitle: string;
   sidebarItems: AppNavigationSidebarItem[];
@@ -171,7 +152,6 @@ function buildUserSidebarRegistry(): RegistryItem[] {
   ];
 }
 
-/** Whether the member sees the Organization's events and their navigation. */
 export const canViewEvents = (accessPolicy: AccessPolicy | undefined) =>
   accessPolicy?.allowsAny([
     Capability.LOOTLOG_EVENTS_READ,
@@ -257,11 +237,6 @@ function buildOrganizationSidebarRegistry(
   ];
 }
 
-/**
- * The section an Organization opens on: the first sidebar entry the member
- * may see, so a member without loot access lands on reservations rather than
- * on a forbidden loot list. `null` when no section is visible.
- */
 export function getOrganizationLandingItemId(
   organizationId: string,
   accessPolicy: AccessPolicy | undefined,
@@ -273,20 +248,13 @@ export function getOrganizationLandingItemId(
   return item?.id ?? null;
 }
 
-/** How many sections a phone tab bar holds before "More". */
 const TAB_BAR_TAB_COUNT = 4;
 
 export type AppTabBarSections = {
-  /** The first sections the member may see, in sidebar order. */
   tabs: AppNavigationSidebarItem[];
-  /** Every other visible section, reached from "More". */
   overflow: AppNavigationSidebarItem[];
 };
 
-/**
- * Splits the visible sidebar sections between a phone tab bar and its "More"
- * entry, so the bar follows the sidebar's order and access policy.
- */
 export function resolveTabBarSections(
   sidebarItems: readonly AppNavigationSidebarItem[],
 ): AppTabBarSections {
@@ -376,7 +344,6 @@ function resolveSidebarItems(
   }));
 }
 
-/** The page's breadcrumbs, collected from the navigation of every matched route. */
 function resolvePage(options: ResolveAppNavigationOptions) {
   const breadcrumbs: Breadcrumb[] = [];
   let tab = false;
@@ -410,10 +377,6 @@ function resolvePage(options: ResolveAppNavigationOptions) {
   return { breadcrumbs, tab, documentContext };
 }
 
-/**
- * A section and its tabs share the section's title; a child page carries its
- * own title and returns to the page above it.
- */
 function resolveHeading(
   { breadcrumbs, tab }: ReturnType<typeof resolvePage>,
   sidebarItems: readonly AppNavigationSidebarItem[],
@@ -463,7 +426,6 @@ function resolvePageNavigation(
 ): AppNavigation {
   const page = resolvePage(options);
 
-  // A personal page is named after its section.
   if (lastMatch.routeId.startsWith(USER_ROUTE_PREFIX)) {
     return resolveScopedNavigation(
       page,

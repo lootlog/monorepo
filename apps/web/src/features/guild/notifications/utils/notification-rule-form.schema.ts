@@ -251,8 +251,6 @@ const validateScheduledRule = (
   }
 };
 
-// A hero sighting and a loot draw each happen on one world, so their rules
-// watch one.
 const validateSingleWorld = (
   data: RuleFormData,
   issues: RuleFormIssues,
@@ -290,9 +288,6 @@ const validateHeroSightingRule = (
 export const ruleFormSchema = (t: Translator, maxNpcCount: number) =>
   Schema.toStandardSchemaV1(
     RuleFormFields.check(
-      // Struct filters run only once every field decodes, so the fields take
-      // any value the inputs produce and every rule lives in this one filter:
-      // a submit then shows every problem at once.
       Schema.makeFilter((data) => {
         const issues: RuleFormIssues = [];
 

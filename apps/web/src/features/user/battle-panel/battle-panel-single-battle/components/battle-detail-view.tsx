@@ -41,15 +41,9 @@ const getBattleCharacterId = (battle: Battle | undefined) =>
   battle?.characterId ?? null;
 
 type BattleDetailViewLayoutProps = BattleDetailViewProps & {
-  /** Controls at the end of the details bar, such as sharing and deleting. */
   actions?: ReactNode;
 };
 
-/**
- * The battle's teams, chart and statistics in the main column, with the log, and the recent
- * battles against the same opponent behind a tab, in a rail beside it that scrolls on its own,
- * as the event overview keeps its ranking. Narrower pages read the rail last.
- */
 export function BattleDetailView({
   actions,
   battle,

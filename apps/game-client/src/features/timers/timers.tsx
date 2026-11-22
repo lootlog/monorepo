@@ -10,8 +10,6 @@ import { useWindowsStore } from "@/store/windows.store";
 export const Timers = () => {
   useTimersSocket();
 
-  // The timers stay observed while the window is closed so add-ons reading
-  // the public API and live socket updates keep a current snapshot.
   const { world } = useTimersWorld();
   useTimers({ world });
 
@@ -25,8 +23,6 @@ export const Timers = () => {
   const isUnderBag = timersUnderBag && gameInterface === "ni";
   const { shouldRender: shouldRenderTimersView } = useWindowPresence(open);
 
-  // Under the bag the panel replaces the window, so the same open state, tile
-  // and hotkey show and hide it.
   if (isUnderBag) {
     return open ? <TimersView isOpen isUnderBag /> : null;
   }

@@ -7,7 +7,6 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { KillsMobileCardSkeleton } from "./components/kills-mobile-card-skeleton";
 
-// World, period, monster type, and level range.
 const FILTER_WIDTHS = ["w-[200px]", "w-[200px]", "w-[200px]", "w-[167px]"];
 
 export const KillsPageSkeleton = () => {
@@ -24,7 +23,6 @@ export const KillsPageSkeleton = () => {
         ))}
         footer={<TablePaginationFooterSkeleton />}
       >
-        {/* A page of kills fills the screen, so the footer docks at its bottom. */}
         <TableRowsSkeleton
           rows={20}
           trailingColumns={2}

@@ -13,11 +13,6 @@ const STAT_SOURCES = ["character", "skills", "items"] as const;
 
 type StatSource = (typeof STAT_SOURCES)[number];
 
-/**
- * Every stat of the set: as the whole character with what its profession
- * has at its level, from the items with what the learned skills add, or
- * from the items alone.
- */
 export function EquipmentSetStats() {
   const { set } = useEquipmentSet();
   const { wornItems, totals, skillBonuses, isLoaded } = useSetSummary();
@@ -32,7 +27,6 @@ export function EquipmentSetStats() {
         spacing={1.5}
         className="flex-wrap"
         value={[source]}
-        // One source is always chosen: pressing it again keeps it.
         onValueChange={([pressed]) => {
           const next = STAT_SOURCES.find((value) => value === pressed);
 

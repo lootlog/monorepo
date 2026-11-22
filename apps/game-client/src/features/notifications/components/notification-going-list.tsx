@@ -16,11 +16,6 @@ type NotificationGoingListProps = {
   scope: NotificationGoingScope;
 };
 
-/**
- * Who of the player's Lootlogs said they are going to the reported NPC. The
- * row shows the count and as many nicks as fit; the tooltip lists everyone
- * with level, profession and clan.
- */
 export function NotificationGoingList({ scope }: NotificationGoingListProps) {
   const { t } = useTranslation("notifications");
 

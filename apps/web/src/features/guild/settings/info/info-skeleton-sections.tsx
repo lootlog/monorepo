@@ -4,8 +4,6 @@ import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 
-// Sits on the text line like the loaded outline badge, so the row keeps its
-// loaded height.
 const badgeSkeleton = (
   <Skeleton render={<span />} className="block h-5.5 w-24 rounded-full" />
 );
@@ -20,7 +18,6 @@ const DISCORD_PERMISSIONS = [
 
 const valueSkeleton = <SkeletonLine className="h-3.5 w-40" />;
 
-/** Stands in for the Info sections while the sync status loads. */
 export const InfoSettingsSkeletonSections = () => {
   const { t } = useTranslation();
 
@@ -49,7 +46,6 @@ export const InfoSettingsSkeletonSections = () => {
         title={t("settings.guildInfo.permissionSection.title")}
         description={t("settings.guildInfo.permissionSection.description")}
       >
-        {/* The permissions every bot needs, as wide as their loaded badges. */}
         <div className="flex flex-wrap gap-2">
           {DISCORD_PERMISSIONS.map((permission) => (
             <Skeleton
@@ -62,10 +58,8 @@ export const InfoSettingsSkeletonSections = () => {
             </Skeleton>
           ))}
         </div>
-        {/* Most bots have every permission, which the loaded page confirms. */}
         <span className="text-sm">
           <SkeletonLine className="h-3.5 w-96 max-w-full" />
-          {/* Phones wrap the sentence onto a second line. */}
           <span className="sm:hidden">
             <SkeletonLine className="h-3.5 w-40" />
           </span>

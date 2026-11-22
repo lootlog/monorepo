@@ -9,8 +9,6 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GuildDocLinkOpenPlugin } from "./guild-doc-link-open-plugin";
 
-// A docs writer controls every attribute of a stored link, including one that
-// asks the browser to keep window.opener.
 const documentWithLink = JSON.stringify({
   root: {
     type: "root",

@@ -49,9 +49,7 @@ export function createPageTransport(
     for (const listener of heartbeatLatencies) {
       try {
         listener(latencyMs);
-      } catch {
-        /* Isolate UI observers. */
-      }
+      } catch {}
     }
   };
 
@@ -69,9 +67,7 @@ export function createPageTransport(
     for (const listener of states) {
       try {
         listener(next);
-      } catch {
-        /* Isolate UI observers from transport delivery. */
-      }
+      } catch {}
     }
   };
 
@@ -115,9 +111,7 @@ export function createPageTransport(
 
         try {
           send({ type: "cancel", id });
-        } catch {
-          /* The channel may already be closed. */
-        }
+        } catch {}
 
         reject(error);
       };
@@ -174,8 +168,6 @@ export function createPageTransport(
   const realtime: GameRealtimeClient = {
     connect,
     disconnect,
-    // The extension decoded these already; the page decodes what crossed the port.
-    // The extension correlates its own request; the command still names one.
     join: (data) =>
       request({
         type: "command",
@@ -218,7 +210,6 @@ export function createPageTransport(
       if (state !== "ready") return;
       void request({ type: "probe-latency" }).catch(() => {});
     },
-    // SocketProvider owns startup for extension documents.
     setReconnectHandler: () => {},
   };
 
@@ -226,9 +217,7 @@ export function createPageTransport(
     for (const listener of events) {
       try {
         listener(frame);
-      } catch {
-        /* Isolate UI observers from transport delivery. */
-      }
+      } catch {}
     }
   };
 
@@ -255,8 +244,6 @@ export function createPageTransport(
 
           return;
         case "state":
-          // A refused join leaves the background client disconnected without
-          // reconnecting, so the next connect() must reach it again.
           if (message.state === "disconnected") connectionRequested = false;
           setState(message.state);
 
@@ -308,9 +295,7 @@ export function createPageTransport(
 
     try {
       send({ type: "release", id: crypto.randomUUID() });
-    } catch {
-      /* Already disconnected. */
-    }
+    } catch {}
 
     disposed = true;
     failPending();
@@ -327,7 +312,6 @@ export function createPageTransport(
       const nativeRequest = new Request(input, init);
       const url = new URL(nativeRequest.url);
 
-      // These game-owned requests must retain Margonem's cookies and request semantics.
       if (
         ["public-api.margonem.pl", "public-api.margonem.com"].includes(
           url.hostname,

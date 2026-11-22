@@ -1,6 +1,5 @@
 import { ApiKeyEndpointPolicy } from "@lootlog/protocol/http/api-key-http";
 import { SchemaErrorResponse } from "@lootlog/protocol/http/schema-error-response";
-/** Authoritative composition root for the battlelog HTTP contract. */
 import { healthGroup } from "@lootlog/instrumentation/service";
 import { HttpApi, OpenApi } from "effect/http-api";
 import { BattlesGroup } from "./contracts/battles/api.js";

@@ -8,7 +8,6 @@ type HeroSightingStatusLabelProps = {
   className?: string;
 };
 
-/** The status named in its colour. */
 export const HeroSightingStatusLabel = ({
   status,
   className,
@@ -17,7 +16,6 @@ export const HeroSightingStatusLabel = ({
 
   return (
     <span
-      // An unconfirmed hero is not where the board last saw it; say why.
       title={
         status === "STALE" ? t("heroSightings.staleDescription") : undefined
       }

@@ -13,7 +13,6 @@ import "@/i18n/config";
 import { StatisticsLegendsTable } from "./statistics-legends-table";
 import type { StatisticsSortValue } from "./statistics-sort";
 
-/** Holds the sort the statistics page keeps in its URL. */
 function SortedLegendsTable({
   legends,
 }: {

@@ -15,13 +15,9 @@ type CommandData = {
   >["data"];
 };
 
-/** How the gateway admits and runs one command type. */
 interface CommandRoute<Type extends CommandType> {
-  /** Runs only once the session joined. */
   readonly joined: boolean;
-  /** API key integrations may send it; they send nothing else. */
   readonly apiKey?: boolean;
-  /** Records a `gateway.command` span, which costs about as much as the command. */
   readonly traced?: boolean;
   readonly run: (
     socket: GatewaySocket,
@@ -29,12 +25,10 @@ interface CommandRoute<Type extends CommandType> {
   ) => Effect.Effect<CommandSuccess<Type>, CommandFailure>;
 }
 
-/** One route per command type; a command without a route does not compile. */
 export type CommandRoutes = {
   readonly [Type in CommandType]: CommandRoute<Type>;
 };
 
-/** Runs the route of `type`, generic so that the route and its data stay correlated. */
 export const runCommandRoute = <Type extends CommandType>(
   routes: CommandRoutes,
   socket: GatewaySocket,
@@ -43,7 +37,6 @@ export const runCommandRoute = <Type extends CommandType>(
 ): Effect.Effect<CommandSuccess<Type>, CommandFailure> =>
   routes[type].run(socket, data);
 
-/** A dependency answers `null` when the session may not read what it asked for. */
 export const orAccessDenied = <A, E>(
   effect: Effect.Effect<A | null, E>,
 ): Effect.Effect<A, E | OrganizationAccessDenied> =>

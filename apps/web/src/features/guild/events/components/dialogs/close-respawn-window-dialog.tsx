@@ -125,9 +125,7 @@ export const CloseRespawnWindowDialog = ({
         newMaxSpawnTime,
       });
       form.reset();
-    } catch {
-      // Preserve the entered times for retry after the action reports its error.
-    }
+    } catch {}
   };
 
   const handleOpenChange = (isOpen: boolean) => {

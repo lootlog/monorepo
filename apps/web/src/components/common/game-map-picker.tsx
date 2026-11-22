@@ -7,21 +7,17 @@ import { SearchInput } from "@/components/ui/search-input";
 type GameMap = { id: number; name: string };
 
 type GameMapPickerProps<Map extends GameMap> = {
-  /** Labels the search input. */
   id: string;
   search: string;
   onSearchChange: (search: string) => void;
   placeholder: string;
-  /** The game maps matching the search, without those already added. */
   maps: Map[];
   onAdd: (map: Map) => void;
   noResultsLabel: string;
   hintLabel: string;
-  /** Blocks adding while a previous add is saving. */
   isAdding?: boolean;
 };
 
-/** Searches Margonem's maps and adds one per click, as event and template forms do. */
 export const GameMapPicker = <Map extends GameMap>({
   id,
   search,

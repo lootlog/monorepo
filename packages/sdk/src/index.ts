@@ -15,7 +15,6 @@ export type LootlogApiOptions = {
   baseUrls?: Partial<Record<PublicApiService, string>>;
 };
 
-/** Configure the generated HTTP functions. Returns an idempotent cleanup function. */
 export function configureLootlogApi(options: LootlogApiOptions): () => void {
   if (!options.apiKey.trim()) throw new TypeError("apiKey must not be empty");
 

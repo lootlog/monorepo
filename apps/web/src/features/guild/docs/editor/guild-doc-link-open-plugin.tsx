@@ -1,12 +1,6 @@
 import { useEffect } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 
-/**
- * Opens links of a read-only document in a new tab without giving the linked
- * page `window.opener`. Link targets and `rel` come from the stored document,
- * which any docs writer controls, so neither Lexical's ClickableLinkPlugin
- * (plain `window.open`) nor the anchor's own attributes can be trusted here.
- */
 export const GuildDocLinkOpenPlugin = () => {
   const [editor] = useLexicalComposerContext();
 

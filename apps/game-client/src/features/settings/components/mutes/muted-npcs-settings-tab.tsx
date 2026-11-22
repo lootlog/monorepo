@@ -25,8 +25,6 @@ export const MutedNpcsSettingsTab = () => {
       getSearchValues={(npc) => [npc.name, `${npc.lvl}${npc.prof ?? ""}`]}
       renderLeading={(npc) =>
         npc.icon ? (
-          // Every sprite gets the same height; the slot is wide enough to
-          // keep the names aligned.
           <NpcTile
             npc={{ icon: npc.icon, nick: npc.name }}
             className="ll:h-8 ll:max-h-8 ll:max-w-none ll:rounded-sm"

@@ -9,7 +9,6 @@ import {
 const TRACKER = "Wtajemniczony Tropiciel Herosów";
 
 describe("NPC identity", () => {
-  // Derived ids are stored in kill tables, timer keys and event records.
   it("keeps the ids already stored for colossi, trackers and event heroes", () => {
     expect(getKillNpcId({ id: 1, name: "Lulukav" }, NpcType.COLOSSUS)).toBe(
       -2111221842,

@@ -17,15 +17,9 @@ export type LootRosterPlayer = {
 };
 
 export type LootRoster = {
-  /** Players who took part in the loot, those with items first. */
   recipients: LootRosterPlayer[];
   unassignedItems: Item[];
-  /** Players recorded on the map at drop time who did not take part. */
   bystanders: LootRosterPlayer[];
-  /**
-   * True when the add-on keeps map players for loots like this one (a fight
-   * with a legendary drop) but none were recorded.
-   */
   isSnapshotUnavailable: boolean;
 };
 
@@ -52,8 +46,6 @@ export const buildLootRoster = (loot: LootRosterInput): LootRoster => {
     items: itemsByPlayer[player.id] ?? [],
   }));
 
-  // Matching is by character id only: names are not unique across worlds
-  // and legacy records without ids must not be paired by guesswork.
   const recipientCharacterIds = new Set(
     loot.players.flatMap(({ characterId }) =>
       characterId !== null && characterId > 0 ? [characterId] : [],

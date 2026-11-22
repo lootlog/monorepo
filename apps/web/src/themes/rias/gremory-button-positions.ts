@@ -1,4 +1,3 @@
-// Pre-computed positions for button particles
 export const buttonParticlePositions = [
   { x: "15%", y: "25%", size: 4, delay: 0 },
   { x: "80%", y: "70%", size: 3, delay: 0.2 },

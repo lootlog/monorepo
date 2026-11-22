@@ -148,10 +148,6 @@ const makeSocket = (connectionId: string) => {
   return { socket, frames };
 };
 
-/**
- * A game connection with a character that has not published presence yet.
- * Connections sharing `user` and `character` play the same character.
- */
 const gameSocket = (
   connectionId: string,
   {
@@ -181,7 +177,6 @@ const gameSocket = (
   return socket;
 };
 
-/** A web session following the Organization's loot feed up to `lvlRangeTo`. */
 const feedSocket = (connectionId: string, lvlRangeTo = 500) => {
   const target = makeSocket(connectionId);
 
@@ -222,7 +217,6 @@ const addDueDepartures = (store: RedisGatewayStore, ...keys: string[]) =>
     ...keys,
   );
 
-// Publishes to every Lootlog of the session, as a client whose character catches for all of them.
 const joinedOrganizations = (target: GatewaySocket) =>
   target.data.guilds.map(({ guild }) => guild.id);
 
@@ -240,10 +234,6 @@ type OpenStore = {
   readonly [Symbol.asyncDispose]: () => Promise<void>;
 };
 
-/**
- * A Gateway store on its own Redis connection. Disposal interrupts the
- * background work it started, such as federation subscriptions.
- */
 const openStore = async (keyPrefix = uniquePrefix()): Promise<OpenStore> => {
   const runtime = ManagedRuntime.make(BunRedis.layer({ url: redisUrl() }));
   const background: Array<Fiber.Fiber<void, unknown>> = [];
@@ -269,7 +259,6 @@ const openStore = async (keyPrefix = uniquePrefix()): Promise<OpenStore> => {
   };
 };
 
-/** A started Gateway instance; instances sharing a key prefix federate. */
 const startFederatedInstance = async (configuration: GatewayConfiguration) => {
   const instance = await openStore(configuration.redis.keyPrefix);
   const hub = new RealtimeHub(configuration, instance.store);
@@ -279,7 +268,6 @@ const startFederatedInstance = async (configuration: GatewayConfiguration) => {
   return { ...instance, hub };
 };
 
-/** Two federated instances whose air tags reach only organization-1. */
 const startAirTagInstances = async () => {
   const configuration = makeConfiguration();
   const first = await startFederatedInstance(configuration);
@@ -299,7 +287,6 @@ const startAirTagInstances = async () => {
   };
 };
 
-/** A publisher that records events, or fails while `fail` is set. */
 const recorder = <E>() => {
   const events: E[] = [];
 
@@ -348,10 +335,6 @@ type ScriptInterception = {
   readonly command: RedisGatewayCommands;
 };
 
-/**
- * Records the results of one tagged Lua script. A hook set on the
- * interception runs around the next call of that script only.
- */
 const interceptScript = (
   command: RedisGatewayCommands,
   tag: `-- presence:${string}`,
@@ -420,7 +403,6 @@ const OFFLINE_OUTBOX_INDEX = "presence:offline:outbox";
 
 const OFFLINE_SWEEP_LOCK = "presence:offline:sweep-lock";
 
-/** Hands the offline sweep lease to another replica. */
 const takeOverOfflineSweep = async (store: RedisGatewayStore) => {
   await store.command.set(OFFLINE_SWEEP_LOCK, "successor", "PX", 30_000);
 };
@@ -459,7 +441,6 @@ const clanEnemy = {
   stasis: true,
 };
 
-/** Revision of a federated `air-tag.scope-updated` frame for `mapId`. */
 const federatedAirTagRevision = (
   raw: string,
   mapId: number,
@@ -486,7 +467,6 @@ const moveAirTagSocket = (
   setSocketPresence(socket, { ...presence, location });
 };
 
-/** A web or game session on `location` that may read precise locations. */
 const threatWatcher = (connectionId: string, readsLocation = true) => {
   const target = makeSocket(connectionId);
 
@@ -663,8 +643,6 @@ describe("realtime Dragonfly integration", () => {
         const started = Promise.withResolvers<void>();
         const commits: RedisScriptReply[] = [];
 
-        // A stale projection is served at once and refreshed in the background,
-        // so the obsolete commit is awaited before the cache is read.
         const firstStore = makeGuildStore(
           configuration,
           {
@@ -702,9 +680,6 @@ describe("realtime Dragonfly integration", () => {
         await Effect.runPromise(secondStore.getUserGuilds(options));
         response.resolve(Response.json(guilds));
 
-        // A projection read before the invalidation carries the authority of a
-        // session that joined then; a join that waited gets current access.
-        // The obsolete response itself is never accepted.
         await expect(request).resolves.toEqual(
           cacheState === "populated" ? guilds : [],
         );
@@ -732,7 +707,6 @@ describe("realtime Dragonfly integration", () => {
       const window = 60_000;
 
       try {
-        // The cutoff is inclusive: this old attempt must release one slot.
         const seededAt = Number(
           await client.send("EVAL", [
             `local time = redis.call("TIME")
@@ -906,7 +880,6 @@ describe("realtime Dragonfly integration", () => {
       gameSessions: 2,
       uniquePlayers: 2,
     });
-    // Simulate an abandoned replica using Redis time, without waiting for the lease.
     await store.command.eval(
       `
         local value = cjson.decode(redis.call('HGET', KEYS[1], ARGV[1]))
@@ -983,7 +956,6 @@ describe("realtime Dragonfly integration", () => {
 
     const firstHub = new RealtimeHub(makeConfiguration(), redis.store);
     const secondHub = new RealtimeHub(makeConfiguration(), redis.store);
-    // Who plays where differs from who follows which channel.
     const gordionA = listener("chat-gordion-a", "gordion");
     const sharedA = listener("chat-shared-a", "gordion");
     const gordionB = listener("chat-gordion-b", "classic");
@@ -1020,7 +992,6 @@ describe("realtime Dragonfly integration", () => {
     expect(stats(sharedA.frames)).toEqual([
       { v: 1, type: "global-chat.stats", data: { online: 4, listeners: 2 } },
     ]);
-    // The second replica sampled before the first one reported its listeners.
     expect(stats(gordionB.frames)).toEqual([
       {
         v: 1,
@@ -1060,14 +1031,12 @@ describe("realtime Dragonfly integration", () => {
     await Effect.runPromise(presence.sweepOffline());
     expect(claims.results).toHaveLength(1);
     expect(offline.events).toEqual([]);
-    // The reconnect leaves no cancelled departure in the character index.
     expect(
       await redis.store.command.smembers(
         `presence:offline:character:${JSON.stringify([game.data.userId, game.data.character?.world, game.data.character?.characterId])}`,
       ),
     ).toEqual([]);
 
-    // Redis TTL can elapse while the gateway is down; metadata must retain identity.
     for (const { guild } of game.data.guilds)
       await redis.store.command.del(
         `presence:${guild.id}:${game.data.connectionId}`,
@@ -1106,7 +1075,6 @@ describe("realtime Dragonfly integration", () => {
 
       const command = {
         ...claims.command,
-        // Reconnect cancellation starts by listing the character's departures.
         smembers: async (key: string) => {
           if (pauseReconnect && key.startsWith("presence:offline:character:")) {
             pauseReconnect = false;
@@ -1148,9 +1116,6 @@ describe("realtime Dragonfly integration", () => {
 
       if (!firstKey || !secondKey)
         throw new Error("Missing pending departures");
-      // Equal due scores sort by member, so the first user's group is claimed
-      // first. Both groups overlap organization-1. Its first snapshot must not
-      // be reused after another group's claim waits on network I/O.
       claims.after = async () => {
         pauseReconnect = true;
         reconnecting = connect(presence, second);
@@ -1158,8 +1123,6 @@ describe("realtime Dragonfly integration", () => {
         expect(
           await redis.store.command.get("presence:organization-1:group-second"),
         ).not.toBeNull();
-        // Cancellation is still blocked, so the reconnect has not removed this
-        // exact pending value yet.
         expect(await redis.store.command.get(secondKey)).not.toBeNull();
       };
 
@@ -1216,17 +1179,13 @@ describe("realtime Dragonfly integration", () => {
 
     claims.before = async () => {
       await connect(presence, reconnected);
-      // A brief reconnect replaces the captured departure with a newer one.
       await connect(presence, replacement);
       await depart(presence, replacement);
     };
 
-    // The old departure is already durable in the outbox. Returning online
-    // starts a new period and must not erase its accepted publication.
     claims.after = () => connect(presence, departed);
 
     await Effect.runPromise(presence.sweepOffline());
-    // One atomic decision for the group; only the unchanged departure completes.
     expect(claims.results).toEqual([1]);
     expect(offline.events.map((event) => event.userId)).toEqual([
       departed.data.userId,
@@ -1283,7 +1242,6 @@ describe("realtime Dragonfly integration", () => {
     await depart(presence, firstTab);
     now += 5_000;
     await depart(presence, secondTab);
-    // A replica whose clock lags reports an exit older than the pending one.
     await depart(lagging, laggingTab);
     expect(await dueDepartures(redis.store)).toHaveLength(1);
 
@@ -1327,7 +1285,6 @@ describe("realtime Dragonfly integration", () => {
         .presences[0]?.lastSeen,
     ).toBe(now);
 
-    // A full Redis loss must be recoverable without another presence.publish.
     await store.command.flushdb();
     now += 25_000;
     await Effect.runPromise(presence.heartbeat(game, game.data.connectionId));
@@ -1451,7 +1408,6 @@ describe("realtime Dragonfly integration", () => {
     expect(departures).toHaveLength(1);
     expect(departures).not.toContain(olderExit);
 
-    // The older exit's grace already ended; only the expiry departure remains.
     await Effect.runPromise(presence.sweepOffline());
     expect(offline.events).toEqual([]);
 
@@ -1574,7 +1530,6 @@ describe("realtime Dragonfly integration", () => {
     now += PRESENCE_EXPIRY_MS;
 
     removals.before = async () => {
-      // Another replica cannot claim the batch while the first holds its lease.
       await Effect.runPromise(second.sweepExpired());
       await Effect.runPromise(second.heartbeat(game, game.data.connectionId));
     };
@@ -1729,9 +1684,6 @@ describe("realtime Dragonfly integration", () => {
     await Effect.runPromise(makePresence().sweepOffline());
     expect(organizationReads).toBe(1);
     expect(offline.events).toHaveLength(0);
-    // The old owner captured an offline observation before the reconnect.
-    // Keep the successor's lease held until that stale owner attempts its claim,
-    // so value comparison alone cannot hide a missing lease check.
     await takeOverOfflineSweep(store);
     const reconnected = makeSocket("reconnected").socket;
     reconnected.data = {
@@ -1972,7 +1924,6 @@ describe("realtime Dragonfly integration", () => {
     await Effect.runPromise(history.observe(session, now, true));
     await Effect.runPromise(history.flush());
     expect(checkpoints()).toHaveLength(3);
-    // A world change closes the segment and starts one in the new world.
     const changedAt = now + 120_000;
     now = changedAt;
     await Effect.runPromise(history.observe(session, now));
@@ -2140,8 +2091,6 @@ describe("realtime Dragonfly integration", () => {
       fail = false;
       now = start + 120_000;
       await Effect.runPromise(history.flush());
-      // The failed second batch retains its complete 60-second lease, measured
-      // from its own claim at 63 seconds, while unclaimed work can be drained.
       expect(checkpoints()).toHaveLength(failSecondBatch ? 150 : 250);
       now = start + 123_000;
       await Effect.runPromise(history.flush());
@@ -2169,7 +2118,6 @@ describe("realtime Dragonfly integration", () => {
           }),
         );
 
-        // Dragonfly observes socket closure asynchronously on another connection.
         const subscriptions = yield* redis
           .send<[string, number]>("PUBSUB", "NUMSUB", channel)
           .pipe(
@@ -2290,8 +2238,6 @@ describe("realtime Dragonfly integration", () => {
       await publishKill(healthy.hub);
       await waitFor(() => stale.frames.length === 1);
 
-      // A frame numbered but never delivered stands for one published while
-      // the subscriber was away.
       if (lostFrame)
         await control.runtime.runPromise(
           control.redis.send(
@@ -2306,7 +2252,6 @@ describe("realtime Dragonfly integration", () => {
 
       if (closed) {
         await waitFor(() => stale.closes.length === 1, 5_000);
-        // Readiness was withdrawn before the socket closed, so no session was admitted into the gap.
         expect(stale.closes).toEqual([
           { code: 1013, reason: "federation-unavailable" },
         ]);
@@ -2314,9 +2259,6 @@ describe("realtime Dragonfly integration", () => {
         expect(stale.socket.data.closing).toBe(true);
       }
 
-      // CLIENT KILL returns before the instance notices, and a frame published
-      // before it resubscribes is really lost: wait for the new subscriber.
-      // Dragonfly may list a killed connection until its thread closes it.
       await waitFor(async () => {
         const addresses = await subscriberAddresses();
 
@@ -2441,7 +2383,6 @@ describe("realtime Dragonfly integration", () => {
 
     for (const target of timerTargets.filter((target) => !target.allowed))
       expect(target.frames).toHaveLength(0);
-    // Even full tier grants do not authorize an out-of-range timer.
     await titanCreated(105);
     await titanCreated(500);
     await delivered(3);
@@ -2560,7 +2501,6 @@ describe("realtime Dragonfly integration", () => {
       });
     }
 
-    // The exhausted map ping budget must not block battle pings.
     await expect(
       Effect.runPromise(
         new BattlePingService(first.store, first.hub).send(source.socket, {
@@ -2613,8 +2553,6 @@ describe("realtime Dragonfly integration", () => {
           observations: [
             observation,
             { ...observation, x: 12 },
-            // An older client reports every player it sees; a neutral one and
-            // the observer's personal enemy are not the Organization's.
             { ...observation, targetId: "neutral", relation: 1 },
             { ...observation, targetId: "personal", relation: 3 },
           ],
@@ -2727,13 +2665,10 @@ describe("realtime Dragonfly integration", () => {
       eventsOfType(watcher.frames, "air-tag.map-threat-updated");
 
     await publishThreat(clanEnemy);
-    // Unchanged and recently reported, so it stays quiet.
     await publishThreat({ ...clanEnemy, x: 9 });
-    // A change inside the throttle window goes out when the window ends, without another sighting.
     await publishThreat({ ...clanEnemy, stasis: false });
     await waitFor(() => threatEvents().length === 2);
 
-    // Older game clients omit level, profession and stasis; the last values stay.
     const {
       lvl: _lvl,
       prof: _prof,
@@ -2749,7 +2684,6 @@ describe("realtime Dragonfly integration", () => {
         }),
       ),
     ).resolves.toMatchObject({ status: "accepted" });
-    // A changed threat would go out once the one-second throttle window ends.
     await Bun.sleep(1_200);
     expect(threatEvents()).toMatchObject([
       {
@@ -2775,7 +2709,6 @@ describe("realtime Dragonfly integration", () => {
       },
     ]);
 
-    // Unverified characters and clanless clan enemies never feed the timers.
     source.socket.data.confidence = "reported";
     await publishThreat({ ...clanEnemy, targetId: "unverified" });
     source.socket.data.confidence = "verified";
@@ -2808,7 +2741,6 @@ describe("realtime Dragonfly integration", () => {
         },
       ],
     });
-    // The threat-maps index expires with the threats it lists.
     expect(
       await airTags.first.store.command.eval<number>(
         'return redis.call("PTTL",KEYS[1])',
@@ -2906,7 +2838,6 @@ describe("realtime Dragonfly integration", () => {
     await report(secondObserver, { observations: [wanderer, lurker] });
     await waitFor(() => scopeUpdates().length === 1);
     await waitFor(() => mapThreats().length === 1);
-    // One frame per batch; the second observer's identical sighting stays quiet.
     expect(scopeUpdates()).toMatchObject([
       {
         mapId: 9,
@@ -2915,7 +2846,6 @@ describe("realtime Dragonfly integration", () => {
       },
     ]);
 
-    // The second observer still sees both.
     await report(firstObserver, {
       observations: [],
       departures: [
@@ -2930,8 +2860,6 @@ describe("realtime Dragonfly integration", () => {
         { targetId: "lurker", reason: "out-of-sight" },
       ],
     });
-    // Nobody sees the lurker, but nobody saw it leave, and a connection that
-    // never reported it cannot remove it.
     await report(bystander, {
       observations: [],
       departures: [{ targetId: "lurker", reason: "left-map" }],
@@ -2939,8 +2867,6 @@ describe("realtime Dragonfly integration", () => {
     await waitFor(() => scopeUpdates().length === 3);
     await waitFor(() => mapThreats().length === 2);
     await Bun.sleep(100);
-    // The first observer reported both and stopped watching while they stayed
-    // on the map, so the map hears they need a reporter.
     expect(scopeUpdates()[1]).toMatchObject({
       targets: [],
       removedTargetIds: [],
@@ -2951,13 +2877,11 @@ describe("realtime Dragonfly integration", () => {
       removedTargetIds: ["wanderer"],
     });
 
-    // Revisions increase, so recipients can drop a frame that is not newer.
     const [sighted, , departed] = scopeUpdates().map(
       ({ revision }) => revision,
     );
 
     expect(departed).toBeGreaterThan(sighted ?? Number.POSITIVE_INFINITY);
-    // The last clan enemy left: an empty list clears the timers at once.
     expect(mapThreats()).toEqual([["wanderer"], []]);
 
     const afterDeparture = makeSocket("after-departure");
@@ -3013,14 +2937,12 @@ describe("realtime Dragonfly integration", () => {
 
     const sighting = { observations: [clanEnemy] };
 
-    // Accepted, and nobody else reports the target: no standby is named.
     const reported = {
       status: "accepted",
       acceptedScopes: 1,
       acceptedTargets: 1,
     } as const;
 
-    // The first to report a target keeps it; the acknowledgement names no standby.
     expect(await report(reporter, sighting)).toEqual(reported);
     expect(await report(standby, sighting)).toMatchObject({
       status: "accepted",
@@ -3028,7 +2950,6 @@ describe("realtime Dragonfly integration", () => {
     });
     expect(await report(reporter, sighting)).toEqual(reported);
 
-    // The reporter loses sight: whoever reports next takes the target at once.
     await report(reporter, {
       observations: [],
       departures: [{ targetId: clanEnemy.targetId, reason: "out-of-sight" }],
@@ -3038,8 +2959,6 @@ describe("realtime Dragonfly integration", () => {
       standbyTargetIds: [clanEnemy.targetId],
     });
 
-    // Roles have swapped. The new reporter walks to another map without a
-    // departure, and the observer left behind is told at once.
     const [walker, remaining] = [standby, reporter];
 
     remaining.frames.length = 0;
@@ -3068,7 +2987,6 @@ describe("realtime Dragonfly integration", () => {
       standbyTargetIds: [clanEnemy.targetId],
     });
 
-    // The reporter vanishes without a word; the lease runs out.
     await Bun.sleep(AIR_TAG_REPORTER_LEASE_MS + 100);
     expect(await report(walker, sighting)).toEqual(reported);
   }, 30_000);
@@ -3136,7 +3054,6 @@ describe("realtime Dragonfly integration", () => {
       expect(soloUpdates(localWatcher)).toBe(2);
       expect(channelUpdates).toHaveLength(1);
 
-      // A lapsed registration returns with the next refresh while a socket still follows the map.
       await first.store.command.del(
         "{air-tag:organization-1}:classic:11:replicas",
       );
@@ -3154,7 +3071,6 @@ describe("realtime Dragonfly integration", () => {
       await waitFor(() => soloUpdates(remoteWatcher) === 2);
       expect(channelUpdates).toHaveLength(2);
 
-      // A subscription without a world or map follows every map of its Organization.
       const anyMapWatcher = makeSocket("any-map-watcher");
 
       const anyMap = {
@@ -3245,7 +3161,6 @@ describe("realtime Dragonfly integration", () => {
         map: "Mroczny Przesmyk",
       }),
     ]);
-    // An NPC above the reader's level range stays hidden, like its timer.
     expect(presenceUpdates(lowLevelReader.frames)).toEqual([]);
 
     await expect(
@@ -3261,11 +3176,9 @@ describe("realtime Dragonfly integration", () => {
       ),
     ).resolves.toMatchObject({ npcs: [] });
 
-    // The first reporter leaving keeps the NPC standing for the second one.
     await Effect.runPromise(service.withdraw(first.socket));
     expect(presenceUpdates(second.frames)).toHaveLength(1);
 
-    // A report from another world withdraws the NPCs seen in the previous one.
     second.socket.data.character = {
       ...second.socket.data.character!,
       world: "tempest",
@@ -3290,8 +3203,6 @@ describe("realtime Dragonfly integration", () => {
       ),
     ).resolves.toMatchObject({ npcs: [] });
 
-    // A report after a failed write replaces what the connection stored,
-    // so an NPC killed meanwhile does not keep standing.
     await Effect.runPromise(
       service.report(second.socket, report([elite], "tempest")),
     );

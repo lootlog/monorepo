@@ -10,16 +10,11 @@ type HeroSightingTimerLocationProps = {
   now: number;
 };
 
-/**
- * Where a hero timer's hero was last detected, how long ago, and how many
- * members camp it, on the timer's meta line.
- */
 export const HeroSightingTimerLocation = ({
   sighting,
   now,
 }: HeroSightingTimerLocationProps) => {
   const { t } = useTranslation();
-  // The timer finds an open sighting; one no longer current is unconfirmed.
   const isStale = !isCurrentHeroSighting(sighting, now);
 
   return (

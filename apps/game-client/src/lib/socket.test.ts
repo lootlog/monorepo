@@ -113,7 +113,6 @@ it.each(["success", "policy", "player"])(
       const oldFacade = getSocket();
       disposeSocket();
       const activeFacade = getSocket();
-      // Disposing an old facade twice must not detach its replacement.
       oldFacade.dispose();
       activeFacade.connect();
       listeners.get("open")?.({});
@@ -404,7 +403,6 @@ describe("access policy synchronization", () => {
         joinsBeforeDenial,
       );
       denyJoin = false;
-      // Returning to the first account dropped the other account's policy.
       expect(socket.getAccessPolicy()).toEqual(policy);
       expect(policies).toHaveBeenCalledTimes(4);
     } finally {

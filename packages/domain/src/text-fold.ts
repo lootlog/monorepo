@@ -1,4 +1,3 @@
-// Letters NFD does not split into a base letter and a mark.
 const UNDECOMPOSED_LETTERS = new Map(
   Object.entries({
     ł: "l",
@@ -14,11 +13,6 @@ const UNDECOMPOSED_LETTERS = new Map(
   }),
 );
 
-/**
- * Text without diacritics, keeping its case: `Łódź Œuvre` → `Lodz OEuvre`.
- * Every combining mark goes, and the letters NFD keeps whole (ł, ß, æ, ø, œ)
- * are spelled with Latin letters.
- */
 export const foldText = (value: string): string =>
   value
     .normalize("NFD")
@@ -28,20 +22,11 @@ export const foldText = (value: string): string =>
       (letter) => UNDECOMPOSED_LETTERS.get(letter) ?? letter,
     );
 
-/**
- * Lowercase ASCII letters and digits joined by single hyphens; every other run
- * of characters becomes one hyphen, and none is left at either end. It does
- * not fold diacritics: compose it with `foldText` for that.
- */
 export const slug = (value: string): string =>
   value
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-/**
- * Text as search compares it: folded, lowercase, with whitespace runs
- * collapsed, so `  Łódź ` matches a query typed as `lodz`.
- */
 export const normalizeSearchText = (value: string): string =>
   foldText(value).toLowerCase().replace(/\s+/g, " ").trim();

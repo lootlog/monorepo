@@ -40,12 +40,6 @@ const areRowPropsEqual = (previous: Props, next: Props) =>
   previous.onReplyToMessage === next.onReplyToMessage &&
   previous.onDeleteMessage === next.onDeleteMessage;
 
-/**
- * Memoized on purpose: the transcript renders up to 500 rows and appends one
- * per incoming message. Without this every incoming message re-rendered every
- * row (measured: 502 row renders per message before, 1 after), so keep every
- * prop referentially stable across ingests.
- */
 export const ChatTranscriptRow = memo(function ChatTranscriptRow({
   row,
   highlighted = false,

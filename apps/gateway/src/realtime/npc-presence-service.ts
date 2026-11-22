@@ -26,14 +26,10 @@ import {
 } from "#src/realtime/command-routes";
 import { RealtimeStoreError, storeCall } from "#src/realtime/realtime-errors";
 
-/** A Redis call that fails the operation with a tagged error. */
-
-// A client reports only when the NPCs on its map change.
 const RATE_LIMIT = 30;
 
 const RATE_LIMIT_WINDOW_MS = 10_000;
 
-// Outlives the reports, so a recipient never sees a revision go backwards.
 const REVISION_TTL_MS = 7 * 24 * 60 * 60 * 1_000;
 
 const LUA_COMMON = `
@@ -44,10 +40,6 @@ end
 local function npcId(field) return string.match(field, "^([^|]+)|") end
 `;
 
-// A report field is `<npcId>|<connectionId>`; an NPC stands while any field names it.
-// Replaces the connection's fields with the given NPCs and renews their expiry, so
-// a field left by a failed earlier write is dropped rather than kept alive.
-// Returns the NPCs that gained their first or lost their last reporter.
 const APPLY_SCRIPT = `${LUA_COMMON}
 local now = nowMs()
 local connection = ARGV[1]
@@ -142,7 +134,6 @@ const decodeSnapshot = Schema.decodeUnknownSync(
 
 type Event = typeof ServerEvent.Type;
 
-/** The NPCs one connection reports in one Organization and world. */
 type Operation = {
   organizationId: string;
   world: string;
@@ -189,7 +180,6 @@ const sameNpcs = (
 ) =>
   first.size === second.size && [...first.keys()].every((id) => second.has(id));
 
-/** Operations that turn the reports stored for `previous` into `next`. */
 const planOperations = (
   previous: NpcPresenceState | undefined,
   next: NpcPresenceState | undefined,
@@ -224,13 +214,7 @@ const planOperations = (
   ];
 };
 
-/**
- * Which timer NPCs Organization members see standing right now. A game client
- * reports the NPCs on its map whenever they change; recipients hear only when
- * an NPC gains its first reporter or loses its last one.
- */
 export class NpcPresenceService {
-  /** Each socket's reports change one at a time, in the order it sent them. */
   private readonly locks = new WeakMap<GatewaySocket, Semaphore.Semaphore>();
 
   constructor(
@@ -245,7 +229,6 @@ export class NpcPresenceService {
     return this.serialize(socket, this.performReport(socket, payload));
   }
 
-  /** Keeps the socket's reports alive; called on its presence heartbeat. */
   refresh(socket: GatewaySocket): Effect.Effect<void> {
     if (!socket.data.npcPresence) return Effect.void;
 
@@ -285,7 +268,6 @@ export class NpcPresenceService {
     );
   }
 
-  /** Withdraws every report of a socket that closed or changed character. */
   withdraw(socket: GatewaySocket): Effect.Effect<void, RealtimeStoreError> {
     if (!socket.data.npcPresence) return Effect.void;
 
@@ -307,7 +289,6 @@ export class NpcPresenceService {
     );
   }
 
-  /** NPCs standing in one Organization and world, for a client that just connected. */
   fetch(
     socket: GatewaySocket,
     organizationId: string,
@@ -412,8 +393,6 @@ export class NpcPresenceService {
             }
           : undefined;
 
-      // After a failed write nothing is known to be stored, so every reported
-      // scope is replaced, even with no NPCs.
       const operations = previous
         ? planOperations(previous, next)
         : organizationIds.map((organizationId) => ({
@@ -423,8 +402,6 @@ export class NpcPresenceService {
             map: payload.map,
           }));
 
-      // A failed report is resent whole and replaces whatever this connection
-      // stored, so nothing is assumed to be stored meanwhile.
       socket.data.npcPresence = undefined;
 
       return yield* apply(socket, operations).pipe(
@@ -445,7 +422,6 @@ export class NpcPresenceService {
     }).pipe(Effect.annotateLogs({ context: "NpcPresenceService" }));
   }
 
-  /** Reporting reveals a timer NPC, so it takes the right to write timers. */
   private reportableOrganizations(
     socket: GatewaySocket,
     organizationIds: readonly string[],
@@ -467,8 +443,6 @@ export class NpcPresenceService {
   ): Effect.Effect<void, RealtimeStoreError> {
     const { redis, hub } = this;
 
-    // Organizations are independent; each keeps its own change order, and a
-    // failed one does not stop the others.
     return Effect.forEach(
       operations,
       ({ organizationId, world, npcs, map }) =>
@@ -496,7 +470,6 @@ export class NpcPresenceService {
                   hub.publishToScopes(
                     [{ topic: "organization.timers", organizationId }],
                     presenceEvent(organizationId, world, change),
-                    // Any world: timers can show a world other than the recipient's own.
                     { recipientPlatform: "game" },
                   ),
                 ).pipe(
@@ -534,7 +507,6 @@ export class NpcPresenceService {
   }
 }
 
-/** NPCs that Members report standing on their maps. */
 export class NpcPresence extends Context.Service<
   NpcPresence,
   NpcPresenceService

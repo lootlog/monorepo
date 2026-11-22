@@ -21,19 +21,12 @@ import {
 } from "./air-tag-unseen-enemies";
 import type { AirTagTarget } from "@lootlog/schema/air-tag";
 
-/** Which enemies are unseen changes with every step; a marker may lag this long. */
 const REFRESH_INTERVAL_MS = 250;
 
-/** A sighting about to expire is drawn this faint; a fresh one is opaque. */
 const OLDEST_ALPHA = 0.45;
 
-// The game's own markers leave this much room for their outline.
 const MARKER_PADDING = 5;
 
-/**
- * A marker drawn like MiniMapObject.js draws its own: the icon and colour the
- * player chose for the kind, a white-centred gradient and a 1 px outline.
- */
 const drawMarkerImage = (
   { color, icon }: MinimapPlayerStyle,
   { minSize, squareMargin }: Pick<MinimapSquares, "minSize" | "squareMargin">,
@@ -91,15 +84,9 @@ const drawMarkerImage = (
 };
 
 type MarkerLabels = {
-  /** The line under the game's tip saying who reported the player and when. */
   seen: (seconds: number) => string;
 };
 
-/**
- * Draws enemies other members see, and the hero does not, on the game's
- * handheld minimap, and answers a hover with the game's own player tip.
- * Runs in the game's frame only while such enemies are reported.
- */
 export class AirTagMinimapController {
   private enabled = false;
   private labels: MarkerLabels = { seen: String };
@@ -109,7 +96,6 @@ export class AirTagMinimapController {
   private unsubscribeTargets: (() => void) | null = null;
   private unsubscribeHover: (() => void) | null = null;
   private releaseMembers: Array<() => void> = [];
-  /** The sources held, so joining or leaving an Organization swaps them. */
   private heldMembers: ReturnType<typeof getAirTagMemberSources> = [];
   private hoverCanvas: HTMLCanvasElement | null = null;
   private readonly images = new Map<string, HTMLCanvasElement>();
@@ -137,7 +123,6 @@ export class AirTagMinimapController {
   }
 
   private readonly attachWhileReported = (): void => {
-    // The next frame re-reads which enemies are unseen.
     this.refreshedAt = 0;
 
     if (this.unsubscribeDraw || !this.hasMarkersToDraw()) return;
@@ -146,20 +131,10 @@ export class AirTagMinimapController {
     this.holdMembers();
   };
 
-  /**
-   * Members report enemies on every map, but only a red map shows them, so
-   * elsewhere a reported enemy is no reason to run in the game's frame.
-   */
   private hasMarkersToDraw(): boolean {
     return showsAirTagsOnMap() && airTagReceiveController.hasTargets();
   }
 
-  /**
-   * A member of another clan of the Organization is no enemy, and a presence
-   * source knows its members only while someone holds it. The sources are
-   * cached per socket, Organization and world, so the same ones come back
-   * until the player joins or leaves an Organization or changes world.
-   */
   private holdMembers(): void {
     const sources = getAirTagMemberSources();
 
@@ -176,7 +151,6 @@ export class AirTagMinimapController {
     );
   }
 
-  /** The next frame re-reads which enemies are unseen. */
   private readonly forgetEnemies = (): void => {
     this.refreshedAt = 0;
   };
@@ -219,7 +193,6 @@ export class AirTagMinimapController {
 
     const style = getMinimapClanEnemyStyle();
 
-    // The player hid clan enemies on the minimap.
     if (!style) return;
 
     for (const enemy of this.enemies) {
@@ -233,7 +206,6 @@ export class AirTagMinimapController {
     context.globalAlpha = 1;
   };
 
-  /** Where MiniMapObject.js puts the marker of a player on this tile. */
   private getMarkerOrigin(
     target: Pick<AirTagTarget, "x" | "y">,
     { margin, normalSize, squareMargin }: MinimapSquares,
@@ -259,7 +231,6 @@ export class AirTagMinimapController {
     return image;
   }
 
-  /** The game rebuilds its minimap window, and with it the canvas. */
   private followHover(canvas: HTMLCanvasElement): void {
     if (canvas === this.hoverCanvas) return;
 
@@ -288,7 +259,6 @@ export class AirTagMinimapController {
       );
     });
 
-    // The game's own marker on the tile keeps its tip.
     if (
       !enemy ||
       !getMinimapClanEnemyStyle() ||

@@ -1,8 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { decodeTimerSettings } from "./timer-settings.js";
 
-// Stored timer settings come from localStorage written by every earlier
-// release and from server documents; the decoder must keep reading them.
 const color = { borderColor: "#111", backgroundColor: "#222" };
 
 const storedSettings = {
@@ -77,7 +75,6 @@ describe("decodeTimerSettings", () => {
           maxLvl: 300,
           selectedNpcTypes: ["HERO", "TITAN"],
           selectedColors: ["red"],
-          // Filters stored before timer lists existed keep decoding.
           selectedLists: [],
         },
       },

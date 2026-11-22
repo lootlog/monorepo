@@ -7,11 +7,9 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 
 type EventKillTileSkeletonProps = {
-  /** The tile ends with a button, such as the member's points breakdown toggle. */
   withAction?: boolean;
 };
 
-/** Stands in for one kill tile on phones. */
 export const EventKillTileSkeleton = ({
   withAction = false,
 }: EventKillTileSkeletonProps) => (

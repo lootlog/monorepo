@@ -12,9 +12,7 @@ export type BattlePlayerRankingEntry = {
   warrior: BattleWarrior;
   isFriendly: boolean;
   value: number;
-  /** Relative to the top player, 0-1; drives the bar length. */
   relative: number;
-  /** Share of all players' combined value, 0-1. */
   share: number;
 };
 
@@ -24,11 +22,9 @@ const METRIC_VALUE: Record<
 > = {
   damageDealt: (warrior) => warrior.damageDealt,
   damageTaken: (warrior) => warrior.damageTaken,
-  // The damage that got through the opponents' defences.
   effectiveness: (warrior) => warrior.damageDealtAfterDefensive,
 };
 
-/** Every warrior of the battle, highest value first. */
 export const getBattlePlayerRanking = (
   battle: Battle,
   metric: BattleRankingMetric,

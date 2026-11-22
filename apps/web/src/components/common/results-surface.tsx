@@ -7,40 +7,22 @@ import type { FilterChip } from "./filter-chip-list";
 import { TableScroller } from "./table-scroller";
 
 type ResultsSurfaceProps = {
-  /** The leading search of the page's `FilterBar`. */
   search?: ReactNode;
-  /**
-   * The filters of the page's `FilterBar`. Without them or a search, the
-   * results sit under the filter bar of the page around them.
-   */
   filters?: ReactNode;
-  /** The filters stacked for the panel narrow pages open them in. */
   stackedFilters?: ReactNode;
   filtersLabel?: string;
   chips?: FilterChip[];
-  /** How many filters are active, for pages without chips; defaults to the chips. */
   activeFilterCount?: number;
   clearFiltersLabel?: string;
   onClearFilters?: () => void;
-  /** Stands in for the chips while the page loads. */
   chipsPlaceholder?: ReactNode;
-  /** The results; a table header in them uses `FILTERED_TABLE_HEADER_CLASS`. */
   children: ReactNode;
-  /** Actions on the selected results, docked above the footer. */
   selectionBar?: ReactNode;
-  /** Pagination, docked at the bottom edge while the results scroll. */
   footer?: ReactNode;
-  /** Scrolls the page back to its top when it changes, such as the page of results. */
   scrollResetKey?: string | number;
   className?: string;
 };
 
-/**
- * A page of filtered results, edge to edge in the page scroller marked
- * `data-under-top-bar`: the `FilterBar` stays on top, a table header pins
- * right under it, and the footer stays at the bottom edge, also when a few
- * results leave the page short.
- */
 export const ResultsSurface = ({
   search,
   filters,
@@ -90,11 +72,7 @@ export const ResultsSurface = ({
       )}
       <TableScroller className="min-w-0 grow">{children}</TableScroller>
       {(selectionBar || footer) && (
-        // Overlaps the last row's rule while it sits right after the rows.
-        <div
-          // Phones dock it above the tab bar.
-          className="sticky bottom-[var(--tab-bar-offset,0px)] z-20 -mt-px bg-sidebar"
-        >
+        <div className="sticky bottom-[var(--tab-bar-offset,0px)] z-20 -mt-px bg-sidebar">
           {selectionBar && (
             <div className="border-t border-sidebar-border">{selectionBar}</div>
           )}

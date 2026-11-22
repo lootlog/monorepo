@@ -103,7 +103,6 @@ describe("source visibility at delivery", () => {
         ...guild,
         roles: [...guild.roles, role([], 250, 350)],
       }));
-      // Event visibility intentionally accepts the level range from any role, as HTTP does.
       expect(canReadSourceEvent(session, event(300))).toBe(true);
     },
   );

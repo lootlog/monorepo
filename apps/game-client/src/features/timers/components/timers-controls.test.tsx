@@ -66,8 +66,6 @@ describe("timers controls", () => {
       minLvl: 0,
       maxLvl: 500,
     });
-    // Lowering the upper bound under the lower one drags the lower one along
-    // instead of leaving a range that matches no timer.
     fireEvent.change(screen.getByLabelText("Poziom od"), {
       target: { value: "300" },
     });

@@ -8,32 +8,17 @@ import { useSettingsKeysSaveMark } from "@/lib/settings-persistence/settings-sav
 import { SettingsSaveBadge } from "./settings-save-badge";
 import { useSettingsControlHighlight } from "./use-settings-control-highlight";
 
-/**
- * Width of a wide control (slider, select, text input, keybind) in a row.
- * Every wide control shares it so their left edges line up down a section.
- */
 const SETTINGS_WIDE_CONTROL_CLASS_NAME = "ll:w-48 ll:max-w-full";
 
 type SettingsRowProps = {
-  /** Manifest id; enables search highlighting and "recently changed". */
   controlId?: SettingsControlId;
-  /**
-   * Catalog keys this row writes, for rows that share one manifest control
-   * (a section-level control) but should show their own save badge.
-   */
   settingKeys?: readonly string[];
-  /** DOM id of the row's control; makes the label click activate it. */
   htmlFor?: string;
   label: ReactNode;
   description?: ReactNode;
   children: ReactNode;
   disabled?: boolean;
-  /** Stack the control under the label instead of on the right. */
   layout?: "inline" | "stacked";
-  /**
-   * `wide` controls (sliders, selects, inputs) take one shared width and drop
-   * under the label when the content column is too narrow to fit both.
-   */
   control?: "auto" | "wide";
   className?: string;
   labelClassName?: string;
@@ -41,10 +26,6 @@ type SettingsRowProps = {
   controlClassName?: string;
 };
 
-/**
- * One setting: label, optional description and its control. Search results
- * scroll to and highlight the row through the settings UI store.
- */
 export const SettingsRow: FC<SettingsRowProps> = ({
   controlId,
   settingKeys,
@@ -120,8 +101,6 @@ export const SettingsRow: FC<SettingsRowProps> = ({
           </div>
         )}
         {description ? (
-          // The description is a click target for the control only; it must
-          // not join the control's accessible name the way a second <label> would.
           <p
             className={cn(
               "ll:m-0 ll:mt-0.5 ll:text-xs ll:leading-4 ll:text-muted-foreground",

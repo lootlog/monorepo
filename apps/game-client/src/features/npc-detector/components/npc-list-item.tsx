@@ -98,12 +98,9 @@ export const NpcListItem = ({
     });
   };
 
-  // Only the cooldown changes: the detection may have moved or updated while
-  // the request was in flight.
   const markNotificationSent = () =>
     setNpcStates([{ npcId: npc.id, npc: { notificationSentAt: Date.now() } }]);
 
-  // Both actions show only while routing resolves an Organization.
   const handleSendNotification = async () => {
     const markAlertSent = () => {
       markNotificationSent();
@@ -118,8 +115,6 @@ export const NpcListItem = ({
     } catch (error) {
       if (error instanceof NotificationChatPublishError) {
         console.warn("Failed to publish notification to chat:", error.cause);
-        // The alert was accepted, so the row leaves its sendable state:
-        // another alert would reopen the recipients' alarm.
         markAlertSent();
         showRuntimeMessage(t("actions.chatPublishFailed"));
 

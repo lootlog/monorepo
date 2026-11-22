@@ -17,7 +17,6 @@ type MemberAccessSummary = {
   className?: string;
 };
 
-/** How a member's access reads: a badge and the sentence that explains it. */
 export const getMemberAccessSummary = (
   accessState: MemberAccessState,
   t: TFunction,

@@ -10,7 +10,6 @@ export const AppContentFrame = ({ header, children }: AppContentFrameProps) => (
     {header}
     <main
       id="main-content"
-      // A marked page scroller slides this frame under the bar; see page-scroll.css.
       className="flex min-h-0 min-w-0 flex-1 flex-col max-md:overflow-clip md:overflow-hidden"
     >
       {children}

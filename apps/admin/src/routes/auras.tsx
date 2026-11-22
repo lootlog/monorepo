@@ -9,7 +9,6 @@ import { auraNoticeText, auraRefusalText, text } from "@/lib/messages";
 import { getAuraGrants } from "@/server/character-auras";
 
 type AurasSearch = {
-  /** A pasted profile link until the loader replaces it with the account id. */
   account?: string | undefined;
   notice?: AuraAction["action"] | undefined;
   error?: AuraRefusal | "failed" | undefined;
@@ -35,7 +34,6 @@ export const Route = createFileRoute("/auras")({
     notice?: unknown;
     error?: unknown;
   }): AurasSearch => ({
-    // Every key is returned even when empty, or a raw value would stay.
     account: Option.getOrUndefined(readAccount(search.account)),
     notice: Option.getOrUndefined(readNotice(search.notice)),
     error: Option.getOrUndefined(readError(search.error)),
@@ -48,7 +46,6 @@ export const Route = createFileRoute("/auras")({
 
     if (gameAccountId === undefined) return { kind: "invalid" as const };
 
-    // A pasted link leaves the address bar as the account it names.
     if (gameAccountId !== deps.account)
       throw redirect({
         to: "/auras",
@@ -98,7 +95,6 @@ function AurasPage() {
           grants={result.grants}
         />
       ) : null}
-      {/* An action refused for the same reason has already said so. */}
       {result.kind === "refused" && error !== result.reason ? (
         <Alert variant="destructive">
           <AlertDescription>{auraRefusalText[result.reason]}</AlertDescription>

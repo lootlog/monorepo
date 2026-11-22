@@ -11,12 +11,10 @@ import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
 import { npcPageParams } from "@/lib/catalog-links";
 
 type EventMonsterItemsProps = {
-  /** None for the event's items Lootlog knows no monster of. */
   monster: CatalogDropSourceDtoOutput | undefined;
   items: readonly CatalogItemDtoOutput[];
 };
 
-/** The event's items of one monster, by rarity. */
 export function EventMonsterItems({ monster, items }: EventMonsterItemsProps) {
   const headingId = `event-monster-${monster?.key ?? "other"}`;
 

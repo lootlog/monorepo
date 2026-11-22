@@ -3,14 +3,9 @@ import { RelativeTime } from "@/components/common/relative-time";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 
 type StatsComputedAtProps = {
-  /** When the API computed the statistics, an ISO timestamp; unset while loading. */
   computedAt: string | undefined;
 };
 
-/**
- * Lootlog statistics read the whole history, so the API serves them for hours
- * and refreshes them in the background. This says how old the numbers are.
- */
 export const StatsComputedAt = ({ computedAt }: StatsComputedAtProps) => {
   const { t } = useTranslation();
   const now = useMinuteTimestamp();

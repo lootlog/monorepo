@@ -8,12 +8,6 @@ import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { findEquipmentSlotById } from "@/lib/equipment-slots";
 import { findMargonemWorld } from "@lootlog/domain/margonem-worlds";
 
-/**
- * The item search as the address bar holds it, so a link opens the same
- * search. Lists are comma separated; empty means no filter, an empty sort
- * follows the query (`effectiveSort`), and an empty scope follows the query
- * and selected types (`effectiveScope`).
- */
 export type ItemsSearch = {
   query: string;
   scope: string;
@@ -25,19 +19,16 @@ export type ItemsSearch = {
   maxLevel: number | undefined;
   stats: string;
   events: string;
-  /** The world whose character searches: events it never saw stay out. */
   world: string;
   bonuses: string;
   bosses: string;
   sort: string;
 };
 
-/** The three browse scopes shown in the scope switcher on `/items`. */
 export const ITEM_SCOPE_TABS = ["equipment", "other", "all"] as const;
 
 export type ItemScopeTab = (typeof ITEM_SCOPE_TABS)[number];
 
-/** Every explicit scope value accepted in the URL, including crafting fodder inside `other`. */
 const ITEM_SEARCH_SCOPES = ["equipment", "other", "crafting", "all"] as const;
 
 export type ItemSearchScope = (typeof ITEM_SEARCH_SCOPES)[number];
@@ -45,10 +36,6 @@ export type ItemSearchScope = (typeof ITEM_SEARCH_SCOPES)[number];
 const isItemSearchScope = (value: unknown): value is ItemSearchScope =>
   ITEM_SEARCH_SCOPES.some((scope) => scope === value);
 
-/**
- * The chosen scope, or `other` when non-equippable types are selected,
- * `all` when searching by phrase, and `equipment` when browsing without one.
- */
 export const effectiveScope = (
   search: Pick<ItemsSearch, "query" | "scope" | "types">,
 ): ItemSearchScope => {
@@ -81,10 +68,6 @@ type SortOption = (typeof SORT_OPTIONS)[number];
 const isSortOption = (value: string): value is SortOption =>
   SORT_OPTIONS.some((option) => option === value);
 
-/**
- * The chosen sort, or relevance for a query and the highest level without
- * one: with no words to match, every item is equally relevant.
- */
 export const effectiveSort = (
   search: Pick<ItemsSearch, "query" | "sort">,
 ): SortOption => {
@@ -93,7 +76,6 @@ export const effectiveSort = (
   return search.query.trim() ? "relevance" : "lvl:desc";
 };
 
-/** Bosses an item can come from, strongest first. */
 export const BOSS_OPTIONS = [
   "TITAN",
   "COLOSSUS",
@@ -103,7 +85,6 @@ export const BOSS_OPTIONS = [
   "ELITE2",
 ] as const;
 
-/** Stats a search can require, as the public catalog accepts them. */
 export const STAT_OPTIONS = [
   "crit",
   "evade",
@@ -118,10 +99,6 @@ export const STAT_OPTIONS = [
   "energybon",
 ] as const;
 
-/**
- * Whether event items show: all of them, none (`exclude`) or only them
- * (`only`). Event items carry the `etiquette` stat that names their events.
- */
 export const EVENT_OPTIONS = ["exclude", "only"] as const;
 
 type EventOption = (typeof EVENT_OPTIONS)[number];
@@ -181,17 +158,12 @@ export function validateItemsSearch(search: {
   };
 }
 
-/**
- * A level the address bar holds: the router reads `?minLevel=200` as a
- * number, and links written before levels were numbers hold `"200"`.
- */
 export const readLevel = (value: string) => {
   const level = Number.parseInt(value.replaceAll('"', ""), 10);
 
   return Number.isInteger(level) && level > 0 ? level : undefined;
 };
 
-/** The public catalog filters of a search; a slot adds the types it holds. */
 export const toCatalogParams = (
   search: ItemsSearch,
 ): CatalogControllerGetItemsParams => {

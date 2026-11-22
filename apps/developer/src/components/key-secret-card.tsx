@@ -9,7 +9,6 @@ import {
 import { useEffect, useState, type RefObject } from "react";
 import { portalText as t } from "@/lib/translations";
 
-/** The new key's secret, shown once; its heading takes focus as it appears. */
 export function KeySecretCard({
   secret,
   headingRef,

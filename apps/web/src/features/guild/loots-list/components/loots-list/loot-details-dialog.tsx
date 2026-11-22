@@ -108,7 +108,6 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
               </MetaItem>
             </div>
           </div>
-          {/* Like, more actions and close share one row of 32px controls. */}
           <div className="flex shrink-0 items-center gap-1">
             <LootLikeButton loot={loot} appearance="button" />
             {canManageLoots && (
@@ -134,7 +133,6 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
 };
 
 type LootDetailsDialogProps = {
-  /** Shows the player's loots in place; without it the dialog navigates to the loot list. */
   onShowPlayerLoots?: (playerName: string) => void;
 };
 
@@ -196,7 +194,6 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
       );
     }
 
-    // Overlays still need an accessible name while the loot is not loaded.
     const hiddenTitle = (
       <Title className="sr-only">{t("loots.details.title")}</Title>
     );
@@ -254,11 +251,9 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeLootDetails()}>
       <DialogContent
-        // Under an item's draw the loot steps back, so the draw reads as on top.
         className="flex max-h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border-border bg-background p-0 transition-[scale,filter] duration-200 ease-out data-nested-dialog-open:scale-[0.97] data-nested-dialog-open:brightness-50 motion-reduce:transition-none sm:max-w-3xl"
         aria-describedby={undefined}
         initialFocus={false}
-        // The header draws its own close button beside like and more actions.
         showCloseButton={false}
       >
         {renderContent(

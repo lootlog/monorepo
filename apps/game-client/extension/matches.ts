@@ -5,7 +5,6 @@ export const gameMatches = [
   "https://*.margonem.com/*",
 ];
 
-/** Margonem subdomains that host no game world. */
 export const nonGameSubdomains = [
   "www",
   "new",

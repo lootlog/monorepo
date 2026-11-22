@@ -14,11 +14,6 @@ import {
 } from "#src/reports/reports.service";
 import { CatalogApi } from "../catalog-api.js";
 
-/**
- * Runs a report operation for the signed-in User the edge identified. A
- * service holding the catalog token reads the catalog but is nobody, so it
- * cannot report.
- */
 const asCaller = <A, E>(
   operation: (
     reports: ReportsModule,

@@ -7,10 +7,6 @@ import { useTranslation } from "react-i18next";
 import { LootLikeButton } from "@/features/guild/loots-list/components/loots-list/loot-like-button";
 import type { Loot } from "@/lib/loots/loot-types";
 
-/**
- * Keeps the current page and its filters and opens the loot details dialog
- * over it. The router parses search params as strings (see `App.tsx`).
- */
 const renderLootDetailsLink = (lootId: number) => (
   <Link
     to="."
@@ -46,7 +42,6 @@ export const LootHeaderActions = ({ loot }: { loot: Loot }) => {
       <ChevronLink
         render={renderLootDetailsLink(lootId)}
         aria-label={t("loots.list.details")}
-        // On phones only the chevron shows; keep a 32px target behind it.
         className="max-sm:min-w-8 max-sm:justify-end"
       >
         <span className="max-sm:sr-only">{t("loots.list.details")}</span>

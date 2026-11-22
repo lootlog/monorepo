@@ -27,8 +27,6 @@ assert.doesNotMatch(
   "root redirect uses the shared asset namespace",
 );
 
-// Paths that pages under `/docs` request on the shared `dev.lootlog.pl` host;
-// the rest of the artifact is served only on `docs.lootlog.pl`.
 const splitterPaths = ["/api/search"];
 
 const sitemap = await readFile(

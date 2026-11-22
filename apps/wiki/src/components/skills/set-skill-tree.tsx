@@ -24,17 +24,11 @@ const Notice = ({ children }: { children: string }) => (
   </p>
 );
 
-/**
- * The set's skills as the game's skill window hands them out: points by the
- * character's level, tiers that open with the level and spent points, and
- * each skill's rank.
- */
 export function SetSkillTree() {
   const { set, setSkillRank, resetSkills } = useEquipmentSet();
   const { data: tree, isPending } = useSkillTree(set.profession);
   const weapons = wornSkillWeapons(useWornItems());
 
-  // The skill whose panel is open, and a rank its slider only previews.
   const [chosen, setChosen] = useState<{ id: number; preview?: number }>();
 
   const spent = tree ? spentSkillPoints(tree, set.skills) : 0;

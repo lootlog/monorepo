@@ -38,7 +38,6 @@ export class MembersData extends Context.Service<
       MemberWithRoles | null,
       MembersOperationError | ReauthenticationRequired
     >;
-    /** The stored member and its roles, without contacting Discord. */
     readonly findStoredMember: (
       discordId: string,
       guildId: string,

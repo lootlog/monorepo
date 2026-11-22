@@ -89,36 +89,27 @@ const groupPresence = <TValue>(
   return grouped;
 };
 
-/** Server events this client consumes itself instead of forwarding. */
 type ConsumedEventType =
   | "session.joined"
   | "permissions.updated"
   | "presence.delta";
 
-/** A joined session and what changed in its access since the previous one. */
 export type GatewayJoin = {
   readonly guildIds: readonly string[];
   readonly accessPolicyChanges: readonly AccessPolicyChange[];
-  /** Whether listeners recover events the page's initial reads missed. */
   readonly recover: boolean;
 };
 
-/** A new access policy; `accessPolicyChanges` is unknown without a baseline. */
 export type GatewayAccessUpdate = {
   readonly organizationIds: readonly string[];
   readonly accessPolicyChanges?: readonly AccessPolicyChange[];
 };
 
-/**
- * What GatewayClient listeners hear: every other server event under its
- * protocol type, and the events of the connection itself.
- */
 export type GatewayClientEvents = {
   readonly [
     Type in Exclude<ServerEvent["type"], ConsumedEventType>
   ]: ServerEventPayload<Type>;
 } & {
-  /** Follows the transport. */
   readonly connect: undefined;
   readonly disconnect: undefined;
   readonly join: GatewayJoin;
@@ -133,8 +124,6 @@ type GatewayClientListener<Event extends GatewayClientEvent> = (
   payload: GatewayClientEvents[Event],
 ) => void;
 
-// Production joins complete 150–250 ms after the first connect. A slower first
-// join may follow events that the page's initial HTTP reads could not include.
 const FRESH_JOIN_WINDOW_MS = 2_000;
 
 export class GatewayClient {
@@ -150,7 +139,6 @@ export class GatewayClient {
   private firstConnectAt: number | undefined;
 
   constructor() {
-    // GatewayProvider owns joins after current user and Organization data are ready.
     this.realtime.setReconnectHandler(async () => {});
     this.realtime.subscribe((event) => this.handleServerEvent(event));
     this.realtime.subscribeState((state) => {
@@ -198,7 +186,6 @@ export class GatewayClient {
     this.listeners.clear();
   }
 
-  /** Joins the signed-in user's Lootlogs; `join` follows once it succeeds. */
   join(): void {
     void this.realtime
       .join({ features: [KILL_STATS_FEATURE] })
@@ -231,22 +218,16 @@ export class GatewayClient {
     const previous = this.accessPolicy;
     this.accessPolicy = next;
 
-    // Without a baseline, such as the empty update sent before a join is
-    // rejected, the changes are unknown and may revoke cached data.
     return previous && diffAccessPolicies(previous, next);
   }
 
   private handleServerEvent(event: ServerEvent): void {
     if (event.type === "session.joined") {
-      // Listeners recover missed events unless this join subscribed right
-      // after the page's initial HTTP reads.
       const recover =
         this.hasJoined ||
         this.firstConnectAt === undefined ||
         Date.now() - this.firstConnectAt > FRESH_JOIN_WINDOW_MS;
 
-      // The first join's snapshot describes the access the page's HTTP data
-      // was loaded under.
       const accessPolicyChanges =
         this.updateAccessPolicy(event.data.accessPolicy) ?? [];
 

@@ -58,7 +58,6 @@ const applyDerivedStats = (
         : 0;
     warrior.legbons = getLegendaryTotal(warrior);
 
-    // Margonem reports honor points unsigned; the outcome gives the sign.
     const isWinning = warrior.team === outcome.winningTeam;
     const isLosing = warrior.team === outcome.losingTeam;
 
@@ -69,7 +68,6 @@ const applyDerivedStats = (
 };
 
 export class BattleProcessor {
-  /** Statistics mode skips timeline diagnostics while preserving persisted combat results. */
   constructor(private readonly mode: "full" | "statistics" = "full") {}
 
   processBattle(battleData: BattlePayload): BattleAnalysis {
@@ -97,7 +95,6 @@ export class BattleProcessor {
     };
   }
 
-  /** Legacy battles stored only their parsed rows and warrior snapshots. */
   processParsedBattle(battleData: ParsedBattlePayload): BattleAnalysis {
     const roster = new WarriorRoster();
 

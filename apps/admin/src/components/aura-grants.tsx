@@ -19,10 +19,6 @@ function GrantBadge({ granted }: { granted: boolean }) {
   );
 }
 
-/**
- * What the User who plays one Margonem account may choose, with the ways to
- * grant each aura and to take every grant back.
- */
 export function AuraGrants({
   gameAccountId,
   grants,

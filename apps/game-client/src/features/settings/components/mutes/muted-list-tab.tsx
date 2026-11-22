@@ -16,14 +16,11 @@ type MutedListTabProps<TItem> = {
   controlId: SettingsControlId;
   title: string;
   searchPlaceholder: string;
-  /** Shown when nothing is muted at all. */
   emptyLabel: string;
-  /** Shown when muted entries exist but none matches the search. */
   noResultsLabel: string;
   isReady: boolean;
   items: readonly TItem[];
   getKey: (item: TItem) => string;
-  /** Sort key and the name in the remove button's label. */
   getName: (item: TItem) => string;
   getSearchValues: (item: TItem) => readonly string[];
   renderLeading: (item: TItem) => ReactNode;
@@ -31,7 +28,6 @@ type MutedListTabProps<TItem> = {
   onRemove: (item: TItem) => void;
 };
 
-/** Case-insensitive substring match of a mutes list query against an entry. */
 const matchesMuteSearch = (query: string, values: readonly string[]) => {
   const normalizedQuery = normalizeSearchText(query);
 
@@ -41,7 +37,6 @@ const matchesMuteSearch = (query: string, values: readonly string[]) => {
   );
 };
 
-/** One searchable list of muted entries, each with a remove button. */
 export const MutedListTab = <TItem,>({
   controlId,
   title,

@@ -1,7 +1,6 @@
 import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { Option, Schema } from "effect";
 
-/** NPC groups a reader can hide from the activity feed. */
 export const ACTIVITY_FEED_NPC_CATEGORIES = [
   "ELITE2",
   "HERO",
@@ -37,7 +36,6 @@ export const activityFeedNpcCategory = (
 ): ActivityFeedNpcCategory =>
   isNpcType(npcType) ? CATEGORY_BY_NPC_TYPE[npcType] : "OTHER";
 
-/** Every stored NPC type that belongs to one of the given categories. */
 export const activityFeedNpcTypes = (
   categories: ReadonlyArray<ActivityFeedNpcCategory>,
 ): NpcTypeEnum[] =>
@@ -45,12 +43,6 @@ export const activityFeedNpcTypes = (
     categories.includes(CATEGORY_BY_NPC_TYPE[type]),
   );
 
-/**
- * The Game client reports a kill and its loot as two submissions without a
- * shared identifier. A loot belongs to the kill of its strongest NPC on the
- * same world when it is recorded inside this window around that kill; party
- * loot distribution can finish a while after the fight.
- */
 export const ACTIVITY_FEED_LOOT_BEFORE_KILL_MS = 30_000;
 
 export const ACTIVITY_FEED_LOOT_AFTER_KILL_MS = 120_000;
@@ -61,7 +53,6 @@ type FeedOccurrence = {
   readonly occurredAt: number;
 };
 
-/** Distance used to pick the closest kill, or undefined when they are unrelated. */
 export const lootDistanceFromKill = (
   kill: FeedOccurrence,
   loot: FeedOccurrence,
@@ -79,7 +70,6 @@ export const lootDistanceFromKill = (
   return Math.abs(offset);
 };
 
-/** The reader's feed preferences, stored under `general.activityFeed`. */
 const ActivityFeedSettingsSchema = Schema.Struct({
   excludedGuildIds: Schema.Array(Schema.String),
   excludedNpcCategories: Schema.Array(ActivityFeedNpcCategorySchema),
@@ -96,7 +86,6 @@ export const DEFAULT_ACTIVITY_FEED_SETTINGS: ActivityFeedSettings = {
   paused: false,
 };
 
-/** Parses resolved `general.activityFeed` settings; defaults until they load. */
 export const parseActivityFeedSettings = (
   value: unknown,
 ): ActivityFeedSettings =>

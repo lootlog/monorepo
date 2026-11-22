@@ -17,7 +17,6 @@ const FAILED_PRESENTATION = {
   className: "text-destructive",
 } as const;
 
-/** How the rule's latest delivery ended, and when. */
 export const NotificationLastDelivery = ({ job }: { job: HistoryJob }) => {
   const { t } = useTranslation();
 

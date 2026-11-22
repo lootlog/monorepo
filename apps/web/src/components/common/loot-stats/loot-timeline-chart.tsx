@@ -5,7 +5,6 @@ import {
   ChartTooltipContent,
 } from "@lootlog/ui/components/chart";
 import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
-// Loaded on demand by LootStats; Recharts primitives must share this chart boundary.
 // oxlint-disable-next-line react-doctor/prefer-dynamic-import
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
@@ -19,8 +18,6 @@ import {
   formatStatisticsHour,
 } from "@/components/common/kill-analytics/format-statistics-date";
 
-// Hourly points are instants shown in Polish time; daily and weekly points are
-// the Polish calendar day written as UTC midnight, so they format in UTC.
 const tooltipDayFormatter = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
   timeZone: "UTC",
   weekday: "short",
@@ -39,7 +36,6 @@ const tooltipHourFormatter = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
 
 type LootTimelineChartProps = {
   data?: LootStatsResponseDtoOutputTimelineItem[];
-  /** Points are hours rather than days or weeks. */
   hourly?: boolean;
   isLoading?: boolean;
 };

@@ -24,7 +24,6 @@ const MAX_PARTY_LEVEL = 500;
 
 const MAX_DESCRIPTION_LENGTH = 200;
 
-/** An empty level input stays `""`; anything else must be a level in range. */
 const LevelInput = Schema.Union([
   Schema.Literal(""),
   Schema.FiniteFromString.check(

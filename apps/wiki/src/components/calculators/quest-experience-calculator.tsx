@@ -10,7 +10,6 @@ import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 const BONUS_LIMIT = { min: 0, max: 1000 };
 
-/** A quest's experience with a blessing and a clan bonus. */
 export function QuestExperienceCalculator() {
   const [experience, setExperience] = useState("");
   const [blessing, setBlessing] = useState("0");

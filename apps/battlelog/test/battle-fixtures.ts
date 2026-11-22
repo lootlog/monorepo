@@ -158,10 +158,6 @@ export const unusedRedisStore = {
   zremrangebyscore: unexpectedRedisOperation,
 } satisfies RedisStore;
 
-/**
- * Fixtures insert warriors directly; this adds the filter rows a stored
- * battle writes alongside them.
- */
 export const SYNC_BATTLE_WARRIOR_FILTERS_SQL = `
   INSERT INTO battle_warrior_filters ("userId", "battleId", "originalId", "name", "lvl", "ph", "team")
   SELECT b."userId", w."battleId", w."originalId", w."name", w."lvl", w."ph", w."team"

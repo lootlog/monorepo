@@ -56,7 +56,6 @@ export const GeneralForm = () => {
       publicStatsCardEnabled: false,
       lootDrawExcludedNpcTypes: [],
     },
-    // A refetch updates untouched fields and keeps the unsaved edits.
     values: guild && {
       vanityUrl: guild.vanityUrl ?? "",
       publicStatsCardEnabled: guild.publicStatsCardEnabled,
@@ -116,7 +115,6 @@ export const GeneralForm = () => {
 
   return (
     <Form {...form}>
-      {/* Room below the last section for the docked save bar. */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="pb-24">
         <BandSection
           id="settings-vanity-url"

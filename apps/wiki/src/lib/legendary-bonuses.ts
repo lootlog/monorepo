@@ -18,7 +18,6 @@ import {
 import { sortBy } from "es-toolkit";
 import { LEGENDARY_BONUS_NAMES } from "@lootlog/ui/components/item-stat-utils";
 
-/** What each legendary bonus does, drawn as one icon. */
 const LEGENDARY_BONUS_ICONS = new Map(
   Object.entries({
     anguish: HeartCrack,
@@ -39,35 +38,27 @@ const LEGENDARY_BONUS_ICONS = new Map(
   }),
 );
 
-/** The icon drawn for a legendary bonus. */
 export const legendaryBonusIcon = (name: string) =>
   LEGENDARY_BONUS_ICONS.get(name) ?? Sparkles;
 
-// Bonuses players no longer search for, left out of the filters.
 const UNSEARCHED_BONUSES = new Set(["pushback", "resgain"]);
 
-// Bonuses Margonem has announced but no item carries yet.
 const UPCOMING_BONUSES = new Set(["frenzy", "retaliation"]);
 
-/** Every legendary bonus with its icon, as item cards name them. */
 const LEGENDARY_BONUSES = LEGENDARY_BONUS_NAMES.map((name) => ({
   name,
   icon: legendaryBonusIcon(name),
   isUpcoming: UPCOMING_BONUSES.has(name),
 }));
 
-/** The bonuses a search offers; upcoming ones come last, locked. */
 export const SEARCHABLE_LEGENDARY_BONUSES = sortBy(
   LEGENDARY_BONUSES.filter(({ name }) => !UNSEARCHED_BONUSES.has(name)),
   [({ isUpcoming }) => isUpcoming],
 );
 
-// `legbon` holds the bonus and the level it scales with, `verycrit,200`; a
-// symbol in the item's socket gives it the same way.
 const LEGENDARY_BONUS_STAT =
   /(?:^|;)(?:legbon|socket_injection_legbon|socket_fleeting_legbon)=([^,;]+)/;
 
-/** The item's legendary bonus, its own or its socket's; unknown ones read as none. */
 export const findLegendaryBonus = (stat: string) => {
   const name = LEGENDARY_BONUS_STAT.exec(stat)?.[1];
 

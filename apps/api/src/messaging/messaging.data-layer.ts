@@ -53,8 +53,6 @@ export const NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS = 5;
 export const buildNotificationRateLimitKey = (userId: string) =>
   `messaging:notification-rate:${userId}`;
 
-// Every answer pushes to the Lootlogs and messages the reporter in game, so
-// toggling it is limited apart from sending notifications.
 const buildGoingRateLimitKey = (userId: string) =>
   `messaging:notification-going-rate:${userId}`;
 
@@ -65,15 +63,12 @@ const RATE_LIMIT_SCRIPT = slidingWindowRateLimitScript({
 
 const NotificationMetadataSchema = Schema.Struct({
   discordId: Schema.String,
-  // The reporter's User, told about going answers to an NPC notification.
   userId: Schema.optionalKey(Schema.String),
   guildIds: Schema.Array(Schema.String),
   createdAt: Schema.String,
   world: Schema.optionalKey(Schema.String),
   npcName: Schema.optionalKey(Schema.String),
-  // The NPC's game id, which joins going answers across reports of one NPC.
   npcId: Schema.optionalKey(Schema.Number),
-  // The routing fields of an NPC notification, which decide who may see it.
   npc: Schema.optionalKey(
     Schema.Struct({ ...NpcRoutingDataSchema.fields, lvl: Schema.Number }),
   ),
@@ -88,7 +83,6 @@ const NotificationMetadataJson = Schema.fromJsonString(
 const goingKey = (notificationId: string, guildId: string) =>
   `notification:${notificationId}:going:${guildId}`;
 
-// Adds or removes one player and returns everyone still going.
 const UPDATE_GOING_SCRIPT = `
 if ARGV[1] == "1" then
   redis.call("hset", KEYS[1], ARGV[2], ARGV[3])
@@ -109,7 +103,6 @@ const decodeGoingPlayer = Schema.decodeUnknownOption(
   Schema.fromJsonString(NotificationGoingPlayerSchema),
 );
 
-// An entry that no longer decodes is skipped rather than failing the answer.
 const parseGoingPlayers = (
   values: ReadonlyArray<string>,
 ): NotificationGoingPlayer[] =>
@@ -126,7 +119,6 @@ export interface MessagingRedis {
     value: string,
     ttl: number,
   ) => Effect.Effect<void, RedisError>;
-  /** Resolves with the script's untyped reply; the caller decodes it. */
   readonly eval: (
     script: string,
     keys: ReadonlyArray<string>,
@@ -301,8 +293,6 @@ export const makeMessagingDataLayer = (
                   );
                 }
 
-                // The request schema limits a gathering to one Lootlog; it
-                // must never reach a second one.
                 const [guildId] = guildIds;
 
                 if (guildIds.length !== 1 || guildId === undefined) {
@@ -355,8 +345,6 @@ export const makeMessagingDataLayer = (
               );
               const { guildIds: _guildIds, heroTracker, ...rest } = data;
 
-              // Recipients count an open entrance down on the server clock,
-              // not the reporter's.
               const base = {
                 ...rest,
                 ...(heroTracker && {
@@ -501,8 +489,6 @@ export const makeMessagingDataLayer = (
                 ? { tier: getNpcRoutingTier(npc), npcLevel: npc.lvl }
                 : null;
 
-              // Only the Lootlogs where the caller could read the notification
-              // learn the answer; the others that received it never do.
               const guildIds = stored.guildIds.filter((guildId) => {
                 const guild = access.get(guildId);
 

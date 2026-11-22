@@ -26,8 +26,6 @@ type BattlePaginationDatabase = Pick<DrizzleDatabase, "select" | "execute"> & {
 
 const CURSOR_PREFIXES = { next: "n", previous: "p" } as const;
 
-// The cursor is opaque to clients: a direction and the battle ID that bounds
-// the page, exclusive.
 const encodeCursor = (direction: CursorDirection, id: string): string =>
   Buffer.from(`${CURSOR_PREFIXES[direction]}:${id}`).toString("base64url");
 
@@ -56,7 +54,6 @@ export const makeBattlePagination = (
     const { size = 20, cursor, includeTotal } = options;
     const decodedCursor = cursor ? decodeCursor(cursor) : null;
 
-    // A malformed cursor fails before the read takes a permit and a transaction.
     const validateCursor =
       cursor && !decodedCursor
         ? Effect.fail(new InvalidRequestError("Invalid pagination cursor"))
@@ -65,9 +62,6 @@ export const makeBattlePagination = (
     const readPage = Effect.gen(function* () {
       const startTime = yield* Clock.currentTimeMillis;
 
-      // A previous page reads towards the start of the list from its cursor,
-      // then restores the list order. One extra row reports whether more
-      // battles lie in the direction read.
       const backward = decodedCursor?.direction === "previous";
       const descending = (options.sortOrder !== "asc") !== backward;
       const order = descending ? "desc" : "asc";
@@ -107,8 +101,6 @@ export const makeBattlePagination = (
       const countFinishedAt = yield* Clock.currentTimeMillis;
       const countTime = countFinishedAt - countStartTime;
 
-      // Absent values are omitted, not undefined: the response contract
-      // declares optional keys and rejects an undefined value.
       const pagination: CursorPagination = {
         size,
         hasNext,

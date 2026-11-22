@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import type { ItemsSearch } from "@/lib/items-search";
 
-/** The NPC search with no filters, which links extend with their own. */
 export const EMPTY_NPCS_SEARCH: NpcsSearch = {
   query: "",
   types: "",
@@ -23,7 +22,6 @@ export const EMPTY_NPCS_SEARCH: NpcsSearch = {
   sort: "",
 };
 
-/** The item search with no filters, which links extend with their own. */
 export const EMPTY_ITEMS_SEARCH: ItemsSearch = {
   query: "",
   scope: "",
@@ -41,11 +39,6 @@ export const EMPTY_ITEMS_SEARCH: ItemsSearch = {
   sort: "",
 };
 
-/**
- * Every wiki section, in sidebar order; links open a section's empty search.
- * The header groups the sections into the catalog the wiki browses and the
- * tools that work on its items.
- */
 export const WIKI_NAVIGATION = [
   {
     link: linkOptions({ to: "/" }),
@@ -106,7 +99,6 @@ export const WIKI_NAVIGATION = [
   },
 ];
 
-/** The section a path belongs to. */
 export const findWikiSection = (pathname: string) =>
   WIKI_NAVIGATION.find(({ link }) =>
     link.to === "/" ? pathname === "/" : pathname.startsWith(link.to),

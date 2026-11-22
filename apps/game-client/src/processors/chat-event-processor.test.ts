@@ -91,7 +91,6 @@ describe("ChatEventProcessor", () => {
     await vi.waitFor(() =>
       expect(useLogsStore.getState().actions[0]?.status).toBe("success"),
     );
-    // Let the processor's response handler run after the logged success.
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(useLootStore.getState().lastLootId).toBe(55);
   });

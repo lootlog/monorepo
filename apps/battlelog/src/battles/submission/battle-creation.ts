@@ -44,7 +44,6 @@ type BattleCreationDatabase = Pick<
   };
 };
 
-/** Stores a submitted battle once, however often the client retries it. */
 export const makeBattleCreation = (
   drizzle: BattleCreationDatabase,
   battleAnalyticsService: Pick<BattleAnalytics, "invalidateAnalyticsCache">,
@@ -181,8 +180,6 @@ export const makeBattleCreation = (
         (w) => w.originalId === data.characterId,
       );
 
-      // The character upsert logs and absorbs its own failures, so it never
-      // aborts the battle transaction it runs beside.
       const [, battle] = yield* Effect.all(
         [
           userWarrior
@@ -200,8 +197,6 @@ export const makeBattleCreation = (
                 const now = yield* Clock.currentTimeMillis;
                 const battleId = createBattleId(now);
 
-                // The submission row claims the ID first; a concurrent retry
-                // that loses the claim reads the winner's battle instead.
                 if (data.submissionId) {
                   const [claimed] = yield* tx
                     .insert(battleSubmissions)

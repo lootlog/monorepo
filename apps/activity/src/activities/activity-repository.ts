@@ -31,7 +31,6 @@ import {
   Option,
   Schema,
 } from "effect";
-import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 import {
   ActivityDatabase,
@@ -51,13 +50,11 @@ export class ActivityNotFound extends TaggedErrorClass<ActivityNotFound>()(
   { id: Schema.String },
 ) {}
 
-/** A stored activity with its actor as it was when the activity happened. */
 export type ActivityRecord = ReturnType<typeof mapActivityRow>;
 
 export type MemberActivityStatsRecord = typeof memberActivityStats.$inferSelect;
 
 export interface ActivityRepositoryValue {
-  /** Stores the activity once per idempotency key and answers with that row. */
   readonly create: (
     dto: CreateActivity,
   ) => Effect.Effect<
@@ -130,25 +127,12 @@ const mapActivityRow = ({
   actorSnapshot: actorSnapshot ?? undefined,
 });
 
-// A JavaScript Date keeps milliseconds and "createdAt" keeps microseconds, so
-// the cursor reads the timestamp as PostgreSQL text.
 const CURSOR_TIMESTAMP_FORMAT = 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"';
 
 const cursorCreatedAt = drizzleSql<string>`to_char(${activities.createdAt} AT TIME ZONE 'UTC', ${CURSOR_TIMESTAMP_FORMAT})`;
 
-// How far a Gateway clock may run ahead of the database before a redelivery
-// can be stored twice. A day costs nothing: chunks that recent are never
-// compressed, so the lookup stays on the B-tree index.
 const IDEMPOTENCY_CLOCK_SKEW_MS = 86_400_000;
 
-/**
- * The earliest "createdAt" an earlier delivery of this key can have. The
- * Gateway ends the key with its publication time in milliseconds and the row is
- * stamped when it is inserted, so it cannot be older than the key by more than
- * the clock skew. The bound keeps the lookup out of older chunks, which are
- * compressed and have no index on the key. A key without that suffix is looked
- * up in every chunk.
- */
 const idempotencyLowerBound = (idempotencyKey: string, now: number) => {
   const publishedAt = /_(\d{13})$/.exec(idempotencyKey)?.[1];
 
@@ -180,7 +164,6 @@ export class ActivityRepository extends Context.Service<
           snapshot.lvl === undefined ||
           snapshot.prof === undefined
         )
-          // decodeCreateActivity rejects such a snapshot before it gets here.
           return yield* Effect.die(
             new Error("Actor snapshot is missing a database-required field"),
           );
@@ -224,8 +207,6 @@ export class ActivityRepository extends Context.Service<
           })
           .returning({ id: activityActorSnapshots.id });
 
-        // A concurrent insert may commit after our first read. A separate query
-        // sees that winner even when it was invisible to the INSERT's snapshot.
         const row = rows[0] ?? (yield* findExisting())[0];
 
         if (!row)
@@ -301,7 +282,6 @@ export class ActivityRepository extends Context.Service<
 
             const sessionId = detailsString(dto, "sessionId");
 
-            // decodeCreateActivity requires it for every activity type.
             if (!sessionId)
               return yield* Effect.die(
                 new Error("Activity session identifier is missing"),
@@ -436,7 +416,6 @@ export class ActivityRepository extends Context.Service<
             ? undefined
             : Option.getOrUndefined(parseActivityCursor(query.cursor));
 
-        // The query schema admits only cursors that parse.
         if (query.cursor !== undefined && position === undefined)
           return yield* Effect.die("Activity cursor did not parse");
 
@@ -535,10 +514,6 @@ export class ActivityRepository extends Context.Service<
         id: string,
         guildId: string,
       ) {
-        // One statement, so the stored microsecond "createdAt" never travels
-        // through a millisecond Date. The Organization is the segment key of
-        // compressed chunks: naming it decompresses one batch instead of
-        // probing every Organization's.
         const deleted = yield* db
           .delete(activities)
           .where(and(eq(activities.guildId, guildId), eq(activities.id, id)))

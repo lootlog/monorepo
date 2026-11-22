@@ -22,10 +22,6 @@ const getPreferencesByAccount = memoizeByDocuments(
   () => new Map<string, UserGameAccountPreferences>(),
 );
 
-/**
- * Projects the account-scoped preference documents into the shape the
- * notifications, detector, map ping and air tag features consume.
- */
 export const getGameAccountPreferences = (
   documents: SettingsDocuments | undefined,
   accountId: string,
@@ -94,10 +90,6 @@ export const useCurrentGameAccountPreferences = () => {
   };
 };
 
-/**
- * Writes account-scoped preference patches. Nested partial records merge
- * on the server, so a payload only carries the fields that changed.
- */
 export const useUpdateGameAccountPreferences = () => {
   const mutate = (payload: UpdateUserGameAccountPreferencesPayload) => {
     const gameDataSet: Pick<

@@ -340,8 +340,6 @@ describe("Discord delivery", () => {
   });
 
   test("retries a send only when Discord certainly did not apply it", async () => {
-    // A 5xx after the POST may follow a message Discord already created, and
-    // the API would post it again on retry.
     const ambiguous = await deliverChannelMessage({
       users: { fetch: mock() },
       channels: {

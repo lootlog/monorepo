@@ -1,4 +1,3 @@
-/** Transport schemas owned by the catalog reports HTTP module. */
 import * as Schema from "effect/Schema";
 import { GameVersionSchema } from "@lootlog/schema/game-version";
 import {
@@ -46,7 +45,6 @@ export const CatalogReportStatus = Schema.Literals(
 
 export type CatalogReportStatus = typeof CatalogReportStatus.Type;
 
-/** The longest comment a report keeps. */
 const CATALOG_REPORT_COMMENT_MAX_LENGTH = 500;
 
 const CatalogReportComment = Schema.String.check(

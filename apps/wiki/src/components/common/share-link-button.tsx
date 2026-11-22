@@ -5,17 +5,13 @@ import { cn } from "cn";
 import { t } from "@/i18n/messages";
 
 type ShareLinkButtonProps = {
-  /** The page the link opens. */
   path: string;
-  /** The query parameter that carries what is shared, and its value. */
   param: string;
   value: string;
-  /** An icon alone, for a panel's header. */
   compact?: boolean;
   className?: string;
 };
 
-/** Copies a link that opens what the player built, saying whether it worked. */
 export function ShareLinkButton({
   path,
   param,

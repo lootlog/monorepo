@@ -4,15 +4,10 @@ import { cn } from "cn";
 
 export const inputVariantClasses = {
   default: "ll:rounded-sm ll:border ll:border-border",
-  /** Search and toolbar fields: the input border on a translucent surface. */
   filled: "ll:rounded-sm ll:border ll:border-input ll:dark:bg-input/30",
   borderless: "ll:rounded-none ll:border-0 ll:shadow-none",
 };
 
-/**
- * The 1px top padding is an optical correction: Chrome rounds the Arimo
- * baseline up, so glyphs centered by line-height alone sit a pixel high.
- */
 const inputSizeClasses = {
   sm: "ll:h-7 ll:px-1.5 ll:pt-px ll:leading-5",
   md: "ll:h-8 ll:px-2 ll:pt-px ll:leading-6",
@@ -40,9 +35,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         }}
         className={cn(
           "ll:placeholder:text-muted-foreground ll:[&::selection]:bg-primary ll:[&::selection]:text-primary-foreground ll:flex ll:w-full ll:min-w-0 ll:bg-transparent ll:pb-0 ll:text-[13px] ll:text-white ll:transition-[color,box-shadow] ll:outline-none ll:disabled:pointer-events-none ll:disabled:cursor-not-allowed ll:disabled:opacity-50",
-          // After the font size: tailwind-merge drops a leading utility that
-          // precedes a text size, and the explicit line-height is what keeps
-          // the text centered in the fixed-height box.
           inputSizeClasses[size],
           inputVariantClasses[variant],
           variant !== "borderless" &&

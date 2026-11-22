@@ -42,7 +42,6 @@ export const noticeText: Record<UserAction["action"], string> = {
   "revoke-api-key": "Usunięto klucz API.",
 };
 
-/** The names players see in the Game client's aura settings. */
 export const personalAuraText: Record<PersonalCharacterAuraId, string> = {
   skyborne: "Podniebie",
   joker: "Joker",

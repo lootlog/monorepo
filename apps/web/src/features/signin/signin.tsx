@@ -8,7 +8,6 @@ import { authClient } from "@/lib/auth-client";
 import { signinRedirectPath } from "@/features/signin/signin-redirect-path";
 import { useTranslation } from "react-i18next";
 
-// Better Auth redirects OAuth callback failures to errorCallbackURL?error=<code>.
 const callbackErrorMessages = new Map([
   ["email_not_found", "auth.signin.callbackErrors.emailMissing"],
   ["access_denied", "auth.signin.callbackErrors.cancelled"],

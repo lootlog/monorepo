@@ -16,18 +16,12 @@ import type { OwnHeroDetection } from "@/store/hero-sightings.store";
 
 type HeroDetectionNoticeProps = {
   detection: OwnHeroDetection;
-  /** The latest copy of every listed sighting, so claims made since show. */
   sightings: readonly HeroSightingResponseDto[];
   userId: string | undefined;
   writableGuildIds: ReadonlySet<string>;
   onDismiss: () => void;
 };
 
-/**
- * Names the hero the player's own detector just found, or the player just
- * entered by hand, and offers to claim a hero that will spawn in every
- * Organization that accepted it.
- */
 export function HeroDetectionNotice({
   detection,
   sightings,

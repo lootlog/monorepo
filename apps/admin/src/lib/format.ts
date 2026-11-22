@@ -8,11 +8,6 @@ const parts = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Warsaw",
 });
 
-/**
- * The numeric fields of a moment in Polish time. The text is assembled here
- * rather than by a locale formatter, whose wording differs between the server
- * and the browser and would break hydration.
- */
 const read = (iso: string) => {
   const fields = Object.fromEntries(
     parts.formatToParts(new Date(iso)).map(({ type, value }) => [type, value]),

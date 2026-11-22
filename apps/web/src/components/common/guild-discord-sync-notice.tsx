@@ -85,8 +85,6 @@ export const GuildDiscordSyncNotice = ({
   });
 
   return (
-    // Only the description is live: the cooldown countdown below it must not
-    // be re-announced on every tick.
     <Alert variant={variant} role={undefined}>
       <Icon />
       <AlertTitle>

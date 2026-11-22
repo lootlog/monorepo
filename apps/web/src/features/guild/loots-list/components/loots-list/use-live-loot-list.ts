@@ -77,8 +77,6 @@ const getLootPages = (loots: LootsInfiniteData | undefined) => loots?.pages;
 const hasInitialLoots = (loots: LootsInfiniteData | undefined) =>
   (loots?.pages?.[0]?.items.length ?? 0) > 0;
 
-// A fetched empty result has one empty page; a policy clear leaves no pages,
-// and a list without pages is still waiting for data.
 const hasFetchedPage = (loots: LootsInfiniteData | undefined) =>
   (loots?.pages?.length ?? 0) > 0;
 
@@ -95,7 +93,7 @@ const useStableLootCollections = (pages: LootPageResponseDto[] | undefined) => {
 };
 
 export const useLiveLootList = () => {
-  "use no memo"; // Reads a virtualizer that mutates in place; see usePageVirtualizer.
+  "use no memo";
 
   const { t } = useTranslation();
   const themedKey = useThemedKey();
@@ -110,7 +108,6 @@ export const useLiveLootList = () => {
     typeof createLootListReconciliation
   > | null>(null);
 
-  // A new filter, world or connection inherits an unfinished reconciliation.
   const pendingReconciliationRef = useRef(false);
 
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
@@ -129,7 +126,6 @@ export const useLiveLootList = () => {
 
   const queryIdentity = hashKey(queryKey);
 
-  // Reset before reconciliation checks whether this query can refresh at the top.
   useResetScrollTop({
     getScrollElement: () => scrollElement,
     resetKey: queryIdentity,
@@ -156,9 +152,6 @@ export const useLiveLootList = () => {
 
   const isScrolledToTop = useEffectEvent(scrolledToTop);
 
-  // Snapshots wait while the list is fetching, which would replace the pages
-  // they are placed in, or while the reader is away from its top. They belong
-  // to the Organization that sent them.
   const [pending, setPending] = useState<{
     organizationId?: string;
     loots: readonly Loot[];
@@ -167,8 +160,6 @@ export const useLiveLootList = () => {
   const pendingLoots =
     pending.organizationId === currentGuildId ? pending.loots : EMPTY_LOOTS;
 
-  // The cache, not this render, knows whether a fetch is about to replace the
-  // pages a loot would be placed in.
   const canPlaceLoots = () => {
     const state = queryClient.getQueryState<LootsInfiniteData>(queryKey);
 
@@ -260,7 +251,6 @@ export const useLiveLootList = () => {
         connected &&
         document.visibilityState === "visible" &&
         isScrolledToTop(),
-      // Reconciliation happens only at the top; scrolling follows fresh cursors.
       refresh: () => reconcileActiveLootLists(queryClient, guildId),
     });
 
@@ -314,7 +304,6 @@ export const useLiveLootList = () => {
     const onJoin = (payload: GatewayJoin) => {
       const restricted = restrictedOrganizations(payload.accessPolicyChanges);
 
-      // Until guilds load, currentGuildId may still be the route's alias.
       if (
         guilds &&
         currentGuildId &&
@@ -323,7 +312,6 @@ export const useLiveLootList = () => {
         restricted.push(currentGuildId);
       }
 
-      // A join right after the page's initial fetch has nothing to recover.
       if (restricted.length > 0 || payload.recover)
         revalidateAccess(restricted);
     };
@@ -367,7 +355,6 @@ export const useLiveLootList = () => {
   const { allLoots, gridRows } = useStableLootCollections(getLootPages(loots));
   const totalCount = allLoots.length;
 
-  // The list starts under the toolbar that leads the page scroller.
   const listRef = useRef<HTMLDivElement>(null);
 
   const listVirtualizer = usePageVirtualizer<HTMLDivElement>({
@@ -423,8 +410,6 @@ export const useLiveLootList = () => {
 
   const handleListChange = useEffectEvent(placePendingLoots);
 
-  // Waiting loots are placed when the reader returns to the top or a fetch
-  // settles. Placing a loot writes data manually, which never re-enters here.
   useEffect(() => {
     const target = getPageScroller(scrollElement, scrollsDocument)?.eventTarget;
     const onScroll = () => handleListChange();
@@ -464,15 +449,10 @@ export const useLiveLootList = () => {
 
   const hasLoots = hasInitialLoots(loots);
 
-  // New filters keep the previous page on screen while the next one loads;
-  // background reconciliation refetches the same key and stays silent.
   const isRefreshing = isPlaceholderData && isFetching && !isFetchingNextPage;
 
-  // A failure only replaces the list when nothing was loaded; a failed page
-  // or refresh keeps the accepted records on screen with a retry row.
   const isFailed = isError && !hasLoots;
 
-  // Only a fetched, non-placeholder empty page means there is nothing to show.
   const isEmpty =
     !isError && !isPlaceholderData && hasFetchedPage(loots) && !hasLoots;
 

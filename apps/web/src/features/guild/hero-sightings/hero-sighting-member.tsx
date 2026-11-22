@@ -12,7 +12,6 @@ type HeroSightingMemberProps = {
   className?: string;
 };
 
-/** A member by Discord name, with the character they played. */
 export const HeroSightingMember = ({
   member,
   character,

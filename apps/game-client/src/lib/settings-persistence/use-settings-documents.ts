@@ -31,7 +31,6 @@ const useSettingsDocumentsContext = () => {
   return { gameAccountId, characterId };
 };
 
-/** The resolved settings documents for the signed-in user and current character. */
 export const useSettingsDocuments = () => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
@@ -52,7 +51,6 @@ export const useSettingsDocuments = () => {
   });
 };
 
-/** Timer documents (hidden and pinned timers) of the given guilds, in one request. */
 export const useGuildTimersDocuments = (guildIds: readonly string[]) => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,

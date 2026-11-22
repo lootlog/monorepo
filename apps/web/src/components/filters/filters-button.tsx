@@ -11,16 +11,11 @@ type FiltersButtonProps = {
   onOpenFilters: () => void;
 };
 
-/**
- * Pages too narrow for their filter bar open the filters from the app's top
- * bar, as an action on the current view, with the count of active filters.
- */
 export const FiltersButton = ({
   activeFilterCount,
   onOpenFilters,
 }: FiltersButtonProps) => {
   const { t } = useTranslation();
-  // Phone bars drop control borders; their icons stand alone.
   const isMobile = useIsMobile();
 
   return (

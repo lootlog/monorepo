@@ -1,7 +1,6 @@
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import * as m from "framer-motion/m";
 
-// Drifting destruction energy blobs - dark crimson masses flowing across the screen
 export const DestructionFlow = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
 

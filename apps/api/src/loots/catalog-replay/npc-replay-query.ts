@@ -8,14 +8,7 @@ import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 
 type ReplayDatabase = Pick<ApiDatabaseValue, "$with" | "select" | "with">;
 
-/**
- * Every looted NPC revision with each world it was observed in,
- * with its latest loot, which tells the catalog the most recently observed
- * revision of each entry, as live indexing does; hash order and level do not
- * establish chronology.
- */
 export const buildNpcReplayQuery = (database: ReplayDatabase) => {
-  // Reduce repeated loot links before reading the larger snapshot records.
   const snapshotWorlds = database.$with("snapshot_worlds").as(
     database
       .select({
@@ -24,7 +17,6 @@ export const buildNpcReplayQuery = (database: ReplayDatabase) => {
         latestLootId: sql<number>`max(${lootNpcTable.lootId})`.as(
           "latest_loot_id",
         ),
-        // Epoch milliseconds; `extract` reads the stored UTC time as UTC.
         firstSeenAt:
           sql<number>`(extract(epoch from min(${lootTable.createdAt})) * 1000)::float8`.as(
             "first_seen_at",

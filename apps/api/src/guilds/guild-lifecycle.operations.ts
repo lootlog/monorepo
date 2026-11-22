@@ -42,7 +42,6 @@ export interface GuildLifecyclePorts {
     pattern: string,
   ) => Effect.Effect<void, RedisError>;
   readonly clearCacheKey: (key: string) => Effect.Effect<void, RedisError>;
-  /** Delivers member changes queued in the `MemberSyncDelivery` outbox. */
   readonly deliverMemberChanges: MemberDelivery["deliverAll"];
 }
 
@@ -61,9 +60,6 @@ export const makeGuildLifecycle = (
 ) => {
   const operation = adapterOperation("api.database");
 
-  // Owner access comes from the Organization row rather than a member role, so
-  // no member write invalidates it. Owners who are active members also queue a
-  // Gateway rebalance with the ownership change.
   const queueOwnerRebalance = (
     transaction: Transaction,
     guildId: string,
@@ -89,8 +85,6 @@ export const makeGuildLifecycle = (
       return memberIds;
     });
 
-  // The outbox makes a redelivered role event unnecessary for a change whose
-  // invalidation or publication failed after commit.
   const queueRoleHolders = (
     transaction: Transaction,
     role: { readonly id: string; readonly guildId: string },
@@ -153,8 +147,6 @@ export const makeGuildLifecycle = (
               set: {
                 name: data.name,
                 icon: data.icon,
-                // Drizzle skips undefined, so an event without a banner keeps
-                // the stored one.
                 banner: data.banner,
                 ownerId: data.ownerId,
                 active: true,
@@ -227,8 +219,6 @@ export const makeGuildLifecycle = (
             ...new Set([data.ownerId, ...(previous ? [previous.ownerId] : [])]),
           ];
 
-          // Discord replays creation for known guilds; only activation or an
-          // ownership transfer changes what an owner member may access.
           const ownerMemberIds =
             !previous?.active || previous.ownerId !== data.ownerId
               ? yield* queueOwnerRebalance(transaction, data.guildId, owners)
@@ -239,8 +229,6 @@ export const makeGuildLifecycle = (
       ),
     );
 
-    // An owner who opened Lootlog before adding the bot has a cached projection
-    // without this Organization.
     yield* invalidateOwners(guild.owners);
     yield* ports.deliverMemberChanges(guild.ownerMemberIds);
 
@@ -271,8 +259,6 @@ export const makeGuildLifecycle = (
 
           const oldGuild = rows[0] ?? null;
 
-          // The bot republishes every server whenever it starts, so a
-          // snapshot that changes nothing must not clear any cache.
           if (
             !oldGuild ||
             (oldGuild.name === data.name &&
@@ -377,8 +363,6 @@ export const makeGuildLifecycle = (
             .returning({ id: memberTable.id });
 
           const memberIds = members.map(({ id }) => id);
-          // Redelivered deletions no longer see these members as active; the
-          // committed outbox rows keep their removal retryable.
           yield* queueMemberDeliveries(transaction, memberIds, true);
           yield* transaction
             .delete(roleTable)
@@ -444,8 +428,6 @@ export const makeGuildLifecycle = (
 
     if (existingAdmin !== data.admin) roleUpdate.permissions = permissions;
 
-    // Name, color, and position edits leave every permission projection
-    // unchanged. A new role has no holders; member sync queues assignments.
     const permissionsChanged =
       existing !== null && existingAdmin !== data.admin;
 
@@ -500,8 +482,6 @@ export const makeGuildLifecycle = (
             .limit(1)
             .for("update");
 
-          // Projections omit roles without permissions, so deleting one
-          // changes nothing. Assignments cascade, so queue holders first.
           const holders =
             (roles[0]?.permissions.length ?? 0) > 0
               ? yield* queueRoleHolders(transaction, data)

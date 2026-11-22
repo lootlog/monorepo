@@ -16,9 +16,7 @@ interface EventRankingPreviewProps {
   guildId: string;
   eventId: string;
   limit?: number;
-  /** Adds the member's own place when it falls outside the leaders. */
   currentMemberId?: number;
-  /** Keeps the member's own place in view at the bottom of a scrolling rail. */
   pinViewer?: boolean;
 }
 

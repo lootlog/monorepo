@@ -110,7 +110,6 @@ export const GuildDocEditorPage = () => {
     </MetaItem>
   );
 
-  // The details close the toolbar where it has room; the editor shows on hover.
   const toolbarActions = (
     <>
       <span title={lastEdit} className="mr-2 hidden items-center gap-3 xl:flex">
@@ -175,8 +174,6 @@ export const GuildDocEditorPage = () => {
     </>
   );
 
-  // Readers get no formatting toolbar: a bar in its place says why and shows
-  // the details the toolbar would end with.
   const readerBar = !canWrite && (
     <div
       data-list-tile
@@ -189,7 +186,6 @@ export const GuildDocEditorPage = () => {
     >
       <span className="flex h-8 items-center gap-2 text-sm text-muted-foreground">
         <LockKeyhole aria-hidden="true" className="size-4 shrink-0" />
-        {/* Phones keep the lock alone, so the details fit beside it. */}
         <span className="max-sm:sr-only">{t("docs.editor.readOnly")}</span>
       </span>
       <span className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -259,7 +255,6 @@ export const GuildDocEditorPage = () => {
           cancelButtonLabel={t("common.cancel")}
           pending={deleteDocument.isPending}
           onConfirm={async () => {
-            // The move reports its own failure; keep the dialog for a retry.
             if (!(await moveDocumentToTrash())) {
               throw new Error("The document did not reach the trash.");
             }

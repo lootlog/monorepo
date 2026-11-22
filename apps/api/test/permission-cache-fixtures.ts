@@ -3,8 +3,6 @@ import { Redis } from "effect/persistence";
 import { makeRedisService } from "#src/redis/redis.service";
 import type { InternalGuildsCache } from "../src/guilds/internal-guilds-data.js";
 
-// The real RedisService owns generation and single-flight behavior. Only the
-// external driver commands and their Lua replies are simulated here.
 export const createPermissionCacheBoundary = () => {
   const values = new Map<string, string>();
   let publication: { started: () => void; wait: Promise<void> } | undefined;

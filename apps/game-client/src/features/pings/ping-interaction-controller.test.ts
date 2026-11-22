@@ -117,7 +117,6 @@ describe("PingInteractionController", () => {
     const center = controller.getSnapshot()?.visualCenter;
     expect(center?.y).toBeGreaterThan(10);
 
-    // The top tile sits above the clamped centre, i.e. below the press point.
     controller.updatePointer({ x: 300, y: (center?.y ?? 0) - 50 });
 
     expect(controller.complete(mouseIdentity())?.type).toBe("enemy");

@@ -4,7 +4,6 @@ import { getDefaultColorName } from "@/features/timers/utils/get-default-color-n
 export type TimerColorOption = {
   id: string;
   name: string;
-  /** The colour a swatch shows: the tile accent, or a custom colour's border. */
   swatchColor: string;
 };
 
@@ -19,10 +18,6 @@ type TimerColorOptionsInput = {
   legacyAppearance: boolean;
 };
 
-/**
- * Every colour a player can pick or filter by, in palette order: the visible
- * default colours with their renames and overrides, then the custom colours.
- */
 export const getTimerColorOptions = ({
   customColors,
   defaultColorNames,

@@ -9,7 +9,6 @@ export type ActivityDatabaseValue = Effect.Success<
   ReturnType<typeof makeWithDefaults>
 >;
 
-/** A statement or transaction the activity database did not complete. */
 export type ActivityDatabaseFailure = EffectDrizzleQueryError | SqlError;
 
 export class ActivityDatabase extends Context.Service<

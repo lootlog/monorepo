@@ -34,7 +34,6 @@ const feedParams = (
 type LiveFeedOptions = {
   filters: FeedFilters;
   paused: boolean;
-  /** False until the stored filters and pause state are known. */
   ready: boolean;
 };
 
@@ -59,7 +58,6 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
     | undefined
   >(undefined);
 
-  // The callback-owned timer is replaced only after cancellation and cleared on cleanup.
   // oxlint-disable-next-line react-doctor/effect-needs-cleanup -- Cleanup also removes every socket listener and invalidates pending fetches.
   useEffect(() => {
     if (!ready) return;
@@ -130,8 +128,6 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
     };
 
     const handlePermissions = (payload: GatewayAccessUpdate) => {
-      // Remove revoked organizations immediately; keep the remaining rows mounted.
-      // Discard cached and pending data from the previous policy.
       cancel();
       queryClient.removeQueries({ queryKey });
       dispatch({
@@ -142,8 +138,6 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
       permissionsChanged = true;
       revalidatingAccess = true;
       clearTimeout(accessRefreshTimer);
-      // Permission notifications can arrive in bursts. Wait for them to
-      // settle before fetching the replacement snapshot.
       accessRefreshTimer = setTimeout(() => {
         accessRefreshTimer = undefined;
         void refresh(true);
@@ -151,9 +145,7 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
     };
 
     const handleJoin = (payload: GatewayJoin) => {
-      // A join right after the initial history fetch has nothing to catch up.
       if (!payload.recover) return;
-      // Pausing live updates does not pause source-access revalidation.
       void refresh(true);
     };
 
@@ -170,7 +162,6 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
       refresh: () => {
         if (!isPaused) void refresh();
       },
-      // Filter changes are explicit, so they fetch even while paused.
       replace: () => void refresh(true),
       setPaused: (value) => {
         if (isPaused === value) return;
@@ -187,7 +178,6 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
     appliedFiltersKey.current = JSON.stringify(getFilters());
     dispatch({ type: "filters", filters: getFilters() });
 
-    // History remains available when the realtime gateway cannot join.
     void refresh();
 
     return () => {
@@ -207,7 +197,6 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
     if (appliedFiltersKey.current === filtersKey) return;
     appliedFiltersKey.current = filtersKey;
     dispatch({ type: "filters", filters: getFilters() });
-    // A new filter replaces the list even while the reader is scrolled.
     controlsRef.current?.replace();
   }, [filtersKey]);
 

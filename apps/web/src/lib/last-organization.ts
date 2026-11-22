@@ -18,29 +18,21 @@ export const rememberOrganization = (userId: string, guildId: string) => {
     if (localStorage.getItem(key) !== guildId) {
       localStorage.setItem(key, guildId);
     }
-  } catch {
-    // Remembering navigation is optional when browser storage is unavailable.
-  }
+  } catch {}
 };
 
-// Visiting the personal panel makes it the last space, so sign-in opens it.
 export const rememberPersonalPanel = (userId: string) => {
   try {
     localStorage.removeItem(storageKey(userId));
-  } catch {
-    // Remembering navigation is optional when browser storage is unavailable.
-  }
+  } catch {}
 };
 
 export const forgetLastOrganization = (userId: string, guildId: string) => {
   try {
     const key = storageKey(userId);
 
-    // Another tab may have selected a different organization during the lookup.
     if (localStorage.getItem(key) === guildId) {
       localStorage.removeItem(key);
     }
-  } catch {
-    // A storage failure must not prevent returning to the dashboard.
-  }
+  } catch {}
 };

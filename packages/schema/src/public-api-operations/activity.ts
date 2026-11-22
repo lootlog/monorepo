@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Activity service operations. */
 export const ACTIVITY_OPERATIONS = [
   {
     service: "activity",

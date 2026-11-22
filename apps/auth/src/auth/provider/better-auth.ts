@@ -43,7 +43,6 @@ const logBetterAuthEvent = (
       ? errorCode
       : undefined;
 
-  // Better Auth details may contain OAuth input or database query parameters.
   runLogEffect(
     Effect.logWithLevel(severity[level])(
       Schema.is(Schema.String)(message) && message.trim() !== ""
@@ -62,15 +61,12 @@ export const betterAuthLogger = {
 
 const OAUTH_CALLBACK_ERROR_CODE = /^[A-Za-z0-9_]{1,64}$/u;
 
-// Counts failed OAuth callbacks per Better Auth `?error=` code. The code is
-// the only logged value; profile data and query input stay out of logs.
 export const logOAuthCallbackError = createAuthMiddleware((ctx) => {
   const location =
     ctx.path === "/callback/:id" && !ctx.context.newSession
       ? ctx.context.responseHeaders?.get("location")
       : undefined;
 
-  // URL.parse cannot throw, so logging never replaces the callback redirect.
   const error = location
     ? (URL.parse(location, ctx.context.baseURL)?.searchParams.get("error") ??
       null)
@@ -169,12 +165,10 @@ export const createLootlogAuth = ({
         requireName: true,
         maximumNameLength: 80,
         enableMetadata: true,
-        // ApiKeyService owns the shared, fixed-window Redis limit.
         rateLimit: { enabled: false },
         keyExpiration: { defaultExpiresIn: null },
       }),
       jwt({
-        // Session verification does not consume JWTs; /token still issues them.
         disableSettingJwtHeader: true,
         jwt: {
           issuer: config.appUrl,
@@ -196,28 +190,14 @@ export const createLootlogAuth = ({
 
 export type LootlogAuth = ReturnType<typeof createLootlogAuth>;
 
-/**
- * Shapes a Better Auth instance into the runtime service: the resolved session
- * cookie names, and a session read that keeps the Set-Cookie headers so the
- * caller can return the refreshed cookie cache to the browser.
- */
 export const toAuthProvider = (auth: LootlogAuth) => {
   const cookies = getCookies(auth.options);
 
   return {
     ...auth,
     apiKeys: auth.api,
-    // Writes through Better Auth, so the sessions it keeps in the secondary
-    // storage follow the User row instead of serving the old one.
     accounts: {
-      /**
-       * The session behind the request's cookie, as the store holds it now.
-       * The cookie cache would keep answering for minutes after a sign-out, a
-       * ban or a revoked session.
-       */
       getFreshSession: async (headers: Headers) => {
-        // Only the cookie identifies the User here. The bearer plugin would
-        // read an Authorization header as a session token and replace it.
         const session = await auth.api.getSession({
           headers: new Headers({ cookie: headers.get("cookie") ?? "" }),
           query: { disableCookieCache: true },
@@ -285,7 +265,6 @@ export class BetterAuthRuntime extends Context.Service<
 
       const auth = createLootlogAuth({
         config,
-        // Better Auth requires Promise-based Drizzle with its scoped adapter pool.
         database: drizzle({ client: pool }),
         secondaryStorage: redis.secondaryStorage,
       });

@@ -6,9 +6,7 @@ type ListenerFailure = {
 const reportListenerError = ({ source, error }: ListenerFailure): void => {
   try {
     console.warn(`[Realtime] ${source} listener failed:`, error);
-  } catch {
-    // Diagnostics must not interrupt the transport or the remaining observers.
-  }
+  } catch {}
 };
 
 export const notifyListeners = <Listener>(

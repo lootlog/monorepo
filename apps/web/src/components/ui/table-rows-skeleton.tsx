@@ -5,17 +5,9 @@ import type { ReactNode } from "react";
 type TableRowsSkeletonProps = {
   rows?: number;
   trailingColumns?: number;
-  /** Stands in for a table header that is not rendered while loading. */
   withHeader?: boolean;
-  /**
-   * What the loaded rows hold. `media` rows carry 40px content, such as an
-   * `NpcTile`, avatar, or row link, in padded `h-14` cells, so their collapsed
-   * border adds a pixel to a 57px row. `text` rows stay 56px, border included.
-   */
   rowContent?: "media" | "text";
-  /** Rows lead with an `NpcTile` rather than an avatar. */
   withNpcTile?: boolean;
-  /** Replaces the rows below `xl`, where the results list tiles instead of the table (`RESULTS_TABLE_MEDIA_QUERY`). */
   mobileList?: ReactNode;
 };
 

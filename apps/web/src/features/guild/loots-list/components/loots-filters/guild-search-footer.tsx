@@ -8,7 +8,6 @@ type GuildSearchFooterProps = {
   world: string | null;
 };
 
-/** Keyboard hints, and the world that player and loot hits come from. */
 export const GuildSearchFooter = ({ world }: GuildSearchFooterProps) => {
   const { t } = useTranslation();
 

@@ -2,16 +2,13 @@ import { MessageScroller } from "@shadcn/react/message-scroller";
 import type { ReactNode } from "react";
 
 type ChatTranscriptItemProps = {
-  /** Unset for a date divider, which the scroller does not track. */
   messageId?: string;
   messageGap: number;
-  /** An NPC report card sits flush on the row below it. */
   flushBottom?: boolean;
   highlighted?: boolean;
   children: ReactNode;
 };
 
-/** One striped row of a chat transcript; message rows light up on hover. */
 export const ChatTranscriptItem = ({
   messageId,
   messageGap,

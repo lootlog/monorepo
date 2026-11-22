@@ -10,19 +10,12 @@ type GuildDocItemFindableIdProps = {
   itemId: string;
 };
 
-/**
- * An item's in-game identifier that the browser's find-in-page reaches while
- * the chip shows only the item. A match reveals it under the item until another
- * identifier is found. Browsers without `hidden="until-found"` still match it,
- * without a visible highlight.
- */
 export const GuildDocItemFindableId = ({
   itemId,
 }: GuildDocItemFindableIdProps) => {
   const ref = useRef<HTMLElement>(null);
   const [found, setFound] = useState(false);
 
-  // React 19 cannot render `hidden="until-found"`, so it is set before paint.
   useLayoutEffect(() => {
     const element = ref.current;
 
@@ -32,8 +25,6 @@ export const GuildDocItemFindableId = ({
 
     element.setAttribute("hidden", "until-found");
 
-    // The browser highlights the match right after this event, in this same
-    // text node, so it must leave the out-of-flow position synchronously.
     const reveal = () => flushSync(() => setFound(true));
 
     element.addEventListener("beforematch", reveal);

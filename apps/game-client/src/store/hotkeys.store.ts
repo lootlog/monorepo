@@ -86,7 +86,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
       alt: key !== "",
     },
   })),
-  // Shift+key shortcuts labelled from `settings.hotkeys.actions.<action>`.
   ...(
     [
       { action: "toggle-command", category: "communication", key: "S" },
@@ -252,13 +251,7 @@ interface HotkeysState {
   setBinding: (action: HotkeyAction, binding: HotkeyBinding) => boolean;
   resetBinding: (action: HotkeyAction) => boolean;
   resetAll: () => void;
-  /** Replaces bindings from the settings documents without writing back. */
   applyBindings: (bindings: Record<HotkeyAction, HotkeyBinding>) => void;
-  /**
-   * The action whose new binding the settings are recording. While set, the
-   * next key or button belongs to the recorder, so hotkeys do not run.
-   * Never persisted.
-   */
   recordingAction: HotkeyAction | null;
   setRecordingAction: (action: HotkeyAction | null) => void;
 }
@@ -348,7 +341,6 @@ const bindingsEqual = (
   );
 };
 
-/** True when the binding structurally equals the action's default. */
 export const isDefaultBinding = (
   action: HotkeyAction,
   binding: HotkeyBinding,
@@ -358,7 +350,6 @@ export const isDefaultBinding = (
   return config !== undefined && isEqual(binding, config.defaultBinding);
 };
 
-/** Binding as key caps: modifiers first, then the key or mouse button. */
 export const formatBindingParts = (binding: HotkeyBinding): string[] => {
   if (binding.type === "keyboard" && !binding.key)
     return [i18n.t("chat:quickActions.unassigned")];

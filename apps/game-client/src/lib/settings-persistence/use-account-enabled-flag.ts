@@ -19,7 +19,6 @@ type AccountFlagValues = {
 
 type AccountFlag = keyof AccountFlagValues;
 
-// Mapped per flag, so a flag's normalizer returns that flag's own shape.
 type AccountFlagNormalizers = {
   [TFlag in AccountFlag]: (
     stored: SettingsCatalogValue<`gameData.${TFlag}`>,
@@ -31,16 +30,11 @@ const NORMALIZERS: AccountFlagNormalizers = {
   lootSplit: normalizeLootSplit,
 };
 
-/**
- * Account-scoped `gameData` fields headed by an on/off flag, outside the
- * legacy account preferences contract.
- */
 export const useAccountEnabledFlag = <TFlag extends AccountFlag>(
   flag: TFlag,
 ) => {
   const { data: documents } = useSettingsDocuments();
 
-  // Sets only the leaves it names, so a flag change keeps its siblings.
   const update = (set: SettingsJsonRecord) => {
     enqueueSettingsPatch({
       domain: "gameData",

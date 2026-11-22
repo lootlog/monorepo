@@ -22,7 +22,6 @@ import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 type BattlePanelH2hCardProps = {
   record: HeadToHeadRecord;
   showRatingDelta?: boolean;
-  /** Absent until a character is picked, which the record belongs to. */
   link: LinkOptions | undefined;
 };
 

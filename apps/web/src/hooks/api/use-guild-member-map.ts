@@ -5,7 +5,6 @@ import {
 
 const MEMBER_REFERENCES_PARAMS = { includeInactive: true };
 
-/** The key a record stores for its member; which one depends on the record. */
 export type GuildMemberKey =
   | { discordId: string }
   | { memberId: number }
@@ -35,10 +34,6 @@ const toDirectory = (
   ),
 });
 
-/**
- * Every member of the Organization, including those who already left, so old
- * entries keep their name and colour.
- */
 export const useGuildMemberDirectory = (guildId: string | undefined) => {
   const { data } = useMembersControllerGetGuildMemberReferences(
     { guildId: guildId ?? "" },
@@ -60,6 +55,5 @@ export const findGuildMember = (
   return directory.byUserId.get(key.userId);
 };
 
-/** Members by Discord id. */
 export const useGuildMemberMap = (guildId: string | undefined) =>
   useGuildMemberDirectory(guildId).byDiscordId;

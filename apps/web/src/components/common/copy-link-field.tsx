@@ -6,14 +6,12 @@ import { toast } from "@lootlog/ui/lib/toast";
 
 type CopyLinkFieldProps = {
   url: string;
-  /** Names the read-only field for assistive technology. */
   label: string;
   copyLabel: string;
   copiedMessage: string;
   copyErrorMessage: string;
 };
 
-/** A link to hand on, such as an invitation, with a button that copies it. */
 export const CopyLinkField = ({
   url,
   label,

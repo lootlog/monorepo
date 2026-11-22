@@ -40,7 +40,6 @@ export const getCharacterSettingsScopeId = (
   characterId: string,
 ) => `${gameAccountId}:${characterId}`;
 
-// Values arrive from versioned storage and are validated per catalog field before use.
 type RawSettingsValues = Record<string, typeof Schema.Json.Type>;
 
 export interface SettingsFieldDefinition<TValue = unknown> {
@@ -90,11 +89,8 @@ const field = <TValue>(
   isValid,
 });
 
-// Legacy preference documents are backfilled from lenient storage, so these
-// validators only guard the shape; leaf normalization stays with the consumers.
 type JsonValue = typeof Schema.Json.Type;
 
-// Opaque documents keep JSON values; owning features parse them at their boundary.
 type OpaqueSettingsRecord = Record<string, JsonValue>;
 
 const UnknownRecord = Schema.Record(Schema.String, Schema.Unknown);
@@ -122,9 +118,6 @@ const isDetectorSettingsRecord = Schema.is(
   }),
 );
 
-// One shared server list (`guildIds`) next to a record of per-type rules.
-// Effect index signatures cover every key, so the value is a union; the
-// consumers normalize each leaf.
 const isNotificationsPresentationRecord = Schema.is(
   Schema.Record(
     Schema.String,
@@ -163,7 +156,6 @@ export const SETTINGS_CATALOG = {
     migrations: [],
     fields: {
       allowWorldSelection: field(false, userScopes, isBoolean),
-      // Exclusions keep newly joined Lootlogs and new NPC groups visible.
       "activityFeed.excludedGuildIds": field<readonly string[]>(
         DEFAULT_ACTIVITY_FEED_SETTINGS.excludedGuildIds,
         userScopes,
@@ -316,7 +308,6 @@ export const SETTINGS_CATALOG = {
     migrations: [
       {
         fromVersion: 1,
-        // Event heroes were chat heroes; a player who hid heroes keeps them hidden.
         migrate: (overrides) => {
           const { hiddenNpcTypes } = overrides;
 
@@ -388,9 +379,6 @@ export const SETTINGS_CATALOG = {
         accountScopes,
         isEnabledFlagRecord,
       ),
-      // Gates the per-type detector auto-send on one character, so a player
-      // can stop calling every monster type from it without touching the
-      // account's per-type settings.
       detectorAutoSendEnabled: field(true, characterScopes, isBoolean),
       catching: field<OpaqueSettingsRecord>(
         {},
@@ -413,9 +401,6 @@ export const SETTINGS_CATALOG = {
     schemaVersion: 2,
     migrations: [
       {
-        // Legacy: version 1 stored a server list inside every notification
-        // type. Version 2 keeps one shared `presentation.guildIds`; the union
-        // of the old lists keeps every notification the player received.
         fromVersion: 1,
         migrate: ({ presentation, ...overrides }) => {
           if (!isSettingsRecord(presentation)) return overrides;

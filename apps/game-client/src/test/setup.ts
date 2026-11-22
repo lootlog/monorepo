@@ -8,11 +8,6 @@ afterEach(() => {
   cleanup();
 });
 
-// nanostores unmounts the better-auth session atom one second after its last
-// listener leaves, and that cleanup touches `window`. Unmount it synchronously
-// while the DOM environment still exists so the delayed timer has nothing to do.
-// The client is imported lazily so test files keep control over when the
-// platform modules load and how they are mocked.
 afterAll(async () => {
   const { authClient } = await import("@/lib/auth-client");
   const session = authClient.$store?.atoms?.session;
@@ -20,9 +15,6 @@ afterAll(async () => {
   if (session) cleanStores(session);
 });
 
-// No test reaches the network. A request no test mocked, such as the auth
-// client's session fetch, fails at once as against an unreachable server,
-// instead of opening a socket that outlives the test and logs after it.
 const rejectUnmockedRequest: typeof fetch = (input) =>
   Promise.reject(
     new TypeError(

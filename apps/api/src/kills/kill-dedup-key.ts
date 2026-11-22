@@ -33,7 +33,6 @@ export function buildMemberKillDedupKey(
   return `${buildGuildKillDedupKey(guildId, data)}:member:${memberId}`;
 }
 
-/** One boss kill across Organizations: every report of it holds its time. */
 export function buildBossKillDedupKey(data: KillDedupKeyData): string {
   return `kill:dedup:boss:${data.world}:${data.npcId}`;
 }

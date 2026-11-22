@@ -27,18 +27,12 @@ import {
 } from "./use-guild-doc-item-candidates";
 
 type GuildDocItemDialogProps = {
-  /** The item being changed, or null to insert a new one. */
   initialItem: GuildDocItem | null;
   open: boolean;
   onInsert: (item: GuildDocItem) => void;
   onOpenChange: (open: boolean) => void;
 };
 
-/**
- * Picks an item from the catalog. A pasted `ITEM#…` identifier is kept for
- * readers to copy, and finds the item itself when one of the Organization's
- * loots recorded it; it can also stand alone until the item is known.
- */
 export const GuildDocItemDialog = ({
   initialItem,
   open,
@@ -70,14 +64,12 @@ export const GuildDocItemDialog = ({
     search,
   });
 
-  // The loot's copy wins until the writer picks another entry themselves.
   const chosen = selected ?? candidates.loot ?? candidates.current;
 
   const canSubmit =
     (chosen !== null || parsedItemId !== null) && !itemIdInvalid;
 
   const handleSearchChange = (value: string) => {
-    // An identifier typed into the search belongs in its own field.
     if (parseItemHid(value)) {
       setItemIdInput(value.trim());
       setSearch("");

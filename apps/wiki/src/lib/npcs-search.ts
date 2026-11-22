@@ -12,19 +12,12 @@ import {
   npcCatalogFilter,
 } from "@/lib/npc-types";
 
-/**
- * The NPC search as the address bar holds it, so a link opens the same
- * search. `types` holds one type: players look for one kind of monster at a
- * time. `events` shows event monsters only or leaves them out. Empty means no
- * filter, and an empty sort is the strongest first.
- */
 export type NpcsSearch = {
   query: string;
   types: string;
   events: NpcEventChoice;
   minLevel: number | undefined;
   maxLevel: number | undefined;
-  /** The month (`YYYY-MM`) Lootlog first saw the monster in. */
   firstSeen: string;
   sort: string;
 };
@@ -52,7 +45,6 @@ export function validateNpcsSearch(search: {
 }): NpcsSearch {
   return {
     query: String(search.query ?? ""),
-    // A link from before the filter took one type may list several.
     types: splitList(String(search.types ?? "")).find(isNpcFilterType) ?? "",
     events: isEventOption(search.events) ? search.events : "",
     minLevel: readLevel(String(search.minLevel ?? "")),
@@ -62,16 +54,11 @@ export function validateNpcsSearch(search: {
   };
 }
 
-/**
- * The public catalog filters of a search. The default order is the
- * catalog's own, so it is not sent and shares the plain listing's cache.
- */
 export const toNpcCatalogParams = (search: NpcsSearch) => {
   const sort = effectiveNpcSort(search);
 
   const type = isNpcFilterType(search.types) ? search.types : undefined;
 
-  // A type without event monsters ignores the choice.
   const filter = npcCatalogFilter(
     type,
     hasEventMonsters(type) ? search.events : "",

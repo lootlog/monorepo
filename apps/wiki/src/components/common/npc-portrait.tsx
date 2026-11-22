@@ -4,26 +4,16 @@ import { cn } from "cn";
 
 type NpcPortraitProps = {
   icon: string | null | undefined;
-  /** The sprite's box; the sprite keeps its pixels sharp inside it. */
   size: "sm" | "md" | "lg";
   className?: string;
 };
 
-// The box, how many times a sprite that fits is enlarged in it, and how far
-// it stands from the box's bottom edge. The limit leaves the tallest sprite
-// the same gap above its head.
 const SIZES = {
   sm: { box: "size-16", scale: 1, limit: 56, lift: "mb-1" },
   md: { box: "size-24", scale: 1, limit: 80, lift: "mb-2" },
   lg: { box: "h-44 w-full", scale: 2, limit: 152, lift: "mb-3" },
 } as const;
 
-/**
- * A monster's sprite on a lit stage. Margonem draws sprites from 32 to
- * about 100 pixels; each shows at a whole multiple of its own size that fits
- * the box, so its pixels stay crisp. The shadow follows the sprite, not the
- * box, so it stays under the feet whatever shape the box takes.
- */
 export function NpcPortrait({ icon, size, className }: NpcPortraitProps) {
   const [natural, setNatural] = useState<{ width: number; height: number }>();
   const { box, scale, limit, lift } = SIZES[size];
@@ -44,7 +34,6 @@ export function NpcPortrait({ icon, size, className }: NpcPortraitProps) {
       )
     : 1;
 
-  // A sprite larger than the box still shrinks to fit it.
   const shrink = natural
     ? Math.min(1, limit / Math.max(natural.width, natural.height))
     : 1;
@@ -67,7 +56,6 @@ export function NpcPortrait({ icon, size, className }: NpcPortraitProps) {
             src={npcIconUrl(icon)}
             alt=""
             loading="lazy"
-            // A sprite cached before hydration has loaded without an event.
             ref={(image) => {
               if (image?.complete && image.naturalWidth > 0) measure(image);
             }}

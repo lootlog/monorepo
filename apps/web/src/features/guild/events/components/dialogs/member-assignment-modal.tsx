@@ -252,7 +252,6 @@ export const MemberAssignmentModal = ({
                           aria-busy={isPending || undefined}
                           className="flex w-full items-center gap-3 px-3 py-2.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:cursor-pointer enabled:hover:bg-muted/40 disabled:cursor-default motion-reduce:transition-none"
                         >
-                          {/* The option itself is the button, so the member opens no profile here. */}
                           <MemberIdentity
                             member={{ memberId: member.id }}
                             fallback={{

@@ -26,7 +26,6 @@ const router = createRouter({
 
 type RouteId = keyof typeof router.routesById;
 
-/** What the loaders that navigation reads return, in the parts it reads. */
 type LoaderData = {
   guild?: { name: string };
   event?: { name: string; heroNpcs: { id: number; npcName: string }[] };
@@ -36,13 +35,10 @@ type LoaderData = {
 };
 
 type PageState = {
-  /** Loader data by route, as the router stores it on each match. */
   loaderData?: Partial<Record<RouteId, LoaderData>>;
-  /** Match status by route; every other match has loaded. */
   status?: Partial<Record<RouteId, "error" | "notFound">>;
 };
 
-/** The router's matches for a URL, as the app resolves its navigation from them. */
 function matchPage(
   href: string,
   { loaderData = {}, status = {} }: PageState = {},
@@ -116,7 +112,6 @@ describe("resolveAppNavigation", () => {
       accessPolicy: policy(Capability.ADMIN),
     });
 
-    // The sidebar names the Organization, so the top bar starts below it.
     expect(navigation.heading).toEqual({
       title: "Alicja",
       trail: [

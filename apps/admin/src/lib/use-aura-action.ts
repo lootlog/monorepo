@@ -3,11 +3,6 @@ import { useState } from "react";
 import type { AuraAction } from "@/lib/aura-action";
 import { performAuraAction } from "@/server/character-auras";
 
-/**
- * Changes the auras of the User who plays one account, reloads what the page
- * shows and reports the outcome above it. `pending` names the change in
- * flight, with the personal aura it grants.
- */
 export function useAuraAction(gameAccountId: string) {
   const router = useRouter();
   const navigate = useNavigate({ from: "/auras" });

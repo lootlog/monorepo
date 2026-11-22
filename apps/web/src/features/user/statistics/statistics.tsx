@@ -42,10 +42,8 @@ export function Statistics() {
       days: ({ 7: "7", 30: "30", 90: "90", 365: "365" } as const)[search.days],
       world: search.world,
       characterId: search.characterId,
-      // Only the monster ranking narrows to a type; the totals never do.
       npcType: isMonsters ? search.npcType : undefined,
     },
-    // Loots come from their own statistics.
     { query: { staleTime: 30_000, enabled: !isLoots } },
   );
 
@@ -61,7 +59,6 @@ export function Statistics() {
   if (search.world && !worlds.includes(search.world)) worlds.push(search.world);
   const data = analytics.data;
 
-  // Sections run edge to edge; a lone notice or placeholder keeps an inset.
   const inset =
     data === undefined
       ? analytics.isError || search.tab !== "overview"
@@ -70,7 +67,6 @@ export function Statistics() {
   const filterProps: StatisticsFiltersProps = {
     world: search.world,
     worlds,
-    // A character plays on one world; another world leaves it behind.
     onWorldChange: (world) =>
       update({
         world,

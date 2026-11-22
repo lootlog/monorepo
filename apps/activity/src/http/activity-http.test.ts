@@ -148,7 +148,6 @@ describe("Activity HttpApi contract", () => {
 
   it.each([
     ["not-a-cursor"],
-    // Year 0000 parses in JavaScript but fails PostgreSQL's timestamp cast.
     [
       Buffer.from(
         JSON.stringify(["0000-01-01T00:00:00.000Z", "activity"]),

@@ -5,8 +5,6 @@ import { settingsPatchQueue } from "@/lib/settings-persistence/settings-patch-cl
 import { queryClient } from "@/lib/query-client";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 
-// The queue is the real boundary; only its enqueue side is observed so no
-// request leaves the test.
 const enqueue = vi
   .spyOn(settingsPatchQueue, "enqueue")
   .mockImplementation(() => {});
@@ -427,8 +425,6 @@ describe("timers.store", () => {
     const e2 = { id: "e2", name: "E2", npcNames: ["Kic"] };
     const heroes = { id: "heroes", name: "Herosi", npcNames: ["Tanroth"] };
 
-    // Another device may already have deleted "heroes"; this device still
-    // holds it and must not write it back while editing "e2".
     useTimersStore.setState({ customLists: { e2, heroes } });
 
     const store = useTimersStore.getState();
@@ -454,7 +450,6 @@ describe("timers.store", () => {
     vi.advanceTimersByTime(500);
 
     expect(useTimersStore.getState().customLists).toEqual({ e2: renamed });
-    // An edit followed by a delete in one save window sends only the delete.
     expect(lastWrite()).toEqual({
       set: {},
       unset: ["customLists.heroes"],

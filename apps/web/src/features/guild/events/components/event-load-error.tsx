@@ -14,13 +14,9 @@ type EventLoadErrorBack =
 
 type EventLoadErrorProps = EventLoadErrorBack & {
   guildId: string;
-  /** The failed request's error; its HTTP status picks the notice. */
   error?: unknown;
-  /** Overrides the status taken from `error`, e.g. for a missing record. */
   status?: 403 | 404 | 500;
-  /** Page-specific titles; the rest fall back to the events defaults. */
   titles?: Partial<Record<403 | 404 | 500, string>>;
-  /** Offered only for failures a retry can fix, not for 403 or 404. */
   onRetry?: () => Promise<object>;
 };
 
@@ -30,7 +26,6 @@ const TITLE_KEYS = {
   500: "events.loadError.title",
 } as const;
 
-/** Replaces an events page whose data could not be loaded. */
 export const EventLoadError = (props: EventLoadErrorProps) => {
   const { t } = useTranslation();
   const { guildId, error, titles, onRetry } = props;
@@ -73,7 +68,6 @@ export const EventLoadError = (props: EventLoadErrorProps) => {
     <RouteErrorState
       status={status}
       title={
-        // A lost session keeps the route-wide sign-in notice.
         status === 401 ? undefined : (titles?.[status] ?? t(TITLE_KEYS[status]))
       }
       primaryAction={

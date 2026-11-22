@@ -3,10 +3,6 @@ import { useTranslation } from "react-i18next";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 
-/**
- * Loading or failure of the Lootlogs and the preferences that hide some of
- * them, shown in place of a Lootlog picker until both have loaded.
- */
 export const GuildsLoadStatus: FC<{ className?: string }> = ({ className }) => {
   const { t } = useTranslation("common");
 

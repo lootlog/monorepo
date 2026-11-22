@@ -10,10 +10,6 @@ import { toast } from "@lootlog/ui/lib/toast";
 import { ROUTES } from "@/config/routes";
 import { useCreateUserTheme } from "@/hooks/api/user/use-user-themes";
 
-/**
- * Saves a new theme, such as a copy of a built-in one or of a shared link,
- * and opens it in the editor.
- */
 export const useCreateTheme = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();

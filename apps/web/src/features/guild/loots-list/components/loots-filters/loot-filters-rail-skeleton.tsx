@@ -1,6 +1,5 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
-/** Mirrors the collapsed filters rail: open button, sections, quick filters. */
 export const LootFiltersRailSkeleton = () => (
   <div aria-hidden="true" className="flex w-14 flex-col">
     <div className="box-content flex h-12 items-center justify-center border-b border-sidebar-border">

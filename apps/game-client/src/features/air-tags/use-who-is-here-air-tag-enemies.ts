@@ -18,14 +18,10 @@ const AGE_TICK_MS = 1_000;
 
 type WhoIsHereAirTagView = {
   enemies: AirTagTarget[];
-  /** Where the rows render; resolved only while there are rows to show. */
   host: HTMLElement | null;
-  /** Unseen enemies are reported, before members of the Organizations are removed. */
   hasCandidates: boolean;
-  /** Any player is reported on this red map while the window is open, so a step can change the rows. */
   hasTargets: boolean;
   now: number;
-  /** What the rows show, apart from their age; positions change far more often. */
   signature: string;
 };
 
@@ -47,7 +43,6 @@ const getRowsSignature = (enemies: readonly AirTagTarget[]) =>
     .join(",");
 
 function readView(now: number): WhoIsHereAirTagView {
-  // A closed window shows no rows, so it costs no reads or presence requests.
   if (!isWhoIsHereOpen()) return { ...EMPTY_VIEW, now };
 
   const { enemies, hasCandidates, hasTargets } = readUnseenAirTagEnemies(now);
@@ -71,14 +66,8 @@ const showsSameRows = (
   current.hasCandidates === next.hasCandidates &&
   current.hasTargets === next.hasTargets;
 
-/**
- * Unseen AirTag enemies on the current map. Reads happen at most once a frame
- * after AirTag, presence, game or window updates, and re-render only when a
- * row changes; ages tick each second while rows show.
- */
 export function useWhoIsHereAirTagEnemies() {
   const [view, setView] = useState(EMPTY_VIEW);
-  // Compared outside setView: a no-op updater can still render the hook.
   const shown = useRef(EMPTY_VIEW);
 
   const show = (next: WhoIsHereAirTagView) => {
@@ -108,8 +97,6 @@ export function useWhoIsHereAirTagEnemies() {
       if (frame === null) frame = window.requestAnimationFrame(check);
     };
 
-    // Re-read when the map turns red, or, while players are reported, when
-    // the hero or a player moves into sight.
     const releaseGame = useGameStore.subscribe(({ game }, { game: before }) => {
       if (
         game?.map.pvp !== before?.map.pvp ||
@@ -132,7 +119,6 @@ export function useWhoIsHereAirTagEnemies() {
     const releaseAirTags = airTagReceiveController.subscribe(schedule);
     const releaseWindow = subscribeWhoIsHereVisibility(schedule);
 
-    // Only while enemies are reported: loading presence costs a request per Organization.
     const releaseMembers = hasCandidates
       ? getAirTagMemberSources().map((source) =>
           source.subscribeChanges(schedule),

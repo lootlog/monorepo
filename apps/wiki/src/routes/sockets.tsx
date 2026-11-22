@@ -38,11 +38,6 @@ export const Route = createFileRoute("/sockets")({
   }),
 });
 
-/**
- * Margonem's sockets and symbols: how components become a symbol and a
- * symbol a legendary bonus, which items have a socket, and every range's
- * recipes and chests.
- */
 function SocketsRoute() {
   const [firstTier] = SYMBOL_TIERS;
 

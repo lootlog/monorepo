@@ -5,11 +5,6 @@ import { useEffect, useReducer } from "react";
 
 const MAX_TIMEOUT_DELAY_MS = 2_147_483_647;
 
-/**
- * The moments the list must be projected again: a timer leaves it once its
- * removal delay passes, and a Hero Tracker sorts by its entrance only while
- * the entrance is open.
- */
 const getTimerListBoundaries = (timer: Timer, removeTimerAfterMs: number) => {
   const removal = getTimerRemovalAt(timer, removeTimerAfterMs, getTimerEpoch);
 

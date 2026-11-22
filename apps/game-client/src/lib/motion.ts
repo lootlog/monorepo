@@ -1,7 +1,3 @@
-/**
- * Motion tokens for Web Animations, which cannot read CSS variables. They
- * mirror the `@theme` motion tokens in index.css; change both together.
- */
 export const MOTION_DURATION_MS = {
   short: 130,
   medium: 190,

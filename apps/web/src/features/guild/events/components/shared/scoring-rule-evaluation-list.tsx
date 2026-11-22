@@ -27,7 +27,6 @@ const OUTCOME_ICONS = {
   UNKNOWN: { icon: CircleHelp, className: "text-amber-400" },
 } as const;
 
-/** Every enabled rule with its conditions met, not met or undeterminable. */
 export const ScoringRuleEvaluationList = ({
   explanation,
   rules,

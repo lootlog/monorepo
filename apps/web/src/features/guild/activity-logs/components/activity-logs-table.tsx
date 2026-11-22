@@ -28,14 +28,11 @@ import {
 
 type ActivityLogsTableProps = {
   activities: Activity[];
-  /** Wide pages show a table; narrower ones list each entry on two lines. */
   usesTable: boolean;
   virtualRows: VirtualItem[];
-  /** Spacer heights standing in for the rows outside the rendered range. */
   padding: { top: number; bottom: number };
 };
 
-// The list is not a table, so it builds no row model.
 const NO_TABLE_ROWS: Activity[] = [];
 
 export const ActivityLogsTable = ({
@@ -100,7 +97,6 @@ export const ActivityLogsTable = ({
                     <span aria-hidden="true">·</span>
                   </>
                 )}
-                {/* The member stays visible next to the character: an audit entry must name who acted. */}
                 <MemberIdentity
                   member={{ discordId: activity.discordId }}
                   fallback={{ name: activity.discordId }}
@@ -129,7 +125,6 @@ export const ActivityLogsTable = ({
 
   return (
     <Table className="min-w-[960px] table-fixed border-b">
-      {/* Virtualized rows come and go, so content must not size the columns. */}
       <colgroup>
         <col className="w-[170px]" />
         <col />

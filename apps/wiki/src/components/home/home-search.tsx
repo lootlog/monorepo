@@ -10,7 +10,6 @@ import {
 import { t } from "@/i18n/messages";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
-/** Starts an item search from the home page. */
 export function HomeSearch() {
   const navigate = useNavigate();
   const inputId = useId();

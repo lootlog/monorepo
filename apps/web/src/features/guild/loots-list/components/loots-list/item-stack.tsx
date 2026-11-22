@@ -20,7 +20,6 @@ const rarityRank = (item: Item) =>
 const sortByRarity = (items: Item[]): Item[] =>
   [...items].sort((a, b) => rarityRank(a) - rarityRank(b));
 
-/** Wraps an item's tile, such as with the item's draw. */
 export type DecorateLootItem = (item: Item, tile: ReactNode) => ReactNode;
 
 type Props = {
@@ -124,6 +123,5 @@ export const ItemStack: FC<Props> = ({
     </div>
   );
 
-  // The stack shows its rarest item, so it carries that item's decoration.
   return decorateItem ? decorateItem(topItem, stack) : stack;
 };

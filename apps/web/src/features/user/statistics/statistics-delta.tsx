@@ -14,12 +14,10 @@ const percentFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
 
 type StatisticsDeltaProps = {
   delta: number;
-  /** Null when the previous period had no kills to compare with. */
   percent: number | null;
   className?: string;
 };
 
-/** The change on the previous period, with its direction as an icon. */
 export function StatisticsDelta({
   delta,
   percent,

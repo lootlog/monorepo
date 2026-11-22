@@ -16,11 +16,6 @@ import {
 export const getGlobalChatMessagesQueryKey = (channel: GlobalChatChannel) =>
   ["global-chat", "messages", channel] as const;
 
-/**
- * One channel's history while its window is open: the newest page and older
- * pages on demand. `useGlobalChatSync` adds live messages; closing the window
- * drops the history, so a closed window keeps none in memory.
- */
 export const useGlobalChat = (channel: GlobalChatChannel) => {
   const queryClient = useQueryClient();
   const queryKey = getGlobalChatMessagesQueryKey(channel);
@@ -28,7 +23,6 @@ export const useGlobalChat = (channel: GlobalChatChannel) => {
 
   const query = useInfiniteQuery({
     queryKey,
-    // The first page has no cursor: it ends at the newest message.
     queryFn: ({ pageParam, signal }) => {
       const params: GlobalChatControllerGetMessagesParams = {};
 

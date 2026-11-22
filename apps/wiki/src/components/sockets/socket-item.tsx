@@ -5,14 +5,9 @@ import { ItemNameLink } from "@/components/catalog/item-name-link";
 
 type SocketItemProps = {
   item: CatalogItemDtoOutput | undefined;
-  /** A figure beside the name, such as how many are needed or a chance. */
   detail?: string;
 };
 
-/**
- * A component, symbol or chest: its tile, its name and a figure about it,
- * such as how many are needed.
- */
 export function SocketItem({ item, detail }: SocketItemProps) {
   if (!item) {
     return (

@@ -5,7 +5,6 @@ export type SettingsChoiceOption<Value extends string> = {
   value: Value;
   title: ReactNode;
   description?: ReactNode;
-  /** Shown in place but not selectable, so the grid keeps its layout. */
   disabled?: boolean;
 };
 

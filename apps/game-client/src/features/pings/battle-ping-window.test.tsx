@@ -43,12 +43,10 @@ it("opens with a fight's first ping, stays closed once closed, and opens again i
   expect(screen.getByText(TITLE)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "Zamknij okno" }));
-  // The gateway rejects the only ping, which empties the history.
   act(() => battlePingStore.retract(rejected, null));
   ping("Iskra");
   expect(useWindowsStore.getState()["battle-pings"].open).toBe(false);
 
-  // The fight ends and the next one starts with a ping.
   act(() => battlePingStore.clear());
   ping("Borsuk");
   expect(useWindowsStore.getState()["battle-pings"].open).toBe(true);

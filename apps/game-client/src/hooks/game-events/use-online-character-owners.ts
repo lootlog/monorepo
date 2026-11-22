@@ -17,9 +17,6 @@ function getCurrentWorld(): string | undefined {
   return useGameStore.getState().game?.world;
 }
 
-// Owners survive Shift releases for the same Organization, world and
-// connection. Within this window a new press reuses them; after it the press
-// shows them while it refetches.
 const OWNERS_FRESH_MS = 30_000;
 
 type OwnersHydration = {
@@ -30,7 +27,6 @@ type OwnersHydration = {
   world: string;
 };
 
-// A request is unnecessary while one is in flight or owners loaded recently.
 function needsOwnersRequest(hydration: OwnersHydration | null): boolean {
   if (hydration?.pending) return false;
 
@@ -105,7 +101,6 @@ function hydrateOnlineCharacterOwners({
 }
 
 export function useOnlineCharacterOwners(): void {
-  // A changed selection drops cached owners even while Shift is released.
   const selectedGuildId = useSelectedLootlogGuildId();
   const shiftGuildId = useShiftCatchingGuildsGuildId();
   const active = shiftGuildId !== null;
@@ -146,8 +141,6 @@ export function useOnlineCharacterOwners(): void {
   useEffect(() => {
     const cached = hydrationRef.current;
 
-    // Cached owners belong to one Organization, world and connection. Drop
-    // them as soon as any of these changes, even while Shift is released.
     const cacheUsable =
       cached !== null &&
       joined &&

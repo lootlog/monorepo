@@ -12,16 +12,10 @@ import { useTranslation } from "react-i18next";
 type ChatComposeFieldProps = {
   controller: ReturnType<typeof useChatInputController>;
   className?: string;
-  /** Border, height and focus styling of the box around the editor. */
   shellClassName?: string;
   size?: "sm" | "md";
 };
 
-/**
- * The editable part of a chat composer, shared by the chat window and the
- * console: the editor with its hidden command prefix and mentions, the sending
- * spinner and the `/clr` confirmation.
- */
 export function ChatComposeField({
   controller,
   className,

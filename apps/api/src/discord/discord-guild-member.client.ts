@@ -40,18 +40,10 @@ interface GuildMemberIdentity {
   readonly discordId: string;
 }
 
-/**
- * Reads the caller's own guild membership from Discord. Member sync stores
- * the result with its sync time and runs under the per-user refresh lock, so
- * every call asks Discord: a cached answer would be stored as a fresh sync.
- * Only refusals are cached: Discord counts each 404 and 403 against its
- * invalid-request limit, and neither is stored as a sync.
- */
 export interface DiscordGuildMemberClient {
   readonly getGuildMember: (
     options: GuildMemberIdentity,
   ) => Effect.Effect<APIGuildMember, ApplicationError | RedisError>;
-  /** Discord refused this member recently, so asking again would be refused. */
   readonly isGuildMemberRefused: (
     options: GuildMemberIdentity,
   ) => Effect.Effect<boolean, RedisError>;
@@ -63,7 +55,6 @@ export interface DiscordGuildMemberClient {
 const isDiscordForbidden = (error: unknown): error is DiscordAPIError =>
   error instanceof DiscordAPIError && error.status === HttpStatus.FORBIDDEN;
 
-// The shape toDiscordRequestError gives any Discord 4xx without its own error.
 const discordForbiddenError = (): DependencyUnavailableError =>
   new DependencyUnavailableError({
     code: "DISCORD_HTTP_ERROR",

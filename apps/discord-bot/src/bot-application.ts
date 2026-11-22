@@ -33,7 +33,6 @@ import type { CommandServices } from "#src/commands/slash-command";
 import { BotConfig } from "#src/config/bot-config";
 import { DiscordBotApi } from "#src/http-api/discord-bot-api";
 
-// A failed send is requeued; an undecodable command is rejected and logged.
 const notificationRoute = consumerRoute(
   "discord-bot-notifications-send",
   RabbitRoutingKey.NOTIFICATIONS_DISCORD_SEND,

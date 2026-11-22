@@ -1,7 +1,3 @@
-/**
- * The per-row battle timeline: HP, per-warrior deltas, and why each row
- * matters. Only the full analysis records it.
- */
 import {
   ACTOR_DAMAGE_TAKEN,
   getActionCategory,
@@ -115,7 +111,6 @@ const createEmptyDelta = (): BattleTimelineWarriorDelta => ({
   controlTaken: 0,
 });
 
-/** Healing keys whose value is a percentage or absent, not healed life. */
 const HEALING_WITHOUT_AMOUNT = new Set([
   "healall_per",
   "heal_per",
@@ -124,7 +119,6 @@ const HEALING_WITHOUT_AMOUNT = new Set([
   "antidote",
 ]);
 
-/** Healing keys that heal the row's target instead of its actor. */
 const TARGET_HEALING = new Set(["heal_target", "legbon_lastheal"]);
 
 const MITIGATION_FLAGS = new Map([
@@ -137,7 +131,6 @@ const MITIGATION_FLAGS = new Map([
   ["cover", "cover"],
 ]);
 
-/** Keys that take energy or mana from the row's target. */
 const RESOURCE_PRESSURE = new Map<string, "energyPressure" | "manaPressure">([
   ["-endest", "energyPressure"],
   ["+endest", "energyPressure"],
@@ -147,7 +140,6 @@ const RESOURCE_PRESSURE = new Map<string, "energyPressure" | "manaPressure">([
   ["stealmana", "manaPressure"],
 ]);
 
-/** How each key changes its actor's own energy or mana. */
 const ACTOR_RESOURCE_CHANGE = new Map<string, (signedValue: number) => number>([
   ["en-regen", (value) => value],
   ["+engback", (value) => value],
@@ -177,7 +169,6 @@ type ActionContext = {
   value: number;
   actorId: string | null;
   targetId: string | null;
-  /** Whether the row reports damage after the target's defence. */
   hasTakenDamage: boolean;
 };
 
@@ -280,8 +271,6 @@ export class TimelineRecorder {
     ] as const) {
       if (!id || hp === null) continue;
 
-      // A kill belongs to the row a warrior falls in, not to every later
-      // row it stays dead in. A revived warrior can fall again.
       if (hp <= 0 && (this.hp.get(id) ?? 100) > 0) {
         row.flags.add("kill");
         row.labels.add(`kill:${id}`);
@@ -510,8 +499,6 @@ export class TimelineRecorder {
     const { actionType, value, actorId, targetId } = context;
     const damageKey = readDamageKey(actionType);
 
-    // The attack a row rolled counts only when the row does not report the
-    // damage left after defence.
     if (damageKey?.side === "dealt") {
       if (!context.hasTakenDamage) {
         addDelta(row, actorId, "damageDealt", value);
@@ -545,7 +532,6 @@ export class TimelineRecorder {
     }
   }
 
-  /** Reflected damage comes from the target; other hits from the actor. */
   private analyzeOtherDamage(row: RowAnalysis, context: ActionContext): void {
     const named = parseNamedWarrior(context.param, 2);
     const namedId = named ? this.roster.findIdByName(named.name) : null;
@@ -570,7 +556,6 @@ export class TimelineRecorder {
 
     if (HEALING_WITHOUT_AMOUNT.has(actionType)) return;
 
-    // `heal` reports lost life as a negative value.
     const amount =
       actionType === "heal" ? parseSignedActionValue(param) : context.value;
 
@@ -588,7 +573,6 @@ export class TimelineRecorder {
     row.healing += amount;
   }
 
-  /** Margonem renders absorption renewal on the defending side of a row. */
   private analyzeAbsorb(row: RowAnalysis, context: ActionContext): void {
     const defenderId = context.targetId ?? context.actorId;
 

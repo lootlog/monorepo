@@ -6,13 +6,11 @@ import { getPingPresentation } from "./ping-presentation";
 
 type BattlePingTargetRowProps = {
   ago: string;
-  /** The sender's name, or null when the local hero picked the target. */
   sender: string | null;
   target: string;
   warriorId: number;
 };
 
-/** The team's shared attack target, pinned above the fight's history. */
 export const BattlePingTargetRow: FC<BattlePingTargetRowProps> = ({
   ago,
   sender,

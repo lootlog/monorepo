@@ -49,8 +49,6 @@ describe("ChatAppearanceSettingsForm", () => {
       getCurrentSettingsDocumentsQueryKey(),
       settingsDocuments,
     );
-    // A real server answers a patch with the patched document; the cache
-    // holds that state optimistically, so echo it back.
     patchRequest
       .mockReset()
       .mockImplementation(() =>

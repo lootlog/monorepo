@@ -1,10 +1,5 @@
 import { MAX_FIXED_LEVELS } from "@lootlog/domain/elastic-level";
 
-/**
- * The distinct levels the catalog saw an item at, the lowest kept up to one
- * past `MAX_FIXED_LEVELS`: enough to tell an elastic item apart, which
- * `elasticLevel` stores for filtering.
- */
 export type ItemLevelFields = {
   observedLevels: number[];
   elasticLevel: boolean;
@@ -19,15 +14,9 @@ const toLevelFields = (observedLevels: number[]): ItemLevelFields => ({
   elasticLevel: isElasticLevel({ observedLevels }),
 });
 
-/** The level of one observation; level 0 is no level requirement. */
 export const toItemLevelFields = (item: { lvl: number }) =>
   toLevelFields(item.lvl > 0 ? [item.lvl] : []);
 
-/**
- * One item's levels from two observations. Merging is commutative, so
- * redelivered or reordered deliveries settle on the same entry. Documents
- * indexed before the field existed have none.
- */
 export const mergeItemLevels = (
   incoming: Pick<ItemLevelFields, "observedLevels">,
   stored: Partial<ItemLevelFields> | undefined,

@@ -6,7 +6,6 @@ type SettingsPanelProps = {
   className?: string;
 };
 
-/** Translucent surface for list items and read-only blocks inside settings. */
 export const SettingsPanel: FC<SettingsPanelProps> = ({
   children,
   className,

@@ -111,7 +111,6 @@ beforeAll(async () => {
         periodStart: periodBoundary,
       };
 
-      // Descriptions come from the latest row at the highest level.
       const killedAt = (secondsAgo: number) =>
         new Date(periodBoundary.getTime() - secondsAgo * 1000);
 
@@ -222,7 +221,6 @@ beforeAll(async () => {
         .insert(userKillBucketTable)
         .values({ ...foreignUser, periodStart: periodBoundary });
 
-      // Old buckets outside the lifetime totals, as account deletion left them.
       const old = {
         ...described,
         lastKilledAt: new Date("2000-01-01"),
@@ -342,7 +340,6 @@ for (const period of ["all", "24h"] as const) {
 
         if (!personalNext) throw new Error("Expected a third page");
 
-        // NPCs 7 and 8 tie on kills; the NPC ID tiebreaker keeps 8 next.
         const last = yield* service.personal.getUserNpcKills(userId, {
           ...firstQuery,
           cursor: personalNext,
@@ -571,7 +568,6 @@ for (const period of ["all", "24h"] as const) {
             ...expectedIds,
           ]);
 
-          // One NPC per page continues the same order, ties included.
           const paged: number[] = [];
           let cursor: string | undefined;
 

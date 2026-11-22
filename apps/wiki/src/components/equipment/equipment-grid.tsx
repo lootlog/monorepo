@@ -3,12 +3,7 @@ import { cn } from "cn";
 import { EQUIPMENT_SLOTS, type EquipmentSlot } from "@/lib/equipment-slots";
 
 type EquipmentGridProps = {
-  /** One slot's content, placed where the game draws that slot. */
   renderSlot: (slot: EquipmentSlot) => ReactNode;
-  /**
-   * `sm` holds an item tile closely, `md` fits a side panel and `lg` gives
-   * each slot room for its label.
-   */
   size?: "sm" | "md" | "lg";
   className?: string;
 };
@@ -19,7 +14,6 @@ const GRID = {
   lg: "grid-cols-[repeat(3,6.25rem)] grid-rows-[repeat(4,5.5rem)] gap-2",
 } as const;
 
-/** Margonem's equipment grid: three columns, four rows. */
 export function EquipmentGrid({
   renderSlot,
   size = "md",

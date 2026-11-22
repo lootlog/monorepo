@@ -12,7 +12,7 @@ import type {
 import type { LootNpcNameSummary } from "#src/loots/query/loot-query.operations";
 import type { LootsOperations } from "#src/loots/loots.operations";
 import { Clock, Effect } from "effect";
-import { type RedisService } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import { EventWrappedResponse } from "#src/contracts/events/schemas";
 import { clipToWindowSeconds } from "#src/events/monitoring/tracking-window";
 import {
@@ -100,9 +100,6 @@ type SpawnWindowCoverage = {
   mapIdsByMember: Map<number, Set<string>>;
 };
 
-// Events sharing a timestamp run in this order, which makes both interval
-// bounds inclusive: an assignment starting at a window's minimum spawn time or
-// ending at it, or starting at the kill, still covers the window.
 const SweepStep = {
   assignmentStart: 0,
   windowOpen: 1,
@@ -133,17 +130,6 @@ const countMapStats = (mapStats: unknown): number => {
 const endsAtOrAfter = (end: Date | null, time: number) =>
   end === null || end.getTime() >= time;
 
-/**
- * Counts the maps assigned during each kill's spawn window, in total and per
- * member. An assignment covers a window when it starts no later than the kill
- * and is still open or ends no earlier than the minimum spawn time. A window
- * whose minimum spawn time follows its kill is covered only by an assignment
- * spanning that whole inverted range.
- *
- * One sweep over the sorted start and end times replaces a scan of every
- * assignment per kill: each window reads the assignments active when it opens,
- * and each later assignment start reaches only the windows open at that time.
- */
 const summarizeSpawnWindowAssignments = (
   kills: ReadonlyArray<SpawnWindow>,
   assignments: ReadonlyArray<AssignmentInterval>,
@@ -175,7 +161,6 @@ const summarizeSpawnWindowAssignments = (
       mapIdsByMember: new Map(),
     };
 
-    // An inverted window opens at its kill and closes immediately.
     events.push({
       at: Math.min(window.minSpawnTime, killedAt),
       step: SweepStep.windowOpen,
@@ -189,8 +174,6 @@ const summarizeSpawnWindowAssignments = (
 
   events.sort((left, right) => left.at - right.at || left.step - right.step);
 
-  // Assignments that started and have not ended. One that ends before it
-  // starts never becomes active; it can only reach windows already open.
   const activeAssignments = new Set<AssignmentInterval>();
 
   const openWindows = new Set<SpawnWindowCoverage>();
@@ -669,8 +652,6 @@ export const makeEventWrapped = (
   ): Map<string, HeroLootAggregate> {
     const heroLoots = new Map<string, HeroLootAggregate>();
 
-    // A loot counts once for each of its NPC rows naming an event hero, so a
-    // hero listed twice in one encounter counts that loot and its items twice.
     for (const npc of npcs) {
       const hero = heroByName.get(npc.name.toLowerCase());
 

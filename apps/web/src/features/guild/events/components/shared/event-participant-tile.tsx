@@ -11,7 +11,6 @@ interface EventParticipantTileProps {
   member: Member;
 }
 
-/** A participant's tile: the tile opens their kills in the event, the person their profile. */
 export const EventParticipantTile = ({
   eventId,
   guildId,

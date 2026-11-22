@@ -9,7 +9,6 @@ const ApiRuntimeDependencies = Layer.merge(ApiRedis.layer, ApiRabbitLive).pipe(
   Layer.provideMerge(ApiRuntimeConfig.layer),
 );
 
-/** Complete scoped API process: Bun HTTP, consumers, workers and scheduled jobs. */
 export const ApiApplicationLive = Layer.merge(
   ApiLifecycleLive,
   ApiHttpServerLive,

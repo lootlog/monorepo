@@ -5,7 +5,6 @@ type ScheduleNowLineProps = {
   ref?: Ref<HTMLDivElement>;
 };
 
-/** Marks the current time across today's column, with a dot at its start. */
 export const ScheduleNowLine = ({ style, ref }: ScheduleNowLineProps) => (
   <div
     ref={ref}

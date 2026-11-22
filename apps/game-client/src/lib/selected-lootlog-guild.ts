@@ -52,12 +52,6 @@ export function isConcreteLootlogGuildId(
   return Boolean(guildId) && guildId !== "all";
 }
 
-/**
- * The Lootlogs a multi-target composer sends to: the stored choice limited to
- * visible Lootlogs in their display order, or the character's selected
- * Lootlog when nothing stored is still visible, so a composer never sends to
- * a hidden or lost Lootlog and never starts without a target.
- */
 export function resolveGuildTargets({
   selectedGuildIds,
   visibleGuilds,

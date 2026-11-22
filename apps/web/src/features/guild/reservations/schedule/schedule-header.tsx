@@ -67,7 +67,6 @@ const compactValue = <Value,>(
 const formatDate = (date: Date, pattern: string) =>
   format(date, pattern, { locale: pl });
 
-/** "12–18 października 2026", or both months and years where they differ. */
 const formatWeekRange = (weekStart: Date, weekEnd: Date) => {
   if (isSameMonth(weekStart, weekEnd)) {
     return `${formatDate(weekStart, "d")}–${formatDate(weekEnd, "d MMMM yyyy")}`;
@@ -144,13 +143,8 @@ export function ScheduleHeader({
     </Button>
   );
 
-  // Touch layouts use the largest control step; desktop icon buttons match
-  // the 32px labelled buttons.
   const iconButtonSize = compactValue(isCompact, "icon-lg", "icon-sm");
 
-  // Touch layouts carry the actions in the app's top bar, as a toolbar's
-  // trailing items: the frequent ones as icons, the rest under "More", and
-  // adding a reservation as the one prominent action at the edge.
   const compactActions = (
     <HeaderSlotPortal slot="actions">
       <div
@@ -197,7 +191,6 @@ export function ScheduleHeader({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            // A single rarer action needs no menu of its own.
             <ScheduleIconButton
               label={t("reservations.schedule.header.info")}
               size="icon"
@@ -207,7 +200,6 @@ export function ScheduleHeader({
             </ScheduleIconButton>
           )}
         </TopBarItemGroup>
-        {/* The prominent action stands apart from the group, at the edge. */}
         <Button
           type="button"
           size={isMobile ? "icon-lg" : "icon"}

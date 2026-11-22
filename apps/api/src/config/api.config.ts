@@ -13,10 +13,8 @@ const optionalRedacted = (name: string) =>
 const flag = (name: string, defaultValue: boolean) =>
   Config.Boolean(name).pipe(Config.withDefault(defaultValue));
 
-/** Read by the API and by the catalog replay script. */
 export const rabbitmqUriConfig = Config.Redacted("RABBITMQ_URI");
 
-/** Read by every process that opens the API database. */
 export const databaseUrlConfig = Config.Redacted("POSTGRESQL_CONNECTION_URI");
 
 export interface ApiConfiguration extends BaseServiceConfiguration {
@@ -39,12 +37,10 @@ export interface ApiConfiguration extends BaseServiceConfiguration {
     readonly retentionDays: number;
   };
   readonly nodeWarningDiagnosticsEnabled: boolean;
-  /** Internal User ids shown as global chat admins and allowed to moderate it. */
   readonly globalChatAdminUserIds: ReadonlyArray<string>;
   readonly hostName: string | undefined;
 }
 
-/** The complete API environment contract, decoded by Effect Config. */
 export const apiConfiguration: Config.Config<ApiConfiguration> = Config.all({
   base: baseServiceConfig("api"),
   authIdpTokenSecret: optionalRedacted("AUTH_IDP_TOKEN_SECRET"),

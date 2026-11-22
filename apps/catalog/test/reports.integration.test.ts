@@ -80,7 +80,6 @@ const reports = <A>(
     }),
   );
 
-/** The failure's HTTP code, as `ApplicationError` carries it. */
 const failure = (
   run: (module: ReportsModule) => Effect.Effect<unknown, unknown>,
 ) =>
@@ -197,8 +196,6 @@ test("moderators alone see the queue, most reported page first, under its curren
 
   expect(await failure((module) => module.list(alice, {}))).toBe("FORBIDDEN");
 
-  // A platform role opens the queue without the configured list; another
-  // role does not, and an admin holds every role.
   expect(
     await failure((module) =>
       module.list({ ...alice, roles: ["global-chat-admin"] }, {}),
@@ -265,7 +262,6 @@ test("a review moves reports between the queue and history, and reopening keeps 
   });
   expect((await reports((module) => module.list(moderator, {}))).total).toBe(0);
 
-  // Alice reports the page again; her resolved report cannot reopen beside it.
   await reports((module) =>
     module.create(alice, { ...sword, reason: "WRONG_DETAILS" }),
   );

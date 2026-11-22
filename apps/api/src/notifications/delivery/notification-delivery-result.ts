@@ -24,10 +24,6 @@ export interface NotificationDeliveryStore {
   ) => Effect.Effect<void, OperationError>;
 }
 
-/**
- * Codes the Discord bot reports when the target channel no longer exists:
- * Discord's own 10003 (Unknown Channel) and the bot's empty channel lookup.
- */
 const DELETED_CHANNEL_ERROR_CODES: ReadonlySet<string> = new Set([
   "10003",
   "CHANNEL_NOT_FOUND",
@@ -55,9 +51,6 @@ export const makeNotificationDeliveryResult = (
       return;
     }
 
-    // A channel deletion the bot never reported (it was offline, or the
-    // channel left the snapshot earlier) would otherwise fail every later
-    // notification. Apply the same removal as the channel-deleted fact.
     const channelDeleted =
       !event.success &&
       job.ownerType === NotificationOwnerType.GUILD &&
@@ -66,8 +59,6 @@ export const makeNotificationDeliveryResult = (
       DELETED_CHANNEL_ERROR_CODES.has(event.errorCode);
 
     if (job.status === NotificationJobStatus.FAILED && !event.success) {
-      // A redelivered result whose removal failed after the job was recorded:
-      // the job stays terminal, only the removal is resumed.
       if (channelDeleted) yield* removeGuildTarget(job.ownerId, job.targetId);
 
       return;

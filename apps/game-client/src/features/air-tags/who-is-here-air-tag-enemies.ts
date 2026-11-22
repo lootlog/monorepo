@@ -1,9 +1,5 @@
 import { isAirTagClanEnemy, type AirTagTarget } from "@lootlog/schema/air-tag";
 
-/**
- * Clan enemies other members report on this map that the player cannot see,
- * by nickname.
- */
 export function selectUnseenAirTagEnemies(
   targets: readonly AirTagTarget[],
   isSeenByHero: (target: AirTagTarget) => boolean,

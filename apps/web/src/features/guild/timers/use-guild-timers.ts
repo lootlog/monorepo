@@ -7,11 +7,6 @@ import {
 import { useGuildWorldScope } from "@/hooks/context/use-guild-world-scope";
 import { keepOverdueTimers } from "./keep-overdue-timers";
 
-/**
- * The Organization's timers on its world. Like the game client, timers are
- * read one world at a time, so each world keeps its pinned expired timers;
- * all worlds reads every world the Organization plays on.
- */
 export const useGuildTimers = (removeTimerAfterMs: number) => {
   const {
     guildId,
@@ -53,7 +48,6 @@ export const useGuildTimers = (removeTimerAfterMs: number) => {
 
       return {
         world,
-        // Until every world answers, a partial list would read as complete.
         timers:
           worlds && loaded.length === results.length
             ? loaded.flatMap((result) => result.data ?? [])

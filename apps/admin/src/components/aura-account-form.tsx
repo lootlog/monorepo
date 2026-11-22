@@ -3,7 +3,6 @@ import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { text } from "@/lib/messages";
 
-/** Takes a pasted profile link or account id into the address bar. */
 export function AuraAccountForm({
   account,
   invalid,

@@ -12,7 +12,6 @@ import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
 import { formatNumber } from "@lootlog/domain/locale";
 
-/** Dotyk anioła's healing for a character's health. */
 export function HolyTouchCalculator() {
   const [health, setHealth] = useState("");
   const value = readNumberInput(health, { min: 1, max: 10_000_000 });

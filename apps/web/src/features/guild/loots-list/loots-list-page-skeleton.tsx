@@ -15,10 +15,6 @@ import {
   LOOTS_VIEW_MODE_KEY,
 } from "./loots-list-layout";
 
-/**
- * Route-level placeholder laid out exactly like the loots page, reading the
- * same stored view mode and panel state so nothing jumps once data arrives.
- */
 export const LootsListPageSkeleton = () => {
   const isMobile = useIsMobile();
   const usesOverlayFilters = useMaxWidth(LOOTS_COMPACT_FILTERS_BREAKPOINT);

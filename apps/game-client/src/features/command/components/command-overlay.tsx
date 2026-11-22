@@ -16,25 +16,13 @@ type CommandOverlayProps = {
   children: ReactNode;
   label: string;
   open: boolean;
-  /** A press outside the console: closes it and keeps the draft. */
   onDismiss: () => void;
-  /** Escape: the player cancels on purpose. */
   onEscape: () => void;
 };
 
-/**
- * Presses here must not dismiss Quick chat: the popups it opens (portalled
- * outside the overlay) and the button that toggles it.
- */
 const KEEP_OPEN_SELECTOR =
   '[data-slot="popover-content"], [data-slot="select-content"], [data-ll-window-toggle="command"]';
 
-/**
- * The console floats at the top center of the screen instead of living in a
- * draggable window: it is summoned, used for one line and dismissed, so it
- * has no position, size or opacity to remember. It stays non-modal; the game
- * keeps running and a press anywhere outside closes it.
- */
 export const CommandOverlay: FC<CommandOverlayProps> = ({
   children,
   label,
@@ -52,8 +40,6 @@ export const CommandOverlay: FC<CommandOverlayProps> = ({
 
   const clearFocusRequest = useWindowsStore((state) => state.clearFocusRequest);
 
-  // The input focuses itself on mount; the request only records where focus
-  // goes back to afterwards.
   useLayoutEffect(() => {
     if (!focusRequest) return;
     returnFocusRef.current = focusRequest.returnFocusTo;
@@ -99,11 +85,8 @@ export const CommandOverlay: FC<CommandOverlayProps> = ({
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "Escape" || event.nativeEvent.isComposing) return;
 
-    // Margonem acts on Escape from any focused element (its first action
-    // refuses pending loot), so a key pressed in the console stays here.
     event.stopPropagation();
 
-    // Escape inside the portalled target list only closes that list.
     if (
       event.defaultPrevented ||
       !(event.target instanceof Node) ||

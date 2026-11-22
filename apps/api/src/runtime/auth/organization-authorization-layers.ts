@@ -163,16 +163,6 @@ type GuildForbiddenError<E> = new (props: {
   readonly code: "FORBIDDEN";
 }) => E;
 
-/**
- * Every handler port resolves organization access the same way: look the
- * caller up, project the resolved access into the shape that port declares,
- * and translate the two access failures into that port's own tagged errors.
- * `ReauthenticationRequired` passes through unchanged: the bearer middleware
- * declares it for every authenticated endpoint.
- * The tagged errors stay distinct per port because `Effect.catchTags` and the
- * HTTP status mapping dispatch on them; a port that reports both failures with
- * one class simply passes that class twice.
- */
 const guildAccess =
   <A, NotFound, Forbidden>(
     project: (access: ResolvedAccess) => A,
@@ -220,7 +210,6 @@ const toRoleScopedCaller = (access: ResolvedAccess) => ({
   }),
 });
 
-/** `mode` selects between "every capability" and "any capability". */
 const capabilityRequirements = (
   capabilities: ReadonlyArray<PermissionValue>,
   mode: "all" | "any",
@@ -392,8 +381,6 @@ const publicSystemAuthorization = Effect.map(
     }),
 );
 
-// `TimersAuthorization` declares a mutable `roles` array, so the shared
-// role-scoped projection is copied rather than passed through.
 const timersAccess = guildAccess(
   (access) => ({
     ...toRoleScopedCaller(access),
@@ -430,7 +417,6 @@ const heroSightingsAuthorization = Effect.map(
     }),
 );
 
-/** Organization-aware handler ports backed by the legacy context boundary. */
 export const OrganizationAuthorizationLayers = Layer.mergeAll(
   Layer.effect(ChatAuthorization, chatAuthorization),
   Layer.effect(MembersAuthorization, membersAuthorization),

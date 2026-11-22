@@ -1,18 +1,14 @@
 import type { ReactNode } from "react";
 
 type ArticleSectionProps = {
-  /** The heading's id, which links to the section. */
   id: string;
   title: string;
-  /** A count beside the title, such as how many drops a monster has. */
   count?: number;
-  /** A control beside the title, such as a link to the whole list. */
   action?: ReactNode;
   description?: string;
   children: ReactNode;
 };
 
-/** One part of an article under a ruled heading. */
 export function ArticleSection({
   id,
   title,

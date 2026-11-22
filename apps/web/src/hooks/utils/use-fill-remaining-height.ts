@@ -9,10 +9,6 @@ const bottomInset = (element: Element) => {
   );
 };
 
-/**
- * The height that stretches the element to the bottom of the page scroller,
- * or of the screen where the document scrolls, without making the page scroll.
- */
 export const useFillRemainingHeight = (
   element: HTMLElement | null,
   minHeight: number,
@@ -20,14 +16,12 @@ export const useFillRemainingHeight = (
   const [height, setHeight] = useState<number>();
 
   useLayoutEffect(() => {
-    // A section marked `data-page-fill` already grows to the bottom edge.
     if (!element || element.parentElement?.closest("[data-page-fill]")) return;
 
     const viewport = element.closest<HTMLElement>(
       "[data-slot=scroll-area-viewport]",
     );
 
-    // Below md the page scroller lets its content overflow into the document.
     const scroller =
       viewport && getComputedStyle(viewport).overflowY !== "visible"
         ? viewport
@@ -41,7 +35,6 @@ export const useFillRemainingHeight = (
           : scroller.getBoundingClientRect().top) +
         scroller.scrollTop;
 
-      // The padding of the wrappers below it still takes room on the screen.
       let below = 0;
 
       for (
@@ -60,7 +53,6 @@ export const useFillRemainingHeight = (
 
     observer.observe(scroller);
 
-    // Content above it, such as filter chips that wrap, moves it down.
     for (const content of scroller === document.documentElement
       ? [document.body]
       : scroller.children)

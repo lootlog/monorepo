@@ -4,13 +4,10 @@ import { useTranslation } from "react-i18next";
 
 type BattleTableDeleteDialogsProps = {
   isBulkDeleteDialogOpen: boolean;
-  /** Another table action is running, so deleting must wait. */
   isBusy: boolean;
   isDeletePending: boolean;
-  /** Rejects to keep the dialog open, as after a failed request. */
   onBulkDelete: () => Promise<void>;
   onBulkDeleteOpenChange: (open: boolean) => void;
-  /** Rejects to keep the dialog open, as after a failed request. */
   onSingleDelete: () => Promise<void>;
   onSingleDeleteOpenChange: (open: boolean) => void;
   selectedCount: number;

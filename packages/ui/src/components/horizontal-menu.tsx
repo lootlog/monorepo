@@ -48,8 +48,6 @@ export function HorizontalMenu({
       if (!active) return;
 
       if (activeChanged || recenter) scheduleReveal(active);
-      // Slide only between two active items; first placement and layout
-      // changes snap so the highlight never flies in from the list origin.
       const slide = activeChanged && previous !== null;
 
       if (!slide) highlight.style.transition = "none";
@@ -57,7 +55,6 @@ export function HorizontalMenu({
       highlight.style.transform = `translateX(${active.offsetLeft}px)`;
 
       if (!slide) {
-        // Commit the snapped position before transitions are restored.
         void highlight.offsetWidth;
         highlight.style.transition = "";
       }

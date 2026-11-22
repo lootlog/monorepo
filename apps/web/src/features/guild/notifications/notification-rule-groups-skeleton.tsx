@@ -9,7 +9,6 @@ import { NotificationRuleRowSkeleton } from "./notification-rule-row-skeleton";
 
 const GROUP_SIZES = [3, 4];
 
-/** Stands in for `NotificationRuleGroups`: banded headings above rule rows. */
 export const NotificationRuleGroupsSkeleton = () => (
   <div aria-hidden="true">
     {GROUP_SIZES.map((size, groupIndex) => (

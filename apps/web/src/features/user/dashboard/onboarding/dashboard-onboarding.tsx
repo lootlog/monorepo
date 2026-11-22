@@ -32,8 +32,6 @@ export const DashboardOnboarding = () => {
   const { installAddonModal, createGuildModal } = useGlobalContext();
   const steps = useDashboardOnboarding();
 
-  // Recorded activity is the only completion signal, so a player whose kills
-  // and battles never reach Lootlog needs a way to put the checklist away.
   const [dismissed, setDismissed] = useLocalStorage(
     "lootlog:dashboard:onboarding-dismissed",
     false,
@@ -133,7 +131,6 @@ export const DashboardOnboarding = () => {
         </div>
       }
     >
-      {/* Hairlines between the steps, as in a `StatsTileGrid`. */}
       <div className="overflow-hidden">
         <ol className="-mr-px grid grid-cols-1 lg:grid-cols-3">
           {steps.map((step, index) => (

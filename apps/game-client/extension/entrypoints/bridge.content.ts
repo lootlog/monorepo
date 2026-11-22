@@ -77,7 +77,6 @@ export default defineContentScript({
           }
         };
 
-        // This is a transferred MessagePort, accepted only after the window source and origin checks above.
         page.onmessage = (message: MessageEvent<unknown>) => {
           if (stopped) return;
 
@@ -99,9 +98,7 @@ export default defineContentScript({
                   message: "Extension background unavailable",
                 }),
               );
-          } catch {
-            /* Ignore malformed page messages without exposing extension capabilities. */
-          }
+          } catch {}
         };
 
         page.start();

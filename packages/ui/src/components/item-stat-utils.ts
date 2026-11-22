@@ -86,7 +86,6 @@ const LEGENDARY_BONUS_VALUES = new Map(
   }),
 );
 
-/** Every legendary bonus Margonem items carry, by its stat name. */
 export const LEGENDARY_BONUS_NAMES = [...LEGENDARY_BONUS_VALUES.keys()];
 
 const TECHNICAL_STAT_KEYS = new Set([
@@ -97,7 +96,6 @@ const TECHNICAL_STAT_KEYS = new Set([
   "created",
   "doubleshoot",
   "emo",
-  // The tooltip header shows the upgrade level instead of a stat row.
   "enhancement_upgrade_lvl",
   "item_value",
   "key",
@@ -929,10 +927,8 @@ const STAT_SECTIONS = [
   },
 ] as const satisfies readonly StatSectionDefinition[];
 
-/** Binding and requirement sections, shown in the tooltip footer. */
 export const ITEM_STAT_FOOTER_SECTIONS: ReadonlySet<number> = new Set([8, 9]);
 
-/** Classes of the markup tags in the `itemStats` translations. */
 export const ITEM_STAT_TAG_CLASS_NAMES = {
   description:
     "block text-center italic leading-relaxed text-pretty text-muted-foreground",

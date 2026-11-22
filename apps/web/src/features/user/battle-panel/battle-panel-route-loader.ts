@@ -40,7 +40,6 @@ export const ensureBattlePanelCharacterId = async ({
   return characterId ?? charactersResponse.characters[0]?.id;
 };
 
-/** Starts every query of `BattleAnalyticsOverview` for the same battles. */
 export const prefetchBattleAnalytics = (
   queryClient: QueryClient,
   params: BattleAnalyticsParams,

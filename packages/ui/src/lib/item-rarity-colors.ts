@@ -2,29 +2,15 @@ import type { DisplayItemRarity } from "@lootlog/domain/item-rarity";
 import { mapValues } from "es-toolkit";
 
 type ItemRarityTokens = {
-  /** Hex accent where a class cannot reach, such as charts and link previews. */
   hex: string | undefined;
-  /** Item frame drawn by `ItemImage`. */
   frame: string;
-  /** Rarity-coloured text, such as item names. */
   text: string;
-  /** Faint rarity-tinted background behind a rarity label or icon. */
   surface: string;
-  /**
-   * Rarity filter pill: the label in the frame colour, and once pressed the
-   * frame itself with a faint glow, as the item frames draw it.
-   */
   pill: string;
-  /** Tints the tooltip frame and header ornament through `--item-rarity`. */
   accent: string;
-  /** The rarity label inside an item tooltip. */
   label: string;
 };
 
-/**
- * The rarity palette: legendary orange-600, heroic blue-500, unique amber-300,
- * and upgraded in the game's own pink (`t-upgraded`, #ff59af).
- */
 const ITEM_RARITY_TOKENS = {
   LEGENDARY: {
     hex: "#ea580c",

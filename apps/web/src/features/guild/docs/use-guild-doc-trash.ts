@@ -12,11 +12,6 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { invalidateGuildDocsQueries } from "./docs-api";
 import { canManageGuildDocs } from "@/lib/docs-permissions";
 
-/**
- * Moving a document to the trash and back. Only admins can restore, so only
- * they trash at once and get "Undo" on the toast; everyone else confirms
- * first, because for them the move cannot be taken back.
- */
 export const useGuildDocTrash = () => {
   const { t } = useTranslation();
   const guildId = useGuildId() ?? "";
@@ -36,7 +31,6 @@ export const useGuildDocTrash = () => {
     }
   };
 
-  /** Resolves whether the document reached the trash. */
   const moveToTrash = async (docId: string) => {
     try {
       await deleteDocument.mutateAsync({ pathParams: { guildId, docId } });

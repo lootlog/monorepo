@@ -57,11 +57,6 @@ const unexpected = () => {
   throw new Error("Unexpected bridge collaborator call");
 };
 
-/**
- * A RabbitBridge over messaging that records each consumer, so a test delivers
- * a message to the queue bound to its routing key. Collaborators the test does
- * not pass throw when called.
- */
 export const makeRabbitBridgeHarness = (
   hub: RealtimeHub,
   dependencies: Partial<BridgeDependencies> = {},
@@ -91,7 +86,6 @@ export const makeRabbitBridgeHarness = (
     dependencies.coverage ?? { publish: unexpected },
   );
 
-  /** Delivers to the main queue of `routingKey`; requires a started bridge. */
   const deliver = (
     routingKey: string,
     payload: typeof Schema.Json.Type,

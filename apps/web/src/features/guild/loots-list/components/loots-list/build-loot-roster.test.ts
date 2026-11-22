@@ -71,8 +71,6 @@ describe("buildLootRoster", () => {
     expect(roster.recipients[0]?.items.map((item) => item.hid)).toEqual([
       "item-1",
     ]);
-    // "Gracz p2" shares a name with a recipient but has no character id, so
-    // the map entry stays a bystander instead of being merged by name.
     expect(roster.bystanders.map((player) => player.name)).toEqual([
       "Obserwator",
       "Gracz p2",

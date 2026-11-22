@@ -27,10 +27,6 @@ export type GlobalChatMuteDuration =
   | (typeof GLOBAL_CHAT_MUTE_DURATIONS_MINUTES)[number]
   | null;
 
-/**
- * Admin actions on one channel. Each applies its result to the loaded
- * history at once; the gateway's broadcast of the same change is idempotent.
- */
 export const useGlobalChatModeration = (channel: GlobalChatChannel) => {
   const { t } = useTranslation("globalChat");
   const queryClient = useQueryClient();
@@ -127,7 +123,6 @@ export const useGlobalChatModeration = (channel: GlobalChatChannel) => {
   };
 };
 
-/** Lifting a mute refreshes the admin's list. */
 export const useGlobalChatUnmute = () => {
   const { t } = useTranslation("globalChat");
   const queryClient = useQueryClient();

@@ -201,13 +201,6 @@ const resolveNotificationActionState = (
   };
 };
 
-/**
- * Memoized on purpose: the window renders up to 50 rows, each with several
- * Base UI tooltip roots, and every incoming notification re-rendered all of
- * them (measured: 41-45 row renders per presentation before, 1 after). Every
- * prop the list passes must therefore stay referentially stable across
- * unrelated updates.
- */
 export const SingleNotification = memo(function SingleNotification({
   animationEffectsEnabled,
   autoHideState,
@@ -274,10 +267,6 @@ export const SingleNotification = memo(function SingleNotification({
     receivedAtMs: notification.receivedAtMs,
   });
 
-  // Drains the bar from what is left of the countdown and fades the row out
-  // just before the cleanup sweep removes it, so an expiring notification
-  // leaves instead of vanishing. Both are single Web Animations of transform
-  // and opacity; a paused countdown holds the bar still and keeps the row.
   useEffect(() => {
     const bar = autoHideBarRef.current;
     const row = rowRef.current;
@@ -290,10 +279,6 @@ export const SingleNotification = memo(function SingleNotification({
       autoHidePausedRemainingMs ??
       (autoHideDeadlineMs === null ? 0 : autoHideDeadlineMs - Date.now());
 
-    // The sweep removes the row at the stored deadline, which can lie further
-    // out than the category's current duration after the setting was
-    // shortened; the bar then starts full, and both animations still end
-    // exactly when the row leaves.
     const clampedRemainingMs = Math.max(0, remainingMs);
 
     const startScale = `scaleX(${Math.min(1, clampedRemainingMs / autoHideDurationMs)})`;
@@ -339,9 +324,6 @@ export const SingleNotification = memo(function SingleNotification({
     autoHidePausedRemainingMs,
   ]);
 
-  // The countdown holds while the player points at the row, has keyboard
-  // focus inside it or has its mute menu open, and runs on once all of them
-  // let go.
   const setAutoHideHold = (source: AutoHideHoldSource, held: boolean) => {
     const holds = autoHideHoldsRef.current;
     const wasHeld = holds.size > 0;

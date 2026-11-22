@@ -122,8 +122,6 @@ export const useActivityLogsFilterModel = () => {
   };
 
   const updateFilters = (newFilters: Partial<typeof filters>) => {
-    // Typing a name replaces the address; a history entry per keystroke
-    // would trap Back.
     const isTyping = "name" in newFilters || "clanName" in newFilters;
 
     return setFilters(

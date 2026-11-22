@@ -11,7 +11,6 @@ import {
 } from "./character-aura-renderer";
 import { auraScreenBox } from "./engine/layers";
 
-/** SI has no camera in the way: `#base` scrolls, so its pixels are map pixels. */
 const MAP_CAMERA = [0, 0] as const;
 
 const shownLayers = new Map<string, LegacyAuraLayers>();
@@ -33,7 +32,6 @@ function paintLayer(
   paint(context);
 }
 
-/** The night of an admin's arrival with a tall circle of light on them, in map pixels. */
 function arrivalBackground({ place, darkness, veil }: ShownArrival): string {
   const { bounds } = place.silhouette;
   const x = Math.round(place.x + bounds.x + bounds.w / 2);
@@ -44,11 +42,6 @@ function arrivalBackground({ place, darkness, veil }: ShownArrival): string {
   return `radial-gradient(ellipse 110px 210px at ${x}px ${y}px, rgba(${color},0) 19%, rgba(${color},${alpha}) 100%)`;
 }
 
-/**
- * The SI map: each aura gets a canvas under and one over its character's
- * element, sized to what the aura paints and redrawn every animation frame
- * while any aura is shown.
- */
 const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
   getView: () => ({
     mapId: legacyAuraRuntimeAdapter.getMapId(),
@@ -66,7 +59,6 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
     return () => cancelAnimationFrame(frame);
   },
 
-  // Each layer is sized to its aura.
   isInView: () => true,
 
   present(key, shown) {
@@ -97,9 +89,7 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
     legacyAuraRuntimeAdapter.removeLayers(layers);
   },
 
-  // SI dims the map round the admin with a CSS gradient.
   presentArrival(arrival) {
-    // An effect only seen in bursts leaves the SI map as it is.
     if (!arrival || arrival.darkness <= 0) {
       veil.remove();
 

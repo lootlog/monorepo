@@ -41,7 +41,6 @@ const ENEMY_NAMES = [
   "Zgniatacz",
 ];
 
-/** Cycles through the names, numbering the repeats, for crowded maps. */
 const previewNames = (names: readonly string[], count: number) =>
   Array.from({ length: count }, (_, index) => {
     const round = Math.floor(index / names.length);
@@ -90,11 +89,9 @@ type PreviewState = {
   color: keyof typeof TIMERS_COLORS;
   occupancy?: MapOccupancy;
   threat?: MapThreat;
-  /** An Organization member sees the NPC standing. */
   standing?: boolean;
 };
 
-// Built when the preview opens, so enemy sightings start fresh.
 const createStates = (): readonly PreviewState[] => [
   { title: "Nikt", color: "sky" },
   { title: "Stoi", color: "sky", standing: true },
@@ -236,7 +233,6 @@ function PreviewTile({
   );
 }
 
-/** Every map presence, threat and standing state of a single timer, with hover tooltips. */
 export function TimerStatesPreview({ onClose }: { onClose: () => void }) {
   const container = getLootlogPortalContainer();
   const [states] = useState(createStates);

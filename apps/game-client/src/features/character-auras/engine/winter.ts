@@ -1,9 +1,3 @@
-/**
- * Władca Zimy: a crown of ice over the head, snowflakes circling the body, rime spreading
- * from the feet and, while the admin is on the map, a blizzard over all of it with frost
- * growing in from the corners of the screen. Its burst freezes the ground: spikes of ice
- * shoot up round the character, shatter, and a wave of cold rolls over the map.
- */
 import { clamp } from "es-toolkit";
 import { mulberry32, noise1, rgba, smoothstep, TAU, type Rgb } from "./math";
 import {
@@ -26,22 +20,18 @@ const ICE: Rgb = [176, 224, 255];
 
 const ICE_DEEP: Rgb = [70, 140, 226];
 
-/** The spikes stand between these fractions of the burst, then shatter. */
 const SPIKES_UP = 0.18;
 
 export const SPIKES_SHATTER = 0.7;
 
-/** How tall the burst's spikes stand, 0..1, at `burst` (0..1, -1 resting). */
 function spikeGrowth(burst: number): number {
   if (burst < 0 || burst > SPIKES_SHATTER) return 0;
 
-  // Shot up fast, a little past their height, then standing.
   return burst < SPIKES_UP
     ? (burst / SPIKES_UP) ** 0.5 * 1.1
     : 1 + 0.1 * (1 - smoothstep(SPIKES_UP, SPIKES_UP + 0.1, burst));
 }
 
-/** A pixel snowflake: four long arms, four short ones and barbs when `size` allows. */
 function snowflake(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -61,9 +51,6 @@ function snowflake(
       plot(ctx, x + dx * i, y + dy * i, color, alpha * 0.8);
 }
 
-// --- round the character ------------------------------------------------------------------------
-
-/** Rime on the ground: a pale disc and branching frost growing out from the feet. */
 export function drawRime(b: Brush, place: AuraPlacement, burst: number): void {
   const lit = b.lit();
   const a = b.intensity;
@@ -94,7 +81,6 @@ export function drawRime(b: Brush, place: AuraPlacement, burst: number): void {
       0.7 * a,
     );
 
-    // Two pairs of twigs off each branch, the outer pair shorter.
     for (const [at, length] of [
       [0.5, 0.3],
       [0.78, 0.2],
@@ -119,10 +105,8 @@ export function drawRime(b: Brush, place: AuraPlacement, burst: number): void {
   }
 }
 
-/** Heights of the crown's crystals, left to right. */
 const CROWN_SPIKES = [3, 6, 4, 8, 4, 6, 3] as const;
 
-/** A crown of ice crystals floating over the head, one pixel higher while `raised`. */
 export function drawIceCrown(
   b: Brush,
   place: AuraPlacement,
@@ -140,7 +124,6 @@ export function drawIceCrown(
   for (const [i, height] of CROWN_SPIKES.entries()) {
     const x = left + i * 2;
 
-    // Each crystal two pixels wide: a lit face and a shaded one, solid so it reads on snow.
     for (let h = 0; h < height; h++) {
       plot(dim, x, base - h, h > height - 3 ? WHITE : ICE, a);
       plot(dim, x + 1, base - h, h === height - 1 ? ICE : ICE_DEEP, a);
@@ -168,7 +151,6 @@ export function drawIceCrown(
     );
 }
 
-/** Three snowflakes circling the body on a tilted ring; the far ones go behind it. */
 export function drawSnowOrbit(
   b: Brush,
   place: AuraPlacement,
@@ -187,7 +169,6 @@ export function drawSnowOrbit(
 
     if (depth > 0 !== front) continue;
     const ox = Math.cos(angle) * rx;
-    // Bobbing on its own beat as it goes round.
     const bob = Math.round(noise1(b.time * 0.8 + i * 5, 41) * 2);
     snowflake(
       b.lit(),
@@ -200,7 +181,6 @@ export function drawSnowOrbit(
   }
 }
 
-/** One crystal: a tall triangle with a lit left face, in the layer's current transform. */
 function crystal(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -226,11 +206,6 @@ function crystal(
   ctx.fill();
 }
 
-/**
- * Ice round the feet: a ring of small crystals always, and the burst's tall spikes
- * shooting up between them. Those behind the feet (`front` false) draw before the
- * character.
- */
 export function drawIceRing(
   b: Brush,
   place: AuraPlacement,
@@ -262,7 +237,6 @@ export function drawIceRing(
     );
 
     if (growth <= 0 || i % 2) continue;
-    // The burst's spikes stand further out, leaning away from the character.
     const tall = Math.round((16 + ((i * 104729) % 9)) * growth);
     const x = Math.round(place.feetX + cos * rx * 1.5);
     const y = Math.round(place.feetY - 2 + depth * ry * 1.5);
@@ -273,19 +247,14 @@ export function drawIceRing(
   }
 }
 
-// --- the blizzard over the map ------------------------------------------------------------------
-
-/** How much the blizzard dims the map, 0..1. */
 export const BLIZZARD_GLOOM = 0.3;
 
-/** The overcast: a cold grey-blue, so the map looks snowed in rather than dark. */
 export const BLIZZARD_VEIL: Rgb = [128, 156, 196];
 
 const FROST_SIZE = 150;
 
 let frostSprite: HTMLCanvasElement | null = null;
 
-/** Frost grown from a corner: branching dendrites over a pale bloom, built once. */
 function frost(): HTMLCanvasElement {
   if (frostSprite) return frostSprite;
   const canvas = createCanvas(FROST_SIZE, FROST_SIZE);
@@ -299,7 +268,6 @@ function frost(): HTMLCanvasElement {
   ctx.fillStyle = "#ffffff";
   const rng = mulberry32(1812);
 
-  // A straight needle with twigs off both sides at sixty degrees, each a smaller needle.
   const needle = (
     x: number,
     y: number,
@@ -337,18 +305,12 @@ function frost(): HTMLCanvasElement {
   return canvas;
 }
 
-/** Flakes of one depth: how big its cells are, how fast it falls and how it looks. */
 const SNOW_LAYERS = [
   { cell: 28, seed: 31, depth: 0.5, vx: -26, vy: 58, size: 1, alpha: 0.9 },
   { cell: 42, seed: 37, depth: 1, vx: -52, vy: 112, size: 2, alpha: 1 },
   { cell: 110, seed: 41, depth: 1.4, vx: -90, vy: 170, size: 3, alpha: 0.9 },
 ] as const;
 
-/**
- * The blizzard over the whole map: a cold overcast, two depths of snow driven by the
- * wind, frost growing in from the corners of the screen and, when the aura bursts, a
- * gust, a pale flash and a wave of cold rolling out from the character.
- */
 export function drawBlizzard(scene: MapScene): void {
   const { ctx, width, height, now, view, burst } = scene;
   const freeze = burst >= 0 ? Math.sin(Math.PI * clamp(burst * 1.2, 0, 1)) : 0;
@@ -359,19 +321,16 @@ export function drawBlizzard(scene: MapScene): void {
   ctx.fillStyle = "#ffffff";
 
   for (const layer of SNOW_LAYERS) {
-    // The flakes fall through the field, so the window into it runs the other way.
     const left = view[0] * layer.depth - now * layer.vx;
     const top = view[1] * layer.depth - now * layer.vy;
 
     scatter(left, top, width, height, layer.cell, layer.seed, (x, y, p, q) => {
       ctx.globalAlpha = layer.alpha * (0.6 + q * 0.4);
-      // Each flake swings on its own beat as it falls.
       const sway = Math.sin(now * (1.2 + p * 2) + q * 30) * 5 * layer.depth;
       ctx.fillRect(Math.round(x + sway), Math.round(y), layer.size, layer.size);
     });
   }
 
-  // Frost in the four corners, breathing, and surging inwards with a burst.
   const sprite = frost();
   const scale = 1 + freeze * 0.35;
   ctx.imageSmoothingEnabled = false;
@@ -396,7 +355,6 @@ export function drawBlizzard(scene: MapScene): void {
 
   if (burst < 0) return;
 
-  // The gust: streaks of snow racing across the screen.
   ctx.globalCompositeOperation = "lighter";
   ctx.fillStyle = "#ffffff";
   const gust = mulberry32(53);
@@ -415,9 +373,6 @@ export function drawBlizzard(scene: MapScene): void {
   wash(scene, WHITE, 0.22 * (1 - burst) ** 4, "lighter");
 }
 
-// --- the tooltip --------------------------------------------------------------------------------
-
-/** Snow lying on the top edge in uneven drifts, and a snowflake on the top right corner. */
 export function drawTipSnow({ b, L, T, W, R, a }: TipFrame): void {
   const dim = b.dim();
 

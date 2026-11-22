@@ -7,23 +7,13 @@ import { isOrganizationIdLike } from "@lootlog/domain/organization-vanity-url";
 
 const GUILD_CACHE_TTL_SECONDS = 3600;
 
-// v2: v1 (`guild:<id or vanity URL>`) kept ids and vanity URLs in one namespace
-// and wrote every row under a key derived from its vanity URL, so a vanity URL
-// equal to another Organization's id overwrote that Organization's entry. The
-// new prefix leaves every v1 entry unread.
 const GUILD_CACHE_KEY_PREFIX = "guild-lookup:v2";
 
-/**
- * Cache key for a guild looked up by `idOrVanityUrl`. Ids and vanity URLs live
- * in separate namespaces, and an id-like value only ever maps to the id
- * namespace, so no vanity URL can address another Organization's id entry.
- */
 export const getGuildCacheKey = (idOrVanityUrl: string) =>
   `${GUILD_CACHE_KEY_PREFIX}:${
     isOrganizationIdLike(idOrVanityUrl) ? "id" : "vanity"
   }:${idOrVanityUrl}`;
 
-/** The `RedisService` commands an Organization lookup cache needs. */
 export interface GuildConfigurationCache {
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
   readonly del: (key: string) => Effect.Effect<void, RedisError>;
@@ -43,11 +33,6 @@ const decodeGuildObject = (cached: string) => {
   return guild;
 };
 
-/**
- * Reads the guild cached for `idOrVanityUrl`. An entry that fails to decode,
- * or that sits under an id key while describing a different Organization, is
- * evicted so the caller loads authoritative data.
- */
 export const readCachedGuild = Effect.fnUntraced(function* <Guild>(
   cache: Pick<GuildConfigurationCache, "get" | "del">,
   idOrVanityUrl: string,
@@ -83,7 +68,6 @@ export const readGuildConfigurationCache = (
     Effect.map(
       (guild) =>
         guild && {
-          // Entries cached before the column existed lack it.
           lootDrawExcludedNpcTypes: [...DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES],
           ...guild,
           ...resolveReservationSettings(guild),
@@ -91,10 +75,6 @@ export const readGuildConfigurationCache = (
     ),
   );
 
-/**
- * Caches the guild under the looked-up key only. Deriving a second key from
- * the row's `vanityUrl` would let one Organization write another's entry.
- */
 export const writeGuildConfigurationCache = (
   cache: Pick<GuildConfigurationCache, "set">,
   idOrVanityUrl: string,

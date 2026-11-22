@@ -19,7 +19,6 @@ const KEYBOARD_RESIZE_DELTAS = new Map([
 
 type WindowSize = { width: number; height: number };
 
-/** Resize previews re-render the window, so pointer moves apply at most once per frame. */
 const createFrameCoalescer = (apply: (size: WindowSize) => void) => {
   let pendingSize: WindowSize | null = null;
   let frameId: number | null = null;
@@ -97,7 +96,6 @@ interface WindowResizeHandleProps {
   onResize: (size: { width: number; height: number }) => void;
   onResizeStart: () => void;
   onResizeEnd: () => void;
-  /** Hides the handle while the window body is not yet or no longer shown. */
   hidden?: boolean;
 }
 
@@ -136,8 +134,6 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     const startWidth = windowElement?.offsetWidth ?? minWidth;
     const startHeight = windowElement?.offsetHeight ?? minHeight;
 
-    // Measured once per session: viewport reads force the game document to
-    // lay out, which is too expensive to repeat on every mouse move.
     const {
       scale,
       width: scaledViewportWidth,
@@ -337,9 +333,6 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     onResizeEnd();
   };
 
-  // A 16px target centered 2px inside the window corner, so it covers the
-  // border and padding rather than content. The grip shows faintly at rest
-  // and brightens on hover and keyboard focus.
   return (
     <button
       type="button"

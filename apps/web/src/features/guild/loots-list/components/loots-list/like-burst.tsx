@@ -23,7 +23,6 @@ type Dot = {
   duration: number;
 };
 
-// Two offset rings of dots, the inner one smaller, flying out from the heart.
 const createDots = (size: number): Dot[] =>
   [
     { scale: 0.12, reach: 1.15, offset: 0, colorShift: 0 },
@@ -53,13 +52,8 @@ const createDots = (size: number): Dot[] =>
     }),
   );
 
-/**
- * The ring and dots around a heart that was just liked. Mount it with a new
- * key for every like; it ends invisible, so it needs no unmounting.
- */
 export const LikeBurst = ({ size }: { size: number }) => {
   const [dots] = useState(() => createDots(size));
-  // The outer edge of a ring stroke centred on 0.9 of the heart's size.
   const ringRadius = size * 0.9 + size * 0.225;
 
   return (

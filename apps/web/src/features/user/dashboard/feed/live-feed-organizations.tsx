@@ -15,7 +15,6 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { Link } from "@tanstack/react-router";
 
-/** Avatars past this many collapse into `+N`, so a widely shared event keeps one row. */
 const VISIBLE_ORGANIZATIONS = 3;
 
 type Props = {

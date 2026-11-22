@@ -5,7 +5,6 @@ type TagMetadata = { name: string; description: string };
 type ServiceMetadata = {
   description: string;
   tags: Record<string, TagMetadata>;
-  /** Sidebar groups. Scalar hides a tag that no group lists. */
   groups: { name: string; tags: string[] }[];
 };
 
@@ -15,11 +14,6 @@ const guides =
 const authentication =
   "Send your API key in the `X-Api-Key` header. A key reaches only the Organizations it was created for, and only what you can access there yourself. Paths and fields call an Organization's Discord server a `guild`; `guildId` is that server's ID.";
 
-/**
- * Names, descriptions and sidebar groups for the HTTP reference. The public
- * OpenAPI documents carry only operations, so the portal adds the reading
- * order and the copy a developer needs to find them.
- */
 export const referenceMetadata: Record<PublicApiService, ServiceMetadata> = {
   main: {
     description: `Organizations, Members, timers, loot, kills, events and coordination features of Lootlog.\n\n${authentication}\n\n${guides}`,

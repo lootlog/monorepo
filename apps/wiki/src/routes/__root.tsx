@@ -60,7 +60,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           : []),
       ],
     }),
-    // Configuration and the stored theme hold for the whole visit.
     loader: async () => {
       const [config, storedTheme] = await Promise.all([
         getRuntimeConfig(),
@@ -111,7 +110,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   useEffect(preventIosFocusZoom, []);
 
   return (
-    // The browser applies the User's theme to the root after hydration.
     <html lang="pl" {...documentTheme.root} suppressHydrationWarning>
       <head>
         <HeadContent />

@@ -15,14 +15,6 @@ import {
 } from "@/lib/drop-rate";
 import { formatNumber } from "@lootlog/domain/locale";
 
-/**
- * How likely a boss is to drop the item: the chance of one loot roll, and
- * for a boss that rolls per survivor, the chance of a full party's kill; for
- * a personal loot, the chance of each member who wears the item. An estimate
- * says so. Its button opens the drops, rolls and kills it is counted from and
- * the day counting began, so a reader can tell how much the chance rests on;
- * a boss Lootlog has too few kills of says so.
- */
 export function ItemDropRate({
   rate,
   npcType,

@@ -1,6 +1,5 @@
 import { CornerDownLeft } from "lucide-react";
 
-/** Marks the highlighted palette row as the one Enter opens. */
 export const SearchRowEnterHint = () => (
   <CornerDownLeft
     aria-hidden="true"

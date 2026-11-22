@@ -14,7 +14,6 @@ import { formatDiscordRelativeTimestamp } from "#src/notifications/content/disco
 import { InvalidEntityError } from "@lootlog/protocol/http/errors";
 import type { NotificationQueue } from "#src/notifications/jobs/notification-job-scheduler";
 
-/** Delivery queue operations a reservation reminder needs. */
 export interface ReservationReminderPorts {
   readonly enqueueNotification: NotificationQueue["add"];
   readonly removeNotification: NotificationQueue["remove"];

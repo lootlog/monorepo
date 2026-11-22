@@ -50,7 +50,6 @@ const MAP_PING_MENU: PingMenu = {
 
 export type PingPointer = ClientPoint & { target: EventTarget | null };
 
-/** "Name (70w)", the way the game labels a character. */
 const getCharacterTitle = ({ id, kind }: RuntimeCharacterRef) => {
   const details =
     kind === "npc"
@@ -62,7 +61,6 @@ const getCharacterTitle = ({ id, kind }: RuntimeCharacterRef) => {
     : null;
 };
 
-/** A monster is attacked; another player is marked as an enemy. */
 const getCharacterMenu = (character: RuntimeCharacterRef): PingMenu => {
   const title = getCharacterTitle(character);
 
@@ -80,7 +78,6 @@ const areMapPingsEnabled = () =>
   Boolean(useGameStore.getState().game?.hero.accountId) &&
   normalizePings(readSettingsValue("gameData.pings")).enabled;
 
-/** Throttled game message for rejections the player can act on. */
 export const useRejectedPingHint = () => {
   const lastHintAtRef = useRef(0);
   const { t } = useTranslation("pings");
@@ -200,7 +197,6 @@ export const useMapPings = () => {
     };
   }, [connected, enabled, isNewInterface, joined, socket, t]);
 
-  /** Resolves the map tile under a press or the last known pointer. */
   const resolveStart = (
     pointer: PingPointer,
   ): Omit<PingInteractionStart, "identity"> | null => {
@@ -251,7 +247,6 @@ export const useMapPings = () => {
       : null;
   };
 
-  /** A character ping names it; old clients still see a tile ping. */
   const send = (
     mapId: number,
     tile: { x: number; y: number },
@@ -294,7 +289,6 @@ export const useMapPings = () => {
       y: tile.y,
     };
 
-    // The wire schema rejects an explicit `undefined`.
     if (character?.kind === "npc") payload.npcId = character.id;
 
     if (character?.kind === "player") payload.playerId = character.id;

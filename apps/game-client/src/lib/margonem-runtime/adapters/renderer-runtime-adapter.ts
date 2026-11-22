@@ -18,7 +18,6 @@ type RuntimeHandheldMiniMap = {
   normalSize?: number;
 };
 
-/** A character's hit box in map pixels, as the game uses it for mouse input. */
 export type RuntimeCharacterBounds = {
   bottom: number;
   left: number;
@@ -26,7 +25,6 @@ export type RuntimeCharacterBounds = {
   top: number;
 };
 
-/** A monster a player can attack, or another player. */
 export type RuntimeCharacterRef = { kind: "npc" | "player"; id: number };
 
 type RuntimeCharacterHit = RuntimeCharacterRef & {
@@ -39,10 +37,6 @@ export interface RendererRuntimeAdapter {
   getHighestOrder(): number;
   getMapGeometry(): RuntimeMapGeometry | null;
   getHandheldMiniMap(): RuntimeHandheldMiniMap | null;
-  /**
-   * The topmost attackable NPC or other player whose hit box contains a
-   * map-pixel point.
-   */
   findPingableCharacterAt(x: number, y: number): RuntimeCharacterHit | null;
   getCharacterBounds(
     character: RuntimeCharacterRef,
@@ -53,7 +47,6 @@ export interface RendererRuntimeAdapter {
 
 type RuntimeCharacterHandle = {
   collider?: { box?: readonly [number, number, number, number] } | null;
-  // Players are keyed by their id as a string; NPCs carry a number.
   d?: { id?: number | string; type?: number; x?: number; y?: number };
   ry?: number;
 };
@@ -98,20 +91,13 @@ type RendererRuntimeWindow = Window & {
 
 const DEFAULT_TILE_SIZE = 32;
 
-/** Consecutive failing frames (about two seconds) before a draw gives up for the session. */
 const MAX_CONSECUTIVE_DRAW_FAILURES = 120;
 
-/**
- * Runs Lootlog work inside the game's frame loop without letting it throw
- * into Margonem. A passing error skips one frame; a long unbroken run
- * disables the step so a broken feature cannot cost every frame.
- */
 const makeDrawGuard = (onDisabled?: () => void) => {
   let failures = 0;
   let disabled = false;
   let reported = false;
 
-  // The step and its argument are passed apart so a frame allocates nothing.
   return <A>(step: (argument: A) => void, argument: A) => {
     if (disabled) return;
 
@@ -121,8 +107,6 @@ const makeDrawGuard = (onDisabled?: () => void) => {
     } catch (error) {
       failures += 1;
 
-      // The first error is reported so a step that fails and recovers stays
-      // visible; the rest are silent until the step gives up.
       if (failures === 1 && !reported) {
         reported = true;
         console.warn("[Lootlog] Drawing step failed:", error);
@@ -136,7 +120,6 @@ const makeDrawGuard = (onDisabled?: () => void) => {
   };
 };
 
-// One stable wrapper per drawable, since drawables are re-added every frame.
 const guardedDrawables = new WeakMap<RuntimeDrawable, RuntimeDrawable>();
 
 const guardDrawable = (drawable: RuntimeDrawable): RuntimeDrawable => {
@@ -145,14 +128,11 @@ const guardDrawable = (drawable: RuntimeDrawable): RuntimeDrawable => {
   if (existing) return existing;
   const guard = makeDrawGuard();
 
-  // Keeps `this` for drawables whose draw is a method.
   const drawInto = (context: CanvasRenderingContext2D) =>
     drawable.draw(context);
 
   const guarded: RuntimeDrawable = {
     draw: (context) => guard(drawInto, context),
-    // The game sorts and filters by these every frame, so they fall back
-    // instead of throwing into its renderer.
     getOrder: () => {
       try {
         return drawable.getOrder();
@@ -174,8 +154,6 @@ const guardDrawable = (drawable: RuntimeDrawable): RuntimeDrawable => {
   return guarded;
 };
 
-// Margonem NPC types 2 and 3 are the monsters a player can attack; the others
-// are dialogue characters, objects and decorations.
 const ATTACKABLE_NPC_TYPES = new Set([2, 3]);
 
 const toBounds = (
@@ -189,7 +167,6 @@ const toBounds = (
   return { bottom, left, right, top };
 };
 
-// Strict comparisons, like the game's own hit test.
 const containsPoint = (bounds: RuntimeCharacterBounds, x: number, y: number) =>
   x > bounds.left && x < bounds.right && y > bounds.top && y < bounds.bottom;
 
@@ -266,7 +243,6 @@ class MargonemRendererRuntimeAdapter implements RendererRuntimeAdapter {
       ["player", engine?.others?.check?.()],
     ] as const;
 
-    // The game gives the character drawn in front (lower on screen) priority.
     for (const [kind, handles] of collections) {
       for (const handle of Object.values(handles ?? {})) {
         const candidate = toPingableHit(kind, handle);

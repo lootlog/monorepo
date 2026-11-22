@@ -12,7 +12,6 @@ import {
   type LevelRangeInputsProps,
 } from "./level-range-inputs";
 
-/** Common hunting brackets, one click each. */
 const PRESETS = [
   [1, 100],
   [100, 200],
@@ -20,7 +19,6 @@ const PRESETS = [
   [300, 500],
 ] as const;
 
-/** The level range in a filter bar: one chip whose popover holds the bounds. */
 export function LevelRangeChip(props: LevelRangeInputsProps) {
   const { t } = useTranslation();
   const { minLevel, maxLevel, onMinLevelChange, onMaxLevelChange } = props;

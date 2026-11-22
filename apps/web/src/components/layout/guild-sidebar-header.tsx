@@ -30,7 +30,6 @@ export const GuildSidebarHeader = ({
   isRouteFailed,
 }: {
   guildId?: string;
-  /** The Organization route failed, so its member queries would fail too. */
   isRouteFailed: boolean;
 }) => {
   const queryClient = useQueryClient();
@@ -47,8 +46,6 @@ export const GuildSidebarHeader = ({
     },
   );
 
-  // The route loader fetches the Organization; a failed route still has its
-  // server-rail entry to name it.
   const railGuild = useCurrentUserGuild(guildId);
   const guild = loadedGuild ?? railGuild;
 
@@ -125,8 +122,6 @@ export const GuildSidebarHeader = ({
             className={cn(
               "truncate text-sm",
               (isRukiaTheme || family === "rias") && "font-semibold",
-              // A halo in the sidebar color keeps the name readable over the
-              // banner in every theme; Rukia's gradient text has its own glow.
               !isRukiaTheme &&
                 "[text-shadow:0_1px_2px_var(--sidebar),0_0_10px_var(--sidebar)]",
             )}

@@ -42,10 +42,6 @@ type SetupChecklistStepProps = {
   onAction: () => void;
 };
 
-/**
- * One checklist row: its state (by icon shape and a hidden label, never by
- * color alone), and while it is to do, why it matters and its one action.
- */
 export const SetupChecklistStep: FC<SetupChecklistStepProps> = ({
   step,
   onAction,

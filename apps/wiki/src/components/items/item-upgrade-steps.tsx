@@ -7,16 +7,11 @@ import {
 } from "@lootlog/domain/item-upgrade";
 
 type ItemUpgradeStepsProps = {
-  /** The item's own level, which the upgrade raises its stats from. */
   itemLevel: number;
   value: UpgradeLevel;
   onChange: (upgrade: UpgradeLevel) => void;
 };
 
-/**
- * The upgrade levels, +0 to +5, as one row of steps, each showing the level
- * the item's stats are computed at; the bar under them fills to the choice.
- */
 export function ItemUpgradeSteps({
   itemLevel,
   value,

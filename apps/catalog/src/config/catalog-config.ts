@@ -11,9 +11,7 @@ export interface CatalogConfigValue extends BaseServiceConfiguration {
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly meilisearchHost: string;
   readonly meilisearchApiKey: Redacted.Redacted<string>;
-  /** What trusted services, such as the wiki's Worker, present to read. */
   readonly serviceToken: Redacted.Redacted<string>;
-  /** Internal User ids allowed to review reports about catalog entries. */
   readonly moderatorUserIds: ReadonlyArray<string>;
 }
 

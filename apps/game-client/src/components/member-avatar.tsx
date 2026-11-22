@@ -8,7 +8,6 @@ type MemberAvatarProps = {
   className?: string;
 };
 
-/** A Discord member's 16px round avatar, with their initial while it loads. */
 export const MemberAvatar: FC<MemberAvatarProps> = ({
   name,
   avatarUrl,

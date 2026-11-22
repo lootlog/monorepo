@@ -28,8 +28,6 @@ export type LootsFilters = inferParserType<typeof lootsFiltersParsers>;
 
 export const useLootsFilters = createQueryFilters(lootsFiltersParsers);
 
-/** Reads the loot list filters from a URL, as the list page will. */
 export const loadLootsFilters = createLoader(lootsFiltersParsers);
 
-/** Builds a loot list URL with the given filters, for links from other pages. */
 export const serializeLootsFilters = createSerializer(lootsFiltersParsers);

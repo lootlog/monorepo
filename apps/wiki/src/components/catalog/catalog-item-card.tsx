@@ -26,24 +26,13 @@ import { monsterIdentity } from "@/lib/group-items-by-monster";
 
 type CatalogItemCardProps = {
   item: CatalogItemDtoOutput;
-  /** Hides the source on a page that already belongs to one NPC. */
   showSource?: boolean;
-  /** The searched phrase, marked in the name. */
   highlight?: string;
-  /** The highest level the list is filtered to, which an elastic item fits. */
   maxLevel?: number;
-  /** Shows the attack speed the item adds, for a list ranked by it. */
   attackSpeed?: AttackSpeedRanking;
-  /** Shows how often this boss's kills drop the item, on the boss's page. */
   dropRateOf?: Pick<CatalogDropSourceDtoOutput, "name" | "type">;
 };
 
-/**
- * One item in a list as a dense row: its name over its level, professions,
- * grip, damage types, event and legendary bonus, and where it drops last. An elastic item shows as the set's character would loot it, and a
- * list ranked by attack speed at +5 shows each item at the upgrade it is
- * ranked at, from its tooltip to its page and the set.
- */
 export function CatalogItemCard({
   item,
   showSource = true,

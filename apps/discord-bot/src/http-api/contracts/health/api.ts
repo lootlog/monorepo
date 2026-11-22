@@ -1,4 +1,3 @@
-/** Endpoints owned by the health HTTP module. */
 import { Schema } from "effect";
 import {
   HttpApiEndpoint,

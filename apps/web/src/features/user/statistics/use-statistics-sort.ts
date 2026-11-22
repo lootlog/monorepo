@@ -8,7 +8,6 @@ import {
 import type { StatisticsSortValue } from "./statistics-sort";
 import type { StatisticsFiltersProps } from "./statistics-filters";
 
-/** A ranking tab's sort, kept in the URL; the default leaves it clean. */
 export const useStatisticsSort = (
   tab: StatisticsSortTab,
   search: StatisticsSearch,
@@ -30,7 +29,6 @@ export const useStatisticsSort = (
   return { sort: resolveStatisticsSort(tab, search), onSortChange };
 };
 
-/** The filter panel's sort field on a ranking tab; none on the other tabs. */
 export const useStatisticsSortFilter = (
   search: StatisticsSearch,
 ): StatisticsFiltersProps["sort"] => {

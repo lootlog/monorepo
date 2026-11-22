@@ -75,7 +75,6 @@ export const makeUserKillQueries = (
         : undefined,
     );
 
-  /** One row per world and NPC, described by its latest kill. */
   const readStats = (
     userId: string,
     options: Parameters<typeof statsCondition>[2] & {

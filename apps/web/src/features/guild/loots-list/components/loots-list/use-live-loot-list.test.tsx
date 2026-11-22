@@ -280,7 +280,6 @@ it("places delivered loot snapshots without requests, holding them while the rea
     gateway.deliver(snapshot(4, "katahha"));
     await vi.advanceTimersByTimeAsync(1);
   });
-  // The other world's loot never belongs to this list.
   expect(listState()).toMatchObject({ ids: [2, 1], newLootCount: 1 });
 
   await act(async () => {
@@ -565,8 +564,6 @@ it("reports a fetched empty page as empty but a policy clear as pending", async 
     '"isEmpty":true,"isPending":false',
   );
 
-  // A restriction clears the active list; the tab is hidden, so the
-  // reconciliation refetch has not run yet and no page exists.
   vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
   await act(async () => {
     gateway.deliver({

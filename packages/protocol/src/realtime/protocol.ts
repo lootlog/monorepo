@@ -68,14 +68,12 @@ export const REALTIME_PROTOCOL_VERSION = 1;
 const { feedEntry: _feedEntry, ...lootCreatedFields } =
   GuildLootCreatedMessageV2.fields;
 
-// `loot` is absent when the publisher predates snapshots.
 export const LootSnapshotEvent = Schema.Struct(lootCreatedFields);
 
 export type LootSnapshotEvent = typeof LootSnapshotEvent.Type;
 
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
-// Browser-permitted application codes; reasons are deliberately static and contain no identity.
 export const REALTIME_CLIENT_CLOSE_CODES = {
   heartbeatTimeout: 4001,
   heartbeatRejected: 4002,
@@ -84,21 +82,13 @@ export const REALTIME_CLIENT_CLOSE_CODES = {
   sessionJoinFailed: 4008,
 } as const;
 
-// Sent by a gateway that sheds sessions: a draining replica restarts (1012),
-// and an overloaded or degraded one asks clients to try again later (1013).
 export const REALTIME_SERVER_CLOSE_CODES = {
   restarting: 1012,
   tryAgainLater: 1013,
 } as const;
 
-// Sent by a gateway to a connection whose peer sent no frame, not even a pong,
-// for too long. It is not a shedding code: a client that still receives it
-// reconnects at once.
 export const REALTIME_INBOUND_TIMEOUT_CLOSE_CODE = 4009;
 
-// Clients closed by REALTIME_SERVER_CLOSE_CODES reconnect after a uniformly
-// random delay up to this window, so a deploy spreads rejoins and their HTTP
-// resyncs across it instead of hitting the API at once.
 export const REALTIME_SERVER_CLOSE_RECONNECT_WINDOW_MS = 30_000;
 
 export const PRESENCE_HEARTBEAT_INTERVAL_MS = 25_000;
@@ -125,10 +115,7 @@ export const RealtimeLogicalTopic = Schema.Literals([
   "map.pings",
   "party.ready-room",
   "global.chat",
-  // A world's own global chat channel. A scope without a world matches every
-  // world, so world channels cannot share the shared channel's topic.
   "global.chat.world",
-  // Aura changes, for Game clients that joined with `CHARACTER_AURAS_FEATURE`.
   "global.character-auras",
 ]);
 
@@ -208,7 +195,6 @@ export const PresenceSnapshot = Schema.Struct({
   organizationId: Schema.NonEmptyString,
   world: Schema.optional(Schema.NonEmptyString),
   revision: Revision,
-  // Match the richer shape first so the basic schema does not strip location.
   presences: Schema.Array(Schema.Union([PresenceWithLocation, BasicPresence])),
 });
 
@@ -251,20 +237,12 @@ const SessionJoinCommand = command(
     world: Schema.optional(Schema.NonEmptyString),
     character: Schema.optional(PresenceCharacter),
     margonemAccountProof: Schema.optional(Schema.Unknown),
-    /**
-     * Server events this client understands beyond the original set. A client
-     * rejects an event type it does not know and disconnects, so the gateway
-     * sends such events only to clients that list them. Gateways that predate
-     * the field drop it, and unknown names are ignored.
-     */
     features: Schema.optional(Schema.Array(Schema.NonEmptyString)),
   }),
 );
 
-/** Joins with this feature receive `character-auras.changed`. */
 export const CHARACTER_AURAS_FEATURE = "character-auras";
 
-/** Joins with this feature receive `kill-stats.changed`. */
 export const KILL_STATS_FEATURE = "kill-stats";
 
 const HeartbeatCommand = command(
@@ -274,7 +252,6 @@ const HeartbeatCommand = command(
 
 const PresencePublishCommand = command("presence.publish", PublishedPresence);
 
-// Answered without I/O, so the round trip measures only the connection.
 const PingCommand = command("connection.ping", Schema.Struct({}));
 
 const PresenceFetchCommand = command(
@@ -413,12 +390,10 @@ export type SessionJoined = typeof SessionJoined.Type;
 
 const ScopeAck = Schema.Struct({ scope: SubscriptionScope });
 
-/** The `data` of a successful response to each command. */
 export const CommandSuccess = {
   "session.join": SessionJoined,
   "presence.heartbeat": Schema.Struct({ lastSeen: Timestamp }),
   "connection.ping": Schema.Struct({}),
-  // Absent when the session publishes to no Lootlog.
   "presence.publish": Schema.UndefinedOr(
     Schema.Union([PresenceWithLocation, BasicPresence]),
   ),
@@ -426,7 +401,6 @@ export const CommandSuccess = {
   "subscription.subscribe": ScopeAck,
   "subscription.unsubscribe": ScopeAck,
   "map-ping.send": MapPingAckSchema,
-  // Both pings share one reject vocabulary.
   "battle-ping.send": MapPingAckSchema,
   "loot-split.send": LootSplitAckSchema,
   "loot-split.auto-accept": LootSplitAckSchema,
@@ -442,10 +416,6 @@ export const CommandSuccess = {
 export type CommandSuccess<Type extends ClientCommand["type"]> =
   (typeof CommandSuccess)[Type]["Type"];
 
-/**
- * The message of the `COMMAND_REJECTED` error that refuses a command for an
- * Organization the session cannot access.
- */
 export const ORGANIZATION_ACCESS_DENIED_MESSAGE = "organization access denied";
 
 const RealtimeError = Schema.Struct({
@@ -489,11 +459,6 @@ const serverEvent = <
     data,
   });
 
-/**
- * An Organization's event that the gateway forwards from the API without
- * reading its payload, so frames do not validate it.
- * {@link OrganizationEventPayloads} names its shape.
- */
 const OrganizationEvent = Schema.Struct({
   organizationId: Schema.NonEmptyString,
   payload: Schema.Unknown,
@@ -542,8 +507,6 @@ export const ServerEvent = Schema.Union([
     "kills.changed",
     Schema.Struct({ guildId: Schema.NonEmptyString }),
   ),
-  // Sent only to the clients of the user whose own kill statistics changed
-  // that joined with KILL_STATS_FEATURE.
   serverEvent("kill-stats.changed", Schema.Struct({})),
   serverEvent("loot.created", GuildLootCreatedEventV2),
   serverEvent("loot.share-updated", GuildLootShareUpdatedEventV2),
@@ -596,7 +559,6 @@ export const ServerEvent = Schema.Union([
 
 export type ServerEvent = typeof ServerEvent.Type;
 
-/** Server events whose Organization payload frames carry unvalidated. */
 type UnreadPayloadEvents = {
   [
     Event in ServerEvent as Event["data"] extends { readonly payload: unknown }
@@ -611,10 +573,6 @@ type EveryUnreadPayload<
   Payloads extends Record<keyof UnreadPayloadEvents, unknown>,
 > = Payloads;
 
-/**
- * The JSON payload the API publishes with each Organization event the gateway
- * forwards unread. Receivers trust it as the API's; the gateway does not.
- */
 type OrganizationEventPayloads = EveryUnreadPayload<{
   "chat.created": ChatMessageCreated;
   "chat.updated": ChatMessageUpdated;
@@ -650,10 +608,6 @@ type OrganizationEventPayloads = EveryUnreadPayload<{
   >;
 }>;
 
-/**
- * What a server event delivers: an Organization event's payload, or the
- * event's data.
- */
 export type ServerEventPayload<Type extends ServerEvent["type"]> =
   Type extends keyof OrganizationEventPayloads
     ? OrganizationEventPayloads[Type]
@@ -677,7 +631,6 @@ export const decodeServerEvent = Schema.decodeUnknownSync(ServerEvent);
 
 export const decodeRealtimeFrame = Schema.decodeUnknownSync(RealtimeFrame);
 
-// Discriminate an already decoded frame without parsing its payload a second time.
 const serverEventTypes = new Set<string>(
   ServerEvent.members.map((member) => member.fields.type.literal),
 );

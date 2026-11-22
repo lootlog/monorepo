@@ -11,7 +11,6 @@ let pendingFrame: FrameRequestCallback | null = null;
 
 let now = 0;
 
-/** One animation frame, a tenth of a second after the last. */
 function playFrame(): void {
   now += 100;
   const frame = pendingFrame;

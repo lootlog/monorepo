@@ -12,18 +12,12 @@ type WhatsNewEntryProps = {
   isUnread: boolean;
 };
 
-// Each type keeps a look that stands out from the window on every theme: a
-// fill for what is new, a frame for what got better, a quiet frame for a fix.
 const TYPE_BADGE_CLASSES = {
   feature: "ll:border-primary ll:bg-primary ll:text-primary-foreground",
   improvement: "ll:border-foreground/40 ll:text-foreground",
   fix: "ll:border-border ll:text-muted-foreground",
 } satisfies Record<ChangelogEntryType, string>;
 
-/**
- * One change, ruled off from the next: what kind it is and when it shipped,
- * then what the player can do now and where.
- */
 export const WhatsNewEntry = ({ item, isUnread }: WhatsNewEntryProps) => {
   const { t, i18n } = useTranslation();
 

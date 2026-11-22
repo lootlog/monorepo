@@ -9,11 +9,6 @@ type AddHeroSightingInput = {
   readonly sighting: Omit<AddHeroSightingDto, "actorCharacter">;
 };
 
-/**
- * Adds a hero entered by hand to each Organization. The request settles per
- * Organization: those that accept keep their sighting and offer it for
- * claiming, and each rejection is returned instead of failing the mutation.
- */
 export const useAddHeroSighting = () => {
   const queryClient = useQueryClient();
 

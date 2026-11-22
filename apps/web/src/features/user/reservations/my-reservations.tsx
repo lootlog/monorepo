@@ -29,7 +29,6 @@ const matchesSearch = (
     normalizeSearchText(name).includes(search),
   );
 
-/** The player's reservations across Lootlogs: upcoming ones and history. */
 export function MyReservations() {
   const { t } = useTranslation();
 

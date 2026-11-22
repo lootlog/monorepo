@@ -146,7 +146,6 @@ it("discards a pending old response after a presence restriction and ignores del
   );
   store.refetch();
   gateway.request.mockRejectedValueOnce(new Error("connection closed"));
-  // Without a baseline, this policy must invalidate all cached private data.
   gateway.deliver({
     v: 1,
     type: "permissions.updated",

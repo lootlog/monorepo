@@ -7,16 +7,13 @@ import {
 } from "./ping-presentation";
 
 type PingBadgeProps = {
-  /** Drawn around the badge, e.g. the ping's countdown. */
   children?: ReactNode;
-  /** Adds the gold halo used when a ping names the local hero. */
   highlighted?: boolean;
   icon: PingIconName;
   size: number;
   tone: PingTone;
 };
 
-/** The round icon badge the map marker draws, as a DOM element. */
 export const PingBadge: FC<PingBadgeProps> = ({
   children,
   highlighted = false,

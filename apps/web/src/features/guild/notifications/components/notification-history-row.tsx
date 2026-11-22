@@ -23,7 +23,6 @@ import {
 
 type Job = NotificationJobsResponseDto["history"][number];
 
-/** A finished delivery; the tile opens its details. */
 export function NotificationHistoryRow({
   job,
   openJobDetails,

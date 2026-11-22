@@ -1,20 +1,13 @@
-/** What the panel needs to know to reach the auth service and its operator. */
 export interface AdminConfig {
-  /** The auth service on the private network. */
   readonly authUrl: string;
   readonly adminApiSecret: string;
-  /** The Lootlog API behind the edge, which authorizes the operator's session. */
   readonly apiUrl: string;
-  /** The origin the browser sees, which state-changing requests must name. */
   readonly origin: string;
-  /** The Web app, where the operator signs in to Lootlog. */
   readonly webUrl: string;
-  /** The Cloudflare Access application in front of the tunnel. */
   readonly access:
     | { readonly teamDomain: string; readonly audience: string }
     | undefined;
   readonly operatorEmails: ReadonlySet<string>;
-  /** Stands in for a verified operator; a production build never sets it. */
   readonly devOperator: string | undefined;
 }
 
@@ -28,11 +21,6 @@ const required = (environment: Environment, name: string) => {
   return value;
 };
 
-/**
- * Reads the configuration and refuses to start half-configured: a production
- * build without an Access application and an operator would serve everyone
- * who reaches the port.
- */
 export const readAdminConfig = (
   environment: Environment,
   production: boolean,

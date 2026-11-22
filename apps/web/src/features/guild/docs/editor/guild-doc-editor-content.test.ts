@@ -131,7 +131,6 @@ type SavedDocument = {
   };
 };
 
-/** The inline nodes of a saved document's first paragraph. */
 const firstParagraphNodes = (saved: GuildDocEditorContent | null) =>
   // SAFETY: each test writes one paragraph, which Lexical saves as the root's first child.
   (saved as SavedDocument).root.children[0].children;

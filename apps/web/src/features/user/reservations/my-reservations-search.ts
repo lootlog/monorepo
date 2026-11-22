@@ -7,7 +7,6 @@ export const MY_RESERVATION_STATUSES = [
   "past",
 ] as const satisfies readonly ListMyReservationsStatus[];
 
-/** The tab lives in the URL; upcoming reservations open by default. */
 export const parseMyReservationsSearch = Schema.decodeUnknownSync(
   Schema.Struct({
     status: optionalOrUndefined(Schema.Literals(MY_RESERVATION_STATUSES)),

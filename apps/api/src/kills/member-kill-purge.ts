@@ -6,26 +6,16 @@ import {
   memberKillPurgeTable,
 } from "#src/database/drizzle/kill-statistics.schema";
 
-/** The `MemberKillBucket` chunk interval; chunks start at multiples of it. */
 const CHUNK_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Longer than one purge, so an expired lease means the claimant died.
 const CLAIM_LEASE = "1 hour";
 
-// Hourly runs claim no new member after this, so the last one ends off peak.
 const RUN_BUDGET_MS = 45 * 60 * 1000;
 
 type Claim = Omit<typeof memberKillPurgeTable.$inferSelect, "claimedUntil"> & {
   readonly claimedUntil: Date;
 };
 
-/**
- * Deletes the member kill buckets of deleted accounts. Deleting a member's rows
- * from a compressed chunk decompresses the Organization's whole segment in that
- * chunk, so each chunk is its own transaction and chunks without the member's
- * rows are never written. Every API replica runs it; a lease keeps one member
- * on one replica, and a repeated window deletes nothing.
- */
 export const makeMemberKillPurge = (database: typeof ApiDatabase.Service) => {
   const claimNext = database
     .update(memberKillPurgeTable)
@@ -66,7 +56,6 @@ export const makeMemberKillPurge = (database: typeof ApiDatabase.Service) => {
 
     const chunk = sql<number>`floor(extract(epoch from ${memberKillBucketTable.periodStart}) * 1000 / ${CHUNK_MS})::int`;
 
-    // Reading compressed chunks decompresses in memory and writes no WAL.
     const chunks = yield* database
       .selectDistinct({ chunk })
       .from(memberKillBucketTable)
@@ -104,7 +93,6 @@ export const makeMemberKillPurge = (database: typeof ApiDatabase.Service) => {
       eq(memberKillPurgeTable.claimedUntil, claim.claimedUntil),
     );
 
-    // A newer deletion of the same member moved `before`; keep its purge.
     const completed = yield* database
       .delete(memberKillPurgeTable)
       .where(and(owned, eq(memberKillPurgeTable.before, claim.before)))
@@ -131,7 +119,6 @@ export const makeMemberKillPurge = (database: typeof ApiDatabase.Service) => {
 
       if (!claim) return;
 
-      // A failed purge keeps its lease and is retried by a later run.
       yield* purgeMember(claim).pipe(
         Effect.catch((error) =>
           Effect.logError("Deleted account member kill purge failed", {

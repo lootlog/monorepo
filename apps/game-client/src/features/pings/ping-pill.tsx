@@ -1,12 +1,10 @@
 import type { CSSProperties, FC, PropsWithChildren } from "react";
 
 type PingPillProps = PropsWithChildren<{
-  /** Adds the gold halo used when a ping names the local hero. */
   highlighted?: boolean;
   style?: CSSProperties;
 }>;
 
-/** The label plate of the game's popup menu, shared by the wheel and markers. */
 export const PingPill: FC<PingPillProps> = ({
   children,
   highlighted = false,

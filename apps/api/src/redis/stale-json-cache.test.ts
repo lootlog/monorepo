@@ -68,7 +68,6 @@ describe("getOrSetStaleJson", () => {
         expect(computed).toBe(1);
 
         yield* TestClock.adjust("40 seconds");
-        // Two readers find it stale; only one refresh runs.
         const stale = yield* read();
         yield* read();
         expect(stale.value).toEqual({ n: 1 });

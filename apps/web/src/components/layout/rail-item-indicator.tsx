@@ -1,12 +1,6 @@
 import { cn } from "cn";
 import { useThemeMeta } from "@/themes/use-theme-meta";
 
-/**
- * Marks the open rail entry at the rail's edge and previews the mark on hover
- * or keyboard focus. Place it inside a `group/rail-item` that spans the rail.
- * The active mark pulses while its page is still loading, once the wait
- * becomes noticeable.
- */
 export const RailItemIndicator = ({
   isActive,
   isLoading = false,

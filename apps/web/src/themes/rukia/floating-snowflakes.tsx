@@ -35,7 +35,6 @@ const getSnowflakeType = (isTiny: boolean): FallingSnowflakeType => {
   return "simple";
 };
 
-// Generate snowflake configurations
 const generateSnowflakes = () => {
   const snowflakes = [];
   const count = 35;
@@ -63,7 +62,6 @@ const generateSnowflakes = () => {
 
 const snowflakeConfigs = generateSnowflakes();
 
-// Floating snowflakes for ambient effect
 export const FloatingSnowflakes = () => {
   return (
     <>

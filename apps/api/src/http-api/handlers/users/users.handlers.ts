@@ -47,7 +47,6 @@ export const updateCurrentUserPreferences = Effect.fn(
 )(function* (payload: UpdateUserPreferencesRequest) {
   const current = yield* identity;
 
-  // A User may select only their own theme; another User's id reads as missing.
   if (payload.theme?.startsWith(CUSTOM_THEME_PREFERENCE_PREFIX)) {
     const themeId = payload.theme.slice(CUSTOM_THEME_PREFERENCE_PREFIX.length);
 

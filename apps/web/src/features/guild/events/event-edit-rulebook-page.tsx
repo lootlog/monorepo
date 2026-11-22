@@ -45,8 +45,6 @@ export const EventEditRulebookPage = () => {
     },
   });
 
-  // React Compiler keeps the first `register` result, so a reset must keep
-  // the registered fields or typing stops reaching the form.
   const form = useForm<EventRulebookFormData>({
     values: event ? toRulebookDefaults(event) : undefined,
     resetOptions: { keepFieldsRef: true },

@@ -96,7 +96,6 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
-// Recharts retains arbitrary source-row fields for custom formatters and key lookup.
 type ChartSourceRow = Record<string, unknown>;
 
 type ChartPayloadItem = {
@@ -347,7 +346,6 @@ function ChartLegendContent({
   );
 }
 
-// Helper to extract item config from a payload.
 function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,

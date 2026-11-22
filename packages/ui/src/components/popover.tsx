@@ -30,8 +30,6 @@ function PopoverContent({
     container?: HTMLElement | null;
   }) {
   return (
-    // A popup is never part of the filter bar its trigger sits in: context
-    // passes through the portal, so filters inside keep their full fields.
     <FilterBarContext value={false}>
       <PopoverPrimitive.Portal container={container}>
         <PopoverPrimitive.Positioner

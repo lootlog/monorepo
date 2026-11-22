@@ -305,7 +305,6 @@ it("reports the party with who survived, which decides the loot rolls", async ()
 
 it("records an event hero with the template flag the map observed", async () => {
   const fixture = createBattleTest();
-  // Margonem flags the template only; the battle reports the weight alone.
   useNpcsStore.getState().replaceNpcs([
     {
       icon: "hev/h26-h4-nosferatu.gif",
@@ -603,7 +602,6 @@ it.each(["battle", "kill"] as const)(
   },
 );
 
-// Margonem repeats a finished battle until the player closes it.
 const repeatOfPvpBattle: GameEvent = {
   f: { ...pvpStart().f, endBattle: 1, m: ["start", "end"] },
 };

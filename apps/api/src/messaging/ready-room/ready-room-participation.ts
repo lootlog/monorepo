@@ -63,11 +63,6 @@ export const exitParticipant = Effect.fnUntraced(function* (
   );
 });
 
-/**
- * The room with the applicant added. A player who logs in to another
- * character of the same Margonem account keeps their application; it follows
- * the character they play now.
- */
 const placeApplicant = (
   aggregate: ReadyRoomAggregate,
   discordId: string,
@@ -118,9 +113,6 @@ export const joinWithRetry = (
   Effect.gen(function* () {
     const aggregate = yield* context.getLive(notificationId);
 
-    // Organizing is Margonem-account-wide: none of the organizer
-    // account's characters may join, other accounts of the same
-    // Discord user may.
     if (aggregate.organizerCharacter.accountId === character.accountId) {
       return yield* Effect.fail(
         new ResourceConflictError({ code: "CHARACTER_ALREADY_JOINED" }),

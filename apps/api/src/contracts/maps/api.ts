@@ -1,4 +1,3 @@
-/** Endpoints owned by the maps HTTP module. */
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import { GameMapsResponse } from "./schemas.js";
 

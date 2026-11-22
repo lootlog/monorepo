@@ -1,6 +1,5 @@
 import { Option, Schema } from "effect";
 
-/** Built-in web themes; `cat-random` picks one cat variant per visit. */
 export const BUILT_IN_THEME_IDS = [
   "default",
   "muted",
@@ -32,12 +31,10 @@ export const CUSTOM_THEME_LIMIT = 10;
 
 export const CUSTOM_THEME_NAME_MAX_LENGTH = 40;
 
-/** A stored theme preference that points at one of the User's own themes. */
 export const CUSTOM_THEME_PREFERENCE_PREFIX = "custom:";
 
 const CustomThemePreferenceSchema = Schema.String.check(
   Schema.isPattern(
-    // Only the `u` flag: JSON Schema exports drop a pattern with other flags.
     /^custom:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{12}$/u,
   ),
 );
@@ -74,7 +71,6 @@ const CustomThemeRadiusSchema = Schema.Literals(CUSTOM_THEME_RADIUS_STEPS);
 
 export type CustomThemeRadius = typeof CustomThemeRadiusSchema.Type;
 
-/** Every colour token a theme sets; the advanced editor overrides any of them. */
 export const CUSTOM_THEME_TOKEN_KEYS = [
   "background",
   "foreground",
@@ -122,7 +118,6 @@ const HexColorSchema = Schema.String.check(
   Schema.isPattern(/^#[\dA-Fa-f]{6}$/u),
 );
 
-/** The content surfaces' hue, lightness and colourfulness, in OKLCH terms. */
 const CustomThemeSurfaceSchema = Schema.Struct({
   hue: Schema.Finite.check(Schema.isBetween({ minimum: 0, maximum: 360 })),
   lightness: Schema.Finite.check(
@@ -133,18 +128,10 @@ const CustomThemeSurfaceSchema = Schema.Struct({
 
 export type CustomThemeSurface = typeof CustomThemeSurfaceSchema.Type;
 
-/**
- * `base` keeps the base theme's wallpaper and `none` shows none; any other
- * value names a wallpaper the Web app ships, and an unknown one shows none.
- */
 const CustomThemeWallpaperSchema = Schema.String.check(
   Schema.isPattern(/^[a-z\d-]{1,48}$/u),
 );
 
-/**
- * A User's theme: a built-in base plus what they changed. A knob left out
- * keeps the base theme's colours; overrides win over everything.
- */
 export const CustomThemeDefinitionSchema = Schema.Struct({
   baseThemeId: BuiltInThemeIdSchema,
   accent: Schema.optionalKey(HexColorSchema),
@@ -154,7 +141,6 @@ export const CustomThemeDefinitionSchema = Schema.Struct({
     Schema.optionalKey(HexColorSchema),
   ),
   wallpaper: CustomThemeWallpaperSchema,
-  /** How much the wallpaper shows through, 0–100; left out keeps the base's. */
   wallpaperVisibility: Schema.optionalKey(
     Schema.Int.check(Schema.isBetween({ minimum: 0, maximum: 100 })),
   ),
@@ -177,6 +163,5 @@ const decodeCachedCustomTheme = Schema.decodeUnknownOption(
   CachedCustomThemeSchema,
 );
 
-/** Reads a custom theme cached as JSON; anything malformed reads as `null`. */
 export const parseCachedCustomTheme = (json: string | null) =>
   Option.getOrNull(decodeCachedCustomTheme(json));

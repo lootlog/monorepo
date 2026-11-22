@@ -30,7 +30,6 @@ const ROUTE_OPTIONS = ROUTES.map((route) => ({
 const isTransferRoute = (value: string): value is TransferRoute =>
   ROUTES.some((route) => route === value);
 
-/** What moving a character to another world costs. */
 export function TransferCostCalculator() {
   const routeFieldId = useId();
   const [level, setLevel] = useState("");

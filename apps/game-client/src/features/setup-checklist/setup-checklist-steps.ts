@@ -3,37 +3,20 @@ import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status"
 
 export type SetupStepId = "sign-in" | "join-lootlog" | "catching" | "realtime";
 
-/**
- * - `done`: nothing left to do.
- * - `todo`: the player has to act; the step offers its one action.
- * - `pending`: still being checked, so neither done nor missing yet.
- * - `blocked`: waits for an earlier step.
- */
 type SetupStepStatus = "done" | "todo" | "pending" | "blocked";
 
 export type SetupStep = { id: SetupStepId; status: SetupStepStatus };
 
 type SetupChecklistInput = {
-  /** `undefined` while the session is still being checked. */
   signedIn: boolean | undefined;
-  /** The player's Lootlogs; `undefined` until the list loads. */
   guildIds: readonly string[] | undefined;
-  /** This character's catching scope; `undefined` until its config loads. */
   catchingGuildIds: readonly string[] | undefined;
   realtimeStatus: RealtimeConnectionStatus;
 };
 
 export type SetupChecklist = {
   steps: SetupStep[];
-  /** Steps that are not done yet, out of `steps.length`. */
   remaining: number;
-  /**
-   * A setup step is known to be missing. Checks still in flight never count,
-   * so the checklist does not flash in while the client starts. The realtime
-   * connection is transient rather than setup: a dropped connection shows on
-   * its step and in the connection status, but does not reopen the checklist
-   * for a player who finished setting up.
-   */
   incomplete: boolean;
 };
 
@@ -47,7 +30,6 @@ const getRealtimeStatus = (
   return "todo";
 };
 
-/** First-run setup of one character, each step gated on the one before. */
 export const getSetupChecklist = ({
   signedIn,
   guildIds,
@@ -69,7 +51,6 @@ export const getSetupChecklist = ({
 
   if (join === "done") {
     if (!catchingGuildIds) catching = "pending";
-    // A Lootlog the player has left no longer receives their data.
     else
       catching =
         intersection(catchingGuildIds, guildIds ?? []).length > 0
@@ -77,7 +58,6 @@ export const getSetupChecklist = ({
           : "todo";
   }
 
-  // The gateway joins a session only for a member of some Lootlog.
   const realtime: SetupStepStatus =
     join === "done" ? getRealtimeStatus(realtimeStatus) : "blocked";
 

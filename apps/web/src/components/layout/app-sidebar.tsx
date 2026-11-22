@@ -11,7 +11,6 @@ import {
 import type { ReactNode } from "react";
 import { cn } from "cn";
 
-/** Fits the server rail alone, without the navigation column. */
 export const COMPACT_SIDEBAR_WIDTH = "4rem";
 
 type AppSidebarProps = {
@@ -25,8 +24,6 @@ export const AppSidebar = ({
 }: AppSidebarProps) => {
   const { isMobile, setOpenMobile } = useSidebar();
 
-  // Phones navigate from the tab bar; its "More" opens this sheet, where the
-  // navigation column carries the Lootlog strip instead of the server rail.
   if (isMobile) {
     return (
       <AppNavigationSheet footer={compact ? undefined : <UserMenuSheet />}>
@@ -42,11 +39,8 @@ export const AppSidebar = ({
     );
   }
 
-  // The shell is a fixed-height column, so the desktop sidebar fills its row
-  // instead of the viewport and starts below the announcement bar.
   return (
     <Sidebar
-      // The compact sidebar is the server rail alone, which draws its own edge.
       className={cn(
         "absolute h-auto bg-sidebar",
         !compact && "border-r border-sidebar-border",

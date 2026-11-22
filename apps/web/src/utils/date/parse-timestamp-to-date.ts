@@ -4,7 +4,6 @@ export const DATE_FORMAT = "dd.MM.yyyy";
 
 const DATE_TIME_FORMAT = "dd.MM.yyyy HH:mm";
 
-/** For technical and log views where the exact second matters. */
 export const DATE_TIME_WITH_SECONDS_FORMAT = "dd.MM.yyyy HH:mm:ss";
 
 export const timestampToDate = (

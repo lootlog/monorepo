@@ -22,7 +22,6 @@ interface AirTagRuntimeState {
   joined: boolean;
 }
 
-/** The Organizations whose presence, and so AirTags, the User may read. */
 const readableOrganizations = ({
   organizations,
 }: AccessPolicySnapshot): Set<string> =>
@@ -42,7 +41,6 @@ export class AirTagRuntime {
   private readonly pendingOrganizations = new Set<string>();
   private policyRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
-  /** AirTags run for everyone on the new interface; the socket decides when they publish. */
   configure(nextState: Omit<AirTagRuntimeState, "enabled">): void {
     const previousState = this.state;
     const wasPublishing = this.isPublishing(previousState);
@@ -176,11 +174,6 @@ export class AirTagRuntime {
     airTagReceiveController.clear();
   }
 
-  /**
-   * This character's own publication opened a pending Lootlog, so it needs
-   * no role-change debounce: subscribe right away. Other publications, such
-   * as AFK or map changes, leave the debounce alone.
-   */
   handlePresencePublished(organizationIds: readonly string[]): void {
     if (
       this.policyRefreshTimer === null ||
@@ -239,7 +232,6 @@ export class AirTagRuntime {
       response: typeof AirTagSubscriptionAck.Type,
     ) => void = () => {},
   ): void {
-    // A lost acknowledgement is resent by the next subscription change.
     void getSocket()
       .request("air-tag.subscription", payload)
       .then(acknowledgement)

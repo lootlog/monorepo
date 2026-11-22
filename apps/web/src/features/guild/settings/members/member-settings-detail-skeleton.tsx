@@ -6,7 +6,6 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import { DetailSkeleton } from "@/components/common/detail-skeleton";
 
-/** Each section's always-present fields, as `MemberData` labels them. */
 const SECTIONS = [
   {
     id: "member-access-skeleton",
@@ -76,7 +75,6 @@ export const MemberSettingsDetailSkeleton = () => {
             {section.hasDescription && (
               <span className="text-sm">
                 <SkeletonLine className="h-3 w-80 max-w-full" />
-                {/* Phones wrap the sentence onto a second line. */}
                 <span className="sm:hidden">
                   <SkeletonLine className="h-3 w-40" />
                 </span>

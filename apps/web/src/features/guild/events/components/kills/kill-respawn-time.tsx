@@ -10,7 +10,6 @@ type KillRespawnTimeProps = {
   >;
 };
 
-/** How long after the respawn window opened the hero fell, or that the window was closed by hand. */
 export const KillRespawnTime = ({ kill }: KillRespawnTimeProps) => {
   const { t } = useTranslation();
 

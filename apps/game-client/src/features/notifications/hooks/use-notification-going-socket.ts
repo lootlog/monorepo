@@ -16,25 +16,16 @@ import { getNpcWorldKey } from "@/store/notifications.store";
 
 const isGoingUpdate = Schema.is(NotificationGoingUpdateSchema);
 
-/**
- * Keeps the "going" answers of the current Lootlogs' NPC notifications. The
- * reporter never sees their own notification, so they also hear about each
- * answer to it as a game message.
- */
 export const useNotificationGoingSocket = () => {
   const { socket, connected, joined } = useSocket();
   const { data: session } = useSession();
   const userId = session?.user?.id;
 
   const handleUpdate = useEffectEvent((update: NotificationGoingUpdate) => {
-    // The gateway forwards the API's answer list as is; skip a malformed one.
     if (!isGoingUpdate(update)) return;
 
-    // The reporter hears about the answers to their own report only.
     const scope = { notificationIds: [update.notificationId] };
 
-    // The reporter hears about a player once, even when several of their
-    // Lootlogs list the answer.
     const previous = selectNotificationGoing(
       useNotificationGoingStore.getState(),
       scope,

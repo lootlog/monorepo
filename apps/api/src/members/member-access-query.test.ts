@@ -213,7 +213,6 @@ test("an API key reaches only the Organizations granted to both the key and its 
         ?.map(({ id }) => id)
         .toSorted(),
     ).toEqual(["keyed-reader", "keyed-writer"]);
-    // A session keeps the scope of the endpoint it calls.
     expect(
       await boundary.run(
         apiKeyAccessibleGuilds(boundary.database, [

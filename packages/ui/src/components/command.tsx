@@ -48,7 +48,6 @@ function CommandDialog({
   className?: string;
   showCloseButton?: boolean;
   shouldFilter?: boolean;
-  /** The highlighted item, for palettes that steer the selection themselves. */
   value?: string;
   onValueChange?: (value: string) => void;
 }) {

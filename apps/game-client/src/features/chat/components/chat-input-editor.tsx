@@ -32,13 +32,8 @@ import type { LexicalEditor } from "lexical";
 type ChatInputEditorProps = {
   autoFocus?: boolean;
   caretIndex: number;
-  /** Replace the placeholder while a hidden prefix sets the mode. */
   commandHints?: ChatCommandHints;
   disabled?: boolean;
-  /**
-   * The whole entry. A leading `!` or `/grp ` is kept here and in `onChange`,
-   * but the editor hides it; carets count it too.
-   */
   message: string;
   mentionContext?: ChatMentionContext;
   placeholder: string;
@@ -46,7 +41,6 @@ type ChatInputEditorProps = {
   onChange: (message: string, caretIndex: number) => void;
   onCaretChange: (caretIndex: number) => void;
   onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void;
-  /** `md` is the larger text of the console. */
   size?: "sm" | "md";
 };
 
@@ -198,7 +192,6 @@ export const ChatInputEditor = forwardRef<
           onCaretChange={(nextCaretIndex) => {
             onCaretChange(nextCaretIndex + hiddenPrefix.length);
           }}
-          // Backspace at the start leaves the mode, keeping the text.
           onBackspaceAtStart={
             hiddenPrefix
               ? () => onChange(message.slice(hiddenPrefix.length), 0)

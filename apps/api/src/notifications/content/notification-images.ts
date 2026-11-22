@@ -14,10 +14,6 @@ const decodeLootDraw = Schema.decodeUnknownOption(
   LootDrawResolvedNotificationEventSchema,
 );
 
-/**
- * The images a job's message carries, drawn when it is sent: a loot draw's
- * wheel. A failed drawing sends the message without it rather than not at all.
- */
 export const makeNotificationImages = (
   card: Pick<LootDrawCardImage, "render">,
 ) => ({

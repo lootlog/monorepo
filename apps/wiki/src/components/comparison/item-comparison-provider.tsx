@@ -19,7 +19,6 @@ const STORED_COMPARISON = {
   empty: NO_ITEMS,
 };
 
-/** The items the player compares, kept across visits and shared as a link. */
 export function ItemComparisonProvider({ children }: { children: ReactNode }) {
   const [items, update] = useSharedStoredState(STORED_COMPARISON);
 

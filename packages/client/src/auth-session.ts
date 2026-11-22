@@ -3,7 +3,6 @@ import { inferAdditionalFields } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { useRef, useState } from "react";
 
-/** The Better Auth client of `apps/auth`, which serves it under `/idp`. */
 export const createLootlogAuthClient = (
   authServiceUrl: string,
   options: { fetch?: typeof fetch } = {},
@@ -27,11 +26,6 @@ type SignInOptions = Pick<
   "callbackURL" | "errorCallbackURL" | "scopes"
 >;
 
-/**
- * Starts Discord sign-in once per attempt. A signed-in User links the account
- * instead, because Better Auth updates the scopes of an existing account only
- * through account linking.
- */
 export const useDiscordSignIn = (authClient: LootlogAuthClient) => {
   const attemptPending = useRef(false);
   const [status, setStatus] = useState<"idle" | "pending" | "failed">("idle");
@@ -60,7 +54,6 @@ export const useDiscordSignIn = (authClient: LootlogAuthClient) => {
         ? await authClient.linkSocial(oauthOptions)
         : await authClient.signIn.social(oauthOptions);
 
-      // Keep successful OAuth initiation locked until the redirect unloads the page.
       if (!result.error) return;
 
       if (session.data && result.error.status === 401) {
@@ -68,9 +61,7 @@ export const useDiscordSignIn = (authClient: LootlogAuthClient) => {
 
         if (!signInResult.error) return;
       }
-    } catch {
-      // Network failures and HTTP errors share the same visible retry state.
-    }
+    } catch {}
 
     attemptPending.current = false;
     setStatus("failed");
@@ -83,10 +74,6 @@ export const useDiscordSignIn = (authClient: LootlogAuthClient) => {
   };
 };
 
-/**
- * Signs out once per attempt and clears every cached response, which belonged
- * to the signed-out User.
- */
 export const useLogout = (
   authClient: LootlogAuthClient,
   options: { afterSignOut?: () => void } = {},

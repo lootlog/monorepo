@@ -10,7 +10,6 @@ import { useSocketItems } from "@/hooks/use-socket-items";
 import { t } from "@/i18n/messages";
 import { formatChestChance } from "@/lib/chest-chance";
 
-/** The chests of the component's range and its chance from each. */
 export function ItemComponentChests({
   component,
 }: {
@@ -18,7 +17,6 @@ export function ItemComponentChests({
 }) {
   const itemsById = useSocketItems();
 
-  // The chests that give the most of the component on average come first.
   const chests = orderBy(
     tierChests(component.tier).map((chest) => ({
       chest,

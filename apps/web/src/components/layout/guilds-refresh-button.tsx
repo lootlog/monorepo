@@ -16,7 +16,6 @@ import {
 type GuildsRefreshButtonProps = {
   isRefreshing: boolean;
   onRefresh: () => void;
-  /** `strip` is the labelled tile of the phone sheet. */
   variant?: "rail" | "strip";
 };
 

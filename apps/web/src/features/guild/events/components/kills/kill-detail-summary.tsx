@@ -19,10 +19,6 @@ import {
 import { KillRespawnGauge } from "./kill-respawn-gauge";
 import { formatDuration } from "@/utils/date/format-duration";
 
-/**
- * Where the kill landed in its respawn window. Stored durations win; older
- * kills without them fall back to the window timestamps.
- */
 const getKillRespawnTiming = (kill: KillDetail) => {
   const minSpawn = new Date(kill.minSpawnTimeAtKill);
 

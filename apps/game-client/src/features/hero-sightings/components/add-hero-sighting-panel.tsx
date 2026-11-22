@@ -8,10 +8,6 @@ type AddHeroSightingPanelProps = {
   className?: string;
 };
 
-/**
- * Overlay that covers the detected heroes while the player adds one by hand.
- * Cancel in the form footer and Escape are the ways out.
- */
 export function AddHeroSightingPanel({
   world,
   onClose,

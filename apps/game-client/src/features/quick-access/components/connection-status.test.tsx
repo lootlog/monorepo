@@ -130,8 +130,6 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
       }),
     ).toBeInTheDocument();
 
-    // The retry backoff is still pending under fake timers, so only the
-    // action can open the next connection now.
     fireEvent.click(screen.getByRole("button", { name: "Połącz ponownie" }));
     act(() => gateway.wire.open());
     expect(getSocket().connected).toBe(true);
@@ -182,7 +180,6 @@ it("probes the latency only while the popover shows it", async () => {
       });
     };
 
-    // Heartbeats alone keep the latency fresh while nothing shows it.
     await act(() => vi.advanceTimersByTimeAsync(10_000));
     expect(pings()).toHaveLength(0);
 

@@ -31,10 +31,6 @@ type WatchedItemTileProps = {
   missingGuildIds: string[];
 };
 
-/**
- * One watched item: where it is watched and a way to stop. A watch that still
- * names a Lootlog the player lost access to is tinted until they fix it.
- */
 export const WatchedItemTile = ({
   watchedItem,
   guildLabels,
@@ -113,7 +109,6 @@ export const WatchedItemTile = ({
         )}
       >
         <div className={getListTileLinkClassName(true)}>
-          {/* As wide as the tile icons the other lists lead with. */}
           <span className="flex size-9 shrink-0 items-center justify-center">
             {renderItemVisual()}
           </span>
@@ -129,7 +124,6 @@ export const WatchedItemTile = ({
                 {upperFirst(watchedItem.world)}
               </MetaItem>
             </span>
-            {/* Every watched Lootlog stays readable, so the line wraps. */}
             {guildNames.length > 0 && (
               <MetaItem
                 icon={Users}

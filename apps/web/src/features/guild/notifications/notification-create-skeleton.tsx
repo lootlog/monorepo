@@ -6,10 +6,8 @@ import {
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 
-/** How many fields each form section holds: rule, when, where and content. */
 const SECTION_FIELDS = [2, 3, 1, 1];
 
-/** Route-level stand-in for the rule form: banded sections of labelled fields. */
 export const NotificationCreateSkeleton = () => (
   <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
     {SECTION_FIELDS.map((fields, sectionIndex) => (

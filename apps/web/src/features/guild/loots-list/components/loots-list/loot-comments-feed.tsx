@@ -7,7 +7,6 @@ import { cn } from "cn";
 import { LootSingleComment } from "./loot-single-comment";
 import type { LootCommentsState } from "./use-loot-comments";
 
-/** The comments, or their loading, error or empty state. */
 export const LootCommentsFeed = ({
   comments,
   className,

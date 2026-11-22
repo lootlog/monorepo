@@ -14,14 +14,9 @@ type TimersToolbarProps = {
   onSelectedGroupsChange: (value: string[]) => void;
   viewMode: ViewMode;
   onViewModeChange: (value: ViewMode) => void;
-  /** False below the width where the grid gets a second column. */
   canChooseViewMode: boolean;
 };
 
-/**
- * The timer name filter, with pills that narrow the list to chosen groups,
- * then the view control.
- */
 export const TimersToolbar = ({
   search,
   onSearchChange,

@@ -111,7 +111,6 @@ describe("installCharacterTooltipTransforms", () => {
 
     other.tipUpdate?.();
     expect(other.tip?.[0]).toBe("<div>Other</div><span>extra</span>");
-    // WhoIsHere and the minimap build their own html from the same data.
     expect(tips.createStrTip({ nick: "Other", object: other })).toBe(
       "<div>Other</div><span>extra</span>",
     );
@@ -208,7 +207,6 @@ describe("installCharacterTooltipTransforms", () => {
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
     ).toBe("9822301:617");
 
-    // Another player's game update does not move the active target.
     second.tipUpdate?.();
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
@@ -281,7 +279,6 @@ describe("installCharacterTooltipTransforms", () => {
     const cleanup = installCharacterTooltipTransforms();
     const hoverEvent = { clientX: 10, clientY: 20 };
 
-    // The game cached this html before Shift was pressed.
     other.tipUpdate?.();
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     canvasTip.show(hoverEvent, other);
@@ -330,14 +327,12 @@ describe("installCharacterTooltipTransforms", () => {
 
     const cleanup = installCharacterTooltipTransforms();
 
-    // The game rebuilds tips on its own updates while Shift is held.
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     hovered.tipUpdate?.();
     idle.tipUpdate?.();
     departed.tipUpdate?.();
     expect(idle.tip?.[0]).toBe("<div>Idle</div><span>shift</span>");
 
-    // A player who leaves the map while Shift is held is no longer drawn.
     seedRuntimeOthers({ 1: hovered, 2: idle });
     const departedTipUpdate = vi.fn<() => void>();
 
@@ -370,14 +365,12 @@ describe("installCharacterTooltipTransforms", () => {
 
     const cleanup = installCharacterTooltipTransforms();
 
-    // An earlier Shift hover, then the player leaves the character.
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     canvasTip.show({ clientX: 1, clientY: 2 }, other);
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
     refreshActiveOtherTooltip();
     canvasTip.hide({});
 
-    // Hover again without Shift; a window blur still reports Shift as released.
     canvasTip.show({ clientX: 3, clientY: 4 }, other);
     originalCanvasTipShow.mockClear();
     const builtBeforeBlur = builtTooltips;
@@ -394,8 +387,6 @@ describe("installCharacterTooltipTransforms", () => {
 describe("installCharacterTooltipTransforms on SI", () => {
   const originalWindowG = Object.getOwnPropertyDescriptor(window, "g");
 
-  // SI keeps others in g.other, builds their html with g.tips.other and puts
-  // it in the `tip` attribute of `#other{id}.other` (elements.js newOther).
   function setLegacyRuntime(ids: string[]) {
     const other = Object.fromEntries(
       ids.map((id) => [
@@ -497,8 +488,6 @@ describe("installCharacterTooltipTransforms on SI", () => {
     const unsubscribe =
       useCharacterTooltipCatchingGuildsStore.subscribe(listener);
 
-    // The catching guilds hook refreshes the tooltip whenever the active
-    // player changes, so a refresh that republishes it loops React.
     refreshActiveOtherTooltip();
 
     expect(listener).not.toHaveBeenCalled();
@@ -536,7 +525,6 @@ describe("installCharacterTooltipTransforms on SI", () => {
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     hover("617");
 
-    // newOther rewrites the attribute when a full other update arrives.
     document
       .getElementById("other617")
       ?.setAttribute("tip", "<b>Other 617</b>");

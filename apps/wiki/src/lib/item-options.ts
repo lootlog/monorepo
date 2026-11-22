@@ -2,7 +2,6 @@ import { itemStatValue } from "@lootlog/domain/item-stat";
 import { DisplayItemRarity } from "@lootlog/domain/item-rarity";
 import { t } from "@/i18n/messages";
 
-/** Rarities a search can filter by; common items have no rarity. */
 export const RARITY_OPTIONS = [
   DisplayItemRarity.UNIQUE,
   DisplayItemRarity.HEROIC,
@@ -12,7 +11,6 @@ export const RARITY_OPTIONS = [
 
 export const PROFESSION_OPTIONS = ["w", "p", "h", "m", "b", "t"] as const;
 
-/** The professions the item requires, in the filters' order; none when anyone wears it. */
 export const findRequiredProfessions = (stat: string) => {
   const required = itemStatValue(stat, "reqp") ?? "";
 
@@ -54,7 +52,6 @@ export const ITEM_TYPE_OPTIONS = [
   "COINAGE",
 ] as const;
 
-/** The labels `ItemTile` shows in an item's tooltip. */
 export const ITEM_TILE_LABELS = {
   rarity: Object.fromEntries(
     [DisplayItemRarity.COMMON, ...RARITY_OPTIONS].map((rarity) => [

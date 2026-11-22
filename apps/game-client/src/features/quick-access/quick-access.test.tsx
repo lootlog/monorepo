@@ -130,7 +130,6 @@ describe("QuickAccess", () => {
     expect(
       document.querySelector("[data-ll-window-resize-handle]"),
     ).not.toBeInTheDocument();
-    // The collapsed bar must not overwrite the size the bar expands back to.
     expect(useWindowsStore.getState()["quick-access"]).toMatchObject({
       collapsed: true,
       size: { width: 340, height: 84 },
