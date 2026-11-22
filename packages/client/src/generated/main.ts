@@ -76,6 +76,29 @@ export interface ReauthenticationRequiredEncoded {
   requiresReauth: true;
 }
 
+export type CharacterAuraGrantsResponseDtoPersonalAuraIdsItem = typeof CharacterAuraGrantsResponseDtoPersonalAuraIdsItem[keyof typeof CharacterAuraGrantsResponseDtoPersonalAuraIdsItem];
+
+
+export const CharacterAuraGrantsResponseDtoPersonalAuraIdsItem = {
+  skyborne: 'skyborne',
+  joker: 'joker',
+  nightowl: 'nightowl',
+  sunder: 'sunder',
+  fortyfour: 'fortyfour',
+  thirteenth: 'thirteenth',
+  ninepins: 'ninepins',
+  threefaces: 'threefaces',
+  twineyes: 'twineyes',
+  tulipwind: 'tulipwind',
+} as const;
+
+export interface CharacterAuraGrantsResponseDto {
+  userId: string;
+  admin: boolean;
+  granted: boolean;
+  personalAuraIds: CharacterAuraGrantsResponseDtoPersonalAuraIdsItem[];
+}
+
 export type OwnCharacterAuraResponseDtoPersonalAuraIdsItem = typeof OwnCharacterAuraResponseDtoPersonalAuraIdsItem[keyof typeof OwnCharacterAuraResponseDtoPersonalAuraIdsItem];
 
 
@@ -13026,6 +13049,9 @@ export type UserThemesControllerUnshareThemePathParameters = {
  }
 export type UserThemesControllerGetSharedThemePathParameters = {
  shareToken: string,
+ }
+export type CharacterAurasControllerGetGrantsPathParameters = {
+ gameAccountId: string,
  }
 export type CharacterAurasControllerGrantAurasPathParameters = {
  gameAccountId: string,
@@ -38824,6 +38850,150 @@ export const useCharacterAurasControllerUpdateOwnAura = <TError = ErrorType<Requ
       > => {
       return useMutation(getCharacterAurasControllerUpdateOwnAuraMutationOptions(options), queryClient);
     }
+
+export const getCharacterAurasControllerGetGrantsUrl = ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters,) => {
+
+
+
+
+  return `/character-auras/grants/game-accounts/${gameAccountId}`
+}
+
+/**
+ * Show which auras the user who last proved to play the Margonem account may choose: whether they are a global chat admin, hold the grant of auras in general, and which personal auras they were granted. Global chat admins only; 404 when no user proved to play the account
+ * @summary Get character aura grants
+ */
+export const characterAurasControllerGetGrants = async ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<CharacterAuraGrantsResponseDto> => {
+
+  return mainFetch<CharacterAuraGrantsResponseDto>(getCharacterAurasControllerGetGrantsUrl({ gameAccountId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCharacterAurasControllerGetGrantsQueryKey = ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters,) => {
+    return [
+    `/character-auras/grants/game-accounts/${gameAccountId}`
+    ] as const;
+    }
+
+
+export const getCharacterAurasControllerGetGrantsQueryOptions = <TData = Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCharacterAurasControllerGetGrantsQueryKey({ gameAccountId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>> = ({ signal }) => characterAurasControllerGetGrants({ gameAccountId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: gameAccountId !== null && gameAccountId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CharacterAurasControllerGetGrantsQueryResult = NonNullable<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>>
+export type CharacterAurasControllerGetGrantsQueryError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+
+
+export function useCharacterAurasControllerGetGrants<TData = Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ pathParams: CharacterAurasControllerGetGrantsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof characterAurasControllerGetGrants>>,
+          TError,
+          Awaited<ReturnType<typeof characterAurasControllerGetGrants>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCharacterAurasControllerGetGrants<TData = Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ pathParams: CharacterAurasControllerGetGrantsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof characterAurasControllerGetGrants>>,
+          TError,
+          Awaited<ReturnType<typeof characterAurasControllerGetGrants>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCharacterAurasControllerGetGrants<TData = Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ pathParams: CharacterAurasControllerGetGrantsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get character aura grants
+ */
+
+export function useCharacterAurasControllerGetGrants<TData = Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ { gameAccountId }: CharacterAurasControllerGetGrantsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCharacterAurasControllerGetGrantsQueryOptions({ gameAccountId },options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get character aura grants
+ */
+export const prefetchCharacterAurasControllerGetGrantsQuery = async <TData = Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ queryClient: QueryClient, { gameAccountId }: CharacterAurasControllerGetGrantsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getCharacterAurasControllerGetGrantsQueryOptions({ gameAccountId },options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useCharacterAurasControllerGetGrants} query
+ */
+export const invalidateCharacterAurasControllerGetGrants = async (
+ queryClient: QueryClient, { gameAccountId }: CharacterAurasControllerGetGrantsPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getCharacterAurasControllerGetGrantsQueryKey({ gameAccountId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get character aura grants
+ */
+export const useSetCharacterAurasControllerGetGrantsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters,updater: Awaited<ReturnType<typeof characterAurasControllerGetGrants>> | undefined | ((old: Awaited<ReturnType<typeof characterAurasControllerGetGrants>> | undefined) => Awaited<ReturnType<typeof characterAurasControllerGetGrants>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>>({ exact: $exactMatch, queryKey: getCharacterAurasControllerGetGrantsQueryKey({ gameAccountId }) }, updater);
+  };
+}
+
+/**
+ * @summary Get character aura grants
+ */
+export const useGetCharacterAurasControllerGetGrantsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>>(getCharacterAurasControllerGetGrantsQueryKey({ gameAccountId }));
+}
+
+
 
 export const getCharacterAurasControllerGrantAurasUrl = ({ gameAccountId }: CharacterAurasControllerGrantAurasPathParameters,) => {
 

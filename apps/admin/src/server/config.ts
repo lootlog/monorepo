@@ -3,6 +3,8 @@ export interface AdminConfig {
   /** The auth service on the private network. */
   readonly authUrl: string;
   readonly adminApiSecret: string;
+  /** The Lootlog API behind the edge, which authorizes the operator's session. */
+  readonly apiUrl: string;
   /** The origin the browser sees, which state-changing requests must name. */
   readonly origin: string;
   /** The Web app, where the operator signs in to Lootlog. */
@@ -55,6 +57,7 @@ export const readAdminConfig = (
   return {
     authUrl: required(environment, "AUTH_INTERNAL_URL"),
     adminApiSecret: required(environment, "ADMIN_API_SECRET"),
+    apiUrl: new URL(required(environment, "LOOTLOG_API_URL")).href,
     origin: new URL(required(environment, "ADMIN_ORIGIN")).origin,
     webUrl: new URL(required(environment, "LOOTLOG_WEB_URL")).href,
     access,

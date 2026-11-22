@@ -14049,6 +14049,61 @@ paths:
               $ref: "#/components/schemas/UpdateOwnCharacterAuraDto"
         required: true
   /character-auras/grants/game-accounts/{gameAccountId}:
+    get:
+      tags:
+        - character-auras
+      operationId: CharacterAurasController_getGrants
+      parameters:
+        - name: gameAccountId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: CharacterAuraGrantsResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterAuraGrantsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: "Show which auras the user who last proved to play the Margonem account may choose: whether they are a global chat admin, hold the grant of auras in general, and which personal auras they were granted. Global chat admins only; 404 when no user proved to play the account"
+      summary: Get character aura grants
     put:
       tags:
         - character-auras
@@ -14291,6 +14346,36 @@ components:
         - _tag
         - code
         - requiresReauth
+      additionalProperties: false
+    CharacterAuraGrantsResponseDto:
+      type: object
+      properties:
+        userId:
+          type: string
+        admin:
+          type: boolean
+        granted:
+          type: boolean
+        personalAuraIds:
+          type: array
+          items:
+            type: string
+            enum:
+              - skyborne
+              - joker
+              - nightowl
+              - sunder
+              - fortyfour
+              - thirteenth
+              - ninepins
+              - threefaces
+              - twineyes
+              - tulipwind
+      required:
+        - userId
+        - admin
+        - granted
+        - personalAuraIds
       additionalProperties: false
     OwnCharacterAuraResponseDto:
       type: object

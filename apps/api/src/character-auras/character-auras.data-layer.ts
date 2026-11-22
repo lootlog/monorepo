@@ -429,6 +429,30 @@ export const makeCharacterAurasData = (
 
           return yield* getOwnAura(userId);
         }),
+      // Read from the tables: an operator checks a change they just made.
+      getGrants: (callerUserId, gameAccountId) =>
+        Effect.gen(function* () {
+          const userId = yield* grantTarget(callerUserId, gameAccountId);
+
+          const [granted, personalGrants] = yield* Effect.all([
+            isGranted(userId),
+            database
+              .select({ auraId: userPersonalCharacterAuraGrantTable.auraId })
+              .from(userPersonalCharacterAuraGrantTable)
+              .where(eq(userPersonalCharacterAuraGrantTable.userId, userId)),
+          ]).pipe(Effect.mapError(operationError));
+
+          const personal = new Set(personalGrants.map((row) => row.auraId));
+
+          return {
+            userId,
+            admin: admins.has(userId),
+            granted,
+            personalAuraIds: PERSONAL_CHARACTER_AURA_IDS.filter((auraId) =>
+              personal.has(auraId),
+            ),
+          };
+        }),
       grantAuras: (callerUserId, gameAccountId) =>
         Effect.gen(function* () {
           const userId = yield* grantTarget(callerUserId, gameAccountId);

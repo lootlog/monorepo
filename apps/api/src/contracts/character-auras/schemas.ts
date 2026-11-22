@@ -46,6 +46,20 @@ export const PersonalCharacterAuraGrantParams = Schema.Struct({
   auraId: PersonalCharacterAuraIdSchema,
 });
 
+export const CharacterAuraGrantsResponse = Schema.Struct({
+  /** The Lootlog User who proved to play the account last. */
+  userId: Schema.String,
+  /** A global chat admin chooses every aura without a grant. */
+  admin: Schema.Boolean,
+  /** Whether the User holds the grant of auras in general. */
+  granted: Schema.Boolean,
+  /** The personal auras granted to the User, which `granted` does not cover. */
+  personalAuraIds: Schema.Array(PersonalCharacterAuraIdSchema),
+}).annotate({ identifier: "CharacterAuraGrantsResponseDto" });
+
+export type CharacterAuraGrantsResponse =
+  typeof CharacterAuraGrantsResponse.Type;
+
 export const CharacterAurasResponse = Schema.Struct({
   auras: Schema.Array(CharacterAuraResponse),
 }).annotate({ identifier: "CharacterAurasResponseDto" });

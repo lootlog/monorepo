@@ -245,15 +245,40 @@ describe("character auras", () => {
       Effect.all([
         Effect.flip(data.grantAuras("player", "101")),
         Effect.flip(data.grantAuras("admin", "999")),
+        Effect.flip(data.getGrants("player", "101")),
+        Effect.flip(data.getGrants("admin", "999")),
       ]),
     );
 
     expect(refused.map((error) => error._tag)).toEqual([
       "CharacterAuraAccessDenied",
       "CharacterAuraGrantTargetNotFound",
+      "CharacterAuraAccessDenied",
+      "CharacterAuraGrantTargetNotFound",
     ]);
 
-    await run((data) => data.grantAuras("admin", "101"));
+    const grantsOf101 = () => run((data) => data.getGrants("admin", "101"));
+
+    expect(await grantsOf101()).toEqual({
+      userId: "player",
+      admin: false,
+      granted: false,
+      personalAuraIds: [],
+    });
+
+    await run((data) =>
+      Effect.all([
+        data.grantAuras("admin", "101"),
+        data.grantPersonalAura("admin", "101", "joker"),
+      ]),
+    );
+
+    expect(await grantsOf101()).toEqual({
+      userId: "player",
+      admin: false,
+      granted: true,
+      personalAuraIds: ["joker"],
+    });
     await run((data) =>
       Effect.all([
         data.updateOwnAura("player", character("101"), "frost"),
@@ -279,6 +304,12 @@ describe("character auras", () => {
 
     expect(await run((data) => data.getAuras())).toEqual({
       auras: [shown("202", "void")],
+    });
+    expect(await grantsOf101()).toEqual({
+      userId: "player",
+      admin: false,
+      granted: false,
+      personalAuraIds: [],
     });
     expect(await run((data) => data.getOwnAura("player"))).toEqual({
       auras: [],

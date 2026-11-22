@@ -65,6 +65,18 @@ inspection and rollback constraints.
 holds no data: every read and write goes through the auth service's admin API
 (`/admin/*`), which records each change in `admin_audit_log`.
 
+The panel also grants and revokes character auras for the User who plays a
+Margonem account, found from a pasted profile link
+(`https://www.margonem.pl/profile/view,<account id>`). Those calls go to the
+main API's `/character-auras/grants/*` endpoints at `LOOTLOG_API_URL`, the
+API as the edge serves it, with the operator's Lootlog session and without
+the Access cookie. The edge's forward-auth resolves the session, and the API
+allows them only to a global chat admin, exactly as for the Game client's
+grant menu, so the operator also needs that role or a place in
+`GLOBAL_CHAT_ADMIN_USER_IDS`. These changes are not written to
+`admin_audit_log`. The panel refuses to start without `LOOTLOG_API_URL`, and
+its egress must reach that host.
+
 The panel is reachable only through the Cloudflare tunnel that also serves
 Grafana, on its own public hostname guarded by its own Cloudflare Access
 application, and it opens only to

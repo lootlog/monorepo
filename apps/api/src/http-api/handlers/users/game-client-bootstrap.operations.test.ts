@@ -148,6 +148,7 @@ const run = ({
                 canGrant: false,
               }),
             updateOwnAura: notReadAtStartup,
+            getGrants: notReadAtStartup,
             grantAuras: notReadAtStartup,
             grantPersonalAura: notReadAtStartup,
             revokeAuras: notReadAtStartup,
