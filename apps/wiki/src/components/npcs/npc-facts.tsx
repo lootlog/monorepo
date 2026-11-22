@@ -7,15 +7,12 @@ import { npcKind, npcProfession } from "@/lib/npc-summary";
 type Fact = { label: string; value: ReactNode };
 
 /**
- * The monster's key facts as one ruled line under its heading: its kind, its
- * level and the map it is fought on most. The Locations section lists every
- * map.
+ * The monster's key facts as one ruled line under its heading: its kind and
+ * its level. The Locations section right below lists its maps.
  */
 export function NpcFacts({ npc }: { npc: CatalogNpcDtoOutput }) {
   const kind = npcKind(npc);
   const profession = npcProfession(npc.prof);
-  const topLocation = npc.locations[0];
-  const hasOtherMaps = npc.locations.length > 1;
 
   const facts: Fact[] = [
     ...(kind ? [{ label: t("npc.type"), value: kind }] : []),
@@ -30,35 +27,6 @@ export function NpcFacts({ npc }: { npc: CatalogNpcDtoOutput }) {
           {
             label: t("npc.firstSeenOn"),
             value: formatCatalogDay(npc.firstSeenOn),
-          },
-        ]
-      : []),
-    ...(topLocation
-      ? [
-          {
-            label: t("npc.topMap"),
-            value: (
-              <span className="flex flex-wrap items-baseline gap-x-2">
-                <span className="[overflow-wrap:anywhere]">
-                  {topLocation.map}
-                </span>
-                {hasOtherMaps ? (
-                  <>
-                    <span className="text-xs font-normal text-muted-foreground">
-                      {t("catalog.locationShare", {
-                        share: Math.round(topLocation.share * 100),
-                      })}
-                    </span>
-                    <a
-                      href="#npc-locations"
-                      className="font-medium text-primary outline-none hover:underline focus-visible:underline"
-                    >
-                      {t("npc.allMaps", { count: npc.locations.length })}
-                    </a>
-                  </>
-                ) : null}
-              </span>
-            ),
           },
         ]
       : []),
