@@ -369,17 +369,14 @@ describe("Kills and Loots HttpApi handlers", () => {
   });
 
   // Only loot managers may hold the capability below; members only read.
-  const readOnlyAuthorization = (calls: string[] = []) =>
+  const readOnlyAuthorization = () =>
     makeAuthorization({
-      requireGuild: (options) => {
-        calls.push(options.capability);
-
-        return options.capability === Permission.LOOTLOG_LOOTS_ARCHIVE
+      requireGuild: (options) =>
+        options.capability === Permission.LOOTLOG_LOOTS_ARCHIVE
           ? Effect.fail(
               new RecordsAccessDenied({ status: 403, code: "FORBIDDEN" }),
             )
-          : Effect.succeed(guildCaller);
-      },
+          : Effect.succeed(guildCaller),
     });
 
   const drawEntrants = [
@@ -405,39 +402,25 @@ describe("Kills and Loots HttpApi handlers", () => {
     },
   ] satisfies LootDrawResponse["entrants"];
 
-  it("lets a member who can read a loot draw its items", async () => {
-    const drawn = {
-      id: 7,
-      lootId: 42,
-      itemHid: "hid",
-      entrants: drawEntrants,
-      ticketOrder: [0, 1],
-      roll: 1,
-      winnerIndex: 1,
-      createdBy: { id: 1, name: "Member", avatar: null, userId: "user-1" },
-      createdAt: "2026-11-22T00:00:00.000Z",
-      voided: null,
-    } satisfies LootDrawResponse;
-
-    const authorizationCalls: string[] = [];
-
-    const result = await Effect.runPromise(
+  it("keeps a member who cannot manage loots from drawing an item", async () => {
+    const error = await Effect.runPromise(
       createLootDraw("guild-a", 42, {
         itemHid: "hid",
         entrants: drawEntrants,
         ticketOrder: [0, 1],
       }).pipe(
+        Effect.flip,
         Effect.provide(
           services(
-            readOnlyAuthorization(authorizationCalls),
-            makeData({ createDraw: () => Effect.succeed(drawn) }),
+            readOnlyAuthorization(),
+            // Any data access would die: the draw must stop at authorization.
+            makeData(),
           ),
         ),
       ),
     );
 
-    expect(result).toBe(drawn);
-    expect(authorizationCalls).toEqual([Permission.LOOTLOG_LOOTS_READ]);
+    expect(error).toBeInstanceOf(RecordsAccessDenied);
   });
 
   it("keeps a member who cannot manage loots from voiding a draw", async () => {

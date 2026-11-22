@@ -8,6 +8,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { Capability } from "@lootlog/domain/access-policy";
 import { afterEach, describe, expect, it } from "vitest";
 import { createLoot } from "@/lib/testing/loot";
 import { createLootTestWrapper } from "@/lib/testing/loot-wrapper";
@@ -47,8 +48,10 @@ describe("LootsListItem", () => {
     if (!npc) throw new Error("Missing test loot NPC");
     loot.npcs = [{ ...npc, type: "HERO" }];
 
+    const manager = { capabilities: [Capability.LOOTLOG_LOOTS_ARCHIVE] };
+
     const { unmount } = render(<LootsListItem loot={loot} />, {
-      wrapper: await createLootTestWrapper(),
+      wrapper: await createLootTestWrapper(manager),
     });
 
     // An excluded hero's legend gets no wheel to start a draw.
@@ -63,13 +66,25 @@ describe("LootsListItem", () => {
     loot.npcs = [{ ...npc, type: "ELITE2" }];
 
     const elite = render(<LootsListItem loot={loot} />, {
-      wrapper: await createLootTestWrapper(),
+      wrapper: await createLootTestWrapper(manager),
     });
 
     expect(
       await screen.findByRole("button", { name: "loots.details.draw.openFor" }),
     ).toBeTruthy();
     elite.unmount();
+
+    // A member who does not manage loots cannot start a draw.
+    const member = render(<LootsListItem loot={loot} />, {
+      wrapper: await createLootTestWrapper(),
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: /loots.details.draw/ }),
+      ).toBeNull(),
+    );
+    member.unmount();
     loot.npcs = [{ ...npc, type: "HERO" }];
 
     loot.standingDraws = [

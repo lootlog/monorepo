@@ -28,8 +28,9 @@ export const LootDrawDialogBody = ({
 }: {
   loot: Loot;
   item: Item;
+  /** Whether the viewer manages loots: voids results and runs draws. */
   canVoid: boolean;
-  /** False once the Organization excludes the item's NPC type. */
+  /** False for a non-manager, or once the Organization excludes the item's NPC type. */
   canDraw: boolean;
   /** Takes the dialog's initial focus. */
   bodyRef: RefObject<HTMLDivElement | null>;
@@ -89,7 +90,7 @@ export const LootDrawDialogBody = ({
             onRevealed={() => setLockedHeight(null)}
           />
         )}
-        {data && !standing && !canDraw && (
+        {data && !standing && canVoid && !canDraw && (
           <EmptyState
             compact
             icon={Ban}
