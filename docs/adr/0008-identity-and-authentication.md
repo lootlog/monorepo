@@ -80,6 +80,8 @@ the API keeps reading them.
 - **`UserAvatar`** (`apps/admin/src/components/user-avatar.tsx`): Images not on Discord's CDN fall back to initials, because the CSP loads images only from there.
 - **`validateUsersSearch`** (`apps/admin/src/lib/users-search.ts`): Every admin route's `validateSearch` returns each key even when empty, because the router overlays the result on the raw search and an omitted key would keep its unvalidated value. The router parses search with plain `URLSearchParams` so a Discord id is not turned into an imprecise number.
 - **`read`** (`apps/admin/src/lib/format.ts`): Dates are assembled from `formatToParts` fields, because locale wording differs between server and browser and would break hydration.
+- **`asOperator`** (`apps/admin/src/server/lootlog-api.ts`): The panel changes and reads character aura grants through the main API's public edge (`LOOTLOG_API_URL`, `https://api.lootlog.pl` in production) with the operator's Lootlog session, as the operator's browser would, instead of through a private route or a panel secret. Forward-auth resolves the session and the API applies the same `admin`-role check as for any caller, so the panel adds no authority, the API keeps one authorization path and no new secret or internal endpoint exists to leak or bypass. The Cloudflare Access cookie is stripped first, because no host but the panel needs it. The cost is a round trip through Cloudflare and a dependency on the public edge, and the panel's NetworkPolicy must keep public TCP 443 egress.
+- **`listUsers`** (`apps/admin/src/server/queries.ts`): The aura filter sends the API's grant holder ids to the auth service's `POST /admin/users/search` in the body, because the auth service cannot read grants, which the API owns, and a query string would cap how many holders fit.
 
 ### Admin actions and audit
 
@@ -125,4 +127,5 @@ the API keeps reading them.
 - Revocation is bounded but not instant: a session can outlive sign-out by the decision cache plus the cookie cache window.
 - Every new operation is session-only until listed in `PUBLIC_API_OPERATIONS`.
 - The admin panel and the auth service both enforce access, so a change to one must not assume the other covers it.
+- The admin panel's aura management fails while the public API edge is down, and the operator needs the `admin` role, not only a place in `ADMIN_ACCOUNT_IDS`.
 - Legacy identity shapes are persisted, so their parsing stays until a data migration removes them.
