@@ -1,13 +1,9 @@
 import { EmptyState } from "@/components/common/empty-state";
-import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import { ListToolbar } from "@/components/common/list-toolbar";
+import { PillToggleGroup } from "@/components/common/pill-toggle-group";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@lootlog/ui/components/toggle-group";
 import { groupBy } from "es-toolkit";
 import { History, SearchX } from "lucide-react";
 import { useState } from "react";
@@ -144,29 +140,17 @@ export const NotificationHistoryList = ({
         disabled={isLoading}
       >
         {statusGroups.length > 1 && (
-          <ToggleGroup
+          <PillToggleGroup
             multiple
-            variant="outline"
-            size="sm"
-            spacing={1.5}
+            label={t("settings.notifications.historyStatusesLabel")}
             value={activeStatuses}
             onValueChange={setSelectedStatuses}
-            aria-label={t("settings.notifications.historyStatusesLabel")}
-            className="flex-wrap"
-          >
-            {statusGroups.map(([status, jobs]) => (
-              <ToggleGroupItem
-                key={status}
-                value={status}
-                className={FILTER_PILL_CLASS}
-              >
-                {getJobStatusLabel(status, t)}
-                <span className="text-muted-foreground tabular-nums">
-                  {jobs.length}
-                </span>
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+            options={statusGroups.map(([status, jobs]) => ({
+              value: status,
+              label: getJobStatusLabel(status, t),
+              count: jobs.length,
+            }))}
+          />
         )}
       </ListToolbar>
       {renderContent()}

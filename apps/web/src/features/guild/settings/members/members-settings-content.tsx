@@ -1,5 +1,5 @@
-import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import { ListToolbar } from "@/components/common/list-toolbar";
+import { PillToggleGroup } from "@/components/common/pill-toggle-group";
 import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
 import {
@@ -25,11 +25,6 @@ import {
   useRolesControllerGetGuildRoles,
 } from "@lootlog/client/main";
 import { Permission } from "@lootlog/schema/permissions";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@lootlog/ui/components/toggle-group";
-import { cn } from "cn";
 import { startTransition, useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SettingsListError } from "@/components/common/settings-list-error";
@@ -184,45 +179,24 @@ export const MembersSettingsContent = () => {
         clearLabel={t("settings.clearFilter")}
         disabled={!members?.length}
       >
-        {/* On phones the pills scroll sideways in one row under the filter. */}
-        <div className="max-sm:order-last max-sm:-mx-3 max-sm:w-[calc(100%+1.5rem)] max-sm:overflow-x-auto max-sm:px-3 max-sm:[scrollbar-width:none]">
-          <ToggleGroup
-            variant="outline"
-            size="sm"
-            spacing={1.5}
-            value={[statusFilter]}
-            // One status is always chosen: pressing it again keeps it.
-            onValueChange={([pressed]) => {
-              const filter = statusFilters.find((value) => value === pressed);
+        <PillToggleGroup
+          label={t("settings.members.table.status")}
+          value={statusFilter}
+          onValueChange={changeStatusFilter}
+          options={statusFilters.map((filter) => {
+            const count = memberStats[STATUS_FILTER_COUNTS[filter]];
 
-              if (filter) changeStatusFilter(filter);
-            }}
-            aria-label={t("settings.members.table.status")}
-            className="flex-wrap max-sm:w-max max-sm:flex-nowrap"
-          >
-            {statusFilters.map((filter) => {
-              const count = memberStats[STATUS_FILTER_COUNTS[filter]];
-
-              return (
-                <ToggleGroupItem
-                  key={filter}
-                  value={filter}
-                  className={FILTER_PILL_CLASS}
-                >
-                  {t(`settings.members.filters.${filter}`)}
-                  <span
-                    className={cn(
-                      "text-muted-foreground tabular-nums",
-                      filter === "problems" && count > 0 && "text-signal-timer",
-                    )}
-                  >
-                    {count}
-                  </span>
-                </ToggleGroupItem>
-              );
-            })}
-          </ToggleGroup>
-        </div>
+            return {
+              value: filter,
+              label: t(`settings.members.filters.${filter}`),
+              count,
+              countClassName:
+                filter === "problems" && count > 0
+                  ? "text-signal-timer"
+                  : undefined,
+            };
+          })}
+        />
         <RefreshMembersButton />
       </ListToolbar>
       <OrganizationPresenceStatus guildId={resolvedGuildId} />

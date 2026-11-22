@@ -1,7 +1,15 @@
 import type { ReservationSpotsResponseDto } from "@lootlog/client/main";
-import type { ReservationFilter } from "./reservation-filters";
 import { comparePolish } from "@lootlog/domain/locale";
 import { normalizeSearchText } from "@lootlog/domain/text-fold";
+
+export const RESERVATION_FILTERS = [
+  "all",
+  "available",
+  "pinned",
+  "partners",
+] as const;
+
+export type ReservationFilter = (typeof RESERVATION_FILTERS)[number];
 
 type ReservationSpot = ReservationSpotsResponseDto[number];
 

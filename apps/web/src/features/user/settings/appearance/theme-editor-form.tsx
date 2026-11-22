@@ -1,5 +1,6 @@
 import { BandSection } from "@/components/common/band-section";
 import { DetailPage } from "@/components/common/detail-page";
+import { PillToggleGroup } from "@/components/common/pill-toggle-group";
 import { WALLPAPERS } from "@lootlog/ui/themes/wallpapers";
 import { randomizeCustomTheme } from "@lootlog/domain/custom-theme";
 import { Button } from "@lootlog/ui/components/button";
@@ -9,7 +10,6 @@ import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useUpdateUserTheme } from "@/hooks/api/user/use-user-themes";
 import { useTheme } from "@/hooks/context/use-theme";
 import { CUSTOM_THEME_FONTS } from "@lootlog/ui/themes/custom-theme";
-import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { UserThemeResponseDto } from "@lootlog/client/main";
 import {
@@ -24,10 +24,6 @@ import {
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@lootlog/ui/components/toggle-group";
 import { isEqual } from "es-toolkit";
 import { useEffect, useRef, type ComponentProps } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -209,32 +205,15 @@ export const ThemeEditorForm = ({
               control={form.control}
               name="definition.radius"
               render={({ field }) => (
-                <ToggleGroup
-                  variant="outline"
-                  size="sm"
-                  spacing={1.5}
-                  value={[field.value]}
-                  // One step is always chosen: pressing it again keeps it.
-                  onValueChange={([pressed]) => {
-                    const step = CUSTOM_THEME_RADIUS_STEPS.find(
-                      (value) => value === pressed,
-                    );
-
-                    if (step) field.onChange(step);
-                  }}
-                  aria-label={t("settings.appearance.editor.radius.label")}
-                  className="flex-wrap"
-                >
-                  {CUSTOM_THEME_RADIUS_STEPS.map((step) => (
-                    <ToggleGroupItem
-                      key={step}
-                      value={step}
-                      className={FILTER_PILL_CLASS}
-                    >
-                      {t(`settings.appearance.editor.radius.${step}`)}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
+                <PillToggleGroup
+                  label={t("settings.appearance.editor.radius.label")}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  options={CUSTOM_THEME_RADIUS_STEPS.map((step) => ({
+                    value: step,
+                    label: t(`settings.appearance.editor.radius.${step}`),
+                  }))}
+                />
               )}
             />
           </BandSection>

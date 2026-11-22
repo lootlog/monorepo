@@ -1,10 +1,10 @@
-import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { ListToolbar } from "@/components/common/list-toolbar";
+import { PillToggleGroup } from "@/components/common/pill-toggle-group";
 import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import { SettingsListError } from "@/components/common/settings-list-error";
@@ -29,10 +29,6 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Switch } from "@lootlog/ui/components/switch";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@lootlog/ui/components/toggle-group";
 import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
 import { cn } from "cn";
 import { Eye, EyeOff, SearchX, Server } from "lucide-react";
@@ -244,38 +240,16 @@ export const ServerVisibilitySettings = () => {
         clearLabel={t("settings.clearFilter")}
         disabled={orderedGuilds.length === 0}
       >
-        {/* On phones the pills scroll sideways in one row under the filter. */}
-        <div className="max-sm:order-last max-sm:-mx-3 max-sm:w-[calc(100%+1.5rem)] max-sm:overflow-x-auto max-sm:px-3 max-sm:[scrollbar-width:none]">
-          <ToggleGroup
-            variant="outline"
-            size="sm"
-            spacing={1.5}
-            value={[visibilityFilter]}
-            // One filter is always chosen: pressing it again keeps it.
-            onValueChange={([pressed]) => {
-              const filter = GUILD_VISIBILITY_FILTERS.find(
-                (value) => value === pressed,
-              );
-
-              if (filter) setVisibilityFilter(filter);
-            }}
-            aria-label={t("settings.servers.visibilityFilterLabel")}
-            className="flex-wrap max-sm:w-max max-sm:flex-nowrap"
-          >
-            {GUILD_VISIBILITY_FILTERS.map((filter) => (
-              <ToggleGroupItem
-                key={filter}
-                value={filter}
-                className={FILTER_PILL_CLASS}
-              >
-                {t(`settings.servers.filters.${filter}`)}
-                <span className="text-muted-foreground tabular-nums">
-                  {filterCounts[filter]}
-                </span>
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
+        <PillToggleGroup
+          label={t("settings.servers.visibilityFilterLabel")}
+          value={visibilityFilter}
+          onValueChange={setVisibilityFilter}
+          options={GUILD_VISIBILITY_FILTERS.map((filter) => ({
+            value: filter,
+            label: t(`settings.servers.filters.${filter}`),
+            count: filterCounts[filter],
+          }))}
+        />
         <Button
           variant="outline"
           size="sm"

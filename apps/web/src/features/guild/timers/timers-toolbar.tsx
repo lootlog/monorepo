@@ -1,12 +1,8 @@
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@lootlog/ui/components/toggle-group";
 import { useTranslation } from "react-i18next";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import type { ViewMode } from "@/hooks/use-view-mode";
-import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import { ListToolbar } from "@/components/common/list-toolbar";
+import { PillToggleGroup } from "@/components/common/pill-toggle-group";
 
 type TimerGroupOption = { key: string; label: string; count: number };
 
@@ -47,29 +43,17 @@ export const TimersToolbar = ({
       clearLabel={t("timers.clearSearch")}
     >
       {groups.length > 1 && (
-        <ToggleGroup
+        <PillToggleGroup
           multiple
-          variant="outline"
-          size="sm"
-          spacing={1.5}
+          label={t("timers.groupsLabel")}
           value={selectedGroups}
           onValueChange={onSelectedGroupsChange}
-          aria-label={t("timers.groupsLabel")}
-          className="flex-wrap"
-        >
-          {groups.map((group) => (
-            <ToggleGroupItem
-              key={group.key}
-              value={group.key}
-              className={FILTER_PILL_CLASS}
-            >
-              {group.label}
-              <span className="text-muted-foreground tabular-nums">
-                {group.count}
-              </span>
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+          options={groups.map((group) => ({
+            value: group.key,
+            label: group.label,
+            count: group.count,
+          }))}
+        />
       )}
       {canChooseViewMode && (
         <ViewModeToggle
