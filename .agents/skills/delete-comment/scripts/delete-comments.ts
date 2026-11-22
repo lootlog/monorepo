@@ -8,6 +8,8 @@ const NEWLINE = 0x0a;
 type Target = { readonly file: string; readonly line: number };
 
 const isBlank = (bytes: Buffer) => /^[ \t\r]*$/u.test(bytes.toString("utf8"));
+const isWordByte = (byte: number | undefined) =>
+  byte !== undefined && (byte >= 0x80 || /[\w$]/u.test(String.fromCharCode(byte)));
 
 function deleteSpan(source: Buffer, offset: number, length: number): Buffer {
   let start = offset;
@@ -26,7 +28,9 @@ function deleteSpan(source: Buffer, offset: number, length: number): Buffer {
     while (end < lineEnd && source[end] === 0x20) end++;
   }
 
-  return Buffer.concat([source.subarray(0, start), source.subarray(end)]);
+  const separator = isWordByte(source[start - 1]) && isWordByte(source[end]) ? " " : "";
+
+  return Buffer.concat([source.subarray(0, start), Buffer.from(separator), source.subarray(end)]);
 }
 
 const targets: Target[] = await Bun.file(process.argv[2] ?? "").json();
