@@ -1,5 +1,10 @@
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { formatLevel } from "@lootlog/domain/profession";
+import {
+  buildPlayerTipHtml,
+  setPlayerTip,
+} from "@/lib/margonem-runtime/adapters/minimap-player-runtime-adapter";
 import {
   getWhoIsHereRelationColor,
   startPrivateMessage,
@@ -29,13 +34,43 @@ export function WhoIsHereAirTagRow({
 
   const seenSeconds = Math.max(0, Math.floor((now - enemy.observedAt) / 1_000));
 
+  const row = useRef<HTMLButtonElement>(null);
+  const [hasGameTip, setHasGameTip] = useState(false);
+  const { nickname, lvl, prof } = enemy;
+  const clanName = enemy.clan?.name;
+
+  // The game's own player tip, as on the native rows above. Bound once per
+  // change of what it shows: the row itself re-renders every second.
+  useEffect(() => {
+    const element = row.current;
+
+    const tip = buildPlayerTipHtml({
+      nick: nickname,
+      level: lvl,
+      prof,
+      clanName,
+    });
+
+    if (!element || !tip) return;
+    setPlayerTip(element, tip);
+    setHasGameTip(true);
+
+    return () => setPlayerTip(element, null);
+  }, [nickname, lvl, prof, clanName]);
+
   // Like a native row, a click starts a private message.
   return (
     <button
+      ref={row}
       type="button"
       onClick={() => startPrivateMessage(enemy.nickname)}
+      // The plain title stays for a game that cannot build its tip.
       title={
-        enemy.clan ? `${enemy.nickname} · ${enemy.clan.name}` : enemy.nickname
+        hasGameTip
+          ? undefined
+          : clanName
+            ? `${nickname} · ${clanName}`
+            : nickname
       }
       className="one-other tw-list-item ll:block ll:w-full ll:border-0 ll:text-left ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring"
     >

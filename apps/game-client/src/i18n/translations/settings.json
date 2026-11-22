@@ -285,6 +285,9 @@
   },
   "airTags": {
     "seenAgo": "{{seconds}} s",
+    "minimapSeen": "Widziany przez Lootloga {{seconds}} s temu",
+    "minimapLabel": "Wrogowie na Podręcznej mapie",
+    "minimapDescription": "Pokazuj na Podręcznej mapie wrogów, których widzą inni członkowie Lootloga, a Ty nie. Wyglądają jak wrogowie rysowani przez grę i bledną, gdy zgłoszenie się starzeje.",
     "whoIsHereTitle": "Widziani przez Lootloga",
     "afk": "AFK"
   },

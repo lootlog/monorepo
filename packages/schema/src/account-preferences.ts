@@ -86,6 +86,8 @@ export type MapPingPreferences = {
 
 export type AirTagPreferences = {
   enabled: boolean;
+  /** Draws enemies other members see on the game's handheld minimap. */
+  minimap: boolean;
 };
 
 export type BattlePingPreferences = {
@@ -152,6 +154,7 @@ export const defaultLootSplitPreferences: LootSplitPreferences = {
 
 export const defaultAirTagPreferences: AirTagPreferences = {
   enabled: false,
+  minimap: false,
 };
 
 export const defaultNotificationsSettings: NotificationsSettings = {

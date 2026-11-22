@@ -553,6 +553,13 @@ const MANIFEST = [
             settingKeys: ["gameData.pings"],
           },
           {
+            id: "air-tag-minimap",
+            labelKey: "settings.airTags.minimapLabel",
+            descriptionKey: "settings.airTags.minimapDescription",
+            aliases: ["airtag", "wrogowie", "minimapa", "podręczna mapa"],
+            settingKeys: ["gameData.airTags"],
+          },
+          {
             id: "battle-pings",
             labelKey: "pings.settings.battleLabel",
             descriptionKey: "pings.settings.battleDescription",

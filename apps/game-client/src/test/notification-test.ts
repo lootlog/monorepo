@@ -28,7 +28,7 @@ export const createNotificationTest = () => {
     notifications: createNotificationsSettings(["guild-1"]),
     detector: createDetectorSettings(),
     pings: { enabled: false },
-    airTags: { enabled: false },
+    airTags: { enabled: false, minimap: false },
     hasStoredNotifications: true,
     hasStoredDetector: true,
     hasStoredPings: true,

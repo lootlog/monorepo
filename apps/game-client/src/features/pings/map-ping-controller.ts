@@ -214,7 +214,8 @@ type HandheldMiniMapGeometry = {
   size: { x: number; y: number };
 };
 
-const getCanvasPoint = (
+/** A viewport point in the canvas's own pixels, whatever size it is shown at. */
+export const getCanvasPoint = (
   canvas: HTMLCanvasElement,
   clientX: number,
   clientY: number,

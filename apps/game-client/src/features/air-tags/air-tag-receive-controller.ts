@@ -177,6 +177,15 @@ export class AirTagReceiveController {
     }
   }
 
+  /** Whether any scope holds a target; expired ones leave on the next read. */
+  hasTargets(): boolean {
+    for (const scope of this.scopes.values()) {
+      if (scope.targets.size > 0) return true;
+    }
+
+    return false;
+  }
+
   getRenderableTargets(now: number, ttlMs: number): AirTagTarget[] {
     const targets = new Map<string, AirTagTarget>();
 

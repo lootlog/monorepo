@@ -41,6 +41,21 @@ export const PingsSettingsTab: FC = () => {
               />
             </SettingsRow>
             <SettingsRow
+              controlId="air-tag-minimap"
+              htmlFor="air-tag-minimap"
+              label={t("settings.airTags.minimapLabel")}
+              description={t("settings.airTags.minimapDescription")}
+            >
+              <Switch
+                checked={accountPreferences?.airTags.minimap ?? false}
+                disabled={!accountPreferences}
+                onCheckedChange={(minimap) => {
+                  updateAccountPreferences.mutate({ airTags: { minimap } });
+                }}
+                id="air-tag-minimap"
+              />
+            </SettingsRow>
+            <SettingsRow
               controlId="battle-pings"
               htmlFor="battle-pings"
               label={t("pings.settings.battleLabel")}

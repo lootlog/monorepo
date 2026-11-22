@@ -86,7 +86,7 @@ const setup = async (lootSplit?: { enabled: boolean; rarities: string[] }) => {
     notifications: createNotificationsSettings(),
     detector: createDetectorSettings(),
     pings: { enabled: true },
-    airTags: { enabled: false },
+    airTags: { enabled: false, minimap: false },
     hasStoredNotifications: true,
     hasStoredDetector: true,
     hasStoredPings: true,
