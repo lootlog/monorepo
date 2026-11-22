@@ -41,7 +41,6 @@ import { useRejectedPingHint, type PingPointer } from "./use-map-pings";
 
 const ACK_TIMEOUT_MS = 1_500;
 
-/** A tap calls the team to quick fight; the centre of the wheel cancels. */
 const QUICK_FIGHT_MENU: PingMenu = {
   centre: null,
   quick: BATTLE_QUICK_FIGHT_TYPE,
@@ -53,7 +52,6 @@ const areBattlePingsEnabled = () =>
   Boolean(useGameStore.getState().game?.hero.accountId) &&
   normalizeBattlePings(readSettingsValue("gameData.battlePings")).enabled;
 
-/** The current fight, or null outside a battle Lootlog can ping in. */
 const readBattleContext = () => {
   const game = useGameStore.getState().game;
   const { battleState, battleWarriors } = useBattleStore.getState();
@@ -67,13 +65,6 @@ const readBattleContext = () => {
 
 type BattleContext = NonNullable<ReturnType<typeof readBattleContext>>;
 
-/**
- * Whether a ping of this type may mark this warrior, from the sender's side:
- * enemy pings on living enemies, a request for healing or a call to the whole
- * team on the sender's own living warrior, and profession requests on living
- * allies of that profession. The gateway cannot check battle roles, so both
- * ends apply this.
- */
 const canPingWarrior = (
   context: BattleContext,
   senderCharacterId: string,
@@ -127,8 +118,6 @@ export const useBattlePings = () => {
   const showHint = useRejectedPingHint();
   const { t } = useTranslation("pings");
 
-  // Pings belong to one fight: drop them when it ends, and drop a warrior's
-  // pings once it dies.
   useEffect(() => {
     if (!online) {
       battlePingStore.clear();
@@ -174,7 +163,6 @@ export const useBattlePings = () => {
         !isBattlePingType(event.type) ||
         event.world !== context.game.world ||
         event.mapId !== context.game.map.id ||
-        // Only a character fighting on the hero's team may mark this fight.
         !getBattleTeamCharacterIds(context.warriors, context.heroId).includes(
           event.sender.characterId,
         ) ||
@@ -188,7 +176,6 @@ export const useBattlePings = () => {
         return;
       }
 
-      // A team call addresses every recipient.
       const forMe =
         isBattleTeamPingType(event.type) ||
         (String(event.warriorId) === context.heroId &&
@@ -255,7 +242,6 @@ export const useBattlePings = () => {
     return ring.length > 0 ? { centre: null, quick: null, ring, title } : null;
   };
 
-  /** Resolves the warrior under a press or the last known pointer. */
   const resolveStart = (
     pointer: PingPointer,
   ): Omit<PingInteractionStart, "identity"> | null => {
@@ -299,7 +285,6 @@ export const useBattlePings = () => {
   const send = (warriorId: number, type: BattlePingType) => {
     const context = readBattleContext();
 
-    // The target may have died while the wheel was open.
     if (
       !context ||
       !socket ||
@@ -325,12 +310,9 @@ export const useBattlePings = () => {
       context.heroId,
     );
 
-    // A solo fight has nobody to tell; the local mark is the whole effect.
     if (recipientCharacterIds.length === 0) return;
 
     const retract = (acknowledgement?: MapPingAck) => {
-      // Undelivered: a ping the team never saw must not stay up or in the
-      // fight's history.
       battlePingStore.retract(entryId, previousTarget);
 
       if (acknowledgement?.status === "rejected") showHint(acknowledgement);

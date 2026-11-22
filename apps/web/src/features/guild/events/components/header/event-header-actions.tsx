@@ -42,7 +42,6 @@ type EventHeaderActionsProps = Pick<
   isDeletePending: boolean;
 };
 
-/** The actions on the whole event: rules, summary, pin and management. */
 export const EventHeaderActions = ({
   t,
   event,
@@ -110,7 +109,6 @@ export const EventHeaderActions = ({
           eventIsPinned && "fill-current text-yellow-500",
         )}
       />
-      {/* Why pinning is off, for an event that is not active, is in the title. */}
       {t(eventIsPinned ? "events.unpinEvent" : "events.pinEvent")}
     </Button>
     {canManage && (

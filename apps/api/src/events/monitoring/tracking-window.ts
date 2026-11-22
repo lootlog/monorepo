@@ -3,10 +3,6 @@ type TrackingWindowInterval = {
   end: Date;
 };
 
-/**
- * Clips an interval (with optional open end) to a window, returning the
- * clamped start/end as Dates. A `null` end is treated as `windowEnd`.
- */
 export function clipToWindow(params: {
   start: Date;
   end: Date | null;
@@ -23,10 +19,6 @@ export function clipToWindow(params: {
   };
 }
 
-/**
- * Like {@link clipToWindow} but returns the duration in whole seconds,
- * clamped to a minimum of 0.
- */
 export function clipToWindowSeconds(params: {
   start: Date;
   end: Date | null;

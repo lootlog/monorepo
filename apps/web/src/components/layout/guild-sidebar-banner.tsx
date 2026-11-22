@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { cn } from "cn";
 
-/**
- * The Organization's Discord server banner, shown whole: its presence grows
- * the sidebar header to the banner's 16:9 shape. A scrim under the header row
- * keeps the server name readable in every theme, and the bottom edge melts
- * into the sidebar. A banner that fails to load leaves the plain header.
- */
 export const GuildSidebarBanner = ({ src }: { src: string }) => {
   const [status, setStatus] = useState<"loading" | "loaded" | "failed">(
     "loading",

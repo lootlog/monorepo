@@ -21,7 +21,6 @@ import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 type CombatProfileOverviewProps = {
   data: CombatProfileResponseDtoOutput | undefined;
   isLoading: boolean;
-  /** Abyss battles change the rating instead of earning honor points. */
   rated?: boolean;
 };
 
@@ -30,7 +29,6 @@ const compactFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
   maximumFractionDigits: 1,
 });
 
-/** The battles' headline numbers, edge to edge under the filter bar. */
 export function CombatProfileOverview({
   data,
   isLoading,
@@ -39,7 +37,6 @@ export function CombatProfileOverview({
   const { t } = useTranslation();
   const summary = isLoading ? undefined : data?.summary;
 
-  // Each tile keeps its label while its numbers load.
   const loading = (width: string) => <Skeleton className={`h-7 ${width}`} />;
   const loadingDetail = <Skeleton className="h-4 w-20" />;
 

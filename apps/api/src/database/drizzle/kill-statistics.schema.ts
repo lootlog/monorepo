@@ -14,10 +14,6 @@ import { guildTable, memberTable, npcTypeEnum } from "./organization.schema.js";
 const killTime = (name: string) =>
   timestamp(name, { mode: "date", precision: 3, withTimezone: true });
 
-/**
- * Hourly personal kills. A TimescaleDB hypertable on `periodStart` where the
- * extension is loaded (see drizzle/README.md); a plain table elsewhere.
- */
 export const userKillBucketTable = pgTable(
   "UserKillBucket",
   {
@@ -50,12 +46,6 @@ export const userKillBucketTable = pgTable(
   ],
 );
 
-/**
- * Hourly personal kills per Margonem character, recorded alongside
- * `UserKillBucket` since per-character tracking began. Older kills have no
- * character and stay only in the account-wide tables. A TimescaleDB hypertable
- * on `periodStart` where the extension is loaded.
- */
 export const userCharacterKillBucketTable = pgTable(
   "UserCharacterKillBucket",
   {
@@ -91,10 +81,6 @@ export const userCharacterKillBucketTable = pgTable(
   ],
 );
 
-/**
- * A User's characters with recorded kills, described by the latest kill that
- * reported them. `firstKilledAt` is when tracking this character began.
- */
 export const userKillCharacterTable = pgTable(
   "UserKillCharacter",
   {
@@ -117,7 +103,6 @@ export const userKillCharacterTable = pgTable(
   ],
 );
 
-/** Hourly kills reported by an Organization member. */
 export const memberKillBucketTable = pgTable(
   "MemberKillBucket",
   {
@@ -167,12 +152,6 @@ export const memberKillBucketTable = pgTable(
   ],
 );
 
-/**
- * Member kill buckets left by a deleted account. Compressed chunks segment by
- * Organization, so deleting one member's rows decompresses the Organization's
- * history; a nightly job removes the buckets older than `before` one chunk per
- * transaction instead of inside the deletion request.
- */
 export const memberKillPurgeTable = pgTable("MemberKillPurge", {
   memberId: integer("memberId")
     .primaryKey()
@@ -186,10 +165,6 @@ export const memberKillPurgeTable = pgTable("MemberKillPurge", {
   createdAt: killTime("createdAt").defaultNow().notNull(),
 });
 
-/**
- * Hourly kills counted once per Organization, however many members reported
- * them.
- */
 export const guildKillBucketTable = pgTable(
   "GuildKillBucket",
   {
@@ -224,17 +199,6 @@ export const guildKillBucketTable = pgTable(
   ],
 );
 
-/**
- * Organization kills per Europe/Warsaw calendar day, written in the same
- * transaction as `GuildKillBucket`. All-time timelines and the weekday-by-hour
- * heatmap read these rows instead of every hourly bucket of an Organization.
- * `hours[n + 1]` is the kills of local hour `n`, so the array always has 24
- * entries and sums to `kills`; the repeated hour of a 25-hour day shares its
- * slot, as `extract(hour ...)` of the local time does. The descriptive columns
- * are those of the latest kill, as in the totals. It has no foreign key to the
- * Organization: adding one locks `Guild` for the transaction, and the rollup is
- * derived from `GuildKillBucket`, which has one.
- */
 export const guildKillDayTable = pgTable(
   "GuildKillDay",
   {
@@ -256,16 +220,6 @@ export const guildKillDayTable = pgTable(
   ],
 );
 
-/**
- * Boss kills counted once across Organizations: the Organizations that
- * recorded each kill, and its party when a report named it. Every member of a
- * party reports the same kill, so reports of one boss on one world within the
- * kill dedup window share the time of the first (see `kill-creation.ts`).
- * `lootRolls` is the loot rolls the party got on average (`getKillLootRolls`)
- * and the columns after it its members of each profession, alive or dead;
- * all are null when no report named the party. A TimescaleDB hypertable on
- * `killedAt` where the extension is loaded; a plain table elsewhere.
- */
 export const bossKillTable = pgTable(
   "BossKill",
   {
@@ -292,11 +246,6 @@ export const bossKillTable = pgTable(
   ],
 );
 
-/**
- * Lifetime kills per scope, incremented in the same transaction as the hourly
- * bucket. Only the natural key is indexed and the migration sets fillfactor 70,
- * so increments are heap-only tuple updates.
- */
 export const userKillTotalTable = pgTable(
   "UserKillTotal",
   {
@@ -386,7 +335,6 @@ export const guildKillTotalTable = pgTable(
   ],
 );
 
-/** Short-lived accepted Organization kills and their durable publication intent. */
 export const guildKillActivityTable = pgTable(
   "GuildKillActivity",
   {

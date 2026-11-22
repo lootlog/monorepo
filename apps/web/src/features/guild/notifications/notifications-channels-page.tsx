@@ -16,7 +16,6 @@ import { useNotificationsOverview } from "./use-notifications-overview";
 import { getGuildNotificationTargetLabel } from "./utils/notification-settings.utils";
 import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
-/** The channels tab: the Discord channels rules send to. */
 export const NotificationsChannelsPage = () => {
   const { t } = useTranslation();
   const overview = useNotificationsOverview();

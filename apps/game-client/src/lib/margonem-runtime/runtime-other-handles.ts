@@ -7,8 +7,6 @@ class RuntimeOtherHandleRegistry {
     {},
   );
 
-  // SI queues `other` packets in its load queue and creates the player on a
-  // later game thread tick, so a player can be projected before its handle exists.
   private readonly pendingIds = new Set<string>();
   private resolveHandle: ResolveHandle | null = null;
 
@@ -97,9 +95,7 @@ class RuntimeOtherHandleRegistry {
         const handle = resolve(id);
 
         if (handle) upserts[id] = handle;
-      } catch {
-        // Native state may be unavailable while Margonem loads a map.
-      }
+      } catch {}
     }
 
     if (Object.keys(upserts).length > 0) this.applyBatch({ upserts });

@@ -71,7 +71,6 @@ export function ChatGatheringBar({
 
   const { mergeProjection } = useReadyRoomsCache();
   const { room, isOrganizer } = useCurrentCharacterReadyRoom();
-  // Managed from, and closed to signups on, every character of its account.
   const ownedRoom = useAccountOwnedReadyRoom();
 
   const roomId = room?.notificationId;

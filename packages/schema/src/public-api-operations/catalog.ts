@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Catalog service operations: game facts with no Organization behind them. */
 export const CATALOG_OPERATIONS = [
   {
     service: "catalog",

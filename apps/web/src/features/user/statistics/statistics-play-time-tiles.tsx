@@ -13,13 +13,9 @@ const rateFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
 
 type StatisticsPlayTimeTilesProps = {
   playTime: ReturnType<typeof summarizePlayTime>;
-  /** False until online history loads, or when there is none. */
   available: boolean;
-  /** Online time is counted on this world only. */
   world?: string;
-  /** Online time does not tell characters apart, so one has no kill rate. */
   characterSelected: boolean;
-  /** Names the shorter window online history covers, if it is shorter. */
   coverage?: string;
   formatDuration: (seconds: number) => string;
 };

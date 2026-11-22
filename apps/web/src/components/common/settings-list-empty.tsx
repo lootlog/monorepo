@@ -6,11 +6,9 @@ type SettingsListEmptyProps = {
   icon: LucideIcon;
   title: string;
   description: string;
-  /** The next step, such as clearing the filter or creating the first item. */
   action?: ReactNode;
 };
 
-/** What a settings list shows under its toolbar when no tile is left. */
 export const SettingsListEmpty = ({
   icon,
   title,

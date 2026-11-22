@@ -11,18 +11,11 @@ const MAX_QUEUED_UPDATES = 1_000;
 
 const MAX_TARGETS_PER_SCOPE = 100;
 
-// Longer than the gateway takes to remove a player every observer saw leave.
 const DEPARTED_HIDE_MS = 3_000;
 
 type AirTagScopeState = Omit<AirTagScopeSnapshot, "targets"> & {
   targets: Map<string, AirTagTarget>;
-  /**
-   * Revision of each target's last update or removal. Frames of two gateway
-   * instances may arrive out of order; a late one must not restore a removed
-   * target or an older position.
-   */
   revisions: Map<string, number>;
-  /** Revision every target not listed in `revisions` is known at. */
   baseRevision: number;
 };
 
@@ -33,7 +26,6 @@ const getScopeKey = ({
 }: Pick<AirTagScopeSnapshot, "guildId" | "world" | "mapId">) =>
   `${guildId}:${world}:${mapId}`;
 
-/** Moves gateway (Redis) timestamps onto the local clock, so a skewed clock cannot hide or keep markers. */
 const toLocalTarget = (target: AirTagTarget, offset: number): AirTagTarget => ({
   ...target,
   observedAt: target.observedAt + offset,
@@ -107,7 +99,6 @@ export class AirTagReceiveController {
     for (const snapshot of acknowledgement.scopes) {
       if (!this.isCurrentSnapshot(snapshot)) continue;
 
-      // Older gateways send no server time; their timestamps stay as sent.
       const offset =
         snapshot.serverTime === undefined
           ? 0
@@ -136,11 +127,9 @@ export class AirTagReceiveController {
     this.receive(value);
   }
 
-  /** Hides a player the hero saw leave until the gateway removes them. */
   hideDeparted(targetId: string): void {
     this.departedUntil.set(targetId, this.now() + DEPARTED_HIDE_MS);
     this.notifyChange();
-    // Shows the player again when another member still reports them.
     setTimeout(() => this.notifyChange(), DEPARTED_HIDE_MS);
   }
 
@@ -148,7 +137,6 @@ export class AirTagReceiveController {
     if (!this.isCurrentMap(value)) return;
     const now = this.now();
 
-    // The gateway sends an update as it observes the targets.
     const update = {
       ...value,
       targets: value.targets.map((target) =>
@@ -171,11 +159,6 @@ export class AirTagReceiveController {
     }
   }
 
-  /**
-   * Whether another observer reported the target within `maxAgeMs` in every
-   * scope this character follows. The gateway leaves a connection's own
-   * sightings out of what it sends back, so every update is someone else's.
-   */
   isReportedByOthers(targetId: string, now: number, maxAgeMs: number): boolean {
     if (this.scopes.size === 0) return false;
 
@@ -188,7 +171,6 @@ export class AirTagReceiveController {
     return true;
   }
 
-  /** Whether any scope holds a target; expired ones leave on the next read. */
   hasTargets(): boolean {
     for (const scope of this.scopes.values()) {
       if (scope.targets.size > 0) return true;
@@ -325,7 +307,6 @@ export class AirTagReceiveController {
     targets.set(target.targetId, target);
     revisions.set(target.targetId, revision);
 
-    // Removed targets leave revisions behind; keep only those of current targets.
     if (revisions.size > MAX_TARGETS_PER_SCOPE * 4) {
       for (const targetId of revisions.keys()) {
         if (!targets.has(targetId)) revisions.delete(targetId);

@@ -5,26 +5,12 @@ import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { npcSpawnPositionTable } from "#src/database/drizzle/npc-spawn.schema";
 import { buildMonsterFights } from "./monster-fights.js";
 
-/**
- * A monster's maps come from its latest fights, so a monster moved to another
- * map leaves the old one behind once enough fights there are recorded.
- */
 export const LOCATION_FIGHTS = 1000;
 
-/**
- * A map holding fewer of the monster's fights than this is noise: players
- * leave the map before the loot is recorded. Heroes keep spawn maps above it.
- */
 const MIN_LOCATION_SHARE = 0.01;
 
-/**
- * The spawn tiles shown for a monster on one map. A monster with a fixed
- * spawn has one; a second-tier elite placed at random fills an area, and the
- * most reported tiles of a large one are enough to show it.
- */
 const MAX_SPAWN_TILES = 100;
 
-/** The fights of a monster recorded on one map. */
 export type MonsterLocationFights = {
   readonly gameVersion: GameVersion;
   readonly name: string;
@@ -33,7 +19,6 @@ export type MonsterLocationFights = {
   readonly fights: number;
 };
 
-/** The fights each monster's latest `LOCATION_FIGHTS` recorded on each map. */
 export const buildMonsterLocationsQuery = (database: ApiDatabaseValue) => {
   const { ctes, fights, monsterFights, isMonsterOfFight } =
     buildMonsterFights(database);
@@ -53,7 +38,6 @@ export const buildMonsterLocationsQuery = (database: ApiDatabaseValue) => {
     .groupBy(fights.gameVersion, fights.name, fights.type, fights.location);
 };
 
-/** How often Game clients reported a monster on one tile of one map. */
 export type MonsterSpawnTileReports = {
   readonly gameVersion: GameVersion;
   readonly name: string;
@@ -64,7 +48,6 @@ export type MonsterSpawnTileReports = {
   readonly reports: number;
 };
 
-/** Every reported spawn tile of every monster. */
 export const buildMonsterSpawnTilesQuery = (database: ApiDatabaseValue) =>
   database
     .select({
@@ -81,11 +64,6 @@ export const buildMonsterSpawnTilesQuery = (database: ApiDatabaseValue) =>
 const spawnMapKey = (gameVersion: GameVersion, name: string, map: string) =>
   JSON.stringify([gameVersion, name, map]);
 
-/**
- * The tiles of each monster's map, by edition, monster name and map name.
- * Two maps may share a name; the one the monster was reported on most keeps
- * it, so tiles of different maps never mix.
- */
 const toSpawnTilesByMap = (tiles: ReadonlyArray<MonsterSpawnTileReports>) =>
   new Map(
     Object.entries(
@@ -113,11 +91,6 @@ const toSpawnTilesByMap = (tiles: ReadonlyArray<MonsterSpawnTileReports>) =>
     }),
   );
 
-/**
- * Each monster's maps with the share of its latest fights on each, most
- * fought first. A share is rounded to a whole percent: the catalog tells
- * where a monster is, not how often it is fought.
- */
 export const toMonsterLocations = (
   rows: ReadonlyArray<MonsterLocationFights>,
   spawnTiles: ReadonlyArray<MonsterSpawnTileReports> = [],

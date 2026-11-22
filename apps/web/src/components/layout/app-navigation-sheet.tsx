@@ -13,11 +13,6 @@ type AppNavigationSheetProps = {
   footer?: ReactNode;
 };
 
-/**
- * The phone navigation behind the tab bar's "More": a sheet that rises from
- * the bar it was opened from and swipes back down, as iOS sheets do, instead
- * of a drawer from the opposite edge.
- */
 export const AppNavigationSheet = ({
   children,
   footer,
@@ -30,7 +25,6 @@ export const AppNavigationSheet = ({
       <DrawerContent
         data-sidebar="sidebar"
         data-mobile="true"
-        // Recedes while the account sheet is stacked over it.
         className="bg-sidebar text-sidebar-foreground data-nested-drawer-open:brightness-60"
       >
         <DrawerTitle className="sr-only">

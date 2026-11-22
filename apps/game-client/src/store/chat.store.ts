@@ -16,10 +16,6 @@ const decodeLegacySelectedGuild = Schema.decodeUnknownOption(
 
 export type ChatFilter = "all" | "normal" | "reports";
 
-/**
- * The mode a fresh entry starts in, picked from the mode menu. A gathering is
- * a one-off action, so only a message or a notification stays picked.
- */
 export type ChatDefaultComposeMode = "message" | "notification";
 
 type ReplyableMessageType = Extract<MessageType, "NORMAL" | "NOTIFICATION">;
@@ -35,7 +31,6 @@ export type ChatReplyDraft = {
 interface ChatState {
   isIntegratedMode: boolean;
   toggleIntegratedMode: () => void;
-  /** The Lootlog the console sends to; unset follows the character's Lootlog. */
   commandGuildId: string | null;
   setCommandGuildId: (guildId: string) => void;
   chatFilter: ChatFilter;
@@ -44,7 +39,6 @@ interface ChatState {
   toggleFiltersVisible: () => void;
   defaultComposeMode: ChatDefaultComposeMode;
   setDefaultComposeMode: (mode: ChatDefaultComposeMode) => void;
-  /** A missing draft starts in `defaultComposeMode`. */
   draftsByGuild: Record<string, string>;
   setDraft: (guildId: string, message: string) => void;
   clearDraft: (guildId: string) => void;
@@ -146,7 +140,6 @@ export const useChatStore = create<ChatState>()(
         return {
           ...current,
           ...persisted,
-          // The reports tab replaced the stored npc and party filters.
           chatFilter:
             chatFilter === "normal" || chatFilter === "reports"
               ? chatFilter
@@ -167,7 +160,6 @@ const getChatCharacterKey = () => {
   return `${hero?.accountId ?? ""}:${hero?.characterId ?? ""}`;
 };
 
-/** The pre-store selector preference per character; nothing writes it any more, so it is read once. */
 const legacySelectedGuildByCharacter = new Map<string, string>();
 
 const readLegacySelectedGuild = (key: string): string => {
@@ -191,7 +183,6 @@ export const getSelectedChatGuildId = (
   const selected = state.selectedGuildByCharacter[key];
 
   if (selected !== undefined) return selected;
-  // Preserve the existing per-character selector preference on first use.
   let legacy = legacySelectedGuildByCharacter.get(key);
 
   if (legacy === undefined) {

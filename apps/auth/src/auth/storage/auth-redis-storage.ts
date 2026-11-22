@@ -11,7 +11,6 @@ export const createAuthRedisConnection = (url: Redacted.Redacted<string>) =>
   reconnectingBunRedisLayer({
     url: reveal(url),
     connectionTimeout: 1_000,
-    // Bun connects lazily; retain the first OAuth write while connecting.
     enableOfflineQueue: true,
     maxRetries: 1,
   });
@@ -24,7 +23,6 @@ export interface ApiKeyRateLimitDecision {
 export class AuthRedisStorage extends Context.Service<
   AuthRedisStorage,
   {
-    /** Counts a request in the key's window; a rejected one knows how long the window still runs. */
     readonly consumeApiKeyRateLimit: (
       keyId: string,
     ) => Effect.Effect<ApiKeyRateLimitDecision, Redis.RedisError>;

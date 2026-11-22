@@ -10,7 +10,6 @@ export const RiasEmptyStateIcon: FC<{ className?: string }> = ({
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Outer magic circle */}
       <circle
         cx="60"
         cy="60"
@@ -29,8 +28,6 @@ export const RiasEmptyStateIcon: FC<{ className?: string }> = ({
         opacity="0.08"
       />
 
-      {/* Chess King piece silhouette */}
-      {/* Cross on top */}
       <line
         x1="60"
         y1="18"
@@ -52,7 +49,6 @@ export const RiasEmptyStateIcon: FC<{ className?: string }> = ({
         opacity="0.3"
       />
 
-      {/* Crown top (crenellations) */}
       <path
         d="M47 38 L47 32 L50 35 L53 30 L57 34 L60 28 L63 34 L67 30 L70 35 L73 32 L73 38 Z"
         fill="currentColor"
@@ -63,7 +59,6 @@ export const RiasEmptyStateIcon: FC<{ className?: string }> = ({
         strokeOpacity="0.25"
       />
 
-      {/* Body */}
       <path
         d="M47 38 L45 55 Q44 60 46 62 L48 64 L44 82 Q43 86 47 88 L73 88 Q77 86 76 82 L72 64 L74 62 Q76 60 75 55 L73 38"
         fill="currentColor"
@@ -74,7 +69,6 @@ export const RiasEmptyStateIcon: FC<{ className?: string }> = ({
         strokeOpacity="0.2"
       />
 
-      {/* Waist band */}
       <rect
         x="47"
         y="54"
@@ -88,7 +82,6 @@ export const RiasEmptyStateIcon: FC<{ className?: string }> = ({
         strokeOpacity="0.15"
       />
 
-      {/* Base */}
       <path
         d="M42 88 Q40 90 40 93 L40 96 Q40 99 44 100 L76 100 Q80 99 80 96 L80 93 Q80 90 78 88"
         fill="currentColor"
@@ -99,7 +92,6 @@ export const RiasEmptyStateIcon: FC<{ className?: string }> = ({
         strokeOpacity="0.2"
       />
 
-      {/* Subtle glow particles */}
       <circle cx="35" cy="40" r="1.5" fill="currentColor" opacity="0.1" />
       <circle cx="85" cy="40" r="1" fill="currentColor" opacity="0.08" />
       <circle cx="30" cy="75" r="1" fill="currentColor" opacity="0.08" />

@@ -16,12 +16,6 @@ import {
 
 export type Profession = (typeof PROFESSION_OPTIONS)[number];
 
-/**
- * A character's equipment: who wears it, the item id in each slot and how far
- * each worn item is upgraded, with its +5 bonus and the symbol in its socket;
- * a slot without an upgrade wears it as dropped. `skills` holds the rank of each learned skill of the
- * profession's tree, by the skill's id.
- */
 export type EquipmentSet = {
   profession: Profession | null;
   level: number | null;
@@ -47,7 +41,6 @@ const without = <Value>(
   return rest;
 };
 
-/** The set with the slot emptied. */
 export const unequipSlot = (
   set: EquipmentSet,
   slotId: EquipmentSlotId,
@@ -57,13 +50,6 @@ export const unequipSlot = (
   upgrades: without(set.upgrades, slotId),
 });
 
-/**
- * The set with the item worn in the slot its type belongs to. Without an
- * `upgrade`, an item already worn keeps its own and another is worn as
- * dropped. A weapon and the other hand's item that cannot be held together
- * do not stay together: the one already worn comes off. `typeOf` names the
- * type of a worn item by its id, as far as the catalog has loaded it.
- */
 export const equipItem = (
   set: EquipmentSet,
   item: { id: number; type: string | null },
@@ -107,10 +93,8 @@ export const equipItem = (
   };
 };
 
-/** The query parameter a shared set travels in. */
 export const EQUIPMENT_SET_PARAM = "set";
 
-/** The parameter links shared before it was renamed still carry. */
 export const LEGACY_EQUIPMENT_SET_PARAM = "zestaw";
 
 export const MAX_CHARACTER_LEVEL = 500;
@@ -118,23 +102,13 @@ export const MAX_CHARACTER_LEVEL = 500;
 export const isCharacterLevel = (level: number) =>
   Number.isInteger(level) && level > 0 && level <= MAX_CHARACTER_LEVEL;
 
-// One worn item: its slot letter, its id and its upgrade.
 const SET_PART = new RegExp(`^([a-z])(\\d{1,12})${ITEM_UPGRADE_PATTERN}$`);
 
-// One learned skill: its id and its rank.
 const SKILL_PART = /^(\d{1,5})x(\d{1,2})$/;
 
 const isProfession = (value: string): value is Profession =>
   PROFESSION_OPTIONS.some((profession) => profession === value);
 
-/**
- * A set as a short, readable link value: the character first, then one
- * `<slot letter><item id>` per worn item, with `u<level>` after an upgraded
- * one and the +5 bonus's stat after that, `-` and the socket's symbol bonus
- * after a socketed one, then `<skill id>x<rank>` per learned skill, such as
- * `h250_h12345u5ds_b678u2-critred_168x10`. An unknown
- * character is `-`.
- */
 export const encodeEquipmentSet = (set: EquipmentSet) =>
   [
     `${set.profession ?? "-"}${set.level ?? ""}`,
@@ -151,10 +125,6 @@ export const encodeEquipmentSet = (set: EquipmentSet) =>
       .map(([id, rank]) => `${id}x${rank}`),
   ].join("_");
 
-/**
- * The set a link names. Parts it cannot read are dropped, so a mangled link
- * still opens as much of the set as it carries.
- */
 export const decodeEquipmentSet = (value: string): EquipmentSet => {
   const [character = "", ...parts] = value.split("_");
   const characterMatch = /^([a-z-])(\d{0,3})$/.exec(character);

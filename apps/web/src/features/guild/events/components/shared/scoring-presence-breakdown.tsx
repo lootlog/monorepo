@@ -20,10 +20,6 @@ interface ScoringPresenceBreakdownProps {
   nameOf: (participantId: PresenceParticipantId) => string;
 }
 
-/**
- * A member's presence in one respawn window and how each rule evaluated it,
- * shared by the kill breakdown and the simulator.
- */
 export const ScoringPresenceBreakdown = ({
   analysis,
   participantId,

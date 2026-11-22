@@ -13,17 +13,12 @@ import type { AttackSpeedRanking } from "./item-attack-speed";
 type CatalogItemGridProps = {
   items: readonly CatalogItemDtoOutput[] | undefined;
   isError: boolean;
-  /** How many placeholders hold the grid's place while it loads. */
   placeholders: number;
   emptyLabel: string;
   showSource?: boolean;
-  /** The searched phrase, marked in item names. */
   highlight?: string;
-  /** The highest level the items are filtered to. */
   maxLevel?: number;
-  /** Shows the attack speed each item adds, for a list ranked by it. */
   attackSpeed?: AttackSpeedRanking;
-  /** Shows how often this boss's kills drop each item, on the boss's page. */
   dropRateOf?: Pick<CatalogDropSourceDtoOutput, "name" | "type">;
 };
 
@@ -66,7 +61,6 @@ export function CatalogItemGrid({
     return <p className="text-sm text-muted-foreground">{emptyLabel}</p>;
   }
 
-  // One provider lets the rows' tooltips open quickly and hand over at once.
   return (
     <TooltipProvider delay={100}>
       <ul className={ITEM_LIST_CLASS}>

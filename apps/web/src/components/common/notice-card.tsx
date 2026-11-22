@@ -4,16 +4,11 @@ type NoticeCardProps = {
   icon: ReactNode;
   title: string;
   description: string;
-  /** `h1` when the notice is the whole page, `h2` inside a titled page. */
   headingLevel?: "h1" | "h2";
   meta?: ReactNode;
   children?: ReactNode;
 };
 
-/**
- * Centered card for a page that has one thing to say before it can show
- * anything else: pick a world, no access, not found.
- */
 export const NoticeCard = ({
   icon,
   title,
@@ -22,8 +17,6 @@ export const NoticeCard = ({
   meta,
   children,
 }: NoticeCardProps) => (
-  // Centred at every width; `safe` keeps a card taller than the screen
-  // reachable from its top instead of clipping it.
   <div className="flex min-h-0 flex-1 [align-items:safe_center] justify-center overflow-y-auto px-4 py-5 sm:px-6 md:py-8">
     <section className="flex w-full max-w-sm flex-col items-center rounded-xl border border-border bg-card px-4 py-5 text-center shadow-sm sm:px-7 sm:py-8">
       <div className="mb-4 flex size-14 items-center justify-center rounded-xl border border-border bg-background">

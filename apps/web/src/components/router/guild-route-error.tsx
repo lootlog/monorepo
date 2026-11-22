@@ -26,8 +26,6 @@ export const GuildRouteError = ({ error, reset }: ErrorComponentProps) => {
     </Button>
   );
 
-  // Only an unexpected failure can change on retry; the server will repeat
-  // a missing permission or a missing Organization.
   if (status !== 500) {
     return (
       <RouteErrorState

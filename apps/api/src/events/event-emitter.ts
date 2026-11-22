@@ -10,10 +10,6 @@ export type EventEmitRoutingKey =
   | typeof RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED
   | typeof RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED;
 
-/**
- * Event changes are refresh hints: the gateway drops a failed one and clients
- * refetch on the next. A failed publication is logged, never the caller's failure.
- */
 export const makeEventEmitter = (publisher: EventPublisher) => {
   const emit = <K extends EventEmitRoutingKey>(
     routingKey: K,

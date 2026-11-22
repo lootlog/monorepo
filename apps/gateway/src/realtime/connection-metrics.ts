@@ -47,7 +47,6 @@ const closeClassification = (code: number, reason: string) => {
     case 1005:
       return { close_code: "1005", cause: "no_status" };
     case 1006:
-      // Bun uses an abnormal close and this fixed reason for maxPayloadLength.
       if (reason === "Received too big message")
         return { close_code: "1006", cause: "payload_limit" };
 
@@ -81,7 +80,6 @@ const closeClassification = (code: number, reason: string) => {
   }
 };
 
-// Only decoded protocol discriminators and fixed outcomes become labels.
 export const recordRealtimeCommand = (
   command: ClientCommand["type"],
   outcome: "success" | "retryable" | "rejected" | "defect" | "interrupted",
@@ -111,7 +109,6 @@ export class GatewayConnectionMetrics {
     if (startedAt === undefined) return;
     this.openedAt.delete(socket);
 
-    // Never retain arbitrary peer reason strings, user IDs, worlds or Organizations.
     const attributes = {
       platform: socket.data.platform,
       joined: socket.data.joined ? "yes" : "no",

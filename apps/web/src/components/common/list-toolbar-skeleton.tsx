@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { InlineSearchFieldSkeleton } from "./inline-search-field-skeleton";
 import { LIST_TILE_INSET_CLASS, LIST_TILE_RULE_CLASS } from "./list-tile";
 
-/** Stands in for `ListToolbar`: the filter, then the list's own controls. */
 export const ListToolbarSkeleton = ({ children }: { children?: ReactNode }) => (
   <div
     data-list-tile

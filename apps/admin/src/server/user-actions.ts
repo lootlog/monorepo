@@ -9,7 +9,6 @@ import {
 import { type UserAction, banExpiry } from "@/lib/user-action";
 import { asPanel } from "./auth-api.js";
 
-/** Carries one action out through the auth service's admin API. */
 export const runUserAction = async (id: string, action: UserAction) => {
   switch (action.action) {
     case "roles":

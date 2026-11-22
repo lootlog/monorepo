@@ -14,10 +14,6 @@ import {
 import { HeroSightingsData } from "#src/hero-sightings/hero-sightings-data";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
-/**
- * Publishes a changed sighting to the Organization's realtime clients and to
- * notification rules. Both confirms are awaited even when one fails.
- */
 export const makeHeroSightingPublisher =
   (rabbit: RabbitMessaging["Service"]) => (sighting: HeroSightingResponse) => {
     return Effect.all(

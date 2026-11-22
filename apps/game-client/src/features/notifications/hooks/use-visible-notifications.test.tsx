@@ -133,9 +133,6 @@ describe("useVisibleNotifications", () => {
       wrapper: test.wrapper,
     });
 
-    // Browsers fire a timeout a fraction of a millisecond early, so the sweep
-    // finds nothing expired and the store never changes: without re-arming
-    // itself the notification would stay on screen forever.
     const nowSpy = vi.spyOn(Date, "now").mockReturnValue(deadlineMs - 1);
 
     act(() => {
@@ -169,8 +166,6 @@ describe("useVisibleNotifications", () => {
       wrapper: test.wrapper,
     });
 
-    // A background tab throttles the timeout well past the deadline, while
-    // the row's fade-out has already finished on wall-clock time.
     vi.setSystemTime(Date.now() + 60_000);
 
     act(() => {
@@ -238,7 +233,6 @@ describe("useVisibleNotifications", () => {
           },
         }),
       ],
-      // The player holds the row: its own countdown is paused.
       notificationAutoHideByListKey: {
         "notification-1": {
           deadlineMs: null,

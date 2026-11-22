@@ -1,5 +1,3 @@
-// Generated API clients are ignored by .oxlintrc.json and .oxfmtrc.jsonc, but
-// oxlint still lints ignored files passed to it by path.
 const generatedSourcePattern =
   /(?:^|\/)packages\/(?:client|sdk)\/src\/generated\//;
 
@@ -24,8 +22,6 @@ const buildCommand = (command, files) => {
   return `${command} ${targets.map(quote).join(" ")}`;
 };
 
-// lint-staged runs different globs concurrently, so a file must match only one
-// glob; within it, the commands run in order and lint sees the formatted file.
 export default {
   "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": (files) =>
     [

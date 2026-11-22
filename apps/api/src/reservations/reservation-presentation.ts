@@ -68,7 +68,6 @@ export function getDiscordAvatarUrl(
     return null;
   }
 
-  // A per-server avatar is stored as its address, not as a hash.
   if (avatar.startsWith("http")) return `${avatar}?size=128`;
 
   const extension = avatar.startsWith("a_") ? "gif" : "webp";
@@ -101,7 +100,6 @@ export function presentReservation(
     comment: reservation.comment,
     createdAt: reservation.createdAt,
     author: {
-      // Only a viewer inside the author's Organization can open their profile.
       userId: sourceIsCurrent ? reservation.createdByUserId : null,
       displayName: reservation.authorDisplayName,
       avatarUrl: reservation.authorAvatarUrl,

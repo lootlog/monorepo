@@ -13,7 +13,6 @@ type StatisticsMonsterLegendsProps = {
   actions?: ReactNode;
 };
 
-/** The most killed bosses with the legends they dropped and the user caught. */
 export function StatisticsMonsterLegends({
   monsters = [],
   isLoading,

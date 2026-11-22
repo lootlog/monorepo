@@ -21,12 +21,6 @@ export type RecordWeaponKillsInput = typeof RecordWeaponKillsSchema.Type;
 
 export type WeaponKillsQuery = { world: string; characterId: string };
 
-/**
- * Identifies a finishing blow by the log up to the row that dealt it, so a
- * log cut short when its submitter left, the whole log, and the log Margonem
- * sends again after a reload all agree. Like battle submissions, two battles
- * with identical rows up to the blow count once.
- */
 const createKillFingerprint = (
   { characterId, events, world }: RecordWeaponKillsInput,
   moveIndex: number,
@@ -66,12 +60,6 @@ export const makeWeaponKills = (
       .pipe(Effect.map(([row]) => row?.kills ?? 0));
 
   return {
-    /**
-     * Credits the submitter's finishing blows in a battle to the main weapon
-     * it wore. The server reads the blows from the log, and the client only
-     * names the weapon. A blow submitted again keeps the weapon it was first
-     * credited to.
-     */
     recordWeaponKills(data: RecordWeaponKillsInput, userId: string) {
       return Effect.gen(function* () {
         const kills = findFinishingBlows(data.events)

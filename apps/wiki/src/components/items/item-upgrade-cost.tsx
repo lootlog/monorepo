@@ -16,16 +16,11 @@ import { formatNumber } from "@lootlog/domain/locale";
 
 type ItemUpgradeCostProps = {
   item: CatalogItemDtoOutput;
-  /** The chosen upgrade; at +0 the cost of a full upgrade shows. */
   level: UpgradeLevel;
 };
 
 const MAX_LEVEL = UPGRADE_LEVELS.at(-1) ?? 5;
 
-/**
- * What upgrading the item costs: everything up to the chosen level, then
- * each level's own points, the +5 step with its currency and gold.
- */
 export function ItemUpgradeCost({ item, level }: ItemUpgradeCostProps) {
   const target = level === 0 ? MAX_LEVEL : level;
   const total = itemUpgradeCost(item, target);

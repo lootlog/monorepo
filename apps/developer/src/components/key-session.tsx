@@ -10,7 +10,6 @@ import { useState } from "react";
 import { KeyManager } from "@/components/key-manager";
 import { portalText as t } from "@/lib/translations";
 
-/** The keys page for the current session: sign-in, sign-out and the keys. */
 export function KeySession({ authClient }: { authClient: LootlogAuthClient }) {
   const session = authClient.useSession();
   const signIn = useDiscordSignIn(authClient);

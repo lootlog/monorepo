@@ -1,5 +1,3 @@
-// Every mutation increments revision. Compare that token atomically rather than
-// JSON bytes: schema decoding can reorder fields without changing the state.
 const ASSERT_READY_ROOM_REVISION_SCRIPT = `
 local currentAggregate = redis.call("get", KEYS[1])
 if not currentAggregate then
@@ -13,8 +11,6 @@ if current.notificationId ~= expected.notificationId or current.revision ~= expe
 end
 `;
 
-// Resolve index targets before any mutation; the caller retries with these keys
-// declared so Redis-compatible servers can lock every key the script accesses.
 const DECLARE_INDEXED_ROOM_KEYS_SCRIPT = `
 local function declareIndexedRoomKeys(prefix, firstIndex, lastIndex)
   local declared = {}
@@ -30,8 +26,6 @@ local function declareIndexedRoomKeys(prefix, firstIndex, lastIndex)
 end
 `;
 
-// Full snapshots can replace older pending revisions; delivery acknowledges only
-// the revision it published. These keys have no room TTL so cancellation survives.
 const ENQUEUE_READY_ROOM_PUBLICATION_SCRIPT = `
 local function enqueuePublication(keyIndex)
   local aggregate = cjson.decode(ARGV[2])
@@ -134,8 +128,6 @@ enqueuePublication(4)
 return { "COMMITTED" }
 `;
 
-// Moves every index entry of the room to its new expiry: the organizer and
-// discovery keys, then each participant's user index and character key.
 export const EXTEND_READY_ROOM_SCRIPT = `
 ${ENQUEUE_READY_ROOM_PUBLICATION_SCRIPT}
 ${ASSERT_READY_ROOM_REVISION_SCRIPT}

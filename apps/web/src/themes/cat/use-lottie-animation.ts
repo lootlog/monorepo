@@ -22,7 +22,6 @@ export function useLottieAnimation(url: string) {
       staleTime: Infinity,
       placeholderData: undefined,
     },
-    // Loading indicators can appear before the root route mounts its provider.
     queryClient,
   );
 }

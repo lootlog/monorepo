@@ -18,7 +18,6 @@ const SOURCE_LABEL_KEYS = {
   MANUAL: "loots.details.draw.manualSource",
 } as const;
 
-/** An entrant beside their slice colour, tickets and chance of winning. */
 export const LootDrawEntrantRow = ({
   index,
   entrant,
@@ -38,7 +37,6 @@ export const LootDrawEntrantRow = ({
   };
   totalTickets: number;
   isWinner?: boolean;
-  /** The tickets the draw's rule gives, shown when a manager changed them. */
   defaultTickets?: number;
   onTicketsChange?: (tickets: number) => void;
   onRemove?: () => void;
@@ -76,7 +74,6 @@ export const LootDrawEntrantRow = ({
             .join(" · ")}
         </p>
       </div>
-      {/* On a phone the chance and tickets drop under the name. */}
       <div className="ml-auto flex shrink-0 items-center gap-3">
         <div className="shrink-0 text-right">
           <p className="text-sm font-semibold tabular-nums">
@@ -96,8 +93,6 @@ export const LootDrawEntrantRow = ({
               </button>
             )}
         </div>
-        {/* A result keeps the stepper's room, so its rows match the editor's
-            and a spin moves nothing. */}
         {!onTicketsChange && (
           <p className="flex h-[34px] w-24 shrink-0 items-center justify-center border border-transparent text-xs tabular-nums text-muted-foreground">
             {t("loots.details.draw.tickets", { count: entrant.tickets })}
@@ -150,7 +145,6 @@ export const LootDrawEntrantRow = ({
             <X className="size-4" />
           </Button>
         )}
-        {/* Every row keeps the remove button's room, so the columns line up. */}
         {!onRemove && <span aria-hidden="true" className="size-8 shrink-0" />}
       </div>
     </li>

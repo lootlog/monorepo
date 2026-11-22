@@ -17,12 +17,10 @@ export const Settings = () => {
   const setSettingsPath = useWindowsStore((state) => state.setSettingsPath);
   const hasUnreadNews = useWhatsNew().unreadIds.length > 0;
 
-  // The quick access badge promised news, so the window opens on it.
   const openOnUnreadNews = useEffectEvent(() => {
     if (hasUnreadNews) setSettingsPath("information", "whats-new");
   });
 
-  // Opening the window starts from a clean search state.
   useEffect(() => {
     if (!open) return;
     setOverlayOpen(false);

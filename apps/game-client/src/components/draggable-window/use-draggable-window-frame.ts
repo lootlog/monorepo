@@ -20,7 +20,6 @@ export type DraggableWindowFrameProps = {
   onClose?: () => void;
   variant?: "default" | "small";
   heightMode?: "fixed" | "auto-up-to-max";
-  /** "content" sizes the width to the content, from `minWidth` up. */
   widthMode?: "fixed" | "content";
   resizable?: boolean;
   minWidth?: number;
@@ -35,10 +34,6 @@ export type DraggableWindowFrameProps = {
   closable?: boolean;
   disableTitle?: boolean;
   draggableContent?: boolean;
-  /**
-   * Sizes the window to its content, with a thinner frame and no resize
-   * handle, and keeps the stored size for when it expands again.
-   */
   collapsed?: boolean;
   contentClassName?: string;
   animationPhase: WindowAnimationPhase;
@@ -57,11 +52,6 @@ type WindowContentMeasurements = {
   renderedContentHeight: number;
 };
 
-/**
- * Moves focus out of a closing window: back to where it came from when that
- * element still exists, otherwise to the page so the game gets keys again.
- * Focus the player already moved elsewhere is left alone.
- */
 export const releaseWindowFocus = (
   element: HTMLElement,
   returnFocusTo: HTMLElement | null,
@@ -309,8 +299,6 @@ const resolveWindowFrameMeasurements = ({
 
   const effectiveWidth = localSize.width;
 
-  // Auto height follows the content in CSS, capped by the content max height;
-  // only a max-height adjustment pins it to the previewed height.
   const style = {
     width: effectiveWidth,
     height:
@@ -385,7 +373,6 @@ export function useDraggableWindowFrame({
     })),
   );
 
-  // A primitive selector: focus changes elsewhere must not re-render every open window.
   const zIndex = useWindowsStore((state) => {
     const focusIndex = state.windowFocusHistory.indexOf(id);
 
@@ -503,8 +490,6 @@ export function useDraggableWindowFrame({
 
   const draggableRef = useRef<HTMLDivElement>(null);
 
-  // Auto-sized windows only know their size after layout; the observer keeps
-  // placement and clamping on the size the player actually sees.
   const [renderedSize, setRenderedSize] = useState<WindowSize>({
     width: effectiveWidth,
     height: effectiveHeight,
@@ -549,9 +534,6 @@ export function useDraggableWindowFrame({
 
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
-  // Only a window the player opened on purpose takes focus. Windows that open
-  // on their own (detector, notifications) never request it, so typing and
-  // game hotkeys keep working when they appear.
   useLayoutEffect(() => {
     if (!focusRequest || animationPhase === "exit") return;
     const element = draggableRef.current;
@@ -588,8 +570,6 @@ export function useDraggableWindowFrame({
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "Escape" || event.nativeEvent.isComposing) return;
 
-    // Margonem acts on Escape from any focused element (its first action
-    // refuses pending loot), so a key pressed inside a window stays here.
     event.stopPropagation();
 
     if (event.defaultPrevented || !closable || !onClose) return;
@@ -619,9 +599,6 @@ export function useDraggableWindowFrame({
 
     if (!isMaxHeightAdjustmentArmed) return;
 
-    // The window chrome and content were measured when the resize began
-    // and do not change while the handle moves; re-measuring here would
-    // force a layout on every pointer move.
     const nextMaxContentHeight = sanitizeMaxContentHeight(
       newSize.height - windowChromeHeightRef.current,
     );
@@ -637,10 +614,6 @@ export function useDraggableWindowFrame({
     setCurrentWindowFocus(id);
     setIsResizing(true);
 
-    // Default placements derive from the window's own size (centered, or
-    // anchored to the map's right edge), so resizing an unplaced window would
-    // move its top-left corner with the handle. Resizing places it where it
-    // is drawn now, like a drag.
     if (!useWindowsStore.getState()[id].hasDefinedPosition) {
       setPositionInStore(id, position);
     }

@@ -26,13 +26,6 @@ const ProcessHandlerInfrastructure = Layer.mergeAll(
   RequestIdentityLayers,
 );
 
-/**
- * Complete API router without infrastructure implementations.
- *
- * Its remaining Layer requirements are the explicit Data and Authorization
- * ports owned by the 26 handler groups. Keeping them visible prevents the Bun
- * host from starting with a partially wired API.
- */
 const LootlogApiRoutes = HttpApiBuilder.layer(LootlogApi, {
   openapiPath: "/openapi.json",
 }).pipe(
@@ -42,7 +35,6 @@ const LootlogApiRoutes = HttpApiBuilder.layer(LootlogApi, {
   Layer.provide(SchemaErrorResponseLive),
 );
 
-/** Complete in-process router used by both the Bun server and HTTP integration tests. */
 export const LootlogApiRouter = LootlogApiRoutes.pipe(
   Layer.provideMerge(HandlerInfrastructure),
 );

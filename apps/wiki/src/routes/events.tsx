@@ -37,12 +37,9 @@ const HERO_TRACKERS_SECTION = "hero-trackers";
 
 const EVENT_GRID = "grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3";
 
-/** Every event Lootlog knows items of, by year, the latest first. */
 function EventsRoute() {
   const { data, isError } = useCatalogControllerGetEvents(EVENTS_QUERY);
 
-  // Events by year, the latest first; Tropiciele Herosów editions, which
-  // have no year, come after them, and other events without one last.
   const sections = orderBy(
     Object.entries(
       groupBy(data?.events ?? [], ({ name, year }) =>

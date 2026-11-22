@@ -68,7 +68,6 @@ let runtime: ReturnType<typeof setRuntime>;
 
 const getRuntimeDrawableList = () => runtime.others.getDrawableList();
 
-/** The Lootlog glows the game draws this frame, by character id. */
 const drawnGlows = () =>
   new Map(
     getRuntimeDrawableList().flatMap((drawable) =>
@@ -221,7 +220,6 @@ describe("lootlogOtherGlowManager", () => {
     lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
     getRuntimeDrawableList();
 
-    // A frame moves characters before it collects and draws drawables.
     moveOther(other, { rx: 20, ry: 21, x: 20, y: 21 });
     const glow = getRuntimeDrawableList()[1];
 

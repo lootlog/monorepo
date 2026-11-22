@@ -98,7 +98,6 @@ it("opens the battle picked last when an earlier pick loads later", async () => 
     ),
   );
 
-  // The earlier pick finishes loading last and must not take over.
   await act(async () => {
     loads.get("battle-a")?.();
     await new Promise((resolve) => setTimeout(resolve, 20));

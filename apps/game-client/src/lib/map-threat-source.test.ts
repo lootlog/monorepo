@@ -139,7 +139,6 @@ describe("map threat source", () => {
     );
     expect(source.getMapThreat("Karka-han")).toMatchObject({ freshCount: 2 });
 
-    // The sighting reported 4 s old turns stale first.
     advance(6_000);
     expect(source.getMapThreat("Karka-han")).toMatchObject({
       freshCount: 1,
@@ -178,13 +177,11 @@ describe("map threat source", () => {
       expect.objectContaining({ targetId: "1", stasis: false }),
     ]);
 
-    // Another map with the same name keeps its own list.
     await harness.receive(
       threat([{ targetId: "2", ageMs: 0 }], { mapId: 8, revision: 5 }),
     );
     expect(source.getMapThreat("Karka-han")?.freshCount).toBe(2);
 
-    // The last enemy left map 7: its fresh sighting goes at once.
     await harness.receive(threat([], { revision: 30 }));
     expect(source.getMapThreat("Karka-han")?.enemies).toEqual([
       expect.objectContaining({ targetId: "2" }),
@@ -198,15 +195,12 @@ describe("map threat source", () => {
     await harness.receive(threat([{ targetId: "3", ageMs: 0 }]));
     expect(source.getMapThreat("Karka-han")).toBeDefined();
 
-    // Another member moving between maps leaves the threat as it is.
     await changeMembers([], onlineMember("8"));
     expect(source.getMapThreat("Karka-han")).toBeDefined();
 
     await changeMembers(["3"], onlineMember("3"));
     expect(source.getMapThreat("Karka-han")).toBeUndefined();
 
-    // Without an account id the update is keyed by its Discord user alone, so
-    // it may have replaced the sighted character.
     await changeMembers([], {
       ...onlineMember("8"),
       player: { ...onlineMember("8").player!, accountId: "" },

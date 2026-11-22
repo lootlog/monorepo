@@ -8,10 +8,6 @@ import type { R2Config } from "#src/config/r2.config";
 
 const DEFAULT_SERVICE_NAME = "battlelog-service";
 
-/**
- * The PostgreSQL client's settings. Migrations read only these, so they run
- * without the rest of the service configuration.
- */
 export const battlelogDatabaseConfig = Config.all({
   url: Config.Redacted("POSTGRESQL_CONNECTION_URI"),
   applicationName: Config.String("SERVICE_NAME").pipe(

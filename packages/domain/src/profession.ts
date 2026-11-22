@@ -1,6 +1,5 @@
 import type { ProfessionEnum } from "@lootlog/schema/loot";
 
-/** Margonem's profession letters, in the order Lootlog lists professions. */
 export const PROFESSION_SHORTNAMES = ["w", "p", "h", "m", "b", "t"] as const;
 
 export type ProfessionShortname = (typeof PROFESSION_SHORTNAMES)[number];
@@ -28,11 +27,6 @@ export const getProfByShortname = (
 export const getShortnameByProf = (profession: string): string | undefined =>
   SHORTNAME_BY_PROFESSION.get(profession);
 
-/**
- * Formats an NPC or player level the way Margonem writes it: the level
- * followed by the profession's shortname, for example `300m`. Accepts a
- * profession enum, a shortname, or nothing when the profession is unknown.
- */
 export const formatLevel = (
   level: number,
   profession?: string | null,

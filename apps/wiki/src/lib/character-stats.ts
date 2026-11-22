@@ -3,13 +3,6 @@ import type { Profession } from "@/lib/equipment-set";
 import type { SkillBonuses } from "@/lib/skills/skill-stats";
 import { SKILL_LEVEL_CAP } from "@/lib/skills/skill-tree";
 
-/*
- * A character's window stats from its profession, level, worn items and
- * learned skills, as the game derives them. The formulas follow Margonem's
- * documentation (https://pomoc.margonem.pl/index/view,372) and the openmargo
- * engine's character stats, which reproduces the game's numbers.
- */
-
 type Attributes = { strength: number; agility: number; intellect: number };
 
 type AttributeGains = { odd: Attributes; even: Attributes };
@@ -20,10 +13,6 @@ const gain = (strength: number, agility: number, intellect: number) => ({
   intellect,
 });
 
-/**
- * What each profession gains on every level: one split up to level 20 and
- * another from 21, which may differ on odd and even levels.
- */
 const ATTRIBUTE_GAINS: Record<
   Profession,
   { early: AttributeGains; mature: AttributeGains }
@@ -59,7 +48,6 @@ const MATURE_FROM_LEVEL = 21;
 const cappedLevel = (level: number) =>
   Math.min(SKILL_LEVEL_CAP, Math.max(1, Math.floor(level)));
 
-/** The attributes a profession has at a level without any item. */
 export const baseAttributes = (
   profession: Profession,
   level: number,
@@ -81,7 +69,6 @@ export const baseAttributes = (
 
 type DamageRange = { min: number; max: number };
 
-/** An effect a hit may cause: how likely it is and how much it deals. */
 type ChanceDamage = { chance: number; damage: number };
 
 export type CharacterStats = {
@@ -97,14 +84,12 @@ export type CharacterStats = {
   poison: ChanceDamage;
   wound: ChanceDamage;
   attackSpeed: number;
-  /** Chances in percent; multipliers as the percentage a crit deals. */
   critChance: number;
   critValue: number;
   critMagicValue: number;
   pierce: number;
   armor: number;
   evadePoints: number;
-  /** Against an opponent of the same level, as the game's window shows it. */
   evadeChance: number;
   blockPoints: number;
   blockChance: number;
@@ -123,12 +108,10 @@ type WornItem = { item: { type: string | null; stat: string } };
 
 const NUMBER_LIST = /^-?\d+(?:\.\d+)?(?:,-?\d+(?:\.\d+)?)*$/;
 
-/** A stat's numbers: `a,b` for ranges and chance with damage. */
 const statNumbers = (value: string | boolean) =>
   NUMBER_LIST.test(String(value)) ? String(value).split(",").map(Number) : [];
 
 type ItemSums = {
-  /** Every single-number stat summed, by key. */
   flat: Map<string, number>;
   mainDamage: DamageRange;
   offhandDamage: DamageRange;
@@ -158,10 +141,6 @@ const chanceDamage = (numbers: readonly number[]): ChanceDamage => {
   return { chance: Math.max(0, chance), damage: Math.max(0, damage) };
 };
 
-/**
- * The worn items' stats added up. An auxiliary blade deals its damage,
- * crit and effects with the second hand; every other item adds to the main.
- */
 const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
   const sums: ItemSums = {
     flat: new Map(),
@@ -196,14 +175,12 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
       } else if (key === "light") {
         sums.light = addRange(sums.light, range(numbers));
       } else if (key === "frost") {
-        // Frost is `slow,damage`: only its last number is damage.
         const damage = numbers.at(-1) ?? 0;
 
         sums.frost = addRange(sums.frost, { min: damage, max: damage });
       } else if (key === "poison" || key === "wound") {
         const effect = chanceDamage(numbers);
 
-        // The second hand's poison and wound act on its own hits.
         if (!isOffhand) {
           sums[key] = {
             chance: sums[key].chance + effect.chance,
@@ -236,7 +213,6 @@ const BASE_CRIT_MULTIPLIER = 1.2;
 
 const BASE_ENERGY = 50;
 
-/** Fire and lightning spread a flat value into a range around it. */
 const ELEMENT_SPREAD = 0.2;
 
 const elementalDamage = (
@@ -262,10 +238,6 @@ const elementalDamage = (
   };
 };
 
-/**
- * The character window of a profession at a level, wearing the items with
- * the skills' bonuses, as the game counts them.
- */
 export const characterStats = (
   profession: Profession,
   level: number,

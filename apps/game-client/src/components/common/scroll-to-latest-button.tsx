@@ -10,7 +10,6 @@ type ScrollToLatestButtonProps = {
   label: string;
 };
 
-/** Floats over a message transcript while newer messages are below the viewport. */
 export const ScrollToLatestButton: FC<ScrollToLatestButtonProps> = ({
   label,
 }) => {

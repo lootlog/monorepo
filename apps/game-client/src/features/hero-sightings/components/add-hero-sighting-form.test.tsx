@@ -25,7 +25,6 @@ const getGuildId = (request: Request) =>
     new URL(request.url).pathname,
   )?.[1];
 
-/** The current character plays for two Lootlogs and may write in both. */
 const mountForm = (rejectingGuildId?: string) => {
   const fixture = createTimerHttpFixture((request) => {
     const guildId = getGuildId(request) ?? "";
@@ -107,7 +106,6 @@ it("fills every field from a pasted detector line and adds the hero to each Loot
     mapName: "Oztotl Tzacua p.2 - sala 2",
   });
 
-  // The accepted sightings are offered for claiming, like a detector answer.
   expect(
     useHeroSightingsStore
       .getState()
@@ -128,7 +126,6 @@ it("keeps the form open, keeps the accepted Lootlog's sighting and names the hid
   );
   expect(fixture.onClose).not.toHaveBeenCalled();
   expect(screen.getByLabelText("Mapa")).toHaveValue("Oztotl Tzacua p.2");
-  // The form has no state field, so the pasted answer is the only source.
   expect(await fixture.requests[0]?.json()).toMatchObject({ state: "ROAMING" });
   expect(
     useHeroSightingsStore

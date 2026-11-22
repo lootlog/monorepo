@@ -4,7 +4,6 @@ import type { Period } from "@lootlog/schema/http-scalars";
 import { useTranslation } from "react-i18next";
 
 interface PeriodSelectorProps<TPeriod extends Period> {
-  /** The periods offered, in display order. */
   options: ReadonlyArray<TPeriod>;
   value: TPeriod;
   onValueChange: (period: TPeriod) => void;
@@ -12,7 +11,6 @@ interface PeriodSelectorProps<TPeriod extends Period> {
   placeholder?: string;
   width?: string;
   className?: string;
-  /** The period differs from the page default. */
   active?: boolean;
 }
 

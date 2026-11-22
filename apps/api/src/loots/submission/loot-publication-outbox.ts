@@ -56,7 +56,6 @@ const lootPublicationAge = Metric.histogram("loot.publication.age_ms", {
   boundaries: [100, 1000, 5000, 30_000, 60_000, 300_000, 900_000],
 });
 
-/** Encodes a loot for `loot.created` exactly as its Organization's HTTP responses do. */
 export const makeLootSnapshotReader =
   (query: Pick<LootQueryOperations, "fetchOrganizationLoot">) =>
   (guildId: string, lootId: number) =>
@@ -68,7 +67,6 @@ export const makeLootSnapshotReader =
         ),
       );
 
-/** One locked intent per transaction; failed deliveries remain durable for the next poll. */
 export const makeLootPublicationDispatcher = (
   database: typeof ApiDatabase.Service,
   rabbit: Pick<typeof RabbitMessaging.Service, "publish">,
@@ -78,7 +76,6 @@ export const makeLootPublicationDispatcher = (
     lootId: number,
   ) => Effect.Effect<LootSnapshot | null, unknown>,
 ) =>
-  // ponytail: one delivery holds one DB transaction; use leased batches if measured throughput requires it.
   makeOutboxDispatcher(
     "LootPublicationOutbox",
     database,
@@ -118,7 +115,6 @@ export const makeLootPublicationDispatcher = (
                 { lootId: payload.data.lootId },
               );
 
-              // Without a snapshot, web clients read the loot back instead.
               const loot = yield* readLoot(
                 payload.data.guildId,
                 payload.data.lootId,

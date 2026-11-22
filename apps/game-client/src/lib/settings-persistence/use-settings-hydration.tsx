@@ -36,7 +36,6 @@ import {
   useSettingsDocuments,
 } from "./use-settings-documents";
 
-/** Projects user-scoped timer documents into the timers store. */
 export const applyTimerDocuments = (documents: SettingsDocuments) => {
   const decoded = decodeTimerSettings({
     generalConfig: selectSettingsValue(documents, "timers.generalConfig"),
@@ -136,10 +135,6 @@ type TimersProjection = Pick<
   | "hiddenDefaultColors"
 >;
 
-/**
- * Writes only the keys whose value changed, so a refetched document with the
- * same content leaves store identities (and their subscribers) untouched.
- */
 const setTimersStateIfChanged = (next: Partial<TimersProjection>) => {
   const store = useTimersStore.getState();
   const changed: Partial<TimersProjection> = {};
@@ -175,7 +170,6 @@ const setGuildTimerLists = (
   if (Object.keys(changed).length > 0) useTimersStore.setState(changed);
 };
 
-/** Projects one guild's timer document into the per-guild lists. */
 const applyGuildTimerDocuments = (
   guildId: string,
   documents: SettingsDocuments,
@@ -242,10 +236,6 @@ const readLocalSnapshot = () => {
   };
 };
 
-/**
- * Keeps the settings documents, the feature stores that mirror them, and the
- * one-time import of browser-only settings in sync. Mounted once per session.
- */
 export const useSettingsHydration = () => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
@@ -277,8 +267,6 @@ export const useSettingsHydration = () => {
   useEffect(() => {
     if (!documents.data || !areGuildsFetched || areGuildsFetching) return;
 
-    // The import decides per guild list whether the server already holds one,
-    // so it waits for the guild documents the same way it waits for the user's.
     if (!importedRef.current && areGuildDocumentsReady) {
       importedRef.current = true;
 

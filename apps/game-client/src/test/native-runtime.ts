@@ -1,7 +1,6 @@
 import { vi } from "vitest";
 import type { RuntimeFunction } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 
-// Native packet seam and initialization fields consumed by the real NI adapter.
 export function createNativeRuntime() {
   return {
     communication: { parseJSON: vi.fn<RuntimeFunction>() },

@@ -33,7 +33,6 @@ const actions = (
   </div>
 );
 
-/** Mirrors `ReservationCard`, so the loaded tiles replace it without shifting. */
 export const ReservationCardSkeleton: FC<ReservationCardSkeletonProps> = ({
   viewMode = "grid",
 }) => (

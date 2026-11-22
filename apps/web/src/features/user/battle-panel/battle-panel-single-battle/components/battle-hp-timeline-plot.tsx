@@ -10,7 +10,6 @@ const Content = lazy(() =>
 
 export function BattleHpTimelinePlot(props: ComponentProps<typeof Content>) {
   return (
-    // Sized by the caller's class, like the plot it stands in for.
     <Suspense fallback={<Skeleton className={cn("w-full", props.className)} />}>
       <Content {...props} />
     </Suspense>

@@ -62,7 +62,6 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
       return;
     }
 
-    // Rows are siblings in turn order, so the arrows walk the log without tabbing through it.
     const adjacentRow =
       keyboardEvent.key === "ArrowDown"
         ? keyboardEvent.currentTarget.nextElementSibling

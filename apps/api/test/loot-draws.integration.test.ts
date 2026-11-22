@@ -116,7 +116,6 @@ describe("loot draws against migrated PostgreSQL", () => {
           makeLootQueryPersistence(yield* ApiDatabase),
         );
 
-        // The list and the realtime snapshot both read the loot this way.
         const standingDraws = query
           .fetchOrganizationLoot(guildId, lootId)
           .pipe(Effect.map((loot) => loot?.standingDraws));
@@ -142,7 +141,6 @@ describe("loot draws against migrated PostgreSQL", () => {
           },
         ]);
 
-        // A retried request must not add a second result for the item.
         const retried = yield* persistence.createDraw(draw).pipe(Effect.flip);
 
         expect(retried).toMatchObject({
@@ -158,7 +156,6 @@ describe("loot draws against migrated PostgreSQL", () => {
         });
 
         expect(voided.voided).toMatchObject({ reason: "Wróg na liście" });
-        // A voided result must not stay on the list as the item's winner.
         expect(yield* standingDraws).toEqual([]);
 
         const voidedAgain = yield* persistence
@@ -311,7 +308,6 @@ describe("loot draws against migrated PostgreSQL", () => {
               : Effect.fail(new Error("broker unavailable")),
         );
 
-        // The broker was down when the draw committed: nothing is lost.
         yield* dispatch();
         expect(published).toEqual([]);
 

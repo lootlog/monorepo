@@ -48,19 +48,12 @@ const getIconPath = (icon: PingIconName) => {
   return path;
 };
 
-/**
- * Room around a ground ring for its glow: a canvas shadow blur of 8 reaches
- * about three standard deviations, 12 px.
- */
 const GROUND_RING_GLOW_PADDING = 12;
 
-/** Steps of the expanding ground ring: under half a pixel apart. */
 const GROUND_RING_PULSE_STEPS = 32;
 
-/** Marker sizes kept per colour; the minimap size follows its zoom. */
 const MAX_GROUND_RING_SIZES = 8;
 
-/** One marker size's rings: the resting ring and each pulse step. */
 type GroundRings = {
   ring?: HTMLCanvasElement | null;
   pulses: (HTMLCanvasElement | null | undefined)[];
@@ -87,10 +80,6 @@ const getGroundRings = (color: string, baseRadius: number) => {
   return rings;
 };
 
-/**
- * A glowing ground ellipse, blurred once into its own canvas. A shadow blur
- * on the game canvas costs a blur pass per ring on every frame.
- */
 const renderGroundRing = (color: string, radiusX: number, radiusY: number) => {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
@@ -128,7 +117,6 @@ const drawCentred = (
     context.drawImage(image, x - image.width / 2, y - image.height / 2);
 };
 
-/** Text widths of a ping's name plate in `PLATE_FONT`. */
 type PlateWidths = {
   label: number;
   sender: number;
@@ -138,9 +126,7 @@ type PlateWidths = {
 type ActiveMapPing = {
   id: string;
   mapId: number;
-  /** Set when the ping marks a monster or a player rather than a tile. */
   character?: RuntimeCharacterRef;
-  /** The marked character was on this map; once it is gone, so is the ping. */
   characterSeen?: boolean;
   durationMs: number;
   icon: PingIconName;
@@ -154,13 +140,8 @@ type ActiveMapPing = {
   typeLabel: string;
 };
 
-/**
- * A ping on a monster or a player stays up longer: the team needs time to
- * reach it.
- */
 const CHARACTER_PING_DURATION_MS = 8_000;
 
-/** The monster or player a received ping marks, if any. */
 export const getMapPingCharacter = (
   event: Pick<MapPingEvent, "npcId" | "playerId">,
 ): RuntimeCharacterRef | undefined => {
@@ -171,13 +152,11 @@ export const getMapPingCharacter = (
     : { kind: "player", id: event.playerId };
 };
 
-/** A ping on a monster asks the team to attack it. */
 export const getMapPingPresentation = (
   type: MapPingType,
   character: RuntimeCharacterRef | undefined,
 ) => getPingPresentation(character?.kind === "npc" ? "attack" : type);
 
-/** What a ping looks like and how long it lasts; fixed for its lifetime. */
 const getPingStyle = (
   type: MapPingType,
   character: RuntimeCharacterRef | undefined,
@@ -193,7 +172,6 @@ const getPingStyle = (
   };
 };
 
-/** The tile a character stands on, fractional while it walks. */
 const getCharacterTile = (
   bounds: RuntimeCharacterBounds,
   tileSize: number,
@@ -214,7 +192,6 @@ type HandheldMiniMapGeometry = {
   size: { x: number; y: number };
 };
 
-/** A viewport point in the canvas's own pixels, whatever size it is shown at. */
 export const getCanvasPoint = (
   canvas: HTMLCanvasElement,
   clientX: number,
@@ -312,12 +289,7 @@ export class MapPingController {
   private enabled = false;
   private readonly drawable: RuntimeDrawable;
   private readonly characterGlows = new Map<string, TrackedCharacterGlow>();
-  /** When the expiry timer fires; the frame loop keeps it unless it changes. */
   private expiryAt = Number.POSITIVE_INFINITY;
-  /**
-   * Read once per frame by the draw callback and reused by the main map
-   * drawable, which the renderer draws later in the same frame.
-   */
   private frameGeometry: RuntimeMapGeometry | null = null;
   private frameNow = 0;
 
@@ -456,10 +428,6 @@ export class MapPingController {
     });
   }
 
-  /**
-   * The attackable monster or other player drawn under a point on the main
-   * map, if any.
-   */
   resolveCharacter(
     canvas: HTMLCanvasElement,
     clientX: number,
@@ -506,11 +474,6 @@ export class MapPingController {
     this.drawHandheldMiniMap(geometry);
   };
 
-  /**
-   * Ends a character ping once its monster died or its player left the map,
-   * instead of letting the marker jump back to the tile it was pinged on. A
-   * character this client never saw keeps the tile marker.
-   */
   private pruneDepartedCharacters(currentMapId: number | undefined) {
     for (const [id, ping] of this.activePings) {
       if (!ping.character || ping.mapId !== currentMapId) continue;
@@ -523,7 +486,6 @@ export class MapPingController {
     }
   }
 
-  /** Lights up each pinged character's sprite, drawn just behind it. */
   private addCharacterGlows(currentMapId: number | undefined) {
     for (const id of this.characterGlows.keys()) {
       if (!this.activePings.has(id)) this.characterGlows.delete(id);
@@ -553,7 +515,6 @@ export class MapPingController {
     }
   }
 
-  /** Full strength for most of a ping's life, then a fade out. */
   private getFade(ping: ActiveMapPing) {
     const progress = Math.min(
       1,
@@ -586,7 +547,6 @@ export class MapPingController {
         : null;
 
       if (character) {
-        // The sprite itself glows; float the badge above its name label.
         this.drawMarker(context, ping, {
           badgeAnchorY: character.top - offset[1] - 14,
           baseRadius: 13,
@@ -598,7 +558,6 @@ export class MapPingController {
         continue;
       }
 
-      // A character out of view falls back to the tile it was pinged on.
       const x = getMapCanvasCoordinate(ping.x, tileSize, offset[0]);
       const y = getMapCanvasCoordinate(ping.y, tileSize, offset[1]);
       this.drawMarker(context, ping, {
@@ -637,7 +596,6 @@ export class MapPingController {
         continue;
       }
 
-      // A marked player walks away from the tile; follow them while in range.
       const bounds = ping.character
         ? this.renderer.getCharacterBounds(ping.character)
         : null;
@@ -660,12 +618,9 @@ export class MapPingController {
     context: CanvasRenderingContext2D,
     ping: ActiveMapPing,
     placement: {
-      /** The badge floats above this point. */
       badgeAnchorY: number;
       baseRadius: number;
-      /** Draw the pulsing ellipse on the ground. */
       ground: boolean;
-      /** Centre of the ground ellipse. */
       groundY: number;
       showSender: boolean;
       x: number;
@@ -697,7 +652,6 @@ export class MapPingController {
     context.save();
     context.globalAlpha = fade;
 
-    // The badge drops onto the tile, then bobs gently.
     const drop = Math.max(0, 1 - elapsed / 260);
     const badgeRadius = 13;
 
@@ -786,7 +740,6 @@ export class MapPingController {
     context.restore();
   }
 
-  /** The game's popup-menu plate: "sender · type" with a triple border. */
   private drawPlate(
     context: CanvasRenderingContext2D,
     ping: ActiveMapPing,
@@ -834,11 +787,6 @@ export class MapPingController {
     context.fillText(ping.typeLabel, textX, textY);
   }
 
-  /**
-   * The plate's text and font are fixed for a ping's lifetime, so it is
-   * measured once. A web font still loading may change the widths, so they
-   * are kept only once fonts settled.
-   */
   private getPlateWidths(
     context: CanvasRenderingContext2D,
     ping: ActiveMapPing,

@@ -13,15 +13,9 @@ import { useWindowsStore } from "@/store/windows.store";
 
 type ConnectionStatusStripProps = {
   className?: string;
-  /** A refresh of already loaded data failed; shows `errorLabel` with retry. */
   error: boolean;
   errorLabel: string;
-  /**
-   * Data is on screen and stays current only through the realtime gateway,
-   * so its connection state is worth showing.
-   */
   hasData: boolean;
-  /** Loaded data is being refreshed. */
   refreshing: boolean;
   refreshingLabel: string;
   onRetry?: () => void;
@@ -33,11 +27,6 @@ type Notice = {
   action: "retry" | "signIn" | null;
 };
 
-/**
- * How long each condition must last before the strip shows it. A page load
- * connects while cached data is already on screen, and a dropped connection
- * often recovers within a second; neither is worth a strip.
- */
 const CONNECTION_NOTICE_DELAY_MS = {
   connecting: 1500,
   online: 0,
@@ -74,7 +63,6 @@ const resolveNotice = ({
   signedOut: boolean;
   signedOutLabel: string;
 }): Notice | null => {
-  // Without a session neither a retry nor the gateway can bring data back.
   if (signedOut)
     return { kind: "warning", label: signedOutLabel, action: "signIn" };
 
@@ -95,13 +83,6 @@ const resolveNotice = ({
   return null;
 };
 
-/**
- * One toolbar strip under a window's controls describing the state of data
- * that is already on screen. Error beats the realtime connection beats
- * refreshing, so the strip shows a single message at a time. It unfolds and
- * folds away instead of jumping, and a condition that clears quickly never
- * shows at all.
- */
 export const ConnectionStatusStrip: FC<ConnectionStatusStripProps> = ({
   className,
   error,
@@ -115,11 +96,8 @@ export const ConnectionStatusStrip: FC<ConnectionStatusStripProps> = ({
   const { status } = useSocket();
   const session = authClient.useSession();
   const openAndFocus = useWindowsStore((state) => state.openAndFocus);
-  // A confirmed missing session, not one that is loading or failed to load.
   const signedOut = isSessionSignedOut(session);
 
-  // Each condition waits out its own delay, so one that takes over from a
-  // notice already on screen cannot skip it.
   const connectionDue = useDelayedVisibility(
     hasData && status !== "online",
     CONNECTION_NOTICE_DELAY_MS[status],
@@ -142,7 +120,6 @@ export const ConnectionStatusStrip: FC<ConnectionStatusStripProps> = ({
     signedOutLabel: t("connection.signedOut"),
   });
 
-  // The strip keeps showing the last notice while it folds away.
   const [lastNotice, setLastNotice] = useState(notice);
 
   if (

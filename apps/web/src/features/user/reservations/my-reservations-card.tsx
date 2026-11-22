@@ -45,7 +45,6 @@ export function MyReservationsCard() {
         loading={
           <p
             role="status"
-            // As tall as the compact empty state, so the card keeps its height.
             className="flex min-h-36 flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground"
           >
             {t("common.loading")}

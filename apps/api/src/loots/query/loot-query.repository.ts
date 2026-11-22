@@ -82,8 +82,6 @@ export const makeLootQueryPersistence = (
     player: playerSnapshotTable,
   } as const;
 
-  // One more row than the limit distinguishes an enumerable term from one that
-  // matches too many snapshots to send as an array.
   const findSearchSnapshotIds = (
     relation: keyof typeof searchSnapshotSources,
     pattern: string,
@@ -107,14 +105,6 @@ export const makeLootQueryPersistence = (
     );
   };
 
-  // Resolving the term first turns every arm into an indexed membership test.
-  // The correlated form it replaces read a snapshot row and ran ILIKE for each
-  // loot the descending scan examined, so a term matching nothing paid for the
-  // whole Organization before returning no rows.
-  //
-  // This is the fallback for names the search service has not indexed. It
-  // reads the same snapshot rows the loot list already owns, so a missing or
-  // stale search index cannot hide a loot from its Organization.
   const resolveSearch = Effect.fn("loots.query.resolve-search")(function* (
     search: string | undefined,
   ) {
@@ -141,9 +131,6 @@ export const makeLootQueryPersistence = (
     } satisfies ResolvedLootSearch;
   });
 
-  // Resolve names once so the page query can use LootNpc statistics and avoid
-  // repeated NpcSnapshot probes. Keep type/level predicates independent: they
-  // may match a different NPC in the same encounter.
   const resolveQueryFilters = Effect.fn("loots.query.resolve-filters")(
     function* (filters: LootQueryFilters) {
       const { npcs, search, ...rest } = filters;
@@ -173,11 +160,6 @@ export const makeLootQueryPersistence = (
       isNull(organizationLootRecordTable.archivedAt),
     );
 
-  /**
-   * The Organization's own records, with no join to Loot. This is the only
-   * scope the page selection has, so a record of another Organization cannot
-   * enter the result.
-   */
   const activeRecordsOfOrganization = (guildId: string) =>
     and(
       eq(organizationLootRecordTable.guildId, guildId),
@@ -197,13 +179,6 @@ export const makeLootQueryPersistence = (
           ? Effect.succeed<Array<number>>([])
           : protect(
               "loots.query.ids",
-              // Driven from the Organization's records: the world, the
-              // creation time, the cursor and the ordering all read columns of
-              // the row the scan is already on, so one index range of `limit`
-              // rows replaces a walk through every record the Organization
-              // owns. The rarity filter and the visibility rule read the
-              // record too; the other relation filters correlate on its
-              // lootId.
               database
                 .select({ id: organizationLootRecordTable.lootId })
                 .from(organizationLootRecordTable)
@@ -232,12 +207,6 @@ export const makeLootQueryPersistence = (
       Number,
     );
 
-  /**
-   * Summarizes every loot the list would return for these filters, without
-   * paging or hydrating them. Each row is one NPC name: `encounters` counts
-   * the loot NPC rows with that name, and each rarity total adds a loot's
-   * items once per such row. `lootCount` counts matching loots once.
-   */
   const summarizeByNpcName = (options: {
     readonly guildId: string;
     readonly permissions: ReadonlyArray<string>;
@@ -249,9 +218,6 @@ export const makeLootQueryPersistence = (
         if (filters.search && lootSearchMatchesNothing(filters.search))
           return Effect.succeed({ lootCount: 0, npcs: [] });
 
-        // The window count runs after GROUP BY, so it counts matching loots.
-        // Evaluating visibility once here keeps the count and the NPC rows on
-        // the same snapshot.
         const lootRarities = database
           .select({
             lootId: lootTable.id,
@@ -283,8 +249,6 @@ export const makeLootQueryPersistence = (
           .groupBy(lootTable.id)
           .as("loot_rarities");
 
-        // The left joins keep a loot without NPC rows in the result so the
-        // loot count survives even then; its row has no NPC name.
         return protect(
           "loots.query.npc-summary",
           database
@@ -483,8 +447,6 @@ export const makeLootQueryPersistence = (
       )
       .orderBy(asc(lootLikeTable.createdAt), asc(lootLikeTable.memberId));
 
-  // The winner is the entrant the draw recorded, so a renamed player keeps
-  // the name the wheel showed.
   const selectStandingDraws = (guildId: string, ids: ReadonlyArray<number>) =>
     database
       .select({
@@ -678,7 +640,6 @@ export const makeLootQueryPersistence = (
       return rows[0] ?? null;
     });
 
-  // Callers must resolve source visibility before passing these shared loot IDs.
   const readVisibleSummaries = (ids: ReadonlyArray<number>) =>
     Effect.gen(function* () {
       if (ids.length === 0) return new Map<number, LootSummary>();

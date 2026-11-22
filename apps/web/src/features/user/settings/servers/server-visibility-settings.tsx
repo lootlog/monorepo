@@ -46,7 +46,6 @@ const showPreferencesSaved = ({
   isSuccess: boolean;
 }) => isSuccess && !isPending && !isError;
 
-/** Which Lootlogs the game client shows: one switch per Lootlog. */
 export const ServerVisibilitySettings = () => {
   const { t } = useTranslation();
   const guildsQuery = useUsersControllerGetCurrentUserGuilds();
@@ -67,8 +66,6 @@ export const ServerVisibilitySettings = () => {
     preferencesQuery.data?.guildsOrder,
   );
 
-  // The pills count the Lootlogs the name filter leaves, so each shows where
-  // a name can be found.
   const searchedGuilds = filterGuildsByVisibility(
     orderedGuilds,
     hiddenGuildIds,

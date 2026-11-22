@@ -7,7 +7,6 @@ export type PermissionRefreshInfo = {
   canTriggerRefreshText: string;
 };
 
-/** Whether a permission refresh is allowed yet, counting down while it is not. */
 export const usePermissionRefreshInfo = (
   updatedAt: string | null | undefined,
 ): PermissionRefreshInfo => {

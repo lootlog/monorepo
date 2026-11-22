@@ -6,10 +6,6 @@ type AsyncStatusBarProps = {
   className?: string;
 };
 
-/**
- * Stacks strip-layout status indicators under the toolbar strips so they read
- * as more strips, not as floating pills. Collapses when nothing is active.
- */
 export const AsyncStatusBar: FC<AsyncStatusBarProps> = ({
   children,
   className,

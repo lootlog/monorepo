@@ -23,7 +23,6 @@ const STORED_SET = {
 
 export function EquipmentSetProvider({ children }: { children: ReactNode }) {
   const [set, update] = useSharedStoredState(STORED_SET);
-  // The worn items' types, which decide what a newly worn item pushes out.
   const { itemsById } = useSetCatalogItems(set);
 
   return (

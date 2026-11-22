@@ -238,7 +238,6 @@ describe("RuntimeStateProjection", () => {
     const adapter = createAdapter();
     const projection = new RuntimeStateProjection({ adapter });
     projection.bootstrap();
-    // The native map still shows the previous location while the town packet arrives.
     adapter.getGameSnapshot.mockReturnValue(game);
     projection.apply(
       createEnvelope({ town: { id: 11, name: "Red map", visibility: 20 } }),
@@ -260,7 +259,6 @@ describe("RuntimeStateProjection", () => {
       visibility: 20,
       pvp: 2,
     });
-    // The map name was known, so the map change is not announced again.
     expect(envelope.facts.map((fact) => fact.kind)).toEqual(["afk"]);
   });
 
@@ -459,7 +457,6 @@ describe("RuntimeStateProjection", () => {
 
     projection.bootstrap();
 
-    // The claim packet names a template this client never received.
     projection.apply(
       createEnvelope({
         npcs: [
@@ -614,7 +611,6 @@ describe("RuntimeStateProjection", () => {
       y: 2,
     });
 
-    // SI queues the packet in its load queue; the player does not exist yet.
     adapter.getOtherHandle.mockReturnValue(undefined);
     projection.apply(
       createEnvelope({ other: { 11: create("Enemy"), 12: create("Gone") } }),

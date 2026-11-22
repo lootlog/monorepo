@@ -173,7 +173,6 @@ it("applies the selected custom theme over its base theme", async () => {
     userThemes: [greenRias],
   });
 
-  // Rias's own touches, such as its wallpaper and cursor, keep working.
   expect(result.current.theme).toBe("rias");
   expect(result.current.customTheme?.id).toBe(greenRias.id);
   expect(document.documentElement.classList.contains("rias")).toBe(true);

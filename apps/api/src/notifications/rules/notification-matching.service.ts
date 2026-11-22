@@ -65,11 +65,6 @@ const timerRuleSelections = (filtersValue: JsonValue) => {
 
 export const notificationMatchingPolicy = {
   parseFilters: parseNotificationFilters,
-  /**
-   * `npcId`/`npcIds` select individual timers by their stored NPC id; a
-   * `npcTemplateIds` entry selects every timer observed with that template.
-   * A rule without NPC filters matches every timer.
-   */
   matchesTimerRule: (filtersValue: JsonValue, timer: TimerNpcIdentity) => {
     const { npcIds, templateIds } = timerRuleSelections(filtersValue);
 
@@ -80,7 +75,6 @@ export const notificationMatchingPolicy = {
       (timer.templateId !== null && templateIds.includes(timer.templateId))
     );
   },
-  /** The rule's NPC selections that none of the given timers match. */
   unmatchedTimerSelections: (
     filtersValue: JsonValue,
     timers: readonly TimerNpcIdentity[],

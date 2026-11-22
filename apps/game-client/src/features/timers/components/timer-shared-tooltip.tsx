@@ -15,10 +15,6 @@ type TimerSharedTooltipProps = {
   timer: TimerWithTimeLeft;
 };
 
-/**
- * Tooltip body for the tile the grid's shared tooltip is open on. Mount it
- * keyed by the tile, so the expand delay starts over on every tile.
- */
 export const TimerSharedTooltip: FC<TimerSharedTooltipProps> = ({
   guildNamesById,
   timer,

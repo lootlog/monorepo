@@ -20,13 +20,10 @@ describe("character stats", () => {
   it("derives life, crit and evade from the level as the game documents", () => {
     const stats = characterStats("w", 100, [], new Map());
 
-    // floor(20 * 100^1.375) + 480 strength * 5
     expect(stats.hp).toBe(13_646);
     expect(stats.critChance).toBe(3);
-    // round(22 / 30) evade points over the level
     expect(stats.evadePoints).toBe(1);
     expect(stats.evadeChance).toBeCloseTo(0.2);
-    // A character without a weapon fights with its fists.
     expect(stats.physical).toEqual({ min: 24, max: 24 });
   });
 

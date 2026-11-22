@@ -89,7 +89,6 @@ const buildFilters = (data: RuleInput): JsonObject => {
 
   if (data.itemIds !== undefined) filters.itemIds = [...data.itemIds];
 
-  // A null bound clears it.
   const npcLevelMin = data.npcLevelMin ?? undefined;
   const npcLevelMax = data.npcLevelMax ?? undefined;
 

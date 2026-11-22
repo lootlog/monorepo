@@ -94,8 +94,6 @@ describe("useChatGuildData with the realtime session", () => {
 
         const failedRequests = joinRequests().length;
 
-        // An invalid response closes the socket, which reconnects on its own;
-        // a refusal closes it until the player reconnects.
         if (failure === "refused")
           act(() => {
             getSocket().connect();

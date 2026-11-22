@@ -2,7 +2,6 @@ import { createContext, useContext } from "react";
 import type { EquipmentSlotId } from "@/lib/equipment-slots";
 
 type SetItemPickerContextValue = {
-  /** Opens the search for an item to wear in the slot. */
   pickItem: (slot: EquipmentSlotId) => void;
 };
 

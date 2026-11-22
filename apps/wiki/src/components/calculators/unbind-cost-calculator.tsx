@@ -28,7 +28,6 @@ const RARITY_OPTIONS = UNBIND_RARITIES.map((rarity) => ({
 const isUnbindRarity = (value: string): value is UnbindRarity =>
   UNBIND_RARITIES.some((rarity) => rarity === value);
 
-/** The dragon scales unbinding an item costs, as players found it. */
 export function UnbindCostCalculator() {
   const rarityFieldId = useId();
   const [level, setLevel] = useState("");

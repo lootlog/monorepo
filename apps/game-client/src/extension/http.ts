@@ -19,7 +19,6 @@ const decodeRequest = Schema.decodeUnknownSync(requestSchema, {
   onExcessProperty: "error",
 });
 
-// Battle submissions include the complete fight event sequence.
 export const MAX_EXTENSION_HTTP_BYTES = 16 * 1024 * 1024;
 
 const encoder = new TextEncoder();
@@ -86,7 +85,6 @@ async function readBody(response: Response): Promise<string> {
 
   try {
     while (true) {
-      // Stream consumption must be sequential to bound retained bytes.
       // oxlint-disable-next-line no-await-in-loop
       const { done, value } = await reader.read();
 

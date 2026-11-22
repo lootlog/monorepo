@@ -2,10 +2,6 @@ import { buildMeilisearchInFilter } from "@lootlog/meilisearch/query-builder";
 import type { SearchParams } from "meilisearch";
 import type { PlayerSearchQuery } from "./player-search-query.js";
 
-/**
- * A search for players by name: one search string matches by words, several
- * match exactly those names, and a world narrows either.
- */
 export const playerNameQuery = ({
   limit,
   search,

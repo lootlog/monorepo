@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import type { AppNavigationItemId } from "./app-navigation";
 
-/** One icon per section, shared by the sidebar, the top bar, and search. */
 export const APP_NAVIGATION_ICONS: Record<AppNavigationItemId, LucideIcon> = {
   "user-dashboard": LayoutDashboard,
   "user-statistics": BarChart3,

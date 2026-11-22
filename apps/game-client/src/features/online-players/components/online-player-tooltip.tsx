@@ -12,7 +12,6 @@ type OnlinePlayerTooltipProps = {
   relations: readonly PlayerRelation[];
 };
 
-/** Text colours of the relation statuses, matching the row fills. */
 const RELATION_TEXT_CLASSES: Record<PlayerRelation, string> = {
   self: "ll:text-teal-300",
   party: "ll:text-purple-300",
@@ -28,11 +27,6 @@ const formatCoordinates = (location?: { x?: number; y?: number }) =>
     ? ` (${location.x}, ${location.y})`
     : "";
 
-/**
- * Everything the list row has no room for: the full profession, clan,
- * Discord member, exact position and how the player relates to the hero.
- * Status colours match the row highlights.
- */
 export const OnlinePlayerTooltip: FC<OnlinePlayerTooltipProps> = ({
   canInviteToParty,
   locationName,

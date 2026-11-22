@@ -33,12 +33,6 @@ type Suggestion = { value: string; hit: LootSearchHit; select: () => void };
 
 type SuggestionGroup = { label: string; suggestions: Suggestion[] };
 
-/**
- * The loot list's own search: the Organization search narrowed to loots.
- * Typing lists matching monsters, items and players, or the item behind a
- * pasted HID, under the bar; picking one adds it to the list's filters and
- * clears the field for the next search.
- */
 export const LootSearchField = () => {
   const [open, setOpen] = useState(false);
   const anchor = useComboboxAnchor();
@@ -121,8 +115,6 @@ export const LootSearchField = () => {
 
   const groups = allGroups.filter((group) => group.suggestions.length > 0);
 
-  // First, so it is in view whatever the search service returns, and Enter
-  // searches the typed text until another row is highlighted.
   const directSuggestion: Suggestion | null = canSearchDirectly
     ? {
         value: "direct-search",
@@ -138,7 +130,6 @@ export const LootSearchField = () => {
 
   const values = suggestions.map((suggestion) => suggestion.value);
 
-  // Describes the service's hits, so it sits under the direct search.
   const statuses: [boolean, string][] = [
     [showKeepTyping, "loots.searchCommand.keepTyping"],
     [isHidInput && !isHid, "loots.searchCommand.hidInvalidTitle"],

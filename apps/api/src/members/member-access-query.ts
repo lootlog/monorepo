@@ -26,11 +26,6 @@ import {
   roleTable,
 } from "#src/database/drizzle/organization.schema";
 
-/**
- * A Member grants role access only while it is active and linked to a User.
- * The Organization context and the cross-Organization queries below share
- * this rule.
- */
 export const isActiveMember = (
   member: Pick<typeof memberTable.$inferSelect, "active" | "globalUserId">,
 ) => member.active && member.globalUserId !== null;
@@ -51,7 +46,6 @@ export const activeGuildMemberJoin = (
 
 type MemberQueryDatabase = Pick<typeof ApiDatabase.Service, "select">;
 
-/** The caller's active Member rows in `guildIds`, for writes that record the acting Member. */
 export const selectActiveGuildMembers = (
   database: MemberQueryDatabase,
   discordId: string,
@@ -69,7 +63,6 @@ export const selectActiveGuildMembers = (
           ),
         );
 
-/** The caller's active Member row in one Organization, if any. */
 export const findActiveGuildMember = (
   database: MemberQueryDatabase,
   discordId: string,
@@ -82,14 +75,6 @@ export const findActiveGuildMember = (
     .limit(1)
     .pipe(Effect.map((rows) => rows[0]));
 
-/**
- * Cross-Organization reads for `/me`, the game client, and write fan-out.
- * They are eventually consistent: they trust `Guild.ownerId` from the bot's
- * guild events and the stored active Members and roles, and never wait for
- * Discord. An Organization endpoint instead refreshes the caller's Member from
- * Discord past the soft TTL, and also requires that row for the owner, which
- * the refresh creates on first use.
- */
 export const selectAccessibleGuilds = (
   database: typeof ApiDatabase.Service,
   discordId: string,
@@ -97,14 +82,6 @@ export const selectAccessibleGuilds = (
 ) =>
   accessibleGuildsQuery(database, discordId, permissions).pipe(Effect.flatten);
 
-/**
- * Reuse the scoped access query in a CTE without an extra database round trip.
- *
- * Role grants resolve to an array of Organization ids first, so both grants
- * reach `Guild` through its indexes (`Guild_ownerId_idx` and the primary key).
- * An OR across `Guild` and a left-joined role, or an `IN` semi-join, lets the
- * planner hash-join a sequential scan of every Organization instead.
- */
 export const accessibleGuildsQuery = (
   database: typeof ApiDatabase.Service,
   discordId: string,
@@ -135,20 +112,12 @@ export const accessibleGuildsQuery = (
           eq(guildTable.active, true),
           or(
             eq(guildTable.ownerId, discordId),
-            // The query builder has no `= ANY(ARRAY(subquery))`; `inArray`
-            // renders the `IN` semi-join that plans the sequential scan.
             sql`${guildTable.id} = any(array(${roleGrantedGuildIds}))`,
           ),
         ),
       );
   });
 
-/**
- * Resolve which of `guilds` still grant one of `permissions` to each of
- * `discordIds`, using the same owner and active-member role rules as
- * {@link accessibleGuildsQuery}. Callers pass guilds they already resolved for
- * the requester, so the requester's key scope stays applied.
- */
 export const selectGuildIdsGrantingPermissions = (
   database: typeof ApiDatabase.Service,
   discordIds: ReadonlyArray<string>,
@@ -205,11 +174,6 @@ type GuildRole = Pick<
   "permissions" | "lvlRangeFrom" | "lvlRangeTo"
 >;
 
-/**
- * The caller's roles in every Organization granting one of `permissions`, and
- * whether the caller administers it, for cross-Organization reads that filter
- * each record by its own visibility rule.
- */
 export const selectAccessibleGuildRoles = Effect.fnUntraced(function* (
   database: typeof ApiDatabase.Service,
   discordId: string,

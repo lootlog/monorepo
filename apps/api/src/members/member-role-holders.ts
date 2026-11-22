@@ -5,10 +5,6 @@ import {
   memberToRoleTable,
 } from "#src/database/drizzle/organization.schema";
 
-/**
- * Active members whose permission projection includes this role. Inactive
- * members have no role assignments, and their access is already removed.
- */
 export const selectActiveRoleHolders = (
   database: Pick<ApiDatabaseValue, "select">,
   guildId: string,

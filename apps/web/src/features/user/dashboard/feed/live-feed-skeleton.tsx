@@ -23,8 +23,6 @@ export function LiveFeedSkeleton() {
           const hasLoot = index % 3 === 1;
 
           return (
-            // The same grid as LiveFeedEventRow: below @lg the loot wraps
-            // under the title, so a skeleton row is as tall as a loaded one.
             <div
               key={index}
               className={cn(

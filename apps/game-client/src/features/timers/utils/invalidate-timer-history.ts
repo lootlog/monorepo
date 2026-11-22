@@ -17,8 +17,6 @@ export const invalidateTimerHistory = async (
     ),
   ];
 
-  // Cancellation reverts synchronously, before an older response can mark the
-  // history fresh again. Closed popovers stay invalidated until their next open.
   for (const queryKey of queryKeys)
     void queryClient.cancelQueries({ queryKey });
 

@@ -17,7 +17,6 @@ export type VisibleStatCategory = {
   stats: VisibleStatDefinition[];
 };
 
-/** One table row: a category heading, or one of the stats listed under it. */
 export type OneVsOneStatsRow =
   | { kind: "category"; id: string; searchKey: string; label: string }
   | {
@@ -127,7 +126,6 @@ export const getVisibleStats = ({
     .filter((category) => category !== null);
 };
 
-/** Flattens the categories into the rows the table renders, in display order. */
 export const getOneVsOneStatsRows = (
   categories: VisibleStatCategory[],
 ): OneVsOneStatsRow[] =>

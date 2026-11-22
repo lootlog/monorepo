@@ -113,8 +113,6 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
             ),
         );
 
-  // A Margonem rename gives the same NPC a new timer key, so an event hero
-  // follows its NPC id to the live timer instead of the name typed in the event.
   const findHeroTimerKeys = (
     lookups: ReadonlyArray<{
       readonly guildId: string;

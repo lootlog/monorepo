@@ -14,18 +14,12 @@ export function createPlayerSnapshotHash(
   return hashSnapshotPayload(`${name}${profession}${icon}`);
 }
 
-/** Hash of the revision stats: per-instance entries are ignored, order is not. */
 export function createItemStatsHash(stats: string): string {
   const normalized = splitItemStat(stats).revision.split(";").sort().join(";");
 
   return hashSnapshotPayload(normalized);
 }
 
-/**
- * An item revision is one observed presentation of a template: its edition,
- * name, icon, type and revision stats. Localized names, renames and icon
- * changes are separate revisions; per-instance stats never create one.
- */
 export function createItemSnapshotHash(item: {
   gameVersion: GameVersion;
   itemId: number;
@@ -47,12 +41,6 @@ export function createItemSnapshotHash(item: {
   );
 }
 
-/**
- * A revision describes one observation, never the latest attributes of an NPC.
- * Every world of an edition uses the same NPC ids, so the edition, not the
- * world, separates revisions: one observation on several worlds of an edition
- * is one revision, and editions never share one.
- */
 export function createNpcSnapshotHash(npc: {
   identityNamespace: string;
   gameVersion: GameVersion;

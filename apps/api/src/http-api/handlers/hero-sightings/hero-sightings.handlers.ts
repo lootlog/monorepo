@@ -51,7 +51,6 @@ export class HeroSightingsAuthorization extends Context.Service<
   }
 >()("@lootlog/api/http-api/hero-sightings/authorization") {}
 
-/** Reads need the hero tier as well, which each sighting checks by its level. */
 const READ_PERMISSION =
   NPC_FEATURE_PERMISSIONS[HERO_SIGHTING_READ_FEATURE].base;
 

@@ -282,8 +282,6 @@ describe("internal response validation", () => {
       },
     ];
 
-    // An unknown permission cannot come from the typed port; the response
-    // boundary that receives it rejects it.
     expect(
       Exit.isFailure(
         Schema.decodeUnknownExit(InternalUserPermissionsResponse)(permissions),

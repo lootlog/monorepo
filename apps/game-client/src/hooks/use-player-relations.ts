@@ -9,11 +9,9 @@ import {
 type RelatedPlayer = {
   characterId: string;
   clanId?: number;
-  /** Falls back to the nick for a presence whose character id is unknown. */
   name?: string;
 };
 
-/** How the active hero relates to another player, most telling first. */
 export const usePlayerRelations = ({
   characterId,
   clanId,

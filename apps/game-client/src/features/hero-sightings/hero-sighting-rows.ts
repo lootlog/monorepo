@@ -5,24 +5,15 @@ type HeroSightingClaim = HeroSightingResponseDto["claims"][number];
 
 type HeroSightingMember = HeroSightingResponseDto["detectedBy"];
 
-/** A claim, marked when the claimer also detected the hero. */
 export type HeroSightingClaimer = HeroSightingClaim & {
   readonly isDetector: boolean;
 };
 
-/**
- * Member ids belong to one Organization, so a claimer is the detector only
- * when both are the same member of the sighting's own Organization.
- */
 export const isHeroSightingDetectorClaim = (
   sighting: HeroSightingResponseDto,
   claim: HeroSightingClaim,
 ): boolean => claim.member.memberId === sighting.detectedBy.memberId;
 
-/**
- * A sighting its author may still remove: entered by hand by this User, open,
- * and not confirmed by a detector answer since.
- */
 export const isWithdrawableHeroSighting = (
   sighting: HeroSightingResponseDto,
   userId: string | undefined,
@@ -32,11 +23,6 @@ export const isWithdrawableHeroSighting = (
   userId !== undefined &&
   sighting.detectedBy.userId === userId;
 
-/**
- * One hero in the list. With timer grouping on, the same hero detected on the
- * same map by several Organizations is one row, like a grouped timer; each
- * Organization's sighting keeps its own claims.
- */
 export type HeroSightingRow = {
   readonly key: string;
   readonly world: string;
@@ -46,19 +32,14 @@ export type HeroSightingRow = {
   readonly lastSeenAt: string;
   readonly closeReason: HeroSightingResponseDto["closeReason"];
   readonly isCurrent: boolean;
-  /** Who detected the hero first among the merged sightings. */
   readonly detectedBy: HeroSightingMember;
-  /** That first sighting was entered by hand and no detector confirmed it. */
   readonly manual: boolean;
-  /** Who confirmed the hero last, when that is not its detector. */
   readonly refreshedBy: HeroSightingMember | null;
-  /** Each claimer once, even when they claimed in several Organizations. */
   readonly claims: readonly HeroSightingClaimer[];
   readonly sightings: readonly HeroSightingResponseDto[];
 };
 
 type HeroSightingRowContext = {
-  /** The selected Lootlog, the only one shown while grouping is off. */
   readonly guildId: string | undefined;
   readonly isGrouping: boolean;
 };
@@ -72,14 +53,9 @@ const getRowKey = (sighting: HeroSightingResponseDto, isGrouping: boolean) =>
     sighting.closedAt === null,
   ]);
 
-/** The same person may act through two Organizations; a User counts once. */
 const getMemberKey = (guildId: string, member: HeroSightingMember) =>
   member.userId ?? `${guildId}:${member.memberId}`;
 
-/**
- * Who confirmed the sighting last, when that is not its detector. A
- * confirmation keeps the detector and moves only the last sighter.
- */
 export const getHeroSightingRefresher = (
   sighting: HeroSightingResponseDto,
 ): HeroSightingMember | null =>
@@ -87,7 +63,6 @@ export const getHeroSightingRefresher = (
     ? null
     : sighting.lastSeenBy;
 
-/** API timestamps may differ in precision, so they are compared as instants. */
 const compareInstants = (a: string, b: string) => Date.parse(a) - Date.parse(b);
 
 const toRow = (
@@ -142,10 +117,6 @@ const toRow = (
   };
 };
 
-/**
- * Heroes that will spawn first, then roaming ones, the latest confirmed on
- * top of each; ended sightings last.
- */
 export const projectHeroSightingRows = (
   sightings: readonly HeroSightingResponseDto[],
   { guildId, isGrouping }: HeroSightingRowContext,

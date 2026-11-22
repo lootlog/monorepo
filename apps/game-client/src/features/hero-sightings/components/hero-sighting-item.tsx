@@ -26,16 +26,9 @@ type HeroSightingItemProps = {
   row: HeroSightingRow;
   now: number;
   userId: string | undefined;
-  /** Organizations where the player may claim. */
   writableGuildIds: ReadonlySet<string>;
 };
 
-/**
- * One sighted hero: where it roams or will spawn, how long ago, who found it
- * and who claims it. Claiming is an explicit choice for a hero that will
- * spawn; finding a hero does not claim it, and a roaming one only lets its
- * earlier claimers withdraw. The author of a sighting entered by hand may remove it.
- */
 export function HeroSightingItem({
   row,
   now,

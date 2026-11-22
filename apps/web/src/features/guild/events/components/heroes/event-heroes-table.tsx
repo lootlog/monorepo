@@ -30,11 +30,6 @@ type EventHeroesTableProps = {
   showStandings?: boolean;
 };
 
-/**
- * A short, unfiltered band beside the event's ranking and kill previews, which
- * fold columns the same way: below `lg` the maps, kills and place move into the
- * hero's own line, so the table never scrolls sideways and needs no tiles.
- */
 const getColumnClassName = (columnId: string) => {
   if (columnId === "hero") return "min-w-0";
 

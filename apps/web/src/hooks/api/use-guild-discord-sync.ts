@@ -29,7 +29,6 @@ export const useGuildDiscordSync = () => {
         guildId,
       ],
       onError: (error) => {
-        // Without a deadline there is no countdown to show.
         if (error.status === 429 && error.retryAt === undefined) {
           toast.error(t("common.cooldown.rateLimited"));
         }
@@ -55,12 +54,9 @@ export const useGuildDiscordSync = () => {
     refreshMutation.isError &&
     refreshMutation.variables?.pathParams.guildId === guildId;
 
-  // A refused refresh (cooldown) read nothing new, so the last status stands,
-  // and the server's deadline holds even after a later status read.
   const isRefreshRateLimited =
     hasRefreshFailure && refreshMutation.error.status === 429;
 
-  // A later successful read supersedes a failed refresh of the same Organization.
   const isRefreshError =
     hasRefreshFailure &&
     !isRefreshRateLimited &&
@@ -83,7 +79,6 @@ export const useGuildDiscordSync = () => {
     refreshMutation.mutate({ pathParams: { guildId } });
   };
 
-  // Keep the last confirmed status while a refresh runs so its controls stay mounted.
   const permissionStatus = getGuildDiscordPermissionStatus(
     query.isError || isRefreshError ? undefined : query.data,
   );

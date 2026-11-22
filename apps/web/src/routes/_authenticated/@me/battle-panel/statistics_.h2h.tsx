@@ -4,7 +4,6 @@ import {
   loadBattlePanelHeadToHeadSearch,
 } from "@/features/user/battle-panel/battle-panel-search";
 
-// Opponents moved to their own battle panel tab; old links keep working.
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics_/h2h",
 )({

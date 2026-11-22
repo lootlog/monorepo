@@ -1,4 +1,3 @@
-/** Pixel-art drawing primitives shared by the aura renderer and its decorations. */
 import { clamp } from "es-toolkit";
 import { hslToRgb, rgba, TAU, type Rgb, type Rng } from "./math";
 import { context2d, createCanvas } from "./silhouette";
@@ -17,7 +16,6 @@ export const DIAG = [
   [-1, 1],
 ] as const;
 
-/** Leaf pixels [dx, dy, dark] in three flutter poses. */
 export const LEAF_POSES: readonly (readonly (readonly [
   number,
   number,
@@ -43,24 +41,17 @@ export const LEAF_POSES: readonly (readonly (readonly [
   ],
 ];
 
-/**
- * The single pixels plotted into an additive (`lighter`) layer, kept as premultiplied RGBA
- * instead of one `fillRect` and parsed colour string each: a tick plots hundreds of them,
- * and `lighter` adds and clamps in any order, so they can join the layer at its finish.
- */
 export class LightPixels {
   private data = new Uint8ClampedArray(0);
   private ox = 0;
   private oy = 0;
   private width = 0;
   private height = 0;
-  /** The plotted area in buffer pixels; empty while `left > right`. */
   private left = 0;
   private top = 0;
   private right = -1;
   private bottom = -1;
 
-  /** Starts over for a `width`×`height` layer whose top-left is (`ox`, `oy`) when drawing. */
   reset(ox: number, oy: number, width: number, height: number): void {
     this.clear();
     this.ox = ox;
@@ -77,11 +68,9 @@ export class LightPixels {
     const py = Math.round(y) - this.oy;
 
     if (px < 0 || py < 0 || px >= this.width || py >= this.height) return;
-    // The precision `rgba` hands the canvas.
     const a = Math.round(Math.min(alpha, 1) * 1000) / 1000;
     const { data } = this;
     const i = (py * this.width + px) * 4;
-    // Clamped bytes saturate like `lighter` does.
     data[i] = (data[i] ?? 0) + color[0] * a;
     data[i + 1] = (data[i + 1] ?? 0) + color[1] * a;
     data[i + 2] = (data[i + 2] ?? 0) + color[2] * a;
@@ -104,7 +93,6 @@ export class LightPixels {
     return this.left > this.right;
   }
 
-  /** Adds the plots into `target`, the layer's straight-alpha pixels, and starts over. */
   addInto(target: Uint8ClampedArray): void {
     const { data, width } = this;
 
@@ -149,7 +137,6 @@ export class LightPixels {
 
 const lightPixels = new WeakMap<CanvasRenderingContext2D, LightPixels>();
 
-/** Sends `ctx`'s plots to `pixels` until unbound with null; `ctx` must be drawing with `lighter`. */
 export function bindLightPixels(
   ctx: CanvasRenderingContext2D,
   pixels: LightPixels | null,
@@ -186,7 +173,6 @@ export function hot(color: Rgb): Rgb {
   ];
 }
 
-/** A bright centre pixel with four arms, plus dim diagonals when `full`. */
 export function pixelPlus(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -204,7 +190,6 @@ export function pixelPlus(
     for (const [dx, dy] of DIAG) plot(ctx, x + dx, y + dy, color, alpha * 0.3);
 }
 
-/** A pixel cross sparkle with arms of `arm` pixels fading outwards. */
 export function pixelGlint(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -228,7 +213,6 @@ export function pixelGlint(
     for (const [dx, dy] of DIAG) plot(ctx, x + dx, y + dy, color, alpha * 0.45);
 }
 
-/** One pixel per step from (x0, y0) to (x1, y1), alpha fading from `a0` to `a1`. */
 export function pixelLine(
   ctx: CanvasRenderingContext2D,
   x0: number,
@@ -256,7 +240,6 @@ export function pixelLine(
   }
 }
 
-/** An ellipse outline of single pixels; `color` null paints a rolling rainbow starting at `hue`. */
 export function pixelEllipse(
   ctx: CanvasRenderingContext2D,
   cx: number,
@@ -283,7 +266,6 @@ export function pixelEllipse(
   }
 }
 
-/** The front (lower, `front`) or back (upper) half of a pixel ellipse, for rings around a character. */
 export function pixelArc(
   ctx: CanvasRenderingContext2D,
   cx: number,
@@ -305,7 +287,6 @@ export function pixelArc(
   }
 }
 
-/** A filled pixel circle in the current fill style. */
 export function pixelDisc(
   ctx: CanvasRenderingContext2D,
   cx: number,
@@ -322,7 +303,6 @@ const dotTextures = new Map<string, HTMLCanvasElement>();
 
 const DOT_SIZE = 64;
 
-/** A soft round light of `diameter` px, dithered into pixels by the layer finish. */
 export function drawDot(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -337,8 +317,6 @@ export function drawDot(
 
   if (!texture) {
     texture = createCanvas(DOT_SIZE, DOT_SIZE);
-    // Kept in memory like the aura layers it is drawn into: a GPU texture would be read
-    // back on every draw, over ten times slower.
     const tctx = context2d(texture, { willReadFrequently: true });
     const half = DOT_SIZE / 2;
     const gradient = tctx.createRadialGradient(half, half, 0, half, half, half);
@@ -387,7 +365,6 @@ export function softEllipse(
   ctx.restore();
 }
 
-/** Glyphs for the divine circle: pixel offsets in a 3×3 box, drawn upright on the ellipse. */
 export const RUNES: readonly (readonly (readonly [number, number])[])[] = [
   [
     [0, -1],
@@ -448,7 +425,6 @@ export function drawRunes(
     const x = Math.round(cx + Math.cos(angle) * rx);
     const y = Math.round(cy + Math.sin(angle) * ry);
     const glyph = RUNES[i % RUNES.length] ?? [];
-    // A run of three runes lit at a time, walking round the circle.
     const lit = (Math.floor(turn * 10) + i) % count < 3;
 
     for (const [dx, dy] of glyph)
@@ -456,7 +432,6 @@ export function drawRunes(
   }
 }
 
-/** Midpoint-displaced polyline from a to b, as flat [x, y, …]. */
 export function jagged(
   ax: number,
   ay: number,
@@ -485,7 +460,6 @@ export function jagged(
       );
     }
 
-    // The far end never moves.
     next.push(bx, by);
     points = next;
     spread *= 0.55;

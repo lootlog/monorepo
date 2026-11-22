@@ -13,23 +13,15 @@ import { t } from "@/i18n/messages";
 
 type NewItemsCardProps = {
   title: string;
-  /** What the card is about, above its title, such as a boss's kind. */
   eyebrow?: ReactNode;
-  /** The picture of what the items belong to, before the title. */
   media: ReactNode;
-  /** The page of what the items belong to, which the header opens. */
   link: LinkOptions;
   items: readonly CatalogItemDtoOutput[];
-  /** How many items it has in all; the card shows the first few. */
   itemCount: number;
 };
 
 const ITEMS_SHOWN = 12;
 
-/**
- * How many tiles fill whole rows of `columnCount` columns, as close to the
- * first few items and the count tile as whole rows allow.
- */
 const slotCount = (columnCount: number | null) =>
   columnCount === null
     ? ITEMS_SHOWN + 1
@@ -38,12 +30,6 @@ const slotCount = (columnCount: number | null) =>
 const rarityRank = ({ rarity }: CatalogItemDtoOutput) =>
   ITEM_RARITIES_BY_VALUE.indexOf(resolveItemRarity(rarity));
 
-/**
- * A boss or an event with its newest items, the most valuable first: the
- * header opens its page and every item opens its own. Items past the first
- * few are counted in a tile that opens the page too, in the last place of
- * the last row, so it never wraps onto a row of its own.
- */
 export function NewItemsCard({
   title,
   eyebrow,

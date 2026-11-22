@@ -3,24 +3,16 @@ import { Button } from "@lootlog/ui/components/button";
 import { t } from "@/i18n/messages";
 import { formatNumber } from "@lootlog/domain/locale";
 
-// How far below the screen the next page starts loading.
 const PRELOAD_MARGIN = "600px";
 
 type ShowMoreResultsProps = {
   shown: number;
-  /** How many hits the search can show in all. */
   total: number;
-  /** How many hits the next page adds. */
   next: number;
   isLoading: boolean;
   onShowMore: () => void;
 };
 
-/**
- * The end of a search's loaded hits: how far through them the page is, and
- * the next page, which loads by itself as the User scrolls toward it. The
- * button stays for a keyboard and for a page that did not load.
- */
 export function ShowMoreResults({
   shown,
   total,

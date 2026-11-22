@@ -35,7 +35,6 @@ import {
   createMemberFixture,
 } from "./organization-fixtures.js";
 
-// Exercise the deployed credential middleware and source queries together; no domain query is mocked.
 const api = HttpApi.make("DeveloperScopeProof")
   .add(
     HttpApiGroup.make("scope")

@@ -70,10 +70,6 @@ const getDmHint = (
   return t("settings.userNotifications.dm.reactivateHint");
 };
 
-/**
- * The player's direct messages as the one channel their watched items send
- * to, tinted like a guild channel that cannot deliver while it is off.
- */
 export const DmTargetTile = ({ dmTarget }: DmTargetTileProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -178,7 +174,6 @@ export const DmTargetTile = ({ dmTarget }: DmTargetTileProps) => {
   const testTrigger = dmTarget?.testTrigger;
 
   return (
-    // The actions move beside the text once the tile has room for both.
     <div data-list-tile className={cn("@container", LIST_TILE_RULE_CLASS)}>
       <div
         className={cn(

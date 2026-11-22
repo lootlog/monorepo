@@ -1,7 +1,6 @@
 import type { AdminOverview } from "@lootlog/client/auth";
 import { roleText, text } from "@/lib/messages";
 
-/** Platform-wide counts above the user list. */
 export function OverviewTiles({ overview }: { overview: AdminOverview }) {
   const tiles = [
     { label: text.overviewUsers, value: overview.users },

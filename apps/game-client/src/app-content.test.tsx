@@ -64,7 +64,6 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
   vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue(
     new DOMRect(0, 0, 640, 640),
   );
-  // The documents key follows the character that joins below.
   seedSettingsDocuments(
     test.queryClient,
     createSettingsDocuments(accountPreferenceValues(preferences)),
@@ -73,7 +72,6 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
   const view = render(<AppContent />, { wrapper: test.wrapper });
   test.open();
 
-  // AppContent initializes the native character, so acknowledge its provider join.
   await waitFor(() =>
     expect(
       test.wire.frames.some(
@@ -105,8 +103,6 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
   await waitFor(() =>
     expect(useGlobalStore.getState().socketState.joined).toBe(true),
   );
-  // Settings hydration imports browser-only settings on first start; wait for
-  // that write to settle so a cache refresh does not interrupt the press.
   await waitFor(() =>
     expect(useSettingsSaveStatusStore.getState().status).not.toBe("saving"),
   );

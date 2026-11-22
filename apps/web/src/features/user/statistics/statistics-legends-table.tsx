@@ -53,13 +53,10 @@ type StatisticsLegendsTableProps = {
   legends: Legend[];
   sort: StatisticsSortValue;
   onSortChange: (sort: StatisticsSortValue) => void;
-  /** The legends are narrowed by a search, so none means no match. */
   filtered?: boolean;
-  /** All characters are shown, so each legend names the ones that caught it. */
   showCharacters?: boolean;
 };
 
-/** Every legendary drop of the period: dropped, caught, and the user's kills of its monster. */
 export function StatisticsLegendsTable({
   legends,
   sort,

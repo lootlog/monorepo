@@ -7,10 +7,6 @@ import {
 } from "@lootlog/schema/chat-appearance";
 import { useSourceDraft } from "@/features/settings/components/shared/use-source-draft";
 
-/**
- * Local draft for slider-style controls: the value follows the pointer while
- * dragging and is written through the shared settings patch queue on commit.
- */
 export function useChatAppearanceDraft() {
   const { chatAppearance, data } = useChatAppearanceSettings();
 

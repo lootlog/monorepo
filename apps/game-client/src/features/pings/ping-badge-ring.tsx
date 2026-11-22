@@ -3,10 +3,8 @@ import { useEffect, useRef, type FC } from "react";
 
 type PingBadgeRingProps = {
   color: string;
-  /** Drains the ring while the ping lasts; without it the ring stays full. */
   countdown?: {
     durationMs: number;
-    /** `performance.now()` time the ping expires at. */
     expiresAt: number;
   };
   size: number;
@@ -14,10 +12,6 @@ type PingBadgeRingProps = {
 
 const STROKE = 2;
 
-/**
- * A ring around a badge. A countdown is one Web Animation of the dash offset,
- * so the marker never re-renders for it.
- */
 export const PingBadgeRing: FC<PingBadgeRingProps> = ({
   color,
   countdown,

@@ -174,7 +174,6 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
       updated: 0,
     });
     await new Promise((resolve) => setTimeout(resolve, 0));
-    // Only the one write that changed the user's own statistics refreshes them.
     expect(personalHints).toEqual(["user"]);
 
     for (const [table, kills] of [
@@ -454,7 +453,6 @@ it("does not release a replacement claim when a failed write outlives its claim"
     setNxGet: () => Effect.succeed(null),
     deleteIfValue: (key, token) =>
       Effect.sync(() => {
-        // The original claim expired and another request acquired it before cleanup.
         claims.set(key, replacementToken);
 
         return Number(claims.get(key) === token && claims.delete(key));
@@ -681,19 +679,14 @@ it("records a boss kill once for every Organization that reports it", async () =
       );
     };
 
-    // The first report names no party; a later one from the other
-    // Organization does, and its party fills in the kill.
     await report(1);
     await report(2, [
       { prof: "w", lvl: 100, alive: true },
       { prof: "m", lvl: 100, alive: true },
     ]);
-    // Another member of the second Organization and a retry of the first
-    // report change nothing.
     await report(3);
     await report(1);
 
-    // The first Organization counts the kill again once its claim expires.
     for (const key of claims.keys())
       if (key.includes(":guild:123:")) claims.delete(key);
     await report(1);
@@ -706,7 +699,6 @@ it("records a boss kill once for every Organization that reports it", async () =
       { guildId: "123", kills: 2 },
       { guildId: "456", kills: 1 },
     ]);
-    // The day rollup counts the repeated kill in one hour slot of its day.
     expect(
       (await boundary.run(database.select().from(guildKillDayTable)))
         .map(({ guildId, kills, hours }) => ({

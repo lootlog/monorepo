@@ -3,10 +3,6 @@ import { useState } from "react";
 import type { UserAction } from "@/lib/user-action";
 import { performUserAction } from "@/server/queries";
 
-/**
- * Runs an action on one User, reloads what the page shows and reports the
- * outcome above it. `pending` names the action in flight.
- */
 export function useUserAction(userId: string) {
   const router = useRouter();
   const navigate = useNavigate({ from: "/users/$userId" });

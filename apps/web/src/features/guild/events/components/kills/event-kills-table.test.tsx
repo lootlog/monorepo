@@ -113,7 +113,6 @@ describe("EventKillsTable", () => {
   });
 
   it("watches the loader row against the screen when the document scrolls the page", () => {
-    // A phone, rather than the desktop the other cases render.
     vi.unstubAllGlobals();
     const nativeMatchMedia = window.matchMedia.bind(window);
     vi.stubGlobal("matchMedia", (query: string) => {
@@ -146,8 +145,6 @@ describe("EventKillsTable", () => {
       <EventKillsTable {...defaultProps} kills={[createKill()]} hasNextPage />,
     );
 
-    // The page viewport only grows with the list here, so it would always
-    // contain the loader row and every page would load at once.
     expect(observerOptions).toHaveBeenCalledWith(
       expect.objectContaining({ root: null }),
     );

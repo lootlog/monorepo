@@ -10,7 +10,6 @@ const ICON_SIZE = 14;
 
 interface WindowTitleBarProps {
   title: string;
-  /** Names the window dialog through `aria-labelledby`. */
   titleId: string;
   actions?: React.ReactNode;
   closable: boolean;
@@ -22,11 +21,6 @@ interface WindowTitleBarProps {
   onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
 }
 
-/**
- * Window-specific actions lead, window controls trail, and the title sits in
- * the middle column so it stays centered and truncates before anything
- * overlaps at narrow widths.
- */
 export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   title,
   titleId,

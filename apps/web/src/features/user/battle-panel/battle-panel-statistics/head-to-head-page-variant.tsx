@@ -208,18 +208,15 @@ export function HeadToHeadPageVariant({
 
   return (
     <>
-      {/* A season's page is named after the season. */}
       {!season && <h1 className="sr-only">{t(titleKey)}</h1>}
       <ResultsSurface
         search={
-          // As on the kill statistics: the search, then the character.
           <>
             <WarriorSearchFilter
               selectedWarriors={selectedWarriors}
               onWarriorToggle={handleWarriorToggle}
               placeholder={t("battlePanel.filters.searchOpponent")}
             />
-            {/* Rows open one character's head-to-head, so one is always picked. */}
             {!season && (
               <BattleCharacterSelect
                 characterId={currentCharacterId}
@@ -228,7 +225,6 @@ export function HeadToHeadPageVariant({
             )}
           </>
         }
-        // A season has no filters beyond the opponent search.
         filters={!season && <StatisticsFilterToolbar {...filterProps} />}
         stackedFilters={
           season ? undefined : <StatisticsStackedFilters {...filterProps} />

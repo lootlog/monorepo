@@ -5,19 +5,6 @@ import {
   type CursorTooltipOffsets,
 } from "./cursor-tooltip-placement";
 
-/*
- * Cursor following bypasses React and Base UI on purpose: Base UI's own
- * `trackCursorAxis` re-renders the tooltip and re-runs async positioning on
- * every mousemove, which visibly lags behind the pointer. Instead one passive
- * listener records the pointer and every open tooltip is placed straight on
- * its positioner element, at most once per animation frame.
- *
- * A frame only writes styles and moves the tooltip with `transform`, which
- * needs no layout. Reading `offsetWidth` or `innerWidth` would force the game
- * document to lay out on every pointer move, so the tooltip size is measured
- * once on registration and refreshed by ResizeObserver, and the viewport size
- * is cached until the window resizes.
- */
 type CursorFollower = {
   element: HTMLElement;
   offsets: CursorTooltipOffsets;
@@ -98,8 +85,6 @@ export const registerCursorFollower = (
   cursorFollowers.add(follower);
   placeFollower(follower);
 
-  // ResizeObserver delivers after layout, so reading offset sizes here does
-  // not force one; it keeps the cached size right when the content changes.
   const resizeObserver = new ResizeObserver(() => {
     follower.size = {
       width: element.offsetWidth,

@@ -14,7 +14,6 @@ import { NpcColorPreviewChip } from "./npc-color-preview-chip";
 
 type NpcColorEditorPopoverProps = {
   children: ReactNode;
-  /** The live draft colour; edits come back through `onDraftChange`. */
   color: string;
   defaultColor: string;
   npcType: AppearanceNpcType;
@@ -39,7 +38,6 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
   onReset,
 }) => {
   const { t } = useTranslation();
-  /** The stored colour that Escape restores. */
   const savedColor = useRef(color);
   const surfaceColors = deriveNpcSurfaceColors(color);
   const npcTypeLabel = t(`npcType:${npcType}`);

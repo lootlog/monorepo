@@ -34,9 +34,6 @@ if #members == 0 then return '[]' end
 return cjson.encode(members)
 `;
 
-// KEYS 6 onwards schedule the departure in the same operation: the new
-// departure, its character index, the offline due index, and the departures
-// it supersedes. Their captured values and the index size must still match.
 const REMOVE_EXPIRED_PRESENCE = `
 -- presence:expiry-remove
 if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
@@ -79,11 +76,6 @@ type ExpiryCandidate = {
   readonly metadataValue: string | null;
 };
 
-/**
- * Removes sessions that stopped refreshing. The due index scores each
- * `[organizationId, sessionId]` at `lastSeen + PRESENCE_EXPIRY_MS`, so an idle
- * sweep reads no payloads.
- */
 export class PresenceExpiry {
   constructor(
     private readonly redis: PresenceRedis,
@@ -139,7 +131,6 @@ export class PresenceExpiry {
     });
   }
 
-  // A drain yields between batches and starts no batch after one second.
   private drain = Effect.fnUntraced(function* (
     this: PresenceExpiry,
     token: string,
@@ -215,7 +206,6 @@ export class PresenceExpiry {
 
     const latest = presence ?? metadata?.presence;
 
-    // The refresh that made it fresh also moved its due score.
     if (latest && this.now() - latest.lastSeen < PRESENCE_EXPIRY_MS) return 1;
 
     const departure = yield* this.offline.prepareExpiryDeparture(
@@ -249,7 +239,6 @@ export class PresenceExpiry {
           EXPIRY_LEASE_MS,
           ...departure.args,
         )
-        // Announce a removal once it is stored, even if the sweep was interrupted.
         .then((removed) => {
           if (removed && metadata)
             this.onRemoved(organizationId, {

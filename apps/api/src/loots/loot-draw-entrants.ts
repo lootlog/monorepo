@@ -20,13 +20,11 @@ export type LootDrawEntrantsResult =
 
 const nameKey = (name: string) => `name:${name.trim().toLowerCase()}`;
 
-/** A character id when known, and the name either way: both identify a player. */
 const playerKeys = (player: { characterId: number | null; name: string }) =>
   player.characterId !== null && player.characterId > 0
     ? [`character:${player.characterId}`, nameKey(player.name)]
     : [nameKey(player.name)];
 
-/** The entrant as the loot records the party member it names. */
 const fromPartyMember = (
   player: LootDrawLoot["players"][number],
   source: "WINNER" | "PARTY",
@@ -42,16 +40,6 @@ const fromPartyMember = (
   tickets,
 });
 
-/**
- * Checks a manager's draw for one of the loot's drawable items, skipping
- * the NPC types the Organization excludes. When a party
- * member caught it, they are the one WINNER; an item nobody caught has none.
- * PARTY entrants must be other members of the party; both are stored as the
- * loot records them. MAP and MANUAL entrants must be outside the party.
- * Everybody but the winner must be listed once and able to wear the item.
- * Tickets are the manager's, and the ticket order must hold each entrant's
- * tickets exactly.
- */
 export const buildLootDrawEntrants = (
   loot: LootDrawLoot,
   request: CreateLootDrawRequest,

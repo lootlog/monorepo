@@ -9,19 +9,15 @@ export type SidebarNavBadge = {
 };
 
 type SidebarNavButtonProps = {
-  /** The router link the item renders as; an unavailable item has none. */
   link?: ReactElement;
   isActive: boolean;
   icon: ReactNode;
   label: string;
   badge?: SidebarNavBadge;
-  /** `touch` is the 44px row of the phone navigation sheet. */
   size?: "default" | "touch";
-  /** Decoration drawn over the button, such as a theme's hover mark. */
   children?: ReactNode;
 };
 
-/** One page in a sidebar's navigation column. */
 export const SidebarNavButton = ({
   link,
   isActive,

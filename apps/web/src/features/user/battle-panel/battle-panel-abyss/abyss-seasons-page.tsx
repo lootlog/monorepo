@@ -16,7 +16,6 @@ import { useTranslation } from "react-i18next";
 import { AbyssSeasonsList } from "./abyss-seasons-list";
 import { AbyssSeasonsListSkeleton } from "./abyss-seasons-list-skeleton";
 
-/** A character's Abyss seasons, each opening its battles, opponents and analytics. */
 export function AbyssSeasonsPage() {
   const { t } = useTranslation();
 

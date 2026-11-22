@@ -36,7 +36,6 @@ type AbyssSeasonsListProps = {
 const formatOptionalNumber = (value: number | null) =>
   value === null ? "–" : formatBattleMetric(value);
 
-// The season's range takes the spare width; numbers line up on the right.
 const getColumnClassName = (columnId: string) => {
   if (columnId === "range") return "";
 
@@ -56,10 +55,6 @@ const renderRecord = (season: AbyssSeason) => (
   </>
 );
 
-/**
- * A character's Abyss seasons, newest first; each opens the season's page. A
- * table on wide pages, tiles where it would not fit.
- */
 export function AbyssSeasonsList({
   characterId,
   seasons,

@@ -15,10 +15,6 @@ import type { StatsSettings } from "../hooks/use-stats-settings";
 
 export const DEFAULT_MEMBER_KILLS_LIMIT = 40;
 
-/**
- * The monster ranking and an NPC's killers are top-N lists: the API returns
- * neither a total nor a cursor, so a full list means "at least this many".
- */
 export const GUILD_TOP_NPCS_LIST_LIMIT = 100;
 
 export const NPC_KILLERS_LIMIT = 50;
@@ -62,7 +58,6 @@ export const buildGuildTopNpcsParams = (filters: {
     period: filters.period ?? "all",
   }) ?? {};
 
-/** The member page's kills request, for its loader and its hook alike. */
 export const buildMemberKillsParams = (
   settings: StatsSettings,
   cursor?: string,
@@ -78,7 +73,6 @@ export const buildMemberKillsParams = (
     period: settings.period,
   }) ?? {};
 
-/** The NPC page's killers request, for its loader and its hook alike. */
 export const buildNpcKillersParams = (
   settings: StatsSettings,
 ): KillsControllerGetNpcKillersParams =>

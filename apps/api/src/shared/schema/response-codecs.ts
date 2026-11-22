@@ -10,7 +10,6 @@ export type JsonValue =
   | ReadonlyArray<JsonValue>
   | { readonly [key: string]: JsonValue };
 
-/** Converts domain dates while retaining the concrete HTTP datetime validation. */
 export const DomainDateTime = Schema.Union([
   Schema.flip(IsoDateTime),
   DateTimeString,
@@ -20,7 +19,6 @@ export const nullableIsoDatetimeCodec = Schema.NullOr(IsoDateTime);
 
 const DateOrIsoString = Schema.Union([Schema.Date, DateTimeString]);
 
-/** Encodes a domain `Date` or an already-serialized UTC datetime, rejecting anything else. */
 export const flexibleIsoDatetimeCodec = DateTimeString.pipe(
   Schema.decodeTo(
     DateOrIsoString,

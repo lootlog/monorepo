@@ -9,7 +9,6 @@ type EventListCardSkeletonProps = {
   canDeleteEvent?: boolean;
 };
 
-/** Stands in for an `EventListCard` with the same layout. */
 export const EventListCardSkeleton = ({
   canDeleteEvent = false,
 }: EventListCardSkeletonProps) => (

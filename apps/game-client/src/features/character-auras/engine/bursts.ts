@@ -14,7 +14,6 @@ import { TIMESTOP_LENGTH } from "./chrono";
 import type { BurstKind } from "./presets/preset";
 import type { AuraSilhouette } from "./silhouette";
 
-/** How long each burst runs, in seconds. */
 export const BURST_DURATION: Record<BurstKind, number> = {
   descend: 1.2,
   eruption: 0.6,
@@ -42,42 +41,30 @@ export const BURST_DURATION: Record<BurstKind, number> = {
   timestop: TIMESTOP_LENGTH,
   glaciate: 1.5,
   powerup: 2,
-  // A kit names its own length (`burstLength`).
   kit: 2,
   reload: 1.2,
 };
 
-/** What every burst visual draws from: the placement, the burst's progress and the tones. */
 export interface BurstScene {
   place: AuraPlacement;
   intensity: number;
-  /** Which half is drawn: in front of the character or behind it. */
   front: boolean;
-  /** Burst progress, 0..1. */
   t: number;
   bounds: AuraSilhouette["bounds"];
   light: Rgb;
   mid: Rgb;
   dark: Rgb;
-  /** Horizontal centre of the opaque bounds on screen. */
   cx: number;
-  /** `intensity` faded in and out over the burst. */
   fade: number;
 }
 
-/** The admin auras' bursts that bring a pillar of light (or fire) down on the character. */
 const PILLAR_BURSTS: ReadonlySet<BurstKind> = new Set([
   "coronation",
   "rebirth",
 ]);
 
-/** The bursts that roll a pressure wave out from the body. */
 const WAVE_BURSTS: ReadonlySet<BurstKind> = new Set(["conqueror", "quake"]);
 
-/**
- * Draws the running burst `kind` into the brush's layers. The showcase admin auras'
- * bursts (supernova, timestop, glaciate, reload) are played by their own pieces.
- */
 export function drawBurstScene(
   kind: BurstKind,
   b: Brush,
@@ -132,7 +119,6 @@ export function drawBurstScene(
     case "spores":
     case "bloodrain":
     case "aurora-flare":
-    // The roar's rings spread from the dragon's jaws, which only the renderer knows.
     case "roar":
       break;
   }
@@ -142,7 +128,6 @@ function drawDescendBurst(
   b: Brush,
   { place, front, t, bounds, light, mid, dark, cx, fade }: BurstScene,
 ): void {
-  // A halo lowering from above the head to the feet, with two fainter echoes behind it.
   const rx = Math.round(bounds.w * 0.55 + 4);
   const ry = Math.max(2, Math.round(rx * 0.3));
   const top = place.y + bounds.y - 10;
@@ -159,7 +144,6 @@ function drawImplodeBurst(
   b: Brush,
   { place, front, t, bounds, light, mid, dark, cx, fade }: BurstScene,
 ): void {
-  // A sphere of light collapsing into the chest, then a flash and sparks (`updateBurst`).
   if (t > 0.85 || front) return;
   const cy = place.y + bounds.y + bounds.h * 0.45;
   const base = Math.max(bounds.w, bounds.h) * 0.5 + 22;
@@ -194,7 +178,6 @@ function drawCometBurst(
   b: Brush,
   { place, intensity, front, t, bounds, light, mid, dark, cx }: BurstScene,
 ): void {
-  // A shooting star arcing over the head, left to right, with a three-tone tail.
   if (front) return;
   const x0 = cx - bounds.w / 2 - 34;
   const x1 = cx + bounds.w / 2 + 34;
@@ -223,7 +206,6 @@ function drawBloomBurst(
   b: Brush,
   { place, intensity, front, t, light }: BurstScene,
 ): void {
-  // Pixel flowers opening one after another round the feet, then wilting.
   if (!place.ground) return;
   const rx = groundRadius(place) * 0.95;
   const ry = rx * 0.36;
@@ -257,7 +239,6 @@ function drawSweepBurst(
   b: Brush,
   { place, intensity, front, t, bounds }: BurstScene,
 ): void {
-  // Prism: a rainbow band climbing the outline.
   if (!front) return;
   const row = place.y + bounds.y + bounds.h * (1 - t);
 
@@ -293,7 +274,6 @@ function drawWhirlBurst(
   b: Brush,
   { place, front, t, bounds, light, mid, cx, fade }: BurstScene,
 ): void {
-  // Petals spiralling up round the body, behind and in front.
   const rx = bounds.w * 0.65 + 6;
 
   const bottom = place.ground ? place.feetY - 2 : place.y + bounds.y + bounds.h;
@@ -318,7 +298,6 @@ function drawSandspoutBurst(
   b: Brush,
   { place, front, t, light, mid, cx, fade }: BurstScene,
 ): void {
-  // A tornado of dashed rings, widening upwards, spinning fast.
   if (!place.ground) return;
   const height = Math.sin(Math.PI * t) * 1.1;
 
@@ -353,7 +332,6 @@ function drawSoulsBurst(
 
   if (place.ground) drawSouls(b, place.feetX, place.feetY, t);
   else {
-    // Tooltips: one soul up each side of the box, clear of the text.
     const bottom = place.y + bounds.y + bounds.h + 4;
     drawSouls(b, place.x + bounds.x - 6, bottom, t, [0]);
     drawSouls(b, place.x + bounds.x + bounds.w + 6, bottom, t, [0]);
@@ -364,7 +342,6 @@ function drawSplashBurst(
   b: Brush,
   { place, front, t, light, mid, cx, fade }: BurstScene,
 ): void {
-  // A water column shooting up from the feet and collapsing.
   if (!place.ground || !front || t > 0.5) return;
   const height = Math.sin((Math.PI * t) / 0.5) * 30;
 
@@ -387,7 +364,6 @@ function drawAscendBurst(
   b: Brush,
   { place, front, t, bounds, light, cx, fade }: BurstScene,
 ): void {
-  // The magic circle lifting off the ground to above the head.
   const bottom = place.ground ? place.feetY - 2 : place.y + bounds.y + bounds.h;
 
   const top = place.y + bounds.y - 10;
@@ -403,7 +379,6 @@ function drawConquerorBurst(
   b: Brush,
   { place, intensity, front, t, bounds, light, mid, cx }: BurstScene,
 ): void {
-  // A dark pressure wave rolling out from the body, its leading edge red.
   if (front || t > 0.7) return;
   const cy = place.y + bounds.y + bounds.h * 0.55;
   const r = 6 + (t / 0.7) * (Math.max(bounds.w, bounds.h) * 0.5 + 34);
@@ -437,8 +412,6 @@ function drawConquerorBurst(
 function drawPillarBurst(b: Brush, scene: BurstScene): void {
   const { place, front, t, bounds, light, mid, cx, fade } = scene;
 
-  // A column of light falling on the character from far above, brightest at its core,
-  // with the descending halo inside it; it fades out as the halo lands.
   if (!front && place.ground) {
     const half = Math.round(bounds.w * 0.45 + 3);
     const top = place.y + bounds.y - 60;

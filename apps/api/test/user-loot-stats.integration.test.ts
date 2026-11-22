@@ -27,7 +27,6 @@ const one = async (sql: string, values: unknown[]) => {
   return row.id;
 };
 
-/** An Organization whose member reads loots of NPCs up to level 150, titans excepted. */
 const organization = async (user: string) => {
   const guildId = randomUUID(),
     roleId = randomUUID();
@@ -62,22 +61,16 @@ const organization = async (user: string) => {
   return guildId;
 };
 
-/** A HERO loot with one legendary item, a fight of the given character. */
 const loot = async (options: {
   guildIds: string[];
   characterId: number;
-  /** The character's name in the fight. */
   name?: string;
   npc?: { type?: string; lvl?: number };
   world?: string;
   archived?: boolean;
-  /** Another character fought too. */
   party?: boolean;
-  /** The loot share gives the item to the character. */
   shared?: boolean;
-  /** An older Game client reported the template id, not the spawn id. */
   legacy?: boolean;
-  /** A dialog reward rather than a fight's loot. */
   dialog?: boolean;
 }) => {
   const world = options.world ?? "tempest";
@@ -111,9 +104,6 @@ const loot = async (options: {
     INSERT INTO "LootItem" ("lootId","itemSnapshotId",hid) SELECT $1,id,$2 FROM item`,
     [lootId, hid],
   );
-  // Only this loot's records: the database is shared with suites that leave
-  // tens of thousands of records behind, and rewriting them all for every
-  // seeded loot took the suite past its timeout in CI.
   await client.query(
     `${refreshOrganizationLootRecordFactsSql} WHERE "lootId" = $1`,
     [lootId],
@@ -138,7 +128,6 @@ const loot = async (options: {
     );
 
   if (options.shared)
-    // Share keys are the character id followed by the account id.
     await client.query(`UPDATE "Loot" SET "lootShare"=$2::jsonb WHERE id=$1`, [
       lootId,
       JSON.stringify({ [`${options.characterId}1`]: [hid] }),
@@ -180,11 +169,8 @@ describe("personal loot statistics", () => {
     const foreign = await organization(randomUUID());
     await registerCharacter(user, character);
 
-    // Counted once although both Organizations hold it.
     await loot({ guildIds: [first, second], characterId: character });
-    // Only an Organization the user is not in holds it.
     await loot({ guildIds: [foreign], characterId: character });
-    // Their role hides titans and NPCs above level 150.
     await loot({
       guildIds: [first],
       characterId: character,
@@ -196,9 +182,7 @@ describe("personal loot statistics", () => {
       npc: { lvl: 200 },
     });
     await loot({ guildIds: [first], characterId: character, archived: true });
-    // A dialog reward lists the player but is no fight.
     await loot({ guildIds: [first], characterId: character, dialog: true });
-    // Someone else's fight.
     await loot({ guildIds: [first], characterId: stranger });
 
     const result = await stats(user);
@@ -254,7 +238,6 @@ describe("personal loot statistics", () => {
       party: true,
       shared: true,
     });
-    // A partner may have taken it; nothing says the user did.
     await loot({ guildIds: [guildId], characterId: character, party: true });
     await client.query(
       `INSERT INTO "UserKillBucket" ("periodStart","discordUserId",world,"npcId","npcName","npcType","npcLvl",kills,"lastKilledAt") VALUES (now(),$1,'tempest',77,'Hero','HERO',100,30,now())`,
@@ -291,7 +274,6 @@ describe("personal loot statistics", () => {
     await registerCharacter(user, character);
 
     await loot({ guildIds: [guildId], characterId: character, name: "Archer" });
-    // A later fight the user cannot see must not reveal the new name.
     await loot({
       guildIds: [otherGuildId],
       characterId: character,
@@ -332,7 +314,6 @@ describe("personal loot statistics", () => {
     const result = await stats(user);
 
     expect(result.legends).toEqual([expect.objectContaining({ npcKills: 12 })]);
-    // A boss killed without a single legend still shows, as Margonem lists it.
     expect(result.monsters).toEqual([
       expect.objectContaining({
         npc: expect.objectContaining({ name: "Unlucky" }),

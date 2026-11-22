@@ -18,8 +18,6 @@ const PresenceSnapshot = Schema.Struct({
   ),
 });
 
-// A list of names fills the whole channel on a busy world, so the reply only
-// counts characters; the Web app and the Game client list them.
 export const onlineCommand: SlashCommand = {
   definition: guildCommand("online", COMMAND_TEXT.online.description)
     .addBooleanOption(visibilityOption)
@@ -34,7 +32,6 @@ export const onlineCommand: SlashCommand = {
         PresenceSnapshot,
       );
 
-      // Characters in the game, once each, even with several sessions open.
       const characters = new Map<
         string,
         { readonly world: string; readonly isAfk: boolean }

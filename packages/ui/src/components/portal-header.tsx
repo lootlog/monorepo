@@ -23,30 +23,16 @@ type PortalHeaderLink = {
 };
 
 type PortalHeaderProps = {
-  /** Full portal name, such as "Lootlog Developers". */
   title: string;
-  /** The part of the name shown next to "Lootlog". */
   section: string;
-  /** The brand link element, rendered with the portal's own router. */
   home: ReactElement;
   links: readonly PortalHeaderLink[];
-  /**
-   * Replaces the row of links in the bar, such as a navigation menu that
-   * groups them into panels. The menu still lists every link.
-   */
   navigation?: ReactNode;
   search: ReactNode;
   compactSearch: ReactNode;
-  /** Shown before the search on wide screens and at the bottom of the menu. */
   status?: ReactNode;
-  /** The portal's own mark before its name; the Lootlog mark by default. */
   mark?: ReactNode;
-  /** Controls that stay in the bar at every width, such as the account. */
   actions?: ReactNode;
-  /**
-   * From which width the links sit in the bar; narrower screens open them
-   * from the menu. A portal with more links moves them later.
-   */
   inlineFrom?: "md" | "lg" | "xl";
   labels: {
     skipToContent: string;
@@ -56,7 +42,6 @@ type PortalHeaderProps = {
   };
 };
 
-// Tailwind needs whole class names, so each breakpoint spells its own.
 const INLINE_CLASS_NAMES = {
   md: {
     bar: "hidden md:block",
@@ -75,12 +60,6 @@ const INLINE_CLASS_NAMES = {
   },
 } as const;
 
-/**
- * The fixed top bar shared by the public documentation portals. The links
- * sit after the brand at every width: in the bar on wide screens, behind the
- * menu, which opens from the same side, on narrow ones. Pages offset
- * their content with `#portal-content` from `@lootlog/ui/portal.css`.
- */
 export function PortalHeader({
   title,
   section,

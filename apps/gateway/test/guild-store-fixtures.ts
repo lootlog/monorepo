@@ -7,8 +7,6 @@ const CacheRevisionJson = Schema.fromJsonString(
   Schema.Struct({ revision: Schema.optional(Schema.String) }),
 );
 
-// Redis is the external boundary; the revision-checked commit script is
-// exercised against Dragonfly in realtime-redis.integration.test.ts.
 export const makeGuildStoreRedis = (
   options: GetUserGuildsOptions,
   initialCache: string | null = null,

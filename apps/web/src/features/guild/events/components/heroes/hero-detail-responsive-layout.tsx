@@ -7,11 +7,6 @@ interface HeroDetailResponsiveLayoutProps {
   sidebar: ReactNode;
 }
 
-/**
- * The hero's maps beside who takes part and the hero's ranking, kills and
- * loots. Narrower pages stack participants first, so a player finds
- * themselves before the long list of maps.
- */
 export const HeroDetailResponsiveLayout = ({
   maps,
   participants,

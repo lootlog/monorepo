@@ -53,14 +53,12 @@ type NpcTemplate = Readonly<{
   isHeroFromEvent?: boolean;
   level?: number;
   nick: string;
-  // Hero Tracker templates carry neither.
   prof?: string;
   resp_rand?: number;
   type?: number;
   warrior_type?: number;
 }>;
 
-/** A Hero Tracker template has no profession, type or weight. */
 const withHeroTrackerDefaults = (
   template: NpcTemplate | undefined,
   name: string | undefined,
@@ -80,7 +78,6 @@ const getProjectedEntranceClosesAt = (
       )
     : undefined;
 
-/** Packet fields first, then the cached template's. */
 function resolvePacketNpcFields(
   entry: AppliedNpcEntry,
   template: NpcTemplate | undefined,
@@ -181,8 +178,6 @@ function normalizeOtherFromEvent(
   });
 }
 
-// Margonem keeps a member's profession when a push omits it
-// (PartyMember.updateData), so a push without one must not clear it.
 function normalizeParty(
   event: NonNullable<GameEvent["party"]>,
   previous: readonly RuntimePartyMember[],
@@ -225,7 +220,6 @@ function resolveNpcLevel(
 
 type MapFields = Partial<Omit<RuntimeGameSnapshot["map"], "id">>;
 
-/** The first source's map fields, each missing or blank one taken from the second. */
 function mergeMapFields(first: MapFields, second: MapFields): MapFields {
   return {
     name: first.name?.trim() || second.name?.trim() || undefined,
@@ -381,7 +375,6 @@ export class RuntimeStateProjection {
     if (!current) return facts;
     const nameMissing = !current.map.name?.trim();
 
-    // AirTags, which run only on the new interface, need the map's PvP mode.
     const pvpMissing =
       current.map.pvp === undefined && current.interface === "ni";
 
@@ -392,8 +385,6 @@ export class RuntimeStateProjection {
 
     if (!nameMissing || !map.name || event.town) return facts;
 
-    // Complete deferred map-change effects before ordinary packet facts. The
-    // raw packet stays unchanged: recovery must not reset the map's new NPCs.
     return Object.freeze([
       Object.freeze({
         kind: "map" as const,
@@ -423,18 +414,12 @@ export class RuntimeStateProjection {
     });
   }
 
-  /**
-   * NI and SI expose the applied native map through the same adapter. Only
-   * use native state for this map: the event queue may lag behind another map
-   * transition. Never carry the previous map's name to a new id.
-   */
   private readNativeMap(id: number): RuntimeGameSnapshot["map"] | undefined {
     try {
       const nativeMap = this.adapter.getGameSnapshot().map;
 
       return nativeMap.id === id ? nativeMap : undefined;
     } catch {
-      // Native state may be unavailable while Margonem initializes a map.
       return undefined;
     }
   }
@@ -478,9 +463,7 @@ export class RuntimeStateProjection {
 
         if (handle) handleUpserts[characterId] = handle;
         else pendingHandleIds.push(characterId);
-      } catch {
-        // The normalized event remains authoritative; handles are UI integration only.
-      }
+      } catch {}
     }
 
     const pending = {
@@ -575,7 +558,6 @@ export class RuntimeStateProjection {
     return this.readNativeNpc(entry);
   }
 
-  /** The game's own NPC when the packet and cached templates leave a gap. */
   private readNativeNpc(entry: AppliedNpcEntry): RuntimeNpc | undefined {
     let native: RuntimeNpc | undefined;
 
@@ -587,7 +569,6 @@ export class RuntimeStateProjection {
 
     if (!native) return undefined;
 
-    // The game's NPC carries no entrance countdown; keep the projected one.
     const nativeEntranceClosesAt = getProjectedEntranceClosesAt(
       entry,
       native.name,
@@ -598,8 +579,6 @@ export class RuntimeStateProjection {
       : Object.freeze({ ...native, entranceClosesAt: nativeEntranceClosesAt });
   }
 
-  // NpcManager.mergeNpcDataWithNpcIconData resolves raw icon.id to its string
-  // before game storage; ingress can contain either that reference or the string.
   private resolveNpcIcon(icon: AppliedNpcEntry["icon"]): string | undefined {
     if (typeof icon === "string") return normalizeNpcIcon(icon);
 

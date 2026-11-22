@@ -1,6 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
 
-/** Text the primitives show or announce themselves, in the app's language. */
 export interface UiLabels {
   close: string;
   sidebarTitle: string;
@@ -33,7 +32,6 @@ const defaultLabels: UiLabels = {
 
 const UiLabelsContext = createContext<UiLabels>(defaultLabels);
 
-/** Gives the primitives below it the app's translations of their own text. */
 export function UiLabelsProvider({
   labels,
   children,

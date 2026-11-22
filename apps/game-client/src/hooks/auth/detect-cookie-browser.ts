@@ -1,6 +1,5 @@
 export type CookieBrowser = "brave" | "chrome" | "firefox" | "safari";
 
-/** Picks the cookie settings guidance that matches the player's browser. */
 export const detectCookieBrowser = (
   browser: Pick<Navigator, "userAgent"> = navigator,
 ): CookieBrowser => {

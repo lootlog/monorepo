@@ -9,14 +9,9 @@ import type { ReservationSegment } from "./types";
 
 type ReservationBlockAvatarProps = {
   reservation: ReservationSegment["reservation"];
-  /** A short block: a smaller avatar, shown only when the block has room. */
   compact: boolean;
 };
 
-/**
- * Whose reservation a block is. A partner's reservation shows its Lootlog's
- * server icon instead of the author, whom players of this Lootlog rarely know.
- */
 export const ReservationBlockAvatar = ({
   reservation,
   compact,
@@ -39,7 +34,6 @@ export const ReservationBlockAvatar = ({
   }
 
   return (
-    // The block around it is one button, which opens the reservation.
     <MemberIdentity
       member={
         reservation.author.userId

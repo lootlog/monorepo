@@ -7,10 +7,6 @@ type CharacterLevelInputProps = Omit<
   "value" | "onChange" | "placeholder"
 >;
 
-/**
- * The set's character level, which its requirements and elastic items
- * follow. Text that is no level forgets it.
- */
 export function CharacterLevelInput(props: CharacterLevelInputProps) {
   const { set, setCharacter } = useEquipmentSet();
 

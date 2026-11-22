@@ -43,16 +43,8 @@ class NotificationTimerRebuildError extends TaggedErrorClass<NotificationTimerRe
   { ruleIds: Schema.Array(Schema.Number) },
 ) {}
 
-/** A detection older than this is a redelivery, not news worth a message. */
 const HERO_SIGHTING_NOTIFICATION_MAX_AGE_MS = 15 * 60 * 1000;
 
-/**
- * Whether a sighting update is news to announce: only where a hero will
- * spawn. A roaming hero is never announced, whether found roaming or seen
- * where its spawn was detected, so the Member who found it is not outrun by
- * everyone the message would send there. Repeated confirmations are the same
- * news, so they notify once.
- */
 const isHeroSightingNews = (
   sighting: Pick<HeroSightingResponse, "closedAt" | "lastSeenAt" | "state">,
   now: number,
@@ -62,7 +54,6 @@ const isHeroSightingNews = (
   now - Date.parse(sighting.lastSeenAt) <=
     HERO_SIGHTING_NOTIFICATION_MAX_AGE_MS;
 
-/** A hero sighting rule's level range; a missing bound is open. */
 const matchesHeroLevel = (
   filters: Parameters<typeof parseNotificationFilters>[0],
   heroLvl: number,
@@ -123,8 +114,6 @@ export const makeNotificationsEvents = (options: {
         );
       }
 
-      // Rebuilding cancels and recreates a rule's jobs, so redelivering the
-      // whole fact is safe and keeps a failed rule from staying stale.
       if (failures.length > 0) {
         return yield* Effect.fail(
           new NotificationTimerRebuildError({
@@ -281,10 +270,6 @@ export const makeNotificationsEvents = (options: {
     ReturnType<NotificationEventStore["guildWorldRules"]>
   >[number];
 
-  /**
-   * Schedules one instant job per active target of the rules. The source
-   * event keys each job, so a redelivered event sends nothing twice.
-   */
   const scheduleInstantJobs = (
     rules: ReadonlyArray<GuildWorldRule>,
     source: {
@@ -361,8 +346,6 @@ export const makeNotificationsEvents = (options: {
     );
   });
 
-  // A draw is news only once per outcome. Its loot may be hidden from some
-  // members: the Organization chooses the channel its rule posts to.
   const handleLootDrawResolved = Effect.fn(
     "notifications.events.lootDrawResolved",
   )(function* (event: LootDrawResolvedNotificationEvent) {

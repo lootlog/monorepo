@@ -25,12 +25,10 @@ import {
 
 type ReportFormProps = {
   subject: CatalogReportsControllerGetOwnParams;
-  /** The User's open report about the page, which sending replaces. */
   report: CatalogReportDtoOutput | null;
   onDone: () => void;
 };
 
-/** What is wrong with a page, as the User reports it to the moderators. */
 export function ReportForm({ subject, report, onDone }: ReportFormProps) {
   const queryClient = useQueryClient();
   const request = useSignedInCatalogRequest();

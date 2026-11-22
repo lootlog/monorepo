@@ -28,8 +28,6 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 
-// Module-level values stay free of property reads and unannotated calls so
-// production builds, which never render this tab, can drop the module.
 const DETECTOR_NPC_ENTRIES = [
   {
     key: "titan",
@@ -65,10 +63,6 @@ type LogEntry = {
   success: boolean;
 };
 
-/**
- * The debug strings ship only with the development-only debug tab, so they are
- * registered when it first renders instead of in the production bundle.
- */
 const registerDebugTranslations = () => {
   i18n.addResourceBundle(
     "pl",

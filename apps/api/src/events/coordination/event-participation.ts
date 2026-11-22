@@ -263,10 +263,6 @@ export const makeEventParticipation = (
               confirmable,
               ({ point }) =>
                 Effect.gen(function* () {
-                  // Rankings are keyed by the hero's current name; the share
-                  // lock makes a concurrent rename wait for this write and
-                  // then move it, and is taken before the kill point lock in
-                  // the same order as hero deletion.
                   const heroes = yield* transaction
                     .select({ heroName: eventHeroNpcTable.npcName })
                     .from(eventHeroKillTable)

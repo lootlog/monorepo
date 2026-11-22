@@ -40,8 +40,6 @@ describe("activity wire schemas", () => {
     ).toThrow();
   });
 
-  // The activity log cannot store such an actor, so retrying the delivery
-  // would only delay its dead letter.
   it("rejects an actor snapshot the activity log cannot store", () => {
     expect(() =>
       decodeCreateActivity({

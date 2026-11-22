@@ -4,7 +4,6 @@ import { BattleProcessor } from "../src/battle-processor.js";
 import { findFinishingBlows } from "../src/finishing-blows.js";
 import { calculateBattleStatistics } from "../src/statistics.js";
 
-// Persisted warrior statistics must remain identical when timeline work is skipped.
 const processBattleWithStatisticsParity = (battleData: BattlePayload) => {
   const detailed = new BattleProcessor().processBattle(battleData);
 
@@ -37,7 +36,6 @@ const duelist = (originalId: number, name: string, team: number) => ({
   team,
 });
 
-/** A battle between Attacker (1) and Defender (2) with the given rows. */
 const duel = (moves: string[]): BattlePayload => ({
   accountId: "test-account",
   characterId: "1",
@@ -242,8 +240,6 @@ describe("BattleProcessor", () => {
               m: ["201=100;101=0;+dmg=900;-dmg=900"],
             },
           },
-          // Margonem keeps the battle running for the others after the dead
-          // player closes it, so no end packet or outcome line follows.
           { ev: 1003, f: { m: ["102=100;201=60;+dmg=400;-dmg=400"] } },
         ],
       };
@@ -288,8 +284,6 @@ describe("BattleProcessor", () => {
       });
     });
 
-    // Margonem ends a flee with `winner=?` too; the flee-aware views and
-    // analytics still read its inferred teams.
     it("keeps the inferred teams of a battle a warrior fled from", () => {
       const result = processBattleWithStatisticsParity(
         duel([
@@ -1048,8 +1042,6 @@ describe("BattleProcessor", () => {
     });
   });
 
-  // Row semantics follow Margonem's own battle log renderer
-  // (core/battle/BattleMessages.js) and its Polish dictionary.
   describe("Margonem log semantics", () => {
     it("credits a wide swing's extra hit to the attacker instead of reflecting it", () => {
       const result = processBattleWithStatisticsParity(
@@ -1322,8 +1314,6 @@ describe("BattleProcessor", () => {
 
       const flags = result.battleTimeline[0]?.flags ?? [];
 
-      // Evade, parry and arrow block make the attack miss; a pierce block
-      // only cancels the armor pierce.
       expect(defender?.evasions).toBe(3);
       expect(defender?.blocks).toBe(0);
       expect(defender?.blockedDamage).toBe(0);
@@ -1444,8 +1434,6 @@ describe("BattleProcessor", () => {
       expect(energyDestroyAction?.param).toBe("12,3");
     });
 
-    // Margonem prints rage and the beast's stigma as "atak +X": a bonus inside
-    // the attack the row already reports, not a second damage instance.
     it("should not count attack bonuses as separate timeline damage", () => {
       const battleData: BattlePayload = {
         accountId: "test-account",

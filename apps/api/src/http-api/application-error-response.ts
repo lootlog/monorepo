@@ -7,7 +7,6 @@ import {
   reauthenticationRequiredResponse,
 } from "@lootlog/protocol/http/errors";
 
-/** The shared answer, except that every 401 asks the caller to sign in again. */
 export const applicationErrorResponse = (cause: unknown) =>
   Schema.is(ApplicationError)(cause) && applicationErrorStatus(cause) === 401
     ? reauthenticationRequiredResponse(

@@ -134,7 +134,6 @@ describe("notification dispatch with BullMQ and PostgreSQL", () => {
       ),
     );
 
-    // Opened after the queue, which installs BullMQ's Bun client factory.
     const events = new QueueEvents(queueName, {
       connection: { url: Redacted.value(redisUrl) },
       prefix: "{bull}",

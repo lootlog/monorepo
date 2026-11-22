@@ -1,4 +1,3 @@
-// Margonem merges town packets into map state; packets may update only one field.
 export interface TownEvent {
   id?: number;
   name?: string;

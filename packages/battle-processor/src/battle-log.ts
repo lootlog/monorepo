@@ -1,9 +1,3 @@
-/**
- * The Margonem battle packets the processor reads, and the row grammar of
- * their `m` move log. Margonem renders the same rows in
- * `core/battle/BattleMessages.js`.
- */
-
 export type BattleWarriorSnapshot = {
   originalId: number;
   name: string;
@@ -98,10 +92,6 @@ export type ParsedBattlePayload = {
   matchmaking?: MatchmakingInfo | undefined;
 };
 
-/**
- * `winner=?` ends a battle without a winner: one a warrior fled from, or one
- * that reached the turn limit.
- */
 export const NO_WINNER = "?";
 
 const parseHpPercentage = (hp: string): number | null => {
@@ -110,10 +100,6 @@ const parseHpPercentage = (hp: string): number | null => {
   return Number.isNaN(hpPercentage) ? null : hpPercentage;
 };
 
-/**
- * Reads `key=value` the way Margonem's `BattleMessages.js` does: the value is
- * the text between the first and the second `=`.
- */
 const splitPair = (part: string): [key: string, value: string] => {
   const [key = "", value = ""] = part.split("=");
 
@@ -129,11 +115,6 @@ const parseMoveSide = (part = "0") => {
   };
 };
 
-/**
- * Splits each `actor=hp;target=hp;action=param;...` row. An id of `0` or an
- * empty id means the row has no warrior on that side, such as a damage over
- * time tick. An unreadable HP reads as unknown (`null`).
- */
 export const parseBattleMoves = (
   events: readonly BattleEvent[],
 ): ParsedMove[] =>
@@ -157,11 +138,6 @@ export const parseBattleMoves = (
       };
     });
 
-/**
- * The first comma-separated number of a parameter, signed. The rest of a
- * parameter such as `wound=2817,20` is the percentage the value was weakened
- * by. A missing or textual parameter reads as `0`.
- */
 export const parseSignedActionValue = (param: string): number => {
   const [firstParam = ""] = param.split(",");
   const value = Number.parseInt(firstParam, 10);
@@ -172,11 +148,6 @@ export const parseSignedActionValue = (param: string): number => {
 export const parseActionValue = (param: string): number =>
   Math.abs(parseSignedActionValue(param));
 
-/**
- * The warrior a parameter names in one of its comma-separated parts, such as
- * `Name(95%)` in `+oth_dmg=120,dmgf,Name(95%)` or `Name` in
- * `legbon_lastheal=300,Name`.
- */
 export const parseNamedWarrior = (
   param: string,
   index: number,

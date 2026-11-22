@@ -23,10 +23,6 @@ const PAGE_SIZE = 20;
 
 const STATUSES = Object.values(ReportStatus);
 
-/**
- * Reported pages of one status, the most reported first, which a moderator
- * resolves, rejects or opens again a page at a time.
- */
 export function ModerationQueue() {
   const queryClient = useQueryClient();
   const request = useSignedInCatalogRequest();
@@ -47,7 +43,6 @@ export function ModerationQueue() {
     request,
     mutation: {
       onSuccess: () => {
-        // The page's last subject left it: show the one before.
         if (data?.subjects.length === 1 && offset > 0) {
           setOffset(offset - PAGE_SIZE);
         }
@@ -78,7 +73,6 @@ export function ModerationQueue() {
         spacing={1.5}
         className="flex-wrap"
         value={[status]}
-        // One status is always chosen: pressing it again keeps it.
         onValueChange={([pressed]) => {
           const next = STATUSES.find((value) => value === pressed);
 

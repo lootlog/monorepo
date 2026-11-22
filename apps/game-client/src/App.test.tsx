@@ -202,7 +202,6 @@ describe("extension session lifecycle", () => {
         }
       },
     );
-    // A fresh page load starts with the session read still pending.
     act(() =>
       authClient.$store.atoms.session!.set({
         ...authClient.$store.atoms.session!.get(),
@@ -237,7 +236,6 @@ describe("extension session lifecycle", () => {
     await waitFor(() => expect(wires[1]?.readyState).toBe(3));
     expect(privateState()).toEqual(clearedState);
     expect(wires).toHaveLength(2);
-    // A confirmed logout sends the player to sign in again on the website.
     expect(
       await screen.findByRole("link", { name: "Otwórz stronę Lootloga" }),
     ).toBeInTheDocument();

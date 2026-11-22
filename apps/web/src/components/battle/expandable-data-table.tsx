@@ -88,7 +88,6 @@ export function ExpandableDataTable<TData extends Warrior>({
                   <SortableColumnHeader
                     column={header.column}
                     align={headerIndex === 0 ? "start" : "end"}
-                    // Ten columns share a narrow panel, so an unsorted column spends no width on an icon.
                     showUnsortedIcon={false}
                     className="px-1 py-1 leading-tight"
                   >
@@ -141,7 +140,6 @@ export function ExpandableDataTable<TData extends Warrior>({
                       className={cn(
                         "h-10 px-0.5 py-0.5",
                         cellIndex === 0 &&
-                          // Opaque equivalents of the row backgrounds, so scrolled cells never show through.
                           "sticky left-0 z-10 max-w-40 bg-background group-hover/row:bg-[color-mix(in_oklab,var(--accent)_35%,var(--background))]",
                       )}
                     >

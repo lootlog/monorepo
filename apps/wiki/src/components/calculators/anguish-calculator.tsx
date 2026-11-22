@@ -16,7 +16,6 @@ import { formatNumber } from "@lootlog/domain/locale";
 
 const ATTRIBUTE_LIMIT = { min: 0, max: 100_000 };
 
-/** Krwawa udręka's bleeding from an item and the character's attributes. */
 export function AnguishCalculator() {
   const [itemLevel, setItemLevel] = useState("");
   const [upgrade, setUpgrade] = useState<UpgradeLevel>(0);

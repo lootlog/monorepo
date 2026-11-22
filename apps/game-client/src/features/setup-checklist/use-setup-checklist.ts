@@ -11,16 +11,9 @@ import { useGameStore } from "@/store/game.store";
 
 const DISMISSED_KEY = storageKey("ll:setup-checklist-dismissed");
 
-/**
- * The first-run checklist of the current character, read from state the
- * client already keeps (session, Lootlogs, catching config, gateway status),
- * plus the player's choice to hide it. Nothing here polls.
- */
 export const useSetupChecklist = () => {
   const session = useSession();
 
-  // A failed session check is unknown, like one still in flight: asking the
-  // player to sign in would contradict the login window.
   const signedIn = session.data
     ? true
     : isSessionSignedOut(session)

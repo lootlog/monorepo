@@ -61,7 +61,6 @@ describe("loot contracts", () => {
     }
   });
 
-  // An unknown value used to reach the enum column and fail the query with a 500.
   it("rejects unknown rarities and comma-joined NPC types while decoding filters", () => {
     expect(() =>
       Schema.decodeUnknownSync(LootsQuery)({ rarities: ["EPIC"] }),

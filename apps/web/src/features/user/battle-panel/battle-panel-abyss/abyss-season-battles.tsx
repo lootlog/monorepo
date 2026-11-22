@@ -15,7 +15,6 @@ import {
   buildAbyssSeasonBattlesParams,
 } from "@/features/user/battle-panel/battle-panel-request-params";
 
-/** The season's battles, newest first, a page at a time. */
 export function AbyssSeasonBattles() {
   const { t } = useTranslation();
   const { characterId, season } = useAbyssSeason();

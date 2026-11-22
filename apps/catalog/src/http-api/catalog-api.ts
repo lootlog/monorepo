@@ -1,6 +1,5 @@
 import { healthGroup } from "@lootlog/instrumentation/service";
 import { ApiKeyEndpointPolicy } from "@lootlog/protocol/http/api-key-http";
-/** Authoritative composition root for the catalog HTTP contract. */
 import { SchemaErrorResponse } from "@lootlog/protocol/http/schema-error-response";
 import { HttpApi, OpenApi } from "effect/http-api";
 import { CatalogAccess } from "./catalog-access.js";

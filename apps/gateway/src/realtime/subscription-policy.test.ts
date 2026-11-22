@@ -65,7 +65,6 @@ describe("logical subscription policy", () => {
         { topic: "global.chat" },
       ),
     ).toBe(false);
-    // Without a world, the scope would match every world's channel.
     expect(canSubscribe(member, { topic: "global.chat.world" })).toBe(false);
     expect(canSubscribe({ ...member, guilds: [] }, world)).toBe(false);
   });
@@ -79,7 +78,6 @@ describe("logical subscription policy", () => {
     expect(canSubscribe({ ...reader, platform: "web-app" }, aurasScope)).toBe(
       false,
     );
-    // A Game client that predates the event rejects it and disconnects.
     expect(defaultScopes(game)).not.toContainEqual(aurasScope);
     expect(canSubscribe(game, aurasScope)).toBe(false);
   });

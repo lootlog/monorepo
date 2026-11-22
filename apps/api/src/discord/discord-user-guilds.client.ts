@@ -46,15 +46,7 @@ const decodeCompleteUserGuildsEntry = Schema.decodeUnknownSync(
 
 interface CompleteUserGuildsResult {
   guilds: RESTGetAPICurrentUserGuildsResult;
-  /**
-   * Discord returned the list within the last two seconds. A list served from
-   * the long-lived cache may miss a server the user has joined since.
-   */
   fresh: boolean;
-  /**
-   * The list is older than the 15-minute max age and is being replaced in the
-   * background, so it must be presented as stale.
-   */
   stale: boolean;
 }
 
@@ -75,19 +67,10 @@ export interface DiscordUserGuildsClient {
     userId: string,
     discordId: string,
   ) => Effect.Effect<RESTGetAPICurrentUserGuildsResult, DiscordGuildsError>;
-  /**
-   * Returns the complete list as Discord reported it within the last two
-   * seconds, sharing one Discord request between concurrent callers.
-   */
   readonly getFreshCompleteUserGuilds: (
     userId: string,
     discordId: string,
   ) => Effect.Effect<CompleteUserGuildsResult, DiscordGuildsError>;
-  /**
-   * Returns the cached complete list. A list older than 15 minutes is returned
-   * at once while a background request replaces it; only a user with no list
-   * cached within the last day waits for Discord.
-   */
   readonly getCachedCompleteUserGuilds: (
     userId: string,
     discordId: string,
@@ -109,28 +92,22 @@ const COMPLETE_GUILDS_LOCK_TTL_MS = 15000;
 
 const COMPLETE_GUILDS_MAX_AGE_MS = 15 * 60 * 1000;
 
-// A list past the max age is still shown while one background request
-// replaces it. The list only decides what is displayed; guild routes check
-// access themselves, and only a fresh list may deactivate members.
 const COMPLETE_GUILDS_STALE_TTL_SECONDS = 24 * 60 * 60;
 
 const COMPLETE_GUILDS_FRESH_MAX_AGE_MS = 2000;
 
-// Redlock's default contention retries for the plain list.
 const LOCK_WAIT: LockRetry = {
   retryCount: 3,
   retryDelay: 100,
   retryJitter: 50,
 };
 
-// A caller waits about 1.9 s for another caller's complete lookup.
 const COMPLETE_GUILDS_LOCK_WAIT: LockRetry = {
   retryCount: 18,
   retryDelay: 100,
   retryJitter: 0,
 };
 
-/** Another caller holds the lookup's lock for the whole wait budget. */
 class GuildsLockUnavailable extends TaggedErrorClass<GuildsLockUnavailable>()(
   "GuildsLockUnavailable",
   {},
@@ -419,17 +396,12 @@ export const makeDiscordUserGuildsClient = (dependencies: {
       );
   };
 
-  // Concurrent callers in this process share one lookup, which keeps running
-  // when a caller is interrupted. Registering the request and forking its
-  // lookup is uninterruptible, and the lookup settles the request on every
-  // exit, so an interrupted caller cannot leave an unresolved request behind.
   const fetchCompleteUserGuildsOnce = (
     identity: UserIdentity,
     maxAgeMs: number,
   ) =>
     Effect.uninterruptibleMask((restore) =>
       Effect.suspend(() => {
-        // A fresh caller must not reuse a lookup that accepts a cached list.
         const requestKey = `${getCompleteUserGuildsRequestKey(identity)}:${maxAgeMs}`;
         const inFlightRequest = completeUserGuildRequests.get(requestKey);
 
@@ -468,8 +440,6 @@ export const makeDiscordUserGuildsClient = (dependencies: {
     fetchCompleteUserGuildsOnce(identity, COMPLETE_GUILDS_MAX_AGE_MS).pipe(
       Effect.catch((error) =>
         Effect.gen(function* () {
-          // Once Discord rejects the user's authorization, the next request must
-          // surface that instead of showing the old list for another day.
           if (error instanceof AuthenticationRequiredError) {
             yield* redis.del(cacheKey).pipe(Effect.ignore);
           }

@@ -3,19 +3,12 @@ import { SKILL_EFFECT_TEMPLATES } from "@/lib/skills/skill-effect-templates";
 import { parseSkillRank, skillValueAt } from "@/lib/skills/skill-tree";
 import { formatDecimal } from "@lootlog/domain/locale";
 
-/**
- * How the game's skill window words one stat: its dictionary line and how
- * the value goes into it. `percent100` shows a fraction as a percentage,
- * `signed` adds a plus, and `pair` fills the line with both halves of `a/b`.
- */
 export type SkillEffectTemplate = {
   template: string;
   value: "plain" | "signed" | "percent100" | "pair";
-  /** The line names the value in percentage points after it. */
   percentPoints?: boolean;
 };
 
-// Stats the game words with "przez" before the turns instead of "na".
 const LASTING_STATS = new Set([
   "en-regen",
   "lightshield_per",
@@ -35,7 +28,6 @@ const TEMPLATES = new Map<string, SkillEffectTemplate>(
 const signed = (value: number) =>
   `${value >= 0 ? "+" : ""}${formatDecimal(value)}`;
 
-/** Polish takes one form for 1, another for 2–4 and a third from 5. */
 const pluralForm = (count: number) =>
   count === 1 ? "one" : count > 1 && count < 5 ? "few" : "many";
 
@@ -50,11 +42,6 @@ const shown = (raw: string, level: number | null) => {
   return value === undefined ? raw : formatDecimal(value);
 };
 
-/**
- * One stat of a rank as the game's skill window words it, with `*lvl`
- * values worked out for the level. A stat the game has no line for keeps
- * its raw name and value.
- */
 export const skillEffectLine = (
   key: string,
   raw: string,
@@ -108,7 +95,6 @@ export const skillEffectLine = (
   return `${text}${cooldown}${lasting}${perLevel}`.replace(/\s+/g, " ").trim();
 };
 
-/** Every stat of a rank as lines of the game's skill window. */
 export const skillEffectLines = (rank: string, level: number | null) =>
   [...parseSkillRank(rank)].map(([key, raw]) =>
     skillEffectLine(key, raw, level),

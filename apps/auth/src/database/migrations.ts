@@ -165,7 +165,6 @@ export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
     tracked.every(
       (entry, index) =>
         entry.hash === migrations[index]?.hash &&
-        // Legacy journals retain milliseconds; migration folder names have second precision.
         Math.floor(Number(entry.createdAt) / 1000) ===
           Math.floor((migrations[index]?.folderMillis ?? Number.NaN) / 1000),
     );
@@ -198,7 +197,6 @@ export const runAuthMigrations = Effect.fn("runAuthMigrations")(function* (
 ) {
   return yield* client.withTransaction(
     Effect.gen(function* () {
-      // Drizzle shares this transaction context; hold the lock through validation and DDL.
       yield* client.unsafe(
         "SELECT pg_advisory_xact_lock(hashtext('lootlog'), hashtext('auth-migrations'))",
       );

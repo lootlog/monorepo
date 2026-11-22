@@ -9,7 +9,6 @@ const ARIA_SORT_BY_DIRECTION = {
   desc: "descending",
 } as const;
 
-/** The `aria-sort` value for a column header; only the sorted column carries one. */
 export const getColumnAriaSort = (column: SortableColumn) => {
   const sortDirection = column.getIsSorted();
 

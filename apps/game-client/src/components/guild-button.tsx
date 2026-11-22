@@ -15,23 +15,15 @@ type GuildButtonProps = PropsWithChildren<{
   unreadLabel?: string | null;
 }>;
 
-/** Flush tiles divided by hairlines. */
 const STRIP_CLASS_NAME =
   "ll:group ll:rounded-none ll:border-0 ll:border-l ll:border-solid ll:border-gray-400/40 ll:bg-transparent ll:transition-[background-color] ll:motion-reduce:transition-none ll:hover:bg-white/5";
 
-/** The active tile carries a blue rule along its bottom edge. */
 const STRIP_SELECTED_CLASS_NAME =
   "ll:after:pointer-events-none ll:after:absolute ll:after:inset-x-0 ll:after:bottom-0 ll:after:h-0.5 ll:after:bg-blue-400";
 
-/**
- * Idle artwork is dimmed and desaturated until the tile is hovered, so the one
- * coloured icon reads as active. Only the avatar is filtered: the unread dot
- * sits above it and keeps its red.
- */
 const IDLE_AVATAR_CLASS_NAME =
   "ll:opacity-50 ll:grayscale ll:transition-[opacity,filter] ll:motion-reduce:transition-none ll:group-hover:opacity-100 ll:group-hover:grayscale-0";
 
-/** One tile of the guild switcher strip. */
 export const GuildButton: FC<GuildButtonProps> = ({
   isSelected,
   onClick,
@@ -64,8 +56,6 @@ export const GuildButton: FC<GuildButtonProps> = ({
         >
           {children}
         </Avatar>
-        {/* The dot stays inside the tile: the strip scrolls and clips anything
-            that reaches past the tile's edges. */}
         {unreadLabel ? (
           <span
             aria-hidden

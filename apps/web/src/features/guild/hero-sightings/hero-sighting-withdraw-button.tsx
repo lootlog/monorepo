@@ -15,10 +15,6 @@ type HeroSightingWithdrawButtonProps = {
   sighting: HeroSightingResponseDto;
 };
 
-/**
- * Removes a current sighting added by hand, for its author or an
- * administrator. A sighting a detector confirmed is the game's word and stays.
- */
 export const HeroSightingWithdrawButton = ({
   sighting,
 }: HeroSightingWithdrawButtonProps) => {

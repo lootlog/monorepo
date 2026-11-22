@@ -12,7 +12,6 @@ import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { selectNotificationMemberships } from "#src/notifications/rules/notification-matching.service";
 
-/** Every Organization named in the retained payload must still expose its source loot. */
 export const notificationLootSourceCondition = Effect.fnUntraced(function* (
   database: ApiDatabaseValue,
   discordId: string,
@@ -40,7 +39,6 @@ export const notificationLootSourceCondition = Effect.fnUntraced(function* (
   );
 
   const sourceGuildIds = sql`${notificationJobTable.payloadSnapshot}->'guildIds'`;
-  // Keep the indexed Loot.id uncast, and reject malformed legacy identifiers before casting.
   const sourceLootId = sql`CASE WHEN ${notificationJobTable.sourceEntityId} ~ '^[1-9][0-9]{0,9}$' THEN ${notificationJobTable.sourceEntityId}::bigint ELSE NULL END`;
 
   const visibleSources = guilds.map((guild) => {

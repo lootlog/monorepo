@@ -265,7 +265,6 @@ export function ReservationsSchedule() {
       ref={containerRef}
       className="relative flex h-full min-h-0 flex-col overflow-hidden max-md:overflow-clip"
     >
-      {/* The top bar names the spot; the page keeps one heading for it. */}
       <h1 className="sr-only">{spotName}</h1>
 
       {reservationsQuery.isPending || reservationsQuery.isError ? (

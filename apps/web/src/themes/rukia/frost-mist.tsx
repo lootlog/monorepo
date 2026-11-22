@@ -1,7 +1,6 @@
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import * as m from "framer-motion/m";
 
-// Frost mist that drifts across the bottom
 const mistLayers = [
   { y: "92%", duration: 40, delay: 0, opacity: 0.03 },
   { y: "95%", duration: 35, delay: 10, opacity: 0.045 },

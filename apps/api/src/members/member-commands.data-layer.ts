@@ -58,7 +58,6 @@ export interface MemberCommandsPorts {
   readonly recordStaleUse: (
     reason: MemberRefreshAttempt["status"],
   ) => Effect.Effect<void, unknown>;
-  /** Delivers member changes queued in the `MemberSyncDelivery` outbox. */
   readonly deliverMemberChanges: MemberDelivery["deliverAll"];
   readonly enqueueBulkRefresh: (
     data: MemberBulkRefreshJobData,
@@ -76,7 +75,6 @@ export interface MemberCommandsPorts {
 
 const failure = (cause: unknown) => new MembersOperationError({ cause });
 
-/** Only the caller's own Discord authorization can ask the caller to sign in again. */
 const callerFailure = (cause: unknown) =>
   Schema.is(ApplicationError)(cause) &&
   cause.kind === ApplicationErrorKind.AUTHENTICATION_REQUIRED
@@ -290,8 +288,6 @@ export const makeMembersDataLayer = (
               yield* transaction
                 .delete(memberToRoleTable)
                 .where(eq(memberToRoleTable.A, stored.id));
-              // A retry sees the member as deactivated, so the committed
-              // outbox row is what keeps its removal retryable.
               yield* queueMemberDeliveries(transaction, [stored.id], true);
 
               return { ...updated, roles: [] };
@@ -308,8 +304,6 @@ export const makeMembersDataLayer = (
           const { job, memberIds } = yield* database.transaction(
             (transaction) =>
               Effect.gen(function* () {
-                // Concurrent requests wait here, so only one of them can pass
-                // the cooldown check below and create a job.
                 yield* transaction
                   .select({ id: guildTable.id })
                   .from(guildTable)

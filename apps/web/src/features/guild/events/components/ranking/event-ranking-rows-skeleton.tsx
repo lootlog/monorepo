@@ -10,7 +10,6 @@ import { cn } from "cn";
 
 const RANKING_SKELETON_ROWS = 20;
 
-/** Stands in for the event's ranking: table rows, or tiles on phones. */
 export const EventRankingRowsSkeleton = () => (
   <TableRowsSkeleton
     rows={RANKING_SKELETON_ROWS}

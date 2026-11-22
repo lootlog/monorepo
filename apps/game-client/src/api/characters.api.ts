@@ -33,8 +33,6 @@ export type MargonemCharacter = {
   world?: string;
 };
 
-// Character lists arrive from both the public API and versioned browser caches.
-// Field aliases and casing are decoded below before producing MargonemCharacter.
 type RawCharacterData = Record<string, unknown>;
 
 const toStringOrNull = (value: unknown) => {
@@ -254,17 +252,13 @@ const getLocalStorageItem = (key: string): string | null => {
 const setLocalStorageItem = (key: string, value: string): void => {
   try {
     window.localStorage?.setItem(key, value);
-  } catch {
-    // Ignore quota/privacy errors; the API response can still be returned.
-  }
+  } catch {}
 };
 
 const removeLocalStorageItem = (key: string): void => {
   try {
     window.localStorage?.removeItem(key);
-  } catch {
-    // Ignore storage errors.
-  }
+  } catch {}
 };
 
 const getLocalStorageKeys = (): string[] => {
@@ -322,7 +316,6 @@ const sweepPersistentCharacterListCache = (now = Date.now()): void => {
     }
 
     if (now - parsed.cachedAt < 0) {
-      // A cache written by a clock ahead of this one can never age out.
       removeLocalStorageItem(key);
       continue;
     }
@@ -427,8 +420,6 @@ export async function fetchCharacterList({
   sweepPersistentCharacterListCache();
   const filteredCached = readMargonemCharacterListCache({ accountId, world });
 
-  // An unrecognized host has no edition API or edition cache; only the game's
-  // own cached list applies.
   if (gameVersion === null) return filteredCached;
 
   const options = { accountId, world, gameVersion };

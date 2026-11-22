@@ -3,7 +3,6 @@ import {
   discordPermissionFields,
   DiscordGuildSyncStatus,
 } from "@lootlog/schema/discord";
-/** Shared input and output schemas for the guilds feature. */
 import * as Schema from "effect/Schema";
 import {
   NonEmptyString,
@@ -33,8 +32,6 @@ export const OrganizationPermissionsResponse = Schema.Struct({
 type ManageableOrganizationResponse =
   typeof ManageableOrganizationResponse.Type;
 
-// Discord installation candidates may not have an Organization yet.
-// The current-user guild list supplies no owner ID or Lootlog configuration.
 const ManageableOrganizationResponse = Schema.Struct({
   id: Schema.String,
   name: Schema.String,

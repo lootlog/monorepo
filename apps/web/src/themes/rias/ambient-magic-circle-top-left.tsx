@@ -1,7 +1,6 @@
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import * as m from "framer-motion/m";
 
-// Second ambient magic circle - top left, counter-rotating
 export const AmbientMagicCircleTopLeft = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
 

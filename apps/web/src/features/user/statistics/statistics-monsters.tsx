@@ -48,7 +48,6 @@ export function StatisticsMonsters({ data, search }: StatisticsTabProps) {
   const { npcs } = data;
   const lootStats = useStatisticsLootStats(search);
 
-  // A boss's name, unlike its id, is the same in its kills and its loots.
   const dropsByMonster = new Map(
     lootStats.data?.monsters.map((monster) => [
       `${monster.world}:${monster.npc.name}`,

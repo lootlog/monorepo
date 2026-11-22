@@ -1,5 +1,4 @@
 import { BattleListMeta, BattlePagination } from "../shared.js";
-/** analytics transport definitions for battles. */
 import * as Schema from "effect/Schema";
 import { DateTimeString, FiniteNumber } from "@lootlog/schema/http-scalars";
 

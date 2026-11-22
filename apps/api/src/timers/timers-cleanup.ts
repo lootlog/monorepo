@@ -22,8 +22,6 @@ export const makeTimersCleanup = (
       sql`(${timerTable.npc}->>'margonemType')::int = ${TIMER_TYPES.CUSTOM_MANUAL}`,
     );
 
-    // Manual timers end with their window: the timer, deleted or not, and
-    // the history that could restore it are removed together.
     const deleted = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
         yield* transaction.delete(timerHistoryEntryTable).where(

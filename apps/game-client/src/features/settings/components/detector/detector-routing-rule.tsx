@@ -15,16 +15,12 @@ import { useId, type FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type DetectorRoutingRuleProps = {
-  /** 1-based position; the fallback name and the badge. */
   index: number;
   guilds: Guild[] | undefined;
-  /** Stored rule name; blank when the rule is unnamed. */
   name: string;
   minLevel: number;
   maxLevel: number;
-  /** Stored world filter; blank when the rule covers every world. */
   world: string;
-  /** World the player is on right now; offered as a one-click fill. */
   currentWorld?: string;
   selectedGuildIds: string[];
   onRemove: () => void;
@@ -34,11 +30,6 @@ type DetectorRoutingRuleProps = {
   onNameCommit: (name: string) => void;
 };
 
-/**
- * One delivery rule, always fully visible: a numbered header with the name,
- * the two match conditions side by side, and the Lootlogi grid under them.
- * A rule without a Lootlog warns right above the picker, where it is fixed.
- */
 export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
   index,
   guilds,
@@ -71,8 +62,6 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
     currentWorld.toLowerCase() !==
       normalizeRoutingRuleText(world)?.toLowerCase();
 
-  // World names are matched case-insensitively; show the game's lowercase
-  // value the way the world selector does.
   const currentWorldLabel = currentWorld
     ? toWorldOption(currentWorld).label
     : "";

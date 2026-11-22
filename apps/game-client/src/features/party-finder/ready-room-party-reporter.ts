@@ -36,7 +36,6 @@ const RETRY_DELAYS_MS = [1_000, 2_000];
 
 const READY_ROOM_PARTY_REQUEST_TIMEOUT_MS = 5_000;
 
-// Share the bounded request across remounts to avoid unnecessary CAS conflicts.
 let activeReport: Promise<void> | null = null;
 
 export function createReadyRoomPartyReporter(
@@ -59,8 +58,6 @@ export function createReadyRoomPartyReporter(
   function refreshObservation() {
     const observation = readObservation();
 
-    // Display fields and the organizer's map belong to the key; HP and the
-    // room revision do not.
     const key = observation
       ? JSON.stringify([
           observation.scope,
@@ -82,8 +79,6 @@ export function createReadyRoomPartyReporter(
         : null;
   }
 
-  // Viewers mark an observation stale after a fixed age, so re-report an
-  // unchanged party a heartbeat after the last report was sent.
   function scheduleHeartbeat(current: PendingObservation) {
     clearTimeout(heartbeatTimer);
     heartbeatTimer = setTimeout(
@@ -100,8 +95,6 @@ export function createReadyRoomPartyReporter(
     );
   }
 
-  // Responses for the same room scope are server truth and carry its newest
-  // revision, even when a newer roster has superseded the reported one.
   function isCurrentScope(current: PendingObservation) {
     return pending?.observation.scope === current.observation.scope;
   }
@@ -205,7 +198,6 @@ export function createReadyRoomPartyReporter(
       return;
     }
 
-    // A timeout releases this queue. expectedRevision fences the old server write.
     const request = report(pending);
     activeReport = request;
     void request.then(() => {

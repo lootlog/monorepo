@@ -13,35 +13,27 @@ import {
 import { auraScreenBox } from "./engine/layers";
 import type { AuraPlacement } from "./engine/placement";
 
-/** SI has no camera in the way: `#base` scrolls, so its pixels are map pixels. */
 const MAP_CAMERA = [0, 0] as const;
 
-/** An aura's layers and what they were last painted for. */
 type ShownLayers = {
   layers: LegacyAuraLayers;
-  place: AuraPlacement | null;
-  revision: number | null;
+  paintedPlace: AuraPlacement | null;
+  paintedRevision: number | null;
 };
 
 const shownLayers = new Map<string, ShownLayers>();
 
-/**
- * Whether the layers already show `shown`. An aura changes ten times a second and when
- * its character moves or takes another frame of its walk, so most animation frames find
- * the canvases as they should be. Resizing a layer clears it, which only a new
- * silhouette does.
- */
 function isPainted(
-  { place, revision }: ShownLayers,
+  { paintedPlace, paintedRevision }: ShownLayers,
   shown: ShownAura<LegacyAuraCharacter>,
 ): boolean {
   return (
-    place !== null &&
-    revision !== null &&
-    revision === shown.revision &&
-    place.silhouette === shown.place.silhouette &&
-    place.x === shown.place.x &&
-    place.y === shown.place.y
+    paintedPlace !== null &&
+    paintedRevision !== null &&
+    paintedRevision === shown.revision &&
+    paintedPlace.silhouette === shown.place.silhouette &&
+    paintedPlace.x === shown.place.x &&
+    paintedPlace.y === shown.place.y
   );
 }
 
@@ -62,7 +54,6 @@ function paintLayer(
   paint(context);
 }
 
-/** The night of an admin's arrival with a tall circle of light on them, in map pixels. */
 function arrivalBackground({ place, darkness, veil }: ShownArrival): string {
   const { bounds } = place.silhouette;
   const x = Math.round(place.x + bounds.x + bounds.w / 2);
@@ -73,11 +64,6 @@ function arrivalBackground({ place, darkness, veil }: ShownArrival): string {
   return `radial-gradient(ellipse 110px 210px at ${x}px ${y}px, rgba(${color},0) 19%, rgba(${color},${alpha}) 100%)`;
 }
 
-/**
- * The SI map: each aura gets a canvas under and one over its character's
- * element, sized to what the aura paints and redrawn on the animation frames
- * that change it.
- */
 const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
   getView: () => ({
     mapId: legacyAuraRuntimeAdapter.getMapId(),
@@ -95,7 +81,6 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
     return () => cancelAnimationFrame(frame);
   },
 
-  // Each layer is sized to its aura.
   isInView: () => true,
 
   present(key, shown) {
@@ -110,8 +95,8 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
     if (!layers) {
       layers = {
         layers: legacyAuraRuntimeAdapter.createLayers(),
-        place: null,
-        revision: null,
+        paintedPlace: null,
+        paintedRevision: null,
       };
       shownLayers.set(key, layers);
     }
@@ -125,8 +110,8 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
     );
 
     if (isPainted(layers, shown)) return;
-    layers.place = shown.place;
-    layers.revision = shown.revision;
+    layers.paintedPlace = shown.place;
+    layers.paintedRevision = shown.revision;
     paintLayer(back, box.x, box.y, shown.back);
     paintLayer(front, box.x, box.y, shown.front);
   },
@@ -139,9 +124,7 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
     legacyAuraRuntimeAdapter.removeLayers(layers.layers);
   },
 
-  // SI dims the map round the admin with a CSS gradient.
   presentArrival(arrival) {
-    // An effect only seen in bursts leaves the SI map as it is.
     if (!arrival || arrival.darkness <= 0) {
       veil.remove();
 

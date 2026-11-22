@@ -28,7 +28,6 @@ describe("posterizeAlpha", () => {
 
 describe("distanceField", () => {
   test("measures orthogonal and diagonal steps from the nearest solid pixel", () => {
-    // 5×5 with only the centre solid.
     const solid = Array.from({ length: 25 }, (_, i) => i === 12);
     const d = distanceField(solid, 5, 5);
     expect(d[12]).toBe(0);

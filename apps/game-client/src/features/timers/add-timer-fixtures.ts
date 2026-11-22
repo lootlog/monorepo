@@ -14,7 +14,6 @@ export const createAddTimerFixture = ({
   createStatus = 200,
 }: {
   npcResults?: SearchTimersNpcResponseDtoOutput[];
-  /** HTTP status the timer creation request answers with. */
   createStatus?: number;
 } = {}) => {
   const fixture = createTimerHttpFixture((request) =>

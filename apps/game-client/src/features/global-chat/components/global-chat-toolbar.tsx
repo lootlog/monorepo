@@ -25,9 +25,6 @@ type GlobalChatToolbarProps = {
   isAdmin: boolean;
 };
 
-/**
- * A shortcut to the shared channel, the channel switcher and its listeners.
- */
 export const GlobalChatToolbar = ({
   channel,
   worlds,

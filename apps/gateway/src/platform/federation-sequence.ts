@@ -1,11 +1,3 @@
-/**
- * Proves that a subscriber received every sequenced federation frame.
- *
- * Publishers take the next number from one Redis counter atomically with
- * PUBLISH, so a hole in the numbers is a lost frame. Delivery through
- * Dragonfly's threads may reorder frames, so a hole counts as a loss only when
- * it stays open for the reorder window.
- */
 export class FederationSequence {
   private contiguous: number | undefined;
   private readonly ahead = new Set<number>();
@@ -14,20 +6,13 @@ export class FederationSequence {
 
   constructor(private readonly reorderWindowMs: number) {}
 
-  /**
-   * Starts a subscription from the counter read after SUBSCRIBE. `pending`
-   * means the frames up to `published` must arrive within the reorder window.
-   */
   resume(published: number, now: number): "intact" | "pending" | "lost" {
-    // Nothing published before the first subscription can reach it.
     if (this.contiguous === undefined) {
       this.rebase(published);
 
       return "intact";
     }
 
-    // A counter below the last frame was reset with the Redis data. Frames
-    // numbered in the new epoch while this subscriber was away are unknown.
     if (published < this.contiguous) {
       this.rebase(published);
 
@@ -39,7 +24,6 @@ export class FederationSequence {
     return this.required === undefined ? "intact" : "pending";
   }
 
-  /** Records a frame. Returns whether it closed the last open hole. */
   observe(sequence: number, now: number): boolean {
     if (this.contiguous === undefined || sequence <= this.contiguous)
       return false;
@@ -61,10 +45,6 @@ export class FederationSequence {
     return true;
   }
 
-  /**
-   * Returns whether a hole outlived the reorder window. The frames are lost;
-   * tracking continues from the highest frame seen.
-   */
   expired(now: number): boolean {
     if (this.deadline === undefined || now < this.deadline) return false;
     this.rebase(

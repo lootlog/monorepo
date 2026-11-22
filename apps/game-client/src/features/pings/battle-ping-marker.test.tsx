@@ -3,7 +3,6 @@ import { afterAll, afterEach, beforeEach, expect, it, vi } from "vitest";
 import { useSettingsStore } from "@/store/settings.store";
 import { BattlePingMarker } from "./battle-ping-marker";
 
-/** jsdom has no Web Animations; the countdown is the only caller here. */
 const animate = vi.fn<() => { cancel: () => void }>(() => ({
   cancel: vi.fn<() => void>(),
 }));

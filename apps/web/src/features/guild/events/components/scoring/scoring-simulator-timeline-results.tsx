@@ -12,7 +12,6 @@ interface ScoringSimulatorTimelineResultsProps {
   rules: EventScoringRules;
 }
 
-/** Points of every simulated participant, each expandable to its breakdown. */
 export const ScoringSimulatorTimelineResults = ({
   result,
   rules,

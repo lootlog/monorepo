@@ -1,4 +1,3 @@
-/** Transport schemas of the admin API, which only the admin panel calls. */
 import {
   DateTimeString,
   NonNegativeSafeInteger,
@@ -8,13 +7,11 @@ import { PlatformRole } from "@lootlog/schema/platform-roles";
 import { Schema } from "effect";
 import { ADMIN_AUDIT_ACTIONS } from "#src/admin/audit";
 
-/** The panel's service credential and the operator's session cookie. */
 export const AdminHeaders = Schema.Struct({
   authorization: Schema.optionalKey(Schema.String),
   cookie: Schema.optionalKey(Schema.String),
 });
 
-/** The signed-in admin the panel acts for. */
 export const AdminOperator = Schema.Struct({
   userId: Schema.String,
   name: Schema.String,
@@ -22,7 +19,6 @@ export const AdminOperator = Schema.Struct({
 
 const AdminUserBan = Schema.Struct({
   reason: Schema.NullOr(Schema.String),
-  /** Null for a ban without an end. */
   expiresAt: Schema.NullOr(DateTimeString),
 }).annotate({ identifier: "AdminUserBan" });
 
@@ -34,7 +30,6 @@ export const AdminUser = Schema.Struct({
   discordId: Schema.String,
   createdAt: DateTimeString,
   roles: Schema.Array(PlatformRole),
-  /** Null unless a ban is in force; an expired ban is not one. */
   ban: Schema.NullOr(AdminUserBan),
   activeSessions: NonNegativeSafeInteger,
 }).annotate({ identifier: "AdminUser" });
@@ -66,7 +61,6 @@ export const AdminAuditEntry = Schema.Struct({
   actor: Schema.String,
   action: AdminAuditAction,
   targetUserId: Schema.NullOr(Schema.String),
-  /** The target's current name; null once the User is gone. */
   targetName: Schema.NullOr(Schema.String),
   details: Schema.NullOr(Schema.Record(Schema.String, Schema.Json)),
   createdAt: DateTimeString,
@@ -77,7 +71,6 @@ export type AdminAuditEntry = typeof AdminAuditEntry.Type;
 export const AdminUserParams = Schema.Struct({ id: Schema.NonEmptyString });
 
 export const AdminUsersQuery = Schema.Struct({
-  /** Part of a name or email, or a whole User or Discord id. */
   search: Schema.optionalKey(Schema.String.check(Schema.isMaxLength(100))),
   role: Schema.optionalKey(PlatformRole),
   banned: Schema.optionalKey(Schema.Boolean),
@@ -109,7 +102,6 @@ export const SetAdminUserRoles = Schema.Struct({
 
 export const BanAdminUser = Schema.Struct({
   reason: Schema.Trim.check(Schema.isMinLength(1), Schema.isMaxLength(500)),
-  /** Null bans until lifted. */
   expiresAt: Schema.NullOr(DateTimeString),
 }).annotate({ identifier: "BanAdminUser" });
 

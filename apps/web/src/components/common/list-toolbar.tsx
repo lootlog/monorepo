@@ -15,16 +15,9 @@ type ListToolbarProps = {
   label: string;
   clearLabel: string;
   disabled?: boolean;
-  /** Controls after the filter, such as filter pills or the list's actions. */
   children?: ReactNode;
 };
 
-/**
- * The first row of a tiled list: a borderless name filter that reads as part
- * of the list rather than a second global search, followed by the list's own
- * controls. It stays on top while the list scrolls, so it belongs directly in
- * the page scroller marked `data-under-top-bar`.
- */
 export const ListToolbar = ({
   search,
   onSearchChange,
@@ -43,8 +36,6 @@ export const ListToolbar = ({
       LIST_TILE_INSET_CLASS,
     )}
   >
-    {/* The bar's bottom rule lights up while the filter has focus; its
-        controls look as they do in a `FilterBar`. */}
     <FilterBarContext value>
       <InlineSearchField
         clearLabel={clearLabel}

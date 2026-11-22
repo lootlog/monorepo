@@ -12,7 +12,6 @@ import {
 
 const query = new QueryBuilder();
 
-/** The lifetime total columns named like the bucket `fields`. */
 const totalFields = <Fields extends Record<string, PgColumn>>(
   fields: Fields,
   total: PgTable,
@@ -24,10 +23,6 @@ const totalFields = <Fields extends Record<string, PgColumn>>(
   return mapValues(fields, (_column, name) => columns[name]) as Fields;
 };
 
-/**
- * Kill rows since `periodStart` (hourly buckets), or lifetime rows (one total
- * per key), with the same columns.
- */
 export const userKillSource = (periodStart?: Date) => {
   const { periodStart: start, ...fields } =
     getTableColumns(userKillBucketTable);

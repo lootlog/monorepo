@@ -4,7 +4,6 @@ import type { EmitterSpec } from "../particles";
 import type { PowerFire } from "../ascend";
 import { breathe, type AuraPreset } from "./preset";
 
-/** Gold fire: an orange bloom, a gold edge, a yellow body and a white-hot core. */
 const GOLD_FIRE: PowerFire["colors"] = [
   [255, 150, 20],
   [255, 180, 30],
@@ -12,7 +11,6 @@ const GOLD_FIRE: PowerFire["colors"] = [
   [255, 253, 222],
 ];
 
-/** What the warrior auras shed: energy racing up, pebbles lifting, sparks off the body. */
 const WARRIOR_EMITTERS: readonly EmitterSpec[] = [
   {
     kind: "mote",
@@ -55,10 +53,6 @@ const WARRIOR_EMITTERS: readonly EmitterSpec[] = [
   },
 ];
 
-/**
- * One of the warrior auras: a solid fire behind the character and the field of power
- * over the map. They differ in their fire, and in what `stage` overrides.
- */
 function warrior(
   id: CharacterAuraId,
   stage: Partial<AuraPreset> & Pick<AuraPreset, "description" | "fire">,
@@ -68,7 +62,6 @@ function warrior(
     tier: "mythic",
     sky: "power",
     herald: true,
-    // The fire is the whole look: no outline round the character.
     bare: true,
     particles: ["#ffffff", "#fff3a0", "#ffd83a", "#7a6a58", "#3a302a"],
     rim: "#fff3a0",
@@ -88,7 +81,6 @@ function warrior(
   };
 }
 
-/** The showcase: each takes over the whole map in its own way. */
 export const SHOWCASE_AURAS = {
   cosmos: {
     id: "cosmos",

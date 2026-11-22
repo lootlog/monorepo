@@ -32,7 +32,6 @@ export interface PingSender {
   readonly name: string;
 }
 
-/** The sender's verified game location, or null when it no longer matches the client's map. */
 export const getPingSender = (
   socket: GatewaySocket,
   expectedMapId: number,
@@ -56,12 +55,6 @@ export const getPingSender = (
   };
 };
 
-/**
- * Every Organization in which the sender may share pings with players of its
- * world, on one map or, without `mapId`, on any. Loot split choices ride the
- * same scope: a new topic would reach older clients in `session.joined`, which
- * they cannot decode.
- */
 export const getPingScopes = (
   socket: GatewaySocket,
   location: { readonly world: string; readonly mapId?: number },
@@ -81,10 +74,6 @@ export const getPingScopes = (
     return canSubscribe(socket.data, scope) ? [scope] : [];
   });
 
-/**
- * Records one ping in a sliding window and returns `[accepted, createdAt, retryAfterMs]`,
- * or null when Redis cannot decide, so the caller fails closed.
- */
 export const consumePingRateLimit = (
   redis: PingScriptStore,
   context: string,
@@ -130,12 +119,6 @@ type RelayRejection =
       readonly retryAfterMs: number;
     };
 
-/**
- * Consumes one relay from the sender's sliding window, then publishes it.
- * Redis or a failed publication rejects it as temporarily unavailable, so the
- * sender learns it was not delivered instead of losing the socket. Logs are
- * annotated only on failure, and no generator runs: relays are hot.
- */
 export const relayWithRateLimit = <Accepted>(options: {
   readonly redis: PingScriptStore;
   readonly context: string;

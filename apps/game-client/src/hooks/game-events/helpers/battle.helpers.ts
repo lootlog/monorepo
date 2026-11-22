@@ -5,8 +5,6 @@ import { useOthersStore } from "@/store/others.store";
 import type { BattleWarriorsWithAccountId } from "@/store/game-store/battle.store";
 import type { W } from "@lootlog/margonem/game-events";
 
-// Margonem passes raw hp fields through OneWarrior.updateWarrior without normalization.
-// Preserve numeric primitives verbatim; only parsed strings require finite results.
 export const parseNumericHpValue = (value: unknown) => {
   if (typeof value === "number") return value;
 
@@ -62,8 +60,6 @@ const getModernHpPercentage = (
   return undefined;
 };
 
-// Battle.js forwards each changed warrior to OneWarrior.updateWarrior, which
-// updates only supplied keys. This merger accepts those patches against current participants.
 export const mergeBattleWarriorPatches = (
   warriors: Readonly<Record<string, Partial<W[string]>>>,
   currentWarriors: BattleWarriorsWithAccountId,
@@ -104,8 +100,6 @@ export const mergeBattleWarriorPatches = (
 
     mergedWarriors[key] = mergedWarrior;
 
-    // Capture the map NPC once: its npcs_del can precede the battle or the
-    // fight loot, and the warrior alone has no template or Margonem type.
     if (key.startsWith("-")) {
       const runtimeId = mergedWarrior.originalId;
 

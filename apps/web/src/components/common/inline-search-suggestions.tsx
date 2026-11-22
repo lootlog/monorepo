@@ -1,24 +1,18 @@
 import { ComboboxContent } from "@lootlog/ui/components/combobox";
 import type { ReactNode, RefObject } from "react";
 
-/** The bar an `InlineSearchField` sits in, which its suggestions hang from. */
 const INLINE_SEARCH_BAR_ATTRIBUTE = "data-inline-search-bar";
 
-/** A suggestion row, ruled off and inset like a list tile. */
 export const INLINE_SEARCH_SUGGESTION_CLASS =
   "min-h-12 gap-3 rounded-none border-b border-sidebar-border px-3 last:border-b-0 data-highlighted:bg-muted/40 sm:px-4";
 
 const SUGGESTIONS_HEIGHT_PROPERTY = "--suggestions-height";
 
 type InlineSearchSuggestionsProps = {
-  /** The `InlineSearchField` the suggestions belong to. */
   anchor: RefObject<HTMLDivElement | null>;
-  /** A `ComboboxEmpty` and a `ComboboxList` of suggestion rows. */
   children: ReactNode;
 };
 
-// Spans the whole bar the field sits in and hangs from its bottom rule, so
-// the suggestions read as a band of the page rather than a floating card.
 const getBarAnchor = (field: HTMLDivElement | null) => {
   if (!field) return null;
 
@@ -30,8 +24,6 @@ const getBarAnchor = (field: HTMLDivElement | null) => {
   };
 };
 
-// Publishes the suggestions' height on the band, which transitions to it, so
-// the band grows and shrinks smoothly as the results change.
 const publishSuggestionsHeight = (content: HTMLDivElement | null) => {
   const band = content?.parentElement;
 
@@ -43,8 +35,6 @@ const publishSuggestionsHeight = (content: HTMLDivElement | null) => {
       `${content.offsetHeight}px`,
     );
 
-  // Measured before the first paint, so the band opens from its starting
-  // height to the suggestions, then again whenever they change.
   const observer = new ResizeObserver(measure);
 
   measure();
@@ -53,14 +43,12 @@ const publishSuggestionsHeight = (content: HTMLDivElement | null) => {
   return () => observer.disconnect();
 };
 
-/** The suggestions of an `InlineSearchField`, as a band under its bar. */
 export const InlineSearchSuggestions = ({
   anchor,
   children,
 }: InlineSearchSuggestionsProps) => (
   <ComboboxContent
     anchor={() => getBarAnchor(anchor.current)}
-    // Inside the page's scroll area, so its scrollbar stays on top.
     container={anchor.current?.closest<HTMLElement>(
       '[data-slot="scroll-area"]',
     )}

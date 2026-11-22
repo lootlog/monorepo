@@ -14,11 +14,6 @@ type TimerGridPopupsProps = {
   timersByKey: ReadonlyMap<string, TimerWithTimeLeft>;
 };
 
-/**
- * One tooltip and one context menu for every tile of the grid. A popup root
- * per tile cost each tile its own stores, timers and document listener on
- * mount, although a player opens at most one of them at a time.
- */
 export const TimerGridPopups = ({
   children,
   className,

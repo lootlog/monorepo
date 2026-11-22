@@ -4,11 +4,9 @@ import { useTranslation } from "react-i18next";
 
 type MemberEventMetaProps = {
   eventName: string;
-  /** The place in the shown hero's ranking; absent across several heroes. */
   rankingPlace?: { position: number; playerCount: number };
 };
 
-/** What a member's event page is about, for its `DetailBar`. */
 export const MemberEventMeta = ({
   eventName,
   rankingPlace,

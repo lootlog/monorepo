@@ -11,18 +11,11 @@ import { t } from "@/i18n/messages";
 
 type ItemElasticLevelSectionProps = {
   item: Pick<CatalogItemDtoOutput, "lvl" | "elasticLevel">;
-  /** The level it shows at. */
   level: number;
-  /** The character level typed to preview it at, which the set keeps. */
   previewLevel: number | undefined;
   onPreviewLevelChange: (level: number | undefined) => void;
 };
 
-/**
- * An elastic item's level: the one a typed character level would loot it
- * at, else the set's character's, else the level it shows at without one.
- * An item of fixed level has none.
- */
 export function ItemElasticLevelSection({
   item,
   level,

@@ -23,7 +23,6 @@ interface ProfessionWinRateChartProps {
   isLoading?: boolean;
 }
 
-/** Margonem's six professions, so the loading rows match the loaded list. */
 const PROFESSION_COUNT = 6;
 
 export function ProfessionWinRateChart({

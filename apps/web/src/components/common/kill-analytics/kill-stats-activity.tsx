@@ -9,11 +9,9 @@ import { useTranslation } from "react-i18next";
 
 type KillStatsActivityProps = {
   cells: GuildKillStatsResponseDtoOutputHourlyWeekdayItem[];
-  /** Defaults to the Organization's "Kiedy bijecie". */
   title?: string;
 };
 
-/** When kills happen: the weekday and hour rhythm in Polish time. */
 export const KillStatsActivity = ({ cells, title }: KillStatsActivityProps) => {
   const { t } = useTranslation();
   const heading = title ?? t("kills.activity.title");

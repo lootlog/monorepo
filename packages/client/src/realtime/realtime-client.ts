@@ -24,7 +24,6 @@ import { notifyListeners } from "./notify-listeners.js";
 
 export type CommandType = ClientCommand["type"];
 
-/** The data a command of `Type` sends. */
 export type CommandData<Type extends CommandType> = Extract<
   ClientCommand,
   { type: Type }
@@ -88,7 +87,6 @@ export class RealtimeRequestError extends Error {
   }
 }
 
-/** Whether the gateway refused a command for an Organization the session cannot access. */
 export const isOrganizationAccessDenied = (
   error: unknown,
 ): error is RealtimeRequestError =>
@@ -228,9 +226,6 @@ export class RealtimeClient {
     return () => this.heartbeatLatencyListeners.delete(listener);
   }
 
-  /**
-   * Measures the round trip now instead of at the next heartbeat.
-   */
   probeLatency(): void {
     if (this.stateValue !== "ready" || this.latencyProbeInFlight) return;
     const socket = this.socket;
@@ -241,7 +236,6 @@ export class RealtimeClient {
         if (this.socket === socket)
           this.setHeartbeatLatency(Math.round(performance.now() - startedAt));
       })
-      // Heartbeats own liveness; a lost probe leaves the last measurement.
       .catch(() => {})
       .finally(() => {
         this.latencyProbeInFlight = false;
@@ -357,8 +351,6 @@ export class RealtimeClient {
       if (this.socket !== socket) return;
       this.setState("connected");
 
-      // A synchronous observer suppresses only the default join. Explicit restore
-      // handlers can also refresh HTTP data or publish presence and must still run.
       if (
         this.joinData &&
         (this.rejoinHandler || this.stateValue === "connected")
@@ -389,8 +381,6 @@ export class RealtimeClient {
       if (this.socket !== socket) return;
       this.socket = null;
 
-      // Every session of a restarting replica closes within seconds; spread
-      // their rejoins and the HTTP resyncs that follow them.
       if (event.code !== undefined && SERVER_CLOSE_CODES.has(event.code))
         this.reconnectNotBeforeMs = Math.round(
           this.random() * REALTIME_SERVER_CLOSE_RECONNECT_WINDOW_MS,
@@ -416,8 +406,6 @@ export class RealtimeClient {
     if (pending?.socket === socket) {
       if (pending.key === key) return pending.promise;
 
-      // The game client can replace an unverified session with a proof-bearing
-      // join. Serialize that update instead of discarding its new credentials.
       return pending.promise.then(() => {
         if (this.socket !== socket || !this.connected)
           throw new Error("Realtime connection changed before queued join");
@@ -444,9 +432,6 @@ export class RealtimeClient {
     try {
       const result = await joined;
 
-      // Scopes change while their restore is in flight and are only sent
-      // directly once the session is ready, so repeat until the server holds
-      // exactly the current set.
       const restored = new Map<string, SubscriptionScope>();
 
       for (;;) {
@@ -487,7 +472,6 @@ export class RealtimeClient {
           this.clearReconnect();
         }
 
-        // A busy gateway spreads rejoins with the delay it asked for.
         if (error instanceof RealtimeRequestError && error.retryable)
           this.reconnectNotBeforeMs = error.retryAfterMs ?? 0;
 
@@ -617,8 +601,6 @@ export class RealtimeClient {
         return;
       }
 
-      // A publication can refresh this same session while its heartbeat is
-      // in flight. Keep the publication's heartbeat schedule and lifetime.
       const isStaleHeartbeat = () =>
         this.socket !== socket ||
         this.presenceSessionId !== sessionId ||
@@ -639,8 +621,6 @@ export class RealtimeClient {
           if (isStaleHeartbeat()) return;
           this.setHeartbeatLatency(null);
 
-          // Correlated retryable responses prove the transport is alive. Back off
-          // on the same session while its last successful refresh is still valid.
           if (error instanceof RealtimeRequestError && error.retryable) {
             const retryDelay = Math.max(
               Math.round(

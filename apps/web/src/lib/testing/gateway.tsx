@@ -10,7 +10,6 @@ import type { PropsWithChildren } from "react";
 import { GatewayClient } from "@/lib/gateway-client";
 import { GatewayContext } from "@/contexts/gateway-context";
 
-/** Builds the access policy the gateway sends for a member of these Organizations. */
 export const createTestAccessPolicy = (
   organizationIds: readonly string[],
   permissions: Permission[] = [],

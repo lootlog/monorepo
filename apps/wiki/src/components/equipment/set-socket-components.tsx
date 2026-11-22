@@ -15,7 +15,6 @@ import { useWornItems } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 import { formatGold } from "@/lib/upgrade-cost-format";
 
-/** The chosen symbol among those the socket takes; none when it takes none. */
 const findChosenSymbol = (
   options: ReadonlyArray<{ bonus: string; symbolId: number }>,
   bonus: string | undefined,
@@ -28,11 +27,6 @@ const findChosenSymbol = (
 const EMPTY_STATE =
   "rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground";
 
-/**
- * What the symbols chosen for the worn items' sockets take: the components
- * of every recipe added up, the fusions and their gold, then each socketed
- * item with its symbol.
- */
 export function SetSocketComponents() {
   const wornItems = useWornItems();
   const itemsById = useSocketItems();
@@ -56,7 +50,6 @@ export function SetSocketComponents() {
 
   const symbols = rows.flatMap(({ symbol }) => (symbol ? [symbol] : []));
 
-  // Each component once, by range and kind, with what every recipe takes of it.
   const components = sortBy(
     Object.entries(
       groupBy(

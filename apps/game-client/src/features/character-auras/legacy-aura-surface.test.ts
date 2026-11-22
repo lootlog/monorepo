@@ -11,8 +11,11 @@ let pendingFrame: FrameRequestCallback | null = null;
 
 let now = 0;
 
-/** One animation frame, a tenth of a second (an aura's tick) after the last by default. */
-function playFrame(elapsed = 100): void {
+const AURA_TICK_MS = 100;
+
+const FRAME_MS = 16;
+
+function playFrame(elapsed = AURA_TICK_MS): void {
   now += elapsed;
   const frame = pendingFrame;
   pendingFrame = null;
@@ -106,20 +109,22 @@ it("repaints an SI aura between its ticks only once the player moves", () => {
     throw new Error("The aura layer is not beside the player");
   }
 
-  // A mark in the layer's empty corner lasts until the layer is painted again.
   const context = back.getContext("2d");
-  const marked = () => context?.getImageData(0, 0, 1, 1).data[3] === 255;
+
+  const cornerMarkSurvives = () =>
+    context?.getImageData(0, 0, 1, 1).data[3] === 255;
+
   context?.setTransform(1, 0, 0, 1, 0, 0);
   context?.fillRect(0, 0, 1, 1);
 
-  playFrame(16);
-  playFrame(16);
+  playFrame(FRAME_MS);
+  playFrame(FRAME_MS);
 
-  expect(marked()).toBe(true);
+  expect(cornerMarkSurvives()).toBe(true);
 
   element.style.left = `${Number.parseFloat(element.style.left) + 4}px`;
-  playFrame(16);
+  playFrame(FRAME_MS);
 
-  expect(marked()).toBe(false);
+  expect(cornerMarkSurvives()).toBe(false);
   expect(painted(back)).toBe(true);
 });

@@ -22,7 +22,6 @@ type LogsRequestRowProps = {
   onCopy: (request: LoggedApiRequest) => void;
 };
 
-/** One API request row of an expanded action plus its payload/response detail row. */
 export const LogsRequestRow: FC<LogsRequestRowProps> = ({
   request,
   onCopy,

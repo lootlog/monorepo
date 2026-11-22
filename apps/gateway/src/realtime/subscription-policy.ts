@@ -9,23 +9,14 @@ type Topic = typeof RealtimeLogicalTopic.Type;
 
 type Scope = typeof SubscriptionScope.Type;
 
-/**
- * The identity and Organization grants that every permission check reads. A
- * game session also brings the Organizations it publishes its presence to.
- */
 export type PermissionViewer = Pick<SessionData, "discordId" | "guilds"> &
   Partial<Pick<SessionData, "platform" | "presence">>;
 
-/** Permissions that reveal where other players are. */
 export const PRESENCE_PERMISSIONS: ReadonlySet<Permission> = new Set([
   Permission.LOOTLOG_ONLINE_PLAYERS_READ,
   Permission.LOOTLOG_PRESENCE_LOCATION_READ,
 ]);
 
-/**
- * A character in game sees other players of a Lootlog only while it is
- * visible there itself, so nobody can watch a Lootlog incognito.
- */
 export const publishesPresenceTo = (
   viewer: PermissionViewer,
   organizationId: string,
@@ -49,13 +40,9 @@ const TOPIC_PERMISSION = new Map<Topic, Permission>([
 
 interface PermissionIndex {
   readonly discordId: string;
-  /** `true` grants every permission: the owner and ADMIN roles. */
   readonly organizations: ReadonlyMap<string, ReadonlySet<Permission> | true>;
 }
 
-// Delivery checks every socket of an audience for each event. Sessions
-// replace their grants array on every access change, so the array identity
-// keys a precomputed lookup that cannot outlive the grants it describes.
 const permissionIndexes = new WeakMap<
   PermissionViewer["guilds"],
   PermissionIndex
@@ -110,12 +97,9 @@ export const canSubscribe = (session: SessionData, scope: Scope): boolean => {
   if (!organizationId) {
     if (session.apiKeyAccess) return false;
 
-    // Any Member of any Organization reads the global chat in the Game client;
-    // a world's channel is followed one world at a time.
     if (scope.topic === "global.chat")
       return session.platform === "game" && session.guilds.length > 0;
 
-    // Only a client that understands aura changes may receive them.
     if (scope.topic === "global.character-auras")
       return session.platform === "game" && session.characterAuras === true;
 

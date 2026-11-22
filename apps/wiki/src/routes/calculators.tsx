@@ -47,7 +47,6 @@ function CalculatorsRoute() {
   const current = calculator ?? DEFAULT_CALCULATOR;
   const Calculator = CALCULATORS[current];
 
-  // Links shared when every calculator had its own anchor open that one.
   useEffect(() => {
     const anchor = decodeURIComponent(window.location.hash.slice(1));
 

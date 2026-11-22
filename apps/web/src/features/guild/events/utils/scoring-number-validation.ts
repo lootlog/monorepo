@@ -6,11 +6,8 @@ import type { GroupSizeRange } from "@lootlog/domain/scoring-presence";
 import { Schema } from "effect";
 
 export type ScoringNumberBounds = {
-  /** Inclusive upper bound; a bound of 100 reads as a percentage. */
   max?: number;
-  /** People and seconds are whole numbers. */
   integer?: boolean;
-  /** Inclusive lower bound, 0 by default. */
   min?: number;
 };
 
@@ -55,10 +52,6 @@ function scoringNumberSchema({
   );
 }
 
-/**
- * The first problem with a scoring number, as an i18n key. A form field typed
- * for any condition value may hold a boolean, which is not a number.
- */
 export function getScoringNumberError(
   value: number | boolean,
   bounds?: ScoringNumberBounds,
@@ -68,7 +61,6 @@ export function getScoringNumberError(
   return "issues" in result ? result.issues?.[0]?.message : undefined;
 }
 
-/** An inverted `BETWEEN` range ("od 4 do 2 osób") is rejected. */
 export const getGroupSizeRangeError = (size: GroupSizeRange) =>
   size.comparison === "BETWEEN" && size.to < size.value
     ? "events.scoring.validation.invertedRange"

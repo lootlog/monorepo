@@ -4,7 +4,6 @@ import { TruncatedText } from "@/components/truncated-text";
 import { t } from "@/i18n/messages";
 import { npcPageParams } from "@/lib/catalog-links";
 
-/** The monster the item drops from, preferring one that still drops it. */
 export function ItemSource({ item }: { item: CatalogItemDtoOutput }) {
   const source =
     item.droppedBy.find(({ retired }) => !retired) ?? item.droppedBy[0];

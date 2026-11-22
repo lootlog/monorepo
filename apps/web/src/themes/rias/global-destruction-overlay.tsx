@@ -7,7 +7,6 @@ import { AmbientMagicCircleTopLeft } from "./ambient-magic-circle-top-left";
 import { DestructionVignette } from "./destruction-vignette";
 import { DestructionFlow } from "./destruction-flow";
 
-// Global ambient destruction overlay for the entire app
 export const GlobalDestructionOverlay = () => (
   <m.div
     className="fixed inset-0 pointer-events-none z-50 overflow-hidden"

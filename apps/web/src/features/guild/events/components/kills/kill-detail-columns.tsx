@@ -8,11 +8,6 @@ type KillDetailColumnsProps = {
   loots: ReactNode;
 };
 
-/**
- * Who took part and how the maps were covered beside the scoring rules and
- * the kill's loots. Narrower pages read participants, rules, loots, then the
- * long map table.
- */
 export const KillDetailColumns = ({
   participants,
   maps,

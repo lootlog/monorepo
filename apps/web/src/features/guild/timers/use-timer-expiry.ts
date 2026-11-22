@@ -4,15 +4,8 @@ import type { TimerResponseDto } from "@lootlog/client/main";
 import { getTimerIdentityKey, getTimerRemovalAt } from "@lootlog/domain/timers";
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 
-// A response reflects expiries that preceded its evaluation on the server,
-// which can lag its receipt by the request's latency.
 const RESPONSE_LATENCY_ALLOWANCE_MS = 60_000;
 
-/**
- * Refetches the timer lists under `queryKey` once one of their timers has been
- * past its maximum spawn time for the removal delay, when the game client drops
- * it too; the server then keeps only the timers the player pinned.
- */
 export function useTimerExpiry(
   timers:
     | Pick<

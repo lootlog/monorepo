@@ -21,7 +21,6 @@ const decodeCachedList = Schema.decodeUnknownSync(
   ),
 );
 
-// Bun's Response body stream is typed apart from the one REST declares.
 const discordResponse = (
   guilds: ReadonlyArray<{ readonly id: string }>,
 ): ResponseLike => {
@@ -57,7 +56,6 @@ describe("Discord user guild list cache against Dragonfly", () => {
 
   afterAll(() => redisRuntime.dispose());
 
-  // Everything but Discord's HTTP answer is the production wiring.
   const setUp = async (discord: REST["queueRequest"]) => {
     const identity = { userId: crypto.randomUUID(), discordId: "discord-1" };
     const cacheKey = getCompleteUserGuildsCacheKey(identity);
@@ -128,8 +126,6 @@ describe("Discord user guild list cache against Dragonfly", () => {
       client.getCachedCompleteUserGuilds(identity.userId, identity.discordId),
     );
 
-    // Discord has not answered yet. A fresh flag here would let the caller
-    // deactivate memberships from a list that may predate a join.
     expect(result.guilds.map(({ id }) => id)).toEqual(["left-guild"]);
     expect(result.fresh).toBe(false);
     expect(result.stale).toBe(true);

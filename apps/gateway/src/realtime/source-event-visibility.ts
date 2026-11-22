@@ -37,7 +37,6 @@ const canReadLootSource = (
       ? [Permission.OWNER]
       : guild.roles.flatMap((role) => role.permissions);
 
-  // Kill aggregates allow administrators; loot visibility only bypasses for owners.
   if (
     allowAdministrator &&
     permissions.some(
@@ -77,11 +76,9 @@ export const findEventGuild = (
     ? undefined
     : session.guilds.find((entry) => entry.guild.id === organizationId);
 
-/** Game clients receive their own features' events; web and API key sessions do not. */
 const isGameSession = (session: SessionData): boolean =>
   session.platform === "game";
 
-/** The Web app reads each new loot once, as `loot.snapshot`; others read `loot.created`. */
 const readsLootSnapshots = (session: SessionData): boolean =>
   session.platform === "web-app" && !session.apiKeyAccess;
 
@@ -98,7 +95,6 @@ const canReadLootEvent = (
   return canReadLootSource(session, guild, npcs, false);
 };
 
-/** Game client events whose routing scope or payload already decides who reads them. */
 const GAME_CLIENT_EVENTS: ReadonlySet<Event["type"]> = new Set([
   "battle-ping.received",
   "loot-split.received",
@@ -110,7 +106,6 @@ const GAME_CLIENT_EVENTS: ReadonlySet<Event["type"]> = new Set([
   "global-chat.stats",
 ]);
 
-/** Game client events that are also filtered by the Organization's NPC access. */
 const GAME_CLIENT_NPC_EVENTS: ReadonlySet<Event["type"]> = new Set([
   "party-gathering.state-updated",
   "npc-presence.updated",
@@ -140,11 +135,8 @@ export const prepareSourceEventVisibility = (
     if (GAME_CLIENT_NPC_EVENTS.has(event.type) && !isGameSession(session))
       return false;
 
-    // API keys never read it; `canReadApiKey` already refused them.
     if (event.type === "notification.volunteer") return true;
 
-    // Only the Web app shows personal kill statistics, and a bundle loaded
-    // before the event existed would reject it and disconnect.
     if (event.type === "kill-stats.changed")
       return session.platform === "web-app" && session.killStats === true;
 

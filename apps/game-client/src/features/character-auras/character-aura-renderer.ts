@@ -7,66 +7,41 @@ import { Aura } from "./engine/render";
 import type { AuraPlacement } from "./engine/placement";
 import { SilhouetteCache } from "./engine/silhouette";
 
-/** The key of the hero among the drawn characters; others use their character id. */
 export const HERO_AURA_KEY = "hero";
 
-/** Consecutive failing frames (about two seconds) before a step gives up for the session. */
 const MAX_FAILURES = 120;
 
-/**
- * Each new aura's tick phase moves on by this fraction, so any number of auras keep
- * their tick renders on different frames.
- */
 const GOLDEN_RATIO = (Math.sqrt(5) - 1) / 2;
 
-/** The failure key of the per-frame work shared by every aura. */
 const FRAME_KEY = "*";
 
-/** The map an aura is drawn on and its camera: particle space minus screen space. */
 export type AuraView = { mapId?: number; camera: readonly [number, number] };
 
-/** Paints one side of an aura into a context whose origin is the screen's. */
 export type AuraPaint = (context: CanvasRenderingContext2D) => void;
 
-/** An aura shown this frame: its character, where it goes and its two sides. */
 export type ShownAura<C extends RuntimeAuraCharacter> = {
   character: C;
   place: AuraPlacement;
-  /** `Aura.paintRevision`: the same while both sides paint the same at an unchanged place. */
   revision: number | null;
   back: AuraPaint;
   front: AuraPaint;
 };
 
-/**
- * An aura's effects over the whole map (an admin's arrival, a storm): where its character
- * is, how dark the map gets and how to paint it.
- */
 export type ShownArrival = {
   place: AuraPlacement;
-  /** 0..1. */
   darkness: number;
-  /** What the map is dimmed with, where a surface can only lay a flat veil over it. */
   veil: readonly [number, number, number];
-  /** Paints the arrival over the whole map into a context whose origin is the screen's. */
   paint: AuraPaint;
 };
 
-/** Where auras are drawn: the NI canvas or the SI map elements. */
 export interface CharacterAuraSurface<C extends RuntimeAuraCharacter> {
-  /** The current map, or null while it is not drawn. */
   getView(): AuraView | null;
   getHero(): C | null;
   getOther(characterId: string): C | null;
-  /** Calls `onFrame` once per drawn frame until unsubscribed. */
   subscribeFrame(onFrame: () => void): (() => void) | null;
-  /** Whether an aura at `place` lands on what `context` draws. */
   isInView(place: AuraPlacement, context: CanvasRenderingContext2D): boolean;
-  /** Shows the aura of `key` this frame, or hides it when null. */
   present(key: string, shown: ShownAura<C> | null): void;
-  /** Forgets everything shown for `key`. */
   release(key: string): void;
-  /** Shows an aura's effects over the whole map this frame, or hides them when null. */
   presentArrival(arrival: ShownArrival | null): void;
 }
 
@@ -78,31 +53,21 @@ type DrawnAura = {
   arrival: AuraPaint;
 };
 
-/**
- * Draws auras on a surface just under and over their characters, once per
- * frame. Only characters with an aura cost any work: the hero when it wears
- * one and the others whose account shows one.
- */
 export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
   private targets: ReadonlyMap<string, CharacterAuraId> = new Map();
-  /** How many other characters' auras are drawn, nearest the hero first; null for all. */
   private othersLimit: number | null = null;
   private readonly drawn = new Map<string, DrawnAura>();
   private readonly silhouettes = new SilhouetteCache();
   private unsubscribe: (() => void) | null = null;
   private mapId: number | undefined;
   private last = 0;
-  /** Auras created so far, which spreads their tick phases. */
   private created = 0;
-  /** Consecutive failures by `FRAME_KEY`, aura key or one of its two draws. */
   private readonly failures = new Map<string, number>();
-  /** Auras that kept failing and are no longer drawn. */
   private readonly disabled = new Set<string>();
   private broken = false;
 
   constructor(private readonly surface: CharacterAuraSurface<C>) {}
 
-  /** Characters to draw an aura on, by `HERO_AURA_KEY` or character id. */
   setTargets(targets: ReadonlyMap<string, CharacterAuraId>): void {
     this.targets = targets;
 
@@ -121,7 +86,6 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     this.unsubscribe = this.surface.subscribeFrame(this.onFrame);
   }
 
-  /** Draws only the `limit` other auras nearest the hero, or every aura when null. */
   setOthersLimit(limit: number | null): void {
     this.othersLimit = limit;
   }
@@ -144,12 +108,6 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
 
   private readonly onFrame = (): void => this.drawFrame();
 
-  // Errors never leave the game's frame loop or renderer. A passing one (a
-  // map change, a sprite still loading) skips the step. A long unbroken run
-  // turns off only what keeps failing: one aura (a character the adapter
-  // cannot read), or every aura when the shared frame work fails (a game
-  // build the adapter no longer matches). Each step counts on its own, so
-  // one that succeeds every frame cannot reset another that always fails.
   private guard<T>(key: string, step: () => T, counter = key): T | undefined {
     if (this.broken || this.disabled.has(key)) return undefined;
 
@@ -205,10 +163,6 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     this.surface.presentArrival(this.darkestArrival());
   }
 
-  /**
-   * The one aura whose effects go over the whole map this frame: of those that have
-   * any, the one dimming the map most.
-   */
   private darkestArrival(): ShownArrival | null {
     let darkest: ShownArrival | null = null;
 
@@ -230,10 +184,6 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     return darkest;
   }
 
-  /**
-   * The targets drawn this frame: all, or the hero, every admin aura (meant to be seen
-   * across the map) and the others nearest the hero.
-   */
   private shownTargets(
     view: AuraView | null,
   ): ReadonlyMap<string, CharacterAuraId> {
@@ -286,7 +236,6 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
   private currentView(): AuraView | null {
     const view = this.surface.getView();
 
-    // Particles live in map pixels; a new map starts every aura over.
     if (view && view.mapId !== this.mapId) {
       this.mapId = view.mapId;
       this.dropAll();
@@ -359,7 +308,6 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
           },
           `${key}:front`,
         ),
-      // The context's transform scales by the game's zoom.
       arrival: (context) =>
         this.guard(
           key,
@@ -383,11 +331,6 @@ export class CharacterAuraRenderer<C extends RuntimeAuraCharacter> {
     return drawn;
   }
 
-  /**
-   * Where the aura goes this frame. A frame whose silhouette waits for a later frame's build
-   * budget keeps the last one, which matches but for a step of the walk; an aura with none yet
-   * waits unseen.
-   */
   private placement(
     { frame, feetHeight }: RuntimeAuraCharacter,
     [viewX, viewY]: readonly [number, number],

@@ -9,10 +9,6 @@ import { TextLink } from "@lootlog/ui/components/text-link";
 import { t } from "@/i18n/messages";
 import { MECHANICS_DOCUMENTATION_URL } from "@/lib/calculators";
 
-/**
- * The day drop rates are counted from, and how they are counted, folded away,
- * with the game's rules they follow and where to report a mistake.
- */
 export function DropRateMethod() {
   return (
     <Collapsible className="flex max-w-3xl flex-col gap-2">

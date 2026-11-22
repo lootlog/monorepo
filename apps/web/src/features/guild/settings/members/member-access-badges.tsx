@@ -10,7 +10,6 @@ type MemberAccessBadgesProps = {
   isOnlineInGame: boolean;
 };
 
-/** Whether a member has access, and where they are online right now. */
 export const MemberAccessBadges = ({
   accessState,
   isOnlineOnWeb,

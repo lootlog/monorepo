@@ -7,7 +7,6 @@ import {
 
 const noop = () => undefined;
 
-// The game's hook pushes its moderation entry; Other.js then shows the menu.
 const installOthers = () => {
   const others = {
     getById: (id: string | number) =>
@@ -23,7 +22,6 @@ const installOthers = () => {
   return others;
 };
 
-// The wrapper replaces the hook on the same object the game calls it on.
 const openMenu = (others: ReturnType<typeof installOthers>, id: string) => {
   const menu: RuntimeMenuEntry[] = [];
 
@@ -49,7 +47,6 @@ describe("other menu runtime", () => {
 
     expect(openMenu(others, "7")).toEqual(["MC Panel", "Nadaj aurę"]);
     expect(seen).toEqual(["3001/7"]);
-    // A player who left the map has no account to act on.
     expect(openMenu(others, "8")).toEqual(["MC Panel"]);
   });
 

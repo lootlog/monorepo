@@ -26,11 +26,6 @@ export const normalizeGuildDocEditorContent = (
     () => EMPTY_GUILD_DOC_EDITOR_CONTENT,
   );
 
-/**
- * Lexical serializes optional node fields as explicit `undefined`, which is not
- * valid JSON. Round-tripping through JSON drops them, so the draft holds the
- * exact document that gets persisted and compared against the saved revision.
- */
 export const serializeGuildDocEditorState = (
   state: SerializedEditorState,
 ): GuildDocEditorContent | null =>

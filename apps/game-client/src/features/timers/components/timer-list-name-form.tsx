@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 const TIMER_LIST_NAME_MAX_LENGTH = 32;
 
 type TimerListNameFormProps = {
-  /** Current name when renaming; a create form starts empty and clears after each list. */
   defaultName?: string;
   placeholder: string;
   "aria-label": string;
@@ -14,7 +13,6 @@ type TimerListNameFormProps = {
   onSubmit: (name: string) => void;
 };
 
-/** Names a timer list; Enter submits, and a blank name is not accepted. */
 export const TimerListNameForm: FC<TimerListNameFormProps> = ({
   defaultName,
   placeholder,
@@ -45,7 +43,6 @@ export const TimerListNameForm: FC<TimerListNameFormProps> = ({
         maxLength={TIMER_LIST_NAME_MAX_LENGTH}
         autoFocus={autoFocus}
         className="ll:min-w-0 ll:flex-1"
-        // A rename starts with the current name selected, ready to be retyped.
         onFocus={(event) => event.currentTarget.select()}
         onChange={(event) => setName(event.target.value)}
       />

@@ -1,7 +1,6 @@
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import * as m from "framer-motion/m";
 
-// Ambient magic circle watermark
 export const AmbientMagicCircle = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -51,7 +50,6 @@ export const AmbientMagicCircle = () => {
           strokeWidth="0.8"
           fill="none"
         />
-        {/* Inner hexagon */}
         <polygon
           points="100,45 130,65 130,95 100,115 70,95 70,65"
           stroke="rgba(200, 30, 60, 0.4)"

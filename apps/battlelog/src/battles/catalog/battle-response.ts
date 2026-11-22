@@ -1,8 +1,5 @@
 import { CursorPaginationSchema } from "#src/battles/analytics/pagination";
-import {
-  DateTimeString,
-  type DeepMutable,
-} from "#src/battles/battle-response-types";
+import { DateTimeString } from "#src/battles/battle-response-types";
 import { Schema, Struct } from "effect";
 
 const BattleStatisticEntrySchema = Schema.Struct({
@@ -286,7 +283,6 @@ const BattleTimelineTurnResponseSchema = Schema.Struct({
   reason: Schema.String,
 });
 
-// Public links are read without signing in, so they carry no uploader identity.
 const PublicBattleResponseSchema = BattleResponseSchema.mapFields(
   Struct.omit(["userId"]),
 );

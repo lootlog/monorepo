@@ -4,11 +4,6 @@ import {
   type RuntimeFunction,
 } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 
-/**
- * The item a tip is built for: an NI `Item` instance or an SI `g.item` entry.
- * Both carry the item packet fields. NI suffixes the id of an item shown in
- * another player's equipment with `-showeq` and sets `own` to that player.
- */
 export type RuntimeTipItem = {
   id?: unknown;
   cl?: unknown;
@@ -20,9 +15,7 @@ export type RuntimeTipItem = {
 };
 
 type ItemTipRuntimeWindow = Window & {
-  // Both interfaces build item tip html with the shared TipsParser script.
   MargoTipsParser?: { getTip?: unknown };
-  // SI caches each item's tip html in `g.item[id].tip` and `#item{id}[tip]`.
   g?: { item?: Record<string, RuntimeTipItem | undefined> };
   itemTip?: (item: RuntimeTipItem, nosafe?: boolean) => string;
   hero?: { id?: unknown };
@@ -34,19 +27,8 @@ type ItemTipRuntimeWindow = Window & {
 
 const getRuntimeWindow = (): ItemTipRuntimeWindow => window;
 
-/** The equipment slot of the main weapon in both interfaces. */
 const MAIN_WEAPON_ST = 5;
 
-/**
- * Wraps the shared item tip builder so `extend` can append html. The game
- * calls `MargoTipsParser.getTip(item, cmpStats)`; the wrapper keeps the
- * receiver, arguments and return value, and a failing `extend` leaves the
- * game's html unchanged. Returns null while the parser is not loaded.
- *
- * Another addon may wrap `getTip` on top of this wrapper, which then cannot
- * be unwrapped. Restoring therefore also turns it into a pass-through, so a
- * reinstalled wrapper does not extend the same tip twice.
- */
 const isTipHtml = (value: unknown): value is string =>
   typeof value === "string";
 
@@ -84,7 +66,6 @@ export function wrapItemTipBuilder(
   };
 }
 
-/** The unique id of the main weapon the hero wears, if any. */
 export function getHeroMainWeaponItemId(): string | null {
   const runtimeWindow = getRuntimeWindow();
   const engine = runtimeWindow.Engine;
@@ -110,18 +91,12 @@ export function getHeroMainWeaponItemId(): string | null {
   return null;
 }
 
-/** The item's unique id without NI's `-showeq` view suffix. */
 export function getItemId(item: RuntimeTipItem): string | null {
   const id = Number.parseInt(String(item.id), 10);
 
   return Number.isSafeInteger(id) && id > 0 ? String(id) : null;
 }
 
-/**
- * Rebuilds the cached tip html of items whose tooltip content changed. NI
- * items rebuild their own tip, which every view of the item shares; SI keeps
- * the html in the item and in the `tip` attribute of each of its elements.
- */
 export function refreshItemTips(items: Iterable<RuntimeTipItem>): void {
   const runtimeWindow = getRuntimeWindow();
 
@@ -149,7 +124,6 @@ export function refreshItemTips(items: Iterable<RuntimeTipItem>): void {
   }
 }
 
-/** The hero's item with this id, in either interface. */
 export function getHeroItem(itemId: string): RuntimeTipItem | undefined {
   const runtimeWindow = getRuntimeWindow();
 

@@ -18,10 +18,6 @@ import {
 } from "@/themes/adapters";
 import { useThemeMeta } from "@/themes/use-theme-meta";
 
-// A group that appears after the first render (once the access policy allows
-// it) draws its rule and then lets its items follow one by one. Groups present
-// on the first render stay still, because CollapsePresence skips initial
-// animations.
 const groupVariants: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
@@ -64,8 +60,6 @@ export const SidebarNav = ({
       .map((item) => `${basePath}${item.path}`),
   );
 
-  // Groups come from every item, so a group keeps its place while its items
-  // are hidden and can grow into view once the access policy shows them.
   const groups: { heading?: string; items: MenuItem[] }[] = [];
 
   for (const item of items) {
@@ -85,10 +79,6 @@ export const SidebarNav = ({
     >
       <ThemeSidebarBackground />
       {header && (
-        // A backdrop in the header (the server banner) grows it to the
-        // backdrop's own height; the header row keeps its place on top.
-        // Like the app top bar, the header is 56px with its rule inside, so
-        // both rules meet in one line.
         <div className="group/sidebar-header relative isolate shrink-0 border-b border-sidebar-border has-data-[slot=sidebar-header-backdrop]:aspect-video">
           <div className="flex h-[calc(--spacing(14)-1px)] flex-row items-center justify-between px-2 font-semibold">
             {header}
@@ -111,8 +101,6 @@ export const SidebarNav = ({
         className="relative min-h-0 flex-1 [&>[data-slot=scroll-area-viewport]]:overscroll-contain"
       >
         <div className="flex flex-col pb-2">
-          {/* Phones have no server rail, so the sheet opens on a labelled
-              strip of Lootlogs above the open one's sections. */}
           {isMobile && (
             <GuildsSelector
               orientation="horizontal"
@@ -129,7 +117,6 @@ export const SidebarNav = ({
                 <CollapsePresence
                   key={heading ?? ""}
                   open={visibleItems.length > 0}
-                  // Room for the focus ring, which the collapse clips.
                   className="-my-1"
                 >
                   <m.div

@@ -32,7 +32,6 @@ const gameSession = (): SessionData => ({
 
 const makePublisher = () => {
   const logged: Array<{ type: string; guildId: string }> = [];
-  // How many upcoming publications RabbitMQ rejects.
   const failures = { remaining: 0 };
 
   const publisher = new ActivityPublisher(

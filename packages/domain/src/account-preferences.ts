@@ -24,9 +24,6 @@ import type {
   NotificationMutes,
 } from "@lootlog/schema/user-preferences";
 
-// Preference documents arrive from lenient storage; every optional field is
-// normalized here so the API façade and the Game client agree on one shape.
-
 const readPreferenceRecord = flow(
   Option.liftPredicate(isObjectRecord),
   Option.getOrUndefined,
@@ -150,11 +147,6 @@ const normalizeGuildIds = (fallback: string[]) =>
     raw ? raw.filter(Predicate.isString) : [...fallback],
   );
 
-/**
- * Expects the current `notifications` document shape (schema version 2):
- * the per-type lists of older documents are lifted by the catalog migration
- * before any reader sees them.
- */
 export const normalizeNotifications = flow(
   readPreferenceRecord,
   (settings): NotificationsSettings => {
@@ -171,8 +163,6 @@ export const normalizeNotifications = flow(
       )(settings?.[type]);
     }
 
-    // Event heroes were notified as heroes; every field a player has not set
-    // apart keeps the hero setting that player chose.
     normalized.EVENT_HERO = normalizeNotification(normalized.HERO)(
       settings?.EVENT_HERO,
     );
@@ -286,9 +276,6 @@ export const normalizeDetector = flow(
       );
     }
 
-    // Event heroes were detected as heroes, and Hero Trackers lead to heroes;
-    // every field a player has not set apart keeps the hero setting that
-    // player chose, so a player sending heroes sends trackers too.
     normalized.EVENT_HERO = normalizeDetectorType(normalized.HERO)(
       settings?.EVENT_HERO,
     );

@@ -13,7 +13,6 @@ import {
   plot,
 } from "./paint";
 
-/** Draws one particle kind at (`x`, `y`); `age` runs 0..1 over its life. */
 type ParticlePainter = (
   lit: CanvasRenderingContext2D,
   dim: CanvasRenderingContext2D,
@@ -110,7 +109,6 @@ function drawFlakeParticle(
 ): void {
   const a = envelope(age, 0.15, 0.35);
 
-  // Snow that landed lies as a pixel or two.
   if (p.settled) {
     plot(lit, x, y, [255, 255, 255], a * 0.9);
 
@@ -119,7 +117,6 @@ function drawFlakeParticle(
     return;
   }
 
-  // A 5×5 pixel snowflake; arms and diagonals swap every few ticks to twinkle.
   const big = p.size >= 2.8;
   const turn = (tick + Math.floor(p.seed)) % 8 < 4;
   plot(lit, x, y, [255, 255, 255], a);
@@ -163,7 +160,6 @@ function drawLeafParticle(
 ): void {
   const a = envelope(age, 0.15, 0.3);
 
-  // Three poses stepping through a flutter.
   const pose =
     LEAF_POSES[
       p.settled ? 0 : (tick + Math.floor(p.seed)) % LEAF_POSES.length
@@ -263,7 +259,6 @@ function drawDropParticle(
   color: Rgb,
 ): void {
   const a = envelope(age, 0.1, 0.1);
-  // Fast drops streak: the faster, the longer the trail above them.
   const streak = Math.min(4, Math.round(Math.abs(p.vy) / 40));
 
   for (let k = streak; k >= 1; k--)
@@ -283,7 +278,6 @@ function drawFeatherParticle(
   palette: Rgb[],
 ): void {
   const a = envelope(age, 0.1, 0.3);
-  // Four pixels on a slant that rocks with the swing; flat once it lies.
   const lean = p.settled ? 0 : p.rot > 0.3 ? 1 : p.rot < -0.3 ? -1 : 0;
 
   for (let i = -1; i <= 2; i++)
@@ -310,7 +304,6 @@ function drawGrainParticle(
   const a = envelope(age, 0.05, 0.3);
   plot(dim, x, y, color, a);
 
-  // Bigger grains are 2×2 stones with a lit top edge.
   if (p.size > 1.5) {
     plot(dim, x + 1, y, color, a);
     plot(dim, x, y + 1, STONE_SHADE, a);
@@ -347,7 +340,6 @@ function drawBatParticle(
   tick: number,
 ): void {
   const a = envelope(age, 0.15, 0.15);
-  // Two-frame flap: wings up, then down.
   const up = (tick + Math.floor(p.seed)) % 2 === 0;
   const body: Rgb = [36, 6, 12];
   const wing: Rgb = [110, 16, 28];
@@ -358,7 +350,6 @@ function drawBatParticle(
     plot(dim, x + side, y + (up ? -1 : 0), wing, a);
     plot(dim, x + side * 2, y + (up ? -2 : 1), wing, a);
     plot(dim, x + side * 3, y + (up ? -2 : 1), wing, a * 0.8);
-    // Moonlight catching the wing tips.
     plot(lit, x + side * 3, y + (up ? -3 : 1), [255, 70, 70], a * 0.7);
   }
 
@@ -385,7 +376,6 @@ function drawScorchParticle(
   y: number,
   age: number,
 ): void {
-  // A landed ember: glows orange, cools through red to a dark mark, then fades.
   const heat = ramp(
     [
       [255, 200, 90],
@@ -414,7 +404,6 @@ function drawPuddleParticle(
   palette: Rgb[],
   tick: number,
 ): void {
-  // A flat pool swelling as drops feed it and drying from the edges; a glint on top.
   const dry = age > 0.6 ? (1 - age) / 0.4 : 1;
   const r = Math.max(1, Math.round(p.size * dry));
 
@@ -474,7 +463,6 @@ function drawRingParticle(
   );
 }
 
-/** Particles drawn on the covering layer: opaque things that hide what is under them. */
 export const COVERING_PARTICLES: ReadonlySet<ParticleKind> =
   new Set<ParticleKind>([
     "leaf",
@@ -489,20 +477,17 @@ export const COVERING_PARTICLES: ReadonlySet<ParticleKind> =
     "scorch",
   ]);
 
-/** Particles drawn with soft gradients, so their layers need the pixel finish. */
 export const SOFT_PARTICLES: ReadonlySet<ParticleKind> = new Set<ParticleKind>([
   "smoke",
   "wisp",
   "firefly",
 ]);
 
-/** Pixel hearts, rows top down: small (3×3) and large (5×4). */
 const HEARTS: readonly (readonly string[])[] = [
   ["X.X", "XXX", ".X."],
   [".X.X.", "XXXXX", ".XXX.", "..X.."],
 ];
 
-/** A pixel heart drifting up, with a white glint on its left lobe. */
 function drawHeartParticle(
   lit: CanvasRenderingContext2D,
   _dim: CanvasRenderingContext2D,
@@ -522,7 +507,6 @@ function drawHeartParticle(
   plot(lit, left + (p.size >= 2 ? 1 : 0), y + 1, [255, 255, 255], a * 0.8);
 }
 
-/** The shaded underside of a 2×2 stone grain. */
 const STONE_SHADE: Rgb = [18, 14, 16];
 
 export const PARTICLE_PAINTERS: Record<ParticleKind, ParticlePainter> = {

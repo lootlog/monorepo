@@ -59,7 +59,6 @@ export function ActivityHeatmap({
 
     if (!element) return;
 
-    // Keep the latest weeks in view when the card narrows, e.g. on rotation.
     const pinToLatest = () => {
       element.scrollLeft = element.scrollWidth;
     };
@@ -119,7 +118,6 @@ export function ActivityHeatmap({
             gridTemplateRows: `20px repeat(7, ${fill ? "var(--activity-cell, 20px)" : "20px"})`,
           }}
         >
-          {/* Covers month labels scrolled under the weekday column. */}
           <span
             aria-hidden
             className="sticky left-0 z-10 bg-card"

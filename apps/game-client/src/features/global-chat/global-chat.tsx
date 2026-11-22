@@ -4,7 +4,6 @@ import { useWindowsStore } from "@/store/windows.store";
 import { GlobalChatContent } from "./components/global-chat-content";
 import { GlobalChatOnline } from "./components/global-chat-online";
 
-/** The plain-text chat shared by every Member of every Organization. */
 export const GlobalChat = () => {
   const { t } = useTranslation("globalChat");
   const open = useWindowsStore((state) => state["global-chat"].open);

@@ -11,7 +11,6 @@ const decodeAccess = Schema.decodeUnknownOption(
   Schema.fromJsonString(ApiKeyAccess),
 );
 
-/** Undefined means a session; null means a malformed proxy assertion and must fail closed. */
 function readApiKeyAccess(
   headers: Readonly<Record<string, string | undefined>>,
 ): ApiKeyAccess | null | undefined {
@@ -29,7 +28,6 @@ export interface ForwardAuthIdentityValue {
   readonly apiKey?: ApiKeyAccess;
 }
 
-/** The caller the edge asserted, or undefined when the assertion is missing or malformed. */
 export function readForwardAuthIdentity(
   headers: Readonly<Record<string, string | undefined>>,
 ): ForwardAuthIdentityValue | undefined {

@@ -33,8 +33,6 @@ export const useAccessibleGuilds = (enabled = true) => {
 
         const policy = getGameAccessPolicy(queryClient);
 
-        // A membership grant during the request can add an organization whose
-        // name and icon were absent from the earlier authorized response.
         if (
           startingPolicy?.version !== policy?.version &&
           isOrganizationMetadataMissing(policy, guilds)

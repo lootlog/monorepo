@@ -13,12 +13,10 @@ export type OneVsOneStatValueCellProps = {
 };
 
 const BAR_CLASS_NAME_BY_SIDE = {
-  // Bars grow away from the shared middle edge, so the row reads as one comparison.
   friendly: "right-0 rounded-l-sm bg-green-400/25",
   enemy: "left-0 rounded-r-sm bg-red-400/25",
 } as const;
 
-// `Number.isFinite` rejects every non-number stat (flags, names) without coercing it.
 const toMagnitude = (value: BattleStatValue) =>
   Number.isFinite(value) ? Math.abs(Number(value)) : null;
 
@@ -33,7 +31,6 @@ export const OneVsOneStatValueCell: FC<OneVsOneStatValueCellProps> = ({
   const opposingMagnitude = toMagnitude(opposingValue);
   const isComparable = magnitude !== null && opposingMagnitude !== null;
   const largest = isComparable ? Math.max(magnitude, opposingMagnitude) : 0;
-  // Share of the larger of the two values; two zeros draw no bar at all.
   const share = isComparable && largest > 0 ? magnitude / largest : 0;
   const isLeading = isComparable && magnitude > opposingMagnitude;
 

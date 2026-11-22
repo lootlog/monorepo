@@ -36,10 +36,8 @@ const config = {
   maxBackpressureBytes: 1_024,
 };
 
-/** An unstarted hub whose federation publishes go nowhere. */
 const makeHub = () => new RealtimeHub(config, makeFederationBus().store);
 
-/** Two started replicas sharing one federation bus. */
 const startPair = async () => {
   const { hubs, bus } = await startHubs();
   const [local, remote] = hubs;
@@ -49,7 +47,6 @@ const startPair = async () => {
   return [local, remote, bus] as const;
 };
 
-/** A web session that owns and administers both Lootlogs. */
 const makeAdminSession = (
   connectionId: string,
   overrides: Partial<SessionData> = {},
@@ -174,7 +171,6 @@ describe("RealtimeHub federation", () => {
       data: {},
     });
 
-    // A client that does not know the event type rejects it and disconnects.
     expect(
       targets.map(({ name, target }) => [name, target.sent.length]),
     ).toEqual([
@@ -592,7 +588,6 @@ describe("RealtimeHub federation", () => {
     } as const;
 
     const scenarios = [
-      // A participant who walked to another map still sees the split.
       {
         id: "listed",
         characterId: "100",
@@ -607,7 +602,6 @@ describe("RealtimeHub federation", () => {
         organization: "organization-1",
         delivered: false,
       },
-      // A participant from another Lootlog must not learn the choices.
       {
         id: "foreign",
         characterId: "100",
@@ -697,7 +691,6 @@ describe("RealtimeHub federation", () => {
       },
     } as const;
 
-    // Without a routing scope a ping has no Organization to authorize it.
     for (const event of [choices, autoAccepted, battlePing])
       for (const target of targets) {
         await local.publishToUser(target.socket.data.userId, event);
@@ -763,7 +756,6 @@ describe("RealtimeHub federation", () => {
           for (const target of targets)
             expect(target.sent).toHaveLength(target.visible ? 4 : 0);
 
-          // Delivery must use current roles even when old subscription objects remain.
           for (const target of targets)
             target.socket.data.guilds = target.socket.data.guilds.map(
               (guild) => ({
@@ -928,7 +920,6 @@ describe("RealtimeHub federation", () => {
 
       if (!target) throw new Error("Missing lifecycle target");
       hub.detach(target.socket);
-      // An asynchronous subscription request may finish after the socket closes.
       hub.subscribe(target.socket, otherScope);
     }
 
@@ -1033,7 +1024,6 @@ describe("RealtimeHub federation", () => {
     expect([firstTarget.sent.length, secondTarget.sent.length]).toEqual([1, 0]);
     await hub.publishToScope(second, event);
     expect([firstTarget.sent.length, secondTarget.sent.length]).toEqual([1, 1]);
-    // A second subscription whose fields join to the same text is its own scope.
     hub.subscribe(firstTarget.socket, second);
     expect(firstTarget.socket.data.subscriptions.size).toBe(2);
     await hub.publishToScope(first, event);
@@ -1062,7 +1052,6 @@ describe("RealtimeHub federation", () => {
 
     const partial = { topic: "map.air-tags", world: "tempest" } as const;
 
-    // Federated messages carry this key; a rolling deploy mixes releases.
     expect(getScopeKey(full)).toBe(
       '["map.air-tags","organization-1","event-1","tempest",0]',
     );
@@ -1121,7 +1110,6 @@ describe("RealtimeHub federation", () => {
         data: { ...canonical.data, untrusted: "strip" },
       };
 
-      // Administrators read precise presence, so they receive this variant.
       const preciseCanonical = {
         ...canonical,
         data: { ...canonical.data, payload: { id: "message-precise" } },
@@ -1165,7 +1153,6 @@ describe("RealtimeHub federation", () => {
       );
 
       for (const sent of targets) {
-        // Parse the wire text without the protocol schema, which would hide leaked fields.
         expect(sent.map((text) => JSON.parse(text))).toEqual([
           publication === "presence" ? preciseCanonical : canonical,
           canonical,
@@ -1225,14 +1212,12 @@ describe("RealtimeHub federation", () => {
     if (!message) throw new Error("Missing federation message");
     expect(message.event).toEqual(event);
 
-    // A replica with this schema already encoded the frame, in its own key order.
     const canonicalText = JSON.stringify({
       data: event.data,
       type: event.type,
       v: event.v,
     });
 
-    // A replica with another schema may send fields this one strips.
     for (const [id, frameSchema, text] of [
       ["canonical-schema", message.frameSchema, canonicalText],
       [
@@ -1316,7 +1301,6 @@ describe("RealtimeHub federation", () => {
       expect(remoteText).toBe(localText);
     }
 
-    // The decoder rejects this key even inside otherwise valid JSON payloads.
     const rejectedPayload: unknown = JSON.parse(
       '{"__proto__":{"hidden":true}}',
     );
@@ -1538,7 +1522,6 @@ describe("RealtimeHub federation", () => {
             expect(group.map((target) => target.sent.length)).toEqual([
               4, 0, 0, 0, 2, 4, 1, 0,
             ]);
-            // The Web app receives the loot only through `loot.snapshot`.
             expect(decodeRealtimeFrame(group[0]!.sent[2]!)).toEqual({
               v: 1,
               type: "loot.snapshot",
@@ -1618,7 +1601,6 @@ describe("RealtimeHub federation", () => {
     const [first, second, bus] = await startPair();
 
     const targets = [first, second].map((hub, index) => {
-      // The Game client reads new loots as `loot.created`.
       const target = makeTestSocket({
         ...makeAdminSession(`loot-${index}`),
         platform: "game",
@@ -1780,7 +1762,6 @@ describe("RealtimeHub federation", () => {
     local.register(localShared.socket);
     local.subscribe(localShared.socket, { topic: "global.chat" });
 
-    // Only Members in the Game client may read global chat, even when subscribed.
     const excluded = [local, remote].flatMap((hub, index) => {
       const recipients = {
         unsubscribed: makeTestSocket(session(`${index}-unsubscribed`)),
@@ -1943,7 +1924,6 @@ describe("RealtimeHub federation", () => {
     let bufferedAmount = 10;
     target.socket.getBufferedAmount = () => bufferedAmount;
 
-    // Registered after the slow socket, so an aborted broadcast would skip it.
     const healthy = makeTestSocket(makeAdminSession("healthy"));
 
     for (const recipient of [target, healthy]) {
@@ -2004,7 +1984,6 @@ describe("RealtimeHub federation", () => {
       expect(decodeFrame).not.toHaveBeenCalled();
       expect(target.sent).toEqual([]);
       hub.subscribe(target.socket, scope);
-      // Already observed publications must not be replayed after joining.
       await redis.publish(message, frames);
       expect(target.sent).toEqual([]);
       await redis.publish({ ...message, id: "subscribed" }, frames);
@@ -2366,8 +2345,6 @@ test("gathering rosters reach authorized observers across gateways without expos
           ),
         );
 
-        // A mismatch fails on every redelivery, so it skips the retries and
-        // goes straight to the dead-letter queue.
         const unprocessable = (exit: Exit.Exit<void, unknown>) =>
           Exit.isFailure(exit) &&
           Option.exists(
@@ -2390,7 +2367,6 @@ test("gathering rosters reach authorized observers across gateways without expos
         ))
           expect(target.sent).toHaveLength(0);
 
-        // A gathering announced with a message instead of an NPC has no NPC.
         const { npc: _gatheringNpc, ...messageGathering } = gathering;
         const { npc: _envelopeNpc, ...messageEnvelope } = envelope;
 
@@ -2521,8 +2497,6 @@ const npcDeliveryCases = (
     ],
   ] as const;
 
-// Each topic must check its own tier permission: a denied reader holds every
-// other topic's grants, and an allowed reader holds only this topic's.
 for (const scenario of [
   {
     name: "level range",
@@ -2789,7 +2763,6 @@ test("keeps basic and precise presence private for local and remote recipients",
 
   await local.publishPresence(scope, basic, precise);
 
-  // A permission change replaces the session's grants, as commitAccess does.
   for (const target of targets) {
     target.session.guilds = [presenceMembership(!target.precise)];
   }
@@ -2878,7 +2851,6 @@ test("API key user-targeted organization events stay inside selected current org
   expect(target.sent).toHaveLength(1);
 });
 
-// Regresses the 300 identical routing decodes that used to accompany one broadcast.
 test("resolves timer routing once while preserving recipient authorization across a large audience", async () => {
   const routing = spyOn(npcRouting, "getNpcRoutingTier");
 

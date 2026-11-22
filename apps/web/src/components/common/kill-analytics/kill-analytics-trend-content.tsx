@@ -42,7 +42,6 @@ type KillAnalyticsTrendProps = {
   title: string;
   description?: string;
   data: KillAnalyticsTrendPoint[];
-  /** "day" points are calendar dates; "hour" points are instants. */
   granularity?: "day" | "hour";
 };
 
@@ -99,7 +98,6 @@ export function KillAnalyticsTrend({
     },
   ];
 
-  // The newest day comes first; the chart keeps time running left to right.
   const [sorting, setSorting] = useState<SortingState>([
     { id: "date", desc: true },
   ]);
@@ -108,7 +106,6 @@ export function KillAnalyticsTrend({
 
   const direction = sort.desc ? "desc" : "asc";
 
-  // By kills, days without data stay last in both directions.
   const rows =
     sort.id === "kills"
       ? orderBy(

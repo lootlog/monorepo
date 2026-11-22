@@ -207,11 +207,6 @@ const channelSnapshot = (
   };
 };
 
-/**
- * The subset of channel state that reaches the synced projection. Discord
- * emits `channelUpdate` for topic, slowmode, NSFW and similar edits that do not
- * change anything Lootlog stores, so those updates are ignored.
- */
 const channelProjectionKey = (channel: SyncableGuildChannel) =>
   JSON.stringify({
     type: channel.type,
@@ -234,7 +229,6 @@ const guildSnapshot = (guild: Guild): GuildUpdated => ({
   guildId: guild.id,
   name: guild.name,
   icon: guild.iconURL(),
-  // The web sidebar shows the banner still and at most 240px wide.
   banner: guild.bannerURL({ size: 512, forceStatic: true }),
   ownerId: guild.ownerId,
 });
@@ -261,10 +255,6 @@ export const makeDiscordSync = (publisher: EventPublisher, client: Client) => {
     >
   >();
 
-  /**
-   * Gateway events for one Discord guild are processed one at a time so an
-   * update and a delete of the same channel cannot publish out of order.
-   */
   const withGuildLock =
     (guildId: string) =>
     <A, E>(effect: Effect.Effect<A, E>) =>
@@ -314,13 +304,6 @@ export const makeDiscordSync = (publisher: EventPublisher, client: Client) => {
     );
   };
 
-  /**
-   * Gateway-driven handlers read `guild.channels.cache`: with the `Guilds`
-   * intent discord.js keeps it current from the same events that trigger the
-   * handler, so a forced REST refetch only duplicates work and competes with
-   * every other handler for the REST queue. Explicit HTTP refreshes still read
-   * from REST so a stale cache can be repaired on demand.
-   */
   const createSyncContext = (
     guild: Guild,
     options: {
@@ -424,12 +407,6 @@ export const makeDiscordSync = (publisher: EventPublisher, client: Client) => {
       );
     });
 
-  /**
-   * Concurrent HTTP refreshes of the same guild share one REST round trip.
-   * The load runs in a detached fiber so a caller that disconnects only gives
-   * up its own wait instead of interrupting the load every other caller
-   * shares.
-   */
   const coalescedGuildChannelsPayload = (guildId: string) =>
     Effect.gen(function* () {
       const pending = inFlightRefreshes.get(guildId);
@@ -473,12 +450,6 @@ export const makeDiscordSync = (publisher: EventPublisher, client: Client) => {
       >);
     });
 
-  /**
-   * Serializes a gateway-driven channel sync per guild and reports a failed
-   * Discord read downstream, so the Organization sees a stale projection
-   * instead of silently keeping the previous state as current. A failed
-   * publish is not reported again: RabbitMQ is the path that just failed.
-   */
   const channelSync = <A>(
     guildId: string,
     effect: Effect.Effect<A, DiscordSyncFailure>,
@@ -493,10 +464,6 @@ export const makeDiscordSync = (publisher: EventPublisher, client: Client) => {
       ),
     );
 
-  // discord.js emits guildCreate only for servers joined after login, so
-  // changes made while the bot was offline (and banners of servers it joined
-  // before banners were synced) would never reach the API. The API ignores
-  // snapshots that change nothing.
   const handleClientReady = (readyClient: Client) =>
     Effect.gen(function* () {
       const guilds = readyClient.guilds.cache.filter(
@@ -507,7 +474,6 @@ export const makeDiscordSync = (publisher: EventPublisher, client: Client) => {
         `Bot is ready and logged in as ${readyClient.user?.username ?? "unknown"}; publishing ${guilds.size} guild snapshots`,
       );
 
-      // One failed publish must not skip the servers after it.
       yield* Effect.forEach(
         guilds.values(),
         (guild) =>

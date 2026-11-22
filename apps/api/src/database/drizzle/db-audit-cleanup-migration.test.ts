@@ -25,8 +25,6 @@ describe("database audit cleanup migration", () => {
         await database.exec(migration.sql.join("\n"));
       }
 
-      // Loot 100 has a record; 101 has none. Snapshots 1 are shared by both,
-      // 2 only belong to 101, and player 3 is also a timer actor.
       await database.exec(`
         INSERT INTO "Guild" (id, name, "ownerId", "updatedAt") VALUES ('guild', 'Guild', 'owner', now());
         INSERT INTO "Member" (id, "userId", "guildId", name, "updatedAt") VALUES (10, 'user', 'guild', 'Member', now());

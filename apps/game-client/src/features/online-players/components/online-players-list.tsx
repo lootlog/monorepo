@@ -71,12 +71,6 @@ type InitialLoad = {
 
 const GATEWAY_OFFLINE = new Error("Realtime gateway is not connected");
 
-/**
- * Without an Organization there is no presence scope to fetch, so the only
- * thing that can load or fail is the Organization list itself. With a scope
- * but no gateway session nothing is requested, which the user must see too.
- * A player in no Organization has nothing to load at all.
- */
 const resolveInitialLoad = ({
   disconnected,
   error,

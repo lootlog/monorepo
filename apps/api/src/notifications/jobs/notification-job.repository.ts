@@ -56,8 +56,6 @@ export type NotificationDeliveryUpdate = {
   readonly targetFirst?: boolean;
 };
 
-// A queued retry may claim or block a job its failed attempt left PROCESSING;
-// a first attempt never overrides another worker's claim.
 const eligibleJobForAttempt = (jobId: string, retrying: boolean) =>
   and(
     eq(notificationJobTable.id, jobId),
@@ -180,7 +178,6 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         ownerId: notificationJobTable.ownerId,
         sourceEntityType: notificationJobTable.sourceEntityType,
         scheduledFor: notificationJobTable.scheduledFor,
-        // Drizzle has no jsonb field accessor.
         maxSpawnTime: sql<
           string | null
         >`${notificationJobTable.payloadSnapshot}->>'maxSpawnTime'`,
@@ -196,7 +193,6 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .limit(limit)
       .pipe(Effect.mapError(failure("notifications.jobStore.findOverdue")));
 
-  // Only a job nobody claimed meanwhile is closed, so a send in progress wins.
   const closeMissed = (jobId: string, reason: string) =>
     Effect.gen(function* () {
       const now = new Date(yield* Clock.currentTimeMillis);

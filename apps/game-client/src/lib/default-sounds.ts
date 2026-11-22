@@ -23,12 +23,10 @@ const getDefaultSoundUrl = (key: string): string | undefined =>
 
 type SoundConfig = Readonly<Record<string, Partial<NpcTypeSoundConfig>>>;
 
-/** The sound a key plays while the player has not given it its own. */
 export const getFallbackSoundUrl = (
   config: SoundConfig | undefined,
   key: string,
 ): string | undefined =>
-  // Event heroes played the hero sound; they keep the one a player chose.
   key === "EVENT_HERO"
     ? resolveSoundUrl(config, "HERO")
     : getDefaultSoundUrl(key);

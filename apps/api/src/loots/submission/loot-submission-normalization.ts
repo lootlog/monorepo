@@ -22,14 +22,8 @@ import { getProfByShortname } from "@lootlog/domain/profession";
 import { parseRequiredProfessions } from "#src/loots/required-professions";
 import { parseCharacterIdentity } from "#src/shared/margonem/player-snapshot.repository";
 
-// Older game clients appended the account id to participant character ids.
 export const LEGACY_ID = { legacyCombinedId: true } as const;
 
-/**
- * The catalog identity stored for a looted NPC. A reported template wins; a
- * spawn without one stays in the runtime namespace instead of posing as a
- * template. Clients that send only the overloaded `id` keep `legacy`.
- */
 const lootNpcIdentity = (npc: CreateLootRequest["npcs"][number]) => {
   if (npc.templateId !== undefined && npc.templateId !== null) {
     return {
@@ -48,7 +42,6 @@ const lootNpcIdentity = (npc: CreateLootRequest["npcs"][number]) => {
   return { identityNamespace: NpcIdentityNamespace.LEGACY, npcId: npc.id };
 };
 
-/** The strongest NPC names the loot, as every view of it does. */
 export function processNpcs(npcs: CreateLootRequest["npcs"]) {
   const [primary] = npcs.toSorted((left, right) =>
     compareNpcsStrongestFirst(
@@ -175,7 +168,6 @@ export function normalizeCharacterAndAccount(
 ) {
   const identity = parseCharacterIdentity(id, accountId, LEGACY_ID);
 
-  // acceptWithLock rejects a loot with an invalid participant first.
   if (!identity) throw new InvalidRequestError("Invalid player id");
 
   return identity;
@@ -188,8 +180,6 @@ export function mapLootNpcsToPersistence(npcs: CreateLootRequest["npcs"]) {
     name: npc.name,
     type: getNpcType(NpcType, npc),
     lvl: npc.lvl,
-    // Senders may report the rendered CDN URL of the graphic; a revision
-    // must not depend on which form a sender chose.
     icon: normalizeNpcIcon(npc.icon),
     wt: npc.wt,
     margonemType: npc.type,

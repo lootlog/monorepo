@@ -66,7 +66,6 @@ const isEditableElementActive = () => {
 const isPingActive = () =>
   pingInteractionController.getActiveIdentity() !== null;
 
-/** The event releases the key or button that holds the active ping. */
 const releasesActivePing = (event: HotkeyEvent) => {
   const activeIdentity = pingInteractionController.getActiveIdentity();
 
@@ -77,9 +76,6 @@ const releasesActivePing = (event: HotkeyEvent) => {
 };
 
 export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
-  // Callers pass fresh callbacks on every render. The listeners read the
-  // latest ones through a ref, so a re-render mid-press does not reinstall
-  // them and cancel a held ping.
   const handlersRef = useRef(handlers);
 
   useEffect(() => {
@@ -140,10 +136,6 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
       ["toggle-detector-auto-send", toggleCharacterDetectorAutoSend],
     ]);
 
-    /**
-     * Runs the first binding the event matches, if `allows` lets it run, and
-     * returns its action; null when nothing ran.
-     */
     const executeAction = (
       event: HotkeyEvent,
       allows: (action: string) => boolean = () => true,
@@ -189,16 +181,11 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
       return null;
     };
 
-    // Margonem reads keys from a bubbling document listener and ignores
-    // modifiers, so Shift+S would also walk the hero south. This listener runs
-    // in the window capture phase and keeps a key it handles from the game.
     const consumeKey = (event: KeyboardEvent) => {
       event.preventDefault();
       event.stopImmediatePropagation();
     };
 
-    // The settings recorder listens later in the same capture phase; while it
-    // records, the key is the new binding, not a hotkey.
     const isRecordingBinding = () =>
       useHotkeysStore.getState().recordingAction !== null;
 
@@ -228,7 +215,6 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
     const handleMouseDown = (event: MouseEvent) => {
       if (isRecordingBinding()) return;
 
-      // A map ping still starts while a text input keeps focus.
       const action = executeAction(
         event,
         (matched) => matched === "map-ping" || !isEditableElementActive(),
@@ -266,8 +252,6 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
     };
 
     window.addEventListener("keydown", handleKeyDown, true);
-    // Focused editors stop key events from bubbling; a held ping must still
-    // end on its release.
     window.addEventListener("keyup", handleKeyUp, true);
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handleMouseUp);

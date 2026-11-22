@@ -73,8 +73,6 @@ describe("member refresh processor", () => {
       );
     }).pipe(Effect.provide(TestClock.layer()), Effect.runPromise);
 
-    // BullMQ keeps a job it was told to delay only when the processor rejects
-    // with DelayedError; any other error moves it to failed.
     expect(result).toMatchObject({ failure: expect.any(DelayedError) });
     expect(lockedJob.moveToDelayed).toHaveBeenCalledTimes(1);
     const [delayedUntil, token] = lockedJob.moveToDelayed.mock.calls[0]!;
@@ -117,7 +115,6 @@ describe("member refresh processor", () => {
       outcome: "rate_limited",
       reason: "MANUAL",
     });
-    // Counted once: a second "failed" sample would double the failure rate.
     expect(
       dependencies.diagnostics.recordMemberRefreshMetric.mock.calls.filter(
         ([metric]) => metric.outcome === "failed",
@@ -142,7 +139,6 @@ describe("member refresh processor", () => {
       Effect.result(makeMemberRefreshProcessor(dependencies)(job)),
     );
 
-    // A failed job is retried by BullMQ; Discord refuses every retry.
     expect(Result.isSuccess(result)).toBe(true);
     expect(
       dependencies.diagnostics.recordMemberRefreshMetric,

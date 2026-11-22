@@ -1,4 +1,3 @@
-/** Transport schemas owned by the presence HTTP module. */
 import {
   BasicPresence,
   PresenceSnapshot,
@@ -7,8 +6,6 @@ import {
 import { Schema, Struct } from "effect";
 import { HttpApiSchema } from "effect/http-api";
 
-// HTTP readers identify players by the internal User; Discord identities stay
-// inside the realtime protocol.
 export const OrganizationPresence = Schema.Struct({
   ...PresenceSnapshot.fields,
   presences: Schema.Array(

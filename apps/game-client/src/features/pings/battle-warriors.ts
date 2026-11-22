@@ -1,10 +1,5 @@
 import type { BattleWarriorsWithAccountId } from "@/store/game-store/battle.store";
 
-/**
- * Margonem draws every warrior of a turn-based battle as its own element and
- * names it by class only (`other-id-battle-<id>`). Auto battles never insert
- * these elements, so they cannot be pinged.
- */
 const WARRIOR_SELECTOR = ".battle-window .one-warrior";
 
 const WARRIOR_ID_CLASS = /(?:^|\s)other-id-battle-(-?\d+)(?:\s|$)/;
@@ -56,7 +51,6 @@ export const getBattleWarriorRole = (
   return warrior.team === hero.team ? "ally" : "enemy";
 };
 
-/** Other characters (not NPCs) fighting on the hero's team. */
 export const getBattleTeamCharacterIds = (
   warriors: BattleWarriorsWithAccountId,
   heroCharacterId: string,

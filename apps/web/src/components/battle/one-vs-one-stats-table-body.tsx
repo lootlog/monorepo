@@ -7,12 +7,9 @@ import type { OneVsOneStatsRow } from "./one-vs-one-stats-rows";
 
 type OneVsOneStatsTableBodyProps = {
   table: Table<typeof coreTableFeatures, OneVsOneStatsRow>;
-  /** Search key of the row the stat search currently points at. */
   activeSearchKey: string | null;
 };
 
-// The shared body wraps every cell in its own `<td>`; here the column cells render theirs,
-// because a category row and a stat row style the same column differently.
 export const OneVsOneStatsTableBody = ({
   table,
   activeSearchKey,

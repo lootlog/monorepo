@@ -6,15 +6,9 @@ type UseInfiniteScrollSentinelOptions = {
   fetchNextPage: (() => void) | undefined;
   hasNextPage?: boolean;
   isFetchingNextPage: boolean;
-  /** The page's scroll viewport; the document stands in for it below `md`. */
   scrollElement: Element | null;
 };
 
-/**
- * Requests the next page when the returned sentinel approaches the visible
- * part of a DOM-scrolled list. Observation restarts after each page, so a
- * sentinel that is still in view once a page loads requests the following one. Virtualized lists use `useVirtualInfiniteScroll` instead.
- */
 export const useInfiniteScrollSentinel = <TSentinel extends Element>({
   enabled = true,
   fetchNextPage,
@@ -24,7 +18,6 @@ export const useInfiniteScrollSentinel = <TSentinel extends Element>({
 }: UseInfiniteScrollSentinelOptions) => {
   const sentinelRef = useRef<TSentinel>(null);
   const scrollsDocument = usePageScrollsDocument();
-  // A viewport that only grows with its content would always contain the sentinel.
   const root = scrollsDocument ? null : scrollElement;
 
   useEffect(() => {

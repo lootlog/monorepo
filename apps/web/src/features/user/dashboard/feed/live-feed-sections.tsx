@@ -22,12 +22,10 @@ const sectionOf = (group: FeedGroup, now: number) =>
 type Props = {
   titleId: string;
   groups: FeedGroup[];
-  /** Events that slide in because they just arrived live. */
   animatedKeys: string[];
   now: number;
 };
 
-/** Feed events under headings for the last 15 minutes, hour and earlier. */
 export function LiveFeedSections({
   titleId,
   groups,

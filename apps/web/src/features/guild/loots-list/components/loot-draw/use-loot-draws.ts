@@ -11,7 +11,6 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { patchLoot } from "@/features/guild/loots-list/components/loots-list/loot-list-cache";
 import type { Loot } from "@/lib/loots/loot-types";
 
-/** The standing result of every drawn item, as the loot list shows them. */
 const standingDrawsOf = (
   draws: readonly LootDrawResponseDto[],
 ): Loot["standingDraws"] =>
@@ -29,13 +28,10 @@ const standingDrawsOf = (
       : [];
   });
 
-/** A loot's draws, newest first, and the mutations that add or void one. */
 export const useLootDraws = (lootId: number) => {
   const guildId = useGuildId();
   const queryClient = useQueryClient();
 
-  // Whatever happened, the refreshed history is the truth: the loot list
-  // takes its standing results from it, a rival's draw after a conflict too.
   const refresh = async () => {
     if (!guildId) return;
 
@@ -57,7 +53,6 @@ export const useLootDraws = (lootId: number) => {
     { query: { enabled: !!guildId && !!lootId } },
   );
 
-  // A conflict means another member drew first: showing theirs is the answer.
   const createDraw = useLootsControllerCreateDraw({
     mutation: { onSettled: refresh },
   });

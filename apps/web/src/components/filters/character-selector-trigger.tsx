@@ -22,7 +22,6 @@ type CharacterSelectorTriggerProps = Omit<
   active: boolean;
 };
 
-/** The chosen characters' avatars and name: a chip in a filter bar, a field elsewhere. */
 export function CharacterSelectorTrigger({
   selectedCharacters,
   placeholder,
@@ -55,7 +54,6 @@ export function CharacterSelectorTrigger({
         })
       : (selectedCharacter?.name ?? placeholder);
 
-  // A combobox takes no name from its content.
   const accessibleName = `${t("ui.characterSelector.label")}: ${value}`;
 
   if (inFilterBar)
@@ -64,7 +62,6 @@ export function CharacterSelectorTrigger({
         {...props}
         role="combobox"
         aria-label={accessibleName}
-        // A character without a known sprite keeps the filter's icon.
         media={selectedCharacter?.icon ? media : undefined}
         icon={Users}
         label={t("ui.characterSelector.label")}
@@ -82,8 +79,6 @@ export function CharacterSelectorTrigger({
       aria-label={accessibleName}
       className={cn(
         "min-w-0 justify-between gap-2",
-        // Without a character, the icon and label line up with the filter
-        // popovers beside it.
         selectedCharacter ? "px-2" : "px-3",
         className,
       )}

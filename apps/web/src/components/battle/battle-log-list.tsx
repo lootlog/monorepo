@@ -28,9 +28,7 @@ export type BattleLogListProps = {
   userTeam?: number;
   selectedTurn?: number | null;
   scrollToSelectedTurnRequestId?: number;
-  /** The scroller the log lives in; the log has no scroll container of its own. */
   scrollViewportRef: RefObject<HTMLDivElement | null>;
-  /** Content pinned to the top of that scroller, which covers the first visible rows. */
   stickyContentRef?: RefObject<HTMLDivElement | null>;
   searchMatchedTurns?: number[];
   activeSearchTurn?: number | null;
@@ -56,7 +54,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   onTurnSelect,
   onVisibleTurnsChange,
 }) => {
-  "use no memo"; // Reads a virtualizer that mutates in place; see usePageVirtualizer.
+  "use no memo";
 
   const listRef = useRef<HTMLUListElement>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
@@ -143,7 +141,6 @@ export const BattleLogList: FC<BattleLogListProps> = ({
     let stableFrames = 0;
     let attempts = 0;
     let finished = false;
-    // Estimated heights make smooth jumps unreliable. Measure the destination first.
     virtualizer.scrollToIndex(requestedTurn - 1, {
       align: "start",
       behavior: "auto",
@@ -158,7 +155,6 @@ export const BattleLogList: FC<BattleLogListProps> = ({
         const band = scroller.getVisibleBand();
         const stickyRect = stickyContentRef?.current?.getBoundingClientRect();
 
-        // Content pinned over the top of the scroller hides rows, so align below it.
         const visibleTop =
           stickyRect &&
           stickyRect.bottom > band.top &&

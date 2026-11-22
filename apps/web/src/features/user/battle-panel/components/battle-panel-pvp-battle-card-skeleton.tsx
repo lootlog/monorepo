@@ -7,7 +7,6 @@ import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { BattlePanelTeamColumnSkeleton } from "./battle-panel-team-column-skeleton";
 
-/** Stands in for one `BattlePanelPvpBattleCard`. */
 export const BattlePanelPvpBattleCardSkeleton = () => (
   <div
     data-list-tile

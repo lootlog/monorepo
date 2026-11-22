@@ -26,15 +26,9 @@ import { useGuildDocEditorToolbarModel } from "./use-guild-doc-editor-toolbar-mo
 import { observeTopBarGlass } from "@/components/layout/observe-top-bar-glass";
 
 type GuildDocEditorToolbarProps = {
-  /** The document's own actions, such as history, after the formatting controls. */
   actions?: ReactNode;
 };
 
-/**
- * The first row of the document page, pinned like a list toolbar while the
- * document scrolls under it. On phones the controls scroll sideways instead of
- * stacking rows over the text.
- */
 export const GuildDocEditorToolbar = ({
   actions,
 }: GuildDocEditorToolbarProps) => {
@@ -69,10 +63,6 @@ export const GuildDocEditorToolbar = ({
           LIST_TILE_INSET_CLASS,
         )}
       >
-        {/*
-          The negative margin lines the first icon up with the title below. On
-          phones the controls fade out at the end to show there are more.
-        */}
         <div className="-ml-3 flex min-w-0 flex-1 items-center gap-1 px-1 py-2 max-sm:overflow-x-auto max-sm:[scrollbar-width:none] max-sm:[mask-image:linear-gradient(to_right,#000_calc(100%-1.5rem),transparent)] sm:flex-wrap max-sm:[&::-webkit-scrollbar]:hidden">
           {controls.map((control) => {
             if ("separator" in control) {
@@ -154,7 +144,6 @@ export const GuildDocEditorToolbar = ({
             );
           })}
         </div>
-        {/* Pinned to the first row while the controls wrap onto a second one. */}
         {actions && (
           <div className="flex shrink-0 items-center gap-1 self-start py-2">
             <Separator

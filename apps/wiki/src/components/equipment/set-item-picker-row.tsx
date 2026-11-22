@@ -15,19 +15,13 @@ import { ITEM_TILE_LABELS } from "@/lib/item-options";
 
 type SetItemPickerRowProps = {
   item: CatalogItemDtoOutput;
-  /** The row's name in the list, which the keyboard highlights. */
   value: string;
-  /** The searched phrase, marked in the name. */
   query: string;
   isWorn: boolean;
   disabled: boolean;
   onSelect: () => void;
 };
 
-/**
- * One item the picker offers, as the set's character would loot it: its
- * name over its level, type, damage and legendary bonus.
- */
 export function SetItemPickerRow({
   item,
   value,

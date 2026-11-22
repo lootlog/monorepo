@@ -5,7 +5,6 @@ import {
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 
-/** Stands in for a partner or invitation tile while the shares load. */
 export const ReservationShareTileSkeleton = () => (
   <div
     data-list-tile

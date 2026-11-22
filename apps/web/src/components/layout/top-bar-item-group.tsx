@@ -3,11 +3,6 @@ import type { ComponentProps } from "react";
 import { cn } from "cn";
 import { GLASS_SURFACE_CLASS } from "@lootlog/ui/lib/glass-surface";
 
-/**
- * Related top bar controls. Phones float each group as one glass capsule
- * over the page, with borderless round buttons inside it; wider bars set the
- * controls side by side.
- */
 export const TopBarItemGroup = ({
   className,
   ...props

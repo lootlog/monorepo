@@ -28,7 +28,6 @@ import {
 } from "#src/rabbit/gateway-queues";
 
 export class RabbitBridge {
-  /** Consumes the Gateway's queues for as long as the replica runs. */
   static readonly layer = Layer.effectDiscard(
     Effect.gen(function* () {
       const bridge = new RabbitBridge(

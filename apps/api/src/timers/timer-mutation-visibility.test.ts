@@ -844,7 +844,6 @@ it.each([
             )
           )[0],
         ).toEqual(timer);
-        // A deleted source is still private when its history ID is known.
         await boundary.run(
           database
             .update(timerTable)
@@ -913,7 +912,6 @@ it.each([
       }
 
       if (allowed && read !== Permission.ADMIN) {
-        // The same timer key can acquire a different NPC level after this history entry.
         for (const deletedAt of [null, now]) {
           const [hiddenCurrent] = await boundary.run(
             database

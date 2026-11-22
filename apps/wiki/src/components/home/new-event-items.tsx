@@ -9,7 +9,6 @@ import { eventSubtitle } from "@/lib/item-events";
 import { NewItemsCard } from "./new-items-card";
 import { NewItemsCardsSkeleton } from "./new-items-cards-skeleton";
 
-/** The event's strongest monster, which pictures it. */
 const eventBoss = (items: readonly CatalogItemDtoOutput[]) =>
   orderBy(
     uniqBy(
@@ -20,7 +19,6 @@ const eventBoss = (items: readonly CatalogItemDtoOutput[]) =>
     ["desc"],
   )[0];
 
-/** The newest items of the latest events, under each event's name. */
 export function NewEventItems() {
   const { data: events, isError } = useLatestEvents(HOME_EVENTS_SHOWN);
 

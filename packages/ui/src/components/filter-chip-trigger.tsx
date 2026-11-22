@@ -8,20 +8,12 @@ type FilterChipTriggerProps = Omit<
   "variant" | "size" | "children" | "icon"
 > & {
   icon?: LucideIcon;
-  /** Replaces the icon, such as a character's avatar. */
   media?: ReactNode;
-  /** The filter's name, shown muted before its value; omit for a self-named control. */
   label?: string;
-  /** Omit while nothing is chosen: the name alone reads as the control. */
   value?: ReactNode;
-  /** The filter narrows the results; the chip takes the accent. */
   active?: boolean;
 };
 
-/**
- * The trigger of one filter in a filter bar: its name and value with a
- * chevron, quiet until the filter is set.
- */
 export function FilterChipTrigger({
   icon: Icon,
   media,

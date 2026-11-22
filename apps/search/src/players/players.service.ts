@@ -26,7 +26,6 @@ const uniquePlayers = (players: ReadonlyArray<SearchPlayer>) => {
   const unique = new Map<string, SearchPlayer>();
 
   for (const player of players) {
-    // ponytail: name fallback for truncated legacy IDs; remove after an identity migration.
     if (player.accountId === 0 && knownNames.has(playerNameKey(player))) {
       continue;
     }
@@ -48,7 +47,6 @@ const uniquePlayers = (players: ReadonlyArray<SearchPlayer>) => {
 
 type IndexPlayer = IndexPlayersCommand["players"][number];
 
-/** The stored shape of one player. */
 const toPlayerDocument = (player: IndexPlayer) => ({
   ...player,
   uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,

@@ -63,7 +63,6 @@ export const useGuildDocsList = () => {
   const hasDocuments = documents.length > 0;
   const hasFilteredDocuments = filteredDocuments.length > 0;
 
-  /** Resolves whether the document reached the trash. */
   const moveDocumentToTrash = async (
     document: GuildDocumentListResponseDtoItemsItem,
   ) => {

@@ -6,13 +6,10 @@ import {
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 type NotificationTileSkeletonProps = {
-  /** Rule and channel tiles open with an icon. */
   withIcon?: boolean;
-  /** Quiet icon buttons at the tile's end. */
   actions?: number;
 };
 
-/** Stands in for a notification tile: name, a meta line and its actions. */
 export const NotificationTileSkeleton = ({
   withIcon = false,
   actions = 0,

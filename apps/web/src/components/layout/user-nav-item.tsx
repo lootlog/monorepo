@@ -27,7 +27,6 @@ const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
 };
 
 type UserNavItemProps = {
-  /** `strip` is the labelled tile of the phone sheet. */
   variant?: "rail" | "strip";
   onSelect?: () => void;
 };

@@ -21,10 +21,6 @@ import {
 } from "@/lib/router/route-prefetch";
 import { canViewEvents } from "@/navigation/app-navigation";
 
-/**
- * How long opening an Organization keeps the previous page painted before
- * its skeleton shows; most opens finish sooner and swap in one step.
- */
 export const ORGANIZATION_OPEN_PENDING_MS = 400;
 
 export const loadOrganization = async (
@@ -68,12 +64,6 @@ export const loadOrganization = async (
   return { guild, guildMember, accessPolicy };
 };
 
-/**
- * Loads what the Organization's shell shows around every page: the world
- * switcher's worlds and, for a member who can see events, the sidebar's
- * pinned events with the featured one's timers and the active event badge.
- * Waiting for them lets a move between Organizations land in one step.
- */
 export const loadOrganizationShell = (
   queryClient: QueryClient,
   guildId: string,

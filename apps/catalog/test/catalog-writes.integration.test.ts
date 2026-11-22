@@ -29,7 +29,6 @@ let pool: pg.Pool;
 
 let runtime: ManagedRuntime.ManagedRuntime<CatalogDatabase, unknown>;
 
-/** What the search index received, per index and entry. */
 let projected: Map<string, Map<string, object>>;
 
 let projectionWrites: number;
@@ -175,7 +174,6 @@ test("keeps an item's worlds, earliest sighting and every NPC of its edition acr
   await catalog(({ items }) =>
     items.indexItems({
       items: [
-        // A redelivered later sighting, then an earlier one from another NPC.
         {
           ...item(1),
           observedAt: "2026-10-25T08:00:00.000Z",
@@ -186,7 +184,6 @@ test("keeps an item's worlds, earliest sighting and every NPC of its edition acr
           observedAt: "2026-10-18T21:30:00.000Z",
           droppedBy: vampire,
         },
-        // An older loot names the English edition's boss.
         {
           ...item(1),
           observedAt: "2026-10-19T10:00:00.000Z",
@@ -205,7 +202,6 @@ test("keeps an item's worlds, earliest sighting and every NPC of its edition acr
     droppedByKeys: [npcCatalogKey(nosferatu), npcCatalogKey(vampire)],
     droppedByMonsterKeys: ["pl_Nosferatu_HERO", "pl_Wampir_HERO"],
   });
-  // The search index holds what the database committed plus the derived category.
   expect(projected.get(ITEMS_INDEX)?.get(uid)).toEqual({
     ...entry,
     category: "other",
@@ -311,7 +307,6 @@ test("a new loot of an item keeps its drop rates, retirements and changes", asyn
         lootMode: "SHARED",
       },
     ],
-    // Nosferatu dropped it again; Kostucha has not.
     retiredDropMonsterKeys: ["pl_Kostucha_HERO"],
     changedOn: "2026-10-01",
   });
@@ -425,7 +420,6 @@ const reuzen = {
   observedAt: "2026-10-01T00:00:00.000Z",
 };
 
-// An older client's entry from before the monster lost eight levels.
 const formerReuzen = {
   ...reuzen,
   id: 173652,
@@ -463,7 +457,6 @@ test("a rebalanced monster is current only at its newest level, and an older loo
     }),
     expect.objectContaining({ uid: npcCatalogKey(reuzen), current: true }),
   ]);
-  // The index holds each stored entry with the directory of its graphic.
   expect([...(projected.get(NPCS_INDEX)?.values() ?? [])]).toEqual(
     expect.arrayContaining(
       (await storedNpcs()).map((npc) =>
@@ -516,12 +509,10 @@ test("the catalog index names an id the game gave to a later item by that item, 
   expect(found.hits).toEqual([
     expect.objectContaining({ key: npcCatalogKey(reuzen), lvl: reuzen.lvl }),
   ]);
-  // Only the catalog's fields leave the service.
   expect(found.hits[0]).not.toHaveProperty("worlds");
 });
 
 test("a monster's maps and former levels reach each identity and survive new loots", async () => {
-  // The second map comes from an API revision that published no tiles.
   const hall = {
     map: "Grota Martwodrzewów - sala",
     share: 0.9,
@@ -604,14 +595,12 @@ test("a delivery that changes nothing does not wait for a writer, and changes th
       `SELECT pg_advisory_lock(hashtext('lootlog:catalog:writer'))`,
     );
 
-    // Resolves while the writer still holds the lock.
     await catalog(({ items }) => items.indexItems({ items: [item(1)] }));
 
     const waiting = ["first", "second"].map((world) =>
       catalog(({ items }) => items.indexItems({ items: [item(1, world)] })),
     );
 
-    // Both saw the entry before either changed it.
     while (
       (
         await pool.query(

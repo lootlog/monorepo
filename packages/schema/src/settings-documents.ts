@@ -84,19 +84,9 @@ const SettingsPatchOperationSchema = Schema.Struct({
   unset: Schema.Array(Schema.NonEmptyString)
     .annotate({ default: [] })
     .pipe(Schema.withDecodingDefaultTypeKey(Effect.succeed([]))),
-  /**
-   * The `updatedAt` of this document's layer as the client last read it, or
-   * `null` when the client read no stored document. The patch fails with 409
-   * when the stored document has changed since; omit it to merge by path.
-   */
   expectedUpdatedAt: Schema.optionalKey(Schema.NullOr(IsoDateTime)),
 });
 
-/**
- * The read context a client resolves its documents in. A patch that carries
- * it gets back the documents resolved for that context, so the client can
- * replace its cache entry with the response instead of refetching.
- */
 const SettingsDocumentsContextSchema = Schema.Struct({
   gameAccountId: Schema.optionalKey(Schema.NonEmptyString),
   characterId: Schema.optionalKey(Schema.NonEmptyString),
@@ -110,10 +100,8 @@ export const PatchSettingsDocumentsSchema = Schema.Struct({
   context: Schema.optionalKey(SettingsDocumentsContextSchema),
 }).annotate({ identifier: "PatchSettingsDocumentsDto" });
 
-/** Guild-scoped documents for several guilds in one request. */
 export const GuildSettingsDocumentsQuerySchema = Schema.Struct({
   domains: Schema.NonEmptyString,
-  /** Comma-separated guild ids. */
   guildIds: Schema.NonEmptyString,
 });
 
@@ -146,7 +134,6 @@ export const SettingsDocumentsResponseSchema = Schema.Struct({
 export type SettingsDocumentsResponse =
   typeof SettingsDocumentsResponseSchema.Type;
 
-/** Documents per guild; guilds the user is not an active member of are omitted. */
 export const GuildSettingsDocumentsResponseSchema = Schema.Struct({
   guilds: Schema.Record(Schema.String, SettingsDocumentsResponseSchema),
 }).annotate({ identifier: "GuildSettingsDocumentsResponseDto_Output" });

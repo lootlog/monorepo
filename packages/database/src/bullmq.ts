@@ -9,11 +9,8 @@ import {
 } from "bullmq";
 import { Effect, Redacted } from "effect";
 
-// Every Lootlog queue lives under one Redis Cluster hash slot.
 const prefix = "{bull}";
 
-// BullMQ reads its client factory from a process-global; set it before every
-// connection instead of relying on an import side effect.
 const useBunRedis = () => {
   RedisConnection.clientFactory = (options) => {
     if (!options.url) throw new Error("BullMQ requires a Redis URL");
@@ -22,7 +19,6 @@ const useBunRedis = () => {
   };
 };
 
-/** A BullMQ queue on Bun's Redis client, closed with its scope. */
 export const acquireBullQueue = <Data>(
   name: string,
   redisUrl: Redacted.Redacted<string>,
@@ -39,7 +35,6 @@ export const acquireBullQueue = <Data>(
     (queue) => Effect.tryPromise(() => queue.close()).pipe(Effect.orDie),
   );
 
-/** A BullMQ worker on Bun's Redis client, closed with its scope. */
 export const acquireBullWorker = <Data, Result>(
   name: string,
   redisUrl: Redacted.Redacted<string>,

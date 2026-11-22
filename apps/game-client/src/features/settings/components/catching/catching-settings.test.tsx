@@ -53,7 +53,6 @@ const characterConfig = (characterId: string, catchingGuildIds: string[]) => ({
 
 const restores: Array<() => void> = [];
 
-/** Serves the catching tab; each character config write waits for `release`. */
 const serve = () => {
   const pendingWrites: Array<() => void> = [];
 
@@ -153,7 +152,6 @@ describe("CatchingSettings", () => {
     await waitFor(() => expect(pendingWrites).toHaveLength(1));
     expect(isSaving(characterCard("Alpha"))).toBe(true);
 
-    // Switching remounts the form of the character whose save is in flight.
     await user.click(characterCard("Beta"));
     release();
 

@@ -160,8 +160,6 @@ export const makeMemberRefreshScheduler = (
   const enqueueRefresh = Effect.fn("members.refresh.enqueue")(function* (
     data: MemberRefreshJobData,
   ) {
-    // Discord answers a refused member the same way until the refusal
-    // expires, so a job queued now would only repeat the refusal.
     if (yield* ports.isRefused(data)) {
       yield* ports.recordMetric({ outcome: "refused", reason: data.reason });
 

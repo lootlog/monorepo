@@ -57,13 +57,6 @@ export type LootQueryFilters = {
   readonly lootId?: number;
 };
 
-/**
- * Where the scalar columns a page filters on live. Both the loot and the
- * organization's record of it carry the loot id, the world and the creation
- * time, so a query can be driven from whichever table it already scans: the id
- * selection drives from the record and never joins Loot, while queries that
- * read other loot columns keep driving from Loot.
- */
 export type LootQuerySource = {
   readonly lootId: PgColumn;
   readonly world: PgColumn;
@@ -76,17 +69,6 @@ export type LootQueryVisibilityRole = {
   readonly permissions: ReadonlyArray<string>;
 };
 
-/**
- * A free-text term resolved against the snapshot tables before the page query
- * runs. The term matches item, NPC and player names; map names are not
- * searchable.
- *
- * An empty array means the term cannot match that relation, so its arm is
- * dropped. `null` means the term matched more snapshots than
- * {@link LOOT_SEARCH_SNAPSHOT_LIMIT} enumerates, so that arm keeps the original
- * pattern; such a term matches densely enough for the descending scan to stop
- * early.
- */
 export type ResolvedLootSearch = {
   readonly pattern: string;
   readonly itemSnapshotIds: ReadonlyArray<number> | null;
@@ -102,10 +84,8 @@ export type ResolvedLootQueryFilters = Omit<
   readonly search?: ResolvedLootSearch;
 };
 
-/** Snapshot ids enumerated per relation before a term falls back to its pattern. */
 export const LOOT_SEARCH_SNAPSHOT_LIMIT = 1000;
 
-/** A resolved term that can match nothing anywhere: the page query is skipped. */
 export const lootSearchMatchesNothing = (search: ResolvedLootSearch) =>
   search.itemSnapshotIds?.length === 0 &&
   search.npcSnapshotIds?.length === 0 &&
@@ -250,14 +230,6 @@ const existsPlayerSnapshotIds = (
       ),
   );
 
-// Start from the chosen snapshots instead of testing each scanned loot: the
-// correlated EXISTS made a rare NPC or item on a busy Organization walk its
-// whole history (383k buffers for an item found once, 1M for an NPC, on a
-// local production copy), while the array reads the snapshots' rows from
-// "LootNpc_npcSnapshotId_lootId_idx" or "LootItem_itemSnapshotId_lootId_idx"
-// and probes the records by key (3k buffers at most). The query builder has no
-// `= ANY(ARRAY(subquery))`; the `IN` semi-join `inArray` renders read 4x the
-// buffers.
 const lootIdIn = (lootId: PgColumn, lootIds: SQLWrapper) =>
   sql`${lootId} = any(array(${lootIds}))`;
 
@@ -303,10 +275,6 @@ const relationConditions = (
       )
     : undefined,
   npcNameCondition(source.lootId, filters.npcNameSnapshotIds),
-  // The record carries the types of its loot's NPCs and the rarities of its
-  // items as masks, so both tests read the row the scan is already on. As
-  // subqueries on LootNpc and LootItem they ran for every record a page
-  // examined.
   filters.npcTypes?.length
     ? lootNpcTypeCondition(
         organizationLootRecordTable.npcTypeMask,
@@ -349,9 +317,6 @@ const professionCondition = (
   return condition ? existsItem(lootId, condition) : undefined;
 };
 
-// Each relation contributes an arm only when the term can still match it.
-// Enumerated snapshot ids replace the correlated name join, which otherwise
-// reads a snapshot row and runs ILIKE for every loot the scan examines.
 const searchRelationArm = (
   snapshotIds: ReadonlyArray<number> | null,
   membership: (ids: ReadonlyArray<number>) => SQL,
@@ -390,30 +355,18 @@ const searchCondition = (
   );
 };
 
-/** The loot's own columns: for queries that already read other loot columns. */
 export const lootQuerySource: LootQuerySource = {
   lootId: lootTable.id,
   world: lootTable.world,
   createdAt: lootTable.createdAt,
 };
 
-/**
- * The organization's record of the loot. Driving the page from here keeps the
- * scan, the filters and the ordering on one table: testing the world through
- * Loot was 80% of the buffers a page read, because it ran once per record the
- * Organization owns.
- */
 export const organizationLootRecordQuerySource: LootQuerySource = {
   lootId: organizationLootRecordTable.lootId,
   world: organizationLootRecordTable.lootWorld,
   createdAt: organizationLootRecordTable.lootCreatedAt,
 };
 
-/**
- * The rarity and NPC type filters and the visibility rule read the
- * Organization's record, whichever source drives the query, so the record must
- * be in scope.
- */
 export const buildLootQueryConditions = (
   source: LootQuerySource,
   filters: ResolvedLootQueryFilters,

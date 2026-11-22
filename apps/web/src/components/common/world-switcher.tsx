@@ -12,7 +12,6 @@ const ALL_WORLDS_SENTINEL = "__ALL__";
 
 type WorldSwitcherProps = {
   className?: string;
-  /** The selected world; `null` is all worlds. */
   value: string | null;
   onValueChange: (world: string | null) => void;
   showAllOption?: boolean;
@@ -24,7 +23,6 @@ type WorldSwitcherProps = {
   triggerClassName?: string;
   contentClassName?: string;
   worlds?: string[];
-  /** Shows the trigger's up-down chevron. */
   indicator?: boolean;
 };
 

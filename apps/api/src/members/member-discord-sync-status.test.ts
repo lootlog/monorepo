@@ -60,7 +60,6 @@ describe("member-discord-sync-status", () => {
 
     expect(getTransientMemberSyncStatus(refusal)).toBe("DISCORD_HTTP_403");
     expect(isDiscordRefusalSyncStatus("DISCORD_HTTP_403")).toBe(true);
-    // A retried refusal reached Discord again every second.
     expect(isRetryableMemberRefreshStatus("DISCORD_HTTP_403")).toBe(false);
     expect(isTransientMemberSyncStatus("DISCORD_HTTP_403")).toBe(true);
     expect(

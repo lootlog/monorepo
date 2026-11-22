@@ -52,8 +52,6 @@ describe("Organization chat store Dragonfly integration", () => {
         },
       ),
     );
-    // A concurrent send between reading and writing trims the list, so the
-    // gathering read at index 1 now sits at index 0 and "c" at index 1.
     await Effect.runPromise(chat.rpush(key, "d"));
     await Effect.runPromise(chat.ltrim(key, -3, -1));
 

@@ -217,7 +217,6 @@ it("returns keyboard focus to the same member after canceling on a refreshed lis
     throw new Error("Member must remain in the list");
   }
 
-  // Focus returns to the member's actions, which opened the dialog.
   await waitFor(() =>
     expect(document.activeElement).toBe(
       within(refreshedTile).getByRole("button"),

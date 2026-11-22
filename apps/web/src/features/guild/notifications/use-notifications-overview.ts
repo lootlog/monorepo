@@ -14,7 +14,6 @@ type PendingJob = NotificationJobsResponseDto["pending"][number];
 
 type HistoryJob = NotificationJobsResponseDto["history"][number];
 
-/** What the notifications page shows, whichever layout presents it. */
 export const useNotificationsOverview = () => {
   const guildId = useGuildId() ?? "";
   const hasGuildId = Boolean(guildId);
@@ -60,7 +59,6 @@ export const useNotificationsOverview = () => {
     sync,
     hasRequiredPermissions: sync.permissionStatus === "ok",
     isLoading: targetsQuery.isLoading || rulesQuery.isLoading,
-    // Each tab blocks only on the list it shows.
     rulesLoad: {
       isError: rulesQuery.isError && !rulesQuery.data,
       isRetrying: rulesQuery.isFetching,
@@ -82,12 +80,10 @@ export const useNotificationsOverview = () => {
     jobs: jobsQuery.data,
     pendingJobs,
     historyJobs,
-    /** The rule's next delivery, if one is queued. */
     getNextJob: (ruleId: number): PendingJob | undefined =>
       minBy(pendingByRule[ruleId] ?? [], (job) =>
         new Date(job.scheduledFor).getTime(),
       ),
-    /** The rule's latest finished delivery. */
     getLastJob: (ruleId: number): HistoryJob | undefined =>
       minBy(
         historyByRule[ruleId] ?? [],

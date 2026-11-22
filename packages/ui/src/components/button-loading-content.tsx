@@ -4,11 +4,6 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 const isText = (value: ReactNode): value is string | number =>
   typeof value === "string" || typeof value === "number";
 
-/**
- * Keeps the button's own children in place and lays the spinner over them, so
- * the button never changes size while it loads. Runs of text become one span
- * so the button can hide every child while keeping it in the accessible name.
- */
 export function ButtonLoadingContent({
   loading = false,
   children,

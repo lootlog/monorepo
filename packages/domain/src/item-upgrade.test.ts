@@ -12,7 +12,6 @@ import { itemStatValue } from "./item-stat.js";
 
 const statOf = (stat: string, key: string) => itemStatValue(stat, key);
 
-// Real catalog items at level 227, whose +5 virtual level is 262.
 const necklace = {
   stat: "act=5;binds;crit=3;da=122;evade=23;heal=514;lowcrit=4;lowevade=23;lvl=227;rarity=heroic;sa=178",
   lvl: 227,
@@ -36,26 +35,21 @@ describe("item upgrade", () => {
   it("computes bonuses at the virtual level from the number the item was given", () => {
     const upgraded = upgradeItemStat(necklace, { level: 5 });
 
-    // Two "all attributes" bonuses: 0.25 * 262 * 2 + 8.
     expect(statOf(upgraded, "da")).toBe("139");
-    // Three attack speed bonuses: 8 + 0.25 * 262 * 3, in hundredths.
     expect(statOf(upgraded, "sa")).toBe("205");
     expect(statOf(upgraded, "heal")).toBe("628");
-    // Critical chance does not depend on level, and wearing it still takes 227.
     expect(statOf(upgraded, "crit")).toBe("3");
     expect(statOf(upgraded, "lvl")).toBe("227");
     expect(statOf(upgraded, "enhancement_upgrade_lvl")).toBe("5");
   });
 
   it("grows weapon damage with the rarity and level power", () => {
-    // 8 * 0.3984 * (rarity_power + level_power) at 262, with a 10% spread.
     expect(statOf(upgradeItemStat(sword, { level: 5 }), "dmg")).toBe(
       "6050,7394",
     );
   });
 
   it("counts the base of life once, however many life bonuses an item has", () => {
-    // A heroic helmet with six life bonuses, dropped at 297 and at 42.
     const helmet = {
       stat: "ac=771;artisanbon=150;da=82;hp=8607;lvl=297;permbound;rarity=heroic;sa=82",
       lvl: 297,
@@ -108,17 +102,13 @@ describe("item upgrade", () => {
   });
 
   it("adds the chosen +5 bonus from the item's class pool at the virtual level", () => {
-    // One strength bonus at 262: 5 * 262 / 9 + 4, a stat the necklace lacked.
     const withStrength = upgradeItemStat(necklace, { level: 5, bonus: "ds" });
 
     expect(statOf(withStrength, "bonus")).toBe("ds,150");
     expect(statOf(withStrength, "ds")).toBe("150");
-    // One more healing bonus: 8 + 2 * (0.8 * 262 + 0.2 * level_power), the
-    // base counted once, not 628 + 628.
     expect(
       statOf(upgradeItemStat(necklace, { level: 5, bonus: "heal" }), "heal"),
     ).toBe("1249");
-    // A necklace cannot draw a weapon bonus, and below +5 there is none.
     expect(
       statOf(upgradeItemStat(necklace, { level: 5, bonus: "acdmg" }), "bonus"),
     ).toBeUndefined();
@@ -128,8 +118,6 @@ describe("item upgrade", () => {
   });
 
   it("makes the +5 bonus one more of the item's bonuses, its base counted once", () => {
-    // Oko mrozu: one attack speed bonus, 0.94 at 345; a second gives
-    // round(8 + 2 * 0.25 * 345) = 1.81, not 0.94 + 0.94.
     const orb = {
       stat: "binds;crit=1;di=171;frost=220,2861;heal=764;lvl=300;manabon=80;rarity=heroic;reqp=m;resdmg=1;sa=83",
       lvl: 300,
@@ -147,9 +135,6 @@ describe("item upgrade", () => {
   });
 
   it("grows native armor and absorption apart from the bonuses added to them", () => {
-    // A mage's heroic helmet at 300: native absorption 8 * 0.375 * 0.33 *
-    // (rarity_power + level_power) = 2613.8, plus two bonuses of
-    // 0.6 * level_power * 0.33 = 510.8 each.
     const helmet = {
       stat: "absorb=3635;lvl=300;rarity=heroic;reqp=m",
       lvl: 300,
@@ -157,12 +142,9 @@ describe("item upgrade", () => {
       type: "HELMET",
     };
 
-    // At 345 the native part is 3310.6 and the bonuses 1297.9; scaling the
-    // whole value by rarity_power + level_power would give 4604.
     expect(statOf(upgradeItemStat(helmet, { level: 5 }), "absorb")).toBe(
       "4608",
     );
-    // The +5 bonus is a third absorption bonus: 649 more.
     expect(
       statOf(upgradeItemStat(helmet, { level: 5, bonus: "absorb" }), "bonus"),
     ).toBe("absorb,649");
@@ -185,11 +167,8 @@ describe("item upgrade", () => {
 
 describe("attack speed at +5", () => {
   it("takes the +5 bonus that adds the most attack speed for the item's class", () => {
-    // 2,05 SA and 139 to all attributes at +5, then 150 agility: 2,05 +
-    // 0,002 * (139 + 150). Necklaces cannot draw attack speed itself.
     expect(attackSpeedUpgrade(necklace)).toEqual({ level: 5, bonus: "dz" });
     expect(upgradedAttackSpeed(necklace)).toBe(2.628);
-    // A third attack speed bonus outruns 150 agility on a weapon.
     expect(attackSpeedUpgrade(sword)).toEqual({ level: 5, bonus: "sa" });
     expect(upgradedAttackSpeed(sword)).toBe(2.05);
   });
@@ -208,8 +187,6 @@ describe("attack speed at +5", () => {
 
 describe("armor of several professions", () => {
   it("reads the professions in any order the item lists them", () => {
-    // A warrior and blade dancer armor at 100: 8 * 0.12375 * (46 + 460)
-    // native and one armor bonus, 0.15 * 460.
     const armor = (reqp: string) => ({
       stat: `ac=570;lvl=100;rarity=legendary;reqp=${reqp}`,
       lvl: 100,
@@ -221,7 +198,6 @@ describe("armor of several professions", () => {
       itemStatValue(itemAtLevel(armor(reqp), 200).stat, "ac");
 
     expect(acAt200("wb")).toBe(acAt200("bw"));
-    // 8 * 0.12375 * (66 + 1320) + 0.15 * 1320 at 200.
     expect(acAt200("bw")).toBe("1570");
   });
 });

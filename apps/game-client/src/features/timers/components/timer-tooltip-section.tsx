@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-/** A block of the timer tooltip, divided from the one above it. */
 export function TimerTooltipSection({
   heading,
   children,

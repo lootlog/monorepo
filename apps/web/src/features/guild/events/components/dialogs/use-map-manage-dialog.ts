@@ -164,7 +164,6 @@ export function useMapManageDialog({
       )
     : heroLocations;
 
-  /** Moves a location one place up or down from the keyboard and saves it. */
   const handleMoveLocation = (locationId: string, offset: -1 | 1) => {
     if (reorderLocations.isPending) return;
     const ids = displayedLocations.map((location) => location.id);

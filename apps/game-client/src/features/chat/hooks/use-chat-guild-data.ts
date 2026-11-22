@@ -57,11 +57,6 @@ type MentionContextCacheEntry = MentionContextInput & {
 
 const mentionContextCache = new Map<string, MentionContextCacheEntry>();
 
-/**
- * Every rendered row of a guild receives this context, so its identity must
- * only change when its content does. A new message from a known sender keeps
- * the previous object even though the message array is new.
- */
 const getStableChatMentionContext = (
   guildId: string,
   input: MentionContextInput,
@@ -138,20 +133,9 @@ const reconcileChatMessageRefetch = ({
   );
 };
 
-/**
- * `useQueries` returns a new array on every render; combining keeps each
- * result structurally shared, so derived records keep their identity until a
- * query actually changes.
- */
 const combineData = <Data>(results: UseQueryResult<Data>[]) =>
   results.map((result) => result.data);
 
-/**
- * Read straight from the queries rather than through `combine`: a combined
- * result is shared by index, so a full history that drops its oldest message
- * would rebuild every message and re-render every transcript row. Each
- * history is already shared by message id (`shareChatMessages`).
- */
 const summarizeMessageQueries = (
   results: UseQueryResult<ChatMessageType[]>[],
 ) => ({

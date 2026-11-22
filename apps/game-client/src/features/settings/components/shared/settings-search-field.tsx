@@ -14,7 +14,6 @@ type SettingsSearchFieldProps = {
   onKeyDown: KeyboardEventHandler<HTMLInputElement>;
 };
 
-/** Settings search box: the shared SearchInput wired as a combobox. */
 export const SettingsSearchField: FC<SettingsSearchFieldProps> = ({
   value,
   placeholder,

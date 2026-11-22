@@ -1,4 +1,3 @@
-/** Endpoints owned by the weapon-kills HTTP module. */
 import { Unauthorized } from "../errors.js";
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import { BearerSecurityMiddleware } from "@lootlog/protocol/http/bearer-security";

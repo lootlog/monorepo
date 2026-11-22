@@ -11,7 +11,6 @@ import {
 import { LootSplitStatusCount } from "./loot-split-status-count";
 import { LootSplitStatusIcon } from "./loot-split-status-icon";
 
-/** Players still choosing come first: they hold the party up. */
 const STATUS_ORDER: Record<LootSplitStatus, number> = {
   choosing: 0,
   timedOut: 0,
@@ -26,10 +25,6 @@ type LootSplitSectionProps = {
   now: number;
 };
 
-/**
- * One split as a participant × item grid. Participants are rows: a party of
- * up to ten outgrows a split's few items, so the grid grows downwards.
- */
 export const LootSplitSection: FC<LootSplitSectionProps> = ({
   split,
   heroId,
@@ -53,7 +48,6 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
   const unknown = rows.filter(({ status }) => status === "unknown").length;
   const title = isOwn ? t("ownSplit") : t("otherSplit");
 
-  // Only choices this client knows count; a loot filter keeps its player's.
   const wanted = split.items.map(
     (item) =>
       rows.filter(({ view }) => (view?.choices[item.id] ?? 0) > 0).length,
@@ -125,7 +119,6 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
           aria-hidden
           className="ll:mt-1.5 ll:mb-2 ll:h-0.5 ll:overflow-hidden ll:rounded-full ll:bg-white/12"
         >
-          {/* The store ticks every 500 ms; the transition fills the gap. */}
           <div
             className="ll:h-full ll:origin-left ll:rounded-full ll:bg-white/55 ll:transition-transform ll:duration-500 ll:ease-linear ll:motion-reduce:transition-none"
             style={{ transform: `scaleX(${remaining})` }}
@@ -188,7 +181,6 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
                 const label = t("cellLabel", {
                   player: participant.name,
                   item: item.name,
-                  // The game keeps a loot filter's choices from its player.
                   choice: t(
                     view?.autoAccept === "lootFilter"
                       ? "choices.lootFilter"

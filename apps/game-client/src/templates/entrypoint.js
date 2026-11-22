@@ -26,8 +26,6 @@ const version = "$GAME_CLIENT_VERSION$";
 (function () {
   "use strict";
 
-  // The bundle never ran, so this notice cannot use its translations or
-  // stylesheet: plain DOM, inline styles, Polish copy.
   const showLoadFailure = () => {
     const noticeId = "lootlog-loader-notice";
 
@@ -81,7 +79,6 @@ const version = "$GAME_CLIENT_VERSION$";
     ].join(";");
     dismiss.addEventListener("click", () => notice.remove());
 
-    // Presses on the notice must not reach the game underneath.
     for (const type of ["pointerdown", "mousedown", "click", "keydown"])
       notice.addEventListener(type, (event) => event.stopPropagation());
 

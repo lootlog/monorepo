@@ -42,8 +42,6 @@ export const makeMemberRemoval = (
     if (missing.length === 0) return 0;
     const now = new Date(yield* Clock.currentTimeMillis);
 
-    // The removal delivery commits with the deactivation, so a failed
-    // invalidation or publication is retried by the delivery dispatcher.
     const deactivated = yield* operation(
       "members.deactivateMissing.transaction",
       database.transaction((transaction) =>

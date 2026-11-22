@@ -57,7 +57,6 @@ it("refreshes personal statistics on the user's own kill hints only, coalesced, 
     ),
   });
 
-  // Another member's kill changes only Organization statistics.
   act(() =>
     gateway.deliver({
       v: 1,

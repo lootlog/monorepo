@@ -53,10 +53,6 @@ export const makeRedisStore = (redis: Redis.Redis["Service"]) => {
     eval: evalScript,
   };
 
-  /**
-   * Reads a JSON value, or lets one caller fill it while the others wait. A
-   * Redis failure runs `factory` uncached; a `factory` failure fails the read.
-   */
   const getOrSetJson = <T, E, R>(
     options: CacheFillOptions<T, E, R>,
   ): Effect.Effect<T, E, R> => getOrFillJson(cacheFillStore, options);

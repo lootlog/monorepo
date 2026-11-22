@@ -21,8 +21,6 @@ const MemberView = Schema.Struct({
   avatarUrl: Schema.NullOr(Schema.String),
 });
 
-// The gateway forwards the API's HeroSightingResponseDto. Validate the fields
-// this view reads before putting an incremental payload in cache.
 const decodeHeroSightingView = Schema.decodeUnknownOption(
   Schema.Struct({
     id: Schema.Finite,
@@ -56,7 +54,6 @@ type Options = {
 const touchesHeroSightings = (change: AccessPolicyChange) =>
   change.areas.includes("timers") || change.areas.includes("organization");
 
-/** Keeps hero sighting boards and histories current from realtime updates. */
 export const useHeroSightingsSocket = ({ socket, guilds }: Options) => {
   const queryClient = useQueryClient();
 
@@ -74,7 +71,6 @@ export const useHeroSightingsSocket = ({ socket, guilds }: Options) => {
       void queryClient.invalidateQueries(queries);
     };
 
-    // Revoked access hides what was shown at once, before the refetch answers.
     const clearRestricted = (ids?: readonly string[]) => {
       const queries = heroSightingQueries(ids);
 
@@ -118,7 +114,6 @@ export const useHeroSightingsSocket = ({ socket, guilds }: Options) => {
       );
 
       if (restricted.length > 0) {
-        // If membership disappeared, its former alias may no longer be known.
         const allAliasesKnown = restricted.every((change) =>
           guilds?.some((guild) => guild.id === change.organizationId),
         );
@@ -146,7 +141,6 @@ export const useHeroSightingsSocket = ({ socket, guilds }: Options) => {
     const onJoin = (payload: GatewayJoin) => {
       onPolicyChanges(payload.accessPolicyChanges);
 
-      // Join confirms the subscription: HTTP recovers updates missed offline.
       if (payload.recover) refetch();
     };
 

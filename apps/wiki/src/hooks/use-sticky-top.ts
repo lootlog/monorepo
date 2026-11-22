@@ -1,15 +1,9 @@
 import { useState } from "react";
 
-// Below the site bar, and above the set docked at the bottom of the screen.
 const TOP_GAP = 80;
 
 const BOTTOM_GAP = 80;
 
-/**
- * The `top` of a side panel that sticks under the site bar. A panel taller
- * than the screen first scrolls with the page and sticks once its bottom is
- * in view, so none of it stays out of reach until the page ends.
- */
 export const useStickyTop = () => {
   const [top, setTop] = useState(TOP_GAP);
 

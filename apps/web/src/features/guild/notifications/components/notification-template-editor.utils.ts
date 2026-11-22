@@ -23,7 +23,6 @@ import {
   $isNotificationTemplateVariableNode,
 } from "./notification-template-variable-node";
 
-/** The `{{variable}}` placeholders the API renders, by the rule triggers that fill them. */
 const TIMER_VARIABLE_KEYS = [
   "ruleName",
   "npcName",

@@ -43,8 +43,6 @@ function getWhoIsHereRows(): HTMLElement[] {
   );
 }
 
-// classList and style writes rewrite the game's attribute even when the value
-// is unchanged, so each row is written only when its highlight changes.
 function clearRowHighlight(row: HTMLElement): void {
   if (row.classList.contains(HIGHLIGHT_CLASS)) {
     row.classList.remove(HIGHLIGHT_CLASS);

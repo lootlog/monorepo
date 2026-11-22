@@ -63,9 +63,6 @@ describe("resolveLootAcceptance", () => {
     });
   });
 
-  // A game client holds only the character's catching scope; deciding on
-  // configuration or membership it has not loaded would drop loot the API
-  // accepts.
   it("never rejects on configuration, membership or loot the caller did not pass", () => {
     expect(
       resolveLootAcceptance({ catchingGuildIds: ["legendary-only"] }),
@@ -75,10 +72,6 @@ describe("resolveLootAcceptance", () => {
     });
   });
 
-  // The game client reads the catching scope from the character
-  // configuration endpoint, which already drops Organizations where the
-  // user cannot write loot. Both sides must then agree on whether the
-  // whitelist rejects the loot everywhere.
   it.each<{ writable: string[]; stored: string[] }>([
     { writable: ["a", "b"], stored: [] },
     { writable: ["a", "b"], stored: ["gone"] },

@@ -23,7 +23,6 @@ let database: Effect.Success<typeof databaseEffect>;
 
 const FIRST_BATTLE_AT = Date.UTC(2026, 9, 4, 12);
 
-// Milliseconds after FIRST_BATTLE_AT; two battles share a millisecond.
 const OWNER_BATTLE_OFFSETS = [0, 1, 2, 2, 5, 8, 13, 21];
 
 const ownerBattleIds: string[] = [];
@@ -125,8 +124,6 @@ describe("battle list pagination against PostgreSQL", () => {
         hasNext: true,
       });
 
-      // End pages lack a cursor and an uncounted page lacks count metadata;
-      // the response contract must still encode them.
       for (const result of [...forward, ...backward]) {
         expect(() =>
           Schema.encodeUnknownSync(Schema.toCodecJson(BattlePagination))(

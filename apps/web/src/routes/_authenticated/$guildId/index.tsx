@@ -24,7 +24,6 @@ import {
   type AppNavigationItemId,
 } from "@/navigation/app-navigation";
 
-// Sections a member can land on when the loot list is not theirs to read.
 const LANDING_ROUTES = {
   "organization-timers": "/$guildId/timers",
   "organization-hero-sightings": "/$guildId/hero-sightings",
@@ -47,11 +46,8 @@ export const Route = createFileRoute("/_authenticated/$guildId/")({
   },
   component: LootsListPage,
   pendingComponent: LootsListPageSkeleton,
-  // The server rail opens every Organization here, so this page holds the
-  // previous one as long as the Organization route does.
   pendingMs: ORGANIZATION_OPEN_PENDING_MS,
   loader: async ({ abortController, context, location, params }) => {
-    // The parent route ensures the same query, so this is a cache read.
     const permissions = await withRouteLoaderCancellation(abortController, () =>
       ensureRouteQueryData(
         context.queryClient,

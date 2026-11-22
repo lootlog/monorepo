@@ -4,10 +4,6 @@ import type {
 } from "@lootlog/client/main";
 import { maxBy } from "es-toolkit";
 
-/**
- * The busiest timeline point, the longest run of consecutive points with
- * kills, and the busiest weekday hour; null when nothing was killed.
- */
 export function summarizeKillRecords(
   points: GuildKillStatsResponseDtoOutputTimelinePointsItem[],
   cells: GuildKillStatsResponseDtoOutputHourlyWeekdayItem[],

@@ -23,11 +23,6 @@ const whenIdle = (callback: () => void) => {
   return () => clearTimeout(handle);
 };
 
-/**
- * Downloads the code of likely next pages while the browser is idle, so the
- * first click on them does not wait for a chunk. Loaders do not run, so this
- * adds no API traffic.
- */
 export function useWarmRouteChunks(paths: readonly string[]) {
   const router = useRouter();
   const pathsKey = paths.join("\n");

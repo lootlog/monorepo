@@ -13,7 +13,6 @@ type MapOccupant = {
   clanName?: string;
 };
 
-/** Who is on one map; the reference changes only when what the tooltip shows does. */
 export type MapOccupancy = {
   players: readonly MapOccupant[];
   allAfk: boolean;
@@ -34,7 +33,6 @@ const sameOccupancy = (first: MapOccupancy, second: MapOccupancy) =>
     );
   });
 
-/** Whether a presence update leaves everything a map occupant shows unchanged. */
 const sameOccupant = (previous: PlayerPresence, next: PlayerPresence) =>
   previous.isAfk === next.isAfk &&
   previous.player?.name === next.player?.name &&
@@ -42,13 +40,11 @@ const sameOccupant = (previous: PlayerPresence, next: PlayerPresence) =>
   previous.player?.prof === next.player?.prof &&
   previous.player?.clan?.name === next.player?.clan?.name;
 
-/** Character identity survives reconnects; session identity makes late removals safe. */
 export class PresenceMapIndex {
   private readonly characters = new Map<string, PlayerPresence>();
   private readonly sessions = new Map<string, string>();
   private readonly maps = new Map<string, Map<string, PlayerPresence>>();
   private readonly occupancy = new Map<string, MapOccupancy>();
-  // Presence counts per character id: the lookup runs per enemy per projection.
   private readonly characterCounts = new Map<string, number>();
 
   getOccupancy(mapName: string): MapOccupancy | undefined {
@@ -64,7 +60,6 @@ export class PresenceMapIndex {
         key,
         name: presence.player?.name ?? "",
         isAfk: presence.isAfk,
-        // Presence normalises a missing level to 0 and a missing profession to "".
         lvl: presence.player?.lvl || undefined,
         prof: presence.player?.prof || undefined,
         clanName: presence.player?.clan?.name,
@@ -118,7 +113,6 @@ export class PresenceMapIndex {
       for (const presence of presences) this.apply(presence);
     }
 
-    // Keep unchanged references so a refresh does not wake every timer tile.
     for (const [mapName, occupancy] of previous) {
       const next = this.getOccupancy(mapName);
 
@@ -127,7 +121,6 @@ export class PresenceMapIndex {
     }
   }
 
-  /** Returns the maps whose occupancy changed. */
   apply(presence: PlayerPresence): string[] {
     const key = `${presence.discordId}:${getPresenceKey(presence)}`;
 

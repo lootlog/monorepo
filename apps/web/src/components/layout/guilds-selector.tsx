@@ -23,7 +23,6 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import { RotateCcw } from "lucide-react";
 
-// Rail entries span the rail; strip tiles keep their own width.
 const ORIENTATIONS = {
   vertical: {
     variant: "rail",
@@ -46,12 +45,7 @@ const getHiddenGuildIds = (
 ) => new Set(preferences?.hiddenGuildIds);
 
 type GuildsSelectorProps = {
-  /**
-   * `horizontal` is the labelled strip that opens the phone navigation
-   * sheet; the desktop rail is vertical.
-   */
   orientation: "vertical" | "horizontal";
-  /** Called when an entry navigates or opens a dialog. */
   onSelect?: () => void;
 };
 
@@ -67,7 +61,6 @@ export const GuildsSelector: FC<GuildsSelectorProps> = ({
   const hiddenGuildIds = getHiddenGuildIds(preferencesQuery.data);
   const lootUnreadCounts = useLootUnreadCounts();
 
-  // A clicked server is marked at once; its page follows once it has loaded.
   const { guildId: currentGuildId, isOpening: isOpeningGuild } =
     useRailGuildId();
 

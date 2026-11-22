@@ -12,7 +12,6 @@ export type PlayerSnapshotInput = Pick<
   "world" | "accountId" | "characterId" | "name" | "prof" | "icon"
 >;
 
-/** Margonem does not report the account of every character it shows. */
 const UNKNOWN_ACCOUNT_ID = 0;
 
 const parsePositiveId = (value: string): number | null => {
@@ -21,12 +20,6 @@ const parsePositiveId = (value: string): number | null => {
   return /^\d+$/.test(value) && Number.isSafeInteger(id) && id > 0 ? id : null;
 };
 
-/**
- * The account and character a client reported, in the form snapshots store.
- * A missing or zero account is unknown. Returns null when either id is
- * malformed. Older loot senders appended the account id to the character id;
- * only their callers pass `legacyCombinedId`.
- */
 export const parseCharacterIdentity = (
   characterId: string | number,
   accountId: string | number | null | undefined,
@@ -57,7 +50,6 @@ export const parseCharacterIdentity = (
       };
 };
 
-// Senders report a missing graphic as an empty string or null.
 const normalizeInput = (
   snapshot: PlayerSnapshotInput,
 ): PlayerSnapshotInput => ({
@@ -113,7 +105,6 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
     ).values(),
   ];
 
-  // Older writers used different hash inputs for the same stored character data.
   const existing = yield* database
     .select()
     .from(playerSnapshotTable)
@@ -153,8 +144,6 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
   );
 
   if (missing.length > 0) {
-    // Versioned structured hashes cannot collide with legacy concatenated fields.
-    // Keep one ordered insert batch so overlapping callers acquire keys consistently.
     const inserts = missing
       .map((snapshot) => ({
         ...snapshot,

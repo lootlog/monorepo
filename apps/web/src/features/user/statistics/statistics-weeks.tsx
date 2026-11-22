@@ -5,7 +5,6 @@ import { StatisticsDelta } from "./statistics-delta";
 import { StatisticsWeekChart } from "./statistics-week-chart";
 import { summarizeWeeks } from "./summarize-weeks";
 
-/** This week next to the previous one, whatever period the page shows. */
 type StatisticsWeeksProps = {
   world: string | undefined;
   characterId: string | undefined;
@@ -21,7 +20,6 @@ export function StatisticsWeeks({ world, characterId }: StatisticsWeeksProps) {
 
   const weeks = activity.data && summarizeWeeks(activity.data.daily);
 
-  // Days without history leave the comparison open instead of counting zero.
   const totals =
     weeks && weeks.currentKills !== null && weeks.previousKills !== null
       ? { current: weeks.currentKills, previous: weeks.previousKills }

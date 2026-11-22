@@ -12,23 +12,16 @@ import { useFillRemainingHeight } from "@/hooks/utils/use-fill-remaining-height"
 import type { LucideIcon } from "lucide-react";
 
 type EmptyStateProps = {
-  /** Replaces the icon tile, for example with a themed illustration. */
   media?: ReactNode;
   icon?: LucideIcon;
   title: string;
   description?: string;
   className?: string;
-  /**
-   * The page's only content: fills the visible space below it, so the state
-   * sits in the middle of what is left of the screen.
-   */
   fill?: boolean;
-  /** Sized for a state inside a card rather than a whole page or table. */
   compact?: boolean;
   action?: ReactNode;
 };
 
-/** The height of a page's empty state when little is left of the screen. */
 const MIN_FILL_HEIGHT = 256;
 
 export const EmptyState = ({

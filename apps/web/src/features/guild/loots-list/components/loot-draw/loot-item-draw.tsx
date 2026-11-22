@@ -7,13 +7,6 @@ import type { Item, Loot } from "@/lib/loots/loot-types";
 import { LootDrawDialog } from "./loot-draw-dialog";
 import { useLootDrawRules } from "./use-loot-draw-rules";
 
-/**
- * A drawable item's tile on the loot list, with its draw at hand: a trophy
- * and the standing winner under the tile, or a die that opens the wheel. The
- * badge takes the bottom-left corner; a stack's count holds the bottom-right.
- * An item the Organization does not draw shows only its tile, unless its
- * draw is open: voiding an excluded item's result keeps the dialog on screen.
- */
 export const LootItemDraw = ({
   loot,
   item,
@@ -21,7 +14,6 @@ export const LootItemDraw = ({
 }: {
   loot: Loot;
   item: Item;
-  /** The item's tile. */
   children: ReactNode;
 }) => {
   const { t } = useTranslation();
@@ -59,7 +51,6 @@ export const LootItemDraw = ({
           }
           className={cn(
             "absolute -bottom-1.5 -left-1.5 z-10 flex size-5 items-center justify-center rounded-full shadow-sm ring-2 ring-card transition-colors focus-visible:outline-2 focus-visible:outline-ring",
-            // A 28px target around the 20px badge.
             "after:absolute after:-inset-1 after:content-['']",
             winner
               ? "bg-primary text-primary-foreground hover:bg-primary/85"
@@ -74,13 +65,10 @@ export const LootItemDraw = ({
         </button>
       </div>
       {winner && (
-        // The name hangs under the tile without widening the player's
-        // column, so a long name never spreads the players apart.
         <div className="relative h-5 w-full">
           <button
             type="button"
             onClick={openDraw}
-            // The trophy above takes keyboard focus for the same action.
             tabIndex={-1}
             aria-label={t("loots.details.draw.wonByItem", {
               item: item.name,

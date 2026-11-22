@@ -3,7 +3,6 @@ import { cn } from "cn";
 
 const FILTER_WIDTHS = ["w-[170px]", "w-[94px]"];
 
-/** Stands in for `StatisticsFilterToolbar`, which narrow pages move to a panel. */
 export const StatisticsFilterToolbarSkeleton = () =>
   FILTER_WIDTHS.map((width) => (
     <Skeleton

@@ -7,19 +7,15 @@ import {
   getLegacyRuntimeOther,
 } from "./tooltip-runtime-adapter";
 
-/** An SI character as the aura sees it: its frame and the map element it is drawn as. */
 export type LegacyAuraCharacter = RuntimeAuraCharacter & {
-  /** `#hero` or `#other{id}`, the element the aura's layers sit beside. */
   element: HTMLElement;
 };
 
-/** The two canvases of one aura: under and over its character. */
 export type LegacyAuraLayers = {
   back: HTMLCanvasElement;
   front: HTMLCanvasElement;
 };
 
-/** A layer's rect in `#base` pixels, which are map pixels. */
 export type LegacyAuraLayerBox = {
   x: number;
   y: number;
@@ -34,19 +30,12 @@ type LegacyAuraRuntimeWindow = Window & {
 
 const getRuntimeWindow = (): LegacyAuraRuntimeWindow => window;
 
-/** Sprites are swapped rarely; the cache only guards against unbounded growth. */
 const MAX_SPRITES = 256;
 
-/** The sprite of each `background-image` url SI gave a character element. */
 const sprites = new Map<string, HTMLImageElement>();
 
 const BACKGROUND_URL = /^url\((["']?)(.+)\1\)$/;
 
-/**
- * SI loads a sprite through XHR into a `blob:` url of the page's own origin
- * (functions.js `ImgLoader.onload`) and sets it as the element's background,
- * so the same url decodes again from memory and its pixels can be read.
- */
 function spriteOf(backgroundImage: string): HTMLImageElement | null {
   const url = BACKGROUND_URL.exec(backgroundImage)?.[2];
 
@@ -67,12 +56,6 @@ function modulo(value: number, size: number): number {
   return ((value % size) + size) % size;
 }
 
-/**
- * The frame SI shows on a character element. `moveOther` (elements.js) and
- * `hero.run` (player.js) set its inline left, top, size, z-index and the
- * background position of the sprite's 4×4 frame grid; in water the element
- * is pushed down and cut shorter, so the visible part is what it shows.
- */
 function readFrame(element: HTMLElement): RuntimeCharacterFrame | null {
   const { style } = element;
 
@@ -112,8 +95,6 @@ function toAuraCharacter(
   const frame = element && readFrame(element);
 
   if (!element || !frame) return null;
-  // `getLayerOrder` (elements.js) sets `y * 2 + 10`; a fraction mid-step is
-  // not a valid z-index, so the element keeps its last whole one.
   const order = Number.parseInt(element.style.zIndex, 10);
 
   return {
@@ -128,8 +109,6 @@ function createLayer(): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = 0;
   canvas.height = 0;
-  // Inline only: no stylesheet rule matches these, and the map's clicks and
-  // tips go through them to the characters and ground underneath.
   canvas.style.cssText = "position:absolute;left:0;top:0;pointer-events:none";
 
   return canvas;
@@ -151,7 +130,6 @@ function placeLayer(
   if (layer.style.zIndex !== zIndex) layer.style.zIndex = zIndex;
 }
 
-/** SI's map: `#base` holds the hero and others as positioned elements in map pixels. */
 export const legacyAuraRuntimeAdapter = {
   isAvailable(): boolean {
     return (
@@ -178,11 +156,6 @@ export const legacyAuraRuntimeAdapter = {
     return { back: createLayer(), front: createLayer() };
   },
 
-  /**
-   * Puts the layers right before and after the character's element with its
-   * z-index, so the back one paints under it and the front one over it,
-   * both under the characters of the rows in front.
-   */
   placeLayers(
     layers: LegacyAuraLayers,
     element: HTMLElement,
@@ -203,17 +176,14 @@ export const legacyAuraRuntimeAdapter = {
     layers.front.remove();
   },
 
-  /** A cover over the whole of `#base`, above every character, for an admin's arrival. */
   createVeil(): HTMLDivElement {
     const veil = document.createElement("div");
-    // Inline only, like the layers; clicks go through to the map.
     veil.style.cssText =
       "position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:2147483000";
 
     return veil;
   },
 
-  /** Puts the veil into `#base` with `background`; false while the map is not shown. */
   placeVeil(veil: HTMLDivElement, background: string): boolean {
     const base = document.getElementById("base");
 

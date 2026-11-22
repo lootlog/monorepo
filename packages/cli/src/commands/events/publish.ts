@@ -16,7 +16,6 @@ const EventFixture = Schema.Struct({
 
 type EventFixture = typeof EventFixture.Type;
 
-/** A fixture must be a message the consumers of its routing key accept. */
 const validateEvent = (fixture: EventFixture): EventFixture => {
   if (!isCanonicalRabbitEventRoutingKey(fixture.routingKey)) {
     throw new Error(`Unknown routing key: ${fixture.routingKey}`);
@@ -79,14 +78,12 @@ const publishInteractive = Effect.fn("publishInteractive")(function* (
   yield* Console.log(styleText("gray", "Connected to RabbitMQ"));
 
   for (let iteration = 0; ; iteration++) {
-    // Continuous mode reloads fixtures so edits show up without a restart.
     const fixtures = yield* Effect.promise(() => loadFixtures());
 
     if (fixtures.size === 0) {
       return yield* Effect.die(new Error("No event fixtures found"));
     }
 
-    // Ctrl+C cancels the picker without failing the command.
     const selected = yield* Effect.option(
       Prompt.run(
         Prompt.Select({

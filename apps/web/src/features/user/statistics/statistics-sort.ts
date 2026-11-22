@@ -7,7 +7,6 @@ import type { StatisticsSort } from "./statistics-search";
 
 export type StatisticsSortValue = { field: StatisticsSort; asc: boolean };
 
-/** Rows ordered by one number; ties keep the server's order. */
 export const sortStatisticsRows = <T>(
   rows: readonly T[],
   value: (row: T) => number,
@@ -22,10 +21,8 @@ export const sortStatisticsRows = <T>(
     )
     .map(({ row }) => row);
 
-/** A sortable field and the id of the table column that shows it. */
 export type StatisticsSortColumn = readonly [StatisticsSort, string];
 
-/** Bridges a table's sorting state and the URL's sort. */
 export const statisticsTableSorting = (
   sort: StatisticsSortValue,
   columns: readonly StatisticsSortColumn[],

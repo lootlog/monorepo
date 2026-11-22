@@ -28,11 +28,6 @@ const forbidden = { code: "FORBIDDEN" } as const;
 
 const unavailable = { code: "UNAVAILABLE" } as const;
 
-/**
- * Serves the `organization.presence` snapshot over HTTP with the subscription
- * policy a WebSocket viewer gets. API keys keep their lease checks on the
- * socket, so this read refuses them instead of re-implementing those checks.
- */
 const readOrganizationPresence = Effect.fn("GatewayOrganizationPresence")(
   function* (
     dependencies: GatewayHttpDependencies,

@@ -133,7 +133,6 @@ for (const origin of [
   assert.ok(robots.includes(`Sitemap: ${origin}/sitemap.xml`));
 }
 
-// Pages answers unknown paths with 404.html; no link requests it directly.
 await assertRoutedTo(
   (await readdir(clientDirectory))
     .filter((entry) => entry !== "404.html")

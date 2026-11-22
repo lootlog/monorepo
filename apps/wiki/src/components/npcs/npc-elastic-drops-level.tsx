@@ -7,7 +7,6 @@ import {
 import { CharacterLevelInput } from "@/components/equipment/character-level-input";
 import { t } from "@/i18n/messages";
 
-/** The character level a monster's elastic drops show at. */
 export function NpcElasticDropsLevel() {
   const inputId = useId();
   const hintId = useId();

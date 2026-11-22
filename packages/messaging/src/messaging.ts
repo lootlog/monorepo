@@ -51,11 +51,6 @@ export class MessagingError extends TaggedErrorClass<MessagingError>()(
   },
 ) {}
 
-/**
- * Fails a delivery that can never succeed, such as a payload that does not
- * decode. Retry and dead-letter policies send it straight to the dead-letter
- * queue; nack and requeue policies reject it without requeueing.
- */
 export class UnprocessableDelivery extends TaggedErrorClass<UnprocessableDelivery>()(
   "UnprocessableDelivery",
   { cause: Schema.Defect() },
@@ -102,7 +97,6 @@ const acquireBrokerResource = <
           try {
             await resource.close();
           } catch {
-            /* Already closed by the broker. */
           } finally {
             resource.off("error", onError);
             resource.off("close", onClose);
@@ -120,8 +114,6 @@ export interface RabbitDelivery {
   readonly raw: ConsumeMessage;
 }
 
-// AMQP field tables are relayed intact, including broker and producer extensions.
-// Their values remain unknown until a consumer validates an owned header.
 type AmqpHeaders = Readonly<Record<string, unknown>>;
 
 export interface PublishOptions {
@@ -138,7 +130,6 @@ const textEncoder = new TextEncoder();
 
 const textDecoder = new TextDecoder();
 
-/** One canonical event as a message: its routing key and JSON wire form. */
 export const eventMessage = <Key extends CanonicalRabbitEventRoutingKey>(
   routingKey: Key,
   payload: CanonicalRabbitEvent<Key>,
@@ -149,7 +140,6 @@ export const eventMessage = <Key extends CanonicalRabbitEventRoutingKey>(
   content: textEncoder.encode(JSON.stringify(payload)),
 });
 
-/** Publishes canonical events; a domain receives this port instead of the broker. */
 export interface EventPublisher {
   readonly publish: <Key extends CanonicalRabbitEventRoutingKey>(
     routingKey: Key,
@@ -164,7 +154,6 @@ export const makeEventPublisher = (
     rabbit.publish(eventMessage(routingKey, payload)),
 });
 
-/** A payload that does not decode now never will, so it fails as unprocessable. */
 const decodeEventDelivery = <Key extends CanonicalRabbitEventRoutingKey>(
   routingKey: Key,
   delivery: RabbitDelivery,
@@ -184,7 +173,6 @@ const decodeEventDelivery = <Key extends CanonicalRabbitEventRoutingKey>(
     ),
   );
 
-/** Consumes a route's queue under its failure policy with decoded events. */
 export const consumeEvent = <Key extends CanonicalRabbitEventRoutingKey, E>(
   rabbit: RabbitMessagingService,
   route: ConsumerRoute<Key>,
@@ -409,8 +397,6 @@ const makeService = (
     );
   };
 
-  // The broker keeps only the payload, so the handler's cause is logged before
-  // the delivery is settled; a retried or dead-lettered failure stays diagnosable.
   const routeFailure = (
     queue: string,
     delivery: RabbitDelivery,
@@ -526,8 +512,6 @@ const makeService = (
                       }),
                     ),
                   ),
-                  // The delivery runtime captured the consume span; without a
-                  // root, every delivery joins one trace for the process lifetime.
                   Effect.withSpan("RabbitMessaging.process", {
                     root: true,
                     kind: "consumer",
@@ -656,7 +640,6 @@ export class RabbitMessaging extends Context.Service<
     );
   }
 
-  /** Fail the application and close its scopes when an established broker connection dies. */
   static supervised<A, E, R>(
     application: Effect.Effect<A, E, R | RabbitConnectionFailure>,
   ): Effect.Effect<A, E | MessagingError, Exclude<R, RabbitConnectionFailure>> {

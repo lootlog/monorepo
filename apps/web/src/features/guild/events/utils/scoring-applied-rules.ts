@@ -57,10 +57,6 @@ function parseDateIfValid(value: string | null | undefined): Date | null {
   return Number.isFinite(date.getTime()) ? date : null;
 }
 
-/**
- * The kill's presence analysis from every participant's assignment records,
- * built once and shared by each participant's breakdown.
- */
 function analyzeKillPresence(kill: KillDetail): EventKillPresence {
   const participants = kill.points ?? [];
 
@@ -125,17 +121,12 @@ export function evaluateEventScoring(
   };
 }
 
-/** The kill's shared analysis and current rules for every breakdown. */
 export type KillParticipantScoring = {
   rules: EventScoringRules;
   analysis: EventKillPresence;
   explain: (participant: KillDetailParticipant) => EventScoringExplanation;
 };
 
-/**
- * Re-evaluates the event's current rules for one kill participant: tracking
- * comes from the stored kill point, presence from the kill's analysis.
- */
 function explainParticipantScoring(params: {
   kill: KillDetail;
   participant: KillDetailParticipant;
@@ -187,7 +178,6 @@ function explainParticipantScoring(params: {
   });
 }
 
-/** Current rules and presence for a kill's breakdowns, or none in simple mode. */
 export function getKillParticipantScoring(
   kill: KillDetail,
   scoringRules: EventScoringRules | null,

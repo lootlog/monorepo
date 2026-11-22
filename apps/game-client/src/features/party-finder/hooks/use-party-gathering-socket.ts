@@ -29,7 +29,6 @@ export const usePartyGatheringSocket = () => {
   const { isReady: areMutesReady, mutes } = useCurrentUserNotificationMutes();
   const world = useGameStore((state) => state.game?.world);
 
-  // The ingress keeps the latest callback, so it reads current settings.
   const processNotifications = (
     notifications: readonly PartyGatheringPayload[],
   ) => {

@@ -6,7 +6,6 @@ export function isWindowActive(status: WindowStatus): boolean {
   return status === "OPEN" || status === "OVERDUE";
 }
 
-/** Notifies just after each future boundary, where the status changes. */
 const subscribeToBoundaries =
   (boundaries: readonly number[]) => (onChange: () => void) => {
     const now = Date.now();

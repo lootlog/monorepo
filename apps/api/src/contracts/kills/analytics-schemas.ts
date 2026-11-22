@@ -12,25 +12,21 @@ const NullableNumber = Schema.NullOr(FiniteNumber);
 
 const NullableString = Schema.NullOr(Schema.String);
 
-/** One Margonem character, counted since per-character tracking began. */
 export const CharacterIdQuery = Schema.optionalKey(
   Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
 );
 
-// A character id is unique only within its world, so it never stands alone.
 export const characterNeedsWorld = Schema.makeFilter(
   ({ world, characterId }: { world?: string; characterId?: string }) =>
     characterId === undefined || world !== undefined,
   { expected: "a world alongside characterId" },
 );
 
-/** Calendar days in Europe/Warsaw, ending today. */
 export const UserStatsDays = Schema.Literals([7, 30, 90, 365]);
 
 export const UserKillAnalyticsQuery = Schema.Struct({
   days: Schema.optionalKey(UserStatsDays),
   world: Schema.optionalKey(WorldParam),
-  /** Narrows the NPC rankings, not the totals, to one NPC type. */
   npcType: Schema.optionalKey(NpcType),
   characterId: CharacterIdQuery,
 }).check(characterNeedsWorld);
@@ -50,10 +46,6 @@ const KillAnalyticsMeta = Schema.Struct({
   days: Count,
   world: NullableString,
   characterId: NullableString,
-  /**
-   * With `characterId`: when per-character tracking began for the user. Days
-   * before it are unknown (`kills: null`), not zero. Null without `characterId`.
-   */
   trackedSince: NullableString,
   startDate: Schema.String,
   endDate: Schema.String,
@@ -163,13 +155,11 @@ export const UserKillCharactersResponse = Schema.Struct({
     Schema.Struct({
       characterId: Schema.String,
       world: Schema.String,
-      /** Null until a Game client that reports character details records a kill. */
       name: NullableString,
       level: NullableNumber,
       profession: NullableString,
       icon: NullableString,
       kills: Count,
-      /** When kills of this character started being recorded. */
       firstKilledAt: Schema.String,
       lastKilledAt: Schema.String,
     }),

@@ -9,7 +9,6 @@ import { blogNotFoundHead, blogPageHead, blogPosts } from "../config/blog";
 import type { ComponentType } from "react";
 import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
-/** Each post's article is `content/blog/<slug>.mdx`. */
 const articles = import.meta.glob<ComponentType>("../content/blog/*.mdx", {
   eager: true,
   import: "default",

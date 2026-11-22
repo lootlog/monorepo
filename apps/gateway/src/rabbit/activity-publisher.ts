@@ -25,12 +25,6 @@ export class ActivityPublisher {
     >,
   ) {}
 
-  /**
-   * Records a connection once per Lootlog and a disconnection only where the
-   * connection was recorded, so each Lootlog sees a session only while it is
-   * visible there. Without `requestedIds` a connection goes to every
-   * Lootlog of the session and a disconnection to every recorded one.
-   */
   publish(
     type: "CONNECT_EVENT" | "DISCONNECT_EVENT",
     session: SessionData,
@@ -48,8 +42,6 @@ export class ActivityPublisher {
             ).filter((id) => !recorded.has(id))
           : (requestedIds ?? [...recorded]).filter((id) => recorded.has(id));
 
-      // Changed only after a confirmed publication, so a failed connection
-      // is retried by the next one and a disconnection never precedes it.
       const record = (guildId: string) =>
         Effect.sync(() => {
           const current = session.activityOrganizationIds ?? [];
@@ -92,8 +84,6 @@ export class ActivityPublisher {
                   prof: player.prof,
                 }
               : undefined,
-            // Activity reads the trailing timestamp to bound its duplicate
-            // lookup; keep it last and in milliseconds.
             idempotencyKey: `${type.toLowerCase()}_${session.connectionId}_${guildId}_${timestamp}`,
           };
 
@@ -123,7 +113,6 @@ export class ActivityPublisher {
   }
 }
 
-/** Records connections in the activity log of each Lootlog. */
 export class Activity extends Context.Service<Activity, ActivityPublisher>()(
   "@lootlog/gateway/rabbit/Activity",
 ) {

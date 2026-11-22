@@ -140,7 +140,6 @@ describe("DetectorSettingsTab", () => {
     expect(document.getElementById("HERO-detect")).toBeChecked();
     await act(async () => {
       resolveFirst?.();
-      // Let the response land before any follow-up save could re-apply it.
       await new Promise((resolve) => setTimeout(resolve, 50));
     });
     expect(document.getElementById("HERO-detect")).toBeChecked();

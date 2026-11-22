@@ -10,7 +10,6 @@ import { lootDrawAnnouncementOutboxTable } from "#src/database/drizzle/loot-draw
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import { makeOutboxDispatcher } from "#src/shared/outbox-worker";
 
-/** What a draw's notification shows: the draw and the item it was for. */
 const drawResolvedEvent = (
   guildId: string,
   loot: LootQueryResult,
@@ -53,12 +52,6 @@ const drawResolvedEvent = (
   };
 };
 
-/**
- * Publishes committed draw announcements. The event is read when it is sent,
- * so a draw voided meanwhile still announces its first outcome as drawn, and
- * a replayed row carries the same message id. A loot or draw gone since has
- * nothing left to announce, and its row is dropped.
- */
 export const makeLootDrawAnnouncementDispatcher = <ReadError, PublishError>(
   database: typeof ApiDatabase.Service,
   read: {

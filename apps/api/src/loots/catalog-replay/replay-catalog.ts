@@ -1,19 +1,3 @@
-/**
- * Replays the game knowledge the API holds to the services that project it:
- * every item and NPC revision to the catalog and every looting character to
- * player search, on replay routing keys of their own so live loots are not
- * held up, then the monster statistics and item revisions the API otherwise
- * publishes each morning.
- *
- * Each message is an observation the consumers already merge from live
- * loots, sent in the order the live path would have sent it, so a replay
- * into an empty catalog builds what live indexing built, and a replay into a
- * full one changes nothing it already holds.
- *
- * Usage: `bun run catalog:replay` in `apps/api` with
- * `POSTGRESQL_CONNECTION_URI` and `RABBITMQ_URI` set. The catalog and search
- * must have declared their replay queues first.
- */
 import { BunRuntime } from "@effect/platform-bun";
 import {
   RabbitMessaging,
@@ -47,7 +31,6 @@ const OBSERVATIONS_PER_MESSAGE = 500;
 const toObservedAt = (epochMilliseconds: number) =>
   new Date(epochMilliseconds).toISOString();
 
-/** Publishes in order, one message at a time, so the consumer sees that order. */
 const publishInOrder = Effect.fn("CatalogReplay.publish")(function* <Item>(
   routingKey: RabbitRoutingKeyName,
   observations: ReadonlyArray<Item>,
@@ -64,14 +47,9 @@ const publishInOrder = Effect.fn("CatalogReplay.publish")(function* <Item>(
   );
 });
 
-/**
- * Each item revision once with its worlds and first sighting, then once more
- * with each NPC it came from, by the rule live indexing applies.
- */
 const replayItems = Effect.gen(function* () {
   const database = yield* ApiDatabase;
 
-  // One after the other: both aggregate every loot link.
   const rows = yield* buildItemReplayQuery(database);
   const sources = yield* buildItemDropSourceQuery(database);
   const sourcesBySnapshot = groupBy(sources, (source) => source.itemSnapshotId);
@@ -104,7 +82,6 @@ const replayItems = Effect.gen(function* () {
   );
 });
 
-/** Each NPC revision once per world, with the latest loot that saw it there. */
 const replayNpcs = Effect.gen(function* () {
   const rows = yield* buildNpcReplayQuery(yield* ApiDatabase);
 
@@ -148,7 +125,6 @@ const replayPlayers = Effect.gen(function* () {
   );
 });
 
-/** The statistics the catalog keeps beside loots, published as each morning. */
 const replayStatistics = Effect.gen(function* () {
   const database = yield* ApiDatabase;
   const rabbit = yield* RabbitMessaging;

@@ -52,7 +52,6 @@ type BridgeOptions = {
 
 export type RuntimeBridgeHealth = Readonly<{
   adapter: RuntimeInterface | "unknown";
-  /** Observer callbacks that threw since install; each was isolated from the game. */
   observerFailures: number;
   reason: string | null;
   seam: string | null;
@@ -146,14 +145,11 @@ export class MargonemRuntimeBridge {
     const wrappedInbound: RuntimeFunction = function (...args) {
       initializeGame();
       const intent = captureIntent();
-      // Reflect calls the foreign callable even if an addon overrides its own apply property.
       let result: unknown;
 
       try {
         result = Reflect.apply(originalInbound, this, args);
       } catch (error) {
-        // The packet's intent must not reach the next packet; Margonem's
-        // exception propagates unchanged.
         clearIntent();
         throw error;
       }
@@ -197,11 +193,6 @@ export class MargonemRuntimeBridge {
     return () => this.appliedHandlers.delete(handler);
   }
 
-  /**
-   * Observes outgoing game commands on both interfaces. Handlers run inside
-   * the game's own request call, so they must stay cheap; a throwing handler
-   * is reported and never reaches the game.
-   */
   subscribeCommand(handler: RuntimeCommandHandler): () => void {
     this.commandHandlers.add(handler);
 
@@ -259,7 +250,6 @@ export class MargonemRuntimeBridge {
       const wrappedOutgoing: RuntimeFunction = function (...args) {
         observeIntent(args[0]);
 
-        // Never modify the arguments, payload, callbacks, or return value of an outgoing Margonem request.
         return Reflect.apply(originalOutgoing, this, args);
       };
 
@@ -282,7 +272,6 @@ export class MargonemRuntimeBridge {
         const wrapper: RuntimeFunction = function (...args) {
           observeIntent(args[0]);
 
-          // Never modify the arguments, payload, callbacks, or return value of an outgoing Margonem request.
           return Reflect.apply(originalFunction, this, args);
         };
 
@@ -517,9 +506,7 @@ export class MargonemRuntimeBridge {
 
     try {
       this.onObserverError?.(failure);
-    } catch {
-      // Diagnostics must never affect Margonem or the remaining observers.
-    }
+    } catch {}
   }
 
   private detachInbound(): void {
@@ -559,10 +546,6 @@ export class MargonemRuntimeBridge {
   }
 }
 
-/**
- * Tears the active Lootlog runtime down after the current game callback and
- * tells the player why, with diagnostics taken before teardown resets them.
- */
 export function scheduleRuntimeTeardown(
   kind: RuntimeFailureKind,
   failure: string,
@@ -575,22 +558,16 @@ export function scheduleRuntimeTeardown(
 
   if (!failedRuntime) return;
 
-  // Runs after the game callback that detected the failure, so building the
-  // report never stalls it.
   queueMicrotask(() => {
     if (runtimeWindow.__lootlogGameClientRuntime !== failedRuntime) return;
     let diagnostics = "";
 
-    // Teardown resets the bridge and the overlay's stores, so the report is
-    // taken first, while they still describe the failure.
     try {
       diagnostics = createDiagnosticsReport({
         bridgeHealth: margonemRuntimeBridge.getHealth(),
         failure,
       });
-    } catch {
-      // The notice and the teardown must not depend on the report.
-    }
+    } catch {}
 
     try {
       failedRuntime.dispose();

@@ -12,10 +12,6 @@ import type { ReactNode } from "react";
 import { Option, Schema } from "effect";
 import { GuildDocItemChip } from "./guild-doc-item-chip";
 
-/**
- * A copy of the catalog entry, so the text reads the same after the game
- * changes the item.
- */
 const GuildDocItemSnapshotSchema = Schema.Struct({
   name: Schema.String,
   icon: Schema.String,
@@ -33,14 +29,8 @@ const decodeGuildDocItemSnapshot = Schema.decodeUnknownOption(
 
 const decodeItemId = Schema.decodeUnknownOption(Schema.String);
 
-/**
- * An item in a document. A pasted in-game identifier alone is enough to start
- * with: the item fills in when one of the Organization's loots recorded it, or
- * when a writer picks it.
- */
 export type GuildDocItem = {
   snapshot: GuildDocItemSnapshot | null;
-  /** `ITEM#<hid>.<world>`, as players paste it into the game. */
   itemId: string | null;
 };
 
@@ -51,7 +41,6 @@ type SerializedGuildDocItemNode = Spread<
 
 const GUILD_DOC_ITEM_NODE_TYPE = "guild-doc-item";
 
-/** Opens the item dialog for the item node with this key. */
 export const EDIT_GUILD_DOC_ITEM_COMMAND = createCommand<NodeKey>(
   "EDIT_GUILD_DOC_ITEM_COMMAND",
 );
@@ -67,7 +56,6 @@ export const lootItemToGuildDocSnapshot = (
   catalogId: item.id,
 });
 
-/** An item inline in the text or a table cell, with its tooltip. */
 export class GuildDocItemNode extends DecoratorNode<ReactNode> {
   __item: GuildDocItem;
 
@@ -80,7 +68,6 @@ export class GuildDocItemNode extends DecoratorNode<ReactNode> {
   }
 
   static importJSON(serializedNode: SerializedGuildDocItemNode) {
-    // A saved entry this version cannot read shows as an unknown item.
     return $createGuildDocItemNode({
       snapshot: Option.getOrNull(
         decodeGuildDocItemSnapshot(serializedNode.item),

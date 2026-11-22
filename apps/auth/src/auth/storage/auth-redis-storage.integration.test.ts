@@ -119,7 +119,6 @@ describe("auth Redis storage", () => {
         secondStorage.consumeApiKeyRateLimit(keyId),
       );
 
-      // The rejection reports the window's remaining time for Retry-After.
       expect(rejected.allowed).toBe(false);
       expect(rejected.retryAfterMs).toBeGreaterThan(0);
       expect(rejected.retryAfterMs).toBeLessThanOrEqual(10_000);

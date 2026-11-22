@@ -14,10 +14,8 @@ type TipWindow = Window & {
 
 const tipWindow: TipWindow = window;
 
-// The hero's items the game holds, which the counters refresh.
 const heroItems = new Map<string, RuntimeTipItem>();
 
-// `firstRead` answers the hero's counters read that installation starts.
 const setUp = (
   firstRead?: () => Promise<Response>,
   gameTip = "<b>Item</b>",
@@ -72,7 +70,6 @@ it("adds the counter to a main weapon tip once the hero's counters arrive", asyn
 
   heroItems.set("555", weapon);
 
-  // The game built this tip before the counters were loaded.
   expect(getTip(weapon)).toBe("<b>Item</b>");
 
   await waitFor(() => expect(weapon.setTip).toHaveBeenCalled());
@@ -106,8 +103,6 @@ it("shows the counter once after reinstalling under another addon's wrapper", ()
 
   if (!parser) throw new Error("The parser is not installed");
 
-  // Another addon wraps the tip builder on top of Lootlog's wrapper, so
-  // uninstalling cannot unwrap it before Lootlog installs again.
   const lootlogGetTip = parser.getTip;
   parser.getTip = (item) => lootlogGetTip(item);
   reinstall();
@@ -173,7 +168,6 @@ it("keeps a counter recorded while an older read was in flight", async () => {
   await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
   setWeaponKills("555", 4);
   answerRead(Response.json({ weapons: [{ itemId: "555", kills: 3 }] }));
-  // Let the read's response settle into the cache.
   await new Promise((resolve) => setTimeout(resolve, 10));
 
   expect(getTip(weapon)).toMatch(/Zabici gracze:.*>4</);

@@ -3,7 +3,6 @@ import { cn } from "cn";
 import { RelativeTime } from "@/components/common/relative-time";
 
 type Props = {
-  /** The NPC's type, coloured like its group. */
   type: string | undefined;
   typeClassName: string;
   world: string;
@@ -12,7 +11,6 @@ type Props = {
   now: number;
 };
 
-/** The second line of a feed tile: type · world · place · time. */
 export function LiveFeedEventMeta({
   type,
   typeClassName,

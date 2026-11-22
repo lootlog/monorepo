@@ -3,17 +3,9 @@ export type CursorPoint = { x: number; y: number };
 export type BoxSize = { width: number; height: number };
 
 export type CursorTooltipOffsets = {
-  /** Gap between the cursor and the tooltip on the vertical axis. */
   sideOffset: number;
-  /** Gap between the cursor and the tooltip on the horizontal axis. */
   alignOffset: number;
-  /** Minimum distance kept from every viewport edge. */
   padding: number;
-  /**
-   * The content grows while open, so the tooltip takes the taller side of the
-   * cursor instead of the one its current height fits, and growing never
-   * flips it to the other side.
-   */
   growsWhileOpen?: boolean;
 };
 
@@ -24,19 +16,9 @@ export type CursorTooltipPlacement = {
   align: "start" | "end";
 };
 
-/**
- * Not `es-toolkit`'s `clamp`: a tooltip wider or taller than the viewport
- * makes `max` fall below `min`, and this collapses that inverted range onto
- * `min` (the padded top-left) instead of letting the upper bound win.
- */
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), Math.max(min, max));
 
-/**
- * Places a tooltip next to the cursor the way Margonem's own tips are placed:
- * hanging off the bottom-left corner of the pointer, flipped to the right or
- * above it whenever the preferred spot would leave the viewport.
- */
 export const placeTooltipAtCursor = (
   cursor: CursorPoint,
   size: BoxSize,

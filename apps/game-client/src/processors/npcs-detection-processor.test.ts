@@ -515,8 +515,6 @@ describe("NpcsDetectionProcessor", () => {
         { id: "rule-1", minLevel: 200, maxLevel: 300, guildIds: ["guild-1"] },
       ],
     });
-    // The template as Margonem sent it on 2026-09-12: no weight, profession
-    // or type.
 
     const tracker = {
       npc_tpls: [
@@ -531,7 +529,6 @@ describe("NpcsDetectionProcessor", () => {
     } satisfies GameEvent;
 
     const position = { id: 190436, tpl: 190436, x: 17, y: 22 };
-    // Later packets omit the template; the runtime projection supplies it.
     setInitialNpcs([
       createGameNpc({
         ...position,
@@ -553,7 +550,6 @@ describe("NpcsDetectionProcessor", () => {
       npc: { name: "Doświadczony Tropiciel Herosów", lvl: 282 },
       heroTracker: { state: "unclaimed" },
     });
-    // The Lootlog chat announces it too, without the profession it lacks.
     const chatMessage = await requests[1]?.json();
     expect(new URL(requests[1]!.url).pathname).toBe(
       "/guilds/guild-1/chat-messages",
@@ -564,15 +560,12 @@ describe("NpcsDetectionProcessor", () => {
     });
     expect(chatMessage.npc).not.toHaveProperty("prof");
 
-    // Moving without a countdown is no news.
     processor.handle({ npcs: [{ ...position, icon: { id: 9791 } }] });
     processor.handle({
       npcs: [{ ...position, icon: { id: 9791 }, killSeconds: 1200 }],
     });
 
     await waitFor(() => expect(requests).toHaveLength(4));
-    // The game's countdown, which the API turns into a close time on its own
-    // clock, not the reporter's.
     expect(await requests[2]?.json()).toMatchObject({
       heroTracker: { state: "open", entranceSecondsLeft: 1200 },
     });
@@ -747,8 +740,6 @@ describe("NpcsDetectionProcessor", () => {
       npcs: [{ id: 501, x: 3, y: 4, tpl: 900, icon: { id: 44 } }],
     });
 
-    // Sends run in detection order, so the first request shows whether the
-    // detection made while the switch was off was sent.
     await waitFor(() => expect(requests).toHaveLength(2));
     expect(await requests[0]?.json()).toMatchObject({ npc: { id: 501 } });
     expect(useNpcDetectorStore.getState().npcs).toEqual(

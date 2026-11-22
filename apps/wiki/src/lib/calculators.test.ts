@@ -10,13 +10,9 @@ import {
   wornLegendaryBonuses,
 } from "./calculators";
 
-// The examples and tables below are the game's, from its combat mechanics
-// documentation at https://pomoc.margonem.pl/index/view,372.
 describe("calculators", () => {
   it("measures evade and block against the enemy's level, capped at 300", () => {
-    // 300 points against a level 100 enemy reach the cap.
     expect(defenceChance(300, 100)).toBe(50);
-    // A level 400 enemy counts as 300.
     expect(defenceChance(300, 400)).toBe(20);
     expect(pointsForMaxDefence(400)).toBe(750);
   });
@@ -42,11 +38,9 @@ describe("calculators", () => {
   });
 
   it("weakens a bonus linearly over 50 levels from its item's threshold", () => {
-    // Below level 120 the bonus weakens from 30 levels above the item.
     expect(legendaryBonusStrength(130, 100)).toBe(1);
     expect(legendaryBonusStrength(155, 100)).toBe(0.5);
     expect(legendaryBonusStrength(180, 100)).toBe(0);
-    // From level 120 it weakens from 1.25 times the item's level.
     expect(legendaryBonusStrength(250, 200)).toBe(1);
     expect(legendaryBonusStrength(300, 200)).toBe(0);
   });
@@ -61,19 +55,15 @@ describe("calculators", () => {
     expect(anguishDamage({ itemLevel: 80, upgrade: 0, ...attributes })).toBe(
       522,
     );
-    // +5 raises level 80 to 90 by the documented upgrade formula; the
-    // documentation's own +5 example says 95, against that formula.
     expect(anguishDamage({ itemLevel: 80, upgrade: 5, ...attributes })).toBe(
       anguishDamage({ itemLevel: 90, upgrade: 0, ...attributes }),
     );
-    // An upgrade past level 300 adds nothing.
     expect(anguishDamage({ itemLevel: 290, upgrade: 5, ...attributes })).toBe(
       anguishDamage({ itemLevel: 300, upgrade: 0, ...attributes }),
     );
   });
 
   it("does not lose a point of quest experience to float rounding", () => {
-    // 100 * 1.15 is 114.99999999999999 in floating point.
     expect(
       questExperience({ experience: 100, blessingPercent: 15, clanPercent: 0 }),
     ).toBe(115);
@@ -87,7 +77,6 @@ describe("calculators", () => {
   });
 
   it("adds up a worn bonus by the level each item's stat gives it", () => {
-    // Two full items of Fasada opieki: 13 + 7. The third bonus has no percent.
     expect(
       wornLegendaryBonuses(
         [
@@ -103,7 +92,6 @@ describe("calculators", () => {
       { name: "lastheal", items: 1, value: undefined, isWeakened: false },
     ]);
 
-    // A level 200 item weakens from 250 and is half gone at 275.
     expect(wornLegendaryBonuses(["legbon=verycrit,200"], 275)).toEqual([
       { name: "verycrit", items: 1, value: 9, isWeakened: true },
     ]);

@@ -28,10 +28,6 @@ export const getBattleTeams = (battle: Battle) => {
   };
 };
 
-/**
- * Margonem names `?` the winner of a battle without one. Without a flee, the
- * battle reached the turn limit.
- */
 export const isBattleDraw = (
   battle: Pick<Battle, "winner" | "hasFlee">,
 ): boolean => battle.winner === "?" && !battle.hasFlee;

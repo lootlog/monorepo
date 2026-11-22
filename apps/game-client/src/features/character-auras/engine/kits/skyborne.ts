@@ -1,9 +1,3 @@
-/**
- * Podniebie: the map adrift in the sky. Clouds lie under the character's feet and drift
- * over the whole map, a sun and a moon cross the top of the screen and the light of the
- * whole map follows them through a day that lasts 67 seconds. Its burst opens the sky: a
- * pillar of sunlight falls on the character and the clouds part in a wave.
- */
 import { sprite } from "../decor";
 import { ramp, rgba, type Rgb } from "../math";
 import { pixelGlint } from "../paint";
@@ -11,12 +5,10 @@ import { context2d, createCanvas } from "../silhouette";
 import { wash, wrap } from "../sky";
 import { span, type AuraKit } from "./kit";
 
-/** Seconds a whole day takes. */
 const DAY = 67;
 
 const WHITE: Rgb = [255, 255, 255];
 
-/** The map's light through the day: dawn, noon, noon, sunset, night, night, dawn. */
 const LIGHT: readonly Rgb[] = [
   [255, 170, 150],
   [210, 232, 255],
@@ -27,7 +19,6 @@ const LIGHT: readonly Rgb[] = [
   [255, 170, 150],
 ];
 
-/** How strongly that light lies on the map at each of those moments. */
 const LIGHT_ALPHA = [0.16, 0.05, 0.05, 0.2, 0.5, 0.5, 0.16] as const;
 
 const PUFF = ["  ####  ", " ###### ", "########", " ###### "];
@@ -38,7 +29,6 @@ const CLOUD_H = 100;
 
 const cloudSprites: (HTMLCanvasElement | undefined)[] = [];
 
-/** A soft cloud, or (`shadow`) the dark of one passing overhead. */
 function cloud(shadow: boolean): HTMLCanvasElement {
   const cached = cloudSprites[shadow ? 1 : 0];
 
@@ -47,7 +37,6 @@ function cloud(shadow: boolean): HTMLCanvasElement {
   const canvas = createCanvas(CLOUD_W, CLOUD_H);
   const ctx = context2d(canvas);
 
-  // A few overlapping soft lobes make one cloud.
   for (const [x, y, r] of [
     [70, 60, 44],
     [125, 46, 46],
@@ -66,7 +55,6 @@ function cloud(shadow: boolean): HTMLCanvasElement {
   return canvas;
 }
 
-/** Where the day stands at `time` s, 0..1 from one dawn to the next. */
 function dayAt(time: number): number {
   return (time % DAY) / DAY;
 }
@@ -81,7 +69,6 @@ export const skyborne: AuraKit = {
     const x = Math.round(place.feetX);
     const y = Math.round(place.feetY) - 1;
 
-    // Puffs of cloud round the feet, each bobbing on its own beat.
     for (let i = 0; i < 6; i++) {
       const angle = (i / 6) * Math.PI * 2 + 0.4;
 
@@ -98,7 +85,6 @@ export const skyborne: AuraKit = {
     }
 
     if (front) return;
-    // A small sun or moon riding its arc over the head with the day.
     const day = dayAt(b.time);
     const night = day > 0.6;
     const along = night ? (day - 0.6) / 0.4 : day / 0.6;
@@ -128,7 +114,6 @@ export const skyborne: AuraKit = {
 
     wash(scene, ramp(LIGHT, day), alpha);
 
-    // The shadows of islands above, then the clouds themselves, drifting with the wind.
     ctx.globalCompositeOperation = "source-over";
 
     for (let i = 0; i < 9; i++) {
@@ -145,7 +130,6 @@ export const skyborne: AuraKit = {
       ctx.drawImage(cloud(shadow), cx - CLOUD_W, cy - CLOUD_H);
     }
 
-    // The sun by day and the moon by night, crossing the top of the screen.
     const night = day > 0.6;
     const along = night ? (day - 0.6) / 0.4 : day / 0.6;
     const orbX = width * (0.08 + along * 0.84);
@@ -167,7 +151,6 @@ export const skyborne: AuraKit = {
     const open = span(burst, 0.3, 1);
 
     if (burst < 0.3) return;
-    // The sky opens: a pillar of sunlight on the character and the clouds parting.
     const fade = (1 - open) ** 1.5;
 
     for (const [half, a] of [

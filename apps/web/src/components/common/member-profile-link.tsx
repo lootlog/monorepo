@@ -3,15 +3,12 @@ import { cn } from "cn";
 import { cloneElement } from "react";
 
 type MemberProfileLinkProps = {
-  /** The router link the row becomes; the row supplies its content. */
   link: React.ReactElement<{ className?: string; children?: React.ReactNode }>;
   icon: LucideIcon;
-  /** The page the member's name led to before it opened the profile. */
   primary?: boolean;
   children: React.ReactNode;
 };
 
-/** A link row in a member's profile card. */
 export const MemberProfileLink = ({
   link,
   icon: Icon,

@@ -6,7 +6,6 @@ import {
 import { Effect, Layer, Redacted } from "effect";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
-/** Every event the API consumes, with the queues and failure policy it needs. */
 export const apiRabbitRoutes = {
   guildCreate: consumerRoute(
     "backend-guilds-create",
@@ -38,15 +37,11 @@ export const apiRabbitRoutes = {
     RabbitRoutingKey.GUILDS_DELETE_ROLE,
     { failure: "retry" },
   ),
-  // Presence facts carry no sequence, so a delayed retry could overwrite a
-  // newer fact. Their consumers retry in place, then dead-letter.
   characterOffline: consumerRoute(
     "backend-game-character-offline",
     RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
     { failure: "dead-letter" },
   ),
-  // A verification only moves its time forward, so a redelivery is harmless;
-  // the next join announces the account again.
   margonemAccountVerified: consumerRoute(
     "backend-margonem-account-verified-v1",
     RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1,
@@ -57,9 +52,6 @@ export const apiRabbitRoutes = {
     RabbitRoutingKey.PRESENCE_COVERAGE_CHECK,
     { failure: "dead-letter" },
   ),
-  // Discord channel and sync facts describe the latest state, and timer
-  // notification facts rebuild or cancel jobs from it, so a delayed retry could
-  // apply an older fact over a newer one. They retry in place, then dead-letter.
   discordGuildChannelsSynced: consumerRoute(
     "backend-discord-guild-channels-synced",
     RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNCED,
@@ -109,8 +101,6 @@ export const apiRabbitRoutes = {
         RabbitRoutingKey.NOTIFICATIONS_DISCORD_GUILD_CHANNEL_DELETED_DLQ,
     },
   ),
-  // Hero sighting notifications are instant jobs keyed by the sighting
-  // transition, so a delayed redelivery cannot send one twice.
   heroSightingUpdated: consumerRoute(
     "backend-notifications-hero-sighting-updated",
     RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED,
@@ -121,7 +111,6 @@ export const apiRabbitRoutes = {
     RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED,
     { failure: "retry", rejectToRetryQueue: false },
   ),
-  // Instant jobs keyed by the draw and its outcome: a redelivery sends once.
   lootDrawResolved: consumerRoute(
     "backend-notifications-loot-draw-resolved",
     RabbitRoutingKey.NOTIFICATIONS_LOOT_DRAW_RESOLVED,

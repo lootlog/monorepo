@@ -5,18 +5,14 @@ import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";
 
-// A hero spawns on a dozen maps, an event hero on thirty; the most fought
-// ones show first.
 const SHOWN_LOCATIONS = 12;
 
-// Beyond this many fixed spawns the rest are counted, not listed.
 const LISTED_TILES = 12;
 
 type Location = CatalogNpcDtoOutput["locations"][number];
 
 type Tile = Location["tiles"][number];
 
-// Margonem writes a tile as `x,y`.
 const formatTile = ({ x, y }: Tile) => `${x},${y}`;
 
 const describeSpawnArea = (tiles: Tile[]) => {
@@ -40,12 +36,6 @@ const describeFixedSpawns = (tiles: Tile[]) => {
     : listed;
 };
 
-/**
- * Where on the map the monster spawns, or null before any tile is known. A
- * second-tier elite spawns at random within an area, so its tiles read as
- * that area; every other monster has fixed spawns, a hero several per map.
- * A catalog deployed before spawn tiles sends none.
- */
 const describeSpawnTiles = (tiles: Tile[] | undefined, randomArea: boolean) => {
   const [first] = tiles ?? [];
 
@@ -56,11 +46,6 @@ const describeSpawnTiles = (tiles: Tile[] | undefined, randomArea: boolean) => {
   return randomArea ? describeSpawnArea(tiles) : describeFixedSpawns(tiles);
 };
 
-/**
- * The maps a monster spawns on as a dense list, most fought first: each map
- * with where on it the monster spawns and, beside it, the map's share of the
- * monster's latest recorded fights. A monster on one map shows no share.
- */
 export function NpcLocations({ npc }: { npc: CatalogNpcDtoOutput }) {
   const { locations } = npc;
   const randomArea = npc.type === "ELITE2";

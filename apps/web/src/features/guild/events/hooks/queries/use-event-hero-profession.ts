@@ -6,10 +6,6 @@ type UseEventHeroProfessionOptions = {
   heroId: string;
 };
 
-/**
- * The event hero record has no profession; hero stats derive it from the
- * Organization's kills of that NPC.
- */
 export const useEventHeroProfession = ({
   guildId,
   eventId,

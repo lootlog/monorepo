@@ -10,10 +10,6 @@ type SkillNodeProps = {
   onSelect: () => void;
 };
 
-/**
- * One skill of the tree: its icon, name and rank. Choosing it opens what it
- * does and the controls that hand out its points.
- */
 export function SkillNode({
   skill,
   state,

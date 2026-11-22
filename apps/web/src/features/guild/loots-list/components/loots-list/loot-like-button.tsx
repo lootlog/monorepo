@@ -31,10 +31,6 @@ const COUNT_ROLL: Variants = {
 
 type Pop = { key: number; liked: boolean };
 
-/**
- * `link` sits among the quiet links of a loot card; `button` is the bordered
- * control of the loot details header.
- */
 export const LootLikeButton = ({
   loot,
   appearance = "link",
@@ -108,7 +104,6 @@ export const LootLikeButton = ({
           {pop?.liked && !reduceMotion && (
             <LikeBurst key={`burst-${pop.key}`} size={HEART_SIZE} />
           )}
-          {/* A new key replays the pop on every click, but not on mount. */}
           <m.span
             key={`heart-${pop?.key ?? 0}`}
             className="relative inline-flex size-full"

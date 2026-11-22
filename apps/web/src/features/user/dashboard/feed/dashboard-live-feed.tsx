@@ -24,14 +24,8 @@ import {
 } from "./live-feed-state";
 import { RetryButton } from "@/components/common/retry-button";
 
-/** Events listed before the rest folds behind "show older". */
 const VISIBLE_GROUPS = 8;
 
-/**
- * Stacked in the page, a fixed number of events keeps the feed's height
- * steady while live entries arrive; older ones wait behind "show older".
- * Beside the side column the feed scrolls on its own and lists them all.
- */
 const foldGroups = <T,>(
   groups: T[],
   { isWide, expanded }: { isWide: boolean; expanded: boolean },
@@ -106,7 +100,6 @@ export function DashboardLiveFeed() {
       withLootOnly: DEFAULT_ACTIVITY_FEED_SETTINGS.withLootOnly,
     });
 
-  // Back to the newest entries, under the pinned headings.
   const showPending = () => {
     applyPending();
     top.current?.scrollIntoView({
@@ -176,9 +169,7 @@ export function DashboardLiveFeed() {
           onChange={update}
         />
       </FiltersOverlay>
-      {/* Floats under the pinned heading while older entries are on screen. */}
       <div
-        // Announces the button, which appears while older entries are read.
         aria-live="polite"
         className="pointer-events-none sticky top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)+3rem)] z-10 flex h-0 justify-center"
       >
@@ -221,7 +212,6 @@ export function DashboardLiveFeed() {
                     ? "statistics.feedEmptyFiltered"
                     : "statistics.feedEmpty",
                 )}
-                // Beside the side column, it centres in the screen it has.
                 fill={isWide}
                 compact={!isWide}
                 action={

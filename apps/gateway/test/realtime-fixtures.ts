@@ -14,7 +14,6 @@ import type { PingScriptStore } from "../src/realtime/ping-routing.js";
 import { RealtimeHub } from "../src/realtime/realtime-hub.js";
 import type { GatewaySocket, SessionData } from "../src/realtime/session.js";
 
-/** Configuration for benchmarks that never open a connection. */
 export const benchmarkConfig = {
   environment: RuntimeEnvironment.DEV,
   port: 0,
@@ -39,7 +38,6 @@ export const unusedFederationStore = {
   subscribe: unexpectedFederationIO,
 } satisfies ConstructorParameters<typeof RealtimeHub>[1];
 
-/** Reports a live subscription so a started hub admits WebSocket sessions. */
 export const subscribedFederationStore = {
   ...unusedFederationStore,
   subscribe: (
@@ -52,7 +50,6 @@ export const subscribedFederationStore = {
   },
 } satisfies ConstructorParameters<typeof RealtimeHub>[1];
 
-/** A joined game socket on classic map 7 that may share pings in one Organization. */
 export const makeGamePingSocket = (): GatewaySocket => ({
   send: () => 0,
   close: () => {},
@@ -104,7 +101,6 @@ export const makeGamePingSocket = (): GatewaySocket => ({
 
 type Membership = SessionData["guilds"][number];
 
-/** One Lootlog membership with a single role. */
 export const membership = (
   organizationId: string,
   permissions: ReadonlyArray<Permission>,
@@ -126,7 +122,6 @@ export const membership = (
   ],
 });
 
-/** A joined web session without memberships; tests override what they need. */
 export const makeSession = (
   overrides: Partial<SessionData> = {},
 ): SessionData => ({
@@ -142,7 +137,6 @@ export const makeSession = (
   ...overrides,
 });
 
-/** A socket that records sent frames and close codes. */
 export const makeTestSocket = (data: SessionData, bufferedAmount = 0) => {
   const sent: string[] = [];
   const closes: number[] = [];
@@ -163,7 +157,6 @@ export const makeTestSocket = (data: SessionData, bufferedAmount = 0) => {
   return { socket, sent, closes };
 };
 
-/** Grants the session an unexpired read-only API key for the Lootlogs. */
 export const withApiKey = (
   session: SessionData,
   organizationIds: ReadonlyArray<string>,
@@ -195,16 +188,11 @@ type CommandBody = ClientCommand extends infer Command
     : never
   : never;
 
-/** One client command as the frame a socket sends. */
 export const commandFrame = (
   command: CommandBody,
   requestId = "request-1",
 ): string => JSON.stringify({ v: 1, requestId, ...command });
 
-/**
- * A federation channel shared by hubs. Like Redis Pub/Sub after a reconnect it
- * may deliver a message twice, so receivers must deduplicate.
- */
 export const makeFederationBus = ({ deliveries = 2 } = {}) => {
   const listeners: Array<(message: FederatedRealtimeMessage) => void> = [];
 
@@ -224,7 +212,6 @@ export const makeFederationBus = ({ deliveries = 2 } = {}) => {
     ) => {
       let delivered: FederatedRealtimeMessage;
 
-      // Redis subscribers drop a message they cannot decode.
       try {
         delivered = decodeFederatedRealtimeMessage(
           encodeFederatedRealtimeMessage(message, frames),
@@ -244,7 +231,6 @@ export const makeFederationBus = ({ deliveries = 2 } = {}) => {
   return { store, listeners };
 };
 
-/** Started hubs federated over one bus, as replicas sharing Redis. */
 export const startHubs = async (
   count = 2,
   config: ConstructorParameters<typeof RealtimeHub>[0] = {
@@ -263,7 +249,6 @@ export const startHubs = async (
   return { hubs, bus };
 };
 
-/** A ping rate-limit store that admits every request at `createdAt`. */
 export const acceptingRateLimit = (
   createdAt = 1234,
   keys: string[] = [],

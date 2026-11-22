@@ -527,7 +527,6 @@ describe("useWhoIsHereLootlogHighlight", () => {
     const createTipWrapper = vi.fn<
       (container: Element | null, other: Other) => void
     >((_tipContainer, tooltipOther) => {
-      // WhoIsHere.createTipWrapper builds its html through OthersManager.
       tooltipHtml = tips.createStrTip({
         nick: tooltipOther.d.nick,
         object: tooltipOther,
@@ -561,7 +560,6 @@ describe("useWhoIsHereLootlogHighlight", () => {
     );
     expect(tooltipHtml).toContain("Gra dla:");
     expect(tooltipHtml).toContain("Blue Guild");
-    // Without a Lootlog member name the Discord id stays out of the tooltip.
     expect(tooltipHtml).not.toContain("player-discord");
 
     act(() => {
@@ -586,7 +584,6 @@ describe("useWhoIsHereLootlogHighlight", () => {
     const createTipWrapper = vi.fn<
       (container: Element | null, other: Other) => void
     >((_tipContainer, tooltipOther) => {
-      // WhoIsHere.createTipWrapper builds its html through OthersManager.
       tooltipHtml = tips.createStrTip({
         nick: tooltipOther.d.nick,
         object: tooltipOther,

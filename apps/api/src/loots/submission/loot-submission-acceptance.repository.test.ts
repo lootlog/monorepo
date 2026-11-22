@@ -86,7 +86,6 @@ it("writes the loot's rarities and NPC visibility on every Organization's record
       ),
     );
 
-    // A member of another Organization reports the same loot later.
     await run(
       persistence.appendSubmissions(
         lootId,

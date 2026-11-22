@@ -8,13 +8,8 @@ type QuickAccessCollapseButtonProps = {
   collapsed: boolean;
 };
 
-// Toggling swaps the expanded bar for the collapsed one, so the button that
-// was pressed unmounts. The flag hands keyboard focus to its counterpart; it
-// is set only by a press, never on load, so a restored collapsed bar does not
-// take focus from the game.
 let focusNextToggle = false;
 
-/** Switches the quick access bar between its expanded and collapsed sizes. */
 export const QuickAccessCollapseButton: FC<QuickAccessCollapseButtonProps> = ({
   collapsed,
 }) => {

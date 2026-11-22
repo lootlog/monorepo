@@ -5,10 +5,6 @@ import { toast } from "@lootlog/ui/lib/toast";
 import { useTranslation } from "react-i18next";
 import { writeHeroSightingToCache } from "./hero-sighting-cache";
 
-/**
- * Adds a hero sighting by hand, for a detector answer Lootlog did not record.
- * The board shows it at once; other members get it over the socket.
- */
 export const useAddHeroSighting = (onAdded: () => void) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();

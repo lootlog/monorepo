@@ -63,19 +63,10 @@ export type ChatInputProps = {
   autofocus?: boolean;
 };
 
-/**
- * The console reuses the chat composer outside the chat window: it keeps its
- * own draft, leaves the chat's replies and focus requests alone, and closes
- * once an entry has gone through.
- */
 export type ChatComposerOptions = ChatInputProps & {
-  /** Draft slot in the chat store; the chat keeps one per guild. */
   draftKey?: string;
-  /** Replies and compose-focus requests belong to the chat window. */
   handlesReplies?: boolean;
-  /** Escape with no suggestion list open. */
   onEscape?: () => void;
-  /** An entry was sent, a gathering started or the chat cleared. */
   onSubmitted?: () => void;
 };
 
@@ -574,7 +565,6 @@ export function useChatInputController({
     });
   };
 
-  // The next entry starts again in the default mode.
   const resetInputState = () => {
     useChatStore.getState().clearDraft(draftKey);
     clearReplyDraft();
@@ -655,7 +645,6 @@ export function useChatInputController({
       return;
     }
 
-    // The `!` alone only switches the mode; there is nothing to send yet.
     if (submitAction.kind === "notification" && !submitAction.message.trim()) {
       return;
     }
@@ -817,7 +806,6 @@ export function useChatInputController({
     }
   };
 
-  /** Replaces the whole entry and puts the caret at its end. */
   const replaceMessage = (nextMessage: string) =>
     applySelectedMessageValue({
       nextCaretIndex: nextMessage.length,

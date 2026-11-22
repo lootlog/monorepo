@@ -7,19 +7,12 @@ import {
 
 type WindowOverlayPanelProps = {
   title: string;
-  /** Context shown next to the title, e.g. the Lootlog the form writes to. */
   subtitle?: string;
   onClose: () => void;
   className?: string;
   children: ReactNode;
 };
 
-/**
- * Overlay that covers a window's content while the user fills in a form. It
- * stays inside the window, so the title bar and its actions remain reachable.
- * Escape closes it; the content provides its own cancel action. The parent
- * must be positioned.
- */
 export const WindowOverlayPanel = ({
   title,
   subtitle,

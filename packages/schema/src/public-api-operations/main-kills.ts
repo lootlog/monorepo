@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Main API maps, map templates, kills, and stats cards. */
 export const MAIN_KILL_OPERATIONS = [
   {
     service: "main",

@@ -16,7 +16,6 @@ type StatisticsQueryStateProps = {
   };
   children: ReactNode;
   loading?: ReactNode;
-  /** Sizes the failed-load state for a card rather than a whole page. */
   compact?: boolean;
   errorMessage?: string;
 };

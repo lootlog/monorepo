@@ -101,7 +101,6 @@ describe(`map threats with ${MEMBERS} online members and ${MAPS} threatened maps
     const result = await bench("member moves to another map", async () => {
       step += 1;
       const member = step % MEMBERS;
-      // Each visit sends the member one map further than the last one.
       const map = (member + 1 + Math.floor(step / MEMBERS)) % MAPS;
       const moved = memberPresence(member, map);
       index.apply(moved);

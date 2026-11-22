@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import type { IdenticalItems } from "./group-identical-items";
 import { LootItemIdButton } from "./loot-item-id-button";
 
-/** An item with its name, level and copy count, and its identifiers. */
 export const LootItemLine = ({
   entry: { item, hids },
   watchContext,
@@ -17,7 +16,6 @@ export const LootItemLine = ({
   entry: IdenticalItems;
   watchContext: WatchedItemScope;
   showIdButton?: boolean;
-  /** Shown before the identifier button, such as the item's draw. */
   action?: ReactNode;
   className?: string;
 }) => {

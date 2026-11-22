@@ -143,7 +143,6 @@ describe("Map Templates HttpApi handlers", () => {
         update: (guildId, templateId) => {
           updateCalls.push({ guildId, templateId });
 
-          // The repository returns null when the id belongs to another guild.
           return Effect.succeed(null);
         },
       }),

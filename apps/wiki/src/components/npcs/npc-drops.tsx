@@ -12,12 +12,6 @@ import { t } from "@/i18n/messages";
 import { npcDropsQuery } from "@/lib/catalog-page-queries";
 import { monsterIdentity } from "@/lib/group-items-by-monster";
 
-/**
- * A monster's drops, the most valuable rarity first, highest level within
- * each, with how often a boss's kills drop them; the items it no longer
- * drops follow, folded away. Drops that take
- * their looter's level come with the character level they show at.
- */
 export function NpcDrops({
   npc,
 }: {
@@ -46,7 +40,6 @@ export function NpcDrops({
     ),
   );
 
-  // Only bosses Lootlog counts kills of have drop rates.
   const hasDropRates = current.some(({ droppedBy }) =>
     droppedBy.some(
       (source) =>

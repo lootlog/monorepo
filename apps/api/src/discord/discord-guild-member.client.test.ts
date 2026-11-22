@@ -58,8 +58,6 @@ const makeClient = () => {
 
 describe("DiscordGuildMemberClient", () => {
   test("asks Discord once while it keeps refusing a member with 403", async () => {
-    // Every member read used to re-ask Discord, so one refused member added an
-    // invalid request (which Discord bans an IP for) on every page request.
     const { client, queueRequest, recordInvalidDiscordRequest } = makeClient();
 
     for (let attempt = 0; attempt < 3; attempt += 1) {

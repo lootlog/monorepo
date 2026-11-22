@@ -14,21 +14,16 @@ import { useTranslation } from "react-i18next";
 import type { HeadToHeadPageVariantProps } from "./use-head-to-head-page";
 
 type BattlePanelH2hSkeletonProps = {
-  /** One placeholder of the card the route lists below `md` instead of its table. */
   mobileCard: ReactNode;
 } & (
   | ({
-      /** `HeadToHeadPageVariant`: static titles. */
       variant: "head-to-head";
     } & Pick<HeadToHeadPageVariantProps, "titleKey">)
   | {
-      /** `PlayerVsPlayerFullPage`: named by the loaded characters, with no default chips. */
       variant: "player-vs-player";
     }
 );
 
-// Stands in for the head-to-head pages: a `ResultsSurface` whose filter bar
-// carries the opponent search and, on wide pages, the filter toolbar.
 export const BattlePanelH2hSkeleton = (props: BattlePanelH2hSkeletonProps) => {
   const { t } = useTranslation();
   const isHeadToHead = props.variant === "head-to-head";
@@ -44,14 +39,12 @@ export const BattlePanelH2hSkeleton = (props: BattlePanelH2hSkeletonProps) => {
           </>
         )
       }
-      // Without a search, narrower pages leave no bar above the results.
       filters={
         (isHeadToHead || listsFilters) && <StatisticsFilterToolbarSkeleton />
       }
       filtersLabel={t("battlePanel.filters.title")}
       footer={<TablePaginationFooterSkeleton labelClassName="w-36" />}
     >
-      {/* A page of rows fills the screen, so the footer docks at its bottom. */}
       <TableRowsSkeleton
         rows={20}
         withHeader
@@ -75,7 +68,6 @@ export const BattlePanelH2hSkeleton = (props: BattlePanelH2hSkeletonProps) => {
     );
   }
 
-  // The opponents tab, inside the battle panel's page scroller.
   return (
     <div aria-busy="true" className="min-w-0">
       <h1 className="sr-only">{t(props.titleKey)}</h1>

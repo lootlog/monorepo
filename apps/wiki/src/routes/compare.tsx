@@ -39,7 +39,6 @@ function CompareRoute() {
 
   const byId = new Map((data?.hits ?? []).map((item) => [item.id, item]));
 
-  // Items keep the order they were added in; one gone from the catalog drops.
   const compared = items.flatMap(({ id, upgrade }) => {
     const item = byId.get(id);
 
@@ -94,8 +93,6 @@ function CompareRoute() {
           </Button>
         </div>
       ) : compared.length === 0 ? (
-        // An item just added may still be loading; ids the catalog no longer
-        // has, from an old visit or a shared link, never load.
         !data || isFetching ? (
           <Skeleton className="h-96 w-full rounded-xl" />
         ) : (

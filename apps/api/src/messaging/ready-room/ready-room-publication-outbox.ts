@@ -33,8 +33,6 @@ redis.call("zrem", KEYS[2], ARGV[1])
 return 1
 `;
 
-// Drops a pending entry only while it still holds the undecodable payload, so a
-// valid publication committed for the same room in the meantime survives.
 const DROP_PUBLICATION_SCRIPT = `
 if redis.call("hget", KEYS[1], ARGV[1]) ~= ARGV[2] then return 0 end
 redis.call("hdel", KEYS[1], ARGV[1])
@@ -109,8 +107,6 @@ export const makeReadyRoomPublicationOutbox = (
       )(payload).pipe(
         Effect.matchEffect({
           onSuccess: publish,
-          // Retrying cannot make the payload decodable; keep it from being
-          // claimed again every lease.
           onFailure: () =>
             Effect.logError(
               "Dropping invalid pending Ready Room publication",

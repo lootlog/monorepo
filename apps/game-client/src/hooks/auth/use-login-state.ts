@@ -3,7 +3,6 @@ import { resolveLoginState, type LoginState } from "@/hooks/auth/login-state";
 import { authClient, readSession } from "@/lib/auth-client";
 import { isExtensionClient } from "@/lib/game-client-platform";
 
-/** Whether the player opened the website from the login window this run. */
 export const useLoginWebsiteStore = create<{ websiteOpened: boolean }>(() => ({
   websiteOpened: false,
 }));
@@ -11,7 +10,6 @@ export const useLoginWebsiteStore = create<{ websiteOpened: boolean }>(() => ({
 export const markLoginWebsiteOpened = () =>
   useLoginWebsiteStore.setState({ websiteOpened: true });
 
-/** The session and the website round trip read as one login state. */
 export const useLoginState = () => {
   const session = authClient.useSession();
   const websiteOpened = useLoginWebsiteStore((state) => state.websiteOpened);
@@ -25,7 +23,6 @@ export const useLoginState = () => {
   return { state, session };
 };
 
-/** The same reading outside React, such as for the diagnostics report. */
 export const readLoginState = (): LoginState =>
   resolveLoginState({
     extension: isExtensionClient(),

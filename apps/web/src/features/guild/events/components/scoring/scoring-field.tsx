@@ -10,7 +10,6 @@ interface ScoringFieldProps {
   children: ReactNode;
 }
 
-/** A labelled control in the scoring editor, with an optional short hint. */
 export const ScoringField = ({
   label,
   htmlFor,

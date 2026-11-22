@@ -25,16 +25,12 @@ import { keepFittingSymbol, useSocketCatalog } from "@/hooks/use-socket-items";
 type WornItemIssue = ItemRequirementIssue | "hands";
 
 export type WornItem = {
-  /** The item at the set's level, with the stats its upgrade gives it. */
   item: CatalogItemDtoOutput;
-  /** The item at the set's level as it drops, before it is upgraded. */
   dropped: CatalogItemDtoOutput;
   upgrade: ItemUpgrade;
-  /** What keeps the set's character from wearing the item as the set has it. */
   issues: readonly WornItemIssue[];
 };
 
-/** A set's items by id; every reader shares one catalog request. */
 export const useSetCatalogItems = (set: EquipmentSet) => {
   const ids = Object.values(set.items);
 
@@ -50,16 +46,10 @@ export const useSetCatalogItems = (set: EquipmentSet) => {
 
   return {
     itemsById: new Map((data?.hits ?? []).map((item) => [item.id, item])),
-    // While a changed set loads, the previous response stands in and lacks
-    // the new items, so the set is not yet as worn.
     isLoaded: ids.length === 0 || (data !== undefined && !isPlaceholderData),
   };
 };
 
-/**
- * The set from the page's context with its items and, while one of them has
- * a symbol, the catalog's symbols that tell whether it fits.
- */
 const useSetItems = () => {
   const { set } = useEquipmentSet();
 
@@ -91,7 +81,6 @@ const wornIn = (
 
   const stat = upgradeItemStat(looted, upgrade);
 
-  // A shared link can carry a pair no character holds at once.
   const weaponId = slotId === "secondary" ? set.items.weapon : undefined;
   const weapon = weaponId === undefined ? undefined : itemsById.get(weaponId);
 
@@ -117,18 +106,15 @@ const wornItemsOf = (setItems: ReturnType<typeof useSetItems>) =>
     }),
   );
 
-/** The set's items as they are worn, upgrades included, by slot. */
 export const useWornItems = (): Map<EquipmentSlotId, WornItem> =>
   wornItemsOf(useSetItems());
 
-/** The worn items and whether they have loaded at all. */
 export const useLoadedWornItems = () => {
   const setItems = useSetItems();
 
   return { wornItems: wornItemsOf(setItems), isLoaded: setItems.isLoaded };
 };
 
-/** The item worn in one slot, if it has loaded. */
 export const useWornItem = (slotId: EquipmentSlotId | undefined) => {
   const setItems = useSetItems();
 

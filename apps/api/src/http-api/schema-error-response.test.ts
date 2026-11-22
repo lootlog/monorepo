@@ -207,7 +207,6 @@ const get = (path: string) =>
     }),
   );
 
-// An unknown NPC type used to reach the enum column and fail as a 500.
 it("rejects an unknown loot npcTypes value as a 400 before the handler", async () => {
   const previousCalls = handlerCalls;
 
@@ -228,7 +227,6 @@ it("accepts one or repeated npcTypes values", async () => {
   expect(handlerCalls).toBe(previousCalls + 2);
 });
 
-// Top NPCs used to take any number and load every row into memory.
 for (const path of [
   "/guilds/guild/loots?limit=101",
   "/guilds/guild/stats/kills/top-npcs?limit=101",

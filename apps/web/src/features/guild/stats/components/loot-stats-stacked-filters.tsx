@@ -12,7 +12,6 @@ type LootStatsStackedFiltersProps = {
   onExcludeColossusChange: (value: boolean) => void;
 };
 
-/** The loot statistics filters stacked for the panel narrow pages open. */
 export const LootStatsStackedFilters = ({
   period,
   excludeColossus,

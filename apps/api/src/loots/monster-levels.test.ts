@@ -21,7 +21,6 @@ const level = (
 test("dates a rebalance by the new level's first fight, though older clients kept reporting the former one", () => {
   expect(
     toMonsterFormerLevels([
-      // Older clients reported 252 for months after the colossus became 244.
       level(252, 31_697, 1, "2025-06-03", 0),
       level(244, 39_855, 20_000, "2026-01-15", 1000),
     ]),
@@ -39,7 +38,6 @@ test("keeps no history of a namesake fought from the start, a monster that follo
   const formerLevels = (rows: Parameters<typeof toMonsterFormerLevels>[0]) =>
     toMonsterFormerLevels(rows).map((monster) => monster.formerLevels);
 
-  // Two Duchy arystokraty on different maps.
   expect(
     formerLevels([
       level(265, 5270, 1, "2025-06-09", 0),
@@ -47,7 +45,6 @@ test("keeps no history of a namesake fought from the start, a monster that follo
     ]),
   ).toEqual([[]]);
 
-  // An elastic myconid, fought at its fighters' levels.
   expect(
     formerLevels(
       [56, 67, 88, 117, 147, 220].map((lvl, index) =>
@@ -56,7 +53,6 @@ test("keeps no history of a namesake fought from the start, a monster that follo
     ),
   ).toEqual([[]]);
 
-  // One client's misread level among thousands of fights.
   expect(
     formerLevels([
       level(213, 9000, 1, "2025-06-05", 1000),

@@ -91,8 +91,6 @@ describe("useNotifications", () => {
     test.setPreferences();
     renderHook(() => useNotifications(), { wrapper: test.wrapper });
     test.open();
-    // The server sent it long ago by this device's clock, two minutes before
-    // the entrance closed by its own.
     await test.receive({
       v: 1,
       type: "notification.sent",

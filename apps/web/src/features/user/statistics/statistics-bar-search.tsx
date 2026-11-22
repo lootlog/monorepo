@@ -5,11 +5,9 @@ import { StatisticsQuerySearch } from "./statistics-query-search";
 
 type StatisticsBarSearchProps = {
   search: StatisticsSearch;
-  /** A ranking tab, which a name search narrows. */
   rankingTab: StatisticsSortTab | undefined;
 };
 
-/** The leading part of the statistics filter bar: a ranking's search and the character. */
 export function StatisticsBarSearch({
   search,
   rankingTab,

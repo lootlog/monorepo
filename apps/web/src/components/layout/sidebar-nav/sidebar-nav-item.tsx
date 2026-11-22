@@ -6,7 +6,6 @@ import type { Variants } from "framer-motion";
 import type { MenuItem } from "./types";
 import { ThemeInteractiveFrame } from "@/themes/adapters";
 
-// Follows the variants of an appearing sidebar group; static otherwise.
 const itemVariants: Variants = {
   hidden: { opacity: 0, x: -8 },
   visible: {

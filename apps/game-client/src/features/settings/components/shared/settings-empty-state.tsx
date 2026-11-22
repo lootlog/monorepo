@@ -6,11 +6,6 @@ type SettingsEmptyStateProps = {
   className?: string;
 };
 
-/**
- * Stands where a settings list or section body would be when it has nothing
- * to show. The dashed outline marks the empty slot, so the message does not
- * read as another section description.
- */
 export const SettingsEmptyState: FC<SettingsEmptyStateProps> = ({
   children,
   className,

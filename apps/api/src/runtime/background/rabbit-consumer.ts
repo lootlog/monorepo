@@ -10,10 +10,6 @@ import type {
 import type { ConsumerRoute } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Schedule, Semaphore } from "effect";
 
-/**
- * Retries a failed handler before the delivery is settled, so later messages
- * in the queue stay behind it: 3 retries after 250 ms, 500 ms and 1 s.
- */
 export const orderedHandlerRetry = Schedule.max([
   Schedule.exponential("250 millis"),
   Schedule.recurs(3),
@@ -22,8 +18,6 @@ export const orderedHandlerRetry = Schedule.max([
 export const makeRabbitConsumer = Effect.fnUntraced(function* (
   rabbit: RabbitMessagingService,
 ) {
-  // One shared budget leaves database connections available to HTTP requests.
-  // Prefetch one also bounds waiting deliveries and preserves queue ordering.
   const handlerSlots = yield* Semaphore.make(5);
 
   return <Key extends CanonicalRabbitEventRoutingKey>(
@@ -47,7 +41,6 @@ export const makeRabbitConsumer = Effect.fnUntraced(function* (
               });
         }).pipe(handlerSlots.withPermits(1));
 
-        // The backoff runs outside the handler slot, leaving it to other queues.
         return inPlaceRetry
           ? attempt.pipe(Effect.retry(inPlaceRetry))
           : attempt;

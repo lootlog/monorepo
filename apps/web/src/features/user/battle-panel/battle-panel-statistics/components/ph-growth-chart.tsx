@@ -12,7 +12,6 @@ export function PhGrowthChart(props: ComponentProps<typeof Content>) {
   const { t } = useTranslation();
 
   return (
-    // The section the chart renders, loading, so its heading is there already.
     <Suspense
       fallback={
         <ChartSection

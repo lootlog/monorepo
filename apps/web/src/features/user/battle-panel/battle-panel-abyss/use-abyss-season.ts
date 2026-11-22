@@ -7,7 +7,6 @@ import { useParams } from "@tanstack/react-router";
 import { useQueryStates } from "nuqs";
 import { findAbyssSeason } from "./abyss-formatters";
 
-/** The Abyss season a season page shows, with its character. */
 export function useAbyssSeason() {
   const { seasonId } = useParams({
     from: "/_authenticated/@me/battle-panel/abyss_/$seasonId",

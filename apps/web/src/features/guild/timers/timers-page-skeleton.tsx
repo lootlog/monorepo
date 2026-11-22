@@ -2,7 +2,6 @@ import { useViewMode } from "@/hooks/use-view-mode";
 import { TimersListSkeleton } from "./timers-list-skeleton";
 import { TIMERS_GRID_MEDIA_QUERY, TIMERS_VIEW_MODE_KEY } from "./timers-layout";
 
-/** Route-level stand-in for the timers page: grouped timer rows. */
 export const TimersPageSkeleton = () => {
   const { viewMode, canChooseViewMode } = useViewMode(
     TIMERS_VIEW_MODE_KEY,

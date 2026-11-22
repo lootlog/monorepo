@@ -12,11 +12,6 @@ type ScheduleBarProps = {
   children: ReactNode;
 };
 
-/**
- * The schedule's first row, styled as a list toolbar. It stays on top while
- * the hours scroll, so it belongs directly in the page scroller marked
- * `data-under-top-bar`.
- */
 export const ScheduleBar = ({ isCompact, children }: ScheduleBarProps) => (
   <header
     data-list-tile

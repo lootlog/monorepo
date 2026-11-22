@@ -21,11 +21,6 @@ export const Route = createFileRoute("/set")({
   }),
 });
 
-/**
- * The User's whole set: the character and what it wears stay in view beside
- * its stats, its skills, what upgrading it costs and what its sockets'
- * symbols are made of.
- */
 function SetRoute() {
   return (
     <div className="flex flex-col gap-6 py-6">

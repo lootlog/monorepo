@@ -48,10 +48,6 @@ type ThemeEditorFormProps = Omit<
   theme: UserThemeResponseDto;
 };
 
-/**
- * The editor's controls. The whole app previews the draft while the editor is
- * open and returns to the saved theme when it closes.
- */
 export const ThemeEditorForm = ({
   theme,
   actions,
@@ -71,8 +67,6 @@ export const ThemeEditorForm = ({
     name: "definition",
   });
 
-  // The form hands out a fresh copy on each render; only a real change
-  // repaints the app.
   const previewed = useRef<ThemeEditorFormValues["definition"] | null>(null);
 
   useEffect(() => {
@@ -89,7 +83,6 @@ export const ThemeEditorForm = ({
     [setPreview],
   );
 
-  // The font picker shows each font in itself.
   useEffect(() => {
     for (const font of Object.values(CUSTOM_THEME_FONTS)) void font.load?.();
   }, []);
@@ -138,7 +131,6 @@ export const ThemeEditorForm = ({
           </>
         }
       >
-        {/* Room below the last section for the docked save bar. */}
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="pb-24"

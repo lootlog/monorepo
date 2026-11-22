@@ -24,7 +24,6 @@ export const makeGuildKillActivityPublisher = (
         Math.floor(input.lastKilledAt.getTime() / 60000) * 60000,
       );
 
-      // The NPC read is wasted only for a kill without a feed entry.
       const [feedEntry, sourceNpcs] = yield* Effect.all(
         [
           readPublishedFeedEntry(database, input.guildId, {
@@ -54,7 +53,6 @@ export const makeGuildKillActivityPublisher = (
 
       if (!feedEntry || feedEntry.type !== "kill") return;
 
-      // The gateway rejects a kill whose NPC has no Margonem type or level.
       const npcType = feedEntry.npc.type;
       const npcLevel = feedEntry.npc.lvl;
 
@@ -83,7 +81,6 @@ export const makeGuildKillActivityPublisher = (
     ),
   );
 
-/** Batches avoid one unbounded transaction when cleanup catches up after downtime. */
 export const makeGuildKillActivityCleanup = (
   database: typeof ApiDatabase.Service,
 ) =>

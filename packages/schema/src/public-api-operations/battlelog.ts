@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Battlelog service operations. */
 export const BATTLELOG_OPERATIONS = [
   {
     service: "battlelog",

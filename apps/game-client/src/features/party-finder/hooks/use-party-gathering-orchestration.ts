@@ -29,7 +29,6 @@ import type { GameNpcWithLocation } from "@/store/npc-detector.store";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-/** A gathering belongs to one Lootlog, never several at once. */
 type StartPartyGatheringOptions = {
   guildId: string;
   world: string;
@@ -108,7 +107,6 @@ export const usePartyGatheringOrchestration = () => {
     return notificationId;
   };
 
-  /** One gathering per Discord user: an existing one is shown instead. */
   const rejectIfOwnedReadyRoom = (
     shouldOpen: boolean,
     closeCreateWindow = false,

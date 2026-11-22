@@ -1,5 +1,4 @@
 import { Schema } from "effect";
-/** Endpoints owned by the auth HTTP module. */
 import {
   HttpApi,
   HttpApiEndpoint,

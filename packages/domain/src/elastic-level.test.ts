@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { elasticItemLevel, itemForCharacter } from "./elastic-level.js";
 
-// Kapitan Mikodyń's legendary gloves as Lootlog saw them dropped.
 const gloves = (lvl: number, stat: string) => ({
   stat,
   lvl,
@@ -22,7 +21,6 @@ const glovesAt40 = gloves(
 
 describe("elastic items", () => {
   it("takes the highest level of the item class's ladder not above the looter's", () => {
-    // Looters' levels and the levels their drops had.
     expect(elasticItemLevel("GLOVES", 53)).toBe(52);
     expect(elasticItemLevel("GLOVES", 42)).toBe(42);
     expect(elasticItemLevel("GLOVES", 298)).toBe(297);
@@ -33,7 +31,6 @@ describe("elastic items", () => {
   it("gives no item below level 40 or above 300", () => {
     expect(elasticItemLevel("GLOVES", 41)).toBe(40);
     expect(elasticItemLevel("RING", 12)).toBe(40);
-    // 300 lies on no armor ladder, and every character past it gets 300.
     expect(elasticItemLevel("GLOVES", 300)).toBe(300);
     expect(elasticItemLevel("GLOVES", 473)).toBe(300);
   });

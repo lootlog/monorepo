@@ -17,21 +17,12 @@ export type PageTab = {
 
 type PageTabsLayoutProps = {
   tabs: PageTab[];
-  /** Prefixed to every tab's `href`. */
   basePath?: string;
-  /** The current tab, for tabs that share one path and differ in search. */
   activeId?: string;
   ariaLabel: string;
-  /** The current tab's page, usually the section's `<Outlet />`. */
   children: ReactNode;
 };
 
-/**
- * A section split into tabs. On a tab, the tabs and the tab's page share one
- * page scroller, so the tabs stay mounted while a tab loads or changes and
- * the active tab's underline slides to the next one. Any other page of the
- * section, such as a detail page reached from a tab, renders without the tabs.
- */
 export const PageTabsLayout = ({
   tabs,
   basePath = "",
@@ -51,8 +42,6 @@ export const PageTabsLayout = ({
 
   const shownId = useRef(currentId);
 
-  // Each tab opens at its top, as it would in a scroller of its own. Going to
-  // a detail page and back keeps the scroll position the router restores.
   useLayoutEffect(() => {
     const previousId = shownId.current;
     shownId.current = currentId;

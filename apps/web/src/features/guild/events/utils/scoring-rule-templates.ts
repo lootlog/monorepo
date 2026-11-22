@@ -23,10 +23,6 @@ const templateKeys = (id: string) => {
   return { i18nKey, i18nDescriptionKey: `${i18nKey}Desc` };
 };
 
-/**
- * Builds a template from a default preset rule. The created rule is named with
- * the template's translated label, which is what players see in the editor.
- */
 const createPresetTemplate = (
   id: string,
   presetId: string,
@@ -125,13 +121,6 @@ export const SCORING_RULE_TEMPLATES: ScoringRuleTemplate[] = [
   createPresetTemplate("leaveGrace", "leave-grace"),
 ];
 
-/**
- * The solo / small group / regular base rulebook. The last matching base rule
- * wins, so the rules go from the lowest base to the highest: a solo member
- * also matches the small group, and solo must come after it to keep 3 pkt.
- * Bonuses already on the list are kept after the base rules, and the cap is
- * raised so the highest base with every bonus is not cut.
- */
 export const applyGroupRulebook = (
   scoringRules: EventScoringRules,
 ): EventScoringRules => {

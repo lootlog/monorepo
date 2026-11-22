@@ -8,14 +8,12 @@ type HeroSightingClaimsProps = {
   className?: string;
 };
 
-/** The members who declared camping the hero, in the order they did. */
 export const HeroSightingClaims = ({
   sighting,
   className,
 }: HeroSightingClaimsProps) => {
   const { t } = useTranslation();
 
-  // Nobody is expected to camp a roaming hero, so no claims is not news.
   if (sighting.claims.length === 0 && sighting.state === "ROAMING") return null;
 
   if (sighting.claims.length === 0) {

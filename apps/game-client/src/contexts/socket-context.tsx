@@ -29,19 +29,9 @@ import {
   type ReactNode,
 } from "react";
 
-/**
- * A feature cache that follows the Organization access policy. The
- * composition root supplies these, so the provider does not import features.
- */
 export interface RealtimeAccessPolicyObserver {
-  /** Holds the observer's policy state while the provider is mounted. */
   retain?: (queryClient: QueryClient) => () => void;
-  /**
-   * The session joined after an interruption or before any access policy
-   * arrived, so cached history may have gaps.
-   */
   resync?: (queryClient: QueryClient, guildIds: readonly string[]) => void;
-  /** The access policy changed. */
   update?: (queryClient: QueryClient, policy: AccessPolicySnapshot) => void;
 }
 
@@ -55,13 +45,10 @@ type SocketContextValue = {
 
 const EMPTY_JOINED_GUILDS: string[] = [];
 
-// A join that fails on an open socket, such as an invalid response, is not
-// followed by a reconnect, so the provider retries it itself.
 const JOIN_RETRY_BASE_DELAY_MS = 1_000;
 
 const JOIN_RETRY_MAX_DELAY_MS = 30_000;
 
-// The gateway's static refusal messages (apps/gateway realtime-errors.ts).
 const getJoinRejectionReasonKey = (reason: string) => {
   switch (reason) {
     case "organization access denied":
@@ -75,11 +62,6 @@ const getJoinRejectionReasonKey = (reason: string) => {
   }
 };
 
-/**
- * A gateway refusal the player can act on, in their language. Retryable
- * refusals recover on their own, and a user without an Organization is shown
- * that state where it matters instead of as a connection failure.
- */
 const describeJoinRejection = (error: Error): string | null => {
   if (!(error instanceof RealtimeRequestError) || error.retryable) return null;
   const reason = error.message.trim().toLowerCase();
@@ -149,20 +131,15 @@ export const SocketProvider = ({
   const [joinRetry, setJoinRetry] = useState(0);
   const joinAttempt = useRef(0);
   const joinFailures = useRef(0);
-  // One message per run of refusals, so retries do not repeat it.
   const joinRejectionShown = useRef(false);
   const [guildIds, setJoinedGuilds] = useState<string[]>([]);
 
-  // Deferred like the overlay in AppContent: both values share React's
-  // deferred lane, so the join is sent in the commit that mounts the feature
-  // trees and their listeners, not ahead of them.
   const gameInitialized = useDeferredValue(
     useGlobalStore((s) => s.gameState.gameInitialized),
   );
 
   const setSocketState = useGlobalStore((s) => s.setSocketState);
 
-  // Primitive selectors: the game store updates on every hero step.
   const sessionWorld = useGameStore((state) => state.game?.world);
   const sessionAccountId = useGameStore((state) => state.game?.hero.accountId);
 
@@ -248,11 +225,7 @@ export const SocketProvider = ({
             if (import.meta.env.DEV)
               console.warn("[Gateway] Failed to join", error);
 
-            // A newer join supersedes this attempt. The closed socket that a
-            // refusal leaves behind must still degrade, so this ignores cleanup.
             if (attempt !== joinAttempt.current) return;
-            // Load HTTP snapshots instead of waiting for a join that may never
-            // succeed, and catch up on missed events once a later join succeeds.
             hasBeenUnavailable.current = true;
             setJoinFailed(true);
             const rejection = describeJoinRejection(error);
@@ -263,10 +236,6 @@ export const SocketProvider = ({
               showRuntimeMessage(`${t("realtimeJoin.rejected")} ${rejection}`);
             }
 
-            // A closed socket reconnects through the realtime client's backoff
-            // or, after a non-retryable refusal, through the reconnect button
-            // in the connection status. After cleanup, a later run either
-            // joins again or has no join to retry.
             if (cancelled || !socket.connected) return;
 
             const delay = Math.min(
@@ -385,7 +354,6 @@ export const SocketProvider = ({
 
 export const useSocket = () => useContext(SocketContext);
 
-/** Wait for the first subscription before fetching snapshots, with REST fallback after a connection or join failure. */
 export const useRealtimeSnapshotReady = () => {
   const { socket, status } = useSocket();
 

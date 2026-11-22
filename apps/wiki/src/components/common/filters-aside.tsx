@@ -4,16 +4,10 @@ import { t } from "@/i18n/messages";
 import { FiltersHeader } from "./filters-header";
 
 type FiltersAsideProps = {
-  /** How many filters narrow the search now. */
   count: number;
-  /** The search's filter panel. */
   children: ReactNode;
 };
 
-/**
- * A search's filters docked beside its results from tablet width up, under
- * the top bar like the set dock: a rule, not a card.
- */
 export function FiltersAside({ count, children }: FiltersAsideProps) {
   return (
     <aside

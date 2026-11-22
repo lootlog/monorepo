@@ -4,10 +4,6 @@ import { text } from "@/lib/messages";
 
 const link = buttonVariants({ variant: "outline", size: "sm" });
 
-/**
- * Previous and next links for a paged list. `renderLink` builds the link for a
- * page so each list keeps its own route and filters.
- */
 export function Pagination({
   page,
   pageSize,

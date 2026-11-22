@@ -1,8 +1,5 @@
 import { isPlainObject } from "es-toolkit";
 
-// Shape of public-api.margonem.pl/account/charlist entries (TCharacterData in the
-// game's CharacterList.ts). Nicks, ids and levels are invented; icons, worlds and
-// field layout follow a real response.
 type MargonemCharlistEntry = {
   id: number;
   nick: string;
@@ -220,8 +217,6 @@ export const SANDBOX_CHARACTERS: readonly [
 
 const MARGONEM_STORAGE_KEY = "Margonem";
 
-// CharacterList.onSuccess stores the response with Storage.set(`charlist/${accountId}`),
-// which Lootlog reads before it calls the public API.
 export function seedMargonemCharacterList(): void {
   try {
     const stored: unknown = JSON.parse(
@@ -239,7 +234,5 @@ export function seedMargonemCharacterList(): void {
         charlist: { ...charlist, [SANDBOX_ACCOUNT_ID]: SANDBOX_CHARACTERS },
       }),
     );
-  } catch {
-    // Storage can be unavailable; Lootlog then falls back to the public API.
-  }
+  } catch {}
 }

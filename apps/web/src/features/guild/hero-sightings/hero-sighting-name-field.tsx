@@ -20,18 +20,12 @@ type HeroSightingNameFieldProps = Pick<
 > & {
   value: string;
   knownHeroes: readonly KnownHero[];
-  /** Names the list of suggestions. */
   suggestionsLabel: string;
   onChange: (name: string) => void;
   onPickHero: (hero: KnownHero) => void;
-  /** The game's detector line was pasted: it names the hero, state and map. */
   onPasteDetection: (detection: HeroDetection) => void;
 };
 
-/**
- * The hero's name, typed freely. Heroes the Organization already met are
- * suggested, and the detector's chat line can be pasted whole.
- */
 export const HeroSightingNameField = ({
   value,
   knownHeroes,

@@ -1,10 +1,3 @@
-/**
- * Architekt: the one who can edit the world. The character stands selected, in corner
- * brackets with a blinking cursor, on a wireframe disc; code rains behind it and its
- * shape splits into red and cyan ghosts that jump apart in fits. While the admin is on
- * the map the tile grid shows through it and a scan line sweeps down. Its burst reloads
- * the world: strips of the map jump sideways, then a sweep redraws it.
- */
 import { clamp } from "es-toolkit";
 import { mulberry32, smoothstep, TAU, type Rgb } from "./math";
 import { pixelLine, plot, RUNES } from "./paint";
@@ -20,18 +13,12 @@ const CYAN: Rgb = [0, 232, 255];
 
 const MAGENTA: Rgb = [255, 40, 200];
 
-/** The map jumps about until this fraction of the burst, then the sweep redraws it. */
 export const RELOAD_GLITCH = 0.4;
 
-/** Ticks a fit of the ghosts lasts, and the share of such slots that have one. */
 const FIT_TICKS = 3;
 
 const FIT_CHANCE = 0.16;
 
-/**
- * How far apart the character's ghosts are at `tick`, 0..1: a hair between fits, wide
- * in one, widest while the burst (0..1, -1 resting) tears the map.
- */
 export function glitchLevel(tick: number, burst: number): number {
   if (burst >= 0 && burst < RELOAD_GLITCH) return 1;
   const roll = mulberry32(Math.floor(tick / FIT_TICKS) * 2654435761)();
@@ -39,9 +26,6 @@ export function glitchLevel(tick: number, burst: number): number {
   return roll < FIT_CHANCE ? 0.4 + (roll / FIT_CHANCE) * 0.5 : 0;
 }
 
-// --- round the character ------------------------------------------------------------------------
-
-/** The disc under the feet: a lattice of dots turning slowly inside a dashed ring. */
 export function drawWireGround(b: Brush, place: AuraPlacement): void {
   const lit = b.lit();
   const [light, mid, dark] = b.tones;
@@ -66,7 +50,6 @@ export function drawWireGround(b: Brush, place: AuraPlacement): void {
     }
   }
 
-  // Marching ants: dashes walking round the ring, as round a selection.
   const count = Math.round(TAU * rx);
 
   for (let i = 0; i < count; i++) {
@@ -76,12 +59,10 @@ export function drawWireGround(b: Brush, place: AuraPlacement): void {
   }
 }
 
-/** Cells in a column's lit tail, and the px between cells. */
 const RAIN_TAIL = 7;
 
 const RAIN_PITCH = 5;
 
-/** One glyph of the rain: a 3×3 rune picked by `pick`. */
 function glyph(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -94,10 +75,6 @@ function glyph(
     plot(ctx, x + dx, y + dy, color, alpha);
 }
 
-/**
- * A column of code falling from `top` to `bottom` at `x`: its head white, the tail
- * fading through the aura's tones, the glyphs changing as it runs.
- */
 function rainColumn(
   b: Brush,
   x: number,
@@ -130,7 +107,6 @@ function rainColumn(
   }
 }
 
-/** Code raining behind the character, three columns either side of it. */
 export function drawCodeRain(b: Brush, place: AuraPlacement): void {
   const { bounds } = place.silhouette;
   const cx = place.x + bounds.x + bounds.w / 2;
@@ -143,11 +119,6 @@ export function drawCodeRain(b: Brush, place: AuraPlacement): void {
   }
 }
 
-/**
- * The selection round the character: four corner brackets that breathe, a tag over the
- * top left one and a blinking cursor. The burst switches it off like a screen, down to
- * one bright line, and back on.
- */
 export function drawSelection(
   b: Brush,
   place: AuraPlacement,
@@ -172,7 +143,6 @@ export function drawSelection(
   const halfH = Math.round((bounds.h / 2 + grow) * open);
 
   if (halfH < 2) {
-    // Switched off: the line a screen leaves.
     pixelLine(lit, cx - halfW - 8, cy, cx + halfW + 8, cy, WHITE, a, a);
 
     return;
@@ -214,10 +184,6 @@ export function drawSelection(
     }
 }
 
-/**
- * The character's red and cyan ghosts straight onto the map behind it, `level` (0..1)
- * apart: a fringe at its edges between fits, two shapes thrown wide in one.
- */
 export function drawGhosts(
   ctx: CanvasRenderingContext2D,
   place: AuraPlacement,
@@ -247,10 +213,6 @@ export function drawGhosts(
   }
 }
 
-/**
- * During a fit, bands of the character's shape knocked sideways over it, as if rows of
- * its picture were read from the wrong place.
- */
 export function drawTornRows(
   ctx: CanvasRenderingContext2D,
   place: AuraPlacement,
@@ -288,27 +250,18 @@ export function drawTornRows(
   }
 }
 
-// --- the wireframe over the map -----------------------------------------------------------------
-
-/** How much the wireframe dims the map, 0..1: just enough for the grid to read. */
 export const WIREFRAME_GLOOM = 0.14;
 
 export const WIREFRAME_VEIL: Rgb = [0, 12, 10];
 
-/** The game's tile, px. */
 const TILE = 32;
 
-/** Seconds the scan line takes down the screen, and between tiles being inspected. */
 const SCAN_EVERY = 5;
 
 const INSPECT_EVERY = 0.6;
 
 let strips: HTMLCanvasElement | null = null;
 
-/**
- * Knocks a few strips of what is already drawn sideways. The strips are copied out
- * first and drawn back after, so the canvas is read once a frame however many there are.
- */
 function tearMap(scene: MapScene, strength: number): void {
   const { ctx, width, height, time } = scene;
   const { a: scaleX, d: scaleY, e: shiftX, f: shiftY } = ctx.getTransform();
@@ -362,7 +315,6 @@ function tearMap(scene: MapScene, strength: number): void {
     );
   }
 
-  // A fringe of colour on each strip, red one way and cyan the other.
   ctx.globalCompositeOperation = "lighter";
   ctx.globalAlpha = 0.16 * strength;
 
@@ -372,11 +324,6 @@ function tearMap(scene: MapScene, strength: number): void {
   }
 }
 
-/**
- * The world's wireframe over the whole map: the tile grid, a scan line sweeping down, a
- * tile or two picked out as if inspected and, when the aura bursts, the map torn into
- * strips and then redrawn by a sweep from the left.
- */
 export function drawWireframe(scene: MapScene): void {
   const { ctx, width, height, now, view, burst, light, mid } = scene;
 
@@ -388,7 +335,6 @@ export function drawWireframe(scene: MapScene): void {
 
   wash(scene, WIREFRAME_VEIL, WIREFRAME_GLOOM);
 
-  // The grid on the game's tiles; it lights up as the reload redraws the map.
   ctx.globalCompositeOperation = "lighter";
   ctx.fillStyle = `rgb(${mid[0]},${mid[1]},${mid[2]})`;
   ctx.globalAlpha = 0.07 + (reload >= 0 ? 0.25 * (1 - reload) : 0);
@@ -399,7 +345,6 @@ export function drawWireframe(scene: MapScene): void {
   for (let y = wrap(-view[1], TILE); y < height; y += TILE)
     ctx.fillRect(0, Math.round(y), width, 1);
 
-  // The scan line with a short glow trailing above it.
   const scan = ((now % SCAN_EVERY) / SCAN_EVERY) * (height + 80) - 40;
 
   for (const [offset, tall, alpha] of [
@@ -411,7 +356,6 @@ export function drawWireframe(scene: MapScene): void {
     ctx.fillRect(0, Math.round(scan + offset), width, tall);
   }
 
-  // Two tiles picked out for a moment, with handles on their corners.
   const slot = Math.floor(now / INSPECT_EVERY);
   const rng = mulberry32(slot * 104729 + 3);
   const blink = 1 - (now / INSPECT_EVERY - slot);
@@ -434,7 +378,6 @@ export function drawWireframe(scene: MapScene): void {
   }
 
   if (reload < 0) return;
-  // The sweep redrawing the map from the left, its trail fading behind it.
   const edge = reload * (width + 160);
 
   for (const [offset, wide, alpha] of [
@@ -449,9 +392,6 @@ export function drawWireframe(scene: MapScene): void {
   wash(scene, light, 0.2 * (1 - reload) ** 4, "lighter");
 }
 
-// --- the tooltip --------------------------------------------------------------------------------
-
-/** Brackets round the frame's corners and a cursor blinking beside the top right one. */
 export function drawTipBrackets({
   b,
   corners,
@@ -477,7 +417,6 @@ export function drawTipBrackets({
     }
 }
 
-/** Code raining down both sides of the frame, behind it. */
 export function drawTipRain({ b, L, T, R, B }: TipFrame): void {
   for (const [i, x] of [L - 12, L - 6, R + 6, R + 12].entries())
     rainColumn(b, x, T - 6, B + 6, i);

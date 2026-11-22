@@ -19,8 +19,6 @@ import {
   getOwnCharacterAura,
 } from "../character-auras/character-auras.handlers.js";
 
-// A failed part is reported as unavailable instead of failing the others; the
-// client reads it again from the endpoint the part stands for.
 const orUnavailable =
   (part: string) =>
   <A, E, R>(effect: Effect.Effect<A, E, R>) =>
@@ -33,11 +31,6 @@ const orUnavailable =
           ).pipe(Effect.annotateLogs({ part }), Effect.as(null)),
     );
 
-/**
- * The startup reads of the game client in one request. Every part runs the
- * operation of the endpoint it replaces, so it applies that endpoint's access
- * policy; the guild documents cover the accessible guilds just read.
- */
 export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
   function* (query: GameClientBootstrapQuery) {
     const accountContext = {
@@ -62,8 +55,6 @@ export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
           guildPermissions: null,
         };
 
-      // Each guild runs the permissions endpoint's own authorization; one
-      // that fails is left out so the client reads just that guild itself.
       const guildIds: ReadonlyArray<string> = accessibleGuilds.map(
         ({ id }: { readonly id: string }) => id,
       );

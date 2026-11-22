@@ -1,4 +1,3 @@
-/** Error responses the activity endpoints declare; every one has the shared body. */
 import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import { HttpApiSchema } from "effect/http-api";
 

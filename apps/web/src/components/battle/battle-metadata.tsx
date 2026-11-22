@@ -38,7 +38,6 @@ type BattleMetadataItem = {
   className?: string;
 };
 
-/** The battle's details as `MetaItem`s for the page's `DetailBar`. */
 export const BattleMetadata: FC<BattleMetadataProps> = ({ battle }) => {
   const { t } = useTranslation();
 

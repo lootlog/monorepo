@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Main API notifications, messaging, party gathering, and sound settings. */
 export const MAIN_NOTIFICATION_OPERATIONS = [
   {
     service: "main",

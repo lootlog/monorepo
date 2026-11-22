@@ -1,7 +1,6 @@
 import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { EASE_EMPHASIZED_CSS } from "@/lib/motion";
 
-/** The keyframe every loading placeholder reveals itself with after its delay. */
 const PLACEHOLDER_REVEAL_ANIMATION = "placeholder-in";
 
 const FADE_DURATION_MS = 240;
@@ -10,16 +9,6 @@ const STAGGER_STEP_MS = 30;
 
 const STAGGERED_SIBLINGS = 3;
 
-/**
- * Content that replaces a loading placeholder the player actually saw fades in
- * where it lands; nothing moves, so the handoff never shifts the layout.
- * Content that arrives before any placeholder showed, such as a cached or fast
- * navigation, appears at once and never fades.
- *
- * A placeholder counts as seen once its delayed reveal animation starts. While
- * a seen placeholder is on screen, a mutation observer pairs its removal with
- * the elements the same commit inserts into the same parent.
- */
 export const startContentEntrance = (root: HTMLElement) => {
   const seenPlaceholders = new Set<Element>();
   let isObserving = false;
@@ -91,7 +80,6 @@ const containsAny = (node: Node, elements: Set<Element>) => {
   return false;
 };
 
-/** Siblings entering together are staggered, but only the first few. */
 const playEntrances = (siblingGroups: HTMLElement[][]) => {
   for (const siblings of siblingGroups) {
     siblings.forEach((element, index) => {

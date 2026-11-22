@@ -9,10 +9,6 @@ type SightedTimer = {
   npc?: { name: string; type: string } | null;
 };
 
-/**
- * Whether a hero timer counts down the sighted hero. A detector answer names
- * the hero only, so they match by the normalized hero name on one world.
- */
 const isSightedHeroTimer = (
   timer: SightedTimer,
   sighting: HeroSightingResponseDto,
@@ -24,11 +20,6 @@ const isSightedHeroTimer = (
   timer.world === sighting.world &&
   getHeroSightingKey(timer.npc.name) === sighting.hero.key;
 
-/**
- * The open sighting of a hero timer's hero, so the timer can say where the
- * hero was last detected. It may no longer be current: the timer marks a
- * roaming hero gone unconfirmed instead of hiding where it was.
- */
 export const findTimerHeroSighting = (
   sightings: readonly HeroSightingResponseDto[] | undefined,
   timer: SightedTimer,
@@ -38,7 +29,6 @@ export const findTimerHeroSighting = (
       sighting.closedAt === null && isSightedHeroTimer(timer, sighting),
   );
 
-/** The timer of a sighted hero, so the board can say when it respawns. */
 export const findHeroSightingTimer = <Timer extends SightedTimer>(
   timers: readonly Timer[] | undefined,
   sighting: HeroSightingResponseDto,

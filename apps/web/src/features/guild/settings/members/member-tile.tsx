@@ -56,11 +56,6 @@ type MemberTileProps = {
   onDeactivate: () => void;
 };
 
-/**
- * One member: presence beside the name, Discord sync, activity and visits
- * under it, then permissions and access. The tile opens the member; the
- * menu refreshes or deactivates them.
- */
 export const MemberTile = ({
   ref,
   index,
@@ -95,7 +90,6 @@ export const MemberTile = ({
     });
   }
 
-  // The tile is the member: it opens their page, not their profile card.
   const memberKey = { memberId: member.id };
 
   const fallback = {

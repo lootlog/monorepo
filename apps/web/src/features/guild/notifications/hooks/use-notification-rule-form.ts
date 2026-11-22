@@ -211,7 +211,6 @@ const getWorldOptions = (
   return options;
 };
 
-// Leaves room for the same monster's timers on several worlds.
 const TIMER_NPC_SEARCH_LIMIT = 50;
 
 const NUMERIC_NPC_SEARCH_PATTERN = /^\d+$/;
@@ -256,11 +255,6 @@ const getNpcOptionLabel = (
     : `${timer.name} ${type} (#${id})`;
 };
 
-/**
- * Saved selections are labelled from their timers; once the lookup has
- * answered, a selection without a visible timer stays listed as unmatched so
- * it can be inspected and removed.
- */
 const getNpcOptions = (
   selected: { values: string[]; timers?: SearchTimersNpcResponseDtoOutput[] },
   searched: SearchTimersNpcResponseDtoOutput[],
@@ -323,7 +317,6 @@ const useNotificationRuleData = (
   };
 };
 
-/** NPC options for a timer rule, read from the Organization's timers. */
 const useTimerNpcSelection = (
   form: Pick<UseFormReturn<RuleFormValues>, "control">,
   guildId: string | undefined,
@@ -495,7 +488,6 @@ export const useNotificationRuleForm = () => {
 
     initializedDraft.current = { identity: draftIdentity, rule };
 
-    // A refetch of the same rule refreshes untouched fields and keeps edits.
     const isRefetch = initialized?.identity === draftIdentity;
 
     const keepsContentDraft =
@@ -635,7 +627,6 @@ export const useNotificationRuleForm = () => {
           ? {
               ...basePayload,
               world,
-              // Null clears a bound the rule saved before.
               npcLevelMin: values.npcLevelMin ?? null,
               npcLevelMax: values.npcLevelMax ?? null,
             }

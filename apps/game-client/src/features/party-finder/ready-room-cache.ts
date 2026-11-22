@@ -22,24 +22,12 @@ const READY_ROOM_TOMBSTONE_TTL_MS = 120_000;
 
 const READY_ROOM_TOMBSTONE_CAP = 512;
 
-/**
- * Ready Rooms arrive from the list endpoint, from socket updates and from the
- * responses of the room's own mutations, in any order. The collection keeps
- * the highest revision seen per room and remembers removals as tombstones so
- * a late response cannot resurrect a room that was already closed.
- */
 export type ReadyRoomProjections = {
   projections: Record<string, PartyReadyRoomProjection>;
   roomVersions: Record<string, ReadyRoomVersion>;
 };
 
 export type ReadyRoomCache = ReadyRoomProjections & {
-  /**
-   * When the last authoritative list response was applied, and null while a
-   * resynchronization is pending or its request failed. A socket update is not
-   * a synchronization: it says nothing about the rooms it does not mention, so
-   * it must never make an incomplete collection look current.
-   */
   listAppliedAt: number | null;
 };
 
@@ -84,7 +72,6 @@ export function selectOwnedReadyRoom(
   );
 }
 
-/** Applicants the organizer still has to invite into the party. */
 export function selectParticipantsOutsideParty(
   projection: PartyReadyRoomProjection,
 ): PartyReadyRoomParticipant[] {
@@ -306,11 +293,6 @@ export function removeReadyRoom(
   return removeReadyRoomAtRevision(cache, notificationId, revision);
 }
 
-/**
- * The list endpoint is authoritative, but only for the rooms that were already
- * known when the request left: a room created while it was in flight must not
- * be dropped just because the response predates it.
- */
 export function applyAuthoritativeReadyRoomSync(
   cache: ReadyRoomProjections,
   incomingProjections: PartyReadyRoomProjection[],

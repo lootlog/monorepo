@@ -47,7 +47,6 @@ describe("getBattleTeamSummaries", () => {
           team: 1,
           meleeDamage: 300,
           fireDamage: 100,
-          // Overlaps melee damage, so it must not dilute the shares.
           rageDamageDealt: 250,
         }),
         createBattleWarrior({ originalId: "enemy", team: 2 }),

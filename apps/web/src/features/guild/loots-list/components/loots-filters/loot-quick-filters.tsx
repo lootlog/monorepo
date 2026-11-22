@@ -16,7 +16,6 @@ type LootQuickFiltersProps = Pick<
   | "setIsDialogOpen"
 >;
 
-/** Built-in and saved filter sets at the top of the filters panel. */
 export const LootQuickFilters = ({
   t,
   allQuickFilters,
@@ -26,7 +25,6 @@ export const LootQuickFilters = ({
   canSaveCurrentFilter,
   setIsDialogOpen,
 }: LootQuickFiltersProps) => (
-  // A peer of the filter sections, so its header reads like theirs.
   <div className="border-b border-sidebar-border">
     <div className="flex h-11 items-center gap-1 pr-2 pl-4">
       <h3 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium">
@@ -51,8 +49,6 @@ export const LootQuickFilters = ({
 
         return (
           <div key={filter.id} className="group/quick-filter flex items-center">
-            {/* Drawn like the section pills, so every pressed pill means
-                the same thing: it narrows the list. */}
             <button
               type="button"
               aria-pressed={isApplied}

@@ -7,7 +7,6 @@ import { cn } from "cn";
 import { t } from "@/i18n/messages";
 import { findDamageTypes } from "@/lib/damage-types";
 
-/** The item's damage types as icons, each named in a tooltip. */
 export function ItemDamageTypes({ stat }: { stat: string }) {
   const damageTypes = findDamageTypes(stat);
 

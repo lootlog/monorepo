@@ -3,7 +3,6 @@ import { itemEventSlug } from "@lootlog/domain/item-events";
 import { t } from "@/i18n/messages";
 import { itemEvents } from "@/lib/item-events";
 
-/** The events an item dropped during, each a link to its page; nothing for an item of none. */
 export function ItemEventLinks({ stat }: { stat: string }) {
   const events = itemEvents(stat);
 

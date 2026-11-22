@@ -12,7 +12,6 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { PRODUCT_LOCALE, formatNumber } from "@lootlog/domain/locale";
 
-// One hue, as on the activity heatmaps: the most common type is the brightest.
 const NPC_TYPE_FILLS: Partial<Record<KilledNpcType, string>> = {
   ELITE2: "bg-primary",
   ELITE3: "bg-primary/85",
@@ -29,25 +28,14 @@ const shareFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
 
 type KillStatsOverviewProps = {
   total?: number;
-  /** A line under the total, such as its change or the participations. */
   totalDetail?: ReactNode;
-  /** Stands in for `totalDetail` while loading, where it may wrap. */
   loadingTotalDetail?: ReactNode;
-  /**
-   * One tile per NPC type, in this order. While loading, a `detail` of `null`
-   * reserves the line the loaded detail takes.
-   */
   types: { type: KilledNpcType; kills: number; detail?: ReactNode }[];
   isLoading?: boolean;
-  /** The type the page narrows to; omit where a tile only opens the type. */
   selectedType?: KilledNpcType;
   onSelectType?: (type: KilledNpcType) => void;
 };
 
-/**
- * All kills in the period next to a tile per NPC type, edge to edge at the
- * top of a statistics page.
- */
 export const KillStatsOverview = ({
   total = 0,
   totalDetail,
@@ -151,7 +139,6 @@ export const KillStatsOverview = ({
               />
               <span className="truncate">{t(`npcType.${type}`)}</span>
             </span>
-            {/* The share sits by the count, leaving the label the tile's width. */}
             {isLoading ? (
               <Skeleton className="h-7 w-16" />
             ) : (

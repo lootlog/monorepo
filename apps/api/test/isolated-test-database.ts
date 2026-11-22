@@ -1,6 +1,5 @@
 let isolatedConnectionUri: string | undefined;
 
-/** Called only by the preload after starting its disposable PostgreSQL container. */
 export const registerIsolatedTestDatabase = (connectionUri: string) => {
   if (new URL(connectionUri).pathname !== "/lootlog_e2e") {
     throw new Error(

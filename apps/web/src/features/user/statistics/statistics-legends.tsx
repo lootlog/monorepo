@@ -9,12 +9,10 @@ import { StatisticsLegendItem } from "./statistics-legend-item";
 type StatisticsLegendsProps = {
   legends?: UserLootStatsResponseDtoOutputLegendsItem[];
   isLoading: boolean;
-  /** Rows shown; all of them unless it is a preview. */
   size?: number;
   actions?: ReactNode;
 };
 
-/** Legendary drops the user was present at, and how many their characters caught. */
 export function StatisticsLegends({
   legends = [],
   isLoading,

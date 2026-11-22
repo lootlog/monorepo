@@ -4,7 +4,6 @@ import { useCurrentGameAccountPreferences } from "@/lib/settings-persistence/use
 import { useGameStore } from "@/store/game.store";
 import { airTagMinimapController } from "./air-tag-minimap-controller";
 
-/** Draws AirTag enemies on the handheld minimap for players who turned it on. */
 export const useAirTagMinimap = (): void => {
   const { t } = useTranslation("settings");
   const { data: preferences } = useCurrentGameAccountPreferences();

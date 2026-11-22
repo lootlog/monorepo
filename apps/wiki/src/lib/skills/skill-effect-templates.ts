@@ -1,4 +1,3 @@
-// Generated from the game's skill tooltip parser and Polish dictionary.
 import type { SkillEffectTemplate } from "@/lib/skills/skill-effects";
 
 export const SKILL_EFFECT_TEMPLATES = {

@@ -2,21 +2,14 @@ import { cn } from "cn";
 import type { CSSProperties, FC, ReactNode } from "react";
 
 type SettingsListRowProps = {
-  /** Avatar, icon or swatch shown before the text. */
   leading?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
-  /** Trailing controls: buttons, badges, popover triggers. */
   children?: ReactNode;
   className?: string;
   style?: CSSProperties;
 };
 
-/**
- * One entry of a list inside settings (a server, a muted player, a hidden
- * timer, a colour). Same rhythm as SettingsRow, but the text is an item name
- * rather than a setting label, and the trailing slot holds item actions.
- */
 export const SettingsListRow: FC<SettingsListRowProps> = ({
   leading,
   title,

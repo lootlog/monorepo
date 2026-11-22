@@ -15,7 +15,6 @@ import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status"
 import { LoaderCircle, LogIn, Wifi, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-/** Shape and color both change per state, so the status never rests on color alone. */
 const STATUS_ICON = {
   online: { Icon: Wifi, className: "ll:text-green-400" },
   connecting: {
@@ -32,15 +31,8 @@ const STATUS_ICON = {
 
 const SIGNED_OUT_ICON = { Icon: LogIn, className: "ll:text-yellow-400" };
 
-/** Refresh rate of the latency while the player is looking at it. */
 const LATENCY_PROBE_INTERVAL_MS = 2_000;
 
-/**
- * Gateway connection state for the quick access title bar. The tooltip names
- * the state and latency; the popover also lists the joined organizations and,
- * while the connection is down, lets the player retry now instead of waiting
- * for the next backoff.
- */
 export const ConnectionStatus: FC = () => {
   const { t } = useTranslation("quickAccess");
   const { t: tCommon } = useTranslation("common");
@@ -58,8 +50,6 @@ export const ConnectionStatus: FC = () => {
     [socket],
   );
 
-  // Heartbeats refresh the latency every 25 seconds; probe faster only while
-  // the tooltip or popover shows it.
   useEffect(() => {
     if (!socket || !latencyVisible) return;
     socket.probeLatency();
@@ -79,7 +69,6 @@ export const ConnectionStatus: FC = () => {
   const session = authClient.useSession();
   const openAndFocus = useWindowsStore((state) => state.openAndFocus);
 
-  // Signed out, the socket is not mounted at all, so its status means nothing.
   const signedOut = isSessionSignedOut(session);
   const online = !signedOut && status === "online";
 

@@ -444,7 +444,6 @@ describe("durable loot publications", () => {
       data: [{ droppedBy: { id: npc.id, name: npc.name } }],
     });
 
-    // Several NPCs do not tell which one gave the items.
     const ambiguous = await indexed([
       npc,
       { ...npc, id: npc.id + 1, name: "Test pickaxe" },
@@ -600,7 +599,6 @@ describe("durable loot publications", () => {
       return { link, search };
     };
 
-    // The template wins over the overloaded id; the spawn stays on the loot.
     expect(
       await accept({ id: 313_103, runtimeId: 313_103, templateId: 257_636 }),
     ).toMatchObject({
@@ -611,7 +609,6 @@ describe("durable loot publications", () => {
       },
       search: { data: [{ id: 257_636, identityNamespace: "template" }] },
     });
-    // An unresolved template is never filled from the runtime id.
     expect(
       await accept({ id: 313_104, runtimeId: 313_104, templateId: null }),
     ).toMatchObject({
@@ -622,7 +619,6 @@ describe("durable loot publications", () => {
       },
       search: { data: [{ id: 313_104, identityNamespace: "runtime" }] },
     });
-    // Older clients keep their overloaded id in the legacy namespace.
     expect(await accept({ id: 257_636 })).toMatchObject({
       link: { runtimeNpcId: null, npcId: 257_636, identityNamespace: "legacy" },
       search: { data: [{ id: 257_636, identityNamespace: "legacy" }] },
@@ -704,22 +700,18 @@ describe("durable loot publications", () => {
       stored: { lootGameVersion: "en", snapshotGameVersion: "en" },
       search: { data: [{ id: 257_636, gameVersion: "en", world: "cronus" }] },
     });
-    // Equal template ids from different editions never share a revision.
     expect(english.stored?.snapshotId).not.toBe(polish.stored?.snapshotId);
 
-    // Every world of the edition shares the revision.
     expect(
       (await accept("pl", { world: `other-${randomUUID()}` })).stored
         ?.snapshotId,
     ).toBe(polish.stored?.snapshotId);
 
-    // The declared edition decides the revision, whatever the world.
     expect((await accept("en")).stored).toMatchObject({
       lootGameVersion: "en",
       snapshotId: english.stored?.snapshotId,
     });
 
-    // A retry of an accepted loot keeps the provenance it was accepted with.
     const retry = await accept("en", { hids: polish.hids });
     expect(retry.id).toBe(polish.id);
     expect(retry.stored).toEqual(polish.stored);
@@ -730,7 +722,6 @@ describe("durable loot publications", () => {
     const itemId = 9_000_000 + randomInt(1_000_000);
     const revisionStat = "rarity=heroic;lvl=80;contra=40";
 
-    // Stored before revisions: first-writer English presentation, no hash.
     const [legacy] = await runtime.runPromise(
       database
         .insert(itemSnapshotTable)
@@ -827,8 +818,6 @@ describe("durable loot publications", () => {
       instanceStat: "created=400",
     });
 
-    // Equal stats never lend one language's presentation to another, and an
-    // identical presentation reuses its revision whatever the instance stats.
     expect(english.stored?.snapshot.id).not.toBe(legacy.id);
     expect(polish.stored?.snapshot.id).not.toBe(english.stored?.snapshot.id);
     expect(polishAgain.stored?.snapshot.id).toBe(polish.stored?.snapshot.id);
@@ -842,7 +831,6 @@ describe("durable loot publications", () => {
       "created=300;amount=5;opis=Zdobyte przez Gracza",
     );
 
-    // Each loot shows its own presentation and its own instance values.
     expect(
       [english, polish, polishAgain, newIcon].map(({ item }) => [
         item?.name,
@@ -878,7 +866,6 @@ describe("durable loot publications", () => {
       ],
     });
 
-    // A retry with another presentation keeps the accepted loot unchanged.
     const retry = await accept(
       {
         name: "Wojenne trofeum Seta",
@@ -1157,8 +1144,6 @@ describe("durable loot publications", () => {
 
       const npcQ = { ...npcP, id: npcP.id + 1 };
 
-      // Opposite orders and repeated identical items make both loots contend
-      // for the same snapshot keys while each instance keeps its own link.
       const items = (...templates: Array<typeof itemX>) =>
         templates.map((item) => ({ ...item, hid: randomUUID() }));
 
@@ -1529,7 +1514,6 @@ describe("durable loot publications", () => {
           .where(eq(playerSnapshotTable.world, request.submission.world)),
       );
 
-      // The level belongs to the loot's map link, not the player snapshot.
       const { lvl: _originalLvl, ...originalPlayer } = original;
       const { lvl: _changedLvl, ...changedPlayer } = changed;
 
@@ -1620,7 +1604,6 @@ describe("durable loot publications", () => {
         const result = await runtime.runPromise(acceptance().accept(request));
         snapshotTestLootIds.push(result.id);
 
-        // Draws need the outsiders of a hero's legendary as much as an elite's.
         if (variant === "hero") {
           expect((await lootRecord(id, result.id))?.mapPlayersSnapshot).toEqual(
             mapPlayersSnapshot,
@@ -1706,7 +1689,6 @@ describe("durable loot publications", () => {
     const createdPayload =
       created && JSON.parse(new TextDecoder().decode(created.content));
 
-    // A failed snapshot read must not hold back the loot.created signal.
     expect(createdPayload).toMatchObject({ guildId: id, lootId: result.id });
     expect(createdPayload).not.toHaveProperty("loot");
     expect(sent.map((message) => message.routingKey).sort()).toEqual(
@@ -1796,7 +1778,6 @@ describe("durable loot publications", () => {
     );
     expect([...published.keys()].sort()).toEqual([first.id, second.id].sort());
 
-    // Each Organization's snapshot carries only its own submissions.
     for (const organizationId of [first.id, second.id]) {
       expect(published.get(organizationId)).toMatchObject({
         id: accepted.id,
@@ -2200,7 +2181,6 @@ describe("durable loot publications", () => {
 
     await hydrated.promise;
 
-    // Bypass this API instance, as an archive committed by another replica does.
     await runtime.runPromise(
       database
         .update(organizationLootRecordTable)
@@ -2221,7 +2201,6 @@ describe("durable loot publications", () => {
     expect((await beforeArchive)?.id).toBe(result.id);
     expect(await afterArchive).toBeNull();
 
-    // A delayed event or redelivery cannot make the archived detail readable.
     expect(await lootRecord(id, result.id)).toBeNull();
     expect(await lootList(id)).toEqual([]);
     expect(

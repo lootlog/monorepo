@@ -8,7 +8,6 @@ import {
 } from "@lootlog/schema/npc-presence";
 import { useNpcsStore } from "@/store/npcs.store";
 
-// Collapses the NPC updates of one map load into a single report.
 export const NPC_PRESENCE_REPORT_DELAY_MS = 250;
 
 const NPC_PRESENCE_RETRY_MS = 5_000;
@@ -18,13 +17,10 @@ type ReportSender = (
 ) => Promise<NpcPresenceReportAck>;
 
 type ReporterContext = {
-  /** The joined gateway accepts NPC presence reports. */
   ready: boolean;
   world: string | null;
-  /** The name of the map the hero stands on. */
   map?: string | null;
   characterId: string | null;
-  /** Organizations this character catches timers for. */
   organizationIds: readonly string[] | undefined;
   send: ReportSender;
 };
@@ -42,15 +38,10 @@ const toReportedNpcs = (): NpcPresenceNpc[] =>
       type: npc.type,
     }));
 
-/**
- * Reports the timer NPCs on the hero's map to the gateway whenever they
- * change, so Organization timers can show which NPCs stand right now.
- */
 export class NpcPresenceReporter {
   private context: ReporterContext | null = null;
   private unsubscribeNpcs: (() => void) | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
-  /** The last report the gateway stored for this connection. */
   private sentKey: string | null = null;
   private sending = false;
 
@@ -59,14 +50,12 @@ export class NpcPresenceReporter {
     this.context = context;
 
     if (!context.ready) {
-      // A new connection starts without reports.
       this.sentKey = null;
       this.stopWatching();
 
       return;
     }
 
-    // The gateway withdraws the reports of a character that left the socket.
     if (!previous?.ready || previous.characterId !== context.characterId)
       this.sentKey = null;
     this.startWatching();
@@ -120,7 +109,6 @@ export class NpcPresenceReporter {
       npcs: toReportedNpcs(),
     };
 
-    // A name the gateway would reject must not cost the NPCs their presence.
     const report: NpcPresenceReport =
       context.map && context.map.length <= NPC_PRESENCE_MAP_MAX_LENGTH
         ? { ...reported, map: context.map }
@@ -128,7 +116,6 @@ export class NpcPresenceReporter {
 
     const key = JSON.stringify(report);
 
-    // A connection that never reported has nothing to withdraw.
     if (key === this.sentKey || (this.sentKey === null && !report.npcs.length))
       return;
 

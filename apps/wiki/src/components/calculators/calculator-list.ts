@@ -12,13 +12,11 @@ import {
 } from "lucide-react";
 
 type Calculator = {
-  /** The calculator's address in the page link. */
   id: string;
   titleKey: string;
   icon: LucideIcon;
 };
 
-/** The calculators by topic, official formulas first within each. */
 export const CALCULATOR_GROUPS = [
   {
     titleKey: "calculators.groups.combat",

@@ -98,7 +98,6 @@ export type EventScoringCondition =
       value: number;
     }
   | {
-      /** The member's first counted presence came at most this late. */
       type: "RESPAWN_JOIN";
       toleranceSeconds: number;
     }
@@ -106,9 +105,7 @@ export type EventScoringCondition =
       type: "GROUP_SIZE";
       counting: GroupCounting;
       size: GroupSizeRange;
-      /** `MIN_SHARE`: share of the whole window a member needs to count. */
       minSharePercentage: number;
-      /** `TIMELINE`: share of the member's own counted time in the group. */
       minTimePercentage: number;
     };
 
@@ -147,10 +144,6 @@ export type EventScoringContext = {
   timeOnMapSeconds: number;
   afkPercentage: number;
   wasPresent: boolean;
-  /**
-   * The kill's shared presence analysis and the evaluated member. Without it
-   * the presence conditions cannot be determined and never award points.
-   */
   presence?: {
     analysis: EventKillPresence;
     participantId: PresenceParticipantId;
@@ -175,11 +168,8 @@ type EventScoringRuleExplanation = {
     condition: EventScoringCondition;
     outcome: EventScoringConditionOutcome;
   }>;
-  /** Every condition is met. */
   matched: boolean;
-  /** The rule changed the points (a bonus also needs the minimum tracking). */
   applied: boolean;
-  /** A later base rule replaced the base this rule set. */
   overridden: boolean;
 };
 
@@ -631,7 +621,6 @@ type EventScoringJoin =
   | { status: "ABSENT" }
   | { status: "JOINED"; delayMs: number };
 
-/** When the member first joined the respawn window, relative to its start. */
 export function resolveEventScoringJoin(
   presence: EventScoringContext["presence"],
 ): EventScoringJoin {
@@ -823,11 +812,6 @@ function meetsBonusMinimum(
   );
 }
 
-/**
- * Evaluates the rules in order and reports every condition's outcome. A
- * matching base rule replaces the base set by earlier rules, so the last
- * matching base rule on the list wins; bonuses add up.
- */
 export function explainEventScoring(params: {
   mode: EventScoringMode;
   rules: EventScoringRules;

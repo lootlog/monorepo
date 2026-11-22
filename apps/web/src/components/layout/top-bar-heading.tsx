@@ -12,15 +12,9 @@ import { TopBarTitle } from "./top-bar-title";
 
 type TopBarHeadingProps = {
   heading: AppNavigationHeading;
-  /** Where a page renders its own title, such as an editable one. */
   titleRef: Ref<HTMLDivElement>;
 };
 
-/**
- * The page's place in its section: the section's sidebar icon, the pages above
- * as quiet links, and the current page. A narrow bar keeps only a way back.
- * A page may replace the current page's label through the title slot.
- */
 export const TopBarHeading = ({ heading, titleRef }: TopBarHeadingProps) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -42,7 +36,6 @@ export const TopBarHeading = ({ heading, titleRef }: TopBarHeadingProps) => {
           aria-label={t("common.actions.backTo", { page: parent.label })}
           className={cn(
             "shrink-0 @2xl/top-bar:hidden",
-            // Phones float the way back as a glass circle, as iOS does.
             isMobile
               ? cn(GLASS_SURFACE_CLASS, "text-foreground")
               : "text-muted-foreground hover:text-foreground",
@@ -84,7 +77,6 @@ export const TopBarHeading = ({ heading, titleRef }: TopBarHeadingProps) => {
               media={
                 trail.length === 0 &&
                 SectionIcon && (
-                  // Phones name the section in the tab bar already.
                   <SectionIcon
                     aria-hidden="true"
                     className="size-4 shrink-0 text-primary max-md:hidden"

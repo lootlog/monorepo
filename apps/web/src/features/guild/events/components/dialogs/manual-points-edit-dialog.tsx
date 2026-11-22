@@ -77,9 +77,7 @@ export const ManualPointsEditDialog = ({
     try {
       await onSubmit({ pointsDelta: parsedPointsDelta, comment: commentValue });
       onOpenChange(false);
-    } catch {
-      // The action reports its error; preserve the entered correction for retry.
-    }
+    } catch {}
   };
 
   return (

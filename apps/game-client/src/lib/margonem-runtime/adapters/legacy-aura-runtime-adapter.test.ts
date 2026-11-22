@@ -17,7 +17,6 @@ afterEach(() => {
 });
 
 it("reads the walking frame, map position and row order SI shows for an other", () => {
-  // Mid-walk to the right: step 2 of direction 2 at x 10.25, y 6.
   const element = map.addOther("42", {
     sprite: SPRITE,
     rx: 10.25,
@@ -30,7 +29,6 @@ it("reads the walking frame, map position and row order SI shows for an other", 
 
   expect(other?.element).toBe(element);
   expect(other?.frame).toMatchObject({
-    // The background is shifted right by step × width, so it shows column 2.
     sx: 64,
     sy: 96,
     sw: 32,
@@ -78,7 +76,6 @@ it("keeps the layers right under and over their character as the map changes", (
   const box = { x: 0, y: 0, width: 96, height: 120 };
 
   legacyAuraRuntimeAdapter.placeLayers(layers, element, box);
-  // Another player arrives and the character steps down a row.
   map.addOther("43", { sprite: SPRITE, rx: 2, ry: 1 });
   element.before(document.createElement("div"));
   element.style.zIndex = "14";

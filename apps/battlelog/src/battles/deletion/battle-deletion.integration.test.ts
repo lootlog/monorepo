@@ -18,7 +18,6 @@ const BATTLE_IDS = {
   other: "01a10000-0000-7000-8000-000000000003",
 };
 
-// "one" was saved before UUIDv7 IDs, so R2 keeps its object under its old ID.
 const LEGACY_ONE = "legacy-one";
 
 const battleName = (id: string) =>
@@ -120,7 +119,6 @@ for (const mode of ["single", "user"] as const) {
       }),
     );
 
-    // Only the battle saved before timelines moved to Postgres owns an object.
     const expected = [LEGACY_ONE];
 
     expect(
@@ -154,7 +152,6 @@ for (const mode of ["single", "user"] as const) {
         : [{ killFingerprint: "other-kill" }],
     );
 
-    // Battle hypertables have no cascading foreign keys.
     for (const table of [
       "battle_warriors",
       "battle_warrior_filters",
@@ -177,7 +174,6 @@ for (const mode of ["single", "user"] as const) {
     ).toEqual([]);
     fail = false;
     await pool.query('UPDATE battle_object_deletions SET "retryAt" = now()');
-    // A fresh module/runtime has no memory of the request that removed the row.
     await run(
       Effect.gen(function* () {
         const restarted = makeBattleDeletion(

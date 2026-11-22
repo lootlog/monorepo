@@ -116,7 +116,6 @@ export const mergeGuildNotificationTargets = (
   baseTargets: GuildNotificationTarget[],
   extraTargets: GuildNotificationTarget[],
 ) => {
-  // `extraTargets` wins on id collisions, matching the previous map-merge.
   return uniqBy([...extraTargets, ...baseTargets], (target) => target.id).sort(
     (leftTarget, rightTarget) =>
       getGuildNotificationTargetLabel(leftTarget).localeCompare(

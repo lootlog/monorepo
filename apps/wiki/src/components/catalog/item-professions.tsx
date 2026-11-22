@@ -6,11 +6,6 @@ import {
 import { t } from "@/i18n/messages";
 import { findRequiredProfessions } from "@/lib/item-options";
 
-/**
- * The professions the item requires as one chip of letters, in the
- * alphabetical order players say them, `BHT`, with their full names in a
- * tooltip.
- */
 export function ItemProfessions({ stat }: { stat: string }) {
   const professions = findRequiredProfessions(stat);
 

@@ -69,8 +69,6 @@ export const useUpdateUserPreferences = () => {
     },
   });
 
-  // Derived from the cache at call time: rapid changes each build on the
-  // previous optimistic state instead of the one a render was given.
   const mutateFromCurrent = (
     updater: UserPreferencesUpdater,
     options?: Parameters<typeof mutation.mutate>[1],

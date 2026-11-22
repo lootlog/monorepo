@@ -64,12 +64,6 @@ export const userSettingsTable = pgTable(
   (table) => [uniqueIndex("UserSettings_userId_key").on(table["userId"])],
 );
 
-/**
- * The aura a Margonem character wears, chosen by the User who plays it. It
- * shows only while that User plays the account, so a shared account does not
- * carry an earlier player's choice. Users live in the auth service, so
- * `userId` has no foreign key.
- */
 export const characterAuraTable = pgTable(
   "CharacterAura",
   {
@@ -88,34 +82,18 @@ export const characterAuraTable = pgTable(
   ],
 );
 
-/**
- * Deprecated: one aura per User, shown on every character they played, which
- * made players of several accounts look like one person. Nothing reads it
- * since auras belong to characters; a later migration drops it once no
- * deployed API reads it.
- */
 export const userCharacterAuraTable = pgTable("UserCharacterAura", {
   userId: text("userId").notNull().primaryKey(),
   auraId: text("auraId").notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
 });
 
-/**
- * Users a global chat admin let choose any aura, beside the admins themselves.
- * Revoking deletes the row together with the aura the User wears.
- */
 export const userCharacterAuraGrantTable = pgTable("UserCharacterAuraGrant", {
   userId: text("userId").notNull().primaryKey(),
   grantedByUserId: text("grantedByUserId").notNull(),
   grantedAt: timestamp("grantedAt", { mode: "date", precision: 3 }).notNull(),
 });
 
-/**
- * Personal auras a global chat admin let a User choose, one row an aura. They
- * stand apart from `UserCharacterAuraGrant`: that grant does not cover them,
- * and a User may hold one of these without it. Revoking a User's auras deletes
- * their rows here too.
- */
 export const userPersonalCharacterAuraGrantTable = pgTable(
   "UserPersonalCharacterAuraGrant",
   {
@@ -132,11 +110,6 @@ export const userPersonalCharacterAuraGrantTable = pgTable(
   ],
 );
 
-/**
- * Margonem accounts a User proved to play: the gateway verified Margonem's
- * signed proof and announced it. An account shared by several Users belongs
- * to each of them; the latest `verifiedAt` names who plays it now.
- */
 export const userMargonemAccountTable = pgTable(
   "UserMargonemAccount",
   {
@@ -159,11 +132,6 @@ export const userMargonemAccountTable = pgTable(
   ],
 );
 
-/**
- * Deprecated: accounts claimed by the Game client without proof. Nothing
- * reads it since auras follow `UserMargonemAccount`; a later migration drops
- * it once no deployed API writes it.
- */
 export const userCharacterAuraGameAccountTable = pgTable(
   "UserCharacterAuraGameAccount",
   {
@@ -176,10 +144,6 @@ export const userCharacterAuraGameAccountTable = pgTable(
   ],
 );
 
-/**
- * A User's own web theme: a built-in base plus their changes. A share token,
- * while set, lets anyone with the link read the theme to save a copy.
- */
 export const userThemeTable = pgTable(
   "UserTheme",
   {

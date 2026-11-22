@@ -18,10 +18,6 @@ export type ItemCandidate = {
   lvl: number;
 };
 
-/**
- * The items the dialog offers: the one being changed, the loot that recorded
- * the pasted identifier, and catalog hits for the typed name.
- */
 export const useGuildDocItemCandidates = ({
   initialItem,
   itemHid,

@@ -26,7 +26,6 @@ export const createRolesFormSchema = (t: TFunction) => {
         Schema.optionalKey(Schema.Boolean),
       ),
     }).check(
-      // An out-of-range level still gets compared, so both fields report.
       Schema.makeFilter((values) => {
         const issues: Array<Schema.FilterIssue> = [];
 

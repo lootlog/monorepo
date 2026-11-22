@@ -168,10 +168,6 @@ export const createReadyRoomForNotification = (
     );
 };
 
-/**
- * Dependencies and Organization-scoped access, projection, and publication
- * helpers shared by every ready-room operation, built once per data layer.
- */
 const makeReadyRoomContext = (
   redis: ReadyRoomRedis,
   effects: ReadyRoomEffects,
@@ -235,8 +231,6 @@ const makeReadyRoomContext = (
       { concurrency: 4 },
     );
 
-  // The viewer's projection is read with the recipients' instead of after
-  // them, and only once when the viewer is also a recipient.
   const preparePublicationForViewer = (
     aggregate: ReadyRoomAggregate,
     recipients: ReadonlyArray<string>,
@@ -290,7 +284,6 @@ const makeReadyRoomContext = (
           },
           { concurrency: "unbounded", discard: true },
         ),
-        // The outbox keeps the gathering update pending on failure.
         gatheringPublications.publish(aggregate),
       ],
       { concurrency: "unbounded", discard: true },

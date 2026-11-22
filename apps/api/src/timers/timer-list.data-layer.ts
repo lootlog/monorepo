@@ -181,15 +181,8 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
   ) => operation(identity, world).pipe(Effect.mapError(toTimersDataFailure));
 };
 
-// The NPC types a hero detector names; their timers outlive their window.
 const HERO_TIMER_TYPES = [NpcTypeEnum.HERO, NpcTypeEnum.EVENT_HERO];
 
-/**
- * The latest timer of every hero and event hero on one world, expired and
- * deleted ones included, so a hero sighting can say when its hero's window
- * ended. One row per timer key holds the latest window, so the list stays as
- * small as the heroes the Organization timed.
- */
 export const makeGuildHeroTimerList = (
   database: typeof ApiDatabase.Service,
 ) => {
@@ -202,11 +195,9 @@ export const makeGuildHeroTimerList = (
         and(
           eq(timerTable.guildId, access.guild.id),
           eq(timerTable.world, world),
-          // Timer NPCs are JSON; `mapTimerNpc` reads their type case-insensitively.
           inArray(sql`upper(${timerTable.npc}->>'type')`, HERO_TIMER_TYPES),
         ),
       )
-      // Several timer keys can name one hero; its latest window comes first.
       .orderBy(desc(timerTable.maxSpawnTime));
 
     return rows

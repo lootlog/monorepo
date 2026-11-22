@@ -5,7 +5,6 @@ type ReadyRoomExpiryProps = {
   expiresAt: string;
 };
 
-/** Whole minutes left before the gathering lapses, rounded up. */
 export function ReadyRoomExpiry({ expiresAt }: ReadyRoomExpiryProps) {
   const { t } = useTranslation("partyFinder");
   const minutes = useReadyRoomMinutesLeft(expiresAt);

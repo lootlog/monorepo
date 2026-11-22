@@ -8,7 +8,6 @@ import { useSocketItems } from "@/hooks/use-socket-items";
 import { t } from "@/i18n/messages";
 import { formatChestChance } from "@/lib/chest-chance";
 
-/** What opening a chest of components gives, with each one's chance. */
 export function ItemChestSection({ chest }: { chest: ComponentChest }) {
   const itemsById = useSocketItems();
   const range = { min: chest.tier.minLevel, max: chest.tier.maxLevel };

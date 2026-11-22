@@ -9,10 +9,6 @@ type Props = {
   guildIds: readonly string[];
 };
 
-/**
- * The organizer's clan, the map they stand on and their Lootlog name, on a
- * line of its own so a narrow chat never drops the clan to fit the nick.
- */
 export function ChatGatheringOrganizerMeta({
   clanName,
   mapName,

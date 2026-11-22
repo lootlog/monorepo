@@ -27,7 +27,6 @@ describe("resolveCharacterAuraTargets", () => {
       othersById: {
         a: other("a", "7"),
         b: other("b", "7"),
-        // The same character id on another account is another character.
         c: other("a", "8"),
       },
     });

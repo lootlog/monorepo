@@ -12,13 +12,10 @@ import {
 
 type EquipButtonProps = {
   item: CatalogItemDtoOutput;
-  /** A compact icon button for item lists; the full label elsewhere. */
   compact?: boolean;
-  /** The upgrade to wear the item at; without one, a worn item keeps its own. */
   upgrade?: ItemUpgrade;
 };
 
-/** Wears the item in the User's set; nothing for items no slot holds. */
 export function EquipButton({
   item,
   compact = false,

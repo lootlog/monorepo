@@ -1,5 +1,3 @@
-// Hand-maintained persistence contract, including Better Auth plugin fields.
-// Update this source and generate reviewed SQL migrations when auth storage changes.
 import {
   index,
   integer,
@@ -208,15 +206,10 @@ export const authApiKeys = pgTable(
   ],
 );
 
-/**
- * What an operator did in the admin panel. A row outlives the User it names,
- * so `targetUserId` is not a foreign key.
- */
 export const adminAuditLog = pgTable(
   "admin_audit_log",
   {
     id: text("id").primaryKey(),
-    /** The operator's Lootlog name and User id. */
     actor: text("actor").notNull(),
     action: text("action").$type<AdminAuditAction>().notNull(),
     targetUserId: text("targetUserId"),

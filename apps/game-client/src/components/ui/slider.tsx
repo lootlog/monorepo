@@ -2,13 +2,6 @@ import { Slider as SliderPrimitive } from "@base-ui/react/slider";
 import { cn } from "cn";
 import type { FocusEvent, KeyboardEvent } from "react";
 
-/**
- * Base UI focuses a visually hidden range input inside each thumb. The thumb
- * mirrors the input's `:focus-visible` as `data-focus-visible` so its ring
- * needs no `:has()` rule, which the game client stylesheet must avoid. A key
- * press always counts as keyboard focus: Base UI then restores
- * `:focus-visible` on the input without reporting a new focus event.
- */
 const markThumbFocusVisible = (
   event: FocusEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
   visible: boolean,

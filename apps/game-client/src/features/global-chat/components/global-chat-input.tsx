@@ -25,7 +25,6 @@ type GlobalChatInputProps = {
   channel: GlobalChatChannel;
   viewer: GlobalChatViewer | undefined;
   onSent: (message: GlobalChatMessageResponse) => void;
-  /** A refused send may mean the caller was muted since the history loaded. */
   onRefused: () => void;
 };
 
@@ -39,10 +38,6 @@ const sendErrorKey = (status: number | undefined) => {
   return "errors.sendFailed";
 };
 
-/**
- * Plain text: Enter sends, and a failed send keeps the draft. An
- * admin may send one message to every channel; the choice resets once sent.
- */
 export const GlobalChatInput = ({
   channel,
   viewer,
@@ -96,7 +91,6 @@ export const GlobalChatInput = ({
         const data: SendGlobalChatMessageRequest = { message };
 
         if (world !== undefined) data.world = world;
-        // Only the shared channel tags where its senders write from.
         else if (currentWorld) data.originWorld = currentWorld;
 
         if (isAdmin && allWorlds) data.allWorlds = true;
@@ -116,7 +110,6 @@ export const GlobalChatInput = ({
           placeholder={placeholder}
           aria-label={placeholder}
           autoComplete="off"
-          // Matches the chat window's compose editor.
           className="ll:h-full ll:flex-1 ll:px-1 ll:pt-0 ll:text-xs ll:leading-[14px]"
           onChange={(event) => setDraft(event.target.value)}
         />

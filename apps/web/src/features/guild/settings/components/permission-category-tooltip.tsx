@@ -29,7 +29,6 @@ export const PermissionCategoryTooltip = ({
     <Tooltip>
       <TooltipTrigger
         render={
-          // The surrounding role link owns keyboard activation; this wrapper only stops bubbled clicks.
           // oxlint-disable-next-line react-doctor/click-events-have-key-events, react-doctor/no-static-element-interactions
           <div
             className={cn(

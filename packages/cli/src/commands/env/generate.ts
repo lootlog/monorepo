@@ -49,7 +49,6 @@ const processEnvFile = Effect.fn("processEnvFile")(function* (
   }
 
   if (exists && !options.force) {
-    // Ctrl+C skips this file, like answering no.
     const overwrite = Option.getOrElse(
       yield* Effect.option(
         Prompt.run(

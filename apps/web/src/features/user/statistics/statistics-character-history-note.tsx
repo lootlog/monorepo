@@ -7,10 +7,6 @@ type StatisticsCharacterHistoryNoteProps = {
   meta: UserKillAnalyticsResponseDtoOutput["meta"] | undefined;
 };
 
-/**
- * Says when a character's history starts, so the days before it are not read
- * as zero; nothing while the period lies wholly within it.
- */
 export function StatisticsCharacterHistoryNote({
   meta,
 }: StatisticsCharacterHistoryNoteProps) {

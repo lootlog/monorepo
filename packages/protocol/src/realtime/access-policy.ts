@@ -101,7 +101,6 @@ const mergeRanges = (ranges: Range[]): Range[] => {
     if (range.from > range.to) continue;
     const last = merged[merged.length - 1];
 
-    // NPC event levels accept finite numbers, so integer-adjacent ranges retain a fractional gap.
     if (last && range.from <= last.to) last.to = Math.max(last.to, range.to);
     else merged.push({ ...range });
   }
@@ -109,7 +108,6 @@ const mergeRanges = (ranges: Range[]): Range[] => {
   return merged;
 };
 
-/** Canonical effective grants: role identifiers, role ordering, and overlapping grants do not change the version. */
 export const createAccessPolicySnapshot = (
   guilds: readonly GuildPolicy[],
   discordId: string,
@@ -203,7 +201,6 @@ const includesArea = (
       );
     });
 
-/** Compare the local snapshot, including after reconnect; the event's delta may refer to a newer server baseline. */
 export const diffAccessPolicies = (
   previous: AccessPolicySnapshot,
   next: AccessPolicySnapshot,

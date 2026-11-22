@@ -1,12 +1,9 @@
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import { create } from "zustand";
 
-// Detector entries are keyed by runtime id; the template id is not tracked.
 export type GameNpcWithLocation = Omit<GameNpc, "tpl"> & {
   location: string;
-  /** Epoch ms of the last sent notification; drives the resend cooldown. */
   notificationSentAt: number | null;
-  /** Epoch ms when a claimed Hero Tracker's entrance closes. */
   entranceClosesAt?: number;
 };
 
@@ -33,8 +30,6 @@ export interface NpcDetectorState {
   clearDetectionAnimation: (npcId: number, cycle: number) => void;
 }
 
-// Margonem re-sends known NPCs on rescans and map re-entry with unchanged
-// fields; keeping the array identity then spares the detector window a render.
 const hasNpcFieldChange = (
   npc: GameNpcWithLocation,
   update: Partial<GameNpcWithLocation>,

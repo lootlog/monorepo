@@ -16,7 +16,6 @@ import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 interface ScoringNumberInputProps {
   control: Control<ScoringRulesFormValues>;
   register: UseFormRegister<ScoringRulesFormValues>;
-  /** A numeric field; a condition's `value` is numeric for the types using this. */
   name:
     | FieldPathByValue<ScoringRulesFormValues, number>
     | `scoringRules.rules.${number}.conditions.${number}.value`;
@@ -24,9 +23,7 @@ interface ScoringNumberInputProps {
   id?: string;
   bounds?: ScoringNumberBounds;
   step?: number;
-  /** A unit shown inside the field's end, such as "%" or "pkt". */
   unit?: string;
-  /** An extra error for the field, such as an inverted range. */
   error?: string;
   className?: string;
 }

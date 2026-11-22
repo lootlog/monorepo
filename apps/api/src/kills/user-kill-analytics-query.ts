@@ -15,7 +15,6 @@ export const getKillAnalyticsRange = (now: DateTime.Utc, days: number) => {
   const today = DateTime.startOf(zoned, "day");
   const start = DateTime.subtract(today, { days: days - 1 });
   const previousStart = DateTime.subtract(start, { days });
-  // Round the instant, not a local wall hour: the repeated autumn hour is distinct.
   const through = DateTime.startOf(now, "hour");
 
   const previousThrough = DateTime.subtract(
@@ -39,20 +38,13 @@ export type KillAnalyticsRange = ReturnType<typeof getKillAnalyticsRange>;
 
 export type UserKillAnalyticsScope = {
   readonly world?: string;
-  /** Reads the character's own tables, which start when per-character tracking began. */
   readonly characterId?: string;
 };
 
 const ISO_UTC = 'YYYY-MM-DD"T"HH24:MI:SS"Z"';
 
-/**
- * Every monster an account kills in a year fits: the heaviest accounts kill
- * about 400 different bosses. The bound keeps the response finite, not the
- * ranking short.
- */
 const USER_KILL_ANALYTICS_NPC_LIMIT = 500;
 
-/** Both variants aggregate inside PostgreSQL. The activity variant never computes NPC ranks or hourly grids. */
 export const userKillAnalyticsSql = (
   discordUserId: string,
   { world, characterId }: UserKillAnalyticsScope,
@@ -79,8 +71,6 @@ export const userKillAnalyticsSql = (
         : undefined,
     );
 
-  // Every kill since the user's first per-character kill has a character, so
-  // a character's history is known from then on, even before its own first kill.
   const trackedSince = characterId
     ? sql`(select to_char(min(${userKillCharacterTable.firstKilledAt}) at time zone 'UTC', ${ISO_UTC})
         from ${userKillCharacterTable} where ${eq(userKillCharacterTable.discordUserId, discordUserId)})`

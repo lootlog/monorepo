@@ -3,11 +3,6 @@ import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.s
 import { and, desc, eq } from "drizzle-orm";
 import { Effect } from "effect";
 
-/**
- * The Organizations a character's game-client submissions fan out to, from
- * its latest Lootlog settings. Callers still intersect them with the
- * Organizations the User may write to.
- */
 export const selectCharacterCatchingGuildIds = (
   database: typeof ApiDatabase.Service,
   discordId: string,

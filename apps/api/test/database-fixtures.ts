@@ -12,8 +12,6 @@ import {
 let migratedDatabase: Promise<Blob> | undefined;
 
 const createMigratedDatabase = async () => {
-  // Loot search migrations install pg_trgm; PGlite only offers an extension
-  // the client was created with.
   const runtime = ManagedRuntime.make(
     PgliteClient.layer({ extensions: { pg_trgm } }),
   );
@@ -27,13 +25,10 @@ const createMigratedDatabase = async () => {
       ),
     });
 
-    // The baseline contains multiple statements without Drizzle breakpoints.
-    // PGlite exec accepts the unchanged migration batch via PostgreSQL's simple protocol.
     for (const migration of migrations) {
       await client.pglite.exec(migration.sql.join("\n"));
     }
 
-    // Keep the image private: no test can mutate the database it was built from.
     return await runtime.runPromise(client.dumpDataDir("none"));
   } finally {
     await runtime.dispose();
@@ -41,8 +36,6 @@ const createMigratedDatabase = async () => {
 };
 
 export const createDatabaseBoundary = async () => {
-  // Share only the immutable image. Live databases, transactions and disposal
-  // stay independent, including when boundaries are acquired concurrently.
   const loadDataDir = await (migratedDatabase ??= createMigratedDatabase());
 
   const runtime = ManagedRuntime.make(

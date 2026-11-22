@@ -8,7 +8,6 @@ type MemberKillBreakdownProps = {
   kill: KillHistoryMemberEntry;
 };
 
-/** How the member's points for a kill add up, under its row or tile. */
 export const MemberKillBreakdown = ({ kill }: MemberKillBreakdownProps) => {
   const { t } = useTranslation();
 

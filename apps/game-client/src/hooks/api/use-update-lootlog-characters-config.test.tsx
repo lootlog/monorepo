@@ -52,7 +52,6 @@ it("waits for canonical identity before submitting character config", async () =
     characterId: "101",
   });
 
-  // The saved entry lands in the account map without a refetch.
   const queryKey =
     getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
       accountId: "202",
@@ -66,9 +65,6 @@ it("waits for canonical identity before submitting character config", async () =
   );
 });
 
-// A rollback may restore an earlier optimistic write that failed as well;
-// treated as confirmed, it would let the game client skip loot the API
-// accepts.
 it("leaves the catching scope unknown after queued saves fail", async () => {
   const fixture = createTimerHttpFixture(
     () => new Response(null, { status: 500 }),

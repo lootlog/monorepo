@@ -1,33 +1,19 @@
-/** The respawn variation Margonem applies when an NPC reports none. */
 export const DEFAULT_RESPAWN_RANDOMNESS = 10;
 
-/** Shortest respawn base Margonem reports for an NPC that gets a timer. */
 export const MIN_RESP_BASE_SECONDS = 2;
 
-/**
- * How a timer stores its respawn, and what a reset counts from the moment of
- * the reset: `respBaseSeconds` ± `respawnRandomness` percent of it. Margonem
- * reports respawns in this form; a window entered by hand or opened by an
- * event is converted with `respawnFromSpawnWindow`.
- */
 export type TimerRespawn = {
   readonly respBaseSeconds: number;
   readonly respawnRandomness: number;
 };
 
-/** A spawn window as offsets from the moment it starts counting. */
 export type SpawnWindowOffsets = {
   readonly minOffsetMs: number;
   readonly maxOffsetMs: number;
 };
 
-/** A Hero Tracker returns about 90 minutes after its entrance closes. */
 export const HERO_TRACKER_RESP_BASE_SECONDS = 90 * 60;
 
-/**
- * A Hero Tracker's respawn on a world whose NPCs return
- * `npcRespawnMultiplier` times faster than the base time.
- */
 export const getHeroTrackerRespBaseSeconds = (
   npcRespawnMultiplier: number,
 ): number => Math.round(HERO_TRACKER_RESP_BASE_SECONDS / npcRespawnMultiplier);
@@ -42,15 +28,6 @@ export const spawnWindowFromRespawn = ({
   return { minOffsetMs: baseMs - varianceMs, maxOffsetMs: baseMs + varianceMs };
 };
 
-/**
- * The respawn whose reset repeats a window that opens `minSeconds` and closes
- * `maxSeconds` from now; a window already open counts from now. Both values
- * are stored as integers, so a reset can differ from the original window by
- * a second plus half a percent of the base.
- *
- * Rows written before this encoding keep their values: their reset is still
- * base ± randomness, as before, so no migration rewrites them.
- */
 export const respawnFromSpawnWindow = (
   minSeconds: number,
   maxSeconds: number,
@@ -109,21 +86,15 @@ export type TimerSpawnTimes = {
   readonly minSpawnTime: string;
   readonly maxSpawnTime: string;
   readonly deletedAt?: string | null;
-  /** When a Hero Tracker's open entrance closes; its respawn window follows. */
   readonly entranceClosesAt?: string | null;
 };
 
 export type TimerTimeLeft = {
   readonly minTimeLeft: number;
   readonly maxTimeLeft: number;
-  /** Present only for a timer with a Hero Tracker entrance. */
   readonly entranceTimeLeft?: number;
 };
 
-/**
- * Milliseconds left to the minimum and maximum spawn time; a deleted timer
- * counts both down to its deletion. `toEpoch` lets callers cache parsing.
- */
 export const getTimerTimeLeft = (
   timer: TimerSpawnTimes,
   now: number,
@@ -151,11 +122,6 @@ export const getTimerTimeLeft = (
 const isEntranceOpen = ({ entranceTimeLeft }: TimerTimeLeft) =>
   entranceTimeLeft !== undefined && entranceTimeLeft > 0;
 
-/**
- * Where a timer stands: a Hero Tracker's entrance still open, before its spawn
- * window, inside it, past its maximum spawn time, or kept past the removal
- * delay because the player pinned it.
- */
 export type TimerPhase =
   | "entrance"
   | "waiting"
@@ -182,10 +148,6 @@ export const getTimerPhase = (
 
 export type TimerCountdownMode = "min" | "max";
 
-/**
- * The one countdown a timer shows: to an open entrance's close, otherwise to
- * its maximum, or to its minimum until it passes.
- */
 export const getTimerCountdownMs = (
   timeLeft: TimerTimeLeft,
   countdownMode: TimerCountdownMode,
@@ -199,28 +161,16 @@ export const getTimerCountdownMs = (
   return countdownMode === "max" || minTimeLeft < 0 ? maxTimeLeft : minTimeLeft;
 };
 
-/**
- * A Hero Tracker's window comes from the entrance countdown the game reports,
- * so a reset from the moment someone clicks would only make it wrong.
- */
 export const canResetTimerNpc = (npc: { readonly type?: string | null }) =>
   npc.type !== "HERO_TRACKER";
 
-/**
- * What every timer list orders a timer by: the time left to an open entrance's
- * close, otherwise to its maximum spawn time (or its deletion).
- */
 export const getTimerSortTimeLeft = (timeLeft: TimerTimeLeft): number =>
   timeLeft.entranceTimeLeft !== undefined && isEntranceOpen(timeLeft)
     ? timeLeft.entranceTimeLeft
     : timeLeft.maxTimeLeft;
 
-// Margonem sends the seconds left on a Hero Tracker's entrance, so closing
-// times of one entrance differ only by latency (and by the reporter's clock
-// for clients that still send their own close time), never by minutes.
 const SAME_HERO_TRACKER_ENTRANCE_TOLERANCE_MS = 60_000;
 
-/** Whether two closing times, in epoch ms, belong to one Hero Tracker entrance. */
 export const isSameHeroTrackerEntrance = (
   closesAtMs: number,
   otherClosesAtMs: number,
@@ -228,17 +178,12 @@ export const isSameHeroTrackerEntrance = (
   Math.abs(closesAtMs - otherClosesAtMs) <
   SAME_HERO_TRACKER_ENTRANCE_TOLERANCE_MS;
 
-/** One string per timer identity, for maps and sets keyed by timer. */
 export const getTimerIdentityKey = ({
   guildId,
   world,
   timerKey,
 }: TimerIdentity): string => `${guildId}:${world}:${timerKey}`;
 
-/**
- * When a timer leaves the timer lists: the player's removal delay after its
- * maximum spawn time, or after its deletion. A pinned timer stays anyway.
- */
 export const getTimerRemovalAt = (
   timer: Pick<TimerSpawnTimes, "maxSpawnTime" | "deletedAt">,
   removeTimerAfterMs: number,
@@ -246,7 +191,6 @@ export const getTimerRemovalAt = (
 ): number =>
   toEpoch(timer.deletedAt ?? timer.maxSpawnTime) + removeTimerAfterMs;
 
-/** Whether an unpinned timer is still listed at `now`. */
 export const isTimerListed = (
   timer: Pick<TimerSpawnTimes, "maxSpawnTime" | "deletedAt">,
   removeTimerAfterMs: number,

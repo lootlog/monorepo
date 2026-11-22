@@ -17,18 +17,11 @@ export interface LevelRangeInputsProps {
   maxLevel?: number;
   onMinLevelChange: (value: number | undefined) => void;
   onMaxLevelChange: (value: number | undefined) => void;
-  /** Delay before a typed bound is committed. */
   debounceMs?: number;
   size?: "default" | "lg";
   className?: string;
 }
 
-/**
- * Commits the last scheduled value once typing pauses, or at once on `flush`
- * (leaving the field, e.g. before a popover closes). The commit reads the
- * latest props, so a caller that passes new callbacks on every render never
- * cancels or delays a pending edit; unmounting drops it.
- */
 const useDebouncedCommit = <T,>(
   onCommit: (value: T) => void,
   delayMs: number,
@@ -75,8 +68,6 @@ export function LevelRangeInputs({
   const [localMinLevel, setLocalMinLevel] = useState(minLevel);
   const [localMaxLevel, setLocalMaxLevel] = useState(maxLevel);
 
-  // Follow outside changes (a reset, a saved filter) without remounting, so
-  // one bound committing never cancels the other bound's pending edit.
   const [syncedLevels, setSyncedLevels] = useState({ minLevel, maxLevel });
 
   if (

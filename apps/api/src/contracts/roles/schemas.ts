@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the roles feature. */
 import * as Schema from "effect/Schema";
 import { CapabilitySchema } from "@lootlog/schema/permissions";
 import { FiniteNumber, LevelFilter } from "@lootlog/schema/http-scalars";

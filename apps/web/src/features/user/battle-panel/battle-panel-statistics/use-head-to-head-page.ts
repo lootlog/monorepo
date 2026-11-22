@@ -32,7 +32,6 @@ import {
   buildHeadToHeadParams,
 } from "@/features/user/battle-panel/battle-panel-request-params";
 
-/** The battles of one Abyss season, which fix the character and dates. */
 type HeadToHeadSeasonScope = {
   id: string;
   characterId: string;
@@ -110,7 +109,6 @@ export function useHeadToHeadPage({
   const sorting: SortingState = [{ id: sortBy, desc: sortOrder === "desc" }];
   const pageSize = BATTLE_PANEL_PAGE_SIZE;
 
-  // Rows open one character's record against the opponent.
   const getOpponentLink = (opponentId: string) =>
     currentCharacterId
       ? ({
@@ -160,7 +158,6 @@ export function useHeadToHeadPage({
       search: nextSearch ?? null,
     };
 
-    // A season keeps its character and dates out of the address.
     if (season) {
       void setQueryState(filters);
 
@@ -303,8 +300,6 @@ export function useHeadToHeadPage({
     selectedWarriorsCount: selectedWarriors.length,
     translate: t,
   })
-    // The character has its own picker in the bar, and a season fixes the
-    // dates, so neither is a chip to clear.
     .filter(
       (chip) => chip.id !== "character" && !(season && chip.id === "period"),
     )

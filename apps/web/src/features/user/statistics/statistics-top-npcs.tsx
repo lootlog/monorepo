@@ -9,7 +9,6 @@ import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-s
 import { StatsLeaderboardNpcMedia } from "@/components/common/stats-leaderboard-npc-media";
 import type { StatisticsSearch } from "./statistics-search";
 
-/** Rows of each ranking preview on the overview. */
 export const STATISTICS_PREVIEW_SIZE = 5;
 
 type StatisticsTopNpcsProps = {
@@ -17,7 +16,6 @@ type StatisticsTopNpcsProps = {
   search: StatisticsSearch;
 };
 
-/** The most killed monsters, opening the whole ranking from its heading. */
 export function StatisticsTopNpcs({ npcs, search }: StatisticsTopNpcsProps) {
   const { t } = useTranslation();
   const top = npcs.slice(0, STATISTICS_PREVIEW_SIZE);

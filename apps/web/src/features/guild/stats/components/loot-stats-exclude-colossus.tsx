@@ -8,7 +8,6 @@ type LootStatsExcludeColossusProps = {
   onCheckedChange: (value: boolean) => void;
 };
 
-/** The loot statistics checkbox that leaves colossus loot out. */
 export const LootStatsExcludeColossus = ({
   id,
   checked,

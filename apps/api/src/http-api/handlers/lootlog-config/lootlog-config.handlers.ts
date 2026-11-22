@@ -68,7 +68,6 @@ export const getLootlogConfig = Effect.fn("getLootlogConfig")(function* (
   const { guildId } = yield* authorize(requestedGuildId);
   const data = yield* LootlogConfigData;
 
-  // The open configuration fields can contain domain dates outside the declared fields.
   return yield* decodeDomainJson(
     LootlogConfigResponse,
     yield* data.get(guildId),

@@ -19,11 +19,6 @@ type NotificationDiscordMessageProps = {
   className?: string;
 };
 
-/**
- * The rule's message as Discord shows it, with sample values in place of the
- * variables. It keeps Discord's own dark palette whatever the theme, since it
- * stands in for that screen.
- */
 export const NotificationDiscordMessage = ({
   contentTemplate,
   guildRoles,

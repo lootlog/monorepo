@@ -48,13 +48,11 @@ interface WindowData {
   opacity: WindowOpacity;
   locked: boolean;
   maxContentHeight?: number;
-  /** Shrunk to its collapsed content; `size` keeps the expanded size. */
   collapsed?: boolean;
 }
 
 export type WindowFocusRequest = {
   windowId: WindowId;
-  /** Receives focus back when the window closes; `null` returns it to the game. */
   returnFocusTo: HTMLElement | null;
 };
 
@@ -82,22 +80,10 @@ type WindowEntries = Record<Exclude<WindowId, "settings">, WindowData> & {
 };
 
 interface WindowsState extends WindowEntries {
-  /** Windows by recency of focus, most recent first; drives stacking. */
   windowFocusHistory: WindowId[];
-  /**
-   * The window a player just opened on purpose, waiting for its frame to move
-   * keyboard focus into it. Never persisted: a restored or automatically
-   * opened window must not take focus from the game.
-   */
   focusRequest?: WindowFocusRequest;
   setCurrentWindowFocus: (key: WindowId) => void;
-  /** Opens or closes a window without moving keyboard focus. */
   setOpen: (window: WindowId, open: boolean, state?: WindowPayload) => void;
-  /**
-   * Opens a window in response to an explicit player action (a button, a
-   * shortcut, a command) and asks its frame to move keyboard focus into it.
-   * Focus returns to the previously focused element when the window closes.
-   */
   openAndFocus: (window: WindowId, state?: WindowPayload) => void;
   clearFocusRequest: (window: WindowId) => void;
   setPosition: (window: WindowId, pos: WindowPositionState) => void;
@@ -106,13 +92,7 @@ interface WindowsState extends WindowEntries {
   setOpacity: (window: WindowId, opacity: WindowOpacity) => void;
   setLocked: (window: WindowId, locked: boolean) => void;
   setCollapsed: (window: WindowId, collapsed: boolean) => void;
-  /** A player action: opening this way also moves keyboard focus into the window. */
   toggleOpen: (window: WindowId) => void;
-  /**
-   * Restores every window's default geometry, opacity and lock while keeping
-   * open state and window payloads, so the window the player is using stays
-   * open and on the same page.
-   */
   resetWindowLayout: () => void;
   setSettingsPath: (
     activeTab: SettingsTabValue,
@@ -122,21 +102,12 @@ interface WindowsState extends WindowEntries {
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
 
-/**
- * Stored until the player places a window. While `hasDefinedPosition` is false
- * the frame ignores it and shows the window at its viewport-relative default
- * (`resolveDefaultWindowPosition`), which the layout reset restores.
- */
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
 
 const DEFAULT_QUICK_ACCESS_WIDTH = 250;
 
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
 
-/**
- * Every window the store knows, in persisted key order, with the open state
- * and size it starts with. All other window fields share one default.
- */
 const WINDOW_DEFAULTS = {
   "extension-login": { open: true, size: { width: 360, height: 180 } },
   "app-error": {
@@ -178,16 +149,8 @@ export type WindowId = keyof typeof WINDOW_DEFAULTS;
 // SAFETY: the keys of WINDOW_DEFAULTS are exactly WindowId.
 const WINDOW_IDS = Object.keys(WINDOW_DEFAULTS) as WindowId[];
 
-/**
- * Windows owned by the current runtime: they are never persisted and the
- * layout reset leaves them alone.
- */
 const RUNTIME_WINDOW_IDS = new Set<WindowId>(["extension-login", "app-error"]);
 
-/**
- * Store fields that live only in memory. Actions are dropped separately so the
- * persisted state matches what hydration reads back from storage.
- */
 const TRANSIENT_FIELDS = new Set<string>([
   "windowFocusHistory",
   "focusRequest",
@@ -304,8 +267,6 @@ const migrateSettingsTabToPath = (state: RawPersistedWindows): void => {
   const { activeTab } = readSettingsState(state).settingsState;
   const previousTab = isSettingsTab(activeTab) ? activeTab : undefined;
 
-  // Version 12 mapped "appearance" to its chat subsection, which version 14
-  // later moved into the chat domain; keep that historical destination.
   const nextPath: SettingsPath =
     previousTab === "appearance"
       ? { domain: "chat", subsection: "chat-appearance" }
@@ -331,7 +292,6 @@ const migrateRoutingSettingsPath = (state: RawPersistedWindows): void => {
   }
 };
 
-/** Moves the retired appearance/interface page into general and catching into its own domain. */
 const migrateGeneralSettingsPath = (state: RawPersistedWindows): void => {
   const { activeSubsection } = readSettingsState(state).settingsState;
 
@@ -350,7 +310,6 @@ const migrateMutesSettingsPath = (state: RawPersistedWindows): void => {
   }
 };
 
-/** Settings-page relocations, applied in order for persisted versions below `since`. */
 const SETTINGS_PATH_MIGRATIONS: readonly [
   since: number,
   migrate: (state: RawPersistedWindows) => void,
@@ -393,7 +352,6 @@ export const migrateWindowsState = (
 
   migrateLegacyWindowEntries(state);
 
-  // Focus became transient in version 10.
   if (version < 10) {
     delete state.currentWindowFocus;
     state.windowFocusHistory = [];
@@ -405,10 +363,8 @@ export const migrateWindowsState = (
 
   if (version < 15) delete state["timer-settings-conflict"];
 
-  // Manual timer creation moved into the timers window in version 19.
   if (version < 19) delete state["add-timer"];
 
-  // The notification creation window was never rendered; version 20 drops it.
   if (version < 20) delete state["create-notification"];
 
   for (const [since, migrate] of SETTINGS_PATH_MIGRATIONS) {
@@ -472,7 +428,6 @@ const parsePersistedWindow = (
   };
 };
 
-// A payload that is not an object throws, which leaves the store unhydrated.
 const decodeSettingsPayload = Schema.decodeUnknownSync(
   looseStruct({
     activeTab: optionalOrUndefined(settingsTabSchema),
@@ -490,7 +445,6 @@ const mergePersistedWindows = (
   current: WindowsState,
 ): WindowsState => {
   const raw = isObjectRecord(persisted) ? persisted : {};
-  // Keep extension fields, but persisted names must never overwrite live actions.
   const merged = { ...raw, ...current };
 
   for (const id of WINDOW_IDS) {
@@ -498,9 +452,6 @@ const mergePersistedWindows = (
     merged[id] = parsePersistedWindow(raw[id], current[id]);
   }
 
-  // Quick chat is summoned for one entry: a reload, including one that
-  // restores an older payload with the console open, must not reopen it and
-  // pull focus away from the game.
   merged.command = { ...merged.command, open: false };
 
   merged.settings = {
@@ -527,8 +478,6 @@ export const useWindowsStore = create<WindowsState>()(
             : { windowFocusHistory: withFocusedWindow(state, key) },
         ),
       setOpen: (key, open, windowState) => {
-        // Resolved outside `set`: a no-op call (detector or notification bursts
-        // re-open an already focused window) must not run the persist write.
         const state = get();
         const currentWindow = state[key];
 
@@ -707,7 +656,6 @@ export const useWindowsStore = create<WindowsState>()(
   ),
 );
 
-// This prompt belongs to the current runtime, never to persisted player preferences.
 export const resetExtensionLoginWindow = () => {
   const width = Math.min(
     360,

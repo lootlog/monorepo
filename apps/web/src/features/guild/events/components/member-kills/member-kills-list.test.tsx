@@ -125,7 +125,6 @@ describe("MemberKillsList", () => {
     );
     expect(link.textContent).toContain("Zorin");
 
-    // The whole row opens the kill, tabbed once; the toggle stays outside.
     const rowLinks = within(link.closest("tr") ?? document.body).getAllByRole(
       "link",
     );

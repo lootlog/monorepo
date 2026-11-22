@@ -24,8 +24,6 @@ export class AppErrorBoundary extends Component<
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught application error", error, errorInfo);
-    // The router never resolves after a crash, so the startup screen would
-    // hide the recovery actions.
     releaseStartupScreen();
   }
 

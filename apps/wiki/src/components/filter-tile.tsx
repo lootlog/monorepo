@@ -6,17 +6,12 @@ type FilterTileProps = {
   label: string;
   pressed: boolean;
   onPressedChange: (pressed: boolean) => void;
-  /** Drawn before the label, in the tile's own color. */
   icon?: ReactNode;
-  /** Recolors the tile, such as a rarity's frame once pressed. */
   className?: string;
-  /** Why the option cannot be picked yet; shown instead of the check. */
   lockedLabel?: string;
-  /** The label in the middle, without a check, for tiles laid out in a grid. */
   centered?: boolean;
 };
 
-/** One option of a filter: a tile that is pressed while it filters. */
 export function FilterTile({
   label,
   pressed,

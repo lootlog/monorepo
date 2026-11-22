@@ -6,7 +6,6 @@ interface ScoringRuleSummaryProps {
   rule: EventScoringRule;
 }
 
-/** The rule's conditions as one readable sentence. */
 export const ScoringRuleSummary = ({ rule }: ScoringRuleSummaryProps) => {
   const { t } = useTranslation();
 

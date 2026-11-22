@@ -3,7 +3,6 @@ import { Coffee } from "lucide-react";
 import { AnnouncementBar } from "@/components/common/announcement-bar";
 import { SUPPORT_URL } from "@/config/support";
 
-/** The bar that asks players to support Lootlog until they donate or hide it. */
 export const SupportAnnouncement = () => {
   const { t } = useTranslation();
 

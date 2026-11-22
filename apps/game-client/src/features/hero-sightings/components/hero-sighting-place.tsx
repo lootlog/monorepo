@@ -13,10 +13,6 @@ type HeroSightingPlaceProps = {
   now: number;
 };
 
-/**
- * Where the hero roams or will spawn, and why the sighting no longer holds:
- * ended, or a roaming hero nobody has confirmed lately.
- */
 export function HeroSightingPlace({
   sighting,
   isCurrent,
@@ -38,7 +34,6 @@ export function HeroSightingPlace({
       </span>
       <TruncatedText
         className={
-          // Only a spawn to camp stands out; a roaming hero is a record.
           isCurrent && sighting.state === "SPAWNING"
             ? "ll:text-green-300"
             : "ll:text-white"

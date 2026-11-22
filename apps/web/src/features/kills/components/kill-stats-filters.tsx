@@ -8,10 +8,8 @@ import type { KillStatsPeriod } from "@/features/kills/kill-stats-period";
 import { KillStatsNpcTypeSelect } from "@/features/kills/components/kill-stats-npc-type-select";
 
 export type KillStatsFiltersProps = {
-  /** Omit where the world is the Organization's context instead of a filter. */
   world?: {
     value: string | null;
-    /** Worlds to offer; omit to list the current guild's worlds. */
     worlds?: string[];
     onChange: (value: string | null) => void;
   };
@@ -25,7 +23,6 @@ export type KillStatsFiltersProps = {
   };
 };
 
-/** The kill statistics filters for a filter bar, after its search. */
 export const KillStatsFilters = ({
   world,
   period = "all",

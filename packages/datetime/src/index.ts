@@ -1,4 +1,3 @@
-/** The time zone Margonem runs on; Lootlog counts calendar days in it. */
 export const MARGONEM_TIME_ZONE = "Europe/Warsaw" as const;
 
 export type LocalDate = {
@@ -101,16 +100,6 @@ function getTimeZoneOffsetMinutes(date: Date, timeZone: string): number {
   return sign * (hours * 60 + minutes);
 }
 
-/**
- * Converts a wall-clock time in `timeZone` to its instant. A clock skipped by
- * a DST transition moves past the gap, and a repeated clock resolves to its
- * second occurrence (for zones ahead of UTC, such as Europe/Warsaw).
- *
- * Kept over a library on purpose: `@date-fns/tz` picks the first occurrence
- * of a repeated clock, which would shift scoring and notification windows on
- * the fall-back day, and Effect `DateTime` matches only at ~22 kB minified in
- * the Web bundle while using the same `Intl` offset technique.
- */
 export function toUtcDateFromLocal(
   localDate: LocalDate,
   hour: number,

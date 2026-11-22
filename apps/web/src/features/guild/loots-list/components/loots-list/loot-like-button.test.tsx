@@ -118,11 +118,9 @@ it("sends a quick like and unlike in order and ends with the last answer", async
     fireEvent.click(await heart());
     expect((await heart()).getAttribute("aria-pressed")).toBe("false");
 
-    // The unlike waits for the like, so the server applies them in order.
     await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
     expect(fetch.mock.calls[0]?.[1]?.method).toBe("PUT");
 
-    // An earlier answer must not flip the heart back while the unlike is pending.
     answers[0]?.(likesResponse([other, me]));
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
     expect(fetch.mock.calls[1]?.[1]?.method).toBe("DELETE");

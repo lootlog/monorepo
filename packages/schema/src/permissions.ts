@@ -38,7 +38,7 @@ export const Capability = {
 
 export type Capability = (typeof Capability)[keyof typeof Capability];
 
-/** @alias Legacy name for Capability. */
+/** @alias */
 export const Permission = Capability;
 
 /** @alias */

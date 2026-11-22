@@ -27,17 +27,10 @@ import {
 import { lootSplitStore } from "./loot-split-store";
 import { useLootSplitSocket } from "./use-loot-split-socket";
 
-/**
- * Choice changes within this window leave as one frame; an accept leaves at
- * once, because it is what the party waits for.
- */
 const CHOICES_COALESCE_MS = 150;
 
-/** A Margonem party holds at most ten characters. */
 const MAX_RECIPIENTS = 9;
 
-// Loot, the chat that closes a split, a fight start that closes the window,
-// and the battle log that names a drop the loot filter took.
 const isLootSplitPacket = (event: GameEvent | undefined) =>
   event?.loot !== undefined ||
   event?.chat?.channels?.system !== undefined ||
@@ -56,7 +49,6 @@ const readContext = (): LootSplitContext | null => {
       characterId: member.characterId,
       name: member.name,
     })),
-    // Players are the battle's positive warrior ids.
     fighters: new Set(
       Object.keys(useBattleStore.getState().battleWarriors).filter(
         (id) => !id.startsWith("-"),
@@ -65,7 +57,6 @@ const readContext = (): LootSplitContext | null => {
   };
 };
 
-/** Starts over when another character plays, so splits never mix heroes. */
 const forHero = (state: LootSplitState, heroId: string) =>
   state.heroId === null || state.heroId === heroId
     ? state
@@ -82,7 +73,6 @@ const sendOwnView = (socket: AppSocket, splitId: string) => {
     .map(({ characterId }) => characterId)
     .filter((characterId) => characterId !== state.heroId);
 
-  // Nobody else takes part, so nobody needs the frame.
   if (recipientCharacterIds.length === 0) return;
 
   void socket
@@ -95,13 +85,6 @@ const sendOwnView = (socket: AppSocket, splitId: string) => {
     .catch(() => undefined);
 };
 
-/**
- * Follows the hero's group loot splits from game packets and outgoing
- * commands, shares the hero's choices with the other participants, and
- * merges theirs. When the hero's loot filter accepts a split, which the game
- * keeps from this client, the fight's other players learn of it. Solo loots
- * and splits without other participants never reach the gateway.
- */
 export const useLootSplitSync = () => {
   const socket = useLootSplitSocket();
   const socketRef = useRef<AppSocket | null>(null);
@@ -152,7 +135,6 @@ export const useLootSplitSync = () => {
           context,
         );
 
-        // Not queued while offline: the split is over within seconds.
         if (recipientCharacterIds && socketRef.current)
           void socketRef.current
             .request("loot-split.auto-accept", {
@@ -202,8 +184,6 @@ export const useLootSplitSync = () => {
 
     if (!socket) return;
 
-    // Frames dropped while offline are not queued; the latest state is
-    // shared again as soon as the gateway can relay it.
     for (const split of openOwnSplits(lootSplitStore.getSnapshot().state))
       sendOwnView(socket, split.id);
 

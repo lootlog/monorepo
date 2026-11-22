@@ -9,10 +9,6 @@ import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { ScheduleBar } from "./schedule/schedule-bar";
 import { useCompactScheduleLayout } from "./schedule/use-compact-schedule-layout";
 
-/**
- * Route-level stand-in for `ReservationsSchedule`: its bar and top bar actions
- * with the same control sizes, above the schedule's own loading state.
- */
 export const ReservationDetailSkeleton = () => {
   const { t } = useTranslation();
   const { containerRef, isCompact } = useCompactScheduleLayout();

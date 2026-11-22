@@ -6,20 +6,12 @@ export type SettingsSaveMarkStatus = "saving" | "saved" | "error";
 
 export type SettingsSaveMark = { status: SettingsSaveMarkStatus; at: number };
 
-/** How long a resolved per-key mark stays before it clears itself. */
 const KEY_MARK_VISIBLE_MS = 1500;
 
 interface SettingsSaveStatusState {
   status: SettingsSaveStatus;
   savedAt: number | null;
-  /** Re-sends the write that failed; set together with the "error" status. */
   retry: (() => void) | null;
-  /**
-   * Save state per written item: a catalog key (`domain.path`) of the patches
-   * in flight, so a row can show which of its settings is being written, or
-   * another item a plain mutation saves (e.g. one character's Lootlogi).
-   * Resolved marks clear themselves after a moment.
-   */
   keyMarks: Record<string, SettingsSaveMark>;
   setStatus: (status: SettingsSaveStatus, retry?: () => void) => void;
   markKeys: (keys: readonly string[], status: SettingsSaveMarkStatus) => void;
@@ -67,7 +59,6 @@ export const useSettingsSaveStatusStore = create<SettingsSaveStatusState>()((
     }
   };
 
-  /** Keys still marked "saving" follow the queue's final status. */
   const resolveSavingKeys = (status: "saved" | "error") => {
     const savingKeys = Object.entries(get().keyMarks)
       .filter(([, mark]) => mark.status === "saving")
@@ -96,17 +87,11 @@ export const useSettingsSaveStatusStore = create<SettingsSaveStatusState>()((
   };
 });
 
-/**
- * True when a row bound to `rowKey` is affected by a write to `savedKey`:
- * the same key, a nested path under the row's key, or a parent the row's key
- * lives under (a whole sub-document replaced at once).
- */
 export const settingsKeyMatches = (rowKey: string, savedKey: string) =>
   rowKey === savedKey ||
   savedKey.startsWith(`${rowKey}.`) ||
   rowKey.startsWith(`${savedKey}.`);
 
-/** Save mark for a control bound to `settingKeys`, if any of them is marked. */
 export const useSettingsKeysSaveMark = (
   settingKeys: readonly string[] | undefined,
 ) =>
@@ -119,7 +104,6 @@ export const useSettingsKeysSaveMark = (
         continue;
       }
 
-      // A pending write outranks a resolved one; among resolved, the latest wins.
       if (
         !match ||
         (mark.status === "saving" && match.status !== "saving") ||
@@ -137,11 +121,6 @@ export const useSettingsKeysSaveMark = (
 export const useSettingsSaveStatus = () =>
   useSettingsSaveStatusStore((state) => state.status);
 
-/**
- * Reports one write that runs outside the settings patch queue (a plain
- * mutation) to the title bar indicator, with a retry for the failed call.
- * Keys marked "saving" for it follow the reported outcome.
- */
 export const reportSettingsSave = {
   saving: (keys: readonly string[] = []) => {
     const store = useSettingsSaveStatusStore.getState();

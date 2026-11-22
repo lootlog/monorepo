@@ -1,4 +1,3 @@
-/** Player-facing Polish copy for slash commands, matching the Web app's terms. */
 import type { Period } from "@lootlog/schema/http-scalars";
 import type { CommandFailure } from "./lootlog-client.js";
 
@@ -19,7 +18,6 @@ const NPC_TYPE_LABELS = new Map(
 
 export const npcTypeLabel = (type: string) => NPC_TYPE_LABELS.get(type) ?? type;
 
-// Slash commands offer the same windows as the Web kill statistics.
 export const KILL_PERIODS = [
   "24h",
   "3d",
@@ -51,7 +49,6 @@ const RARITY_LABELS = new Map(
 
 export const rarityLabel = (rarity: string) => RARITY_LABELS.get(rarity);
 
-// The frame colors of item images on the Web, as Discord can draw them.
 const RARITY_MARKS = new Map(
   Object.entries({ UNIQUE: "🟨", HEROIC: "🟦", LEGENDARY: "🟧" }),
 );

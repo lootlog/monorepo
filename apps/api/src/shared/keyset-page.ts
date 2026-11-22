@@ -1,13 +1,6 @@
 import { Effect, Schema } from "effect";
 import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 
-/**
- * Lists page by keyset: fetch `limit + 1` rows ordered by a unique key
- * (a sort column plus the row ID as tiebreaker), return `limit` of them and an
- * opaque `nextCursor` that encodes the last row's key. The cursor also carries
- * the filters it was issued for, so a cursor replayed with other filters is
- * rejected instead of skipping or repeating rows.
- */
 export const takeKeysetPage = <Row>(rows: Row[], limit: number) => {
   const hasMore = rows.length > limit;
 
@@ -44,10 +37,6 @@ export const decodePageCursor = <A, I>(
     Effect.mapError(invalidCursor),
   );
 
-/**
- * Turns a `limit + 1` fetch into `{ items, nextCursor }`, encoding the last
- * returned row's key with `schema`.
- */
 export const toPage = <Row, A, I>(
   rows: Row[],
   limit: number,

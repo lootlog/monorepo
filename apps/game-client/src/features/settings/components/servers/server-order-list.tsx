@@ -13,18 +13,11 @@ type ServerOrderListProps = {
   selectedGuildIds: readonly string[];
   onToggle: (guildId: string) => void;
   onReorder: (guildIds: string[]) => void;
-  /** Reordering is off while the list is filtered: a partial order is ambiguous. */
   reorderDisabled?: boolean;
   disabled?: boolean;
   "aria-label"?: string;
 };
 
-/**
- * Server cards stacked one under another, each with a drag handle in front.
- * Clicking a card toggles its visibility; dragging the handle (or pressing
- * arrow keys on it) sets the order the servers take in every switcher of the
- * game client.
- */
 export const ServerOrderList: FC<ServerOrderListProps> = ({
   guilds,
   selectedGuildIds,
@@ -90,8 +83,6 @@ export const ServerOrderList: FC<ServerOrderListProps> = ({
                     : t("settings.servers.order.handleHint")
                 }
                 className={cn(
-                  // Sits over the card's left edge: a button cannot nest inside
-                  // the card's own button, so it is a sibling drawn inside it.
                   "ll:absolute ll:top-1/2 ll:left-1 ll:z-10 ll:flex ll:size-6 ll:-translate-y-1/2 ll:touch-none ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-muted-foreground ll:transition-colors ll:hover:bg-white/10 ll:hover:text-foreground ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:disabled:opacity-40 ll:[&_svg]:size-3.5",
                   isDragging ? "ll:cursor-grabbing" : "ll:cursor-grab",
                 )}

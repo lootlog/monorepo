@@ -2,7 +2,6 @@ import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 
-/** Route-level stand-in for the documents page: its toolbar above the tiles. */
 export const GuildDocsListSkeleton = () => (
   <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
     <ListToolbarSkeleton>

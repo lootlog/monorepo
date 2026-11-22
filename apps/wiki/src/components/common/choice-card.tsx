@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { cn } from "cn";
 
 type ChoiceCardProps = {
-  /** The radio group the card belongs to. */
   name: string;
   value: string;
   checked: boolean;
@@ -11,11 +10,6 @@ type ChoiceCardProps = {
   children: ReactNode;
 };
 
-/**
- * One option of a radio group drawn as a card, lit in the item's rarity
- * color while chosen; the radio itself stays for keyboards and screen
- * readers.
- */
 export function ChoiceCard({
   name,
   value,

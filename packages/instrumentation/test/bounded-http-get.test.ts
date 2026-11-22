@@ -179,7 +179,6 @@ test("waits a growing backoff between retries instead of repeating a failed burs
     ),
   );
 
-  // The delays are 100 ms and 200 ms scaled by the random factor.
   expect(callsAfter).toEqual([1, 1, 2, 2, 3]);
 });
 

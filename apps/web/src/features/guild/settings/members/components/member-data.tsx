@@ -27,7 +27,6 @@ import { RoleTile } from "../../roles/role-tile";
 
 export type MemberDataProps = {
   member: GuildMember;
-  /** The Organization as the route names it, for links to the member's roles. */
   guildId: string;
   webActivityStats?: MemberActivityStats;
   gameActivityStats?: MemberActivityStats;

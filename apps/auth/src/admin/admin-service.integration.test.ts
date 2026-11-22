@@ -40,7 +40,6 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
 
   let auth: ReturnType<typeof createLootlogAuth>;
 
-  /** Makes Better Auth refuse writes to a User, as when its store is down. */
   let accountWritesFail = false;
 
   const admin = <A, E>(
@@ -259,7 +258,6 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
     const kept = await internalAdapter.createSession(user.id);
     const revoked = await internalAdapter.createSession(user.id);
 
-    // A session id of one user is not revocable through another.
     await expect(
       admin((service) => service.revokeSession(ACTOR, other.id, revoked.id)),
     ).rejects.toThrow("Session not found");
@@ -289,7 +287,6 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
       ),
     );
 
-    // A key id of one user is not revocable through another.
     await expect(
       admin((service) => service.revokeApiKey(ACTOR, other.id, keyId)),
     ).rejects.toThrow("API key not found");
@@ -329,7 +326,6 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
     expect(await ids("admin")).toEqual([moderator.id]);
     expect(await ids("global-chat-admin")).toEqual([]);
 
-    // Removing every role returns the user to the default one.
     await admin((service) => service.setRoles(ACTOR, moderator.id, []));
     expect(await ids("admin")).toEqual([]);
 
@@ -358,7 +354,6 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
     expect(userIds).toContain(superAdmin.id);
     expect(userIds).toHaveLength(2);
 
-    // The panel's credential and a missing one open nothing here.
     await expect(holders(`Bearer ${SECRET}`)).rejects.toThrow();
     await expect(holders(undefined)).rejects.toThrow();
   });
