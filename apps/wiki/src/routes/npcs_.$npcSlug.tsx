@@ -190,6 +190,20 @@ function NpcRoute() {
       </header>
 
       <div className="flex min-w-0 flex-col gap-12">
+        <ArticleSection
+          id="npc-locations"
+          title={t("catalog.locationsTitle")}
+          count={
+            npc && npc.locations.length > 1 ? npc.locations.length : undefined
+          }
+        >
+          {npc ? (
+            <NpcLocations npc={npc} />
+          ) : (
+            <Skeleton className="h-11 w-full max-w-sm rounded-lg" />
+          )}
+        </ArticleSection>
+
         <ArticleSection id="npc-drops" title={t("catalog.dropsTitle")}>
           {npc ? (
             <NpcDrops npc={npc} />
@@ -200,14 +214,6 @@ function NpcRoute() {
               placeholders={8}
               emptyLabel=""
             />
-          )}
-        </ArticleSection>
-
-        <ArticleSection id="npc-locations" title={t("catalog.locationsTitle")}>
-          {npc ? (
-            <NpcLocations locations={npc.locations} />
-          ) : (
-            <Skeleton className="h-11 w-full max-w-sm rounded-lg" />
           )}
         </ArticleSection>
       </div>

@@ -798,13 +798,10 @@ const messages = {
     formerLevels: "Wcześniej: {{levels}}",
     formerLevel: "{{level}} lvl (do {{date}})",
     locationsTitle: "Lokacje",
-    locationsDescription:
-      "Udział map w ostatnich walkach z tym potworem zapisanych przez Lootlog.",
+    locationsDescription: "% to udział mapy w ostatnich walkach.",
+    spawnAreaDescription: "Elita II respi się w losowym miejscu obszaru.",
     locationShare: "{{share}}%",
-    spawnTilesDescription:
-      "Kratki pod nazwą mapy to miejsca, w których dodatek widział potwora przy zabiciu.",
-    spawnTile: "Kratka {{tile}}",
-    spawnTiles: "Kratki {{tiles}}",
+    spawnTilesMore: "{{tiles}} i {{count}} innych",
     spawnArea:
       "Obszar respu x\u00a0{{minX}}–{{maxX}}, y\u00a0{{minY}}–{{maxY}}",
     noLocationsYet: "Lootlog nie zna jeszcze map tego potwora.",
@@ -1130,9 +1127,7 @@ const messages = {
     profession: "Profesja",
     firstSeenOn: "W Lootlogu od",
     elasticLevel: "Jak postać",
-    topMap: "Najczęstsza mapa",
     actions: "Akcje potwora",
-    allMaps: "Wszystkie mapy ({{count}})",
   },
   npcTypes: npcType satisfies Record<CatalogNpcDtoOutputType, string>,
   linkPreview: {
