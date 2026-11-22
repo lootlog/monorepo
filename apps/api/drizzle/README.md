@@ -1472,3 +1472,14 @@ and the second one refuses to run until steps 2-4 are done:
 The backfill left the unique `(guildId, lootId)` index and the `lootId` index
 at twice their size. `REINDEX INDEX CONCURRENTLY` on each brought them from
 1212 MB to 620 MB and from 638 MB to 320 MB; see "After a bulk rewrite" above.
+
+## Loot draw announcements
+
+`20261122140447_loot_draw_notifications` adds `LOOT_DRAW_RESOLVED` to
+`NotificationTriggerType`, and `20261122144839_loot_draw_announcement_outbox`
+creates `LootDrawAnnouncementOutbox`. A draw or
+a void inserts its row in the same transaction, and the API's background
+worker publishes `notifications.loot-draw.resolved` from it, retrying while
+RabbitMQ is unavailable. The notification consumer keys its jobs by
+`loot-draw:<drawId>:<DRAWN|VOIDED>`, so a replayed row sends nothing twice.
+Apply both migrations before deploying the API revision that writes them.

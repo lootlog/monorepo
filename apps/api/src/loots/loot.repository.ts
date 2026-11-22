@@ -1,3 +1,4 @@
+import { lootDrawAnnouncementOutboxTable } from "#src/database/drizzle/loot-draw-announcement-outbox.schema";
 import {
   OperationError,
   withAdapterSpan,
@@ -491,6 +492,17 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                 );
               }
 
+              // Committed with the draw, so its announcement survives a
+              // broker outage or a restart before it is published.
+              yield* transaction
+                .insert(lootDrawAnnouncementOutboxTable)
+                .values({
+                  guildId: options.guildId,
+                  lootId: options.lootId,
+                  drawId: created.id,
+                  outcome: "DRAWN",
+                });
+
               return created;
             }),
           );
@@ -581,6 +593,15 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                   }),
                 );
               }
+
+              yield* transaction
+                .insert(lootDrawAnnouncementOutboxTable)
+                .values({
+                  guildId: options.guildId,
+                  lootId: options.lootId,
+                  drawId: voided.id,
+                  outcome: "VOIDED",
+                });
 
               return voided;
             }),

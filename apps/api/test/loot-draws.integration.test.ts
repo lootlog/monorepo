@@ -15,6 +15,10 @@ import {
 } from "../src/database/drizzle/loot.schema.js";
 import { ErrorKey } from "../src/loots/error-key.js";
 import { makeLootPersistence } from "../src/loots/loot.repository.js";
+import { makeLootDrawAnnouncementDispatcher } from "../src/loots/loot-draw-announcement-outbox.js";
+import { lootDrawAnnouncementOutboxTable } from "../src/database/drizzle/loot-draw-announcement-outbox.schema.js";
+import type { LootQueryResult } from "../src/loots/query/loot-query-result.js";
+import type { LootDrawResolvedNotificationEvent } from "@lootlog/schema/notifications";
 import { makeLootQueryOperations } from "../src/loots/query/loot-query.operations.js";
 import { makeLootQueryPersistence } from "../src/loots/query/loot-query.repository.js";
 import {
@@ -230,6 +234,103 @@ describe("loot draws against migrated PostgreSQL", () => {
         expect(foreignVoid).toMatchObject({
           body: { code: ErrorKey.LOOT_DRAW_NOT_FOUND },
         });
+      }),
+    );
+  });
+
+  it("announces each committed outcome from the outbox, even after an outage", async () => {
+    await runtime.runPromise(
+      Effect.gen(function* () {
+        const db = yield* ApiDatabase;
+        const lootId = yield* seedLoot;
+        const persistence = makeLootPersistence(db);
+
+        const loot: LootQueryResult = {
+          id: lootId,
+          uniqueId: "loot",
+          world: "luvia",
+          source: "FIGHT",
+          location: "Katakumby",
+          lootShare: {},
+          mapPlayersSnapshot: null,
+          items: [
+            {
+              id: 1,
+              hid: "wand-hid",
+              name: "Różdżka",
+              icon: "wand.gif",
+              stat: "",
+              type: null,
+              rarity: "LEGENDARY",
+              lvl: 300,
+              prof: ["MAGE"],
+            },
+          ],
+          players: [],
+          npcs: [],
+          submissions: [],
+          commentsCount: 0,
+          likes: [],
+          standingDraws: [],
+          createdAt: new Date(0),
+          updatedAt: new Date(0),
+        };
+
+        const draw = yield* persistence.createDraw({
+          discordId,
+          guildId,
+          lootId,
+          itemHid: "wand-hid",
+          entrants,
+          ticketOrder: [0, 0, 1],
+          roll: 2,
+          winnerIndex: 1,
+        });
+
+        yield* persistence.voidDraw({
+          discordId,
+          guildId,
+          lootId,
+          drawId: draw.id,
+          reason: "Wróg na liście",
+        });
+
+        const published: LootDrawResolvedNotificationEvent[] = [];
+        let brokerUp = false;
+
+        const dispatch = makeLootDrawAnnouncementDispatcher(
+          db,
+          {
+            loot: () => Effect.succeed(loot),
+            draws: (organization, id) =>
+              persistence.listDraws(organization, id),
+          },
+          (event) =>
+            brokerUp
+              ? Effect.sync(() => void published.push(event))
+              : Effect.fail(new Error("broker unavailable")),
+        );
+
+        // The broker was down when the draw committed: nothing is lost.
+        yield* dispatch();
+        expect(published).toEqual([]);
+
+        brokerUp = true;
+        yield* dispatch();
+
+        expect(
+          published.map(({ outcome, item, draw }) => ({
+            outcome,
+            item: item.name,
+            winner: draw.entrants[draw.winnerIndex]?.name,
+          })),
+        ).toEqual([
+          { outcome: "DRAWN", item: "Różdżka", winner: "Spoza Grupy" },
+          { outcome: "VOIDED", item: "Różdżka", winner: "Spoza Grupy" },
+        ]);
+        expect(
+          yield* db.select().from(lootDrawAnnouncementOutboxTable),
+        ).toEqual([]);
       }),
     );
   });

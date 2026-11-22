@@ -69,18 +69,12 @@ const loot: LootQueryResult = {
   updatedAt: new Date(0),
 };
 
-type LootsDependencies = Parameters<typeof makeLootsOperations>[0];
-
 const makeOperations = (
   fetchLootById: LootQueryOperations["fetchLootById"],
   isLootVisible = () => Effect.succeed(true),
-  draws: {
-    readonly createDraw?: LootsDependencies["persistence"]["createDraw"];
-    readonly publishDrawResolved?: LootsDependencies["publishDrawResolved"];
-  } = {},
 ) =>
   makeLootsOperations({
-    publishDrawResolved: draws.publishDrawResolved ?? (() => Effect.void),
+    signalDrawAnnouncements: Effect.void,
     query: {
       fetchLootById,
       isLootVisible,
@@ -95,8 +89,7 @@ const makeOperations = (
       createComment: () => Effect.die("Unexpected comment write"),
       setLike: () => Effect.die("Unexpected like write"),
       listDraws: () => Effect.die("Unexpected draw read"),
-      createDraw:
-        draws.createDraw ?? (() => Effect.die("Unexpected draw write")),
+      createDraw: () => Effect.die("Unexpected draw write"),
       voidDraw: () => Effect.die("Unexpected draw void"),
     },
     redis: {
@@ -495,7 +488,7 @@ describe("loot list pages", () => {
   const ids = [5, 4, 3, 2, 1];
 
   const operations = makeLootsOperations({
-    publishDrawResolved: () => Effect.void,
+    signalDrawAnnouncements: Effect.void,
     query: {
       fetchLootById: () => Effect.die("Unexpected detail read"),
       isLootVisible: () => Effect.die("Unexpected visibility read"),
@@ -570,120 +563,5 @@ describe("loot list pages", () => {
 
       expect(error).toMatchObject({ body: { code: "INVALID_CURSOR" } });
     }
-  });
-});
-
-describe("loot draw announcements", () => {
-  const drawLoot: LootQueryResult = {
-    ...loot,
-    items: [
-      {
-        id: 1,
-        hid: "wand",
-        name: "Różdżka",
-        icon: "wand.gif",
-        stat: "",
-        type: null,
-        rarity: "LEGENDARY",
-        lvl: 250,
-        prof: ["MAGE"],
-      },
-    ],
-    players: [
-      {
-        id: "1",
-        name: "Winner",
-        lvl: 250,
-        prof: "MAGE",
-        icon: null,
-        characterId: 1,
-        accountId: 1,
-        hpp: 100,
-      },
-    ],
-    lootShare: { "1": ["wand"] },
-  };
-
-  const entrant = {
-    accountId: null,
-    characterId: null,
-    prof: "MAGE",
-    lvl: 250,
-    icon: null,
-    tickets: 1,
-  } as const;
-
-  const request = {
-    itemHid: "wand",
-    entrants: [
-      { ...entrant, name: "Winner", source: "WINNER" },
-      { ...entrant, name: "Outsider", source: "MAP" },
-    ],
-    ticketOrder: [0, 1],
-  } as const;
-
-  const drawn = {
-    id: 9,
-    lootId: 42,
-    itemHid: "wand",
-    entrants: [
-      { ...entrant, name: "Winner", source: "WINNER" },
-      { ...entrant, name: "Outsider", source: "MAP" },
-    ],
-    ticketOrder: [0, 1],
-    roll: 1,
-    winnerIndex: 1,
-    createdBy: { id: 1, name: "Drawer", avatar: null, userId: "user-1" },
-    createdAt: "2026-11-22T00:00:00.000Z",
-    voided: null,
-  } as const;
-
-  const draw = (
-    publishDrawResolved: LootsDependencies["publishDrawResolved"],
-  ) =>
-    makeOperations(() => Effect.succeed(drawLoot), undefined, {
-      createDraw: () => Effect.succeed(drawn),
-      publishDrawResolved,
-    }).createDraw({
-      discordId: "discord-1",
-      guild,
-      lootId: 42,
-      body: {
-        ...request,
-        entrants: [...request.entrants],
-        ticketOrder: [0, 1],
-      },
-      accessPolicy: policy,
-      roles: [],
-    });
-
-  it("announces the drawn item to the Organization's rules", async () => {
-    const announced: unknown[] = [];
-
-    await Effect.runPromise(
-      draw((event) => Effect.sync(() => void announced.push(event))),
-    );
-
-    expect(announced).toEqual([
-      expect.objectContaining({
-        guildId: guild.id,
-        world: "world",
-        outcome: "DRAWN",
-        item: expect.objectContaining({ name: "Różdżka" }),
-        draw: expect.objectContaining({
-          id: 9,
-          winnerIndex: 1,
-          drawnBy: "Drawer",
-        }),
-      }),
-    ]);
-  });
-
-  it("keeps a committed draw when its announcement fails", async () => {
-    const result = await Effect.runPromise(
-      draw(() => Effect.fail(new Error("broker unavailable"))),
-    );
-
-    expect(result).toBe(drawn);
   });
 });

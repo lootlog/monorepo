@@ -42,11 +42,6 @@ import { PositiveSafeInteger } from "@lootlog/schema/http-scalars";
 
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import { ErrorKey } from "#src/loots/error-key";
-import { compareNpcsStrongestFirst } from "@lootlog/domain/npc-type";
-import {
-  LootDrawOutcome,
-  type LootDrawResolvedNotificationEvent,
-} from "@lootlog/schema/notifications";
 import type { LootPersistence } from "#src/loots/loot.repository";
 import type {
   LootListParams,
@@ -172,54 +167,12 @@ interface LootsDependencies {
   readonly persistence: LootPersistence;
   readonly query: LootQueryOperations;
   readonly redis: Pick<RedisService, "invalidateScopes" | "getOrSetJson">;
-  /** Hands a run or voided draw to the Organization's notification rules. */
-  readonly publishDrawResolved: (
-    event: LootDrawResolvedNotificationEvent,
-  ) => Effect.Effect<void, unknown>;
+  /**
+   * Wakes the outbox that announces committed draws. Only a hint: the outbox
+   * also polls, so a lost signal delays an announcement but never drops it.
+   */
+  readonly signalDrawAnnouncements: Effect.Effect<void>;
 }
-
-/** What a draw's notification shows, from the loot as its drawer saw it. */
-const drawResolvedEvent = (
-  guildId: string,
-  loot: LootQueryResult,
-  draw: LootDrawResponse,
-  outcome: LootDrawOutcome,
-): LootDrawResolvedNotificationEvent | null => {
-  const item = loot.items.find(({ hid }) => hid === draw.itemHid);
-
-  if (!item) return null;
-
-  const [npc] = loot.npcs.toSorted((left, right) =>
-    compareNpcsStrongestFirst(
-      { ...left, npcId: left.id },
-      { ...right, npcId: right.id },
-    ),
-  );
-
-  return {
-    guildId,
-    world: loot.world,
-    lootId: loot.id,
-    outcome,
-    item: { hid: item.hid, name: item.name, icon: item.icon, lvl: item.lvl },
-    npcName: npc?.name ?? null,
-    draw: {
-      id: draw.id,
-      entrants: draw.entrants.map(({ name, prof, lvl, tickets }) => ({
-        name,
-        prof,
-        lvl,
-        tickets,
-      })),
-      winnerIndex: draw.winnerIndex,
-      drawnBy: draw.createdBy.name,
-      voided: draw.voided && {
-        by: draw.voided.by.name,
-        reason: draw.voided.reason,
-      },
-    },
-  };
-};
 
 const CACHE_TTL_SECONDS = 10;
 
@@ -291,7 +244,7 @@ export const makeLootsOperations = ({
   persistence,
   query,
   redis,
-  publishDrawResolved,
+  signalDrawAnnouncements,
 }: LootsDependencies): LootsOperations => {
   const pendingDetails = new Map<string, FetchedLootRead>();
 
@@ -317,29 +270,6 @@ export const makeLootsOperations = ({
         ),
       { concurrency: "unbounded", discard: true },
     );
-
-  // The draw is committed: a lost announcement must not fail the request.
-  const announceDraw = (
-    guildId: string,
-    loot: LootQueryResult,
-    draw: LootDrawResponse,
-    outcome: LootDrawOutcome,
-  ) => {
-    const event = drawResolvedEvent(guildId, loot, draw, outcome);
-
-    return event
-      ? publishDrawResolved(event).pipe(
-          withAdapterSpan("loots.draws.announce", "loots"),
-          Effect.catch((error) =>
-            Effect.logWarning("Failed to announce a loot draw", {
-              error,
-              guildId,
-              drawId: draw.id,
-            }),
-          ),
-        )
-      : Effect.void;
-  };
 
   const visibleLoot = (
     guild: Guild,
@@ -477,12 +407,7 @@ export const makeLootsOperations = ({
 
         // The list shows each item's standing winner.
         yield* invalidateList([options.guild.id]);
-        yield* announceDraw(
-          options.guild.id,
-          loot,
-          draw,
-          LootDrawOutcome.DRAWN,
-        );
+        yield* signalDrawAnnouncements;
 
         return draw;
       }),
@@ -507,12 +432,7 @@ export const makeLootsOperations = ({
         });
 
         yield* invalidateList([options.guild.id]);
-        yield* announceDraw(
-          options.guild.id,
-          loot,
-          draw,
-          LootDrawOutcome.VOIDED,
-        );
+        yield* signalDrawAnnouncements;
 
         return draw;
       }),

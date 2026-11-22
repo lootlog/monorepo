@@ -22,6 +22,7 @@ import {
   makeLootSnapshotReader,
 } from "#src/loots/submission/loot-publication-outbox";
 import { makeOutboxWorker } from "#src/shared/outbox-worker";
+import { makeLootDrawAnnouncementDispatcher } from "#src/loots/loot-draw-announcement-outbox";
 import { makeLootSubmissionAcceptance } from "#src/loots/submission/loot-submission-acceptance.service";
 import {
   makeLootsOperations,
@@ -41,6 +42,7 @@ interface RecordsServicesValue {
   readonly layer: ReturnType<typeof recordsDataLayer>;
   readonly loots: LootsOperations;
   readonly runLootPublications: Effect.Effect<never>;
+  readonly runLootDrawAnnouncements: Effect.Effect<never>;
 }
 
 export class RecordsServices extends Context.Service<
@@ -110,17 +112,32 @@ export const recordsServicesLive = Layer.effect(
       lootPublications.signal,
     );
 
+    const lootPersistence = makeLootPersistence(database);
+
+    const lootDrawAnnouncements = yield* makeOutboxWorker(
+      "Loot draw announcement",
+      makeLootDrawAnnouncementDispatcher(
+        database,
+        {
+          loot: lootQuery.fetchOrganizationLoot,
+          draws: lootPersistence.listDraws,
+        },
+        (event, messageId) =>
+          rabbit.publish(
+            eventMessage(
+              RabbitRoutingKey.NOTIFICATIONS_LOOT_DRAW_RESOLVED,
+              event,
+              { messageId },
+            ),
+          ),
+      )(),
+    );
+
     const loots = makeLootsOperations({
-      persistence: makeLootPersistence(database),
+      persistence: lootPersistence,
       query: lootQuery,
       redis,
-      publishDrawResolved: (event) =>
-        rabbit.publish(
-          eventMessage(
-            RabbitRoutingKey.NOTIFICATIONS_LOOT_DRAW_RESOLVED,
-            event,
-          ),
-        ),
+      signalDrawAnnouncements: lootDrawAnnouncements.signal,
     });
 
     const killStatsPersistence = makeKillStatsPersistence(database);
@@ -140,6 +157,7 @@ export const recordsServicesLive = Layer.effect(
 
     return {
       runLootPublications: lootPublications.run,
+      runLootDrawAnnouncements: lootDrawAnnouncements.run,
       loots,
       layer: recordsDataLayer({
         userFeed: makeUserFeed(database),
