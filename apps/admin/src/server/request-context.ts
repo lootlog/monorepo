@@ -1,3 +1,4 @@
+import "@tanstack/react-start/server-only";
 import { AsyncLocalStorage } from "node:async_hooks";
 
 type RequestContext = {

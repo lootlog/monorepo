@@ -7,7 +7,7 @@ import {
   characterAurasControllerRevokeAuras,
 } from "@lootlog/client/main";
 import { ApiError } from "@lootlog/client/transport";
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { Schema } from "effect";
 import {
   type AuraAction,
@@ -35,7 +35,7 @@ const settle = async <A>(request: Promise<A>): Promise<AuraResult<A>> => {
   }
 };
 
-export const listAuraHolderIds = async () => {
+export const listAuraHolderIds = createServerOnlyFn(async () => {
   const result = await settle(
     characterAurasControllerListGrantHolders(asOperator()),
   );
@@ -46,7 +46,7 @@ export const listAuraHolderIds = async () => {
         value: result.value.holders.map((holder) => holder.userId),
       }
     : result;
-};
+});
 
 const runAuraAction = (gameAccountId: string, action: AuraAction) => {
   switch (action.action) {
