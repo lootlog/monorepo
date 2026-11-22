@@ -2,7 +2,7 @@ import { Schema } from "effect";
 
 const AIR_TAG_RELATIONS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
-export const AIR_TAG_CLAN_ENEMY_RELATION = 6;
+const AIR_TAG_CLAN_ENEMY_RELATION = 6;
 
 /**
  * AirTags carry clan enemies only. A personal enemy is one member's private

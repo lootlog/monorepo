@@ -10,7 +10,7 @@ const CLAN_ENEMY_KIND = "cl-en";
 /** HandHeldMiniMapData.STATIC_ICONS. */
 export const MINIMAP_ICON = { square: 0, circle: 1, rhomb: 2 } as const;
 
-export type MinimapIcon = (typeof MINIMAP_ICON)[keyof typeof MINIMAP_ICON];
+type MinimapIcon = (typeof MINIMAP_ICON)[keyof typeof MINIMAP_ICON];
 
 export type MinimapPlayerStyle = { color: string; icon: MinimapIcon };
 
