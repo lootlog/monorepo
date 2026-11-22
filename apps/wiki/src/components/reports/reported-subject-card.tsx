@@ -6,7 +6,7 @@ import type {
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ButtonLoadingContent } from "@lootlog/ui/components/button-loading-content";
-import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
+import { itemIconUrl } from "@lootlog/domain/margonem-cdn";
 import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 import { NpcPortrait } from "@/components/common/npc-portrait";
 import { t } from "@/i18n/messages";

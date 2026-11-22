@@ -16,6 +16,7 @@ import {
 } from "@lootlog/schema/notifications";
 import { isJsonObject, type JsonValue } from "#src/database/json";
 import { NOTIFICATION_DELIVERY_ATTEMPTS } from "#src/notifications/jobs/dispatch-queue";
+import type { NotificationImages } from "#src/notifications/content/notification-images";
 
 export type NotificationDispatchJob = NotificationJobWithRelations;
 
@@ -106,6 +107,7 @@ export const makeNotificationJobDispatch = (
   publisher: NotificationDispatchPublisher,
   finalize: NotificationJobFinalization,
   parseAllowedMentions: NotificationContentModule["parseAllowedMentions"],
+  images: NotificationImages,
 ) =>
   Effect.fn("notifications.jobs.dispatch")(function* (
     jobId: string,
@@ -161,6 +163,7 @@ export const makeNotificationJobDispatch = (
 
     if (!(yield* store.claim(job.id, attempt.retrying))) return;
     const payload = parseDispatchPayload(job.payloadSnapshot);
+    const files = yield* images.filesFor(payload.metadata);
 
     const published = yield* publisher
       .publish({
@@ -178,6 +181,7 @@ export const makeNotificationJobDispatch = (
           externalId: job.target.externalId,
           targetType: job.target.targetType,
         },
+        files,
       })
       .pipe(Effect.result);
 

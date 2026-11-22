@@ -1,0 +1,1 @@
+ALTER TYPE "NotificationTriggerType" ADD VALUE 'LOOT_DRAW_RESOLVED';

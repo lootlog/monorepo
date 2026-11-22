@@ -2031,6 +2031,7 @@ describe("durable loot publications", () => {
       let visibilityReads = 0;
 
       const operations = makeLootsOperations({
+        publishDrawResolved: () => Effect.void,
         persistence: makeLootPersistence(database),
         query: {
           ...realQuery,
@@ -2171,6 +2172,7 @@ describe("durable loot publications", () => {
     const finish = Promise.withResolvers<void>();
 
     const operations = makeLootsOperations({
+      publishDrawResolved: () => Effect.void,
       query: {
         ...query,
         fetchLootById: (...args) =>

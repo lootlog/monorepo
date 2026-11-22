@@ -9,6 +9,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   type DiscordNotificationDeliveryResult,
   type LootCreatedNotificationEventV2,
+  type LootDrawResolvedNotificationEvent,
   NotificationJobKind,
 } from "@lootlog/schema/notifications";
 import type { NotificationGuildTargets } from "#src/notifications/targets/notification-guild-targets";
@@ -276,26 +277,33 @@ export const makeNotificationsEvents = (options: {
     },
   );
 
-  const handleHeroSightingUpdated = Effect.fn(
-    "notifications.events.heroSightingUpdated",
-  )(function* (sighting: HeroSightingResponse) {
-    const now = yield* Clock.currentTimeMillis;
+  type GuildWorldRule = Effect.Success<
+    ReturnType<NotificationEventStore["guildWorldRules"]>
+  >[number];
 
-    if (!isHeroSightingNews(sighting, now)) return;
-
-    const rules = yield* options.store.heroSightingRules(
-      sighting.guildId,
-      sighting.world,
-    );
-
-    yield* Effect.forEach(
-      rules
-        .filter((rule) => matchesHeroLevel(rule.filters, sighting.hero.lvl))
-        .flatMap((rule) =>
-          rule.targets
-            .filter(({ target }) => target.active && target.canSend)
-            .map(({ target }) => ({ rule, target })),
-        ),
+  /**
+   * Schedules one instant job per active target of the rules. The source
+   * event keys each job, so a redelivered event sends nothing twice.
+   */
+  const scheduleInstantJobs = (
+    rules: ReadonlyArray<GuildWorldRule>,
+    source: {
+      readonly sourceEntityType: string;
+      readonly sourceEntityId: string;
+      readonly sourceEventId: string;
+    },
+    now: number,
+    payload: (
+      rule: GuildWorldRule,
+      target: GuildWorldRule["targets"][number]["target"],
+    ) => Parameters<NotificationJobScheduler["create"]>[0]["payloadSnapshot"],
+  ) =>
+    Effect.forEach(
+      rules.flatMap((rule) =>
+        rule.targets
+          .filter(({ target }) => target.active && target.canSend)
+          .map(({ target }) => ({ rule, target })),
+      ),
       ({ rule, target }) =>
         options.scheduler
           .create({
@@ -303,23 +311,8 @@ export const makeNotificationsEvents = (options: {
             target,
             jobKind: NotificationJobKind.INSTANT,
             scheduledFor: new Date(now),
-            sourceEntityType: "hero-sighting",
-            sourceEntityId: String(sighting.id),
-            sourceEventId: `hero-sighting:${sighting.id}:${sighting.state}`,
-            payloadSnapshot: options.content.buildHeroSightingPayload({
-              notificationRule: rule,
-              target,
-              sighting: {
-                id: sighting.id,
-                world: sighting.world,
-                hero: sighting.hero,
-                heroLevel: formatLevel(sighting.hero.lvl, sighting.hero.prof),
-                mapName: sighting.mapName,
-                detectedBy: sighting.manual
-                  ? heroSightingAddedByHand(sighting.detectedBy.displayName)
-                  : sighting.detectedBy.displayName,
-              },
-            }),
+            ...source,
+            payloadSnapshot: payload(rule, target),
           })
           .pipe(
             Effect.flatMap((job) =>
@@ -327,6 +320,74 @@ export const makeNotificationsEvents = (options: {
             ),
           ),
       { concurrency: "unbounded", discard: true },
+    );
+
+  const handleHeroSightingUpdated = Effect.fn(
+    "notifications.events.heroSightingUpdated",
+  )(function* (sighting: HeroSightingResponse) {
+    const now = yield* Clock.currentTimeMillis;
+
+    if (!isHeroSightingNews(sighting, now)) return;
+
+    const rules = yield* options.store.guildWorldRules(
+      "HERO_SIGHTED",
+      sighting.guildId,
+      sighting.world,
+    );
+
+    yield* scheduleInstantJobs(
+      rules.filter((rule) => matchesHeroLevel(rule.filters, sighting.hero.lvl)),
+      {
+        sourceEntityType: "hero-sighting",
+        sourceEntityId: String(sighting.id),
+        sourceEventId: `hero-sighting:${sighting.id}:${sighting.state}`,
+      },
+      now,
+      (rule, target) =>
+        options.content.buildHeroSightingPayload({
+          notificationRule: rule,
+          target,
+          sighting: {
+            id: sighting.id,
+            world: sighting.world,
+            hero: sighting.hero,
+            heroLevel: formatLevel(sighting.hero.lvl, sighting.hero.prof),
+            mapName: sighting.mapName,
+            detectedBy: sighting.manual
+              ? heroSightingAddedByHand(sighting.detectedBy.displayName)
+              : sighting.detectedBy.displayName,
+          },
+        }),
+    );
+  });
+
+  // A draw is news only once per outcome. Its loot may be hidden from some
+  // members: the Organization chooses the channel its rule posts to.
+  const handleLootDrawResolved = Effect.fn(
+    "notifications.events.lootDrawResolved",
+  )(function* (event: LootDrawResolvedNotificationEvent) {
+    const now = yield* Clock.currentTimeMillis;
+
+    const rules = yield* options.store.guildWorldRules(
+      "LOOT_DRAW_RESOLVED",
+      event.guildId,
+      event.world,
+    );
+
+    yield* scheduleInstantJobs(
+      rules,
+      {
+        sourceEntityType: "loot-draw",
+        sourceEntityId: String(event.draw.id),
+        sourceEventId: `loot-draw:${event.draw.id}:${event.outcome}`,
+      },
+      now,
+      (rule, target) =>
+        options.content.buildLootDrawPayload({
+          notificationRule: rule,
+          target,
+          event,
+        }),
     );
   });
 
@@ -349,6 +410,7 @@ export const makeNotificationsEvents = (options: {
     handleTimerDeleted,
     handleLootCreated,
     handleHeroSightingUpdated,
+    handleLootDrawResolved,
     handleDeliveryResult,
     handleDiscordGuildChannelDeleted,
   };

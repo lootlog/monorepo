@@ -22,18 +22,15 @@ import { LootDetailsActions } from "@/features/guild/loots-list/components/loots
 import { AlertCircle, Calendar, MapPin, Package, Users, X } from "lucide-react";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import { useLootFromCache } from "@/hooks/use-loot-from-cache";
-import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Loot } from "@/lib/loots/loot-types";
-import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import { useCanManageLoots } from "@/features/guild/loots-list/use-can-manage-loots";
 import { useLootsControllerFetchLootById } from "@lootlog/client/main";
 import { EmptyState } from "@/components/common/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
-
-const ARCHIVE_LOOTS_PERMISSION = "LOOTLOG_LOOTS_ARCHIVE";
 
 type TitleComponent = ComponentType<{
   className?: string;
@@ -148,8 +145,7 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
   const { selectedLootId, closeLootDetails, isOpen } = useSelectedLoot();
   const cachedLoot = useLootFromCache(selectedLootId);
   const guildId = useGuildId();
-  const { data: accessPolicy } = useGuildPermissions();
-  const isOwner = useIsOwner();
+  const canManageLoots = useCanManageLoots();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
@@ -168,9 +164,6 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
   );
 
   const loot = cachedLoot ?? fetchedLoot;
-
-  const canManageLoots =
-    accessPolicy?.allows(ARCHIVE_LOOTS_PERMISSION) || isOwner;
 
   const showPlayerLoots = (playerName: string) => {
     if (onShowPlayerLoots) {

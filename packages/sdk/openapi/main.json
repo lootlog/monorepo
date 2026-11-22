@@ -21890,6 +21890,12 @@
             "items": {
               "$ref": "#/components/schemas/MemberSummary"
             }
+          },
+          "standingDraws": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LootStandingDrawDto"
+            }
           }
         },
         "required": [
@@ -21906,7 +21912,8 @@
           "createdAt",
           "updatedAt",
           "commentsCount",
-          "likes"
+          "likes",
+          "standingDraws"
         ],
         "additionalProperties": false
       },
@@ -21928,6 +21935,45 @@
           }
         },
         "required": ["id", "name", "avatar", "userId"],
+        "additionalProperties": false
+      },
+      "LootStandingDrawDto": {
+        "type": "object",
+        "properties": {
+          "drawId": {
+            "type": "number"
+          },
+          "itemHid": {
+            "type": "string"
+          },
+          "winner": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "prof": {
+                "nullable": true,
+                "type": "string",
+                "enum": [
+                  "WARRIOR",
+                  "PALADIN",
+                  "HUNTER",
+                  "MAGE",
+                  "BLADE_DANCER",
+                  "TRACKER"
+                ]
+              },
+              "lvl": {
+                "nullable": true,
+                "type": "number"
+              }
+            },
+            "required": ["name", "prof", "lvl"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["drawId", "itemHid", "winner"],
         "additionalProperties": false
       },
       "LootStatsResponseDto_Output": {
@@ -22522,6 +22568,12 @@
             "items": {
               "$ref": "#/components/schemas/MemberSummary"
             }
+          },
+          "standingDraws": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LootStandingDrawDto"
+            }
           }
         },
         "required": [
@@ -22538,7 +22590,8 @@
           "createdAt",
           "updatedAt",
           "commentsCount",
-          "likes"
+          "likes",
+          "standingDraws"
         ],
         "allOf": [
           {
@@ -24862,7 +24915,8 @@
                     "NPC_SPAWNED",
                     "WATCHED_ITEM_DROPPED",
                     "SCHEDULED_MESSAGE",
-                    "HERO_SIGHTED"
+                    "HERO_SIGHTED",
+                    "LOOT_DRAW_RESOLVED"
                   ]
                 },
                 "guildId": {
@@ -25294,7 +25348,8 @@
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
               "SCHEDULED_MESSAGE",
-              "HERO_SIGHTED"
+              "HERO_SIGHTED",
+              "LOOT_DRAW_RESOLVED"
             ]
           },
           "guildId": {
@@ -25744,7 +25799,8 @@
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
               "SCHEDULED_MESSAGE",
-              "HERO_SIGHTED"
+              "HERO_SIGHTED",
+              "LOOT_DRAW_RESOLVED"
             ]
           },
           "targetIds": {
@@ -25883,7 +25939,8 @@
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
               "SCHEDULED_MESSAGE",
-              "HERO_SIGHTED"
+              "HERO_SIGHTED",
+              "LOOT_DRAW_RESOLVED"
             ]
           },
           "targetIds": {
@@ -26023,7 +26080,8 @@
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
                         "SCHEDULED_MESSAGE",
-                        "HERO_SIGHTED"
+                        "HERO_SIGHTED",
+                        "LOOT_DRAW_RESOLVED"
                       ]
                     },
                     "world": {
@@ -26151,7 +26209,8 @@
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
                         "SCHEDULED_MESSAGE",
-                        "HERO_SIGHTED"
+                        "HERO_SIGHTED",
+                        "LOOT_DRAW_RESOLVED"
                       ]
                     },
                     "guildId": {
@@ -26576,7 +26635,8 @@
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
                         "SCHEDULED_MESSAGE",
-                        "HERO_SIGHTED"
+                        "HERO_SIGHTED",
+                        "LOOT_DRAW_RESOLVED"
                       ]
                     },
                     "world": {
@@ -26704,7 +26764,8 @@
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
                         "SCHEDULED_MESSAGE",
-                        "HERO_SIGHTED"
+                        "HERO_SIGHTED",
+                        "LOOT_DRAW_RESOLVED"
                       ]
                     },
                     "guildId": {
@@ -27293,7 +27354,8 @@
                   "NPC_SPAWNED",
                   "WATCHED_ITEM_DROPPED",
                   "SCHEDULED_MESSAGE",
-                  "HERO_SIGHTED"
+                  "HERO_SIGHTED",
+                  "LOOT_DRAW_RESOLVED"
                 ]
               },
               "guildId": {

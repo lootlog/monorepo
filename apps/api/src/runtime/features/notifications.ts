@@ -13,6 +13,9 @@ import {
   type NotificationGuildTargets,
 } from "#src/notifications/targets/notification-guild-targets";
 import { makeNotificationJobDispatch } from "#src/notifications/jobs/notification-job-dispatch";
+import { makeNotificationImages } from "#src/notifications/content/notification-images";
+import { LootDrawCardImage } from "#src/notifications/content/loot-draw-card";
+import { HttpClient } from "effect/http";
 import { canDispatchLootNotification } from "#src/notifications/notification-loot-source-visibility";
 import { makeNotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import { makeNotificationJobOperations } from "#src/notifications/jobs/notification-job-operations";
@@ -67,6 +70,7 @@ export const notificationsServicesLive = Layer.effect(
   NotificationsServices,
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
+    const httpClient = yield* HttpClient.HttpClient;
     const database = yield* ApiDatabase;
     const guildSync = yield* GuildDiscordSync;
     const userGuilds = yield* AccountOrganizationOperations;
@@ -148,6 +152,7 @@ export const notificationsServicesLive = Layer.effect(
       },
       finalize,
       (value) => content.parseAllowedMentions(value),
+      makeNotificationImages(new LootDrawCardImage(httpClient)),
     );
 
     const recovery = makeNotificationJobRecovery(

@@ -23,6 +23,7 @@ const loot = {
   updatedAt: "2026-01-01T00:00:00Z",
   commentsCount: 0,
   likes: [],
+  standingDraws: [],
 } satisfies typeof LootResponse.Type;
 
 describe("loot contracts", () => {

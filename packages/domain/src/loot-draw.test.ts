@@ -1,9 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import {
   capturesMapPlayers,
+  formatLootDrawTickets,
   groupedLootDrawTicketOrder,
   isLootDrawItem,
   isLootDrawTicketOrder,
+  lootDrawLandingOffset,
   lootDrawWinnerTickets,
   shuffleLootDrawTicketOrder,
 } from "./loot-draw.js";
@@ -85,5 +87,35 @@ describe("capturesMapPlayers", () => {
     expect(
       capturesMapPlayers({ source: "DIALOG", rarities: ["LEGENDARY"] }),
     ).toBe(false);
+  });
+});
+
+describe("formatLootDrawTickets", () => {
+  it("declines the ticket count as Polish counts it", () => {
+    expect([1, 2, 4, 5, 12, 22, 25].map(formatLootDrawTickets)).toEqual([
+      "1 los",
+      "2 losy",
+      "4 losy",
+      "5 losów",
+      "12 losów",
+      "22 losy",
+      "25 losów",
+    ]);
+  });
+});
+
+describe("lootDrawLandingOffset", () => {
+  it("never stops the pointer on the line between two tickets", () => {
+    const offsets = Array.from({ length: 10_000 }, (_, id) =>
+      lootDrawLandingOffset(id + 1),
+    );
+
+    expect(Math.min(...offsets)).toBeGreaterThanOrEqual(0.08);
+    expect(Math.max(...offsets)).toBeLessThanOrEqual(0.92);
+  });
+
+  it("stops every wheel of one draw at the same place", () => {
+    expect(lootDrawLandingOffset(44)).toBe(lootDrawLandingOffset(44));
+    expect(lootDrawLandingOffset(44)).not.toBe(lootDrawLandingOffset(45));
   });
 });

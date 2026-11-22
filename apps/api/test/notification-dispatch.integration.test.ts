@@ -253,6 +253,7 @@ describe("notification dispatch with BullMQ and PostgreSQL", () => {
       },
       finalize,
       () => undefined,
+      { filesFor: () => Effect.succeed([]) },
     );
 
     const processor = makeNotificationDispatchProcessor({ dispatch });

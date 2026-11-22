@@ -45,6 +45,19 @@ export const LootPlayerResponse = Schema.Struct({
   hpp: Schema.NullOr(FiniteNumber),
 });
 
+/** The standing result of a loot item's draw: who won it, as the draw entered them. */
+export const LootStandingDrawResponse = Schema.Struct({
+  drawId: FiniteNumber,
+  itemHid: Schema.String,
+  winner: Schema.Struct({
+    name: Schema.String,
+    prof: Schema.NullOr(ProfessionSchema),
+    lvl: Schema.NullOr(FiniteNumber),
+  }),
+});
+
+export type LootStandingDrawResponse = typeof LootStandingDrawResponse.Type;
+
 export const LootNpcResponse = Schema.Struct({
   id: FiniteNumber,
   name: Schema.String,
@@ -104,6 +117,8 @@ export const LootSnapshot = Schema.Struct({
   commentsCount: Schema.Number,
   // Publishers before likes omit them.
   likes: Schema.optionalKey(Schema.Array(LootMember)),
+  // Publishers before draws on the list omit them.
+  standingDraws: Schema.optionalKey(Schema.Array(LootStandingDrawResponse)),
 });
 
 export type LootSnapshot = typeof LootSnapshot.Type;

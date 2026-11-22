@@ -4240,7 +4240,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw
+      description: Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. Any member who can read the loot may draw. 409 while the item has a standing draw
       summary: Draw a loot item
       requestBody:
         content:
@@ -4318,7 +4318,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Void a draw with a reason so the item can be drawn again; the voided draw stays in the history
+      description: Void a draw with a reason so the item can be drawn again; the voided draw stays in the history. Requires loot management
       summary: Void a loot draw
       requestBody:
         content:
@@ -21385,6 +21385,7 @@ components:
                 - WATCHED_ITEM_DROPPED
                 - SCHEDULED_MESSAGE
                 - HERO_SIGHTED
+                - LOOT_DRAW_RESOLVED
             guildId:
               nullable: true
               type: string
@@ -21823,6 +21824,7 @@ components:
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
                       - HERO_SIGHTED
+                      - LOOT_DRAW_RESOLVED
                   world:
                     nullable: true
                     type: string
@@ -21928,6 +21930,7 @@ components:
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
                       - HERO_SIGHTED
+                      - LOOT_DRAW_RESOLVED
                   guildId:
                     nullable: true
                     type: string
@@ -22283,6 +22286,7 @@ components:
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
                       - HERO_SIGHTED
+                      - LOOT_DRAW_RESOLVED
                   world:
                     nullable: true
                     type: string
@@ -22388,6 +22392,7 @@ components:
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
                       - HERO_SIGHTED
+                      - LOOT_DRAW_RESOLVED
                   guildId:
                     nullable: true
                     type: string
@@ -22677,6 +22682,7 @@ components:
             - WATCHED_ITEM_DROPPED
             - SCHEDULED_MESSAGE
             - HERO_SIGHTED
+            - LOOT_DRAW_RESOLVED
         guildId:
           nullable: true
           type: string
@@ -23048,6 +23054,7 @@ components:
             - WATCHED_ITEM_DROPPED
             - SCHEDULED_MESSAGE
             - HERO_SIGHTED
+            - LOOT_DRAW_RESOLVED
         targetIds:
           type: array
           items:
@@ -23164,6 +23171,7 @@ components:
             - WATCHED_ITEM_DROPPED
             - SCHEDULED_MESSAGE
             - HERO_SIGHTED
+            - LOOT_DRAW_RESOLVED
         targetIds:
           type: array
           items:
@@ -23437,6 +23445,7 @@ components:
                   - WATCHED_ITEM_DROPPED
                   - SCHEDULED_MESSAGE
                   - HERO_SIGHTED
+                  - LOOT_DRAW_RESOLVED
               guildId:
                 nullable: true
                 type: string
@@ -26245,6 +26254,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MemberSummary"
+        standingDraws:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootStandingDrawDto"
       required:
         - id
         - uniqueId
@@ -26260,9 +26273,45 @@ components:
         - updatedAt
         - commentsCount
         - likes
+        - standingDraws
       allOf:
         - type: object
           additionalProperties: {}
+    LootStandingDrawDto:
+      type: object
+      properties:
+        drawId:
+          type: number
+        itemHid:
+          type: string
+        winner:
+          type: object
+          properties:
+            name:
+              type: string
+            prof:
+              nullable: true
+              type: string
+              enum:
+                - WARRIOR
+                - PALADIN
+                - HUNTER
+                - MAGE
+                - BLADE_DANCER
+                - TRACKER
+            lvl:
+              nullable: true
+              type: number
+          required:
+            - name
+            - prof
+            - lvl
+          additionalProperties: false
+      required:
+        - drawId
+        - itemHid
+        - winner
+      additionalProperties: false
     NullableLootItemResponseDto_Output:
       nullable: true
       type: object
@@ -26954,6 +27003,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MemberSummary"
+        standingDraws:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootStandingDrawDto"
       required:
         - id
         - uniqueId
@@ -26969,6 +27022,7 @@ components:
         - updatedAt
         - commentsCount
         - likes
+        - standingDraws
       additionalProperties: false
     SettingsDocumentsResponseDto_Output:
       type: object

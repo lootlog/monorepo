@@ -1,5 +1,8 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
-import { LootSnapshot } from "@lootlog/protocol/loot-summary";
+import {
+  LootSnapshot,
+  LootStandingDrawResponse,
+} from "@lootlog/protocol/loot-summary";
 import { Schema } from "effect";
 import { LootSubmission } from "#src/contracts/loots/schemas";
 import { MemberSummary } from "#src/contracts/shared";
@@ -11,6 +14,7 @@ export const LootResponse = Schema.Struct({
   ...LootSnapshot.fields,
   submissions: Schema.optionalKey(Schema.Array(LootSubmission)),
   likes: Schema.Array(MemberSummary),
+  standingDraws: Schema.Array(LootStandingDrawResponse),
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
 });

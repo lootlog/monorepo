@@ -46,8 +46,23 @@ const HERO_SIGHTING_VARIABLE_KEYS = [
   "world",
 ] as const;
 
+const LOOT_DRAW_VARIABLE_KEYS = [
+  "ruleName",
+  "itemName",
+  "winnerName",
+  "outcome",
+  "drawnBy",
+  "npcName",
+  "reason",
+  "world",
+] as const;
+
 const TEMPLATE_VARIABLE_PATTERN = [
-  ...new Set([...TIMER_VARIABLE_KEYS, ...HERO_SIGHTING_VARIABLE_KEYS]),
+  ...new Set([
+    ...TIMER_VARIABLE_KEYS,
+    ...HERO_SIGHTING_VARIABLE_KEYS,
+    ...LOOT_DRAW_VARIABLE_KEYS,
+  ]),
 ].join("|");
 
 export const getTemplateVariableKeys = (
@@ -58,6 +73,8 @@ export const getTemplateVariableKeys = (
       return [...SCHEDULED_MESSAGE_VARIABLE_KEYS];
     case NotificationTriggerType.HERO_SIGHTED:
       return HERO_SIGHTING_VARIABLE_KEYS;
+    case NotificationTriggerType.LOOT_DRAW_RESOLVED:
+      return LOOT_DRAW_VARIABLE_KEYS;
     default:
       return TIMER_VARIABLE_KEYS;
   }
@@ -78,6 +95,13 @@ export const createPreviewTemplateValues = (t: (key: string) => string) => ({
   detectedBy: t(
     "settings.notifications.templateEditor.previewValues.detectedBy",
   ),
+  itemName: t("settings.notifications.templateEditor.previewValues.itemName"),
+  winnerName: t(
+    "settings.notifications.templateEditor.previewValues.winnerName",
+  ),
+  outcome: t("settings.notifications.templateEditor.previewValues.outcome"),
+  drawnBy: t("settings.notifications.templateEditor.previewValues.drawnBy"),
+  reason: t("settings.notifications.templateEditor.previewValues.reason"),
 });
 
 export const renderTemplatePreview = (

@@ -8,7 +8,7 @@ import {
   getCatalogControllerGetItemsQueryOptions,
   useCatalogControllerGetItems,
 } from "@lootlog/client/catalog";
-import { itemIconUrl } from "@lootlog/ui/lib/item-icon-url";
+import { itemIconUrl } from "@lootlog/domain/margonem-cdn";
 import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-colors";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { resolveItemRarity } from "@lootlog/domain/item-rarity";

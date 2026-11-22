@@ -1,4 +1,5 @@
 import { hasItemStat } from "./item-stat.js";
+import { PRODUCT_LOCALE } from "./locale.js";
 
 /**
  * The draw a Lootlog runs for a looted legendary item among the players who
@@ -135,4 +136,38 @@ export const shuffleLootDrawTicketOrder = (
   }
 
   return shuffled;
+};
+
+const ticketPlural = new Intl.PluralRules(PRODUCT_LOCALE);
+
+const TICKET_WORDS: Partial<Record<Intl.LDMLPluralRule, string>> = {
+  one: "los",
+  few: "losy",
+};
+
+/** A whole number of tickets in Polish: `1 los`, `3 losy`, `5 losów`. */
+export const formatLootDrawTickets = (count: number) =>
+  `${count} ${TICKET_WORDS[ticketPlural.select(count)] ?? "losów"}`;
+
+/** An entrant's share of all tickets, in percent with one decimal. */
+export const lootDrawTicketShare = (tickets: number, totalTickets: number) =>
+  totalTickets > 0 ? Math.round((tickets / totalTickets) * 1000) / 10 : 0;
+
+/**
+ * Where in the winning ticket the pointer stops, as a share of the ticket
+ * from its start: anywhere but its very edges, and more often near one, so
+ * a wheel seems to almost land on a neighbour. The draw's id fixes it, so
+ * every wheel and card of one draw stops at the same place.
+ */
+export const lootDrawLandingOffset = (drawId: number) => {
+  // One round of mulberry32 spreads consecutive ids over [0, 1).
+  let hash = (drawId + 0x6d2b79f5) | 0;
+  hash = Math.imul(hash ^ (hash >>> 15), hash | 1);
+  hash ^= hash + Math.imul(hash ^ (hash >>> 7), hash | 61);
+  const uniform = ((hash ^ (hash >>> 14)) >>> 0) / 4294967296;
+
+  // The arcsine shape gathers stops towards both edges.
+  const edgeBiased = (1 - Math.cos(Math.PI * uniform)) / 2;
+
+  return 0.08 + 0.84 * edgeBiased;
 };

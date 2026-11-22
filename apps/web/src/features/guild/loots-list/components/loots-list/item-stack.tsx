@@ -20,12 +20,15 @@ const rarityRank = (item: Item) =>
 const sortByRarity = (items: Item[]): Item[] =>
   [...items].sort((a, b) => rarityRank(a) - rarityRank(b));
 
+/** Wraps an item's tile, such as with the item's draw. */
+export type DecorateLootItem = (item: Item, tile: ReactNode) => ReactNode;
+
 type Props = {
   playerId: Loot["players"][number]["id"];
   items: Item[];
   watchContext: WatchedItemScope;
   selectedItemNames: string[];
-  renderItem?: (item: Item) => ReactNode;
+  decorateItem?: DecorateLootItem;
 };
 
 export const ItemStack: FC<Props> = ({
@@ -33,7 +36,7 @@ export const ItemStack: FC<Props> = ({
   items,
   watchContext,
   selectedItemNames,
-  renderItem,
+  decorateItem,
 }) => {
   const { stackRef, anchorRect, isExpanded, toggleExpansion } =
     useItemStackExpansion(playerId);
@@ -43,15 +46,15 @@ export const ItemStack: FC<Props> = ({
   if (!firstItem) return null;
 
   if (items.length === 1) {
-    return renderItem ? (
-      renderItem(firstItem)
-    ) : (
+    const tile = (
       <WatchableItemTile
         item={firstItem}
         watchContext={watchContext}
         selectedItemNames={selectedItemNames}
       />
     );
+
+    return decorateItem ? decorateItem(firstItem, tile) : tile;
   }
 
   const sorted = sortByRarity(items);
@@ -68,7 +71,7 @@ export const ItemStack: FC<Props> = ({
     toggleExpansion();
   };
 
-  return (
+  const stack = (
     <div
       ref={stackRef}
       className={cn(
@@ -110,7 +113,7 @@ export const ItemStack: FC<Props> = ({
       <AnimatePresence>
         {isExpanded && anchorRect && (
           <ItemStackExpanded
-            renderItem={renderItem}
+            decorateItem={decorateItem}
             items={sorted}
             anchorRect={anchorRect}
             watchContext={watchContext}
@@ -120,4 +123,7 @@ export const ItemStack: FC<Props> = ({
       </AnimatePresence>
     </div>
   );
+
+  // The stack shows its rarest item, so it carries that item's decoration.
+  return decorateItem ? decorateItem(topItem, stack) : stack;
 };

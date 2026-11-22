@@ -4416,6 +4416,7 @@ export const WatchedItemResponseDtoNotificationRuleTriggerType = {
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
+  LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
 } as const;
 
 /**
@@ -4783,6 +4784,7 @@ export const NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType = 
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
+  LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
 } as const;
 
 /**
@@ -4891,6 +4893,7 @@ export const NotificationJobsResponseDtoPendingItemRuleTriggerType = {
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
+  LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
 } as const;
 
 /**
@@ -5211,6 +5214,7 @@ export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType = 
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
+  LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
 } as const;
 
 /**
@@ -5319,6 +5323,7 @@ export const NotificationJobsResponseDtoHistoryItemRuleTriggerType = {
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
+  LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
 } as const;
 
 /**
@@ -5602,6 +5607,7 @@ export const NotificationRuleResponseDtoTriggerType = {
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
+  LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
 } as const;
 
 /**
@@ -5866,6 +5872,7 @@ export const UpdateNotificationRuleDtoTriggerType = {
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
+  LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
 } as const;
 
 export interface UpdateNotificationRuleDto {
@@ -5996,6 +6003,7 @@ export const CreateNotificationRuleDtoTriggerType = {
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
+  LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
 } as const;
 
 export interface CreateNotificationRuleDto {
@@ -6284,6 +6292,7 @@ export const GuildNotificationRulesResponseDtoItemsItemTriggerType = {
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
+  LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
 } as const;
 
 /**
@@ -8284,6 +8293,35 @@ export type NullableLootResponseDtoSubmissionsItem = {
 /**
  * @nullable
  */
+export type LootStandingDrawDtoWinnerProf = typeof LootStandingDrawDtoWinnerProf[keyof typeof LootStandingDrawDtoWinnerProf] | null;
+
+
+export const LootStandingDrawDtoWinnerProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type LootStandingDrawDtoWinner = {
+  name: string;
+  /** @nullable */
+  prof: LootStandingDrawDtoWinnerProf;
+  /** @nullable */
+  lvl: number | null;
+};
+
+export interface LootStandingDrawDto {
+  drawId: number;
+  itemHid: string;
+  winner: LootStandingDrawDtoWinner;
+}
+
+/**
+ * @nullable
+ */
 export type NullableLootResponseDto = {[key: string]: unknown} & ({
   id: number;
   uniqueId: string;
@@ -8306,6 +8344,7 @@ export type NullableLootResponseDto = {[key: string]: unknown} & ({
   submissions?: NullableLootResponseDtoSubmissionsItem[];
   commentsCount: number;
   likes: MemberSummary[];
+  standingDraws: LootStandingDrawDto[];
 } | null) | null;
 
 /**
@@ -8756,6 +8795,7 @@ export interface LootResponseDto {
   submissions?: LootResponseDtoSubmissionsItem[];
   commentsCount: number;
   likes: MemberSummary[];
+  standingDraws: LootStandingDrawDto[];
 }
 
 export interface LootPageResponseDto {
@@ -11323,6 +11363,7 @@ export const NotificationJobPayloadSnapshotResponseDtoTriggerType = {
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
+  LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
 } as const;
 
 /**
@@ -21205,7 +21246,7 @@ export const getLootsControllerCreateDrawUrl = ({ guildId, lootId }: LootsContro
 }
 
 /**
- * Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw
+ * Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. Any member who can read the loot may draw. 409 while the item has a standing draw
  * @summary Draw a loot item
  */
 export const lootsControllerCreateDraw = async ({ guildId, lootId }: LootsControllerCreateDrawPathParameters,
@@ -21295,7 +21336,7 @@ export const getLootsControllerVoidDrawUrl = ({ guildId, lootId, drawId }: Loots
 }
 
 /**
- * Void a draw with a reason so the item can be drawn again; the voided draw stays in the history
+ * Void a draw with a reason so the item can be drawn again; the voided draw stays in the history. Requires loot management
  * @summary Void a loot draw
  */
 export const lootsControllerVoidDraw = async ({ guildId, lootId, drawId }: LootsControllerVoidDrawPathParameters,

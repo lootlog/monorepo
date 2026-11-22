@@ -188,6 +188,46 @@ describe("Discord delivery", () => {
     });
   });
 
+  test("attaches the images the API drew and keeps the message's nonce", async () => {
+    const send = mock(async () => ({ id: "message-3" }));
+
+    const client = {
+      users: { fetch: mock() },
+      channels: {
+        fetch: mock(async () => ({
+          type: ChannelType.GuildText,
+          isTextBased: () => true,
+          isSendable: () => true,
+          send,
+        })),
+      },
+    } satisfies DiscordDeliveryClient;
+
+    await Effect.runPromise(
+      makeDiscordDelivery(
+        { publish: () => Effect.void },
+        client,
+      ).sendNotification({
+        ...command(NotificationTargetType.CHANNEL),
+        files: [
+          {
+            name: "lootlog-kolo.png",
+            contentType: "image/png",
+            base64: Buffer.from("wheel").toString("base64"),
+          },
+        ],
+      }),
+    );
+
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nonce: expect.stringMatching(/^[0-9a-f]{25}$/),
+        enforceNonce: true,
+        files: [{ attachment: Buffer.from("wheel"), name: "lootlog-kolo.png" }],
+      }),
+    );
+  });
+
   test("publishes a non-retryable result for invalid channels", async () => {
     const publish = mock(() => Effect.void);
 

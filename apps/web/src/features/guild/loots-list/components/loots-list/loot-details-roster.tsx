@@ -20,7 +20,7 @@ export const LootDetailsRoster = ({
   onShowPlayerLoots,
 }: {
   loot: Loot;
-  /** Managers draw items, whoever caught them. */
+  /** Loot managers may void a draw's result. */
   canManageLoots: boolean;
   onShowPlayerLoots?: (playerName: string) => void;
 }) => {
@@ -53,7 +53,7 @@ export const LootDetailsRoster = ({
                 <LootDrawButton
                   loot={loot}
                   item={item}
-                  canManage={canManageLoots}
+                  canVoid={canManageLoots}
                 />
               )}
             />
@@ -86,7 +86,7 @@ export const LootDetailsRoster = ({
                     <LootDrawButton
                       loot={loot}
                       item={entry.item}
-                      canManage={canManageLoots}
+                      canVoid={canManageLoots}
                     />
                   }
                 />

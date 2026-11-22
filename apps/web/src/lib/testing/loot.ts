@@ -50,5 +50,6 @@ export function createLoot(id = 1): Loot {
     updatedAt: "2026-08-12T10:54:00.000Z",
     commentsCount: 0,
     likes: [],
+    standingDraws: [],
   };
 }

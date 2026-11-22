@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+import { ProfessionSchema } from "./loot.js";
 
 export const NotificationOwnerType = { GUILD: "GUILD", USER: "USER" } as const;
 
@@ -21,6 +22,7 @@ export const NotificationTriggerType = {
   WATCHED_ITEM_DROPPED: "WATCHED_ITEM_DROPPED",
   SCHEDULED_MESSAGE: "SCHEDULED_MESSAGE",
   HERO_SIGHTED: "HERO_SIGHTED",
+  LOOT_DRAW_RESOLVED: "LOOT_DRAW_RESOLVED",
 } as const;
 
 export type NotificationTriggerType =
@@ -137,6 +139,19 @@ export const DiscordNotificationSendCommandSchema = Schema.Struct({
     externalId: Schema.String,
     targetType: NotificationTargetTypeSchema,
   }),
+  /**
+   * Images sent with the message, such as a loot draw's wheel. A bot that
+   * predates them posts the message alone.
+   */
+  files: Schema.optionalKey(
+    Schema.Array(
+      Schema.Struct({
+        name: Schema.String,
+        contentType: Schema.Literal("image/png"),
+        base64: Schema.String,
+      }),
+    ),
+  ),
 });
 
 export type DiscordNotificationSendCommand =
@@ -167,6 +182,49 @@ export const LootCreatedNotificationEventV2Schema = Schema.Struct({
 
 export type LootCreatedNotificationEventV2 =
   typeof LootCreatedNotificationEventV2Schema.Type;
+
+export const LootDrawOutcome = { DRAWN: "DRAWN", VOIDED: "VOIDED" } as const;
+
+export type LootDrawOutcome =
+  (typeof LootDrawOutcome)[keyof typeof LootDrawOutcome];
+
+/**
+ * A loot item's draw that was run or voided in one Organization, carrying
+ * what its message and wheel image show.
+ */
+export const LootDrawResolvedNotificationEventSchema = Schema.Struct({
+  guildId: Schema.NonEmptyString,
+  world: Schema.NonEmptyString,
+  lootId: Schema.Int,
+  outcome: Schema.Literals(Object.values(LootDrawOutcome)),
+  item: Schema.Struct({
+    hid: Schema.String,
+    name: Schema.String,
+    icon: Schema.String,
+    lvl: Schema.Number,
+  }),
+  /** The strongest monster of the fight, when the loot names one. */
+  npcName: Schema.NullOr(Schema.String),
+  draw: Schema.Struct({
+    id: Schema.Int,
+    entrants: Schema.Array(
+      Schema.Struct({
+        name: Schema.String,
+        prof: Schema.NullOr(ProfessionSchema),
+        lvl: Schema.NullOr(Schema.Number),
+        tickets: Schema.Int,
+      }),
+    ),
+    winnerIndex: Schema.Int,
+    drawnBy: Schema.String,
+    voided: Schema.NullOr(
+      Schema.Struct({ by: Schema.String, reason: Schema.String }),
+    ),
+  }),
+});
+
+export type LootDrawResolvedNotificationEvent =
+  typeof LootDrawResolvedNotificationEventSchema.Type;
 
 /** The bot's answer to one notification send command. */
 export const DiscordNotificationDeliveryResultSchema = Schema.Struct({

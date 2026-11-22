@@ -247,8 +247,10 @@ export function patchLoot(
   queryClient: QueryClient,
   guildId: string,
   lootId: number,
-  patch: Partial<Pick<Loot, "lootShare" | "likes">>,
+  patch: Partial<Pick<Loot, "lootShare" | "likes" | "standingDraws">>,
 ) {
+  const apply = (loot: Loot): Loot => ({ ...loot, ...patch });
+
   for (const [key] of cachedLootLists(queryClient, guildId)) {
     queryClient.setQueryData<LootsInfiniteData>(key, (old) =>
       old?.pages.some((page) => page.items.some((loot) => loot.id === lootId))
@@ -258,7 +260,7 @@ export function patchLoot(
               withItems(
                 page,
                 page.items.map((loot) =>
-                  loot.id === lootId ? { ...loot, ...patch } : loot,
+                  loot.id === lootId ? apply(loot) : loot,
                 ),
               ),
             ),
@@ -269,7 +271,7 @@ export function patchLoot(
 
   queryClient.setQueryData<Loot | null>(
     getLootsControllerFetchLootByIdQueryKey({ guildId, lootId }),
-    (old) => (old ? { ...old, ...patch } : old),
+    (old) => (old ? apply(old) : old),
   );
 }
 

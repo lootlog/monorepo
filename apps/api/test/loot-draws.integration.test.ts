@@ -15,6 +15,8 @@ import {
 } from "../src/database/drizzle/loot.schema.js";
 import { ErrorKey } from "../src/loots/error-key.js";
 import { makeLootPersistence } from "../src/loots/loot.repository.js";
+import { makeLootQueryOperations } from "../src/loots/query/loot-query.operations.js";
+import { makeLootQueryPersistence } from "../src/loots/query/loot-query.repository.js";
 import {
   createGuildFixture,
   createMemberFixture,
@@ -106,6 +108,15 @@ describe("loot draws against migrated PostgreSQL", () => {
         const lootId = yield* seedLoot;
         const persistence = makeLootPersistence(yield* ApiDatabase);
 
+        const query = makeLootQueryOperations(
+          makeLootQueryPersistence(yield* ApiDatabase),
+        );
+
+        // The list and the realtime snapshot both read the loot this way.
+        const standingDraws = query
+          .fetchOrganizationLoot(guildId, lootId)
+          .pipe(Effect.map((loot) => loot?.standingDraws));
+
         const draw = {
           discordId,
           guildId,
@@ -118,6 +129,14 @@ describe("loot draws against migrated PostgreSQL", () => {
         };
 
         const first = yield* persistence.createDraw(draw);
+
+        expect(yield* standingDraws).toEqual([
+          {
+            drawId: first.id,
+            itemHid: "wand-hid",
+            winner: { name: "Spoza Grupy", prof: "MAGE", lvl: 290 },
+          },
+        ]);
 
         // A retried request must not add a second result for the item.
         const retried = yield* persistence.createDraw(draw).pipe(Effect.flip);
@@ -135,6 +154,8 @@ describe("loot draws against migrated PostgreSQL", () => {
         });
 
         expect(voided.voided).toMatchObject({ reason: "Wróg na liście" });
+        // A voided result must not stay on the list as the item's winner.
+        expect(yield* standingDraws).toEqual([]);
 
         const voidedAgain = yield* persistence
           .voidDraw({
@@ -155,6 +176,14 @@ describe("loot draws against migrated PostgreSQL", () => {
           roll: 0,
           winnerIndex: 0,
         });
+
+        expect(yield* standingDraws).toEqual([
+          {
+            drawId: redrawn.id,
+            itemHid: "wand-hid",
+            winner: { name: "Rozdaje Kolby", prof: "MAGE", lvl: 302 },
+          },
+        ]);
 
         const history = yield* persistence.listDraws(guildId, lootId);
 

@@ -220,7 +220,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .annotate(OpenApi.Summary, "Draw a loot item")
     .annotate(
       OpenApi.Description,
-      "Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw",
+      "Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. Any member who can read the loot may draw. 409 while the item has a standing draw",
     ),
   HttpApiEndpoint.post(
     "LootsControllerVoidDraw",
@@ -241,7 +241,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .annotate(OpenApi.Summary, "Void a loot draw")
     .annotate(
       OpenApi.Description,
-      "Void a draw with a reason so the item can be drawn again; the voided draw stays in the history",
+      "Void a draw with a reason so the item can be drawn again; the voided draw stays in the history. Requires loot management",
     ),
   HttpApiEndpoint.put(
     "LootsControllerLikeLoot",

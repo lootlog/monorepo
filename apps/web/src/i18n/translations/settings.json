@@ -419,6 +419,8 @@
     },
     "groups": {
       "TIMER_BEFORE_SPAWN": "Przypomnienia przed spawnem",
+      "HERO_SIGHTED": "Wykrycia herosów",
+      "LOOT_DRAW_RESOLVED": "Wyniki koła",
       "SCHEDULED_MESSAGE": "Zaplanowane wiadomości"
     },
     "rows": {
@@ -484,7 +486,8 @@
       "npcSpawned": "Spawn potwora",
       "watchedItemDropped": "Drop obserwowanego przedmiotu",
       "scheduledMessage": "Zaplanowana wiadomość",
-      "heroSighted": "Wykrycie herosa"
+      "heroSighted": "Wykrycie herosa",
+      "lootDrawResolved": "Wynik koła"
     },
     "jobStatuses": {
       "pending": "Oczekuje",
@@ -673,7 +676,12 @@
         "heroLevel": "258b",
         "state": "Pojawi się w",
         "mapName": "Oztotl Tzacua p.2 - sala 2",
-        "detectedBy": "Kamil"
+        "detectedBy": "Kamil",
+        "itemName": "Wyłupione ślepie demona",
+        "winnerName": "Grimm",
+        "outcome": "Wygrywa **Grimm** (1 los).",
+        "drawnBy": "Kamil",
+        "reason": "Gracz z wrogiej frakcji"
       },
       "variables": {
         "ruleName": "Nazwa reguły",
@@ -687,7 +695,12 @@
         "heroLevel": "Poziom herosa",
         "state": "Stan (pojawi się w)",
         "mapName": "Mapa",
-        "detectedBy": "Kto wykrył"
+        "detectedBy": "Kto wykrył",
+        "itemName": "Przedmiot",
+        "winnerName": "Zwycięzca",
+        "outcome": "Wynik (wygrywa albo unieważniony)",
+        "drawnBy": "Kto zakręcił",
+        "reason": "Powód unieważnienia"
       },
       "presets": {
         "simple": "Prosty",
@@ -713,10 +726,12 @@
       "triggerOptions": {
         "timerBeforeSpawn": "Gdy zbliża się respawn potwora z ustawionym timerem.",
         "scheduledMessage": "O wybranej porze, jednorazowo lub cyklicznie.",
-        "heroSighted": "Gdy ktoś z Lootloga wykryje, gdzie pojawi się heros."
+        "heroSighted": "Gdy ktoś z Lootloga wykryje, gdzie pojawi się heros.",
+        "lootDrawResolved": "Gdy ktoś zakręci kołem o legendę albo unieważni jego wynik."
       },
       "whenTimer": "Lootlog wyśle przypomnienie, gdy ktoś z Lootloga ustawi timer wybranego potwora.",
       "whenHeroSighting": "Lootlog wyśle wiadomość, gdy wykrywacz pokaże, gdzie na wybranym świecie pojawi się heros. O grasującym herosie nie wysyła nic.",
+      "whenLootDraw": "Lootlog wyśle wiadomość z obrazkiem koła, gdy ktoś zakręci kołem o legendę z wybranego świata, i drugą, gdy wynik zostanie unieważniony. Kanał zobaczy każdy, kto ma do niego dostęp, także loot ukryty przed częścią ról.",
       "whenScheduledMessage": "Lootlog wyśle wiadomość w wybranym terminie, a przy harmonogramie w każdym kolejnym.",
       "unsavedNewRule": "Nowa reguła nie jest jeszcze zapisana",
       "targetsDescription": "Wybierz jeden lub więcej kanałów docelowych. Możesz też dodać nowy bez opuszczania formularza."

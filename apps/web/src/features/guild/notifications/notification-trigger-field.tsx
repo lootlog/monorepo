@@ -11,7 +11,10 @@ type Props = Pick<
   "form" | "t" | "getDefaultContentTemplate"
 >;
 
-/** What triggers the rule: a monster's spawn window, a hero sighting, or a time of day. */
+/**
+ * What triggers the rule: a monster's spawn window, a hero sighting, a loot
+ * draw's result, or a time of day.
+ */
 export const NotificationTriggerField = ({
   form,
   t,
@@ -33,7 +36,11 @@ export const NotificationTriggerField = ({
       form.setValue("scheduledAt", "");
     }
 
-    if (nextType === NotificationTriggerType.HERO_SIGHTED) {
+    // Neither a sighting nor a draw is about chosen monsters.
+    if (
+      nextType === NotificationTriggerType.HERO_SIGHTED ||
+      nextType === NotificationTriggerType.LOOT_DRAW_RESOLVED
+    ) {
       form.setValue("npcIds", []);
       form.setValue("manualNpcIds", "");
     }
@@ -69,6 +76,17 @@ export const NotificationTriggerField = ({
             ),
             description: t(
               "settings.notifications.ruleDialog.triggerOptions.heroSighted",
+            ),
+          },
+          {
+            value: NotificationTriggerType.LOOT_DRAW_RESOLVED,
+            title: t(
+              getNotificationTriggerTranslationKey(
+                NotificationTriggerType.LOOT_DRAW_RESOLVED,
+              ),
+            ),
+            description: t(
+              "settings.notifications.ruleDialog.triggerOptions.lootDrawResolved",
             ),
           },
           {

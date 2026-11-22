@@ -7,44 +7,47 @@ import {
   watchedItemTable,
 } from "#src/database/drizzle/notification.schema";
 import { timerTable } from "#src/database/drizzle/timer.schema";
+import type { NotificationTriggerType } from "@lootlog/schema/notifications";
+
+/** An Organization's enabled rules of one trigger for a world, or for every world. */
+const guildWorldRuleCondition = (
+  triggerType: NotificationTriggerType,
+  guildId: string,
+  world: string,
+) =>
+  and(
+    eq(notificationRuleTable.ownerType, "GUILD"),
+    eq(notificationRuleTable.ownerId, guildId),
+    eq(notificationRuleTable.guildId, guildId),
+    eq(notificationRuleTable.enabled, true),
+    eq(notificationRuleTable.triggerType, triggerType),
+    or(
+      isNull(notificationRuleTable.world),
+      eq(notificationRuleTable.world, world),
+    ),
+  );
 
 export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
   const timerRules = (guildId: string, world: string) =>
     database
       .select()
       .from(notificationRuleTable)
-      .where(
-        and(
-          eq(notificationRuleTable.ownerType, "GUILD"),
-          eq(notificationRuleTable.ownerId, guildId),
-          eq(notificationRuleTable.guildId, guildId),
-          eq(notificationRuleTable.enabled, true),
-          eq(notificationRuleTable.triggerType, "TIMER_BEFORE_SPAWN"),
-          or(
-            isNull(notificationRuleTable.world),
-            eq(notificationRuleTable.world, world),
-          ),
-        ),
-      );
+      .where(guildWorldRuleCondition("TIMER_BEFORE_SPAWN", guildId, world));
 
-  const heroSightingRules = (guildId: string, world: string) =>
+  /** An Organization's rules of one instant trigger, with their targets. */
+  const guildWorldRules = (
+    triggerType: Extract<
+      NotificationTriggerType,
+      "HERO_SIGHTED" | "LOOT_DRAW_RESOLVED"
+    >,
+    guildId: string,
+    world: string,
+  ) =>
     Effect.gen(function* () {
       const rules = yield* database
         .select()
         .from(notificationRuleTable)
-        .where(
-          and(
-            eq(notificationRuleTable.ownerType, "GUILD"),
-            eq(notificationRuleTable.ownerId, guildId),
-            eq(notificationRuleTable.guildId, guildId),
-            eq(notificationRuleTable.enabled, true),
-            eq(notificationRuleTable.triggerType, "HERO_SIGHTED"),
-            or(
-              isNull(notificationRuleTable.world),
-              eq(notificationRuleTable.world, world),
-            ),
-          ),
-        );
+        .where(guildWorldRuleCondition(triggerType, guildId, world));
 
       const targets = yield* readNotificationRuleTargets(
         database,
@@ -116,7 +119,7 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
       .orderBy(asc(timerTable.minSpawnTime))
       .limit(50);
 
-  return { heroSightingRules, timerRules, timersForRule, watchedItemsForLoot };
+  return { guildWorldRules, timerRules, timersForRule, watchedItemsForLoot };
 };
 
 export type NotificationEventStore = ReturnType<

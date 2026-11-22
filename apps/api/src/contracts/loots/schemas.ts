@@ -4,6 +4,7 @@ import {
   LootPlayerResponse as LootPlayer,
   LootNpcResponse as LootNpc,
   LootShareResponse as LootShare,
+  LootStandingDrawResponse,
 } from "@lootlog/protocol/loot-summary";
 /** Shared input and output schemas for the loots feature. */
 import * as Schema from "effect/Schema";
@@ -63,6 +64,10 @@ const LootRecord = Schema.Struct({
   commentsCount: FiniteNumber,
   /** Members who liked the loot, oldest like first. */
   likes: Schema.Array(MemberSummary),
+  /** The standing draw of each drawn item; voided draws are left out. */
+  standingDraws: Schema.Array(
+    LootStandingDrawResponse.annotate({ identifier: "LootStandingDrawDto" }),
+  ),
 });
 
 export type LootResponse = typeof LootResponse.Type;

@@ -75,6 +75,11 @@ const messageOptions = (command: DiscordNotificationSendCommand) => ({
       : command.allowedMentions,
   nonce: messageNonce(command.notificationJobId),
   enforceNonce: true,
+  // Images the API drew for the message, such as a loot draw's wheel.
+  files: command.files?.map(({ name, base64 }) => ({
+    attachment: Buffer.from(base64, "base64"),
+    name,
+  })),
 });
 
 const deliveryFailure = (

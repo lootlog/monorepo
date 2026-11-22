@@ -4,14 +4,15 @@ import type { Item } from "@/lib/loots/loot-types";
 import * as m from "framer-motion/m";
 import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
 import { createPortal } from "react-dom";
-import { Fragment, type ReactNode, type FC } from "react";
+import { Fragment, type FC } from "react";
+import type { DecorateLootItem } from "./item-stack";
 
 type Props = {
   items: Item[];
   anchorRect: DOMRect;
   watchContext: WatchedItemScope;
   selectedItemNames: string[];
-  renderItem?: (item: Item) => ReactNode;
+  decorateItem?: DecorateLootItem;
 };
 
 export const ItemStackExpanded: FC<Props> = ({
@@ -19,7 +20,7 @@ export const ItemStackExpanded: FC<Props> = ({
   anchorRect,
   watchContext,
   selectedItemNames,
-  renderItem,
+  decorateItem,
 }) =>
   createPortal(
     <m.div
@@ -35,20 +36,21 @@ export const ItemStackExpanded: FC<Props> = ({
       }}
       onPointerDown={(e) => e.stopPropagation()}
     >
-      {items.map((item) => (
-        <Fragment key={item.id}>
-          {renderItem ? (
-            renderItem(item)
-          ) : (
-            <WatchableItemTile
-              key={item.id}
-              item={item}
-              watchContext={watchContext}
-              selectedItemNames={selectedItemNames}
-            />
-          )}
-        </Fragment>
-      ))}
+      {items.map((item) => {
+        const tile = (
+          <WatchableItemTile
+            item={item}
+            watchContext={watchContext}
+            selectedItemNames={selectedItemNames}
+          />
+        );
+
+        return (
+          <Fragment key={item.id}>
+            {decorateItem ? decorateItem(item, tile) : tile}
+          </Fragment>
+        );
+      })}
     </m.div>,
     document.body,
   );

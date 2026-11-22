@@ -1,0 +1,31 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "a111f6b0-a060-4f2f-9cfa-0ad31373dfa2",
+  "prevIds": ["cccd73ed-1622-4005-97fb-327ba62095c3"],
+  "footprints": [
+    {
+      "statementType": "alter_enum",
+      "statementTarget": ["enum", "public", "NotificationTriggerType"],
+      "writes": ["s|enum|public.NotificationTriggerType"],
+      "reads": ["n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"NotificationTriggerType\"]",
+      "set": {
+        "values": [
+          "TIMER_BEFORE_SPAWN",
+          "NPC_SPAWNED",
+          "WATCHED_ITEM_DROPPED",
+          "SCHEDULED_MESSAGE",
+          "HERO_SIGHTED",
+          "LOOT_DRAW_RESOLVED"
+        ]
+      }
+    }
+  ]
+}

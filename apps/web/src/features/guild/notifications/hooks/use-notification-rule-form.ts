@@ -33,6 +33,7 @@ import {
   getDefaultGuildNotificationRuleContentTemplate,
   getDefaultScheduledMessageContentTemplate,
   getDefaultHeroSightingContentTemplate,
+  getDefaultLootDrawContentTemplate,
   getGuildNotificationRuleNpcIds,
   getGuildNotificationRuleTargetIds,
   getGuildNotificationTargetLabel,
@@ -70,6 +71,8 @@ const getDefaultContentTemplate = (
       return getDefaultScheduledMessageContentTemplate();
     case NotificationTriggerType.HERO_SIGHTED:
       return getDefaultHeroSightingContentTemplate();
+    case NotificationTriggerType.LOOT_DRAW_RESOLVED:
+      return getDefaultLootDrawContentTemplate();
     default:
       return getDefaultGuildNotificationRuleContentTemplate();
   }
@@ -513,6 +516,7 @@ export const useNotificationRuleForm = () => {
   const {
     isScheduledMessage,
     isHeroSighting,
+    isLootDraw,
     isTimerRule,
     isRecurring,
     showScheduledAtField,
@@ -635,22 +639,25 @@ export const useNotificationRuleForm = () => {
               npcLevelMin: values.npcLevelMin ?? null,
               npcLevelMax: values.npcLevelMax ?? null,
             }
-          : (() => {
-              const npcFilterPayload = buildNotificationRuleNpcFilterPayload(
-                getNotificationRuleNpcIdsForSubmit(values),
-              );
+          : values.triggerType === NotificationTriggerType.LOOT_DRAW_RESOLVED
+            ? { ...basePayload, world }
+            : (() => {
+                const npcFilterPayload = buildNotificationRuleNpcFilterPayload(
+                  getNotificationRuleNpcIdsForSubmit(values),
+                );
 
-              return {
-                ...basePayload,
-                world,
-                scheduleStrategy:
-                  NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE,
-                scheduleAnchor:
-                  values.scheduleAnchor ?? NotificationScheduleAnchor.MIN_SPAWN,
-                scheduleOffsetMinutes: Number(values.scheduleOffsetMinutes),
-                ...npcFilterPayload,
-              };
-            })();
+                return {
+                  ...basePayload,
+                  world,
+                  scheduleStrategy:
+                    NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE,
+                  scheduleAnchor:
+                    values.scheduleAnchor ??
+                    NotificationScheduleAnchor.MIN_SPAWN,
+                  scheduleOffsetMinutes: Number(values.scheduleOffsetMinutes),
+                  ...npcFilterPayload,
+                };
+              })();
 
     const saveErrorMessage = t(
       isCreateMode
@@ -695,6 +702,7 @@ export const useNotificationRuleForm = () => {
     isSubmitting,
     isScheduledMessage,
     isHeroSighting,
+    isLootDraw,
     isTimerRule,
     isRecurring,
     showScheduledAtField,

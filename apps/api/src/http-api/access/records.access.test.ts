@@ -10,11 +10,13 @@ import type {
 import type {
   LootCommentResponse,
   CreateLootCommentRequest,
+  LootDrawResponse,
 } from "#src/contracts/loots/schemas";
 
 import {
   createComment,
   createLootDraw,
+  voidLootDraw,
   createLoot,
   fetchLoot,
   fetchLoots,
@@ -366,49 +368,86 @@ describe("Kills and Loots HttpApi handlers", () => {
     expect(authorizationCalls).toEqual([Permission.LOOTLOG_LOOTS_WRITE]);
   });
 
-  it("keeps a member who cannot manage loots from drawing an item", async () => {
-    const error = await Effect.runPromise(
+  // Only loot managers may hold the capability below; members only read.
+  const readOnlyAuthorization = (calls: string[] = []) =>
+    makeAuthorization({
+      requireGuild: (options) => {
+        calls.push(options.capability);
+
+        return options.capability === Permission.LOOTLOG_LOOTS_ARCHIVE
+          ? Effect.fail(
+              new RecordsAccessDenied({ status: 403, code: "FORBIDDEN" }),
+            )
+          : Effect.succeed(guildCaller);
+      },
+    });
+
+  const drawEntrants = [
+    {
+      name: "Winner",
+      accountId: 1,
+      characterId: 1,
+      prof: "MAGE",
+      lvl: 300,
+      icon: null,
+      source: "WINNER",
+      tickets: 1,
+    },
+    {
+      name: "Outsider",
+      accountId: 2,
+      characterId: 2,
+      prof: "MAGE",
+      lvl: 300,
+      icon: null,
+      source: "MAP",
+      tickets: 1,
+    },
+  ] satisfies LootDrawResponse["entrants"];
+
+  it("lets a member who can read a loot draw its items", async () => {
+    const drawn = {
+      id: 7,
+      lootId: 42,
+      itemHid: "hid",
+      entrants: drawEntrants,
+      ticketOrder: [0, 1],
+      roll: 1,
+      winnerIndex: 1,
+      createdBy: { id: 1, name: "Member", avatar: null, userId: "user-1" },
+      createdAt: "2026-11-22T00:00:00.000Z",
+      voided: null,
+    } satisfies LootDrawResponse;
+
+    const authorizationCalls: string[] = [];
+
+    const result = await Effect.runPromise(
       createLootDraw("guild-a", 42, {
         itemHid: "hid",
-        entrants: [
-          {
-            name: "Winner",
-            accountId: 1,
-            characterId: 1,
-            prof: "MAGE",
-            lvl: 300,
-            icon: null,
-            source: "WINNER",
-            tickets: 1,
-          },
-          {
-            name: "Outsider",
-            accountId: 2,
-            characterId: 2,
-            prof: "MAGE",
-            lvl: 300,
-            icon: null,
-            source: "MAP",
-            tickets: 1,
-          },
-        ],
+        entrants: drawEntrants,
         ticketOrder: [0, 1],
       }).pipe(
+        Effect.provide(
+          services(
+            readOnlyAuthorization(authorizationCalls),
+            makeData({ createDraw: () => Effect.succeed(drawn) }),
+          ),
+        ),
+      ),
+    );
+
+    expect(result).toBe(drawn);
+    expect(authorizationCalls).toEqual([Permission.LOOTLOG_LOOTS_READ]);
+  });
+
+  it("keeps a member who cannot manage loots from voiding a draw", async () => {
+    const error = await Effect.runPromise(
+      voidLootDraw("guild-a", 42, 7, { reason: "Wróg" }).pipe(
         Effect.flip,
         Effect.provide(
           services(
-            makeAuthorization({
-              requireGuild: (options) =>
-                options.capability === Permission.LOOTLOG_LOOTS_ARCHIVE
-                  ? Effect.fail(
-                      new RecordsAccessDenied({
-                        status: 403,
-                        code: "FORBIDDEN",
-                      }),
-                    )
-                  : Effect.succeed(guildCaller),
-            }),
-            // Any data access would die: the draw must stop at authorization.
+            readOnlyAuthorization(),
+            // Any data access would die: the void must stop at authorization.
             makeData(),
           ),
         ),
