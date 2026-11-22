@@ -70,21 +70,27 @@ export type AdminAuditEntry = typeof AdminAuditEntry.Type;
 
 export const AdminUserParams = Schema.Struct({ id: Schema.NonEmptyString });
 
-const UserIds = Schema.Array(Schema.NonEmptyString).check(
-  Schema.isMaxLength(500),
-);
-
 export const AdminUsersQuery = Schema.Struct({
   search: Schema.optionalKey(Schema.String.check(Schema.isMaxLength(100))),
   role: Schema.optionalKey(PlatformRole),
   banned: Schema.optionalKey(Schema.Boolean),
-  userIds: Schema.optionalKey(UserIds),
-  excludedUserIds: Schema.optionalKey(UserIds),
   limit: Schema.optionalKey(PageSize.annotate({ default: 25 })),
   offset: Schema.optionalKey(NonNegativeSafeInteger.annotate({ default: 0 })),
 });
 
 export type AdminUsersQuery = typeof AdminUsersQuery.Type;
+
+const UserIds = Schema.Array(
+  Schema.NonEmptyString.check(Schema.isMaxLength(100)),
+).check(Schema.isMaxLength(20_000));
+
+export const SearchAdminUsers = Schema.Struct({
+  ...AdminUsersQuery.fields,
+  userIds: Schema.optionalKey(UserIds),
+  excludedUserIds: Schema.optionalKey(UserIds),
+}).annotate({ identifier: "SearchAdminUsers" });
+
+export type SearchAdminUsers = typeof SearchAdminUsers.Type;
 
 export const AdminUsersResponse = Schema.Struct({
   users: Schema.Array(AdminUser),

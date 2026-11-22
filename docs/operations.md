@@ -75,8 +75,9 @@ allows them only to a global chat admin, exactly as for the Game client's
 grant menu, so the operator also needs that role or a place in
 `GLOBAL_CHAT_ADMIN_USER_IDS`. The user list's aura filter asks the API for every
 holder of an aura grant (`/character-auras/grants`) under the same rule and
-passes their ids to the auth service's `/admin/users` as `userIds` or
-`excludedUserIds`. These changes are not written to
+passes their ids to the auth service's `POST /admin/users/search` as
+`userIds` or `excludedUserIds`, in the body so the list has no URL-length
+limit. `GET /admin/users` stays for panels deployed before it. These changes are not written to
 `admin_audit_log`. The panel refuses to start without `LOOTLOG_API_URL`, and
 its egress must reach that host.
 

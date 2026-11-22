@@ -23,6 +23,7 @@ import {
   AdminUserParams,
   AdminUserResponse,
   AdminUsersQuery,
+  SearchAdminUsers,
   AdminUsersResponse,
   BanAdminUser,
   SetAdminUserRoles,
@@ -52,6 +53,12 @@ export class AdminGroup extends HttpApiGroup.make("admin")
       error,
       success: AdminUsersResponse,
     }).annotate(OpenApi.Identifier, "AdminController_listUsers"),
+    HttpApiEndpoint.post("AdminSearchUsers", "/admin/users/search", {
+      headers,
+      payload: SearchAdminUsers,
+      error,
+      success: AdminUsersResponse,
+    }).annotate(OpenApi.Identifier, "AdminController_searchUsers"),
     HttpApiEndpoint.get("AdminGetUser", "/admin/users/:id", {
       headers,
       params: AdminUserParams,

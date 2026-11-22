@@ -1,10 +1,10 @@
 import {
   type AdminAuditEntry,
-  type AdminControllerListUsersParams,
   type AdminUsersResponse,
+  type SearchAdminUsers,
   adminControllerGetUser,
   adminControllerListAudit,
-  adminControllerListUsers,
+  adminControllerSearchUsers,
   adminControllerOverview,
   adminControllerSession,
 } from "@lootlog/client/auth";
@@ -89,16 +89,16 @@ export const getOverview = createServerFn({ method: "GET" }).handler(() =>
 export const listUsers = createServerFn({ method: "GET" })
   .validator(Schema.decodeUnknownSync(UsersInput))
   .handler(async ({ data }): Promise<UsersPage> => {
-    const params: AdminControllerListUsersParams = {
-      limit: `${USERS_PAGE_SIZE}`,
-      offset: `${(data.page - 1) * USERS_PAGE_SIZE}`,
+    const query: SearchAdminUsers = {
+      limit: USERS_PAGE_SIZE,
+      offset: (data.page - 1) * USERS_PAGE_SIZE,
     };
 
-    if (data.search) params.search = data.search.slice(0, 100);
+    if (data.search) query.search = data.search.slice(0, 100);
 
-    if (data.role) params.role = data.role;
+    if (data.role) query.role = data.role;
 
-    if (data.banned !== undefined) params.banned = `${data.banned}`;
+    if (data.banned !== undefined) query.banned = data.banned;
 
     if (data.aura !== undefined) {
       const holders = await listAuraHolderIds();
@@ -106,14 +106,11 @@ export const listUsers = createServerFn({ method: "GET" })
       if (holders.status !== "ok")
         return { users: [], total: 0, auraRefusal: holders.status };
 
-      if (data.aura && holders.value.length === 0)
-        return { users: [], total: 0 };
-
-      if (data.aura) params.userIds = [...holders.value];
-      else params.excludedUserIds = [...holders.value];
+      if (data.aura) query.userIds = [...holders.value];
+      else query.excludedUserIds = [...holders.value];
     }
 
-    return adminControllerListUsers(params, asPanel());
+    return adminControllerSearchUsers(query, asPanel());
   });
 
 export const getUser = createServerFn({ method: "GET" })

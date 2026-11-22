@@ -41,6 +41,9 @@ export const AdminHandlers = HttpApiBuilder.group(
       .handle("AdminListUsers", ({ query }) =>
         admin((service) => service.listUsers(query)),
       )
+      .handle("AdminSearchUsers", ({ payload }) =>
+        admin((service) => service.listUsers(payload)),
+      )
       .handle("AdminGetUser", ({ params }) =>
         admin((service) => service.getUser(params.id)),
       )

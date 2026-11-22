@@ -40,7 +40,7 @@ import {
 import type {
   AdminAuditEntry,
   AdminUser,
-  AdminUsersQuery,
+  SearchAdminUsers,
   BanAdminUser,
 } from "#src/http-api/contracts/admin/schemas";
 
@@ -148,7 +148,7 @@ export class AdminService extends Context.Service<
       ApplicationError
     >;
     readonly listUsers: (
-      query: AdminUsersQuery,
+      query: SearchAdminUsers,
     ) => Effect.Effect<
       { users: ReadonlyArray<AdminUser>; total: number },
       ApplicationError
