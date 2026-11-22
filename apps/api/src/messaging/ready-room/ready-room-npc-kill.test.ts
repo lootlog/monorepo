@@ -67,7 +67,7 @@ it("ends only gatherings whose every Lootlog recorded the kill", async () => {
       );
 
       return found
-        ? Schema.decodeUnknownEffect(schema)(found).pipe(Effect.orDie)
+        ? Schema.decodeEffect(schema)(found).pipe(Effect.orDie)
         : Effect.succeed(null);
     },
     eval: (script, keys, args) => {
@@ -85,7 +85,7 @@ it("ends only gatherings whose every Lootlog recorded the kill", async () => {
       }
 
       if (script === TERMINATE_READY_ROOM_SCRIPT) {
-        const next = Schema.decodeUnknownSync(
+        const next = Schema.decodeSync(
           Schema.fromJsonString(PartyReadyRoomAggregateSchema),
         )(String(args[1]));
 

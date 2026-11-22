@@ -55,11 +55,11 @@ return {connections, sessions, count, cjson.encode(listeners), cjson.encode(worl
 
 const decodeCounts = Schema.decodeUnknownSync(
   Schema.Tuple([
-    Schema.Number,
-    Schema.Number,
-    Schema.Number,
-    Schema.fromJsonString(Schema.Record(Schema.String, Schema.Number)),
-    Schema.fromJsonString(Schema.Record(Schema.String, Schema.Number)),
+    Schema.Finite,
+    Schema.Finite,
+    Schema.Finite,
+    Schema.fromJsonString(Schema.Record(Schema.String, Schema.Finite)),
+    Schema.fromJsonString(Schema.Record(Schema.String, Schema.Finite)),
   ]),
 );
 

@@ -12,10 +12,10 @@ export type AuthenticatedIdentity = {
   readonly discordId: string;
 };
 
-export class AccountOrganizationOperationError extends TaggedErrorClass<AccountOrganizationOperationError>()(
-  "AccountOrganizationOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class AccountOrganizationOperationError extends TaggedErrorClass<
+  AccountOrganizationOperationError,
+  { readonly brand: unique symbol }
+>()("AccountOrganizationOperationError", { cause: Schema.Defect() }) {}
 
 type DataEffect<A> = Effect.Effect<A, AccountOrganizationOperationError>;
 

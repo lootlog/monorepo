@@ -34,7 +34,7 @@ const isLootSplitAutoAcceptPayload = Schema.is(
 );
 
 type LootSplitRelayedEvent = Extract<
-  typeof ServerEvent.Type,
+  ServerEvent,
   { type: "loot-split.received" | "loot-split.auto-accepted" }
 >;
 

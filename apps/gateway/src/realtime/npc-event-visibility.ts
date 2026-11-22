@@ -21,7 +21,7 @@ import { Function, Option, Predicate, Schema } from "effect";
 import type { UserGuildData } from "#src/guilds/guild";
 import type { SessionData } from "#src/realtime/session";
 
-type Event = typeof ServerEvent.Type;
+type Event = ServerEvent;
 
 export const PartyGatheringEventSourceSchema = Schema.Struct({
   guildId: PartyGatheringUpdateEnvelopeSchema.fields.guildId,
@@ -71,13 +71,13 @@ const decodeReadyRoomOrganizer = Schema.decodeUnknownOption(
 const decodeNpc = Schema.decodeUnknownOption(
   Schema.Struct({
     ...NpcRoutingDataSchema.fields,
-    lvl: Schema.Number,
+    lvl: Schema.Finite,
   }),
 );
 
 const RoutingSchema = Schema.Struct({
   tier: NpcRoutingTierSchema,
-  npcLevel: Schema.optionalKey(Schema.Number),
+  npcLevel: Schema.optionalKey(Schema.Finite),
 });
 
 const decodeRouting = Schema.decodeUnknownOption(RoutingSchema);

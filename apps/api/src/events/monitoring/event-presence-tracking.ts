@@ -200,170 +200,163 @@ export const makeEventPresenceTracking = (
       );
     });
 
-  const handleInternal = (
+  const handleInternal = Effect.fn("events.presence.handle")(function* (
     guildId: string,
     mapName: string,
     discordId: string,
     hasPlayer: boolean,
     isAfk: boolean,
-  ) =>
-    Effect.gen(function* () {
-      const referenceTime = new Date(yield* Clock.currentTimeMillis);
+  ) {
+    const referenceTime = new Date(yield* Clock.currentTimeMillis);
 
-      const [activeMember, mapRows] = yield* Effect.all(
-        [
-          query(
-            "events.presence.member",
-            findActiveGuildMember(database, discordId, guildId),
-          ),
-          query(
-            "events.presence.maps",
-            database
-              .select({
-                map: eventMapTable,
-                hero: eventHeroNpcTable,
-                event: eventTable,
-              })
-              .from(eventMapTable)
-              .innerJoin(
-                eventHeroNpcTable,
-                eq(eventHeroNpcTable.id, eventMapTable.heroNpcId),
-              )
-              .innerJoin(
-                eventTable,
-                eq(eventTable.id, eventHeroNpcTable.eventId),
-              )
-              .where(
-                and(
-                  eq(eventMapTable.mapName, mapName),
-                  eq(eventTable.guildId, guildId),
-                  activeEventCondition(referenceTime),
-                ),
+    const [activeMember, mapRows] = yield* Effect.all(
+      [
+        query(
+          "events.presence.member",
+          findActiveGuildMember(database, discordId, guildId),
+        ),
+        query(
+          "events.presence.maps",
+          database
+            .select({
+              map: eventMapTable,
+              hero: eventHeroNpcTable,
+              event: eventTable,
+            })
+            .from(eventMapTable)
+            .innerJoin(
+              eventHeroNpcTable,
+              eq(eventHeroNpcTable.id, eventMapTable.heroNpcId),
+            )
+            .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
+            .where(
+              and(
+                eq(eventMapTable.mapName, mapName),
+                eq(eventTable.guildId, guildId),
+                activeEventCondition(referenceTime),
               ),
-          ),
-        ],
-        { concurrency: "unbounded" },
-      );
+            ),
+        ),
+      ],
+      { concurrency: "unbounded" },
+    );
 
-      if (mapRows.length === 0) return;
-      const mapIds = mapRows.map(({ map }) => map.id);
+    if (mapRows.length === 0) return;
+    const mapIds = mapRows.map(({ map }) => map.id);
 
-      const [assignmentRows, activeRows, hasTimer] = yield* Effect.all(
-        [
-          query(
-            "events.presence.assignments",
-            database
-              .select({
-                mapId: eventMapToMemberTable.A,
-                active: memberTable.active,
-              })
-              .from(eventMapToMemberTable)
-              .innerJoin(
-                memberTable,
-                eq(memberTable.id, eventMapToMemberTable.B),
-              )
-              .where(inArray(eventMapToMemberTable.A, mapIds)),
-          ),
-          query(
-            "events.presence.active",
-            database
-              .selectDistinct({
-                mapId: eventPresenceLogTable.mapId,
-                memberId: eventPresenceLogTable.memberId,
-              })
-              .from(eventPresenceLogTable)
-              .where(
-                and(
-                  inArray(eventPresenceLogTable.mapId, mapIds),
-                  isNull(eventPresenceLogTable.endedAt),
-                  eq(eventPresenceLogTable.isAfk, false),
-                ),
+    const [assignmentRows, activeRows, hasTimer] = yield* Effect.all(
+      [
+        query(
+          "events.presence.assignments",
+          database
+            .select({
+              mapId: eventMapToMemberTable.A,
+              active: memberTable.active,
+            })
+            .from(eventMapToMemberTable)
+            .innerJoin(memberTable, eq(memberTable.id, eventMapToMemberTable.B))
+            .where(inArray(eventMapToMemberTable.A, mapIds)),
+        ),
+        query(
+          "events.presence.active",
+          database
+            .selectDistinct({
+              mapId: eventPresenceLogTable.mapId,
+              memberId: eventPresenceLogTable.memberId,
+            })
+            .from(eventPresenceLogTable)
+            .where(
+              and(
+                inArray(eventPresenceLogTable.mapId, mapIds),
+                isNull(eventPresenceLogTable.endedAt),
+                eq(eventPresenceLogTable.isAfk, false),
               ),
-          ),
-          timers.hasEventRespawnTimers(
-            mapRows.map(({ hero, event }) => ({
-              guildId,
-              world: event.world,
-              npcId: getEventHeroNpcId(hero),
-              npcName: hero.npcName,
-            })),
-          ),
-        ],
-        { concurrency: "unbounded" },
-      );
+            ),
+        ),
+        timers.hasEventRespawnTimers(
+          mapRows.map(({ hero, event }) => ({
+            guildId,
+            world: event.world,
+            npcId: getEventHeroNpcId(hero),
+            npcName: hero.npcName,
+          })),
+        ),
+      ],
+      { concurrency: "unbounded" },
+    );
 
-      const member = activeMember ?? null;
-      yield* Effect.forEach(
-        mapRows.filter((_, index) => hasTimer[index]),
-        ({ map, hero, event }) =>
-          Effect.gen(function* () {
-            const mapAssignments = assignmentRows.filter(
-              ({ mapId }) => mapId === map.id,
-            );
+    const member = activeMember ?? null;
+    yield* Effect.forEach(
+      mapRows.filter((_, index) => hasTimer[index]),
+      ({ map, hero, event }) =>
+        Effect.gen(function* () {
+          const mapAssignments = assignmentRows.filter(
+            ({ mapId }) => mapId === map.id,
+          );
 
-            const assigned = mapAssignments.some(({ active }) => active);
+          const assigned = mapAssignments.some(({ active }) => active);
 
-            const nonAfk = new Set(
-              activeRows
-                .filter(({ mapId }) => mapId === map.id)
-                .map(({ memberId }) => memberId),
-            );
+          const nonAfk = new Set(
+            activeRows
+              .filter(({ mapId }) => mapId === map.id)
+              .map(({ memberId }) => memberId),
+          );
 
-            if (member) {
-              const endedAt = new Date(yield* Clock.currentTimeMillis);
-              yield* query(
-                "events.presence.close",
-                database
-                  .update(eventPresenceLogTable)
-                  .set({ endedAt })
-                  .where(
-                    and(
-                      eq(eventPresenceLogTable.mapId, map.id),
-                      eq(eventPresenceLogTable.memberId, member.id),
-                      isNull(eventPresenceLogTable.endedAt),
-                    ),
+          if (member) {
+            const endedAt = new Date(yield* Clock.currentTimeMillis);
+            yield* query(
+              "events.presence.close",
+              database
+                .update(eventPresenceLogTable)
+                .set({ endedAt })
+                .where(
+                  and(
+                    eq(eventPresenceLogTable.mapId, map.id),
+                    eq(eventPresenceLogTable.memberId, member.id),
+                    isNull(eventPresenceLogTable.endedAt),
                   ),
+                ),
+            );
+
+            if (hasPlayer) {
+              yield* query(
+                "events.presence.create",
+                database.insert(eventPresenceLogTable).values({
+                  id: Bun.randomUUIDv7(),
+                  mapId: map.id,
+                  memberId: member.id,
+                  isAfk,
+                }),
               );
 
-              if (hasPlayer) {
-                yield* query(
-                  "events.presence.create",
-                  database.insert(eventPresenceLogTable).values({
-                    id: Bun.randomUUIDv7(),
-                    mapId: map.id,
-                    memberId: member.id,
-                    isAfk,
-                  }),
-                );
-
-                if (isAfk) nonAfk.delete(member.id);
-                else nonAfk.add(member.id);
-              } else {
-                nonAfk.delete(member.id);
-              }
+              if (isAfk) nonAfk.delete(member.id);
+              else nonAfk.add(member.id);
+            } else {
+              nonAfk.delete(member.id);
             }
+          }
 
-            // Everyone assigned here has left the Discord server, so the map
-            // is now unassigned rather than uncovered.
-            if (!assigned && mapAssignments.length === 0) return;
+          // Everyone assigned here has left the Discord server, so the map
+          // is now unassigned rather than uncovered.
+          if (!assigned && mapAssignments.length === 0) return;
 
-            if (!assigned) {
-              yield* closeUncoveredGap(map.id);
-              yield* openUnassignedGap(map.id, hero.id);
-            } else if (nonAfk.size === 0)
-              yield* openUncoveredGap(map.id, hero.id);
-            else yield* closeUncoveredGap(map.id);
-            yield* publisher.emit(RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE, {
-              guildId,
-              eventId: event.id,
-              mapId: map.id,
-              heroNpcLvl: hero.npcLvl,
-              reason: "presence",
-            });
-          }),
-        { concurrency: "unbounded", discard: true },
-      );
-    }).pipe(Effect.withSpan("events.presence.handle"));
+          if (!assigned) {
+            yield* closeUncoveredGap(map.id);
+            yield* openUnassignedGap(map.id, hero.id);
+          } else if (nonAfk.size === 0)
+            yield* openUncoveredGap(map.id, hero.id);
+          else yield* closeUncoveredGap(map.id);
+          yield* publisher.emit(RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE, {
+            guildId,
+            eventId: event.id,
+            mapId: map.id,
+            heroNpcLvl: hero.npcLvl,
+            reason: "presence",
+          });
+        }),
+      { concurrency: "unbounded", discard: true },
+    );
+  });
 
   return {
     closeAllGapsForHero,

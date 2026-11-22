@@ -15,6 +15,94 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "ES2022"
+    "target": "ES2022",
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "diagnosticSeverity": {
+          "acquireReleaseDisposable": "error",
+          "allOfMapToForEach": "error",
+          "catchAllTagDispatchToCatchTag": "error",
+          "catchAllToMapError": "error",
+          "catchChainToFirstSuccessOf": "error",
+          "catchConditionalRefailToCatchIf": "error",
+          "catchDieToOrDie": "error",
+          "catchIfTagToCatchTag": "error",
+          "catchRefailToTapError": "error",
+          "catchTagToCatchReason": "error",
+          "catchToIgnore": "error",
+          "catchToOrElseSucceed": "error",
+          "catchUnfailableEffect": "error",
+          "effectFnOpportunity": "error",
+          "effectMapFlatten": "error",
+          "effectMapVoid": "error",
+          "effectSleepZeroToYieldNow": "error",
+          "effectSucceedWithUndefined": "error",
+          "effectSucceedWithVoid": "error",
+          "failCauseToConstructor": "error",
+          "flatMapConditionalToFilterOrFail": "error",
+          "flatMapIdentityToFlatten": "error",
+          "flatMapToMap": "error",
+          "flatMapToTap": "error",
+          "globalErrorInEffectCatch": "error",
+          "globalErrorInEffectFailure": "error",
+          "lazyEffect": "error",
+          "manualMetricTapToTrack": "error",
+          "mapConstToAs": "error",
+          "mapMapErrorToMapBoth": "error",
+          "mapSomeCatchNoSuchElement": "error",
+          "mapSomeToAsSome": "error",
+          "matchBooleanToIsSuccess": "error",
+          "matchEffectToMapBoth": "error",
+          "matchEffectToMatch": "error",
+          "matchToResultOrOption": "error",
+          "multipleCatchTag": "error",
+          "optionMatchToFromOption": "error",
+          "preferSucceedSomeOrNone": "error",
+          "preferTypedSchemaDecoder": "error",
+          "preferUnsafeConstructor": "error",
+          "provideLayerSucceedToProvideService": "error",
+          "provideMergeAllToArray": "error",
+          "raceFirstWithSleepToTimeout": "error",
+          "resultMatchToFromResult": "error",
+          "returnEffectInGen": "error",
+          "runEffectInsideEffect": "error",
+          "runOfExitToRunExit": "error",
+          "schemaClassMissingBrand": "error",
+          "schemaNumber": "error",
+          "schemaSyncInEffect": "error",
+          "suspendFailToFailSync": "error",
+          "syncToSucceed": "error",
+          "timeoutCatchTagToTimeoutOrElse": "error",
+          "tryCatchInEffectGen": "error",
+          "unknownInEffectCatch": "error",
+          "unnecessaryEffectGen": "error",
+          "unnecessaryFailYieldableError": "error",
+          "unnecessaryPipe": "error",
+          "unnecessaryPipeChain": "error",
+          "unnecessaryTypeofType": "error",
+          "missingReturnYieldStar": "off",
+          "overriddenSchemaConstructor": "off",
+          "unstableApiUsage": "off"
+        },
+        "overrides": [
+          {
+            "include": [
+              "../../**/*.test.ts",
+              "../../**/*.test.tsx",
+              "../../**/test/**/*.ts"
+            ],
+            "options": {
+              "diagnosticSeverity": {
+                "globalErrorInEffectFailure": "off",
+                "unknownInEffectCatch": "off",
+                "runEffectInsideEffect": "off",
+                "schemaSyncInEffect": "off"
+              }
+            }
+          }
+        ]
+      }
+    ]
   }
 }

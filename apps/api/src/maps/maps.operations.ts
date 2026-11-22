@@ -9,24 +9,24 @@ const cacheKey = "maps:all";
 
 const cacheTtlSeconds = 60 * 60;
 
-export class MapsOperationFailure extends TaggedErrorClass<MapsOperationFailure>()(
-  "MapsOperationFailure",
-  {
-    reason: Schema.Literals([
-      "cache",
-      "invalid-response",
-      "response-too-large",
-      "status",
-      "timeout",
-      "transport",
-    ]),
-    retryable: Schema.Boolean,
-    status: Schema.optional(Schema.Number),
-  },
-) {}
+export class MapsOperationFailure extends TaggedErrorClass<
+  MapsOperationFailure,
+  { readonly brand: unique symbol }
+>()("MapsOperationFailure", {
+  reason: Schema.Literals([
+    "cache",
+    "invalid-response",
+    "response-too-large",
+    "status",
+    "timeout",
+    "transport",
+  ]),
+  retryable: Schema.Boolean,
+  status: Schema.optional(Schema.Finite),
+}) {}
 
 const GameMapsJson = Schema.fromJsonString(
-  Schema.Array(Schema.Struct({ id: Schema.Number, name: Schema.String })),
+  Schema.Array(Schema.Struct({ id: Schema.Finite, name: Schema.String })),
 );
 
 const decodeGameMapsJson = Schema.decodeUnknownSync(GameMapsJson);
@@ -63,7 +63,7 @@ export const makeMapsOperation = (options: MapsOperationOptions) => {
     });
   });
 
-  return Effect.fn("MapsController_getMaps")(function* () {
+  return Effect.gen(function* () {
     const cached = yield* options.redis
       .get(cacheKey)
       .pipe(Effect.mapError(() => failure("cache")));
@@ -81,7 +81,7 @@ export const makeMapsOperation = (options: MapsOperationOptions) => {
       .pipe(Effect.mapError(() => failure("cache")));
 
     return maps;
-  })().pipe(
+  }).pipe(
     Effect.catch((error) =>
       Effect.logError("Failed to fetch maps").pipe(
         Effect.annotateLogs({ reason: error.reason }),

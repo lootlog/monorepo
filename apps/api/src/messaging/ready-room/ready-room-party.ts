@@ -87,18 +87,14 @@ export const observeWithRetry = (
       aggregate.organizerCharacter.accountId !== organizerAccountId ||
       aggregate.organizerCharacter.characterId !== organizerCharacterId
     ) {
-      return yield* Effect.fail(
-        new PermissionDeniedError({ code: "FORBIDDEN" }),
-      );
+      return yield* new PermissionDeniedError({ code: "FORBIDDEN" });
     }
 
     if (
       expectedRevision !== undefined &&
       aggregate.revision !== expectedRevision
     ) {
-      return yield* Effect.fail(
-        new ResourceConflictError({ code: "REVISION_CONFLICT" }),
-      );
+      return yield* new ResourceConflictError({ code: "REVISION_CONFLICT" });
     }
 
     const memberIds = new Set(memberCharacterIds);
@@ -162,16 +158,12 @@ export const observeWithRetry = (
     const result = yield* context.repository.commit(aggregate, next);
 
     if (result.status === "missing") {
-      return yield* Effect.fail(
-        new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
-      );
+      return yield* new ResourceNotFoundError({ code: "ROOM_EXPIRED" });
     }
 
     if (result.status === "conflict") {
       return expectedRevision !== undefined || attempt + 1 >= MAX_CAS_ATTEMPTS
-        ? yield* Effect.fail(
-            new ResourceConflictError({ code: "REVISION_CONFLICT" }),
-          )
+        ? yield* new ResourceConflictError({ code: "REVISION_CONFLICT" })
         : yield* observeWithRetry(
             context,
             discordId,
@@ -205,9 +197,7 @@ export const resolveInvitationTargets = (
     const aggregate = yield* context.getLive(notificationId);
 
     if (aggregate.organizerDiscordId !== identity.discordId) {
-      return yield* Effect.fail(
-        new PermissionDeniedError({ code: "FORBIDDEN" }),
-      );
+      return yield* new PermissionDeniedError({ code: "FORBIDDEN" });
     }
 
     const characters = new Set<string>();

@@ -179,8 +179,8 @@ export const makeBattleCatalog = (
         );
 
       if (!battle)
-        return yield* Effect.fail(
-          new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
+        return yield* new ResourceNotFoundError(
+          `Battle with ID ${battleId} not found`,
         );
 
       return battle;
@@ -218,8 +218,8 @@ export const makeBattleCatalog = (
         .pipe(withAdapterSpan("Battles_update", "battlelog-infrastructure"));
 
       if (updated.length === 0)
-        return yield* Effect.fail(
-          new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
+        return yield* new ResourceNotFoundError(
+          `Battle with ID ${battleId} not found`,
         );
 
       const battle = yield* drizzle.query.battles
@@ -232,8 +232,8 @@ export const makeBattleCatalog = (
         );
 
       if (!battle)
-        return yield* Effect.fail(
-          new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
+        return yield* new ResourceNotFoundError(
+          `Battle with ID ${battleId} not found`,
         );
 
       return battle;

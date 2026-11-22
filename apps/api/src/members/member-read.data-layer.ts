@@ -209,9 +209,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                 const [found] = members;
 
                 if (!found) {
-                  return yield* Effect.fail(
-                    new ResourceNotFoundError("Member not found"),
-                  );
+                  return yield* new ResourceNotFoundError("Member not found");
                 }
 
                 const { member, ownerId } = found;
@@ -407,11 +405,9 @@ export const MemberRefreshJobDataLive = Layer.effect(
 
             return job
               ? withCooldown(job)
-              : yield* Effect.fail(
-                  new ResourceNotFoundError({
-                    code: ErrorKey.REFRESH_JOB_NOT_FOUND,
-                  }),
-                );
+              : yield* new ResourceNotFoundError({
+                  code: ErrorKey.REFRESH_JOB_NOT_FOUND,
+                });
           }),
         ),
     });

@@ -21,7 +21,7 @@ export const DomainJsonValue: Schema.Codec<DomainJsonValue> = Schema.suspend(
     Schema.Union([
       IsoDateTime,
       Schema.String,
-      Schema.Number,
+      Schema.Finite,
       Schema.Boolean,
       Schema.Null,
       Schema.Undefined,

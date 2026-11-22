@@ -205,21 +205,19 @@ export const makeEventMapAssignments = (
     );
 
   return {
-    assignMember: (
-      guild: { id: string },
-      eventId: string,
-      mapId: string,
-      memberId: number,
-    ) =>
-      Effect.gen(function* () {
+    assignMember: Effect.fn("EventsAssignmentController_assignMember")(
+      function* (
+        guild: { id: string },
+        eventId: string,
+        mapId: string,
+        memberId: number,
+      ) {
         const scoped = yield* scopedMap(guild.id, eventId, mapId);
 
-        if (!scoped)
-          return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
+        if (!scoped) return yield* new ResourceNotFoundError("Map not found");
         const [current] = yield* hydrateMaps([scoped.map]);
 
-        if (!current)
-          return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
+        if (!current) return yield* new ResourceNotFoundError("Map not found");
         const members = current.assignedMembers;
 
         if (members.some(({ id }) => id === memberId)) return current;
@@ -240,9 +238,7 @@ export const makeEventMapAssignments = (
         );
 
         if (!memberRows[0])
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Member not found"),
-          );
+          return yield* new ResourceNotFoundError("Member not found");
 
         const effectiveNpcId = getEventHeroNpcId(scoped.hero);
 
@@ -262,18 +258,14 @@ export const makeEventMapAssignments = (
         });
 
         if (!availability.allowed)
-          return yield* Effect.fail(
-            new InvalidRequestError(
-              ASSIGNMENT_UNAVAILABLE_MESSAGES[availability.reason],
-            ),
+          return yield* new InvalidRequestError(
+            ASSIGNMENT_UNAVAILABLE_MESSAGES[availability.reason],
           );
         const cap = scoped.event.mapAssignmentCap;
 
         if (cap && cap > 0 && members.length >= cap)
-          return yield* Effect.fail(
-            new InvalidRequestError(
-              `Map assignment limit reached (${cap} members max)`,
-            ),
+          return yield* new InvalidRequestError(
+            `Map assignment limit reached (${cap} members max)`,
           );
         const wasUnassigned = members.length === 0;
         yield* query(
@@ -333,19 +325,19 @@ export const makeEventMapAssignments = (
         );
 
         return updated;
-      }).pipe(Effect.withSpan("EventsAssignmentController_assignMember")),
+      },
+    ),
 
-    unassignMember: (
-      guild: { id: string },
-      eventId: string,
-      mapId: string,
-      memberId?: number,
-    ) =>
-      Effect.gen(function* () {
+    unassignMember: Effect.fn("EventsAssignmentController_unassignMember")(
+      function* (
+        guild: { id: string },
+        eventId: string,
+        mapId: string,
+        memberId?: number,
+      ) {
         const scoped = yield* scopedMap(guild.id, eventId, mapId);
 
-        if (!scoped)
-          return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
+        if (!scoped) return yield* new ResourceNotFoundError("Map not found");
         const now = new Date(yield* Clock.currentTimeMillis);
         yield* query(
           "events.assignments.unassign.transaction",
@@ -392,7 +384,8 @@ export const makeEventMapAssignments = (
         );
 
         return updated;
-      }).pipe(Effect.withSpan("EventsAssignmentController_unassignMember")),
+      },
+    ),
   };
 };
 

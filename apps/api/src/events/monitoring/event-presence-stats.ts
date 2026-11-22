@@ -30,7 +30,7 @@ export const makeEventPresenceStats = (
       const hero = heroRows[0];
 
       if (!hero) {
-        return yield* Effect.fail(new ResourceNotFoundError("Hero not found"));
+        return yield* new ResourceNotFoundError("Hero not found");
       }
 
       const maps = yield* database

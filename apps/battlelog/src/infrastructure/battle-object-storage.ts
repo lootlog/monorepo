@@ -36,10 +36,10 @@ export type BattleObjectCache = Pick<
 >;
 
 /** R2 could not complete a request; the battle objects it names are unchanged or unread. */
-class BattleObjectStorageError extends TaggedErrorClass<BattleObjectStorageError>()(
-  "BattleObjectStorageError",
-  { cause: Schema.Defect() },
-) {}
+class BattleObjectStorageError extends TaggedErrorClass<
+  BattleObjectStorageError,
+  { readonly brand: unique symbol }
+>()("BattleObjectStorageError", { cause: Schema.Defect() }) {}
 
 const r2 = <A>(send: (signal: AbortSignal) => Promise<A>) =>
   Effect.tryPromise({
@@ -215,7 +215,7 @@ export const makeBattleObjectStorage = (
 
         return yield* Effect.try({
           try: () => decodeJson(cachedData),
-          catch: (cause) => cause,
+          catch: (cause) => new BattleObjectStorageError({ cause }),
         });
       }
 
@@ -223,7 +223,7 @@ export const makeBattleObjectStorage = (
 
       const parsedData = yield* Effect.try({
         try: () => decodeJson(data),
-        catch: (cause) => cause,
+        catch: (cause) => new BattleObjectStorageError({ cause }),
       });
 
       yield* cacheData(battleId, data);
@@ -261,9 +261,9 @@ export const makeBattleObjectStorage = (
 
         if (response.Errors?.some((error) => !error.Key)) {
           // Without a key no object in the batch is known to be removed.
-          return yield* Effect.fail(
-            new BattleObjectStorageError({ cause: response.Errors }),
-          );
+          return yield* new BattleObjectStorageError({
+            cause: response.Errors,
+          });
         }
 
         const errors = new Set(response.Errors?.map((error) => error.Key));

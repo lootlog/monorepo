@@ -357,15 +357,14 @@ export const makeCharacterAurasData = (
       }).pipe(Effect.mapError(operationError));
 
     return CharacterAurasData.of({
-      getAuras: () =>
-        cache.list(
-          shownAuras().pipe(
-            Effect.mapBoth({
-              onSuccess: (auras) => ({ auras }),
-              onFailure: operationError,
-            }),
-          ),
+      getAuras: cache.list(
+        shownAuras().pipe(
+          Effect.mapBoth({
+            onSuccess: (auras) => ({ auras }),
+            onFailure: operationError,
+          }),
         ),
+      ),
       getOwnAura,
       updateOwnAura: (userId, character, auraId) =>
         Effect.gen(function* () {

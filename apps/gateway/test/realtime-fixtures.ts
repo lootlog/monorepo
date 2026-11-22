@@ -258,7 +258,7 @@ export const startHubs = async (
     () => new RealtimeHub(config, bus.store),
   );
 
-  for (const hub of hubs) await Effect.runPromise(hub.start());
+  for (const hub of hubs) await Effect.runPromise(hub.start);
 
   return { hubs, bus };
 };

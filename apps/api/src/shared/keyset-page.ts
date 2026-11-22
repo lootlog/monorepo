@@ -35,9 +35,9 @@ export const decodePageCursor = <A, I>(
   schema: Schema.Codec<A, I>,
   cursor: string,
 ) =>
-  Schema.decodeUnknownEffect(EncodedCursor)(cursor).pipe(
+  Schema.decodeEffect(EncodedCursor)(cursor).pipe(
     Effect.flatMap((encoded) =>
-      Schema.decodeUnknownEffect(Schema.fromJsonString(schema), {
+      Schema.decodeEffect(Schema.fromJsonString(schema), {
         onExcessProperty: "error",
       })(Buffer.from(encoded, "base64url").toString("utf8")),
     ),

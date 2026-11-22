@@ -90,8 +90,9 @@ export const indexChangedDocuments = Effect.fn("Search.indexChangedDocuments")(
           }),
         ).pipe(
           Effect.map((stored) => changedDocuments(batch, stored.results)),
-          Effect.tap((changed) =>
-            Metric.update(skipped, batch.length - changed.length),
+          Effect.trackSuccesses(
+            skipped,
+            (changed) => batch.length - changed.length,
           ),
         ),
       { concurrency: 4 },

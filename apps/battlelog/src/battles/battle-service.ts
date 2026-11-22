@@ -34,8 +34,8 @@ export interface GetAllBattlesResult {
 const ParsedMoveSchema = Schema.Struct({
   attackerId: Schema.NullOr(Schema.String),
   defenderId: Schema.NullOr(Schema.String),
-  attackerHpPercentage: Schema.NullOr(Schema.Number),
-  defenderHpPercentage: Schema.NullOr(Schema.Number),
+  attackerHpPercentage: Schema.NullOr(Schema.Finite),
+  defenderHpPercentage: Schema.NullOr(Schema.Finite),
   actions: Schema.mutable(
     Schema.Array(
       Schema.Struct({ actionType: Schema.String, param: Schema.String }),

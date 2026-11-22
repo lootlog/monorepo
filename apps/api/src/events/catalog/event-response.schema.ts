@@ -9,15 +9,15 @@ import {
 
 const EventHeroNpcResponse = Schema.Struct({
   id: Schema.String,
-  npcId: Schema.NullOr(Schema.Number),
+  npcId: Schema.NullOr(Schema.Finite),
   npcName: Schema.String,
   npcIcon: Schema.NullOr(Schema.String),
-  npcLvl: Schema.NullOr(Schema.Number),
+  npcLvl: Schema.NullOr(Schema.Finite),
 });
 
 const EventMemberRoleResponse = Schema.Struct({
-  position: Schema.Number,
-  color: Schema.NullOr(Schema.Number),
+  position: Schema.Finite,
+  color: Schema.NullOr(Schema.Finite),
 });
 
 const EventAssignedMemberResponse = Schema.Struct({
@@ -27,7 +27,7 @@ const EventAssignedMemberResponse = Schema.Struct({
 
 const EventMapResponse = Schema.Struct({
   id: Schema.String,
-  mapId: Schema.Number,
+  mapId: Schema.Finite,
   mapName: Schema.String,
   locationId: Schema.NullOr(Schema.String),
   assignedMembers: Schema.Array(EventAssignedMemberResponse),
@@ -36,7 +36,7 @@ const EventMapResponse = Schema.Struct({
 const EventLocationResponse = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
-  order: Schema.Number,
+  order: Schema.Finite,
   maps: Schema.Array(EventMapResponse),
 });
 
@@ -55,12 +55,12 @@ export const EventListItemResponse = Schema.Struct({
 
 export const EventOverviewResponse = Schema.Struct({
   ...EventListItemResponse.fields,
-  basePointsPerKill: Schema.optionalKey(Schema.NullOr(Schema.Number)),
-  assignmentTimeoutMinutes: Schema.optionalKey(Schema.NullOr(Schema.Number)),
+  basePointsPerKill: Schema.optionalKey(Schema.NullOr(Schema.Finite)),
+  assignmentTimeoutMinutes: Schema.optionalKey(Schema.NullOr(Schema.Finite)),
   participationConfirmationMinutes: Schema.optionalKey(
-    Schema.NullOr(Schema.Number),
+    Schema.NullOr(Schema.Finite),
   ),
-  mapAssignmentCap: Schema.optionalKey(Schema.NullOr(Schema.Number)),
+  mapAssignmentCap: Schema.optionalKey(Schema.NullOr(Schema.Finite)),
   rulebookMarkdown: Schema.optionalKey(Schema.NullOr(Schema.String)),
   scoringMode: Schema.Literals(EVENT_SCORING_MODES),
   scoringRules: Schema.NullOr(jsonValueSchema),
@@ -97,9 +97,9 @@ const EventRankingMemberResponse = Schema.Struct({
 const RankingEditHistoryEntryResponse = Schema.Struct({
   id: Schema.String,
   rankingId: Schema.String,
-  previousPoints: Schema.Number,
-  newPoints: Schema.Number,
-  deltaPoints: Schema.Number,
+  previousPoints: Schema.Finite,
+  newPoints: Schema.Finite,
+  deltaPoints: Schema.Finite,
   editType: Schema.Literals(["KILL_POINT", "RANKING"]),
   editedByUserId: Schema.String,
   editedByName: Schema.NullOr(Schema.String),
@@ -110,12 +110,12 @@ const RankingEditHistoryEntryResponse = Schema.Struct({
 const EventRankingEntryResponse = Schema.Struct({
   id: Schema.String,
   eventId: Schema.String,
-  memberId: Schema.Number,
+  memberId: Schema.Finite,
   heroNpcName: Schema.String,
-  totalPoints: Schema.Number,
-  totalKills: Schema.Number,
-  totalTimeSeconds: Schema.Number,
-  avgAfkPercentage: Schema.Number,
+  totalPoints: Schema.Finite,
+  totalKills: Schema.Finite,
+  totalTimeSeconds: Schema.Finite,
+  avgAfkPercentage: Schema.Finite,
   pointsModified: Schema.Boolean,
   updatedAt: IsoDateTime,
   member: EventRankingMemberResponse,
@@ -137,7 +137,7 @@ export const PendingParticipationConfirmationsResponse = Schema.Struct({
 });
 
 const EventTimerResponse = Schema.Struct({
-  npcId: Schema.Number,
+  npcId: Schema.Finite,
   world: Schema.String,
   minSpawnTime: IsoDateTime,
   maxSpawnTime: IsoDateTime,

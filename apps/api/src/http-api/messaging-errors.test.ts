@@ -159,11 +159,7 @@ afterAll(async () => {
   await databaseBoundary.dispose();
 });
 
-const request = (
-  method: string,
-  path: string,
-  body?: typeof Schema.Json.Type,
-) =>
+const request = (method: string, path: string, body?: Schema.Json) =>
   boundary.handler(
     new Request(`http://api.test${path}`, {
       method,

@@ -1,5 +1,6 @@
 import {
   baseServiceConfig,
+  InvalidServiceConfiguration,
   type BaseServiceConfiguration,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
@@ -32,19 +33,16 @@ export class ActivityConfig extends Context.Service<
         ? configuredSecret.value
         : environment === RuntimeEnvironment.PROD ||
             environment === RuntimeEnvironment.STAGING
-          ? yield* Effect.fail(
-              new Error(
-                `ACTIVITY_EVENT_SIGNATURE_SECRET is required when ENV=${environment}`,
-              ),
-            )
+          ? yield* new InvalidServiceConfiguration({
+              message: `ACTIVITY_EVENT_SIGNATURE_SECRET is required when ENV=${environment}`,
+            })
           : Redacted.make("local-development-activity-event-signature-secret");
 
       if (Redacted.value(signatureSecret).length < 32)
-        return yield* Effect.fail(
-          new Error(
+        return yield* new InvalidServiceConfiguration({
+          message:
             "ACTIVITY_EVENT_SIGNATURE_SECRET must contain at least 32 characters",
-          ),
-        );
+        });
       const redisHost = yield* Config.option(Config.String("REDIS_HOST"));
 
       return ActivityConfig.of({
@@ -55,9 +53,9 @@ export class ActivityConfig extends Context.Service<
           ? yield* redisUrlConfig
           : environment === RuntimeEnvironment.LOCAL
             ? undefined
-            : yield* Effect.fail(
-                new Error(`REDIS_HOST is required when ENV=${environment}`),
-              ),
+            : yield* new InvalidServiceConfiguration({
+                message: `REDIS_HOST is required when ENV=${environment}`,
+              }),
         apiServiceUrl: yield* Config.String("API_SERVICE_URL"),
         signatureSecret,
       });

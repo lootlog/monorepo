@@ -15,9 +15,9 @@ import { RealtimeDependencyError } from "#src/realtime/realtime-errors";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 import type { ConsumedRoutingKey } from "#src/rabbit/gateway-queues";
 
-type Event = typeof ServerEvent.Type;
+type Event = ServerEvent;
 
-type Scope = typeof SubscriptionScope.Type;
+type Scope = SubscriptionScope;
 
 const globalChatChannelEvent = (update: GlobalChatChannelUpdate): Event => {
   if (update.type === "deleted") {

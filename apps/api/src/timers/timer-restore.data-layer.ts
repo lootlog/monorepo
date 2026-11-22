@@ -54,17 +54,13 @@ const resolveResetRollbackSnapshot = Effect.fnUntraced(function* (
     .limit(2);
 
   if (!isCurrentTimerReset(entry, current, latest)) {
-    return yield* Effect.fail(
-      new ResourceConflictError({ code: ErrorKey.EXISTING_TIMER }),
-    );
+    return yield* new ResourceConflictError({ code: ErrorKey.EXISTING_TIMER });
   }
 
   if (previous && !canViewTimer(access, previous)) {
-    return yield* Effect.fail(
-      new ResourceNotFoundError({
-        code: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
-      }),
-    );
+    return yield* new ResourceNotFoundError({
+      code: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
+    });
   }
 
   return getTimerResetRollbackSnapshot(entry, current, latest, previous);
@@ -94,22 +90,18 @@ export const makeRestoreTimer = (
         const entry = historyRows[0];
 
         if (!entry || !canViewTimer(access, entry)) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError({
-              code: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
-            }),
-          );
+          return yield* new ResourceNotFoundError({
+            code: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
+          });
         }
 
         const rollbackReset = entry.action === TimerHistoryAction.RESET;
         let snapshot = getTimerRestoreSnapshot(entry);
 
         if (rollbackReset ? !getTimerHistorySnapshot(entry) : !snapshot) {
-          return yield* Effect.fail(
-            new InvalidRequestError({
-              code: ErrorKey.TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED,
-            }),
-          );
+          return yield* new InvalidRequestError({
+            code: ErrorKey.TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED,
+          });
         }
 
         const timerScope = and(
@@ -129,11 +121,9 @@ export const makeRestoreTimer = (
           : currentQuery;
 
         if (existingRows.some((timer) => !canViewTimer(access, timer))) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError({
-              code: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
-            }),
-          );
+          return yield* new ResourceNotFoundError({
+            code: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
+          });
         }
 
         if (rollbackReset) {
@@ -144,17 +134,15 @@ export const makeRestoreTimer = (
             existingRows[0],
           );
         } else if (existingRows[0]?.deletedAt === null) {
-          return yield* Effect.fail(
-            new ResourceConflictError({ code: ErrorKey.EXISTING_TIMER }),
-          );
+          return yield* new ResourceConflictError({
+            code: ErrorKey.EXISTING_TIMER,
+          });
         }
 
         if (!snapshot) {
-          return yield* Effect.fail(
-            new InvalidRequestError({
-              code: ErrorKey.TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED,
-            }),
-          );
+          return yield* new InvalidRequestError({
+            code: ErrorKey.TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED,
+          });
         }
 
         const now = new Date(yield* Clock.currentTimeMillis);
@@ -168,11 +156,9 @@ export const makeRestoreTimer = (
         );
 
         if (activeEventHeroes.length > 0) {
-          return yield* Effect.fail(
-            new InvalidRequestError({
-              code: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET,
-            }),
-          );
+          return yield* new InvalidRequestError({
+            code: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET,
+          });
         }
 
         const restoredRows = yield* rollbackReset
@@ -210,9 +196,9 @@ export const makeRestoreTimer = (
         const restored = restoredRows[0];
 
         if (!restored)
-          return yield* Effect.fail(
-            new ResourceConflictError({ code: ErrorKey.EXISTING_TIMER }),
-          );
+          return yield* new ResourceConflictError({
+            code: ErrorKey.EXISTING_TIMER,
+          });
 
         const actor = yield* findActiveGuildMember(
           transaction,

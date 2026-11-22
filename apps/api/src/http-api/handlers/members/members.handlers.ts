@@ -43,15 +43,18 @@ export type MembersGuildAccess = MembersIdentity & {
   readonly permissions: ReadonlyArray<PermissionValue>;
 };
 
-export class MembersAccessDenied extends TaggedErrorClass<MembersAccessDenied>()(
-  "MembersAccessDenied",
-  { status: Schema.Literals([401, 403]), code: Schema.String },
-) {}
+export class MembersAccessDenied extends TaggedErrorClass<
+  MembersAccessDenied,
+  { readonly brand: unique symbol }
+>()("MembersAccessDenied", {
+  status: Schema.Literals([401, 403]),
+  code: Schema.String,
+}) {}
 
-export class MembersNotFound extends TaggedErrorClass<MembersNotFound>()(
-  "MembersNotFound",
-  { status: Schema.Literal(404), code: Schema.String },
-) {}
+export class MembersNotFound extends TaggedErrorClass<
+  MembersNotFound,
+  { readonly brand: unique symbol }
+>()("MembersNotFound", { status: Schema.Literal(404), code: Schema.String }) {}
 
 type AccessFailure =
   | MembersAccessDenied

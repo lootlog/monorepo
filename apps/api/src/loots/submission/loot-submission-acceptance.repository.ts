@@ -497,9 +497,7 @@ export const makeLootSubmissionAcceptancePersistence = (
         const loot = createdLoots[0];
 
         if (!loot) {
-          return yield* Effect.fail(
-            new DependencyUnavailableError("Failed to create loot"),
-          );
+          return yield* new DependencyUnavailableError("Failed to create loot");
         }
 
         // Snapshot tables are resolved in one order (items, players, NPCs) so

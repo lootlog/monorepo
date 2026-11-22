@@ -26,7 +26,7 @@ const runWith = (
   return Effect.runPromise(
     Effect.flatMap(ApiHttpClient, (client) =>
       client.get(operationId, "https://api.internal/resource"),
-    ).pipe(Effect.provide(ApiHttpClient.layer), Effect.provide(fetchLayer)),
+    ).pipe(Effect.provide(Layer.provide(ApiHttpClient.layer, fetchLayer))),
   );
 };
 

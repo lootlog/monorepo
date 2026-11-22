@@ -26,10 +26,13 @@ import {
   type UpdateNpcLootlogConfigRequest,
 } from "#src/contracts/lootlog-config/schemas";
 
-export class LootlogConfigAccessDenied extends TaggedErrorClass<LootlogConfigAccessDenied>()(
-  "LootlogConfigAccessDenied",
-  { status: Schema.Literals([401, 403, 404]), code: Schema.String },
-) {}
+export class LootlogConfigAccessDenied extends TaggedErrorClass<
+  LootlogConfigAccessDenied,
+  { readonly brand: unique symbol }
+>()("LootlogConfigAccessDenied", {
+  status: Schema.Literals([401, 403, 404]),
+  code: Schema.String,
+}) {}
 
 export class LootlogConfigAuthorization extends Context.Service<
   LootlogConfigAuthorization,
@@ -86,7 +89,7 @@ export const updateLootlogConfigNpc = Effect.fn("updateLootlogConfigNpc")(
     const { guildId } = yield* authorize(requestedGuildId);
     const data = yield* LootlogConfigData;
 
-    return yield* Schema.decodeUnknownEffect(NpcLootlogConfigResponse)(
+    return yield* Schema.decodeEffect(NpcLootlogConfigResponse)(
       yield* data.updateNpc(guildId, npcId, payload),
     ).pipe(
       Effect.mapError((cause) => new LootlogConfigOperationError({ cause })),

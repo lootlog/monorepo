@@ -55,10 +55,10 @@ const MAX_ICON_BYTES = 2_000_000;
 
 const REFRESH_COOLDOWN_SECONDS = 300;
 
-export class PublicGuildStatsCardAdapterError extends TaggedErrorClass<PublicGuildStatsCardAdapterError>()(
-  "PublicGuildStatsCardAdapterError",
-  { cause: Schema.Defect() },
-) {}
+export class PublicGuildStatsCardAdapterError extends TaggedErrorClass<
+  PublicGuildStatsCardAdapterError,
+  { readonly brand: unique symbol }
+>()("PublicGuildStatsCardAdapterError", { cause: Schema.Defect() }) {}
 
 export interface PublicGuildStatsCardCache {
   readonly get: (
@@ -174,17 +174,15 @@ export const makePublicGuildStatsCard = (options: {
           const activeNextRefreshAt =
             (yield* options.cache.get(cooldownKey)) ?? nextRefreshAt;
 
-          return yield* Effect.fail(
-            new RateLimitedError({
-              code: "STATS_CARD_REFRESH_COOLDOWN",
-              message: "Stats card refresh is rate limited",
-              details: { nextRefreshAt: activeNextRefreshAt },
-              retryAfterMs: Math.max(
-                0,
-                new Date(activeNextRefreshAt).getTime() - now,
-              ),
-            }),
-          );
+          return yield* new RateLimitedError({
+            code: "STATS_CARD_REFRESH_COOLDOWN",
+            message: "Stats card refresh is rate limited",
+            details: { nextRefreshAt: activeNextRefreshAt },
+            retryAfterMs: Math.max(
+              0,
+              new Date(activeNextRefreshAt).getTime() - now,
+            ),
+          });
         }
 
         yield* render(guild, guildId).pipe(

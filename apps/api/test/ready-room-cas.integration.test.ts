@@ -317,7 +317,7 @@ return 1`,
     const publisher = makeGatheringUpdatePublisher({
       publish: (message) =>
         Effect.gen(function* () {
-          const envelope = Schema.decodeUnknownSync(
+          const envelope = Schema.decodeSync(
             Schema.fromJsonString(PartyGatheringUpdateEnvelopeSchema),
           )(new TextDecoder().decode(message.content));
 

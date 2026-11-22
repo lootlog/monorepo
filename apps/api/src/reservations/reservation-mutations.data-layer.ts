@@ -367,11 +367,9 @@ export const makeReservationMutationsDataLayer = (
           );
 
           if (!member || !guild) {
-            return yield* Effect.fail(
-              new PermissionDeniedError({
-                code: "RESERVATION_MEMBER_REQUIRED",
-              }),
-            );
+            return yield* new PermissionDeniedError({
+              code: "RESERVATION_MEMBER_REQUIRED",
+            });
           }
 
           const settings = resolveReservationSettings(guild);
@@ -381,10 +379,7 @@ export const makeReservationMutationsDataLayer = (
             endsAt: new Date(data.endsAt),
           };
 
-          yield* Effect.try({
-            try: () => validateReservationTime({ ...range, settings }),
-            catch: (cause) => cause,
-          });
+          yield* validateReservationTime({ ...range, settings });
           const reminderMinutesBefore = data.reminderMinutesBefore ?? null;
 
           const reminderContext = yield* prepareReminder(database, {
@@ -469,18 +464,16 @@ export const makeReservationMutationsDataLayer = (
           );
 
           if (createResult.kind === "overlap") {
-            return yield* Effect.fail(
-              new ResourceConflictError({ code: "RESERVATION_OVERLAP" }),
-            );
+            return yield* new ResourceConflictError({
+              code: "RESERVATION_OVERLAP",
+            });
           }
 
           if (createResult.kind === "active-limit") {
-            return yield* Effect.fail(
-              new InvalidEntityError({
-                code: "ACTIVE_LIMIT_REACHED",
-                details: { limit: settings.reservationActiveLimitPerSpot },
-              }),
-            );
+            return yield* new InvalidEntityError({
+              code: "ACTIVE_LIMIT_REACHED",
+              details: { limit: settings.reservationActiveLimitPerSpot },
+            });
           }
 
           if (createResult.kind === "insert-failed") {
@@ -533,9 +526,9 @@ export const makeReservationMutationsDataLayer = (
           const reservation = yield* findOwned({ ...options, guildIds });
 
           if (!reservation) {
-            return yield* Effect.fail(
-              new ResourceNotFoundError({ code: "RESERVATION_NOT_FOUND" }),
-            );
+            return yield* new ResourceNotFoundError({
+              code: "RESERVATION_NOT_FOUND",
+            });
           }
 
           const range = {
@@ -571,15 +564,11 @@ export const makeReservationMutationsDataLayer = (
           );
 
           if (timeChanged) {
-            yield* Effect.try({
-              try: () =>
-                validateReservationTime({
-                  ...range,
-                  settings: resolveReservationSettings(reservation.guild),
-                  allowPastStart:
-                    range.startsAt.getTime() === reservation.startsAt.getTime(),
-                }),
-              catch: (cause) => cause,
+            yield* validateReservationTime({
+              ...range,
+              settings: resolveReservationSettings(reservation.guild),
+              allowPastStart:
+                range.startsAt.getTime() === reservation.startsAt.getTime(),
             });
           }
 
@@ -637,9 +626,9 @@ export const makeReservationMutationsDataLayer = (
           );
 
           if (!updateResult) {
-            return yield* Effect.fail(
-              new ResourceConflictError({ code: "RESERVATION_OVERLAP" }),
-            );
+            return yield* new ResourceConflictError({
+              code: "RESERVATION_OVERLAP",
+            });
           }
 
           const updated = { ...updateResult, guild: reservation.guild };
@@ -710,9 +699,9 @@ export const makeReservationMutationsDataLayer = (
               const reservation = yield* findVisible(reservationId, visible);
 
               if (!reservation) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError({ code: "RESERVATION_NOT_FOUND" }),
-                );
+                return yield* new ResourceNotFoundError({
+                  code: "RESERVATION_NOT_FOUND",
+                });
               }
 
               const isOwned =
@@ -724,11 +713,9 @@ export const makeReservationMutationsDataLayer = (
                 canModerateReservations(context);
 
               if (!isOwned && !canModerateSource) {
-                return yield* Effect.fail(
-                  new PermissionDeniedError({
-                    code: "RESERVATION_DELETE_FORBIDDEN",
-                  }),
-                );
+                return yield* new PermissionDeniedError({
+                  code: "RESERVATION_DELETE_FORBIDDEN",
+                });
               }
 
               const audienceGuildIds =
@@ -764,9 +751,9 @@ export const makeReservationMutationsDataLayer = (
               });
 
               if (!reservation) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError({ code: "RESERVATION_NOT_FOUND" }),
-                );
+                return yield* new ResourceNotFoundError({
+                  code: "RESERVATION_NOT_FOUND",
+                });
               }
 
               yield* deletePersisted({

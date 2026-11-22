@@ -33,33 +33,33 @@ import {
   type Scope,
 } from "effect";
 
-export class MessagingError extends TaggedErrorClass<MessagingError>()(
-  "MessagingError",
-  {
-    operation: Schema.Literals([
-      "ack",
-      "cancel",
-      "close",
-      "connect",
-      "consume",
-      "nack",
-      "publish",
-      "topology",
-    ]),
-    message: Schema.String,
-    cause: Schema.Defect(),
-  },
-) {}
+export class MessagingError extends TaggedErrorClass<
+  MessagingError,
+  { readonly brand: unique symbol }
+>()("MessagingError", {
+  operation: Schema.Literals([
+    "ack",
+    "cancel",
+    "close",
+    "connect",
+    "consume",
+    "nack",
+    "publish",
+    "topology",
+  ]),
+  message: Schema.String,
+  cause: Schema.Defect(),
+}) {}
 
 /**
  * Fails a delivery that can never succeed, such as a payload that does not
  * decode. Retry and dead-letter policies send it straight to the dead-letter
  * queue; nack and requeue policies reject it without requeueing.
  */
-export class UnprocessableDelivery extends TaggedErrorClass<UnprocessableDelivery>()(
-  "UnprocessableDelivery",
-  { cause: Schema.Defect() },
-) {}
+export class UnprocessableDelivery extends TaggedErrorClass<
+  UnprocessableDelivery,
+  { readonly brand: unique symbol }
+>()("UnprocessableDelivery", { cause: Schema.Defect() }) {}
 
 const isUnprocessableDelivery = Schema.is(UnprocessableDelivery);
 
@@ -401,11 +401,7 @@ const makeService = (
       persistent: delivery.properties.deliveryMode === 2,
     }).pipe(
       Effect.andThen(ack(delivery)),
-      Effect.catch((publishError) =>
-        nack(delivery, { requeue: true }).pipe(
-          Effect.andThen(Effect.fail(publishError)),
-        ),
-      ),
+      Effect.tapError(() => nack(delivery, { requeue: true })),
     );
   };
 

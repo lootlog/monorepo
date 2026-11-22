@@ -213,7 +213,7 @@ const cacheKey = (
   ].join(":");
 };
 
-const normalizeCachedPage = (page: typeof LootListResponse.Type): LootPage => ({
+const normalizeCachedPage = (page: LootListResponse): LootPage => ({
   nextCursor: page.nextCursor,
   items: page.items.map((loot) => ({
     ...loot,
@@ -294,7 +294,7 @@ export const makeLootsOperations = ({
           options.lootId,
         );
 
-        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+        if (!loot) return yield* new ResourceNotFoundError();
 
         return yield* persistence.listComments(
           options.guild.id,
@@ -312,9 +312,9 @@ export const makeLootsOperations = ({
         );
 
         if (!loot) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError({ code: ErrorKey.CANT_DELETE_LOOT }),
-          );
+          return yield* new ResourceNotFoundError({
+            code: ErrorKey.CANT_DELETE_LOOT,
+          });
         }
 
         const archived = yield* persistence.archive({
@@ -325,9 +325,9 @@ export const makeLootsOperations = ({
         });
 
         if (!archived) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError({ code: ErrorKey.CANT_DELETE_LOOT }),
-          );
+          return yield* new ResourceNotFoundError({
+            code: ErrorKey.CANT_DELETE_LOOT,
+          });
         }
 
         yield* invalidateList([options.guild.id]);
@@ -342,7 +342,7 @@ export const makeLootsOperations = ({
           options.lootId,
         );
 
-        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+        if (!loot) return yield* new ResourceNotFoundError();
 
         const comment = yield* persistence.createComment({
           discordId: options.discordId,
@@ -365,7 +365,7 @@ export const makeLootsOperations = ({
           options.lootId,
         );
 
-        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+        if (!loot) return yield* new ResourceNotFoundError();
 
         return yield* persistence.listDraws(options.guild.id, options.lootId);
       }),
@@ -381,7 +381,7 @@ export const makeLootsOperations = ({
           options.lootId,
         );
 
-        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+        if (!loot) return yield* new ResourceNotFoundError();
 
         const built = buildLootDrawEntrants(
           loot,
@@ -390,9 +390,7 @@ export const makeLootsOperations = ({
         );
 
         if ("error" in built) {
-          return yield* Effect.fail(
-            new InvalidRequestError({ code: built.error }),
-          );
+          return yield* new InvalidRequestError({ code: built.error });
         }
 
         const { ticketOrder } = options.body;
@@ -425,7 +423,7 @@ export const makeLootsOperations = ({
           options.lootId,
         );
 
-        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+        if (!loot) return yield* new ResourceNotFoundError();
 
         const draw = yield* persistence.voidDraw({
           discordId: options.discordId,
@@ -450,7 +448,7 @@ export const makeLootsOperations = ({
           options.lootId,
         );
 
-        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+        if (!loot) return yield* new ResourceNotFoundError();
 
         const likes = yield* persistence.setLike({
           discordId: options.discordId,
@@ -459,7 +457,7 @@ export const makeLootsOperations = ({
           liked: options.liked,
         });
 
-        if (!likes) return yield* Effect.fail(new ResourceNotFoundError());
+        if (!likes) return yield* new ResourceNotFoundError();
 
         yield* invalidateList([options.guild.id]);
 
@@ -479,9 +477,7 @@ export const makeLootsOperations = ({
             : yield* decodePageCursor(LootListCursor, cursor);
 
         if (after && after.filters !== fingerprint) {
-          return yield* Effect.fail(
-            new InvalidRequestError({ code: "INVALID_CURSOR" }),
-          );
+          return yield* new InvalidRequestError({ code: "INVALID_CURSOR" });
         }
 
         const read = query

@@ -21,10 +21,10 @@ import {
   type PlayersCatchingOrganizationsRequest,
 } from "#src/contracts/user-lootlog-config/schemas";
 
-export class UserLootlogConfigOperationError extends TaggedErrorClass<UserLootlogConfigOperationError>()(
-  "UserLootlogConfigOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class UserLootlogConfigOperationError extends TaggedErrorClass<
+  UserLootlogConfigOperationError,
+  { readonly brand: unique symbol }
+>()("UserLootlogConfigOperationError", { cause: Schema.Defect() }) {}
 
 type Operation<A> = Effect.Effect<A, UserLootlogConfigOperationError>;
 

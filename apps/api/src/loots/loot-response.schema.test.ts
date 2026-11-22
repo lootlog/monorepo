@@ -30,7 +30,7 @@ describe("LootResponse", () => {
       standingDraws: [],
     } as const;
 
-    const decoded = Schema.decodeUnknownSync(LootResponse)(wire);
+    const decoded = Schema.decodeSync(LootResponse)(wire);
     expect(decoded.createdAt).toBeInstanceOf(Date);
     expect(Schema.encodeSync(LootResponse)(decoded)).toEqual(wire);
   });

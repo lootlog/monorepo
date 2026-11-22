@@ -149,7 +149,7 @@ const setup = async () => {
     return { store, hub, commands, presence };
   });
 
-  for (const replica of replicas) await Effect.runPromise(replica.hub.start());
+  for (const replica of replicas) await Effect.runPromise(replica.hub.start);
   const first = replicas[0];
 
   if (!first) throw new Error("Missing first replica");

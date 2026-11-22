@@ -45,7 +45,7 @@ describe("Read cache Dragonfly integration", () => {
   let cache: RedisService;
 
   const codec = makeJsonCodec(
-    Schema.NullOr(Schema.Struct({ value: Schema.Number })),
+    Schema.NullOr(Schema.Struct({ value: Schema.Finite })),
   );
 
   const organization = randomUUID();
@@ -722,13 +722,13 @@ describe("Read cache Dragonfly integration", () => {
               characters: [],
             });
           }).pipe(
-            Effect.provide(makeMemberReadDataLayer(cache)),
-            Effect.provide(
+            Effect.provide([
+              makeMemberReadDataLayer(cache),
               UserLootlogConfigData.layerDatabase({
                 getOrSetJsonEffect: cache.getOrSetJson,
                 invalidateScopes: cache.invalidateScopes,
               }),
-            ),
+            ]),
           );
         }),
       );
@@ -825,13 +825,13 @@ describe("Read cache Dragonfly integration", () => {
               yield* members.getGuildMemberReferences(guildId, true),
             ).toMatchObject([{ userId: discordId, active: false }]);
           }).pipe(
-            Effect.provide(makeMemberReadDataLayer(cache)),
-            Effect.provide(
+            Effect.provide([
+              makeMemberReadDataLayer(cache),
               UserLootlogConfigData.layerDatabase({
                 getOrSetJsonEffect: cache.getOrSetJson,
                 invalidateScopes: cache.invalidateScopes,
               }),
-            ),
+            ]),
           );
         }),
       );

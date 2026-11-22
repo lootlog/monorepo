@@ -468,13 +468,13 @@ const readSnapshot = (
   world?: string,
 ) => Effect.runPromise(store.snapshot(viewer, organizationId, world));
 
-const flush = (store: PresenceStore) => Effect.runPromise(store.flushDeltas());
+const flush = (store: PresenceStore) => Effect.runPromise(store.flushDeltas);
 
 const sweepExpired = (store: PresenceStore) =>
-  Effect.runPromise(store.sweepExpired());
+  Effect.runPromise(store.sweepExpired);
 
 const sweepOffline = (store: PresenceStore) =>
-  Effect.runPromise(store.sweepOffline());
+  Effect.runPromise(store.sweepOffline);
 
 const deltaChanges = (hub: RecordingHub, action: "upsert" | "remove") =>
   hub.presenceEvents.flatMap(({ basic }) =>
@@ -692,7 +692,7 @@ describe("PresenceStore", () => {
 
     const controller = new AbortController();
 
-    const flushing = Effect.runPromiseExit(store.flushDeltas(), {
+    const flushing = Effect.runPromiseExit(store.flushDeltas, {
       signal: controller.signal,
     });
 
@@ -1296,7 +1296,7 @@ test("expiry cleanup resumes after a transient Redis failure", async () => {
 
   await Effect.runPromise(
     Effect.gen(function* () {
-      yield* store.runExpirySweep().pipe(Effect.forkScoped);
+      yield* store.runExpirySweep.pipe(Effect.forkScoped);
       yield* TestClock.adjust("5 seconds");
       expect(attempts).toBe(2);
     }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
@@ -1383,7 +1383,7 @@ describe("game character offline grace", () => {
     }
 
     const { store } = offlineStore(new StalledRedis(), () => 0);
-    const fiber = Effect.runFork(store.sweepOffline());
+    const fiber = Effect.runFork(store.sweepOffline);
     await started.promise;
 
     try {
@@ -1423,7 +1423,7 @@ describe("game character offline grace", () => {
     try {
       await Effect.runPromise(
         Effect.gen(function* () {
-          const fiber = yield* store.sweepOffline().pipe(Effect.forkScoped);
+          const fiber = yield* store.sweepOffline.pipe(Effect.forkScoped);
           yield* Effect.promise(() => started.promise);
           yield* TestClock.adjust("1 second");
           expect(fiber.pollUnsafe()?._tag).toBe("Success");

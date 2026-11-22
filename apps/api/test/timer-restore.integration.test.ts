@@ -37,9 +37,9 @@ const waitForTimerLocks = async (expected: number) => {
         AND wait_event_type = 'Lock' AND query LIKE '%"Timer"%'`);
 
     blocked =
-      Schema.decodeUnknownSync(
-        Schema.Array(Schema.Struct({ count: Schema.Number })),
-      )(result.rows)[0]?.count ?? 0;
+      Schema.decodeSync(Schema.Array(Schema.Struct({ count: Schema.Finite })))(
+        result.rows,
+      )[0]?.count ?? 0;
 
     if (blocked < expected) await Bun.sleep(10);
   }

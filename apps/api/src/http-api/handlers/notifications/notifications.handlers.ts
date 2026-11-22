@@ -54,25 +54,34 @@ export interface NotificationGuildCaller extends NotificationCaller {
   readonly roles: ReadonlyArray<Role>;
 }
 
-export class NotificationsAccessDenied extends TaggedErrorClass<NotificationsAccessDenied>()(
-  "NotificationsAccessDenied",
-  { status: Schema.Literals([401, 403]), code: Schema.String },
-) {}
+export class NotificationsAccessDenied extends TaggedErrorClass<
+  NotificationsAccessDenied,
+  { readonly brand: unique symbol }
+>()("NotificationsAccessDenied", {
+  status: Schema.Literals([401, 403]),
+  code: Schema.String,
+}) {}
 
-class NotificationsBadRequest extends TaggedErrorClass<NotificationsBadRequest>()(
-  "NotificationsBadRequest",
-  { status: Schema.Literal(400), code: Schema.String },
-) {}
+class NotificationsBadRequest extends TaggedErrorClass<
+  NotificationsBadRequest,
+  { readonly brand: unique symbol }
+>()("NotificationsBadRequest", {
+  status: Schema.Literal(400),
+  code: Schema.String,
+}) {}
 
-export class NotificationsNotFound extends TaggedErrorClass<NotificationsNotFound>()(
-  "NotificationsNotFound",
-  { status: Schema.Literal(404), code: Schema.String },
-) {}
+export class NotificationsNotFound extends TaggedErrorClass<
+  NotificationsNotFound,
+  { readonly brand: unique symbol }
+>()("NotificationsNotFound", {
+  status: Schema.Literal(404),
+  code: Schema.String,
+}) {}
 
-class NotificationsDataError extends TaggedErrorClass<NotificationsDataError>()(
-  "NotificationsDataError",
-  { cause: Schema.Defect() },
-) {}
+class NotificationsDataError extends TaggedErrorClass<
+  NotificationsDataError,
+  { readonly brand: unique symbol }
+>()("NotificationsDataError", { cause: Schema.Defect() }) {}
 
 type NotificationsHttpFailure =
   | ApplicationError

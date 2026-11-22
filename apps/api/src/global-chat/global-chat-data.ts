@@ -21,26 +21,29 @@ export type GlobalChatCaller = {
  * while sending, or is not a global chat admin while moderating or sending to
  * every channel.
  */
-export class GlobalChatAccessDenied extends TaggedErrorClass<GlobalChatAccessDenied>()(
-  "GlobalChatAccessDenied",
-  { status: Schema.Literal(403) },
-) {}
+export class GlobalChatAccessDenied extends TaggedErrorClass<
+  GlobalChatAccessDenied,
+  { readonly brand: unique symbol }
+>()("GlobalChatAccessDenied", { status: Schema.Literal(403) }) {}
 
 /** The world has no channel, or the channel no longer keeps the message or mute. */
-export class GlobalChatNotFound extends TaggedErrorClass<GlobalChatNotFound>()(
-  "GlobalChatNotFound",
-  { status: Schema.Literal(404) },
-) {}
+export class GlobalChatNotFound extends TaggedErrorClass<
+  GlobalChatNotFound,
+  { readonly brand: unique symbol }
+>()("GlobalChatNotFound", { status: Schema.Literal(404) }) {}
 
-export class GlobalChatRateLimited extends TaggedErrorClass<GlobalChatRateLimited>()(
-  "GlobalChatRateLimited",
-  { status: Schema.Literal(429), retryAfterMs: Schema.Number },
-) {}
+export class GlobalChatRateLimited extends TaggedErrorClass<
+  GlobalChatRateLimited,
+  { readonly brand: unique symbol }
+>()("GlobalChatRateLimited", {
+  status: Schema.Literal(429),
+  retryAfterMs: Schema.Finite,
+}) {}
 
-export class GlobalChatOperationError extends TaggedErrorClass<GlobalChatOperationError>()(
-  "GlobalChatOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class GlobalChatOperationError extends TaggedErrorClass<
+  GlobalChatOperationError,
+  { readonly brand: unique symbol }
+>()("GlobalChatOperationError", { cause: Schema.Defect() }) {}
 
 export type GlobalChatFailure =
   | GlobalChatAccessDenied

@@ -20,7 +20,7 @@ const UserCharactersResponseSchema = Schema.Struct({
       name: Schema.String,
       world: Schema.String,
       icon: Schema.String,
-      lvl: Schema.NullOr(Schema.Number),
+      lvl: Schema.NullOr(Schema.Finite),
       prof: Schema.NullOr(Schema.String),
     }),
   ),

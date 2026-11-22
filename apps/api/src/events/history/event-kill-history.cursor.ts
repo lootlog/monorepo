@@ -50,9 +50,7 @@ export const decodeHistoryCursor = Effect.fnUntraced(function* (
     payload.scope.heroId !== scope.heroId ||
     payload.scope.memberId !== scope.memberId
   ) {
-    return yield* Effect.fail(
-      new InvalidRequestError({ code: "INVALID_CURSOR" }),
-    );
+    return yield* new InvalidRequestError({ code: "INVALID_CURSOR" });
   }
 
   return { killedAt, id: payload.id };

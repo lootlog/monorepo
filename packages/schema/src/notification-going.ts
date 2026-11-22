@@ -37,7 +37,7 @@ export const NotificationGoingUpdateSchema = Schema.Struct({
   // lists them under whichever report it shows. An update of a notification
   // stored before this field existed leaves it out.
   npcId: Schema.optionalKey(FiniteNumber),
-  npc: Schema.Struct({ ...NpcRoutingDataSchema.fields, lvl: Schema.Number }),
+  npc: Schema.Struct({ ...NpcRoutingDataSchema.fields, lvl: Schema.Finite }),
   going: Schema.Array(NotificationGoingPlayerSchema),
 });
 

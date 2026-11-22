@@ -34,13 +34,11 @@ const makeBetterAuthHandler = (auth: typeof BetterAuthRuntime.Service) =>
       )
         return HttpServerResponse.empty({ status: 404 });
 
-      const response = yield* Effect.tryPromise({
-        try: () =>
-          auth.handler(
-            normalizeBetterAuthRequest(webRequest, auth.options.baseURL),
-          ),
-        catch: (cause) => cause,
-      });
+      const response = yield* Effect.tryPromise(() =>
+        auth.handler(
+          normalizeBetterAuthRequest(webRequest, auth.options.baseURL),
+        ),
+      );
 
       return HttpServerResponse.fromWeb(response);
     },

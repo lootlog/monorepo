@@ -29,10 +29,10 @@ export const getNpcTypeRoutingTier = (npcType: NpcTypeEnum): NpcRoutingTier =>
 export const NpcRoutingDataSchema = Schema.Struct({
   prof: Schema.optionalKey(Schema.NullOr(Schema.String)),
   type: Schema.optionalKey(
-    Schema.NullOr(Schema.Union([Schema.Number, Schema.String])),
+    Schema.NullOr(Schema.Union([Schema.Finite, Schema.String])),
   ),
   wt: Schema.optionalKey(
-    Schema.NullOr(Schema.Union([Schema.Number, Schema.String])),
+    Schema.NullOr(Schema.Union([Schema.Finite, Schema.String])),
   ),
   icon: Schema.optionalKey(Schema.NullOr(Schema.String)),
   isHeroFromEvent: Schema.optionalKey(Schema.Boolean),

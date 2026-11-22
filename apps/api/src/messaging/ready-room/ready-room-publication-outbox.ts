@@ -104,7 +104,7 @@ export const makeReadyRoomPublicationOutbox = (
 
       if (id === undefined || payload === undefined) break;
 
-      yield* Schema.decodeUnknownEffect(
+      yield* Schema.decodeEffect(
         Schema.fromJsonString(PartyReadyRoomAggregateSchema),
       )(payload).pipe(
         Effect.matchEffect({

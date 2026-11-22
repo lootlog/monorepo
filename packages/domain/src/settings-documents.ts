@@ -41,7 +41,7 @@ export const getCharacterSettingsScopeId = (
 ) => `${gameAccountId}:${characterId}`;
 
 // Values arrive from versioned storage and are validated per catalog field before use.
-type RawSettingsValues = Record<string, typeof Schema.Json.Type>;
+type RawSettingsValues = Record<string, Schema.Json>;
 
 export interface SettingsFieldDefinition<TValue = unknown> {
   defaultValue: TValue;
@@ -92,7 +92,7 @@ const field = <TValue>(
 
 // Legacy preference documents are backfilled from lenient storage, so these
 // validators only guard the shape; leaf normalization stays with the consumers.
-type JsonValue = typeof Schema.Json.Type;
+type JsonValue = Schema.Json;
 
 // Opaque documents keep JSON values; owning features parse them at their boundary.
 type OpaqueSettingsRecord = Record<string, JsonValue>;

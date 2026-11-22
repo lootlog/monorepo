@@ -16,10 +16,10 @@ export type MembersIdentity = {
   readonly apiKey?: ApiKeyAccess;
 };
 
-export class MembersOperationError extends TaggedErrorClass<MembersOperationError>()(
-  "MembersOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class MembersOperationError extends TaggedErrorClass<
+  MembersOperationError,
+  { readonly brand: unique symbol }
+>()("MembersOperationError", { cause: Schema.Defect() }) {}
 
 type DataEffect<A> = Effect.Effect<A, MembersOperationError>;
 

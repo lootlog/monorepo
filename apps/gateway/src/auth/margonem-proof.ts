@@ -33,9 +33,9 @@ const NONCE_PATTERN = /^[a-f0-9]{32}$/;
 const Proof = Schema.Struct({
   userId: Schema.String,
   characterId: Schema.String,
-  clanId: Schema.optional(Schema.Number),
+  clanId: Schema.optional(Schema.Finite),
   token: Schema.String,
-  ts: Schema.Number,
+  ts: Schema.Finite,
   validatedString: Schema.String,
   signatureBase64: Schema.String,
 });
@@ -54,19 +54,19 @@ interface ProofVerificationOptions {
   readonly clanId?: number;
 }
 
-class MargonemSigningKeyFailure extends TaggedErrorClass<MargonemSigningKeyFailure>()(
-  "MargonemSigningKeyFailure",
-  {
-    reason: Schema.Literals([
-      "invalid-response",
-      "response-too-large",
-      "status",
-      "timeout",
-      "transport",
-    ]),
-    status: Schema.optional(Schema.Number),
-  },
-) {}
+class MargonemSigningKeyFailure extends TaggedErrorClass<
+  MargonemSigningKeyFailure,
+  { readonly brand: unique symbol }
+>()("MargonemSigningKeyFailure", {
+  reason: Schema.Literals([
+    "invalid-response",
+    "response-too-large",
+    "status",
+    "timeout",
+    "transport",
+  ]),
+  status: Schema.optional(Schema.Finite),
+}) {}
 
 export interface MargonemProofVerifier {
   readonly verify: (

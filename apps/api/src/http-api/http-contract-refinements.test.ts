@@ -32,7 +32,7 @@ const rejects = (schema: Schema.ConstraintDecoder<unknown>) =>
 const decodeQuery =
   <S extends Schema.Top & { readonly DecodingServices: never }>(schema: S) =>
   (query: Record<string, string>) =>
-    Schema.decodeUnknownResult(Schema.toCodecStringTree(schema))(query);
+    Schema.decodeResult(Schema.toCodecStringTree(schema))(query);
 
 describe("HttpApi contract refinements", () => {
   it("preserves event and respawn time ordering", () => {
@@ -68,7 +68,7 @@ describe("HttpApi contract refinements", () => {
 
   it("stores and filters events by the normalized world", () => {
     expect(
-      Schema.decodeUnknownSync(CreateEventRequest)({
+      Schema.decodeSync(CreateEventRequest)({
         name: "event",
         world: "  Aldous ",
       }).world,

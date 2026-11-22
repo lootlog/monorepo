@@ -150,9 +150,7 @@ export const makeLootQueryPersistence = (
 
       const [npcNameSnapshotIds, resolvedSearch] = yield* Effect.all(
         [
-          npcs?.length
-            ? findNpcNameSnapshotIds(npcs)
-            : Effect.succeed(undefined),
+          npcs?.length ? findNpcNameSnapshotIds(npcs) : Effect.undefined,
           resolveSearch(search),
         ] as const,
         { concurrency: "unbounded" },

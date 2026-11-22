@@ -78,17 +78,17 @@ export type NotificationJobStatus =
 export const NotificationFiltersSchema = Schema.Struct({
   guildIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.String))),
   world: Schema.optionalKey(Schema.String),
-  npcId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
-  npcIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
+  npcId: Schema.optionalKey(Schema.NullOr(Schema.Finite)),
+  npcIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Finite))),
   /** Margonem template ids; `npcId`/`npcIds` hold timer (runtime or legacy) ids. */
   npcTemplateIds: Schema.optionalKey(
-    Schema.mutable(Schema.Array(Schema.Number)),
+    Schema.mutable(Schema.Array(Schema.Finite)),
   ),
-  itemId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
-  itemIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
+  itemId: Schema.optionalKey(Schema.NullOr(Schema.Finite)),
+  itemIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Finite))),
   /** Level range of a hero sighting rule; omitted bounds are open. */
-  npcLevelMin: Schema.optionalKey(Schema.Number),
-  npcLevelMax: Schema.optionalKey(Schema.Number),
+  npcLevelMin: Schema.optionalKey(Schema.Finite),
+  npcLevelMax: Schema.optionalKey(Schema.Finite),
 });
 
 export type NotificationFilters = typeof NotificationFiltersSchema.Type;
@@ -175,7 +175,7 @@ export const LootCreatedNotificationEventV2Schema = Schema.Struct({
   npcs: Schema.Array(
     Schema.Struct({
       type: Schema.NullOr(Schema.String),
-      lvl: Schema.NullOr(Schema.Number),
+      lvl: Schema.NullOr(Schema.Finite),
     }),
   ),
 });
@@ -201,7 +201,7 @@ export const LootDrawResolvedNotificationEventSchema = Schema.Struct({
     hid: Schema.String,
     name: Schema.String,
     icon: Schema.String,
-    lvl: Schema.Number,
+    lvl: Schema.Finite,
   }),
   /** The strongest monster of the fight, when the loot names one. */
   npcName: Schema.NullOr(Schema.String),
@@ -211,7 +211,7 @@ export const LootDrawResolvedNotificationEventSchema = Schema.Struct({
       Schema.Struct({
         name: Schema.String,
         prof: Schema.NullOr(ProfessionSchema),
-        lvl: Schema.NullOr(Schema.Number),
+        lvl: Schema.NullOr(Schema.Finite),
         tickets: Schema.Int,
       }),
     ),

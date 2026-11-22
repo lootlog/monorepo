@@ -3,7 +3,7 @@ import { Clock, Effect } from "effect";
 import type { RedisError } from "effect/persistence/Redis";
 import type { RedisService } from "#src/redis/redis.service";
 import type { DiscordEndpoint } from "./discord.types.js";
-import { decodeJsonUnknown } from "#src/shared/schema/json";
+import { decodeJsonUnknownEffect } from "#src/shared/schema/json";
 
 interface UserRateLimitData {
   bucket?: string | null;
@@ -64,10 +64,7 @@ export const makeDiscordRateLimiter = (
         return null;
       }
 
-      const parsed = yield* Effect.try({
-        try: () => decodeJsonUnknown(data),
-        catch: (error) => error,
-      }).pipe(
+      const parsed = yield* decodeJsonUnknownEffect(data).pipe(
         Effect.catch((error) =>
           Effect.logDebug({
             message: "Failed to parse Discord rate limit cache",

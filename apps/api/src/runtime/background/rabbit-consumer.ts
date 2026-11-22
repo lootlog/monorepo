@@ -1,3 +1,4 @@
+import { promiseOperation } from "@lootlog/instrumentation/operation";
 import {
   consumeEvent,
   type RabbitDelivery,
@@ -41,10 +42,9 @@ export const makeRabbitConsumer = Effect.fnUntraced(function* (
 
           return Effect.isEffect(result)
             ? result.pipe(Effect.asVoid)
-            : Effect.tryPromise({
-                try: () => Promise.resolve(result),
-                catch: (cause) => cause,
-              });
+            : promiseOperation("rabbit.consumer.handler", () =>
+                Promise.resolve(result),
+              );
         }).pipe(handlerSlots.withPermits(1));
 
         // The backoff runs outside the handler slot, leaving it to other queues.

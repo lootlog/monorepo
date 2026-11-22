@@ -17,7 +17,7 @@ test("a Redis outage reports degraded health through Rabbit without flooding it"
   );
 
   expect(
-    (await Effect.runPromise(history.flush().pipe(Effect.result)))._tag,
+    (await Effect.runPromise(history.flush.pipe(Effect.result)))._tag,
   ).toBe("Failure");
   expect(events).toEqual([
     {
@@ -28,9 +28,9 @@ test("a Redis outage reports degraded health through Rabbit without flooding it"
     },
   ]);
   now += 5_000;
-  await Effect.runPromise(history.flush().pipe(Effect.result));
+  await Effect.runPromise(history.flush.pipe(Effect.result));
   expect(events).toHaveLength(1);
   now += 55_000;
-  await Effect.runPromise(history.flush().pipe(Effect.result));
+  await Effect.runPromise(history.flush.pipe(Effect.result));
   expect(events).toHaveLength(2);
 });

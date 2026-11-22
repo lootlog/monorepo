@@ -212,8 +212,8 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
       snapshot.prof !== input.prof ||
       (snapshot.icon ?? "") !== (input.icon ?? "")
     ) {
-      return yield* Effect.fail(
-        new DependencyUnavailableError("Failed to resolve player snapshot"),
+      return yield* new DependencyUnavailableError(
+        "Failed to resolve player snapshot",
       );
     }
 

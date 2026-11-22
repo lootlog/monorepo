@@ -711,8 +711,8 @@ export class AirTagService {
   }
 
   /** Keeps this replica registered for every air-tag scope a local socket follows. */
-  runInterestRefresh() {
-    return Effect.suspend(() => this.refreshInterest()).pipe(
+  get runInterestRefresh() {
+    return Effect.suspend(() => this.refreshInterest).pipe(
       Effect.catchCause((cause) =>
         warn("Air tag interest refresh failed", cause),
       ),
@@ -720,7 +720,7 @@ export class AirTagService {
     );
   }
 
-  private refreshInterest(): Effect.Effect<void, RealtimeStoreError> {
+  private get refreshInterest(): Effect.Effect<void, RealtimeStoreError> {
     const now = Date.now();
 
     this.userBatches.sweep(now);
@@ -776,7 +776,7 @@ export class AirTags extends Context.Service<AirTags, AirTagService>()(
     Effect.gen(function* () {
       const airTags = new AirTagService(yield* GatewayRedis, yield* Hub);
 
-      yield* airTags.runInterestRefresh().pipe(Effect.forkScoped);
+      yield* airTags.runInterestRefresh.pipe(Effect.forkScoped);
 
       return airTags;
     }),

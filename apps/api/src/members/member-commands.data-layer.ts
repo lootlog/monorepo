@@ -168,11 +168,9 @@ export const makeMembersDataLayer = (
             !desiredGuildId ||
             !apiKeyAllowsOrganization(options.identity.apiKey, desiredGuildId)
           ) {
-            return yield* Effect.fail(
-              new ResourceNotFoundError({
-                code: GuildErrorKey.GUILD_NOT_FOUND,
-              }),
-            );
+            return yield* new ResourceNotFoundError({
+              code: GuildErrorKey.GUILD_NOT_FOUND,
+            });
           }
 
           const now = new Date(yield* Clock.currentTimeMillis);
@@ -190,9 +188,9 @@ export const makeMembersDataLayer = (
           const fresh = isFresh(stored, new Date(now.getTime() - ttl));
 
           if (stored && options.refresh && fresh) {
-            return yield* Effect.fail(
-              new InvalidRequestError({ code: ErrorKey.MEMBER_TTL_ACTIVE }),
-            );
+            return yield* new InvalidRequestError({
+              code: ErrorKey.MEMBER_TTL_ACTIVE,
+            });
           }
 
           if (fresh) return stored;
@@ -252,17 +250,13 @@ export const makeMembersDataLayer = (
               );
 
               if (!stored) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError("Member not found"),
-                );
+                return yield* new ResourceNotFoundError("Member not found");
               }
 
               if (!stored.active) {
-                return yield* Effect.fail(
-                  new InvalidRequestError({
-                    code: ErrorKey.MEMBER_ALREADY_DEACTIVATED,
-                  }),
-                );
+                return yield* new InvalidRequestError({
+                  code: ErrorKey.MEMBER_ALREADY_DEACTIVATED,
+                });
               }
 
               const now = new Date(yield* Clock.currentTimeMillis);
@@ -282,9 +276,7 @@ export const makeMembersDataLayer = (
               const updated = rows[0];
 
               if (!updated) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError("Member not found"),
-                );
+                return yield* new ResourceNotFoundError("Member not found");
               }
 
               yield* transaction
@@ -334,16 +326,14 @@ export const makeMembersDataLayer = (
                   .limit(1);
 
                 if (recent[0]) {
-                  return yield* Effect.fail(
-                    new InvalidRequestError({
-                      code: ErrorKey.BULK_REFRESH_RATE_LIMIT_ACTIVE,
-                      details: {
-                        nextAvailableAt: new Date(
-                          recent[0].createdAt.getTime() + rateLimit,
-                        ).toISOString(),
-                      },
-                    }),
-                  );
+                  return yield* new InvalidRequestError({
+                    code: ErrorKey.BULK_REFRESH_RATE_LIMIT_ACTIVE,
+                    details: {
+                      nextAvailableAt: new Date(
+                        recent[0].createdAt.getTime() + rateLimit,
+                      ).toISOString(),
+                    },
+                  });
                 }
 
                 const members = yield* transaction
@@ -460,10 +450,8 @@ export const makeMembersDataLayer = (
               const userId = rows[0]?.userId;
 
               if (!userId) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError(
-                    "Member not found or global user ID is missing",
-                  ),
+                return yield* new ResourceNotFoundError(
+                  "Member not found or global user ID is missing",
                 );
               }
 

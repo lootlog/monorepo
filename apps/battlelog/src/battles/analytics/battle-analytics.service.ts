@@ -20,6 +20,24 @@ import type { BattleCombatProfileRead } from "./battle-combat-profile-read.servi
 import type { BattleAnalyticsRead } from "./battle-analytics-read.service.js";
 
 const analyticsDecoders = {
+  cachedCharacterTotal: Schema.decodeUnknownSync(
+    Schema.fromJsonString(
+      Schema.Struct({
+        characterIds: Schema.mutable(Schema.Array(Schema.String)),
+        total: Schema.Finite,
+      }),
+    ),
+  ),
+  cachedHeadToHead: Schema.decodeUnknownSync(
+    Schema.fromJsonString(
+      Schema.Struct({
+        hasCharacter: Schema.Boolean,
+        records: Schema.mutable(
+          BattleStatisticsResponseSchemas.headToHead.fields.records,
+        ),
+      }),
+    ),
+  ),
   abyssSeasons: Schema.decodeUnknownSync(
     Schema.fromJsonString(
       Schema.Array(BattleStatisticsResponseSchemas.abyssSeason),
@@ -182,16 +200,7 @@ export const makeBattleAnalytics = (
                 : [],
             };
           }),
-        Schema.decodeUnknownSync(
-          Schema.fromJsonString(
-            Schema.Struct({
-              hasCharacter: Schema.Boolean,
-              records: Schema.mutable(
-                BattleStatisticsResponseSchemas.headToHead.fields.records,
-              ),
-            }),
-          ),
-        ),
+        analyticsDecoders.cachedHeadToHead,
       );
 
       const queryTime = (yield* Clock.currentTimeMillis) - startTime;
@@ -372,14 +381,7 @@ export const makeBattleAnalytics = (
                   : 0,
             };
           }),
-        Schema.decodeUnknownSync(
-          Schema.fromJsonString(
-            Schema.Struct({
-              characterIds: Schema.mutable(Schema.Array(Schema.String)),
-              total: Schema.Number,
-            }),
-          ),
-        ),
+        analyticsDecoders.cachedCharacterTotal,
       );
 
       if (cached.characterIds.length === 0)

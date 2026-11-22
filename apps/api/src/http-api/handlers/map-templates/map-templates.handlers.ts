@@ -25,13 +25,13 @@ import {
 } from "#src/map-templates/map-template.schema";
 import { LootlogApi } from "../../lootlog-api.js";
 
-export class MapTemplatesAccessDenied extends TaggedErrorClass<MapTemplatesAccessDenied>()(
-  "MapTemplatesAccessDenied",
-  {
-    status: Schema.Literals([401, 403, 404]),
-    code: Schema.String,
-  },
-) {}
+export class MapTemplatesAccessDenied extends TaggedErrorClass<
+  MapTemplatesAccessDenied,
+  { readonly brand: unique symbol }
+>()("MapTemplatesAccessDenied", {
+  status: Schema.Literals([401, 403, 404]),
+  code: Schema.String,
+}) {}
 
 export class MapTemplatesAuthorization extends Context.Service<
   MapTemplatesAuthorization,

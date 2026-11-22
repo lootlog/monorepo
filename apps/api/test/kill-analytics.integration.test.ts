@@ -42,8 +42,7 @@ const readAnalytics = (world?: string) =>
       world: world || undefined,
     });
   }).pipe(
-    Effect.provide(TestClock.layer()),
-    Effect.provide(ApiDatabaseLive),
+    Effect.provide([TestClock.layer(), ApiDatabaseLive]),
     Effect.runPromise,
   );
 
@@ -56,8 +55,7 @@ const readActivity = (world?: string) =>
       cache,
     ).getUserKillActivity("analytics-owner", world ? { world } : {});
   }).pipe(
-    Effect.provide(TestClock.layer()),
-    Effect.provide(ApiDatabaseLive),
+    Effect.provide([TestClock.layer(), ApiDatabaseLive]),
     Effect.runPromise,
   );
 
@@ -158,8 +156,7 @@ describe("personal kill analytics PostgreSQL boundary", () => {
         cache,
       ).getUserKillActivity("analytics-owner", {});
     }).pipe(
-      Effect.provide(TestClock.layer()),
-      Effect.provide(ApiDatabaseLive),
+      Effect.provide([TestClock.layer(), ApiDatabaseLive]),
       Effect.runPromise,
     );
 
@@ -192,12 +189,12 @@ describe("personal kill analytics PostgreSQL boundary", () => {
       query.params,
     );
 
-    const explain = Schema.decodeUnknownSync(
+    const explain = Schema.decodeSync(
       Schema.Array(
         Schema.Struct({
           "QUERY PLAN": Schema.Array(
             Schema.Struct({
-              "Execution Time": Schema.Number,
+              "Execution Time": Schema.Finite,
               Plan: Schema.Unknown,
             }),
           ),

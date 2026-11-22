@@ -154,13 +154,13 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       );
 
       return room
-        ? Schema.decodeUnknownEffect(schema)(room).pipe(Effect.orDie)
+        ? Schema.decodeEffect(schema)(room).pipe(Effect.orDie)
         : Effect.succeed(null);
     },
     eval: (script, _keys, args) => {
       if (script === CREATE_READY_ROOM_SCRIPT) {
         rooms.push(
-          Schema.decodeUnknownSync(
+          Schema.decodeSync(
             Schema.fromJsonString(PartyReadyRoomAggregateSchema),
           )(String(args[1])),
         );
@@ -174,11 +174,11 @@ it("keeps authorized gathering rosters current across discovery, observations, a
         script === JOIN_READY_ROOM_SCRIPT ||
         script === EXIT_READY_ROOM_PARTICIPANT_SCRIPT
       ) {
-        const next = Schema.decodeUnknownSync(
+        const next = Schema.decodeSync(
           Schema.fromJsonString(PartyReadyRoomAggregateSchema),
         )(String(args[1]));
 
-        const expected = Schema.decodeUnknownSync(
+        const expected = Schema.decodeSync(
           Schema.fromJsonString(PartyReadyRoomAggregateSchema),
         )(String(args[0]));
 

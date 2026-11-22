@@ -174,337 +174,321 @@ export const makeEventCatalogMutations = (
   );
 
   return {
-    addHero: (
+    addHero: Effect.fn("EventsAssignmentController_addHero")(function* (
       guild: { id: string },
       eventId: string,
       data: CreateEventHeroRequest,
-    ) =>
-      Effect.gen(function* () {
-        const now = new Date(yield* Clock.currentTimeMillis);
+    ) {
+      const now = new Date(yield* Clock.currentTimeMillis);
 
-        const eventRows = yield* query(
-          "events.catalog.addHero.event",
+      const eventRows = yield* query(
+        "events.catalog.addHero.event",
+        database
+          .select()
+          .from(eventTable)
+          .where(
+            and(
+              eq(eventTable.id, eventId),
+              eq(eventTable.guildId, guild.id),
+              activeEventCondition(now),
+            ),
+          )
+          .limit(1),
+      );
+
+      const event = eventRows[0];
+
+      if (!event) return yield* new ResourceNotFoundError("Event not found");
+      let npcId = data.npcId;
+      let npcIcon: string | undefined;
+
+      if (!npcId) {
+        const timerRows = yield* query(
+          "events.catalog.addHero.timerNpc",
           database
-            .select()
-            .from(eventTable)
+            .select({ npc: timerTable.npc })
+            .from(timerTable)
             .where(
               and(
-                eq(eventTable.id, eventId),
-                eq(eventTable.guildId, guild.id),
-                activeEventCondition(now),
+                eq(timerTable.guildId, guild.id),
+                eq(timerTable.world, event.world),
+                sql`${timerTable.npc}->>'name' ILIKE ${data.npcName}`,
+                sql`coalesce(${timerTable.npc}->>'margonemType', '0') != ${String(TIMER_TYPES.CUSTOM_MANUAL)}`,
               ),
             )
+            .orderBy(desc(timerTable.updatedAt))
             .limit(1),
         );
 
-        const event = eventRows[0];
+        const npc = timerRows[0]?.npc;
 
-        if (!event)
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Event not found"),
-          );
-        let npcId = data.npcId;
-        let npcIcon: string | undefined;
-
-        if (!npcId) {
-          const timerRows = yield* query(
-            "events.catalog.addHero.timerNpc",
-            database
-              .select({ npc: timerTable.npc })
-              .from(timerTable)
-              .where(
-                and(
-                  eq(timerTable.guildId, guild.id),
-                  eq(timerTable.world, event.world),
-                  sql`${timerTable.npc}->>'name' ILIKE ${data.npcName}`,
-                  sql`coalesce(${timerTable.npc}->>'margonemType', '0') != ${String(TIMER_TYPES.CUSTOM_MANUAL)}`,
-                ),
-              )
-              .orderBy(desc(timerTable.updatedAt))
-              .limit(1),
-          );
-
-          const npc = timerRows[0]?.npc;
-
-          if (isObjectRecord(npc)) {
-            npcId = Schema.is(Schema.Number)(npc.id) ? npc.id : undefined;
-            npcIcon = Schema.is(Schema.String)(npc.icon) ? npc.icon : undefined;
-          }
+        if (isObjectRecord(npc)) {
+          npcId = Schema.is(Schema.Finite)(npc.id) ? npc.id : undefined;
+          npcIcon = Schema.is(Schema.String)(npc.icon) ? npc.icon : undefined;
         }
+      }
 
-        const heroId = Bun.randomUUIDv7();
+      const heroId = Bun.randomUUIDv7();
 
-        const added = yield* query(
-          "events.catalog.addHero.transaction",
-          database.transaction((transaction) =>
-            Effect.gen(function* () {
-              if (yield* isHeroNameTaken(transaction, eventId, data.npcName))
-                return false;
+      const added = yield* query(
+        "events.catalog.addHero.transaction",
+        database.transaction((transaction) =>
+          Effect.gen(function* () {
+            if (yield* isHeroNameTaken(transaction, eventId, data.npcName))
+              return false;
 
-              yield* transaction.insert(eventHeroNpcTable).values({
-                id: heroId,
-                eventId,
-                npcId: npcId ?? null,
-                npcName: data.npcName,
-                npcIcon: npcIcon ?? null,
-              });
+            yield* transaction.insert(eventHeroNpcTable).values({
+              id: heroId,
+              eventId,
+              npcId: npcId ?? null,
+              npcName: data.npcName,
+              npcIcon: npcIcon ?? null,
+            });
 
-              if (data.maps && data.maps.length > 0) {
-                yield* transaction.insert(eventMapTable).values(
-                  data.maps.map((map) => ({
-                    id: Bun.randomUUIDv7(),
-                    heroNpcId: heroId,
-                    mapId: map.mapId,
-                    mapName: map.mapName,
-                    updatedAt: now,
-                  })),
-                );
-              }
+            if (data.maps && data.maps.length > 0) {
+              yield* transaction.insert(eventMapTable).values(
+                data.maps.map((map) => ({
+                  id: Bun.randomUUIDv7(),
+                  heroNpcId: heroId,
+                  mapId: map.mapId,
+                  mapName: map.mapName,
+                  updatedAt: now,
+                })),
+              );
+            }
 
-              return true;
-            }),
-          ),
-        );
+            return true;
+          }),
+        ),
+      );
 
-        if (!added) return yield* Effect.fail(heroNameTakenError());
+      if (!added) return yield* heroNameTakenError();
 
-        const heroes = yield* query(
-          "events.catalog.addHero.result",
-          database
-            .select()
-            .from(eventHeroNpcTable)
-            .where(eq(eventHeroNpcTable.id, heroId))
-            .limit(1),
-        );
+      const heroes = yield* query(
+        "events.catalog.addHero.result",
+        database
+          .select()
+          .from(eventHeroNpcTable)
+          .where(eq(eventHeroNpcTable.id, heroId))
+          .limit(1),
+      );
 
-        const hero = heroes[0];
-        yield* invalidate(guild.id, eventId);
+      const hero = heroes[0];
+      yield* invalidate(guild.id, eventId);
 
-        return hero ? { ...hero, maps: yield* heroMaps([heroId]) } : null;
-      }).pipe(Effect.withSpan("EventsAssignmentController_addHero")),
+      return hero ? { ...hero, maps: yield* heroMaps([heroId]) } : null;
+    }),
 
-    updateHero: (
+    updateHero: Effect.fn("EventsAssignmentController_updateHero")(function* (
       guild: { id: string },
       eventId: string,
       heroId: string,
       data: UpdateEventHeroRequest,
-    ) =>
-      Effect.gen(function* () {
-        const hero = yield* findHero(guild.id, eventId, heroId);
+    ) {
+      const hero = yield* findHero(guild.id, eventId, heroId);
 
-        if (!hero) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Hero not found"),
-          );
-        }
+      if (!hero) {
+        return yield* new ResourceNotFoundError("Hero not found");
+      }
 
-        // Rankings are keyed by hero name, so a rename moves them in place,
-        // keeping their ids for edit history. Locking the hero row first
-        // waits for kill ranking writes, which read the name under a share
-        // lock on the same row.
-        const rows = yield* query(
-          "events.catalog.updateHero",
-          database.transaction((transaction) =>
-            Effect.gen(function* () {
-              const locked = yield* transaction
-                .select({ npcName: eventHeroNpcTable.npcName })
-                .from(eventHeroNpcTable)
-                .where(eq(eventHeroNpcTable.id, heroId))
-                .for("update");
+      // Rankings are keyed by hero name, so a rename moves them in place,
+      // keeping their ids for edit history. Locking the hero row first
+      // waits for kill ranking writes, which read the name under a share
+      // lock on the same row.
+      const rows = yield* query(
+        "events.catalog.updateHero",
+        database.transaction((transaction) =>
+          Effect.gen(function* () {
+            const locked = yield* transaction
+              .select({ npcName: eventHeroNpcTable.npcName })
+              .from(eventHeroNpcTable)
+              .where(eq(eventHeroNpcTable.id, heroId))
+              .for("update");
 
-              const previousName = locked[0]?.npcName;
+            const previousName = locked[0]?.npcName;
 
-              if (previousName === undefined) return { missing: true as const };
+            if (previousName === undefined) return { missing: true as const };
 
-              const renamed = data.npcName !== previousName;
+            const renamed = data.npcName !== previousName;
 
-              if (renamed) {
-                if (yield* isHeroNameTaken(transaction, eventId, data.npcName))
-                  return { taken: true as const };
+            if (renamed) {
+              if (yield* isHeroNameTaken(transaction, eventId, data.npcName))
+                return { taken: true as const };
 
-                yield* transaction
-                  .update(eventRankingTable)
-                  .set({ heroNpcName: data.npcName })
-                  .where(
-                    and(
-                      eq(eventRankingTable.eventId, eventId),
-                      eq(eventRankingTable.heroNpcName, previousName),
-                    ),
-                  );
-              }
-
-              const updated = yield* transaction
-                .update(eventHeroNpcTable)
-                .set({
-                  npcName: data.npcName,
-                  ...(data.npcId !== undefined && { npcId: data.npcId }),
-                })
-                .where(eq(eventHeroNpcTable.id, heroId))
-                .returning();
-
-              return { updated };
-            }),
-          ),
-        );
-
-        if ("missing" in rows)
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Hero not found"),
-          );
-
-        if ("taken" in rows) return yield* Effect.fail(heroNameTakenError());
-
-        yield* invalidate(guild.id, eventId);
-
-        return rows.updated[0] ?? null;
-      }).pipe(Effect.withSpan("EventsAssignmentController_updateHero")),
-
-    deleteHero: (guild: { id: string }, eventId: string, heroId: string) =>
-      Effect.gen(function* () {
-        const hero = yield* findHero(guild.id, eventId, heroId);
-
-        if (!hero)
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Hero not found"),
-          );
-        // Kills, points, maps and tracking history cascade with the hero.
-        // Rankings are keyed by hero name, so remove them explicitly to keep
-        // ranking totals consistent with the remaining kill points. Deleting
-        // the hero first waits for ranking writes that hold a kill lock, so
-        // the ranking delete also sees rankings they committed meanwhile.
-        yield* query(
-          "events.catalog.deleteHero",
-          database.transaction((transaction) =>
-            Effect.gen(function* () {
               yield* transaction
-                .delete(eventHeroNpcTable)
-                .where(eq(eventHeroNpcTable.id, heroId));
-              yield* transaction
-                .delete(eventRankingTable)
+                .update(eventRankingTable)
+                .set({ heroNpcName: data.npcName })
                 .where(
                   and(
                     eq(eventRankingTable.eventId, eventId),
-                    eq(eventRankingTable.heroNpcName, hero.npcName),
+                    eq(eventRankingTable.heroNpcName, previousName),
                   ),
                 );
-            }),
-          ),
-        );
-        yield* invalidate(guild.id, eventId);
+            }
 
-        return { success: true };
-      }).pipe(Effect.withSpan("EventsAssignmentController_deleteHero")),
+            const updated = yield* transaction
+              .update(eventHeroNpcTable)
+              .set({
+                npcName: data.npcName,
+                ...(data.npcId !== undefined && { npcId: data.npcId }),
+              })
+              .where(eq(eventHeroNpcTable.id, heroId))
+              .returning();
 
-    addMap: (
+            return { updated };
+          }),
+        ),
+      );
+
+      if ("missing" in rows)
+        return yield* new ResourceNotFoundError("Hero not found");
+
+      if ("taken" in rows) return yield* heroNameTakenError();
+
+      yield* invalidate(guild.id, eventId);
+
+      return rows.updated[0] ?? null;
+    }),
+
+    deleteHero: Effect.fn("EventsAssignmentController_deleteHero")(function* (
+      guild: { id: string },
+      eventId: string,
+      heroId: string,
+    ) {
+      const hero = yield* findHero(guild.id, eventId, heroId);
+
+      if (!hero) return yield* new ResourceNotFoundError("Hero not found");
+      // Kills, points, maps and tracking history cascade with the hero.
+      // Rankings are keyed by hero name, so remove them explicitly to keep
+      // ranking totals consistent with the remaining kill points. Deleting
+      // the hero first waits for ranking writes that hold a kill lock, so
+      // the ranking delete also sees rankings they committed meanwhile.
+      yield* query(
+        "events.catalog.deleteHero",
+        database.transaction((transaction) =>
+          Effect.gen(function* () {
+            yield* transaction
+              .delete(eventHeroNpcTable)
+              .where(eq(eventHeroNpcTable.id, heroId));
+            yield* transaction
+              .delete(eventRankingTable)
+              .where(
+                and(
+                  eq(eventRankingTable.eventId, eventId),
+                  eq(eventRankingTable.heroNpcName, hero.npcName),
+                ),
+              );
+          }),
+        ),
+      );
+      yield* invalidate(guild.id, eventId);
+
+      return { success: true };
+    }),
+
+    addMap: Effect.fn("EventsAssignmentController_addMap")(function* (
       guild: { id: string },
       eventId: string,
       heroId: string,
       data: CreateEventMapRequest,
-    ) =>
-      Effect.gen(function* () {
-        if (!(yield* findHero(guild.id, eventId, heroId)))
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Hero not found"),
-          );
+    ) {
+      if (!(yield* findHero(guild.id, eventId, heroId)))
+        return yield* new ResourceNotFoundError("Hero not found");
 
-        const duplicate = yield* query(
-          "events.catalog.addMap.duplicate",
-          database
-            .select({ id: eventMapTable.id })
-            .from(eventMapTable)
-            .where(
-              and(
-                eq(eventMapTable.heroNpcId, heroId),
-                eq(eventMapTable.mapId, data.mapId),
-              ),
-            )
-            .limit(1),
+      const duplicate = yield* query(
+        "events.catalog.addMap.duplicate",
+        database
+          .select({ id: eventMapTable.id })
+          .from(eventMapTable)
+          .where(
+            and(
+              eq(eventMapTable.heroNpcId, heroId),
+              eq(eventMapTable.mapId, data.mapId),
+            ),
+          )
+          .limit(1),
+      );
+
+      if (duplicate[0])
+        return yield* new InvalidRequestError(
+          "Map already exists for this hero",
         );
+      const id = Bun.randomUUIDv7();
 
-        if (duplicate[0])
-          return yield* Effect.fail(
-            new InvalidRequestError("Map already exists for this hero"),
-          );
-        const id = Bun.randomUUIDv7();
-
-        const rows = yield* query(
-          "events.catalog.addMap.transaction",
-          database.transaction((transaction) =>
-            Effect.gen(function* () {
-              const inserted = yield* transaction
-                .insert(eventMapTable)
-                .values({
-                  id,
-                  heroNpcId: heroId,
-                  mapId: data.mapId,
-                  mapName: data.mapName,
-                  updatedAt: new Date(yield* Clock.currentTimeMillis),
-                })
-                .returning();
-
-              yield* transaction.insert(eventMapCoverageGapTable).values({
-                id: Bun.randomUUIDv7(),
-                mapId: id,
+      const rows = yield* query(
+        "events.catalog.addMap.transaction",
+        database.transaction((transaction) =>
+          Effect.gen(function* () {
+            const inserted = yield* transaction
+              .insert(eventMapTable)
+              .values({
+                id,
                 heroNpcId: heroId,
-                gapType: "UNASSIGNED",
-                startedAt: new Date(yield* Clock.currentTimeMillis),
-              });
+                mapId: data.mapId,
+                mapName: data.mapName,
+                updatedAt: new Date(yield* Clock.currentTimeMillis),
+              })
+              .returning();
 
-              return inserted;
-            }),
-          ),
-        );
+            yield* transaction.insert(eventMapCoverageGapTable).values({
+              id: Bun.randomUUIDv7(),
+              mapId: id,
+              heroNpcId: heroId,
+              gapType: "UNASSIGNED",
+              startedAt: new Date(yield* Clock.currentTimeMillis),
+            });
 
-        yield* invalidate(guild.id, eventId);
+            return inserted;
+          }),
+        ),
+      );
 
-        const [map] = rows;
+      yield* invalidate(guild.id, eventId);
 
-        if (!map) return yield* Effect.die("Event map was not returned");
+      const [map] = rows;
 
-        return { ...map, assignedMembers: [] };
-      }).pipe(Effect.withSpan("EventsAssignmentController_addMap")),
+      if (!map) return yield* Effect.die("Event map was not returned");
 
-    deleteMap: (
+      return { ...map, assignedMembers: [] };
+    }),
+
+    deleteMap: Effect.fn("EventsAssignmentController_deleteMap")(function* (
       guild: { id: string },
       eventId: string,
       heroId: string,
       mapId: string,
-    ) =>
-      Effect.gen(function* () {
-        if (!(yield* findMap(guild.id, eventId, heroId, mapId)))
-          return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
-        yield* query(
-          "events.catalog.deleteMap",
-          database.delete(eventMapTable).where(eq(eventMapTable.id, mapId)),
-        );
-        yield* invalidate(guild.id, eventId);
+    ) {
+      if (!(yield* findMap(guild.id, eventId, heroId, mapId)))
+        return yield* new ResourceNotFoundError("Map not found");
+      yield* query(
+        "events.catalog.deleteMap",
+        database.delete(eventMapTable).where(eq(eventMapTable.id, mapId)),
+      );
+      yield* invalidate(guild.id, eventId);
 
-        return { success: true };
-      }).pipe(Effect.withSpan("EventsAssignmentController_deleteMap")),
+      return { success: true };
+    }),
 
-    getLocations: (guild: { id: string }, eventId: string, heroId: string) =>
-      Effect.gen(function* () {
+    getLocations: Effect.fn("EventsAssignmentController_getLocations")(
+      function* (guild: { id: string }, eventId: string, heroId: string) {
         if (!(yield* findHero(guild.id, eventId, heroId)))
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Hero not found"),
-          );
+          return yield* new ResourceNotFoundError("Hero not found");
 
         const layoutOf = yield* heroMapLayouts([heroId]);
 
         return layoutOf(heroId).locations;
-      }).pipe(Effect.withSpan("EventsAssignmentController_getLocations")),
+      },
+    ),
 
-    createLocation: (
-      guild: { id: string },
-      eventId: string,
-      heroId: string,
-      data: CreateEventLocationRequest,
-    ) =>
-      Effect.gen(function* () {
+    createLocation: Effect.fn("EventsAssignmentController_createLocation")(
+      function* (
+        guild: { id: string },
+        eventId: string,
+        heroId: string,
+        data: CreateEventLocationRequest,
+      ) {
         if (!(yield* findHero(guild.id, eventId, heroId)))
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Hero not found"),
-          );
+          return yield* new ResourceNotFoundError("Hero not found");
 
         const duplicate = yield* query(
           "events.catalog.createLocation.duplicate",
@@ -521,8 +505,8 @@ export const makeEventCatalogMutations = (
         );
 
         if (duplicate[0])
-          return yield* Effect.fail(
-            new InvalidRequestError("Location with this name already exists"),
+          return yield* new InvalidRequestError(
+            "Location with this name already exists",
           );
 
         const maxRows = yield* query(
@@ -552,16 +536,17 @@ export const makeEventCatalogMutations = (
         yield* invalidate(guild.id, eventId);
 
         return rows[0] ? { ...rows[0], maps: [] } : null;
-      }).pipe(Effect.withSpan("EventsAssignmentController_createLocation")),
+      },
+    ),
 
-    updateLocation: (
-      guild: { id: string },
-      eventId: string,
-      heroId: string,
-      locationId: string,
-      data: UpdateEventLocationRequest,
-    ) =>
-      Effect.gen(function* () {
+    updateLocation: Effect.fn("EventsAssignmentController_updateLocation")(
+      function* (
+        guild: { id: string },
+        eventId: string,
+        heroId: string,
+        locationId: string,
+        data: UpdateEventLocationRequest,
+      ) {
         const location = yield* findLocation(
           guild.id,
           eventId,
@@ -570,9 +555,7 @@ export const makeEventCatalogMutations = (
         );
 
         if (!location)
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Location not found"),
-          );
+          return yield* new ResourceNotFoundError("Location not found");
 
         if (data.name && data.name !== location.name) {
           const duplicate = yield* query(
@@ -591,8 +574,8 @@ export const makeEventCatalogMutations = (
           );
 
           if (duplicate[0])
-            return yield* Effect.fail(
-              new InvalidRequestError("Location with this name already exists"),
+            return yield* new InvalidRequestError(
+              "Location with this name already exists",
             );
         }
 
@@ -613,19 +596,18 @@ export const makeEventCatalogMutations = (
         return rows[0]
           ? { ...rows[0], maps: yield* heroMaps([heroId], locationId) }
           : null;
-      }).pipe(Effect.withSpan("EventsAssignmentController_updateLocation")),
+      },
+    ),
 
-    deleteLocation: (
-      guild: { id: string },
-      eventId: string,
-      heroId: string,
-      locationId: string,
-    ) =>
-      Effect.gen(function* () {
+    deleteLocation: Effect.fn("EventsAssignmentController_deleteLocation")(
+      function* (
+        guild: { id: string },
+        eventId: string,
+        heroId: string,
+        locationId: string,
+      ) {
         if (!(yield* findLocation(guild.id, eventId, heroId, locationId)))
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Location not found"),
-          );
+          return yield* new ResourceNotFoundError("Location not found");
         yield* query(
           "events.catalog.deleteLocation",
           database
@@ -635,19 +617,18 @@ export const makeEventCatalogMutations = (
         yield* invalidate(guild.id, eventId);
 
         return { success: true };
-      }).pipe(Effect.withSpan("EventsAssignmentController_deleteLocation")),
+      },
+    ),
 
-    reorderLocations: (
-      guild: { id: string },
-      eventId: string,
-      heroId: string,
-      data: ReorderEventLocationsRequest,
-    ) =>
-      Effect.gen(function* () {
+    reorderLocations: Effect.fn("EventsAssignmentController_reorderLocations")(
+      function* (
+        guild: { id: string },
+        eventId: string,
+        heroId: string,
+        data: ReorderEventLocationsRequest,
+      ) {
         if (!(yield* findHero(guild.id, eventId, heroId)))
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Hero not found"),
-          );
+          return yield* new ResourceNotFoundError("Hero not found");
 
         const locations =
           data.locationIds.length === 0
@@ -666,10 +647,8 @@ export const makeEventCatalogMutations = (
               );
 
         if (locations.length !== data.locationIds.length)
-          return yield* Effect.fail(
-            new InvalidRequestError(
-              "Some locations not found or do not belong to this hero",
-            ),
+          return yield* new InvalidRequestError(
+            "Some locations not found or do not belong to this hero",
           );
         yield* query(
           "events.catalog.reorderLocations",
@@ -688,48 +667,46 @@ export const makeEventCatalogMutations = (
         yield* invalidate(guild.id, eventId);
 
         return { success: true };
-      }).pipe(Effect.withSpan("EventsAssignmentController_reorderLocations")),
+      },
+    ),
 
-    assignMapToLocation: (
+    assignMapToLocation: Effect.fn(
+      "EventsAssignmentController_assignMapToLocation",
+    )(function* (
       guild: { id: string },
       eventId: string,
       heroId: string,
       mapId: string,
       data: AssignEventMapLocationRequest,
-    ) =>
-      Effect.gen(function* () {
-        if (!(yield* findMap(guild.id, eventId, heroId, mapId)))
-          return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
-        const locationId = data.locationId ?? null;
+    ) {
+      if (!(yield* findMap(guild.id, eventId, heroId, mapId)))
+        return yield* new ResourceNotFoundError("Map not found");
+      const locationId = data.locationId ?? null;
 
-        const location = locationId
-          ? yield* findLocation(guild.id, eventId, heroId, locationId)
-          : null;
+      const location = locationId
+        ? yield* findLocation(guild.id, eventId, heroId, locationId)
+        : null;
 
-        if (locationId && !location)
-          return yield* Effect.fail(
-            new ResourceNotFoundError("Location not found"),
-          );
+      if (locationId && !location)
+        return yield* new ResourceNotFoundError("Location not found");
 
-        const rows = yield* query(
-          "events.catalog.assignMapToLocation",
-          database
-            .update(eventMapTable)
-            .set({
-              locationId,
-              updatedAt: new Date(yield* Clock.currentTimeMillis),
-            })
-            .where(eq(eventMapTable.id, mapId))
-            .returning(),
-        );
+      const rows = yield* query(
+        "events.catalog.assignMapToLocation",
+        database
+          .update(eventMapTable)
+          .set({
+            locationId,
+            updatedAt: new Date(yield* Clock.currentTimeMillis),
+          })
+          .where(eq(eventMapTable.id, mapId))
+          .returning(),
+      );
 
-        const hydrated = yield* hydrateMaps(rows);
-        yield* invalidate(guild.id, eventId);
+      const hydrated = yield* hydrateMaps(rows);
+      yield* invalidate(guild.id, eventId);
 
-        return hydrated[0] ? { ...hydrated[0], location } : null;
-      }).pipe(
-        Effect.withSpan("EventsAssignmentController_assignMapToLocation"),
-      ),
+      return hydrated[0] ? { ...hydrated[0], location } : null;
+    }),
   };
 };
 

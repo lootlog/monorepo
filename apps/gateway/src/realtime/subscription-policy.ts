@@ -5,9 +5,9 @@ import type {
 } from "@lootlog/protocol/realtime";
 import type { SessionData } from "#src/realtime/session";
 
-type Topic = typeof RealtimeLogicalTopic.Type;
+type Topic = RealtimeLogicalTopic;
 
-type Scope = typeof SubscriptionScope.Type;
+type Scope = SubscriptionScope;
 
 /**
  * The identity and Organization grants that every permission check reads. A

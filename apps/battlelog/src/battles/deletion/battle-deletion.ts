@@ -177,8 +177,8 @@ export const makeBattleDeletion = (
         const [removedBattle] = removed;
 
         if (!removedBattle) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
+          return yield* new ResourceNotFoundError(
+            `Battle with ID ${battleId} not found`,
           );
         }
 
@@ -186,13 +186,7 @@ export const makeBattleDeletion = (
       }),
     );
 
-    yield* analytics
-      .invalidateAnalyticsCache(userId)
-      .pipe(
-        Effect.catch((error) =>
-          Effect.logWarning("Battle analytics cleanup remains pending", error),
-        ),
-      );
+    yield* analytics.invalidateAnalyticsCache(userId);
 
     return { message: "Battle deleted successfully" };
   });
@@ -215,16 +209,7 @@ export const makeBattleDeletion = (
         }),
       );
 
-      yield* analytics
-        .invalidateAnalyticsCache(userId)
-        .pipe(
-          Effect.catch((error) =>
-            Effect.logWarning(
-              "Battle analytics cleanup remains pending",
-              error,
-            ),
-          ),
-        );
+      yield* analytics.invalidateAnalyticsCache(userId);
 
       return { deletedCount: removed.length };
     },

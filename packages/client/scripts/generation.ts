@@ -52,7 +52,7 @@ const OpenApiDocumentSchema = Schema.StructWithRest(
   [Schema.Record(Schema.String, Schema.Unknown)],
 );
 
-export type JsonValue = typeof Schema.Json.Type;
+export type JsonValue = Schema.Json;
 
 export type JsonObject = { [key: string]: JsonValue };
 

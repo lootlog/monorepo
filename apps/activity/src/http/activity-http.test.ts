@@ -62,13 +62,12 @@ const repository: ActivityRepositoryValue = {
 };
 
 const readiness: ActivityReadinessValue = {
-  check: () =>
-    Effect.succeed({
-      status: "ok",
-      info: { database: { status: "up" } },
-      error: null,
-      details: { database: { status: "up" } },
-    }),
+  check: Effect.succeed({
+    status: "ok",
+    info: { database: { status: "up" } },
+    error: null,
+    details: { database: { status: "up" } },
+  }),
 };
 
 const unusedOnlineRepository = Layer.succeed(OnlineRepository, {
@@ -76,8 +75,9 @@ const unusedOnlineRepository = Layer.succeed(OnlineRepository, {
     Effect.die(new Error("Unexpected online ingest in activity route test")),
   find: () =>
     Effect.die(new Error("Unexpected online query in activity route test")),
-  prune: () =>
-    Effect.die(new Error("Unexpected online pruning in activity route test")),
+  prune: Effect.die(
+    new Error("Unexpected online pruning in activity route test"),
+  ),
 });
 
 const makeBoundary = (

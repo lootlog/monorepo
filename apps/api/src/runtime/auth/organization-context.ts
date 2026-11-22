@@ -88,10 +88,10 @@ const STALE_REFRESH_RETRY_SECONDS = 60;
 const refreshAheadKey = (userId: string, guildId: string) =>
   `organization-context:refresh-ahead:${userId}:${guildId}`;
 
-export class OrganizationNotFound extends TaggedErrorClass<OrganizationNotFound>()(
-  "OrganizationNotFound",
-  { guildId: Schema.String },
-) {}
+export class OrganizationNotFound extends TaggedErrorClass<
+  OrganizationNotFound,
+  { readonly brand: unique symbol }
+>()("OrganizationNotFound", { guildId: Schema.String }) {}
 
 // The cache holds only the member and its roles, which cost a Discord sync to
 // refresh. The guild row and the capabilities derived from it are read on every
@@ -198,9 +198,9 @@ export class OrganizationContextLookup extends Context.Service<
             );
 
             if (!guild) {
-              return yield* Effect.fail(
-                new OrganizationNotFound({ guildId: idOrVanityUrl }),
-              );
+              return yield* new OrganizationNotFound({
+                guildId: idOrVanityUrl,
+              });
             }
 
             yield* writeGuildConfigurationCache(

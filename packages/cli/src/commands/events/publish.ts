@@ -29,7 +29,7 @@ const validateEvent = (fixture: EventFixture): EventFixture => {
 
 export const parseEventFixture = (content: string): EventFixture =>
   validateEvent(
-    Schema.decodeUnknownSync(Schema.fromJsonString(EventFixture))(content),
+    Schema.decodeSync(Schema.fromJsonString(EventFixture))(content),
   );
 
 const parsePayload = Schema.decodeUnknownSync(
@@ -148,7 +148,7 @@ const publishCustom = async (
   routingKey: string,
   payload: string,
 ): Promise<void> => {
-  let parsedPayload: typeof Schema.Json.Type;
+  let parsedPayload: Schema.Json;
 
   try {
     parsedPayload = parsePayload(payload);

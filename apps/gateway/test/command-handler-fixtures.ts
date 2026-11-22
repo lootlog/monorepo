@@ -90,7 +90,7 @@ class FakeHub {
     socket.data.presence = presence;
   }
 
-  publishPermissionRebalance(): Effect.Effect<void, unknown> {
+  publishPermissionRebalance(): Effect.Effect<void> {
     return Effect.void;
   }
 

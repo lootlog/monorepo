@@ -37,15 +37,18 @@ export type ChatGuildAccess = ChatIdentity &
     readonly guildId: string;
   };
 
-export class ChatAccessDenied extends TaggedErrorClass<ChatAccessDenied>()(
-  "ChatAccessDenied",
-  { status: Schema.Literals([401, 403]), code: Schema.String },
-) {}
+export class ChatAccessDenied extends TaggedErrorClass<
+  ChatAccessDenied,
+  { readonly brand: unique symbol }
+>()("ChatAccessDenied", {
+  status: Schema.Literals([401, 403]),
+  code: Schema.String,
+}) {}
 
-export class ChatNotFound extends TaggedErrorClass<ChatNotFound>()(
-  "ChatNotFound",
-  { status: Schema.Literal(404), code: Schema.String },
-) {}
+export class ChatNotFound extends TaggedErrorClass<
+  ChatNotFound,
+  { readonly brand: unique symbol }
+>()("ChatNotFound", { status: Schema.Literal(404), code: Schema.String }) {}
 
 type AccessFailure = ChatAccessDenied | ChatNotFound | ReauthenticationRequired;
 

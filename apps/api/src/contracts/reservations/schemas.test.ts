@@ -38,13 +38,13 @@ const reservation = {
 
 describe("reservation contracts", () => {
   it("preserves extension fields on spot projections and editing constraints, while stripping them on reservation details", () => {
-    const details = Schema.decodeUnknownSync(ReservationResponse)(reservation);
+    const details = Schema.decodeSync(ReservationResponse)(reservation);
     expect(details).not.toHaveProperty("future");
     expect(details.editingConstraints).toMatchObject({
       future: { allowed: true },
     });
 
-    const spots = Schema.decodeUnknownSync(ReservationSpotsResponse)([
+    const spots = Schema.decodeSync(ReservationSpotsResponse)([
       {
         id: "spot",
         name: "Spot",
@@ -65,7 +65,7 @@ describe("reservation contracts", () => {
       calendar: true,
     });
     expect(() =>
-      Schema.decodeUnknownSync(ReservationResponse)({
+      Schema.decodeSync(ReservationResponse)({
         ...reservation,
         editingConstraints: {
           ...reservation.editingConstraints,
@@ -82,7 +82,7 @@ describe("reservation contracts", () => {
     };
 
     expect(
-      Schema.decodeUnknownSync(CreateReservationRequest)({
+      Schema.decodeSync(CreateReservationRequest)({
         ...dates,
         reminderMinutesBefore: 15,
       }),
@@ -93,14 +93,12 @@ describe("reservation contracts", () => {
         reminderMinutesBefore: 10,
       }),
     ).toThrow();
-    expect(() =>
-      Schema.decodeUnknownSync(UpdateReservationRequest)({}),
-    ).toThrow();
+    expect(() => Schema.decodeSync(UpdateReservationRequest)({})).toThrow();
     expect(() =>
       Schema.decodeUnknownSync(UpdateReservationRequest)({ unsupported: true }),
     ).toThrow();
     expect(
-      Schema.decodeUnknownSync(UpdateReservationRequest)({ comment: "" }),
+      Schema.decodeSync(UpdateReservationRequest)({ comment: "" }),
     ).toEqual({ comment: "" });
   });
 });

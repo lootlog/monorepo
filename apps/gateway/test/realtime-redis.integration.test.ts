@@ -274,7 +274,7 @@ const startFederatedInstance = async (configuration: GatewayConfiguration) => {
   const instance = await openStore(configuration.redis.keyPrefix);
   const hub = new RealtimeHub(configuration, instance.store);
 
-  await instance.runtime.runPromise(hub.start());
+  await instance.runtime.runPromise(hub.start);
 
   return { ...instance, hub };
 };
@@ -846,7 +846,7 @@ describe("realtime Dragonfly integration", () => {
         location: moved,
       }),
     );
-    await Effect.runPromise(presence.flushDeltas());
+    await Effect.runPromise(presence.flushDeltas);
 
     const updated = await snapshot();
 
@@ -855,7 +855,7 @@ describe("realtime Dragonfly integration", () => {
     ]);
     expect(updated.revision).toBeGreaterThan(published.revision);
     await depart(presence, source);
-    await Effect.runPromise(presence.flushDeltas());
+    await Effect.runPromise(presence.flushDeltas);
 
     const disconnected = await snapshot();
 
@@ -1057,7 +1057,7 @@ describe("realtime Dragonfly integration", () => {
     now += 10_000;
     claims.before = () => connect(presence, game);
 
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(claims.results).toHaveLength(1);
     expect(offline.events).toEqual([]);
     // The reconnect leaves no cancelled departure in the character index.
@@ -1074,17 +1074,17 @@ describe("realtime Dragonfly integration", () => {
       );
     now += PRESENCE_EXPIRY_MS + 10_000;
     presence = makePresence();
-    await Effect.runPromise(presence.sweepExpired());
+    await Effect.runPromise(presence.sweepExpired);
     offline.fail = true;
-    await Effect.runPromise(presence.sweepOffline().pipe(Effect.flip));
+    await Effect.runPromise(presence.sweepOffline.pipe(Effect.flip));
     presence = makePresence();
     offline.fail = false;
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events).toHaveLength(1);
     expect(offline.events[0]?.characterId).toBe(
       game.data.character?.characterId,
     );
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events).toHaveLength(1);
   });
 
@@ -1163,7 +1163,7 @@ describe("realtime Dragonfly integration", () => {
         expect(await redis.store.command.get(secondKey)).not.toBeNull();
       };
 
-      await Effect.runPromise(presence.sweepOffline());
+      await Effect.runPromise(presence.sweepOffline);
       expect(offline.events.map((event) => event.userId)).toEqual([
         first.data.userId,
       ]);
@@ -1225,7 +1225,7 @@ describe("realtime Dragonfly integration", () => {
     // starts a new period and must not erase its accepted publication.
     claims.after = () => connect(presence, departed);
 
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     // One atomic decision for the group; only the unchanged departure completes.
     expect(claims.results).toEqual([1]);
     expect(offline.events.map((event) => event.userId)).toEqual([
@@ -1238,13 +1238,13 @@ describe("realtime Dragonfly integration", () => {
 
     now += 10_000;
     await depart(presence, departed);
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events.map((event) => event.userId)).toEqual([
       departed.data.userId,
       replacement.data.userId,
     ]);
     now += 10_000;
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events.map((event) => event.userId)).toEqual([
       departed.data.userId,
       replacement.data.userId,
@@ -1288,11 +1288,11 @@ describe("realtime Dragonfly integration", () => {
     expect(await dueDepartures(redis.store)).toHaveLength(1);
 
     now = start + 10_000;
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events).toEqual([]);
 
     now = start + 15_000;
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events).toEqual([
       expect.objectContaining({
         userId: "user-player",
@@ -1340,11 +1340,11 @@ describe("realtime Dragonfly integration", () => {
     for (const { guild } of guilds)
       await store.command.del(`presence:${guild.id}:heartbeat`);
     now += PRESENCE_EXPIRY_MS + 10_000;
-    await Effect.runPromise(presence.sweepExpired());
+    await Effect.runPromise(presence.sweepExpired);
     expect(
       await store.command.smembers("presence:index:organization-1"),
     ).toEqual([]);
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events).toEqual([
       expect.objectContaining({
         disconnectedAt: lastSeen + PRESENCE_EXPIRY_MS,
@@ -1379,8 +1379,8 @@ describe("realtime Dragonfly integration", () => {
     });
 
     const sweep = async () => {
-      await Effect.runPromise(presence.sweepExpired());
-      await Effect.runPromise(presence.flushDeltas());
+      await Effect.runPromise(presence.sweepExpired);
+      await Effect.runPromise(presence.flushDeltas);
     };
 
     for (let index = 0; index < 205; index++)
@@ -1389,7 +1389,7 @@ describe("realtime Dragonfly integration", () => {
         gameSocket(`burst-${index}`, { memberships: guilds.slice(0, 1) }),
       );
 
-    await Effect.runPromise(presence.flushDeltas());
+    await Effect.runPromise(presence.flushDeltas);
     await sweep();
     expect(payloadReads).toEqual([]);
     expect(removed).toBe(0);
@@ -1444,7 +1444,7 @@ describe("realtime Dragonfly integration", () => {
     if (!olderExit) throw new Error("Missing pending exit");
 
     now = start + PRESENCE_EXPIRY_MS;
-    await Effect.runPromise(presence.sweepExpired());
+    await Effect.runPromise(presence.sweepExpired);
     expect(await redis.store.command.get(olderExit)).toBeNull();
     const departures = await dueDepartures(redis.store);
 
@@ -1452,11 +1452,11 @@ describe("realtime Dragonfly integration", () => {
     expect(departures).not.toContain(olderExit);
 
     // The older exit's grace already ended; only the expiry departure remains.
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events).toEqual([]);
 
     now += 10_000;
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events).toEqual([
       expect.objectContaining({
         userId: "user-player",
@@ -1505,16 +1505,16 @@ describe("realtime Dragonfly integration", () => {
       await depart(presence, active);
     };
 
-    await Effect.runPromise(presence.sweepExpired());
+    await Effect.runPromise(presence.sweepExpired);
     expect(removals.results).toEqual([0]);
     expect(await dueDepartures(redis.store)).toHaveLength(1);
 
-    await Effect.runPromise(presence.sweepExpired());
+    await Effect.runPromise(presence.sweepExpired);
     expect(removals.results).toEqual([0, 1]);
     expect(await dueDepartures(redis.store)).toHaveLength(1);
 
     now += 10_000;
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events).toEqual([
       expect.objectContaining({
         userId: "user-player",
@@ -1565,9 +1565,7 @@ describe("realtime Dragonfly integration", () => {
     });
 
     const flushBoth = () =>
-      Effect.runPromise(
-        Effect.all([first.flushDeltas(), second.flushDeltas()]),
-      );
+      Effect.runPromise(Effect.all([first.flushDeltas, second.flushDeltas]));
 
     await connect(first, game);
     await flushBoth();
@@ -1575,14 +1573,14 @@ describe("realtime Dragonfly integration", () => {
 
     removals.before = async () => {
       // Another replica cannot claim the batch while the first holds its lease.
-      await Effect.runPromise(second.sweepExpired());
+      await Effect.runPromise(second.sweepExpired);
       await Effect.runPromise(second.heartbeat(game, game.data.connectionId));
     };
 
-    await Effect.runPromise(first.sweepExpired());
-    await Effect.runPromise(second.sweepExpired());
+    await Effect.runPromise(first.sweepExpired);
+    await Effect.runPromise(second.sweepExpired);
     now += 10_000;
-    await Effect.runPromise(second.sweepOffline());
+    await Effect.runPromise(second.sweepOffline);
     await flushBoth();
     expect(removals.results).toEqual([0]);
     expect(removed).toBe(0);
@@ -1603,9 +1601,9 @@ describe("realtime Dragonfly integration", () => {
     ).toBe(now - 10_000 + PRESENCE_EXPIRY_MS);
 
     now += PRESENCE_EXPIRY_MS;
-    await Effect.runPromise(second.sweepExpired());
-    await Effect.runPromise(first.sweepExpired());
-    await Effect.runPromise(first.sweepOffline());
+    await Effect.runPromise(second.sweepExpired);
+    await Effect.runPromise(first.sweepExpired);
+    await Effect.runPromise(first.sweepOffline);
     await flushBoth();
     expect(await firstRedis.store.command.get(key)).toBeNull();
     expect(await firstRedis.store.command.get(metadataKey)).toBeNull();
@@ -1647,8 +1645,8 @@ describe("realtime Dragonfly integration", () => {
             ) {
               transferred = true;
               await store.command.del("presence:expiry:sweep-lock");
-              await Effect.runPromise(successor.sweepExpired());
-              await Effect.runPromise(successor.sweepOffline());
+              await Effect.runPromise(successor.sweepExpired);
+              await Effect.runPromise(successor.sweepOffline);
               expect(offline.events).toHaveLength(1);
             }
 
@@ -1660,8 +1658,8 @@ describe("realtime Dragonfly integration", () => {
       publishOffline: offline.publish,
     });
 
-    await Effect.runPromise(predecessor.sweepExpired());
-    await Effect.runPromise(successor.sweepOffline());
+    await Effect.runPromise(predecessor.sweepExpired);
+    await Effect.runPromise(successor.sweepOffline);
     expect(transferred).toBe(true);
     expect(offline.events).toHaveLength(1);
     expect(await dueDepartures(store)).toEqual([]);
@@ -1723,10 +1721,10 @@ describe("realtime Dragonfly integration", () => {
     }
 
     await addDueDepartures(store, ...keys);
-    const reusedSweep = presence.sweepOffline();
+    const reusedSweep = presence.sweepOffline;
     const first = Effect.runPromise(reusedSweep);
     await readStarted.promise;
-    await Effect.runPromise(makePresence().sweepOffline());
+    await Effect.runPromise(makePresence().sweepOffline);
     expect(organizationReads).toBe(1);
     expect(offline.events).toHaveLength(0);
     // The old owner captured an offline observation before the reconnect.
@@ -1806,13 +1804,13 @@ describe("realtime Dragonfly integration", () => {
       await redis.store.command.set(key, JSON.stringify(rewritten));
     };
 
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(drops.results).toEqual([0]);
     expect(await redis.store.command.get(key)).toBe(JSON.stringify(rewritten));
     expect(await dueDepartures(redis.store)).toEqual([key]);
     expect(offline.events).toEqual([]);
 
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events).toEqual([rewritten]);
     expect(await dueDepartures(redis.store)).toEqual([]);
   });
@@ -1840,7 +1838,7 @@ describe("realtime Dragonfly integration", () => {
 
     renewals.before = () => takeOverOfflineSweep(redis.store);
 
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(renewals.results).toEqual([0]);
     expect(offline.events).toEqual([]);
     expect(await redis.store.command.get(key)).toBe(JSON.stringify(captured));
@@ -1850,7 +1848,7 @@ describe("realtime Dragonfly integration", () => {
     expect(await redis.store.command.get(OFFLINE_SWEEP_LOCK)).toBe("successor");
 
     await redis.store.command.del(OFFLINE_SWEEP_LOCK);
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(offline.events).toEqual([captured]);
     expect(await redis.store.command.smembers(OFFLINE_OUTBOX_INDEX)).toEqual(
       [],
@@ -1885,7 +1883,7 @@ describe("realtime Dragonfly integration", () => {
 
     acknowledgements.before = () => takeOverOfflineSweep(redis.store);
 
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(acknowledgements.results).toEqual([-1]);
     expect(offline.events).toHaveLength(1);
     expect(
@@ -1894,7 +1892,7 @@ describe("realtime Dragonfly integration", () => {
     expect(await redis.store.command.get(OFFLINE_SWEEP_LOCK)).toBe("successor");
 
     await redis.store.command.del(OFFLINE_SWEEP_LOCK);
-    await Effect.runPromise(presence.sweepOffline());
+    await Effect.runPromise(presence.sweepOffline);
     expect(new Set(offline.events.map(({ userId }) => userId))).toEqual(
       new Set(["user-outbox-0", "user-outbox-1"]),
     );
@@ -1925,7 +1923,7 @@ describe("realtime Dragonfly integration", () => {
     await observeAt(25);
     await observeAt(50);
     now = start + 60_000;
-    await Effect.runPromise(history.flush());
+    await Effect.runPromise(history.flush);
     expect(checkpoints()).toHaveLength(1);
     expect(checkpoints()[0]?.world).toBe("classic");
     expect(checkpoints()[0]?.endedAt).toBe(
@@ -1934,15 +1932,15 @@ describe("realtime Dragonfly integration", () => {
     await observeAt(75);
     await observeAt(100);
     now = start + 110_000;
-    await Effect.runPromise(history.flush());
+    await Effect.runPromise(history.flush);
     expect(checkpoints()).toHaveLength(1);
     now = start + 120_000;
     online.fail = true;
-    await expect(Effect.runPromise(history.flush())).rejects.toThrow();
+    await expect(Effect.runPromise(history.flush)).rejects.toThrow();
     history = new OnlineHistory(store.command, online.publish, () => now);
     online.fail = false;
     now = start + 180_000;
-    await Effect.runPromise(history.flush());
+    await Effect.runPromise(history.flush);
     expect(checkpoints()).toHaveLength(2);
     expect(checkpoints()[1]?.segmentId).toBe(checkpoints()[0]?.segmentId);
     expect(checkpoints()[1]?.endedAt).toBe(
@@ -1950,7 +1948,7 @@ describe("realtime Dragonfly integration", () => {
     );
     await observeAt(200);
     await observeAt(225, true);
-    await Effect.runPromise(history.flush());
+    await Effect.runPromise(history.flush);
     expect(checkpoints()).toHaveLength(3);
     expect(checkpoints()[2]?.startedAt).toBe(
       new Date(start + 200_000).toISOString(),
@@ -1970,7 +1968,7 @@ describe("realtime Dragonfly integration", () => {
     await Effect.runPromise(history.observe(web, now + 30_000, true));
     now += 120_000;
     await Effect.runPromise(history.observe(session, now, true));
-    await Effect.runPromise(history.flush());
+    await Effect.runPromise(history.flush);
     expect(checkpoints()).toHaveLength(3);
     // A world change closes the segment and starts one in the new world.
     const changedAt = now + 120_000;
@@ -1984,7 +1982,7 @@ describe("realtime Dragonfly integration", () => {
     now = changedAt + 50_000;
     await Effect.runPromise(history.observe(session, now));
     now = changedAt + 150_000;
-    await Effect.runPromise(history.flush());
+    await Effect.runPromise(history.flush);
     expect(
       checkpoints()
         .slice(3)
@@ -2048,7 +2046,7 @@ describe("realtime Dragonfly integration", () => {
       );
 
     now = start + 60_000;
-    await Effect.runPromise(history.flush());
+    await Effect.runPromise(history.flush);
     expect(checkpoints()).toHaveLength(1000);
     expect(new Set(checkpoints().map((event) => event.sessionId)).size).toBe(
       1000,
@@ -2058,13 +2056,13 @@ describe("realtime Dragonfly integration", () => {
       1,
     );
     fail = true;
-    await expect(Effect.runPromise(history.flush())).rejects.toThrow(
+    await expect(Effect.runPromise(history.flush)).rejects.toThrow(
       "Rabbit unavailable",
     );
     expect(await pending()).toBe(251);
     fail = false;
     now += 60_000;
-    await Effect.runPromise(history.flush());
+    await Effect.runPromise(history.flush);
     expect(checkpoints()).toHaveLength(1251);
     expect(new Set(checkpoints().map((event) => event.sessionId)).size).toBe(
       1250,
@@ -2128,10 +2126,10 @@ describe("realtime Dragonfly integration", () => {
       now = start + 60_000;
 
       if (fail)
-        await expect(Effect.runPromise(history.flush())).rejects.toThrow(
+        await expect(Effect.runPromise(history.flush)).rejects.toThrow(
           "Rabbit unavailable",
         );
-      else await Effect.runPromise(history.flush());
+      else await Effect.runPromise(history.flush);
       expect(checkpoints()).toHaveLength(100);
       expect(
         messages.filter((event) => event.type === "collector").at(-1)
@@ -2139,12 +2137,12 @@ describe("realtime Dragonfly integration", () => {
       ).toBe(new Date(now).toISOString());
       fail = false;
       now = start + 120_000;
-      await Effect.runPromise(history.flush());
+      await Effect.runPromise(history.flush);
       // The failed second batch retains its complete 60-second lease, measured
       // from its own claim at 63 seconds, while unclaimed work can be drained.
       expect(checkpoints()).toHaveLength(failSecondBatch ? 150 : 250);
       now = start + 123_000;
-      await Effect.runPromise(history.flush());
+      await Effect.runPromise(history.flush);
       expect(checkpoints()).toHaveLength(250);
       expect(new Set(checkpoints().map((event) => event.sessionId)).size).toBe(
         250,
@@ -3145,7 +3143,7 @@ describe("realtime Dragonfly integration", () => {
       expect(channelUpdates).toHaveLength(1);
 
       const refresh = second.runtime.runFork(
-        recipientAirTags.runInterestRefresh(),
+        recipientAirTags.runInterestRefresh,
       );
 
       await Bun.sleep(100);

@@ -56,21 +56,21 @@ const getPostgresErrorCode = (error: unknown): string | undefined => {
   return getPostgresErrorCode(error.cause);
 };
 
-export class InvalidSettingsPatchError extends TaggedErrorClass<InvalidSettingsPatchError>()(
-  "InvalidSettingsPatchError",
-  { message: Schema.String },
-) {}
+export class InvalidSettingsPatchError extends TaggedErrorClass<
+  InvalidSettingsPatchError,
+  { readonly brand: unique symbol }
+>()("InvalidSettingsPatchError", { message: Schema.String }) {}
 
-export class SettingsPersistenceError extends TaggedErrorClass<SettingsPersistenceError>()(
-  "SettingsPersistenceError",
-  { cause: Schema.Defect() },
-) {}
+export class SettingsPersistenceError extends TaggedErrorClass<
+  SettingsPersistenceError,
+  { readonly brand: unique symbol }
+>()("SettingsPersistenceError", { cause: Schema.Defect() }) {}
 
 /** A document changed after the client read the `updatedAt` it expects. */
-export class SettingsConflictError extends TaggedErrorClass<SettingsConflictError>()(
-  "SettingsConflictError",
-  { message: Schema.String },
-) {}
+export class SettingsConflictError extends TaggedErrorClass<
+  SettingsConflictError,
+  { readonly brand: unique symbol }
+>()("SettingsConflictError", { message: Schema.String }) {}
 
 type RepositoryFailure =
   | InvalidSettingsPatchError
@@ -201,40 +201,42 @@ export class SettingsDocumentsRepository extends Context.Service<
                   });
                 }
 
-                try {
-                  // Bring the stored document to the catalog version before
-                  // patching, so the row written below matches the version
-                  // it is stamped with.
-                  const currentOverrides =
-                    nextDocuments.get(key)?.overrides ??
-                    (Predicate.isObject(stored?.overrides)
-                      ? migrateSettingsDocument(
-                          operation.domain,
-                          decodeSettingsRecord(stored.overrides),
-                          stored.schemaVersion,
-                        )
-                      : {});
+                yield* Effect.try({
+                  try: () => {
+                    // Bring the stored document to the catalog version before
+                    // patching, so the row written below matches the version
+                    // it is stamped with.
+                    const currentOverrides =
+                      nextDocuments.get(key)?.overrides ??
+                      (Predicate.isObject(stored?.overrides)
+                        ? migrateSettingsDocument(
+                            operation.domain,
+                            decodeSettingsRecord(stored.overrides),
+                            stored.schemaVersion,
+                          )
+                        : {});
 
-                  nextDocuments.set(key, {
-                    domain: operation.domain,
-                    scope: operation.scope,
-                    stored,
-                    overrides: applySettingsPatch({
+                    nextDocuments.set(key, {
                       domain: operation.domain,
                       scope: operation.scope,
-                      currentOverrides,
-                      set: operation.set,
-                      unset: operation.unset,
+                      stored,
+                      overrides: applySettingsPatch({
+                        domain: operation.domain,
+                        scope: operation.scope,
+                        currentOverrides,
+                        set: operation.set,
+                        unset: operation.unset,
+                      }),
+                    });
+                  },
+                  catch: (error) =>
+                    new InvalidSettingsPatchError({
+                      message:
+                        error instanceof Error
+                          ? error.message
+                          : "Invalid settings operation",
                     }),
-                  });
-                } catch (error) {
-                  return yield* new InvalidSettingsPatchError({
-                    message:
-                      error instanceof Error
-                        ? error.message
-                        : "Invalid settings operation",
-                  });
-                }
+                });
               }
 
               const now = yield* Clock.currentTimeMillis;

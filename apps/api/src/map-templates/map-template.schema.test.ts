@@ -15,9 +15,7 @@ const encoded = {
 
 describe("map template HTTP codec", () => {
   it("decodes and encodes the public response without changing its JSON", () => {
-    const decoded = Schema.decodeUnknownSync(MapTemplateResponseSchema)(
-      encoded,
-    );
+    const decoded = Schema.decodeSync(MapTemplateResponseSchema)(encoded);
 
     expect(decoded.createdAt).toEqual(new Date(encoded.createdAt));
     expect(Schema.encodeSync(MapTemplateResponseSchema)(decoded)).toEqual(
@@ -27,13 +25,13 @@ describe("map template HTTP codec", () => {
 
   it("rejects invalid dates and unsafe nested map ids", () => {
     expect(() =>
-      Schema.decodeUnknownSync(MapTemplateResponseSchema)({
+      Schema.decodeSync(MapTemplateResponseSchema)({
         ...encoded,
         createdAt: "invalid",
       }),
     ).toThrow();
     expect(() =>
-      Schema.decodeUnknownSync(MapTemplateResponseSchema)({
+      Schema.decodeSync(MapTemplateResponseSchema)({
         ...encoded,
         maps: [{ id: Number.MAX_SAFE_INTEGER + 1, name: "Ithan" }],
       }),
@@ -42,13 +40,13 @@ describe("map template HTTP codec", () => {
 
   it("validates the nested create payload", () => {
     expect(
-      Schema.decodeUnknownSync(CreateMapTemplateSchema)({
+      Schema.decodeSync(CreateMapTemplateSchema)({
         name: encoded.name,
         maps: encoded.maps,
       }),
     ).toEqual({ name: encoded.name, maps: encoded.maps });
     expect(() =>
-      Schema.decodeUnknownSync(CreateMapTemplateSchema)({
+      Schema.decodeSync(CreateMapTemplateSchema)({
         name: encoded.name,
         maps: [{ id: 1.5, name: "Ithan" }],
       }),

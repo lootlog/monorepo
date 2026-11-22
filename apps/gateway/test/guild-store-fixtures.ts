@@ -40,7 +40,7 @@ export const makeGuildStoreRedis = (
       const current = values.get(key);
 
       const revision = current
-        ? Schema.decodeUnknownSync(CacheRevisionJson)(current).revision
+        ? Schema.decodeSync(CacheRevisionJson)(current).revision
         : undefined;
 
       if ((revision ?? "") !== String(revisionArgument))

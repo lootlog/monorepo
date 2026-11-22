@@ -63,10 +63,8 @@ export const makeBattleAnalyticsQuery = (
         });
 
         if (!userCharacter)
-          return yield* Effect.fail(
-            new ResourceNotFoundError(
-              `Character ${query.characterId} not found for user`,
-            ),
+          return yield* new ResourceNotFoundError(
+            `Character ${query.characterId} not found for user`,
           );
 
         return [query.characterId];

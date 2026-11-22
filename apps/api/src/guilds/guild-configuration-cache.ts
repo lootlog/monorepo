@@ -58,7 +58,7 @@ export const readCachedGuild = Effect.fnUntraced(function* <Guild>(
 
   if (!cached) return null;
 
-  try {
+  return yield* Effect.try(() => {
     const guild = decode(cached);
 
     if (
@@ -68,11 +68,7 @@ export const readCachedGuild = Effect.fnUntraced(function* <Guild>(
       throw new Error("Guild cache entry belongs to another Organization");
 
     return guild;
-  } catch {
-    yield* cache.del(key);
-
-    return null;
-  }
+  }).pipe(Effect.catch(() => Effect.as(cache.del(key), null)));
 });
 
 export const readGuildConfigurationCache = (

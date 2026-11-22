@@ -3,7 +3,7 @@ import { Schema } from "effect";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
-type Scope = typeof SubscriptionScope.Type;
+type Scope = SubscriptionScope;
 
 /** The optional scope fields in key order, after `topic`. */
 const SCOPE_FIELDS = ["organizationId", "eventId", "world", "mapId"] as const;

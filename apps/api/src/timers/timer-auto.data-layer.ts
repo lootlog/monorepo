@@ -46,9 +46,7 @@ export const makeAutoTimer = (
     payload: CreateAutoTimerRequest,
   ) {
     if (!hasTimerWeight(payload)) {
-      return yield* Effect.fail(
-        new InvalidRequestError({ code: ErrorKey.WT_TOO_LOW }),
-      );
+      return yield* new InvalidRequestError({ code: ErrorKey.WT_TOO_LOW });
     }
 
     const now = new Date(yield* Clock.currentTimeMillis);
@@ -73,8 +71,7 @@ export const makeAutoTimer = (
       { concurrency: "unbounded" },
     );
 
-    if (guildRows.length === 0)
-      return yield* Effect.fail(new PermissionDeniedError());
+    if (guildRows.length === 0) return yield* new PermissionDeniedError();
 
     const catching = new Set(catchingGuildIds);
 
@@ -93,11 +90,9 @@ export const makeAutoTimer = (
     }));
 
     if (targets.length === 0) {
-      return yield* Effect.fail(
-        badRequest(
-          ErrorKey.NO_GUILDS_ON_THE_CATCHING_WHITELIST,
-          rejectedGuilds,
-        ),
+      return yield* badRequest(
+        ErrorKey.NO_GUILDS_ON_THE_CATCHING_WHITELIST,
+        rejectedGuilds,
       );
     }
 
@@ -129,8 +124,9 @@ export const makeAutoTimer = (
     }
 
     if (submittedGuilds.length === 0) {
-      return yield* Effect.fail(
-        badRequest(ErrorKey.NO_GUILD_ACCEPTS_THIS_TIMER, rejectedGuilds),
+      return yield* badRequest(
+        ErrorKey.NO_GUILD_ACCEPTS_THIS_TIMER,
+        rejectedGuilds,
       );
     }
 

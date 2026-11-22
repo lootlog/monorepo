@@ -94,7 +94,7 @@ export const makeRabbitBridgeHarness = (
   /** Delivers to the main queue of `routingKey`; requires a started bridge. */
   const deliver = (
     routingKey: string,
-    payload: typeof Schema.Json.Type,
+    payload: Schema.Json,
     {
       messageId,
       redelivered = false,

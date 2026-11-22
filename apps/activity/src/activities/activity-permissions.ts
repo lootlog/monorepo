@@ -1,3 +1,4 @@
+import { OperationError } from "@lootlog/instrumentation/operation";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import {
   Permission,
@@ -16,19 +17,19 @@ import {
 const UserPermissions = Schema.Array(UserGuildPermissionsDtoSchema);
 
 /** The guild or the user's grants could not be read; the request cannot be authorized. */
-class PermissionsUnavailable extends TaggedErrorClass<PermissionsUnavailable>()(
-  "PermissionsUnavailable",
-  {
-    operation: Schema.Literals([
-      "guild-cache-read",
-      "guild-cache-write",
-      "guild-response",
-      "permissions-response",
-    ]),
-    status: Schema.optional(Schema.Number),
-    cause: Schema.optional(Schema.Defect()),
-  },
-) {}
+class PermissionsUnavailable extends TaggedErrorClass<
+  PermissionsUnavailable,
+  { readonly brand: unique symbol }
+>()("PermissionsUnavailable", {
+  operation: Schema.Literals([
+    "guild-cache-read",
+    "guild-cache-write",
+    "guild-response",
+    "permissions-response",
+  ]),
+  status: Schema.optional(Schema.Finite),
+  cause: Schema.optional(Schema.Defect()),
+}) {}
 
 export interface PermissionsValue {
   readonly resolveGuildId: (
@@ -66,7 +67,8 @@ export class Permissions extends Context.Service<
           .send("PING")
           .pipe(
             Effect.mapError(
-              (cause) => new Error("Redis connection failed", { cause }),
+              (cause) =>
+                new OperationError({ operation: "activity.redis.ping", cause }),
             ),
           );
       }
@@ -84,10 +86,8 @@ export class Permissions extends Context.Service<
             .pipe(
               Effect.flatMap((value) =>
                 value
-                  ? Schema.decodeUnknownEffect(Schema.fromJsonString(schema))(
-                      value,
-                    )
-                  : Effect.succeed(undefined),
+                  ? Schema.decodeEffect(Schema.fromJsonString(schema))(value)
+                  : Effect.undefined,
               ),
             );
         }
@@ -96,7 +96,7 @@ export class Permissions extends Context.Service<
 
         return entry
           ? Schema.decodeUnknownEffect(schema)(entry.value)
-          : Effect.succeed(undefined);
+          : Effect.undefined;
       };
 
       const set = (

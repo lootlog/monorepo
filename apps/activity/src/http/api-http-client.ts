@@ -3,20 +3,20 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpClient } from "effect/http";
 
-export class ApiHttpClientFailure extends TaggedErrorClass<ApiHttpClientFailure>()(
-  "ApiHttpClientFailure",
-  {
-    operationId: Schema.String,
-    reason: Schema.Literals([
-      "invalid-response",
-      "response-too-large",
-      "timeout",
-      "transport",
-    ]),
-    retryable: Schema.Boolean,
-    status: Schema.optional(Schema.Number),
-  },
-) {}
+export class ApiHttpClientFailure extends TaggedErrorClass<
+  ApiHttpClientFailure,
+  { readonly brand: unique symbol }
+>()("ApiHttpClientFailure", {
+  operationId: Schema.String,
+  reason: Schema.Literals([
+    "invalid-response",
+    "response-too-large",
+    "timeout",
+    "transport",
+  ]),
+  retryable: Schema.Boolean,
+  status: Schema.optional(Schema.Finite),
+}) {}
 
 export interface ApiHttpClientValue {
   readonly get: (

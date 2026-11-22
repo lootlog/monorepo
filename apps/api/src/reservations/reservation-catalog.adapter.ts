@@ -30,13 +30,13 @@ export interface ReservationCatalogCache {
 }
 
 /** The catalog service answered with an error status or an unusable payload. */
-export class ReservationCatalogUnavailable extends TaggedErrorClass<ReservationCatalogUnavailable>()(
-  "ReservationCatalogUnavailable",
-  {
-    status: Schema.optional(Schema.Number),
-    cause: Schema.optional(Schema.Defect()),
-  },
-) {}
+export class ReservationCatalogUnavailable extends TaggedErrorClass<
+  ReservationCatalogUnavailable,
+  { readonly brand: unique symbol }
+>()("ReservationCatalogUnavailable", {
+  status: Schema.optional(Schema.Finite),
+  cause: Schema.optional(Schema.Defect()),
+}) {}
 
 type CatalogFailure = ReservationCatalogUnavailable | OutboundHttpFailure;
 

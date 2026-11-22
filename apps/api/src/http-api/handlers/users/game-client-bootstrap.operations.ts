@@ -76,7 +76,7 @@ export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
             Effect.catchCause((cause) =>
               Cause.hasInterruptsOnly(cause)
                 ? Effect.interrupt
-                : Effect.succeed(undefined),
+                : Effect.undefined,
             ),
           ),
         { concurrency: "unbounded" },
@@ -112,8 +112,8 @@ export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
           orUnavailable("lootlogConfig"),
         ),
         getPreferences(settingsQuery).pipe(orUnavailable("settingsDocuments")),
-        getOwnCharacterAura().pipe(orUnavailable("characterAura")),
-        getCharacterAuras().pipe(orUnavailable("characterAuras")),
+        getOwnCharacterAura.pipe(orUnavailable("characterAura")),
+        getCharacterAuras.pipe(orUnavailable("characterAuras")),
       ],
       { concurrency: "unbounded" },
     );

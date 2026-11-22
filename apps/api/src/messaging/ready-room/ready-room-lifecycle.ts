@@ -65,27 +65,21 @@ export const createRoom = (
     const result = yield* context.repository.create(aggregate);
 
     if (result.status === "active-room-exists") {
-      return yield* Effect.fail(
-        new ResourceConflictError({
-          code: "ACTIVE_GATHERING_EXISTS",
-          details: { notificationId: result.notificationId },
-        }),
-      );
+      return yield* new ResourceConflictError({
+        code: "ACTIVE_GATHERING_EXISTS",
+        details: { notificationId: result.notificationId },
+      });
     }
 
     if (result.status === "joined-elsewhere") {
-      return yield* Effect.fail(
-        new ResourceConflictError({
-          code: "ALREADY_JOINED_ELSEWHERE",
-          details: { notificationId: result.notificationId },
-        }),
-      );
+      return yield* new ResourceConflictError({
+        code: "ALREADY_JOINED_ELSEWHERE",
+        details: { notificationId: result.notificationId },
+      });
     }
 
     if (result.status === "room-exists") {
-      return yield* Effect.fail(
-        new ResourceConflictError({ code: "REVISION_CONFLICT" }),
-      );
+      return yield* new ResourceConflictError({ code: "REVISION_CONFLICT" });
     }
 
     yield* context.publish(result.aggregate, recipients);

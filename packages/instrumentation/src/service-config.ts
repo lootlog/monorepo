@@ -2,7 +2,14 @@ import {
   RuntimeEnvironment,
   RuntimeEnvironmentSchema,
 } from "@lootlog/schema/runtime-environment";
-import { Config, Redacted } from "effect";
+import { Config, Redacted, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
+
+/** A setting the environment requires is missing or unusable. */
+export class InvalidServiceConfiguration extends TaggedErrorClass<
+  InvalidServiceConfiguration,
+  { readonly brand: unique symbol }
+>()("InvalidServiceConfiguration", { message: Schema.String }) {}
 
 /** What every backend service reads to identify, observe and serve itself. */
 export interface BaseServiceConfiguration {

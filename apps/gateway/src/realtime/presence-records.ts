@@ -14,9 +14,9 @@ export type PresenceRedis = {
   >;
 };
 
-export type Basic = typeof BasicPresence.Type;
+export type Basic = BasicPresence;
 
-export type Precise = typeof PresenceWithLocation.Type;
+export type Precise = PresenceWithLocation;
 
 export type PresenceChange =
   | { readonly action: "upsert"; readonly presence: Basic | Precise }

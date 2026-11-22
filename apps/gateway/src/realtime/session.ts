@@ -20,7 +20,7 @@ export interface AirTagScope {
   readonly guildId: string;
   readonly world: string;
   readonly mapId: number;
-  readonly subscription: typeof SubscriptionScope.Type;
+  readonly subscription: SubscriptionScope;
 }
 
 /** The timer NPCs this socket last reported standing on its map. */
@@ -41,7 +41,7 @@ export interface SessionData extends AuthenticatedIdentity {
   /** Set when the gateway will close the socket; it no longer acts on commands. */
   closing?: boolean;
   guilds: UserGuildData[];
-  subscriptions: Map<string, typeof SubscriptionScope.Type>;
+  subscriptions: Map<string, SubscriptionScope>;
   airTagScopes: AirTagScope[];
   /** When this connection sent its recent sighting batches, for its rate limit. */
   airTagBatchesSentAt?: number[];
@@ -56,7 +56,7 @@ export interface SessionData extends AuthenticatedIdentity {
   /** The client joined with `KILL_STATS_FEATURE`, so it reads `kill-stats.changed`. */
   killStats?: boolean;
   confidence: typeof PresenceConfidence.Type;
-  presence?: typeof BasicPresence.Type & {
+  presence?: BasicPresence & {
     readonly location?: {
       readonly mapId?: number;
       readonly map: string;

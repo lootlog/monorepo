@@ -27,10 +27,13 @@ import type {
   HeroSightingsNotFound,
 } from "#src/hero-sightings/hero-sighting-errors";
 
-export class HeroSightingsAccessDenied extends TaggedErrorClass<HeroSightingsAccessDenied>()(
-  "HeroSightingsAccessDenied",
-  { status: Schema.Literals([401, 403]), code: Schema.String },
-) {}
+export class HeroSightingsAccessDenied extends TaggedErrorClass<
+  HeroSightingsAccessDenied,
+  { readonly brand: unique symbol }
+>()("HeroSightingsAccessDenied", {
+  status: Schema.Literals([401, 403]),
+  code: Schema.String,
+}) {}
 
 export class HeroSightingsAuthorization extends Context.Service<
   HeroSightingsAuthorization,

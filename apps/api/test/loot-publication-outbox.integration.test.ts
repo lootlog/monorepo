@@ -260,7 +260,7 @@ describe("durable loot publications", () => {
       ),
     );
 
-    return Schema.decodeUnknownSync(LootDetailResponse)(
+    return Schema.decodeSync(LootDetailResponse)(
       Schema.encodeSync(NullableLootResponse)(loot),
     );
   };
@@ -274,7 +274,7 @@ describe("durable loot publications", () => {
       ).fetchLootsByGuildId(guild, [Permission.OWNER], [], {}),
     );
 
-    return Schema.decodeUnknownSync(Schema.Array(LootResponse))(
+    return Schema.decodeSync(Schema.Array(LootResponse))(
       Schema.encodeSync(Schema.Array(RuntimeLootResponse))(loots),
     );
   };

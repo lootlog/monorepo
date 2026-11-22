@@ -17,14 +17,14 @@ const DiscordGuildChannelsResponse = Schema.Struct({
 
 type GuildChannels = typeof DiscordGuildChannelsResponse.Type;
 
-class DiscordBotClientFailure extends TaggedErrorClass<DiscordBotClientFailure>()(
-  "DiscordBotClientFailure",
-  {
-    reason: Schema.Literals(["invalid-response", "status"]),
-    message: Schema.String,
-    status: Schema.optional(Schema.Number),
-  },
-) {}
+class DiscordBotClientFailure extends TaggedErrorClass<
+  DiscordBotClientFailure,
+  { readonly brand: unique symbol }
+>()("DiscordBotClientFailure", {
+  reason: Schema.Literals(["invalid-response", "status"]),
+  message: Schema.String,
+  status: Schema.optional(Schema.Finite),
+}) {}
 
 type DiscordBotFailure = OutboundHttpFailure | DiscordBotClientFailure;
 

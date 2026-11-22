@@ -151,7 +151,7 @@ export class AdminService extends Context.Service<
     readonly authorize: (
       headers: Headers,
     ) => Effect.Effect<AdminOperator, ApplicationError>;
-    readonly overview: () => Effect.Effect<
+    readonly overview: Effect.Effect<
       {
         users: number;
         banned: number;
@@ -421,7 +421,7 @@ export class AdminService extends Context.Service<
               account((accounts) => accounts.getFreshSession(sessionHeaders)),
           }),
 
-        overview: Effect.fn("AdminService.overview")(function* () {
+        overview: Effect.gen(function* () {
           const now = new Date();
 
           const [users, banned, activeSessions, roleRows] = yield* query(
@@ -457,7 +457,7 @@ export class AdminService extends Context.Service<
                 .reduce((sum, row) => sum + row.users, 0),
             })),
           };
-        }),
+        }).pipe(Effect.withSpan("AdminService.overview")),
 
         listUsers: Effect.fn("AdminService.listUsers")(function* (input) {
           const now = new Date();

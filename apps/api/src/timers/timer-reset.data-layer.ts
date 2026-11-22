@@ -61,35 +61,31 @@ export const makeResetTimer = (
     );
 
     if (matches.some((timer) => !canViewTimer(access, timer))) {
-      return yield* Effect.fail(
-        new ResourceNotFoundError({ code: ErrorKey.TIMER_NOT_FOUND }),
-      );
+      return yield* new ResourceNotFoundError({
+        code: ErrorKey.TIMER_NOT_FOUND,
+      });
     }
 
     if (matches.length > 1) {
-      return yield* Effect.fail(
-        new InvalidRequestError({
-          code: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
-        }),
-      );
+      return yield* new InvalidRequestError({
+        code: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
+      });
     }
 
     const resolved = matches[0];
 
     if (!resolved) {
-      return yield* Effect.fail(
-        new ResourceNotFoundError({ code: ErrorKey.TIMER_NOT_FOUND }),
-      );
+      return yield* new ResourceNotFoundError({
+        code: ErrorKey.TIMER_NOT_FOUND,
+      });
     }
 
     const resolvedNpc = parseTimerNpc(resolved.npc);
 
     if (resolvedNpc && !canResetTimerNpc(resolvedNpc)) {
-      return yield* Effect.fail(
-        new InvalidRequestError({
-          code: ErrorKey.HERO_TRACKER_TIMER_CANNOT_BE_RESET,
-        }),
-      );
+      return yield* new InvalidRequestError({
+        code: ErrorKey.HERO_TRACKER_TIMER_CANNOT_BE_RESET,
+      });
     }
 
     const now = new Date(yield* Clock.currentTimeMillis);
@@ -103,11 +99,9 @@ export const makeResetTimer = (
     );
 
     if (activeEventHero.length > 0) {
-      return yield* Effect.fail(
-        new InvalidRequestError({
-          code: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET,
-        }),
-      );
+      return yield* new InvalidRequestError({
+        code: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET,
+      });
     }
 
     const projection = yield* ports.withLock(
@@ -130,11 +124,9 @@ export const makeResetTimer = (
           const current = currentRows[0];
 
           if (!current || !canViewTimer(access, current)) {
-            return yield* Effect.fail(
-              new ResourceNotFoundError({
-                code: ErrorKey.TIMER_NOT_FOUND,
-              }),
-            );
+            return yield* new ResourceNotFoundError({
+              code: ErrorKey.TIMER_NOT_FOUND,
+            });
           }
 
           const { minOffsetMs, maxOffsetMs } = spawnWindowFromRespawn({
@@ -191,11 +183,9 @@ export const makeResetTimer = (
           const updated = updatedRows[0];
 
           if (!updated) {
-            return yield* Effect.fail(
-              new ResourceNotFoundError({
-                code: ErrorKey.TIMER_NOT_FOUND,
-              }),
-            );
+            return yield* new ResourceNotFoundError({
+              code: ErrorKey.TIMER_NOT_FOUND,
+            });
           }
 
           yield* transaction.insert(timerHistoryEntryTable).values({

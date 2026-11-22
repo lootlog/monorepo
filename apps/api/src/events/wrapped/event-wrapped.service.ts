@@ -342,8 +342,7 @@ export const makeEventWrapped = (
     return Effect.gen(function* () {
       const event = yield* repository.findEvent(guild.id, eventId);
 
-      if (!event)
-        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
+      if (!event) return yield* new ResourceNotFoundError("Event not found");
 
       const eventWindowStart = event.startsAt ?? event.createdAt;
 

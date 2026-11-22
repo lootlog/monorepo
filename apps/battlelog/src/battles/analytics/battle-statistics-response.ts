@@ -6,32 +6,32 @@ import {
 import { Schema } from "effect";
 
 const BattleAnalyticsResponseSchema = Schema.Struct({
-  totalBattles: Schema.Number,
-  wins: Schema.Number,
-  losses: Schema.Number,
-  winRatio: Schema.Number,
-  totalPH: Schema.Number,
+  totalBattles: Schema.Finite,
+  wins: Schema.Finite,
+  losses: Schema.Finite,
+  winRatio: Schema.Finite,
+  totalPH: Schema.Finite,
 });
 
 const ProfessionWinRateResponseSchema = Schema.Struct({
   prof: Schema.String,
-  wins: Schema.Number,
-  losses: Schema.Number,
-  totalBattles: Schema.Number,
-  winRate: Schema.Number,
+  wins: Schema.Finite,
+  losses: Schema.Finite,
+  totalBattles: Schema.Finite,
+  winRate: Schema.Finite,
 });
 
 const PlayerVsPlayerWarriorResponseSchema = Schema.Struct({
   name: Schema.String,
-  lvl: Schema.Number,
+  lvl: Schema.Finite,
   prof: Schema.String,
   icon: Schema.String,
-  fireDamage: Schema.Number,
-  frostDamage: Schema.Number,
-  lightningDamage: Schema.Number,
-  poisonDamageTaken: Schema.Number,
-  woundDamageTaken: Schema.Number,
-  critWoundDamageTaken: Schema.Number,
+  fireDamage: Schema.Finite,
+  frostDamage: Schema.Finite,
+  lightningDamage: Schema.Finite,
+  poisonDamageTaken: Schema.Finite,
+  woundDamageTaken: Schema.Finite,
+  critWoundDamageTaken: Schema.Finite,
 });
 
 const HeadToHeadRecordResponseSchema = Schema.Struct({
@@ -39,17 +39,17 @@ const HeadToHeadRecordResponseSchema = Schema.Struct({
   opponentName: Schema.String,
   opponentIcon: Schema.String,
   opponentProf: Schema.String,
-  opponentLvl: Schema.Number,
+  opponentLvl: Schema.Finite,
   lastBattleResult: Schema.Literals(["won", "lost", "flee"]),
   lastBattleUserWarrior: PlayerVsPlayerWarriorResponseSchema,
   lastBattleOpponentWarrior: PlayerVsPlayerWarriorResponseSchema,
-  wins: Schema.Number,
-  losses: Schema.Number,
-  totalBattles: Schema.Number,
-  winRate: Schema.Number,
+  wins: Schema.Finite,
+  losses: Schema.Finite,
+  totalBattles: Schema.Finite,
+  winRate: Schema.Finite,
   lastBattleDate: DateTimeString,
-  totalRatingDelta: Schema.optionalKey(Schema.Number),
-  avgRatingDelta: Schema.optionalKey(Schema.Number),
+  totalRatingDelta: Schema.optionalKey(Schema.Finite),
+  avgRatingDelta: Schema.optionalKey(Schema.Finite),
 });
 
 const HeadToHeadPaginatedResponseSchema = Schema.Struct({
@@ -57,9 +57,9 @@ const HeadToHeadPaginatedResponseSchema = Schema.Struct({
   pagination: CursorPaginationSchema,
   meta: Schema.Struct({
     performance: Schema.Struct({
-      queryTime: Schema.Number,
-      countTime: Schema.optionalKey(Schema.Number),
-      totalItems: Schema.optionalKey(Schema.Number),
+      queryTime: Schema.Finite,
+      countTime: Schema.optionalKey(Schema.Finite),
+      totalItems: Schema.optionalKey(Schema.Finite),
       estimatedTotal: Schema.optionalKey(Schema.Boolean),
     }),
   }),
@@ -68,26 +68,26 @@ const HeadToHeadPaginatedResponseSchema = Schema.Struct({
 const StreakResponseSchema = Schema.Struct({
   current: Schema.Struct({
     type: Schema.Literals(["wins", "losses", "none"]),
-    count: Schema.Number,
+    count: Schema.Finite,
   }),
   longest: Schema.Struct({
-    wins: Schema.Number,
-    losses: Schema.Number,
+    wins: Schema.Finite,
+    losses: Schema.Finite,
   }),
 });
 
 const BattleDurationStatsResponseSchema = Schema.Struct({
-  avgWinDuration: Schema.Number,
-  avgLossDuration: Schema.Number,
+  avgWinDuration: Schema.Finite,
+  avgLossDuration: Schema.Finite,
   fastest: Schema.NullOr(
     Schema.Struct({
-      duration: Schema.Number,
+      duration: Schema.Finite,
       battleId: Schema.String,
     }),
   ),
   longest: Schema.NullOr(
     Schema.Struct({
-      duration: Schema.Number,
+      duration: Schema.Finite,
       battleId: Schema.String,
     }),
   ),
@@ -95,15 +95,15 @@ const BattleDurationStatsResponseSchema = Schema.Struct({
 
 const PhGrowthDataPointResponseSchema = Schema.Struct({
   date: DateTimeString,
-  ph: Schema.Number,
-  cumulativePh: Schema.Number,
+  ph: Schema.Finite,
+  cumulativePh: Schema.Finite,
   battleId: Schema.String,
 });
 
 const RatingGrowthDataPointResponseSchema = Schema.Struct({
   date: DateTimeString,
-  ratingDelta: Schema.Number,
-  rating: Schema.Number,
+  ratingDelta: Schema.Finite,
+  rating: Schema.Finite,
   battleId: Schema.String,
 });
 
@@ -112,12 +112,12 @@ const RatingDeltaByOpponentResponseSchema = Schema.Struct({
   opponentName: Schema.String,
   opponentIcon: Schema.String,
   opponentProf: Schema.String,
-  opponentLvl: Schema.Number,
-  totalRatingDelta: Schema.Number,
-  wins: Schema.Number,
-  losses: Schema.Number,
-  totalBattles: Schema.Number,
-  avgRatingDelta: Schema.Number,
+  opponentLvl: Schema.Finite,
+  totalRatingDelta: Schema.Finite,
+  wins: Schema.Finite,
+  losses: Schema.Finite,
+  totalBattles: Schema.Finite,
+  avgRatingDelta: Schema.Finite,
   lastBattleDate: DateTimeString,
 });
 
@@ -125,26 +125,26 @@ const AbyssSeasonResponseSchema = Schema.Struct({
   id: Schema.String,
   startedAt: DateTimeString,
   endedAt: DateTimeString,
-  totalBattles: Schema.Number,
-  wins: Schema.Number,
-  losses: Schema.Number,
-  winRate: Schema.Number,
-  totalRatingDelta: Schema.Number,
-  peakRating: Schema.NullOr(Schema.Number),
-  totalPointsGained: Schema.NullOr(Schema.Number),
+  totalBattles: Schema.Finite,
+  wins: Schema.Finite,
+  losses: Schema.Finite,
+  winRate: Schema.Finite,
+  totalRatingDelta: Schema.Finite,
+  peakRating: Schema.NullOr(Schema.Finite),
+  totalPointsGained: Schema.NullOr(Schema.Finite),
 });
 
 const PlayerVsPlayerBattleResponseSchema = Schema.Struct({
   battleId: Schema.String,
   createdAt: DateTimeString,
-  duration: Schema.Number,
+  duration: Schema.Finite,
   winner: Schema.String,
   loser: Schema.String,
   hasFlee: Schema.Boolean,
   matchmaking: Schema.Boolean,
-  ratingDelta: Schema.NullOr(Schema.Number),
-  userRating: Schema.NullOr(Schema.Number),
-  opponentRating: Schema.NullOr(Schema.Number),
+  ratingDelta: Schema.NullOr(Schema.Finite),
+  userRating: Schema.NullOr(Schema.Finite),
+  opponentRating: Schema.NullOr(Schema.Finite),
   userWarrior: PlayerVsPlayerWarriorResponseSchema,
   opponentWarrior: PlayerVsPlayerWarriorResponseSchema,
 });
@@ -154,52 +154,52 @@ const PlayerVsPlayerPaginatedResponseSchema = Schema.Struct({
   pagination: CursorPaginationSchema,
   meta: Schema.Struct({
     performance: Schema.Struct({
-      queryTime: Schema.Number,
-      totalItems: Schema.optionalKey(Schema.Number),
+      queryTime: Schema.Finite,
+      totalItems: Schema.optionalKey(Schema.Finite),
     }),
   }),
 });
 
 const CombatProfileSummaryResponseSchema = Schema.Struct({
-  totalBattles: Schema.Number,
-  wins: Schema.Number,
-  losses: Schema.Number,
-  winRate: Schema.Number,
-  totalPH: Schema.Number,
-  totalRatingDelta: Schema.Number,
-  avgTurns: Schema.Number,
-  avgDuration: Schema.Number,
-  damagePerTurn: Schema.Number,
-  mitigationRate: Schema.Number,
-  controlRate: Schema.Number,
+  totalBattles: Schema.Finite,
+  wins: Schema.Finite,
+  losses: Schema.Finite,
+  winRate: Schema.Finite,
+  totalPH: Schema.Finite,
+  totalRatingDelta: Schema.Finite,
+  avgTurns: Schema.Finite,
+  avgDuration: Schema.Finite,
+  damagePerTurn: Schema.Finite,
+  mitigationRate: Schema.Finite,
+  controlRate: Schema.Finite,
 });
 
 const CombatProfileBreakdownResponseSchema = Schema.Struct({
   key: Schema.String,
   label: Schema.String,
-  value: Schema.Number,
-  share: Schema.Number,
+  value: Schema.Finite,
+  share: Schema.Finite,
 });
 
 const CombatProfileSpellUsageResponseSchema = Schema.Struct({
   spell: Schema.String,
-  skillId: Schema.NullOr(Schema.Number),
-  casts: Schema.Number,
-  share: Schema.Number,
+  skillId: Schema.NullOr(Schema.Finite),
+  casts: Schema.Finite,
+  share: Schema.Finite,
 });
 
 const CombatProfileMatchupResponseSchema = Schema.Struct({
   prof: Schema.String,
-  wins: Schema.Number,
-  losses: Schema.Number,
-  totalBattles: Schema.Number,
-  winRate: Schema.Number,
+  wins: Schema.Finite,
+  losses: Schema.Finite,
+  totalBattles: Schema.Finite,
+  winRate: Schema.Finite,
 });
 
 const CombatProfileTrendPointResponseSchema = Schema.Struct({
   date: DateTimeString,
-  value: Schema.Number,
-  cumulativeValue: Schema.Number,
+  value: Schema.Finite,
+  cumulativeValue: Schema.Finite,
   battleId: Schema.String,
 });
 
@@ -208,7 +208,7 @@ const CombatProfileHighlightResponseSchema = Schema.Struct({
   createdAt: DateTimeString,
   type: Schema.String,
   label: Schema.String,
-  value: Schema.Number,
+  value: Schema.Finite,
 });
 
 const CombatProfileResponseSchema = Schema.Struct({

@@ -333,12 +333,10 @@ export const makeGlobalChatOperations = (
           );
 
           if (!acquired)
-            return yield* Effect.fail(
-              new GlobalChatRateLimited({
-                status: 429,
-                retryAfterMs: GLOBAL_CHAT_SEND_COOLDOWN_SECONDS * 1000,
-              }),
-            );
+            return yield* new GlobalChatRateLimited({
+              status: 429,
+              retryAfterMs: GLOBAL_CHAT_SEND_COOLDOWN_SECONDS * 1000,
+            });
 
           const worlds = yield* knownWorlds;
 

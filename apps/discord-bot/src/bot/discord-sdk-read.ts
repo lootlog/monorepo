@@ -2,14 +2,14 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Cause, Effect, Schedule, Schema } from "effect";
 import { isPermanentDiscordError } from "./non-retryable-discord-error-codes.js";
 
-export class DiscordSdkReadFailure extends TaggedErrorClass<DiscordSdkReadFailure>()(
-  "DiscordSdkReadFailure",
-  {
-    operation: Schema.String,
-    cause: Schema.Defect(),
-    retryable: Schema.Boolean,
-  },
-) {}
+export class DiscordSdkReadFailure extends TaggedErrorClass<
+  DiscordSdkReadFailure,
+  { readonly brand: unique symbol }
+>()("DiscordSdkReadFailure", {
+  operation: Schema.String,
+  cause: Schema.Defect(),
+  retryable: Schema.Boolean,
+}) {}
 
 /**
  * Two bounded retries with a short jittered backoff: an immediate retry after a

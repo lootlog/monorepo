@@ -55,8 +55,8 @@ const releaseAfterBlockedWrites = async (count: number) => {
           AND wait_event_type = 'Lock' AND query LIKE '%UserSettingDocument%'`);
 
       blocked =
-        Schema.decodeUnknownSync(
-          Schema.Array(Schema.Struct({ count: Schema.Number })),
+        Schema.decodeSync(
+          Schema.Array(Schema.Struct({ count: Schema.Finite })),
         )(result.rows)[0]?.count ?? 0;
 
       if (blocked < count) await Bun.sleep(10);

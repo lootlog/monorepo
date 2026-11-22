@@ -15,13 +15,13 @@ import { Context, Effect, Schema } from "effect";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { SettingsRequestError } from "#src/settings-documents/settings-documents.service";
 
-export class SettingsAccessDenied extends TaggedErrorClass<SettingsAccessDenied>()(
-  "SettingsAccessDenied",
-  {
-    status: Schema.Literal(401),
-    code: Schema.String,
-  },
-) {}
+export class SettingsAccessDenied extends TaggedErrorClass<
+  SettingsAccessDenied,
+  { readonly brand: unique symbol }
+>()("SettingsAccessDenied", {
+  status: Schema.Literal(401),
+  code: Schema.String,
+}) {}
 
 export class SettingsIdentity extends Context.Service<
   SettingsIdentity,

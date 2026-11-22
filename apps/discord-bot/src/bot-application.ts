@@ -1,4 +1,7 @@
-import { withAdapterSpan } from "@lootlog/instrumentation/operation";
+import {
+  promiseOperation,
+  withAdapterSpan,
+} from "@lootlog/instrumentation/operation";
 import {
   consumeEvent,
   makeEventPublisher,
@@ -58,19 +61,16 @@ class BotServices extends Context.Service<BotServices, BotServicesValue>()(
       const publisher = makeEventPublisher(rabbit);
 
       const client = yield* Effect.acquireRelease(
-        Effect.tryPromise({
-          try: async () => {
-            const active = new Client({
-              intents: [IntentsBitField.Flags.Guilds],
-            });
+        promiseOperation("discord.client.login", async () => {
+          const active = new Client({
+            intents: [IntentsBitField.Flags.Guilds],
+          });
 
-            await active.login(Redacted.value(config.discordBotToken));
+          await active.login(Redacted.value(config.discordBotToken));
 
-            return active;
-          },
-          catch: (cause) => cause,
+          return active;
         }),
-        (active) => Effect.sync(() => active.destroy()),
+        (active) => Effect.promise(() => active.destroy()),
       );
 
       const delivery = makeDiscordDelivery(publisher, client);

@@ -107,7 +107,7 @@ export const consumeInBatches = Effect.fn("consumeInBatches")(function* <
       let items: ReadonlyArray<A>;
 
       try {
-        items = Schema.decodeUnknownSync(Schema.fromJsonString(schema))(
+        items = Schema.decodeSync(Schema.fromJsonString(schema))(
           new TextDecoder().decode(delivery.content),
         );
       } catch (error) {

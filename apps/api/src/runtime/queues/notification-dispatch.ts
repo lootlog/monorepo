@@ -1,3 +1,4 @@
+import { promiseOperation } from "@lootlog/instrumentation/operation";
 import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
 import type { Job } from "bullmq";
 import { Context, Effect, Layer, type Redacted } from "effect";
@@ -26,26 +27,21 @@ export class NotificationDispatchQueue extends Context.Service<
 
       return NotificationDispatchQueue.of({
         add: (notificationJobId, delay) =>
-          Effect.tryPromise({
-            try: () =>
-              queue.add(
-                notificationJobId,
-                { notificationJobId },
-                {
-                  ...NOTIFICATION_DISPATCH_JOB_OPTIONS,
-                  jobId: notificationJobId,
-                  delay,
-                },
-              ),
-            catch: (cause) => cause,
-          }).pipe(Effect.asVoid),
+          promiseOperation("notifications.dispatch.queue.add", () =>
+            queue.add(
+              notificationJobId,
+              { notificationJobId },
+              {
+                ...NOTIFICATION_DISPATCH_JOB_OPTIONS,
+                jobId: notificationJobId,
+                delay,
+              },
+            ),
+          ).pipe(Effect.asVoid),
         remove: (notificationJobId) =>
-          Effect.tryPromise({
-            try: async () => {
-              const job = await queue.getJob(notificationJobId);
-              await job?.remove();
-            },
-            catch: (cause) => cause,
+          promiseOperation("notifications.dispatch.queue.remove", async () => {
+            const job = await queue.getJob(notificationJobId);
+            await job?.remove();
           }),
       });
     }),

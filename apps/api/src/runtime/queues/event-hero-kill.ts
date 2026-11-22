@@ -1,3 +1,4 @@
+import { promiseOperation } from "@lootlog/instrumentation/operation";
 import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
 import type { Job } from "bullmq";
 import { Context, Effect, FiberSet, Layer, type Redacted } from "effect";
@@ -28,17 +29,15 @@ export class EventHeroKillQueue extends Context.Service<
 
       return EventHeroKillQueue.of({
         add: (jobId, data) =>
-          Effect.tryPromise({
-            try: () =>
-              queue.add(EVENT_HERO_KILL_JOB_NAME, data, {
-                jobId,
-                attempts: 5,
-                backoff: { type: "exponential", delay: 1000 },
-                removeOnComplete: true,
-                removeOnFail: false,
-              }),
-            catch: (error) => error,
-          }).pipe(Effect.asVoid),
+          promiseOperation("events.heroKill.queue.add", () =>
+            queue.add(EVENT_HERO_KILL_JOB_NAME, data, {
+              jobId,
+              attempts: 5,
+              backoff: { type: "exponential", delay: 1000 },
+              removeOnComplete: true,
+              removeOnFail: false,
+            }),
+          ).pipe(Effect.asVoid),
       });
     }),
   );

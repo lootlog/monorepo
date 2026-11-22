@@ -31,7 +31,7 @@ const MyReservations = Schema.Struct({ items: Schema.Array(Reservation) });
 const ReservationSpots = Schema.Array(
   Schema.Struct({
     name: Schema.String,
-    level: Schema.Number,
+    level: Schema.Finite,
     currentReservation: Schema.NullOr(Reservation),
     nextReservation: Schema.NullOr(Reservation),
   }),

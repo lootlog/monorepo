@@ -24,16 +24,16 @@ const loot = {
   commentsCount: 0,
   likes: [],
   standingDraws: [],
-} satisfies typeof LootResponse.Type;
+} satisfies LootResponse;
 
 describe("loot contracts", () => {
   it("preserves nullable detail metadata while stripping extra list fields", () => {
     const withMetadata = { ...loot, metadata: { revision: 2 } };
-    expect(Schema.decodeUnknownSync(LootDetailResponse)(withMetadata)).toEqual(
+    expect(Schema.decodeSync(LootDetailResponse)(withMetadata)).toEqual(
       withMetadata,
     );
-    expect(Schema.decodeUnknownSync(LootResponse)(withMetadata)).toEqual(loot);
-    expect(Schema.decodeUnknownSync(LootDetailResponse)(null)).toBeNull();
+    expect(Schema.decodeSync(LootResponse)(withMetadata)).toEqual(loot);
+    expect(Schema.decodeSync(LootDetailResponse)(null)).toBeNull();
   });
 
   it("preserves numeric filter bounds and does not coerce input strings", () => {
@@ -45,7 +45,7 @@ describe("loot contracts", () => {
       itemLevelMax: 500,
     };
 
-    expect(Schema.decodeUnknownSync(LootsQuery)(query)).toEqual(query);
+    expect(Schema.decodeSync(LootsQuery)(query)).toEqual(query);
 
     for (const invalid of [
       { limit: 101 },
@@ -74,12 +74,12 @@ describe("loot contracts", () => {
 
   it("stores a trimmed comment and rejects a blank or overlong one", () => {
     expect(
-      Schema.decodeUnknownSync(CreateLootCommentRequest)({ content: "  gg  " }),
+      Schema.decodeSync(CreateLootCommentRequest)({ content: "  gg  " }),
     ).toEqual({ content: "gg" });
 
     for (const content of ["   ", "x".repeat(257)]) {
       expect(() =>
-        Schema.decodeUnknownSync(CreateLootCommentRequest)({ content }),
+        Schema.decodeSync(CreateLootCommentRequest)({ content }),
       ).toThrow();
     }
   });

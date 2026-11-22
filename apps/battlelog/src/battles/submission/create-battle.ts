@@ -1,11 +1,11 @@
 import { Effect, Option, Predicate, Schema, SchemaGetter } from "effect";
 
 const CreateBattlePartyMembersEventSchema = Schema.Struct({
-  id: Schema.Number,
-  account: Schema.Number,
+  id: Schema.Finite,
+  account: Schema.Finite,
   nick: Schema.String,
   icon: Schema.String,
-  commander: Schema.optionalKey(Schema.Number),
+  commander: Schema.optionalKey(Schema.Finite),
 });
 
 const CreateBattlePartyEventSchema = Schema.Struct({
@@ -13,12 +13,12 @@ const CreateBattlePartyEventSchema = Schema.Struct({
 });
 
 const CreateBattleFightEventWarriorSchema = Schema.Struct({
-  originalId: Schema.Number,
+  originalId: Schema.Finite,
   name: Schema.String,
-  lvl: Schema.Number,
+  lvl: Schema.Finite,
   prof: Schema.String,
   icon: Schema.String,
-  team: Schema.Number,
+  team: Schema.Finite,
 });
 
 const hasCompleteWarriorSnapshot = Schema.is(
@@ -94,33 +94,33 @@ const OptionalWarriorsRecordSchema = Schema.optionalKey(Schema.Unknown).pipe(
 
 const CreateBattleFightEventSchema = Schema.Struct({
   m: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.String))),
-  endBattle: Schema.optionalKey(Schema.Number),
+  endBattle: Schema.optionalKey(Schema.Finite),
   init: Schema.optionalKey(Schema.String),
   auto: Schema.optionalKey(Schema.String),
   w: OptionalWarriorsRecordSchema,
 });
 
 const CreateBattleMatchSummarySchema = Schema.Struct({
-  difficulty_rank: Schema.Number,
-  result: Schema.Number,
-  rating_delta: Schema.Number,
-  opponent_lvl: Schema.Number,
-  opponent_oplvl: Schema.Number,
-  opponent_rating: Schema.Number,
-  rating: Schema.Number,
-  status: Schema.Number,
-  placement_cur: Schema.optionalKey(Schema.Number),
-  placement_max: Schema.optionalKey(Schema.Number),
-  points_gained: Schema.optionalKey(Schema.Number),
+  difficulty_rank: Schema.Finite,
+  result: Schema.Finite,
+  rating_delta: Schema.Finite,
+  opponent_lvl: Schema.Finite,
+  opponent_oplvl: Schema.Finite,
+  opponent_rating: Schema.Finite,
+  rating: Schema.Finite,
+  status: Schema.Finite,
+  placement_cur: Schema.optionalKey(Schema.Finite),
+  placement_max: Schema.optionalKey(Schema.Finite),
+  points_gained: Schema.optionalKey(Schema.Finite),
   daily_stage: Schema.optionalKey(
     Schema.Struct({
-      id: Schema.Number,
-      points_cur: Schema.Number,
-      points_max: Schema.Number,
-      points_step: Schema.Number,
-      rewards_last: Schema.Number,
-      rewards_cur: Schema.Number,
-      rewards_max: Schema.Number,
+      id: Schema.Finite,
+      points_cur: Schema.Finite,
+      points_max: Schema.Finite,
+      points_step: Schema.Finite,
+      rewards_last: Schema.Finite,
+      rewards_cur: Schema.Finite,
+      rewards_max: Schema.Finite,
     }),
   ),
 });
@@ -128,9 +128,9 @@ const CreateBattleMatchSummarySchema = Schema.Struct({
 const CreateBattleEventsSchema = Schema.Struct({
   party: Schema.optionalKey(CreateBattlePartyEventSchema),
   f: CreateBattleFightEventSchema,
-  ev: Schema.optionalKey(Schema.Number),
+  ev: Schema.optionalKey(Schema.Finite),
   match_summary: Schema.optionalKey(CreateBattleMatchSummarySchema),
-  matchmaking_state: Schema.optionalKey(Schema.Number),
+  matchmaking_state: Schema.optionalKey(Schema.Finite),
 });
 
 export const CreateBattleSchema = Schema.Struct({

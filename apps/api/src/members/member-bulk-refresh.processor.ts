@@ -142,7 +142,7 @@ export const makeMemberBulkRefreshProcessor = (
             .where(eq(memberRefreshJobTable.id, job.data.jobId));
           yield* emitRefreshJobUpdate(job.data.jobId);
 
-          return yield* Effect.fail(error);
+          return yield* error;
         }),
       ),
       withAdapterSpan("members.bulkRefresh.process", "bullmq"),

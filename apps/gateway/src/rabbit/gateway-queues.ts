@@ -202,7 +202,7 @@ const decodeRecord = Schema.decodeUnknownOption(
 
 const decodeString = Schema.decodeUnknownOption(Schema.String);
 
-const decodeNumber = Schema.decodeUnknownOption(Schema.Number);
+const decodeNumber = Schema.decodeUnknownOption(Schema.Finite);
 
 // Identifies a dead-lettered delivery without logging its payload or any
 // member's Discord ID. Each field decodes on its own, because a delivery that

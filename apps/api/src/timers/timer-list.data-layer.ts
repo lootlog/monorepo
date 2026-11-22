@@ -152,7 +152,7 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
     );
 
     if (guildAccess.size === 0) {
-      return yield* Effect.fail(new PermissionDeniedError());
+      return yield* new PermissionDeniedError();
     }
 
     const timers = yield* readVisibleTimers(

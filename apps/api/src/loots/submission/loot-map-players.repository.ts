@@ -78,8 +78,8 @@ export const captureLootMapPlayers = Effect.fnUntraced(function* (
     .where(eq(lootTable.id, lootId));
 
   if (!loot)
-    return yield* Effect.fail(
-      new DependencyUnavailableError("Failed to resolve loot world"),
+    return yield* new DependencyUnavailableError(
+      "Failed to resolve loot world",
     );
 
   const inputs = mapPlayersToSnapshotInputs(loot.world, players);

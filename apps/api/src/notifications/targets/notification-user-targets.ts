@@ -178,19 +178,15 @@ export const makeNotificationUserTargets = (
     data: CreateNotificationTargetRequest,
   ) {
     if (data.targetType !== NotificationTargetType.DM) {
-      return yield* Effect.fail(
-        new InvalidRequestError({
-          code: NotificationError.USER_TARGETS_MUST_BE_DISCORD_DMS,
-        }),
-      );
+      return yield* new InvalidRequestError({
+        code: NotificationError.USER_TARGETS_MUST_BE_DISCORD_DMS,
+      });
     }
 
     if (data.externalId && data.externalId !== discordId) {
-      return yield* Effect.fail(
-        new InvalidRequestError({
-          code: NotificationError.USER_DM_TARGET_MUST_USE_AUTHENTICATED_DISCORD_ACCOUNT,
-        }),
-      );
+      return yield* new InvalidRequestError({
+        code: NotificationError.USER_DM_TARGET_MUST_USE_AUTHENTICATED_DISCORD_ACCOUNT,
+      });
     }
 
     const organizations = yield* apiKeyAccessibleGuilds(database);
@@ -421,19 +417,15 @@ export const makeNotificationUserTargets = (
       const target = yield* find(discordId, targetId);
 
       if (target.targetType !== NotificationTargetType.DM) {
-        return yield* Effect.fail(
-          new InvalidRequestError({
-            code: NotificationError.USER_TEST_TARGET_MUST_BE_DISCORD_DM,
-          }),
-        );
+        return yield* new InvalidRequestError({
+          code: NotificationError.USER_TEST_TARGET_MUST_BE_DISCORD_DM,
+        });
       }
 
       if (!target.active || !target.canSend) {
-        return yield* Effect.fail(
-          new ResourceConflictError({
-            code: NotificationError.USER_DISCORD_DM_TARGET_MUST_BE_ACTIVE_AND_CAN_SEND,
-          }),
-        );
+        return yield* new ResourceConflictError({
+          code: NotificationError.USER_DISCORD_DM_TARGET_MUST_BE_ACTIVE_AND_CAN_SEND,
+        });
       }
 
       const usage = getNotificationTestUsageResponse(
@@ -442,16 +434,14 @@ export const makeNotificationUserTargets = (
       );
 
       if (usage.remaining <= 0) {
-        return yield* Effect.fail(
-          new ResourceConflictError({
-            code: NotificationError.USER_DM_TEST_TRIGGER_LIMIT_REACHED,
-            details: {
-              limit: usage.limit,
-              windowSeconds: usage.windowSeconds,
-              nextAvailableAt: usage.nextAvailableAt,
-            },
-          }),
-        );
+        return yield* new ResourceConflictError({
+          code: NotificationError.USER_DM_TEST_TRIGGER_LIMIT_REACHED,
+          details: {
+            limit: usage.limit,
+            windowSeconds: usage.windowSeconds,
+            nextAvailableAt: usage.nextAvailableAt,
+          },
+        });
       }
 
       const rule = yield* getOrCreateTestRule(discordId, targetId);
@@ -474,11 +464,9 @@ export const makeNotificationUserTargets = (
       });
 
       if (!job) {
-        return yield* Effect.fail(
-          new ResourceConflictError({
-            code: NotificationError.NO_TEST_JOB_CREATED_FOR_TARGET,
-          }),
-        );
+        return yield* new ResourceConflictError({
+          code: NotificationError.NO_TEST_JOB_CREATED_FOR_TARGET,
+        });
       }
 
       yield* jobs.enqueue(job.id, 0);

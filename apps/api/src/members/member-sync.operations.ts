@@ -230,12 +230,10 @@ export const makeMemberSync = (
       });
 
       if (options.throwOnUnexpectedError) {
-        return yield* Effect.fail(
-          new OperationError({
-            operation: "members.sync.discord",
-            cause: error,
-          }),
-        );
+        return yield* new OperationError({
+          operation: "members.sync.discord",
+          cause: error,
+        });
       }
 
       return {

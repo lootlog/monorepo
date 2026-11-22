@@ -7,7 +7,7 @@ import {
   type StaleJsonRedis,
 } from "#src/redis/stale-json-cache";
 
-const schema = Schema.Struct({ n: Schema.Number });
+const schema = Schema.Struct({ n: Schema.Finite });
 
 const fakeRedis = () => {
   const store = new Map<string, string>();

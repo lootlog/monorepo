@@ -22,12 +22,12 @@ import { toStatsDate } from "./kill-stats-period.js";
 const RawDaily = Schema.Struct({
   date: Schema.String,
   world: Schema.String,
-  kills: Schema.Number,
+  kills: Schema.Finite,
 });
 
 const RawBase = Schema.Struct({
-  allTimeKills: Schema.Number,
-  timedKills: Schema.Number,
+  allTimeKills: Schema.Finite,
+  timedKills: Schema.Finite,
   firstBucketAt: Schema.NullOr(Schema.String),
   trackedSince: Schema.NullOr(Schema.String),
   daily: Schema.Array(RawDaily),
@@ -35,43 +35,43 @@ const RawBase = Schema.Struct({
 
 const RawNpc = Schema.Struct({
   world: Schema.String,
-  npcId: Schema.Number,
+  npcId: Schema.Finite,
   npcName: Schema.String,
   npcType: Schema.String,
-  npcLvl: Schema.Number,
+  npcLvl: Schema.Finite,
   npcProf: Schema.NullOr(Schema.String),
   npcIcon: Schema.NullOr(Schema.String),
-  totalKills: Schema.Number,
-  previousKills: Schema.Number,
-  comparisonKills: Schema.Number,
-  deltaKills: Schema.Number,
+  totalKills: Schema.Finite,
+  previousKills: Schema.Finite,
+  comparisonKills: Schema.Finite,
+  deltaKills: Schema.Finite,
 });
 
 const RawAnalytics = Schema.Struct({
   ...RawBase.fields,
-  currentKills: Schema.Number,
-  previousKills: Schema.Number,
-  uniqueNpcs: Schema.Number,
+  currentKills: Schema.Finite,
+  previousKills: Schema.Finite,
+  uniqueNpcs: Schema.Finite,
   hourlyWeekday: Schema.Array(
     Schema.Struct({
-      weekday: Schema.Number,
-      hour: Schema.Number,
-      kills: Schema.Number,
+      weekday: Schema.Finite,
+      hour: Schema.Finite,
+      kills: Schema.Finite,
     }),
   ),
   types: Schema.Array(
     Schema.Struct({
       npcType: Schema.String,
-      totalKills: Schema.Number,
-      uniqueNpcs: Schema.Number,
+      totalKills: Schema.Finite,
+      uniqueNpcs: Schema.Finite,
     }),
   ),
   npcs: Schema.Array(RawNpc),
   worldComparisons: Schema.Array(
     Schema.Struct({
       world: Schema.String,
-      comparisonKills: Schema.Number,
-      previousKills: Schema.Number,
+      comparisonKills: Schema.Finite,
+      previousKills: Schema.Finite,
     }),
   ),
 });

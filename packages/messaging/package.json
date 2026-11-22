@@ -8,7 +8,7 @@
     ".": "./src/messaging.ts"
   },
   "scripts": {
-    "lint": "oxlint src test",
+    "lint": "oxlint src test && effect-tsgo diagnostics --project tsconfig.json --severity error,warning --strict",
     "typecheck": "bun check",
     "test": "bun test --path-ignore-patterns='**/*.integration.*'",
     "test:integration": "bun test .integration."
@@ -19,6 +19,7 @@
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@effect/tsgo": "0.67.3",
     "@lootlog/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "testcontainers": "^12.2.1",

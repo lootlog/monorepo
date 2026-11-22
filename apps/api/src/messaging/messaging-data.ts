@@ -13,10 +13,10 @@ export type MessagingCaller = {
   readonly discordId: string;
 };
 
-export class MessagingOperationError extends TaggedErrorClass<MessagingOperationError>()(
-  "MessagingOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class MessagingOperationError extends TaggedErrorClass<
+  MessagingOperationError,
+  { readonly brand: unique symbol }
+>()("MessagingOperationError", { cause: Schema.Defect() }) {}
 
 export class MessagingData extends Context.Service<
   MessagingData,

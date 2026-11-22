@@ -72,10 +72,10 @@ const NotificationMetadataSchema = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
   npcName: Schema.optionalKey(Schema.String),
   // The NPC's game id, which joins going answers across reports of one NPC.
-  npcId: Schema.optionalKey(Schema.Number),
+  npcId: Schema.optionalKey(Schema.Finite),
   // The routing fields of an NPC notification, which decide who may see it.
   npc: Schema.optionalKey(
-    Schema.Struct({ ...NpcRoutingDataSchema.fields, lvl: Schema.Number }),
+    Schema.Struct({ ...NpcRoutingDataSchema.fields, lvl: Schema.Finite }),
   ),
 });
 
@@ -253,30 +253,28 @@ export const makeMessagingDataLayer = (
               );
 
               if (rateLimit.accepted === false) {
-                return yield* Effect.fail(
-                  new RateLimitedError({
-                    code: "NOTIFICATION_RATE_LIMITED",
-                    retryAfterMs: rateLimit.retryAfterMs,
-                  }),
-                );
+                return yield* new RateLimitedError({
+                  code: "NOTIFICATION_RATE_LIMITED",
+                  retryAfterMs: rateLimit.retryAfterMs,
+                });
               }
 
               if (!data.message && !data.npc) {
-                return yield* Effect.fail(
-                  new InvalidRequestError({ code: "MISSING_MESSAGE_OR_NPC" }),
-                );
+                return yield* new InvalidRequestError({
+                  code: "MISSING_MESSAGE_OR_NPC",
+                });
               }
 
               if (data.message && data.npc) {
-                return yield* Effect.fail(
-                  new InvalidRequestError({ code: "EITHER_MESSAGE_OR_NPC" }),
-                );
+                return yield* new InvalidRequestError({
+                  code: "EITHER_MESSAGE_OR_NPC",
+                });
               }
 
               const authorized = yield* guildIdsFor(discordId);
 
               if (authorized.length === 0) {
-                return yield* Effect.fail(new PermissionDeniedError());
+                return yield* new PermissionDeniedError();
               }
 
               const guildIds = authorized.filter((id) =>
@@ -284,7 +282,7 @@ export const makeMessagingDataLayer = (
               );
 
               if (guildIds.length === 0) {
-                return yield* Effect.fail(new PermissionDeniedError());
+                return yield* new PermissionDeniedError();
               }
 
               const notificationId = Bun.randomUUIDv7();
@@ -294,10 +292,8 @@ export const makeMessagingDataLayer = (
 
               if (data.isGatheringParty) {
                 if (!data.character) {
-                  return yield* Effect.fail(
-                    new InvalidRequestError(
-                      "Party gathering notifications require a character",
-                    ),
+                  return yield* new InvalidRequestError(
+                    "Party gathering notifications require a character",
                   );
                 }
 
@@ -306,9 +302,9 @@ export const makeMessagingDataLayer = (
                 const [guildId] = guildIds;
 
                 if (guildIds.length !== 1 || guildId === undefined) {
-                  return yield* Effect.fail(
-                    new InvalidRequestError({ code: "SINGLE_GUILD_REQUIRED" }),
-                  );
+                  return yield* new InvalidRequestError({
+                    code: "SINGLE_GUILD_REQUIRED",
+                  });
                 }
 
                 yield* readyRoom.create({
@@ -418,24 +414,20 @@ export const makeMessagingDataLayer = (
               const stored = yield* metadata(notificationId);
 
               if (!stored) {
-                return yield* Effect.fail(
-                  new InvalidRequestError("Notification expired or not found"),
+                return yield* new InvalidRequestError(
+                  "Notification expired or not found",
                 );
               }
 
               if (data.targetDiscordId !== stored.discordId) {
-                return yield* Effect.fail(
-                  new PermissionDeniedError("Invalid target"),
-                );
+                return yield* new PermissionDeniedError("Invalid target");
               }
 
               const guildIds = yield* guildIdsFor(discordId);
 
               if (!guildIds.some((id) => stored.guildIds.includes(id))) {
-                return yield* Effect.fail(
-                  new PermissionDeniedError(
-                    "Not a member of notification guild",
-                  ),
+                return yield* new PermissionDeniedError(
+                  "Not a member of notification guild",
                 );
               }
 
@@ -468,12 +460,10 @@ export const makeMessagingDataLayer = (
               );
 
               if (rateLimit.accepted === false) {
-                return yield* Effect.fail(
-                  new RateLimitedError({
-                    code: "NOTIFICATION_GOING_RATE_LIMITED",
-                    retryAfterMs: rateLimit.retryAfterMs,
-                  }),
-                );
+                return yield* new RateLimitedError({
+                  code: "NOTIFICATION_GOING_RATE_LIMITED",
+                  retryAfterMs: rateLimit.retryAfterMs,
+                });
               }
 
               const stored = yield* metadata(notificationId);
@@ -486,9 +476,9 @@ export const makeMessagingDataLayer = (
                 reporterUserId === undefined ||
                 stored.world !== data.world
               ) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError({ code: "NOTIFICATION_NOT_FOUND" }),
-                );
+                return yield* new ResourceNotFoundError({
+                  code: "NOTIFICATION_NOT_FOUND",
+                });
               }
 
               const access = yield* selectAccessibleGuildRoles(
@@ -519,7 +509,7 @@ export const makeMessagingDataLayer = (
               });
 
               if (guildIds.length === 0) {
-                return yield* Effect.fail(new PermissionDeniedError());
+                return yield* new PermissionDeniedError();
               }
 
               const now = yield* Clock.currentTimeMillis;
@@ -532,9 +522,9 @@ export const makeMessagingDataLayer = (
               );
 
               if (ttl <= 0) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError({ code: "NOTIFICATION_NOT_FOUND" }),
-                );
+                return yield* new ResourceNotFoundError({
+                  code: "NOTIFICATION_NOT_FOUND",
+                });
               }
 
               const player: NotificationGoingPlayer = {

@@ -136,7 +136,7 @@ const makeData = (overrides: Partial<TimersData["Service"]> = {}) =>
     createAuto: () =>
       Effect.succeed({ submittedGuilds: [], rejectedGuilds: [] }),
     reset: () => Effect.succeed(storedTimer),
-    delete: () => Effect.succeed(undefined),
+    delete: () => Effect.undefined,
     getHistory: () => Effect.succeed([]),
     restore: () => Effect.succeed(storedTimer),
     createManual: () => Effect.succeed(storedTimer),
@@ -430,7 +430,7 @@ describe("Timers HttpApi handlers", () => {
             world,
           ]);
 
-          return Effect.succeed(undefined);
+          return Effect.undefined;
         },
         restore: (current, historyEntryId) => {
           mutationCalls.push([

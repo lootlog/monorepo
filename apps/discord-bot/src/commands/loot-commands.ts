@@ -42,11 +42,11 @@ const Loot = Schema.Struct({
   players: Schema.Array(Schema.Struct({ name: Schema.String })),
   npcs: Schema.Array(
     Schema.Struct({
-      id: Schema.Number,
+      id: Schema.Finite,
       name: Schema.String,
       type: Schema.NullOr(Schema.String),
-      wt: Schema.NullOr(Schema.Number),
-      lvl: Schema.NullOr(Schema.Number),
+      wt: Schema.NullOr(Schema.Finite),
+      lvl: Schema.NullOr(Schema.Finite),
     }),
   ),
 });
@@ -59,7 +59,7 @@ const SearchItems = Schema.Struct({
   hits: Schema.Array(
     Schema.Struct({
       name: Schema.String,
-      lvl: Schema.Number,
+      lvl: Schema.Finite,
       rarity: Schema.NullOr(Schema.String),
     }),
   ),

@@ -9,10 +9,10 @@ import {
 } from "#src/database/drizzle/loot.schema";
 import type { UpdateNpcLootlogConfigRequest } from "#src/contracts/lootlog-config/schemas";
 
-export class LootlogConfigOperationError extends TaggedErrorClass<LootlogConfigOperationError>()(
-  "LootlogConfigOperationError",
-  { cause: Schema.Defect() },
-) {}
+export class LootlogConfigOperationError extends TaggedErrorClass<
+  LootlogConfigOperationError,
+  { readonly brand: unique symbol }
+>()("LootlogConfigOperationError", { cause: Schema.Defect() }) {}
 
 type LootlogConfigNpc = typeof lootlogConfigNpcTable.$inferSelect;
 

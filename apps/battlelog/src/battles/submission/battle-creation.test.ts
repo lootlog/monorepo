@@ -51,7 +51,7 @@ const requestJson = async <S extends Schema.ConstraintDecoder<unknown>>(
   path: string,
   schema: S,
   expectedStatus: number,
-  body?: typeof Schema.Json.Type,
+  body?: Schema.Json,
   userId = "user-1",
 ) => {
   const response = await handler(
@@ -80,7 +80,7 @@ const requestJson = async <S extends Schema.ConstraintDecoder<unknown>>(
 
 const postBattle = (
   handler: TestApplication["handler"],
-  body: typeof Schema.Json.Type,
+  body: Schema.Json,
   userId = "user-1",
 ) =>
   requestJson(
@@ -129,7 +129,7 @@ const battleEvent = {
   f: { endBattle: 1, init: "1", m: moves, w: warriors },
 };
 
-const incrementalBattleEvents: (typeof Schema.Json.Type)[] = [
+const incrementalBattleEvents: Schema.Json[] = [
   {
     ev: 1_785_091_976.6,
     f: { init: "1", m: moves.slice(0, 6), w: warriors },

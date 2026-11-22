@@ -144,7 +144,7 @@ try {
     measured = true;
     const started = performance.now();
     await Promise.all(
-      sweepers.map((presence) => Effect.runPromise(presence.sweepExpired())),
+      sweepers.map((presence) => Effect.runPromise(presence.sweepExpired)),
     );
     const sweepMs = performance.now() - started;
     measured = false;

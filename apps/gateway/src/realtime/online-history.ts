@@ -99,13 +99,15 @@ const Pending = Schema.fromJsonString(
     sessionId: Schema.String,
     segmentId: Schema.String,
     world: Schema.String,
-    started: Schema.Number,
-    ended: Schema.Number,
+    started: Schema.Finite,
+    ended: Schema.Finite,
     final: Schema.Boolean,
   }),
 );
 
 const decodePending = Schema.decodeUnknownSync(Pending);
+
+const checkpointEvent = Schema.decodeSync(UserOnlineCheckpointV1);
 
 export class OnlineHistory {
   private lastHealthAt = 0;
@@ -156,7 +158,7 @@ export class OnlineHistory {
     );
   }
 
-  flush() {
+  get flush() {
     return Effect.gen({ self: this }, function* () {
       const startedAt = this.now();
 
@@ -172,7 +174,7 @@ export class OnlineHistory {
         for (const raw of values) {
           const item = yield* Effect.try(() => decodePending(raw));
 
-          const event = Schema.decodeUnknownSync(UserOnlineCheckpointV1)({
+          const event = checkpointEvent({
             version: 1,
             type: "checkpoint",
             userId: item.userId,
@@ -261,8 +263,8 @@ export class OnlineHistory {
     );
   }
 
-  run() {
-    return this.flush().pipe(
+  get run() {
+    return this.flush.pipe(
       Effect.catch((error) =>
         Effect.logError("Online history delivery failed; retrying", error),
       ),
@@ -303,7 +305,7 @@ export class OnlineHistories extends Context.Service<
             .pipe(Effect.asVoid),
       );
 
-      yield* history.run().pipe(Effect.forkScoped);
+      yield* history.run.pipe(Effect.forkScoped);
 
       return history;
     }),

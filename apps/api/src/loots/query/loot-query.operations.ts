@@ -90,9 +90,9 @@ const mapLoot = (guildId: string, loot: LootQueryRecord): LootQueryResult => ({
   world: loot.world,
   source: loot.source,
   location: loot.location,
-  mapPlayersSnapshot: Schema.decodeUnknownSync(
-    Schema.NullOr(MapPlayersSnapshot),
-  )(loot.mapPlayersSnapshot),
+  mapPlayersSnapshot: Schema.decodeSync(Schema.NullOr(MapPlayersSnapshot))(
+    loot.mapPlayersSnapshot,
+  ),
   lootShare: Object.fromEntries(
     Object.entries(
       Schema.decodeUnknownSync(LootShareResponse)(loot.lootShare),
@@ -125,7 +125,7 @@ export const makeLootQueryOperations = (
     );
 
     return names.length === 0
-      ? Effect.succeed(undefined)
+      ? Effect.undefined
       : attempt(
           "loots.query.itemSnapshots",
           persistence.findItemSnapshotIds(names),

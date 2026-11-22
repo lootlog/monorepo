@@ -238,8 +238,8 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
               capabilities: viewer.permissions,
             }).allowsAny(AccessRequirement.ADMINISTER)
           ) {
-            return yield* Effect.fail(
-              new PermissionDeniedError("Only OWNER or ADMIN can clear chat"),
+            return yield* new PermissionDeniedError(
+              "Only OWNER or ADMIN can clear chat",
             );
           }
 
@@ -259,9 +259,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
           );
 
           if (!target) {
-            return yield* Effect.fail(
-              new ResourceNotFoundError("Message not found"),
-            );
+            return yield* new ResourceNotFoundError("Message not found");
           }
 
           const message = parseStored(target);
@@ -270,8 +268,8 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
             !canViewerReadChatMessage(viewer, message) ||
             !canDeleteChatMessage(viewer, message)
           ) {
-            return yield* Effect.fail(
-              new PermissionDeniedError("Not allowed to manage this message"),
+            return yield* new PermissionDeniedError(
+              "Not allowed to manage this message",
             );
           }
 

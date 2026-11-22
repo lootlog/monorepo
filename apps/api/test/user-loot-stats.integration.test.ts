@@ -15,12 +15,10 @@ const runtime = ManagedRuntime.make(ApiDatabaseLive);
 
 let database: typeof ApiDatabase.Service;
 
-const Ids = Schema.Array(Schema.Struct({ id: Schema.Number }));
+const Ids = Schema.Array(Schema.Struct({ id: Schema.Finite }));
 
 const one = async (sql: string, values: unknown[]) => {
-  const [row] = Schema.decodeUnknownSync(Ids)(
-    (await client.query(sql, values)).rows,
-  );
+  const [row] = Schema.decodeSync(Ids)((await client.query(sql, values)).rows);
 
   if (!row) throw new Error("Missing fixture row");
 

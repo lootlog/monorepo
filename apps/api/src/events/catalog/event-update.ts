@@ -200,7 +200,7 @@ export const makeEventUpdate =
       const event = rows[0];
 
       if (!event) {
-        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
+        return yield* new ResourceNotFoundError("Event not found");
       }
 
       const {
@@ -220,8 +220,8 @@ export const makeEventUpdate =
       const nextEnd = updatedDate(endsAt, event.endsAt);
 
       if (nextEnd && nextStart && nextEnd <= nextStart) {
-        return yield* Effect.fail(
-          new InvalidRequestError("End date must be after start date"),
+        return yield* new InvalidRequestError(
+          "End date must be after start date",
         );
       }
 
@@ -270,9 +270,7 @@ export const makeEventUpdate =
                   getEffectiveCapabilities(accessPolicy),
                 ).length !== existingHeroes.length
               ) {
-                return yield* Effect.fail(
-                  new ResourceNotFoundError("Hero not found"),
-                );
+                return yield* new ResourceNotFoundError("Hero not found");
               }
 
               const existingMaps =
@@ -295,7 +293,7 @@ export const makeEventUpdate =
               );
 
               if (changes instanceof InvalidRequestError) {
-                return yield* Effect.fail(changes);
+                return yield* changes;
               }
 
               const now = new Date(yield* Clock.currentTimeMillis);

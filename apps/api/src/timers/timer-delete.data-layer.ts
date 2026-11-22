@@ -65,27 +65,23 @@ export const makeDeleteTimer = (
         ).for("update");
 
         if (timers.some((timer) => !canViewTimer(access, timer))) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError({ code: ErrorKey.TIMER_NOT_FOUND }),
-          );
+          return yield* new ResourceNotFoundError({
+            code: ErrorKey.TIMER_NOT_FOUND,
+          });
         }
 
         if (timers.length > 1) {
-          return yield* Effect.fail(
-            new InvalidRequestError({
-              code: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
-            }),
-          );
+          return yield* new InvalidRequestError({
+            code: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
+          });
         }
 
         const timer = timers[0];
 
         if (!timer) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError({
-              code: ErrorKey.TIMER_NOT_FOUND,
-            }),
-          );
+          return yield* new ResourceNotFoundError({
+            code: ErrorKey.TIMER_NOT_FOUND,
+          });
         }
 
         // Deleting a deleted timer changes nothing: no row rewrite (every
@@ -103,11 +99,9 @@ export const makeDeleteTimer = (
         );
 
         if (activeEventHero.length > 0) {
-          return yield* Effect.fail(
-            new InvalidRequestError({
-              code: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE,
-            }),
-          );
+          return yield* new InvalidRequestError({
+            code: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE,
+          });
         }
 
         const actor = yield* findActiveGuildMember(
@@ -147,9 +141,9 @@ export const makeDeleteTimer = (
           .returning();
 
         if (!updated[0]) {
-          return yield* Effect.fail(
-            new ResourceNotFoundError({ code: ErrorKey.TIMER_NOT_FOUND }),
-          );
+          return yield* new ResourceNotFoundError({
+            code: ErrorKey.TIMER_NOT_FOUND,
+          });
         }
 
         return timer;
@@ -165,7 +159,7 @@ export const makeDeleteTimer = (
       guildId: access.guild.id,
       routing: {
         tier: getNpcRoutingTier(parseTimerNpcRouting(resolved.npc)),
-        npcLevel: Schema.is(Schema.Number)(npcLevel) ? npcLevel : undefined,
+        npcLevel: Schema.is(Schema.Finite)(npcLevel) ? npcLevel : undefined,
       },
     };
 

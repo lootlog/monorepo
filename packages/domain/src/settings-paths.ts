@@ -3,7 +3,7 @@ import { Predicate, Schema } from "effect";
 // Dotted-path helpers shared by the API resolver and the Game client cache.
 const SettingsJsonRecordSchema = Schema.Record(Schema.String, Schema.Json);
 
-export type SettingsJsonRecord = Record<string, typeof Schema.Json.Type>;
+export type SettingsJsonRecord = Record<string, Schema.Json>;
 
 export const decodeSettingsRecord = Schema.decodeUnknownSync(
   SettingsJsonRecordSchema,
@@ -11,7 +11,7 @@ export const decodeSettingsRecord = Schema.decodeUnknownSync(
 
 // JSON leaves have already been decoded at the document boundary.
 export const isSettingsRecord = (
-  value: typeof Schema.Json.Type | undefined,
+  value: Schema.Json | undefined,
 ): value is SettingsJsonRecord => Predicate.isObject(value);
 
 const FORBIDDEN_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
@@ -38,8 +38,8 @@ const MISSING_PATH = Symbol("missing-settings-path");
 const readPath = (
   value: SettingsJsonRecord,
   path: string,
-): typeof Schema.Json.Type | undefined | typeof MISSING_PATH => {
-  let currentValue: typeof Schema.Json.Type | undefined = value;
+): Schema.Json | undefined | typeof MISSING_PATH => {
+  let currentValue: Schema.Json | undefined = value;
 
   for (const segment of path.split(".")) {
     if (!isSettingsRecord(currentValue) || !(segment in currentValue)) {
@@ -55,7 +55,7 @@ const readPath = (
 export const getPath = (
   value: SettingsJsonRecord,
   path: string,
-): typeof Schema.Json.Type | undefined => {
+): Schema.Json | undefined => {
   const result = readPath(value, path);
 
   return result === MISSING_PATH ? undefined : result;
@@ -64,7 +64,7 @@ export const getPath = (
 export const setPath = (
   target: SettingsJsonRecord,
   path: string,
-  value: typeof Schema.Json.Type,
+  value: Schema.Json,
 ) => {
   const segments = splitWritablePath(path);
   const finalSegment = segments.pop();
@@ -124,8 +124,8 @@ export const unsetPath = (target: SettingsJsonRecord, path: string) => {
 export const collectLeafPaths = (
   value: SettingsJsonRecord,
   prefix = "",
-): Array<{ path: string; value: typeof Schema.Json.Type }> => {
-  const paths: Array<{ path: string; value: typeof Schema.Json.Type }> = [];
+): Array<{ path: string; value: Schema.Json }> => {
+  const paths: Array<{ path: string; value: Schema.Json }> = [];
 
   for (const [key, nestedValue] of Object.entries(value)) {
     const path = prefix ? `${prefix}.${key}` : key;

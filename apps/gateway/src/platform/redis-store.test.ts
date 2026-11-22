@@ -128,6 +128,8 @@ test("a dropped subscriber reports the interruption before delivering its whole 
                 new Redis.RedisError({ cause: "connection closed" }),
               );
 
+            // The subscription resolves to the Effect that ends with it.
+            // @effect-diagnostics-next-line returnEffectInGen:off
             return Deferred.await(terminal);
           }),
         );

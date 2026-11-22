@@ -49,9 +49,7 @@ export const prepareReminder = (
     );
 
     if (scheduledFor.getTime() <= (yield* Clock.currentTimeMillis)) {
-      return yield* Effect.fail(
-        new InvalidEntityError({ code: "REMINDER_TIME_ELAPSED" }),
-      );
+      return yield* new InvalidEntityError({ code: "REMINDER_TIME_ELAPSED" });
     }
 
     const targets = yield* database
@@ -73,9 +71,7 @@ export const prepareReminder = (
     const target = targets[0];
 
     if (!target) {
-      return yield* Effect.fail(
-        new InvalidEntityError({ code: "DM_TARGET_REQUIRED" }),
-      );
+      return yield* new InvalidEntityError({ code: "DM_TARGET_REQUIRED" });
     }
 
     return { target, scheduledFor };
@@ -205,9 +201,7 @@ export const scheduleReminder = (
     const rule = yield* getOrCreateReminderRule(database, options.discordId);
 
     if (!rule) {
-      return yield* Effect.fail(
-        new InvalidEntityError({ code: "DM_TARGET_REQUIRED" }),
-      );
+      return yield* new InvalidEntityError({ code: "DM_TARGET_REQUIRED" });
     }
 
     const startsAtDiscord = formatDiscordRelativeTimestamp(options.startsAt);

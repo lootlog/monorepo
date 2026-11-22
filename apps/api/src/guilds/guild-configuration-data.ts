@@ -146,11 +146,9 @@ export class GuildConfigurationData extends Context.Service<
                 const guild = yield* findActiveGuild(database, idOrVanityUrl);
 
                 if (!guild) {
-                  return yield* Effect.fail(
-                    new ResourceNotFoundError({
-                      code: ErrorKey.GUILD_NOT_FOUND,
-                    }),
-                  );
+                  return yield* new ResourceNotFoundError({
+                    code: ErrorKey.GUILD_NOT_FOUND,
+                  });
                 }
 
                 yield* writeGuildConfigurationCache(
@@ -167,16 +165,16 @@ export class GuildConfigurationData extends Context.Service<
               Effect.gen(function* () {
                 const validationError = validateGuildConfiguration(payload);
 
-                if (validationError) return yield* Effect.fail(validationError);
+                if (validationError) return yield* validationError;
 
                 const vanityUrl = payload.vanityUrl
                   ? parseVanityUrl(payload.vanityUrl)
                   : null;
 
                 if (vanityUrl?.error) {
-                  return yield* Effect.fail(
-                    new InvalidRequestError({ code: vanityUrl.error }),
-                  );
+                  return yield* new InvalidRequestError({
+                    code: vanityUrl.error,
+                  });
                 }
 
                 const oldRows = yield* database
@@ -191,7 +189,7 @@ export class GuildConfigurationData extends Context.Service<
                   validateGuildConfigurationAgainstStored(payload, oldGuild);
 
                 if (storedValidationError) {
-                  return yield* Effect.fail(storedValidationError);
+                  return yield* storedValidationError;
                 }
 
                 const updatedRows = yield* database
@@ -208,11 +206,9 @@ export class GuildConfigurationData extends Context.Service<
                 const guild = updatedRows[0];
 
                 if (!guild) {
-                  return yield* Effect.fail(
-                    new ResourceNotFoundError({
-                      code: ErrorKey.GUILD_NOT_FOUND,
-                    }),
-                  );
+                  return yield* new ResourceNotFoundError({
+                    code: ErrorKey.GUILD_NOT_FOUND,
+                  });
                 }
 
                 // The row is cached under every key it was looked up by, so a

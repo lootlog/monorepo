@@ -13,7 +13,7 @@ import {
   canSubscribe,
 } from "#src/realtime/subscription-policy";
 
-type Event = typeof ServerEvent.Type;
+type Event = ServerEvent;
 
 // Pings and loot split choices carry no Organization, so they reach sockets
 // only through authorized routing scopes.
