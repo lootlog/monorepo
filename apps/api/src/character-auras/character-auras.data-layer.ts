@@ -318,7 +318,7 @@ export const makeCharacterAurasData = (
 
     return CharacterAurasData.of({
       getAuras: cache.list(
-        shownAuras().pipe(
+        Effect.suspend(() => shownAuras()).pipe(
           Effect.mapBoth({
             onSuccess: (auras) => ({ auras }),
             onFailure: operationError,

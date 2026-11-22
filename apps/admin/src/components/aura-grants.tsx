@@ -27,6 +27,7 @@ export function AuraGrants({
   grants: CharacterAuraGrantsResponseDto;
 }) {
   const { run, pending } = useAuraAction(gameAccountId);
+  const busy = pending !== undefined;
   const personal = new Set<string>(grants.personalAuraIds);
   const anyGrant = grants.granted || personal.size > 0;
 
@@ -81,6 +82,7 @@ export function AuraGrants({
             <div>
               <Button
                 loading={pending === "grant"}
+                disabled={busy}
                 onClick={() => void run({ action: "grant" })}
               >
                 {text.aurasGrant}
@@ -113,6 +115,7 @@ export function AuraGrants({
                       className="shrink-0"
                       aria-label={text.aurasGrantPersonalLabel(name)}
                       loading={pending === auraId}
+                      disabled={busy}
                       onClick={() =>
                         void run({ action: "grant-personal", auraId })
                       }
@@ -133,8 +136,11 @@ export function AuraGrants({
               confirmButtonLabel={text.aurasRevoke}
               cancelButtonLabel={text.cancel}
               onConfirm={() => run({ action: "revoke" })}
+              pending={pending === "revoke"}
               trigger={
-                <Button variant="destructive">{text.aurasRevoke}</Button>
+                <Button variant="destructive" disabled={busy}>
+                  {text.aurasRevoke}
+                </Button>
               }
             />
           </div>
