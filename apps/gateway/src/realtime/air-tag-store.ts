@@ -167,7 +167,6 @@ local function effective(target, now, ttl, enemy, clanEnemy)
   if target.enemyObservedAt ~= nil and now - tonumber(target.enemyObservedAt) < ttl then return enemy end
   return tonumber(target.relation)
 end
-local function isThreat(relation, enemy, clanEnemy) return relation == enemy or relation == clanEnemy end
 -- An observation omits level, profession and stasis when they did not change; keep the last reported value.
 local function carry(target, observation, existing, field)
   if observation[field] ~= nil then target[field]=observation[field] elseif existing ~= nil then target[field]=existing[field] end
@@ -269,27 +268,8 @@ end
 if #threatDrops > 0 and redis.call("HDEL",KEYS[4],unpack(threatDrops)) > 0 then threatRemoved=true end
 for _,observation in ipairs(observations) do
   local existing=stored[observation.targetId]
-  local shouldAccept=true
-  if existing == nil and count >= maxTargets then
-    shouldAccept=false
-    if isThreat(tonumber(observation.relation),enemy,clanEnemy) then
-      -- A full map evicting a non-threat is rare, and it scans committed state,
-      -- so the staged writes go out first.
-      flush()
-      local candidates=redis.call("ZRANGE",KEYS[2],0,-1)
-      for _,candidateId in ipairs(candidates) do
-        local candidateRaw=redis.call("HGET",KEYS[1],candidateId)
-        if candidateRaw ~= false then
-          local candidate=cjson.decode(candidateRaw)
-          if not isThreat(effective(candidate,now,ttl,enemy,clanEnemy),enemy,clanEnemy) then
-            redis.call("HDEL",KEYS[1],candidateId); redis.call("ZREM",KEYS[2],candidateId)
-            stored[candidateId]=nil
-            count=count-1; shouldAccept=true; break
-          end
-        end
-      end
-    end
-  end
+  -- Every stored target is an enemy, so a full map has no one to make room.
+  local shouldAccept=existing ~= nil or count < maxTargets
   if shouldAccept then
     local target={targetId=observation.targetId,nickname=observation.nickname,relation=observation.relation,x=observation.x,y=observation.y,observedAt=now,lastBroadcastAt=0}
     if observation.clan ~= nil then target.clan=observation.clan end

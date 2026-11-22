@@ -6,6 +6,16 @@ export const AIR_TAG_ENEMY_RELATION = 3;
 
 export const AIR_TAG_CLAN_ENEMY_RELATION = 6;
 
+/**
+ * A personal or clan enemy. AirTags carry no one else: nothing shows a
+ * neutral player, a friend or a clan mate, and they are most players on a map.
+ */
+export const isAirTagThreatRelation = (
+  relation: AirTagRelation | undefined,
+): boolean =>
+  relation === AIR_TAG_ENEMY_RELATION ||
+  relation === AIR_TAG_CLAN_ENEMY_RELATION;
+
 export const AIR_TAG_MAX_BATCH_SIZE = 50;
 
 const AIR_TAG_MAX_COORDINATE = 65_535;

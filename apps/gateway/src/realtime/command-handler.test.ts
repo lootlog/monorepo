@@ -797,7 +797,7 @@ describe("CommandHandler session lifecycle", () => {
           data: {
             expectedMapId: 12,
             observations: [
-              { targetId: "7", nickname: "Wróg", relation: 2, x: 1, y: 1 },
+              { targetId: "7", nickname: "Wróg", relation: 6, x: 1, y: 1 },
             ],
           },
         },

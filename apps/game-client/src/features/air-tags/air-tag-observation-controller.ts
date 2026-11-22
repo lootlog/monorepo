@@ -5,6 +5,7 @@ import {
   AIR_TAG_MAX_BATCH_SIZE,
   isAirTagObservation,
   isAirTagRelation,
+  isAirTagThreatRelation,
   type AirTagDeparture,
   type AirTagDepartureReason,
   type AirTagObservation,
@@ -84,6 +85,11 @@ const toObservation = ({
 
 type ObservationPublisher = (batch: AirTagObservationBatch) => void;
 
+/**
+ * Every player the game sent: any of them can turn into an enemy, and the
+ * hero seeing one leave hides a marker another member still reports. Only
+ * enemies are published.
+ */
 type LocalAirTagTarget = AirTagObservation & {
   dir: number;
   lastPublishedAt: number;
@@ -254,8 +260,15 @@ export class AirTagObservationController {
     const target = this.targets.get(targetId);
 
     if (!target) return;
+    const wasThreat = isAirTagThreatRelation(target.relation);
     const moved = this.applyMovement(target, update);
     const changed = this.applyAttributes(target, update, moved);
+
+    if (!isAirTagThreatRelation(target.relation)) {
+      if (wasThreat) this.withdraw(target);
+
+      return;
+    }
 
     const movedFarEnough =
       Math.max(
@@ -332,6 +345,20 @@ export class AirTagObservationController {
     return changed;
   }
 
+  /** Stops reporting a player who is no longer an enemy, such as after a clan war ends. */
+  private withdraw(target: LocalAirTagTarget): void {
+    this.pending.delete(target.targetId);
+
+    if (!target.sent) return;
+    target.sent = false;
+    // Another member may still see an enemy in them, so they only fade for this observer.
+    this.departures.set(target.targetId, {
+      targetId: target.targetId,
+      reason: "out-of-sight",
+    });
+    this.scheduleBatch();
+  }
+
   private handleDelete(targetId: string): void {
     const target = this.targets.get(targetId);
     this.targets.delete(targetId);
@@ -366,6 +393,8 @@ export class AirTagObservationController {
   }
 
   private queue(target: LocalAirTagTarget, publishedAt: number): void {
+    if (!isAirTagThreatRelation(target.relation)) return;
+
     target.lastPublishedAt = publishedAt;
     target.lastPublishedX = target.x;
     target.lastPublishedY = target.y;
@@ -384,7 +413,9 @@ export class AirTagObservationController {
 
     for (const observation of batch.observations) {
       if (
-        this.targets.has(observation.targetId) &&
+        isAirTagThreatRelation(
+          this.targets.get(observation.targetId)?.relation,
+        ) &&
         !this.pending.has(observation.targetId)
       )
         this.pending.set(observation.targetId, observation);
@@ -461,7 +492,10 @@ export class AirTagObservationController {
       if (!this.active) return;
 
       const now = this.now();
-      const targets = [...this.targets.values()];
+
+      const targets = [...this.targets.values()].filter((target) =>
+        isAirTagThreatRelation(target.relation),
+      );
 
       if (
         !targets.some(
@@ -511,7 +545,15 @@ export class AirTagObservationController {
       return;
     }
 
-    const [oldestTargetId, oldest] = this.targets.entries().next().value ?? [];
+    // A player nobody is told about goes first; the oldest enemy only on a map full of them.
+    let [oldestTargetId, oldest] = this.targets.entries().next().value ?? [];
+
+    for (const [id, target] of this.targets) {
+      if (isAirTagThreatRelation(target.relation)) continue;
+      oldestTargetId = id;
+      oldest = target;
+      break;
+    }
 
     if (oldestTargetId === undefined) return;
     this.targets.delete(oldestTargetId);

@@ -3,6 +3,7 @@ import {
   AIR_TAG_MAX_MAP_NAME_LENGTH,
   isAirTagDeparture,
   isAirTagObservation,
+  isAirTagThreatRelation,
   type AirTagDeparture,
   type AirTagObservationAck,
   type AirTagMapThreatEvent,
@@ -231,6 +232,19 @@ export class AirTagService {
     if (scopes.length === 0)
       return Effect.succeed({ status: "rejected", code: "forbidden" });
 
+    // The contract accepts every relation, and older clients report every
+    // player they see; most are not enemies and cost no Redis call.
+    const sightings = payload.observations.filter((item) =>
+      isAirTagThreatRelation(item.relation),
+    );
+
+    if (sightings.length === 0 && !payload.departures?.length)
+      return Effect.succeed({
+        status: "accepted",
+        acceptedScopes: scopes.length,
+        acceptedTargets: 0,
+      });
+
     return this.admit(socket, scopes).pipe(
       Effect.flatMap(
         (
@@ -246,9 +260,7 @@ export class AirTagService {
             });
 
           const observations = [
-            ...new Map(
-              payload.observations.map((item) => [item.targetId, item]),
-            ).values(),
+            ...new Map(sightings.map((item) => [item.targetId, item])).values(),
           ];
 
           const observedIds = new Set(

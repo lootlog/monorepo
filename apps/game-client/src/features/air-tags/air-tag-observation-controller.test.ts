@@ -31,7 +31,7 @@ const createOther = (overrides: Partial<OtherCreate> = {}): OtherCreate => ({
   prof: "w",
   attr: 0,
   is_blessed: 0,
-  relation: 1,
+  relation: 6,
   ...overrides,
 });
 
@@ -252,7 +252,7 @@ describe("AirTagObservationController", () => {
     expect(publisher).not.toHaveBeenCalled();
   });
 
-  it("republishes a relation or clan that changes mid-session and ignores a malformed one", () => {
+  it("reports a player only while they are an enemy, and ignores a malformed relation", () => {
     const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
     const controller = new AirTagObservationController();
     controller.configure({
@@ -261,8 +261,15 @@ describe("AirTagObservationController", () => {
       mapId: 42,
       publisher,
     });
-    controller.handle({ "123": createOther({ relation: 1 }) });
-    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    // Neutral players, friends and clan mates are most of a map; none is reported.
+    controller.handle({
+      "123": createOther({ relation: 1 }),
+      friend: createOther({ relation: 2 }),
+      mate: createOther({ relation: 4 }),
+    });
+    controller.handle({ "123": { x: 20, y: 10, dir: 1 } });
+    vi.advanceTimersByTime(AIR_TAG_HEARTBEAT_INTERVAL_MS * 2);
+    expect(publisher).not.toHaveBeenCalled();
 
     // A clan war declared while both players stay on the map.
     controller.handle({
@@ -273,6 +280,7 @@ describe("AirTagObservationController", () => {
       expectedMapId: 42,
       observations: [
         expect.objectContaining({
+          targetId: "123",
           relation: 6,
           clan: { id: 7, name: "Rivals" },
         }),
@@ -281,6 +289,17 @@ describe("AirTagObservationController", () => {
 
     controller.handle({ "123": { relation: 99 } });
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    expect(publisher).toHaveBeenCalledTimes(1);
+
+    // The war ends: the gateway stops counting this observer, and no heartbeat follows.
+    controller.handle({ "123": { relation: 1 } });
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    expect(publisher).toHaveBeenLastCalledWith({
+      expectedMapId: 42,
+      observations: [],
+      departures: [{ targetId: "123", reason: "out-of-sight" }],
+    });
+    vi.advanceTimersByTime(AIR_TAG_HEARTBEAT_INTERVAL_MS * 2);
     expect(publisher).toHaveBeenCalledTimes(2);
   });
 

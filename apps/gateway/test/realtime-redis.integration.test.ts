@@ -2609,7 +2609,12 @@ describe("realtime Dragonfly integration", () => {
       Effect.runPromise(
         sourceAirTags.publishObservations(source.socket, {
           expectedMapId: 7,
-          observations: [observation, { ...observation, x: 12 }],
+          observations: [
+            observation,
+            { ...observation, x: 12 },
+            // Not an enemy: an older client reports every player it sees.
+            { ...observation, targetId: "neutral", relation: 1 },
+          ],
         }),
       ),
     ).resolves.toEqual({
@@ -2640,6 +2645,9 @@ describe("realtime Dragonfly integration", () => {
       status: "accepted",
       scopes: [{ targets: [{ targetId: "target-1", x: 12 }] }],
     });
+    expect(
+      rejoined.status === "accepted" && rejoined.scopes[0]?.targets,
+    ).toHaveLength(1);
 
     for (let index = 0; index < 14; index += 1) {
       const acknowledgement = await Effect.runPromise(
