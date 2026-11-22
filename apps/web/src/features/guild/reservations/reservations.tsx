@@ -1,5 +1,6 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { ListToolbar } from "@/components/common/list-toolbar";
+import { PillToggleGroup } from "@/components/common/pill-toggle-group";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -26,12 +27,10 @@ import {
   RESERVATIONS_VIEW_MODE_KEY,
 } from "./reservation-collection-layout";
 import {
-  ReservationFilters,
-  type ReservationFilter,
-} from "./reservation-filters";
-import {
   getVisibleReservationSpots,
+  RESERVATION_FILTERS,
   setReservationSpotPinned,
+  type ReservationFilter,
 } from "./reservation-spots";
 import { RetryButton } from "@/components/common/retry-button";
 import { ClearFiltersButton } from "@/components/common/clear-filters-button";
@@ -200,7 +199,15 @@ export function Reservations() {
             clearLabel={t("reservations.clearSearch")}
             disabled={spotsQuery.isPending}
           >
-            <ReservationFilters value={filter} onChange={setFilter} />
+            <PillToggleGroup
+              label={t("reservations.filters.label")}
+              value={filter}
+              onValueChange={setFilter}
+              options={RESERVATION_FILTERS.map((value) => ({
+                value,
+                label: t(`reservations.filters.${value}`),
+              }))}
+            />
             {canChooseViewMode && (
               <ViewModeToggle
                 value={viewMode}
