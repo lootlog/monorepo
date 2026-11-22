@@ -4,8 +4,8 @@
  * players the game does not know about the same way.
  */
 
-/** HandHeldMiniMapData.KIND of a personal and a clan enemy. */
-export type MinimapEnemyKind = "en" | "cl-en";
+/** HandHeldMiniMapData.KIND of a clan enemy. */
+const CLAN_ENEMY_KIND = "cl-en";
 
 /** HandHeldMiniMapData.STATIC_ICONS. */
 export const MINIMAP_ICON = { square: 0, circle: 1, rhomb: 2 } as const;
@@ -123,19 +123,17 @@ export function getMinimapSquares(): MinimapSquares | null {
 }
 
 /**
- * How the minimap draws players of this kind, or null when the player turned
- * the kind off in the minimap's own settings.
+ * How the minimap draws clan enemies, or null when the player turned them off
+ * in the minimap's own settings.
  */
-export function getMinimapPlayerStyle(
-  kind: MinimapEnemyKind,
-): MinimapPlayerStyle | null {
+export function getMinimapClanEnemyStyle(): MinimapPlayerStyle | null {
   const controller = getController();
 
-  if (!controller?.canUpdate?.("other", kind)) return null;
+  if (!controller?.canUpdate?.("other", CLAN_ENEMY_KIND)) return null;
 
-  const color = controller.getColorByKind?.(kind);
+  const color = controller.getColorByKind?.(CLAN_ENEMY_KIND);
   // oxlint-disable-next-line anti-slop/no-shape-in-symbol-names -- The game names its own method.
-  const icon = controller.getShapeByKind?.(kind);
+  const icon = controller.getShapeByKind?.(CLAN_ENEMY_KIND);
 
   if (!color) return null;
 

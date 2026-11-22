@@ -2,19 +2,16 @@ import { Schema } from "effect";
 
 const AIR_TAG_RELATIONS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
-export const AIR_TAG_ENEMY_RELATION = 3;
-
 export const AIR_TAG_CLAN_ENEMY_RELATION = 6;
 
 /**
- * A personal or clan enemy. AirTags carry no one else: nothing shows a
- * neutral player, a friend or a clan mate, and they are most players on a map.
+ * AirTags carry clan enemies only. A personal enemy is one member's private
+ * list, not the Organization's, and nothing shows a neutral player, a friend
+ * or a clan mate, who are most players on a map.
  */
-export const isAirTagThreatRelation = (
+export const isAirTagClanEnemy = (
   relation: AirTagRelation | undefined,
-): boolean =>
-  relation === AIR_TAG_ENEMY_RELATION ||
-  relation === AIR_TAG_CLAN_ENEMY_RELATION;
+): boolean => relation === AIR_TAG_CLAN_ENEMY_RELATION;
 
 export const AIR_TAG_MAX_BATCH_SIZE = 50;
 
@@ -76,8 +73,6 @@ export interface AirTagSubscriptionPayload {
 
 export interface AirTagTarget extends AirTagObservation {
   observedAt: number;
-  enemyObservedAt?: number;
-  clanEnemyObservedAt?: number;
 }
 
 export interface AirTagScopeSnapshot {
@@ -212,8 +207,6 @@ export const AirTagObservationBatchSchema = Schema.Struct({
 export const AirTagTargetSchema = Schema.Struct({
   ...AirTagObservationSchema.fields,
   observedAt: SafeNatural,
-  enemyObservedAt: Schema.optionalKey(SafeNatural),
-  clanEnemyObservedAt: Schema.optionalKey(SafeNatural),
 });
 
 const AirTagScopeIdentityFields = {

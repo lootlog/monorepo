@@ -9,7 +9,7 @@ import {
   getWhoIsHereRelationColor,
   startPrivateMessage,
 } from "@/lib/margonem-runtime/adapters/who-is-here-runtime-adapter";
-import type { WhoIsHereAirTagEnemy } from "./who-is-here-air-tag-enemies";
+import type { AirTagTarget } from "@lootlog/schema/air-tag";
 
 /** Game default for clan enemies, used until the game reports the player's colour. */
 const FALLBACK_ENEMY_COLOR = "#fc3e40";
@@ -23,13 +23,13 @@ export function WhoIsHereAirTagRow({
   enemy,
   now,
 }: {
-  enemy: WhoIsHereAirTagEnemy;
+  enemy: AirTagTarget;
   now: number;
 }) {
   const { t } = useTranslation("settings");
 
   const color =
-    getWhoIsHereRelationColor(enemy.targetId, enemy.effectiveRelation) ??
+    getWhoIsHereRelationColor(enemy.targetId, enemy.relation) ??
     FALLBACK_ENEMY_COLOR;
 
   const seenSeconds = Math.max(0, Math.floor((now - enemy.observedAt) / 1_000));

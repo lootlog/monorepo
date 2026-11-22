@@ -37,12 +37,6 @@ const getScopeKey = ({
 const toLocalTarget = (target: AirTagTarget, offset: number): AirTagTarget => ({
   ...target,
   observedAt: target.observedAt + offset,
-  ...(target.enemyObservedAt !== undefined && {
-    enemyObservedAt: target.enemyObservedAt + offset,
-  }),
-  ...(target.clanEnemyObservedAt !== undefined && {
-    clanEnemyObservedAt: target.clanEnemyObservedAt + offset,
-  }),
 });
 
 const compareEpoch = (
@@ -209,20 +203,8 @@ export class AirTagReceiveController {
           continue;
         }
 
-        const freshest =
-          target.observedAt > existing.observedAt ? target : existing;
-
-        targets.set(targetId, {
-          ...freshest,
-          enemyObservedAt: this.maximumTimestamp(
-            existing.enemyObservedAt,
-            target.enemyObservedAt,
-          ),
-          clanEnemyObservedAt: this.maximumTimestamp(
-            existing.clanEnemyObservedAt,
-            target.clanEnemyObservedAt,
-          ),
-        });
+        if (target.observedAt > existing.observedAt)
+          targets.set(targetId, { ...target });
       }
     }
 
@@ -368,17 +350,6 @@ export class AirTagReceiveController {
       value.world === this.currentWorld &&
       value.mapId === this.currentMapId
     );
-  }
-
-  private maximumTimestamp(
-    first: number | undefined,
-    second: number | undefined,
-  ): number | undefined {
-    if (first === undefined) return second;
-
-    if (second === undefined) return first;
-
-    return Math.max(first, second);
   }
 
   private notifyChange(): void {

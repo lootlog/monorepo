@@ -48,7 +48,7 @@ const airTags = new AirTagService(
                   {
                     targetId: "target",
                     nickname: "Enemy",
-                    relation: 3,
+                    relation: 6,
                     x: 1,
                     y: 2,
                     observedAt: 1,
@@ -117,7 +117,7 @@ const scenarios = {
       data: {
         expectedMapId: 7,
         observations: [
-          { targetId: "target", nickname: "Enemy", relation: 3, x: 1, y: 2 },
+          { targetId: "target", nickname: "Enemy", relation: 6, x: 1, y: 2 },
         ],
       },
     }),

@@ -4,10 +4,8 @@ import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { isSeenByHero, showsAirTagsOnMap } from "./air-tag-game-visibility";
 import { airTagReceiveController } from "./air-tag-receive-controller";
-import {
-  selectUnseenAirTagEnemies,
-  type WhoIsHereAirTagEnemy,
-} from "./who-is-here-air-tag-enemies";
+import type { AirTagTarget } from "@lootlog/schema/air-tag";
+import { selectUnseenAirTagEnemies } from "./who-is-here-air-tag-enemies";
 
 export const AIR_TAG_TARGET_TTL_MS = 10_000;
 
@@ -25,7 +23,7 @@ export function getAirTagMemberSources() {
 }
 
 export type UnseenAirTagEnemies = {
-  enemies: WhoIsHereAirTagEnemy[];
+  enemies: AirTagTarget[];
   /** Unseen enemies are reported, before members of the Organizations are removed. */
   hasCandidates: boolean;
   /** Any player is reported on this map. */
@@ -52,11 +50,7 @@ export function readUnseenAirTagEnemies(now: number): UnseenAirTagEnemies {
 
   if (targets.length === 0) return NONE;
 
-  const candidates = selectUnseenAirTagEnemies(targets, {
-    now,
-    ttlMs: AIR_TAG_TARGET_TTL_MS,
-    isSeenByHero,
-  });
+  const candidates = selectUnseenAirTagEnemies(targets, isSeenByHero);
 
   // Loading presence costs a request per Organization, so only once enemies are reported.
   const members = candidates.length > 0 ? getAirTagMemberSources() : [];

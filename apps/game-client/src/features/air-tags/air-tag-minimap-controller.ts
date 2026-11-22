@@ -1,17 +1,12 @@
-import {
-  AIR_TAG_CLAN_ENEMY_RELATION,
-  type AirTagTarget,
-} from "@lootlog/schema/air-tag";
 import { rendererRuntimeAdapter } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
 import {
   MINIMAP_ICON,
   buildPlayerTipHtml,
-  getMinimapPlayerStyle,
+  getMinimapClanEnemyStyle,
   getMinimapSquares,
   hasMinimapObjectAt,
   showMinimapTip,
   subscribeMinimapHover,
-  type MinimapEnemyKind,
   type MinimapHoverEvent,
   type MinimapPlayerStyle,
   type MinimapSquares,
@@ -22,7 +17,7 @@ import {
   AIR_TAG_TARGET_TTL_MS,
   readUnseenAirTagEnemies,
 } from "./air-tag-unseen-enemies";
-import type { WhoIsHereAirTagEnemy } from "./who-is-here-air-tag-enemies";
+import type { AirTagTarget } from "@lootlog/schema/air-tag";
 
 /** Which enemies are unseen changes with every step; a marker may lag this long. */
 const REFRESH_INTERVAL_MS = 250;
@@ -32,9 +27,6 @@ const OLDEST_ALPHA = 0.45;
 
 // The game's own markers leave this much room for their outline.
 const MARKER_PADDING = 5;
-
-const getKind = (enemy: WhoIsHereAirTagEnemy): MinimapEnemyKind =>
-  enemy.effectiveRelation === AIR_TAG_CLAN_ENEMY_RELATION ? "cl-en" : "en";
 
 /**
  * A marker drawn like MiniMapObject.js draws its own: the icon and colour the
@@ -109,7 +101,7 @@ type MarkerLabels = {
 export class AirTagMinimapController {
   private enabled = false;
   private labels: MarkerLabels = { seen: String };
-  private enemies: WhoIsHereAirTagEnemy[] = [];
+  private enemies: AirTagTarget[] = [];
   private refreshedAt = 0;
   private unsubscribeDraw: (() => void) | null = null;
   private unsubscribeTargets: (() => void) | null = null;
@@ -179,10 +171,12 @@ export class AirTagMinimapController {
 
     const { context } = squares;
 
-    for (const enemy of this.enemies) {
-      const style = getMinimapPlayerStyle(getKind(enemy));
+    const style = getMinimapClanEnemyStyle();
 
-      if (!style) continue;
+    // The player hid clan enemies on the minimap.
+    if (!style) return;
+
+    for (const enemy of this.enemies) {
       const { left, top } = this.getMarkerOrigin(enemy, squares);
       const age = Math.min(1, (now - enemy.observedAt) / AIR_TAG_TARGET_TTL_MS);
 
@@ -251,7 +245,7 @@ export class AirTagMinimapController {
     // The game's own marker on the tile keeps its tip.
     if (
       !enemy ||
-      !getMinimapPlayerStyle(getKind(enemy)) ||
+      !getMinimapClanEnemyStyle() ||
       hasMinimapObjectAt(enemy.x, enemy.y)
     )
       return;

@@ -441,7 +441,7 @@ const clanEnemyFields = ({
 const observation = {
   targetId: "target-1",
   nickname: "Enemy",
-  relation: 3 as const,
+  relation: 6 as const,
   x: 10,
   y: 11,
 };
@@ -2612,8 +2612,10 @@ describe("realtime Dragonfly integration", () => {
           observations: [
             observation,
             { ...observation, x: 12 },
-            // Not an enemy: an older client reports every player it sees.
+            // An older client reports every player it sees; a neutral one and
+            // the observer's personal enemy are not the Organization's.
             { ...observation, targetId: "neutral", relation: 1 },
+            { ...observation, targetId: "personal", relation: 3 },
           ],
         }),
       ),

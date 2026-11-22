@@ -12,12 +12,12 @@ import {
   getAirTagMemberSources,
   readUnseenAirTagEnemies,
 } from "./air-tag-unseen-enemies";
-import type { WhoIsHereAirTagEnemy } from "./who-is-here-air-tag-enemies";
+import type { AirTagTarget } from "@lootlog/schema/air-tag";
 
 const AGE_TICK_MS = 1_000;
 
 type WhoIsHereAirTagView = {
-  enemies: WhoIsHereAirTagEnemy[];
+  enemies: AirTagTarget[];
   /** Where the rows render; resolved only while there are rows to show. */
   host: HTMLElement | null;
   /** Unseen enemies are reported, before members of the Organizations are removed. */
@@ -38,11 +38,11 @@ const EMPTY_VIEW: WhoIsHereAirTagView = {
   signature: "",
 };
 
-const getRowsSignature = (enemies: readonly WhoIsHereAirTagEnemy[]) =>
+const getRowsSignature = (enemies: readonly AirTagTarget[]) =>
   enemies
     .map(
       (enemy) =>
-        `${enemy.targetId}|${enemy.nickname}|${enemy.lvl}|${enemy.clan?.id}|${enemy.stasis}|${enemy.effectiveRelation}`,
+        `${enemy.targetId}|${enemy.nickname}|${enemy.lvl}|${enemy.clan?.id}|${enemy.stasis}`,
     )
     .join(",");
 

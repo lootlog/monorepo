@@ -55,8 +55,7 @@ describe("AirTagService map threats", () => {
       enemies: [{ targetId: "enemy", nickname: "Rival", ageMs: 0 }],
     };
 
-    const evaluations: Array<string | number[]> = [
-      [1, 0, 0],
+    const evaluations: string[] = [
       JSON.stringify({
         epochId: "epoch",
         epochStartedAt: 100,

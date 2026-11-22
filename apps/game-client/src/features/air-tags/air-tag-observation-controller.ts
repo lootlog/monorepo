@@ -5,7 +5,7 @@ import {
   AIR_TAG_MAX_BATCH_SIZE,
   isAirTagObservation,
   isAirTagRelation,
-  isAirTagThreatRelation,
+  isAirTagClanEnemy,
   type AirTagDeparture,
   type AirTagDepartureReason,
   type AirTagObservation,
@@ -88,7 +88,7 @@ type ObservationPublisher = (batch: AirTagObservationBatch) => void;
 /**
  * Every player the game sent: any of them can turn into an enemy, and the
  * hero seeing one leave hides a marker another member still reports. Only
- * enemies are published.
+ * clan enemies are published.
  */
 type LocalAirTagTarget = AirTagObservation & {
   dir: number;
@@ -260,11 +260,11 @@ export class AirTagObservationController {
     const target = this.targets.get(targetId);
 
     if (!target) return;
-    const wasThreat = isAirTagThreatRelation(target.relation);
+    const wasThreat = isAirTagClanEnemy(target.relation);
     const moved = this.applyMovement(target, update);
     const changed = this.applyAttributes(target, update, moved);
 
-    if (!isAirTagThreatRelation(target.relation)) {
+    if (!isAirTagClanEnemy(target.relation)) {
       if (wasThreat) this.withdraw(target);
 
       return;
@@ -393,7 +393,7 @@ export class AirTagObservationController {
   }
 
   private queue(target: LocalAirTagTarget, publishedAt: number): void {
-    if (!isAirTagThreatRelation(target.relation)) return;
+    if (!isAirTagClanEnemy(target.relation)) return;
 
     target.lastPublishedAt = publishedAt;
     target.lastPublishedX = target.x;
@@ -413,9 +413,7 @@ export class AirTagObservationController {
 
     for (const observation of batch.observations) {
       if (
-        isAirTagThreatRelation(
-          this.targets.get(observation.targetId)?.relation,
-        ) &&
+        isAirTagClanEnemy(this.targets.get(observation.targetId)?.relation) &&
         !this.pending.has(observation.targetId)
       )
         this.pending.set(observation.targetId, observation);
@@ -494,7 +492,7 @@ export class AirTagObservationController {
       const now = this.now();
 
       const targets = [...this.targets.values()].filter((target) =>
-        isAirTagThreatRelation(target.relation),
+        isAirTagClanEnemy(target.relation),
       );
 
       if (
@@ -549,7 +547,7 @@ export class AirTagObservationController {
     let [oldestTargetId, oldest] = this.targets.entries().next().value ?? [];
 
     for (const [id, target] of this.targets) {
-      if (isAirTagThreatRelation(target.relation)) continue;
+      if (isAirTagClanEnemy(target.relation)) continue;
       oldestTargetId = id;
       oldest = target;
       break;
