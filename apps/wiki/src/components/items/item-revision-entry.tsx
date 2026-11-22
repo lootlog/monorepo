@@ -9,18 +9,12 @@ import {
   formatRevisionDays,
 } from "@/lib/item-revision-changes";
 
-/**
- * One change the game made to an item: when Lootlog saw it happen, at which
- * level for an item that takes its looter's, and each name, icon or stat
- * it altered from what it was to what it became.
- */
 export function ItemRevisionEntry({
   revision,
   rarity,
   elasticLevel,
 }: {
   revision: CatalogItemRevisionDtoOutput;
-  /** The item's rarity, which frames its icons. */
   rarity: string | null;
   elasticLevel: boolean;
 }) {

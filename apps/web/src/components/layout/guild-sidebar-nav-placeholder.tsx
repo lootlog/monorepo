@@ -15,8 +15,6 @@ const renderRows = (rows: number[]) => (
   </ul>
 );
 
-// Mirrors SidebarNav: the same header, 36px rows and labelled management
-// group, so the loaded navigation lands in place.
 export const GuildSidebarNavPlaceholder = () => {
   return (
     <div className="flex h-full w-full flex-1 flex-col overflow-hidden bg-sidebar">

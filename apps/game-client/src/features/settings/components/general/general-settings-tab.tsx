@@ -24,10 +24,6 @@ import { MAP_AURA_MODES } from "@lootlog/schema/character-aura";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
-/**
- * Rarities monsters drop, in the order the game ranks them; upgraded items
- * come only from upgrading.
- */
 const LOOT_SPLIT_RARITIES = [
   ItemRarityEnum.UNIQUE,
   ItemRarityEnum.HEROIC,

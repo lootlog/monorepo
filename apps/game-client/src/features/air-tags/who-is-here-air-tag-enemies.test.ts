@@ -16,7 +16,6 @@ describe("selectUnseenAirTagEnemies", () => {
     const enemies = selectUnseenAirTagEnemies(
       [
         target({ targetId: "neutral", nickname: "Neutral", relation: 1 }),
-        // An older gateway still passes on a member's personal enemy.
         target({ targetId: "personal", nickname: "Alpha", relation: 3 }),
         target({ targetId: "clan", nickname: "Zeta" }),
         target({ targetId: "other", nickname: "Beta" }),

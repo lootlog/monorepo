@@ -3,7 +3,6 @@ import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { Card } from "@lootlog/ui/components/card";
 
-/** A card whose title links to a page; the whole card is the hit area. */
 export function ResourceCard({
   icon,
   title,

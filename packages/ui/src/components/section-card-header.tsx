@@ -25,8 +25,6 @@ export const SectionCardHeader = ({
       className,
     )}
   >
-    {/* At least the longest word wide, so the actions wrap below a narrow title
-        instead of breaking its words. */}
     <div className="min-w-min flex-1">
       <h2
         id={id}

@@ -59,7 +59,6 @@ import {
   AccountOrganizationOperationError,
 } from "#src/guilds/account-organization-data";
 
-/** Battlelog did not accept the request to delete the User's battles. */
 export class BattlelogCleanupFailed extends TaggedErrorClass<BattlelogCleanupFailed>()(
   "BattlelogCleanupFailed",
   { status: Schema.Number },
@@ -107,17 +106,10 @@ const deletePersistedAccount = (
       const memberIds = members.map(({ id }) => id);
       const deactivatedAt = new Date(yield* Clock.currentTimeMillis);
 
-      // Buckets from this hour on sit in an uncompressed chunk and are deleted
-      // now, so kills after a returning member's reactivation are never
-      // purged. Older ones would decompress each chunk's Organization segment
-      // (hundreds of MB of WAL), so the member kill purge job deletes them off
-      // peak.
       const purgeBefore = new Date(
         Math.floor(deactivatedAt.getTime() / 3_600_000) * 3_600_000,
       );
 
-      // Personal kill buckets are segmented by the Discord id, so TimescaleDB
-      // deletes their compressed batches without decompressing them.
       yield* transaction.execute(
         sql`select set_config('timescaledb.max_tuples_decompressed_per_dml_transaction', '0', true)`,
       );
@@ -163,7 +155,6 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userSettingsTable)
         .where(eq(userSettingsTable.userId, identity.userId));
-      // Deleting the themes also revokes their share links.
       yield* transaction
         .delete(userThemeTable)
         .where(eq(userThemeTable.userId, identity.userId));
@@ -194,8 +185,6 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userPinnedReservationSpotTable)
         .where(eq(userPinnedReservationSpotTable.userId, identity.userId));
-      // Personal notifications are keyed by the Discord id. Deleting rules and
-      // targets cascades to their links and pending jobs.
       yield* transaction
         .delete(watchedItemTable)
         .where(eq(watchedItemTable.userId, identity.discordId));

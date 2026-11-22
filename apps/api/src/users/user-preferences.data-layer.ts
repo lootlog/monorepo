@@ -205,9 +205,6 @@ export const makeUserPreferencesData = (
       );
     }
 
-    // Only the sent leaves are written, by path inside the document
-    // transaction, so a concurrent change of another mute list or chat field
-    // is kept instead of being overwritten with this request's stale copy.
     const userScope = { type: "USER", id: userId } as const;
     const operations: SettingsOperation[] = [];
     const mutesSet: Record<string, JsonValue> = {};

@@ -8,7 +8,6 @@ const decodeSignature = Schema.decodeUnknownOption(
   Schema.Union([Schema.String, Schema.NonEmptyArray(Schema.String)]),
 );
 
-/** The signature header's value; AMQP may relay a header as a list. */
 export const readActivityEventSignature = (
   header: string | ReadonlyArray<string> | undefined,
 ): string | undefined =>

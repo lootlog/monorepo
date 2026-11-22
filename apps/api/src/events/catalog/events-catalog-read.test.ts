@@ -211,7 +211,6 @@ describe("event catalog read Effect module", () => {
         ]),
       );
 
-      // Serve the loaded value through the cache codec, as a cache hit would.
       const redis = {
         getOrSetJson<T, E>(options: RedisGetOrSetJsonOptions<T, E>) {
           return options.factory.pipe(

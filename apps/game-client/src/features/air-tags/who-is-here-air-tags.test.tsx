@@ -20,14 +20,12 @@ const target = (overrides: Partial<AirTagTarget>): AirTagTarget => ({
   targetId: "1",
   nickname: "Target",
   relation: 6,
-  // Outside the test hero's war shadow range.
   x: 80,
   y: 80,
   observedAt: Date.now(),
   ...overrides,
 });
 
-// AirTags show players only on red maps.
 const RED_MAP = { id: 7, name: "Ithan", visibility: 30, pvp: 2 };
 
 beforeEach(() => setTestRuntimeGame({ map: RED_MAP }));
@@ -76,7 +74,6 @@ it("lists enemies seen through AirTags under the native players list and starts 
           targets: [
             target({ targetId: "hidden", nickname: "Hidden", lvl: 250 }),
             target({ targetId: "seen", nickname: "Seen" }),
-            // A stale report: the hero sees that tile and nobody is there.
             target({ targetId: "left", nickname: "Left", x: 3, y: 4 }),
             target({ targetId: "neutral", nickname: "Neutral", relation: 1 }),
           ],
@@ -185,7 +182,6 @@ it("lists enemies only once the closed window opens", async () => {
   await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
   expect(screen.queryByRole("button", { name: /Hidden/ })).toBeNull();
 
-  // Window.js `show` sets the inline display.
   act(() => {
     whoIsHereWindow.style.display = "block";
   });
@@ -237,7 +233,6 @@ it("hides an online member of the Organization whom another clan's member report
           revision: 1,
           targets: [
             target({ targetId: "hidden", nickname: "Hidden" }),
-            // The online member from the presence fixture.
             target({ targetId: "10", nickname: "Hero" }),
           ],
         },

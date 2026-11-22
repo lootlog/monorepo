@@ -90,7 +90,6 @@ export const RefreshMembersStatus = ({
     return <RefreshCooldown time={countdown.label} />;
   }
 
-  // Phones keep the icon alone, so the button fits beside the member filter.
   if (isMobile) {
     const label =
       displayJob?.status === "FAILED"

@@ -5,10 +5,8 @@ import { SettingsSectionHeader } from "./settings-section-header";
 import { useSettingsControlHighlight } from "./use-settings-control-highlight";
 
 type SettingsSectionProps = {
-  /** Manifest id when the whole section is one searchable control. */
   controlId?: SettingsControlId;
   title?: ReactNode;
-  /** Explains the whole group; rows under it stay label-only. */
   description?: ReactNode;
   children: ReactNode;
   actions?: ReactNode;
@@ -16,10 +14,6 @@ type SettingsSectionProps = {
   contentClassName?: string;
 };
 
-/**
- * A titled group of rows. Consecutive sections are divided by a hairline
- * drawn in the gap above them, so a highlight hugs only the section itself.
- */
 export const SettingsSection: FC<SettingsSectionProps> = ({
   controlId,
   title,
@@ -40,9 +34,6 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
       {...dataAttributes}
       className={cn(
         "ll:relative ll:flex ll:flex-col ll:rounded-sm",
-        // The highlight is a pseudo-element that overhangs the section by a
-        // few pixels, so it breathes around the title and the last row
-        // without changing the layout.
         "ll:after:pointer-events-none ll:after:absolute ll:after:-inset-x-1 ll:after:-inset-y-2 ll:after:rounded-md ll:after:bg-primary/10 ll:after:opacity-0 ll:after:shadow-[inset_0_0_0_1px_var(--color-primary)] ll:after:transition-opacity ll:after:duration-500 ll:after:content-[''] ll:data-[settings-highlighted]:after:opacity-100 ll:data-[settings-highlighted]:after:duration-150",
         "ll:[section+&]:before:pointer-events-none ll:[section+&]:before:absolute ll:[section+&]:before:inset-x-2 ll:[section+&]:before:-top-3 ll:[section+&]:before:h-px ll:[section+&]:before:bg-border ll:[section+&]:before:content-['']",
         description ? "ll:gap-3" : "ll:gap-2",

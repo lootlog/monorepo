@@ -27,7 +27,6 @@ export const canReadNotification = (
   if (!organization) return false;
 
   if (notification.type === "chat-mention") {
-    // Null identifies a verified plain message; an absent source is an old or unknown entry.
     if (notification.sourceNpc === undefined) return false;
 
     return canReadPolicyNpc(organization, "chat", notification.sourceNpc);
@@ -59,8 +58,6 @@ export const reconcileNotificationAccess = (policy: AccessPolicySnapshot) => {
 
       if (servers.length === notification.servers.length) return [notification];
 
-      // A grouped entry must no longer retain the removed organization as its
-      // source, nor count the reports that arrived through it.
       return [
         {
           ...notification,

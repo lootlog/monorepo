@@ -35,8 +35,6 @@ const result = spawnSync(
 
 if (result.status !== 0) throw new Error("Public SDK generation failed");
 
-// Orval imports the mutator by a relative path into the client's sources;
-// import it through the client package instead.
 for (const service of PUBLIC_API_SERVICES) {
   const generatedPath = `${root}/src/generated/${service}.ts`;
   writeFileSync(

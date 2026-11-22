@@ -9,7 +9,7 @@ import {
   type CharacterAurasCache,
   type CharacterAurasEvents,
 } from "#src/character-auras/character-auras.data-layer";
-import { type RedisService } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { GlobalChatAdminDirectory } from "#src/runtime/features/global-chat-admins";
 import { CHARACTER_AURAS_CACHE_SCOPE } from "#src/shared/cache";
@@ -19,8 +19,6 @@ const listCodec = makeJsonCodec(CharacterAurasResponse);
 const holdersCodec = makeJsonCodec(CharacterAuraHolders);
 
 const makeCharacterAurasCache = (redis: RedisService): CharacterAurasCache => ({
-  // Aura writes invalidate the list. The TTL bounds what they cannot see: a
-  // newly proved account of a User who shows an aura.
   list: (load) =>
     redis.getOrSetJson({
       key: CHARACTER_AURAS_CACHE_SCOPE,
@@ -29,18 +27,14 @@ const makeCharacterAurasCache = (redis: RedisService): CharacterAurasCache => ({
       ttlSeconds: 30,
       codec: listCodec,
     }),
-  // Every aura and grant write invalidates it; the TTL bounds only a failed
-  // invalidation.
   holders: (load) =>
     redis.getOrSetJson({
-      // A copy stored before personal grants joined it would not decode.
       key: `${CHARACTER_AURAS_CACHE_SCOPE}:holders:personal`,
       scopes: [CHARACTER_AURAS_CACHE_SCOPE],
       factory: load,
       ttlSeconds: 300,
       codec: holdersCodec,
     }),
-  // The write is committed; readers catch up when the stored copies expire.
   invalidate: redis
     .invalidateScopes(CHARACTER_AURAS_CACHE_SCOPE)
     .pipe(
@@ -62,7 +56,6 @@ const makeCharacterAurasEvents = (
       .pipe(Effect.asVoid),
 });
 
-// Global chat admins wear auras and grant them to other Users.
 export const characterAurasData = Layer.unwrap(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;

@@ -20,7 +20,6 @@ const UPGRADE_OPTIONS = UPGRADE_LEVELS.map((level) => ({
   label: t("upgrade.level", { level }),
 }));
 
-/** An item's upgrade, +0 to +5, as one field of a form. */
 export function UpgradeSelect({
   value,
   onChange,
@@ -30,7 +29,6 @@ export function UpgradeSelect({
   value: UpgradeLevel;
   onChange: (value: UpgradeLevel) => void;
   label?: string;
-  /** A smaller field whose label only screen readers read, for tight spots. */
   compact?: boolean;
 }) {
   const id = useId();

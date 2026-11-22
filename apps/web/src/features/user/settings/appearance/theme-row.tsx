@@ -11,7 +11,6 @@ import { useState, type ReactNode } from "react";
 
 const PALETTE_SLOTS = ["accent", "highlight", "background"] as const;
 
-/** Each rounding step on a 20–24px swatch, from square to circle. */
 const SWATCH_RADIUS: Record<ThemePreview["radius"], string> = {
   sharp: "0px",
   soft: "3px",
@@ -24,28 +23,16 @@ type ThemeRowProps = {
   title: string;
   description: string;
   preview: ThemePreview;
-  /** The theme's class, which scopes its palette to the row. */
   themeClass: string;
-  /** The theme's font and radius, and a custom theme's colours. */
   themeStyle: CustomThemeStyle;
-  /** Whether the theme is in use; leave out where the row is not a toggle. */
   isActive?: boolean;
-  /** Replaces the description on the theme in use. */
   activeLabel?: string;
-  /** Set while the theme is shared by link; names the link icon by it. */
   sharedLabel?: string;
-  /** Picks the theme; left out, the row only shows it, as a preview. */
   onSelect?: () => void;
-  /** Shows the theme without waiting to be pointed at, as in a preview. */
   alwaysThemed?: boolean;
-  /** A control at the row's end, such as editing the theme. */
   action?: ReactNode;
 };
 
-/**
- * One theme in a list. Pointed at or focused, the row is drawn in that theme:
- * its surfaces, text, accent, font and rounding, as a preview in place.
- */
 export const ThemeRow = ({
   title,
   description,
@@ -59,8 +46,6 @@ export const ThemeRow = ({
   alwaysThemed = false,
   action,
 }: ThemeRowProps) => {
-  // The row takes on its theme while pointed at or focused, so the list stays
-  // calm and each theme shows itself on demand.
   const Content = onSelect ? "button" : "div";
   const [isPointedAt, setIsPointedAt] = useState(false);
   const isThemed = alwaysThemed || isPointedAt;
@@ -68,8 +53,6 @@ export const ThemeRow = ({
   return (
     <li
       data-list-tile
-      // A theme's palette is scoped by its class and custom properties, so
-      // the row and everything in it paint in that theme.
       className={cn(
         "flex items-center bg-linear-to-r transition-colors",
         LIST_TILE_RULE_CLASS,
@@ -138,10 +121,6 @@ export const ThemeRow = ({
             {isActive && activeLabel ? activeLabel : description}
           </span>
         </span>
-        {/*
-          A light inner rule outlines each swatch, so dark highlights and
-          backgrounds stay visible on the dark row.
-        */}
         <span
           aria-hidden
           className="mr-3 flex shrink-0 items-center gap-1 max-sm:hidden"

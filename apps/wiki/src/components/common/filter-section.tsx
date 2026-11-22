@@ -9,15 +9,12 @@ import { t } from "@/i18n/messages";
 
 type FilterSectionProps = {
   title: string;
-  /** How many of the section's options filter now. */
   count: number;
   onClear: () => void;
-  /** Sections that filter open on their own, so a link shows what it set. */
   defaultOpen?: boolean;
   children: ReactNode;
 };
 
-/** A titled group of item filters that folds away, with its own reset. */
 export function FilterSection({
   title,
   count,

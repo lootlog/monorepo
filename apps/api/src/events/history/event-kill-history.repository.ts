@@ -100,7 +100,6 @@ export const makeEventKillHistoryStore = (
   const pageConditions = (query: HistoryPageQuery) =>
     and(
       killScope,
-      // Drizzle has no row comparison; PostgreSQL can seek the complete tuple in the ordering index.
       query.boundary
         ? sql`(${eventHeroKillTable.killedAt}, ${eventHeroKillTable.id}) < (${query.boundary.killedAt.toISOString()}::timestamp, ${query.boundary.id})`
         : undefined,
@@ -151,7 +150,6 @@ export const makeEventKillHistoryStore = (
         .groupBy(eventKillPointTable.killId),
     );
 
-    // Number each kill within its hero, independent of the page's member filter.
     const earlierKill = alias(eventHeroKillTable, "history_earlier_kill");
 
     const killNumbers = database.$with("history_kill_numbers").as(

@@ -1,35 +1,21 @@
-/**
- * Absolut: the aura with no bounds. It wears the other admin auras in turn, a new one
- * after every burst, and whatever it wears, its own dominion lies over the whole map: a
- * seal as wide as the screen turning on the ground round the character, beams of light
- * rising from it to the top of the screen, comets circling it and motes rising everywhere.
- * All of it takes the colours of the aura worn, and flares when that changes.
- */
 import { hasGraphicsAcceleration } from "../map-aura-mode";
 import { rgba, TAU } from "./math";
 import { scatter, wash, type MapScene } from "./sky";
 
-/** The seal's radius, px, and how flat it lies on the ground. */
 const SEAL_RADIUS = 250;
 
 const SEAL_SQUASH = 0.55;
 
-/** Seconds the flare of a change runs. */
 const SHIFT_LENGTH = 0.7;
 
 const BEAMS = 7;
 
 const COMETS = 3;
 
-/** Segments of a comet's tail, and the angle each covers. */
 const TAIL = 9;
 
 const TAIL_STEP = 0.07;
 
-/**
- * Draws the dominion over the whole map; `shifted` is the seconds since the aura last
- * changed what it wears.
- */
 export function drawDominion(scene: MapScene, shifted: number): void {
   const { ctx, width, height, x, y, feetY, now, view, light, mid } = scene;
   const shift = shifted < SHIFT_LENGTH ? 1 - shifted / SHIFT_LENGTH : 0;
@@ -37,8 +23,6 @@ export function drawDominion(scene: MapScene, shifted: number): void {
   ctx.globalCompositeOperation = "lighter";
   ctx.lineCap = "round";
 
-  // Beams fanning up from the character to the top of the screen, swaying. Wide soft
-  // fills over much of the screen: only where the GPU blends them.
   if (hasGraphicsAcceleration()) {
     ctx.fillStyle = rgba(light, 1);
 
@@ -59,8 +43,6 @@ export function drawDominion(scene: MapScene, shifted: number): void {
     }
   }
 
-  // The seal: three rings, their marks, a twelve-pointed star and a hexagon turning
-  // the other way inside it. It opens out from the character when the aura changes.
   const radius = SEAL_RADIUS * (1 - shift * shift * 0.35);
   const turn = now * 0.1;
 
@@ -99,7 +81,6 @@ export function drawDominion(scene: MapScene, shifted: number): void {
 
   for (let i = 0; i < 12; i++) {
     const angle = turn + (i / 12) * TAU;
-    // Each point of the star joins the fifth one on.
     ctx.moveTo(...at(angle, 0.93));
     ctx.lineTo(...at(angle + (5 / 12) * TAU, 0.93));
     ctx.moveTo(...at(angle + TAU / 24, 0.93));
@@ -110,7 +91,6 @@ export function drawDominion(scene: MapScene, shifted: number): void {
     const angle = -turn * 1.7 + (i / 6) * TAU;
     ctx.moveTo(...at(angle, 0.56));
     ctx.lineTo(...at(angle + TAU / 6, 0.56));
-    // A small circle on each corner of the hexagon.
     const [cx, cy] = at(angle, 0.56);
     ctx.moveTo(cx + 9, cy);
     ctx.ellipse(cx, cy, 9, 9 * SEAL_SQUASH, 0, 0, TAU);
@@ -118,7 +98,6 @@ export function drawDominion(scene: MapScene, shifted: number): void {
 
   ctx.stroke();
 
-  // Comets circling just outside the seal, each with a tail fading behind it.
   for (let i = 0; i < COMETS; i++) {
     const head = now * 0.8 + (i / COMETS) * TAU;
     const reach = 1.08 + 0.07 * Math.sin(now * 0.6 + i * 2);
@@ -139,7 +118,6 @@ export function drawDominion(scene: MapScene, shifted: number): void {
     ctx.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, 3, 3);
   }
 
-  // Motes rising over the whole map.
   ctx.fillStyle = rgba(light, 1);
 
   scatter(
@@ -163,6 +141,5 @@ export function drawDominion(scene: MapScene, shifted: number): void {
   );
 
   if (shift <= 0) return;
-  // The change itself: a flash and a wave rolling out over the map.
   wash(scene, light, 0.4 * shift ** 2, "lighter");
 }

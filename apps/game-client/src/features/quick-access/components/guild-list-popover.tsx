@@ -29,7 +29,6 @@ export const GuildListPopover = () => {
     orderedGuilds: guilds,
   } = useLootlogGuilds();
 
-  // A hidden checklist comes back here while there is still something to do.
   const setup = useSetupChecklist();
   const canShowSetup = setup.dismissed && setup.incomplete;
 

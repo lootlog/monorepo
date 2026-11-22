@@ -1,7 +1,6 @@
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import * as m from "framer-motion/m";
 
-// Ice sparkles that appear and fade randomly
 const generateIceSparkles = () =>
   Array.from({ length: 20 }, (_, index) => ({
     id: index,

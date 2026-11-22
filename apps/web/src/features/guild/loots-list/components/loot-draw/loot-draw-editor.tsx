@@ -29,11 +29,6 @@ import { LootDrawLayout } from "./loot-draw-layout";
 import { LootDrawWheel } from "./loot-draw-wheel";
 import type { useLootDraws } from "./use-loot-draws";
 
-/**
- * The draw before it runs: the winner from the game, if anybody caught it,
- * stays; anybody else can be removed or added, anybody's tickets changed,
- * and the wheel shuffled.
- */
 export const LootDrawEditor = ({
   loot,
   item,
@@ -61,7 +56,6 @@ export const LootDrawEditor = ({
 
   const { guildId, createDraw } = draws;
 
-  // Any change of entrants or tickets lays the wheel out again, shuffled or not.
   const update = (
     changed: readonly LootDrawDraftEntrant[],
     shuffled = isShuffled,

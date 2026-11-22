@@ -10,11 +10,9 @@ import { formatDuration } from "@/utils/date/format-duration";
 
 type MemberSummaryStripProps = {
   contextStats: MemberStatsSummary;
-  /** Kills of the shown heroes in the whole event, for the participation share. */
   eventKillCount?: number;
 };
 
-/** A thin bar with a caption, for KPIs that are a share of something. */
 const ShareDetail = ({ share, label }: { share: number; label: string }) => (
   <span className="flex min-w-0 items-center gap-2">
     <span
@@ -30,7 +28,6 @@ const ShareDetail = ({ share, label }: { share: number; label: string }) => (
   </span>
 );
 
-/** The member's totals for the heroes the page shows, related to the event. */
 export const MemberSummaryStrip = ({
   contextStats,
   eventKillCount,

@@ -5,7 +5,6 @@ import { sortBy, uniqBy } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { npcSpawnPositionTable } from "#src/database/drizzle/npc-spawn.schema";
 
-/** An NPC of a loot or timer submission, where the Game client saw it. */
 export type ReportedNpcPosition = {
   readonly name: string;
   readonly templateId?: number | null;
@@ -15,7 +14,6 @@ export type ReportedNpcPosition = {
   readonly y?: number;
 };
 
-/** The largest coordinate a `smallint` tile column holds. */
 const MAX_TILE = 32_767;
 
 const isTile = (value: number | undefined): value is number =>
@@ -24,11 +22,6 @@ const isTile = (value: number | undefined): value is number =>
   value >= 0 &&
   value <= MAX_TILE;
 
-/**
- * The tiles of a submission's NPCs, one per monster and tile, in key order so
- * concurrent upserts lock rows in the same order. Older Game clients report
- * no map id or tile, so their NPCs add nothing.
- */
 const toNpcSpawnPositions = (
   gameVersion: GameVersion,
   npcs: ReadonlyArray<ReportedNpcPosition>,
@@ -65,11 +58,6 @@ const toNpcSpawnPositions = (
     ["mapId", "npcName", "x", "y"],
   );
 
-/**
- * Counts one report of every tile in the submission. Positions only feed the
- * wiki, so a failure is logged and never reaches the loot or timer it came
- * with.
- */
 export const recordNpcSpawnPositions = (
   database: ApiDatabaseValue,
   gameVersion: GameVersion | undefined,

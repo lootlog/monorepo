@@ -50,7 +50,6 @@ function queueUpdate(
   updates.set(key, presence);
 }
 
-/** One live scope serves row consumers and the much narrower occupied-map projection. */
 export class PlayersPresenceSource {
   private snapshot = emptyPlayersPresenceSnapshot;
   private readonly index = new PresenceMapIndex();
@@ -115,7 +114,6 @@ export class PlayersPresenceSource {
       ? this.index.getOccupancy(mapName)
       : undefined;
 
-  /** Whether a character is an online member; unknown until the snapshot is current. */
   isOnlineMember = (characterId: string): boolean =>
     this.snapshot.isCurrent && this.index.hasCharacter(characterId);
 
@@ -155,7 +153,6 @@ export class PlayersPresenceSource {
   };
 
   subscribeMap = (mapName: string, listener: Listener): (() => void) => {
-    // Only what a timer shows about the map; position deltas must never wake a timer tile.
     let previous = this.getMapOccupancy(mapName);
 
     return this.mapListeners.add(mapName, () => {
@@ -310,8 +307,6 @@ export class PlayersPresenceSource {
     void this.refresh();
   };
 
-  // Unlike a role change, this character's own publication needs no
-  // debounce: read the Lootlog it just became visible in right away.
   private handlePublished = (payload: {
     organizationIds: readonly string[];
   }): void => {

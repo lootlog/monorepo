@@ -24,7 +24,6 @@ describe("makeRefreshingGlobalChatAdmins", () => {
           Effect.sync(() => admins.ids().toSorted()),
         );
 
-        // The auth service is down at startup: the configured list still works.
         expect(admins.ids()).toEqual(["configured"]);
 
         answer = ["granted"];
@@ -33,7 +32,6 @@ describe("makeRefreshingGlobalChatAdmins", () => {
         answer = "down";
         expect(yield* afterRefresh).toEqual(["configured", "granted"]);
 
-        // The role was removed in the panel; a configured admin never is.
         answer = [];
         expect(yield* afterRefresh).toEqual(["configured"]);
         expect(admins.has("granted")).toBe(false);

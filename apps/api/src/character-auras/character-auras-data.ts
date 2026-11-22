@@ -9,13 +9,11 @@ import type {
   OwnCharacterAuraResponse,
 } from "#src/contracts/character-auras/schemas";
 
-/** The User may not choose an aura, or does not play the character. */
 export class CharacterAuraAccessDenied extends TaggedErrorClass<CharacterAuraAccessDenied>()(
   "CharacterAuraAccessDenied",
   { status: Schema.Literal(403) },
 ) {}
 
-/** No Lootlog User proved to play the Margonem account. */
 export class CharacterAuraGrantTargetNotFound extends TaggedErrorClass<CharacterAuraGrantTargetNotFound>()(
   "CharacterAuraGrantTargetNotFound",
   { status: Schema.Literal(404) },
@@ -26,7 +24,6 @@ export class CharacterAurasOperationError extends TaggedErrorClass<CharacterAura
   { cause: Schema.Defect() },
 ) {}
 
-/** A Margonem character, by its account and id. */
 export interface CharacterAuraCharacter {
   readonly gameAccountId: string;
   readonly characterId: string;
@@ -54,18 +51,15 @@ export class CharacterAurasData extends Context.Service<
       character: CharacterAuraCharacter,
       auraId: CharacterAuraId | null,
     ) => Operation<OwnCharacterAuraResponse>;
-    /** Lets the User who plays the account choose any aura; admins only. */
     readonly grantAuras: (
       callerUserId: string,
       gameAccountId: string,
     ) => Operation<void>;
-    /** Lets the User who plays the account choose one personal aura; admins only. */
     readonly grantPersonalAura: (
       callerUserId: string,
       gameAccountId: string,
       auraId: PersonalCharacterAuraId,
     ) => Operation<void>;
-    /** Withdraws every grant and removes the auras they allowed; admins only. */
     readonly revokeAuras: (
       callerUserId: string,
       gameAccountId: string,

@@ -13,7 +13,6 @@ export const formatTimeShort = (date: Date): string =>
 
 const formatDate = (date: Date): string => timestampToDate(date, DATE_FORMAT);
 
-/** Joins an event's dates with an en dash; an open end shows `openEndLabel`. */
 export const formatDateRange = (
   start: Date,
   end: Date | null,

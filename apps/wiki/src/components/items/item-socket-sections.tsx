@@ -13,17 +13,11 @@ import { ItemSocketSection } from "./item-socket-section";
 import { ItemSymbolSection } from "./item-symbol-section";
 
 type ItemSocketSectionsProps = {
-  /** The item as dropped, at the level it is shown at. */
   item: CatalogItemDtoOutput;
   upgrade: ItemUpgrade;
   onChange: (upgrade: ItemUpgrade) => void;
 };
 
-/**
- * What an item page shows of sockets and symbols: the symbol in a socketed
- * item, how a symbol is fused, where a component comes from and which
- * symbols it goes into, or what a chest of components gives.
- */
 export function ItemSocketSections({
   item,
   upgrade,

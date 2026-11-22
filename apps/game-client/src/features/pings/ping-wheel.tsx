@@ -17,7 +17,6 @@ const OUTER = PING_WHEEL_OUTER_RADIUS_PX;
 
 const INNER = PING_WHEEL_INNER_RADIUS_PX;
 
-/** Room for the frame around the ring. */
 const FRAME = 3;
 
 const CENTER = OUTER + FRAME;
@@ -26,7 +25,6 @@ const SIZE = CENTER * 2;
 
 const ICON_PX = 20;
 
-/** Gap between wedges, in degrees on each side. */
 const WEDGE_GAP_DEG = 1.5;
 
 const pointAt = (radius: number, angleFromTop: number) => {
@@ -42,7 +40,6 @@ const circlePath = (radius: number) =>
   `M${CENTER - radius} ${CENTER}a${radius} ${radius} 0 1 0 ${radius * 2} 0a${radius} ${radius} 0 1 0 ${-radius * 2} 0`;
 
 const wedgePath = (index: number, count: number) => {
-  // A single option fills the whole ring.
   if (count === 1) {
     return `${circlePath(OUTER)}${circlePath(INNER)}`;
   }
@@ -135,7 +132,6 @@ export const PingWheel = () => {
         style={{ filter: "drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6))" }}
         viewBox={`0 0 ${SIZE} ${SIZE}`}
       >
-        {/* The game's popup-menu frame: dark fill inside a light hairline. */}
         <path
           d={circlePath(OUTER + FRAME)}
           fill="#3f3b3d"

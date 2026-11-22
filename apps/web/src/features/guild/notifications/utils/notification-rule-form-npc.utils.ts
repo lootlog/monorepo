@@ -8,11 +8,6 @@ type ManualNpcIdsParseResult = {
 
 const MANUAL_NPC_ID_SPLIT_PATTERN = /[\s,]+/;
 
-/**
- * Form values keep a timer NPC id as its number and a Margonem template id
- * with this prefix: a template selects every spawn of the monster, while a
- * timer id selects one spawn.
- */
 const TEMPLATE_NPC_SELECTION_PREFIX = "template:";
 
 const MANUAL_NPC_SELECTION_PATTERN = /^(template:)?(\d+)$/;
@@ -38,11 +33,6 @@ export const parseNotificationRuleNpcSelection = (selection: string) => {
   };
 };
 
-/**
- * A timer with a known template selects every spawn of its monster. A timer
- * without one can only select its own id, which is offered only for a
- * one-world rule: an all-world rule must not silently narrow to one spawn.
- */
 export const toTimerNpcSearchSelection = (
   timer: TimerNpcHit,
   isAllWorlds: boolean,
@@ -64,7 +54,6 @@ export const findSelectedTimerNpc = <Timer extends TimerNpcHit>(
   );
 };
 
-/** Timer search parameters that resolve saved selections to their timers. */
 export const getNotificationRuleNpcLookupParams = (selections: string[]) => {
   const [templates, timers] = partition(
     selections.map(parseNotificationRuleNpcSelection),

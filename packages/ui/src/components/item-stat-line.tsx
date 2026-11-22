@@ -48,7 +48,6 @@ type ItemStatLineProps = {
   displayValue: ItemDisplayValue;
 };
 
-/** One item stat as the game's tooltip words it, or `key: value` without a wording. */
 export const ItemStatLine: FC<ItemStatLineProps> = ({ displayValue }) => {
   if (!displayValue.key) return null;
 

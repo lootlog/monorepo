@@ -57,7 +57,6 @@ export const ActivityConsumers = Layer.effectDiscard(
 
           return decodeCreateActivity(event);
         },
-        // A signature or rule that fails now fails on every retry.
         catch: (cause) =>
           new UnprocessableDelivery({
             cause: new Error("Invalid activity event", { cause }),

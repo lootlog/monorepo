@@ -17,7 +17,6 @@ import {
 
 export type WorldOption = { value: string; label: string };
 
-/** Base UI filters grouped items when each group carries an `items` array. */
 export type WorldGroup = { value: string; label: string; items: WorldOption[] };
 
 export const toWorldOption = (world: string): WorldOption => ({
@@ -25,10 +24,6 @@ export const toWorldOption = (world: string): WorldOption => ({
   label: upperFirst(world),
 });
 
-/**
- * The recently picked worlds that are still available, newest first, then
- * every other world. Empty groups are left out.
- */
 export const getRecentWorldGroups = (
   worlds: ReadonlyArray<string>,
   recent: ReadonlyArray<string>,
@@ -58,7 +53,6 @@ type WorldComboboxProps = {
   variant?: "default" | "strip";
 };
 
-/** The searchable, grouped world picker every world switcher shares. */
 export const WorldCombobox = ({
   groups,
   value,

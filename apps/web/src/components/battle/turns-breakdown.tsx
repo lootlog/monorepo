@@ -40,7 +40,6 @@ export const TurnsBreakdown: FC<TurnsBreakdownProps> = ({ warrior }) => {
     },
   ].filter((item) => item.value > 0);
 
-  // Detailed spell breakdown
   const spellBreakdown = Object.entries(warrior.spellsUsedMap || {})
     .map(([spell, count]) => ({
       spell,

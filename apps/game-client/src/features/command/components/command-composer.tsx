@@ -14,15 +14,9 @@ import { getCommandMode, toggleCommandMode } from "../command-mode.helpers";
 import { CommandModeToggle } from "./command-mode-toggle";
 
 type CommandComposerProps = {
-  /** Closes the console; the draft stays unless the caller clears it. */
   onClose: () => void;
 };
 
-/**
- * The chat composer bound to one Lootlog of the player's choice: mentions,
- * command suggestions and the hidden `!`/`/grp` prefixes behave as in the chat,
- * and a successful entry closes the console.
- */
 export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
   const { t } = useTranslation("command");
   const { t: tChat } = useTranslation("chat");

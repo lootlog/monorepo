@@ -9,8 +9,6 @@ import {
 import { itemStatValue } from "./item-stat.js";
 import { upgradeItemStat } from "./item-upgrade.js";
 
-// Real catalog items: a Mirvenis-Adur armor with an empty socket, and a
-// Krwawa Kopalnia helmet whose socket holds a fleeting symbol.
 const armor = {
   stat: "ac=1561;act=8;artisanbon=242;crit=1;dmgmul=3;ds=121;energybon=24;evade=112;hp=1551;lvl=210;permbound;rarity=legendary;reqp=b;resfire=5;sa=218;socket_content=0",
   lvl: 210,
@@ -29,7 +27,6 @@ describe("symbol in a socket", () => {
   it("gives its bonus as strong as the item's upgraded level", () => {
     const stat = upgradeItemStat(armor, { level: 5, symbol: "facade" });
 
-    // 210 + round(210 * 0.03) * 5
     expect(itemStatValue(stat, "socket_injection_legbon")).toBe("facade,240");
     expect(itemStatValue(stat, "socket_content")).toBe("1");
   });
@@ -43,7 +40,6 @@ describe("symbol in a socket", () => {
 
   it("offers the symbols whose own stats take the item's class and level", () => {
     const symbols = [
-      // Stabilne: for armors and helmets, armors only, then Słabe.
       {
         id: 57_475,
         stat: "legbon=glare,1;permbound;rarity=legendary;socket_enhancer;target_class=8,9;target_max_lvl=200;target_min_lvl=101",
@@ -99,7 +95,6 @@ describe("component chests", () => {
   };
 
   it("gives an element's chest its own component half the time", () => {
-    // Ciężka skrytka ognistej mocy
     expect(chancesOf(59_494)).toEqual({
       components: 1,
       likeliest: "fire",
@@ -114,7 +109,6 @@ describe("component chests", () => {
   });
 
   it("gives two components alike from a double-power chest", () => {
-    // Lekka skrytka zdwojonej mocy
     expect(chancesOf(63_696)).toEqual({
       components: 2,
       likeliest: "steel",

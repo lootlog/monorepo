@@ -7,14 +7,11 @@ import {
 import { cn } from "cn";
 
 type TruncatedTextProps = {
-  /** The whole text, shown in a tooltip while the line cuts it off. */
   label: string;
-  /** What the line shows; the label when omitted. */
   children?: ReactNode;
   className?: string;
 };
 
-/** One line of text that ends in an ellipsis and offers itself whole on hover. */
 export function TruncatedText({
   label,
   children = label,

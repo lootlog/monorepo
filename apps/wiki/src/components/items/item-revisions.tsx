@@ -3,7 +3,6 @@ import { ArticleSection } from "@/components/article/article-section";
 import { t } from "@/i18n/messages";
 import { ItemRevisionEntry } from "./item-revision-entry";
 
-/** The changes the game made to the item, newest first; none hides it. */
 export function ItemRevisions({
   item,
 }: {

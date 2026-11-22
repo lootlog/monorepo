@@ -35,7 +35,6 @@ import type {
   CatalogNpcsResponseDto_Output,
 } from "./contracts/catalog/schemas.js";
 
-/** Searches read Meilisearch; lookups and listings read the database. */
 type CatalogReadFailure = SearchOperationFailure | EffectDrizzleQueryError;
 
 export interface CatalogOperationsValue {

@@ -27,7 +27,6 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
   ) => {
     const viewportRef = useRef<HTMLDivElement | null>(null);
 
-    // React forwarded refs are either callbacks or mutable ref objects.
     const setViewportRef = (element: HTMLDivElement | null) => {
       viewportRef.current = element;
 

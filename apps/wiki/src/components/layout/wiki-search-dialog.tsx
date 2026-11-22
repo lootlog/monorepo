@@ -40,10 +40,6 @@ type WikiSearchDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-/**
- * Finds items and monsters by name as the User types. Each group offers its
- * full search page; before a query it lists the wiki's sections.
- */
 export function WikiSearchDialog({
   open,
   onOpenChange,
@@ -53,8 +49,6 @@ export function WikiSearchDialog({
   const [query, setQuery] = useState("");
   const [wasOpen, setWasOpen] = useState(open);
 
-  // Every way of closing, the Ctrl+K toggle included, starts the next search
-  // from an empty field.
   if (open !== wasOpen) {
     setWasOpen(open);
 
@@ -74,8 +68,6 @@ export function WikiSearchDialog({
     isStale,
   } = useWikiSearchHits(trimmedQuery, open);
 
-  // The rows in list order; the highlight falls back to the first one when
-  // new hits replace the row it was on, so Enter always opens a visible row.
   const rowValues = showsHits
     ? [
         ...itemHits.map((item) => `item-${item.id}`),
@@ -173,9 +165,6 @@ export function WikiSearchDialog({
                 <CommandItem
                   key={item.id}
                   value={`item-${item.id}`}
-                  // Hits kept from an earlier query stay visible but cannot
-                  // be opened, so Enter never leads to a row the field no
-                  // longer asks for.
                   disabled={isStale}
                   onSelect={() =>
                     go(() =>
@@ -309,7 +298,6 @@ export function WikiSearchDialog({
       onValueChange={setSelectedValue}
       title={t("quickSearch.title")}
       description={t("quickSearch.description")}
-      // Esc closes it on a keyboard; phones get the close button instead.
       showCloseButton={isMobile}
       className="top-[12vh] w-[calc(100%-1rem)] max-w-[600px] translate-y-0 rounded-xl border-border bg-card shadow-[0_24px_64px_rgba(0,0,0,0.55)] max-md:top-2 sm:max-w-[600px] [&_[data-slot=command]]:rounded-xl [&_[data-slot=command]]:bg-card"
     >

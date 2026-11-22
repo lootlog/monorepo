@@ -59,7 +59,6 @@ export const LOG_STATUS_CHIP_CLASS_NAMES: Record<
   skipped: "ll:bg-amber-500/15 ll:text-amber-300",
 };
 
-/** Shared chip shape; pair with a LOG_STATUS_CHIP_CLASS_NAMES colour. */
 export const LOG_STATUS_CHIP_BASE_CLASS_NAME =
   "ll:inline-flex ll:h-4 ll:items-center ll:rounded-sm ll:px-1 ll:text-[11px] ll:font-semibold ll:tabular-nums";
 

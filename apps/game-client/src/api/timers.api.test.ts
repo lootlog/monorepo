@@ -121,8 +121,6 @@ it("times out hung submissions and finishes three attempts within server dedupli
   const signals: AbortSignal[] = [];
   http.mockImplementation((input, init) => {
     signals.push(new Request(input, init).signal);
-    // Browser timers fire late; exact fake timers would hide a budget that
-    // leaves no room for the third attempt.
     vi.setSystemTime(Date.now() + 100);
 
     return new Promise(() => undefined);
@@ -159,7 +157,6 @@ it("does not resend a failed timer after tab suspension outlives server deduplic
 
 it("does not start a retry after the latest attempt start", async () => {
   http.mockImplementation(async () => {
-    // Simulate a suspended browser delivering the failed request late.
     vi.setSystemTime(Date.now() + 20_000);
     throw new TypeError("Network unavailable");
   });

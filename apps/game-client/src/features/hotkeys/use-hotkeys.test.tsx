@@ -24,7 +24,6 @@ import {
   pingInteractionController,
 } from "@/features/pings/ping-interaction-controller";
 
-/** Ping handlers wired to the interaction controller, as usePings wires them. */
 const createOnPingStart = () =>
   vi.fn<(event: KeyboardEvent | MouseEvent) => boolean>((event) =>
     pingInteractionController.begin({
@@ -345,7 +344,6 @@ describe("useHotkeys", () => {
         new KeyboardEvent("keydown", { code: "KeyP", key: "P" }),
       );
     });
-    // usePings drops the press when the gateway connection goes away.
     act(() => pingInteractionController.cancel());
 
     const escape = new KeyboardEvent("keydown", {
@@ -469,7 +467,6 @@ it("switches detector auto-send for every type on the current character only", (
   setTestRuntimeGame({ hero: { accountId: "202", characterId: "101" } });
   queryClient.clear();
   seedSettingsDocumentValues(queryClient, {});
-  // The real queue applies each write to the cache; only sending is skipped.
   const enqueue = vi.spyOn(settingsPatchQueue, "enqueue");
   onTestFinished(() => {
     enqueue.mockRestore();

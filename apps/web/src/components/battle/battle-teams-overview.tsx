@@ -15,10 +15,6 @@ export type BattleTeamsOverviewProps = {
 const getWinnerResult = (battle: Battle) =>
   battle.hasFlee ? ("flee" as const) : ("won" as const);
 
-/**
- * Both teams side by side, one rule between them, each with its result. A duel needs little
- * room, so it splits sooner than a group, which needs space for several members per row.
- */
 export const BattleTeamsOverview: FC<BattleTeamsOverviewProps> = ({
   battle,
   cdnBaseUrl,

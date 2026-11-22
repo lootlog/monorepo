@@ -70,6 +70,5 @@ const signedBattleMetricFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
   signDisplay: "exceptZero",
 });
 
-/** A change, such as a rating delta, with its sign: `+12`, `−3,5`, `0`. */
 export const formatSignedBattleMetric = (value: number): string =>
   signedBattleMetricFormatter.format(value);

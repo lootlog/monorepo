@@ -12,7 +12,6 @@ export const LootFooter = ({
   playersCount,
   itemsCount,
 }: {
-  /** Shown when the list spans every world. */
   world?: string;
   location: string;
   date: string;
@@ -28,8 +27,6 @@ export const LootFooter = ({
         LIST_TILE_INSET_CLASS,
       )}
     >
-      {/* The location keeps room for a readable name; when it would get less,
-          the date and counters wrap to a second line instead. */}
       {world && (
         <MetaItem
           icon={Globe}

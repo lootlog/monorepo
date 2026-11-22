@@ -4,7 +4,6 @@ import type { BattleSegmentValue } from "./utils/battle-team-summary";
 import { formatNumber } from "@lootlog/domain/locale";
 
 export type BattleSummaryCompositionProps = {
-  /** Background class per segment key; shared by the bar and its legend. */
   colors: Record<string, string>;
   getLabel: (key: string) => string;
   segments: BattleSegmentValue<string>[];

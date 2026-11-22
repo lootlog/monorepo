@@ -2,7 +2,6 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NotificationRuleGroupsSkeleton } from "./notification-rule-groups-skeleton";
 import { NotificationsTabSkeleton } from "./notifications-tab-skeleton";
 
-/** Route-level stand-in for the rules tab. */
 export const NotificationsPageSkeleton = () => (
   <NotificationsTabSkeleton
     actions={

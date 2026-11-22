@@ -17,10 +17,8 @@ interface SettingsUiState {
   clearQuery: () => void;
   setSelectedResultIndex: (index: number) => void;
   setOverlayOpen: (open: boolean) => void;
-  /** Navigates to the control's subsection, scrolls to it and highlights it. */
   openControl: (controlId: SettingsControlId) => void;
   clearPendingScroll: () => void;
-  /** Drops transient search and highlight state when the window closes. */
   reset: () => void;
 }
 

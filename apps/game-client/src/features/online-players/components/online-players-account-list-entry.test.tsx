@@ -27,7 +27,6 @@ import type { ReactElement, ReactNode } from "react";
 import { OnlinePlayersAccountListEntry } from "./online-players-account-list-entry";
 import { OnlinePlayersPopups } from "./online-players-popups";
 
-// The list hosts the shared tooltip and context menu of its rows.
 const ListWrapper = ({ children }: { children: ReactNode }) => (
   <OnlinePlayersPopups>
     <div>{children}</div>

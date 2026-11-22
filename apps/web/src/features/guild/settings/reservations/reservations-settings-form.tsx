@@ -56,7 +56,6 @@ export const ReservationsSettingsForm = ({
 
   const form = useForm<ReservationsSettingsFormValues>({
     resolver: standardSchemaResolver(reservationsSettingsFormSchema),
-    // A refetch updates untouched fields and keeps the unsaved edits.
     values: resolveReservationSettings(guild),
     resetOptions: { keepDirtyValues: true },
   });

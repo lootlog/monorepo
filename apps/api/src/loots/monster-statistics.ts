@@ -27,15 +27,8 @@ import { buildDropStatisticsQuery, toRetiredDrops } from "./retired-drops.js";
 
 const MONSTERS_PER_MESSAGE = 200;
 
-// One run at a time across API replicas; the key is arbitrary but fixed.
 const MONSTER_STATISTICS_LOCK = 7_316_204;
 
-/**
- * Publishes, for every monster with recorded fights, the items it no longer
- * drops and how often its kills drop each item, the maps it is fought on and
- * the levels it had before. Each monster's lists are complete, so the catalog
- * replaces what it held and a redelivery changes nothing.
- */
 export const makeMonsterStatisticsPublisher = (
   database: ApiDatabaseValue,
   rabbit: Pick<typeof RabbitMessaging.Service, "publish">,
@@ -47,7 +40,6 @@ export const makeMonsterStatisticsPublisher = (
           .select({
             acquired: sql<boolean>`pg_try_advisory_xact_lock(${MONSTER_STATISTICS_LOCK})`,
           })
-          // The builder needs a source; one row runs the lock function once.
           .from(lootTable)
           .limit(1);
 
@@ -75,7 +67,6 @@ export const makeMonsterStatisticsPublisher = (
       ),
     );
 
-    // The retired drops message carries each monster's drop rates too.
     const monsterDrops = toRetiredDrops(statistics.drops).map(
       (monster): CatalogMonsterDrops => {
         const rated = dropRates.get(
@@ -97,7 +88,6 @@ export const makeMonsterStatisticsPublisher = (
       ]),
     );
 
-    // The locations message carries each monster's former levels too.
     const locations = toMonsterLocations(
       statistics.locations,
       statistics.spawnTiles,

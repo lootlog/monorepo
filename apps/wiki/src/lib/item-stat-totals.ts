@@ -3,17 +3,11 @@ import type { Profession } from "@/lib/equipment-set";
 
 type SetStat = {
   id: string;
-  /** The item stats it adds up; an attribute also counts "all attributes". */
   keys: readonly string[];
-  /** The game stores some stats in hundredths, such as attack speed. */
   scale?: number;
   unit?: "%";
 };
 
-/**
- * A set's stats as the game's character window groups them: attack,
- * defence, power and the basic attributes, in the window's order.
- */
 export const SET_STAT_SECTIONS = [
   {
     id: "attack",
@@ -70,7 +64,6 @@ type SetStatSection = (typeof SET_STAT_SECTIONS)[number];
 
 export type SetStatDefinition = SetStatSection["stats"][number];
 
-/** Every item stat a set adds up. */
 const SUMMED_STAT_KEYS = [
   ...new Set(
     SET_STAT_SECTIONS.flatMap(({ stats }) => stats.flatMap(({ keys }) => keys)),
@@ -83,11 +76,9 @@ export type StatTotals = Partial<Record<SummedStatKey, number>>;
 
 const NUMERIC_VALUE = /^[+-]?\d+(?:\.\d+)?$/;
 
-/** A stat's text value; flags such as `binds` carry none. */
 const textValue = (value: string | boolean | undefined) =>
   value === undefined || value === true || value === false ? undefined : value;
 
-/** The sum of each summed stat over the items; a stat no item has is absent. */
 export const sumItemStats = (stats: ReadonlyArray<string>): StatTotals => {
   const totals: StatTotals = {};
 
@@ -107,10 +98,6 @@ export const sumItemStats = (stats: ReadonlyArray<string>): StatTotals => {
 
 export type ItemRequirementIssue = "profession" | "level";
 
-/**
- * What keeps the character from wearing the item: another profession or a
- * higher level. A character without a profession or level meets each check.
- */
 export const findRequirementIssues = (
   stat: string,
   character: { profession: Profession | null; level: number | null },
@@ -133,10 +120,6 @@ export const findRequirementIssues = (
   ].filter((issue) => issue !== undefined);
 };
 
-/**
- * A set stat's value in the game's own units, such as attack speed in whole
- * points; none when no worn item has it.
- */
 export const setStatValue = (
   totals: StatTotals,
   stat: SetStatDefinition,

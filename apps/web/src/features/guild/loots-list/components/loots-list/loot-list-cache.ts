@@ -11,7 +11,6 @@ export const LOOTS_QUERY_GC_TIME_MS = 5 * 60_000;
 
 export const LOOTS_PAGE_LIMIT = 20;
 
-/** Page parameter of a list's first page, which is read without a cursor. */
 export const FIRST_PAGE_CURSOR = "";
 
 type LootsInfiniteData = InfiniteData<LootPageResponseDto>;
@@ -55,10 +54,6 @@ const someInRange = (
       (max === undefined || level <= max),
   );
 
-/**
- * Mirrors the API's list filters. `undefined` means only the server can decide,
- * as for free-text search, which also matches snapshot names it resolves.
- */
 export function lootMatchesListParams(
   loot: Loot,
   params: typeof LootListParams.Type,
@@ -94,7 +89,6 @@ export function lootMatchesListParams(
       itemNames,
       loot.items.map((item) => item.name),
     ) &&
-    // An item without a profession requirement suits every profession.
     (!professions?.length ||
       loot.items.some(
         (item) =>
@@ -124,8 +118,6 @@ const withItems = (
   items: LootPageResponseDto["items"],
 ): LootPageResponseDto => ({ ...page, items });
 
-// Lists are ordered by descending id. A loot older than every loaded one
-// belongs to a page that has not been read yet, unless the list is complete.
 const placeLoot = (
   data: LootsInfiniteData | undefined,
   loot: Loot,
@@ -174,8 +166,6 @@ const placeLoot = (
   };
 };
 
-// Event pages and the HID lookup cache plain results under the same path as
-// the paged lists, so lists are told apart by their data.
 const LootPage = Schema.Struct({
   items: Schema.Array(Schema.Unknown),
   nextCursor: Schema.NullOr(Schema.String),
@@ -198,10 +188,6 @@ const cachedLootLists = (queryClient: QueryClient, guildId: string) => {
     .filter(([key, data]) => key[0] === path && isLootPages(data));
 };
 
-/**
- * Places loot snapshots in every cached list and detail of the Organization
- * without a request. Returns whether a list needs the server to place them.
- */
 export function applyLootSnapshots(
   queryClient: QueryClient,
   guildId: string,
@@ -242,7 +228,6 @@ export function applyLootSnapshots(
   return needsServer;
 }
 
-/** Updates fields of one loot in every cached list and detail of the Organization. */
 export function patchLoot(
   queryClient: QueryClient,
   guildId: string,
@@ -294,7 +279,6 @@ export async function reconcileActiveLootLists(
     });
   }
 
-  // Inactive filters retain their history and become stale without HTTP work.
   await queryClient.invalidateQueries(
     { queryKey, refetchType: "active" },
     { throwOnError: true, cancelRefetch: false },

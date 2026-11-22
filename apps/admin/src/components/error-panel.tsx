@@ -1,4 +1,3 @@
-/** A page-level message for a missing page or a failed load. */
 export function ErrorPanel({
   title,
   description,

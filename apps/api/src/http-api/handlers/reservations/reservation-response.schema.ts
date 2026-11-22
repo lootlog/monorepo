@@ -15,7 +15,6 @@ import {
 import { DomainDateTime } from "#src/shared/schema/response-codecs";
 import { DomainJsonValue } from "../../domain-json.schema.js";
 
-// Only contract-declared open fields need recursive domain JSON conversion.
 const DomainJson = Schema.flip(DomainJsonValue).pipe(
   Schema.decodeTo(JsonValue),
 );

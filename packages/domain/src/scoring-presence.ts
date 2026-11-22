@@ -1,27 +1,13 @@
-/**
- * Shared presence analysis for one kill: which ranking participants watched
- * the hero, when, and alongside how many others. Live scoring, explicit
- * recalculation, the kill breakdown and the simulator all build the analysis
- * here so the same intervals always produce the same numbers.
- *
- * Time is computed on half-open intervals `[start, end)`: a member leaving at
- * the instant another one arrives never forms a two-person group. Presence at
- * the kill keeps its own explicit semantics (see {@link resolveKillPresenceState}).
- */
-
 export type PresenceParticipantId = number | string;
 
 export type PresenceInterval = {
   participantId: PresenceParticipantId;
   start: Date;
-  /** `null` means the presence was still open when the window ended. */
   end: Date | null;
 };
 
 export type PresenceWindow = {
-  /** Minimum respawn time; `null` when it is not known reliably. */
   start: Date | null;
-  /** The kill. */
   end: Date;
 };
 
@@ -29,23 +15,14 @@ type MsInterval = { start: number; end: number };
 
 export type ParticipantPresence = {
   participantId: PresenceParticipantId;
-  /**
-   * Whether any counted presence record exists for this participant. Callers
-   * pass every record that touches the window, so a kill participant without
-   * one is missing data rather than absent.
-   */
   hasData: boolean;
-  /** Merged positive-length intervals inside the window, in ms. */
   intervals: readonly MsInterval[];
   countedMs: number;
-  /** Counted time over window duration, unrounded (0–1). */
   windowShare: number;
   firstJoinAt: Date | null;
   joinDelayMs: number | null;
   presentAtKill: boolean;
-  /** Last leave inside the window when not present at the kill. */
   lastLeaveAt: Date | null;
-  /** Counted time of this participant split by concurrent group size. */
   msByGroupSize: ReadonlyMap<number, number>;
 };
 
@@ -74,13 +51,10 @@ export type GroupMembership = {
 
 export type EventKillPresence = {
   window: PresenceWindow;
-  /** `null` when the window start is unknown or not before the kill. */
   windowMs: number | null;
   participants: ReadonlyMap<PresenceParticipantId, ParticipantPresence>;
-  /** Participants of the kill without any presence record. */
   missingParticipantIds: readonly PresenceParticipantId[];
   segments: readonly PresenceSegment[];
-  /** Memoized per (counting, threshold) so every participant reuses it. */
   groupMembership: (
     counting: Exclude<GroupCounting, "TIMELINE">,
     minSharePercentage: number,
@@ -99,7 +73,6 @@ type GroupSizeComparison = (typeof GROUP_SIZE_COMPARISONS)[number];
 export type GroupSizeRange = {
   comparison: GroupSizeComparison;
   value: number;
-  /** Upper bound for `BETWEEN`; ignored otherwise. */
   to: number;
 };
 
@@ -116,12 +89,6 @@ export function isGroupSizeInRange(size: number, range: GroupSizeRange) {
   }
 }
 
-/**
- * The window new presence conditions use: from the minimum respawn time to the
- * kill, where a kill after the maximum respawn time ends at that maximum, as
- * live tracking does. A start that is missing or not before the end is
- * unreliable and reported as `null`.
- */
 export function resolveEventScoringWindow(params: {
   killedAt: Date;
   minSpawnTimeAtKill: Date | null | undefined;
@@ -142,11 +109,6 @@ export function resolveEventScoringWindow(params: {
   return { start, end };
 }
 
-/**
- * Whether a member's presence lasted until the window end, and otherwise when
- * they last left inside the window. A presence ending exactly at the window
- * end counts as present at the kill.
- */
 export function resolveKillPresenceState(params: {
   intervals: ReadonlyArray<Pick<PresenceInterval, "start" | "end">>;
   windowStart: Date;
@@ -204,7 +166,6 @@ function groupByParticipant(intervals: readonly PresenceInterval[]) {
   return byId;
 }
 
-/** Clips a participant's records to the window and merges them. */
 function clipToWindow(
   intervals: readonly PresenceInterval[],
   startMs: number,
@@ -222,11 +183,6 @@ function clipToWindow(
   return mergeIntervals(clipped);
 }
 
-/**
- * Sweeps the merged intervals' boundaries into constant-size segments and
- * each participant's time per group size. At equal times ends go first, so
- * `[a, t)` and `[t, b)` never overlap.
- */
 function sweepGroupSizes(
   mergedById: ReadonlyMap<PresenceParticipantId, readonly MsInterval[]>,
 ) {
@@ -275,11 +231,6 @@ function sweepGroupSizes(
   return { segments, msByGroupSizeById };
 }
 
-/**
- * Builds the presence analysis of one kill. Participants are the kill's
- * ranking identities; a participant without any presence record is reported
- * as missing data, never as absent.
- */
 export function analyzeEventKillPresence(params: {
   window: PresenceWindow;
   participantIds: readonly PresenceParticipantId[];
@@ -407,11 +358,9 @@ function getGroupExclusion(
 export type GroupTimeShare = {
   matchedMs: number;
   ownMs: number;
-  /** Unrounded percentage of the participant's own counted time (0–100). */
   percentage: number;
 };
 
-/** The part of a participant's own counted time spent in a matching group. */
 export function getGroupTimeShare(
   participant: ParticipantPresence,
   range: GroupSizeRange,
@@ -430,11 +379,6 @@ export function getGroupTimeShare(
   };
 }
 
-/**
- * The presence-derived part of a member's scoring context: counted tracking
- * time and share (rounded as stored on kill points), presence at the kill and
- * the shared analysis for the presence conditions.
- */
 export function getPresenceScoringContext(
   analysis: EventKillPresence,
   participantId: PresenceParticipantId,

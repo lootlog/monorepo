@@ -15,7 +15,6 @@ export const WHATS_NEW_SURFACE_ICONS = {
   discord: MessageCircle,
 } satisfies Record<ChangelogSurface, LucideIcon>;
 
-/** Where the player meets a change. */
 export const WhatsNewSurfaces = ({
   surfaces,
 }: {

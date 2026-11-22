@@ -7,7 +7,6 @@ import { refreshWhoIsHereScroll } from "@/lib/margonem-runtime/adapters/who-is-h
 import { useWhoIsHereAirTagEnemies } from "./use-who-is-here-air-tag-enemies";
 import { WhoIsHereAirTagRow } from "./who-is-here-air-tag-row";
 
-/** Enemies other members see on this map, listed under the game's "Gracze na mapie". */
 export function WhoIsHereAirTags() {
   const { t } = useTranslation("settings");
   const { enemies, host, now } = useWhoIsHereAirTagEnemies();

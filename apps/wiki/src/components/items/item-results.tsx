@@ -12,7 +12,6 @@ import {
 import { CATALOG_MAX_HITS } from "@/lib/catalog-pages";
 import { formatNumber } from "@lootlog/domain/locale";
 
-// The sorts that rank by attack speed, and which one each shows.
 const ATTACK_SPEED_RANKINGS = new Map<string | undefined, AttackSpeedRanking>([
   ["attackSpeed:desc", "dropped"],
   ["upgradedAttackSpeed:desc", "upgraded"],
@@ -20,13 +19,10 @@ const ATTACK_SPEED_RANKINGS = new Map<string | undefined, AttackSpeedRanking>([
 
 type ItemResultsProps = {
   params: ItemSearchParams;
-  /** The typed phrase, highlighted in item names. */
   query: string;
-  /** The active filters, shown beside the count. */
   filters?: ReactNode;
 };
 
-/** The item search's hits, a page at a time, with how many there are. */
 export function ItemResults({ params, query, filters }: ItemResultsProps) {
   const { data, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({

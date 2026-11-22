@@ -32,23 +32,18 @@ afterAll(async () => {
   await runtime.dispose();
 });
 
-/** Fights 1–200 on the old map, then 895 on the new one and 5 by the exit. */
 const mapOfFight = (fight: number) =>
   fight <= 200 ? "Stara grota" : fight <= 1095 ? "Nowa grota" : "Wyjście";
 
-/** The titan was rebalanced from 110 to 100 ten days after its 300th fight. */
 const REBALANCED_AFTER = 300;
 
 const REBALANCE_DELAY = 10 * 24 * 60 * 60_000;
 
-// The publisher reads every monster in the database that all suites share, so
-// its run time grows with the suites that ran before this one.
 const PUBLISHER_TIMEOUT_MS = 30_000;
 
 it(
   "publishes a monster's maps from its latest fights, the drops it no longer gives and the level it had before",
   async () => {
-    // Other suites share the database; a unique name keeps this monster apart.
     const name = `Tytan ${randomUUID()}`;
     const startedAt = Date.UTC(2026, 0, 1);
 
@@ -104,7 +99,6 @@ it(
             npcSnapshotId: index < REBALANCED_AFTER ? former!.id : npc!.id,
           })),
         );
-        // The item dropped in the first 100 fights only.
         yield* database.insert(lootItemTable).values(
           loots.slice(0, 100).map(({ id }) => ({
             lootId: id,
@@ -113,9 +107,6 @@ it(
           })),
         );
 
-        // Game clients placed the titan on two tiles of its lair. Another
-        // map of the same name holds one stray report, and the exit, left
-        // out of the locations, holds one too.
         const tile = (
           mapId: number,
           mapName: string,
@@ -151,7 +142,6 @@ it(
       }),
     );
 
-    // Both publications name each monster; the rest is what the test asserts.
     type PublishedMonster = {
       gameVersion: string;
       name: string;
@@ -175,7 +165,6 @@ it(
         )
         .find((entry) => entry.name === name);
 
-    // The old map is in the latest 1000 fights; the exit holds under 1% of them.
     expect(monster(RabbitRoutingKey.CATALOG_NPCS_LOCATIONS)).toEqual({
       gameVersion: "pl",
       name,
@@ -191,7 +180,6 @@ it(
         },
         { map: "Stara grota", share: 0.1, tiles: [] },
       ],
-      // The day the titan was first fought at its new level.
       formerLevels: [{ lvl: 110, until: "2026-01-11" }],
     });
     expect(monster(RabbitRoutingKey.CATALOG_ITEMS_RETIRED_DROPS)).toEqual({
@@ -200,7 +188,6 @@ it(
       type: "TITAN",
       retiredItemIds: [1],
       lootMode: "SHARED",
-      // No Organization counted the titan's kills.
       dropRates: [],
     });
   },
@@ -212,7 +199,6 @@ it(
   async () => {
     const name = `Heros ${randomUUID()}`;
     const world = `rates-${randomUUID()}`;
-    // Boss kills begin long before other suites' data, so they set the window.
     const killsBegin = new Date(Date.UTC(2001, 0, 1));
     const killedAt = new Date(Date.UTC(2001, 0, 2));
     const [everything, legendsOnly] = [randomUUID(), randomUUID()];
@@ -250,8 +236,6 @@ it(
             updatedAt: now,
           },
         ]);
-        // Every kill named its party: 2 rolls a kill for one Organization's,
-        // 4 for the other's and 3 for those both recorded.
         yield* database.insert(bossKillTable).values(
           [
             { guildIds: [everything], kills: 200, lootRolls: 2 },
@@ -341,12 +325,9 @@ it(
           });
 
         yield* record(20, unique!.id, [everything]);
-        // Loots both Organizations recorded count once.
         yield* record(5, legendary!.id, [everything, legendsOnly]);
         yield* record(4, unique!.id, [legendsOnly, everything]);
-        // Kept by an Organization whose settings now skip uniques.
         yield* record(3, unique!.id, [legendsOnly]);
-        // Before the first boss kill, so no kill pairs with it.
         yield* record(
           4,
           unique!.id,
@@ -382,7 +363,6 @@ it(
       .find((monster) => monster.name === name)?.dropRates;
 
     expect(rates?.toSorted((a, b) => a.itemId - b.itemId)).toEqual([
-      // Only kills the Organization that keeps uniques recorded could drop one.
       { itemId: 900_001, drops: 24, kills: 300, rolls: 700, basis: "PARTY" },
       { itemId: 900_002, drops: 5, kills: 600, rolls: 1900, basis: "PARTY" },
     ]);

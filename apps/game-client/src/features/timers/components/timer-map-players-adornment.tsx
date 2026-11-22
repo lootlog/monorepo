@@ -5,7 +5,6 @@ import { TimerMapThreatIndicator } from "./timer-map-threat-indicator";
 import { TimerHeroSightingIndicator } from "./timer-hero-sighting-indicator";
 import type { TimerHeroSighting } from "./timer-map-presence-provider";
 
-/** The detected hero mark and member and enemy counts shown before a timer's time. */
 export function TimerMapPlayersAdornment({
   occupancy,
   threat,

@@ -2,7 +2,6 @@ import { RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { HeroSightingMemberDto } from "@lootlog/client/main";
 
-/** Who confirmed the hero last, beside the time of that confirmation. */
 export function HeroSightingRefresher({
   member,
 }: {

@@ -4,7 +4,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@lootlog/ui/components/chart";
-// Loaded only by its lazy wrapper; Recharts stays inside that async boundary.
 // oxlint-disable-next-line react-doctor/prefer-dynamic-import
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useTranslation } from "react-i18next";
@@ -16,7 +15,6 @@ import { CHART_SERIES_ANIMATION } from "@/lib/motion";
 
 export type PlayTimePoint = {
   date: string;
-  /** Online that day, null before tracking began. */
   seconds: number | null;
   kills: number | null;
 };
@@ -36,7 +34,6 @@ const withRunningTotal = (points: readonly PlayTimePoint[]) => {
   });
 };
 
-/** Hours online added up day by day, so the period's total reads at the end. */
 export function StatisticsPlayTimeChart({
   points,
   formatDuration,

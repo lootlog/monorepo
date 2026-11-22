@@ -38,18 +38,9 @@ type PlayerTileProps = {
   world?: string;
   onShowLoots?: () => void;
   highlighted?: boolean;
-  /**
-   * `compact` draws the sprite at three quarters inside a 24×36 button, so
-   * the button, which the details hang from, covers the sprite as drawn.
-   */
   size?: "default" | "compact";
 };
 
-/**
- * A character sprite that shows its details on hover and opens a small
- * action popover on click or tap, so touch users reach the same information
- * and actions as mouse users.
- */
 export const PlayerTile: FC<PlayerTileProps> = ({
   player: { lvl, prof, name, icon },
   idx,
@@ -114,8 +105,6 @@ export const PlayerTile: FC<PlayerTileProps> = ({
       className={cn(
         "inline-flex cursor-pointer appearance-none rounded-lg border-0 bg-transparent p-0 outline-none",
         size === "compact" && "relative h-9 w-6 shrink-0 rounded-sm",
-        // A highlighted sprite already wears the selection ring, so focus
-        // draws an outline just outside it instead of replacing it.
         highlighted
           ? "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-solid focus-visible:outline-ring"
           : "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",

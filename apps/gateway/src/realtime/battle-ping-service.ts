@@ -94,7 +94,6 @@ export class BattlePingService {
   }
 }
 
-/** Relays battle pings to the listed teammates. */
 export class BattlePings extends Context.Service<
   BattlePings,
   BattlePingService
@@ -107,7 +106,6 @@ export class BattlePings extends Context.Service<
   );
 }
 
-/** Battle pings are relayed to teammates, never stored. */
 export const battlePingRoutes = (pings: Pick<BattlePingService, "send">) =>
   ({
     "battle-ping.send": {

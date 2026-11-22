@@ -30,11 +30,6 @@ type HeroSightingRowProps = {
   onOpenHistory: (sighting: HeroSightingResponseDto) => void;
 };
 
-/**
- * One hero on the board. Phones stack the hero over its map, timer and
- * claims, with the actions beside the claims; from `xl` every row shares the
- * same columns.
- */
 export const HeroSightingRow = ({
   sighting,
   timer,
@@ -103,7 +98,6 @@ export const HeroSightingRow = ({
           <span className="min-w-0 break-words">{sighting.mapName}</span>
         </p>
         <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-          {/* A row of pieces, so a long name shortens without hiding the rest. */}
           <span className="flex min-w-0 items-center whitespace-pre">
             <span className="shrink-0">
               {t(
@@ -119,7 +113,6 @@ export const HeroSightingRow = ({
               nameClassName="text-xs"
             />
             {sighting.detectorCharacter && (
-              // Truncation collapses a leading space, so the gap is padding.
               <span className="min-w-0 truncate pl-1">
                 {`(${sighting.detectorCharacter.name})`}
               </span>

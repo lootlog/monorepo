@@ -12,11 +12,6 @@ import {
 import { ScrollArea } from "./scroll-area";
 import { getLootlogPortalContainer } from "./theme-boundary";
 
-/**
- * Searchable select (shadcn Base UI combobox). The trigger, popup and items
- * share the plain select's classes; the only visible difference is the
- * search field at the top of the list.
- */
 const Combobox = BaseCombobox.Root;
 
 const ComboboxValue = (props: BaseCombobox.Value.Props) => (
@@ -25,7 +20,6 @@ const ComboboxValue = (props: BaseCombobox.Value.Props) => (
 
 type ComboboxTriggerProps = BaseCombobox.Trigger.Props & {
   size?: "sm" | "default";
-  /** `strip` renders a flat, full-width bar for stacking with other toolbar strips. */
   variant?: "default" | "strip";
 };
 
@@ -85,7 +79,6 @@ const ComboboxContent = React.forwardRef<HTMLDivElement, ComboboxContentProps>(
         collisionPadding={collisionPadding}
         side={side}
         sideOffset={sideOffset}
-        // Same overlay layer as the select: above every draggable window.
         className="ll:z-[500] ll:min-w-[var(--anchor-width)]"
       >
         <BaseCombobox.Popup
@@ -93,7 +86,6 @@ const ComboboxContent = React.forwardRef<HTMLDivElement, ComboboxContentProps>(
           data-slot="combobox-content"
           className={cn(
             selectPopupClassName,
-            // A narrow trigger (a toolbar strip) still opens a readable list.
             "ll:group/combobox-content ll:flex ll:w-[max(var(--anchor-width),12rem)] ll:max-w-[var(--available-width)] ll:flex-col ll:overflow-hidden",
             className,
           )}
@@ -106,7 +98,6 @@ const ComboboxContent = React.forwardRef<HTMLDivElement, ComboboxContentProps>(
 
 ComboboxContent.displayName = "ComboboxContent";
 
-/** Search field pinned to the top of the popup. */
 const ComboboxInput = React.forwardRef<
   HTMLInputElement,
   BaseCombobox.Input.Props
@@ -134,10 +125,6 @@ const ComboboxInput = React.forwardRef<
 
 ComboboxInput.displayName = "ComboboxInput";
 
-/**
- * Scrolls inside the overlay's ScrollArea, capped well below the screen so a
- * long list (every world) does not fill the game's height.
- */
 const ComboboxList = React.forwardRef<HTMLDivElement, BaseCombobox.List.Props>(
   ({ className, ...props }, ref) => (
     <ScrollArea className="ll:max-h-[min(16rem,var(--available-height))] ll:overscroll-contain">
@@ -201,7 +188,6 @@ const ComboboxEmpty = ({ className, ...props }: BaseCombobox.Empty.Props) => (
   <BaseCombobox.Empty
     data-slot="combobox-empty"
     className={cn(
-      // Base UI keeps the element mounted; show it only when nothing matches.
       "ll:hidden ll:px-2 ll:py-2 ll:text-[11px] ll:text-muted-foreground ll:group-data-[empty]/combobox-content:block",
       className,
     )}

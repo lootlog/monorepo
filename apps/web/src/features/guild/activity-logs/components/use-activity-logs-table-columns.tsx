@@ -46,7 +46,6 @@ export const useActivityLogsTableColumns = (): ColumnDef<
       cell: ({ row: { original: activity } }) => (
         <MemberIdentity
           member={{ discordId: activity.discordId }}
-          // An audit entry names who acted even once they are unknown.
           fallback={{ name: activity.discordId }}
           display="name"
           nameClassName="font-normal"

@@ -1,8 +1,3 @@
-/**
- * The action keys of a battle row and what each means. The catalog follows
- * the keys Margonem renders in `core/battle/BattleMessages.js`; the Polish
- * dictionary (`dictionary_pl.js`, `msg_<key>`) names their effect.
- */
 import type { NumericWarriorStat } from "./warrior.js";
 
 export type BattleActionCategory =
@@ -283,12 +278,10 @@ const ACTION_CATEGORIES = new Map<string, BattleActionCategory>([
 ]);
 
 export type DamageKey = {
-  /** `+` keys are the attack the actor rolled, `-` keys what the target took. */
   side: "dealt" | "taken";
   stat: NumericWarriorStat | null;
 };
 
-/** Dealt and taken stats by the suffix after `dmg`. */
 const DAMAGE_FAMILIES = new Map<
   string,
   readonly [NumericWarriorStat, NumericWarriorStat]
@@ -302,11 +295,6 @@ const DAMAGE_FAMILIES = new Map<
   ["l", ["lightningDamage", "lightningDamageTaken"]],
 ]);
 
-/**
- * The attack keys of a row. Margonem treats every `+dmg…` and `-dmg…` key as
- * one damage instance and colours it by its suffix; `+thirdatt` and `+of_dmg`
- * add the third strike and off-hand damage to the same attack.
- */
 export const readDamageKey = (actionType: string): DamageKey | null => {
   if (actionType === "+thirdatt")
     return { side: "dealt", stat: "thirdAttDamage" };
@@ -330,10 +318,6 @@ export const readDamageKey = (actionType: string): DamageKey | null => {
     : { side: "taken", stat: family?.[1] ?? null };
 };
 
-/**
- * Damage over time and unavoidable damage the row's actor takes. These rows
- * name the affected warrior as the actor, often without a target.
- */
 export const ACTOR_DAMAGE_TAKEN = new Map<string, NumericWarriorStat | null>([
   ["wound", "woundDamageTaken"],
   ["critwound", "critWoundDamageTaken"],

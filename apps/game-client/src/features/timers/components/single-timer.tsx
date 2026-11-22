@@ -28,7 +28,6 @@ import {
 } from "./timer-map-presence-provider";
 
 type SingleTimerProps = {
-  /** Identifies the tile to the grid's shared tooltip and context menu. */
   popupKey: string;
   guildIds: string[];
   guildNamesById: Record<string, string>;
@@ -136,8 +135,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     onDelete: handleDeleteTimer,
   };
 
-  // The tile keeps its actions and their in-flight state; the grid's shared
-  // menu shows the latest props of the tile it was opened on.
   const menuTarget = useSharedContextMenuTarget(popupKey, {
     className: "ll:w-48 ll:flex ll:flex-col",
     items: <TimerContextMenuContent {...menuProps} />,

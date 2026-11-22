@@ -13,7 +13,6 @@ type MemberKillPointsProps = {
   kill: KillHistoryMemberEntry;
 };
 
-/** The points the member earned for a kill, flagged when they were corrected by hand. */
 export const MemberKillPoints = ({ kill }: MemberKillPointsProps) => {
   const { t } = useTranslation();
 

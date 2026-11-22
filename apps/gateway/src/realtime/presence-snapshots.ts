@@ -15,12 +15,8 @@ export type CachedSnapshot = {
   readonly presences: ReadonlyArray<Basic | Precise>;
 };
 
-// A cached snapshot is served only while its revision is current, so every
-// change missing from it reaches the viewer as a later delta. The age bound
-// keeps heartbeat-refreshed lastSeen values from drifting.
 const SNAPSHOT_MAX_AGE_MS = 1_000;
 
-/** Organization presence snapshots, shared by concurrent viewers of one revision. */
 export class PresenceSnapshots {
   private readonly pending = new SingleFlight<
     string,
@@ -36,8 +32,6 @@ export class PresenceSnapshots {
   ) {}
 
   read(organizationId: string): Effect.Effect<CachedSnapshot, unknown> {
-    // Read the revision first: every change absent from the rows read after
-    // it increments the revision later and reaches viewers as a delta.
     return storeCall("presence.get-revision", () =>
       this.redis.command.get(revisionKey(organizationId)),
     ).pipe(
@@ -53,7 +47,6 @@ export class PresenceSnapshots {
 
         const readAt = this.now();
 
-        // Offline decisions and coverage require their own fresh read.
         return this.pending.run(
           JSON.stringify([organizationId, revision]),
           readOrganization(this.redis, organizationId, this.now).pipe(
@@ -73,7 +66,6 @@ export class PresenceSnapshots {
     );
   }
 
-  /** Drops snapshots too old to serve, so idle Organizations release memory. */
   prune(): void {
     for (const [organizationId, snapshot] of this.cached) {
       if (this.now() - snapshot.readAt >= SNAPSHOT_MAX_AGE_MS)

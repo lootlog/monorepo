@@ -229,7 +229,6 @@ describe("useChatGuildData", () => {
       expect(result.current.messagesByGuildId["guild-1"]).toHaveLength(2);
     });
 
-    // Rows are memoized on these props; a new identity would re-render every row.
     expect(result.current.mentionContextsByGuildId["guild-1"]).toBe(
       contextBefore,
     );
@@ -323,7 +322,6 @@ describe("useChatGuildData", () => {
       );
     });
 
-    // Rows are memoized on message identity; a copy re-renders every row.
     expect(result.current.messagesByGuildId["guild-1"]?.slice(0, -1)).toEqual(
       messagesBefore.slice(1),
     );

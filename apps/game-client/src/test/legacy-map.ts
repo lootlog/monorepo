@@ -1,12 +1,7 @@
 import { vi } from "vitest";
 
-/** A sprite sheet of 4×4 character frames, as SI loads it. */
 export type LegacySprite = { url: string; width: number; height: number };
 
-/**
- * Lets the DOM decode sprites: SI loads every sprite into a blob url before
- * showing it, so `<img>` with that url is complete at once in the browser.
- */
 export function installLegacySprites(sprites: readonly LegacySprite[]): void {
   const byUrl = new Map(sprites.map((sprite) => [sprite.url, sprite]));
   const spriteOf = (image: HTMLImageElement) => byUrl.get(image.src);
@@ -32,10 +27,6 @@ export function installLegacySprites(sprites: readonly LegacySprite[]): void {
   });
 }
 
-/**
- * Styles a character element the way SI's `moveOther` (elements.js) and
- * `hero.run` (player.js) do, with jQuery's px units.
- */
 function placeLegacyCharacter(
   element: HTMLElement,
   { sprite, rx, ry, step = 0, dir = 0, water = 0 }: LegacyPlacement,
@@ -64,10 +55,6 @@ export type LegacyPlacement = {
   water?: number;
 };
 
-/**
- * SI's map: `#base` with the elements of the hero and others, and the game's
- * other records, as `newOther` (elements.js) keeps them.
- */
 export function installLegacyMap() {
   const base = document.createElement("div");
   base.id = "base";
@@ -96,7 +83,6 @@ export function installLegacyMap() {
 
       return element;
     },
-    /** A `del` packet: the data and the element go. */
     removeOther(id: string): void {
       delete others[id];
       document.getElementById(`other${id}`)?.remove();

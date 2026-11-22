@@ -9,9 +9,7 @@ import { cn } from "cn";
 type PillOption<T extends string> = {
   value: T;
   label: string;
-  /** How many entries the pill stands for, after its label. */
   count?: number;
-  /** Recolors the count, such as when it needs attention. */
   countClassName?: string;
 };
 
@@ -20,24 +18,17 @@ type PillToggleGroupProps<T extends string> = {
   options: readonly PillOption<T>[];
 } & (
   | {
-      /** Each pressed pill narrows the list; none pressed shows every entry. */
       multiple: true;
       value: T[];
       onValueChange: (value: T[]) => void;
     }
   | {
-      /** One pill is always pressed: pressing it again keeps it. */
       multiple?: false;
       value: T;
       onValueChange: (value: T) => void;
     }
 );
 
-/**
- * A row of outlined pills. In a list's toolbar the pills move under its
- * filter on phones and scroll sideways in one row, so the pinned toolbar
- * stays short.
- */
 export const PillToggleGroup = <T extends string>(
   props: PillToggleGroupProps<T>,
 ) => {
@@ -98,8 +89,6 @@ export const PillToggleGroup = <T extends string>(
   if (!inFilterBar) return group;
 
   return (
-    // Bleeds into the toolbar's phone inset (`LIST_TILE_INSET_CLASS`), so
-    // the pills scroll out under its edges.
     <div className="max-sm:order-last max-sm:-mx-3 max-sm:w-[calc(100%+1.5rem)] max-sm:overflow-x-auto max-sm:px-3 max-sm:[scrollbar-width:none]">
       {group}
     </div>

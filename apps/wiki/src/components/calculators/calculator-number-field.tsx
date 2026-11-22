@@ -11,10 +11,6 @@ type CalculatorNumberFieldProps = {
   step?: number;
 };
 
-/**
- * One number a calculator reads. It keeps the typed text, so a field can be
- * cleared and retyped; the calculator decides when the text is a number.
- */
 export function CalculatorNumberField({
   label,
   value,

@@ -1,9 +1,3 @@
-/**
- * The admin API. Its only caller is the admin panel, which presents the
- * `ADMIN_API_SECRET` bearer credential together with the session cookie of
- * its operator, who must be listed in `ADMIN_ACCOUNT_IDS`. Neither one alone
- * authorizes these operations, and the edge does not route them.
- */
 import { Schema } from "effect";
 import {
   HttpApi,

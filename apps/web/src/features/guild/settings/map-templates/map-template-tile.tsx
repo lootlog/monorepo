@@ -25,7 +25,6 @@ type MapTemplateTileProps = {
   onDelete: () => Promise<void>;
 };
 
-/** One map template; the tile unfolds its maps, and its actions edit or delete it. */
 export const MapTemplateTile = ({
   template,
   onEdit,
@@ -99,7 +98,6 @@ export const MapTemplateTile = ({
           </div>
         </div>
         <CollapsibleContent>
-          {/* The maps line up under the template's name. */}
           <ul
             className={cn(
               "flex flex-wrap gap-2 pb-3",

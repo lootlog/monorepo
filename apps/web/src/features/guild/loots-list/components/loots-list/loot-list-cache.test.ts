@@ -154,7 +154,6 @@ it("matches live loots against list filters as the server query does", () => {
     ),
   ).toEqual([false, true]);
 
-  // A level range never matches an NPC whose level is unknown.
   expect(
     lootMatchesListParams(
       lootWith(3, {
@@ -203,10 +202,8 @@ it("places snapshots by id among loaded pages and leaves unread pages to paginat
     false,
   );
   expect(ids()?.slice(0, 3)).toEqual([101, 100, 99]);
-  // A redelivered loot replaces its entry.
   expect(ids()?.filter((id) => id === 90)).toEqual([90]);
 
-  // Older than a last page with a next cursor: its page has not been read yet.
   applyLootSnapshots(client, "one", [lootWith(50)]);
   expect(ids()).not.toContain(50);
 });

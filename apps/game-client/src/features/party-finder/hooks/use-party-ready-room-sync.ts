@@ -12,12 +12,6 @@ import {
   useReadyRoomsSynchronized,
 } from "@/features/party-finder/hooks/use-ready-rooms";
 
-/**
- * Mounts the Ready Room query and resynchronizes it whenever the viewer's
- * character, world or gathering-related permissions change. Such a change can hide
- * rooms the viewer may no longer see, so it drops the collection instead of
- * merging the next response into it.
- */
 export function usePartyReadyRoomSync(): void {
   const queryClient = useQueryClient();
   const world = useGameStore((state) => state.game?.world);
@@ -31,10 +25,6 @@ export function usePartyReadyRoomSync(): void {
   const hasJoined = useRef(joined);
   const lastIdentity = useRef(`${world ?? ""}:${characterId ?? ""}`);
 
-  // Every gateway join and character switch resynchronizes: updates missed
-  // while disconnected are only recovered by a fresh list, never by the
-  // cached collection. Mounting the query already fetches it, so the first
-  // render needs no invalidation of its own.
   useEffect(() => {
     const identity = `${world ?? ""}:${characterId ?? ""}`;
     const rejoined = joined && !wasJoined.current && hasJoined.current;

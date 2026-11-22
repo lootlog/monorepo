@@ -56,7 +56,6 @@ describe("ChatMessage", () => {
       <ChatMessage all={false} member={member} message={makeChatMessage()} />,
     );
 
-    // The wrapper's list element stands in for the transcript.
     expect(container.firstChild).toBeEmptyDOMElement();
   });
 

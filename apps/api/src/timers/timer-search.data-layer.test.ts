@@ -96,7 +96,6 @@ describe("timer NPC search", () => {
     );
     await boundary.run(
       boundary.database.insert(timerTable).values([
-        // Sorts before the visible elite, so a leak would take the limit.
         timer(guild.id, "world-a", 100, {
           name: "Kic hero",
           lvl: 300,
@@ -240,7 +239,6 @@ describe("timer NPC search", () => {
 
     expect(byName.map(({ npcId }) => npcId)).toEqual([100, 200, 250, 300]);
 
-    // LIKE wildcards in the search text match literally, not every name.
     expect(await search(admin, { search: "k%c" })).toEqual([]);
     expect(await search(admin, { search: "k_c" })).toEqual([]);
 

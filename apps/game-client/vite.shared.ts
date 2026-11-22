@@ -4,7 +4,6 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 import gameClientPackage from "./package.json" with { type: "json" };
 
-/** Tailwind CSS v4's baseline, which every supported browser meets. */
 const BROWSER_TARGETS = ["chrome111", "edge111", "firefox128", "safari16.4"];
 
 const COLOR_MIX_SUPPORTS = "@supports (color:color-mix(in lab, red, red)){";
@@ -13,7 +12,6 @@ const SINGLE_RULE = /^([^{};]+)\{([^{}]*)\}$/;
 
 const PRECEDING_RULE = /([^{};]+)\{([^{}]*)\}$/;
 
-/** Splits a minified selector list on its top-level, unescaped commas. */
 const splitSelectorList = (list: string) => {
   const selectors: string[] = [];
   let depth = 0;
@@ -47,14 +45,6 @@ const parseDeclarations = (body: string) =>
       };
     });
 
-/**
- * Tailwind follows each `color-mix()` colour with a fallback rule and wraps
- * the real value in `@supports (color: color-mix(in lab, red, red))`, which
- * every browser in BROWSER_TARGETS passes. Unwrap each single-rule block and
- * drop the fallback declarations of the rule right before it when the
- * unwrapped rule, with the same selector, redeclares all of them. Anything
- * that does not match this minified shape is left untouched.
- */
 const stripColorMixFallbacks = (css: string): string => {
   let head = "";
   let cursor = 0;
@@ -79,7 +69,6 @@ const stripColorMixFallbacks = (css: string): string => {
       continue;
     }
 
-    // Both patterns capture their selector and body unconditionally.
     const [, selector = "", body = ""] = inner;
     const preceding = PRECEDING_RULE.exec(head);
     const [, precedingSelector = "", precedingBody = ""] = preceding ?? [];
@@ -183,13 +172,7 @@ export function gameClientViteConfig(mode: string): UserConfig {
           passes: 1,
         },
       },
-      // Margonem runs in current browsers; the extension requires Chrome 116
-      // and Firefox 140. Targeting the same browsers as the CSS keeps class
-      // fields and other ES2022 syntax native instead of shipping helpers.
       target: BROWSER_TARGETS,
-      // Lightning CSS lowers `:is()` to `:-webkit-any()` for older browsers.
-      // That fallback has pseudo-class specificity, so the preflight reset
-      // would beat Tailwind utilities in production builds only.
       cssTarget: BROWSER_TARGETS,
     },
     plugins: [

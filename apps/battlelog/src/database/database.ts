@@ -4,7 +4,6 @@ import { Effect, Layer } from "effect";
 import { battlelogDatabaseConfig } from "#src/config/env";
 import { relations } from "./relations.js";
 
-/** The Effect-native Drizzle service. Queries retain interruption and tracing. */
 export const drizzleDatabaseEffect = makeWithDefaults({ relations });
 
 export type DrizzleDatabase = Effect.Success<typeof drizzleDatabaseEffect>;

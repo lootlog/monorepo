@@ -18,11 +18,6 @@ import {
 
 export type CustomThemeTokens = Partial<Record<CustomThemeTokenKey, string>>;
 
-/**
- * Lightness of each surface relative to the content background, as in the
- * shipped dark themes: the sidebar sits a step below the content, raised
- * surfaces a step above it.
- */
 const SURFACE_LADDER = {
   sidebar: -0.04,
   background: 0,
@@ -34,27 +29,19 @@ const SURFACE_LADDER = {
   border: 0.135,
 } as const satisfies Partial<Record<CustomThemeTokenKey, number>>;
 
-/** Body text reads at AAA; supporting text and accent labels at AA. */
 const BODY_TEXT_CONTRAST = 7;
 
 const SUPPORTING_TEXT_CONTRAST = 4.5;
 
-/** Text chroma stays near grey so it reads on any surface hue. */
 const TEXT_CHROMA_LIMIT = 0.012;
 
-/** The accent tint behind selected items stays quiet next to the accent. */
 const ACCENT_TINT_CHROMA_LIMIT = 0.045;
 
-/**
- * Raises lightness from `start` until the colour reaches `minimum` contrast
- * against every surface; the surfaces are dark, so lighter reads better.
- */
 const lightenUntilReadable = (
   [start, chroma, hue]: OklchColor,
   surfaces: readonly OklchColor[],
   minimum: number,
 ) => {
-  // Contrast is checked on the rounded hex values the page will paint.
   const surfaceRgbs = surfaces.map((surface) => hexToRgb(oklchToHex(surface)));
 
   for (let lightness = start; lightness < 1; lightness += 0.01) {
@@ -90,7 +77,6 @@ const deriveSurfaceTokens = ({
   );
 
   const textChroma = Math.min(chroma, TEXT_CHROMA_LIMIT);
-  // Text must read on the lightest surface it sits on, not only the page.
 
   const textSurfaces = [
     surface(SURFACE_LADDER.sidebar),
@@ -124,11 +110,6 @@ const deriveSurfaceTokens = ({
   };
 };
 
-/**
- * Text on the accent: the darkest surface when it reads, otherwise
- * near-white. A mid-tone accent can defeat both, so pure black or white
- * settles it; one of them always clears 4.5:1.
- */
 const deriveAccentForeground = (accent: string, darkSurface: OklchColor) => {
   const accentRgb = hexToRgb(accent);
 
@@ -146,7 +127,6 @@ const deriveAccentForeground = (accent: string, darkSurface: OklchColor) => {
     : "#FFFFFF";
 };
 
-/** The surface a theme without its own surface knob is assumed to use. */
 const DEFAULT_SURFACE: CustomThemeSurface = {
   hue: 250,
   lightness: 0.17,
@@ -183,10 +163,6 @@ const deriveAccentTokens = (
   };
 };
 
-/**
- * The colour tokens a custom theme sets over its base theme's stylesheet. A
- * knob left out keeps the base theme's tokens; overrides win over the knobs.
- */
 export const deriveCustomThemeTokens = (
   definition: CustomThemeDefinition,
 ): CustomThemeTokens => ({
@@ -199,7 +175,6 @@ export const deriveCustomThemeTokens = (
   ...definition.overrides,
 });
 
-/** The tokens a knob derives, read from the derivation itself. */
 const tokensDerivedBy = (tokens: CustomThemeTokens) =>
   CUSTOM_THEME_TOKEN_KEYS.filter((token) => token in tokens);
 
@@ -211,10 +186,6 @@ const SURFACE_TOKEN_KEYS = tokensDerivedBy(
   deriveSurfaceTokens(DEFAULT_SURFACE),
 );
 
-/**
- * Sets the accent and drops overrides of the tokens it derives, since an
- * override wins over the knob and would hide the new accent.
- */
 export const withAccent = (
   definition: CustomThemeDefinition,
   accent: string,
@@ -224,7 +195,6 @@ export const withAccent = (
   overrides: omit(definition.overrides, ACCENT_TOKEN_KEYS),
 });
 
-/** Sets the surface and drops overrides of the tokens it derives. */
 export const withSurface = (
   definition: CustomThemeDefinition,
   surface: CustomThemeSurface,
@@ -234,20 +204,12 @@ export const withSurface = (
   overrides: omit(definition.overrides, SURFACE_TOKEN_KEYS),
 });
 
-/** Opacity, in percent, of each surface that sits over the wallpaper. */
 export type WallpaperCover = {
-  /** The background layer over a photo wallpaper. */
   overlay: number;
-  /** Tiled list rows, such as loots and timers. */
   listTile: number;
   card: number;
 };
 
-/**
- * Cover at no, the default, and full wallpaper visibility. The middle matches
- * the shipped themes; rows and cards stop at 60% so text stays readable over
- * a bright wallpaper.
- */
 const COVER_STOPS: Record<keyof WallpaperCover, [number, number, number]> = {
   overlay: [95, 78, 45],
   listTile: [97, 88, 60],
@@ -262,14 +224,12 @@ const interpolate = (
     ? hidden + ((middle - hidden) * at) / 50
     : middle + ((shown - middle) * (at - 50)) / 50;
 
-/** How opaque the surfaces over the wallpaper are at a visibility of 0–100. */
 export const deriveWallpaperCover = (visibility: number): WallpaperCover => ({
   overlay: Math.round(interpolate(COVER_STOPS.overlay, visibility)),
   listTile: Math.round(interpolate(COVER_STOPS.listTile, visibility)),
   card: Math.round(interpolate(COVER_STOPS.card, visibility)),
 });
 
-/** A source of numbers in [0, 1); tests pass a seeded one. */
 export type RandomSource = () => number;
 
 const between = (random: RandomSource, minimum: number, maximum: number) =>
@@ -283,25 +243,14 @@ const pick = <Item>(random: RandomSource, items: readonly Item[]): Item => {
   return item;
 };
 
-/**
- * Where the background's hue sits relative to the accent's: mostly the same
- * family, sometimes its complement or a neighbour, as palettes that read as
- * one theme usually do.
- */
 const BACKGROUND_HUE_SHIFTS = [0, 0, 0, 0, 180, 180, 30, -30] as const;
 
-/**
- * A random but coherent theme over a base: a vivid accent, a dark tinted
- * background in harmony with it, and any wallpaper, font and radius. Every
- * hand-set colour is cleared, so the palette is whole.
- */
 export const randomizeCustomTheme = ({
   baseThemeId,
   wallpapers,
   random = Math.random,
 }: {
   baseThemeId: BuiltInThemeId;
-  /** The wallpapers the client ships, besides the base's and none. */
   wallpapers: readonly string[];
   random?: RandomSource;
 }): CustomThemeDefinition => {

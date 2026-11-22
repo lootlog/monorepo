@@ -1,61 +1,22 @@
 import { cn } from "cn";
 
-/**
- * Lists such as loots, timers and reservations tile the page edge to edge:
- * no gaps or radius, one hairline between neighbours. Tiles, their group
- * headings, the list toolbar and skeleton tiles share these classes; a tile
- * carries `data-list-tile` so it stays readable over a theme's wallpaper.
- */
-
-/** Horizontal inset of every tile, heading and toolbar in a tiled list. */
 export const LIST_TILE_INSET_CLASS = "px-3 sm:px-4";
 
-/** A group heading; transparent, so a theme's wallpaper shows through it. */
 export const LIST_GROUP_HEADING_CLASS =
   "flex h-9 items-center gap-2 border-b border-sidebar-border text-xs font-semibold text-muted-foreground";
 
-/**
- * A group heading on a band, so each group, such as a kind of notification
- * rule or a part of a form, reads as its own block. The band is glass, so a
- * heading pinned while the page scrolls blurs what passes under it, as the
- * other pinned bars do (`glass-bar`). It is ruled above and below, so
- * sections stay apart on any screen; the top rule overlaps the rule of
- * whatever ends above it. Add it after
- * `LIST_GROUP_HEADING_CLASS`, or pass it to `ListGroupHeading`.
- */
 export const LIST_BAND_HEADING_CLASS =
   "glass-bar -mt-px h-10 border-y border-border text-[13px] text-foreground [--glass-bar-tint:color-mix(in_oklab,var(--muted)_45%,var(--background))]";
 
-/**
- * The hairline under each tile. A tile is isolated, so nothing raised inside
- * it, such as a focused row or stacked sprites, paints over the list toolbar
- * that the tiles scroll under.
- */
 export const LIST_TILE_RULE_CLASS = "isolate border-b border-sidebar-border";
 
-/**
- * A grid of tiles inside an `overflow-hidden` wrapper. Each cell rules its
- * right edge once the grid has columns, and the grid overhangs the wrapper by
- * a pixel so the last column's rule disappears. Add the column counts.
- */
 export const LIST_TILE_GRID_CLASS = "-mr-px grid grid-cols-1";
 
 export const LIST_TILE_GRID_CELL_CLASS = `${LIST_TILE_RULE_CLASS} lg:border-r`;
 
-/**
- * The hover highlight of a tile, on whichever element is the tile: the row
- * that holds a link and its actions, so both share it, or the link itself
- * when it is the whole tile. Matches the hover of a results table row.
- */
 export const LIST_TILE_HOVER_CLASS =
   "transition-colors hover:bg-muted/40 motion-reduce:transition-none";
 
-/**
- * A tile split into a link and trailing actions, such as pin or delete. The
- * link fills the tile's height and takes its inset; with actions after it,
- * they take the right inset instead. The tile, not the link, takes
- * `LIST_TILE_HOVER_CLASS`, so its actions share the highlight.
- */
 export const getListTileLinkClassName = (hasActions: boolean) =>
   cn(
     "flex min-w-0 flex-1 items-center gap-3 self-stretch py-3 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",

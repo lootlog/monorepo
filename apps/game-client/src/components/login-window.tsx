@@ -19,13 +19,6 @@ import { useWindowsStore } from "@/store/windows.store";
 
 const LOGIN_WINDOW_MAX_WIDTH = 360;
 
-/**
- * The single sign-in surface of both installations: the player signs in on
- * the website and comes back. The extension reads that first-party session
- * through its background worker; the userscript needs the browser to send
- * Lootlog's cookie to the Margonem page, so a round trip that still ends
- * signed out points at blocked third-party cookies.
- */
 export function LoginWindow() {
   const { t } = useTranslation("common");
   const { state, session } = useLoginState();
@@ -38,8 +31,6 @@ export function LoginWindow() {
   const signedIn = state === "signedIn";
   const busy = state === "checking";
 
-  // Coming back from the website tab focuses this window without changing its
-  // visibility, which is all Better Auth listens to.
   useEffect(() => {
     if (signedIn) return;
 
@@ -62,7 +53,6 @@ export function LoginWindow() {
         title={t("auth.windowTitle")}
         resizable={false}
         minWidth={size.width}
-        // Opens at the viewport width when narrower and narrows with it.
         maxWidth={Math.min(
           LOGIN_WINDOW_MAX_WIDTH,
           Math.max(1, Math.floor(viewport.width / viewport.scale)),

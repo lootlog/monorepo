@@ -4,16 +4,11 @@ import { cn } from "cn";
 import type { FC, ReactNode } from "react";
 
 type NpcTypeChipProps = {
-  /** NPC type key as used by the colour palette, e.g. "HERO". */
   npcType: string;
   children: ReactNode;
   className?: string;
 };
 
-/**
- * NPC type label: a dot in the type's palette colour followed by the name in
- * the regular text colour. Replaces colouring the whole label.
- */
 export const NpcTypeChip: FC<NpcTypeChipProps> = ({
   npcType,
   children,

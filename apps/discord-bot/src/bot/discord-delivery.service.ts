@@ -55,12 +55,6 @@ const notificationContent = (command: DiscordNotificationSendCommand) => {
   return `**${command.title}**\n${command.message}`;
 };
 
-/**
- * Discord deduplicates message creation by nonce for a few minutes when
- * `enforceNonce` is set, so a repeated send of the same job returns the
- * existing message instead of posting it again. Nonces are limited to 25
- * characters, so the job id is hashed.
- */
 const messageNonce = (notificationJobId: string) =>
   new Bun.CryptoHasher("sha256")
     .update(notificationJobId)
@@ -75,7 +69,6 @@ const messageOptions = (command: DiscordNotificationSendCommand) => ({
       : command.allowedMentions,
   nonce: messageNonce(command.notificationJobId),
   enforceNonce: true,
-  // Images the API drew for the message, such as a loot draw's wheel.
   files: command.files?.map(({ name, base64 }) => ({
     attachment: Buffer.from(base64, "base64"),
     name,
@@ -125,7 +118,6 @@ export interface DiscordDeliveryClient {
 }
 
 export interface DiscordDeliveryOptions {
-  /** Upper bound for one Discord SDK step; defaults to 10 seconds. */
   readonly stepTimeout?: Duration.Input;
 }
 
@@ -136,13 +128,6 @@ export const makeDiscordDelivery = (
 ) => {
   const stepTimeout = options?.stepTimeout ?? "10 seconds";
 
-  /**
-   * A lookup that times out never reached a visible side effect, so it can be
-   * repeated. A send that fails ambiguously (timeout, 5xx, reset connection)
-   * may already have produced a message, so it is reported as a permanent
-   * failure instead of risking a duplicate delivery; only a rate limited or
-   * never-connected send is retried.
-   */
   const step = <A>(
     operation: Exclude<DeliveryOperation, "publish" | "resolve-channel">,
     execute: () => Promise<A>,
@@ -257,9 +242,6 @@ export const makeDiscordDelivery = (
       return;
     }
 
-    // Structured, token-free failure context: which step failed, Discord's
-    // own code and message, and whether the API will retry. Target ids and
-    // message content stay out of the log.
     yield* Effect.logError("Failed to send Discord notification").pipe(
       Effect.annotateLogs({
         notificationJobId: command.notificationJobId,

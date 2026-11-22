@@ -73,8 +73,6 @@ const getScheduledExpirationTimeMs = ({
     receivedAtMs: notification.receivedAtMs,
   });
 
-  // An open Hero Tracker entrance ends the row when it closes, even with
-  // auto-hide off or paused by the player.
   const entranceClosesAtMs =
     "heroTracker" in notification
       ? getHeroTrackerEntranceClosesAtMs(notification)
@@ -102,7 +100,6 @@ const isNotificationVisible = ({
 
   const key = getNotificationSettingsKey(notification);
 
-  // Unlike delivery, the list hides categories it has no settings for.
   return (
     isNotificationSettingsKey(key) &&
     settings[key] !== undefined &&
@@ -127,13 +124,6 @@ const isSameInput = (
   previous.settings === next.settings &&
   previous.world === next.world;
 
-/**
- * Derives the visible list and the auto-hide schedule from the store
- * selection. The visible array keeps its identity while its members are the
- * same references in the same order, so the list and its memoized rows can
- * skip work when only unrelated store state (a paused deadline, another
- * world's notification) changed.
- */
 const selectVisibleNotifications = (
   cacheOwner: VisibleNotificationsCacheOwner,
   input: VisibleNotificationsInput,
@@ -223,9 +213,6 @@ export const useVisibleNotifications = ({
     scheduledExpirationsRef.current = scheduledExpirations;
   }, [scheduledExpirations]);
 
-  // The timer is armed for the nearest deadline only; when it fires it reads
-  // the latest schedule from the ref, so notifications arriving with later
-  // deadlines do not tear down and re-arm the timeout.
   useEffect(() => {
     if (!autoCleanup || nearestExpirationTimeMs === null) {
       return;
@@ -240,11 +227,6 @@ export const useVisibleNotifications = ({
       );
     }
 
-    // A sweep that removes nothing leaves the store untouched, so this effect
-    // does not re-run and nothing else would arm the timer again: a timeout
-    // that fires a fraction of a millisecond before its deadline, or an entry
-    // the store no longer holds, used to strand the notification on screen
-    // forever. The sweep therefore re-arms itself from the live schedule.
     function sweep() {
       const currentTimeMs = Date.now();
       const expiredNotificationIds: string[] = [];
@@ -277,10 +259,6 @@ export const useVisibleNotifications = ({
       }
     }
 
-    // Browsers throttle or freeze timeouts in a background tab, while the
-    // row's fade-out runs on wall-clock time: the player came back to an
-    // already faded, empty window that the late timeout closed only much
-    // later. Returning to the tab sweeps at once.
     function sweepWhenVisible() {
       if (document.hidden) return;
 

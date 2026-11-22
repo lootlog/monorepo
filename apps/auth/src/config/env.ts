@@ -10,7 +10,6 @@ const optionalString = (name: string) => Config.option(Config.String(name));
 
 export interface AuthConfig extends BaseServiceConfiguration {
   readonly idpTokenSecret?: Redacted.Redacted<string>;
-  /** Credential of the admin panel; without it the admin API refuses everyone. */
   readonly adminApiSecret?: Redacted.Redacted<string>;
   readonly apiUrl?: string;
   readonly apiKeysEnabled?: boolean;

@@ -17,7 +17,6 @@ import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
 import { formatNumber } from "@lootlog/domain/locale";
 
-/** Evade and block chances against an attacker of a given level. */
 export function DefenceChanceCalculator() {
   const { set } = useEquipmentSet();
   const wornItems = useWornItems();

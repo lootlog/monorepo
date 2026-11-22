@@ -19,7 +19,6 @@ type ReservationBlockProps = {
   segment: ReservationSegment;
   className?: string;
   style?: React.CSSProperties;
-  /** Without it the block is a static picture, as in a neighbouring day. */
   onSelect?: () => void;
   onCancel?: () => void;
   isCancelPending?: boolean;
@@ -49,8 +48,6 @@ export function ReservationBlock({
     onContextMenuOpenChange?.(false);
   });
 
-  // The menu stays open while a cancel is pending; the block unmounts once the
-  // reservation disappears, and the menu never reports that it closed.
   useEffect(() => () => notifyContextMenuClosedOnUnmount(), []);
   const durationMinutes = Math.round(segment.durationHours * 60);
   const showStackedTime = durationMinutes >= 45;
@@ -131,7 +128,6 @@ export function ReservationBlock({
     </button>
   );
 
-  // A static block skips the context menu, which is most of its render cost.
   if (!onSelect) return block;
 
   return (

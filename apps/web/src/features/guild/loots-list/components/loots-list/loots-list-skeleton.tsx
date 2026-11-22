@@ -13,7 +13,6 @@ type Props = {
   className?: string;
 };
 
-/** Loading placeholder tiled exactly like the loaded list. */
 export const LootsListSkeleton = ({ viewMode, className }: Props) => (
   <div
     role="status"

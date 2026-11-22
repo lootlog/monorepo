@@ -31,7 +31,6 @@ describe("MargonemRuntimeBridge", () => {
       __lootlogGameClientRuntime?: { dispose: () => void };
     } = window;
 
-    // Like the real runtime, teardown resets the bridge.
     const dispose = vi.fn<() => void>(() => margonemRuntimeBridge.cleanup());
     const writeText = vi.fn<Clipboard["writeText"]>().mockResolvedValue();
     vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
@@ -58,7 +57,6 @@ describe("MargonemRuntimeBridge", () => {
         }),
       );
       await vi.waitFor(() => expect(writeText).toHaveBeenCalledOnce());
-      // The report describes the failure, not the reset bridge after teardown.
       expect(writeText.mock.calls[0]?.[0]).toContain(
         "reason=fatal:missing-inbound-seam",
       );
@@ -386,7 +384,6 @@ describe("MargonemRuntimeBridge", () => {
 
   it("reports a loot accept command to command observers without touching the request, even when one throws", () => {
     runtimeWindow.successData = vi.fn<RuntimeFunction>();
-    // NI `Loot.finalize` passes a callback that closes the loot window.
     const callback = vi.fn<() => void>();
     const receiver = { request: true };
     const command = "loot&want=1200653658&not=&must=1200653660&final=1";

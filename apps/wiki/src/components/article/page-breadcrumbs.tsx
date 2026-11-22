@@ -12,7 +12,6 @@ import { t } from "@/i18n/messages";
 
 export type PageBreadcrumb = { label: string; link?: LinkOptions };
 
-/** Where an article sits in the wiki, from the home page to itself. */
 export function PageBreadcrumbs({
   items,
 }: {

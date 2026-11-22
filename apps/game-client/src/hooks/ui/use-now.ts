@@ -8,7 +8,6 @@ type Clock = {
   syncVisibility: () => void;
 };
 
-/** One interval per period, shared by every caller of that period. */
 const clocks = new Map<number, Clock>();
 
 const publish = (clock: Clock) => {
@@ -28,8 +27,6 @@ const createClock = (periodMs: number): Clock => {
   const clock: Clock = {
     listeners: new Set(),
     interval: null,
-    // A hidden document draws nothing, so its clock stops and catches up
-    // once shown again.
     syncVisibility: () => {
       if (document.hidden) {
         stop(clock);
@@ -73,12 +70,6 @@ const subscribe = (periodMs: number, listener: ClockListener) => {
   };
 };
 
-/**
- * The current epoch time, refreshed every `periodMs` while `enabled` and the
- * document is visible. Callers of one period share one interval and tick in
- * the same task, so they render together. Pick the coarsest period the shown
- * time needs: every tick re-renders the caller.
- */
 export const useNow = (periodMs: number, enabled = true): number => {
   const [now, setNow] = useState(Date.now);
 

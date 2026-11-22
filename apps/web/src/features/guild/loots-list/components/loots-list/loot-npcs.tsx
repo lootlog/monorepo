@@ -21,11 +21,9 @@ export type LootNpcsProps = {
   npcs: LootNpc[];
   className?: string;
   showIcon?: boolean;
-  /** `lg` is the details dialog title; cards and feed rows use `sm`. */
   size?: "sm" | "lg";
 };
 
-// NPC types that get special badges
 const SPECIAL_NPC_TYPES = ["TITAN", "COLOSSUS", "HERO", "EVENT_HERO"] as const;
 
 type SpecialNpcType = (typeof SPECIAL_NPC_TYPES)[number];
@@ -41,7 +39,6 @@ export const LootNpcs: FC<LootNpcsProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // The strongest NPC names the loot, as in statistics and the activity feed.
   const sortedNpcs = [...npcs].sort((left, right) =>
     compareNpcsStrongestFirst(
       { ...left, npcId: left.id },

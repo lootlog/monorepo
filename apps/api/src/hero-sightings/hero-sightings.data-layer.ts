@@ -62,13 +62,10 @@ import {
   toHeroSightingsDataFailure,
 } from "./hero-sighting-errors.js";
 
-/** A detector answer reaches the API within seconds; older ones are replays. */
 const MAX_OBSERVATION_AGE_MS = 15 * 60 * 1000;
 
-/** How late a kill can reach the API after the game client saw it. */
 const KILL_REPORT_DELAY_MS = 2 * 60 * 1000;
 
-/** How long a hero's last sighting stays on the board after it closed. */
 const BOARD_CLOSED_RETENTION_MS = 24 * 60 * 60 * 1000;
 
 export interface HeroSightingPorts {
@@ -103,10 +100,6 @@ const publishAll = (
   sightings: ReadonlyArray<HeroSightingResponse>,
 ) => Effect.forEach(sightings, ports.publish, { discard: true });
 
-/**
- * Keeps the newest sightings of a hero. The current one is always the newest
- * row, so it is never pruned.
- */
 const pruneHeroSightings = Effect.fnUntraced(function* (
   transaction: Pick<Database, "select" | "delete">,
   scope: HeroSightingScope,
@@ -135,7 +128,6 @@ const getObservedAt = (observedAt: string, now: number) => {
       new InvalidRequestError({ code: "HERO_SIGHTING_TOO_OLD" }),
     );
 
-  // A reporter's clock may run ahead; nothing is detected in the future.
   return Effect.succeed(new Date(Math.min(time, now)));
 };
 
@@ -144,7 +136,6 @@ type HeroIdentity = Pick<
   "heroName" | "heroLvl" | "heroProf"
 >;
 
-/** Where a hero was placed, by a detector answer or by a Member's hand. */
 type Detection = Pick<
   CreateHeroSightingRequest,
   "state" | "mapName" | "actorCharacter"
@@ -154,10 +145,6 @@ type Detection = Pick<
   readonly manual: boolean;
 };
 
-/**
- * Applies one detection to an Organization's sightings of the hero and
- * returns the current sighting and every sighting it changed.
- */
 const recordDetection = Effect.fnUntraced(function* (
   transaction: Transaction,
   options: {
@@ -216,8 +203,6 @@ const recordDetection = Effect.fnUntraced(function* (
           state: payload.state,
           spawnedAt: observedAt,
         }),
-        // A detector answer is the game's word: it confirms a sighting that
-        // was entered by hand.
         ...(!payload.manual && { manual: false }),
         updatedAt: now,
       })
@@ -274,7 +259,6 @@ const recordDetection = Effect.fnUntraced(function* (
   return { currentId, changedIds: [...changedIds, currentId] };
 });
 
-/** Records a detection in one Organization and tells its clients. */
 const makeGuildSightingWriter =
   (database: Database, ports: HeroSightingPorts) =>
   (
@@ -292,8 +276,6 @@ const makeGuildSightingWriter =
 
       const changed = yield* loadHeroSightings(database, result.changedIds);
 
-      // The current sighting is published even when unchanged, so a retry of
-      // a request whose publication failed still reaches every client.
       yield* publishAll(ports, changed);
 
       const current = changed.find(({ id }) => id === result.currentId);
@@ -331,8 +313,6 @@ export const makeCreateHeroSighting = (
 
     const heroKey = getHeroSightingKey(payload.hero.name);
 
-    // The response follows read visibility: writing to an Organization does
-    // not let a role outside the hero's level range read its sighting there.
     const [guildRows, catchingGuildIds, readers] = yield* Effect.all(
       [
         selectAccessibleGuilds(database, identity.discordId, [
@@ -431,7 +411,6 @@ export const makeCreateHeroSighting = (
     );
 };
 
-/** The latest sighting of each hero: the current one, or the last closed one for a day. */
 const readBoard = Effect.fnUntraced(function* (
   database: Database,
   guildIds: ReadonlyArray<string>,
@@ -557,7 +536,6 @@ export const makeHeroSightingReads = (database: Database) => {
 const notFound = () =>
   new HeroSightingsNotFound({ status: 404, code: "HERO_SIGHTING_NOT_FOUND" });
 
-/** A sighting of this Organization the caller can see, or not found. */
 const loadVisibleSighting = Effect.fnUntraced(function* (
   database: Pick<Database, "select">,
   access: HeroSightingsGuildAccess,
@@ -579,7 +557,6 @@ export const makeHeroSightingClaims = (
   database: Database,
   ports: Pick<HeroSightingPorts, "publish">,
 ) => {
-  /** Reloads a sighting whose claims changed and tells its clients. */
   const publishCurrent = Effect.fnUntraced(function* (sightingId: number) {
     const [updated] = yield* loadHeroSightings(database, [sightingId]);
 
@@ -609,7 +586,6 @@ export const makeHeroSightingClaims = (
           payload.actorCharacter,
         );
 
-        // A repeated declaration keeps the first one and its time.
         yield* transaction
           .insert(heroSightingClaimTable)
           .values({
@@ -661,12 +637,6 @@ export const makeHeroSightingClaims = (
 
 const typedName = (name: string) => name.trim().replace(/\s+/g, " ");
 
-/**
- * Sightings a Member enters by hand, for a detector used outside Lootlog. A
- * typed name can differ from the game's spelling, so a hero and a map the
- * Organization already recorded keep their recorded spelling: a differently
- * typed map would otherwise read as the hero having moved.
- */
 export const makeManualHeroSightings = (
   database: Database,
   ports: HeroSightingPorts,
@@ -697,7 +667,6 @@ export const makeManualHeroSightings = (
 
     const [latest] = known;
 
-    // A typed level must not move a known hero into another role's range.
     const hero: HeroIdentity = latest
       ? {
           heroName: latest.heroName,
@@ -749,8 +718,6 @@ export const makeManualHeroSightings = (
 
     const now = new Date(yield* Clock.currentTimeMillis);
 
-    // Under the hero's lock, so a detection confirming the sighting at the
-    // same moment either makes it unwithdrawable or opens a new one after.
     const withdrawn = yield* ports.withLock(
       buildHeroSightingLockKey({
         guildId: sighting.guildId,
@@ -796,10 +763,6 @@ export const makeManualHeroSightings = (
   };
 };
 
-/**
- * Closes the current sighting of a hero Lootlog saw killed. Runs inside the
- * writer of the kill, and returns the closed sighting for publication.
- */
 export const closeKilledHeroSighting = Effect.fnUntraced(function* (
   transaction: Pick<Database, "update">,
   options: {
@@ -824,8 +787,6 @@ export const closeKilledHeroSighting = Effect.fnUntraced(function* (
           heroKey: getHeroSightingKey(options.heroName),
         }),
         isNull(heroSightingTable.closedAt),
-        // A detected spawn may have appeared and been killed unseen, but one
-        // detected just before the kill report is the hero's next spawn.
         or(
           eq(heroSightingTable.state, HeroSightingState.ROAMING),
           lte(

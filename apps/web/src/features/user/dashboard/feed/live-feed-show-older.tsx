@@ -5,12 +5,10 @@ import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
 
 type Props = {
   expanded: boolean;
-  /** Events past the first few, folded while collapsed. */
   hiddenCount: number;
   onToggle: () => void;
 };
 
-/** The feed's last tile: unfolds older events, or folds them back. */
 export function LiveFeedShowOlder({ expanded, hiddenCount, onToggle }: Props) {
   const { t } = useTranslation();
 

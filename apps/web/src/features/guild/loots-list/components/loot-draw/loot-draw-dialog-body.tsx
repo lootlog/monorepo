@@ -14,11 +14,6 @@ import { LootDrawHistory } from "./loot-draw-history";
 import { LootDrawResult } from "./loot-draw-result";
 import { useLootDraws } from "./use-loot-draws";
 
-/**
- * The open draw dialog's header and body: the item's standing result, or the
- * editor to run one, then its voided results. It mounts only while the
- * dialog shows, so a closed dialog reads no draws.
- */
 export const LootDrawDialogBody = ({
   loot,
   item,
@@ -29,18 +24,13 @@ export const LootDrawDialogBody = ({
   loot: Loot;
   item: Item;
   canVoid: boolean;
-  /** False once the Organization excludes the item's NPC type. */
   canDraw: boolean;
-  /** Takes the dialog's initial focus. */
   bodyRef: RefObject<HTMLDivElement | null>;
 }) => {
   const { t } = useTranslation();
   const draws = useLootDraws(loot.id);
   const reducedMotion = usePrefersReducedMotion();
-  // The draw this viewer just ran spins; any other result is shown at rest.
   const [spunDrawId, setSpunDrawId] = useState<number | null>(null);
-  // While a spin runs, the body keeps the editor's height so nothing moves
-  // under the wheel; once the winner shows, the dialog eases down to the result.
   const [lockedHeight, setLockedHeight] = useState<number | null>(null);
   const { data, isLoading, isError, isFetching, refetch } = draws.drawsQuery;
   const itemDraws = (data ?? []).filter(({ itemHid }) => itemHid === item.hid);
@@ -109,7 +99,6 @@ export const LootDrawDialogBody = ({
             onDrawn={(draw) => {
               setSpunDrawId(draw.id);
 
-              // Without motion the result shows at once, with no spin to wait for.
               if (reducedMotion) setLockedHeight(null);
             }}
           />

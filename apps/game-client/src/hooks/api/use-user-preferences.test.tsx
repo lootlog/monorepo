@@ -187,11 +187,9 @@ describe("useUpdateUserPreferences", () => {
       }));
     });
 
-    // The second updater saw the first one's optimistic value.
     expect(readHiddenGuildIds()).toEqual(["guild-1", "guild-2"]);
     await waitFor(() => expect(respond).toHaveBeenCalledTimes(1));
 
-    // The first response predates the queued update and must not undo it.
     firstDeferred.resolve({ ...previousData, hiddenGuildIds: ["guild-1"] });
     await waitFor(() => expect(respond).toHaveBeenCalledTimes(2));
     expect(readHiddenGuildIds()).toEqual(["guild-1", "guild-2"]);
@@ -275,7 +273,6 @@ describe("useUpdateUserPreferences", () => {
     });
 
     expect(result.current.isSuccess).toBe(true);
-    // The response is the full document: no refetch may follow the save.
     expect(
       queryClient.getQueryState(
         UsersModule.getUsersControllerGetUserPreferencesQueryKey(),

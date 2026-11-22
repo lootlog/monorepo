@@ -392,7 +392,6 @@ describe("map ping coordinates", () => {
     expect(added).toEqual([]);
     expect(unsubscribe).toHaveBeenCalledOnce();
 
-    // A character this client never saw still shows the tile marker.
     controller.addOptimistic({ x: 12, y: 9 }, 42, "Me", "enemy", "Wróg", {
       kind: "player",
       id: 77,

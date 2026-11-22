@@ -1,10 +1,3 @@
-/**
- * Władca Czasu: a clock face on the ground under the feet whose hand jumps from mark to
- * mark, brass gears turning behind the shoulders in notches, and echoes of the character
- * where it stood a moment ago. Its burst stops time: the hand winds up, the whole map
- * loses its colour and everything the aura moves stands still, the hand running backwards,
- * until time snaps back.
- */
 import { smoothstep, rgba, TAU, type Rgb } from "./math";
 import {
   pixelEllipse,
@@ -28,15 +21,12 @@ const BRASS: Rgb = [214, 160, 70];
 
 const BRASS_DARK: Rgb = [116, 76, 26];
 
-/** Time stands still between these fractions of the burst. */
 export const STOP_FROM = 0.12;
 
 export const STOP_TO = 0.85;
 
-/** How long the burst runs, s; the renderer's `BURST_DURATION` takes it from here. */
 export const TIMESTOP_LENGTH = 2.6;
 
-/** How still time stands, 0..1, at `burst` (0..1, -1 resting). */
 export function stillness(burst: number): number {
   if (burst < 0) return 0;
 
@@ -46,12 +36,8 @@ export function stillness(burst: number): number {
   );
 }
 
-// --- the clock ----------------------------------------------------------------------------------
-
-/** Seconds the long hand takes round the face: one mark a second. */
 const HAND_TURN = 12;
 
-/** A point on the face lying on the ground: `reach` 0..1 from its centre along `angle`. */
 function onFace(
   cx: number,
   cy: number,
@@ -63,10 +49,6 @@ function onFace(
   return [cx + Math.cos(angle) * rx * reach, cy + Math.sin(angle) * ry * reach];
 }
 
-/**
- * The clock face under the feet. `clock` is the aura's time, held while time stands
- * still; `burst` winds the hand up before the stop and runs it backwards during it.
- */
 export function drawClockFace(
   b: Brush,
   place: AuraPlacement,
@@ -104,11 +86,9 @@ export function drawClockFace(
     pixelLine(lit, x0, y0, x1, y1, quarter ? BRASS_LIGHT : BRASS, a, a);
   }
 
-  // The long hand lands on a mark each second, a touch past it on the first tick.
   const whole = Math.floor(clock);
   const kick = clock - whole < 0.15 ? 0.2 : 0;
 
-  // Wound up before the stop, then back a mark every third of a second.
   const windUp =
     burst >= 0 && burst < STOP_FROM ? (burst / STOP_FROM) ** 2 * 14 : 0;
 
@@ -125,12 +105,8 @@ export function drawClockFace(
   plot(lit, cx, cy, WHITE, a);
 }
 
-// --- the gears ----------------------------------------------------------------------------------
-
-/** Notches a gear turns by each second, so it moves like clockwork, not like a wheel. */
 const NOTCHES = 5;
 
-/** A brass gear of `teeth` teeth round (`x`, `y`), turned to `angle`. */
 function drawGear(
   b: Brush,
   x: number,
@@ -147,10 +123,8 @@ function drawGear(
     const at = (i / count) * TAU;
     const cos = Math.cos(at);
     const sin = Math.sin(at);
-    // Teeth: every other stretch of the rim stands two pixels proud.
     const tooth = Math.floor(((at - angle) / TAU) * teeth * 2 + 1000) % 2 === 0;
 
-    // Lit from the upper left.
     const color =
       cos + sin < -0.5 ? BRASS_LIGHT : cos + sin > 0.9 ? BRASS_DARK : BRASS;
 
@@ -182,7 +156,6 @@ function drawGear(
   plot(b.lit(), x - 1, y - 1, BRASS_LIGHT, 0.5 * a);
 }
 
-/** The gears behind the shoulders, hung on the spring so they trail a walk. */
 export function drawGears(b: Brush, place: AuraPlacement, clock: number): void {
   const { bounds } = place.silhouette;
   const a = b.intensity;
@@ -192,7 +165,6 @@ export function drawGears(b: Brush, place: AuraPlacement, clock: number): void {
   const bigX = Math.round(cx + bounds.w / 2 + 7);
   const bigY = Math.round(top + bounds.h * 0.22);
   drawGear(b, bigX, bigY, 9, 10, turn, a);
-  // A small one meshed with it, turning the other way.
   drawGear(
     b,
     Math.round(bigX + Math.cos(-0.9) * 15),
@@ -213,33 +185,22 @@ export function drawGears(b: Brush, place: AuraPlacement, clock: number): void {
   );
 }
 
-// --- the echoes ---------------------------------------------------------------------------------
-
-/** Where the character stood at one of the last ticks, on the map. */
 export interface TrailStep {
   x: number;
   y: number;
   silhouette: AuraSilhouette;
 }
 
-/** How many ticks of the walk an aura keeps, newest first. */
 export const TRAIL_STEPS = 7;
 
-/** Further than a walk can leave an echo, px: the character was moved, not walking. */
 const ECHO_REACH = 140;
 
-/** Which ticks back the echoes stand, and how strong each is. */
 const ECHOES = [
   [2, 0.4],
   [4, 0.26],
   [6, 0.14],
 ] as const;
 
-/**
- * The character's echoes where it stood a moment ago, straight onto the map behind it:
- * one blit of its tinted shape each. While time stands still (`still`, 0..1) two more
- * part from it sideways, so a standing character shows them too.
- */
 export function drawTimeEchoes(
   ctx: CanvasRenderingContext2D,
   place: AuraPlacement,
@@ -261,7 +222,6 @@ export function drawTimeEchoes(
 
     const away = Math.hypot(x - place.x, y - place.y);
 
-    // Standing still, the echoes are all behind the character; after a teleport there are none.
     if (away < 2 || away > ECHO_REACH) continue;
     const image = tintedSilhouette(step.silhouette, color);
 
@@ -290,15 +250,8 @@ export function drawTimeEchoes(
   }
 }
 
-// --- time standing still over the map -----------------------------------------------------------
-
 const GREY: Rgb = [128, 128, 128];
 
-/**
- * The stop over the whole map: its colour drains away, a dial as wide as the screen
- * opens round the character with its hand running backwards, and a wave rolls out when
- * time snaps back. Nothing is drawn between bursts.
- */
 export function drawTimeStop(scene: MapScene): void {
   const { ctx, width, height, burst, x, feetY, light, mid } = scene;
 
@@ -306,9 +259,6 @@ export function drawTimeStop(scene: MapScene): void {
   const still = stillness(burst);
 
   if (still > 0) {
-    // The one who stopped time keeps their colour. A grey source keeps the map's light
-    // and hue but takes its saturation; drawn by the CPU that blend costs ten times a
-    // plain fill over the whole screen, so there the map fades into grey instead.
     if (hasGraphicsAcceleration())
       washAround(scene, GREY, 0.92 * still, 36, 90, "saturation");
     else washAround(scene, GREY, 0.6 * still, 36, 90);
@@ -365,9 +315,6 @@ export function drawTimeStop(scene: MapScene): void {
   wash(scene, light, 0.22 * (1 - release) ** 3, "lighter");
 }
 
-// --- the tooltip --------------------------------------------------------------------------------
-
-/** A small clock standing on the middle of the top edge, its hand ticking round. */
 export function drawTipClock({ b, L, T, W, light, mid, a }: TipFrame): void {
   const lit = b.lit();
   const cx = Math.round(L + W / 2);
@@ -411,7 +358,6 @@ export function drawTipClock({ b, L, T, W, light, mid, a }: TipFrame): void {
   );
 }
 
-/** A gear turning half behind the bottom right corner. */
 export function drawTipGear({ b, R, B, a }: TipFrame): void {
   drawGear(
     b,

@@ -53,7 +53,6 @@ type ItemTileDetailsProps = {
   type: string;
 };
 
-/** An item's header and stats, as its tooltip shows them and a page can too. */
 export const ItemTileDetails: FC<ItemTileDetailsProps> = ({
   color,
   icon,

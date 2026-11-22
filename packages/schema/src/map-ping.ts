@@ -7,7 +7,6 @@ export type MapPingType = (typeof MAP_PING_TYPES)[number];
 
 const MapPingTypeSchema = Schema.Literals(MAP_PING_TYPES);
 
-/** Margonem NPC and character ids are positive 32-bit integers. */
 const MapPingCharacterIdSchema = Schema.Int.check(
   Schema.isBetween({ minimum: 1, maximum: 2_147_483_647 }),
 );
@@ -27,9 +26,7 @@ export interface MapPingSendPayload {
   type: MapPingType;
   x: number;
   y: number;
-  /** The NPC the ping targets. Older gateways and clients ignore it. */
   npcId?: number;
-  /** The player the ping targets. Older gateways and clients ignore it. */
   playerId?: number;
 }
 

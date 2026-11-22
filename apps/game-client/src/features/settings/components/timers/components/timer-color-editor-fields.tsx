@@ -10,16 +10,10 @@ type TimerColorEditorFieldsProps = {
   idPrefix: string;
   draft: ColorEditData;
   defaultColorId?: string;
-  /** Live update for previews; nothing is persisted yet. */
   onDraftChange: (draft: ColorEditData) => void;
-  /** Persist the draft once a field is done editing. */
   onCommit: (draft: ColorEditData) => void;
 };
 
-/**
- * Name, border, background, transparency and a live sample of one timer
- * colour. Shared by the editor of an existing colour and the add form.
- */
 export const TimerColorEditorFields: FC<TimerColorEditorFieldsProps> = ({
   defaultColorId,
   idPrefix,

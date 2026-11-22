@@ -11,14 +11,11 @@ import { useTranslation } from "react-i18next";
 type BattleOpponentsSectionProps = {
   records: HeadToHeadRecord[];
   isLoading: boolean;
-  /** The full list of opponents. */
   allOpponentsLink: LinkProps;
-  /** The head-to-head page with one opponent. */
   getOpponentLink: (opponentId: string) => LinkProps;
   rated?: boolean;
 };
 
-/** The opponents fought most often, each opening the head-to-head with them. */
 export function BattleOpponentsSection({
   records,
   isLoading,

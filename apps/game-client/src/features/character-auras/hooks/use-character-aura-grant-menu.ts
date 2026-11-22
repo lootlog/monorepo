@@ -14,19 +14,12 @@ import { wrapOtherMenu } from "@/lib/margonem-runtime/adapters/other-menu-runtim
 import { useGlobalStore } from "@/store/global.store";
 import { useOwnCharacterAura } from "./use-own-character-aura";
 
-/**
- * Lets an aura admin grant or revoke auras from another player's menu on
- * the map: auras in general, and each personal aura by name. Revoking takes
- * every grant at once. The menu changes only for admins; everyone else runs
- * nothing.
- */
 export const useCharacterAuraGrantMenu = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: own } = useOwnCharacterAura();
   const canGrant = own?.canGrant ?? false;
 
-  // The menu hook exists once the game has loaded its others.
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
@@ -38,7 +31,6 @@ export const useCharacterAuraGrantMenu = () => {
       try {
         await request();
         showRuntimeMessage(done);
-        // A revoked aura leaves the map now instead of on the next refresh.
         await queryClient.invalidateQueries({
           queryKey: getCharacterAurasControllerGetAurasQueryKey(),
         });

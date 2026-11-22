@@ -1,4 +1,3 @@
-/** Transport schemas owned by the public-battles HTTP module. */
 import * as Schema from "effect/Schema";
 import {
   BattleRawResponseDto_Output,

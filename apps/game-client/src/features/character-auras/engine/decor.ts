@@ -1,7 +1,3 @@
-/**
- * Signature pieces drawn around a character or a tooltip box: the newer auras' effects and
- * the per-aura tooltip decorations, all in pixels on the renderer's layer buffers.
- */
 import { clamp } from "es-toolkit";
 import { hslToRgb, noise1, ramp, TAU, type Rgb } from "./math";
 import {
@@ -20,22 +16,17 @@ import { drawTipBrackets, drawTipRain } from "./glitch";
 import { drawTipSnow } from "./winter";
 import type { TipDeco } from "./presets/preset";
 
-/** What a decoration draws with: the layer buffers, the stepped clock and the aura's colours. */
 export interface Brush {
-  /** Additive layer, for light; reaching for it marks it drawn. */
   lit: () => CanvasRenderingContext2D;
-  /** Covering layer, for opaque things (petals, bone, vines). */
   dim: () => CanvasRenderingContext2D;
   time: number;
   tick: number;
   tones: readonly [Rgb, Rgb, Rgb];
   palette: readonly Rgb[];
   intensity: number;
-  /** How far spring-hung props trail the head, px. */
   lag: { x: number; y: number };
 }
 
-/** Screen box of the shape: a character's opaque bounds or a tooltip's frame. */
 export interface Box {
   x: number;
   y: number;
@@ -43,7 +34,6 @@ export interface Box {
   h: number;
 }
 
-/** Pixel sprites: one character per pixel, mapped through a palette; spaces are empty. */
 export function sprite(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -81,7 +71,6 @@ const CLOUD = [
   "   ###  ####  ###    ",
 ];
 
-/** Storm: a small dark cloud over the head, lit from inside when lightning flashes. */
 export function drawCloud(
   b: Brush,
   at: { x: number; y: number },
@@ -96,7 +85,6 @@ export function drawCloud(
     { "#": lit ? [190, 200, 230] : [64, 70, 92] },
     0.95 * b.intensity,
   );
-  // A lighter top edge: the same sprite's first rows, one pixel up.
   sprite(
     b.dim(),
     at.x,
@@ -107,9 +95,6 @@ export function drawCloud(
   );
 }
 
-// --- character effects --------------------------------------------------------------------------
-
-/** Aurora: curtains of light waving behind the character, bright on top, fading downwards. */
 export function drawCurtain(
   b: Brush,
   cx: number,
@@ -136,7 +121,6 @@ export function drawCurtain(
 
     for (let j = 0; j < length; j += 2) {
       const fall = 1 - j / length;
-      // The curtain's hem swings behind a walk, like cloth hung from the top.
       const sway = b.lag.x * 1.2 * (j / length);
       plot(
         b.lit(),
@@ -149,7 +133,6 @@ export function drawCurtain(
   }
 }
 
-/** Necromancy: two skulls bobbing round the shoulders, passing behind and in front. */
 export function drawSkulls(b: Brush, box: Box, front: boolean): void {
   const cx = box.x + box.w / 2;
   const cy = box.y + 2;
@@ -161,7 +144,6 @@ export function drawSkulls(b: Brush, box: Box, front: boolean): void {
     const angle = b.time * 0.7 + i * Math.PI;
 
     if (Math.sin(angle) > 0 !== front) continue;
-    // Each skull hangs on the spring a little looser than the last, so they trail a walk apart.
     const slack = 1 + i * 0.6;
     const x = cx + Math.cos(angle) * rx + b.lag.x * slack;
 
@@ -182,7 +164,6 @@ export function drawSkulls(b: Brush, box: Box, front: boolean): void {
   }
 }
 
-/** Arcane: four runes circling the chest on a tilted ring. */
 export function drawGlyphOrbit(b: Brush, box: Box, front: boolean): void {
   const cx = box.x + box.w / 2;
   const cy = box.y + box.h * 0.5;
@@ -194,7 +175,6 @@ export function drawGlyphOrbit(b: Brush, box: Box, front: boolean): void {
     const depth = Math.sin(angle);
 
     if (depth > 0 !== front) continue;
-    // Runes trail on the spring by how far round the ring they are, fanning out on a walk.
     const slack = 0.6 + i * 0.35;
     const x = Math.round(cx + Math.cos(angle) * rx + b.lag.x * slack);
     const y = Math.round(cy + depth * ry + b.lag.y * slack);
@@ -206,7 +186,6 @@ export function drawGlyphOrbit(b: Brush, box: Box, front: boolean): void {
   }
 }
 
-/** Sandstorm: dashed streaks of sand circling the body at three heights. */
 export function drawDustSwirl(b: Brush, box: Box, front: boolean): void {
   const cx = box.x + box.w / 2;
 
@@ -234,7 +213,6 @@ export function drawDustSwirl(b: Brush, box: Box, front: boolean): void {
   }
 }
 
-/** Ghosts for the necromancy burst: three souls rising from the ground at staggered starts. */
 export function drawSouls(
   b: Brush,
   feetX: number,
@@ -263,12 +241,8 @@ export function drawSouls(
   }
 }
 
-// --- tooltip decorations --------------------------------------------------------------------------
-
-/** A corner of the tooltip box and the direction pointing out of it. */
 type BoxCorner = [x: number, y: number, sx: number, sy: number];
 
-/** One tooltip decoration frame: the brush, the box edges and the aura's tones. */
 export interface TipFrame {
   b: Brush;
   deco: TipDeco;
@@ -276,7 +250,6 @@ export interface TipFrame {
   T: number;
   W: number;
   H: number;
-  /** Right and bottom pixel columns of the box. */
   R: number;
   B: number;
   corners: BoxCorner[];
@@ -287,7 +260,6 @@ export interface TipFrame {
   boost: number;
 }
 
-/** Gold diamonds on the corners, glinting in turn. */
 function drawGemCorners({ b, corners, light, mid, a }: TipFrame): void {
   for (const [i, [x, y, sx, sy]] of corners.entries()) {
     const cx = x + sx * 2;
@@ -310,7 +282,6 @@ function drawGemCorners({ b, corners, light, mid, a }: TipFrame): void {
   }
 }
 
-/** Gold diamonds on the corners and a small cross over the top edge. */
 function drawHolyCorners(frame: TipFrame): void {
   const { b, L, T, W, light, mid, a } = frame;
   drawGemCorners(frame);
@@ -321,7 +292,6 @@ function drawHolyCorners(frame: TipFrame): void {
   for (let i = -2; i <= 2; i++) plot(b.lit(), L + W / 2 + i, T - 7, light, a);
 }
 
-/** Icicles of varied length hanging off the bottom edge, growing and melting slowly. */
 function drawIcicles({ b, L, R, B, light, mid, dark, a }: TipFrame): void {
   for (let x = L + 3, i = 0; x < R - 2; x += 6, i++) {
     const length = Math.round(
@@ -340,7 +310,6 @@ function drawIcicles({ b, L, R, B, light, mid, dark, a }: TipFrame): void {
   }
 }
 
-/** Dark tendrils creeping out of each corner, curling with the clock. */
 function drawTendrils({ b, corners, light, a }: TipFrame): void {
   for (const [i, [x, y, sx, sy]] of corners.entries()) {
     for (const spread of [-0.6, 0.6]) {
@@ -360,7 +329,6 @@ function drawTendrils({ b, corners, light, a }: TipFrame): void {
   }
 }
 
-/** A zigzag spark jumps off a corner every few ticks. */
 function drawBoltCorners({ b, corners, light, a }: TipFrame): void {
   for (const [i, [x, y, sx, sy]] of corners.entries()) {
     if ((b.tick + i * 4) % 9 > 1) continue;
@@ -386,7 +354,6 @@ function drawBoltCorners({ b, corners, light, a }: TipFrame): void {
   }
 }
 
-/** Beads swelling under the bottom edge before they fall (the falling drops are particles). */
 function drawDrips({ b, deco, L, R, B, mid, a }: TipFrame): void {
   const color = deco === "drips" ? mid : (b.palette[1] ?? mid);
 
@@ -399,7 +366,6 @@ function drawDrips({ b, deco, L, R, B, mid, a }: TipFrame): void {
   }
 }
 
-/** Stars just outside the frame, joined by faint lines; each twinkles on its own beat. */
 function drawConstellation({
   b,
   L,
@@ -454,7 +420,6 @@ function drawPrismCorners({ b, corners, a }: TipFrame): void {
   }
 }
 
-/** A vine along the top edge and down the left one, leaves nodding a pixel each few ticks. */
 function drawVines({ b, L, T, R, B, light, mid, a }: TipFrame): void {
   const path: [number, number, number, number][] = [];
 
@@ -485,7 +450,6 @@ function drawVines({ b, L, T, R, B, light, mid, a }: TipFrame): void {
   }
 }
 
-/** Cherry branches reaching in over the top corners, blossoms swaying a pixel. */
 function drawBlossoms({ b, L, T, R, mid, a }: TipFrame): void {
   for (const [x, sx] of [
     [L, -1],
@@ -515,7 +479,6 @@ function drawBlossoms({ b, L, T, R, mid, a }: TipFrame): void {
   }
 }
 
-/** Streaks of sand blowing across the top edge, left to right. */
 function drawSand({ b, L, T, W, light, mid, a }: TipFrame): void {
   for (let k = 0; k < 5; k++) {
     const x = L - 10 + ((b.time * 60 + k * 37) % (W + 20));
@@ -542,7 +505,6 @@ function drawSkullCorners({ b, corners, mid, a }: TipFrame): void {
   }
 }
 
-/** A rolling wave along the bottom edge, white foam on the crests. */
 function drawWaves({ b, L, R, B, light, mid, dark, a }: TipFrame): void {
   for (let x = L - 2; x <= R + 2; x++) {
     const phase = x * 0.3 - b.time * 4;
@@ -553,7 +515,6 @@ function drawWaves({ b, L, R, B, light, mid, dark, a }: TipFrame): void {
   }
 }
 
-/** Runes travelling round the frame, a little outside it. */
 function drawSigils({ b, L, T, W, H, R, B, light, mid, a }: TipFrame): void {
   const perimeter = 2 * (W + H);
 
@@ -573,7 +534,6 @@ function drawSigils({ b, L, T, W, H, R, B, light, mid, a }: TipFrame): void {
   }
 }
 
-/** Cracks splitting from each corner, glowing red on the pulse, black between. */
 function drawCracks({ b, corners, light, a }: TipFrame): void {
   const glowing = b.tick % 7 < 3;
 
@@ -603,7 +563,6 @@ function drawCracks({ b, corners, light, a }: TipFrame): void {
   }
 }
 
-/** A thin silver ring floating over the middle of the top edge, glinting now and then. */
 function drawTipHalo({ b, L, T, W, light, mid, a }: TipFrame): void {
   const x = Math.round(L + W / 2);
   const y = T - 6 - (b.tick % 16 < 8 ? 0 : 1);
@@ -614,7 +573,6 @@ function drawTipHalo({ b, L, T, W, light, mid, a }: TipFrame): void {
     pixelGlint(b.lit(), x + 9, y, 2, [255, 255, 255], light, a);
 }
 
-/** A small gold crown on the middle of the top edge, a glint running along its points. */
 function drawTipCrown({ b, L, T, W, light, mid, dark, a }: TipFrame): void {
   const x = Math.round(L + W / 2) - 4;
   const y = T - 6;
@@ -635,7 +593,6 @@ function drawTipCrown({ b, L, T, W, light, mid, dark, a }: TipFrame): void {
     pixelGlint(b.lit(), x + glint * 4, y, 1, [255, 255, 255], light, a);
 }
 
-/** Small dark wings off both sides of the box, beating slowly. */
 function drawTipWings({ b, L, T, R, light, mid, a }: TipFrame): void {
   const lift = b.tick % 12 < 6 ? 0 : 2;
 
@@ -652,7 +609,6 @@ function drawTipWings({ b, L, T, R, light, mid, a }: TipFrame): void {
   }
 }
 
-/** Pixel hearts on the corners, beating in turn. */
 function drawTipHearts({ b, corners, light, mid, a }: TipFrame): void {
   for (const [i, [x, y, sx, sy]] of corners.entries()) {
     const big = (b.tick + i * 3) % 12 < 2;
@@ -677,7 +633,6 @@ function drawTipHearts({ b, corners, light, mid, a }: TipFrame): void {
   }
 }
 
-/** Heavenly Dragon: a cloud drifting under each bottom corner of the box. */
 function drawTipClouds({ b, L, R, B }: TipFrame): void {
   drawClouds(b, L + 8, B + 3, 9);
   drawClouds(b, R - 8, B + 3, 9);
@@ -687,10 +642,6 @@ function drawTipCurtain({ b, L, T, W, boost }: TipFrame): void {
   drawCurtain(b, L + W / 2, T - 24, W / 2 + 6, 26, boost);
 }
 
-/**
- * How each decoration draws and on which pass: `front` decorations may overlap the box,
- * the others sit behind it. Embers are all particles, so their tip draws nothing here.
- */
 const TIP_DECO_PAINTERS: Record<
   TipDeco,
   readonly { front: boolean; draw: (frame: TipFrame) => void }[]
@@ -717,7 +668,6 @@ const TIP_DECO_PAINTERS: Record<
   crown: [{ front: true, draw: drawTipCrown }],
   wings: [{ front: true, draw: drawTipWings }],
   hearts: [{ front: true, draw: drawTipHearts }],
-  // Admin auras layer two decorations each.
   regal: [
     { front: true, draw: drawTipCrown },
     { front: true, draw: drawGemCorners },
@@ -767,7 +717,6 @@ const TIP_DECO_PAINTERS: Record<
   ],
 };
 
-/** The aura's own dressing round a tooltip box; `front` draws what may overlap the box. */
 export function drawTipDeco(
   b: Brush,
   deco: TipDeco,
@@ -810,7 +759,6 @@ export function drawTipDeco(
   for (const painter of painters) painter.draw(frame);
 }
 
-/** The arcane circle: two rings, a turning pentagram and runes between the rings. */
 export function drawMagicCircle(
   b: Brush,
   cx: number,

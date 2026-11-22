@@ -30,12 +30,6 @@ const isChatMessagesQuery = (query: QueryWithKey) => {
   return getChatMessagesQueryGuildId(query) !== undefined;
 };
 
-/**
- * Structural sharing for a chat history, matched by message id. The default
- * one pairs messages by index, so once the history is full and every new
- * message drops the oldest, it rebuilt every message object and the memoized
- * transcript re-rendered every row on each incoming message.
- */
 export const shareChatMessages = (
   previous: readonly ChatMessageType[],
   next: ChatMessageType[],

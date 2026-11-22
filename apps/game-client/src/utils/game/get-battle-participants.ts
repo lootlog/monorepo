@@ -14,11 +14,6 @@ export type PartyMember = {
   accountId: number;
 };
 
-/**
- * `runtimeId` is the looted spawn (battle `originalId`), `templateId` its
- * Margonem template or null when it was not observed. `id` keeps the value
- * older API revisions expect: the template when known, else the runtime id.
- */
 export type Npc = {
   id: number;
   runtimeId: number;
@@ -30,7 +25,6 @@ export type Npc = {
   lvl: number;
   wt: number;
   location: string;
-  /** Margonem id of the map and the tile the NPC stood on before the fight. */
   mapId?: number;
   x?: number;
   y?: number;
@@ -52,9 +46,6 @@ export const getBattleParticipants = (
       const npcData =
         value.mapNpc ?? useNpcsStore.getState().getMapNpc(runtimeId);
 
-      // The map never showed this NPC. The warrior names no template to read
-      // the Margonem type from and NI never reads a warrior `type`, so 2, the
-      // plain monster type, stands in when the warrior has none.
       if (!npcData) {
         npcs.push({
           id: runtimeId,

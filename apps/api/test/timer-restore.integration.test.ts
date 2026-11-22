@@ -50,7 +50,6 @@ const waitForTimerLocks = async (expected: number) => {
 beforeAll(async () => {
   database = await runtime.runPromise(ApiDatabase);
   await client.connect();
-  // Hold restores after their initial read so the competing write wins first.
   await client.query(`CREATE FUNCTION pause_timer_restore() RETURNS trigger LANGUAGE plpgsql AS $$
     BEGIN
       IF NEW.world = 'timer-restore-race' THEN

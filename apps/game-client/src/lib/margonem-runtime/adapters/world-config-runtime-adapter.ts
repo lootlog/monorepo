@@ -11,10 +11,6 @@ type WorldConfigRuntimeWindow = Window & {
 
 const getRuntimeWindow = (): WorldConfigRuntimeWindow => window;
 
-/**
- * How many times faster than the base time NPCs return on this world, from
- * the world's own server parameters; 1 until the game has received them.
- */
 export const getNpcRespawnMultiplier = (): number => {
   try {
     const runtime = getRuntimeWindow();

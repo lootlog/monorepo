@@ -3,15 +3,9 @@ import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-m
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { EASE_EMPHASIZED_CSS, MOTION_DURATION } from "@/lib/motion";
 
-/** What changes with the Organization: its sidebar column and its page. */
 const ORGANIZATION_SURFACES_SELECTOR =
   "#main-content, [data-slot=sidebar-navigation]";
 
-/**
- * Fades the sidebar column and page in together when another Organization
- * opens, so the switch reads as one step instead of a hard cut. Opacity
- * alone, on the compositor: nothing moves and the layout never shifts.
- */
 export const useOrganizationSwitchFade = () => {
   const guildId = useGuildId();
   const previousGuildId = useRef(guildId);

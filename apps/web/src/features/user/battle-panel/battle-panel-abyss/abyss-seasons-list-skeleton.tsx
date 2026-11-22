@@ -1,7 +1,6 @@
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 
-/** `AbyssSeasonsList` while the seasons load. */
 export const AbyssSeasonsListSkeleton = () => (
   <TableRowsSkeleton
     rows={6}

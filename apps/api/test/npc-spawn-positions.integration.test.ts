@@ -19,7 +19,6 @@ afterAll(async () => {
 });
 
 it("counts every report of a tile once per submission and keeps the elite's spawn area", async () => {
-  // Other suites share the database; a unique name keeps this elite apart.
   const name = `Elita ${randomUUID()}`;
 
   const elite = (x: number, y: number, templateId: number | null = 77) => ({
@@ -33,17 +32,13 @@ it("counts every report of a tile once per submission and keeps the elite's spaw
 
   await runtime.runPromise(
     Effect.gen(function* () {
-      // A group fight reports one elite twice and its minion without a tile.
       yield* recordNpcSpawnPositions(database, "pl", [
         elite(10, 12),
         elite(10, 12),
         { ...elite(0, 0), name: `${name} sługa`, x: undefined },
       ]);
-      // The next kill finds it elsewhere in its area; an older client sent no
-      // template, which must not erase the known one.
       yield* recordNpcSpawnPositions(database, "pl", [elite(14, 9)]);
       yield* recordNpcSpawnPositions(database, "pl", [elite(10, 12, null)]);
-      // A client of unknown edition cannot place the tile.
       yield* recordNpcSpawnPositions(database, undefined, [elite(1, 1)]);
     }),
   );

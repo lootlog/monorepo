@@ -16,16 +16,10 @@ import { wikiThemePersistence } from "@/config/theme-cookie";
 import { useSession } from "@/hooks/use-session";
 
 type UserThemeProps = {
-  /** The theme the server rendered the page in. */
   storedSelection: string | null;
-  /** The custom theme's copy the server rendered the page from. */
   storedCustomTheme: AppliedCustomTheme | null;
 };
 
-/**
- * Paints the wiki in the theme the User picked in the Web app. The wiki only
- * reads the pick; the Web app's appearance settings change it.
- */
 export function UserTheme({
   storedSelection,
   storedCustomTheme,
@@ -41,8 +35,6 @@ export function UserTheme({
     },
   });
 
-  // Signed out, the page keeps the theme it was last shown in, which may be
-  // one the preferences brought in after the server rendered the page.
   const [shownSelection, setShownSelection] = useState(storedSelection);
   const preferredSelection = preferences?.theme;
 
@@ -64,8 +56,6 @@ export function UserTheme({
     },
   });
 
-  // Until the User's themes load, which they never do signed out, the last
-  // applied copy keeps the page as the server rendered it.
   const look = resolveThemeLook({
     selection,
     userThemes,

@@ -1,4 +1,3 @@
-/** Transport schemas owned by the internal HTTP module. */
 import * as Schema from "effect/Schema";
 
 type DeleteUserDataDto = typeof DeleteUserDataDto.Type;

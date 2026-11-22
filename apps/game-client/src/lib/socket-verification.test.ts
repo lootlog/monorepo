@@ -88,7 +88,6 @@ describe("game realtime verification and presence selection", () => {
       subscriptionScopes: [],
       accessPolicy: ownerAccessPolicy([]),
     });
-    // What the gateway answers when a test does not care about the result.
     mocks.request.mockImplementation(async (type, data) => {
       if (
         type === "subscription.subscribe" ||
@@ -402,7 +401,6 @@ describe("game realtime verification and presence selection", () => {
     const socket = createSocket();
     socket.on("global-chat.subscribed", subscribed);
     socket.followGlobalChat("gordion");
-    // The join renews the subscription, so none is sent before it.
     expect(globalChatRequests()).toEqual([]);
     await socket.join(joinData);
     await vi.waitFor(() => expect(subscribed).toHaveBeenCalledWith("gordion"));
@@ -465,7 +463,6 @@ describe("game realtime verification and presence selection", () => {
     publications: number;
   }>([
     { scopes: [], publishedAtJoin: [], publications: 0 },
-    // Another account's scope is dropped while the next one loads.
     {
       scopes: [["organization-2"], undefined],
       publishedAtJoin: [],

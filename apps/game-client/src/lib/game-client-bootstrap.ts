@@ -30,7 +30,6 @@ type Bootstrap = {
 
 let current: Bootstrap | undefined;
 
-/** The character the startup queries are keyed by, once the game has one. */
 const waitForCharacter = (signal: AbortSignal) =>
   new Promise<{ accountId: string; characterId: string }>((resolve, reject) => {
     const read = () => {
@@ -69,8 +68,6 @@ const waitForCharacter = (signal: AbortSignal) =>
     signal.addEventListener("abort", abort);
   });
 
-// The startup queries wait for this one request, so a hung request must
-// fail into their own fetches instead of holding all of them.
 const BOOTSTRAP_REQUEST_TIMEOUT_MS = 10_000;
 
 const load = async (queryClient: QueryClient, signal: AbortSignal) => {
@@ -86,8 +83,6 @@ const load = async (queryClient: QueryClient, signal: AbortSignal) => {
   const seed = <T>(queryKey: QueryKey, data: T, cached: T = data) => {
     parts.set(hashKey(queryKey), data);
 
-    // Data already cached was written after the request left, by a save
-    // or a fetch of its own, so it is not replaced by the older answer.
     if (queryClient.getQueryData(queryKey) === undefined)
       queryClient.setQueryData(queryKey, cached);
   };
@@ -98,8 +93,6 @@ const load = async (queryClient: QueryClient, signal: AbortSignal) => {
       response.accessibleGuilds,
     );
 
-    // A waiting query applies the access policy itself, as it does to its
-    // own response; the cache gets the guilds that policy allows.
     seed(
       getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
       response.accessibleGuilds,
@@ -159,12 +152,6 @@ const load = async (queryClient: QueryClient, signal: AbortSignal) => {
   return parts;
 };
 
-/**
- * Answers the game client's startup reads with one request. Until it
- * settles, those queries wait for it instead of fetching; a part it could not
- * read, or a failed request, leaves them to fetch from their own endpoints.
- * Returns the cleanup for the tree that started it.
- */
 export const startGameClientBootstrap = (queryClient: QueryClient) => {
   const controller = new AbortController();
 
@@ -186,10 +173,6 @@ export const startGameClientBootstrap = (queryClient: QueryClient) => {
   };
 };
 
-/**
- * The startup answer for a query that started before the bootstrap settled,
- * or undefined when the query has to fetch it from its own endpoint.
- */
 export const readGameClientBootstrap = async <T>(
   queryKey: QueryKey,
 ): Promise<T | undefined> => {

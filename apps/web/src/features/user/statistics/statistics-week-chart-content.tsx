@@ -6,7 +6,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@lootlog/ui/components/chart";
-// Loaded only by its lazy wrapper; Recharts stays inside that async boundary.
 // oxlint-disable-next-line react-doctor/prefer-dynamic-import
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useTranslation } from "react-i18next";
@@ -18,7 +17,6 @@ type StatisticsWeekChartProps = {
   days: NonNullable<ReturnType<typeof summarizeWeeks>>["days"];
 };
 
-/** Kills on each day of this week next to the same day a week earlier. */
 export function StatisticsWeekChart({ days }: StatisticsWeekChartProps) {
   const { t } = useTranslation();
 
@@ -30,7 +28,6 @@ export function StatisticsWeekChart({ days }: StatisticsWeekChartProps) {
     current: { label: t("statistics.thisWeek"), color: "var(--primary)" },
   };
 
-  // Named days on the axis, so the tooltip's label is the day, never a series.
   const rows = days.map((day) => ({
     ...day,
     day: formatIsoWeekday(day.weekday, true),

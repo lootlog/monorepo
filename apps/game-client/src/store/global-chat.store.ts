@@ -7,34 +7,24 @@ import { createChangedOnlyStorage } from "./changed-only-storage";
 
 const STORAGE_KEY = storageKey("ll:global-chat");
 
-/**
- * A global chat channel: a world's name, or `GLOBAL_CHAT_SHARED_CHANNEL` for
- * the channel every world shares. World names are never empty.
- */
 export type GlobalChatChannel = string;
 
 export const GLOBAL_CHAT_SHARED_CHANNEL: GlobalChatChannel = "";
 
-/** The channel of a message or event whose world is absent when shared. */
 export const getGlobalChatChannel = (world: string | undefined) =>
   world ?? GLOBAL_CHAT_SHARED_CHANNEL;
 
-/** The `world` the API and gateway expect for a channel. */
 export const getGlobalChatWorld = (channel: GlobalChatChannel) =>
   channel === GLOBAL_CHAT_SHARED_CHANNEL ? undefined : channel;
 
 interface GlobalChatState {
-  /** The channel the player last picked; null until they pick one. */
   selectedChannel: GlobalChatChannel | null;
   selectChannel: (channel: GlobalChatChannel) => void;
-  /** World channels the player picked, most recent first. */
   recentWorlds: string[];
-  /** The latest live counts the gateway sent for the followed channel. */
   stats:
     | (Omit<GlobalChatStats, "world"> & { channel: GlobalChatChannel })
     | null;
   setStats: (stats: GlobalChatStats) => void;
-  /** Messages the followed channel received while its window was closed. */
   unread: number;
   addUnread: () => void;
   clearUnread: () => void;

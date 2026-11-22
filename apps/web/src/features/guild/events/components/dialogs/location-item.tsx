@@ -55,7 +55,6 @@ export const LocationItem = ({
           if (offset === 0) return;
           event.preventDefault();
           onMove(offset);
-          // The row moves in the list; keep the handle focused for the next press.
           requestAnimationFrame(() => handle.current?.focus());
         }}
         className="-my-1 inline-flex size-6 shrink-0 cursor-grab items-center justify-center rounded-sm text-muted-foreground/50 outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"

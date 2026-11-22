@@ -9,9 +9,6 @@ import { cn } from "cn";
 import { DoorOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-// The game client's colours: green while a Hero Tracker's entrance is open,
-// white until the spawn window opens, orange inside it, red past the maximum,
-// and a dimmed red for a kept timer.
 const PHASE_TEXT_CLASS = {
   entrance: "text-emerald-300",
   waiting: "text-foreground",
@@ -27,7 +24,6 @@ type TimerCountdownProps = {
   className?: string;
 };
 
-/** A timer's one countdown, coloured by its phase as in the game client. */
 export const TimerCountdown = ({
   timeLeft,
   phase,

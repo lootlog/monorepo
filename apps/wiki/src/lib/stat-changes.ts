@@ -5,21 +5,14 @@ import {
 } from "@lootlog/ui/components/item-stat-utils";
 
 export type StatChange = {
-  /** The stat as the item shows it after the change. */
   displayValue: ItemDisplayValue;
-  /** The first number of the stat before and after, such as minimum damage. */
   before: number;
   after: number;
 };
 
-/** The first number of a stat's value; flags such as `binds` have none. */
 const firstNumber = (value: string | boolean | undefined) =>
   Number.parseFloat(String(value));
 
-/**
- * The stats `stat` raises or lowers from `baseStat`, in the order the item
- * lists them. A legendary bonus only fades later, so it is not a change.
- */
 export const findStatChanges = (baseStat: string, stat: string) => {
   const base = new Map(
     parseItemStatEntries(baseStat).map(({ key, value }) => [key, value]),

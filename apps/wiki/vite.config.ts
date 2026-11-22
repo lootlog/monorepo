@@ -5,7 +5,6 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { defineConfig } from "vite";
 
 type WikiViteConfigOptions = {
-  /** Overrides the Worker's `vars` from `wrangler.jsonc`; `.env` still wins. */
   workerVars?: Record<string, string>;
 };
 

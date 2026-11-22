@@ -163,7 +163,6 @@ const setup = async () => {
           (value) => value !== "" && idOf(value) === id,
         );
 
-        // Keeps positions stable, like the scored sorted set.
         if (index !== -1) kept[index] = "";
 
         return index !== -1;
@@ -431,7 +430,6 @@ describe("global chat", () => {
       undefined,
     ]);
 
-    // Each channel moderates its own copy.
     await run(operations.deleteMessage(admin, "gordion", gordion?.id ?? ""));
     expect(await read("gordion")).toEqual([]);
     expect(await read(undefined)).toHaveLength(1);
@@ -565,7 +563,6 @@ describe("global chat", () => {
       mutedUntil: mute.mutedUntil,
     });
     expect(listed.mutes).toEqual([mute]);
-    // Lifted from the message's menu; neither way finds the mute again.
     expect(notMuted.map(({ _tag }) => _tag)).toEqual([
       "GlobalChatNotFound",
       "GlobalChatNotFound",

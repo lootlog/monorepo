@@ -1,4 +1,3 @@
-/** Input and output schemas for the auras Margonem characters wear. */
 import { Schema } from "effect";
 import {
   CharacterAuraIdSchema,
@@ -14,23 +13,17 @@ const CharacterAuraResponse = Schema.Struct({
 }).annotate({ identifier: "CharacterAuraResponseDto" });
 
 export const OwnCharacterAuraResponse = Schema.Struct({
-  /** The User's characters that wear an aura, each with its own. */
   auras: Schema.Array(CharacterAuraResponse),
-  /** Whether the User may choose an aura; removing one is always allowed. */
   canChange: Schema.Boolean,
-  /** The personal auras the User may choose; `canChange` does not cover them. */
   personalAuraIds: Schema.Array(PersonalCharacterAuraIdSchema),
-  /** Whether the User may grant and revoke auras of other Users. */
   canGrant: Schema.Boolean,
 }).annotate({ identifier: "OwnCharacterAuraResponseDto" });
 
 export type OwnCharacterAuraResponse = typeof OwnCharacterAuraResponse.Type;
 
 export const UpdateOwnCharacterAuraRequest = Schema.Struct({
-  /** The Margonem account the character belongs to. */
   gameAccountId: MargonemId,
   characterId: MargonemId,
-  /** `null` removes the character's aura. */
   auraId: Schema.NullOr(CharacterAuraIdSchema),
 }).annotate({ identifier: "UpdateOwnCharacterAuraDto" });
 

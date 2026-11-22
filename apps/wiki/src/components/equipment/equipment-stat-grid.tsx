@@ -1,10 +1,6 @@
 import type { ReactNode } from "react";
 import { EquipmentLegendaryBonuses } from "./equipment-legendary-bonuses";
 
-/**
- * A set's stats under a line saying what they count: its legendary bonuses
- * first, then the stat sections side by side, as many as fit.
- */
 export function EquipmentStatGrid({
   caption,
   children,

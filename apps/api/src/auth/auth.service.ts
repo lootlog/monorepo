@@ -12,7 +12,7 @@ import {
   type AuthServiceError,
 } from "#src/auth/auth-errors";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
-import { type RedisService } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import {
   getAuthTokenCacheKey,
@@ -30,8 +30,6 @@ const IdpTokenSuccess = Schema.Struct({
   scopes: Schema.mutable(Schema.Array(Schema.String)),
 });
 
-// Auth answers with the shared `code`; `error` covers auth instances that
-// still answer with it while both services roll out.
 const IdpTokenFailure = Schema.Union([
   Schema.Struct({ code: Schema.String }),
   Schema.Struct({ error: Schema.String }),
@@ -54,19 +52,11 @@ const cachedIdpTokenCodec = makeJsonCodec(IdpTokenSuccess);
 
 type IdpToken = typeof IdpTokenSuccess.Type;
 
-/** The user's Discord access token, issued and refreshed by the auth service. */
 export interface AuthService {
   readonly getIdpToken: (
     userId: string,
     discordId: string,
   ) => Effect.Effect<IdpToken, AuthServiceError>;
-  /**
-   * Stops serving a token Discord answered with 401 while the auth service
-   * keeps returning it. Each token has its own marker, so a late rejection of
-   * an older token cannot clear a newer one's, and reading the cache drops
-   * only a token that is marked. A failure is logged and does not replace the
-   * Discord error the caller is about to report.
-   */
   readonly rejectIdpToken: (
     userId: string,
     discordId: string,
@@ -237,8 +227,6 @@ export const makeAuthService = (options: {
         return cached;
       }
 
-      // The auth service holds the token issued by the user's latest sign-in,
-      // which replaces a rejected or under-scoped one at once.
       if (cached) {
         yield* redis.del(cacheKey);
       }

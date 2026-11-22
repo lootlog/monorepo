@@ -4,7 +4,6 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { ReservationShareTileSkeleton } from "./reservation-share-tile-skeleton";
 
-/** A group of partner or invitation tiles, or a line saying it is empty. */
 export const ReservationShareGroup = ({
   id,
   title,
@@ -19,7 +18,6 @@ export const ReservationShareGroup = ({
   count: number | undefined;
   isPending: boolean;
   emptyLabel: string;
-  /** The icon the group's tiles lead with. */
   emptyIcon: LucideIcon;
   children: ReactNode;
 }) => (

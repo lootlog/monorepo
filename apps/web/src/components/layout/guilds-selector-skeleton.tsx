@@ -5,11 +5,9 @@ const SKELETON_COUNT = 3;
 
 const skeletonItems = Array.from({ length: SKELETON_COUNT }, (_, i) => i);
 
-// Matches the loaded list: `pt-1` and a 54px pitch (44px icon, `mb-2`, `gap-0.5`).
 export const GuildsSelectorSkeleton: FC<{
   orientation?: "vertical" | "horizontal";
 }> = ({ orientation = "vertical" }) => {
-  // The strip's tiles: a 44px avatar over a label, 72px apart.
   if (orientation === "horizontal") {
     return (
       <div className="flex gap-1">

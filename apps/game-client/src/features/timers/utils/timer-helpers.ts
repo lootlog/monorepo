@@ -9,7 +9,6 @@ export const getLevelSuffix = (npc: Timer["npc"]) => {
   return ` (${formatLevel(npc.lvl, npc.prof)})`;
 };
 
-/** A character as timers name it: `Name (300m)`, or the name alone without a level. */
 export const getActorCharacterLabel = (character: {
   name: string;
   lvl: number | null;

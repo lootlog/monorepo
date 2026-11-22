@@ -5,11 +5,6 @@ const STARTUP_SCREEN_ID = "startup-screen";
 
 const EXIT_DURATION_MS = 200;
 
-/**
- * index.html shows the startup screen from the first byte, before any script
- * runs. It fades away over whatever the app rendered first, while the slot
- * lifts as if its loot was picked up.
- */
 export const releaseStartupScreen = () => {
   const screen = document.getElementById(STARTUP_SCREEN_ID);
 
@@ -26,8 +21,6 @@ export const releaseStartupScreen = () => {
 
   const slot = screen.firstElementChild;
 
-  // A start that resolved within the reveal delay never showed the slot, and
-  // the delay would otherwise run out during the fade.
   if (slot && isStillHidden(slot)) {
     slot.remove();
   } else {
@@ -45,7 +38,6 @@ const isStillHidden = (slot: Element) =>
     return Number(localTime ?? Number.POSITIVE_INFINITY) < delay;
   });
 
-/** The first resolved navigation has rendered a page, its skeleton or its error. */
 export const releaseStartupScreenOnFirstResolve = (
   router: Pick<AnyRouter, "subscribe">,
 ) => {

@@ -24,7 +24,6 @@ export const getNotificationFieldVisibility = (
     isScheduledMessage,
     isHeroSighting,
     isLootDraw,
-    /** Only spawn reminders pick NPCs and a spawn window anchor. */
     isTimerRule: triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN,
     isRecurring,
     showScheduledAtField:

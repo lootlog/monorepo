@@ -1,5 +1,3 @@
-// React 19 has native useSyncExternalStore, so we provide a selector-based wrapper
-// This shim redirects use-sync-external-store/shim/with-selector imports to use the native API
 import { useSyncExternalStore, useRef, useCallback } from "react";
 
 export function useSyncExternalStoreWithSelector<Snapshot, Selection>(

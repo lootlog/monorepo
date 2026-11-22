@@ -27,8 +27,6 @@ const decodeTimerIdentity = Schema.decodeUnknownOption(
   Schema.Struct(timerIdentityFields),
 );
 
-// The authenticated gateway forwards the API's TimerResponseDto. Validate the
-// fields consumed by this view before putting an incremental payload in cache.
 const isTimerView = Schema.is(
   Schema.Struct({
     ...timerIdentityFields,
@@ -116,12 +114,8 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
         const needsSnapshot =
           state?.data === undefined || state.fetchStatus === "fetching";
 
-        // Cancellation reverts synchronously before the patch; a late HTTP
-        // snapshot cannot overwrite the delivered event or a permission reset.
         if (needsSnapshot) void queryClient.cancelQueries(query);
 
-        // A patch changes one timer; the rest of the list, and the expiries it
-        // already reflects, still date from the last HTTP snapshot.
         queryClient.setQueryData<TimerResponseDto[]>(
           queryKey,
           (old) =>
@@ -167,7 +161,6 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
       );
 
       if (restricted.length > 0) {
-        // If membership disappeared, its former alias may no longer be known.
         const allAliasesKnown = restricted.every((change) =>
           guilds?.some((guild) => guild.id === change.organizationId),
         );
@@ -207,7 +200,6 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
         return;
       }
 
-      // Join confirms the new subscription: HTTP recovers events missed offline.
       if (payload.recover) reconcile();
     };
 

@@ -14,7 +14,6 @@ export const useTimersSocket = () => {
   const queryClient = useQueryClient();
   const needsCatchUp = useRef(false);
 
-  // The gateway forwards the API's timer response as is.
   const handleTimerCreate = useEffectEvent((data: TimerResponseDto) => {
     upsertTimer(normalizeTimerResponse(data));
   });

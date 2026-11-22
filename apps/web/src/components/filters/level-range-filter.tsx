@@ -5,7 +5,6 @@ import {
   type LevelRangeInputsProps,
 } from "./level-range-inputs";
 
-/** In a filter bar the range is one chip that opens the bounds. */
 export function LevelRangeFilter(props: LevelRangeInputsProps) {
   return useInFilterBar() ? (
     <LevelRangeChip {...props} />

@@ -2,7 +2,6 @@ import { Shirt } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { t } from "@/i18n/messages";
 
-/** Fills a calculator's fields from the player's equipment set. */
 export function CalculatorFromSetButton({
   onClick,
   disabled,

@@ -15,10 +15,6 @@ import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@lootlog/client/main";
 
-/**
- * The player's own notifications: the direct messages they arrive by, then
- * the items they watch, as banded sections like the Organization's settings.
- */
 export const UserNotifications = () => {
   const { t } = useTranslation();
 
@@ -46,8 +42,6 @@ export const UserNotifications = () => {
     return <UserNotificationsPageSkeleton />;
   }
 
-  // Without them the page would offer to create a DM that may already exist;
-  // a retry paused while offline has no data and no error either.
   if (!targetsQuery.data || !watchedItemsQuery.data) {
     return (
       <div className="flex h-full min-h-0 flex-col">

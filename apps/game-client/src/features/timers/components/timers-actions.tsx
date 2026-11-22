@@ -42,12 +42,6 @@ type OptionItem = {
   onSelect: () => void;
 };
 
-/**
- * Every option, filters included, lives in one menu so the title bar keeps
- * room for the title at the minimum window width. History and manual timer
- * creation sit next to it as plain icon actions; the "+" stays lit while the
- * add timer panel covers the list.
- */
 export const TimersActions: FC<TimersActionsProps> = ({
   timerFiltersEnabled = false,
   toggleTimerFiltersEnabled,

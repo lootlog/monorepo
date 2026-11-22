@@ -4,22 +4,15 @@ import type { CSSProperties, FC, ReactNode } from "react";
 type ListRowProps = {
   children: ReactNode;
   className?: string;
-  /** Row background. Rows without a colour let the window show through. */
   fill?: string;
   id?: string;
   onDoubleClick?: () => void;
   style?: CSSProperties;
 };
 
-/** Mixes an overlay such as `black 40%` into a colour, keeping its alpha. */
 export const veilColor = (color: string, overlay: string) =>
   `color-mix(in srgb, ${color}, ${overlay})`;
 
-/**
- * One row of an in-game list, such as timers or online players: a
- * translucent fill over the window, edge to edge, lighter on hover. A faint
- * light line along the bottom keeps neighbouring rows of one colour apart.
- */
 export const ListRow: FC<ListRowProps> = ({
   children,
   className,

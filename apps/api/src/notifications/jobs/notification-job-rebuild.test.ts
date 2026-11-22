@@ -200,7 +200,6 @@ const staleTimerJob = (
     }),
   });
 
-/** The event handlers that schedule instant jobs, over a seeded database. */
 const instantEvents = (
   fixture: Awaited<ReturnType<typeof seedTimerNotifications>>,
 ) =>
@@ -397,8 +396,6 @@ describe("notification job rebuild", () => {
         ),
       );
 
-      // Sent before deploying occurrence keys: keyed by the moved time. The
-      // job of 105 announced this window, the job of 106 an earlier one.
       await fixture.boundary.run(
         fixture.database.insert(notificationJobTable).values(
           (
@@ -554,7 +551,6 @@ describe("notification job rebuild", () => {
       rules: [
         templateRule(7, {}),
         templateRule(8, { world: "tempest" }),
-        // A timer id rule keeps selecting only its own spawn.
         timerRule(10, [313_103]),
       ],
       links: [7, 8, 10].map((ruleId) => ({ ruleId, targetId: 1 })),
@@ -655,11 +651,9 @@ describe("notification job rebuild", () => {
           ),
         );
 
-      // Two spawns of template 257636, then a spawn of another template.
       await kill({ id: 313_103, templateId: 257_636 });
       await kill({ id: 313_104, templateId: 257_636 });
       await kill({ id: 313_105, templateId: 300_351 });
-      // A retried submission within the deduplication window is not a kill.
       await kill({ id: 313_103, templateId: 257_636 });
 
       for (const payload of published.splice(0)) {
@@ -687,7 +681,6 @@ describe("notification job rebuild", () => {
         [10, vonaros(313_103)],
       ]);
 
-      // An older client reports only the runtime id after the next kill.
       await boundary.run(
         database
           .update(timerHistoryEntryTable)
@@ -883,7 +876,6 @@ describe("notification job rebuild", () => {
         claims: [],
       };
 
-      // A confirmation and a redelivery repeat the same news.
       await fixture.boundary.run(events.handleHeroSightingUpdated(sighting));
       await fixture.boundary.run(events.handleHeroSightingUpdated(sighting));
       await fixture.boundary.run(
@@ -911,7 +903,6 @@ describe("notification job rebuild", () => {
           .orderBy(asc(notificationJobTable.sourceEventId)),
       );
 
-      // Target 3 is inactive, and rule 8 watches heroes from level 300.
       expect(jobs).toEqual([
         { targetId: 1, sourceEventId: "hero-sighting:41:SPAWNING" },
       ]);
@@ -977,7 +968,6 @@ describe("notification job rebuild", () => {
         },
       };
 
-      // A redelivered draw is the same news.
       await fixture.boundary.run(events.handleLootDrawResolved(drawn));
       await fixture.boundary.run(events.handleLootDrawResolved(drawn));
       await fixture.boundary.run(
@@ -1000,7 +990,6 @@ describe("notification job rebuild", () => {
           .orderBy(asc(notificationJobTable.sourceEventId)),
       );
 
-      // Target 3 is inactive, and rule 8 watches another world.
       expect(
         jobs.map(({ targetId, sourceEntityType, sourceEventId }) => ({
           targetId,
@@ -1019,7 +1008,6 @@ describe("notification job rebuild", () => {
           sourceEventId: "loot-draw:5:VOIDED",
         },
       ]);
-      // Each message tells its own outcome and keeps the draw for its image.
       expect(jobs.map(({ payloadSnapshot }) => payloadSnapshot)).toEqual([
         expect.objectContaining({
           content: "Ślepie demona: Wygrywa **Grimm** (1 los).",

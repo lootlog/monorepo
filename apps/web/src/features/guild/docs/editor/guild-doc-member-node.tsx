@@ -10,9 +10,7 @@ import { Option, Schema } from "effect";
 import { GuildDocMemberChip } from "./guild-doc-member-chip";
 
 const GuildDocMemberSchema = Schema.Struct({
-  /** The member's `userId` from member references; it outlives renames. */
   userId: Schema.String,
-  /** The name when it was mentioned, shown if the member is gone. */
   name: Schema.String,
 });
 
@@ -29,7 +27,6 @@ type SerializedGuildDocMemberNode = Spread<
 
 const GUILD_DOC_MEMBER_NODE_TYPE = "guild-doc-member";
 
-/** A member mentioned in the text, shown with their current name and avatar. */
 export class GuildDocMemberNode extends DecoratorNode<ReactNode> {
   __member: GuildDocMember;
 

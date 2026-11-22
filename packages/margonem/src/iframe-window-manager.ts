@@ -1,4 +1,3 @@
-/** IframeWindowManager.ts builds the profile URL from these options. */
 interface PlayerProfileOptions {
   staticUrl?: string | false;
   accountId?: string | number;

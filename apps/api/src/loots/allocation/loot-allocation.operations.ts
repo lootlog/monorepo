@@ -44,8 +44,6 @@ export interface LootAllocationPublisher {
 const parseChatAllocation = (message: string) => {
   const allocation: Record<string, string[]> = {};
 
-  // Both patterns capture their groups unconditionally; the defaults only
-  // satisfy the type of an optional capture.
   for (const [, player = "", itemList = ""] of message.matchAll(
     LOOT_SHARE_MSG_REGEX,
   )) {
@@ -108,8 +106,6 @@ export const makeLootAllocationOperations = (options: {
 }) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
-      // Declared business failures keep their HTTP status; only unexpected
-      // causes become an internal operation error.
       Effect.mapError((cause) =>
         Schema.is(ApplicationError)(cause)
           ? cause
@@ -139,7 +135,6 @@ export const makeLootAllocationOperations = (options: {
     );
   };
 
-  // A loot the actor cannot read is missing to them, as on every other loot path.
   const deniedOrHidden = (input: {
     readonly actorDiscordId: string;
     readonly lootId: number;
@@ -214,11 +209,6 @@ export const makeLootAllocationOperations = (options: {
 
         const sharedItemsCount = new Set(Object.values(allocation).flat()).size;
 
-        // Margonem omits items every player rejected, so a chat share may cover
-        // only some loot items, or none. With nothing to record, keep the
-        // current allocation instead of erasing it. The empty response tells
-        // the game client this message did not confirm the loot; it may belong
-        // to an older one.
         if (sharedItemsCount === 0) {
           yield* Effect.logInfo({
             message: "Chat loot share matched no loot items; allocation kept",

@@ -52,10 +52,6 @@ export interface SettingsDocuments {
     userId: string,
     context: SettingsContext,
   ) => Effect.Effect<SettingsDocumentsResponse, SettingsDocumentsFailure>;
-  /**
-   * Guild-scoped documents for every listed guild the user is an active
-   * member of; other guilds are left out instead of failing the request.
-   */
   readonly getGuildPreferences: (
     userId: string,
     context: GuildSettingsContext,
@@ -64,11 +60,6 @@ export interface SettingsDocuments {
     userId: string,
     payload: PatchSettingsDocuments,
   ) => Effect.Effect<SettingsDocumentsResponse, SettingsDocumentsFailure>;
-  /**
-   * Writes a batch that may span several guilds in one transaction, without
-   * resolving a response; every scope is authorized before anything is
-   * written.
-   */
   readonly applyOperations: (
     userId: string,
     operations: PatchSettingsDocuments["operations"],
@@ -223,7 +214,6 @@ type StoredDocuments = Effect.Success<
   ReturnType<SettingsDocumentsRepositoryService["findDocuments"]>
 >;
 
-/** Resolves each domain from the stored documents matching `scopes`, in order. */
 const resolveDomains = (
   domains: SettingsDomain[],
   scopes: ReadonlyArray<SettingsScope>,
@@ -314,8 +304,6 @@ export const makeSettingsDocuments = (
         id: guildId,
       }));
 
-      // Each guild resolves over the same layers as a single-guild read:
-      // the user document first, then the guild document.
       const documents =
         guildScopes.length === 0
           ? []
@@ -386,8 +374,6 @@ export const makeSettingsDocuments = (
     Effect.gen(function* () {
       yield* validateOperationUniqueness(payload.operations);
 
-      // A batch repeats its scopes across domains; each scope is authorized
-      // once per request.
       const operationScopes = uniqBy(
         payload.operations.map((operation) => operation.scope),
         getScopeKey,
@@ -397,10 +383,6 @@ export const makeSettingsDocuments = (
 
       const operationsContext = getContextFromOperations(payload.operations);
 
-      // A client that sends its read context gets the documents resolved the
-      // way it reads them, so the response can replace its cache entry. The
-      // context is validated before the write so a rejected context cannot
-      // fail a patch that has already been committed.
       const responseContext: SettingsContext = payload.context
         ? {
             domains: operationsContext.domains,

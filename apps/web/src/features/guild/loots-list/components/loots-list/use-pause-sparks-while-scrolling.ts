@@ -11,8 +11,6 @@ const settle = () => {
   delete document.documentElement.dataset.scrolling;
 };
 
-// Captures scrolling in any container, so the list viewport and the phone's
-// document scroll both count. Only the attribute flips; nothing re-renders.
 const onScroll = () => {
   if (settleTimeout === undefined)
     document.documentElement.dataset.scrolling = "";
@@ -21,10 +19,6 @@ const onScroll = () => {
   settleTimeout = setTimeout(settle, SCROLL_SETTLE_MS);
 };
 
-/**
- * Marks the document as scrolling while any legendary embers are mounted,
- * which pauses them in `legendary-loot.css`. One listener serves every loot.
- */
 export const usePauseSparksWhileScrolling = () => {
   useEffect(() => {
     mountedSparks += 1;

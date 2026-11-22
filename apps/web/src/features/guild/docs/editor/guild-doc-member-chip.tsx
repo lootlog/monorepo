@@ -7,12 +7,7 @@ type GuildDocMemberChipProps = {
   member: GuildDocMember;
 };
 
-/**
- * A mentioned member under their current Discord name, avatar and colour; the
- * name saved with the mention stands in once they are no longer known.
- */
 export const GuildDocMemberChip = ({ member }: GuildDocMemberChipProps) => {
-  // While the document is being written a click on the chip places the caret.
   const editable = useLexicalEditable();
 
   return (

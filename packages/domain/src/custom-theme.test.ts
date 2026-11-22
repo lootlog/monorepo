@@ -35,8 +35,6 @@ describe("deriveCustomThemeTokens", () => {
     ).not.toContain("background");
   });
 
-  // The knobs range over every surface the editor allows; text must stay
-  // readable on all of them, including the brightest, most colourful one.
   test.each([
     { hue: 0, lightness: 0.08, chroma: 0 },
     { hue: 140, lightness: 0.28, chroma: 0.08 },
@@ -88,8 +86,6 @@ describe("deriveCustomThemeTokens", () => {
     },
   );
 
-  // A mid-grey accent on the lightest allowed surface defeats both the
-  // surface colour and near-white as its label.
   test("keeps the label on a mid-tone accent over a light surface readable", () => {
     const tokens = deriveCustomThemeTokens(
       definition({
@@ -103,8 +99,6 @@ describe("deriveCustomThemeTokens", () => {
     ).toBeGreaterThanOrEqual(4.5);
   });
 
-  // The simple pickers must take effect even after "More colours" set the
-  // same tokens; otherwise the new colour snaps back to the override.
   test("lets the accent and background pickers replace earlier overrides", () => {
     const overridden = definition({
       overrides: {
@@ -122,7 +116,6 @@ describe("deriveCustomThemeTokens", () => {
 
     expect(accented.primary).toBe("#3FB950");
     expect(surfaced.background).not.toBe("#000000");
-    // Overrides of tokens the picker does not derive stay.
     expect(accented["chart-1"]).toBe("#123456");
     expect(surfaced["chart-1"]).toBe("#123456");
   });
@@ -151,7 +144,6 @@ describe("deriveWallpaperCover", () => {
     });
   });
 
-  // Text sits on rows and cards; a fully shown wallpaper must not wash it out.
   test("keeps rows and cards opaque enough to read at full visibility", () => {
     const cover = deriveWallpaperCover(100);
 
@@ -169,7 +161,6 @@ describe("deriveWallpaperCover", () => {
   });
 });
 
-/** A small deterministic generator, so each seed gives the same theme. */
 const seeded = (seed: number) => {
   let state = seed;
 
@@ -189,15 +180,12 @@ describe("randomizeCustomTheme", () => {
     }),
   );
 
-  // A random theme is saved like any other; the API must accept every one.
   test("always produces a theme the API accepts", () => {
     for (const theme of themes) {
       expect(Schema.is(CustomThemeDefinitionSchema)(theme)).toBe(true);
     }
   });
 
-  // "Sensible" means readable: the accent must stand out from the page and
-  // its label must read on it, whatever the dice gave.
   test("keeps the accent visible and its label readable", () => {
     for (const theme of themes) {
       const tokens = deriveCustomThemeTokens(theme);

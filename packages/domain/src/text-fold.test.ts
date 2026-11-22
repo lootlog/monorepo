@@ -2,8 +2,6 @@ import { describe, expect, it } from "bun:test";
 import { catalogSlug } from "./catalog-slug.js";
 import { normalizeVanityUrl } from "./organization-vanity-url.js";
 
-// Catalog slugs are wiki URLs and vanity URLs are stored, so both must keep
-// their exact output.
 describe("persisted slugs", () => {
   it.each([
     ["Zażółć gęślą jaźń", "zazolc-gesla-jazn", "za-g-l-ja"],

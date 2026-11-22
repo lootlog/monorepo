@@ -10,10 +10,6 @@ import { formatRosterPlayerDetail } from "./format-roster-player-detail";
 import { groupIdenticalItems } from "./group-identical-items";
 import { LootItemLine } from "./loot-item-line";
 
-/**
- * A player beside what they received, each item named with its identifier.
- * Narrower than 20rem, the items move under the player.
- */
 export const LootRecipientRow = ({
   player,
   watchContext,

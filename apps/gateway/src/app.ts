@@ -101,7 +101,6 @@ const RealtimeLive = Ingress.layer.pipe(
   Layer.provideMerge(FeaturesLive),
 );
 
-// Background work that only runs for as long as the replica does.
 const ReplicaTasksLive = Layer.mergeAll(
   GatewayMetrics.layer,
   GatewayRuntimeMetrics.layer,
@@ -230,7 +229,6 @@ export const createGatewayFetch =
         return complete(new Response("Not found", { status: 404 }));
       }
 
-      // Refuse before auth work so the client retries against a ready replica.
       if (application.hub.unavailableReason() !== undefined) {
         return complete(
           new Response("Gateway unavailable", {
@@ -347,7 +345,6 @@ export const createGatewayFetch =
     }
   };
 
-/** The socket Bun hands to the WebSocket callbacks. */
 export type TransportSocket = GatewaySocket & LivenessSocket;
 
 export const createGatewayWebSocket = (
@@ -361,7 +358,6 @@ export const createGatewayWebSocket = (
     maxPayloadLength: 256 * 1_024,
     idleTimeout: 70,
     open(socket: TransportSocket) {
-      // Federation can drop between the upgrade check and this callback.
       if (application.hub.unavailableReason() !== undefined) {
         socket.close(
           REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
@@ -410,15 +406,11 @@ export const createGatewayWebSocket = (
 };
 
 interface DrainTiming {
-  /** Lets Traefik drop the terminating endpoint before sockets move. */
   readonly endpointRemoval: Duration.Input;
-  /** Spreads reconnects so the remaining replicas absorb joins gradually. */
   readonly closeSpread: Duration.Input;
-  /** Bounds disconnect cleanup: presence removal and DISCONNECT activity. */
   readonly cleanup: Duration.Input;
 }
 
-// Keep the sum below terminationGracePeriodSeconds in the infra repository.
 const deployedDrainTiming: DrainTiming = {
   endpointRemoval: "5 seconds",
   closeSpread: "10 seconds",
@@ -431,7 +423,6 @@ const localDrainTiming: DrainTiming = {
   cleanup: "2 seconds",
 };
 
-/** Moves every local session to another replica before the server stops. */
 export const drainGateway = (
   application: Pick<GatewayApplicationService, "hub" | "ingress">,
   timing: DrainTiming,

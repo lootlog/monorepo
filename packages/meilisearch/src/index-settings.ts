@@ -14,7 +14,6 @@ const searchIndexSettingFields = [
   "faceting",
 ] as const;
 
-/** The settings a service owns on one index; startup applies only these. */
 export type IndexSettings = Pick<
   Settings,
   (typeof searchIndexSettingFields)[number]
@@ -22,7 +21,6 @@ export type IndexSettings = Pick<
 
 export const SEARCH_INDEX_PRIMARY_KEY = "uid";
 
-/** Creates the index unless it exists. */
 export const ensureIndex = (meilisearch: Meilisearch, indexName: string) =>
   attemptMeilisearch("meilisearch.index.get", () =>
     meilisearch.getIndex(indexName),
@@ -41,7 +39,6 @@ export const ensureIndex = (meilisearch: Meilisearch, indexName: string) =>
     Effect.asVoid,
   );
 
-/** Creates each index and applies its settings when they differ. */
 export const configureMeilisearchIndexes = (
   meilisearch: Meilisearch,
   settings: Readonly<Record<string, IndexSettings>>,
@@ -59,7 +56,6 @@ export const configureMeilisearchIndexes = (
           );
 
           const changed = searchIndexSettingFields.some((field) => {
-            // Searchable attribute order affects ranking; filter/sort sets do not.
             if (!(field in desired)) return false;
             const actual = current[field];
             const expected = desired[field];

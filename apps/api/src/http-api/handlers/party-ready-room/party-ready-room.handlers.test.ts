@@ -354,7 +354,6 @@ it("keeps room and participant dates without weakening response validation", asy
     expect(failure).toBeInstanceOf(ReadyRoomOperationError);
   }
 
-  // Values the typed port cannot carry are checked at the response boundary.
   for (const value of [
     { ...room, expiresAt: new Date(Number.NaN) },
     { ...room, description: null },

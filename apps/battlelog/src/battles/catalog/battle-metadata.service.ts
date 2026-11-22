@@ -42,9 +42,6 @@ export const makeBattleMetadata = (
   const getUserCharactersCacheKey = (userId: string) =>
     `battle-characters:list:${userId}`;
 
-  // Keep the join inside LIMIT: an incomplete newest battle must not hide
-  // the character's last recorded level/profession.
-  // OFFSET 0 keeps this join battle-first instead of scanning global warrior ids.
   const latestBattleWarrior = drizzle
     .select({ lvl: battleWarriors.lvl, prof: battleWarriors.prof })
     .from(battleWarriors)
@@ -172,7 +169,6 @@ export const makeBattleMetadata = (
 
       const term = `%${query.trim()}%`;
 
-      // The latest appearance supplies the icon, profession and level.
       const latest = drizzle
         .selectDistinctOn([battleWarriorFilters.name], {
           name: battleWarriorFilters.name,

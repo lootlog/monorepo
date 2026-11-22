@@ -26,7 +26,6 @@ const sampledTracer = Layer.effect(
         });
 
         const attribute = span.attribute.bind(span);
-        // HTTP credentials can live in arbitrary headers and OAuth query strings.
         span.attribute = (name, value) => {
           if (
             name === "url.full" ||
@@ -41,8 +40,6 @@ const sampledTracer = Layer.effect(
         return span;
       },
       context(primitive, fiber) {
-        // Promise continuations already inherit this span; only switch on a
-        // mismatch, including clearing a span when an untraced fiber resumes.
         if (logSpanContext.getStore() === fiber.cache.span)
           return primitive["~effect/Effect/evaluate"](fiber);
 
@@ -54,7 +51,6 @@ const sampledTracer = Layer.effect(
   }),
 );
 
-/** What a service reports about itself in logs, traces and metrics. */
 export interface ServiceIdentity {
   readonly serviceName: string;
   readonly environment: string;

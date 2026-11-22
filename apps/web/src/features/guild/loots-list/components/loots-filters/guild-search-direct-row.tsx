@@ -9,7 +9,6 @@ type GuildSearchDirectRowProps = {
   onSelect: () => void;
 };
 
-/** Matches the raw term in saved loots when the search service misses it. */
 export const GuildSearchDirectRow = ({
   term,
   onSelect,

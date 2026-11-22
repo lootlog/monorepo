@@ -1,12 +1,6 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
-/**
- * The frame the editor and the result share, so a spin swaps the contents
- * without moving the wheel, the entrants or the footer: the wheel with a row
- * of actions under it, and the entrants with the spin or the result in the
- * footer right below them.
- */
 export const LootDrawLayout = ({
   wheel,
   wheelActions,
@@ -28,8 +22,6 @@ export const LootDrawLayout = ({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[20rem_minmax(0,1fr)] lg:items-start">
-      {/* The top inset keeps the pointer, which stands above the wheel,
-          inside the scrolling body. */}
       <div className="grid justify-items-center gap-2 pt-2">
         {wheel}
         {wheelActions && <div className="flex h-8 gap-1">{wheelActions}</div>}

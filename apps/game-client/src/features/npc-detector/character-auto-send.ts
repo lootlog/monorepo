@@ -7,10 +7,6 @@ import {
 import { useGameStore } from "@/store/game.store";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
-/**
- * Flips the current character's detector auto-send switch for every monster
- * type. Skips the message while the character is unknown and nothing was saved.
- */
 export const toggleCharacterDetectorAutoSend = () => {
   const enabled = !selectSettingsValue(
     readCurrentSettingsDocuments(),

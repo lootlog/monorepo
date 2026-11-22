@@ -9,24 +9,15 @@ type SettingsKeybindFieldProps = {
   binding: HotkeyBinding;
   capturing: boolean;
   captureLabel: string;
-  /** Accessible name of the capture button, e.g. "Zmień skrót: Chat". */
   label: string;
-  /** Shows the reset action; its space is always reserved. */
   modified: boolean;
   resetLabel: string;
   onCaptureToggle: () => void;
   onReset: () => void;
-  /** Timestamp of the last capture that set `binding`; pops the caps in. */
   assignedAt?: number;
   className?: string;
 };
 
-/**
- * Keybind control: an input-like field showing the binding as key caps. Click
- * to record the next key or mouse press; while recording the field's outline
- * breathes and it shows the prompt; a freshly captured binding pops in. The reset slot sits before the field and keeps its width
- * even when hidden, so every field ends at the same right edge.
- */
 export const SettingsKeybindField: FC<SettingsKeybindFieldProps> = ({
   binding,
   capturing,

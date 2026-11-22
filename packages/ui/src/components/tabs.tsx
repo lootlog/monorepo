@@ -22,21 +22,13 @@ const tabsListSizes = {
 };
 
 const tabsListVariants = {
-  /** A bordered, rounded control that stands on its own. */
   pill: "rounded-lg border border-border",
-  /** A square strip that fills a card row between its separators. */
   flush: "rounded-none",
-  /** Views in a filter bar, frameless like the filter chips beside them. */
   chips: "gap-1 rounded-control bg-transparent",
-  /**
-   * Panels of one page area as an edge-to-edge strip, like the page tabs
-   * (`HorizontalMenu`): a lime bar under the active tab.
-   */
   underline:
     "w-full rounded-none border-b border-border bg-transparent sm:px-1",
 };
 
-/** Looks like the animated toggle group: a lime pill slides to the active tab. */
 function TabsList({
   className,
   size = "default",
@@ -47,7 +39,6 @@ function TabsList({
   size?: keyof typeof tabsListSizes;
   variant?: keyof typeof tabsListVariants;
 }) {
-  // A filter bar shows every view switch as chips, whatever the caller asked.
   const shownVariant = useInFilterBar() ? "chips" : variant;
 
   return (

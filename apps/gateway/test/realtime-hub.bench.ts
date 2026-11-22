@@ -12,7 +12,6 @@ import { getScopeKey } from "#src/realtime/realtime-audiences";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { SessionData } from "#src/realtime/session";
 
-// Run with `bun run perf:routing`. This measures routing and encoding, not network I/O.
 const connections = 5_000;
 
 const publications = 20_000;
@@ -84,14 +83,12 @@ for (const scenario of [
 ] as const) {
   let deliveries = 0;
   let recipientCandidates = 0;
-  // Registry background writes are outside this routing/codec benchmark.
   const hub = new RealtimeHub(config, redis, () => {});
 
   for (let index = 0; index < connections; index++) {
     const organizationId =
       scenario === "presence" ? `organization-${index % 30}` : "organization-0";
 
-    // Default client subscriptions omit world/map; recipient filters still apply.
     const mapScope: SubscriptionScope =
       scenario === "map.pings.exact"
         ? {
@@ -126,7 +123,6 @@ for (const scenario of [
       ),
       presence: {
         ...presence,
-        // Each candidate's recipient filter reads its world once; setup reads are reset below.
         get character() {
           recipientCandidates++;
 

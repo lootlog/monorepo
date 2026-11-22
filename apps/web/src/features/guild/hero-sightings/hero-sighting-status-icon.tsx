@@ -4,11 +4,9 @@ import { HERO_SIGHTING_STATUS_APPEARANCE } from "./hero-sighting-status-appearan
 
 type HeroSightingStatusIconProps = {
   status: HeroSightingStatus;
-  /** The tile's size and radius; the default leads a board tile. */
   className?: string;
 };
 
-/** A tile in the status colour, so the board reads at a glance. */
 export const HeroSightingStatusIcon = ({
   status,
   className = "size-10 rounded-lg",
@@ -26,7 +24,6 @@ export const HeroSightingStatusIcon = ({
     >
       <Icon className="size-[45%]" />
       {status === "ROAMING" && (
-        // The hero is out there now.
         <span className="absolute -top-0.5 -right-0.5 flex size-2.5">
           <span className="absolute inset-0 animate-ping rounded-full bg-signal-live opacity-60 motion-reduce:hidden" />
           <span className="relative size-2.5 rounded-full border-2 border-background bg-signal-live" />

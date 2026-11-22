@@ -3,7 +3,6 @@ import { cn } from "cn";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
 
-/** A Lootlog's 16px icon beside its name, with its initial while the image loads. */
 export const GuildAvatar: FC<{ guild: GuildIdentity; className?: string }> = ({
   guild,
   className,

@@ -61,11 +61,6 @@ export const getInternalGuild = (idOrVanityUrl: string) =>
     }),
   );
 
-/**
- * The Discord bot acts for the User behind an interaction. Only an active
- * member whose Lootlog User is known resolves; every other case is the same
- * 404, so the bot cannot tell a missing guild from a missing member.
- */
 const getInternalMemberIdentity = (guildId: string, discordId: string) =>
   Effect.gen(function* () {
     const data = yield* InternalGuildsData;

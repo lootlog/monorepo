@@ -16,17 +16,11 @@ export type GlobalChatCaller = {
   readonly discordId: string;
 };
 
-/**
- * The caller is not an active Member of any active Organization, is muted
- * while sending, or is not a global chat admin while moderating or sending to
- * every channel.
- */
 export class GlobalChatAccessDenied extends TaggedErrorClass<GlobalChatAccessDenied>()(
   "GlobalChatAccessDenied",
   { status: Schema.Literal(403) },
 ) {}
 
-/** The world has no channel, or the channel no longer keeps the message or mute. */
 export class GlobalChatNotFound extends TaggedErrorClass<GlobalChatNotFound>()(
   "GlobalChatNotFound",
   { status: Schema.Literal(404) },
@@ -47,7 +41,6 @@ export type GlobalChatFailure =
   | GlobalChatNotFound
   | GlobalChatOperationError;
 
-/** `world` is undefined for the channel every world shares. */
 export class GlobalChatData extends Context.Service<
   GlobalChatData,
   {

@@ -3,12 +3,6 @@ import { cn } from "cn";
 import { Check, CheckCheck, X } from "lucide-react";
 import type { FC } from "react";
 
-/**
- * The game's loot buttons at cell size: a red "Nie chcę" ✕, a green "Chcę"
- * ✓ and a green "Bardzo chcę" ✓✓ with the yellow rim the game gives a
- * chosen button. Opaque gradients keep each chip readable over whatever the
- * translucent window shows through.
- */
 const CHOICES = {
   0: {
     icon: X,

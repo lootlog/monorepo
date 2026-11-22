@@ -36,6 +36,10 @@
     {
       "name": "anti-slop-effect",
       "specifier": "./tools/oxlint/anti-slop/effect/index.ts"
+    },
+    {
+      "name": "lootlog-comments",
+      "specifier": "./tools/oxlint/comments/index.ts"
     }
   ],
   "env": {
@@ -1308,6 +1312,12 @@
     "anti-slop/no-array-filter-map": "error",
     "anti-slop/no-reduce-accumulator-copy": "error",
     "anti-slop/require-readable-spacing": "error",
+    "lootlog-comments/no-comments": [
+      "error",
+      {
+        "baseline": "tools/oxlint/comments/baseline.json"
+      }
+    ],
     "oxc/no-accumulating-spread": "error",
     "complexity": "error",
     "eqeqeq": "error",
@@ -1322,7 +1332,12 @@
     "no-var": "error",
     "prefer-const": "error",
     "no-duplicate-imports": "error",
-    "no-empty": "warn",
+    "no-empty": [
+      "warn",
+      {
+        "allowEmptyCatch": true
+      }
+    ],
     "no-empty-function": "off",
     "no-eval": "error",
     "no-implied-eval": "error",

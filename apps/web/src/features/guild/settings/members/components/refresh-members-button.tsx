@@ -43,7 +43,6 @@ export const RefreshMembersButton = () => {
           return;
         }
 
-        // Realtime progress can reach the cache before this response.
         queryClient.setQueryData<MembersControllerGetLatestRefreshJobQueryResult>(
           getMembersControllerGetLatestRefreshJobQueryKey({
             guildId: currentGuildId,

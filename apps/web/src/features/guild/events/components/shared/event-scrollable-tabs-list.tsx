@@ -26,7 +26,6 @@ export const EventScrollableTabsList = ({
       aria-label={ariaLabel}
       size={size}
       variant={variant}
-      // Chips in a filter bar keep their own width; a strip shares the row.
       className={
         inFilterBar
           ? undefined

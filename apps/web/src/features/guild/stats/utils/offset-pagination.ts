@@ -1,4 +1,3 @@
-/** Pages through a list the client already holds in full. */
 export const getOffsetPagination = (
   pageIndex: number,
   total: number,

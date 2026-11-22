@@ -1,4 +1,3 @@
-/** mutations transport definitions for battles. */
 import * as Schema from "effect/Schema";
 
 export type BattleDeletedResponseDto_Output =

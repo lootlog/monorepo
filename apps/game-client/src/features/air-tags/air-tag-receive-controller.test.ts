@@ -42,7 +42,6 @@ const createScopeUpdate = (
   ...overrides,
 });
 
-/** A delta that moves one target. */
 const createUpdate = ({
   target = createTarget({ x: 14, observedAt: 2_000 }),
   ...overrides
@@ -72,7 +71,6 @@ describe("AirTagReceiveController", () => {
         removedTargetIds: ["target-1"],
       }),
     );
-    // Merged earlier, delivered later by another gateway instance.
     controller.handleScopeUpdate(
       createScopeUpdate({
         revision: 5,
@@ -103,7 +101,6 @@ describe("AirTagReceiveController", () => {
     controller.hideDeparted("target-1");
     expect(controller.getRenderableTargets(now, 10_000)).toEqual([]);
 
-    // Another member still reports the player: the hero's guess was wrong.
     now = 5_000;
     expect(controller.getRenderableTargets(now, 10_000)).toEqual([
       expect.objectContaining({ targetId: "target-1" }),

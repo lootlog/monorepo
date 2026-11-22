@@ -8,17 +8,10 @@ import type { ProfessionEnum } from "@lootlog/schema/loot";
 import { comparePolish } from "./locale.js";
 import { normalizeSearchText } from "./text-fold.js";
 
-/** Sightings kept per hero in one Organization world, the current one included. */
 export const HERO_SIGHTING_HISTORY_LIMIT = 20;
 
-/**
- * A roaming hero not confirmed for this long may already be dead. Its
- * sighting stays current until a detection contradicts it, but surfaces show
- * it as unconfirmed instead of as the hero's position.
- */
 export const HERO_SIGHTING_STALE_AFTER_MS = 30 * 60 * 1000;
 
-/** The system chat style Margonem uses for a detector answer. */
 export const HERO_DETECTOR_CHAT_STYLE = 4;
 
 export type HeroDetection = {
@@ -29,7 +22,6 @@ export type HeroDetection = {
   readonly mapName: string;
 };
 
-/** How the Polish and the English game phrase each detector answer. */
 const HERO_DETECTOR_STATES = new Map<string, HeroSightingStateValue>([
   ["grasuje w", HeroSightingState.ROAMING],
   ["pojawi się w", HeroSightingState.SPAWNING],
@@ -37,21 +29,11 @@ const HERO_DETECTOR_STATES = new Map<string, HeroSightingStateValue>([
   ["will appear in", HeroSightingState.SPAWNING],
 ]);
 
-// The bold markers are optional: answers are matched with or without them.
-// The hero name cannot contain brackets, so the pattern cannot backtrack
-// across the "[/b]" marker on crafted input.
 const HERO_DETECTOR_MESSAGE =
   /^(?:\[b\])?([^[\]]+?) \((\d+)([a-z]?)\)(?:\[\/b\])? (grasuje w|pojawi się w|roves in|will appear in): (.+)$/u;
 
-/** Detector answers are short; longer system messages are something else. */
 const MAX_HERO_DETECTOR_MESSAGE_LENGTH = 300;
 
-/**
- * Reads a detector answer such as
- * `[b]Tepeyollotl (258b)[/b] grasuje w: Oztotl Tzacua p.2 - sala 2`, or its
- * English counterpart `Insane Orc Hunter (165w) roves in: Red Orc Village`.
- * Margonem names the hero and the map but sends no NPC or map id.
- */
 export const parseHeroDetectorMessage = (
   message: string,
 ): HeroDetection | null => {
@@ -74,7 +56,6 @@ export const parseHeroDetectorMessage = (
   };
 };
 
-/** Heroes have no stable id in a detector answer; one world has one hero per name. */
 export const getHeroSightingKey = (heroName: string): string =>
   normalizeNpcName(heroName);
 
@@ -90,15 +71,6 @@ export type CurrentHeroSighting = {
   readonly lastSeenAt: number;
 };
 
-/**
- * - `OPEN`: no current sighting; the detection starts one.
- * - `CONFIRM`: the detection repeats the current sighting.
- * - `SPAWNED`: the hero appeared where its spawn was detected; the sighting,
- *   with its claims, becomes a roaming one.
- * - `REPLACE`: the detection contradicts the current sighting, so the hero
- *   was probably killed; a new sighting replaces it.
- * - `STALE`: an older detection that disagrees with newer knowledge.
- */
 export type HeroSightingTransition =
   | "OPEN"
   | "CONFIRM"
@@ -106,14 +78,6 @@ export type HeroSightingTransition =
   | "REPLACE"
   | "STALE";
 
-/**
- * Detections from several players arrive in any order, so they are compared
- * by the time Margonem answered, not by arrival.
- *
- * A hero killed and respawned on the same map between two detections that
- * both say "pojawi się" is indistinguishable from one pending spawn; that
- * kill is not inferred.
- */
 export const resolveHeroSightingTransition = (
   current: CurrentHeroSighting | null,
   observation: HeroSightingObservation,
@@ -149,12 +113,6 @@ type SightingIdentity = {
   readonly hero: { readonly key: string };
 };
 
-/**
- * Keeps one sighting per hero in each Organization world: the newest by id.
- * Sighting ids grow with time, so the closed sighting a probable kill
- * replaced never displaces its successor, whatever order updates arrive in.
- * Returns the same array when nothing changes.
- */
 export const upsertNewestHeroSighting = <Sighting extends SightingIdentity>(
   sightings: readonly Sighting[],
   next: Sighting,
@@ -183,7 +141,6 @@ type ClaimedSighting = {
   }>;
 };
 
-/** Whether the signed-in User, by internal Lootlog User id, camps the hero. */
 export const isHeroSightingClaimedBy = (
   sighting: ClaimedSighting,
   userId: string | undefined,
@@ -191,20 +148,12 @@ export const isHeroSightingClaimedBy = (
   userId !== undefined &&
   sighting.claims.some((claim) => claim.member.userId === userId);
 
-/**
- * Camping is declared for a hero that will spawn. A roaming hero is already
- * there to fight, so nobody waits for it; claims made before it spawned stay.
- */
 export const isHeroSightingClaimable = (sighting: {
   readonly closedAt: string | null;
   readonly state: string;
 }): boolean =>
   sighting.closedAt === null && sighting.state === HeroSightingState.SPAWNING;
 
-/**
- * A sighting that places the hero now: open and, for a roaming hero,
- * confirmed recently enough to still be believed.
- */
 export const isCurrentHeroSighting = (
   sighting: {
     readonly closedAt: string | null;
@@ -214,12 +163,10 @@ export const isCurrentHeroSighting = (
   now: number,
 ): boolean => sighting.closedAt === null && !isHeroSightingStale(sighting, now);
 
-/** A hero a surface already knows, offered while a sighting is added by hand. */
 export type KnownHero = {
   readonly key: string;
   readonly name: string;
   readonly lvl: number;
-  /** Margonem profession shortname, when known. */
   readonly prof: string | undefined;
 };
 
@@ -229,7 +176,6 @@ type NamedHero = {
   readonly prof: string | null | undefined;
 };
 
-/** Timers carry a shortname or a profession name; sightings a profession name. */
 const toProfShortname = (prof: string | null | undefined) => {
   if (!prof) return undefined;
   const shortname = prof.toLowerCase();
@@ -240,10 +186,6 @@ const toProfShortname = (prof: string | null | undefined) => {
   );
 };
 
-/**
- * Every hero named by a sighting or a hero timer, once, by name. A sighting
- * wins over a timer: it carries the spelling the server keeps.
- */
 export const collectKnownHeroes = (
   sightings: readonly { readonly hero: NamedHero }[],
   timers: readonly { readonly npc: NamedHero & { readonly type: string } }[],
@@ -266,7 +208,6 @@ export const collectKnownHeroes = (
 
 const MAX_SUGGESTED_HEROES = 8;
 
-/** Known heroes whose name contains what the player typed so far. */
 export const suggestKnownHeroes = (
   heroes: readonly KnownHero[],
   typedName: string,

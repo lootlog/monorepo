@@ -1,31 +1,21 @@
-/**
- * An admin's arrival at their own feet: a ring of light closes in under them, the
- * character flares up as the aura bursts, and sparks rise from the ring. Drawn round the
- * character only, in strokes and one blit of the silhouette built once per sprite frame.
- */
 import { clamp } from "es-toolkit";
 import { ARRIVAL_BURST } from "./arrival";
 import { mulberry32, rgba, TAU, type Rgb } from "./math";
 import { groundRadius, type AuraPlacement } from "./placement";
 import { context2d, createCanvas, type AuraSilhouette } from "./silhouette";
 
-/** How much wider than the ground piece the ring starts. */
 const RING_FROM = 2.6;
 
-/** The flare over the character, seconds after the burst. */
 const FLARE_LENGTH = 0.35;
 
 const SPARKS = 16;
 
-/** Seconds a spark rises, and how high, px. */
 const SPARK_LIFE = 0.9;
 
 const SPARK_RISE = 64;
 
-/** Seconds after the burst the last spark leaves the ring. */
 const SPARK_SPREAD = 0.5;
 
-/** The summoning `t` s into an arrival of `strength`, in the aura's light and mid tones. */
 export type Summon = {
   t: number;
   strength: number;
@@ -35,10 +25,6 @@ export type Summon = {
 
 const tinted = new WeakMap<AuraSilhouette, Map<string, HTMLCanvasElement>>();
 
-/**
- * The silhouette's shape in `color` on a padded-silhouette-sized canvas: from its body
- * pixels, or its crisp mask for a cross-origin frame; null when it has neither.
- */
 export function tintedSilhouette(
   silhouette: AuraSilhouette,
   color: Rgb,
@@ -84,7 +70,6 @@ export function tintedSilhouette(
   return canvas;
 }
 
-/** Strokes the ground ellipse of radius `rx` round the feet at `place`. */
 function strokeRing(
   ctx: CanvasRenderingContext2D,
   place: AuraPlacement,
@@ -103,7 +88,6 @@ function strokeRing(
   ctx.stroke();
 }
 
-/** The sparks behind the feet (`front` false) or before them, rising from the ring. */
 function drawSparks(
   ctx: CanvasRenderingContext2D,
   place: AuraPlacement,
@@ -138,7 +122,6 @@ function drawSparks(
   }
 }
 
-/** The ring closing in under the character and the sparks behind it. */
 export function drawSummonBack(
   ctx: CanvasRenderingContext2D,
   place: AuraPlacement,
@@ -149,7 +132,6 @@ export function drawSummonBack(
 
   if (summon.t < ARRIVAL_BURST + 0.4) {
     const k = clamp(summon.t / ARRIVAL_BURST, 0, 1);
-    // After the ring closes, it lingers on the ground piece and fades.
     const fade = clamp((summon.t - ARRIVAL_BURST) / 0.4, 0, 1);
     const rx = radius * (RING_FROM - (RING_FROM - 1) * k * k);
     const alpha = summon.strength * (0.35 + 0.65 * k) * (1 - fade);
@@ -166,14 +148,12 @@ export function drawSummonBack(
   drawSparks(ctx, place, summon, false);
 }
 
-/** The character flaring up as the aura bursts, and the sparks before it. */
 export function drawSummonFront(
   ctx: CanvasRenderingContext2D,
   place: AuraPlacement,
   summon: Summon,
 ): void {
   ctx.globalCompositeOperation = "lighter";
-  // A tenth of a second up to the burst, then fading out.
   const since = summon.t - ARRIVAL_BURST;
   const flare = since < 0 ? 1 + since / 0.1 : 1 - since / FLARE_LENGTH;
 

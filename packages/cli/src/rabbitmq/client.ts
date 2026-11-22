@@ -15,7 +15,6 @@ interface PublishOptions {
   payload: typeof Schema.Json.Type;
 }
 
-// Activity rejects unsigned events; sign them as the gateway does.
 const signatureHeaders = (options: PublishOptions) => {
   const secret = process.env.ACTIVITY_EVENT_SIGNATURE_SECRET;
 
@@ -52,7 +51,6 @@ class RabbitMQClient {
     }
 
     const { routingKey, payload } = options;
-    // Services declare the exchanges they bind; the CLI only publishes.
     const exchange = RabbitExchange.DEFAULT;
 
     try {

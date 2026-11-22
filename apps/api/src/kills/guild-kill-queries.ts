@@ -97,7 +97,6 @@ export const makeGuildKillQueries = (
                 { concurrency: "unbounded" },
               );
 
-            // A group's SUM is never NULL, but Drizzle types it as nullable.
             const timeline = timelineRows.map(({ date, kills }) => ({
               date,
               kills: kills ?? 0,

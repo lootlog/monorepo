@@ -35,8 +35,6 @@ function readCookie(name: string): string | undefined {
   return entry ? decodeURIComponent(entry.slice(prefix.length)) : undefined;
 }
 
-// Must run before @/bootstrap is imported: the runtime projection chooses the
-// NI or SI adapter when its module is evaluated.
 export function installSandboxRuntime(
   runtimeInterface: SandboxInterface,
 ): SandboxRuntime {
@@ -57,7 +55,6 @@ export function installSandboxRuntime(
     Object.assign(runtimeWindow, createSiGlobals(world));
   }
 
-  // Resolve the seam on every emit: Lootlog wraps it after bootstrap.
   const emit = (event: GameEvent) => {
     logSandbox("inbound", Object.keys(event).join(", "));
 

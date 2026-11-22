@@ -13,10 +13,6 @@ const onPingCancel = () => {
   pingInteractionController.cancel();
 };
 
-/**
- * One ping hotkey for both surfaces: a warrior in a turn-based battle, or a
- * tile on the map and the handheld mini map.
- */
 export const usePings = () => {
   const { connected, joined } = useSocket();
   const mapPings = useMapPings();
@@ -24,8 +20,6 @@ export const usePings = () => {
   const pointerRef = useRef<PingPointer | null>(null);
   const active = mapPings.active || battlePings.active;
 
-  // Pointer tracking runs on every mouse move, so it stays off while no ping
-  // surface is enabled.
   useEffect(() => {
     if (!active) {
       return;
@@ -60,7 +54,6 @@ export const usePings = () => {
   useEffect(() => onPingCancel, []);
 
   const onPingStart = (event: KeyboardEvent | MouseEvent) => {
-    // A key press pings whatever is under the last known pointer.
     const pointer =
       event instanceof MouseEvent
         ? { target: event.target, x: event.clientX, y: event.clientY }
@@ -97,8 +90,6 @@ export const usePings = () => {
       target.character &&
       type === (target.character.kind === "npc" ? "attack" : "enemy")
     ) {
-      // Attacking a monster or marking a player travels as an enemy ping that
-      // names the character.
       mapPings.send(target.mapId, target.tile, "enemy", target.character);
     } else if (target.kind === "map" && isMapPingType(type)) {
       mapPings.send(target.mapId, target.tile, type);

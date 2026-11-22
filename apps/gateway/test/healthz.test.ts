@@ -392,7 +392,6 @@ describe("gateway HTTP boundary", () => {
       );
 
     expect((await read())?.status).toBe(401);
-    // Online-player access in another Organization grants nothing here.
     expect((await read("discord-member"))?.status).toBe(403);
     expect(snapshotReads).toEqual([]);
 
@@ -402,7 +401,6 @@ describe("gateway HTTP boundary", () => {
       onlinePresence;
 
     expect(allowed?.status).toBe(200);
-    // Discord identities never leave the realtime protocol over HTTP.
     expect(await allowed?.json()).toEqual({
       organizationId: "organization-1",
       world: "Aldous",

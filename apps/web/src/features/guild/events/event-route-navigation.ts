@@ -35,7 +35,6 @@ const decodeEventRouteLoaderData = Schema.decodeUnknownOption(
   }),
 );
 
-/** The event every event page shows, from the event layout's loader. */
 export function getNavigationEvent(matches: readonly AppNavigationMatch[]) {
   const eventMatch = matches.find((match) => match.routeId === EVENT_ROUTE_ID);
 
@@ -47,7 +46,6 @@ export function getNavigationEvent(matches: readonly AppNavigationMatch[]) {
   };
 }
 
-/** The event hero a hero page and its kill pages belong to. */
 export function getEventHeroBreadcrumb({
   t,
   match,

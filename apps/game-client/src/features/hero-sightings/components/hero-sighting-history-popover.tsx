@@ -15,7 +15,6 @@ type HeroSightingHistoryPopoverProps = {
   now: number;
 };
 
-/** Opens the hero's latest sightings in each Lootlog of the row. */
 export function HeroSightingHistoryPopover({
   row,
   now,

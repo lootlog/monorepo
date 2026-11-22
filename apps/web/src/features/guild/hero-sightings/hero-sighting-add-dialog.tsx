@@ -38,7 +38,6 @@ import { useAddHeroSighting } from "./use-add-hero-sighting";
 type HeroSightingAddDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Heroes to suggest while the name is typed. */
   knownHeroes: readonly KnownHero[];
 };
 
@@ -50,13 +49,7 @@ const FormSchema = Schema.Struct({
   world: Schema.String,
   name: Schema.String,
   lvl: Schema.String,
-  /** Profession shortname of a picked or pasted hero; typing a name clears it. */
   prof: Schema.String,
-  /**
-   * Not a field: a hero added by hand is one that will spawn, because nobody
-   * stops to write down a roaming hero. Only a pasted detector answer says
-   * otherwise, and only while the name is still that answer's hero.
-   */
   state: Schema.Enum(AddHeroSightingDtoState),
   mapName: Schema.String,
 });
@@ -109,11 +102,6 @@ const createResolver = (t: TFunction, asksForWorld: boolean) =>
     ),
   );
 
-/**
- * Adds a hero sighting by hand: for a detector answer the game client did not
- * record, or a detector used without it. The board marks it as added by hand
- * until a detector answer confirms it.
- */
 export const HeroSightingAddDialog = ({
   open,
   onOpenChange,
@@ -123,7 +111,6 @@ export const HeroSightingAddDialog = ({
   const formId = useId();
   const { guildId, world, worlds } = useGuildWorldScope({ enabled: open });
 
-  // The page's world is the target; the form asks only on an all-worlds board.
   const defaultValues: FormValues = {
     world: "",
     name: "",
@@ -148,7 +135,6 @@ export const HeroSightingAddDialog = ({
   const submit = (values: FormValues) => {
     if (!guildId) return;
 
-    // A typed name of a known hero carries that hero's profession too.
     const prof =
       values.prof ||
       knownHeroes.find((hero) => hero.key === getHeroSightingKey(values.name))

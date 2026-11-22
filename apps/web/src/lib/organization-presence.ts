@@ -120,7 +120,6 @@ export class OrganizationPresence {
     return () => {
       this.listeners.delete(listener);
 
-      // React can replace subscribers during the same commit or rehearse effects.
       queueMicrotask(() => {
         if (this.listeners.size > 0) return;
         this.subscribed = false;
@@ -165,8 +164,6 @@ export class OrganizationPresence {
           : { ...emptySnapshot, accessState: "forbidden", status: "forbidden" };
 
       if (snapshot.status === "ready") {
-        // Snapshot rows and their revision are read separately on the gateway.
-        // Replay live changes observed during this fetch, including equal revisions.
         for (const update of this.pendingUpdates ?? []) {
           snapshot = applyPresenceUpdate(snapshot, update);
         }
@@ -218,8 +215,6 @@ export class OrganizationPresence {
           change.areas.includes("presence"),
       )
     ) {
-      // A restriction can hide locations without denying the whole presence list.
-      // Drop the old projection before fetching under the new policy.
       this.update({ ...emptySnapshot, status: "unavailable" });
     }
 

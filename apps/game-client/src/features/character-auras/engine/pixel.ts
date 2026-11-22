@@ -1,14 +1,7 @@
-/**
- * Pixel-art finish for the aura layers: alpha snapped to a few hard levels with an ordered
- * (Bayer 4×4) dither, the way hand-drawn sprites shade glows, instead of smooth gradients.
- */
-
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5] as const;
 
-/** Quantized values by `(bayer << 8) | value`, per level count. */
 const quantizeTables = new Map<number, Uint8Array>();
 
-/** Each byte snapped to `levels` steps at every Bayer threshold, so a pixel is a lookup. */
 function quantizeTable(levels: number): Uint8Array {
   let table = quantizeTables.get(levels);
 
@@ -40,13 +33,6 @@ function quantizeColor(
   for (let c = i; c < i + 3; c++) data[c] = table[bayer | (data[c] ?? 0)] ?? 0;
 }
 
-/**
- * Quantizes the alpha of an RGBA buffer in place to `levels` steps (0 included). Pixels
- * under `floor` are cleared, so faint smears don't turn into stray dither dots. `originX`/
- * `originY` anchor the dither pattern to screen pixels, so it doesn't crawl as a buffer moves.
- * With `colorLevels`, each colour channel is quantized the same way. Returns what is left
- * visible, as `alphaBounds` does.
- */
 export function posterizeAlpha(
   data: Uint8ClampedArray,
   width: number,
@@ -60,7 +46,6 @@ export function posterizeAlpha(
   const alphaTable = quantizeTable(Math.max(2, levels));
   const colorTable = colorLevels > 1 ? quantizeTable(colorLevels) : null;
   const cut = floor * 255;
-  // Most of a layer is empty; whole pixels are skipped a word at a time.
   const words = new Uint32Array(data.buffer, data.byteOffset, width * height);
   const bounds = new BoundsBuilder();
 
@@ -87,7 +72,6 @@ export function posterizeAlpha(
       if (quantized === 0) continue;
       bounds.include(x, y);
 
-      // Colour ramps band into a few flat tones, dithered at the seams like the alpha.
       if (colorTable) quantizeColor(data, i - 3, colorTable, bayer);
     }
   }
@@ -95,7 +79,6 @@ export function posterizeAlpha(
   return bounds.result();
 }
 
-/** The smallest rect holding every visible pixel of a buffer, inclusive. */
 export interface PixelBounds {
   left: number;
   top: number;
@@ -103,7 +86,6 @@ export interface PixelBounds {
   bottom: number;
 }
 
-/** Grows `PixelBounds` over pixels visited row by row, top to bottom. */
 class BoundsBuilder {
   private left = Infinity;
   private top = Infinity;
@@ -132,7 +114,6 @@ class BoundsBuilder {
   }
 }
 
-/** Where an RGBA buffer has any alpha, or null when it is all clear. */
 export function alphaBounds(
   data: Uint8ClampedArray,
   width: number,
@@ -152,10 +133,6 @@ export function alphaBounds(
 
 const SQRT2 = Math.SQRT2;
 
-/**
- * Distance in pixels from every pixel to the nearest solid one (0 on solid pixels), by a
- * two-pass chamfer with weights 1 and √2: close to Euclidean, linear in the pixel count.
- */
 export function distanceField(
   solid: ArrayLike<boolean | number>,
   width: number,
@@ -208,11 +185,6 @@ export function distanceField(
   return d;
 }
 
-/**
- * Which outline band a pixel at distance `d` falls in, or -1: a clean 1 px outline touching
- * the shape only orthogonally, a solid second ring, then a checkerboard and a sparse ordered
- * dither fading out, as pixel artists shade a glow.
- */
 export function bandOf(d: number, x: number, y: number): number {
   if (d <= 0) return -1;
 

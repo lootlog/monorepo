@@ -29,32 +29,23 @@ import { itemStatText } from "@lootlog/ui/lib/item-stat-text";
 import { monsterIdentity } from "@/lib/group-items-by-monster";
 import { npcSummary } from "@/lib/npc-summary";
 
-/**
- * The address search engines should index a page under, without its options:
- * always the production wiki, development hosts too.
- */
 export const canonicalLink = (path: string) => ({
   rel: "canonical",
   href: `${PUBLIC_SITE_ORIGINS.wiki}${path}`,
 });
 
-// Common items keep the chat's own edge.
 const RARITY_COLORS: Partial<Record<DisplayItemRarity, string>> =
   LOOT_RARITY_COLORS;
 
-// Discord shows a few names before the line grows past its preview.
 const LISTED_NAMES = 4;
 
 type LinkPreview = {
   title: string;
-  /** Lines, as the in-game tooltip shows them. */
   lines: readonly string[];
   image?: string;
-  /** Discord colours the preview's edge with it. */
   color?: string;
 };
 
-// A monster's catalog identities share its name, so names list once.
 const listNames = (names: readonly string[]) => {
   const unique = [...new Set(names)];
   const hidden = unique.length - LISTED_NAMES;
@@ -63,10 +54,6 @@ const listNames = (names: readonly string[]) => {
   return hidden > 0 ? `${listed} +${hidden}` : listed;
 };
 
-/**
- * The page's title, and the Open Graph tags Discord and other chats read to
- * unfurl its link without running the page.
- */
 export const linkPreviewMeta = ({
   title,
   lines,
@@ -95,10 +82,6 @@ export const linkPreviewMeta = ({
   ];
 };
 
-/**
- * An item's preview as its tooltip on the page: what it is, its stats at
- * the linked upgrade and level, and the monsters it drops from.
- */
 export const itemLinkPreview = (
   item: CatalogItemDtoOutput,
   {
@@ -141,10 +124,6 @@ export const itemLinkPreview = (
   };
 };
 
-/**
- * A monster's preview: its kind and level, where it is fought, and its most
- * valuable current drops.
- */
 export const npcLinkPreview = (
   npc: CatalogNpcDtoOutput,
   drops: readonly CatalogItemDtoOutput[],
@@ -157,7 +136,6 @@ export const npcLinkPreview = (
       ),
   );
 
-  // Drops come highest level first; the stable sort keeps that per rarity.
   const valuable = sortBy(current, [
     (item) => ITEM_RARITIES_BY_VALUE.indexOf(resolveItemRarity(item.rarity)),
   ]);

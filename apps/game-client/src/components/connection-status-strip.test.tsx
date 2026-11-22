@@ -38,7 +38,6 @@ const mountStrip = ({ error = false, refreshing = false } = {}) => {
   };
 };
 
-/** Advances time, then lets the strip mount a notice that became due. */
 const advance = (ms: number) => {
   act(() => vi.advanceTimersByTime(ms));
   act(() => vi.advanceTimersByTime(0));

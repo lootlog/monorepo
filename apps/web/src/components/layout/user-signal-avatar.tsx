@@ -17,17 +17,9 @@ const SIGNAL_COLOR: Record<LiveSignal, string> = {
 type UserSignalAvatarProps = {
   image?: string | null;
   signal: LiveSignal;
-  /**
-   * Sizes the avatar and sets `--signal-surface` to the background behind it, so
-   * the status dot reads as cut out of it.
-   */
   className?: string;
 };
 
-/**
- * The account avatar inside the Lootlog mark's open ring. The ring and the dot in
- * its gap carry the live-updates connection state.
- */
 export const UserSignalAvatar = ({
   image,
   signal,
@@ -49,7 +41,6 @@ export const UserSignalAvatar = ({
           "animate-[spin_1.4s_linear_infinite] motion-reduce:animate-none",
       )}
     >
-      {/* The ring opens at 45°, where the status dot sits. */}
       <circle
         cx="20"
         cy="20"

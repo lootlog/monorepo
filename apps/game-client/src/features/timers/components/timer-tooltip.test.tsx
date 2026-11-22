@@ -113,7 +113,6 @@ describe("TimerTooltip", () => {
       />,
     );
 
-    // A busy map must not stretch the tooltip past the game window.
     expect(screen.getByText("Player 9")).toBeVisible();
     expect(screen.queryByText("Player 10")).not.toBeInTheDocument();
     expect(screen.getByText("i jeszcze 10")).toBeVisible();

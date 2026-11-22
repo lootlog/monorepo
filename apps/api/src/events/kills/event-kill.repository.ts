@@ -86,8 +86,6 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
             })
             .returning();
 
-          // Another report already recorded this window, even if the Redis
-          // dedup entries were lost or expired.
           if (kill === undefined) return null;
 
           const assignments =

@@ -12,10 +12,6 @@ export const BATTLE_SUMMARY_METRICS = [
 
 type BattleSummaryMetric = (typeof BATTLE_SUMMARY_METRICS)[number];
 
-/**
- * Damage types that add up to the dealt damage. Rage, third attack, stigma and reflected
- * damage are left out: they overlap these types or are not part of the dealt total.
- */
 const BATTLE_DAMAGE_SEGMENTS = [
   "meleeDamage",
   "distanceDamage",
@@ -31,7 +27,6 @@ type BattleDamageSegment = (typeof BATTLE_DAMAGE_SEGMENTS)[number];
 export type BattleSegmentValue<TKey extends string> = {
   key: TKey;
   value: number;
-  /** Share of the side's segment total, 0-1. */
   share: number;
 };
 
@@ -88,7 +83,6 @@ const getTeamSummary = (team: BattleWarrior[]): BattleTeamSummary => ({
   ),
 });
 
-/** Team totals with the viewing character's team first, matching the overview card. */
 export const getBattleTeamSummaries = (battle: Battle) => {
   const { leftTeam, rightTeam } = getBattleTeamPresentation(battle);
 

@@ -368,7 +368,6 @@ describe("Kills and Loots HttpApi handlers", () => {
     expect(authorizationCalls).toEqual([Permission.LOOTLOG_LOOTS_WRITE]);
   });
 
-  // Only loot managers may hold the capability below; members only read.
   const readOnlyAuthorization = (calls: string[] = []) =>
     makeAuthorization({
       requireGuild: (options) => {
@@ -444,13 +443,7 @@ describe("Kills and Loots HttpApi handlers", () => {
     const error = await Effect.runPromise(
       voidLootDraw("guild-a", 42, 7, { reason: "Wróg" }).pipe(
         Effect.flip,
-        Effect.provide(
-          services(
-            readOnlyAuthorization(),
-            // Any data access would die: the void must stop at authorization.
-            makeData(),
-          ),
-        ),
+        Effect.provide(services(readOnlyAuthorization(), makeData())),
       ),
     );
 

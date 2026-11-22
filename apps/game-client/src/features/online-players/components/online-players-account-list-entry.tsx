@@ -32,7 +32,6 @@ type OnlinePlayersAccountListEntryProps = {
   guildMember?: MemberSummaryResponseDtoOutput;
 };
 
-/** Your own row and AFK players keep their colour over any relation. */
 const getHighlightFill = (
   relation: PlayerRelation | undefined,
   isAfk: boolean,

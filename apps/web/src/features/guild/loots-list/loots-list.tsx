@@ -39,7 +39,6 @@ export const LootsListPage: React.FC = () => {
   const [requestedSection, setRequestedSection] =
     useState<LootFilterSectionKey>();
 
-  // Keyboard focus follows the toggle once the player used it, never on load.
   const [focusHandoff, setFocusHandoff] = useState<"panel" | "rail">();
   const isMobile = useIsMobile();
   const usesOverlayFilters = useMaxWidth(LOOTS_COMPACT_FILTERS_BREAKPOINT);
@@ -52,9 +51,6 @@ export const LootsListPage: React.FC = () => {
       ? "sheet"
       : "docked";
 
-  // Crossing a breakpoint swaps the filters surface: an overlay opened for
-  // the old layout closes, and a pending focus handoff is dropped so the
-  // remounted surface never takes focus on its own.
   const [renderedFiltersLayout, setRenderedFiltersLayout] =
     useState(filtersLayout);
 
@@ -111,14 +107,11 @@ export const LootsListPage: React.FC = () => {
 
       <GuildWorldHeaderSwitcher />
 
-      {/* Phones scroll the document, where hiding the overflow would make
-          these the scroller the toolbar sticks to. */}
       <div className="flex h-full w-full overflow-x-clip md:overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-x-clip md:overflow-hidden">
           <LootsList />
         </div>
 
-        {/* Phones open the filters from a floating button instead. */}
         {!isMobile && (
           <aside
             data-top-bar-inset

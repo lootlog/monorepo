@@ -189,7 +189,6 @@ const normalizeOperation = (
   }
 };
 
-/** An integer parameter's documented schema, which Effect encodes as a string. */
 export const integerSchema = (minimum: number, maximum: number) => ({
   type: "integer",
   minimum,

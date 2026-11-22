@@ -6,7 +6,6 @@ import type { Item, Loot } from "@/lib/loots/loot-types";
 import { LootDrawDialog } from "./loot-draw-dialog";
 import { useLootDrawRules } from "./use-loot-draw-rules";
 
-/** Opens a legendary item's draw from its row, naming the standing winner. */
 export const LootDrawButton = ({
   loot,
   item,
@@ -24,7 +23,6 @@ export const LootDrawButton = ({
     ({ itemHid }) => itemHid === item.hid,
   )?.winner;
 
-  // An open draw stays, so voiding an excluded item's result keeps its dialog.
   if (!open && !showsDraw(loot, item)) return null;
 
   return (

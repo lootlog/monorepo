@@ -1,7 +1,6 @@
 import type { UserLootStatsResponseDtoOutputLegendsItem } from "@lootlog/client/main";
 import { ItemTile } from "@/components/tiles/item-tile";
 
-/** A legendary item with its stats tooltip. */
 export function StatisticsLegendItem({
   legend,
 }: {

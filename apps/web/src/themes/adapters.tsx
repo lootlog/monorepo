@@ -113,12 +113,7 @@ type FrameProps = {
 
 type OverlayProps = { subtle: boolean; rounded: string };
 
-/**
- * What a theme family adds to the shell. A family without an entry keeps the
- * standard look there.
- */
 type ThemeFamilyDecorations = {
-  /** Suffix of the family's variant of a translation key, e.g. `titleCat`. */
   keySuffix: string;
   greetingSuffix: string;
   Spinner?: FC<{ className?: string }>;
@@ -249,7 +244,6 @@ export const ThemeSurfaceOverlay = ({
   ) : null;
 };
 
-/** The current family's variant of a translation key. */
 export const useThemedKey = () => {
   const { keySuffix } = useThemeFamily();
 

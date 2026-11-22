@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the internal feature. */
 import * as Schema from "effect/Schema";
 import { OrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
 

@@ -1,6 +1,5 @@
 import { DISCORD_ADMINISTRATOR_PERMISSION } from "@lootlog/schema/discord";
 
-/** A permissions bitfield Discord sent malformed grants no administrator access. */
 export const isDiscordAdministrator = (guild: {
   readonly permissions: string;
 }): boolean => {

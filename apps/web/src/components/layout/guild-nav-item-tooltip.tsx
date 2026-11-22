@@ -1,7 +1,6 @@
 import { TooltipContent } from "@lootlog/ui/components/tooltip";
 import { useTranslation } from "react-i18next";
 
-/** Names a server-rail avatar, with its locked and hidden states. */
 export const GuildNavItemTooltip = ({
   name,
   isLocked,

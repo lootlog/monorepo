@@ -8,19 +8,12 @@ import { useCharacterCatchingSelection } from "@/hooks/use-character-catching-se
 type CatchingSettingsFormProps = {
   characterId: string;
   disabled?: boolean;
-  /** Trailing actions of the servers section, e.g. "apply to all characters". */
   actions?: ReactNode;
 };
 
-/**
- * Save mark key of one character's Lootlogi. The mark lives in the shared
- * save status store, so it resolves with the write even after this form
- * unmounts (e.g. the player switched to another character mid-save).
- */
 export const getCatchingSaveKey = (characterId: string) =>
   `lootlogCharacter:${characterId}`;
 
-/** Lootlogi one character plays for: its loot, timers and presence go there. */
 export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   characterId,
   disabled = false,
@@ -35,7 +28,6 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     isConfigLoading,
   } = useCharacterCatchingSelection(characterId);
 
-  // The mutation reports its outcome to the store, which resolves this mark.
   const toggleGuild = (guildId: string) => {
     useSettingsSaveStatusStore
       .getState()
@@ -43,8 +35,6 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     handleGuildToggle(guildId);
   };
 
-  // The write is optimistic and replaces the whole list, so the picker stays
-  // usable while a save is in flight; only the initial load blocks it.
   const isInteractionDisabled = isConfigLoading || disabled;
   const totalGuilds = guilds.length;
   const selectedCount = selectedGuildIds.length;
@@ -66,7 +56,6 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
         </div>
       }
     >
-      {/* Mounted per character, so the fade marks the switch. */}
       <div className="ll:px-2 ll:py-0.5 ll:animate-in ll:fade-in-0 ll:duration-200">
         <SettingsGuildPicker
           aria-label={t("settings.catching.form.serversLabel")}

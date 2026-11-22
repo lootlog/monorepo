@@ -12,7 +12,6 @@ import { useGameStore } from "@/store/game.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
-/** Map and battle pings; both depend on the new game interface. */
 export const PingsSettingsTab: FC = () => {
   const gameInterface = useGameStore((state) => state.game?.interface);
   const { t } = useTranslation();

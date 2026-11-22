@@ -141,9 +141,6 @@ describe("useSettingsHydration", () => {
 
     const { timersColors } = useTimersStore.getState();
 
-    // The server resolves `effective` documents as JSON, so the same stored
-    // value can come back with its keys in another order. Replacing the store
-    // value for that would re-render the timers feature on every refetch.
     applyTimerDocuments(
       createSettingsDocuments({
         "appearance.timers.timersColors": { Heros: "blue", Tanroth: "red" },
@@ -201,8 +198,6 @@ describe("useSettingsHydration", () => {
     ]);
     expect(patchBodies).toEqual([]);
 
-    // A refetched document with the same content must not replace store
-    // values, or every settings save would re-render the timers feature.
     const { generalConfig, displayConfig, hiddenTimers } =
       useTimersStore.getState();
 
@@ -271,7 +266,6 @@ describe("useSettingsHydration", () => {
       }),
     ).toBe(true);
 
-    // A character switch reloads the page before the debounce elapses.
     window.dispatchEvent(new PageTransitionEvent("pagehide"));
 
     await waitFor(() => expect(patchBodies).toHaveLength(1));

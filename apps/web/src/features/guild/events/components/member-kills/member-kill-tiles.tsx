@@ -20,7 +20,6 @@ type MemberKillTilesProps = {
   onExpandedToggle: (killId: string) => void;
 };
 
-/** The member's kills on phones, where the table's columns don't fit: one tile per kill. */
 export const MemberKillTiles = ({
   kills,
   guildId,
@@ -67,7 +66,6 @@ export const MemberKillTiles = ({
                   linksTile
                 />
               </div>
-              {/* Above the tile's link, so the corrected-points tooltip opens. */}
               <div className="relative z-10 flex shrink-0 flex-col items-end gap-0.5 text-sm">
                 <MemberKillPoints kill={kill} />
                 <span
@@ -77,7 +75,6 @@ export const MemberKillTiles = ({
                   {trackingPercentage} · {trackingTime}
                 </span>
               </div>
-              {/* Above the tile's link, so it toggles instead of navigating. */}
               <div className="relative z-10">
                 <MemberKillBreakdownToggle
                   monsterName={kill.heroNpc.npcName}

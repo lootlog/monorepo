@@ -5,16 +5,13 @@ import {
 import { type Cause, Clock, Effect, Schema } from "effect";
 import type { RedisService } from "#src/redis/redis.service";
 
-/** A cached value and the instant it was computed. */
 export interface StaleJson<T> {
   readonly value: T;
   readonly computedAt: string;
 }
 
-/** Another reader refreshes a stale entry at most once per lease. */
 const REFRESH_LEASE_SECONDS = 300;
 
-/** Reports a failed cache read, or the cause of a failed background refresh. */
 type CacheErrorHandler = (
   failure: Error | Cause.Cause<unknown>,
 ) => Effect.Effect<void>;
@@ -24,13 +21,6 @@ export type StaleJsonRedis = Pick<
   "getOrSetJson" | "setNX" | "setJson"
 >;
 
-/**
- * Serves an entry until `retainSeconds` after it was computed, and recomputes
- * it in the background once it is older than `freshSeconds`: the reader that
- * finds it stale gets the old value at once and a single lease holder
- * refreshes it. Only a missing entry makes a reader wait for the factory. A
- * failed refresh keeps the old entry and is retried after the lease expires.
- */
 export const getOrSetStaleJson = <
   S extends Schema.ConstraintDecoder<unknown>,
   E,

@@ -29,9 +29,6 @@ const ScrollArea = React.forwardRef<
     return (
       <ScrollAreaPrimitive.Root
         data-slot="scroll-area"
-        // A flex column, so the viewport scrolls inside a root that a max
-        // height or a flex parent sizes; `height: 100%` alone resolves only
-        // against a definite height and otherwise clips the content.
         className={cn(
           "relative flex flex-col [&:hover>[data-slot=scroll-area-scrollbar]]:opacity-100 [&:focus-within>[data-slot=scroll-area-scrollbar]]:opacity-100",
           className,

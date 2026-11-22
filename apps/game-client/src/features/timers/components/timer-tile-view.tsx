@@ -9,26 +9,17 @@ export type TimerTileViewProps = {
   legacyAppearance?: boolean;
   displayMode: "column" | "row";
   fontSize: number;
-  /** Colours the text by the spawn window; previews show a waiting timer. */
   phase?: TimerPhase;
   id?: string;
   isPending?: boolean;
-  /** An Organization member sees the NPC on its map right now. */
   isStanding?: boolean;
   label: string;
   timeLabel: string;
-  /** Rendered inline before the time, such as the map presence icon. */
   timeAdornment?: ReactNode;
 };
 
-/** An expired tile keeps its colour, darkened. */
 const EXPIRED_VEIL = "black 40%";
 
-/**
- * The whole tile text follows the spawn window: green while a Hero Tracker's
- * entrance is open, orange once the minimum spawn time passes, red after the
- * maximum, and a dimmed red once expired.
- */
 const TEXT_COLORS = {
   entrance: "ll:text-emerald-300",
   waiting: "ll:text-white",
@@ -45,7 +36,6 @@ const LEGACY_TEXT_COLORS = {
   expired: "ll:text-red-500",
 } satisfies Record<TimerPhase, string>;
 
-/** Separates the text from a tile fill of the same hue. */
 const TEXT_OUTLINE = "ll:[text-shadow:0_1px_2px_rgb(0_0_0/0.7)]";
 
 export const TimerTileView: FC<TimerTileViewProps> = ({
@@ -128,7 +118,6 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
         "ll:@container/timer-tile ll:h-full ll:py-[4px]",
         textColorClassName,
         TEXT_OUTLINE,
-        // The list row line below, and one on the left between columns.
         "ll:shadow-[inset_1px_0_0_rgb(255_255_255/0.08),inset_0_-1px_0_rgb(255_255_255/0.08)]",
         {
           "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":

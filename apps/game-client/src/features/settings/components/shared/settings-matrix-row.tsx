@@ -11,23 +11,12 @@ import {
 } from "react";
 
 type SettingsMatrixRowProps = {
-  /** Category name; usually an NpcTypeChip. */
   title: ReactNode;
-  /** One control per column, in column order. */
   cells: readonly ReactNode[];
-  /**
-   * Row whose primary switch is off: the other cells stay rendered but dim,
-   * so the user still sees what would apply once the row is switched on.
-   */
   dimmed?: boolean;
   className?: string;
 };
 
-/**
- * A click anywhere in a cell toggles the switch it holds, so the whole cell is
- * the target instead of the small control. Clicks on the control itself, on
- * other controls (e.g. a number field) and on disabled switches are left alone.
- */
 const forwardCellClick = (event: MouseEvent<HTMLTableCellElement>) => {
   const target = event.target;
 
@@ -46,16 +35,11 @@ const forwardCellClick = (event: MouseEvent<HTMLTableCellElement>) => {
   toggle?.click();
 };
 
-/**
- * Whether a click on the cell toggles its switch, read from the cell element
- * instead of a `:has()` selector, which the game client stylesheet must avoid.
- */
 const hasEnabledSwitch = (cell: ReactNode) =>
   isValidElement<ComponentProps<typeof Switch>>(cell) &&
   cell.type === Switch &&
   !cell.props.disabled;
 
-/** One category of a SettingsMatrix: name cell plus one cell per column. */
 export const SettingsMatrixRow: FC<SettingsMatrixRowProps> = ({
   title,
   cells,
@@ -80,7 +64,6 @@ export const SettingsMatrixRow: FC<SettingsMatrixRowProps> = ({
       </th>
       {cells.map((cell, index) => (
         <td
-          // Cells are positional and never reordered.
           key={index}
           data-matrix-column={index}
           onClick={forwardCellClick}

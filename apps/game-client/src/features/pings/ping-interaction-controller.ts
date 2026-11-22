@@ -2,22 +2,14 @@ import type { RuntimeCharacterRef } from "@/lib/margonem-runtime/adapters/render
 import type { MapTile } from "./map-ping-controller";
 import type { PingType } from "./ping-presentation";
 
-/** A press shorter than this sends the menu's quick ping. */
 export const PING_HOLD_DELAY_MS = 120;
 
-/** Outer edge of the option ring. */
 export const PING_WHEEL_OUTER_RADIUS_PX = 78;
 
-/** Inner edge of the option ring; the centre option sits inside it. */
 export const PING_WHEEL_INNER_RADIUS_PX = 26;
 
-/**
- * Inside this radius the centre option is selected, or nothing. It matches the
- * drawn centre circle, so what the player sees is what a release sends.
- */
 const PING_WHEEL_DEAD_ZONE_PX = PING_WHEEL_INNER_RADIUS_PX - 3;
 
-/** Half the wheel's footprint, including the label below it. */
 const PING_WHEEL_EXTENT_PX = 108;
 
 const PING_WHEEL_MARGIN_PX = 8;
@@ -35,18 +27,14 @@ type PingTarget =
   | {
       kind: "map";
       mapId: number;
-      /** The monster or player under the press, if any. */
       character?: RuntimeCharacterRef;
       tile: MapTile;
     }
   | { kind: "battle"; warriorId: number };
 
 export type PingMenu = {
-  /** Sent when the press is released inside the dead zone. */
   centre: PingType | null;
-  /** Sent when the press ends before the wheel opens. */
   quick: PingType | null;
-  /** Options around the centre, clockwise from the top. */
   ring: readonly PingType[];
   title: string | null;
 };
@@ -142,11 +130,6 @@ const clampPingWheelCenter = (
   };
 };
 
-/**
- * Resolves the option in the pointer's direction, measured from the centre
- * the player sees, so a clamped wheel near a screen edge still selects what
- * it shows. Only the direction counts: the pointer may leave the ring.
- */
 const resolvePingSelection = (
   menu: PingMenu,
   center: ClientPoint,
@@ -171,7 +154,6 @@ const resolvePingSelection = (
   return menu.ring[index % menu.ring.length] ?? null;
 };
 
-/** Angle of a ring option in degrees, clockwise from the top. */
 export const getPingRingAngle = (index: number, count: number) =>
   (360 / count) * index;
 
@@ -208,7 +190,6 @@ export class PingInteractionController {
     }
 
     if (state.phase === "pending") {
-      // A flick opens the wheel at once instead of waiting for the hold delay.
       const travelled = Math.hypot(
         pointer.x - state.origin.x,
         pointer.y - state.origin.y,
@@ -256,7 +237,6 @@ export class PingInteractionController {
     this.reset();
   }
 
-  /** The key or button holding the current press, or null between presses. */
   getActiveIdentity(): PingPressIdentity | null {
     return this.state?.identity ?? null;
   }

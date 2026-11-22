@@ -15,7 +15,6 @@ type DiscordMemberRefreshMetricOutcome =
   | "stale_used"
   | "verification_unavailable";
 
-/** Counts Discord sync outcomes per 10-minute window; a failed write is only logged. */
 export interface DiscordSyncDiagnostics {
   readonly recordInvalidDiscordRequest: (options: {
     readonly endpoint: DiscordEndpoint;

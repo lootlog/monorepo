@@ -10,14 +10,9 @@ import {
 } from "./online-players-popups-context";
 
 type OnlinePlayersPopupsProps = {
-  /** The player list; it becomes the trigger of the shared context menu. */
   children: ReactElement;
 };
 
-/**
- * One context menu and one tooltip of each kind for every row of the list,
- * which renders every online player at once.
- */
 export const OnlinePlayersPopups = ({ children }: OnlinePlayersPopupsProps) => {
   const [playerTooltip] = useState(() =>
     BaseTooltip.createHandle<OnlinePlayerTooltipPayload>(),

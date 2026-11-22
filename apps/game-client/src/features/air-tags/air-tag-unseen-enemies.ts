@@ -9,7 +9,6 @@ import { selectUnseenAirTagEnemies } from "./who-is-here-air-tag-enemies";
 
 export const AIR_TAG_TARGET_TTL_MS = 10_000;
 
-/** Live presence of every joined Organization on this world; cached per socket. */
 export function getAirTagMemberSources() {
   const world = useGameStore.getState().game?.world;
   const { joinedGuilds } = useGlobalStore.getState().socketState;
@@ -24,9 +23,7 @@ export function getAirTagMemberSources() {
 
 export type UnseenAirTagEnemies = {
   enemies: AirTagTarget[];
-  /** Unseen enemies are reported, before members of the Organizations are removed. */
   hasCandidates: boolean;
-  /** Any player is reported on this map. */
   hasTargets: boolean;
 };
 
@@ -36,10 +33,6 @@ const NONE: UnseenAirTagEnemies = {
   hasTargets: false,
 };
 
-/**
- * Enemies other members see on this map and the hero does not: what the
- * players window lists and the minimap draws. Empty off a red map.
- */
 export function readUnseenAirTagEnemies(now: number): UnseenAirTagEnemies {
   if (!showsAirTagsOnMap()) return NONE;
 
@@ -52,11 +45,9 @@ export function readUnseenAirTagEnemies(now: number): UnseenAirTagEnemies {
 
   const candidates = selectUnseenAirTagEnemies(targets, isSeenByHero);
 
-  // Loading presence costs a request per Organization, so only once enemies are reported.
   const members = candidates.length > 0 ? getAirTagMemberSources() : [];
 
   return {
-    // Members of another Margonem clan in the same Organization can be reported as enemies.
     enemies: candidates.filter(
       (enemy) =>
         !members.some((source) => source.isOnlineMember(enemy.targetId)),

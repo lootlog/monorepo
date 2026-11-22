@@ -96,7 +96,6 @@ export const BattlesList = ({
     }
   };
 
-  // Without onFiltersChange the badges are plain tags, not dead buttons.
   const filterBy = onFiltersChange
     ? (patch: BattleFilters) => onFiltersChange({ ...currentFilters, ...patch })
     : undefined;

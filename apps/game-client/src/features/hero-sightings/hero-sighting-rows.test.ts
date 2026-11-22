@@ -16,7 +16,6 @@ const claimBy = (userId: string, memberId: number) => ({
 
 const sightings = [
   createHeroSighting({ claims: [claimBy("user-2", 2)] }),
-  // The same User claims the same hero through a second Organization.
   createHeroSighting({
     id: 9,
     guildId: "guild-2",
@@ -54,7 +53,6 @@ it("marks a claimer as the detector only where they are the same member of that 
 
   const [row] = projectHeroSightingRows(
     [
-      // In guild-1, member 5 is someone else than guild-2's member 5.
       createHeroSighting({ claims: [claimBy("user-3", 5)] }),
       createHeroSighting({
         id: 9,
@@ -82,7 +80,6 @@ it("names who confirmed the hero last unless the detector did, across Organizati
     projectHeroSightingRows(
       [
         createHeroSighting({ detectedBy: detector, lastSeenBy: detector }),
-        // The detector's later confirmation through a second Organization.
         createHeroSighting({
           id: 9,
           guildId: "guild-2",
@@ -137,7 +134,6 @@ it("lets only the author remove a sighting, and only while it is open and still 
 
   const removable = [
     own,
-    // A detector answer confirmed it since.
     createHeroSighting({ manual: false }),
     createHeroSighting({ manual: true, closedAt: "2026-11-03T13:00:00.000Z" }),
     createHeroSighting({

@@ -102,7 +102,6 @@ it("discovers gatherings on join and preserves visible state during refresh fail
     });
     expect(request).toHaveBeenCalledTimes(requestsAfterJoin);
 
-    // Opening the chat mounts another observer; the live cache needs no fetch.
     reopened = true;
     rerender();
     await waitFor(() => expect(observeReopened).toHaveBeenLastCalledWith(1));
@@ -281,9 +280,6 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
     );
     expect(result.current.data).toHaveLength(1);
 
-    // Live state already carries these changes, so chat and notification
-    // frames and a policy change outside gathering access must not reread or
-    // blank the bar.
     await harness.receive(
       {
         v: 1,

@@ -3,12 +3,10 @@ import type { Rgb } from "./math";
 import type { AuraPlacement } from "./placement";
 import { context2d, createCanvas, type AuraSilhouette } from "./silhouette";
 
-/** A tinted mask composited once per tick and silhouette, then only copied each frame. */
 interface Composite {
   silhouette: AuraSilhouette | null;
   key: string;
   canvas: HTMLCanvasElement;
-  /** The pixel buffer written into `canvas`, reused while its size holds. */
   image: ImageData | null;
 }
 
@@ -16,7 +14,6 @@ export function createComposite(): Composite {
   return { silhouette: null, key: "", canvas: createCanvas(1, 1), image: null };
 }
 
-/** Rebuilds `composite` for `key` and the silhouette when stale, via `paint` on a cleared canvas. */
 export function compositeCanvas(
   composite: Composite,
   silhouette: AuraSilhouette,
@@ -47,7 +44,6 @@ export function compositeCanvas(
   return canvas;
 }
 
-/** Writes `fill`'s pixels into a cleared composite through its reused buffer. */
 export function paintPixels(
   octx: CanvasRenderingContext2D,
   composite: Composite,
@@ -74,13 +70,8 @@ export function blitComposite(
 
 export const WHITE: Rgb = [255, 255, 255];
 
-/** The prism gradient runs from the top-left corner to this fraction of the width at the bottom. */
 export const RAINBOW_RUN = 0.3;
 
-/**
- * The colour at pixel `i` of a `width`×`height` buffer: the only colour, or the rainbow
- * gradient through evenly spaced `stops` sampled at the pixel centre, as `rainbow` paints it.
- */
 export function colorAt(
   stops: readonly Rgb[],
   i: number,
@@ -107,7 +98,6 @@ export function colorAt(
   ];
 }
 
-/** Sets pixel `i` to `color` at `alpha`; the clamped buffer rounds the channels. */
 export function writePixel(
   data: Uint8ClampedArray,
   i: number,
@@ -123,7 +113,6 @@ export function writePixel(
 
 let scratch: HTMLCanvasElement | null = null;
 
-/** `mask` filled with `fill` through its alpha, on a shared scratch canvas valid until the next call. */
 export function tint(
   mask: HTMLCanvasElement,
   fill: (

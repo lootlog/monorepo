@@ -1,4 +1,3 @@
-// Generated from openmargo's skill content; see the wiki skill tree notes.
 import type { SkillDefinition } from "@/lib/skills/skill-tree";
 
 export const SKILL_TREE: readonly SkillDefinition[] = [

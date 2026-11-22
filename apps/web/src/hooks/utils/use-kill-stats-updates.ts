@@ -17,14 +17,12 @@ const queryKeys = [
 
 export function useKillStatsUpdates(socket: Pick<GatewayClient, "on" | "off">) {
   const queryClient = useQueryClient();
-  // Only one callback-owned timer can be pending; cleanup cancels it and both listeners.
   // oxlint-disable-next-line react-doctor/effect-needs-cleanup -- The analyzer does not track the timer assigned inside scheduleRefresh.
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     const scheduleRefresh = () => {
       if (timer !== undefined) return;
-      // A refresh hint for this user's own kills, never an increment.
       timer = setTimeout(() => {
         timer = undefined;
 
@@ -34,7 +32,6 @@ export function useKillStatsUpdates(socket: Pick<GatewayClient, "on" | "off">) {
       }, 1_000);
     };
 
-    // A join right after the page's initial reads has nothing to recover.
     const onJoin = (payload: { recover: boolean }) => {
       if (payload.recover) scheduleRefresh();
     };

@@ -179,11 +179,6 @@ const mentionEntitiesByContext = new WeakMap<
   MentionEntity[]
 >();
 
-/**
- * Entity tables are derived once per context object: every rendered message of
- * a guild shares the same context, so building the table per message would
- * scale with rows x members on every render.
- */
 const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
   if (!context) return NO_MENTION_ENTITIES;
   const cachedEntities = mentionEntitiesByContext.get(context);
@@ -406,7 +401,6 @@ export const buildChatMentionContext = ({
   };
 };
 
-/** Content equality lets callers keep one context object while its inputs are unchanged. */
 export const areChatMentionContextsEqual = (
   left: ChatMentionContext,
   right: ChatMentionContext,

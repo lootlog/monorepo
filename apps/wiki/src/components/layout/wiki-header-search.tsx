@@ -5,10 +5,6 @@ import { Kbd } from "@lootlog/ui/components/kbd";
 import { t } from "@/i18n/messages";
 import { WikiSearchDialog } from "./wiki-search-dialog";
 
-/**
- * The site-wide search: a field-like button in a wide bar, an icon in a
- * narrow one. The field also answers Ctrl+K or Cmd+K on any page.
- */
 export function WikiHeaderSearch({ variant }: { variant: "field" | "icon" }) {
   const [open, setOpen] = useState(false);
 

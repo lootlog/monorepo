@@ -33,7 +33,6 @@ interface KillParticipantRowProps {
   scoring?: KillParticipantScoring | null;
   participantNames?: ReadonlyMap<number, string>;
   rank: number;
-  /** Marks the viewer's own place. */
   isViewer?: boolean;
   isExpanded: boolean;
   onToggle: () => void;

@@ -1,7 +1,6 @@
 import { foldText } from "@lootlog/domain/text-fold";
 import type { BattleWarriorSnapshot } from "./battle-log.js";
 
-/** One warrior's combat totals. Battlelog persists every field. */
 export type Warrior = {
   turns: number;
   turnsLost: number;
@@ -102,7 +101,6 @@ type LegendaryTotalStat =
 
 export type LegendaryTotalWarrior = Pick<Warrior, LegendaryTotalStat>;
 
-/** Counts the legendary bonuses that trigger; value-only bonuses are excluded. */
 export const getLegendaryTotal = (w: LegendaryTotalWarrior): number =>
   w.legbonCurse +
   w.legbonCleanse +
@@ -200,7 +198,6 @@ const createWarrior = (data: BattleWarriorSnapshot): Warrior => ({
 export const normalizeName = (name: string): string =>
   foldText(name).toLowerCase();
 
-/** Warriors keyed by battle id, looked up by the names the log prints. */
 export class WarriorRoster {
   readonly byId = new Map<string, Warrior>();
 
@@ -212,7 +209,6 @@ export class WarriorRoster {
     return id ? (this.byId.get(id) ?? null) : null;
   }
 
-  /** Matches names ignoring case and Polish diacritics. */
   findIdByName(name: string): string | null {
     const normalizedName = normalizeName(name);
 

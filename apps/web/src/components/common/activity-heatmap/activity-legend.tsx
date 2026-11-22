@@ -2,7 +2,6 @@ import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { activityLevelClasses } from "./activity-calendar";
 
-/** "Less … more" scale under an activity heatmap. */
 export function ActivityLegend({
   showUnknown = false,
 }: {

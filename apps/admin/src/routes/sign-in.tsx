@@ -19,7 +19,6 @@ export const Route = createFileRoute("/sign-in")({
   component: SignInPage,
 });
 
-/** Shown instead of the panel until an admin account's session arrives. */
 function SignInPage() {
   const { webUrl } = Route.useLoaderData();
   const { reason } = Route.useSearch();

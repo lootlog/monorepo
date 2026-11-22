@@ -1,11 +1,6 @@
 import { cn } from "cn";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
-/**
- * Wraps a table that may be wider than its card. It scrolls sideways only
- * while the table overflows: any scrolling box traps sticky content, so a
- * table that fits keeps its sticky header pinned to the page scroller.
- */
 export const TableScroller = ({
   children,
   className,

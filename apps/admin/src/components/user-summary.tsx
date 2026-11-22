@@ -5,7 +5,6 @@ import { UserAvatar } from "@/components/user-avatar";
 import { formatDateTime } from "@/lib/format";
 import { text } from "@/lib/messages";
 
-/** Who the User is: name, identifiers, roles and standing. */
 export function UserSummary({ user }: { user: AdminUser }) {
   const facts = [
     { label: text.userId, value: user.id },

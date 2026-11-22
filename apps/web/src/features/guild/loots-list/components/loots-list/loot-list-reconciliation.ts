@@ -1,4 +1,3 @@
-// One dirty bit and one timer per open list, independent of event volume.
 export function createLootListReconciliation({
   refresh,
   canRefresh,

@@ -1,9 +1,7 @@
 import { clamp } from "es-toolkit";
-/** Small deterministic helpers shared by the aura simulation and its renderer. */
 
 export type Rng = () => number;
 
-/** Seeded PRNG (mulberry32): same seed, same particles, so tests can pin behaviour. */
 export function mulberry32(seed: number): Rng {
   let a = seed >>> 0;
 
@@ -39,7 +37,6 @@ function hash(n: number): number {
   return s - Math.floor(s);
 }
 
-/** Smooth 1D value noise in [-1, 1]; `seed` picks an independent curve. */
 export function noise1(x: number, seed = 0): number {
   const i = Math.floor(x);
   const f = x - i;
@@ -48,10 +45,6 @@ export function noise1(x: number, seed = 0): number {
   return lerp(hash(i + seed * 57.3), hash(i + 1 + seed * 57.3), u) * 2 - 1;
 }
 
-/**
- * Lub-dub heartbeat in [0, 1]: a strong beat at the start of each `period` and a weaker
- * one a fifth of the period later, each a fast attack with an exponential release.
- */
 export function heartbeat(time: number, period: number): number {
   const phase = (((time % period) + period) % period) / period;
 
@@ -66,7 +59,6 @@ export function heartbeat(time: number, period: number): number {
   return clamp(beat(0, 1) + beat(0.2, 0.65), 0, 1);
 }
 
-/** Alpha envelope over a life in [0, 1]: fade in over `fadeIn`, out over the last `fadeOut`. */
 export function envelope(age: number, fadeIn: number, fadeOut: number): number {
   if (age < fadeIn) return fadeIn > 0 ? age / fadeIn : 1;
 
@@ -90,7 +82,6 @@ function mixRgb(a: Rgb, b: Rgb, t: number): Rgb {
   ];
 }
 
-/** Colour along a multi-stop ramp, `t` in [0, 1]. */
 export function ramp(stops: readonly Rgb[], t: number): Rgb {
   const only = stops[0];
 

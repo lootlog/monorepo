@@ -4,10 +4,6 @@ import { ItemStatLine } from "@lootlog/ui/components/item-stat-line";
 import { t } from "@/i18n/messages";
 import { findStatChanges } from "@/lib/stat-changes";
 
-/**
- * `ItemStatLine` that marks each stat an upgrade raised or lowered from
- * `baseStat`.
- */
 export const renderStatChanges = (baseStat: string, stat: string) => {
   const changes = new Map(
     findStatChanges(baseStat, stat).map(({ displayValue, before, after }) => [

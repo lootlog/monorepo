@@ -41,7 +41,6 @@ export const getNotificationSettingsKey = (
     return "party-gathering";
   }
 
-  // A Hero Tracker has no weight, which would otherwise mark a plain message.
   if (notification.npc?.name && isHeroTrackerName(notification.npc.name)) {
     return NpcType.HERO_TRACKER;
   }
@@ -57,11 +56,6 @@ export const getNotificationSettingsKey = (
   });
 };
 
-/**
- * Whether the game account's settings let a notification through: its
- * category is shown, it comes from this world when the category is limited to
- * it, and its Lootlog is one the account receives from.
- */
 export const isAllowedByNotificationSettings = (
   notification: { guildId: string; world: string },
   settingsKey: string,

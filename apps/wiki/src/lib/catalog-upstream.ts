@@ -6,10 +6,6 @@ import type {
 } from "@lootlog/client/catalog";
 import { CATALOG_SERVICE_TOKEN_HEADER } from "@lootlog/protocol/http/catalog-access";
 
-/**
- * The catalog service as the Worker reaches it. The token stays on the
- * server: the browser reads the catalog through the Worker's `/api/catalog`.
- */
 export const readCatalogUpstream = () => {
   const baseUrl = process.env.CATALOG_API_URL;
   const token = process.env.CATALOG_SERVICE_TOKEN;
@@ -23,7 +19,6 @@ export const readCatalogUpstream = () => {
   return { baseUrl, headers: { [CATALOG_SERVICE_TOKEN_HEADER]: token } };
 };
 
-// Every parameter of each read; the types keep each list complete.
 const ITEM_PARAMETERS = {
   search: true,
   gameVersion: true,
@@ -69,7 +64,6 @@ const INDEX_PARAMETERS = {
   gameVersion: true,
 } satisfies Record<keyof CatalogControllerGetIndexParams, true>;
 
-/** The catalog reads the wiki's pages make; anything else stays unreachable. */
 const CATALOG_READS = new Map<string, ReadonlySet<string>>([
   ["catalog/items", new Set(Object.keys(ITEM_PARAMETERS))],
   ["catalog/npcs", new Set(Object.keys(NPC_PARAMETERS))],
@@ -77,11 +71,6 @@ const CATALOG_READS = new Map<string, ReadonlySet<string>>([
   ["catalog/index", new Set(Object.keys(INDEX_PARAMETERS))],
 ]);
 
-/**
- * The catalog URL a browser's read asks for, or none for a read the wiki
- * does not make. Only the read's own parameters pass, in one order, so a
- * query the catalog would answer the same way shares one cached answer.
- */
 export const catalogUpstreamUrl = (
   baseUrl: string,
   path: string,

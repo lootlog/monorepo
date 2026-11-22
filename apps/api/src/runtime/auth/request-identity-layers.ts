@@ -51,7 +51,6 @@ const ReadyRoomAuthorizationLive = Layer.succeed(
   ReadyRoomAuthorization.of({ identity: requestScopedIdentity }),
 );
 
-/** Identity-only handler ports backed by the request-scoped forward-auth pair. */
 export const RequestIdentityLayers = Layer.mergeAll(
   SettingsIdentityLive,
   UserLootlogConfigIdentityLive,

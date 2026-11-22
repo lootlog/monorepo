@@ -9,7 +9,6 @@ const ACTION_CLASS_NAMES: Record<EventScoringAction["type"], string> = {
   ZERO_BASE: "bg-amber-400/10 text-amber-400",
 };
 
-/** What a rule does to the points: "3 pkt", "+0,5 pkt" or "Zeruj punkty". */
 export const ScoringActionBadge = ({
   action,
   muted = false,

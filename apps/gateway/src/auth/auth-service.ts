@@ -44,7 +44,6 @@ export const makeGatewayAuth = (
     config.allowedExtensionOrigins.has(origin.replace(/\/$/, ""))
       ? "game"
       : "web-app",
-  // Only the private reverse proxy may supply these verified identity headers.
   readIdentity: (request) => {
     const identity = readForwardAuthIdentity(
       Object.fromEntries(
@@ -60,7 +59,6 @@ export const makeGatewayAuth = (
     const { userId, discordId, apiKey: access } = identity;
 
     if (access === undefined) {
-      // A key the edge did not exchange for an assertion never authenticates.
       if (request.headers.has(API_KEY_HEADER)) return null;
 
       return { userId, discordId };
@@ -88,7 +86,6 @@ export const makeGatewayAuth = (
   },
 });
 
-/** Reads the identity Traefik's forward auth attached to a handshake. */
 export class Auth extends Context.Service<Auth, GatewayAuth>()(
   "@lootlog/gateway/auth/Auth",
 ) {

@@ -6,7 +6,6 @@ import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
 import type { Timer } from "@/api/timers.api";
 import type { GuildMember } from "@/types/guild-member";
 
-/** A timer as the list shows it; grouping merges several guilds' reports into one. */
 export type TimerWithTimeLeft = Timer & {
   members?: GuildMember[];
   mergedGuildIds?: Array<{

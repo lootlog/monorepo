@@ -22,7 +22,6 @@ export const Route = createFileRoute(
       ancestors: [
         { label: t("common.breadcrumbs.npcs"), path: `${parentPath}/npcs` },
       ],
-      // An empty label falls back like a missing one.
       label:
         currentEntityLabel ||
         t("common.breadcrumbs.npcFallback", { id: match.params?.npcId }),

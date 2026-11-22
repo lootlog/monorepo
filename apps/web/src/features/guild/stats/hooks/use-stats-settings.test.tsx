@@ -28,7 +28,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// Shows what a stats page reads from its settings.
 const Probe = () => {
   const { settings, searchDraft, hasActiveFilters, pageIndex, resetFilters } =
     useStatsSettings();

@@ -29,9 +29,7 @@ const defaultLimits = {
   active: 64,
   messages: 16_384,
   bytes: 16 * 1_024 * 1_024,
-  // A reconnect restores up to 4096 subscriptions in one client burst.
   connectionMessages: 4_112,
-  // Include 4096 maximum-size scopes plus their command envelopes on restore.
   connectionBytes: 8 * 1_024 * 1_024,
 } satisfies Limits;
 
@@ -44,7 +42,6 @@ interface Connection {
   closed: boolean;
 }
 
-/** Admission happens before decoding or allocating command fibers. */
 export class CommandIngress {
   private readonly connections = new Map<GatewaySocket, Connection>();
   private readonly ready = new Set<Connection>();
@@ -75,8 +72,6 @@ export class CommandIngress {
 
     if (existing) return !existing.closed;
 
-    // Reserve lifecycle capacity until ordered cleanup finishes. Otherwise a
-    // stalled cleanup dependency lets reconnect churn retain unlimited sockets.
     if (
       this.connections.size >=
       (this.limits.connections ?? defaultLimits.connections)
@@ -184,7 +179,6 @@ export class CommandIngress {
         else this.active += 1;
         this.runBackground(
           message ? "websocket.message" : "websocket.disconnect",
-          // Yield to network/probe callbacks even when commands complete synchronously.
           yieldToEventLoop.pipe(
             Effect.andThen(
               Effect.suspend(() =>
@@ -224,7 +218,6 @@ export class CommandIngress {
   }
 }
 
-/** Admits, orders and runs each socket's frames, then its disconnect cleanup. */
 export class Ingress extends Context.Service<Ingress, CommandIngress>()(
   "@lootlog/gateway/realtime/Ingress",
 ) {
@@ -276,7 +269,6 @@ export class Ingress extends Context.Service<Ingress, CommandIngress>()(
                       ),
                     ),
                   ),
-                // Its failures are logged inside: the lease covers them.
                 airTags.release(socket),
               ],
               { concurrency: 4, discard: true },

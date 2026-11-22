@@ -43,20 +43,12 @@ export const getItemTypeByCl = (cl: number): ItemTypeValue | undefined => {
   return ITEM_TYPES.get(cl);
 };
 
-/**
- * Lootlog counts an item of legendary rarity in two ways. Counters of
- * legendary items (statistics tiles, rarity charts, a loot's rarity summary,
- * the public stats card) count every one. A legend is a legendary find worth
- * listing: the legend lists and rankings leave out these types, which drop as
- * legendary blessings, upgrades and consumables rather than equipment.
- */
 export const NON_LEGEND_ITEM_TYPES = [
   ItemType.BLESS,
   ItemType.UPGRADE,
   ItemType.CONSUME,
 ] as const satisfies readonly ItemTypeValue[];
 
-/** Item types that fit one of Margonem's nine equipment slots, including blessings. */
 const EQUIPPABLE_ITEM_TYPES = [
   ItemType.ONE_HAND_WEAPON,
   ItemType.TWO_HAND_WEAPON,
@@ -81,18 +73,10 @@ const EQUIPPABLE_ITEM_TYPE_SET = new Set<string>(EQUIPPABLE_ITEM_TYPES);
 export const isEquippableItemType = (type: string | null | undefined) =>
   type !== null && type !== undefined && EQUIPPABLE_ITEM_TYPE_SET.has(type);
 
-/**
- * Coarse browse categories of catalog items:
- * - `equipment`: wearable gear meant to be equipped in combat;
- * - `crafting`: equipment-slot items meant only as crafting/upgrade ingredients
- *   (e.g. Chochoł or Marzanna drops with high `artisanbon` and no combat stats);
- * - `other`: non-equippable items such as keys, bags, consumables, and quests.
- */
 export const ITEM_CATEGORIES = ["equipment", "crafting", "other"] as const;
 
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 
-/** Combat stats that distinguish real wearable gear from pure crafting fodder. */
 const COMBAT_STAT_KEYS = new Set([
   "da",
   "ds",

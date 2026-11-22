@@ -17,7 +17,6 @@ export const decodeReferenceDocument = Schema.decodeUnknownSync(
   ReferenceDocumentSchema,
 );
 
-// A path item also holds shared `parameters`, which carry no tags.
 const decodeOperation = Schema.decodeUnknownOption(
   Schema.Struct({ tags: Schema.optional(Schema.Array(Schema.String)) }),
 );
@@ -31,7 +30,6 @@ const sdkInstallation = [
   },
 ];
 
-/** The tags operations of a document use, in order of first use. */
 export function getOperationTags({ paths }: ReferenceDocument) {
   return [
     ...new Set(
@@ -44,11 +42,6 @@ export function getOperationTags({ paths }: ReferenceDocument) {
   ];
 }
 
-/**
- * The public OpenAPI document of a service as the reference shows it: served
- * from the current environment, with named and grouped tags, an introduction
- * and the SDK's install command instead of generated client libraries.
- */
 export function presentReferenceDocument(
   document: ReferenceDocument,
   service: PublicApiService,

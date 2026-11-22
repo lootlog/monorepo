@@ -260,6 +260,11 @@ Before calling a change complete, account for every applicable item:
   Use a full raw SQL query only for a demonstrated builder limitation, and
   explain that limitation alongside the query. Verify generated SQL and relevant
   PostgreSQL behavior when query structure or performance matters.
+- Write no prose comments; `lootlog-comments/no-comments` enforces it, and
+  `tools/oxlint/comments/baseline.json` only shrinks. Name the concept in
+  code, record a non-obvious decision in its `docs/adr` record, and file an
+  issue instead of excusing a hack. Run `bun run comments:ratchet --update`
+  after deleting comments.
 - Import from the module that owns a symbol. Do not create source files that
   only re-export symbols.
 - When importing node built-in modules, first, look for Bun built-ins and only then Node built-ins.

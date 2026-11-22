@@ -17,12 +17,10 @@ export type StatisticsFiltersProps = {
   onWorldChange: (world: string | undefined) => void;
   days: StatisticsDays;
   onDaysChange: (days: StatisticsDays) => void;
-  /** Only the monster ranking narrows to one type. */
   npcType?: {
     value: StatisticsNpcType | undefined;
     onChange: (type: StatisticsNpcType | undefined) => void;
   };
-  /** A ranking tab's sort; wide pages sort from the table headers instead. */
   sort?: {
     tab: StatisticsSortTab;
     fields: readonly StatisticsSort[];
@@ -31,7 +29,6 @@ export type StatisticsFiltersProps = {
   };
 };
 
-/** The statistics filters for the filter bar. */
 export function StatisticsFilters({
   world,
   worlds,

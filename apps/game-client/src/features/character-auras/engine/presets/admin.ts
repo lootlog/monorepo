@@ -2,7 +2,6 @@ import type { CharacterAuraId } from "@lootlog/schema/character-aura";
 import { noise1 } from "../math";
 import { breathe, type AuraPreset } from "./preset";
 
-/** Admin auras: only Lootlog admins wear them (`ADMIN_CHARACTER_AURA_IDS`). */
 export const ADMIN_AURAS = {
   sovereign: {
     id: "sovereign",
@@ -419,7 +418,6 @@ export const ADMIN_AURAS = {
     nick: ["#ffffff", "#a8d8ff", "#2a4a7a"],
     tones: ["#ffffff", "#a8d8ff", "#2a4a7a"],
   },
-  // Calmer admin auras: no arrival.
   starlight: {
     id: "starlight",
     tier: "mythic",

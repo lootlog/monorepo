@@ -274,7 +274,6 @@ it("reads every world one at a time when the Organization shows all worlds", asy
 
   await mount(fetchTimers, null);
 
-  // The same monster on two worlds stays two timers, each naming its world.
   expect(await screen.findAllByText("Original NPC")).toHaveLength(2);
   expect(screen.getByText(/^Tempest/)).toBeTruthy();
   expect(screen.getByText(/^Pandora/)).toBeTruthy();

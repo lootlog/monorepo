@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Main API themes and character auras. */
 export const MAIN_THEME_OPERATIONS = [
   {
     service: "main",

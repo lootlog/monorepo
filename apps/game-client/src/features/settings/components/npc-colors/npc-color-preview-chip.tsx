@@ -3,16 +3,11 @@ import { cn } from "cn";
 import type { FC, ReactNode } from "react";
 
 type NpcColorPreviewChipProps = {
-  /** Accent HEX colour of the NPC type. */
   color: string;
   children: ReactNode;
   className?: string;
 };
 
-/**
- * Renders a label the way the chat, notifications and the detector paint an
- * NPC type: readable text on the tinted surface with the accent border.
- */
 export const NpcColorPreviewChip: FC<NpcColorPreviewChipProps> = ({
   color,
   children,

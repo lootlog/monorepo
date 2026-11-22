@@ -29,7 +29,6 @@ export interface ReservationCatalogCache {
   ) => Effect.Effect<void, RedisError>;
 }
 
-/** The catalog service answered with an error status or an unusable payload. */
 export class ReservationCatalogUnavailable extends TaggedErrorClass<ReservationCatalogUnavailable>()(
   "ReservationCatalogUnavailable",
   {

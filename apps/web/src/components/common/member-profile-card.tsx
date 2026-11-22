@@ -22,11 +22,9 @@ import { useCopyToClipboard } from "usehooks-ts";
 type MemberProfileCardProps = {
   member: GuildMemberReference;
   guildId: string;
-  /** `MemberProfileLink` rows for the place the card was opened from. */
   links?: React.ReactNode;
 };
 
-/** A member's short profile: who they are on Discord and where to reach them. */
 export const MemberProfileCard = ({
   member,
   guildId,
@@ -39,7 +37,6 @@ export const MemberProfileCard = ({
   const roleColor = discordRoleCssColor(member.color);
   const bannerColor = roleColor ?? "var(--muted-foreground)";
   const displayName = member.displayName ?? member.name;
-  // The server avatar hides the face people know from direct messages.
   const hasServerAvatar = member.avatar?.startsWith("http") ?? false;
   const memberParams = { guildId, memberId: String(member.id) };
 
@@ -58,8 +55,7 @@ export const MemberProfileCard = ({
         style={{
           backgroundImage: member.bannerUrl
             ? `url("${member.bannerUrl}")`
-            : // Without a banner the role colour fills the header.
-              `linear-gradient(120deg, color-mix(in srgb, ${bannerColor} 65%, var(--popover)), color-mix(in srgb, ${bannerColor} 15%, var(--popover)))`,
+            : `linear-gradient(120deg, color-mix(in srgb, ${bannerColor} 65%, var(--popover)), color-mix(in srgb, ${bannerColor} 15%, var(--popover)))`,
         }}
       >
         {!member.active && (
@@ -187,7 +183,6 @@ export const MemberProfileCard = ({
           target="_blank"
           rel="noreferrer"
           onClick={(event) => {
-            // A modified click opens the web profile where the user asked.
             if (
               event.metaKey ||
               event.ctrlKey ||

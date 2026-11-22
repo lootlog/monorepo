@@ -12,7 +12,6 @@ type ChatNpcMessageMenuProps = {
   npc: ChatNpc;
 };
 
-/** The items of an NPC message's menu in the transcript's shared context menu. */
 export const ChatNpcMessageMenu: FC<ChatNpcMessageMenuProps> = ({
   message,
   npc,

@@ -24,10 +24,6 @@ type ItemComparisonTableProps = {
   items: ReadonlyArray<{ item: CatalogItemDtoOutput; upgrade: ItemUpgrade }>;
 };
 
-/**
- * The compared items in columns and their stats in rows, each item at its
- * upgrade and, when elastic, at the set's level. Columns share the width, so the table never scrolls sideways.
- */
 export function ItemComparisonTable({ items }: ItemComparisonTableProps) {
   const { set } = useEquipmentSet();
 

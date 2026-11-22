@@ -178,8 +178,6 @@ describe("Activity RabbitMQ topology", () => {
         }).pipe(Effect.scoped),
       );
 
-      // A successful handler is automatically ACKed by RabbitMessaging.
-      // Registering a log-only DLQ handler would silently delete failed events.
       expect(handlers.has("activity-log-create.dlq")).toBe(false);
       expect(handlers.has("guilds-members-remove.dlq")).toBe(false);
 
@@ -190,8 +188,6 @@ describe("Activity RabbitMQ topology", () => {
         return;
       }
 
-      // An unprocessable delivery skips retries and the retry policy routes it
-      // to the dead-letter queue, where it stays available for recovery.
       expect(create).not.toHaveBeenCalled();
       expect(
         Exit.isFailure(outcome) &&

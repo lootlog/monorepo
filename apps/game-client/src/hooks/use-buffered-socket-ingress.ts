@@ -157,7 +157,6 @@ export const useBufferedSocketIngress = <
 
   useEffect(() => {
     const handlePermissionsUpdated = (data?: AccessUpdate) => {
-      // A disconnect carries no access update and drops everything pending.
       if (data && isPayloadAllowedRef.current) {
         pendingItemsRef.current = pendingItemsRef.current.filter(
           isPayloadAllowedRef.current,

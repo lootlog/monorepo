@@ -93,7 +93,6 @@ export function CharacterSelector(props: CharacterSelectorProps) {
           <CharacterSelectorTrigger
             selectedCharacters={selectedCharacters}
             placeholder={placeholder}
-            // A required character is the page's subject, not a narrowing.
             active={
               Boolean(props.multiple || allowAllCharacters) &&
               selectedCharacters.length > 0

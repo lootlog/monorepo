@@ -6,7 +6,6 @@ import {
   LootShareResponse as LootShare,
   LootStandingDrawResponse,
 } from "@lootlog/protocol/loot-summary";
-/** Shared input and output schemas for the loots feature. */
 import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";
 import {
@@ -62,9 +61,7 @@ const LootRecord = Schema.Struct({
   updatedAt: DateTimeString,
   submissions: Schema.optionalKey(Schema.Array(LootSubmission)),
   commentsCount: FiniteNumber,
-  /** Members who liked the loot, oldest like first. */
   likes: Schema.Array(MemberSummary),
-  /** The standing draw of each drawn item; voided draws are left out. */
   standingDraws: Schema.Array(
     LootStandingDrawResponse.annotate({ identifier: "LootStandingDrawDto" }),
   ),
@@ -148,7 +145,6 @@ export { LootStatsBody };
 
 export const LootStatsResponse = Schema.Struct({
   ...LootStatsBody.fields,
-  /** When the statistics were computed; they refresh in the background. */
   computedAt: DateTimeString,
 }).annotate({ identifier: "LootStatsResponseDto_Output" });
 
@@ -162,29 +158,18 @@ export const UserLootStatsQuery = Schema.Struct({
 
 export type UserLootStatsResponse = typeof UserLootStatsResponse.Type;
 
-/**
- * Loots of fights a character of the user took part in, as their
- * Organizations show them. An item is caught when its loot share gives it to
- * one of the user's characters, or when that character fought alone.
- */
 export const UserLootStatsResponse = Schema.Struct({
   overview: Schema.Struct({
     ...LootStatsOverview.fields,
-    /** The items of `legendaryItems` that the user's characters caught. */
     caughtLegendaryItems: FiniteNumber,
   }),
   timeline: LootStatsTimeline,
   topNpcs: LootStatsTopNpcs,
-  /**
-   * Every legend, per world and the monster it dropped from; legends leave
-   * out legendary blessings, upgrades and consumables.
-   */
   legends: Schema.Array(
     Schema.Struct({
       itemId: FiniteNumber,
       name: Schema.String,
       icon: Schema.String,
-      /** The item's stats, for its tooltip. */
       stat: Schema.String,
       type: Schema.NullOr(Schema.String),
       world: Schema.String,
@@ -194,10 +179,8 @@ export const UserLootStatsResponse = Schema.Struct({
         lvl: Schema.Union([FiniteNumber, Schema.Null]),
         icon: Schema.Union([Schema.String, Schema.Null]),
       }),
-      /** Drops the user's characters were present at. */
       count: FiniteNumber,
       caught: FiniteNumber,
-      /** The user's characters that caught it, most catches first. */
       caughtBy: Schema.Array(
         Schema.Struct({
           characterId: Schema.String,
@@ -205,15 +188,9 @@ export const UserLootStatsResponse = Schema.Struct({
           caught: FiniteNumber,
         }),
       ),
-      /** The user's kills of the monster on the world in the period. */
       npcKills: FiniteNumber,
     }),
   ),
-  /**
-   * Every boss the user killed in the period and every monster that dropped
-   * them a legend, with its legends dropped and caught. A monster is keyed by
-   * the id its kills carry: one stable id for a colossus.
-   */
   monsters: Schema.Array(
     Schema.Struct({
       world: Schema.String,
@@ -380,7 +357,6 @@ export const LootCommentResponse = Schema.Struct({
   content: Schema.String,
   member: Schema.Struct({
     ...MemberSummary.fields,
-    /** The Member's display roles, for the name colour. */
     roles: Schema.Array(Schema.Struct({ color: Schema.NullOr(FiniteNumber) })),
   }),
   createdAt: DateTimeString,
@@ -402,7 +378,6 @@ export const CreateLootCommentRequest = Schema.Struct({
 
 export type LootLikesResponse = typeof LootLikesResponse.Type;
 
-/** The loot's likes after a like or unlike, oldest like first. */
 export const LootLikesResponse = Schema.Struct({
   likes: Schema.Array(MemberSummary),
 }).annotate({ identifier: "LootLikesResponseDto" });
@@ -493,7 +468,6 @@ export const LootSharePath = Schema.Struct({
   id: FiniteNumber,
 });
 
-/** Entrants a draw may hold: a full party of ten and a map's few dozen outsiders. */
 const LOOT_DRAW_MAX_ENTRANTS = 110;
 
 const LOOT_DRAW_VOID_REASON_MAX_LENGTH = 200;
@@ -520,11 +494,6 @@ const LootDrawTickets = PositiveSafeInteger.check(
 
 export type LootDrawEntrantInput = typeof LootDrawEntrantInput.Type;
 
-/**
- * One entrant: WINNER caught the item in the game, PARTY was another member
- * of the party, MAP stood on the map outside the party at the drop and MANUAL
- * was added by hand. Managers may change the tickets.
- */
 export const LootDrawEntrantInput = Schema.Struct({
   ...LootDrawPlayer,
   source: LootDrawEntrantSource,
@@ -541,7 +510,6 @@ export const CreateLootDrawRequest = Schema.Struct({
     }),
     Schema.isMaxLength(LOOT_DRAW_MAX_ENTRANTS),
   ),
-  /** The wheel's tickets in order, each naming its entrant's index. */
   ticketOrder: Schema.Array(
     Schema.Int.check(Schema.isGreaterThanOrEqualTo(0)),
   ).check(Schema.isMaxLength(LOOT_DRAW_MAX_ENTRANTS * MAX_LOOT_DRAW_TICKETS)),
@@ -569,9 +537,7 @@ export const LootDrawResponse = Schema.Struct({
       tickets: PositiveSafeInteger,
     }),
   ),
-  /** The wheel's tickets in order, each naming its entrant's index. */
   ticketOrder: Schema.Array(FiniteNumber),
-  /** The drawn position in `ticketOrder`. */
   roll: FiniteNumber,
   winnerIndex: FiniteNumber,
   createdBy: MemberSummary,
@@ -587,7 +553,6 @@ export const LootDrawResponse = Schema.Struct({
 
 export type LootDrawsResponse = typeof LootDrawsResponse.Type;
 
-/** Newest first, voided draws included. */
 export const LootDrawsResponse = Schema.Array(LootDrawResponse);
 
 export type LootDrawPath = typeof LootDrawPath.Type;

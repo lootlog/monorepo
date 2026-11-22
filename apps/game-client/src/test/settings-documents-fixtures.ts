@@ -20,7 +20,6 @@ type SettingsScope = {
   id: string;
 };
 
-/** Dotted `domain.field.path` keys mapped to stored values. */
 export type SettingsDocumentValues = Record<
   string,
   SettingsDocuments["domains"][string]["effective"][string] | undefined
@@ -28,10 +27,6 @@ export type SettingsDocumentValues = Record<
 
 const USER_SCOPE: SettingsScope = { type: "USER", id: "user" };
 
-/**
- * Builds a resolved documents response: catalog defaults for every domain,
- * with the given values marked as stored on `scope`.
- */
 export const createSettingsDocuments = (
   values: SettingsDocumentValues = {},
   scope: SettingsScope = USER_SCOPE,
@@ -131,7 +126,6 @@ export const userPreferenceValues = (
   ),
 });
 
-/** Applies stored values on top of an existing (or fresh) documents response. */
 export const applySettingsDocumentValues = (
   documents: SettingsDocuments | undefined,
   values: SettingsDocumentValues,
@@ -170,7 +164,6 @@ export const applySettingsDocumentValues = (
   return { domains };
 };
 
-/** Seeds values into the documents the current character context resolves to. */
 export const seedSettingsDocumentValues = (
   queryClient: QueryClient,
   values: SettingsDocumentValues,
@@ -185,10 +178,6 @@ export const seedSettingsDocumentValues = (
     ),
   );
 
-/**
- * Seeds the documents the current character context resolves to, or the
- * documents of an explicit context when the character joins later.
- */
 export const seedSettingsDocuments = (
   queryClient: QueryClient,
   documents: SettingsDocuments,

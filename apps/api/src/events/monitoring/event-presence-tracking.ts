@@ -154,8 +154,6 @@ export const makeEventPresenceTracking = (
       );
     });
 
-  // Coverage checks arrive for every map and AFK change. Most maps belong to
-  // no event, so rule them out from the cached event maps before locking.
   const hasActiveEventMap = (guildId: string, mapName: string) =>
     Effect.gen(function* () {
       const referenceTime = new Date(yield* Clock.currentTimeMillis);
@@ -343,8 +341,6 @@ export const makeEventPresenceTracking = (
               }
             }
 
-            // Everyone assigned here has left the Discord server, so the map
-            // is now unassigned rather than uncovered.
             if (!assigned && mapAssignments.length === 0) return;
 
             if (!assigned) {

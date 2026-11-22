@@ -12,7 +12,6 @@ type StatisticsSortSelectProps = {
   onValueChange: (value: StatisticsSortValue) => void;
 };
 
-/** The ranking's sort in the filter panel of narrow pages, which show no table headers. */
 export function StatisticsSortSelect({
   tab,
   fields,

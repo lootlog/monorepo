@@ -27,12 +27,6 @@ type GuildDocItemChipProps = {
   nodeKey: NodeKey;
 };
 
-/**
- * An item in a document: its icon opens the same tooltip as on the loot list,
- * its name takes the rarity colour, and a pasted in-game identifier is one
- * click from the clipboard. An identifier without its item looks it up among
- * the loots; a writer's editor keeps what it finds.
- */
 export const GuildDocItemChip = ({ item, nodeKey }: GuildDocItemChipProps) => {
   const { t } = useTranslation();
   const [editor] = useLexicalComposerContext();
@@ -104,8 +98,6 @@ export const GuildDocItemChip = ({ item, nodeKey }: GuildDocItemChipProps) => {
           title={itemId}
         >
           <PackageSearch aria-hidden="true" className="size-4 shrink-0" />
-          {/* Drawn from an attribute so find-in-page matches the full
-              identifier below instead of this clipped one. */}
           <code
             className="max-w-48 truncate font-mono text-xs before:content-[attr(data-item-id)]"
             data-item-id={itemId}

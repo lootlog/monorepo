@@ -41,17 +41,7 @@ export interface NotificationJobInput {
   };
   readonly jobKind: NotificationJobKind;
   readonly scheduledFor: Date;
-  /**
-   * When a scheduled occurrence was due, if it was due before it could be
-   * planned and `scheduledFor` moved it to now. It keys the job, so planning
-   * the same past-due occurrence again cannot send it a second time.
-   */
   readonly occurrenceAt?: Date;
-  /**
-   * Payload fields that identify a past-due occurrence. A sent job of the
-   * same rule, target and source whose payload contains them is that
-   * occurrence under an earlier key, so it is not created again.
-   */
   readonly occurrence?: JsonObject;
   readonly sourceEntityType?: string;
   readonly sourceEntityId?: string;
@@ -155,8 +145,6 @@ export const makeNotificationJobScheduler = (
       .pipe(Effect.mapError(failure("notifications.scheduler.cancelRows")));
   });
 
-  // A past-due occurrence already sent or being sent under an earlier key,
-  // such as one keyed by its moved time before `occurrenceAt` existed.
   const alreadyDelivered = (options: NotificationJobInput) =>
     options.occurrence &&
     options.occurrenceAt &&
@@ -175,7 +163,6 @@ export const makeNotificationJobScheduler = (
                 options.sourceEntityType,
               ),
               eq(notificationJobTable.sourceEntityId, options.sourceEntityId),
-              // Drizzle has no jsonb containment operator.
               sql`${notificationJobTable.payloadSnapshot} @> ${JSON.stringify(options.occurrence)}::jsonb`,
               inArray(notificationJobTable.status, [
                 NotificationJobStatus.SENT,

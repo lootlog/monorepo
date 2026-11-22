@@ -19,12 +19,6 @@ type HeroSightingsWindowProps = {
   isOpen: boolean;
 };
 
-/**
- * Heroes found with detectors in the timers' world. Like the timers, it shows
- * the selected Lootlog, or every Lootlog merged while timer grouping is on.
- * The "+" action covers the list with the form that adds a hero by hand and
- * stays lit while it does.
- */
 export const HeroSightingsWindow = ({ isOpen }: HeroSightingsWindowProps) => {
   const { t } = useTranslation("heroSightings");
   const setOpen = useWindowsStore((state) => state.setOpen);
@@ -97,7 +91,6 @@ export const HeroSightingsWindow = ({ isOpen }: HeroSightingsWindowProps) => {
             </ScrollArea>
           </AsyncContent>
         </div>
-        {/* The window frame is rounded; the panel follows its bottom corners. */}
         {addOpen ? (
           <AddHeroSightingPanel
             world={world}

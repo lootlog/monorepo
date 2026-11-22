@@ -33,11 +33,9 @@ type MyReservationListItemProps = {
   cancelPending?: boolean;
   cancelDisabled?: boolean;
   onEdit?: () => void;
-  /** Runs after the player confirms; a rejection keeps the dialog open. */
   onCancel?: () => Promise<void>;
 };
 
-/** One of the player's reservations as a tile; the tile opens its calendar. */
 export function MyReservationListItem({
   reservation,
   showCancel = false,

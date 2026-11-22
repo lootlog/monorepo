@@ -6,11 +6,9 @@ import { SocketItem } from "./socket-item";
 
 type SymbolRecipeProps = {
   recipe: ReadonlyArray<RecipeComponent>;
-  /** The symbol the recipe makes; none leaves it out. */
   symbolId?: number;
 };
 
-/** The components a fusion takes, and the symbol it makes. */
 export function SymbolRecipe({ recipe, symbolId }: SymbolRecipeProps) {
   const itemsById = useSocketItems();
 

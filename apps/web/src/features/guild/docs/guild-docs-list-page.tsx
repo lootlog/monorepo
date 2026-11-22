@@ -41,7 +41,6 @@ export const GuildDocsListPage = () => {
 
   const toolbarActions = (
     <div className="flex items-center gap-2">
-      {/* A readout, not a control: a button's height and shape without its border. */}
       <span
         title={t("docs.list.limit", { max: limit.max, used: limit.used })}
         className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-muted/60 px-2.5 text-sm font-semibold tabular-nums text-muted-foreground"
@@ -219,7 +218,6 @@ export const GuildDocsListPage = () => {
         onConfirm={async () => {
           if (!documentPendingTrash) return;
 
-          // The move reports its own failure; keep the dialog for a retry.
           if (!(await moveDocumentToTrash(documentPendingTrash))) {
             throw new Error("The document did not reach the trash.");
           }

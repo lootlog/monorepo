@@ -9,7 +9,6 @@ type SettingsListErrorProps = {
   onRetry: () => void;
 };
 
-/** Takes a settings list's place when it could not be loaded. */
 export const SettingsListError = ({
   title,
   isRetrying,

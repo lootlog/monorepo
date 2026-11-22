@@ -186,7 +186,6 @@ export const StatsRanking = () => {
                     isViewer(member.member.userId) && VIEWER_ROW_CLASS,
                   )}
                 >
-                  {/* The tile opens the member's stats; their name opens their profile. */}
                   <Link
                     to="/$guildId/stats/members/$memberId"
                     params={{ guildId, memberId: String(member.member.id) }}

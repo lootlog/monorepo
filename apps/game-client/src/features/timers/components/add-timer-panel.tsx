@@ -11,12 +11,6 @@ type AddTimerPanelProps = {
   className?: string;
 };
 
-/**
- * Overlay that covers the timers list while the user adds a manual timer. It
- * stays inside the window, so the title bar and the "+" action remain reachable
- * and the target Lootlog is the one the window already shows. Cancel in the
- * form footer and Escape are the ways out.
- */
 export const AddTimerPanel: FC<AddTimerPanelProps> = ({
   guildId,
   world,

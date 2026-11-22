@@ -16,15 +16,9 @@ import {
 
 type CatalogItemTileProps = {
   item: CatalogItemDtoOutput;
-  /** The upgrade the tooltip shows the item at. */
   upgrade?: ItemUpgrade;
 };
 
-/**
- * A catalog item's tile, linking to its page at the upgrade shown. Its tooltip sets the item at its upgrade beside the
- * one the set wears in its slot, unless that is this very item at the same
- * upgrade.
- */
 export function CatalogItemTile({
   item,
   upgrade = NO_UPGRADE,

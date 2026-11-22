@@ -9,7 +9,6 @@ import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
 
 const BOSSES_SHOWN = 3;
 
-/** The newest bosses side by side, each opening its page. */
 export function HeroLineup() {
   const { bosses } = useNewBosses();
 
@@ -26,8 +25,7 @@ export function HeroLineup() {
       </h2>
       <ul className="grid grid-cols-3 gap-3">
         {bosses
-          ? // A boss fought as a hero and a colossus shows once.
-            uniqBy(bosses, ({ monster }) => monster.name)
+          ? uniqBy(bosses, ({ monster }) => monster.name)
               .slice(0, BOSSES_SHOWN)
               .map(({ monster }) => (
                 <li key={monster.key} className="min-w-0">

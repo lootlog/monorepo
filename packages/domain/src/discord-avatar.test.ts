@@ -5,7 +5,6 @@ import {
 } from "./discord-avatar.js";
 
 test("serves a member's per-server avatar from the guild, not from the user's own avatars", () => {
-  // A Member stores the address `getDiscordServerAvatarUrl` builds.
   const stored = getDiscordServerAvatarUrl("guild-1", "42", "a_hash");
 
   expect(getDiscordAvatarUrl("42", stored, 64)).toBe(

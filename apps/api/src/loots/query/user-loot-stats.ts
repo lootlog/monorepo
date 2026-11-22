@@ -50,7 +50,6 @@ const empty: UserLootStatsResponse = {
   monsters: [],
 };
 
-/** The bosses the monster list counts kills of, as the kill statistics track them. */
 const BOSS_TYPES = [
   "TITAN",
   "COLOSSUS",
@@ -67,7 +66,6 @@ type UserCharacter = { world: string; accountId: string; characterId: string };
 const characterKey = (character: UserCharacter) =>
   `${character.world}:${character.accountId}:${character.characterId}`;
 
-/** A legend's catches per character of the user, on its world. */
 const countCatches = (
   rows: readonly { world: string; caught_items: readonly CaughtItem[] }[],
   caughtCharacter:
@@ -91,10 +89,6 @@ const countCatches = (
     return character ? [{ ...character, caught: catches.length }] : [];
   });
 
-/**
- * Each character's name as the latest snapshot among the chosen loots calls
- * it, so a name seen only in loots the user cannot see stays hidden.
- */
 const readCharacterNames = (
   database: typeof ApiDatabase.Service,
   lootIds: readonly number[],
@@ -202,7 +196,6 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
           ),
         );
 
-      // Loot shares name a player by character id followed by account id.
       const charactersByShareKey = new Map(
         characters.map((character) => [
           `${character.characterId}${character.accountId}`,
@@ -254,7 +247,6 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
           { concurrency: "unbounded" },
         );
 
-      // The character that caught each item, as the caught filter chose it.
       const soloCharacters = new Map(
         soloLoots.map(({ lootId, accountId, characterId }) => [
           lootId,
@@ -286,16 +278,12 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
     const legendRows = lootStats?.legendRows ?? [];
     const caughtCharacter = lootStats?.caughtCharacter;
 
-    // A boss's name is unique on its world, while its id is not: kills name a
-    // colossus by a stable id from its name, and older Game clients reported
-    // a loot's monster by its template id instead of the spawn id kills use.
     const monsterKey = (row: { world: string; name: string }) =>
       `${row.world}:${row.name}`;
 
     const legendMonsterKey = (row: (typeof legendRows)[number]) =>
       monsterKey({ world: row.world, name: row.npc_name });
 
-    // Each monster that dropped a legend, on the world it dropped it.
     const legendMonsters = Object.values(
       groupBy(legendRows, legendMonsterKey),
     ).flatMap(([row]) => (row ? [row] : []));
@@ -305,7 +293,6 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
         ? userKillBucketTable
         : userCharacterKillBucketTable;
 
-    // The latest bucket names the monster, as the kill statistics do.
     const latest = <T>(column: AnyPgColumn) =>
       sql<T>`(array_agg(${column} order by ${killBuckets.periodStart} desc))[1]`;
 
@@ -344,7 +331,6 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
                     ),
                 or(
                   inArray(killBuckets.npcType, [...BOSS_TYPES]),
-                  // Any monster that dropped a legend, whatever its type.
                   legendMonsters.length
                     ? sql`(${killBuckets.world}, ${killBuckets.npcName}) IN (SELECT * FROM unnest(${sql.param(legendMonsters.map((row) => row.world))}::text[], ${sql.param(legendMonsters.map((row) => row.npc_name))}::text[]))`
                     : undefined,
@@ -368,7 +354,6 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
 
     const dropsByMonster = groupBy(legendRows, legendMonsterKey);
 
-    // The kills' id names the monster; without kills, the lowest loot id does.
     const monsterNpcId = (key: string) =>
       killsByMonster.get(key)?.npcId ??
       Math.min(...(dropsByMonster[key] ?? []).map((row) => row.npc_id));
@@ -429,7 +414,6 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
           comparePolish(left.name, right.name),
       );
 
-    // Every boss the user killed, and every monster that dropped them a legend.
     const monsters = [
       ...new Set([...killsByMonster.keys(), ...Object.keys(dropsByMonster)]),
     ]

@@ -1,7 +1,6 @@
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { parseKillStatsLevel } from "@/features/kills/parse-kill-stats-level";
 
-/** Bounds are kept as the persisted strings ("" when unset). */
 export type KillStatsLevelRangeValue = {
   minLvl: string;
   maxLvl: string;
@@ -13,14 +12,11 @@ type KillStatsLevelRangeProps = {
   level: KillStatsLevelRangeValue;
 };
 
-// Callers debounce the request on their own, so the inputs commit sooner than
-// the level range's default.
 const LEVEL_COMMIT_DELAY_MS = 300;
 
 const toLevelParam = (value: number | undefined) =>
   value === undefined ? "" : String(value);
 
-/** The kill statistics level range, over the bounds as persisted strings. */
 export const KillStatsLevelRange = ({ level }: KillStatsLevelRangeProps) => (
   <LevelRangeFilter
     debounceMs={LEVEL_COMMIT_DELAY_MS}

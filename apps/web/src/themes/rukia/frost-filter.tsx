@@ -1,4 +1,3 @@
-// SVG Frost Filter - creates organic ice texture
 export const FrostFilter = () => (
   <svg width="0" height="0" className="absolute">
     <defs>

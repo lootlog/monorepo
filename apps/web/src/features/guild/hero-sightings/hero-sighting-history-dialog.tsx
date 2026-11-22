@@ -28,7 +28,6 @@ import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { HeroSightingHistoryEntry } from "./hero-sighting-history-entry";
 import { RetryButton } from "@/components/common/retry-button";
 
-/** The hero whose history is open, on the world it was sighted in. */
 export type HeroSightingHistoryTarget = {
   world: string;
   hero: HeroSightingResponseDtoHero;
@@ -39,7 +38,6 @@ type HeroSightingHistoryDialogProps = {
   onClose: () => void;
 };
 
-/** The last sightings of one hero, newest first, beside the board. */
 export const HeroSightingHistoryDialog = ({
   target,
   onClose,
@@ -49,7 +47,6 @@ export const HeroSightingHistoryDialog = ({
   const isMobile = useIsMobile();
   const now = useMinuteTimestamp();
   const isOpen = target !== null;
-  // Keeps the closing dialog's content while it animates out.
   const [shown, setShown] = useState(target);
 
   if (target !== null && target !== shown) setShown(target);

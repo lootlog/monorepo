@@ -40,12 +40,10 @@ const CachedGuildDataJson = Schema.fromJsonString(
   ]),
 );
 
-// Matches the Lua revision check even when the cached projection no longer decodes.
 const CachedRevisionJson = Schema.fromJsonString(
   Schema.Struct({ revision: Schema.optional(Schema.String) }),
 );
 
-// The revision fences HTTP requests started on another gateway instance.
 const cacheGuildsScript = `
 local raw = redis.call("GET", KEYS[1])
 local revision = ""
@@ -141,7 +139,6 @@ export const makeGuildStore = (
     return yield* boundedHttpGet({
       client: httpClient,
       url,
-      // Bounds how long one join can hold a command slot on a slow API.
       timeoutMilliseconds: 5000,
       retries: 2,
       operationId: "GuildStore_fetchUserGuilds",
@@ -194,9 +191,6 @@ export const makeGuildStore = (
     return guilds;
   });
 
-  // A reconnect burst sends every socket of a user through one API request.
-  // The revision is part of the key: a read that observed an invalidation
-  // never waits for a request started before it.
   const pendingFetches = new SingleFlight<
     string,
     UserGuildData[],
@@ -220,7 +214,6 @@ export const makeGuildStore = (
     const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
     const { entry: cached, revision } = yield* readCache(cacheKey);
 
-    // Revocation must never join a request that started before it.
     if (readOptions?.freshness === "required")
       return yield* fetchAndCommit(options, cacheKey, revision, readOptions);
 
@@ -231,8 +224,6 @@ export const makeGuildStore = (
 
       if (age <= CACHE_TTL.USER_GUILDS * 1_000) return [...cached.guilds];
 
-      // A slow or failing API must not hold joins that already have a
-      // projection nobody invalidated. Refresh it for the next join.
       if (age <= CACHE_TTL.MAX_STALE_CACHE_AGE * 1_000) {
         yield* sharedFetch(options, cacheKey, revision).pipe(
           Effect.catch((error) =>
@@ -251,7 +242,6 @@ export const makeGuildStore = (
 
     if (Result.isSuccess(result)) return result.success;
 
-    // Another gateway may have filled the projection while this request failed.
     const { entry: fallback } = yield* readCache(cacheKey);
     const fallbackAt = yield* Clock.currentTimeMillis;
 
@@ -283,7 +273,6 @@ export const makeGuildStore = (
   };
 };
 
-/** The Organizations and roles of each User, cached in Redis. */
 export class Guilds extends Context.Service<Guilds, GuildStore>()(
   "@lootlog/gateway/guilds/Guilds",
 ) {

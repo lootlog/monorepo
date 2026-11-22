@@ -79,10 +79,6 @@ const getEventScoring = (event: EventOverview | undefined) => {
   };
 };
 
-/**
- * What every page of an event opens with: the event, its status and pin, and
- * the actions on the whole event with their dialogs.
- */
 export const useEventHeader = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });

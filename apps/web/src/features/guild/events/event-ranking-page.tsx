@@ -115,7 +115,6 @@ export const EventRankingPage = () => {
           />
         )}
 
-        {/* A failed refresh keeps the last ranking; a failed first load has none to show. */}
         {(!rankingError || rankings.length > 0) && (
           <EventRankingTable
             rankings={filteredRankings}

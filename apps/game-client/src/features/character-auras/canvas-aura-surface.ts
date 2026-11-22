@@ -14,7 +14,6 @@ import {
 } from "./character-aura-renderer";
 import { isAuraInView } from "./engine/layers";
 
-/** Just under and just over the character in the draw order, between it and the next row. */
 const ORDER_EPSILON = 0.001;
 
 type CanvasAura = {
@@ -27,7 +26,6 @@ const shownAuras = new Map<string, CanvasAura>();
 
 let shownArrival: ShownArrival | null = null;
 
-/** An admin's arrival, drawn over everything on the map. */
 const arrivalDrawable: RuntimeDrawable = {
   getAlwaysDraw: () => true,
   getOrder: () => rendererRuntimeAdapter.getHighestOrder() + 1,
@@ -35,8 +33,6 @@ const arrivalDrawable: RuntimeDrawable = {
 };
 
 function createCanvasAura(shown: ShownAura<RuntimeAuraCharacter>): CanvasAura {
-  // The game draws these whatever their position (`getAlwaysDraw`), so an
-  // aura off the visible canvas skips its tick render and blits here.
   const aura: CanvasAura = {
     shown,
     back: {
@@ -54,14 +50,12 @@ function createCanvasAura(shown: ShownAura<RuntimeAuraCharacter>): CanvasAura {
   return aura;
 }
 
-/** The NI map canvas: auras join the game's own draw list beside their characters. */
 const canvasAuraSurface: CharacterAuraSurface<RuntimeAuraCharacter> = {
   getView: () => auraRuntimeAdapter.getView(),
   getHero: () => auraRuntimeAdapter.getHero(),
   getOther: (characterId) => auraRuntimeAdapter.getOther(characterId),
   subscribeFrame: (onFrame) => rendererRuntimeAdapter.subscribeDraw(onFrame),
 
-  // The game scales the context by its zoom.
   isInView(place, context) {
     const { a: scaleX, d: scaleY } = context.getTransform();
 

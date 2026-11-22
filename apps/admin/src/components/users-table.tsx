@@ -15,10 +15,6 @@ import { UserAvatar } from "@/components/user-avatar";
 import { formatDate } from "@/lib/format";
 import { text } from "@/lib/messages";
 
-/**
- * The user list: a table where it fits and tiles where it would scroll
- * sideways.
- */
 export function UsersTable({ users }: { users: ReadonlyArray<AdminUser> }) {
   if (users.length === 0)
     return (

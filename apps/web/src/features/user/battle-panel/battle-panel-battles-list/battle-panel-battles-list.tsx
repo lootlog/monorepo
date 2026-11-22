@@ -195,7 +195,6 @@ export const BattlePanelBattlesList = () => {
       onRetry={() => void refetchBattles()}
       enableScrollToTop
       search={
-        // As on the kill statistics: the search, then the character.
         <>
           <WarriorSearchFilter
             selectedWarriors={selectedWarriors}

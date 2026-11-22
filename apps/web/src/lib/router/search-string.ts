@@ -32,7 +32,6 @@ export const parseSearch = (searchString: string) => {
 
 type SearchValue = string | number | boolean | null | undefined;
 
-// `null` and `undefined` drop the key instead of being written as text.
 export const stringifySearch = (
   search: Record<string, SearchValue | readonly SearchValue[]>,
 ) => {

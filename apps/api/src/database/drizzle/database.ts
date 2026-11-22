@@ -21,16 +21,12 @@ const PgClientLive = Layer.unwrap(
       makePostgresLayer({
         url,
         applicationName: "lootlog-api",
-        // Most columns are `timestamp` without a zone and hold UTC; `now()`
-        // defaults and comparisons with `timestamptz` columns follow the
-        // session zone.
         startupParameters: { timezone: "UTC" },
       }),
     ),
   ),
 );
 
-/** A scoped PostgreSQL client together with the Effect-native Drizzle service. */
 export const ApiDatabaseLive = ApiDatabase.layer.pipe(
   Layer.provideMerge(PgClientLive),
 );

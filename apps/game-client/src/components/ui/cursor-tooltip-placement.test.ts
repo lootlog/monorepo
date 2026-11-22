@@ -36,8 +36,6 @@ describe("placeTooltipAtCursor", () => {
     const growing = { ...offsets, growsWhileOpen: true };
     const cursor = { x: 400, y: 380 };
 
-    // In the lower half it opens above the cursor although it fits below,
-    // so unfolding to a height that would not fit below does not flip it.
     const collapsed = placeTooltipAtCursor(cursor, size, viewport, growing);
 
     const unfolded = placeTooltipAtCursor(

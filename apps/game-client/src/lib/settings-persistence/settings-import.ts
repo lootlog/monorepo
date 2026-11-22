@@ -19,7 +19,6 @@ export const SETTINGS_IMPORT_STORAGE_KEY = storageKey("ll:settings:import");
 
 const IMPORT_VERSION = 1;
 
-// Preserve the wire serializer's treatment of undefined legacy properties.
 const decodeLegacyTimerJson = (value: string) =>
   Schema.decodeUnknownSync(Schema.Json)(JSON.parse(value));
 
@@ -49,9 +48,7 @@ export const readSettingsImportState = (): SettingsImportState => {
 
       return { version: IMPORT_VERSION, done };
     }
-  } catch {
-    // A corrupt flag only means the import runs again; server values still win.
-  }
+  } catch {}
 
   return { version: IMPORT_VERSION, done: {} };
 };
@@ -63,7 +60,6 @@ export const markSettingsImportDone = (domain: SettingsDomain) => {
 };
 
 type LocalSettingsSnapshot = {
-  /** Raw persisted timers store state (decoded through the codec). */
   timers: unknown;
   hotkeys: SettingsCatalogValue<"controls.hotkeys">;
   allowWorldSelection: boolean | undefined;
@@ -88,7 +84,6 @@ type ImportPlan = {
 
 type ImportContext = {
   documents: SettingsDocuments;
-  /** Guild timer documents of every accessible guild; required to import guild lists. */
   guildDocuments: GuildSettingsDocuments | undefined;
   local: LocalSettingsSnapshot;
   done: SettingsImportState["done"];
@@ -195,8 +190,6 @@ const collectGuildTimerListImports = (
 
   for (const field of ["hiddenTimers", "pinnedTimers"] as const) {
     for (const [guildId, list] of Object.entries(timers[field] ?? {})) {
-      // A guild list already stored on the server (by another browser or the
-      // legacy migration endpoint) wins over a stale local copy.
       if (
         guildId === GLOBAL_TIMER_SETTINGS_KEY ||
         list.length === 0 ||
@@ -294,11 +287,6 @@ const planGameDataImport = (
   }
 };
 
-/**
- * Chooses which browser-only values are worth sending to the server: only
- * fields the server still resolves to catalog defaults, and only when the
- * local value differs from that default. Everything else defers to the server.
- */
 export const planSettingsImport = (context: ImportContext): ImportPlan => {
   const plan: ImportPlan = { patches: [], domains: [] };
 

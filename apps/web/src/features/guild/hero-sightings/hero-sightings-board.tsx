@@ -16,11 +16,8 @@ import {
 } from "./hero-sighting-status";
 
 type HeroSightingsBoardProps = {
-  /** Sorted, so each group keeps the order of the board. */
   sightings: HeroSightingResponseDto[];
-  /** Live timers, counting down as on the timers page. */
   timers: TimerResponseDto[] | undefined;
-  /** Every hero's latest timer, for heroes whose window already ended. */
   heroTimers: TimerResponseDto[];
   now: number;
   showWorld: boolean;
@@ -29,7 +26,6 @@ type HeroSightingsBoardProps = {
   onOpenHistory: (sighting: HeroSightingResponseDto) => void;
 };
 
-/** The heroes in banded groups by status, the ones to act on first. */
 export const HeroSightingsBoard = ({
   sightings,
   timers,
@@ -47,7 +43,6 @@ export const HeroSightingsBoard = ({
   );
 
   return HERO_SIGHTING_GROUPS.map((group) => {
-    // `groupBy` holds only the groups that have a sighting.
     if (!(group in groups)) return null;
     const groupSightings = groups[group];
 

@@ -2,7 +2,6 @@ import { matchmakingH2HColumns } from "@/features/user/battle-panel/battle-panel
 import { HeadToHeadPageVariant } from "@/features/user/battle-panel/battle-panel-statistics/head-to-head-page-variant";
 import { useAbyssSeason } from "./use-abyss-season";
 
-/** Everyone fought in the season, with the record and rating against each. */
 export function AbyssSeasonOpponents() {
   const { characterId, season } = useAbyssSeason();
 

@@ -10,14 +10,6 @@ type EventHeroVisibilityRole = {
   lvlRangeTo: number | null;
 };
 
-/**
- * Check if a user can view an event hero based on level restrictions.
- *
- * Rules:
- * - OWNER or ADMIN permissions: can see all heroes
- * - npcLvl is null or 0: hero is visible (unknown level = no filtering)
- * - Otherwise: check if npcLvl falls within any role's level range
- */
 export function canViewEventHero(
   hero: EventHeroWithLevel,
   roles: readonly EventHeroVisibilityRole[],
@@ -42,9 +34,6 @@ export function canViewEventHero(
   );
 }
 
-/**
- * Filter an array of heroes by level visibility.
- */
 export function filterHeroesByLevel<T extends EventHeroWithLevel>(
   heroes: T[],
   roles: readonly EventHeroVisibilityRole[],

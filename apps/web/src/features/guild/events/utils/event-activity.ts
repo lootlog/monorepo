@@ -24,7 +24,6 @@ export const getEventStatusAtTimestamp = (
   return "active";
 };
 
-/** Badge for an event's status, shared by the event list and detail header. */
 export const EVENT_STATUS_PRESENTATION = {
   upcoming: { labelKey: "events.upcoming", badgeVariant: "outline" },
   active: { labelKey: "events.active", badgeVariant: "live" },

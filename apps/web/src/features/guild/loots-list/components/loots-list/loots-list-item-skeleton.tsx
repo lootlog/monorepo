@@ -12,17 +12,12 @@ type Props = {
   index?: number;
 };
 
-// Party sizes vary tile to tile so the placeholder reads like a real list.
 const PLAYER_COUNTS = [10, 1, 10, 3, 6, 2, 8, 4];
 
 const TITLE_WIDTHS = ["w-36", "w-28", "w-44", "w-32"];
 
 const LOCATION_WIDTHS = ["w-44", "w-56", "w-36", "w-48"];
 
-/**
- * Mirrors the loot tile layout class for class so the list does not shift
- * when real tiles replace the placeholders.
- */
 export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
   const playersCount = PLAYER_COUNTS[index % PLAYER_COUNTS.length] ?? 1;
   const titleWidth = TITLE_WIDTHS[index % TITLE_WIDTHS.length];

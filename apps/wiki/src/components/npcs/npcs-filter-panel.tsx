@@ -20,7 +20,6 @@ import {
 } from "@/lib/npc-types";
 import type { NpcsSearch } from "@/lib/npcs-search";
 
-// How far back the month filter reaches.
 const FIRST_SEEN_MONTHS = 24;
 
 type NpcsFilterPanelProps = {
@@ -28,16 +27,10 @@ type NpcsFilterPanelProps = {
   onChange: (change: Partial<NpcsSearch>) => void;
 };
 
-/**
- * Every filter of the NPC search. The type is one choice, not a list:
- * picking another replaces it, and picking it again shows every type. Event
- * monsters are a filter of their own, for the types that have any.
- */
 export function NpcsFilterPanel({ search, onChange }: NpcsFilterPanelProps) {
   const type = isNpcFilterType(search.types) ? search.types : undefined;
   const hasEvents = hasEventMonsters(type);
 
-  // A link may name a month older than the list offers.
   const months = latestCatalogMonths(FIRST_SEEN_MONTHS);
 
   const monthItems = [

@@ -78,7 +78,6 @@ describe("AirTagService batches with nothing to merge", () => {
       },
     ];
 
-    // An older client reports every player it sees; none here is a clan enemy.
     const publish = () =>
       Effect.runPromise(
         service.publishObservations(socket, {
@@ -142,7 +141,6 @@ describe("AirTagService map threats", () => {
           mget: async (keys: string[]) => keys.map(() => null),
           smembers: async () => [],
           eval: async (script: string) => {
-            // Each publication attempt lists the map among threat maps.
             if (script.includes('"SADD"')) return 1;
 
             const reply = evaluations.shift();
@@ -226,13 +224,11 @@ describe("air-tag connection batch admission", () => {
       });
     }
 
-    // The 16th batch inside the window waits for the first one to leave it.
     expect(admitConnectionBatch(connection, startedAt + 15)).toEqual({
       admitted: false,
       retryAfterMs: 2_985,
     });
 
-    // Once it has, the connection publishes again rather than staying stuck.
     expect(admitConnectionBatch(connection, startedAt + 3_000)).toEqual({
       admitted: true,
     });

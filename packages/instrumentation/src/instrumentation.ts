@@ -34,7 +34,6 @@ export const runLogEffect = (effect: Effect.Effect<void>) => {
   return logRunner(span ? Effect.withParentSpan(effect, span) : effect);
 };
 
-/** Logs outside an Effect, annotating every entry with the given context. */
 export class ContextLogger {
   constructor(private readonly context: string) {}
 
@@ -126,7 +125,6 @@ const RequestMetrics = Context.Reference<RequestMetricsState | undefined>(
   { defaultValue: () => undefined },
 );
 
-// Capture the matched template before HttpEffect restores the request context.
 export const httpServerRouteMetrics = HttpRouter.middleware(
   <E, R>(httpApp: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>) =>
     Effect.gen(function* () {
@@ -142,8 +140,6 @@ export const httpServerRouteMetrics = HttpRouter.middleware(
 export const isHealthcheck = (url: string) =>
   /^\/+(?:healthz|readyz)\/*(?:[?#]|$)/i.test(url);
 
-// Successful, fast responses are in the metrics and traces already; logging
-// each one costs more than it tells. Failures and slow requests stay logged.
 const slowRequestLogThresholdMilliseconds = 1_000;
 
 export const httpServerMetrics = HttpMiddleware.make(

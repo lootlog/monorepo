@@ -82,7 +82,6 @@ export const RefreshStatusProvider = ({
         data.skippedIds?.length ||
         data.failedIds?.length
       ) {
-        // Skipped and failed attempts can update Discord sync diagnostics.
         invalidateMembers(routeGuildId ?? data.guildId);
       }
 
@@ -97,7 +96,6 @@ export const RefreshStatusProvider = ({
 
   return (
     <RefreshStatusContext.Provider
-      // React Compiler caches this object by failedIds/refreshedIds; callbacks are stable (verified in the Vite-transformed module).
       // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values
       value={{
         refreshedIds,

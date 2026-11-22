@@ -19,7 +19,6 @@ describe("PingsSettingsTab", () => {
   beforeEach(() => {
     harness = createGuildPreferencesTest();
     setTestRuntimeGame({ interface: "ni" });
-    // The documents cache key follows the character, so seed after it.
     seedSettingsDocuments(harness.queryClient, createSettingsDocuments());
   });
 

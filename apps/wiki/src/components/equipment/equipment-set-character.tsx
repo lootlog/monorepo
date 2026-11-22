@@ -25,7 +25,6 @@ const professionOptions = [
 const isProfession = (value: string): value is Profession =>
   PROFESSION_OPTIONS.some((profession) => profession === value);
 
-/** Who wears the set: the character's profession and level. */
 export function EquipmentSetCharacter({ className }: { className?: string }) {
   const { set, setCharacter } = useEquipmentSet();
 

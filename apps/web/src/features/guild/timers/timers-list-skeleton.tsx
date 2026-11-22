@@ -10,7 +10,6 @@ import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 
 const GROUP_SIZES = [3, 5];
 
-/** Mirrors the timer list: the toolbar row, then group headings above `SingleTimer` rows. */
 export const TimersListSkeleton = ({
   viewMode,
   canChooseViewMode,

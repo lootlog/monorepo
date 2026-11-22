@@ -2,12 +2,10 @@ import { cn } from "cn";
 
 type FilterCountProps = {
   count: number;
-  /** `corner` sits on the edge of an icon button, like a notification count. */
   variant?: "inline" | "corner";
   className?: string;
 };
 
-/** How many filters narrow a list, beside a title or on a button. */
 export const FilterCount = ({
   count,
   variant = "inline",

@@ -6,7 +6,6 @@ import { GuildsLoadStatus } from "@/components/guilds-load-status";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 
 type GuildTargetSelectProps = {
-  /** Resolved target (see `useGuildTargets`), set once the Lootlogs load. */
   value: string | undefined;
   onValueChange: (guildId: string) => void;
   "aria-label"?: string;
@@ -15,10 +14,6 @@ type GuildTargetSelectProps = {
   className?: string;
 };
 
-/**
- * "Send to" field for composers that post to one Lootlog: the Lootlog
- * select, its loading state, or why there is nothing to choose.
- */
 export const GuildTargetSelect: FC<GuildTargetSelectProps> = ({
   value,
   onValueChange,

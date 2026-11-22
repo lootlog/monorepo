@@ -40,7 +40,6 @@ describe("getRankingSelection", () => {
 });
 
 describe("getRankingLeaders", () => {
-  // Listed out of order: the leaders follow points, not the API's order.
   const rankings = Array.from({ length: 15 }, (_, index) => ({
     memberId: 15 - index,
     totalPoints: 86 + index,

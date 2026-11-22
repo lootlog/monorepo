@@ -491,7 +491,6 @@ it("saves a hero sighting rule with its world, level bounds and no spawn reminde
     filters: { npcLevelMin: 250, npcLevelMax: 300 },
   });
 
-  // Clearing a saved bound must reach the API, or the rule keeps filtering.
   act(() => {
     result.current.form.setValue("npcLevelMax", undefined);
     result.current.form.setValue("targetIds", ["9"]);

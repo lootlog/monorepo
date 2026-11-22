@@ -224,7 +224,6 @@ export const useGuildDocEditorToolbarModel = () => {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
 
-  // The item a chip's edit button opened the dialog for; null inserts one.
   const [editedItem, setEditedItem] = useState<{
     item: GuildDocItem;
     nodeKey: NodeKey;
@@ -343,7 +342,6 @@ export const useGuildDocEditorToolbarModel = () => {
     });
   };
 
-  // A dialog takes the focus; inserting from it goes back to this selection.
   const $restoreSavedSelection = () => {
     if (savedSelection.current) {
       $setSelection(savedSelection.current.clone());
@@ -397,7 +395,6 @@ export const useGuildDocEditorToolbarModel = () => {
     }
   };
 
-  // The mention menu opens on an `@` that starts a word.
   const startMention = () => {
     editor.update(() => {
       const selection = $getSelection();

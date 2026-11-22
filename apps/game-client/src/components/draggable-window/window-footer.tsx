@@ -3,16 +3,10 @@ import { cn } from "cn";
 
 type WindowFooterProps = {
   children: ReactNode;
-  /** Extra classes for the outer bar, e.g. a bleed into the window padding. */
   className?: string;
-  /** Extra classes for the 32px content row, e.g. spacing between children. */
   rowClassName?: string;
 };
 
-/**
- * Bottom bar of a draggable window: one rule on top and a 32px content row,
- * one step taller than a toolbar strip so the bottom edge reads as a footer.
- */
 export const WindowFooter: FC<WindowFooterProps> = ({
   children,
   className,

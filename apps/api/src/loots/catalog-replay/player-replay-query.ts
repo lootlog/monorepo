@@ -7,12 +7,6 @@ import {
 
 type ReplayDatabase = Pick<ApiDatabaseValue, "$with" | "select" | "with">;
 
-/**
- * Every character's newest snapshot that took part in a loot, with the
- * highest level recorded with it. Live indexing only sees loot participants,
- * so map-capture snapshots stay out; levels only rise, so the highest one is
- * the current one. One aggregate over LootPlayer beats a lookup per snapshot.
- */
 export const buildPlayerReplayQuery = (database: ReplayDatabase) => {
   const levels = database.$with("levels").as(
     database

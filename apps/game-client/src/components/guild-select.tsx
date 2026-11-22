@@ -19,7 +19,6 @@ type GuildSelectProps = {
   id?: string;
 };
 
-/** Picks one Lootlog from a dropdown that shows each Lootlog's icon and name. */
 export const GuildSelect: FC<GuildSelectProps> = ({
   guilds,
   value,

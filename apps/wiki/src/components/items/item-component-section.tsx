@@ -8,7 +8,6 @@ import { SocketItem } from "@/components/sockets/socket-item";
 import { useSocketItems } from "@/hooks/use-socket-items";
 import { t } from "@/i18n/messages";
 
-/** The symbols of the component's range whose fusion takes it, and how many. */
 export function ItemComponentSection({
   component,
 }: {

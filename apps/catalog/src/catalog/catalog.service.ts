@@ -44,14 +44,10 @@ import type {
 
 const MAX_LIMIT = 96;
 
-// Margonem item types are upper-case words, such as `ONE_HAND_WEAPON`.
 const ITEM_TYPE = /^[A-Z_]+$/;
 
-// Catalog keys are `npcCatalogKey`'s: an edition, an optional namespace and
-// numeric ids, such as `pl_template_257636_2`.
 const CATALOG_KEY = /^[a-z]{2}(?:_[a-z]+)?_\d+_\d+$/;
 
-// Event slugs are `itemEventSlug`'s: lower-case words joined by hyphens.
 const EVENT_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 type CatalogItemDocument = {
@@ -79,14 +75,11 @@ type CatalogNpcDocument = {
   prof: string;
   type: CatalogNpcsResponseDto_Output["hits"][number]["type"];
   gameVersion: CatalogNpcsResponseDto_Output["hits"][number]["gameVersion"];
-  /** Stored as the API published them, with or without spawn tiles. */
   locations?: ReadonlyArray<typeof CatalogMonsterLocation.Type>;
   formerLevels?: CatalogNpcsResponseDto_Output["hits"][number]["formerLevels"];
   current?: boolean;
   monsterKey: string;
-  /** When this identity was first seen, in epoch milliseconds; stored. */
   firstSeenAt?: number | null;
-  /** When the monster was first seen under any identity; the index derives it. */
   monsterFirstSeenAt?: number | null;
 };
 
@@ -106,10 +99,6 @@ const toDropRate = (rate: ItemDropRate | undefined) =>
       }
     : null;
 
-/**
- * An id the game gave to a later item names that item now: of the entries of
- * one id, a lookup by id shows the latest seen, as the catalog index names it.
- */
 const sortBy = ({ sort, ids }: CatalogControllerGetItemsQuery) =>
   sort === undefined || sort === "relevance"
     ? ids?.length
@@ -117,7 +106,6 @@ const sortBy = ({ sort, ids }: CatalogControllerGetItemsQuery) =>
       : undefined
     : [sort];
 
-/** The sorts that rank by the attack speed an item adds, and how they count it. */
 const ATTACK_SPEED_SORTS = new Map<
   CatalogControllerGetItemsQuery["sort"],
   (item: CatalogItemDocument) => number
@@ -126,7 +114,6 @@ const ATTACK_SPEED_SORTS = new Map<
   ["upgradedAttackSpeed:desc", (item) => upgradedAttackSpeed(item)],
 ]);
 
-// The most hits one Meilisearch search returns, its `maxTotalHits`.
 const MAX_HITS = 1000;
 
 const gameVersionFilter = (gameVersion: string | undefined) =>
@@ -134,10 +121,6 @@ const gameVersionFilter = (gameVersion: string | undefined) =>
     ? undefined
     : `gameVersion = ${JSON.stringify(gameVersion)}`;
 
-/**
- * Items of a level range. An elastic item comes at any level Margonem gives
- * it, so it matches every range reaching into those levels.
- */
 const levelFilter = (min: number | undefined, max: number | undefined) => {
   const bounds = [
     min === undefined ? undefined : `lvl >= ${Math.floor(min)}`,
@@ -160,7 +143,6 @@ const inFilter = (
   values: ReadonlyArray<string | number> | undefined,
 ) => (values?.length ? buildMeilisearchInFilter(field, values) : undefined);
 
-/** The item filters of a query; `monsterKey` is the drop source's monster. */
 const itemFilters = (
   query: CatalogControllerGetItemsQuery,
   monsterKey: string | undefined,
@@ -212,7 +194,6 @@ const NPC_FIELDS = [
   "monsterFirstSeenAt",
 ] as const satisfies ReadonlyArray<keyof CatalogNpcDocument>;
 
-/** An NPC entry as the catalog lists it, under its catalog key. */
 const toCatalogNpc = ({
   uid,
   identityNamespace: _namespace,
@@ -229,7 +210,6 @@ const toCatalogNpc = ({
     monsterFirstSeenAt === undefined || monsterFirstSeenAt === null
       ? null
       : new Date(monsterFirstSeenAt).toISOString().slice(0, 10),
-  // Locations stored before spawn tiles were published have none.
   locations: (locations ?? []).map(({ tiles, ...location }) => ({
     ...location,
     tiles: tiles ?? [],
@@ -248,11 +228,6 @@ export const makeCatalogModule = (
         Effect.tapError((error) => Effect.logError(message, { error })),
       );
 
-  /**
-   * Items a world opened on `since` has: those of no event, and those of an
-   * edition it saw. An item that came back keeps any edition it saw, so the
-   * filter names the editions to keep rather than those to leave out.
-   */
   const availabilityFilter = (gameVersion: string | undefined, since: string) =>
     attemptMeilisearch("catalog.items.editions", () =>
       meilisearch.index(ITEMS_INDEX).search("", {
@@ -280,8 +255,6 @@ export const makeCatalogModule = (
   const getItems = Effect.fn("Catalog.items")(function* (
     query: CatalogControllerGetItemsQuery,
   ) {
-    // An unknown key matches no NPC, and a malformed event slug no event, so
-    // neither matches an item.
     if (
       (query.droppedBy !== undefined && !CATALOG_KEY.test(query.droppedBy)) ||
       (query.event !== undefined && !EVENT_SLUG.test(query.event))
@@ -289,7 +262,6 @@ export const makeCatalogModule = (
       return { hits: [], estimatedTotalHits: 0 };
     }
 
-    // Any identity of a monster lists the drops of all of them.
     const monsterKey =
       query.droppedBy === undefined
         ? undefined
@@ -350,11 +322,6 @@ export const makeCatalogModule = (
     const { limit, offset } = page(query);
     const attackSpeed = ATTACK_SPEED_SORTS.get(query.sort);
 
-    // An elastic item's stats follow its looter's level, and the index holds
-    // the version it saw last, so its attack speed is counted at the level
-    // the search is capped to, as the wiki shows it, and merged into the
-    // fixed items in Meilisearch's order, which puts a query's relevance
-    // before speed.
     const response = attackSpeed
       ? yield* Effect.all(
           [
@@ -417,8 +384,6 @@ export const makeCatalogModule = (
           ...item,
           revisions: revisions ?? [],
           elasticLevel: isElasticLevel({ observedLevels }),
-          // A boss seen by older clients keeps a runtime or legacy entry beside
-          // its template one; each monster is listed once.
           droppedBy: collapseByNameAndType(droppedBy ?? []).map(
             ({
               identityNamespace: _namespace,
@@ -438,10 +403,6 @@ export const makeCatalogModule = (
     } satisfies CatalogItemsResponseDto_Output;
   });
 
-  /**
-   * The order of a listing: strongest first unless the query asks otherwise,
-   * which keeps level-less objects at the end, and by name within a level.
-   */
   const npcOrder = (sort: CatalogControllerGetNpcsQuery["sort"]) => {
     if (sort?.startsWith("name:")) return [sort];
 
@@ -453,7 +414,6 @@ export const makeCatalogModule = (
     ];
   };
 
-  /** NPCs first seen in a month, from its first instant to the next month's. */
   const firstSeenMonthFilter = ({
     firstSeenMonth,
   }: CatalogControllerGetNpcsQuery) => {
@@ -464,11 +424,6 @@ export const makeCatalogModule = (
     return `monsterFirstSeenAt >= ${Date.UTC(year, month - 1)} AND monsterFirstSeenAt < ${Date.UTC(year, month)}`;
   };
 
-  /**
-   * Titans and colossi of the asked origins; NPCs of other types pass. An
-   * origin is the directory of the boss's graphic, and an event's is any
-   * directory the boss type does not own.
-   */
   const bossOriginFilter = ({ bossOrigins }: CatalogControllerGetNpcsQuery) => {
     if (!bossOrigins?.length) return undefined;
 
@@ -502,10 +457,6 @@ export const makeCatalogModule = (
     return `(${[`type NOT IN ${bossTypes}`, ...bosses].join(" OR ")})`;
   };
 
-  /**
-   * NPCs of a level range. An NPC whose level follows the player's is stored
-   * without one, at 0, and a range leaves it out.
-   */
   const npcLevelFilter = ({
     minLevel,
     maxLevel,
@@ -518,12 +469,6 @@ export const makeCatalogModule = (
     ].join(" AND ");
   };
 
-  /**
-   * Monsters by catalog key, read from the database. An old link may name a
-   * monster's former identity; its current identity, under another id, shows
-   * the monster as it is now. A key names its entry exactly, so a lookup by
-   * key takes no search text.
-   */
   const npcsByKeys = Effect.fn("Catalog.npcsByKeys")(function* (
     keys: ReadonlyArray<string>,
     query: CatalogControllerGetNpcsQuery,
@@ -543,8 +488,6 @@ export const makeCatalogModule = (
     const { limit, offset } = page(query);
     const listed = found.slice(offset, offset + limit);
 
-    // Every identity of the listed monsters: the current one shows a
-    // monster as it is now, and the earliest sighting of any dates it.
     const identities =
       listed.length === 0
         ? []
@@ -599,8 +542,6 @@ export const makeCatalogModule = (
     const filters = [
       gameVersionFilter(query.gameVersion),
       query.ids?.length ? buildMeilisearchInFilter("id", query.ids) : undefined,
-      // A listing shows each monster as it is now; a lookup also finds the
-      // identities of its earlier versions.
       lookup ? undefined : "current != false",
       query.types?.length
         ? buildMeilisearchInFilter("type", query.types)
@@ -614,12 +555,7 @@ export const makeCatalogModule = (
       ...page(query),
       attributesToRetrieve: [...NPC_FIELDS],
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
-      // Pages and counts are over monsters, not over their catalog identities.
-      // A lookup reads every identity it names, so the current one is chosen
-      // below rather than the highest level.
       distinct: lookup ? undefined : "monsterKey",
-      // Without a query Meilisearch returns documents in storage order; a
-      // query still ranks by relevance before this.
       sort: npcOrder(query.sort),
     };
 
@@ -632,8 +568,6 @@ export const makeCatalogModule = (
 
     const response = yield* search(params);
 
-    // An old link can name only a monster's former identity; its current
-    // identity, under another id, shows the monster as it is now.
     const superseded = [
       ...new Set(
         response.hits.flatMap(({ current, monsterKey }) =>
@@ -663,11 +597,6 @@ export const makeCatalogModule = (
     } satisfies CatalogNpcsResponseDto_Output;
   });
 
-  /**
-   * Every event with items in the catalog: Meilisearch counts the items of
-   * each event slug, and each event's highest-level item gives its name as
-   * the game writes it and the monster that pictures it.
-   */
   const getEvents = Effect.fn("Catalog.events")(function* (
     query: CatalogControllerGetEventsQuery,
   ) {
@@ -744,10 +673,6 @@ export const makeCatalogModule = (
     } satisfies CatalogEventsResponseDto_Output;
   });
 
-  /**
-   * Every item and current NPC by id and name, read from the database: a
-   * search stops at Meilisearch's `maxTotalHits`.
-   */
   const getIndex = Effect.fn("Catalog.index")(function* (
     query: CatalogControllerGetIndexQuery,
   ) {
@@ -759,7 +684,6 @@ export const makeCatalogModule = (
       { concurrency: 2 },
     ).pipe(logReadError("Catalog index error"));
 
-    // One NPC id may name several monsters.
     return {
       items,
       npcs: orderBy(

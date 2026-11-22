@@ -54,22 +54,16 @@ export interface LootPersistence {
     readonly lootId: number;
     readonly body: CreateLootCommentRequest;
   }) => PersistenceEffect<LootCommentResponse>;
-  /** Likes or unlikes the loot as the caller; null when the record is gone. */
   readonly setLike: (options: {
     readonly discordId: string;
     readonly guildId: string;
     readonly lootId: number;
     readonly liked: boolean;
   }) => PersistenceEffect<ReadonlyArray<MemberSummary> | null>;
-  /** Draws of the loot's items, newest first; voided ones included. */
   readonly listDraws: (
     guildId: string,
     lootId: number,
   ) => PersistenceEffect<ReadonlyArray<LootDrawResponse>>;
-  /**
-   * Stores a drawn result for one item; fails with a conflict while the item
-   * has a standing draw, so a retried request cannot add a second one.
-   */
   readonly createDraw: (options: {
     readonly discordId: string;
     readonly guildId: string;
@@ -148,7 +142,6 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
     userId: member.userId,
   });
 
-  /** Draw rows with the Members who ran and voided them. */
   const projectDraws = (
     lootId: number,
     draws: ReadonlyArray<typeof lootDrawTable.$inferSelect>,
@@ -425,8 +418,6 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
         Effect.gen(function* () {
           const draw = yield* database.transaction((transaction) =>
             Effect.gen(function* () {
-              // The record lock serialises draws of one loot, so two managers
-              // drawing the same item at once get one result and a conflict.
               const [record] = yield* transaction
                 .select({ id: organizationLootRecordTable.id })
                 .from(organizationLootRecordTable)
@@ -492,8 +483,6 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                 );
               }
 
-              // Committed with the draw, so its announcement survives a
-              // broker outage or a restart before it is published.
               yield* transaction
                 .insert(lootDrawAnnouncementOutboxTable)
                 .values({
@@ -658,7 +647,6 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
               );
             }
 
-            // Repeating a like or an unlike leaves the same state.
             if (options.liked) {
               yield* transaction
                 .insert(lootLikeTable)

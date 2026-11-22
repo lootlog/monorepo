@@ -56,8 +56,6 @@ export const EventDetail = () => {
   } = useEventDetail();
 
   const currentMember = useCurrentMember(queryGuildId);
-  // From `xl` the ranking is a rail as tall as the page view, so it lists
-  // every place instead of stopping short of the bottom.
   const isRail = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   if (isLoading || isMapsLoading) {
@@ -75,8 +73,6 @@ export const EventDetail = () => {
     );
   }
 
-  // Places are unknown until the player's Member is; a missing Member means
-  // the player is in no ranking.
   const scores = currentMember.isSuccess
     ? getMyHeroScores(heroes, rankings, currentMember.data?.id)
     : undefined;

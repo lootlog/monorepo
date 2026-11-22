@@ -6,7 +6,6 @@ const PILL_WIDTHS = [
   [],
 ] as const;
 
-/** Mirrors the docked filters panel: header, quick filters, three sections. */
 export const LootsFiltersSidebarSkeleton = () => (
   <div aria-hidden="true" className="flex h-full w-[340px] shrink-0 flex-col">
     <div className="box-content flex h-12 shrink-0 items-center gap-2 border-b border-sidebar-border pr-2 pl-4">

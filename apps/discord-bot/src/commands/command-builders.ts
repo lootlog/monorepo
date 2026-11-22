@@ -13,7 +13,6 @@ import {
 } from "./command-messages.js";
 import { VISIBILITY_OPTION, type CommandOptions } from "./slash-command.js";
 
-/** Lootlog data belongs to the Organization of a server, never to a DM. */
 export const guildCommand = (name: string, description: string) =>
   new SlashCommandBuilder()
     .setName(name)

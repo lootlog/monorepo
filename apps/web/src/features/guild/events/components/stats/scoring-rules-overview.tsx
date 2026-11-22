@@ -14,10 +14,6 @@ interface ScoringRulesOverviewProps {
 
 const EMPTY_RULE_IDS: string[] = [];
 
-/**
- * Advanced scoring rules split by how they combine: the last matching base
- * rule sets the base points, and matching bonuses add up to the cap.
- */
 export const ScoringRulesOverview = ({
   scoringRules,
   highlightedRuleIds = EMPTY_RULE_IDS,

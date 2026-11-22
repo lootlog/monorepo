@@ -9,14 +9,11 @@ import { cn } from "cn";
 const TYPE_COUNT_WIDTHS = ["w-12", "w-14", "w-14", "w-16", "w-16"];
 
 type StatsMobileListSkeletonProps = {
-  /** A member avatar or an NPC sprite, whose 40px tile sets the row height. */
   media: "avatar" | "npcTile";
-  /** Rows carry a wrapping line of per-NPC-type counts below the name. */
   withTypeCounts?: boolean;
   rows?: number;
 };
 
-/** Stands in for the ranked list the stats pages render instead of their table below `md`. */
 export const StatsMobileListSkeleton = ({
   media,
   withTypeCounts = false,

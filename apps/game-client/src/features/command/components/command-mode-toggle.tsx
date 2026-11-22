@@ -7,11 +7,9 @@ type CommandModeToggleProps = {
   label: string;
   onToggle: () => void;
   pressed: boolean;
-  /** The typed prefix this button stands for, shown so players learn it. */
   prefix: string;
 };
 
-/** Switches what Enter does by rewriting the typed prefix. */
 export const CommandModeToggle: FC<CommandModeToggleProps> = ({
   disabled,
   label,

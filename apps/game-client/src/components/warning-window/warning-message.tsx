@@ -6,14 +6,9 @@ type WarningMessageProps = {
   icon: LucideIcon;
   heading: string;
   description: string;
-  /** Icon colour; the text keeps the window's own foreground tokens. */
   iconClassName?: string;
 };
 
-/**
- * The body of every Lootlog notice window: an icon, one line that says what
- * happened, and a quieter line that says what to do next.
- */
 export const WarningMessage: FC<WarningMessageProps> = ({
   icon: Icon,
   heading,

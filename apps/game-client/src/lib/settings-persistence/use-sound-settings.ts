@@ -37,8 +37,6 @@ type SoundSettingsPatch = Partial<
   }
 >;
 
-// Stored category configs are opaque JSON; entries that are not objects are
-// dropped and legacy numeric-string volumes are coerced.
 const normalizeSoundCategoryConfig = (value: unknown): SoundCategoryConfig => {
   if (!isPlainObject(value)) {
     return {};
@@ -80,7 +78,6 @@ const projectSoundSettings = memoizeByDocuments((documents): SoundSettings => ({
   ),
 }));
 
-/** Sound settings as the playback and settings features consume them. */
 const getSoundSettingsFromDocuments = (
   documents: SettingsDocuments | undefined,
 ): SoundSettings | undefined =>
@@ -98,7 +95,6 @@ export const useSoundSettings = () => {
   };
 };
 
-/** Master volume and mute stay on the device; every other field is server-side. */
 export const useUpdateSoundSettings = () => {
   const mutate = (payload: SoundSettingsPatch) => {
     const set: SettingsOperation["set"] = {};

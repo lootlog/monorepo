@@ -32,11 +32,6 @@ type WarriorSearchFilterProps = {
 
 const MINIMUM_SEARCH_LENGTH = 2;
 
-/**
- * The filter bar's leading search: a borderless field typed into in place,
- * like a list toolbar's filter, with the matching warriors listed under it.
- * Picking a warrior toggles it and clears the field for the next one.
- */
 export const WarriorSearchFilter = ({
   selectedWarriors,
   onWarriorToggle,
@@ -67,8 +62,6 @@ export const WarriorSearchFilter = ({
   const resultNames = searchResults.map((warrior) => warrior.name);
   const selectedNames = selectedWarriors.map((warrior) => warrior.name);
 
-  // Selected warriors are restored from the URL by name only, so the field
-  // names them instead of showing a sprite, level or profession.
   const fieldPlaceholder =
     selectedNames.length > 0
       ? selectedNames.join(", ")

@@ -14,7 +14,6 @@ import { TimerColorEditorFields } from "./timer-color-editor-fields";
 type TimerColorEditorPopoverProps = {
   children: ReactNode;
   idPrefix: string;
-  /** Current values: the live draft while editing, the stored colour otherwise. */
   data: ColorEditData;
   defaultColorId?: string;
   isDefault: boolean;
@@ -23,16 +22,10 @@ type TimerColorEditorPopoverProps = {
   onOpenChange: (open: boolean) => void;
   onDraftChange: (draft: ColorEditData) => void;
   onCommit: (draft: ColorEditData) => void;
-  /** Default colours: back to the factory look and name. */
   onReset: () => void;
-  /** Default colours hide, custom colours are removed. */
   onDelete: () => void;
 };
 
-/**
- * The single place to manage one timer colour: name, colours, transparency,
- * a live sample and the reset / hide / delete actions.
- */
 export const TimerColorEditorPopover: FC<TimerColorEditorPopoverProps> = ({
   defaultColorId,
   children,

@@ -2,15 +2,10 @@ import type { CSSProperties, ReactNode } from "react";
 
 type TopBarTitleProps = {
   children: ReactNode;
-  /** Sits before the title, such as the section's icon or an avatar. */
   media?: ReactNode;
   style?: CSSProperties;
 };
 
-/**
- * The current page's name in the top bar. Phones show it larger, as a
- * navigation bar title, right after the way back.
- */
 export const TopBarTitle = ({ children, media, style }: TopBarTitleProps) => (
   <span
     aria-current="page"

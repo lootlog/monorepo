@@ -20,8 +20,6 @@ import type {
 } from "@lootlog/game-client-api";
 import { comparePolish } from "@lootlog/domain/locale";
 
-// Add-ons only display who is online, so presence leaves without account,
-// session or user identifiers, and in name order rather than grouped by user.
 const toPublicOnlinePlayer = (
   presence: PlayerPresence,
 ): PublicOnlinePlayer | undefined => {

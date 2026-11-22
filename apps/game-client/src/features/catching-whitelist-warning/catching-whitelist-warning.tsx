@@ -9,12 +9,6 @@ import { useConfirmedCatchingCharacters } from "@/hooks/use-confirmed-catching-c
 import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
 
-/**
- * Asks once per character which Lootlogs it plays for: its loot, timers and
- * presence go there, and it sees other players only in those Lootlogs. It
- * comes up as soon as the character's Lootlogs are known, once no other notice
- * window is open; picking here also completes the first-run checklist step.
- */
 export const CatchingWhitelistWarning: FC = () => {
   const { t } = useTranslation("catchingWhitelistWarning");
 
@@ -55,8 +49,6 @@ export const CatchingWhitelistWarning: FC = () => {
     )
       return;
 
-    // Decided once per character and session, so a choice made in the
-    // settings while the window is closed does not bring it back.
     checkedCharacterIdsRef.current.add(characterId);
 
     if (!confirmed) setOpen("catching-whitelist-warning", true);

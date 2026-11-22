@@ -46,12 +46,10 @@ import type {
   ReviewCatalogReportsRequest,
 } from "#src/http-api/contracts/reports/schemas";
 
-/** Reports one User may file in a day, so no one floods the queue. */
 export const DAILY_REPORT_LIMIT = 30;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** The signed-in User a report request comes from. */
 export type ReportCaller = {
   readonly userId: string;
   readonly roles: ReadonlyArray<PlatformRole>;
@@ -77,8 +75,6 @@ const matchesSubject = (subject: Subject) =>
     eq(catalogReportTable.subjectId, subject.subjectId),
   );
 
-// A literal, as the open-report index's predicate is: PostgreSQL matches a
-// conflict target or a query to a partial index only by the same constant.
 const isOpen = sql`${catalogReportTable.status} = 'OPEN'`;
 
 // SAFETY: the reports module is the table's only writer and stores only
@@ -95,12 +91,10 @@ const toReport = (row: ReportRow): CatalogReportDto_Output => ({
   reviewedAt: row.reviewedAt?.toISOString() ?? null,
 });
 
-// Literal keys: `distinct on` and `order by` must spell the same expression.
 const npcId = sql<number>`(${catalogNpcTable.document}->>'id')::integer`;
 
 const npcGameVersion = sql`${catalogNpcTable.document}->>'gameVersion'`;
 
-// A monster's former identities are history, not the NPC its page shows.
 const isCurrentNpc = sql`${catalogNpcTable.document}->'current' is distinct from 'false'::jsonb`;
 
 export const makeReportsModule = (
@@ -109,7 +103,6 @@ export const makeReportsModule = (
 ) => {
   const moderators = new Set(moderatorUserIds);
 
-  // The configured list predates platform roles and still grants the queue.
   const isModerator = (caller: ReportCaller) =>
     moderators.has(caller.userId) ||
     hasPlatformRole(caller.roles, "wiki-moderator");
@@ -123,7 +116,6 @@ export const makeReportsModule = (
     gameVersion: Subject["gameVersion"],
     ids: ReadonlyArray<number>,
   ) =>
-    // Of the entries of one id the latest seen names it, as its page does.
     database
       .selectDistinctOn([catalogItemTable.itemId], {
         id: catalogItemTable.itemId,
@@ -163,7 +155,6 @@ export const makeReportsModule = (
       )
       .orderBy(npcId, asc(catalogNpcTable.uid));
 
-  /** The current name of each page, by `subjectKey`. */
   const subjectNames = (subjects: ReadonlyArray<Subject>) =>
     Effect.gen(function* () {
       const names = new Map<string, SubjectName>();
@@ -261,7 +252,6 @@ export const makeReportsModule = (
         })
         .returning();
 
-      // An insert, or the update its conflict turns into, returns its row.
       const [report] = rows.map(toReport);
 
       return (
@@ -416,10 +406,6 @@ export const makeReportsModule = (
       );
     });
 
-  /**
-   * A reporter keeps one open report per page, so a report opens again only
-   * while its reporter has no other open report about the page.
-   */
   const ensureReopenable = (
     transaction: Parameters<
       Parameters<CatalogDatabaseValue["transaction"]>[0]

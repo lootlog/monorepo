@@ -11,10 +11,6 @@ type SharedCharacterTileTooltipProps = {
   children: ReactNode;
 };
 
-/**
- * One tooltip for every CharacterTile of a list, so a long list does not
- * mount a tooltip root per tile.
- */
 export const SharedCharacterTileTooltip = ({
   children,
 }: SharedCharacterTileTooltipProps) => {

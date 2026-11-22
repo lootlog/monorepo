@@ -25,7 +25,6 @@ import { WhatsNewEntry } from "@/components/whats-new/whats-new-entry";
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
 import { WhatsNewFilterFields } from "./whats-new-filter-fields";
 
-/** Every change this build ships with, week by week from the newest. */
 export const WhatsNew = () => {
   const { t, i18n } = useTranslation();
   const { unreadIds, markAllSeen } = useWhatsNew();
@@ -33,11 +32,8 @@ export const WhatsNew = () => {
   const { filters, setFilters, clearFilters, hasActiveFilters } =
     useWhatsNewFilters();
 
-  // Opening the page reads the list; its marks stay for this visit.
   const [unreadOnOpen] = useState(unreadIds);
 
-  // A filtered list, such as one opened from a shared link, can leave a
-  // highlight out, so it counts as read only once every change is listed.
   useEffect(() => {
     if (!hasActiveFilters) markAllSeen();
   });
@@ -79,7 +75,6 @@ export const WhatsNew = () => {
             <KillStatsSearch
               value={filters.q}
               placeholder={t("layout.whatsNew.filters.search")}
-              // Typing replaces the address; a history entry per keystroke would trap Back.
               onChange={(q) => setFilters({ q }, { history: "replace" })}
             />
           }

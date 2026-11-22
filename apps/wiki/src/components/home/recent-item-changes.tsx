@@ -8,7 +8,6 @@ import { ItemChangeCard } from "./item-change-card";
 
 const ITEMS_SHOWN = 12;
 
-/** The items the game changed most recently, the latest change first. */
 export function RecentItemChanges() {
   const { data, isError } = useCatalogControllerGetItems({
     gameVersion: WIKI_GAME_VERSION,
@@ -34,7 +33,6 @@ export function RecentItemChanges() {
     );
   }
 
-  // Items the game never changed follow the changed ones.
   const changed = data.hits.filter(({ revisions }) => revisions.length > 0);
 
   if (changed.length === 0) {

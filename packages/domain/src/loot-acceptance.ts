@@ -14,26 +14,13 @@ type LootAcceptanceConfig = {
   }>;
 };
 
-/**
- * What the deciding side knows about one loot submission. Every input left
- * `undefined` is unknown to the caller and never rejects an Organization:
- * the API passes everything it loads, while a game client passes only what
- * it holds and therefore skips only submissions the API would reject.
- */
 export type LootAcceptanceInput<TMember> = {
-  /** Organizations where the submitter may write loot, in response order. */
   readonly organizationIds?: readonly string[];
-  /** Organizations the character catches for. */
   readonly catchingGuildIds: readonly string[];
   readonly configs?: ReadonlyMap<string, LootAcceptanceConfig>;
   readonly members?: ReadonlyMap<string, TMember>;
   readonly loot?: {
-    /** Type of the strongest NPC of the loot. */
     readonly npcType: NpcType;
-    /**
-     * Called only for an Organization whose config covers `npcType`, so a
-     * stat no config needs is never parsed.
-     */
     readonly rarities: () => ReadonlyArray<ItemRarity | undefined>;
   };
 };
@@ -92,10 +79,6 @@ const getRejectionReason = (
   return null;
 };
 
-/**
- * Decides which Organizations accept a loot. A submission with no accepted
- * Organization is rejected by the API.
- */
 export const resolveLootAcceptance = <TMember>(
   input: LootAcceptanceInput<TMember>,
 ): LootAcceptance<TMember> => {

@@ -32,9 +32,6 @@ describe("kill bucket migration", () => {
         await database.exec(migration.sql.join("\n"));
       }
 
-      // Member 10 has 2 kills before buckets existed, 3 in a closed hour and 4
-      // in the cutover hour. Member 11's lifetime counter was deleted with its
-      // account, leaving a 5-kill bucket behind.
       await database.exec(`
         CREATE TEMPORARY TABLE hours AS SELECT
           date_trunc('hour', now() AT TIME ZONE 'UTC') - interval '2 hours' AS closed,
@@ -65,7 +62,6 @@ describe("kill bucket migration", () => {
 
       const rows = async (query: string) => (await database.query(query)).rows;
 
-      // The cutover hour stays in the old tables for the follow-up migration.
       expect(
         await rows(
           `SELECT "discordUserId", kills FROM "UserKillBucket" ORDER BY "discordUserId"`,
@@ -85,7 +81,6 @@ describe("kill bucket migration", () => {
       expect(await rows(`SELECT kills FROM "GuildKillBucket"`)).toEqual([
         { kills: 3 },
       ]);
-      // The follow-up migration adds the cutover hour's 4 kills to the totals.
       expect(
         await rows(`SELECT "discordUserId", kills FROM "UserKillTotal"`),
       ).toEqual([{ discordUserId: "kept", kills: 5 }]);
@@ -105,14 +100,10 @@ describe("kill bucket migration", () => {
 
       const reconcile = migrations[reconcileIndex]!.sql.join("\n");
 
-      // The older API wrote a moment ago, so the follow-up refuses to run.
       await expect(database.exec(reconcile)).rejects.toThrow(
         "wrote kills in the last 5 minutes",
       );
 
-      // After the copy the older API added a member kill to the cutover hour and
-      // committed 2 personal kills into the hour before it; the new API recorded
-      // 1 personal kill. Then the older API stopped.
       await database.exec(`
         UPDATE "NpcKillStatsBucket" SET "memberKills" = 5 WHERE id = 'm2';
         INSERT INTO "UserKillStatsBucket" (id, "userId", world, "npcId", "npcName", "npcType", "npcLvl", "totalKills", "periodStart", "lastKilledAt", "updatedAt")
@@ -160,8 +151,6 @@ describe("kill bucket migration", () => {
         { kills: 9 },
       ]);
 
-      // A reconcile that runs with the drop ran after the API stopped deleting
-      // old rows, so it may have restored deleted accounts' kills.
       const drop = migrations[reconcileIndex + 1]!.sql.join("\n");
 
       const recordReconcile = (appliedAt: string) => `

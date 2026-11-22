@@ -18,7 +18,6 @@ type DragSession = {
   scale: number;
   rects: RowRect[];
   element: HTMLElement;
-  /** Latest pointer offset, applied once per frame. */
   pendingDeltaY: number | null;
   frameId: number | null;
 };
@@ -28,7 +27,6 @@ type DragState = { id: string; fromIndex: number; overIndex: number };
 export type SortableMove = { id: string; index: number };
 
 type UseSortableListConfig = {
-  /** Ids in their current display order. */
   ids: readonly string[];
   onReorder: (ids: string[]) => void;
   disabled?: boolean;
@@ -49,13 +47,6 @@ const moveId = (
   return next;
 };
 
-/**
- * Vertical reorder for a list of rows. The handle of a row starts a pointer
- * drag; the dragged row follows the pointer while the others slide out of
- * its way, and the new order is committed on release. Arrow keys on a focused
- * handle move the row one step at a time so the list is fully keyboard
- * operable. Rows are addressed by id so the caller keeps its own rendering.
- */
 export const useSortableList = ({
   ids,
   onReorder,
@@ -305,7 +296,6 @@ export const useSortableList = ({
 
   return {
     draggingId: dragState?.id ?? null,
-    /** Last row moved by keyboard or drop, for a live announcement. */
     lastMove,
     getRowProps,
     getHandleProps,
@@ -331,12 +321,6 @@ const keyboardTargetIndex = (
   }
 };
 
-/**
- * Index the dragged row would take if dropped now: the slot whose row centre
- * the dragged row's centre has crossed, measured against the layout captured
- * when the drag started (rows only translate while dragging, so those rects
- * stay valid).
- */
 const findOverIndex = (session: DragSession, deltaY: number): number => {
   const dragged = session.rects[session.fromIndex];
 

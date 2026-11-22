@@ -16,7 +16,6 @@ const configKey =
     accountId: "202",
   });
 
-// The template as Margonem sent it on 2026-09-12: no weight, profession or type.
 const trackerTemplate = {
   id: 190436,
   level: 282,
@@ -46,7 +45,6 @@ const createFixture = () => {
     map: { id: 3331, name: "Jaskinia Piaskowej Burzy s.1", visibility: 30 },
   });
 
-  // Margonem's NPC updates carry no pre-event game state in ingress.
   const ingress = {
     game: null,
     intent: null,
@@ -89,7 +87,6 @@ it("reports a claimed Hero Tracker's entrance once, measuring its respawn from t
   const fixture = createFixture();
 
   fixture.handle(claimedTracker(1200));
-  // Other players' packets repeat the same countdown a few seconds later.
   fixture.handle(claimedTracker(1195));
 
   await waitFor(() => expect(fixture.requests).toHaveLength(1));
@@ -118,7 +115,6 @@ it("reports a claimed Hero Tracker's entrance once, measuring its respawn from t
 it("shortens the respawn by the world's own respawn multiplier", async () => {
   const fixture = createFixture();
 
-  // A private world whose server parameters make NPCs return 3x faster.
   testRuntimeWindow.Engine = { worldConfig: { getNpcResp: () => 3 } };
   onTestFinished(() => {
     delete testRuntimeWindow.Engine;

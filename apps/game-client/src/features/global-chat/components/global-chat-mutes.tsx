@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/popover";
 import { useGlobalChatUnmute } from "../hooks/use-global-chat-moderation";
 
-/** An admin's list of muted senders, each with a way to lift the mute. */
 export const GlobalChatMutes = () => {
   const { t } = useTranslation("globalChat");
   const [open, setOpen] = useState(false);

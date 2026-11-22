@@ -4,7 +4,6 @@ import { EquipmentGrid } from "@/components/equipment/equipment-grid";
 import { t } from "@/i18n/messages";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
-/** The game's equipment, each slot opening the item search for it. */
 export function SlotSearch() {
   return (
     <EquipmentGrid

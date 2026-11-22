@@ -8,12 +8,10 @@ type LevelInputProps = Pick<
   "id" | "size" | "className" | "aria-label" | "aria-describedby"
 > & {
   value: number | undefined;
-  /** The level typed; text that is no level is `undefined`. */
   onChange: (level: number | undefined) => void;
   placeholder?: string;
 };
 
-/** A character level field. */
 export function LevelInput({
   value,
   onChange,

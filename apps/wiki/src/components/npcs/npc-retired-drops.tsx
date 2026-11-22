@@ -8,7 +8,6 @@ import {
 import { ItemsByRarity } from "@/components/catalog/items-by-rarity";
 import { t } from "@/i18n/messages";
 
-/** The items a monster dropped before its loot changed, folded away. */
 export function NpcRetiredDrops({
   items,
 }: {

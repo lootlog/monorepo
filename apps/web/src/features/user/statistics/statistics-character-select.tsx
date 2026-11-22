@@ -11,18 +11,14 @@ type StatisticsCharacter = UserKillCharactersResponseDtoOutputCharactersItem;
 
 type StatisticsCharacterSelectProps = {
   characterId: string | undefined;
-  /** The selected character's world; an id is unique only within one. */
   world: string | undefined;
   onCharacterChange: (character: StatisticsCharacter | undefined) => void;
   className?: string;
 };
 
-// The same character id can exist on several worlds, so the selector keys
-// each character by both.
 const characterKey = (world: string, characterId: string) =>
   `${world}:${characterId}`;
 
-/** The characters with tracked kills; picking one narrows the statistics to it. */
 export function StatisticsCharacterSelect({
   characterId,
   world,
@@ -38,8 +34,6 @@ export function StatisticsCharacterSelect({
 
   const battleCharacters = useBattleCharacters();
 
-  // An older Game client reports kills without the character's details; the
-  // battle log may still know them.
   const characters = tracked.map((character): SelectableCharacter => {
     const known = battleCharacters.find(
       (battle) =>

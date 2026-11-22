@@ -92,7 +92,6 @@ const coreDataLayers = Layer.mergeAll(
   notificationsData,
 );
 
-/** Each BullMQ queue's producer, opened once per process. */
 const apiQueues = Layer.mergeAll(
   EventHeroKillQueue.layer,
   MemberBulkRefreshQueue.layer,

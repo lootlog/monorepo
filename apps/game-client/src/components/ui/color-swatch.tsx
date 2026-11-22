@@ -2,17 +2,11 @@ import { cn } from "cn";
 import type { FC } from "react";
 
 type ColorSwatchProps = {
-  /** Border colour; also the fill unless `fill` is given. */
   color: string;
   fill?: string;
   className?: string;
 };
 
-/**
- * Rounded square preview of a colour, the one swatch look of the client.
- * The border is drawn as an inset ring so the rounded corners stay crisp at
- * any colour.
- */
 export const ColorSwatch: FC<ColorSwatchProps> = ({
   color,
   fill,

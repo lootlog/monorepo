@@ -9,7 +9,6 @@ import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { StatisticsFiltersProps } from "./statistics-filter-toolbar";
 
-/** The battle statistics filters stacked for the panel narrow pages open. */
 export const StatisticsStackedFilters = ({
   period,
   onPeriodChange,

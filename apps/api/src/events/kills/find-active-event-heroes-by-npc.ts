@@ -2,9 +2,6 @@ import type { ActiveEventHeroStore } from "#src/events/kills/active-event-hero.r
 import { foldText } from "@lootlog/domain/text-fold";
 import { Effect } from "effect";
 
-// Margonem has renamed NPCs mid-event (Doppelgänger became Doppelganger), so a
-// hero typed with the old spelling must still match until it learns the NPC id.
-// A hero that already knows a different NPC id is another NPC.
 const comparableNpcName = (name: string) =>
   foldText(name).trim().toLowerCase().replace(/\s+/g, " ");
 

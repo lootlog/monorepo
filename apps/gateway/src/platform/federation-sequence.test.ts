@@ -17,7 +17,6 @@ test("a hole that outlives the window is a loss, and tracking continues after it
 
   expect(sequence.expired(999)).toBe(false);
   expect(sequence.expired(1_000)).toBe(true);
-  // The late frame belongs to the reported gap and opens no new one.
   sequence.observe(11, 1_100);
   sequence.observe(13, 1_100);
   expect(sequence.expired(5_000)).toBe(false);
@@ -31,7 +30,6 @@ test("a resubscription proves continuity only once every frame published before 
   expect(interrupted.observe(11, 0)).toBe(false);
   expect(interrupted.observe(12, 0)).toBe(true);
 
-  // Frame 14 was published while nobody listened on this subscription.
   const lossy = new FederationSequence(1_000);
   lossy.resume(10, 0);
 
@@ -54,7 +52,6 @@ test("a counter reset by Redis data loss is a gap, and later holes are still fou
   const sequence = new FederationSequence(1_000);
   sequence.resume(500, 0);
 
-  // Frames of the new epoch published while this subscriber was away are unknown.
   expect(sequence.resume(2, 0)).toBe("lost");
   sequence.observe(3, 0);
   sequence.observe(5, 0);

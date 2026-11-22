@@ -14,7 +14,6 @@ import {
 
 export type BattleHpTimelineHeightMode = "default" | "expanded";
 
-/** Shared by the chart and its skeleton so the loading state has the reader's chosen height. */
 export const BATTLE_HP_TIMELINE_PLOT_HEIGHT_CLASS_NAMES: Record<
   BattleHpTimelineHeightMode,
   string
@@ -81,9 +80,7 @@ const readLegacyLayerConfig = () => {
 
   try {
     return Option.getOrUndefined(decodeStoredLayers(JSON.parse(value)));
-  } catch {
-    // Ignore malformed legacy preferences and use the defaults.
-  }
+  } catch {}
 };
 
 const normalizeBattleHpTimelineSettingsState = (

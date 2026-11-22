@@ -98,10 +98,6 @@ export function useMobileDaySchedule({
     }, 0);
   };
 
-  /**
-   * The track follows the finger by writing its transform directly: it is a
-   * compositor layer, so a move neither re-renders React nor repaints.
-   */
   const setSwipeOffset = (offset: number) => {
     swipeOffsetRef.current = offset;
     const track = swipeTrackRef.current;
@@ -116,10 +112,6 @@ export function useMobileDaySchedule({
     setSwipeOffset(0);
   };
 
-  /**
-   * Web Animations run on the compositor, so rendering the next day cannot
-   * stall the motion. The final frame holds until the caller resets it.
-   */
   const animateSwipeTo = async (
     offset: number,
     timing: KeyframeAnimationOptions,
@@ -171,9 +163,7 @@ export function useMobileDaySchedule({
 
         try {
           await animateSwipeTo(0, SWIPE_RETURN_TIMING);
-        } catch {
-          // Cancelled by an unmount or a reset, which leaves the track settled.
-        }
+        } catch {}
 
         resetSwipe();
         swipeTransitioningRef.current = false;
@@ -195,14 +185,10 @@ export function useMobileDaySchedule({
 
       try {
         await animateSwipeTo(exitOffset, SWIPE_COMMIT_TIMING);
-        // The neighbouring day is on screen; render it as the current one
-        // before the track moves back, so both land in the same frame.
         flushSync(() => {
           onDaySwipe(direction);
         });
-      } catch {
-        // Cancelled by an unmount or a reset; the day stays as it was.
-      }
+      } catch {}
 
       resetSwipe();
       swipeTransitioningRef.current = false;

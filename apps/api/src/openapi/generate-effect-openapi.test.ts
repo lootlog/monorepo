@@ -72,5 +72,4 @@ it("exports current source contracts without depending on compiled output", asyn
   } finally {
     await rm(fixture, { recursive: true, force: true });
   }
-  // Two real CLI invocations share CI CPU with workspace builds and tests.
 }, 60_000);

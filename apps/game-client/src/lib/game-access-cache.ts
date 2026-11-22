@@ -18,10 +18,6 @@ const isQueryPath = Schema.is(Schema.String);
 
 const isGuildQueryParams = Schema.is(Schema.Struct({ guildId: Schema.String }));
 
-/**
- * A row whose visibility follows its NPC: a timer, or a hero sighting, which
- * names only the hero's level.
- */
 type TimerRecord =
   | { guildId: string; npc: { type: string; lvl: number } }
   | { guildId: string; hero: { lvl: number } };
@@ -125,7 +121,6 @@ export const getTimerQueryGuildId = (
 ): string | null | undefined => {
   const [path, params] = query.queryKey;
 
-  // Hero sightings borrow the timer visibility, so they follow its policy.
   if (path === "/timers" || path === "/hero-sightings") return null;
 
   if (path === "/timers/history") {
@@ -178,8 +173,6 @@ const reconcileTimers = (
       initial ||
       (scope === null ? restricted.size > 0 : restricted.has(scope))
     ) {
-      // The global timer reader filters its response against the latest policy
-      // before caching it, so its first request can finish without restarting.
       const preserveInitialRequest = initial && scope === null && canReadScope;
 
       if (
@@ -190,7 +183,6 @@ const reconcileTimers = (
       )
         pendingQueries.add(query);
 
-      // Cancellation reverts an in-flight query before the policy filter runs.
       if (!preserveInitialRequest)
         void queryClient.cancelQueries({
           queryKey: query.queryKey,
@@ -248,7 +240,6 @@ const reconcilePermissions = (
     });
 
     void queryClient.cancelQueries({ queryKey });
-    // The event contains the authoritative effective permissions; no HTTP roundtrip.
     queryClient.setQueryData(queryKey, [
       ...(organizations.get(id)?.permissions ?? []),
     ]);
@@ -304,7 +295,6 @@ const reconcileOrganizations = (
   }
 };
 
-/** One coordinator for all timer worlds, history queries and organization metadata. */
 export const createGameAccessCache = (queryClient: QueryClient) => {
   let currentPolicy: AccessPolicySnapshot | undefined;
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;

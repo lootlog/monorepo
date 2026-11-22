@@ -1,20 +1,14 @@
 import { Schema } from "effect";
 import { NonNegativeInt } from "./primitives.js";
 
-/** An NPC this light can have a timer, so only these are reported as standing. */
 export const NPC_PRESENCE_MIN_WT = 20;
 
 export const NPC_PRESENCE_MAX_NPCS = 50;
 
 const NPC_PRESENCE_MAX_ORGANIZATIONS = 20;
 
-/**
- * A reported NPC stops standing this long after its reporter's last heartbeat.
- * Only a reporter that vanished without closing its socket reaches it.
- */
 export const NPC_PRESENCE_TTL_MS = 60_000;
 
-/** The fields organization NPC visibility needs, keyed by the NPC's runtime id. */
 export const NpcPresenceNpcSchema = Schema.Struct({
   id: NonNegativeInt,
   lvl: NonNegativeInt,
@@ -27,12 +21,10 @@ export type NpcPresenceNpc = typeof NpcPresenceNpcSchema.Type;
 
 export const NPC_PRESENCE_MAP_MAX_LENGTH = 128;
 
-/** The name of the map the reporting character stands on. */
 const NpcPresenceMapSchema = Schema.NonEmptyString.check(
   Schema.isMaxLength(NPC_PRESENCE_MAP_MAX_LENGTH),
 );
 
-/** Every NPC a character currently sees on its map; each report replaces the previous one. */
 export const NpcPresenceReportSchema = Schema.Struct({
   world: Schema.NonEmptyString.check(Schema.isMaxLength(64)),
   organizationIds: Schema.Array(Schema.NonEmptyString).check(
@@ -41,23 +33,18 @@ export const NpcPresenceReportSchema = Schema.Struct({
   npcs: Schema.Array(NpcPresenceNpcSchema).check(
     Schema.isMaxLength(NPC_PRESENCE_MAX_NPCS),
   ),
-  /** Optional, so reports from clients that predate it stay valid. */
   map: Schema.optionalKey(NpcPresenceMapSchema),
 });
 
 export type NpcPresenceReport = typeof NpcPresenceReportSchema.Type;
 
-/** Sent only when an NPC gains its first reporter or loses its last one. */
 export const NpcPresenceEventSchema = Schema.Struct({
   organizationId: Schema.NonEmptyString,
   world: Schema.NonEmptyString,
-  /** Orders the updates of one Organization and world across gateway replicas. */
   revision: NonNegativeInt,
   npc: NpcPresenceNpcSchema,
   standing: Schema.Boolean,
-  /** Gateway time the NPC was first reported. */
   since: NonNegativeInt,
-  /** The map it stands on, when its reporter named one. */
   map: Schema.optionalKey(NpcPresenceMapSchema),
 });
 

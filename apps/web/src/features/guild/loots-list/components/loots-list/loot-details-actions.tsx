@@ -64,7 +64,6 @@ export const LootDetailsActions: FC<LootDetailsActionsProps> = ({
     onDeleted?.();
   };
 
-  // Deleting stays behind a menu, away from the everyday controls beside it.
   return (
     <>
       <DropdownMenu>

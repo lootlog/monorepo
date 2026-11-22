@@ -9,13 +9,11 @@ export interface BotConfigValue extends BaseServiceConfiguration {
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly apiServiceUrl: string;
   readonly catalogServiceUrl: string;
-  /** What the bot presents to read the catalog. */
   readonly catalogServiceToken: Redacted.Redacted<string>;
   readonly gatewayServiceUrl: string;
   readonly webAppUrl: string;
 }
 
-// Slash commands link players to the Web app of the cluster that answered.
 const WEB_APP_URL_BY_ENVIRONMENT = new Map([
   ["prod", "https://lootlog.pl"],
   ["dev", "https://dev.lootlog.pl"],
@@ -33,8 +31,6 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
       const value = yield* Config.all({
         discordBotToken: Config.Redacted("DISCORD_BOT_TOKEN"),
         rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
-        // Defaults are the in-cluster Service names, which slash commands
-        // reach directly instead of through the public edge.
         apiServiceUrl: Config.String("API_SERVICE_URL").pipe(
           Config.withDefault("http://api:4000"),
         ),
@@ -42,7 +38,6 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
           Config.withDefault("http://catalog:4000"),
         ),
         catalogServiceToken: Config.Redacted("CATALOG_SERVICE_TOKEN").pipe(
-          // The local catalog's token; every cluster sets its own.
           environment === "local"
             ? Config.withDefault(
                 Redacted.make("local-development-catalog-service-token"),

@@ -4,7 +4,6 @@ import { RoleBadges } from "@/components/role-badges";
 import { StatusBadge } from "@/components/status-badge";
 import { UserAvatar } from "@/components/user-avatar";
 
-/** The user list where a table would not fit: one tile per User. */
 export function UserTiles({ users }: { users: ReadonlyArray<AdminUser> }) {
   return (
     <ul className="flex flex-col gap-2">

@@ -36,7 +36,6 @@ export const getBattleStatsTableColumns = ({
   userTeam,
 }: {
   characterId: string;
-  /** Columns listed here draw a meter bar scaled to the battle's highest value. */
   rankingMaxima: Partial<Record<BattleStatsExpandableKey, number>>;
   userTeam: number | undefined;
   expandedRows: Map<string, BattleStatsExpansionType>;

@@ -20,7 +20,6 @@ const getFrostPatchPlacement = (
   };
 };
 
-// Randomly generated frost patches along screen edges - irregular positions and sizes
 const generateFrostPatches = () => {
   const patches: {
     x: string;

@@ -33,10 +33,6 @@ const getActiveTab = (pathname: string): AbyssSeasonTab =>
       ? "analytics"
       : "battles";
 
-/**
- * One Abyss season: its totals across the top, then its battles, opponents
- * and analytics as tabs, all in one page scroller so the tabs stay pinned.
- */
 export function AbyssSeasonLayout() {
   const { t } = useTranslation();
   const { characterId, season, seasonsQuery } = useAbyssSeason();
@@ -133,7 +129,6 @@ export function AbyssSeasonLayout() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{title}</h1>
-      {/* The top bar names the season, so it reads like a document title. */}
       <HeaderSlotPortal slot="title">
         <TopBarTitle>{title}</TopBarTitle>
       </HeaderSlotPortal>

@@ -1,4 +1,3 @@
-/** Transport schemas owned by the health HTTP module. */
 import { Schema } from "effect";
 import { HttpApiSchema } from "effect/http-api";
 

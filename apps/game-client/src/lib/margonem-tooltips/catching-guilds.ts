@@ -18,10 +18,6 @@ import { escapeTooltipHtml } from "./html";
 import type { RuntimeInterface } from "@/lib/margonem-runtime/runtime.types";
 import type { CharacterTooltipTransform } from "./types";
 
-// The section is inserted into the game's own `t_other` tooltip, so it keeps
-// the game's palette (tipsParser.css). NI draws the game's `.line` separator;
-// SI's game.css has no such rule, so SI gets an inline rule. Inline styles
-// keep the section independent of Lootlog's stylesheet.
 const TEXT_COLOR = "#e6d6bf";
 
 const MUTED_COLOR = "#a8998a";
@@ -75,8 +71,6 @@ function renderGuildChips(
 ): string {
   const t = getFixedT("common");
 
-  // The selected Lootlog leads, matching the blue glow it gives on the map.
-  // The userscript targets es2020, so sort a copy instead of using toSorted.
   const ordered = [...guilds].sort(
     (left, right) =>
       Number(right.id === selectedGuildId) -

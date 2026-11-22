@@ -9,7 +9,6 @@ type SectionTileProps = {
   description: string;
 };
 
-/** A home page tile that opens one wiki section. */
 export function SectionTile({
   link,
   icon: Icon,

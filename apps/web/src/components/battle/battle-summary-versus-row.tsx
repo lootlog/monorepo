@@ -7,7 +7,6 @@ export type BattleSummaryVersusRowProps = {
   enemyValue: number;
   friendlyValue: number;
   label: string;
-  /** Marks the smaller value as the leading one, e.g. for damage taken. */
   lowerIsBetter?: boolean;
 };
 

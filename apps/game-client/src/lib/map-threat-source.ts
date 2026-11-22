@@ -23,13 +23,10 @@ import {
 type Listener = () => void;
 
 export type MapThreatEnemy = Omit<AirTagMapThreatEnemy, "ageMs"> & {
-  /** Local clock time of the last clan-enemy sighting. */
   seenAt: number;
 };
 
-/** Clan enemies an Organization member saw on one map; stale once no sighting is fresh. */
 export type MapThreat = {
-  /** Fresh sightings first, then by nickname. */
   enemies: readonly MapThreatEnemy[];
   freshCount: number;
 };
@@ -43,10 +40,6 @@ type MapSightings = {
 export const isMapThreatEnemyFresh = (enemy: MapThreatEnemy, now: number) =>
   now - enemy.seenAt < AIR_TAG_MAP_THREAT_FRESH_MS;
 
-/**
- * One threat from sightings of several maps or Lootlogs: a target seen more
- * than once keeps its latest sighting.
- */
 export function projectMapThreat(
   sightings: Iterable<MapThreatEnemy>,
   now: number,
@@ -79,7 +72,6 @@ const sameThreat = (first: MapThreat, second: MapThreat) =>
   first.enemies.length === second.enemies.length &&
   first.enemies.every((enemy, index) => enemy === second.enemies[index]);
 
-/** Map threats of one Organization and world, delivered by the gateway from members' AirTag sightings. */
 export class MapThreatSource {
   private readonly sightings = new Map<number, MapSightings>();
   private readonly threats = new Map<string, MapThreat>();
@@ -96,7 +88,6 @@ export class MapThreatSource {
     private readonly socket: AppSocket,
     readonly guildId: string,
     readonly world: string,
-    // Members of different Margonem clans can be each other's clan enemies.
     private readonly members: Pick<
       PlayersPresenceSource,
       "isOnlineMember" | "subscribeChanges"
@@ -110,7 +101,6 @@ export class MapThreatSource {
   retain = (): (() => void) => {
     const release = this.references.retain();
 
-    // A subscription replaced in the same commit keeps the running source and its snapshot.
     if (!this.active) this.start();
 
     return release;
@@ -159,7 +149,6 @@ export class MapThreatSource {
     this.clear();
   }
 
-  /** Threats seen before this client connected; later events win by revision. */
   private async hydrate(): Promise<void> {
     if (!this.canRead()) return;
     const fetchId = ++this.fetchId;
@@ -173,12 +162,9 @@ export class MapThreatSource {
       if (fetchId !== this.fetchId) return;
 
       for (const threat of threats) this.apply(threat);
-    } catch {
-      // Live events still arrive; a failed snapshot only delays older sightings.
-    }
+    } catch {}
   }
 
-  // The realtime client decodes server events against the protocol schema.
   private readonly apply = (payload: AirTagMapThreatEvent): void => {
     if (
       payload.guildId !== this.guildId ||
@@ -188,7 +174,6 @@ export class MapThreatSource {
       return;
     const previous = this.sightings.get(payload.mapId);
 
-    // Two gateway instances may deliver lists of one map out of order.
     if (previous && previous.revision >= payload.revision) return;
     const now = this.now();
 
@@ -214,19 +199,14 @@ export class MapThreatSource {
     const readable = this.canRead();
 
     if (!readable) this.clear();
-    // Sightings stored before access was granted are not sent again.
     else if (!this.readable) void this.hydrate();
 
     this.readable = readable;
   };
 
-  /** A target becomes a known member once presence loads; re-project once per burst. */
   private readonly handleMembersChange = (presence?: PlayerPresence): void => {
     if (this.membersChanged || this.sightings.size === 0) return;
 
-    // Members move between maps all the time; an online update keyed by its
-    // character changes only whether that character counts as a member. Any
-    // other update may replace or close another character, so it re-projects.
     if (presence?.status === "online" && presence.player?.accountId) {
       const characterId = presence.player.characterId;
 
@@ -298,7 +278,6 @@ export class MapThreatSource {
     for (const mapName of changed) this.mapListeners.notify(mapName);
   }
 
-  /** Several map ids may share a name; members are never a threat. */
   private project(
     mapSightings: readonly MapSightings[],
     now: number,
@@ -310,7 +289,6 @@ export class MapThreatSource {
     return enemies.length > 0 ? projectMapThreat(enemies, now) : undefined;
   }
 
-  /** Wakes once at the next point where a sighting turns stale or expires. */
   private schedule(now: number): void {
     if (this.timer !== null) clearTimeout(this.timer);
     this.timer = null;

@@ -40,8 +40,6 @@ const time = (value: string) => new Date(`2026-09-27T${value}:00.000Z`);
 const uuid = (value: string) =>
   `${value.padStart(8, "0")}-1111-4111-8111-111111111111`;
 
-// Kills recorded before the move to UUIDs keep their cuid IDs, so the page
-// boundaries at limit 2 fall on those.
 const legacyId = (value: string) => `cm${value.padStart(23, "0")}`;
 
 const orderedIds = [
@@ -84,7 +82,6 @@ const fixture = async () => {
   const boundary = await createDatabaseBoundary();
   const database = boundary.database;
 
-  // Redis is the external boundary; the real cache owner still chooses keys and codecs.
   const entries = new Map<
     string,
     { value: string; scopes: readonly string[] }
@@ -424,7 +421,6 @@ describe("kill history database reads", () => {
         { memberId: 1 },
         { memberId: 1, heroId: "low" },
       ]) {
-        // Kill numbers follow the hero's full history, not the filtered page.
         const expected: Array<[string, number]> =
           "memberId" in query
             ? [

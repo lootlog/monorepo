@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the map-templates feature. */
 import * as Schema from "effect/Schema";
 import { MapTemplateResponseSchema } from "#src/map-templates/map-template.schema";
 

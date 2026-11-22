@@ -6,11 +6,6 @@ type SettingsListProps = {
   className?: string;
 };
 
-/**
- * Container for entity rows (servers, muted players, hidden timers). A
- * hairline between rows marks where the next entry starts; SettingsListRow
- * draws it, so no rule here has a universal `> *` subject.
- */
 export const SettingsList: FC<SettingsListProps> = ({
   children,
   className,

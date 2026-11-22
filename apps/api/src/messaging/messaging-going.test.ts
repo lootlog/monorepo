@@ -20,7 +20,6 @@ it("shares a going answer only with the Lootlogs where the caller reads the noti
   const databaseBoundary = await createDatabaseBoundary();
   const createdAt = new Date().toISOString();
 
-  // A hash per key, standing in for the Redis script around this logic.
   const hashes = new Map<string, Map<string, string>>([
     [
       "notification:hero:going:foreign",
@@ -50,7 +49,6 @@ it("shares a going answer only with the Lootlogs where the caller reads the noti
       set: () => Effect.void,
       eval: (_script, keys, args) =>
         Effect.sync(() => {
-          // The sliding-window rate limit accepts every answer here.
           if (keys[0]?.startsWith("messaging:")) return [1, 0];
 
           const hash = hashes.get(keys[0] ?? "") ?? new Map<string, string>();

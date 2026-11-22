@@ -31,7 +31,6 @@ type TimerTooltipProps = {
   occupancy?: MapOccupancy;
   threat?: MapThreat;
   heroSighting?: TimerHeroSighting;
-  /** Where an Organization member sees the NPC standing now. */
   standing?: NpcStanding;
   expanded?: boolean;
 };
@@ -64,7 +63,6 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   const hiddenMembersCount = Math.max(membersWithGuilds.length - 1, 0);
 
   return (
-    // Balanced wrapping suits a short tip; here it halves long lines early.
     <div className="ll:flex ll:flex-col ll:gap-1.5 ll:py-0.5 ll:text-wrap">
       <div className="ll:flex ll:flex-col ll:gap-0.5">
         <div className="ll:text-sm ll:font-semibold ll:leading-4">
@@ -80,7 +78,6 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
           </div>
         )}
         {standing && (
-          // A long map name wraps, so the icon sits on the first line.
           <div className="ll:flex ll:items-start ll:gap-1 ll:font-semibold ll:text-green-400">
             <Swords
               size={12}
@@ -98,8 +95,6 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
 
       <TimerTooltipSection>
         <div className="ll:grid ll:grid-cols-[auto_auto_1fr] ll:items-center ll:gap-x-1.5 ll:gap-y-0.5">
-          {/* A Hero Tracker hides in one of several places, so its timer
-              names the map where its entrance was found. */}
           {timer.npc.type === NpcTypeEnum.HERO_TRACKER &&
             timer.npc.location && (
               <>

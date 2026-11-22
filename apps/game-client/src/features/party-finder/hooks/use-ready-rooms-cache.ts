@@ -16,10 +16,6 @@ import {
   type ReadyRoomProjections,
 } from "@/features/party-finder/ready-room-cache";
 
-/**
- * Rewrites the projections while carrying the rest of the cache forward: only
- * a list response may decide whether the collection counts as synchronized.
- */
 const writeReadyRoomCache = (
   client: QueryClient,
   update: (cache: ReadyRoomProjections) => ReadyRoomProjections,
@@ -56,11 +52,6 @@ const removeReadyRoomFromCache = (
   );
 };
 
-/**
- * The Ready Room counterpart of useTimersCache: every source of a newer
- * projection — socket updates, mutation responses, expiry rechecks — writes
- * through here instead of keeping its own copy.
- */
 export const useReadyRoomsCache = () => {
   const queryClient = useQueryClient();
 
@@ -74,11 +65,6 @@ export const useReadyRoomsCache = () => {
   };
 };
 
-/**
- * Reads one room from its own endpoint and stores it. Used wherever a room is
- * known to be stale — a gathering just created, a lapsed expiry — and the
- * collection has to catch up without waiting for a socket update.
- */
 export const useRefreshReadyRoom = () => {
   const { mergeProjection } = useReadyRoomsCache();
 

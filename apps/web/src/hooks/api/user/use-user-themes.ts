@@ -21,7 +21,6 @@ export const useUserThemes = ({ enabled = true } = {}) =>
     },
   });
 
-/** Every theme write answers with the theme, so the list updates in place. */
 const useThemeListWrite = <Variables>(
   write: (variables: Variables) => Promise<UserThemeResponseDto>,
 ) => {
@@ -77,7 +76,6 @@ export const useDeleteUserTheme = () => {
     onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey }),
-        // Deleting the selected theme moves the stored preference to its base.
         queryClient.invalidateQueries({
           queryKey: getUsersControllerGetUserPreferencesQueryKey(),
         }),

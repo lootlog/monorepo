@@ -11,10 +11,6 @@ import { LootDrawVoidForm } from "./loot-draw-void-form";
 import { LootDrawWheel } from "./loot-draw-wheel";
 import type { useLootDraws } from "./use-loot-draws";
 
-/**
- * A standing result in the editor's frame: the wheel settled on the winner,
- * who is announced where the spin button stood.
- */
 export const LootDrawResult = ({
   draw,
   draws,
@@ -24,16 +20,12 @@ export const LootDrawResult = ({
 }: {
   draw: LootDrawResponseDto;
   draws: ReturnType<typeof useLootDraws>;
-  /** Spins the wheel to the result, for the draw the viewer just ran. */
   spin: boolean;
-  /** Members who manage loots may overrule a result. */
   canVoid: boolean;
-  /** Called when a spin settles and the winner shows. */
   onRevealed?: () => void;
 }) => {
   const { t } = useTranslation();
   const reducedMotion = usePrefersReducedMotion();
-  // Without motion the wheel never spins, so the winner shows at once.
   const [revealed, setRevealed] = useState(!spin || reducedMotion);
   const winner = draw.entrants[draw.winnerIndex];
 
@@ -64,7 +56,6 @@ export const LootDrawResult = ({
         />
       ))}
       footer={
-        // The live region stays mounted so the winner is announced on reveal.
         <div role="status" aria-live="polite" className="min-w-0 flex-1">
           {winner && revealed ? (
             <div className="flex min-w-0 items-center gap-3">

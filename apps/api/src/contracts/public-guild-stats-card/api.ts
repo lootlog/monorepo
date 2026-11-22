@@ -1,4 +1,3 @@
-/** Endpoints owned by the public-guild-stats-card HTTP module. */
 import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   HttpApiEndpoint,

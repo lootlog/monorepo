@@ -170,8 +170,6 @@ const rejection = async (outcome: ReturnType<typeof accept>["outcome"]) => {
 };
 
 describe("loot submission acceptance", () => {
-  // A client that skips submissions may be stale or old; the API must keep
-  // rejecting them instead of trusting the client to have filtered them.
   it("rejects a character that catches for no writable Organization", async () => {
     const { created, outcome } = accept({
       guilds: [guild("a"), guild("b")],
@@ -221,8 +219,6 @@ describe("loot submission acceptance", () => {
     expect(created).toEqual([]);
   });
 
-  // The request schema accepts any stat text; a rarity no config needs must
-  // not turn the structured rejection into a server error.
   it("rejects without parsing rarities when no configuration covers the NPC", async () => {
     const { outcome } = accept({
       guilds: [guild("a")],

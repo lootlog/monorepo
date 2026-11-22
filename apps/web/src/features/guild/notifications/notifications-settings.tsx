@@ -16,7 +16,6 @@ import { useNotificationsOverview } from "./use-notifications-overview";
 import { getNotificationTriggerTranslationKey } from "./utils/notification-settings.utils";
 import { normalizeSearchText } from "@lootlog/domain/text-fold";
 
-/** The rules tab: each rule with what it sends, where, and its deliveries. */
 export const NotificationsSettings = () => {
   const { t } = useTranslation();
   const overview = useNotificationsOverview();

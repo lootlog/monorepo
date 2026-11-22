@@ -27,9 +27,6 @@ export type MonsterLocationsCommand = {
 
 type IndexNpc = CatalogNpcObservation;
 
-// One catalog entry per edition, identity namespace, id and Margonem type:
-// every world of an edition uses the same NPC ids. Legacy keys omit the
-// namespace; equal ids in another namespace or edition are a different NPC.
 export const npcCatalogKey = (npc: {
   id: number;
   identityNamespace: NpcIdentityNamespace;
@@ -46,27 +43,18 @@ export const npcCatalogKey = (npc: {
   return `${npc.gameVersion}_${namespaced}`;
 };
 
-// A template id selects every spawn of the monster; prefer it when name and
-// type collapse several catalog identities into one suggestion.
 const NAMESPACE_PREFERENCE: Record<NpcIdentityNamespace, number> = {
   [NpcIdentityNamespace.TEMPLATE]: 0,
   [NpcIdentityNamespace.LEGACY]: 1,
   [NpcIdentityNamespace.RUNTIME]: 2,
 };
 
-/**
- * One monster across its catalog identities: a boss seen by older clients
- * keeps runtime or legacy entries beside its template one, all with the
- * edition, name and type in common. Equal names in different editions are
- * different monsters.
- */
 export const npcMonsterKey = (npc: {
   gameVersion: GameVersion;
   name: string;
   type: string | null;
 }) => `${npc.gameVersion}_${npc.name}_${npc.type}`;
 
-/** Lower ranks first: the monster as it is now, then the preferred namespace. */
 const identityRank = (hit: {
   identityNamespace: NpcIdentityNamespace;
   current?: boolean;
@@ -96,15 +84,9 @@ export const collapseByNameAndType = <
     }
   }
 
-  // Keep the relevance position of each suggestion's first hit.
   return [...preferred.values()];
 };
 
-/**
- * The stored shape of one NPC catalog entry; the seed script and the consumer
- * share it. `worlds` holds every world the entry was observed in, and
- * `observedLootId` orders observations.
- */
 const toNpcDocument = (npc: IndexNpc) => {
   const prof = npc.prof ?? "";
 
@@ -136,23 +118,12 @@ const toNpcDocument = (npc: IndexNpc) => {
   };
 };
 
-/**
- * A stored catalog entry. `locations` comes from the API's daily monster
- * statistics, not from loots; entries it has not reached yet have none.
- */
 export type NpcEntry = ReturnType<typeof toNpcDocument> & {
   locations?: ReadonlyArray<typeof CatalogMonsterLocation.Type>;
   formerLevels?: ReadonlyArray<typeof CatalogMonsterFormerLevel.Type>;
   current?: boolean;
 };
 
-/**
- * Whether each catalog identity of a monster shows it as the game has it
- * now. The identity with the latest loot holds the current level; an identity
- * still at another one, such as an older client's entry from before the
- * monster was rebalanced, is its history. The catalog lists only current
- * identities, so a monster is found at its level now and not its highest one.
- */
 const currentRevisions = (
   documents: ReadonlyArray<
     Pick<NpcEntry, "uid" | "monsterKey" | "lvl" | "observedLootId">
@@ -169,18 +140,11 @@ const currentRevisions = (
     },
   );
 
-/** Whether `stored` comes from a later loot than `incoming`. */
 const isNewerObservation = (
   stored: Pick<NpcEntry, "observedLootId">,
   incoming: Pick<NpcEntry, "observedLootId">,
 ) => stored.observedLootId > incoming.observedLootId;
 
-/**
- * One catalog entry from two observations: the later loot's attributes,
- * every world of both, the earlier first sighting and the stored locations.
- * Delivery order is not chronology: a retried or redelivered publication can
- * arrive after a newer one.
- */
 const mergeNpcDocument = (incoming: NpcEntry, stored: NpcEntry): NpcEntry => {
   const locations = stored.locations ?? incoming.locations;
   const formerLevels = stored.formerLevels ?? incoming.formerLevels;
@@ -188,14 +152,12 @@ const mergeNpcDocument = (incoming: NpcEntry, stored: NpcEntry): NpcEntry => {
   return {
     ...(isNewerObservation(stored, incoming) ? stored : incoming),
     worlds: uniqueWorlds([...incoming.worlds, ...stored.worlds]),
-    // Entries indexed before first sightings were recorded have none.
     firstSeenAt: earliestSeenAt(incoming.firstSeenAt, stored.firstSeenAt),
     ...(locations && { locations }),
     ...(formerLevels && { formerLevels }),
   };
 };
 
-/** Documents of one catalog entry in one batch merge into one. */
 const mergeNpcDocuments = (documents: ReadonlyArray<NpcEntry>): NpcEntry[] => {
   const byUid = new Map<string, NpcEntry>();
 
@@ -250,7 +212,6 @@ export const makeNpcsModule = (write: CatalogWrite) => {
           ...new Set(documents.map(({ monsterKey }) => monsterKey)),
         ]);
 
-        // Every identity of these monsters as it is once the batch merges in.
         const current = new Map(
           currentRevisions([
             ...identities.filter(({ uid }) => !incomingUids.has(uid)),
@@ -273,8 +234,6 @@ export const makeNpcsModule = (write: CatalogWrite) => {
           }),
         );
 
-        // A later loot of a monster as it is stored moves only its loot id,
-        // which orders the monster's observations and is kept on every kill.
         const [lootsOnly, changes] = partition(changed, (entry) => {
           const stored = storedByUid.get(entry.uid);
 
@@ -287,7 +246,6 @@ export const makeNpcsModule = (write: CatalogWrite) => {
           );
         });
 
-        // The monster's other identities, when this batch changed which is current.
         const superseded = identities.flatMap((identity) =>
           !incomingUids.has(identity.uid) &&
           current.get(identity.uid) !== identity.current
@@ -308,11 +266,6 @@ export const makeNpcsModule = (write: CatalogWrite) => {
     yield* countEntries("npcs", documents.length, changedCount);
   });
 
-  /**
-   * Replaces each monster's locations and former levels on every catalog
-   * identity of it. Only those fields
-   * are written, so observations indexed meanwhile are kept.
-   */
   const setLocations = Effect.fn("CatalogNpcs.setLocations")(function* (
     data: MonsterLocationsCommand,
   ) {

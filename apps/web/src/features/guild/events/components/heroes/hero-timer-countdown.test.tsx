@@ -50,7 +50,6 @@ describe("HeroTimerCountdown", () => {
 
     render(<HeroTimerCountdown timer={timer} />);
 
-    // Tapping the countdown shows its window, so touch screens reach it too.
     act(() =>
       fireEvent.click(screen.getByRole("button", { name: /01:00:00/ })),
     );

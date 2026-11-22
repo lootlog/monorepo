@@ -26,7 +26,6 @@ type ChatMentionSuggestionsProps = {
   selectedIndex: number;
   onSelect: (suggestion: ChatInputSuggestion) => void;
   isLoading?: boolean;
-  /** `below` opens the list under a composer at the top of the screen. */
   placement?: "above" | "below";
 };
 

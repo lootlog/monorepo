@@ -14,7 +14,6 @@ export const LootSingleComment: FC<LootSingleCommentProps> = ({ comment }) => {
 
   return (
     <li className="flex flex-row gap-3 border-b border-border/50 bg-card/10 px-3 py-2.5 text-sm transition-colors hover:bg-card/30 sm:px-4">
-      {/* The name beside it opens the profile; one target per member. */}
       <MemberIdentity
         member={member}
         fallback={{

@@ -121,9 +121,6 @@ const HTTP_METHODS = [
   "trace",
 ] as const;
 
-// Effect stores endpoint definitions in hash-based collections. Normalize every
-// path item before serialization so operations sharing a path cannot swap order
-// between processes and make the generated client appear stale.
 for (const [path, pathItem] of Object.entries(document.paths)) {
   document.paths[path] = Object.fromEntries(
     Object.entries(pathItem).sort(([left], [right]) => {

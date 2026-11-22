@@ -8,11 +8,6 @@ import {
   LOOTS_VIEW_MODE_KEY,
 } from "@/features/guild/loots-list/loots-list-layout";
 
-/**
- * The loot list's first row: its loot search, then the view control. The
- * filters open from their own rail at the right edge, or from a floating
- * button on phones.
- */
 export const LootsListToolbar = () => {
   const { t } = useTranslation();
 

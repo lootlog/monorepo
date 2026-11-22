@@ -15,7 +15,6 @@ type WhatsNewFilters = ReturnType<typeof useWhatsNewFilters>;
 type WhatsNewFilterFieldsProps = {
   filters: WhatsNewFilters["filters"];
   setFilters: WhatsNewFilters["setFilters"];
-  /** Full-width `FilterPanelField` sections for the filters panel instead of the bar. */
   stacked?: boolean;
 };
 
@@ -24,7 +23,6 @@ const toggle = <Value,>(selected: readonly Value[], value: Value) =>
     ? selected.filter((current) => current !== value)
     : [...selected, value];
 
-/** Narrows the changes by where the player meets them and by their kind. */
 export const WhatsNewFilterFields = ({
   filters,
   setFilters,

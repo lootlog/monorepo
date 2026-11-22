@@ -59,7 +59,6 @@ const currentCharacterOrganizerRoom = {
   },
 };
 
-// Organized on another character of the hero's Margonem account.
 const accountOrganizerRoom = {
   ...readyRoomOrganizerFixture,
   world: "luvia",
@@ -71,8 +70,6 @@ const accountOrganizerRoom = {
 
 const setup = async (rooms: PartyGatheringSummary[] = []) => {
   const harness = createRealtimeTest();
-  // Start from a synchronized empty collection so mounting a Ready Room view
-  // reads the cache instead of issuing its own list request.
   seedReadyRoomCache(harness.queryClient, []);
   useHiddenPartyGatheringsStore.setState({ hiddenByScope: {} });
   useHotkeysStore.getState().resetAll();
@@ -533,7 +530,6 @@ it.each([
         }[organizer],
         harness.queryClient,
       );
-      // Let the query observers deliver the room before asserting either way.
       await new Promise((resolve) => setTimeout(resolve, 5));
     });
 
@@ -864,8 +860,6 @@ it.each([
       }),
     ]);
 
-    // The same Discord user sees its own room as organizer, including the
-    // participant it adds from another character.
     const ownRoom = {
       ...readyRoomOrganizerFixture,
       notificationId: "second-room",

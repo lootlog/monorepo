@@ -7,12 +7,10 @@ import type { RowData, Table as TanStackTable } from "@tanstack/react-table";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { cn } from "cn";
 
-/** Column ids the stats tables share, so every ranking aligns the same way. */
 export const STATS_TABLE_POSITION_COLUMN_ID = "position";
 
 export const STATS_TABLE_TYPE_COLUMN_ID = "type";
 
-/** Prefix of every numeric column: `count`, or `count:<npc type>`. */
 export const STATS_TABLE_COUNT_COLUMN_ID = "count";
 
 const getHeadClassName = (columnId: string) => {
@@ -42,13 +40,10 @@ const getCellClassName = (columnId: string) => {
 type StatsTableProps<TData extends RowData> = {
   table: TanStackTable<typeof coreTableFeatures, TData>;
   className?: string;
-  /** Makes the whole row a click target, next to the link in its name cell. */
   onRowClick?: (row: TData) => void;
-  /** Marks the viewer's own row. */
   isViewerRow?: (row: TData) => boolean;
 };
 
-/** A stats table in a `ResultsSurface`, its header pinned under the filter bar. */
 export const StatsTable = <TData extends RowData>({
   table,
   className,

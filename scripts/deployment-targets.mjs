@@ -23,8 +23,6 @@ const readWorkspaceManifests = async () => {
   return manifests;
 };
 
-// Derived from package scripts so a new suite or producer is never skipped
-// until someone remembers to list it here.
 const packagesWithScript = (manifests, scripts) =>
   new Set(
     manifests
@@ -34,8 +32,6 @@ const packagesWithScript = (manifests, scripts) =>
       .map((manifest) => manifest.name),
   );
 
-// Each of these test suites saturates a runner on its own, so CI checks each
-// package on a dedicated runner and the remaining packages on a shared one.
 const isolatedWorkspacePackages = [
   "@lootlog/api",
   "@lootlog/game-client",
@@ -319,7 +315,6 @@ export async function createDeploymentPlan(input) {
       "client:generate",
     ]);
 
-    // The SDK package check installs and type-checks this public package too.
     clientProducers.add("@lootlog/game-client-api");
 
     const packages = [...affectedPackages]

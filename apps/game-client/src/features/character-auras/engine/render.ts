@@ -131,27 +131,16 @@ import {
   SOFT_PARTICLES,
 } from "./particle-painters";
 
-/**
- * The animation steps at 10 fps, as the game's own animated item icons do (120 ms frames);
- * a smooth 60 fps glow looks pasted onto pixel art.
- */
 const TICK = 0.1;
 
-/** Alpha and colour steps of the pixel finish. */
 const ALPHA_LEVELS = 4;
 
 const COLOR_LEVELS = 7;
 
-/**
- * How often a lite aura's body pieces, outline and inner light step, s, instead of every
- * tick; particles still move every tick.
- */
 const LITE_STEP = 0.2;
 
-/** The black core of a conqueror's bolt. */
 const HAKI_CORE: Rgb = [14, 0, 4];
 
-/** Where a conqueror's bolt's red rim sits round its core, in units of the rim width. */
 const HAKI_RIM = [
   [-1, 0],
   [1, 0],
@@ -160,7 +149,6 @@ const HAKI_RIM = [
 ] as const;
 
 interface Bolt {
-  /** Silhouette-local points, so a bolt rides along while the character walks. */
   points: number[];
   ax: number;
   ay: number;
@@ -168,87 +156,61 @@ interface Bolt {
   by: number;
   age: number;
   life: number;
-  /** A strike from the sky: drawn thicker. */
   heavy?: boolean;
-  /** Conqueror's will: a black core in a red glow instead of white in blue. */
   haki?: boolean;
 }
 
-/** An aura of realms wearing one that leaves the map alone: only its dominion is drawn. */
 const DOMINION_ONLY = { gloom: 0, veil: [4, 2, 10] } as const;
 
-/** Seconds an aura of realms wears its first one at least. */
 const FIRST_REALM = 4;
 
-/** A point in screen or particle space, px. */
 interface Point {
   x: number;
   y: number;
 }
 
-/** The outline bands' alpha, inner to outer. */
 const BAND_ALPHAS = [0.95, 0.8, 0.7, 0.55] as const;
 
-/** Which of the three aura tones each outline band takes. */
 const BAND_TONES = [0, 1, 2, 2] as const;
 
-/** A live aura on one character or tooltip: its own particles, clock and signature effects. */
 export class Aura {
   private readonly rng: Rng;
   private readonly field: ParticleField;
   private preset: AuraPreset;
-  /** Stepped clock, advanced by whole ticks. */
   private time = 0;
   private tick = 0;
   private carry = 0;
-  /** Lightning or burst flash, decays to 0. */
   private flash = 0;
   private bolts: Bolt[] = [];
   private nextBolt = 0.3;
   private beatIndex = -1;
-  /** The preset's burst animation: progress 0..1, or -1 while resting. */
   private burst = -1;
   private nextBurst = 2.5;
-  /** Seconds since the aura showed, for an admin's arrival. */
   private age = 0;
-  /** Shapes the quake's crack in the air; a new one each quake. */
   private quakeSeed = 1;
-  /** Where the character stood at the last ticks, newest first, for the auras that echo it. */
   private trail: TrailStep[] = [];
-  /** The aura's time when time stopped; null while it runs. */
   private frozenAt: number | null = null;
-  /** The aura's own preset; `preset` is the one drawn, which differs for an aura of realms. */
   private host: AuraPreset;
-  /** Which of the host's realms is worn, and the seconds since that changed. */
   private realm = 0;
   private shifted = Infinity;
-  /** Props follow the head through this spring, so they trail a walk. */
   private spring: Spring | null = null;
   private lastCenter: { x: number; y: number } | null = null;
   private motion = { vx: 0, vy: 0 };
   private lastPrint: { x: number; y: number; side: number } | null = null;
-  /** Heavenly Dragon: the dragon and the pearl it chases, in particle space. */
   private dragon: Dragon | null = null;
   private pearl: Point3 = { x: 0, y: 0, z: 0 };
-  /** The head in particle space at the last tick: where the spring is pulled to. */
   private headTarget = { x: 0, y: 0 };
   private rgb: AuraColors;
   private readonly back = createSnapshot();
   private readonly front = createSnapshot();
   private readonly outline = createComposite();
   private readonly inner = createComposite();
-  /** The lit layer's single pixels while it renders (`prepare` to `finish`). */
   private readonly lightPixels = new LightPixels();
-  /** The layer pair drawn into right now; draw helpers pick `lit` (additive) or `dim` (covering). */
   private litCtx!: CanvasRenderingContext2D;
   private dim!: CanvasRenderingContext2D;
   private dimLayer!: Layer;
   private litLayer!: Layer;
 
-  /**
-   * `phase` (0..1) shifts when this aura's ticks land, so auras on one screen render their
-   * ticks on different frames instead of all on the same one.
-   */
   constructor(
     id: CharacterAuraId,
     seed = Math.floor(Math.random() * 1e9),
@@ -261,27 +223,17 @@ export class Aura {
     this.preset = this.worn();
     this.rgb = colorsOf(this.preset);
 
-    // An admin arrives with a burst.
     if (this.preset.herald) this.nextBurst = ARRIVAL_BURST;
   }
 
-  /**
-   * What the aura lays over the whole map: how much it dims it, 0..1, and with what
-   * colour; null for an aura that leaves the map alone.
-   */
   mapEffect(): { gloom: number; veil: Rgb } | null {
     if (this.preset.sky) return MAP_EFFECTS[this.preset.sky];
 
     if (this.preset.kit) return KITS[this.preset.kit];
 
-    // The dominion lies over the map whatever is worn.
     return this.host.realms ? DOMINION_ONLY : null;
   }
 
-  /**
-   * Draws the aura's effects over the whole map, `width` × `height` in the context's units:
-   * a storm, a night sky.
-   */
   drawMapEffects(
     ctx: CanvasRenderingContext2D,
     place: AuraPlacement,
@@ -308,7 +260,6 @@ export class Aura {
         feetY: place.feetY - 2,
         top: place.y + bounds.y,
         half: bounds.w / 2,
-        // The burst steps with the ticks; over the map it runs on between them.
         burst:
           this.burst < 0
             ? -1
@@ -328,7 +279,6 @@ export class Aura {
     }
   }
 
-  /** The admin's summoning at their feet while an arrival or pulse runs at `place`. */
   private summon(place: AuraPlacement, intensity: number): Summon | null {
     if (!this.preset.herald || !place.ground) return null;
     const event = arrivalEvent(this.age);
@@ -347,7 +297,6 @@ export class Aura {
     this.wear();
   }
 
-  /** The preset drawn now: the aura's own, or the one an aura of `realms` wears in turn. */
   private worn(): AuraPreset {
     const { realms } = this.host;
     const id = realms?.[this.realm % realms.length];
@@ -355,7 +304,6 @@ export class Aura {
     return id ? AURAS[id] : this.host;
   }
 
-  /** Puts on the preset now worn, dropping what belonged to the last one but its particles. */
   private wear(): void {
     this.preset = this.worn();
     this.rgb = colorsOf(this.preset);
@@ -377,7 +325,6 @@ export class Aura {
     this.age += Math.max(0, dt);
     this.shifted += Math.max(0, dt);
 
-    // Each later pulse over the map brings the burst too.
     if (this.preset.herald && pulseStarted(before, this.age))
       this.nextBurst = Math.min(this.nextBurst, ARRIVAL_BURST);
     this.carry += Math.max(0, dt);
@@ -386,7 +333,6 @@ export class Aura {
     while (this.carry >= TICK) {
       this.carry -= TICK;
 
-      // After a long stall (hidden tab), catch up a little and drop the rest.
       if (++steps > 4) {
         this.carry = 0;
         break;
@@ -407,13 +353,11 @@ export class Aura {
         ? [...this.preset.emitters, ...this.preset.tipEmitters]
         : this.preset.emitters;
 
-    // While time stands still nothing is born and nothing moves.
     if (this.frozenAt === null) {
       this.field.update(
         TICK,
         emitters,
         frame,
-        // An aura of realms sheds half as much again.
         this.host.realms ? intensity * 1.5 : intensity,
         this.time,
       );
@@ -440,7 +384,6 @@ export class Aura {
     this.updateBurst(place, frame, intensity);
   }
 
-  /** The spawn frame plus what moves things: the walk, the spring-hung props, stars, wind. */
   private physicsFrame(place: AuraPlacement): SpawnFrame {
     const frame = spawnFrame(place);
     const head = { x: frame.body.x + frame.body.w / 2, y: frame.body.y };
@@ -454,7 +397,6 @@ export class Aura {
         vy: (frame.center.y - last.y) / TICK,
       };
 
-      // A jump of more than a few tiles in one tick is a teleport, not a walk.
       if (Math.hypot(this.motion.vx, this.motion.vy) > 400) {
         this.motion = { vx: 0, vy: 0 };
         teleported = true;
@@ -472,7 +414,6 @@ export class Aura {
 
     if (fx.includes("raincloud")) {
       const cloud = this.cloudAt(place);
-      // Wider than the body, so most rain falls beside the character where it can be seen.
       frame.cloud = {
         x: cloud.x + place.viewX,
         y: cloud.y + place.viewY + 3,
@@ -491,7 +432,6 @@ export class Aura {
     return frame;
   }
 
-  /** How far the spring-hung props lag behind the head, px. */
   private lag(): Point {
     if (!this.spring) return { x: 0, y: 0 };
 
@@ -501,7 +441,6 @@ export class Aura {
     };
   }
 
-  /** Storm: the rain cloud's centre on screen, hung over the head on the spring. */
   private cloudAt(place: AuraPlacement): Point {
     const { bounds } = place.silhouette;
     const lag = this.lag();
@@ -516,11 +455,6 @@ export class Aura {
     return this.burst >= 0 && this.burstKind === "roar";
   }
 
-  /**
-   * Heavenly Dragon: the pearl circles the body on a tilted, bobbing ring (or runs round the
-   * tooltip's frame); during the roar it hangs over the head. The dragon chases it, the
-   * pearl sheds sparks and, mid-roar, golden fire streams from the jaws.
-   */
   private stepDragon(
     place: AuraPlacement,
     frame: SpawnFrame,
@@ -548,13 +482,11 @@ export class Aura {
     }
 
     if (!this.dragon || teleported) this.dragon = new Dragon(this.pearl);
-    // Round a box the dragon stays flat (z 0): it must keep off the tip's text.
     this.dragon.step(this.pearl, TICK, place.ground ? 5 : 7);
 
     if (!place.ground) pushOutOfBox(this.dragon, frame.body, 4);
     const [px, py] = project(this.pearl, 0, 0);
 
-    // A spark falls off the pearl every other tick, so its path glitters behind it.
     if (this.tick % 2 === 0)
       this.field.emit(
         PEARL_SPARK,
@@ -584,7 +516,6 @@ export class Aura {
     );
   }
 
-  /** Frost and sand: footprints left and right of the stride while walking. */
   private stepPrints(frame: SpawnFrame): void {
     if (Math.hypot(this.motion.vx, this.motion.vy) < 8) return;
     const { x, y } = frame.feet;
@@ -639,7 +570,6 @@ export class Aura {
       this.drawBurst(b, place, false);
     });
 
-    // The game's context goes back as it came, even if a draw throws.
     ctx.save();
 
     try {
@@ -680,7 +610,6 @@ export class Aura {
 
       if (p.fx.includes("lightning")) this.drawBolts(place, intensity);
 
-      // A faint crack hangs in the air between quakes and flashes with each one.
       if (p.fx.includes("quake") && place.ground)
         drawAirCracks(
           b,
@@ -709,11 +638,6 @@ export class Aura {
     }
   }
 
-  /**
-   * Renders a side's buffers once per tick: the body pieces through `body`, then the
-   * particles. The animation only changes on ticks, so other frames just move the buffers.
-   * A lite aura's body buffers are kept across ticks while nothing in them changes.
-   */
   private snapshot(
     snap: Snapshot,
     place: AuraPlacement,
@@ -737,7 +661,6 @@ export class Aura {
       snap.y = Math.round(place.y);
       this.prepare(snap.bodyLit, snap.bodyDim, box);
 
-      // Lite body pieces are pixels only, so they skip the pixel finish.
       if (this.preset.lite) {
         snap.bodyLit.soft = false;
         snap.bodyDim.soft = false;
@@ -750,7 +673,6 @@ export class Aura {
     snap.viewX = Math.round(place.viewX);
     snap.viewY = Math.round(place.viewY);
     this.prepare(snap.worldLit, snap.worldDim, box);
-    // Particles are plotted pixel by pixel; only smoke, wisps and firefly glows are soft.
     snap.worldLit.soft = false;
     snap.worldDim.soft = false;
     this.drawParticles(place, front);
@@ -758,10 +680,6 @@ export class Aura {
     this.finish(snap.worldLit, snap.worldDim, box);
   }
 
-  /**
-   * What a side's body buffers depend on: the tick `key` for most auras; for a lite one round
-   * a character, its size, intensity and coarse step, unless a burst or flash is changing it.
-   */
   private bodyKey(
     place: AuraPlacement,
     box: Box,
@@ -775,31 +693,23 @@ export class Aura {
     return `lite|${box.w}x${box.h}|${steady}`;
   }
 
-  /** What the outline and inner light composites are rebuilt for: the tick, or a lite step. */
   private compositeKey(intensity: number): string {
     return this.steadyKey(intensity) ?? String(this.tick);
   }
 
-  /**
-   * A lite aura's coarse animation step while no burst or flash is changing it, with the
-   * intensity it was drawn at; null when it has to be drawn every tick.
-   */
   private steadyKey(intensity: number): string | null {
     if (!this.preset.lite || this.burst >= 0 || this.flash > 0) return null;
 
     return `${intensity}|${this.liteStep()}`;
   }
 
-  /** The coarse step a lite aura's body pieces animate by. */
   private liteStep(): number {
     return Math.floor(this.time / LITE_STEP);
   }
 
-  /** The lite auras' pieces round a character, stepped by `liteStep`; `front` picks the pass. */
   private drawLitePieces(b: Brush, place: AuraPlacement, front: boolean): void {
     const fx = this.preset.fx;
     const step = this.liteStep();
-    // Floating pieces bob a pixel up and down, four steps each way.
     const raised = Math.floor(step / 4) % 2 === 1;
 
     if (fx.includes("halo")) drawHalo(b, place, front, raised);
@@ -811,7 +721,6 @@ export class Aura {
     if (fx.includes("wings") && !front) drawWings(b, place, step);
   }
 
-  /** The showcase admin auras' pieces round a character; `front` picks the pass. */
   private drawShowcase(b: Brush, place: AuraPlacement, front: boolean): void {
     const fx = this.preset.fx;
     const burst = this.burst;
@@ -849,11 +758,6 @@ export class Aura {
     }
   }
 
-  /**
-   * The character's doubles drawn straight onto the map, behind it or (`front`) over
-   * it: the echoes of where it stood, its ghosts split into colours. The golden fire
-   * goes the same way, being taller than the aura's buffers.
-   */
   private drawDoubles(
     ctx: CanvasRenderingContext2D,
     place: AuraPlacement,
@@ -888,7 +792,6 @@ export class Aura {
     else drawGhosts(ctx, place, level, this.tick, intensity);
   }
 
-  /** Clears a buffer pair for a render at `box`. */
   private prepare(lit: Layer, dim: Layer, box: Box): void {
     for (const layer of [lit, dim]) {
       const { canvas, ctx } = layer;
@@ -918,10 +821,6 @@ export class Aura {
     this.dimLayer = dim;
   }
 
-  /**
-   * Adds the plotted light, snaps soft layers to the pixel grid (stepped alpha and flat,
-   * dithered tones) and finds what each layer holds.
-   */
   private finish(lit: Layer, dim: Layer, box: Box): void {
     bindLightPixels(lit.ctx, null);
     const light = this.lightPixels;
@@ -959,7 +858,6 @@ export class Aura {
     }
   }
 
-  /** The additive buffer; reaching for it marks it drawn, so `finish` skips untouched ones. */
   private get lit(): CanvasRenderingContext2D {
     this.litLayer.used = true;
 
@@ -972,9 +870,6 @@ export class Aura {
     return this.dim;
   }
 
-  // --- outline -----------------------------------------------------------------------------
-
-  /** The pixel outline bands in three tones; blurred glows when the sprite can't be read. */
   private drawOutline(
     ctx: CanvasRenderingContext2D,
     place: AuraPlacement,
@@ -989,7 +884,6 @@ export class Aura {
       const prism = p.fx.includes("prism");
 
       const bandAlpha = BAND_ALPHAS.map((alpha, index) => {
-        // The outer dither only shows near the top of a pulse, so the glow visibly breathes.
         const a =
           index === 3
             ? smoothstep(0.75, 1.05, glow) * alpha
@@ -1003,7 +897,6 @@ export class Aura {
       );
 
       const flash = this.flash > 0.05 ? this.flash * 0.7 : 0;
-      // The flash adds white over the inner band (the prism's own rainbow on the prism).
       const flashColors = prism ? (bandColors[0] ?? []) : [WHITE];
 
       const composite = compositeCanvas(this.outline, silhouette, key, (octx) =>
@@ -1022,7 +915,6 @@ export class Aura {
               continue;
             }
 
-            // `lighter` over the band: premultiplied colours add, then clamp.
             const light = colorAt(flashColors, i, width, height);
             const alpha = Math.min(1, a + f);
 
@@ -1054,7 +946,6 @@ export class Aura {
     this.blitMask(ctx, place, near, this.rgb.rim, Math.min(1, p.near * glow));
   }
 
-  /** The character lit by its own aura: its silhouette tinted and added over it. */
   private drawInner(
     ctx: CanvasRenderingContext2D,
     place: AuraPlacement,
@@ -1099,7 +990,6 @@ export class Aura {
     blitComposite(ctx, place, composite);
   }
 
-  /** Draws `mask` tinted (rainbow for the prism) at `alpha` onto a padded-silhouette-sized canvas. */
   private paintMask(
     octx: CanvasRenderingContext2D,
     mask: HTMLCanvasElement,
@@ -1159,7 +1049,6 @@ export class Aura {
     ctx.globalAlpha = 1;
   }
 
-  /** Prism: hues run down the body and roll over time; outer bands trail the inner ones. */
   private rainbow(
     sctx: CanvasRenderingContext2D,
     w: number,
@@ -1174,7 +1063,6 @@ export class Aura {
     return gradient;
   }
 
-  /** The rainbow's seven evenly spaced stops for `band`. */
   private rainbowStops(band: number): Rgb[] {
     const shift = this.time * 90 + band * 40;
 
@@ -1182,8 +1070,6 @@ export class Aura {
       hslToRgb(shift + i * 60, 1, band ? 0.55 : 0.72),
     );
   }
-
-  // --- decorations ---------------------------------------------------------------------------
 
   private brush(intensity: number): Brush {
     return {
@@ -1198,7 +1084,6 @@ export class Aura {
     };
   }
 
-  /** The newer auras' signature pieces round a character, or the aura's dressing on a tooltip. */
   private drawDecor(b: Brush, place: AuraPlacement, front: boolean): void {
     const { bounds } = place.silhouette;
 
@@ -1243,7 +1128,6 @@ export class Aura {
     if (fx.includes("dust-swirl")) drawDustSwirl(b, box, front);
 
     if (fx.includes("dragon") && !front) {
-      // Auspicious clouds drifting under the feet, on a faint golden glow.
       const rx = groundRadius(place);
       const x = Math.round(place.feetX);
       const y = Math.round(place.feetY) - 2;
@@ -1260,9 +1144,6 @@ export class Aura {
     }
   }
 
-  // --- bursts ------------------------------------------------------------------------------
-
-  /** How long the running burst lasts, s: the kit's own length, or its kind's. */
   private burstLength(): number {
     const { kit } = this.preset;
 
@@ -1273,14 +1154,12 @@ export class Aura {
     return this.preset.burst;
   }
 
-  /** 0..1..0 over the running burst, for effects that swell and settle. */
   private burstSwell(kind: BurstKind): number {
     if (this.burst < 0 || this.burstKind !== kind) return 0;
 
     return Math.sin(Math.PI * clamp(this.burst, 0, 1));
   }
 
-  /** Every few seconds the preset's own burst: starts, per-tick spawns and the closing beat. */
   private updateBurst(
     place: AuraPlacement,
     frame: SpawnFrame,
@@ -1303,7 +1182,6 @@ export class Aura {
     this.startBurst(kind, place, frame, k);
   }
 
-  /** The running burst's per-tick spawns and the beats it crosses this tick. */
   private advanceBurst(
     kind: BurstKind,
     place: AuraPlacement,
@@ -1392,7 +1270,6 @@ export class Aura {
       );
     }
 
-    // The halo lands: a flash, two rings and gold raining round the character.
     if ((kind === "coronation" || kind === "rebirth") && crossed(0.85)) {
       this.flash = 1;
       this.field.emit(GOLD_RAIN, frame, Math.round(16 * k));
@@ -1401,7 +1278,6 @@ export class Aura {
     }
 
     if (kind === "roar" && crossed(0.85)) {
-      // The fire dies out in a thunderclap: a flash and gold raining round the character.
       this.flash = 1;
       this.field.emit(GOLD_RAIN, frame, Math.round(14 * k));
     }
@@ -1411,8 +1287,6 @@ export class Aura {
     if (this.burst <= 1) return;
     this.burst = -1;
 
-    // An aura of realms moves on to the next one as each burst ends, but for the burst
-    // it arrives with: the first realm stays to be seen.
     if (!this.host.realms || this.age < FIRST_REALM) return;
     this.realm++;
     this.wear();
@@ -1421,7 +1295,6 @@ export class Aura {
     this.nextBurst = 3 + this.rng() * 2;
   }
 
-  /** The beats the showcase admin auras' bursts cross this tick. */
   private advanceShowcaseBurst(
     kind: BurstKind,
     place: AuraPlacement,
@@ -1429,7 +1302,6 @@ export class Aura {
     k: number,
     crossed: (at: number) => boolean,
   ): void {
-    // The star blows: everything it pulled in is thrown back out.
     if (kind === "supernova" && crossed(SUPERNOVA_BLAST)) {
       this.flash = 1;
       this.field.emit(
@@ -1470,7 +1342,6 @@ export class Aura {
         this.flash = 0.8;
       }
 
-      // Time snaps back.
       if (crossed(STOP_TO)) {
         this.frozenAt = null;
         this.flash = 1;
@@ -1479,7 +1350,6 @@ export class Aura {
       if (this.burst > 1) this.frozenAt = null;
     }
 
-    // A kit's burst is released: a flash and sparks off the body.
     if (
       kind === "kit" &&
       this.preset.kit &&
@@ -1504,13 +1374,11 @@ export class Aura {
       );
     }
 
-    // The power is released: stones thrown up and rings.
     if (kind === "powerup" && crossed(POWER_RELEASE)) {
       this.flash = 1;
       this.startConqueror(place, frame, k, false);
     }
 
-    // The spikes shatter into shards thrown up and out.
     if (kind === "glaciate" && crossed(SPIKES_SHATTER)) {
       this.flash = 0.7;
       this.field.emit(
@@ -1535,7 +1403,6 @@ export class Aura {
       );
     }
 
-    // The world is back: bits rise off the ground as the sweep redraws it.
     if (kind === "reload" && crossed(RELOAD_GLITCH)) {
       this.flash = 1;
       this.field.emit(
@@ -1558,14 +1425,12 @@ export class Aura {
     }
   }
 
-  /** A ring spreading on the ground under the feet, while the ground piece shows. */
   private burstRing(
     place: AuraPlacement,
     frame: SpawnFrame,
     size: number,
     color: number,
   ): void {
-    // Admin and kit auras spread nothing over the ground: each has its own finish.
     if (!place.ground || this.preset.tier === "mythic" || this.preset.kit)
       return;
     this.field.emit(
@@ -1585,7 +1450,6 @@ export class Aura {
     );
   }
 
-  /** The opening beat of a new burst. */
   private startBurst(
     kind: BurstKind,
     place: AuraPlacement,
@@ -1667,7 +1531,6 @@ export class Aura {
         this.startConqueror(place, frame, k);
         break;
       case "roar":
-        // The dragon rises after the pearl over the head; the fire streams in `stepDragon`.
         this.flash = 0.8;
         this.field.emit(
           {
@@ -1771,7 +1634,6 @@ export class Aura {
     }
   }
 
-  /** The admin auras' own bursts; false for every other kind. */
   private startMythicBurst(
     kind: BurstKind,
     place: AuraPlacement,
@@ -1798,7 +1660,6 @@ export class Aura {
 
         return true;
       case "rebirth":
-        // The phoenix flares up: a fountain of embers, then the pillar of fire falls.
         this.flash = 1;
         this.field.emit(
           {
@@ -1820,7 +1681,6 @@ export class Aura {
 
         return true;
       case "quake":
-        // A new crack in the air, and the ground heaves.
         this.quakeSeed = Math.floor(this.rng() * 1e9);
         this.flash = 1;
         this.startConqueror(place, frame, k, false);
@@ -1835,12 +1695,10 @@ export class Aura {
       case "timestop":
       case "powerup":
       case "kit":
-        // The galaxy starts to fall in; the hand winds up.
         this.flash = 0.5;
 
         return true;
       case "glaciate":
-        // The ground freezes over: spikes shoot up (`drawIceRing`) in a puff of snow.
         this.flash = 0.9;
         this.field.emit(
           {
@@ -1861,7 +1719,6 @@ export class Aura {
 
         return true;
       case "reload":
-        // Static jumps off the character as the map starts to tear.
         this.flash = 0.6;
         this.field.emit(
           {
@@ -1887,10 +1744,6 @@ export class Aura {
     }
   }
 
-  /**
-   * Judgement: three heavy bolts from the sky striking round the character at once, a
-   * shockwave of two rings and gold sparks raining down. Tooltips get the middle one.
-   */
   private startJudgement(
     place: AuraPlacement,
     frame: SpawnFrame,
@@ -1928,7 +1781,6 @@ export class Aura {
     this.burstRing(place, frame, frame.feet.rx * 1.6, 0);
   }
 
-  /** Strike: one heavy bolt from the cloud (or above the head) down to the feet. */
   private startStrike(
     place: AuraPlacement,
     frame: SpawnFrame,
@@ -1978,7 +1830,6 @@ export class Aura {
     }
   }
 
-  /** Conqueror: the will released at once, a ring of heavy bolts outwards, stones thrown up, a shockwave. */
   private startConqueror(
     place: AuraPlacement,
     frame: SpawnFrame,
@@ -2009,7 +1860,6 @@ export class Aura {
     this.burstRing(place, frame, frame.feet.rx * 1.4, 0);
   }
 
-  /** Splash: drops thrown up from the feet, or off the bottom edge of a tooltip. */
   private startSplash(
     place: AuraPlacement,
     frame: SpawnFrame,
@@ -2060,7 +1910,6 @@ export class Aura {
     }
   }
 
-  /** Burst visuals in the layer buffers; `front` picks the half in front of the character. */
   private drawBurst(b: Brush, place: AuraPlacement, front: boolean): void {
     if (this.burst < 0) return;
     const intensity = b.intensity;
@@ -2070,7 +1919,6 @@ export class Aura {
     const cx = place.x + bounds.x + bounds.w / 2;
     const fade = envelope(t, 0.1, 0.2) * intensity;
 
-    // On a tooltip only the back halves of rings show, so nothing crosses the text.
     if (
       !place.ground &&
       front &&
@@ -2086,7 +1934,6 @@ export class Aura {
       return;
     }
 
-    // Nor does a pressure wave roll out from them.
     if (
       this.preset.tier === "mythic" &&
       (this.burstKind === "conqueror" || this.burstKind === "quake")
@@ -2107,7 +1954,6 @@ export class Aura {
     });
   }
 
-  /** The roar: golden rings spreading from the dragon's jaws (not round a tooltip's text). */
   private drawRoar(
     place: AuraPlacement,
     front: boolean,
@@ -2137,7 +1983,6 @@ export class Aura {
     }
   }
 
-  /** The dragon and its pearl, which live on the map, into the side's world buffers. */
   private drawDragonWorld(
     place: AuraPlacement,
     front: boolean,
@@ -2146,7 +1991,6 @@ export class Aura {
     if (!this.dragon || !this.preset.fx.includes("dragon")) return;
     const b = this.brush(intensity);
 
-    // Round a tooltip the dragon is flat and all drawn over the frame.
     if (place.ground)
       drawDragon(
         b,
@@ -2172,12 +2016,9 @@ export class Aura {
 
     if (place.ground ? this.pearl.z > 0 !== front : !front) return;
     const [px, py] = project(this.pearl, place.viewX, place.viewY);
-    // The pearl's glow is soft and needs the pixel finish.
     this.litLayer.soft = true;
     drawPearl(b, px, py);
   }
-
-  // --- lightning -----------------------------------------------------------------------------
 
   private updateBolts(
     place: AuraPlacement,
@@ -2217,8 +2058,6 @@ export class Aura {
       bx = place.feetX - place.x + Math.cos(angle) * rx;
       by = place.feetY - place.y - 2 + Math.sin(angle) * rx * 0.36;
     } else {
-      // Characters: the farthest of a few candidates, so arcs cross the body. Boxes: one about
-      // 30 px away, so arcs crackle along the border instead of over the text.
       let best = edge[0] ?? a;
       let bestScore = -Infinity;
 
@@ -2275,10 +2114,6 @@ export class Aura {
     }
   }
 
-  /**
-   * Conqueror's will: black bolts cracking outwards from the outline, a few px to a couple of
-   * tiles long, rather than arcing between two points of the body.
-   */
   private hakiBolts(place: AuraPlacement, count: number, heavy: boolean): void {
     const edge = place.silhouette.edge;
 
@@ -2308,10 +2143,6 @@ export class Aura {
     this.flash = Math.max(this.flash, heavy ? 1 : 0.4);
   }
 
-  /**
-   * A black bolt in a red rim, all in pixels on the covering layer (additive light can't draw
-   * black): red on the neighbouring pixels first, the black core over it, a hot tip.
-   */
   private drawHakiBolt(place: AuraPlacement, bolt: Bolt, alpha: number): void {
     const dim = this.useDim();
     const [light, mid] = this.rgb.tones;
@@ -2405,7 +2236,6 @@ export class Aura {
   }
 
   private updateHeartbeat(frame: SpawnFrame): void {
-    // Two rings per beat period: the strong beat and the echo a fifth of it later (`heartbeat`).
     const period = 1.15;
     const index = Math.floor((this.time / period) * 5);
 
@@ -2430,8 +2260,6 @@ export class Aura {
       1,
     );
   }
-
-  // --- particles -----------------------------------------------------------------------------
 
   private drawParticles(place: AuraPlacement, front: boolean): void {
     const palette = this.rgb.particles;
@@ -2466,13 +2294,9 @@ export class Aura {
   }
 }
 
-// --- helpers -----------------------------------------------------------------------------
-
-/** A preset's colours, parsed once per preset. */
 interface AuraColors {
   rim: Rgb;
   haze: Rgb;
-  /** Outline tones, light to dark. */
   tones: readonly [Rgb, Rgb, Rgb];
   particles: Rgb[];
 }
@@ -2488,7 +2312,6 @@ function colorsOf(preset: AuraPreset): AuraColors {
   };
 }
 
-/** Heavenly Dragon: the gold raining round the character as the roar ends. */
 const GOLD_RAIN: EmitterSpec = {
   kind: "spark",
   rate: 0,
@@ -2504,7 +2327,6 @@ const GOLD_RAIN: EmitterSpec = {
   groundOnly: true,
 };
 
-/** A point `distance` px along a path running round a tooltip's box, 8 px outside its sides. */
 function tipPathAt(
   { x, y, w, h }: { x: number; y: number; w: number; h: number },
   distance: number,

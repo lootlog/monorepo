@@ -57,7 +57,6 @@ const buildHeroTrackerPayload = (
     ? { state: "unclaimed" }
     : {
         state: "open",
-        // The server stamps the close time on its clock for recipients.
         entranceSecondsLeft: Math.max(
           1,
           Math.round((npc.entranceClosesAt - Date.now()) / 1000),
@@ -78,10 +77,6 @@ export const resolveNpcNotificationRouting = ({
   };
 };
 
-/**
- * A gathering belongs to one Lootlog: the selected one when the routing rules
- * send this NPC there, otherwise the first routed one.
- */
 export const resolveNpcGatheringGuildId = (
   routedGuildIds: readonly string[],
   selectedGuildId: string | undefined,
@@ -134,7 +129,6 @@ export const buildNpcChatMessagePayload = ({
 
   if (!characterData) return null;
 
-  // A Hero Tracker has no profession; chat omits it instead of an empty one.
   const { prof, ...chatNpc } = buildNotificationNpcPayload(npc);
 
   return {

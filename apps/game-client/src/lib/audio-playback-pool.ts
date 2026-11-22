@@ -18,9 +18,7 @@ type CachedAudio = {
 const resetPlaybackPosition = (audio: HTMLAudioElement) => {
   try {
     audio.currentTime = 0;
-  } catch {
-    // Some media implementations reject seeking before metadata is available.
-  }
+  } catch {}
 };
 
 const releaseAudio = (audio: HTMLAudioElement) => {

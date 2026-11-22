@@ -10,7 +10,6 @@ import {
   resolveTabBarSections,
 } from "@/navigation/app-navigation";
 
-/** The Organization's phone navigation, with its search and event badge. */
 export const GuildTabBar = () => {
   const guildId = useGuildId();
   const { data: accessPolicy } = useGuildPermissions();

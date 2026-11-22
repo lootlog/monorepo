@@ -81,9 +81,7 @@ export class OnlineRepository extends Context.Service<
 
         const cutoff = onlineHistoryCutoff(now);
 
-        // Old redeliveries cannot resurrect expired history or establish tracking metadata.
         if (Date.parse(event.endedAt) <= Date.parse(cutoff)) return;
-        // Normalize both starts to the same retention boundary: trimming must not break valid replays.
         yield* sql.withTransaction(
           Effect.gen(function* () {
             const inserted = yield* sql<{
@@ -109,11 +107,6 @@ export class OnlineRepository extends Context.Service<
                   message: "Online segment start or world cannot change",
                 }),
               );
-            // The day rollup follows the accepted interval inside the same
-            // transaction, using the same retention-clamped start and the
-            // segment's stored world, which a world-less replay turns unknown for
-            // the whole segment. A union cannot take back time already folded
-            // under the known world, so that case recomputes the touched days.
             yield* inserted[0]?.world === null && inserted[0].wasKnown
               ? rebuildOnlineDays(
                   sql,
@@ -164,10 +157,6 @@ export class OnlineRepository extends Context.Service<
           ? new Date(meta.lastObservedAt).toISOString()
           : null;
 
-        // One UserOnlineDay row per day and world holds the merged spans, so the
-        // read is bounded by the number of days, not by checkpoints. Spans are
-        // clipped to the retention cutoff here because the stored ones are not.
-        // Tagged SQL because the Drizzle builder has no multirange operators.
         const days = yield* sql<{
           date: string;
           onlineSeconds: number | null;
@@ -237,8 +226,6 @@ export class OnlineRepository extends Context.Service<
           Math.floor(now / 3600_000) * 3600_000,
         ).toISOString();
 
-        // Each transaction changes at most 1000 rows per phase. A failed owner leaves the
-        // fixed cutoff available to any replica; completed windows survive restarts.
         let pending = true;
 
         while (pending) {
@@ -269,9 +256,6 @@ export class OnlineRepository extends Context.Service<
 
               const retentionCutoff = new Date(current.cutoff);
 
-              // endedAt >= startedAt makes this indexed bound lossless, including
-              // zero-duration intervals exactly at the cutoff. Long intervals
-              // crossing it are retained and trimmed by the next phase.
               const expiredBatch = db
                 .select({ ctid: drizzleSql<string>`ctid`.as("ctid") })
                 .from(userOnlineIntervals)
@@ -285,8 +269,6 @@ export class OnlineRepository extends Context.Service<
                 .limit(1000)
                 .for("update");
 
-              // PostgreSQL's ctid has no schema column; row locks keep these
-              // physical identifiers stable through this statement.
               const removed = db.$with("removed").as(
                 db
                   .delete(userOnlineIntervals)
@@ -314,7 +296,6 @@ export class OnlineRepository extends Context.Service<
 
               if (trimmed[0]?.count === 1000) return true;
 
-              // A day that ended before the cutoff holds no retained time.
               const expiredDays = db
                 .select({ ctid: drizzleSql<string>`ctid`.as("ctid") })
                 .from(userOnlineDays)
@@ -354,7 +335,6 @@ export class OnlineRepository extends Context.Service<
 
               yield* sql`UPDATE "UserOnlineRetention" SET completed = true WHERE id = 1`;
 
-              // A recovered older window may finish after the next one is due.
               return true;
             }),
           );

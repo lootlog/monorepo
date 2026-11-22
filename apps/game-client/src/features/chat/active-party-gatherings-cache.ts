@@ -52,8 +52,6 @@ export function applyGatheringUpdate(
       : Math.max(previous?.expiresAt ?? 0, Date.now() + REMOVAL_RETENTION_MS),
     gathering: gathering && {
       ...gathering,
-      // A room may arrive through several authorized Organizations. Each push
-      // carries only the receiving Organization, even at the same revision.
       guildIds: [
         ...new Set([
           ...(previous?.gathering?.guildIds ?? []),
@@ -77,8 +75,6 @@ export function reconcileGatherings(
   for (const gathering of snapshot) {
     const previous = next[gathering.notificationId];
 
-    // Absence in discovery may mean lost source access, whereas a REMOVE
-    // event terminates the room. Restored access can reveal the same revision.
     if (
       previous &&
       !previous.gathering &&

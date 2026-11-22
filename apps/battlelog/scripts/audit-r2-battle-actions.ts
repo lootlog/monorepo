@@ -76,8 +76,6 @@ const fetchLatestBattleIdsFromDb = async (): Promise<SampleSource | null> => {
   try {
     await client.connect();
 
-    // Only battles saved before timelines moved to Postgres have an R2
-    // object, kept under their legacy ID.
     const result = await client.query<{ id: string }>(
       `select legacy."legacyId" as id
        from battles
@@ -402,7 +400,6 @@ const main = async () => {
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 
   if (process.argv.includes("--write-doc")) {
-    // Keep operational evidence outside the repository and public documentation.
     const reportDirectory = await mkdtemp(
       resolve(tmpdir(), "lootlog-battle-audit-"),
     );

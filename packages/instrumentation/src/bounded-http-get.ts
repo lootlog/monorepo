@@ -8,8 +8,6 @@ type FailureReason =
   | "timeout"
   | "transport";
 
-// Full jitter spreads retries from callers that failed together, such as a
-// reconnect burst against a slow dependency, instead of repeating the burst.
 const retryDelay = Schedule.exponential("100 millis").pipe(
   Schedule.modifyDelay(({ duration }) =>
     Random.next.pipe(
@@ -20,7 +18,6 @@ const retryDelay = Schedule.exponential("100 millis").pipe(
   ),
 );
 
-/** Request policies remain explicit: raw callers own status interpretation. */
 export const boundedHttpGet = Effect.fnUntraced(function* <
   A,
   E extends { readonly retryable: boolean },
@@ -83,7 +80,6 @@ export const boundedHttpGet = Effect.fnUntraced(function* <
               );
             }
 
-            // Bound retained memory even when the transport yields tiny chunks.
             if (nextByteLength > bytes.byteLength) {
               const grown = new Uint8Array(
                 Math.min(

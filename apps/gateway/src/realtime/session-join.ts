@@ -40,7 +40,6 @@ type JoinData = Extract<
   { type: "session.join" }
 >["data"];
 
-/** What a join reads and writes outside the session itself. */
 export interface SessionJoinDependencies {
   readonly guilds: Pick<GuildStore, "getUserGuilds">;
   readonly proofVerifier: MargonemProofVerifier;
@@ -56,7 +55,6 @@ export interface SessionJoinDependencies {
   readonly npcPresence: Pick<NpcPresenceService, "withdraw">;
 }
 
-/** Reports belong to the character and world that saw the NPCs. */
 const withdrawNpcPresenceOnCharacterChange = (
   npcPresence: SessionJoinDependencies["npcPresence"],
   socket: GatewaySocket,
@@ -78,7 +76,6 @@ const withdrawNpcPresenceOnCharacterChange = (
     );
 };
 
-/** Gives a session its identity, access and default subscriptions. */
 export const joinSession = (
   {
     activity,
@@ -104,8 +101,6 @@ export const joinSession = (
     )
       return yield* Effect.fail(new OrganizationAccessDenied());
 
-    // The session keeps its current identity until every fallible step
-    // has passed, so a failed re-join leaves it as it was.
     let confidence: SessionData["confidence"] = "reported";
     let announceVerified: Effect.Effect<void> = Effect.void;
 
@@ -121,7 +116,6 @@ export const joinSession = (
       if (verification.valid) {
         confidence = "verified";
 
-        // Other services trust account ownership only from this fact.
         announceVerified = publishAccountVerified({
           version: 1,
           userId: socket.data.userId,
@@ -130,7 +124,6 @@ export const joinSession = (
           world: data.character.world,
           verifiedAt: new Date(yield* Clock.currentTimeMillis).toISOString(),
         }).pipe(
-          // A stalled broker must not hold the join.
           Effect.timeout("5 seconds"),
           Effect.catchCause((cause) =>
             Effect.logError(
@@ -142,7 +135,6 @@ export const joinSession = (
       }
     }
 
-    // The fact is published whether or not the guild read succeeds.
     const [, userGuildsResult] = yield* Effect.all(
       [announceVerified, Effect.result(guilds.getUserGuilds(socket.data))],
       { concurrency: "unbounded" },
@@ -165,7 +157,6 @@ export const joinSession = (
       socket.data.airTagScopes = [];
       hub.replaceSubscriptions(socket, []);
       const accessPolicy = sessionAccessPolicy(socket.data);
-      // A new connection may have no server baseline while the client retains old cached data.
       hub.sendEvent(socket, {
         v: 1,
         type: "permissions.updated",
@@ -232,8 +223,6 @@ export const joinSession = (
 
     hub.sendEvent(socket, event);
 
-    // A game session connects to a Lootlog when it starts publishing
-    // presence there, so a Lootlog never logs a character hidden from it.
     if (
       !wasJoined &&
       !socket.data.apiKeyAccess &&

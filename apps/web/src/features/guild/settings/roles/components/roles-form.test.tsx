@@ -41,7 +41,6 @@ const role = {
 
 let refetchRole: (next: RoleResponseDtoOutput) => void = () => {};
 
-/** Stands in for the role query, whose refetch hands the form a new role. */
 const RefetchedRolesForm = ({
   initialRole,
 }: {

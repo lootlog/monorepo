@@ -51,7 +51,6 @@ const SHARE_TILE_CLASS = cn(
   LIST_TILE_INSET_CLASS,
 );
 
-/** Removing a partner or an invitation is quiet until hovered. */
 const REMOVE_BUTTON_CLASS =
   "text-muted-foreground hover:bg-destructive/10 hover:text-destructive";
 

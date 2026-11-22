@@ -31,11 +31,6 @@ type ReservationCardProps = {
 
 const formatTime = (timestamp: string) => format(new Date(timestamp), "HH:mm");
 
-/**
- * One spot's tile in the edge-to-edge spot list: its name, monsters, and
- * whether it is free now and who reserved it next. The schedule link covers
- * the whole tile; an occupied spot is tinted.
- */
 export function ReservationCard({
   spot,
   onOpen,
@@ -108,7 +103,6 @@ export function ReservationCard({
               avatarUrl: currentReservation.author.avatarUrl,
             }}
             display="name"
-            // Above the schedule link, which covers the whole tile.
             className="relative z-[2]"
             nameClassName="leading-tight font-normal text-muted-foreground"
           />
@@ -153,7 +147,6 @@ export function ReservationCard({
         type="button"
         size="icon-sm"
         variant="ghost"
-        // Above the schedule link, which covers the whole tile.
         className="relative z-[2]"
         disabled={pinDisabled}
         loading={pinPending}

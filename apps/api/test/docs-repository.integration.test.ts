@@ -89,7 +89,6 @@ describe("DocsRepository against migrated PostgreSQL", () => {
       Effect.gen(function* () {
         const db = yield* ApiDatabase;
         const guildIds = [guildId, otherGuildId];
-        // Organization data restricts Guild deletion, so it goes first.
         yield* db
           .delete(guildDocumentHistoryTable)
           .where(inArray(guildDocumentHistoryTable.guildId, guildIds));
@@ -215,7 +214,6 @@ describe("DocsRepository against migrated PostgreSQL", () => {
       },
     ]);
 
-    // An edit started from version 1 must not overwrite version 2.
     const stale = await runtime.runPromise(
       Effect.flip(
         service.updateDocument(guildId, id, "editor-1", {

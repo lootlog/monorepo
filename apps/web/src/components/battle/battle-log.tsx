@@ -24,7 +24,6 @@ import {
 } from "./utils/battle-log-search";
 
 export type BattleLogProps = {
-  /** The scroller the log lives in; the log has no scroll container of its own. */
   scrollViewportRef: RefObject<HTMLDivElement | null>;
   rawBattle: RawBattle;
   warriors: Warrior[];
@@ -54,7 +53,6 @@ export const BattleLog: FC<BattleLogProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const deferredQuery = useDeferredValue(searchQuery);
   const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(-1);
-  // The search bar pins itself over the top of the log, so rows are aligned below it.
   const toolbarRef = useRef<HTMLDivElement>(null);
   const turnFocusHandlerRef = useRef(onTurnFocus ?? onTurnSelect);
 
@@ -64,8 +62,6 @@ export const BattleLog: FC<BattleLogProps> = ({
 
   const { events } = rawBattle;
 
-  // Keep the index outside the virtualizer component: its mutable API opts that
-  // component out of React Compiler caching.
   const warriorsMap = new Map(
     warriors.map((warrior) => [warrior.originalId, warrior]),
   );

@@ -48,7 +48,6 @@ describe("member refresh scheduler", () => {
 
     const result = await Effect.runPromise(scheduler.enqueueRefresh(data));
 
-    // A queued job would only receive the same refusal again.
     expect(result).toEqual({ queued: false, nextRefreshAt: null });
     expect(queue.add).not.toHaveBeenCalled();
     expect(recordMetric.mock.calls).toEqual([

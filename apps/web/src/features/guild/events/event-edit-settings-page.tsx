@@ -60,8 +60,6 @@ export const EventEditSettingsPage = () => {
     },
   });
 
-  // React Compiler keeps the first `register` result, so a reset must keep
-  // the registered fields or typing stops reaching the form.
   const form = useForm<EventSettingsFormData>({
     values: event ? toSettingsDefaults(event) : undefined,
     resetOptions: { keepFieldsRef: true },

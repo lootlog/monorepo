@@ -8,17 +8,12 @@ const MODE_PREFIXES = {
   ...CHAT_COMMAND_PREFIXES,
 } satisfies Record<CommandMode, string>;
 
-/** What Enter does with this text; the typed prefix decides, as in the chat. */
 export const getCommandMode = (messageValue: string): CommandMode => {
   const { kind } = getChatSubmitAction({ canClearChat: false, messageValue });
 
   return kind === "clear" ? "message" : kind;
 };
 
-/**
- * Rewrites the prefix so Enter performs `mode`, keeping what the player typed
- * after it. A mode button that is already on switches back to a message.
- */
 export const toggleCommandMode = (messageValue: string, mode: CommandMode) => {
   const currentMode = getCommandMode(messageValue);
 

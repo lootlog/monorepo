@@ -1,8 +1,3 @@
-/**
- * Every HTTP service with a generated client, the app that publishes its
- * OpenAPI document, and whether the public SDK and developer portal expose it.
- * Listed in the order the developer portal presents the public services.
- */
 export const API_SERVICES = {
   main: { app: "api", public: true },
   activity: { app: "activity", public: true },
@@ -32,10 +27,8 @@ export const isPublicApiService = (
 ): service is PublicApiService =>
   PUBLIC_API_SERVICES.some((publicService) => publicService === service);
 
-/** Deployed environments; `local` is the developer stack behind localhost. */
 export type DeploymentEnvironment = "production" | "development" | "local";
 
-/** The origin a service is reachable at, e.g. `https://dev-api.lootlog.pl`. */
 export const apiServiceOrigin = (
   service: ApiService,
   environment: DeploymentEnvironment,

@@ -56,8 +56,6 @@ export default defineContentScript({
       if (failure) throw failure.error;
     };
 
-    // The extension let go of a running overlay: explain why instead of
-    // letting it vanish. A runtime already replaced or torn down stays quiet.
     const handleClosed = (reason: ExtensionClosedReason | undefined) => {
       const interrupted =
         !disposed &&
@@ -78,9 +76,7 @@ export default defineContentScript({
           bridgeHealth: margonemRuntimeBridge.getHealth(),
           failure: `extension closed the game tab connection (${reason ?? "unknown"})`,
         });
-      } catch {
-        // The notice and the teardown must not depend on the report.
-      }
+      } catch {}
 
       try {
         dispose();
@@ -114,9 +110,7 @@ export default defineContentScript({
     } catch (error) {
       try {
         dispose();
-      } catch {
-        // Cleanup must not replace the error that prevented startup.
-      }
+      } catch {}
 
       throw error;
     }

@@ -5,7 +5,6 @@ import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-fie
 import { cn } from "cn";
 import { ActivityLogsMobileListSkeleton } from "./components/activity-logs-mobile-list-skeleton";
 
-// The clan, type, source and date range filters of `ActivityLogsFilterFields`.
 const FILTER_WIDTHS = {
   clan: "w-[200px]",
   type: "w-[140px]",
@@ -13,10 +12,8 @@ const FILTER_WIDTHS = {
   dateRange: "w-[130px]",
 };
 
-/** Route-level stand-in for the activity log: its filter bar above the entries. */
 export const ActivityLogsPageSkeleton = () => (
   <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
-    {/* Narrower pages open the filters from a floating button instead. */}
     <FilterBar search={<InlineSearchFieldSkeleton />}>
       {Object.entries(FILTER_WIDTHS).map(([filter, width]) => (
         <Skeleton

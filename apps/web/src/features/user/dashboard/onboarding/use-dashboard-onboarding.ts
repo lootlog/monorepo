@@ -7,7 +7,6 @@ import {
 import { DASHBOARD_RECENT_BATTLES_PARAMS } from "../components/dashboard-recent-battles-params";
 import { getOnboardingSteps } from "./onboarding-steps";
 
-/** Reads the queries the dashboard already renders, so it adds no requests. */
 export const useDashboardOnboarding = () => {
   const guilds = useUsersControllerGetCurrentUserGuilds();
 

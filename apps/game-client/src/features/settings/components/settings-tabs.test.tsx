@@ -84,7 +84,6 @@ describe("SettingsTabs", () => {
       "głośność główna",
     );
 
-    // A single-subsection domain gets one heading, without a repeated name.
     expect(screen.getAllByText("Dźwięki")).toHaveLength(1);
     expect(
       screen.getByRole("option", { name: "Głośność główna" }),
@@ -255,10 +254,6 @@ describe("SettingsTabs manifest coverage", () => {
       soundSettingValues(createSoundSettings()),
     );
 
-    // The aura subsection shows only to Users who may choose an aura; the
-    // navigation reads the app's client, the panel the harness's. The answer
-    // is an older API's, without `personalAuraIds`: a new Game client meets
-    // it while the API is still being deployed.
     const ownAura = { auras: [], canChange: true, canGrant: false };
 
     for (const client of [harness.queryClient, queryClient]) {
@@ -275,7 +270,6 @@ describe("SettingsTabs manifest coverage", () => {
     }));
   });
 
-  // Catching needs the character list API and debug is development-only.
   const uncoveredSubsections = new Set(["catching", "debug"]);
 
   for (const domain of SETTINGS_MANIFEST) {

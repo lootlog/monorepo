@@ -10,26 +10,16 @@ import { buildBoxSilhouette, type AuraSilhouette } from "./silhouette";
 
 const isCharacterAuraId = Schema.is(CharacterAuraIdSchema);
 
-/** Marks a character tip as carrying an aura; the overlay looks for it in the shown tip. */
 const MARK_CLASS = "ll-aura-mark";
 
 export function auraMark(id: CharacterAuraId): string {
   return `<div class="${MARK_CLASS}" data-aura="${id}" style="display:none"></div>`;
 }
 
-/** Room around the tip for the outline bands and particles (silhouette pad + render margin). */
 const MARGIN = 68;
 
-/** The tip's own frame: seven 1 px box-shadow rings outside its box (Tips.js:530 `border`). */
 const FRAME = 7;
 
-/**
- * Draws the aura around the game's tooltip while it shows a marked character tip.
- *
- * The tip sits above anything placed in its own layer, so the aura is one canvas fixed over
- * the whole page instead. What belongs behind the tip (outline, haze, back particles) is
- * drawn first and then cut out where the tip and its frame are; the front part goes on top.
- */
 export class CharacterAuraTooltip {
   private readonly observer: MutationObserver;
   private readonly canvas: HTMLCanvasElement;
@@ -43,7 +33,6 @@ export class CharacterAuraTooltip {
     this.canvas = document.createElement("canvas");
     this.canvas.className = "ll-aura-tip-canvas";
     this.canvas.hidden = true;
-    // Tips.js swaps the tip's content and re-appends it on every show (Tips.js:226-245).
     this.observer = new MutationObserver(() => this.check());
     this.observer.observe(layer, { childList: true, subtree: true });
     this.check();
@@ -98,7 +87,6 @@ export class CharacterAuraTooltip {
     this.canvas.hidden = true;
   }
 
-  // A throw ends the loop and hides the canvas instead of leaving it frozen over the tip.
   private readonly render = (now: number): void => {
     try {
       this.renderFrame(now);
@@ -126,7 +114,6 @@ export class CharacterAuraTooltip {
       return;
     }
 
-    // The aura's box wraps the tip's frame, so the outline starts where the frame ends.
     const width = tipW + FRAME * 2;
     const height = tipH + FRAME * 2;
 

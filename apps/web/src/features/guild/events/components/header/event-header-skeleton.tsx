@@ -14,7 +14,6 @@ const FACT_LABEL_KEYS = [
   "events.header.dates",
 ] as const;
 
-/** Stands in for `EventHeader`; the tabs need no data, so they show at once. */
 export const EventHeaderSkeleton = ({ tab }: { tab?: EventTab }) => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });

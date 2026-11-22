@@ -49,7 +49,6 @@ export type CustomTimerColor = {
   backgroundColor: string;
 };
 
-/** A player-defined list of timers, matched by monster name. */
 export type CustomTimerList = {
   id: string;
   name: string;
@@ -105,7 +104,6 @@ const generalConfig = looseStruct({
 });
 
 const displayConfig = looseStruct({
-  // Missing, undefined, and invalid flags all read as the modern appearance.
   legacyAppearance: Schema.Boolean.pipe(
     withFallback(false),
     Schema.withDecodingDefaultType(Effect.succeed(false)),
@@ -121,7 +119,6 @@ const stringList = Schema.mutable(Schema.Array(Schema.String));
 
 const stringLists = Schema.Record(Schema.String, stringList);
 
-// Filters stored before lists existed have no list selection.
 const selectedLists = stringList.pipe(
   withFallback([]),
   Schema.withDecodingDefaultType(Effect.succeed([])),
@@ -183,12 +180,7 @@ const persistedTimerSettings = Schema.Struct({
   timersSortOrder: optionalOrUndefined(Schema.Literals(["asc", "desc"])),
 });
 
-/**
- * Reads timer settings stored by any earlier release, in localStorage or in a
- * settings document; one invalid field falls back without losing the rest.
- */
 export const decodeTimerSettings = flow(
   Schema.decodeUnknownOption(persistedTimerSettings),
-  // Every stored field is optional, so nothing readable is an empty object.
   Option.getOrElse((): typeof persistedTimerSettings.Type => ({})),
 );

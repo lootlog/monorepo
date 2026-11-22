@@ -315,8 +315,6 @@ export const makeEventTimersPort = ({
       Effect.gen(function* () {
         const windowOpenedAt = new Date(yield* Clock.currentTimeMillis);
 
-        // The event window replaces the NPC description; keep the template
-        // an automatic timer observed so template-level rules still match.
         const existing = yield* store.findTimer(
           input.guildId,
           input.world,
@@ -338,7 +336,6 @@ export const makeEventTimersPort = ({
             : "0",
         };
 
-        // A reset after the event repeats the window it opened.
         const respawn = respawnFromSpawnWindow(
           (input.minSpawnTime.getTime() - windowOpenedAt.getTime()) / 1000,
           (input.maxSpawnTime.getTime() - windowOpenedAt.getTime()) / 1000,

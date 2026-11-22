@@ -7,17 +7,11 @@ import { t } from "@/i18n/messages";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 
 type ItemPageTooltipProps = {
-  /** The item as the page shows it, at its level for the set's character. */
   item: CatalogItemDtoOutput;
-  /** Its stats at the upgrade the page shows; the tooltip marks the level. */
   stat: string;
   renderStat: (displayValue: ItemDisplayValue) => ReactNode;
 };
 
-/**
- * The item's in-game tooltip as the page's side panel, framed in its rarity.
- * It says what the item is, who wears it and from which level.
- */
 export function ItemPageTooltip({
   item,
   stat,

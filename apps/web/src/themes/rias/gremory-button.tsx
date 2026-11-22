@@ -11,7 +11,6 @@ import {
   buttonMagicCirclePositions,
 } from "./gremory-button-positions";
 
-// Gremory wrapper for rectangular buttons
 export const GremoryButton = ({
   children,
   isHovered,
@@ -38,7 +37,6 @@ export const GremoryButton = ({
         <>
           <DestructionFilter />
 
-          {/* Destruction energy texture - hover only */}
           {!isActive && (
             <>
               <m.div
@@ -106,7 +104,6 @@ export const GremoryButton = ({
             />
           ))}
 
-          {/* Crimson glow border */}
           <m.div
             className={`absolute inset-0 ${rounded} pointer-events-none`}
             initial={{ opacity: 0 }}
@@ -119,7 +116,6 @@ export const GremoryButton = ({
             transition={{ duration: 0.3 }}
           />
 
-          {/* Active state: crimson shimmer + border */}
           {isActive && !subtle && (
             <>
               <m.div
@@ -154,7 +150,6 @@ export const GremoryButton = ({
             </>
           )}
 
-          {/* Active burst */}
           {isActive && !subtle && (
             <m.div
               className={`absolute inset-0 ${rounded} pointer-events-none`}
@@ -170,7 +165,6 @@ export const GremoryButton = ({
         </>
       )}
 
-      {/* Content */}
       <div className="relative z-10 flex-1 min-h-0">{children}</div>
     </div>
   );

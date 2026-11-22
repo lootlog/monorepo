@@ -8,7 +8,6 @@ import {
 
 export const DEFAULT_LOOT_STATS_PERIOD: LootStatsPeriod = "7d";
 
-// An absent key is the default, so a default never reads as an active filter.
 const useLootStatsFilters = createQueryFilters({
   period: parseAsStringLiteral(
     Object.values(LootsControllerGetLootStatsPeriod),
@@ -21,7 +20,6 @@ export const useLootStatsSettings = () => {
   const { filters, setFilters, clearFilters } = useLootStatsFilters();
 
   return {
-    // The page's own filters, with the Organization's world they apply to.
     settings: {
       period: filters.period ?? DEFAULT_LOOT_STATS_PERIOD,
       excludeColossus: filters.excludeColossus ?? false,

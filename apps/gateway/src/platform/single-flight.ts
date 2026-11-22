@@ -1,7 +1,5 @@
 import { Deferred, Effect } from "effect";
 
-// The bounded producer belongs to the operation, not its individual waiters.
-// Callers supply the timeout and domain error mapping for their external boundary.
 export class SingleFlight<Key, Value, Error> {
   private readonly pending = new Map<Key, Deferred.Deferred<Value, Error>>();
 

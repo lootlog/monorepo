@@ -2,10 +2,8 @@ import { clamp } from "es-toolkit";
 
 export type RgbColor = readonly [number, number, number];
 
-/** OKLCH lightness 0–1, chroma, and hue in degrees. */
 export type OklchColor = readonly [number, number, number];
 
-/** Reads `#RRGGBB` into 0–255 channels; the caller validates the format. */
 export const hexToRgb = (color: string): RgbColor => [
   Number.parseInt(color.slice(1, 3), 16),
   Number.parseInt(color.slice(3, 5), 16),
@@ -41,7 +39,6 @@ const relativeLuminance = (rgb: RgbColor) =>
   0.7152 * toLinearChannel(rgb[1]) +
   0.0722 * toLinearChannel(rgb[2]);
 
-/** WCAG 2 contrast ratio between two colours. */
 export const contrastRatio = (left: RgbColor, right: RgbColor) => {
   const leftLuminance = relativeLuminance(left);
   const rightLuminance = relativeLuminance(right);
@@ -52,7 +49,6 @@ export const contrastRatio = (left: RgbColor, right: RgbColor) => {
   );
 };
 
-// OKLab conversion by Björn Ottosson: https://bottosson.github.io/posts/oklab/
 export const rgbToOklch = (rgb: RgbColor): OklchColor => {
   const r = toLinearChannel(rgb[0]);
   const g = toLinearChannel(rgb[1]);
@@ -86,10 +82,6 @@ const oklchToLinearRgb = ([lightness, chroma, hue]: OklchColor) => {
 const isInSrgbGamut = (linear: readonly number[]) =>
   linear.every((channel) => channel >= -0.0001 && channel <= 1.0001);
 
-/**
- * Converts to sRGB, lowering chroma until the colour fits the gamut so its
- * lightness and hue survive.
- */
 const oklchToRgb = (color: OklchColor): RgbColor => {
   const [lightness, chroma, hue] = color;
   let low = 0;

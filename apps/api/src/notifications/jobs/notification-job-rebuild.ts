@@ -81,7 +81,6 @@ interface NotificationTimerRebuildFailure {
   readonly cause: unknown;
 }
 
-// Bounds the job inserts and queue writes one rebuild keeps in flight.
 const REBUILD_CONCURRENCY = 4;
 
 export const timerSourceEntityId = (
@@ -120,7 +119,6 @@ export const makeNotificationJobRebuild = (
       ? Effect.succeed(true)
       : hasRequiredGuildPermissions(rule.ownerId);
 
-  // Shares one permission lookup per owner within a single timer update.
   const permittedByOwner = Effect.fnUntraced(function* (
     rules: readonly NotificationStoredRule[],
   ) {
@@ -146,8 +144,6 @@ export const makeNotificationJobRebuild = (
     event: TimerUpdatedEvent,
     now: Date,
   ) => {
-    // A timer whose spawn window has closed is history: announcing it now
-    // would notify about a spawn that already happened.
     if (new Date(event.maxSpawnTime) <= now) return null;
 
     const anchor =
@@ -210,11 +206,6 @@ export const makeNotificationJobRebuild = (
       );
   };
 
-  // Rebuilds one timer's jobs for every rule the caller matched to it. The
-  // rules are re-read together, so a rule disabled or edited since the caller
-  // listed it is not rebuilt from its old row. Rules share one permission
-  // lookup per owner; each rule's failure is reported without stopping the
-  // others.
   const rebuildTimer = Effect.fn("notifications.jobs.rebuildTimer")(function* (
     ruleIds: readonly number[],
     event: TimerUpdatedEvent,
@@ -318,8 +309,6 @@ export const makeNotificationJobRebuild = (
       organizationTimers.map(timerNpcIdentity),
     );
 
-    // Once per rule rebuild, never per timer event: a saved selection that
-    // matches no timer in the rule's Organization and world schedules nothing.
     if (unmatched.npcIds.length > 0 || unmatched.templateIds.length > 0) {
       yield* Effect.logWarning(
         "Notification rule NPC selections match no timer",

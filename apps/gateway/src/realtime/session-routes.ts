@@ -40,7 +40,6 @@ type Scope = typeof SubscriptionScope.Type;
 
 type Event = typeof ServerEvent.Type;
 
-/** Commands of the session itself; every other route belongs to a feature. */
 export type SessionCommand =
   | "session.join"
   | "presence.heartbeat"
@@ -67,7 +66,6 @@ export interface SessionRouteDependencies extends Pick<
     | "subscribe"
     | "unsubscribe"
   >;
-  /** Features that follow the session's heartbeats, joins and subscriptions. */
   readonly sessionFeatures: {
     readonly npcPresence: Pick<NpcPresenceService, "refresh" | "withdraw">;
     readonly airTags: Pick<AirTagService, "registerInterest">;
@@ -75,7 +73,6 @@ export interface SessionRouteDependencies extends Pick<
   readonly joinAdmission: Pick<CommandAdmission, "tryAcquire">;
 }
 
-/** The activity log of a Lootlog follows where a character is visible. */
 const recordPresenceActivity = (
   activity: SessionRouteDependencies["activity"],
   socket: GatewaySocket,
@@ -97,10 +94,6 @@ const recordPresenceActivity = (
   );
 };
 
-/**
- * A game session reads presence only where it publishes its own, so a
- * publication that changes those Lootlogs changes its access as well.
- */
 const publishPresence = (
   { activity, hub, presence }: SessionRouteDependencies,
   socket: GatewaySocket,
@@ -118,9 +111,6 @@ const publishPresence = (
         Effect.suspend(() => {
           const current = socket.data.presence;
 
-          // A failed write may have stored only some of the requested
-          // Lootlogs, so it opens none of them; reads stay where the
-          // session was already visible. Partial records expire.
           if (Exit.isFailure(exit) && current) {
             const kept = current.organizationIds.filter((id) =>
               previouslyPublished.has(id),
@@ -156,7 +146,6 @@ const requireJoined = (
 ): Effect.Effect<void, SessionNotJoined> =>
   socket.data.joined ? Effect.void : Effect.fail(new SessionNotJoined());
 
-/** The routes every session has, whatever features the gateway runs. */
 export const sessionRoutes = (
   dependencies: SessionRouteDependencies,
 ): Pick<CommandRoutes, SessionCommand> => {
@@ -197,9 +186,6 @@ export const sessionRoutes = (
       joined: true,
       run: (socket, { sessionId }) =>
         presence.heartbeat(socket, sessionId).pipe(
-          // The heartbeat must not wait for Redis scripts it does not need.
-          // Forking costs as much as the heartbeat, so only sockets with
-          // reports pay for it.
           Effect.tap(() =>
             socket.data.npcPresence
               ? Effect.forkDetach(sessionFeatures.npcPresence.refresh(socket))
@@ -208,7 +194,6 @@ export const sessionRoutes = (
           Effect.map((lastSeen) => ({ lastSeen })),
         ),
     },
-    // Answered without I/O, so the round trip measures only the connection.
     "connection.ping": {
       joined: false,
       apiKey: true,
@@ -219,7 +204,6 @@ export const sessionRoutes = (
       traced: true,
       run: (socket, data) => publishPresence(dependencies, socket, data),
     },
-    // Access is refused before the join check, as for subscriptions.
     "presence.fetch": {
       joined: false,
       apiKey: true,
@@ -275,13 +259,11 @@ export const sessionRoutes = (
                     }),
             }),
           ),
-          // Other replicas publish air-tag updates only to registered followers.
           Effect.tap(() =>
             scope.topic === "map.air-tags"
               ? sessionFeatures.airTags.registerInterest(scope)
               : Effect.void,
           ),
-          // Counts otherwise arrive with the next metrics sample, up to 10 s later.
           Effect.tap(() =>
             Effect.sync(() => {
               const counts = hub.globalChatCounts;

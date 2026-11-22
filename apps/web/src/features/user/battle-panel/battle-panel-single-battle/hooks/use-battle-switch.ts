@@ -7,7 +7,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useRef, useState, type MouseEvent } from "react";
 
-/** The parts of a click that decide whether the page handles it. */
 type BattleClick = Pick<
   MouseEvent,
   | "defaultPrevented"
@@ -19,16 +18,10 @@ type BattleClick = Pick<
   | "preventDefault"
 >;
 
-/**
- * Moves between battles without the page skeleton: the current battle stays on screen while
- * the next one loads, and the route then finds its data cached. Pointing at a battle starts
- * loading it early, so a click usually switches at once.
- */
 export const useBattleSwitch = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [pendingBattleId, setPendingBattleId] = useState<string | null>(null);
-  // The battle picked last; a slower load of an earlier pick must not override it.
   const latestBattleIdRef = useRef<string | null>(null);
 
   const loadBattle = (battleId: string) =>
@@ -49,7 +42,6 @@ export const useBattleSwitch = () => {
   };
 
   const openBattle = async (event: BattleClick, battleId: string) => {
-    // Opening in a new tab or window keeps the browser's own behaviour.
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
@@ -65,7 +57,6 @@ export const useBattleSwitch = () => {
     latestBattleIdRef.current = battleId;
     setPendingBattleId(battleId);
 
-    // A failed load still navigates, so the route shows its own error state.
     await loadBattle(battleId).catch(() => undefined);
 
     if (latestBattleIdRef.current !== battleId) return;

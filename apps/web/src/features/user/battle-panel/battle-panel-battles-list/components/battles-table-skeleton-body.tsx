@@ -54,7 +54,6 @@ export const BattlesTableSkeletonBody = ({
                 getBattleTableColumnClassName(columnId),
               )}
             >
-              {/* Loaded cells hold 40px links, which set the row height. */}
               <div className="flex min-h-10 items-center">
                 {CELL_SKELETONS.get(columnId)}
               </div>

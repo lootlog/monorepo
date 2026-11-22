@@ -26,7 +26,6 @@ export const GUILD_DOC_TEMPLATE_IDS: GuildDocTemplateId[] = [
   "rules",
 ];
 
-/** Empty rows a template table starts with, below its header row. */
 const TEMPLATE_TABLE_ROWS = 3;
 
 const $createHeaderTable = (headers: string[]): TableNode => {
@@ -102,11 +101,6 @@ const buildTemplate = (id: GuildDocTemplateId, t: TFunction): LexicalNode[] => {
   }
 };
 
-/**
- * Inserts a template as top-level blocks after the block with the cursor,
- * in place of it when that block is an empty paragraph, or at the end of the
- * document when it has no cursor. An empty paragraph follows to keep writing.
- */
 export const $insertGuildDocTemplate = (
   id: GuildDocTemplateId,
   t: TFunction,

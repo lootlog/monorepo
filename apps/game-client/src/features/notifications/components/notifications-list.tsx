@@ -102,8 +102,6 @@ export const NotificationsList: FC<NotificationsListProps> = ({
     })),
   );
 
-  // The setting alone drives the auto-hide countdown, which steps under
-  // reduced motion; movement also follows the operating system preference.
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
@@ -123,10 +121,6 @@ export const NotificationsList: FC<NotificationsListProps> = ({
     .map((notification) => notification.listKey)
     .join("\n");
 
-  // Slides the rows that stay from where they were when a notification
-  // arrives or leaves. Only rows inside the scroll viewport animate, each with
-  // one transform-only Web Animation; positions are read once per change of
-  // the rendered rows, not on unrelated list renders.
   useLayoutEffect(() => {
     const listContent = listContentRef.current;
     const viewport = scrollViewportRef.current;
@@ -223,10 +217,6 @@ export const NotificationsList: FC<NotificationsListProps> = ({
     updateMutesRef.current = updateMutes;
   }, [updateMutes]);
 
-  // These callbacks feed memoized rows (see SingleNotification), so they must
-  // keep their identity across unrelated list renders; the React Compiler
-  // memoizes them. The mutes mutate function is still read through a ref
-  // because its own identity is not guaranteed to be stable.
   const handleUpdateMutes = (mutesPatch: NotificationMutesPatch) => {
     updateMutesRef.current(mutesPatch);
   };

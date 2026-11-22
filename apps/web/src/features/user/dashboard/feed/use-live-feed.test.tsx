@@ -182,7 +182,6 @@ it("receives complete live entries without further HTTP requests and refetches o
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(result.current.state.items).toEqual(feedResponse(20).items);
-  // A kill accepted while session.join is pending must appear in the post-join snapshot.
   mocks.request.mockResolvedValue(feedResponse(21));
   act(() => deliverLifecycleEvent("join"));
   await act(() => vi.advanceTimersByTimeAsync(0));

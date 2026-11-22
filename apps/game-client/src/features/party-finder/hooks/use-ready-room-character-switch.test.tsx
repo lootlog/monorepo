@@ -15,7 +15,6 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 const requests: Request[] = [];
 
-// The status the server answers an application with; 201 accepts it.
 let applyStatus = 201;
 
 let restoreClient = () => {};
@@ -85,7 +84,6 @@ beforeEach(() => {
           Response.json({ code: "REFUSED" }, { status: applyStatus }),
         );
 
-      // The server moves the application onto the applying character.
       return Promise.resolve(
         Response.json(
           {

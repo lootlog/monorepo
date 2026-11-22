@@ -22,8 +22,6 @@ function App() {
   const extension = isExtensionClient();
   const userId = session.data?.user.id ?? null;
 
-  // A sign-in proves the cookie reaches this page, so a later sign-out (an
-  // expired session, say) must not be blamed on blocked cookies.
   useEffect(() => {
     if (userId !== null)
       useLoginWebsiteStore.setState({ websiteOpened: false });
@@ -33,7 +31,6 @@ function App() {
     extension ? userId : undefined,
   );
 
-  // Unmount the old session before clearing its projections and starting another.
   useEffect(() => {
     if (
       session.isPending ||
@@ -43,8 +40,6 @@ function App() {
     )
       return;
 
-    // The first userscript session belongs to the tree already starting up. A
-    // confirmed missing one unmounts its socket until the player signs in.
     if (activeUserId !== undefined) {
       disposeSocket();
       disposeSoundPlayback();
@@ -53,7 +48,6 @@ function App() {
       useLogsStore.getState().clearActions();
     }
 
-    // The new tree must wait until the old tree unmounts and its external socket/cache are cleared.
     // oxlint-disable-next-line react/set-state-in-effect
     setActiveUserId(userId);
   }, [
@@ -95,8 +89,6 @@ function App() {
 
   if (!showGame) content = extension ? <LoginWindow /> : null;
 
-  // The userscript keeps its overlay while signed out, with the login window on
-  // top. A failed recheck of an active session does not interrupt play.
   const showUserscriptLogin =
     !extension &&
     showGame &&

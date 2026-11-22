@@ -5,11 +5,6 @@ const DURATION_MS = 240;
 
 const easeOutCubic = (progress: number) => 1 - (1 - progress) ** 3;
 
-/**
- * The number on its way to `target`: a change glides from the value shown
- * now, so a new target mid-way turns around without a jump. Reduced motion
- * shows the target at once.
- */
 export function useAnimatedNumber(target: number) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [value, setValue] = useState(target);

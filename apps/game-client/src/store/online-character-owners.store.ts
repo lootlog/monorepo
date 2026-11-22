@@ -167,8 +167,6 @@ export const useOnlineCharacterOwnersStore =
         ),
         status: "success",
       }),
-    // A refresh keeps the loaded owners, so it keeps their answer too:
-    // players missing from them still do not play with this Lootlog.
     setLoading: () =>
       set((state) =>
         state.status === "success" ? state : { status: "loading" },

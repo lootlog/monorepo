@@ -14,11 +14,6 @@ import {
   writeHeroSightingToCache,
 } from "./hero-sighting-cache";
 
-/**
- * Declares or withdraws the signed-in member's camping of a sighted hero. A
- * claim names the member by their internal Lootlog User id. Outside an
- * Organization route there is nothing to claim for, so `canToggle` is false.
- */
 export const useHeroSightingClaim = (sighting: HeroSightingResponseDto) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -35,7 +30,6 @@ export const useHeroSightingClaim = (sighting: HeroSightingResponseDto) => {
     error: { status?: number },
     { pathParams }: { pathParams: { guildId: string } },
   ) => {
-    // The hero was killed or moved meanwhile; the board shows what replaced it.
     if (error.status === 409) {
       toast.error(t("heroSightings.claim.closed"));
       void queryClient.invalidateQueries(

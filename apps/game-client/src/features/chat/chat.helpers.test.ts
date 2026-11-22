@@ -601,7 +601,6 @@ describe("chat helpers", () => {
     process.env.TZ = "Europe/Warsaw";
 
     try {
-      // 23:30 and 00:30 in Warsaw (UTC+1) both fall on 1 January in UTC.
       const lateEvening = makeChatMessage({
         id: "late-evening",
         timestamp: "2026-01-01T22:30:00.000Z",

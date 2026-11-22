@@ -72,10 +72,6 @@ export class RuntimeEventPipeline {
     if (ready) this.scheduleDrain();
   }
 
-  /**
-   * Makes `processor` the one that handles projected events, replacing any
-   * earlier one. The release returns whether it was still the active one.
-   */
   setProcessor(processor: RuntimeEventHandler): () => boolean {
     this.activeProcessor = processor;
 
@@ -214,9 +210,7 @@ export class RuntimeEventPipeline {
   private reportProcessingError(cause: unknown): void {
     try {
       this.onProcessingError?.(cause);
-    } catch {
-      // Diagnostics must never interrupt the runtime event queue.
-    }
+    } catch {}
   }
 }
 

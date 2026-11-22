@@ -10,10 +10,8 @@ import { StatisticsWeeks } from "./statistics-weeks";
 import { summarizePlayTime } from "./summarize-play-time";
 import { useFormatOnlineDuration } from "@/utils/date/format-duration";
 
-/** How much online history an activity revision before the yearly one keeps. */
 const PREVIOUS_ONLINE_HISTORY_DAYS = 112;
 
-/** The last `days` calendar days through `to`, as the online history takes them. */
 const rangeEnding = (to: string, days: number) => {
   const from = new Date(`${to}T12:00:00Z`);
   from.setUTCDate(from.getUTCDate() - days + 1);
@@ -32,8 +30,6 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
     { query: { staleTime: 60_000 } },
   );
 
-  // While a release rolls out, an older activity revision rejects a range
-  // longer than its own history; it still answers for what it keeps.
   const rejected =
     yearly.error?.status === 400 && search.days > PREVIOUS_ONLINE_HISTORY_DAYS;
 
@@ -49,7 +45,6 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
 
   const formatOnlineDuration = useFormatOnlineDuration();
 
-  // An older activity revision ignores the world and counts every world.
   const countedWorld = (online.data?.world ?? null) === (search.world ?? null);
 
   const available =
@@ -57,8 +52,6 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
     online.data.status !== "unavailable" &&
     countedWorld;
 
-  // A session an older Game client reported without its world may have been
-  // on this one, so such a day's time on the world is unknown.
   const days = (countedWorld ? (online.data?.days ?? []) : []).map((day) =>
     search.world && !day.worldsComplete ? { ...day, onlineSeconds: null } : day,
   );

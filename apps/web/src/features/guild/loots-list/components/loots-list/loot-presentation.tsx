@@ -28,7 +28,6 @@ export const LootPresentation = ({
   selectedPlayerNames?: string[];
   selectedItemNames?: string[];
   decorateItem?: DecorateLootItem;
-  /** Names the loot's world, for lists that span every world. */
   showWorld?: boolean;
 }) => {
   const { itemsByPlayer, unassignedItems, sortedPlayers } = buildLootData(loot);

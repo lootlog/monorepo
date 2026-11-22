@@ -2,7 +2,7 @@ import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { randomUUID } from "node:crypto";
 import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
-import { type RedisStore } from "#src/infrastructure/redis-store";
+import type { RedisStore } from "#src/infrastructure/redis-store";
 import { Clock, Effect, Schema } from "effect";
 import type { CreateBattleResult } from "#src/battles/battle-service";
 
@@ -45,7 +45,6 @@ export type BattleDeduplicationStore = Pick<
   "getJson" | "setJson" | "setNX" | "evalScript"
 >;
 
-/** Lets one of several concurrent submissions of a battle create it; the others reuse its result. */
 export const makeBattleDeduplication = (
   redisService: BattleDeduplicationStore,
   deduplicationTiming: BattleDeduplicationTiming,
@@ -55,7 +54,6 @@ export const makeBattleDeduplication = (
   ) => {
     return operation.pipe(
       withAdapterSpan("Battles_deduplicationRedis", "battlelog-infrastructure"),
-      // The 503 body hides the Redis failure, so it is logged here.
       Effect.tapError((error) =>
         Effect.logWarning("Battle deduplication Redis call failed", error),
       ),

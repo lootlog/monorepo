@@ -1,16 +1,9 @@
-/**
- * What the API publishes to the catalog service: observations of items and
- * NPCs from accepted loots, and the statistics it derives from them each
- * morning. Each message body is an array of one of these.
- */
 import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
 import { Schema } from "effect";
 
-/** When the API accepted the loot that made an observation. */
 const ObservedAt = Schema.String;
 
-/** The NPC a dialog or fight's items came from, in its catalog identity. */
 const CatalogDropSource = Schema.Struct({
   id: Schema.Number,
   identityNamespace: NpcIdentityNamespaceSchema,
@@ -22,7 +15,6 @@ const CatalogDropSource = Schema.Struct({
   gameVersion: GameVersionSchema,
 });
 
-/** One item revision as loots observed it in some worlds. */
 export const CatalogItemObservation = Schema.Struct({
   id: Schema.Number,
   name: Schema.String,
@@ -34,13 +26,11 @@ export const CatalogItemObservation = Schema.Struct({
   worlds: Schema.Array(Schema.String),
   gameVersion: GameVersionSchema,
   observedAt: ObservedAt,
-  // Absent for lootboxes and for dialogs and fights without one source.
   droppedBy: Schema.optionalKey(CatalogDropSource),
 });
 
 export type CatalogItemObservation = typeof CatalogItemObservation.Type;
 
-/** One NPC revision as a loot in one world observed it. */
 export const CatalogNpcObservation = Schema.Struct({
   id: Schema.Number,
   identityNamespace: NpcIdentityNamespaceSchema,
@@ -54,30 +44,16 @@ export const CatalogNpcObservation = Schema.Struct({
   world: Schema.String,
   gameVersion: GameVersionSchema,
   snapshotHash: Schema.optionalKey(Schema.String),
-  /** The loot that observed it; loot ids order observations. */
   lootId: Schema.Number,
   observedAt: ObservedAt,
 });
 
 export type CatalogNpcObservation = typeof CatalogNpcObservation.Type;
 
-/**
- * Whether each party member rolls a loot of their own, over the items of
- * their profession, or the party shares the boss's rolls.
- */
 const CatalogLootMode = Schema.Literals(["SHARED", "PERSONAL"]);
 
-/**
- * Where the rolls come from: the parties kills reported, or, until enough
- * did, the parties of recorded loots.
- */
 const CatalogLootRollsBasis = Schema.Literals(["PARTY", "LOOTS"]);
 
-/**
- * The items a monster no longer drops and how often its kills drop each
- * item; both lists are all of them. `drops` counts copies of the item over
- * `rolls`, the times its loot was rolled for someone who could get the item.
- */
 export const CatalogMonsterDrops = Schema.Struct({
   gameVersion: GameVersionSchema,
   name: Schema.String,
@@ -97,13 +73,8 @@ export const CatalogMonsterDrops = Schema.Struct({
 
 export type CatalogMonsterDrops = typeof CatalogMonsterDrops.Type;
 
-/** A calendar day in Poland, as `YYYY-MM-DD`. */
 const Day = Schema.String.check(Schema.isPattern(/^\d{4}-\d{2}-\d{2}$/));
 
-/**
- * One change the game made to an item, between the day its old revision was
- * last looted and the day the new one was first looted.
- */
 const CatalogItemRevision = Schema.Struct({
   name: Schema.String,
   icon: Schema.String,
@@ -116,7 +87,6 @@ const CatalogItemRevision = Schema.Struct({
   changedBy: Day,
 });
 
-/** An item's changes, oldest first; the list is all of them. */
 export const CatalogItemRevisions = Schema.Struct({
   gameVersion: GameVersionSchema,
   id: Schema.Number,
@@ -125,32 +95,22 @@ export const CatalogItemRevisions = Schema.Struct({
 
 export type CatalogItemRevisions = typeof CatalogItemRevisions.Type;
 
-/** A map tile where Game clients reported a monster standing. */
 const CatalogMonsterSpawnTile = Schema.Struct({
   x: Schema.Number,
   y: Schema.Number,
 });
 
-/**
- * A map a monster is fought on, with the share of its latest fights there and
- * the tiles it spawns on; API revisions before the tiles omit them.
- */
 export const CatalogMonsterLocation = Schema.Struct({
   map: Schema.String,
   share: Schema.Number,
   tiles: Schema.optionalKey(Schema.Array(CatalogMonsterSpawnTile)),
 });
 
-/** A level a monster had before, until the day its next version appeared. */
 export const CatalogMonsterFormerLevel = Schema.Struct({
   lvl: Schema.Number,
   until: Schema.String,
 });
 
-/**
- * The maps a monster is fought on and the levels it had before; each list is
- * all of them.
- */
 export const CatalogMonsterLocations = Schema.Struct({
   gameVersion: GameVersionSchema,
   name: Schema.String,

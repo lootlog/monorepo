@@ -403,7 +403,6 @@ describe("OnlinePlayersList", () => {
     useSettingsStore.setState({
       guildIdByCharId: { "": "guild-1", "10": "guild-1" },
     });
-    // The gateway session requires a character, so the list renders unjoined.
     renderUi(<OnlinePlayersList viewMode="accounts" filtersVisible />, {
       wrapper: harness.wrapper,
     });

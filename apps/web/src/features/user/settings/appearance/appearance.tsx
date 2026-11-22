@@ -65,7 +65,6 @@ export const AppearanceSettings: FC = () => {
   const inUseLabel = t("settings.appearance.actions.inUse");
   const sharedLabel = t("settings.appearance.actions.shared");
 
-  // Each custom theme's row shows its own font.
   useEffect(() => {
     for (const userTheme of userThemes ?? []) {
       loadCustomThemeFont(userTheme.definition);
@@ -83,7 +82,6 @@ export const AppearanceSettings: FC = () => {
         count={`${themeCount}/${CUSTOM_THEME_LIMIT}`}
         tiled
         trailing={
-          // On phones the buttons keep only their icons, so the title fits.
           <span className="flex items-center gap-1.5">
             <ImportThemeDialog
               trigger={
@@ -168,8 +166,6 @@ export const AppearanceSettings: FC = () => {
                               : "settings.appearance.actions.shareLabel",
                             { name: userTheme.name },
                           )}
-                          // A live link is a state worth noticing, so a
-                          // shared theme's button takes the accent.
                           className={cn(
                             userTheme.shareToken &&
                               "text-primary hover:text-primary",

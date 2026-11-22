@@ -18,13 +18,11 @@ import { useTranslation } from "react-i18next";
 type GuildDocTileProps = {
   guildId: string;
   document: GuildDocumentListResponseDtoItemsItem;
-  /** Offers moving the document to the trash. */
   canWrite: boolean;
   trashDisabled: boolean;
   onTrash: () => void;
 };
 
-/** One document in the edge-to-edge document list; the tile opens it. */
 export const GuildDocTile = ({
   guildId,
   document,
@@ -44,7 +42,6 @@ export const GuildDocTile = ({
           LIST_TILE_HOVER_CLASS,
         )}
       >
-        {/* The tile opens the document; the editor's name opens their profile. */}
         <Link
           to="/$guildId/docs/$docId"
           params={{ guildId, docId: document.id }}

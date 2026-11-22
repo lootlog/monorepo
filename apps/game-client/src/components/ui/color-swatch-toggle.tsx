@@ -10,17 +10,11 @@ import {
 
 type ColorSwatchToggleProps = {
   color: string;
-  /** Colour name: the accessible name and the tooltip. */
   label: string;
   selected: boolean;
   onClick: () => void;
 };
 
-/**
- * A pickable colour: a 24×24 px target around the swatch, `aria-pressed`
- * state, and a check mark plus ring on the selected colour so selection does
- * not rely on colour alone.
- */
 export const ColorSwatchToggle: FC<ColorSwatchToggleProps> = ({
   color,
   label,
@@ -40,8 +34,6 @@ export const ColorSwatchToggle: FC<ColorSwatchToggleProps> = ({
           color={color}
           className={cn(
             "ll:size-5",
-            // An outline, not a ring: the swatch paints its border with an
-            // inline box-shadow.
             selected &&
               "ll:outline-1 ll:outline-offset-1 ll:outline-foreground",
           )}

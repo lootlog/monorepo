@@ -41,7 +41,6 @@ export const Init: React.FC = () => {
         retry: (failureCount, cause) => {
           if (isReauthenticationError(cause)) return false;
 
-          // Discord's installation callback can arrive before the organization is ready.
           if (getApiErrorStatus(cause) === 404) return failureCount < 2;
 
           return shouldRetryQuery(failureCount, cause);
@@ -57,7 +56,6 @@ export const Init: React.FC = () => {
 
     let cancelled = false;
 
-    // The API caches the Discord guild list, which may predate the new server.
     void Promise.allSettled([
       invalidateUsersControllerGetCurrentUserAccessibleGuilds(queryClient),
       refreshCurrentUserGuilds(queryClient),

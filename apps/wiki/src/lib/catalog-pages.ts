@@ -4,19 +4,10 @@ import {
   catalogControllerGetItems,
 } from "@lootlog/client/catalog";
 
-/**
- * The most hits a catalog search counts and returns: the catalog service's
- * Meilisearch `maxTotalHits`. A total that reaches it means "at least this
- * many".
- */
 export const CATALOG_MAX_HITS = 1000;
 
 const PAGE_SIZE = 96;
 
-/**
- * Reads catalog items page by page until the search has no more, the hit cap
- * is reached, or `isEnough` accepts the items read so far.
- */
 export const readCatalogItems = async (
   params: Omit<CatalogControllerGetItemsParams, "limit" | "offset">,
   {

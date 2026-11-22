@@ -4,18 +4,6 @@ import { cn } from "cn";
 import type { ComponentProps } from "react";
 import { Spinner } from "@/components/ui/spinner";
 
-/**
- * shadcn button variants on the game client's compact scale. `menu` is the
- * left-aligned item used inside popover menus. `quiet` is the icon-only action
- * of title bars, toolbars and list rows: a dimmed icon at rest, a plate only
- * on hover or while its popup is open, and a blue icon while its toggle is on.
- * `taskbar` is the quick access tile, whose pressed state means "this window
- * is open" and keeps the plate with an underline.
- *
- * An icon at either edge of a labelled button pulls into the padding with a
- * negative margin instead of a `:has(> svg)` padding rule: the game client
- * stylesheet is matched against every element the game inserts.
- */
 const buttonVariants = cva(
   "ll:inline-flex ll:shrink-0 ll:items-center ll:justify-center ll:gap-1.5 ll:whitespace-nowrap ll:rounded-sm ll:border ll:border-transparent ll:text-[13px] ll:font-medium ll:transition-[background-color,color,border-color,box-shadow] ll:outline-none ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:aria-invalid:border-destructive ll:aria-invalid:ring-destructive/20 ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=size-])]:size-3.5 ll-custom-cursor-pointer",
   {
@@ -59,11 +47,6 @@ const buttonVariants = cva(
 
 type ButtonProps = ComponentProps<typeof ButtonPrimitive> &
   VariantProps<typeof buttonVariants> & {
-    /**
-     * Disables the button and centres a spinner over its content. The content
-     * stays in the layout (only hidden), so the button keeps its width and
-     * nothing around it shifts.
-     */
     loading?: boolean;
   };
 
@@ -78,7 +61,6 @@ export const Button = ({
   ...props
 }: ButtonProps) => {
   const handleMouseDown: ButtonProps["onMouseDown"] = (event) => {
-    // Buttons live inside draggable windows; a press must not start a drag.
     event.stopPropagation();
     onMouseDown?.(event);
   };

@@ -1,5 +1,4 @@
 import { partyGatheringDetailsFields } from "../party-gathering.schema.js";
-/** Shared input and output schemas for the chat feature. */
 import * as Schema from "effect/Schema";
 import {
   NonEmptyString,

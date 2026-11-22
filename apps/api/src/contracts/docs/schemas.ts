@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the docs feature. */
 import * as Schema from "effect/Schema";
 import {
   NonEmptyString,

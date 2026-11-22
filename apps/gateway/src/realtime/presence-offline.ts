@@ -33,12 +33,8 @@ const OFFLINE_BATCH_SIZE = 100;
 
 const OFFLINE_LEASE_MS = 30_000;
 
-// A reconnect within this grace period cancels the departure.
 const OFFLINE_GRACE_MS = 10_000;
 
-// Departure keys are their own index members. Lua receives the keys prefixed,
-// so the members of the departures a reconnect or a newer departure
-// supersedes follow as arguments, starting at `firstMember`.
 const cancelDepartures = (index: number, due: number, firstMember: number) => `
 for key = ${due + 1}, #KEYS do
   local member = ARGV[key - ${due + 1} + ${firstMember}]
@@ -76,7 +72,6 @@ if #keys == 0 then return '[]' end
 return cjson.encode(keys)
 `;
 
-// Compare captured values so cleanup cannot discard a replacement departure.
 const DROP_OFFLINE = `
 -- presence:offline-drop
 if redis.call('GET', KEYS[1]) ~= ARGV[1] then return -1 end
@@ -103,10 +98,6 @@ redis.call('SREM', KEYS[3], ARGV[3])
 return 1
 `;
 
-// One fresh Organization snapshot feeds one atomic group decision, with no
-// per-character network waits that could make later decisions use stale data.
-// Completed reconnect cancellation before this move suppresses departure; a
-// reconnect after the move starts a new online period.
 const CLAIM_OFFLINE = `
 -- presence:offline-claim
 if redis.call('GET', KEYS[1]) ~= ARGV[1] then return -1 end
@@ -135,10 +126,6 @@ const decodeOffline = Schema.decodeUnknownOption(
 const offlineCharacterKey = (presence: Departing): string =>
   `presence:offline:character:${JSON.stringify([presence.userId, presence.character?.world, presence.character?.characterId])}`;
 
-/**
- * Durable game character departures: scheduled when a session leaves, cancelled
- * by a reconnect within the grace period, and published from an outbox.
- */
 export class PresenceOfflineOutbox {
   constructor(
     private readonly redis: PresenceRedis,
@@ -204,11 +191,6 @@ export class PresenceOfflineOutbox {
     });
   }
 
-  /**
-   * The keys and arguments that let an expiry removal schedule the departure
-   * atomically: the new departure, its character index, the due index, and the
-   * departures it supersedes, whose captured values must still match.
-   */
   prepareExpiryDeparture(presence: Basic | undefined): Effect.Effect<
     {
       readonly keys: ReadonlyArray<string>;
@@ -265,8 +247,6 @@ export class PresenceOfflineOutbox {
     return Effect.suspend(() => {
       const token = crypto.randomUUID();
 
-      // Acquisition remains interruptible during Redis failover. An orphaned
-      // lease expires; cleanup gets a bounded attempt when closing the scope.
       return storeCall("presence.offline-lease", () =>
         this.redis.command.set(
           OFFLINE_SWEEP_LOCK,
@@ -365,8 +345,6 @@ export class PresenceOfflineOutbox {
   ) {
     if (keys.length === 0) return [];
 
-    // Dragonfly scripts may only access declared keys. Capture bounded values
-    // before Organization reads; claims and invalid-record cleanup compare them.
     const values = yield* storeCall("presence.offline-batch-values", () =>
       this.redis.command.mget([...keys]),
     );
@@ -439,8 +417,6 @@ export class PresenceOfflineOutbox {
       if (!first) continue;
       const online = new Set<string>();
 
-      // Read each group immediately before its single bounded claim. Never
-      // retain these observations across another group's Redis round trip.
       const organizations = yield* Effect.forEach(
         new Set(first.event.organizationIds),
         (organizationId) =>
@@ -488,8 +464,6 @@ export class PresenceOfflineOutbox {
 
     const outbox = yield* this.readReady("outbox", token);
 
-    // Capturing outbox values may outlast the lease; check once after that
-    // external read. Every successful acknowledgement renews it thereafter.
     if (outbox.length > 0) {
       const renewed = yield* storeCall("presence.offline-renew", () =>
         this.redis.command.eval<number>(

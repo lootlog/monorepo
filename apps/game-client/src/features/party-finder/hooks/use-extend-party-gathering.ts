@@ -8,7 +8,6 @@ import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-room
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
-/** Restarts the organizer's gathering lifetime. */
 export const useExtendPartyGathering = () => {
   const t = getFixedT("partyFinder");
   const queryClient = useQueryClient();

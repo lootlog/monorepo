@@ -10,13 +10,10 @@ import { type ItemUpgrade, NO_UPGRADE } from "@lootlog/domain/item-upgrade";
 
 type ItemNameLinkProps = {
   item: CatalogItemDtoOutput;
-  /** The upgrade the item's page opens at. */
   upgrade?: ItemUpgrade;
-  /** The searched phrase, marked in the name. */
   highlight: string;
 };
 
-/** The item's name on one line in its rarity's color, linking to its page. */
 export function ItemNameLink({
   item,
   upgrade = NO_UPGRADE,

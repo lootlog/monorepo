@@ -8,7 +8,6 @@ export const GuildPinnedEventsSection = ({
   onNavigate,
 }: {
   guildId: string;
-  /** Collapses the section, so losing events access hides it smoothly. */
   enabled: boolean;
   onNavigate?: () => void;
 }) => {
@@ -24,8 +23,6 @@ export const GuildPinnedEventsSection = ({
   const pinnedActiveEvents = pinnedEvents?.map(({ event }) => event) ?? [];
   const hasPinnedEvents = pinnedActiveEvents.length > 0;
 
-  // The route loader brings the pins, so they are usually there on the first
-  // render and appear at once; pins that arrive later grow into view.
   return (
     <CollapsePresence open={enabled && hasPinnedEvents}>
       <PinnedEventsBanner

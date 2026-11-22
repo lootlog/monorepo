@@ -129,7 +129,6 @@ it("replaces progress missed during a disconnect with the job state after rejoin
   await act(async () => gateway.deliver(progress(7, "PROCESSING", 4)));
   expect(screen.getByRole("progressbar")).toBeTruthy();
 
-  // The completion event was published while the socket was closed.
   act(() =>
     gateway.deliver({
       v: 1,
@@ -144,7 +143,6 @@ it("replaces progress missed during a disconnect with the job state after rejoin
   );
 
   await waitFor(() => expect(screen.queryByRole("progressbar")).toBeNull());
-  // Missed per-member results can change Discord sync diagnostics.
   expect(client.getQueryState(membersKey)?.isInvalidated).toBe(true);
 });
 
@@ -165,7 +163,6 @@ it("keeps a completion that arrives before the start response across remounts", 
   const view = renderButton();
   fireEvent.click(screen.getByRole("button"));
 
-  // A small job finishes before the POST response reaches the page.
   await act(async () => gateway.deliver(progress(8, "COMPLETED", 10)));
   await waitFor(() =>
     expect(client.getQueryData(latestJobKey)).toMatchObject({ id: 8 }),

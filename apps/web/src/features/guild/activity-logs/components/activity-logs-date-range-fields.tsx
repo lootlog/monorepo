@@ -36,7 +36,6 @@ export const ActivityLogsDateRangeFields = ({
         <DateTimePicker
           value={startDateValue}
           onChange={(date) => {
-            // An end date before the new start would match nothing.
             const shouldClearEndDate =
               date &&
               endDateValue &&

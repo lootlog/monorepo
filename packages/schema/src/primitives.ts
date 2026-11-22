@@ -8,7 +8,6 @@ export const NonNegativeInt = Schema.Int.check(
 
 const isoDateTimePattern = new RegExp(DATE_TIME_STRING_PATTERN, "u");
 
-/** A JavaScript Date encoded as the existing HTTP ISO-8601 string format. */
 export const IsoDateTime = Schema.String.annotate({
   format: "date-time",
 }).pipe(

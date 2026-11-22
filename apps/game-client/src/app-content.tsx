@@ -78,9 +78,6 @@ export const AppContent = () => {
     Boolean(state.gameState.gameInitialized),
   );
 
-  // The flag flips inside the game's handling of a server packet. Deferring
-  // the overlay moves its first render out of that task and makes it
-  // interruptible, so the game keeps its frames while the windows render.
   const overlayVisible = useDeferredValue(gameInitialized);
 
   return overlayVisible ? (

@@ -12,7 +12,6 @@ import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
 import { PRODUCT_LOCALE, formatNumber } from "@lootlog/domain/locale";
 
-/** The attack speed and evade a character's agility alone gives. */
 export function AttackSpeedCalculator() {
   const [agility, setAgility] = useState("");
   const value = readNumberInput(agility, { min: 0, max: 100_000 });

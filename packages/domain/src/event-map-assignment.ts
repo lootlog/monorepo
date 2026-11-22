@@ -21,11 +21,6 @@ export type MapAssignmentAvailability =
       reason: "NO_TIMER" | "OVERDUE" | "TOO_EARLY";
     };
 
-/**
- * Whether members may be assigned to an event hero's maps: only within its
- * respawn window, from `assignmentTimeoutMinutes` before the window opens
- * until the window is overdue.
- */
 export const getMapAssignmentAvailability = ({
   assignmentTimeoutMinutes,
   now = new Date(),

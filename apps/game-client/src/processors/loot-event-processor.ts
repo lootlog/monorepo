@@ -43,15 +43,12 @@ import type {
 import { useGameStore } from "@/store/game.store";
 import { resolveDialogLootNpcLevel } from "@/utils/game/resolve-dialog-loot-npc-level";
 
-// The game reports the source in lowercase; the contract accepts the uppercase
-// enum, so the mapping stays exhaustive instead of relying on toUpperCase().
 const LOOT_SOURCE_BY_EVENT_SOURCE = {
   dialog: CreateLootDtoSource.DIALOG,
   lootbox: CreateLootDtoSource.LOOTBOX,
   fight: CreateLootDtoSource.FIGHT,
 } satisfies Record<LootEvent["source"], CreateLootDtoSource>;
 
-/** The API's answer when no Lootlog of the character takes the loot. */
 const NO_LOOTLOG_ACCEPTS_LOOT_CODE = "NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT";
 
 export class LootEventProcessor {
@@ -272,10 +269,6 @@ export class LootEventProcessor {
       });
   }
 
-  // The API rejects these submissions for every Organization, so sending
-  // them only produces a 400 response. Unknown inputs never reject: the API
-  // stays authoritative for everything the client cannot see. The key lets a
-  // refusal by the API stand for the same loot until it expires.
   private resolveAcceptance(
     npcs: readonly Npc[],
     loots: ReturnType<typeof getLoot>,
@@ -303,8 +296,6 @@ export class LootEventProcessor {
       return skip("no-catching-organization");
     }
 
-    // The API takes the NPC type from the strongest NPC, and the same set of
-    // types always has the same strongest one.
     const npcTypes = new Set(npcs.map((npc) => getNpcType(NpcType, npc)));
 
     const key: LootAcceptanceKey = {

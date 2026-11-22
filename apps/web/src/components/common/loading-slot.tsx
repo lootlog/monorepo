@@ -6,11 +6,6 @@ type LoadingSlotProps = {
   className?: string;
 };
 
-/**
- * Stands in for content that is still loading: the loot slot of the startup
- * screen (`loot-slot.css`), or the theme's own spinner. It stays invisible
- * briefly so a fast response never flashes it.
- */
 export const LoadingSlot = ({
   size = "default",
   className,

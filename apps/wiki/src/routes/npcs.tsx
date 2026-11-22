@@ -46,7 +46,6 @@ type ActiveFilter = {
   clear: Partial<NpcsSearch>;
 };
 
-/** One removable chip per active filter, in the panel's order. */
 const activeFilters = (search: NpcsSearch): ActiveFilter[] => {
   const type = isNpcFilterType(search.types) ? search.types : undefined;
 
@@ -101,7 +100,6 @@ export const Route = createFileRoute("/npcs")({
     links: [canonicalLink("/npcs")],
   }),
   validateSearch: validateNpcsSearch,
-  // A link holds only the filters it sets.
   search: { middlewares: [stripSearchParams(EMPTY_NPCS_SEARCH)] },
 });
 

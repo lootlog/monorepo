@@ -93,7 +93,6 @@ export const NotificationTemplateEditor = (
         }}
       >
         <div className="overflow-visible rounded-xl border border-border/70 bg-background">
-          {/* Variables go in at the caret; the button keeps the editor's selection. */}
           <div
             role="toolbar"
             aria-label={t(

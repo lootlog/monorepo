@@ -1,9 +1,3 @@
-/**
- * Rozdzielenie: heaven parted from earth. A line of light runs across the whole screen
- * through the character; the map above it is lit gold, the map below it lies in shadow.
- * A yin-yang turns under the feet. Its burst is three strokes of an axe: the two halves
- * of the map part, stars show in the gap, and the third stroke slams them shut.
- */
 import { rgba, type Rgb } from "../math";
 import { pixelGlint, plot } from "../paint";
 import { groundRadius } from "../placement";
@@ -18,13 +12,10 @@ const EARTH: Rgb = [16, 10, 6];
 
 const CLAY: Rgb = [200, 130, 70];
 
-/** When the three strokes fall, as fractions of the burst. */
 const STROKES = [0.12, 0.42, 0.74] as const;
 
-/** How wide the gap between the halves stands after each stroke, px. */
 const GAPS = [46, 90, 0] as const;
 
-/** The gap at `burst`: thrown open by each stroke, shut by the last. */
 function gapAt(burst: number): number {
   let gap = 0;
 
@@ -48,7 +39,6 @@ export const sunder: AuraKit = {
     const { bounds } = place.silhouette;
 
     if (!front) {
-      // The yin-yang lying on the ground, turning.
       const rx = Math.round(groundRadius(place) * 1.2);
       const ry = Math.round(rx * 0.4);
       const cx = Math.round(place.feetX);
@@ -67,7 +57,6 @@ export const sunder: AuraKit = {
           const upper = Math.hypot(u, v - 0.5);
           const lower = Math.hypot(u, v + 0.5);
 
-          // Two halves swirling into each other, each with a dot of the other.
           const light =
             upper < 0.16
               ? false
@@ -85,7 +74,6 @@ export const sunder: AuraKit = {
       }
     }
 
-    // Three lights round the body: heaven, earth and the one between.
     const cx = place.x + bounds.x + bounds.w / 2;
 
     for (const [i, color] of [GOLD, CLAY, WHITE].entries()) {
@@ -110,7 +98,6 @@ export const sunder: AuraKit = {
     const gap = burst < 0 ? 0 : gapAt(burst);
 
     if (gap > 1) {
-      // The halves part: the upper one up, the lower one down, stars between them.
       moveRect(scene, 0, 0, width, horizon, 0, -Math.round(gap / 2));
       moveRect(
         scene,
@@ -133,7 +120,6 @@ export const sunder: AuraKit = {
       });
     }
 
-    // Heaven above the line, earth below it.
     const top = horizon - gap / 2;
     const bottom = horizon + gap / 2;
     ctx.globalCompositeOperation = "lighter";
@@ -145,7 +131,6 @@ export const sunder: AuraKit = {
     ctx.fillStyle = rgba(EARTH, 1);
     ctx.fillRect(0, bottom, width, height - bottom);
 
-    // The line of light itself, on both lips of the gap, with a glint running along it.
     ctx.globalCompositeOperation = "lighter";
     ctx.fillStyle = "#ffffff";
 
@@ -159,7 +144,6 @@ export const sunder: AuraKit = {
 
     if (burst < 0) return;
 
-    // Each stroke: the axe's edge across the screen, a flash and a wave.
     for (const at of STROKES) {
       const since = (burst - at) / 0.14;
 

@@ -7,7 +7,6 @@ import {
   writeHeroSightingToCache,
 } from "./hero-sighting-cache";
 
-/** Takes back a sighting added by hand, such as one with a mistyped hero. */
 export const useWithdrawHeroSighting = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -17,7 +16,6 @@ export const useWithdrawHeroSighting = () => {
       onSuccess: (sighting, { pathParams }) =>
         writeHeroSightingToCache(queryClient, [pathParams.guildId], sighting),
       onError: (error, { pathParams }) => {
-        // A detector confirmed it or it closed meanwhile; show what it is now.
         if (error.status === 409) {
           toast.error(t("heroSightings.withdraw.notWithdrawable"));
           void queryClient.invalidateQueries(

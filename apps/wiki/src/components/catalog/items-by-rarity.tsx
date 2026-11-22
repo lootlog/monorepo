@@ -13,13 +13,10 @@ import { t } from "@/i18n/messages";
 
 type ItemsByRarityProps = {
   items: readonly CatalogItemDtoOutput[];
-  /** Makes the rarity headings' ids unique on the page. */
   idPrefix: string;
-  /** Shows how often this boss's kills drop each item, on the boss's page. */
   dropRateOf?: Pick<CatalogDropSourceDtoOutput, "name" | "type">;
 };
 
-/** Items under their rarities, the most valuable first, in the given order within each. */
 export function ItemsByRarity({
   items,
   idPrefix,

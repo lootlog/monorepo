@@ -9,7 +9,6 @@ type ScoringSimulatorManualInputsProps = {
   simulator: ReturnType<typeof useScoringSimulator>;
 };
 
-/** Hand-entered context values for the conditions that need no timeline. */
 export const ScoringSimulatorManualInputs = ({
   simulator,
 }: ScoringSimulatorManualInputsProps) => {

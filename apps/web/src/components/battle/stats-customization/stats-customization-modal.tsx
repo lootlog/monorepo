@@ -92,7 +92,6 @@ export const StatsCustomizationModal = ({
 
   const triggerButton = (
     <Button
-      // In a band heading it sits among the heading's other ghost actions.
       variant={compactTrigger ? "ghost" : "default"}
       size={compactTrigger ? "icon-sm" : "sm"}
       aria-label={triggerLabel}

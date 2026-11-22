@@ -22,7 +22,6 @@ const interpolationEntities = new Map([
   ["&#x3D;", "="],
 ]);
 
-// Read translation markup before decoding names; the result is text, never HTML.
 const readTranslationText = (translation: string): string => {
   let text = "";
   let insideTag = false;

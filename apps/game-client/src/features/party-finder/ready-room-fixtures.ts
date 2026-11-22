@@ -61,10 +61,6 @@ export const readyRoomOrganizerFixture = {
   ownedParticipantIds: [],
 } satisfies PartyReadyRoomOrganizerProjection;
 
-/**
- * Seeds the Ready Room query entry the way a completed synchronization would,
- * so a test can start from a known collection without stubbing the list call.
- */
 export function seedReadyRoomCache(
   client: QueryClient,
   projections: PartyReadyRoomProjection[],

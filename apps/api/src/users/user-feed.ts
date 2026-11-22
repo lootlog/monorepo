@@ -123,8 +123,6 @@ export const buildUserFeedQuery = (
     if (!selection.kill) lootSelection = eq(lootTable.id, selection.lootId);
   }
 
-  // Kill creation assigns occurredAt once before Organization fanout. Hash the
-  // complete timestamp multiset so distinct kills in one minute stay separate.
   const kills = query.$with("kill_groups").as(
     query
       .select({
@@ -196,12 +194,8 @@ export const buildUserFeedQuery = (
       .orderBy(({ occurredAt, entryId }) => [desc(occurredAt), desc(entryId)]),
   );
 
-  // Kills and NPC statistics use the runtime spawn id. A loot reports it
-  // beside its catalog identity; older clients sent only the overloaded id.
   const feedNpcId = sql<number>`coalesce(${lootNpcTable.runtimeNpcId}, ${npcSnapshotTable.npcId})`;
 
-  // The strongest NPC names the loot, decides its NPC filter group and links
-  // it to that NPC's kill.
   const lootNpcs = query.$with("loot_top_npcs").as(
     query
       .selectDistinctOn([lootNpcTable.lootId], {
@@ -225,12 +219,6 @@ export const buildUserFeedQuery = (
       .orderBy(lootNpcTable.lootId, ...strongestNpcFirst),
   );
 
-  // Kill and loot arrive as separate submissions, so a loot joins the
-  // closest kill of its NPC in the same Organization; the Web feed applies the
-  // same window to live entries. Expanding each loot to the kill minutes its
-  // window covers keeps the join on equality instead of scanning every kill
-  // of that NPC.
-  // A window shorter than three minutes touches at most four minute groups.
   const killMinuteOffset = sql.identifier("kill_minute_offset");
 
   const linkedLoots = query.$with("linked_loots").as(
@@ -333,7 +321,6 @@ export const buildUserFeedQuery = (
       name: itemSnapshotTable.name,
       icon: itemSnapshotTable.icon,
       rarity: itemSnapshotTable.rarity,
-      // joinItemStat in SQL: the revision stats, then this instance's stats.
       stat: sql`concat_ws(';', nullif(${itemSnapshotTable.statRaw}, ''), ${lootItemTable.instanceStat})`.as(
         "stat",
       ),
@@ -457,7 +444,6 @@ export const makeUserFeed = (database: typeof ApiDatabase.Service) =>
     } satisfies UserFeedResponse;
   });
 
-/** Publisher reads one group; gateway applies each recipient's source visibility. */
 export const readPublishedFeedEntry = Effect.fn("feed.read-published-entry")(
   function* (
     database: Pick<typeof ApiDatabase.Service, "select" | "execute">,

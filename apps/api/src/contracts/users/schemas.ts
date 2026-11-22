@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the users feature. */
 import * as Schema from "effect/Schema";
 import {
   FiniteNumber,

@@ -21,7 +21,6 @@ import { prefetchPageQueries } from "@/lib/catalog-page-queries";
 import { canonicalLink } from "@/lib/link-preview";
 import { WIKI_NAVIGATION } from "@/navigation/wiki-navigation";
 
-// The sections that search, which the home page introduces.
 const sections = WIKI_NAVIGATION.flatMap(({ descriptionKey, ...section }) =>
   descriptionKey ? [{ ...section, descriptionKey }] : [],
 );

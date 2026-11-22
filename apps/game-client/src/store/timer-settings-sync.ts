@@ -7,7 +7,6 @@ import type {
   UpdateTimerSettingsPayload,
 } from "@lootlog/schema/timer-settings";
 
-/** Timer settings whose documents live under `appearance.timers.*`. */
 const APPEARANCE_FIELDS = [
   "displayConfig",
   "customColors",
@@ -17,11 +16,6 @@ const APPEARANCE_FIELDS = [
   "hiddenDefaultColors",
 ] as const;
 
-/**
- * Record-valued appearance fields. The server applies `set` per leaf path, so
- * a key dropped from one of these maps must be sent as an `unset` path or the
- * stored entry survives the save.
- */
 const APPEARANCE_MAP_FIELDS = [
   "customColors",
   "defaultColorNames",
@@ -33,7 +27,6 @@ type AppearanceMapField = (typeof APPEARANCE_MAP_FIELDS)[number];
 const isAppearanceMapField = (field: string): field is AppearanceMapField =>
   APPEARANCE_MAP_FIELDS.some((mapField) => mapField === field);
 
-/** Timer settings stored in the `timers` domain at user scope. */
 const BEHAVIOR_FIELDS = [
   "generalConfig",
   "alwaysVisibleExpiredTimers",
@@ -42,24 +35,16 @@ const BEHAVIOR_FIELDS = [
   "timersSortOrder",
 ] as const;
 
-/** Settings key used by the timers feature when timers are grouped across guilds. */
 export const GLOBAL_TIMER_SETTINGS_KEY = "global";
 
 const hasTimersQueryKey = (queryKey: readonly unknown[]) =>
   isString(queryKey[0]) && queryKey[0].startsWith("/timers");
 
-/** The timer list API applies always-visible expired timers server-side. */
 const invalidateTimerLists = () =>
   void queryClient.invalidateQueries({
     predicate: ({ queryKey }) => hasTimersQueryKey(queryKey),
   });
 
-/**
- * Writes a timers store payload to the settings documents. Cleared timer
- * colors and entries removed from the colour maps (compared with `previous`)
- * become `unset` paths so the server removes them instead of keeping a stale
- * value; an emptied map is written whole.
- */
 export const syncTimerSettings = (
   payload: UpdateTimerSettingsPayload,
   previous: Pick<UpdateTimerSettingsPayload, AppearanceMapField> = {},
@@ -121,10 +106,6 @@ export const syncTimerSettings = (
   }
 };
 
-/**
- * Hidden and pinned timers are stored per guild document; the grouped
- * ("global") list lives on the user document.
- */
 export const syncGuildTimerList = (
   settingsKey: string,
   field: "hiddenTimers" | "pinnedTimers",
@@ -145,13 +126,6 @@ export const syncGuildTimerList = (
   });
 };
 
-/**
- * Writes one timer list, or removes it when `list` is undefined. Only that
- * list's paths are sent: the server merges per leaf path, so a device holding
- * a stale copy of another list cannot overwrite it or bring it back.
- * Within one list the last write wins: `npcNames` is a single leaf because
- * monster names can contain dots and cannot serve as path keys.
- */
 export const syncCustomList = (id: string, list: CustomTimerList | undefined) =>
   enqueueSettingsPatch(
     list

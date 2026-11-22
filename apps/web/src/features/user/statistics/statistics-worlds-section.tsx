@@ -17,7 +17,6 @@ type StatisticsWorldsSectionProps = {
   search: StatisticsSearch;
 };
 
-/** Kills on each world; picking one narrows the statistics to it. */
 export function StatisticsWorldsSection({
   worlds,
   search,

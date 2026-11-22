@@ -21,7 +21,6 @@ export interface KillQueryCache {
 }
 
 export interface StaleKillQueryCache {
-  /** Serves the value for hours past `freshSeconds` while it refreshes. */
   readonly getOrSetStale: <S extends Schema.ConstraintDecoder<unknown>>(
     key: string,
     schema: S,
@@ -65,8 +64,6 @@ export const visibilityFilter = (
   accessPolicy: AccessPolicy,
   roles: ReadonlyArray<KillQueryRole>,
 ): KillStatsFilter => {
-  // Kills reveal the same NPCs as their loots, so only the recovery authority
-  // bypasses role coverage, as in `canViewLoot`.
   if (accessPolicy.allows(Capability.OWNER)) return {};
 
   if (roles.length === 0) return { npcType: { in: [] } };
@@ -121,11 +118,6 @@ export const cachedKillQuery = <
     options.scopes,
   );
 
-/**
- * Organization kill statistics scan the Organization's whole history, so they
- * are served for `FRESH_SECONDS` and refreshed in the background; kills do not
- * invalidate them.
- */
 const GUILD_KILL_STATS_FRESH_SECONDS = 3_600;
 
 export const cachedStaleKillQuery = <

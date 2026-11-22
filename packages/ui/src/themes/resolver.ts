@@ -105,7 +105,6 @@ export const isThemeId = (value: string): value is ThemeId =>
 const resolveStoredTheme = (value: string | null | undefined): ThemeId =>
   value && isThemeId(value) ? value : DEFAULT_THEME_ID;
 
-/** What the User picked: a built-in theme or one of their own. */
 export type ThemeSelection = ThemeId | CustomThemeSelection;
 
 export const resolveStoredSelection = (
@@ -118,10 +117,6 @@ export const resolveStoredSelection = (
     : resolveStoredTheme(value);
 };
 
-/**
- * The built-in theme a selection paints with: a custom theme's base, the
- * picked theme itself, or the default while a custom theme is unknown.
- */
 export const resolveSelectionTheme = (
   selection: ThemeSelection,
   definition: CustomThemeDefinition | null,
@@ -131,10 +126,6 @@ export const resolveSelectionTheme = (
     ? resolveStoredTheme(selection)
     : DEFAULT_THEME_ID);
 
-/**
- * Puts a theme on the document root: its class, then its tokens, font and
- * radius. Returns the class it applied, a concrete cat for the cat roulette.
- */
 export const applyThemeToDocument = ({
   root,
   theme,
@@ -154,6 +145,5 @@ export const applyThemeToDocument = ({
   return resolvedTheme;
 };
 
-/** The class that previews a theme on one element; the cat roulette shows one cat. */
 export const previewThemeClass = (theme: ThemeId): ResolvedThemeId =>
   theme === "cat-random" ? DEFAULT_CAT_THEME_VARIANT : theme;

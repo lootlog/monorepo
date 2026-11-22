@@ -4,7 +4,6 @@ import type { LootSplitStatus } from "./loot-split-model";
 
 export const LootSplitStatusIcon: FC<{
   status: LootSplitStatus;
-  /** Accepted by the player's Margonem loot filter, not by a click. */
   byLootFilter?: boolean;
 }> = ({ status, byLootFilter = false }) => {
   if (status === "accepted" && byLootFilter)

@@ -17,7 +17,6 @@ type BattlesListFilterToolbarProps = {
   worlds: string[];
 };
 
-/** The battle list filters for the filter bar, after its search and character. */
 export const BattlesListFilterToolbar = ({
   filters,
   onMinLevelChange,

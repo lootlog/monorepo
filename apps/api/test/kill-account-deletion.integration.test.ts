@@ -34,7 +34,6 @@ const deletedUser = `${guildId}-deleted`;
 
 const keptUser = `${guildId}-kept`;
 
-/** Decodes the node-postgres result behind `db.execute`. */
 const decodeResult = Schema.decodeUnknownSync(
   Schema.Struct({
     rows: Schema.Array(Schema.Record(Schema.String, Schema.Unknown)),
@@ -230,8 +229,6 @@ test("account deletion removes personal kills at once and member kills from comp
           .from(table)
           .where(inArray(table.discordUserId, [deletedUser, keptUser]));
 
-      // Deleting the compressed rows would decompress the Organization's
-      // segment, so the request leaves them to the purge job.
       expect(
         yield* db
           .select({

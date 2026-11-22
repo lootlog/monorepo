@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 
-// Only solid lime surfaces participate; other colors never alter the button.
 export function useMatchingBackgroundMask() {
   const overlayRef = useRef<HTMLSpanElement>(null);
 

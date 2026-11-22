@@ -3,12 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 export type RuntimeConfig = {
   apiUrl: string;
   authServiceUrl: string;
-  /** The Web app, which owns account settings and serves theme wallpapers. */
   webAppUrl: string;
-  /**
-   * The catalog behind the edge's sign-in check, for what the browser does
-   * as its User, such as reporting a page. Reads go through `/api/catalog`.
-   */
   catalogApiUrl: string;
 };
 

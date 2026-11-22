@@ -24,9 +24,6 @@ const decodeGatherings = Schema.decodeUnknownSync(
   Schema.Array(PartyGatheringSummarySchema),
 );
 
-// Gatherings follow chat read access, the organizer's send permission, and
-// administration; changes to other areas cannot alter the visible gatherings.
-// Presence in particular is granted after every gateway join.
 export const GATHERING_ACCESS_AREAS: ReadonlySet<string> = new Set([
   "chat",
   "notifications",
@@ -66,10 +63,6 @@ export function useActivePartyGatherings() {
       !!world &&
       areVisibleGuildsResolved,
     staleTime: 0,
-    // The chat window unmounts its gathering bar while closed. The always
-    // mounted character switch keeps the cache live through socket pushes, so
-    // a remounting observer must not refetch; a rejoin still does because
-    // `enabled` turns on again while the data is stale.
     refetchOnMount: false,
   });
 
@@ -90,8 +83,6 @@ export function useActivePartyGatherings() {
 
       if (relevant.length === 0) return;
 
-      // Revoked access must hide rooms at once; a grant keeps the current bar
-      // visible while discovery adds the newly readable rooms.
       if (relevant.every((change) => !change.restricted)) invalidate();
       else
         void queryClient.resetQueries({

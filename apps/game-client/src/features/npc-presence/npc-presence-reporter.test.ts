@@ -66,22 +66,18 @@ describe("NPC presence reporter", () => {
     expect(reports.map((report) => report.npcs.map(({ id }) => id))).toEqual([
       [1],
     ]);
-    // Timers show the map their NPC stands on.
     expect(reports[0]?.map).toBe("Ithan");
 
-    // A moved NPC or a light one appearing changes nothing the gateway stores.
     useNpcsStore.getState().applyNpcBatch({
       upserts: [{ ...runtimeNpc(1, 25), x: 9 }, runtimeNpc(3, 10)],
     });
     await settle();
     expect(send).toHaveBeenCalledTimes(1);
 
-    // Killed: the next report withdraws it.
     useNpcsStore.getState().applyNpcBatch({ removeIds: [1] });
     await settle();
     expect(reports.at(-1)?.npcs).toEqual([]);
 
-    // A reconnected socket starts without reports, so the current map goes out again.
     useNpcsStore.getState().applyNpcBatch({ upserts: [runtimeNpc(4, 30)] });
     configure(false);
     await settle();

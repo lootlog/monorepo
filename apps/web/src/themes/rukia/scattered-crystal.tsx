@@ -1,7 +1,6 @@
 /* oxlint-disable react-doctor/no-scale-from-zero -- These zero-scale elements are intentional point-origin decorative particles and SVG crystals, never text or controls; the rule explicitly permits point-origin illustration effects. */
 import * as m from "framer-motion/m";
 
-// Scattered ice crystal - can be placed anywhere
 export const ScatteredCrystal = ({
   x,
   y,

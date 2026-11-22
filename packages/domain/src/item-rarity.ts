@@ -1,9 +1,5 @@
 import { ItemRarityEnum } from "@lootlog/schema/item-rarity";
 
-/**
- * The rarity an item is shown with: the stored rarities plus `COMMON` for
- * items Margonem gives no rarity.
- */
 export const DisplayItemRarity = {
   ...ItemRarityEnum,
   COMMON: "COMMON",
@@ -12,7 +8,6 @@ export const DisplayItemRarity = {
 export type DisplayItemRarity =
   (typeof DisplayItemRarity)[keyof typeof DisplayItemRarity];
 
-/** Rarities from the most to the least valuable, as lists order items. */
 export const ITEM_RARITIES_BY_VALUE = [
   DisplayItemRarity.LEGENDARY,
   DisplayItemRarity.HEROIC,

@@ -1,9 +1,3 @@
-/**
- * Czterdzieści i cztery: cats own this map. A cat sits by the character's feet, glowing
- * paw prints walk over the whole map in four trails of eleven, and cats sit in the
- * bottom corners of the screen, tails swaying. Its burst is a paw as big as the screen
- * raking four glowing scars across the map, and then forty-four cats run across it.
- */
 import { sprite } from "../decor";
 import { mulberry32, rgba, type Rgb } from "../math";
 import { wash } from "../sky";
@@ -17,7 +11,6 @@ const FUR: Rgb = [22, 18, 28];
 
 const CLAW: Rgb = [255, 250, 230];
 
-/** Trails of prints over the map, and prints in each: forty-four in all. */
 const TRAILS = 4;
 
 const PRINTS = 11;
@@ -28,7 +21,6 @@ const CAT_SIT = ["#   #", "#####", "#o#o#", "#####", " ###", " ###", "#####"];
 
 const CAT_BLINK = ["#   #", "#####", "#####", "#####", " ###", " ###", "#####"];
 
-/** One paw print at (`x`, `y`) heading along `angle`: a pad and three toes. */
 function print(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -48,7 +40,6 @@ function print(
     );
 }
 
-/** A cat sitting with its back to us at (`x`, `y`), `size` px tall, its tail swung by `sway`. */
 function sitter(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -89,7 +80,6 @@ export const fortyfour: AuraKit = {
 
   pieces(b, place, front) {
     if (!front) return;
-    // The cat by the feet, on whichever side the walk leaves behind, blinking.
     const side = b.lag.x > 1 ? 1 : -1;
     sprite(
       b.dim(),
@@ -105,7 +95,6 @@ export const fortyfour: AuraKit = {
     const { ctx, width, height, now, view, burst, mid } = scene;
     wash(scene, DUSK, 0.22);
 
-    // Four trails of eleven prints walking over the map, the oldest prints fading.
     ctx.globalCompositeOperation = "lighter";
     ctx.fillStyle = rgba(mid, 1);
 
@@ -131,7 +120,6 @@ export const fortyfour: AuraKit = {
       }
     }
 
-    // A cat in each bottom corner, its tail swaying.
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = 0.9;
     ctx.fillStyle = rgba(FUR, 1);
@@ -140,7 +128,6 @@ export const fortyfour: AuraKit = {
     sitter(ctx, width - 70, height + 6, 84, Math.sin(now * 1.1 + 2));
 
     if (burst < 0) return;
-    // The paw: four claws raking down across the screen, their scars glowing after.
     const rake = span(burst, 0, 0.3);
     const scar = 1 - span(burst, 0.3, 0.8);
     ctx.globalCompositeOperation = "lighter";
@@ -171,7 +158,6 @@ export const fortyfour: AuraKit = {
       }
     }
 
-    // Forty-four cats running across, each at its own pace.
     const run = span(burst, 0.3, 1);
 
     if (run <= 0) return;
@@ -184,7 +170,6 @@ export const fortyfour: AuraKit = {
       const cx = -60 + run * (width + 240) * (0.7 + rng() * 0.7) - rng() * 160;
       const cy = Math.round(rng() * height);
       const leap = Math.round(Math.abs(Math.sin(now * 14 + i)) * 4);
-      // Body, head, ears, tail and legs flung out in the leap.
       ctx.fillRect(cx, cy - leap, 14, 5);
       ctx.fillRect(cx + 12, cy - 4 - leap, 6, 6);
       ctx.fillRect(cx + 12, cy - 6 - leap, 2, 2);

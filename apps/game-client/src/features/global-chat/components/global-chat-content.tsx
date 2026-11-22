@@ -5,7 +5,6 @@ import { NoLootlogEmptyState } from "@/components/no-lootlog-empty-state";
 import { useGlobalChatChannel } from "../hooks/use-global-chat-channel";
 import { GlobalChatChannelView } from "./global-chat-channel-view";
 
-/** Mounted only while the window is open, so it fetches history only then. */
 export const GlobalChatContent = () => {
   const { t } = useTranslation("globalChat");
 
@@ -26,7 +25,6 @@ export const GlobalChatContent = () => {
       retryLabel={t("actions.retry", { ns: "common" })}
     >
       {channel !== undefined && worlds ? (
-        // A new channel starts with its own history and scroll position.
         <GlobalChatChannelView
           key={channel}
           channel={channel}

@@ -74,11 +74,6 @@ export const prefetchRouteInfiniteQuery = <
 
 const ROUTE_PREFETCH_WAIT_MS = 1_000;
 
-/**
- * Lets a loader hold its navigation until the page's first data has arrived,
- * so the page lands complete instead of filling in piece by piece. A prefetch
- * that fails or outlasts the wait is left to the page, which loads it itself.
- */
 export const settleRoutePrefetches = (prefetches: Promise<unknown>[]) =>
   new Promise<void>((resolve) => {
     const timer = setTimeout(resolve, ROUTE_PREFETCH_WAIT_MS);
