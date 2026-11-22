@@ -5,6 +5,7 @@ import { canReadPresence } from "@/lib/online-players-presence";
 import { getSocket, type AccessUpdate } from "@/lib/socket";
 import {
   AIR_TAG_STANDBY_TAKEOVER_MS,
+  isAirTagScopeUpdateEvent,
   type AirTagObservationBatch,
   type AirTagScopeUpdateEvent,
   type AirTagSubscriptionPayload,
@@ -147,6 +148,14 @@ export class AirTagRuntime {
 
   handleScopeUpdate(event: AirTagScopeUpdateEvent): void {
     airTagReceiveController.handleScopeUpdate(event);
+
+    if (
+      isAirTagScopeUpdateEvent(event) &&
+      event.unreportedTargetIds?.length &&
+      event.mapId === this.getCurrentMapId() &&
+      event.world === useGameStore.getState().game?.world
+    )
+      airTagObservationController.takeOver(event.unreportedTargetIds);
   }
 
   shutdown(): void {

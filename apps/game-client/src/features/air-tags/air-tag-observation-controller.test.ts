@@ -337,10 +337,27 @@ describe("AirTagObservationController", () => {
       ),
     ).not.toContain("123");
 
+    // The gateway says the reporter stopped watching: no waiting for silence.
+    publisher.mockClear();
+    controller.takeOver(["123", "gone"]);
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    expect(publisher).toHaveBeenCalledWith({
+      expectedMapId: 42,
+      observations: [expect.objectContaining({ targetId: "123", x: 20 })],
+    });
+
+    const offer = publisher.mock.calls[0]?.[0];
+
+    if (!offer) throw new Error("Expected a batch");
+    // Another standby was quicker.
+    controller.applyAcknowledgement(offer, ["123"]);
+
     // The reporter left or lost its connection: nothing arrives any more.
     reportedByOthers = false;
     publisher.mockClear();
-    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS * 3);
+    vi.advanceTimersByTime(
+      AIR_TAG_HEARTBEAT_INTERVAL_MS + AIR_TAG_BATCH_INTERVAL_MS,
+    );
     expect(
       publisher.mock.calls.flatMap(([batch]) => batch.observations),
     ).toContainEqual(expect.objectContaining({ targetId: "123", x: 20 }));

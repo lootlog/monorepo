@@ -50,6 +50,7 @@ import {
   readThreatMapIds,
   recordThreatMap,
   registerReplicaInterest,
+  releaseReportedTargets,
   type MergeResult,
   type ScriptStore,
   type ThreatScope,
@@ -282,6 +283,8 @@ export class AirTagService {
             socket.data.confidence === "verified" &&
             context.mapName.length <= AIR_TAG_MAX_MAP_NAME_LENGTH;
 
+          socket.data.airTagReported = true;
+
           // Scopes are independent: a failed merge does not stop the others.
           // Forking costs more than a merge, and most observers share one scope.
           return Effect.forEach(
@@ -367,7 +370,11 @@ export class AirTagService {
           Effect.sync(() => this.scheduleThreatFlush(scope, pendingMs)),
         );
 
-      if (result.targets.length > 0 || result.removed.length > 0)
+      if (
+        result.targets.length > 0 ||
+        result.removed.length > 0 ||
+        result.unreported.length > 0
+      )
         steps.push(
           this.publishScopeUpdate(scope, observer, result.remoteRecipients, {
             guildId: scope.guildId,
@@ -378,6 +385,9 @@ export class AirTagService {
             revision: result.revision,
             targets: result.targets,
             removedTargetIds: result.removed,
+            ...(result.unreported.length > 0 && {
+              unreportedTargetIds: result.unreported,
+            }),
           }),
         );
     }
@@ -475,9 +485,52 @@ export class AirTagService {
   }
 
   clearSubscription(socket: GatewaySocket): void {
+    // The connection keeps running; its old map's standbys should not wait for it.
+    runLogEffect(this.release(socket));
+
     for (const scope of socket.data.airTagScopes)
       this.hub.unsubscribe(socket, scope.subscription);
     socket.data.airTagScopes = [];
+  }
+
+  /**
+   * Gives up the targets this connection reports, on a map change or a
+   * disconnect, and tells each map so a standby takes them over at once
+   * instead of after the reporter's lease. Costs nothing for a connection
+   * that reported no one, which is most of them.
+   */
+  release(socket: GatewaySocket): Effect.Effect<void> {
+    if (!socket.data.airTagReported) return Effect.void;
+    socket.data.airTagReported = false;
+
+    const observer = socket.data.connectionId;
+
+    return Effect.forEach(
+      socket.data.airTagScopes,
+      (scope) =>
+        releaseReportedTargets(this.redis, scope, observer).pipe(
+          Effect.flatMap((released) =>
+            released
+              ? this.publishScopeUpdate(scope, observer, true, {
+                  guildId: scope.guildId,
+                  world: scope.world,
+                  mapId: scope.mapId,
+                  epochId: released.epochId,
+                  epochStartedAt: released.epochStartedAt,
+                  revision: released.revision,
+                  targets: [],
+                  removedTargetIds: [],
+                  unreportedTargetIds: released.released,
+                })
+              : Effect.void,
+          ),
+          // The lease still hands the targets over, only later.
+          Effect.catch((error) =>
+            warn("Failed to release air tag targets", error),
+          ),
+        ),
+      { concurrency: "unbounded", discard: true },
+    );
   }
 
   private serialize<A, E>(

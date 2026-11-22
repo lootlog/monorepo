@@ -240,6 +240,8 @@ local updates={}
 local removed={}
 -- Sightings whose target another observer reports; this one may fall silent.
 local standby={}
+-- Targets this observer reported and no longer watches, which stay on the map.
+local unreported={}
 local threatRemoved=false
 -- Caller-deduplicated ids, and a departure never shares a target with a
 -- sighting, so one read covers both loops.
@@ -263,8 +265,9 @@ for _,departure in ipairs(departures) do
     if observers[observer] ~= nil then
       observers[observer]=nil
       if departure.reason == "left-map" then target.departed=true end
+      local wasReporter=target.reporter == observer
       -- The next observer to report the target takes it over at once.
-      if target.reporter == observer then target.reporter=nil end
+      if wasReporter then target.reporter=nil end
       if target.departed == true and next(observers) == nil then
         drops[#drops+1]=departure.targetId
         stored[departure.targetId]=nil
@@ -275,6 +278,7 @@ for _,departure in ipairs(departures) do
       else
         target.seenBy=observers
         stage(departure.targetId,cjson.encode(target))
+        if wasReporter then unreported[#unreported+1]=departure.targetId end
       end
     end
   end
@@ -389,8 +393,31 @@ local function othersInterested(key)
   local mine=redis.call("ZSCORE",key,instance)
   return mine == false or tonumber(mine) <= now
 end
-local remoteRecipients=(#updates > 0 or #removed > 0) and (othersInterested(KEYS[6]) or othersInterested(KEYS[7]))
-return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,standby=standby,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=remoteRecipients}),{"targets","removed","standby","enemies"})
+local remoteRecipients=(#updates > 0 or #removed > 0 or #unreported > 0) and (othersInterested(KEYS[6]) or othersInterested(KEYS[7]))
+return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,standby=standby,unreported=unreported,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=remoteRecipients}),{"targets","removed","standby","unreported","enemies"})
+`;
+
+// Gives up every target one connection reports on a map, when it stops
+// following the map without a departure for each: a map change or a disconnect.
+const RELEASE_SCRIPT = `
+local raw=redis.call("GET",KEYS[2])
+if raw == false then return "" end
+local rows=redis.call("HGETALL",KEYS[1])
+local released={}
+local writes={}
+for i=1,#rows,2 do
+  local target=cjson.decode(rows[i+1])
+  if target.reporter == ARGV[1] then
+    target.reporter=nil
+    if target.seenBy ~= nil then target.seenBy[ARGV[1]]=nil end
+    writes[#writes+1]=rows[i]; writes[#writes+1]=cjson.encode(target)
+    released[#released+1]=rows[i]
+  end
+end
+if #released == 0 then return "" end
+redis.call("HSET",KEYS[1],unpack(writes))
+local metadata=cjson.decode(raw)
+return cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,released=released})
 `;
 
 const SNAPSHOT_SCRIPT = `${LUA_COMMON}
@@ -455,6 +482,8 @@ export interface MergeResult {
   removed: string[];
   /** Sightings of the batch another observer reports in this scope. */
   standby: string[];
+  /** Targets the observer was the reporter of and stopped watching. */
+  unreported: string[];
   threat?: { revision: number; enemies: AirTagMapThreatEnemy[] };
   threatPendingMs?: number;
   remoteRecipients: boolean;
@@ -469,6 +498,7 @@ const MergeResultJson = Schema.fromJsonString(
     targets: Schema.Array(AirTagTargetSchema),
     removed: Schema.Array(Schema.String),
     standby: Schema.Array(Schema.String),
+    unreported: Schema.Array(Schema.String),
     threat: Schema.optionalKey(
       Schema.Struct({
         revision: Schema.Number,
@@ -674,12 +704,43 @@ export const mergeObservations = (
       targets: [...parsed.targets],
       removed: [...parsed.removed],
       standby: [...parsed.standby],
+      unreported: [...parsed.unreported],
       ...(threat && {
         threat: { revision: threat.revision, enemies: [...threat.enemies] },
       }),
     };
   });
 };
+
+const ReleaseResultJson = Schema.fromJsonString(
+  Schema.Struct({
+    epochId: Schema.String,
+    epochStartedAt: Schema.Number,
+    revision: Schema.Number,
+    released: Schema.Array(Schema.String),
+  }),
+);
+
+/**
+ * Releases the targets `observer` reports in the scope; undefined when it
+ * reported none. The scope's revision is unchanged: no target changed.
+ */
+export const releaseReportedTargets = (
+  redis: ScriptStore,
+  scope: AirTagScope,
+  observer: string,
+) =>
+  storeCall("air-tag.release", async () => {
+    const [targets, , metadata] = scopeKeys(scope);
+
+    const result = String(
+      await redis.command.eval(RELEASE_SCRIPT, 2, targets, metadata, observer),
+    );
+
+    return result === ""
+      ? undefined
+      : Schema.decodeUnknownSync(ReleaseResultJson)(result);
+  });
 
 /** The scope's targets, registering this replica for its later updates. */
 export const loadScopeSnapshot = (

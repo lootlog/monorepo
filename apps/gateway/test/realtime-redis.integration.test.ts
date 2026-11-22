@@ -2936,16 +2936,25 @@ describe("realtime Dragonfly integration", () => {
       observations: [],
       departures: [{ targetId: "lurker", reason: "left-map" }],
     });
-    await waitFor(() => scopeUpdates().length === 2);
+    await waitFor(() => scopeUpdates().length === 3);
     await waitFor(() => mapThreats().length === 2);
     await Bun.sleep(100);
+    // The first observer reported both and stopped watching while they stayed
+    // on the map, so the map hears they need a reporter.
     expect(scopeUpdates()[1]).toMatchObject({
+      targets: [],
+      removedTargetIds: [],
+      unreportedTargetIds: ["wanderer", "lurker"],
+    });
+    expect(scopeUpdates()[2]).toMatchObject({
       targets: [],
       removedTargetIds: ["wanderer"],
     });
 
     // Revisions increase, so recipients can drop a frame that is not newer.
-    const [sighted, departed] = scopeUpdates().map(({ revision }) => revision);
+    const [sighted, , departed] = scopeUpdates().map(
+      ({ revision }) => revision,
+    );
 
     expect(departed).toBeGreaterThan(sighted ?? Number.POSITIVE_INFINITY);
     // The last clan enemy left: an empty list clears the timers at once.
@@ -3030,9 +3039,41 @@ describe("realtime Dragonfly integration", () => {
       standbyTargetIds: [clanEnemy.targetId],
     });
 
-    // The new reporter vanishes without a word; the lease runs out.
+    // Roles have swapped. The new reporter walks to another map without a
+    // departure, and the observer left behind is told at once.
+    const [walker, remaining] = [standby, reporter];
+
+    remaining.frames.length = 0;
+    await Effect.runPromise(
+      sourceAirTags.updateSubscription(walker.socket, {
+        requestId: "walker-leaves",
+        enabled: false,
+      }),
+    );
+    await waitFor(() =>
+      eventsOfType(remaining.frames, "air-tag.scope-updated").some(
+        ({ data }) =>
+          data.unreportedTargetIds?.includes(clanEnemy.targetId) === true,
+      ),
+    );
+    expect(await report(remaining, sighting)).not.toHaveProperty(
+      "standbyTargetIds",
+    );
+
+    await Effect.runPromise(
+      sourceAirTags.updateSubscription(walker.socket, {
+        requestId: "walker-returns",
+        enabled: true,
+        expectedMapId: 11,
+      }),
+    );
+    expect(await report(walker, sighting)).toMatchObject({
+      standbyTargetIds: [clanEnemy.targetId],
+    });
+
+    // The reporter vanishes without a word; the lease runs out.
     await Bun.sleep(AIR_TAG_REPORTER_LEASE_MS + 100);
-    expect(await report(reporter, sighting)).not.toHaveProperty(
+    expect(await report(walker, sighting)).not.toHaveProperty(
       "standbyTargetIds",
     );
   }, 30_000);

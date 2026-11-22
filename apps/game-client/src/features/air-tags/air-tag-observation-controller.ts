@@ -381,6 +381,23 @@ export class AirTagObservationController {
     }
   }
 
+  /**
+   * The gateway said these targets lost their reporter. This observer offers
+   * each one it still sees; the gateway keeps the first offer.
+   */
+  takeOver(targetIds: readonly string[]): void {
+    if (!this.active) return;
+    const now = this.now();
+
+    for (const targetId of targetIds) {
+      const target = this.targets.get(targetId);
+
+      if (!target) continue;
+      target.standby = false;
+      this.queue(target, now);
+    }
+  }
+
   /** Stops reporting a player who is no longer an enemy, such as after a clan war ends. */
   private withdraw(target: LocalAirTagTarget): void {
     this.pending.delete(target.targetId);

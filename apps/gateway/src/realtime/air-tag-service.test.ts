@@ -64,6 +64,7 @@ describe("AirTagService map threats", () => {
         targets: [],
         removed: [],
         standby: [],
+        unreported: [],
         threat: threatEvent,
         remoteRecipients: true,
       }),

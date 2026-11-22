@@ -23,9 +23,10 @@ export const AIR_TAG_MAX_BATCH_SIZE = 50;
 export const AIR_TAG_REPORTER_LEASE_MS = 6_000;
 
 /**
- * A standby reports a target again once nobody has for this long. Longer than
- * the lease, so the gateway hands the target over, and short enough that the
- * sighting lands before the target expires.
+ * A standby reports a target again once nobody has for this long: the
+ * fallback for a reporter that vanished without the gateway noticing. Longer
+ * than the lease, so the gateway hands the target over, and short enough that
+ * the sighting lands before the target expires.
  */
 export const AIR_TAG_STANDBY_TAKEOVER_MS = 7_000;
 
@@ -115,6 +116,11 @@ export interface AirTagScopeUpdateEvent {
   targets: readonly AirTagTarget[];
   /** Targets every observer lost sight of after one saw them leave the map. */
   removedTargetIds: readonly string[];
+  /**
+   * Targets whose reporter stopped watching: it lost sight of them, changed
+   * map or disconnected. A standby that still sees one reports it at once.
+   */
+  unreportedTargetIds?: readonly string[];
 }
 
 export interface AirTagMapThreatEnemy {
@@ -248,6 +254,7 @@ export const AirTagScopeUpdateEventSchema = Schema.Struct({
   ...AirTagScopeIdentityFields,
   targets: Schema.Array(AirTagTargetSchema),
   removedTargetIds: Schema.Array(ShortString),
+  unreportedTargetIds: Schema.optionalKey(Schema.Array(ShortString)),
 });
 
 export const AirTagMapThreatEventSchema = Schema.Struct({
