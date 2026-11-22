@@ -39,7 +39,7 @@ test("a Sunday closes its week and the next Monday opens a new one", () => {
   ).toEqual([
     {
       weekStart: "2026-11-16",
-      entries: ["highlight", "feature", "tuesday", "monday"],
+      entries: ["tuesday", "highlight", "feature", "monday"],
       fixes: ["fix"],
     },
     { weekStart: "2026-11-09", entries: ["sunday"], fixes: [] },

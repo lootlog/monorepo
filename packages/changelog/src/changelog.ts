@@ -43,7 +43,7 @@ export type ChangelogItem = ChangelogEntry & { id: string };
 export type ChangelogWeek = {
   /** The Monday the week starts on, as `YYYY-MM-DD`. */
   weekStart: string;
-  /** Highlights, then features, then improvements, each newest first. */
+  /** Features and improvements, newest first. */
   entries: ChangelogItem[];
   fixes: ChangelogItem[];
 };
@@ -125,22 +125,25 @@ export const filterChangelog = (
   );
 };
 
-// What a player would not find alone leads, then what is new, then what got
-// better; the sort is stable, so each group stays newest first.
-const getWeekRank = (item: ChangelogItem) => {
+// Among the changes of one day, what a player would not find alone leads,
+// then what is new, then what got better.
+const getDayRank = (item: ChangelogItem) => {
   if (item.highlight) return 0;
 
   return item.type === "feature" ? 1 : 2;
 };
 
-/** Weeks from the newest, each led by its highlights and features. */
+/** Weeks from the newest, each with its changes from the newest. */
 export const groupChangelogByWeek = (
   items: readonly ChangelogItem[],
 ): ChangelogWeek[] => {
   const weeks = new Map<string, ChangelogWeek>();
 
   const newestFirst = [...items].sort(
-    (a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id),
+    (a, b) =>
+      b.date.localeCompare(a.date) ||
+      getDayRank(a) - getDayRank(b) ||
+      a.id.localeCompare(b.id),
   );
 
   for (const item of newestFirst) {
@@ -151,10 +154,7 @@ export const groupChangelogByWeek = (
     weeks.set(weekStart, week);
   }
 
-  return [...weeks.values()].map((week) => ({
-    ...week,
-    entries: week.entries.sort((a, b) => getWeekRank(a) - getWeekRank(b)),
-  }));
+  return [...weeks.values()];
 };
 
 const getHighlightIds = (items: readonly ChangelogItem[]) =>
