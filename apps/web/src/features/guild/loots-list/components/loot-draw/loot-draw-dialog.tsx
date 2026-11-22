@@ -4,9 +4,9 @@ import type { Item, Loot } from "@/lib/loots/loot-types";
 import { LootDrawDialogBody } from "./loot-draw-dialog-body";
 
 /**
- * The draw of one item. Anyone who sees the loot may draw it unless the
- * Organization excludes its NPC type; only loot managers void a result. It stays mounted while closed, so it animates in
- * and out.
+ * The draw of one item. Loot managers draw it unless the Organization
+ * excludes its NPC type, and void its result; everyone who sees the loot sees
+ * the result. It stays mounted while closed, so it animates in and out.
  */
 export const LootDrawDialog = ({
   loot,

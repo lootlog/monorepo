@@ -172,14 +172,13 @@ const getLootDraws = Effect.fn("loots.getDraws")(function* (
   return draws;
 });
 
-// Anyone who may read a loot may draw its items; the first standing result
-// wins. Voiding overrules a result, as managing loots does.
+// Drawing and voiding decide who receives an item, as managing loots does.
 export const createLootDraw = Effect.fn("loots.createDraw")(function* (
   guildId: string | undefined,
   lootId: number,
   payload: CreateLootDrawRequest,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_ARCHIVE);
 
   const draw = yield* data((service) =>
     service.createDraw(caller, lootId, payload),
