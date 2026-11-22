@@ -9,8 +9,7 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import { npcTypeEnum } from "./loot.schema.js";
-import { guildTable, memberTable } from "./organization.schema.js";
+import { guildTable, memberTable, npcTypeEnum } from "./organization.schema.js";
 
 const killTime = (name: string) =>
   timestamp(name, { mode: "date", precision: 3, withTimezone: true });

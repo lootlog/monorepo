@@ -1,4 +1,5 @@
 import { Effect, Predicate } from "effect";
+import { DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES } from "@lootlog/domain/loot-draw";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import type { RedisError } from "effect/persistence/Redis";
@@ -80,7 +81,13 @@ export const readGuildConfigurationCache = (
 ) =>
   readCachedGuild(cache, idOrVanityUrl, decodeGuildObject).pipe(
     Effect.map(
-      (guild) => guild && { ...guild, ...resolveReservationSettings(guild) },
+      (guild) =>
+        guild && {
+          // Entries cached before the column existed lack it.
+          lootDrawExcludedNpcTypes: [...DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES],
+          ...guild,
+          ...resolveReservationSettings(guild),
+        },
     ),
   );
 

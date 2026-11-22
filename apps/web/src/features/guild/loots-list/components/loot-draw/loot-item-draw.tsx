@@ -5,11 +5,14 @@ import { useTranslation } from "react-i18next";
 import { useCanManageLoots } from "@/features/guild/loots-list/use-can-manage-loots";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import { LootDrawDialog } from "./loot-draw-dialog";
+import { useLootDrawRules } from "./use-loot-draw-rules";
 
 /**
  * A drawable item's tile on the loot list, with its draw at hand: a trophy
  * and the standing winner under the tile, or a die that opens the wheel. The
  * badge takes the bottom-left corner; a stack's count holds the bottom-right.
+ * An item the Organization does not draw shows only its tile, unless its
+ * draw is open: voiding an excluded item's result keeps the dialog on screen.
  */
 export const LootItemDraw = ({
   loot,
@@ -24,12 +27,15 @@ export const LootItemDraw = ({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const canVoid = useCanManageLoots();
+  const { canDraw, showsDraw } = useLootDrawRules();
 
   const winner = loot.standingDraws.find(
     ({ itemHid }) => itemHid === item.hid,
   )?.winner;
 
   const openDraw = () => setOpen(true);
+
+  if (!open && !showsDraw(loot, item)) return children;
 
   return (
     <div className="flex flex-col items-center gap-0.5">
@@ -91,6 +97,7 @@ export const LootItemDraw = ({
         loot={loot}
         item={item}
         canVoid={canVoid}
+        canDraw={canDraw(loot, item)}
         open={open}
         onOpenChange={setOpen}
       />

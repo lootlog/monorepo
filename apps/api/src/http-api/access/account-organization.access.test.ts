@@ -1,3 +1,4 @@
+import { DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES } from "@lootlog/domain/loot-draw";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
@@ -70,6 +71,7 @@ const guild = {
   reservationTimeGranularityMinutes: 15,
   reservationMaxAdvanceDays: 14,
   reservationActiveLimitPerSpot: 1,
+  lootDrawExcludedNpcTypes: [...DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES],
 };
 
 const guildRow = createGuildFixture({

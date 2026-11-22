@@ -219,6 +219,7 @@
     "draw": {
       "open": "Losowanie",
       "openFor": "Losowanie: {{item}}",
+      "disabled": "Losowanie legend z tego typu potworów jest wyłączone w ustawieniach Lootloga.",
       "title": "Losowanie przedmiotu",
       "entrants": "Uczestnicy ({{count}})",
       "winnerSource": "Złapał w grze",

@@ -32,6 +32,7 @@ export const createTestGuild = (
   reservationTimeGranularityMinutes: 15,
   reservationMaxAdvanceDays: 7,
   reservationActiveLimitPerSpot: 1,
+  lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
 });
 
 export const createGuildPreferencesTest = () => {

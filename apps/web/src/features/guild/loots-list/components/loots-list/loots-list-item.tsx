@@ -10,8 +10,8 @@ import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
 import { LootItemStackLootIdContext } from "./loot-item-stack-context";
 import { LegendarySparks } from "./legendary-sparks";
-import { isLootDrawItem } from "@lootlog/domain/loot-draw";
 import { LootItemDraw } from "@/features/guild/loots-list/components/loot-draw/loot-item-draw";
+import { isLootDrawItem } from "@lootlog/domain/loot-draw";
 
 type Props = {
   loot: Loot;
@@ -53,7 +53,9 @@ export const LootsListItem = ({
           loot={loot}
           headerActions=<LootHeaderActions loot={loot} />
           decorateItem={(item, tile) =>
-            isLootDrawItem(item) ? (
+            // Any item a draw can cover; the tile applies the Organization's
+            // exclusions itself, so an open draw outlives them.
+            isLootDrawItem(loot, item, []) ? (
               <LootItemDraw loot={loot} item={item}>
                 {tile}
               </LootItemDraw>

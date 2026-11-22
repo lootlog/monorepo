@@ -4,20 +4,22 @@ import type { Item, Loot } from "@/lib/loots/loot-types";
 import { LootDrawDialogBody } from "./loot-draw-dialog-body";
 
 /**
- * The draw of one item. Anyone who sees the loot may draw it; only loot
- * managers void a result. It stays mounted while closed, so it animates in
+ * The draw of one item. Anyone who sees the loot may draw it unless the
+ * Organization excludes its NPC type; only loot managers void a result. It stays mounted while closed, so it animates in
  * and out.
  */
 export const LootDrawDialog = ({
   loot,
   item,
   canVoid,
+  canDraw,
   open,
   onOpenChange,
 }: {
   loot: Loot;
   item: Item;
   canVoid: boolean;
+  canDraw: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) => {
@@ -35,6 +37,7 @@ export const LootDrawDialog = ({
           loot={loot}
           item={item}
           canVoid={canVoid}
+          canDraw={canDraw}
           bodyRef={bodyRef}
         />
       </DialogContent>

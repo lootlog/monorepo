@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import type { LootDrawEntrantInput } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
+import { DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES } from "@lootlog/domain/loot-draw";
 import { buildLootDrawEntrants } from "#src/loots/loot-draw-entrants";
 
 const player = (
@@ -17,6 +18,23 @@ const player = (
   characterId: Number(id),
   accountId: Number(id) * 10,
   hpp: null,
+});
+
+const draw = (
+  loot: Parameters<typeof buildLootDrawEntrants>[0],
+  request: Parameters<typeof buildLootDrawEntrants>[1],
+  excludedNpcTypes: readonly string[] = DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES,
+) => buildLootDrawEntrants(loot, request, excludedNpcTypes);
+
+const npc = (type: "ELITE3" | "HERO" | "TITAN") => ({
+  id: 1,
+  name: "Boss",
+  wt: null,
+  lvl: 280,
+  prof: null,
+  icon: null,
+  type,
+  margonemType: null,
 });
 
 const wand = {
@@ -39,6 +57,7 @@ const loot = {
     player("3", "Xabz", "WARRIOR"),
   ],
   lootShare: { "1": ["wand-hid"] },
+  npcs: [npc("ELITE3")],
 };
 
 const winner: LootDrawEntrantInput = {
@@ -75,7 +94,7 @@ const request = (
 
 describe("buildLootDrawEntrants", () => {
   it("keeps the manager's tickets and stores the winner as the loot records them", () => {
-    const result = buildLootDrawEntrants(
+    const result = draw(
       loot,
       request([
         { ...winner, name: "rozdaje kolby", characterId: null, tickets: 5 },
@@ -97,7 +116,7 @@ describe("buildLootDrawEntrants", () => {
   });
 
   it("refuses a WINNER who did not catch the item", () => {
-    const result = buildLootDrawEntrants(
+    const result = draw(
       loot,
       request([{ ...winner, name: "Xabz", characterId: 3 }, outsider()]),
     );
@@ -106,7 +125,7 @@ describe("buildLootDrawEntrants", () => {
   });
 
   it("refuses a party member entered again as an outsider, even by name", () => {
-    const result = buildLootDrawEntrants(
+    const result = draw(
       loot,
       request([
         winner,
@@ -122,7 +141,7 @@ describe("buildLootDrawEntrants", () => {
   });
 
   it("draws within the party alone, storing each member as the loot records them", () => {
-    const result = buildLootDrawEntrants(
+    const result = draw(
       loot,
       request([
         { ...winner, tickets: 1 },
@@ -152,21 +171,15 @@ describe("buildLootDrawEntrants", () => {
 
   it("refuses a PARTY entrant who was not in the party, or is the winner again", () => {
     expect(
-      buildLootDrawEntrants(
-        loot,
-        request([winner, outsider({ source: "PARTY" })]),
-      ),
+      draw(loot, request([winner, outsider({ source: "PARTY" })])),
     ).toEqual({ error: ErrorKey.LOOT_DRAW_PARTY_MEMBER_NOT_FOUND });
     expect(
-      buildLootDrawEntrants(
-        loot,
-        request([winner, { ...winner, source: "PARTY", tickets: 1 }]),
-      ),
+      draw(loot, request([winner, { ...winner, source: "PARTY", tickets: 1 }])),
     ).toEqual({ error: ErrorKey.LOOT_DRAW_DUPLICATE_OUTSIDER });
   });
 
   it("refuses a party member of another profession", () => {
-    const result = buildLootDrawEntrants(
+    const result = draw(
       loot,
       request([
         winner,
@@ -179,18 +192,15 @@ describe("buildLootDrawEntrants", () => {
 
   it("refuses an outsider of another profession, whatever the level", () => {
     expect(
-      buildLootDrawEntrants(
-        loot,
-        request([winner, outsider({ prof: "WARRIOR" })]),
-      ),
+      draw(loot, request([winner, outsider({ prof: "WARRIOR" })])),
     ).toEqual({ error: ErrorKey.LOOT_DRAW_OUTSIDER_INELIGIBLE });
     expect(
-      buildLootDrawEntrants(loot, request([winner, outsider({ lvl: 120 })])),
+      draw(loot, request([winner, outsider({ lvl: 120 })])),
     ).toHaveProperty("entrants");
   });
 
   it("refuses the same outsider twice", () => {
-    const result = buildLootDrawEntrants(
+    const result = draw(
       loot,
       request([
         winner,
@@ -203,16 +213,13 @@ describe("buildLootDrawEntrants", () => {
   });
 
   it("refuses a ticket order that does not hold each entrant's tickets", () => {
-    const result = buildLootDrawEntrants(
-      loot,
-      request([winner, outsider()], [0, 1, 1]),
-    );
+    const result = draw(loot, request([winner, outsider()], [0, 1, 1]));
 
     expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_INVALID_TICKET_ORDER });
   });
 
   it("refuses an item that is not legendary", () => {
-    const result = buildLootDrawEntrants(
+    const result = draw(
       { ...loot, items: [{ ...wand, rarity: "HEROIC" }] },
       request([winner, outsider()]),
     );
@@ -220,8 +227,23 @@ describe("buildLootDrawEntrants", () => {
     expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_ITEM_NOT_DRAWABLE });
   });
 
-  it("refuses a legendary item bound for good, as colossi and titans drop", () => {
-    const result = buildLootDrawEntrants(
+  it("refuses a legendary item of an NPC type the Organization excludes", () => {
+    for (const type of ["HERO", "TITAN"] as const) {
+      const result = draw(
+        { ...loot, npcs: [npc(type)] },
+        request([winner, outsider()]),
+      );
+
+      expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_ITEM_NOT_DRAWABLE });
+    }
+
+    expect(
+      draw({ ...loot, npcs: [npc("HERO")] }, request([winner, outsider()]), []),
+    ).toHaveProperty("entrants");
+  });
+
+  it("refuses a legendary item bound for good, as colossi drop", () => {
+    const result = draw(
       { ...loot, items: [{ ...wand, stat: "lvl=279;permbound;reqp=m" }] },
       request([winner, outsider()]),
     );
@@ -233,7 +255,7 @@ describe("buildLootDrawEntrants", () => {
     const unassigned = { ...loot, lootShare: {} };
 
     expect(
-      buildLootDrawEntrants(
+      draw(
         unassigned,
         request([
           outsider({ name: "Mikrowojczan", characterId: 2, source: "PARTY" }),
@@ -246,19 +268,19 @@ describe("buildLootDrawEntrants", () => {
         expect.objectContaining({ name: "Spoza Grupy", source: "MANUAL" }),
       ],
     });
-    expect(
-      buildLootDrawEntrants(unassigned, request([winner, outsider()])),
-    ).toEqual({ error: ErrorKey.LOOT_DRAW_WINNER_MISMATCH });
+    expect(draw(unassigned, request([winner, outsider()]))).toEqual({
+      error: ErrorKey.LOOT_DRAW_WINNER_MISMATCH,
+    });
   });
 
   it("makes the only player of a solo loot the WINNER, as Margonem leaves its share empty", () => {
     const solo = { ...loot, players: loot.players.slice(0, 1), lootShare: {} };
 
+    expect(draw(solo, request([winner, outsider()]))).toHaveProperty(
+      "entrants",
+    );
     expect(
-      buildLootDrawEntrants(solo, request([winner, outsider()])),
-    ).toHaveProperty("entrants");
-    expect(
-      buildLootDrawEntrants(
+      draw(
         solo,
         request([outsider(), outsider({ name: "Ktoś", characterId: 91 })]),
       ),
@@ -266,7 +288,7 @@ describe("buildLootDrawEntrants", () => {
   });
 
   it("refuses a draw without the WINNER when somebody caught the item", () => {
-    const result = buildLootDrawEntrants(
+    const result = draw(
       loot,
       request([
         outsider({ name: "Mikrowojczan", characterId: 2, source: "PARTY" }),

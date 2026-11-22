@@ -21,6 +21,7 @@ export const createGuildFixture = (overrides: Partial<Guild> = {}): Guild => ({
   reservationTimeGranularityMinutes: 15,
   reservationMaxAdvanceDays: 7,
   reservationActiveLimitPerSpot: 3,
+  lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
   documentLimit: 50,
   createdAt: new Date(0),
   updatedAt: new Date(0),

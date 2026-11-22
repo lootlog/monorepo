@@ -12,13 +12,13 @@ import {
   discordGuildSyncStateTable,
   guildTable,
   memberTable,
+  npcTypeEnum,
   roleTable,
 } from "#src/database/drizzle/organization.schema";
 import {
   itemRarityEnum,
   lootlogConfigNpcTable,
   lootlogConfigTable,
-  npcTypeEnum,
 } from "#src/database/drizzle/loot.schema";
 import type {
   GuildCreated,

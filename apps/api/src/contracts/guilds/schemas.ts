@@ -12,6 +12,7 @@ import {
   FiniteNumber,
 } from "@lootlog/schema/http-scalars";
 import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/domain/reservations";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { ErrorKey } from "#src/guilds/error-key";
 
 export type OrganizationPermissionsResponse =
@@ -108,6 +109,11 @@ export const UpdateOrganizationConfigRequest = Schema.Struct({
           expected: "a value less than or equal to 10",
         }),
       ),
+  ),
+  lootDrawExcludedNpcTypes: Schema.optionalKey(
+    Schema.Array(NpcTypeSchema).check(
+      Schema.isMaxLength(NpcTypeSchema.literals.length),
+    ),
   ),
 }).annotate({ identifier: "UpdateGuildConfigDto" });
 

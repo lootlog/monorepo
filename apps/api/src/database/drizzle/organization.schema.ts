@@ -1,3 +1,4 @@
+import { DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES } from "@lootlog/domain/loot-draw";
 import { DEFAULT_RESERVATION_SETTINGS } from "@lootlog/domain/reservations";
 import { sql } from "drizzle-orm";
 import {
@@ -14,6 +15,19 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+
+export const npcTypeEnum = pgEnum("NpcType", [
+  "COMMON",
+  "ELITE",
+  "ELITE2",
+  "ELITE3",
+  "HERO",
+  "EVENT_HERO",
+  "TITAN",
+  "COLOSSUS",
+  "NPC",
+  "HERO_TRACKER",
+]);
 
 export const permissionEnum = pgEnum("Permission", [
   "OWNER",
@@ -106,6 +120,11 @@ export const guildTable = pgTable(
       .default(DEFAULT_RESERVATION_SETTINGS.reservationActiveLimitPerSpot)
       .notNull(),
     documentLimit: integer("documentLimit").default(50).notNull(),
+    /** NPC types whose legendary items the Organization does not draw. */
+    lootDrawExcludedNpcTypes: npcTypeEnum("lootDrawExcludedNpcTypes")
+      .array()
+      .default([...DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES])
+      .notNull(),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
       .defaultNow()
       .notNull(),

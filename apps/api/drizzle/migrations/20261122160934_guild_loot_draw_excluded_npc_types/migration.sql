@@ -1,0 +1,1 @@
+ALTER TABLE "Guild" ADD COLUMN "lootDrawExcludedNpcTypes" "NpcType"[] DEFAULT '{HERO,EVENT_HERO,TITAN}'::"NpcType"[] NOT NULL;

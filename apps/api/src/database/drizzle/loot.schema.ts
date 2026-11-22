@@ -17,7 +17,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { guildTable, memberTable } from "./organization.schema.js";
+import { guildTable, memberTable, npcTypeEnum } from "./organization.schema.js";
 
 // The codec makes a select read the column as text. Without it the driver
 // asks for binary results and hands back the wire bytes of a multirange.
@@ -25,19 +25,6 @@ const int4multirange = customType<{ data: string }>({
   dataType: () => "int4multirange",
   codec: "int4multirange",
 });
-
-export const npcTypeEnum = pgEnum("NpcType", [
-  "COMMON",
-  "ELITE",
-  "ELITE2",
-  "ELITE3",
-  "HERO",
-  "EVENT_HERO",
-  "TITAN",
-  "COLOSSUS",
-  "NPC",
-  "HERO_TRACKER",
-]);
 
 export const itemTypeEnum = pgEnum("ItemType", [
   "ONE_HAND_WEAPON",
