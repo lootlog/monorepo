@@ -22,7 +22,9 @@ export const NoticeCard = ({
   meta,
   children,
 }: NoticeCardProps) => (
-  <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-4 pb-8 pt-5 sm:px-6 md:[align-items:safe_center] md:py-8">
+  // Centred at every width; `safe` keeps a card taller than the screen
+  // reachable from its top instead of clipping it.
+  <div className="flex min-h-0 flex-1 [align-items:safe_center] justify-center overflow-y-auto px-4 py-5 sm:px-6 md:py-8">
     <section className="flex w-full max-w-sm flex-col items-center rounded-xl border border-border bg-card px-4 py-5 text-center shadow-sm sm:px-7 sm:py-8">
       <div className="mb-4 flex size-14 items-center justify-center rounded-xl border border-border bg-background">
         {icon}
