@@ -15,6 +15,20 @@ export const isAirTagClanEnemy = (
 
 export const AIR_TAG_MAX_BATCH_SIZE = 50;
 
+/**
+ * One observer reports each target; the gateway names the others standbys.
+ * It keeps the reporter for this long after their last sighting, which must
+ * outlast the gap between two heartbeats of a target that stands still.
+ */
+export const AIR_TAG_REPORTER_LEASE_MS = 6_000;
+
+/**
+ * A standby reports a target again once nobody has for this long. Longer than
+ * the lease, so the gateway hands the target over, and short enough that the
+ * sighting lands before the target expires.
+ */
+export const AIR_TAG_STANDBY_TAKEOVER_MS = 7_000;
+
 const AIR_TAG_MAX_COORDINATE = 65_535;
 
 export const AIR_TAG_MAX_MAP_NAME_LENGTH = 128;
@@ -149,6 +163,12 @@ export type AirTagObservationAck =
       status: "accepted";
       acceptedScopes: number;
       acceptedTargets: number;
+      /**
+       * Sightings of this batch another observer already reports in every
+       * scope. The sender may stay silent about them while it keeps
+       * receiving their updates.
+       */
+      standbyTargetIds?: string[];
     }
   | {
       status: "rejected";

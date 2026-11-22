@@ -171,6 +171,23 @@ export class AirTagReceiveController {
     }
   }
 
+  /**
+   * Whether another observer reported the target within `maxAgeMs` in every
+   * scope this character follows. The gateway leaves a connection's own
+   * sightings out of what it sends back, so every update is someone else's.
+   */
+  isReportedByOthers(targetId: string, now: number, maxAgeMs: number): boolean {
+    if (this.scopes.size === 0) return false;
+
+    for (const scope of this.scopes.values()) {
+      const target = scope.targets.get(targetId);
+
+      if (!target || now - target.observedAt >= maxAgeMs) return false;
+    }
+
+    return true;
+  }
+
   /** Whether any scope holds a target; expired ones leave on the next read. */
   hasTargets(): boolean {
     for (const scope of this.scopes.values()) {

@@ -303,6 +303,49 @@ describe("AirTagObservationController", () => {
     expect(publisher).toHaveBeenCalledTimes(2);
   });
 
+  it("falls silent about a target another observer reports, and takes it over when their sightings stop", () => {
+    const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
+    const controller = new AirTagObservationController();
+    let reportedByOthers = true;
+
+    controller.configure({
+      enabled: true,
+      canPublish: true,
+      mapId: 42,
+      publisher,
+      isReportedByOthers: () => reportedByOthers,
+    });
+    controller.handle({
+      "123": createOther(),
+      "456": createOther({ nick: "Second" }),
+    });
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+
+    const first = publisher.mock.calls[0]?.[0];
+
+    if (!first) throw new Error("Expected a batch");
+    // The gateway already has a reporter for 123; this observer keeps 456.
+    controller.applyAcknowledgement(first, ["123"]);
+    publisher.mockClear();
+
+    controller.handle({ "123": { x: 20, y: 10, dir: 1 } });
+    vi.advanceTimersByTime(AIR_TAG_HEARTBEAT_INTERVAL_MS * 3);
+    expect(publisher).toHaveBeenCalled();
+    expect(
+      publisher.mock.calls.flatMap(([batch]) =>
+        batch.observations.map((item) => item.targetId),
+      ),
+    ).not.toContain("123");
+
+    // The reporter left or lost its connection: nothing arrives any more.
+    reportedByOthers = false;
+    publisher.mockClear();
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS * 3);
+    expect(
+      publisher.mock.calls.flatMap(([batch]) => batch.observations),
+    ).toContainEqual(expect.objectContaining({ targetId: "123", x: 20 }));
+  });
+
   it("forgets targets on a reload so players who left meanwhile stop sending heartbeats", () => {
     const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
     const controller = new AirTagObservationController();

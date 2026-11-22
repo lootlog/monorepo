@@ -325,16 +325,25 @@ export class AirTagService {
     const steps: Array<Effect.Effect<void, RealtimeStoreError>> = [];
     let acceptedScopes = 0;
     let acceptedTargets = 0;
+    // A sighting is redundant only when every scope has another reporter for it.
+    let standby: Set<string> | undefined;
 
     for (const merged of results) {
       if (Exit.isFailure(merged)) {
         steps.push(warn("Failed to merge air tag observations", merged.cause));
+        // The sighting did not reach this scope, so nobody reports it there.
+        standby = new Set();
         continue;
       }
 
       const { scope, result } = merged.value;
       acceptedScopes += 1;
       acceptedTargets += result.acceptedTargets;
+      standby = new Set(
+        standby
+          ? result.standby.filter((targetId) => standby?.has(targetId))
+          : result.standby,
+      );
 
       if (result.threat) {
         const { revision, enemies } = result.threat;
@@ -376,7 +385,12 @@ export class AirTagService {
     const outcome: AirTagObservationAck =
       acceptedScopes === 0
         ? UNAVAILABLE
-        : { status: "accepted", acceptedScopes, acceptedTargets };
+        : {
+            status: "accepted",
+            acceptedScopes,
+            acceptedTargets,
+            ...(standby?.size && { standbyTargetIds: [...standby] }),
+          };
 
     return Effect.forEach(steps, (step) => step, { discard: true }).pipe(
       Effect.as(outcome),

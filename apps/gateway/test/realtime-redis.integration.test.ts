@@ -1,3 +1,4 @@
+import { AIR_TAG_REPORTER_LEASE_MS } from "@lootlog/schema/air-tag";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { RedisClient } from "bun";
@@ -2968,6 +2969,73 @@ describe("realtime Dragonfly integration", () => {
       scopes: [{ targets: [{ targetId: "lurker" }] }],
     });
   });
+
+  test("one observer reports an air-tag target and hands it over when it leaves or falls silent", async () => {
+    await using airTags = await startAirTagInstances();
+    const { first, sourceAirTags } = airTags;
+    const reporter = makeSocket("reporter");
+    const standby = makeSocket("standby");
+
+    for (const observer of [reporter, standby]) {
+      moveAirTagSocket(observer.socket, { mapId: 11, map: "Tuzmer" });
+      first.hub.register(observer.socket);
+      await Effect.runPromise(
+        sourceAirTags.updateSubscription(observer.socket, {
+          requestId: `${observer.socket.data.connectionId}-subscription`,
+          enabled: true,
+          expectedMapId: 11,
+        }),
+      );
+    }
+
+    const report = (
+      observer: ReturnType<typeof makeSocket>,
+      batch: Omit<
+        Parameters<AirTagService["publishObservations"]>[1],
+        "expectedMapId"
+      >,
+    ) =>
+      Effect.runPromise(
+        sourceAirTags.publishObservations(observer.socket, {
+          expectedMapId: 11,
+          ...batch,
+        }),
+      );
+
+    const sighting = { observations: [clanEnemy] };
+
+    // The first to report a target keeps it; the acknowledgement names no standby.
+    expect(await report(reporter, sighting)).toEqual({
+      status: "accepted",
+      acceptedScopes: 1,
+      acceptedTargets: 1,
+    });
+    expect(await report(standby, sighting)).toMatchObject({
+      status: "accepted",
+      standbyTargetIds: [clanEnemy.targetId],
+    });
+    expect(await report(reporter, sighting)).not.toHaveProperty(
+      "standbyTargetIds",
+    );
+
+    // The reporter loses sight: whoever reports next takes the target at once.
+    await report(reporter, {
+      observations: [],
+      departures: [{ targetId: clanEnemy.targetId, reason: "out-of-sight" }],
+    });
+    expect(await report(standby, sighting)).not.toHaveProperty(
+      "standbyTargetIds",
+    );
+    expect(await report(reporter, sighting)).toMatchObject({
+      standbyTargetIds: [clanEnemy.targetId],
+    });
+
+    // The new reporter vanishes without a word; the lease runs out.
+    await Bun.sleep(AIR_TAG_REPORTER_LEASE_MS + 100);
+    expect(await report(reporter, sighting)).not.toHaveProperty(
+      "standbyTargetIds",
+    );
+  }, 30_000);
 
   test("air-tag updates cross Redis only for maps another replica follows", async () => {
     await using airTags = await startAirTagInstances();

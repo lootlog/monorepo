@@ -372,6 +372,7 @@ const AirTagObservationAck = Schema.Union([
     status: Schema.Literal("accepted"),
     acceptedScopes: NonNegativeInt,
     acceptedTargets: NonNegativeInt,
+    standbyTargetIds: Schema.optional(Schema.Array(Schema.NonEmptyString)),
   }),
   Schema.Struct({
     status: Schema.Literal("rejected"),

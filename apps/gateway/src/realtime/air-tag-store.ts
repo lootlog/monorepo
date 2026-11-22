@@ -1,5 +1,6 @@
 import {
   AIR_TAG_MAP_THREAT_TTL_MS,
+  AIR_TAG_REPORTER_LEASE_MS,
   AirTagMapThreatEventSchema,
   AirTagTargetSchema,
   type AirTagDeparture,
@@ -224,6 +225,7 @@ local mapName=ARGV[11]
 local observer=ARGV[12]
 local departures=cjson.decode(ARGV[13])
 local instance=ARGV[14]
+local lease=tonumber(ARGV[15])
 local raw=redis.call("GET",KEYS[3])
 local metadata
 if raw == false then
@@ -236,6 +238,8 @@ local count=redis.call("HLEN",KEYS[1])
 local accepted=0
 local updates={}
 local removed={}
+-- Sightings whose target another observer reports; this one may fall silent.
+local standby={}
 local threatRemoved=false
 -- Caller-deduplicated ids, and a departure never shares a target with a
 -- sighting, so one read covers both loops.
@@ -259,6 +263,8 @@ for _,departure in ipairs(departures) do
     if observers[observer] ~= nil then
       observers[observer]=nil
       if departure.reason == "left-map" then target.departed=true end
+      -- The next observer to report the target takes it over at once.
+      if target.reporter == observer then target.reporter=nil end
       if target.departed == true and next(observers) == nil then
         drops[#drops+1]=departure.targetId
         stored[departure.targetId]=nil
@@ -290,6 +296,13 @@ for _,observation in ipairs(observations) do
       target.seenBy=liveObservers(existing,now,ttl)
     end
     target.seenBy[observer]=now
+    -- One reporter per target: theirs until they fall silent for the lease.
+    if existing ~= nil and existing.reporter ~= nil and existing.reporter ~= observer and now-tonumber(existing.reporterAt or 0) < lease then
+      target.reporter=existing.reporter; target.reporterAt=existing.reporterAt
+      standby[#standby+1]=target.targetId
+    else
+      target.reporter=observer; target.reporterAt=now
+    end
     local broadcast=existing == nil
     if existing ~= nil then
       broadcast=tonumber(existing.x) ~= tonumber(target.x) or tonumber(existing.y) ~= tonumber(target.y) or existing.nickname ~= target.nickname or clanId(existing) ~= clanId(target) or existing.lvl ~= target.lvl or existing.prof ~= target.prof or existing.stasis ~= target.stasis or now-target.lastBroadcastAt >= interval
@@ -377,7 +390,7 @@ local function othersInterested(key)
   return mine == false or tonumber(mine) <= now
 end
 local remoteRecipients=(#updates > 0 or #removed > 0) and (othersInterested(KEYS[6]) or othersInterested(KEYS[7]))
-return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=remoteRecipients}),{"targets","removed","enemies"})
+return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,standby=standby,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=remoteRecipients}),{"targets","removed","standby","enemies"})
 `;
 
 const SNAPSHOT_SCRIPT = `${LUA_COMMON}
@@ -440,6 +453,8 @@ export interface MergeResult {
   acceptedTargets: number;
   targets: AirTagScopeUpdateEvent["targets"];
   removed: string[];
+  /** Sightings of the batch another observer reports in this scope. */
+  standby: string[];
   threat?: { revision: number; enemies: AirTagMapThreatEnemy[] };
   threatPendingMs?: number;
   remoteRecipients: boolean;
@@ -453,6 +468,7 @@ const MergeResultJson = Schema.fromJsonString(
     acceptedTargets: Schema.Number,
     targets: Schema.Array(AirTagTargetSchema),
     removed: Schema.Array(Schema.String),
+    standby: Schema.Array(Schema.String),
     threat: Schema.optionalKey(
       Schema.Struct({
         revision: Schema.Number,
@@ -646,6 +662,7 @@ export const mergeObservations = (
       observer,
       JSON.stringify(departures),
       instanceId,
+      AIR_TAG_REPORTER_LEASE_MS,
     );
 
     const { threat, ...parsed } = Schema.decodeUnknownSync(MergeResultJson)(
@@ -656,6 +673,7 @@ export const mergeObservations = (
       ...parsed,
       targets: [...parsed.targets],
       removed: [...parsed.removed],
+      standby: [...parsed.standby],
       ...(threat && {
         threat: { revision: threat.revision, enemies: [...threat.enemies] },
       }),

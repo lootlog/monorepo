@@ -3,10 +3,11 @@ import type { AccessPolicySnapshot } from "@lootlog/protocol/realtime/access-pol
 import { useGameStore } from "@/store/game.store";
 import { canReadPresence } from "@/lib/online-players-presence";
 import { getSocket, type AccessUpdate } from "@/lib/socket";
-import type {
-  AirTagObservationBatch,
-  AirTagScopeUpdateEvent,
-  AirTagSubscriptionPayload,
+import {
+  AIR_TAG_STANDBY_TAKEOVER_MS,
+  type AirTagObservationBatch,
+  type AirTagScopeUpdateEvent,
+  type AirTagSubscriptionPayload,
 } from "@lootlog/schema/air-tag";
 import {
   AIR_TAG_BATCH_INTERVAL_MS,
@@ -62,6 +63,12 @@ export class AirTagRuntime {
       mapId: this.getCurrentMapId(),
       publisher: this.publishObservations,
       onLeftMap: (targetId) => airTagReceiveController.hideDeparted(targetId),
+      isReportedByOthers: (targetId, now) =>
+        airTagReceiveController.isReportedByOthers(
+          targetId,
+          now,
+          AIR_TAG_STANDBY_TAKEOVER_MS,
+        ),
     });
 
     if (!nextEnabled) {
@@ -243,10 +250,16 @@ export class AirTagRuntime {
     void socket
       .request("air-tag.observation", batch)
       .then((acknowledgement) => {
-        if (
-          acknowledgement.status === "rejected" &&
-          acknowledgement.code === "rate-limited"
-        )
+        if (acknowledgement.status === "accepted") {
+          airTagObservationController.applyAcknowledgement(
+            batch,
+            acknowledgement.standbyTargetIds ?? [],
+          );
+
+          return;
+        }
+
+        if (acknowledgement.code === "rate-limited")
           airTagObservationController.retry(
             batch,
             acknowledgement.retryAfterMs ?? AIR_TAG_BATCH_INTERVAL_MS,

@@ -55,6 +55,7 @@ const airTags = new AirTagService(
                   },
                 ],
                 removed: [],
+                standby: [],
                 remoteRecipients: false,
               })
             : [1, 0, 0],
