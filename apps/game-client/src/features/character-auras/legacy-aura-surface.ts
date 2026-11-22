@@ -8,13 +8,42 @@ import {
   type AuraPaint,
   type CharacterAuraSurface,
   type ShownArrival,
+  type ShownAura,
 } from "./character-aura-renderer";
 import { auraScreenBox } from "./engine/layers";
+import type { AuraPlacement } from "./engine/placement";
 
 /** SI has no camera in the way: `#base` scrolls, so its pixels are map pixels. */
 const MAP_CAMERA = [0, 0] as const;
 
-const shownLayers = new Map<string, LegacyAuraLayers>();
+/** An aura's layers and what they were last painted for. */
+type ShownLayers = {
+  layers: LegacyAuraLayers;
+  place: AuraPlacement | null;
+  revision: number | null;
+};
+
+const shownLayers = new Map<string, ShownLayers>();
+
+/**
+ * Whether the layers already show `shown`. An aura changes ten times a second and when
+ * its character moves or takes another frame of its walk, so most animation frames find
+ * the canvases as they should be. Resizing a layer clears it, which only a new
+ * silhouette does.
+ */
+function isPainted(
+  { place, revision }: ShownLayers,
+  shown: ShownAura<LegacyAuraCharacter>,
+): boolean {
+  return (
+    place !== null &&
+    revision !== null &&
+    revision === shown.revision &&
+    place.silhouette === shown.place.silhouette &&
+    place.x === shown.place.x &&
+    place.y === shown.place.y
+  );
+}
 
 const veil = legacyAuraRuntimeAdapter.createVeil();
 
@@ -46,8 +75,8 @@ function arrivalBackground({ place, darkness, veil }: ShownArrival): string {
 
 /**
  * The SI map: each aura gets a canvas under and one over its character's
- * element, sized to what the aura paints and redrawn every animation frame
- * while any aura is shown.
+ * element, sized to what the aura paints and redrawn on the animation frames
+ * that change it.
  */
 const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
   getView: () => ({
@@ -79,14 +108,27 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
     let layers = shownLayers.get(key);
 
     if (!layers) {
-      layers = legacyAuraRuntimeAdapter.createLayers();
+      layers = {
+        layers: legacyAuraRuntimeAdapter.createLayers(),
+        place: null,
+        revision: null,
+      };
       shownLayers.set(key, layers);
     }
 
+    const { back, front } = layers.layers;
     const box = auraScreenBox(shown.place);
-    legacyAuraRuntimeAdapter.placeLayers(layers, shown.character.element, box);
-    paintLayer(layers.back, box.x, box.y, shown.back);
-    paintLayer(layers.front, box.x, box.y, shown.front);
+    legacyAuraRuntimeAdapter.placeLayers(
+      layers.layers,
+      shown.character.element,
+      box,
+    );
+
+    if (isPainted(layers, shown)) return;
+    layers.place = shown.place;
+    layers.revision = shown.revision;
+    paintLayer(back, box.x, box.y, shown.back);
+    paintLayer(front, box.x, box.y, shown.front);
   },
 
   release(key) {
@@ -94,7 +136,7 @@ const legacyAuraSurface: CharacterAuraSurface<LegacyAuraCharacter> = {
 
     if (!layers) return;
     shownLayers.delete(key);
-    legacyAuraRuntimeAdapter.removeLayers(layers);
+    legacyAuraRuntimeAdapter.removeLayers(layers.layers);
   },
 
   // SI dims the map round the admin with a CSS gradient.

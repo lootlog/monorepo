@@ -11,9 +11,9 @@ let pendingFrame: FrameRequestCallback | null = null;
 
 let now = 0;
 
-/** One animation frame, a tenth of a second after the last. */
-function playFrame(): void {
-  now += 100;
+/** One animation frame, a tenth of a second (an aura's tick) after the last by default. */
+function playFrame(elapsed = 100): void {
+  now += elapsed;
   const frame = pendingFrame;
   pendingFrame = null;
   frame?.(now);
@@ -92,4 +92,34 @@ it("stops its frame loop once no character wears an aura", () => {
 
   expect(pendingFrame).toBeNull();
   expect(map.base.querySelector("canvas")).toBeNull();
+});
+
+it("repaints an SI aura between its ticks only once the player moves", () => {
+  const element = document.getElementById("other42");
+  legacyAuraRenderer.setTargets(new Map([["42", "storm"]]));
+
+  for (let frame = 0; frame < 5; frame++) playFrame();
+
+  const back = element?.previousSibling;
+
+  if (!element || !(back instanceof HTMLCanvasElement)) {
+    throw new Error("The aura layer is not beside the player");
+  }
+
+  // A mark in the layer's empty corner lasts until the layer is painted again.
+  const context = back.getContext("2d");
+  const marked = () => context?.getImageData(0, 0, 1, 1).data[3] === 255;
+  context?.setTransform(1, 0, 0, 1, 0, 0);
+  context?.fillRect(0, 0, 1, 1);
+
+  playFrame(16);
+  playFrame(16);
+
+  expect(marked()).toBe(true);
+
+  element.style.left = `${Number.parseFloat(element.style.left) + 4}px`;
+  playFrame(16);
+
+  expect(marked()).toBe(false);
+  expect(painted(back)).toBe(true);
 });

@@ -200,6 +200,8 @@ export class Aura {
   /** Stepped clock, advanced by whole ticks. */
   private time = 0;
   private tick = 0;
+  /** Counts the ticks and changes of preset: all that changes what a still aura paints. */
+  private revision = 0;
   private carry = 0;
   /** Lightning or burst flash, decays to 0. */
   private flash = 0;
@@ -328,6 +330,15 @@ export class Aura {
     }
   }
 
+  /**
+   * Stays the same while both sides paint the same at an unchanged place, so a surface
+   * that keeps what it painted can skip the frames between ticks; null while an admin's
+   * summoning animates on every frame.
+   */
+  paintRevision(): number | null {
+    return this.preset.herald && arrivalEvent(this.age) ? null : this.revision;
+  }
+
   /** The admin's summoning at their feet while an arrival or pulse runs at `place`. */
   private summon(place: AuraPlacement, intensity: number): Summon | null {
     if (!this.preset.herald || !place.ground) return null;
@@ -358,6 +369,7 @@ export class Aura {
   /** Puts on the preset now worn, dropping what belonged to the last one but its particles. */
   private wear(): void {
     this.preset = this.worn();
+    this.revision++;
     this.rgb = colorsOf(this.preset);
     this.bolts = [];
     this.dragon = null;
@@ -399,6 +411,7 @@ export class Aura {
   private step(place: AuraPlacement | null, intensity: number): void {
     this.time += TICK;
     this.tick++;
+    this.revision++;
     this.flash = Math.max(0, this.flash - TICK * 4);
     const frame = place ? this.physicsFrame(place) : null;
 
